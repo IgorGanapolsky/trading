@@ -31,10 +31,24 @@ def load_trades() -> dict:
         return json.load(f)
 
 
-def calculate_stats(trades: list[dict]) -> dict:
-    """Calculate win rate statistics from closed trades."""
+def calculate_stats(trades: list[dict], paper_phase_start: str = None) -> dict:
+    """Calculate win rate statistics from closed trades.
+
+    Args:
+        trades: List of trade dictionaries
+        paper_phase_start: ISO date string when paper phase started (e.g., '2026-01-15')
+    """
     closed = [t for t in trades if t.get("status") == "closed"]
     open_trades = [t for t in trades if t.get("status") == "open"]
+
+    # Calculate paper phase days
+    paper_phase_days = 0
+    if paper_phase_start:
+        try:
+            start_date = datetime.fromisoformat(paper_phase_start).date()
+            paper_phase_days = (datetime.now(timezone.utc).date() - start_date).days
+        except (ValueError, TypeError):
+            pass
 
     if not closed:
         return {
@@ -49,6 +63,8 @@ def calculate_stats(trades: list[dict]) -> dict:
             "avg_loss": None,
             "profit_factor": None,
             "total_pnl": 0.0,
+            "paper_phase_start": paper_phase_start,
+            "paper_phase_days": paper_phase_days,
             "last_updated": datetime.now(timezone.utc).isoformat(),
         }
 
@@ -74,6 +90,8 @@ def calculate_stats(trades: list[dict]) -> dict:
         "avg_loss": round(total_losses / len(losses), 2) if losses else None,
         "profit_factor": round(total_wins / total_losses, 2) if total_losses > 0 else None,
         "total_pnl": round(total_wins - total_losses, 2),
+        "paper_phase_start": paper_phase_start,
+        "paper_phase_days": paper_phase_days,
         "last_updated": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -83,6 +101,19 @@ def display_stats(stats: dict) -> None:
     logger.info("=" * 50)
     logger.info("WIN RATE TRACKING - Per CLAUDE.md Mandate")
     logger.info("=" * 50)
+
+    # Show paper phase progress
+    paper_days = stats.get("paper_phase_days", 0)
+    paper_start = stats.get("paper_phase_start")
+    if paper_start:
+        days_remaining = max(0, 90 - paper_days)
+        logger.info(f"Paper Phase: Day {paper_days}/90 (started {paper_start})")
+        if paper_days >= 90:
+            logger.info("90-DAY PAPER PHASE COMPLETE - Ready for scaling decision!")
+        else:
+            logger.info(f"{days_remaining} days remaining in paper phase")
+    logger.info("")
+
     logger.info(f"Total Trades: {stats['total_trades']}")
     logger.info(f"  Open: {stats['open_trades']}")
     logger.info(f"  Closed: {stats['closed_trades']}")
@@ -104,12 +135,23 @@ def display_stats(stats: dict) -> None:
     logger.info(f"Total P/L: ${stats['total_pnl']}")
     logger.info("")
 
-    # CLAUDE.md decision point check
+    # CLAUDE.md decision point check (updated Jan 15, 2026)
+    # Break-even win rate for credit spreads = 88%. Targets:
+    # - <75%: Not profitable, reassess strategy
+    # - 75-80%: Marginally profitable, proceed with caution
+    # - 80%+: Profitable, consider scaling after 90 days
     if stats["closed_trades"] >= 30:
-        if stats["win_rate_pct"] and stats["win_rate_pct"] < 60:
-            logger.warning("⚠️  WIN RATE <60% - Per CLAUDE.md: Reassess strategy!")
+        win_rate = stats["win_rate_pct"]
+        if win_rate and win_rate < 75:
+            logger.warning("DECISION: WIN RATE <75% - Per CLAUDE.md: REASSESS STRATEGY!")
+            logger.warning("Credit spread math requires 88% to break even.")
+            logger.warning("With early exits at 50% profit, need 80%+ win rate.")
+        elif win_rate and win_rate < 80:
+            logger.info("DECISION: WIN RATE 75-80% - Marginally profitable")
+            logger.info("Proceed with caution. Do not scale yet.")
         else:
-            logger.info("✅ Win rate meets 60% threshold")
+            logger.info("DECISION: WIN RATE 80%+ - Profitable!")
+            logger.info("Consider scaling after 90-day paper phase complete.")
     else:
         remaining = 30 - stats["closed_trades"]
         logger.info(f"Need {remaining} more closed trades for statistical validity")
@@ -169,7 +211,11 @@ def close_trade(trade_id: str, exit_price: float, exit_date: str = None) -> bool
             trade["outcome"] = outcome
 
             # Recalculate stats
-            stats = calculate_stats(trades)
+            paper_phase_start = (
+                data.get("stats", {}).get("paper_phase_start")
+                or data.get("metadata", {}).get("paper_phase_start")
+            )
+            stats = calculate_stats(trades, paper_phase_start)
             update_trades_file(data, stats)
 
             logger.info(f"✅ Closed {trade_id}: ${pnl:.2f} ({outcome})")
@@ -235,7 +281,11 @@ def add_trade(
             trade[key] = value
 
     trades.append(trade)
-    stats = calculate_stats(trades)
+    paper_phase_start = (
+        data.get("stats", {}).get("paper_phase_start")
+        or data.get("metadata", {}).get("paper_phase_start")
+    )
+    stats = calculate_stats(trades, paper_phase_start)
     update_trades_file(data, stats)
 
     logger.info(f"✅ Added trade {trade_id}")
@@ -252,7 +302,12 @@ def main():
 
     data = load_trades()
     trades = data.get("trades", [])
-    stats = calculate_stats(trades)
+    # Get paper phase start from existing stats or metadata
+    paper_phase_start = (
+        data.get("stats", {}).get("paper_phase_start")
+        or data.get("metadata", {}).get("paper_phase_start")
+    )
+    stats = calculate_stats(trades, paper_phase_start)
 
     display_stats(stats)
 

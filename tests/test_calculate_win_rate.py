@@ -218,3 +218,95 @@ class TestCloseTrade:
             assert trade["exit_price"] == 160.0
             assert trade["realized_pnl"] == 100.0  # (160-150) * 10
             assert trade["outcome"] == "win"
+
+
+class TestPaperPhaseTracking:
+    """Test 90-day paper phase tracking per CLAUDE.md."""
+
+    def test_paper_phase_days_calculated(self):
+        """Stats should include paper phase days when start date provided."""
+        from scripts.calculate_win_rate import calculate_stats
+
+        trades = [
+            {"id": "t1", "status": "closed", "outcome": "win", "realized_pnl": 50},
+        ]
+        stats = calculate_stats(trades, paper_phase_start="2026-01-01")
+
+        assert "paper_phase_start" in stats
+        assert "paper_phase_days" in stats
+        assert stats["paper_phase_start"] == "2026-01-01"
+        # paper_phase_days should be > 0 since start is in the past
+        assert stats["paper_phase_days"] >= 0
+
+    def test_paper_phase_no_start_date(self):
+        """Stats should handle missing paper phase start date."""
+        from scripts.calculate_win_rate import calculate_stats
+
+        trades = [
+            {"id": "t1", "status": "closed", "outcome": "win", "realized_pnl": 50},
+        ]
+        stats = calculate_stats(trades, paper_phase_start=None)
+
+        assert stats["paper_phase_start"] is None
+        assert stats["paper_phase_days"] == 0
+
+
+class TestWinRateThresholds:
+    """Test win rate decision thresholds per CLAUDE.md (Jan 15, 2026).
+
+    Thresholds:
+    - <75%: Not profitable, reassess strategy
+    - 75-80%: Marginally profitable, proceed with caution
+    - 80%+: Profitable, consider scaling after 90 days
+    """
+
+    def test_win_rate_below_75_should_reassess(self):
+        """Win rate <75% should trigger reassess warning."""
+        from scripts.calculate_win_rate import calculate_stats
+
+        # Create trades with 60% win rate (18 wins, 12 losses = 30 trades)
+        trades = []
+        for i in range(18):
+            trades.append({"id": f"w{i}", "status": "closed", "outcome": "win", "realized_pnl": 50})
+        for i in range(12):
+            trades.append({"id": f"l{i}", "status": "closed", "outcome": "loss", "realized_pnl": -50})
+
+        stats = calculate_stats(trades)
+
+        assert stats["closed_trades"] == 30
+        assert stats["win_rate_pct"] == 60.0
+        # This would trigger reassess per CLAUDE.md (<75%)
+
+    def test_win_rate_75_to_80_marginally_profitable(self):
+        """Win rate 75-80% should indicate marginal profitability."""
+        from scripts.calculate_win_rate import calculate_stats
+
+        # 77% win rate (23 wins, 7 losses = 30 trades)
+        trades = []
+        for i in range(23):
+            trades.append({"id": f"w{i}", "status": "closed", "outcome": "win", "realized_pnl": 50})
+        for i in range(7):
+            trades.append({"id": f"l{i}", "status": "closed", "outcome": "loss", "realized_pnl": -50})
+
+        stats = calculate_stats(trades)
+
+        assert stats["closed_trades"] == 30
+        assert stats["win_rate_pct"] == pytest.approx(76.7, rel=0.1)
+        # This would indicate marginal profitability (75-80%)
+
+    def test_win_rate_above_80_profitable(self):
+        """Win rate >=80% should indicate profitable strategy."""
+        from scripts.calculate_win_rate import calculate_stats
+
+        # 83% win rate (25 wins, 5 losses = 30 trades)
+        trades = []
+        for i in range(25):
+            trades.append({"id": f"w{i}", "status": "closed", "outcome": "win", "realized_pnl": 50})
+        for i in range(5):
+            trades.append({"id": f"l{i}", "status": "closed", "outcome": "loss", "realized_pnl": -50})
+
+        stats = calculate_stats(trades)
+
+        assert stats["closed_trades"] == 30
+        assert stats["win_rate_pct"] == pytest.approx(83.3, rel=0.1)
+        # This would indicate profitable strategy (80%+)
