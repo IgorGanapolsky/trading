@@ -1,0 +1,109 @@
+{
+  "meta": {
+    "version": "1.0",
+    "created": "2026-01-15T21:40:00Z",
+    "purpose": "Master ledger for win rate tracking per CLAUDE.md",
+    "paper_phase_start": "2026-01-15",
+    "paper_phase_days_required": 90,
+    "decision_thresholds": {
+      "reassess_below": 75,
+      "marginal_range": [75, 80],
+      "profitable_above": 80,
+      "min_trades_for_decision": 30
+    }
+  },
+  "stats": {
+    "total_trades": 3,
+    "closed_trades": 0,
+    "open_trades": 3,
+    "wins": 0,
+    "losses": 0,
+    "breakeven": 0,
+    "win_rate_pct": null,
+    "avg_win": null,
+    "avg_loss": null,
+    "profit_factor": null,
+    "total_pnl": 0.0,
+    "paper_phase_days": 0,
+    "last_updated": "2026-01-15T21:40:00Z"
+  },
+  "trades": [
+    {
+      "id": "spread_565_570_20260115",
+      "type": "bull_put_spread",
+      "underlying": "SPY",
+      "legs": [
+        {
+          "symbol": "SPY260220P00565000",
+          "side": "long",
+          "qty": 1,
+          "entry_price": 0.47,
+          "current_price": 0.50
+        },
+        {
+          "symbol": "SPY260220P00570000",
+          "side": "short",
+          "qty": 1,
+          "entry_price": 0.50,
+          "current_price": 0.54
+        }
+      ],
+      "entry_date": "2026-01-15",
+      "expiration": "2026-02-20",
+      "net_credit": 0.03,
+      "max_risk": 4.97,
+      "status": "open",
+      "current_pnl": -1.0,
+      "notes": "30-delta bull put spread on SPY"
+    },
+    {
+      "id": "spread_595_600_20260115",
+      "type": "bull_put_spread",
+      "underlying": "SPY",
+      "legs": [
+        {
+          "symbol": "SPY260220P00595000",
+          "side": "long",
+          "qty": 1,
+          "entry_price": 0.73,
+          "current_price": 0.78
+        },
+        {
+          "symbol": "SPY260220P00600000",
+          "side": "short",
+          "qty": 1,
+          "entry_price": 0.78,
+          "current_price": 0.86
+        }
+      ],
+      "entry_date": "2026-01-15",
+      "expiration": "2026-02-20",
+      "net_credit": 0.05,
+      "max_risk": 4.95,
+      "status": "open",
+      "current_pnl": -3.0,
+      "notes": "30-delta bull put spread on SPY"
+    },
+    {
+      "id": "orphan_660_20260115",
+      "type": "orphan_long_put",
+      "underlying": "SPY",
+      "legs": [
+        {
+          "symbol": "SPY260220P00660000",
+          "side": "long",
+          "qty": 1,
+          "entry_price": 3.07,
+          "current_price": 3.43
+        }
+      ],
+      "entry_date": "2026-01-15",
+      "expiration": "2026-02-20",
+      "net_debit": 3.07,
+      "max_risk": 307.0,
+      "status": "open",
+      "current_pnl": 36.0,
+      "notes": "ORPHAN - Created without matching short leg. Crisis position - see LL-221. Currently profitable but violates strategy."
+    }
+  ]
+}
