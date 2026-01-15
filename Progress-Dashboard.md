@@ -1,6 +1,6 @@
 # 📊 World-Class Trading Dashboard
 
-**Last Updated**: 2026-01-15 08:54 PM ET
+**Last Updated**: 2026-01-15 09:12 PM ET
 **Auto-Updated**: Daily via GitHub Actions
 **Dashboard Version**: Enhanced World-Class (v2.0)
 
@@ -10,8 +10,8 @@
 
 | Account | Equity | Starting | Total P/L | Total % |
 |---------|--------|----------|-----------|---------|
-| **🔴 LIVE (Brokerage)** | $5,004.53 | $20.00 | $+4.53 | +0.09% |
-| **📝 PAPER (R&D)** | $5,004.53 | $5,000.00 | $+4.53 | +0.09% |
+| **🔴 LIVE (Brokerage)** | $4,989.81 | $20.00 | $-10.19 | -0.20% |
+| **📝 PAPER (R&D)** | $4,989.81 | $5,000.00 | $-10.19 | -0.20% |
 
 > ⚠️ **LIVE account** = Real money. **PAPER account** = R&D simulation for testing strategies.
 
@@ -25,8 +25,8 @@
 
 | Metric | Value |
 |--------|-------|
-| **Equity** | $5,004.53 |
-| **Total P/L** | $+4.53 (+0.09%) |
+| **Equity** | $4,989.81 |
+| **Total P/L** | $-10.19 (-0.20%) |
 | **Today's P/L** | $+0.00 (+0.00%) |
 | **Status** | ✅ Active |
 
@@ -36,8 +36,8 @@
 
 | Metric | Value |
 |--------|-------|
-| **Equity** | $5,004.53 |
-| **Total P/L** | $+4.53 (+0.09%) |
+| **Equity** | $4,989.81 |
+| **Total P/L** | $-10.19 (-0.20%) |
 | **Today's P/L** | $+0.00 (+0.00%) |
 | **Win Rate** | 0% |
 | **Trades Today** | 0 |
@@ -66,11 +66,11 @@
 
 | Metric | Current | Target | Progress |
 |--------|---------|--------|----------|
-| **Average Daily Profit** | $0.57/day | $100.00/day | 0.57% |
-| **Total P/L** | $+4.53 (+0.09%) | TBD | ✅ |
+| **Average Daily Profit** | $-1.27/day | $100.00/day | -1.27% |
+| **Total P/L** | $-10.19 (-0.20%) | TBD | ⚠️ |
 | **Win Rate** | 0.0% | >55% | ⚠️ |
 
-**Progress Bar**: `█░░░░░░░░░░░░░░░░░░░` (0.57%)
+**Progress Bar**: `░░░░░░░░░░░░░░░░░░░░` (-1.27%)
 
 **Assessment**: ⚠️ **R&D PHASE** - Learning, not earning yet
 
@@ -189,8 +189,8 @@
 
 | Metric | Portfolio | Benchmark | Difference | Status |
 |--------|-----------|-----------|------------|--------|
-| **Total Return** | +0.09% | +0.00% | +0.09% | ✅ Outperforming |
-| **Alpha** | +0.09% | - | - | ✅ Positive Alpha |
+| **Total Return** | -0.20% | +0.00% | -0.20% | ⚠️ Underperforming |
+| **Alpha** | -0.20% | - | - | ⚠️ Negative Alpha |
 | **Beta** | 1.00 | 1.0 | +0.00 | Lower Risk |
 | **Data Available** | ⚠️ Limited | - | - | - |
 
@@ -243,9 +243,9 @@ Run full dashboard generation for AI insights.
 | Metric | Value |
 |--------|-------|
 | **Starting Balance** | $20.00 |
-| **Current Equity** | $5,004.53 |
-| **Total P/L** | $+4.53 (+0.09%) |
-| **Average Daily Profit** | $+0.57 |
+| **Current Equity** | $4,989.81 |
+| **Total P/L** | $-10.19 (-0.20%) |
+| **Average Daily Profit** | $-1.27 |
 | **Total Trades** | 0 |
 | **Win Rate** | 0.0% |
 | **Trades Today** | 0 |
