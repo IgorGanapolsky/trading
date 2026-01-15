@@ -1,25 +1,25 @@
 {
-  "last_updated": "2026-01-15T15:10:46.848578",
+  "last_updated": "2026-01-15T15:12:36.359247",
   "portfolio": {
-    "equity": 4984.11,
+    "equity": 4983.12,
     "cash": 4260.12
   },
   "paper_account": {
-    "equity": 4984.11,
+    "equity": 4983.12,
     "cash": 4260.12,
-    "buying_power": 8919.23,
-    "total_pl": -15.89,
-    "total_pl_pct": -0.32,
+    "buying_power": 8919.24,
+    "total_pl": -16.88,
+    "total_pl_pct": -0.34,
     "positions_count": 6,
-    "daily_change": 24.93
+    "daily_change": 23.94
   },
   "positions": [
     {
       "symbol": "SPY",
       "qty": 0.576037269,
-      "price": 692.65,
-      "value": 398.992214,
-      "pnl": -0.967785,
+      "price": 692.675,
+      "value": 399.006615,
+      "pnl": -0.953384,
       "type": "stock"
     },
     {
@@ -33,17 +33,17 @@
     {
       "symbol": "SPY260220P00570000",
       "qty": -1.0,
-      "price": 0.55,
-      "value": -55.0,
-      "pnl": -5.0,
+      "price": 0.54,
+      "value": -54.0,
+      "pnl": -4.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00595000",
       "qty": 1.0,
-      "price": 0.78,
-      "value": 78.0,
-      "pnl": 5.0,
+      "price": 0.77,
+      "value": 77.0,
+      "pnl": 4.0,
       "type": "option"
     },
     {
@@ -57,9 +57,9 @@
     {
       "symbol": "SPY260220P00660000",
       "qty": 1.0,
-      "price": 3.37,
-      "value": 337.0,
-      "pnl": 30.0,
+      "price": 3.36,
+      "value": 336.0,
+      "pnl": 29.0,
       "type": "option"
     }
   ],
@@ -71,13 +71,13 @@
   },
   "risk": {
     "status": "RECOVERING",
-    "total_pl": -15.89,
-    "unrealized_pl": 25.03
+    "total_pl": -16.88,
+    "unrealized_pl": 24.05
   },
   "account": {
-    "current_equity": 4984.11,
-    "total_pl": -15.89,
-    "total_pl_pct": -0.32,
+    "current_equity": 4983.12,
+    "total_pl": -16.88,
+    "total_pl_pct": -0.34,
     "positions_count": 6
   }
 }
