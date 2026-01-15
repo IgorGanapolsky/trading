@@ -777,6 +777,8 @@ class TradeGateway:
 
         # ============================================================
         # CHECK 12: RAG Lesson Block (CRITICAL lessons learned)
+        # FIX Jan 15, 2026: Only block if lesson SPECIFICALLY mentions this ticker
+        # Previous bug: lessons about SOFI were blocking SPY trades
         # ============================================================
         # Query RAG for lessons about this ticker and strategy
         query_terms = f"{request.symbol}"
@@ -784,10 +786,26 @@ class TradeGateway:
             query_terms += f" {request.strategy_type}"
         query_terms += f" {request.side}"
 
+        underlying = self._get_underlying_symbol(request.symbol)
         rag_lessons = self.rag.query(query_terms, top_k=5)
-        critical_rag_lessons = [
-            lesson for lesson in rag_lessons if lesson.get("severity") == "CRITICAL"
-        ]
+
+        # Only consider CRITICAL lessons that specifically mention THIS ticker
+        critical_rag_lessons = []
+        for lesson in rag_lessons:
+            if lesson.get("severity") != "CRITICAL":
+                continue
+            # Check if lesson specifically mentions this ticker
+            lesson_content = lesson.get("content", "") + lesson.get("snippet", "")
+            lesson_id = lesson.get("id", "").upper()
+            # Only block if ticker appears in lesson content or ID
+            if underlying.upper() in lesson_content.upper() or underlying.upper() in lesson_id:
+                critical_rag_lessons.append(lesson)
+            else:
+                # Log that we skipped this lesson (not ticker-specific)
+                logger.debug(
+                    f"Skipping non-ticker-specific lesson: {lesson.get('id')} "
+                    f"(searching for {underlying})"
+                )
 
         if critical_rag_lessons:
             rejection_reasons.append(RejectionReason.RAG_LESSON_CRITICAL)

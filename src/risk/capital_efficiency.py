@@ -119,6 +119,23 @@ class CapitalEfficiencyCalculator:
             "collateral_per_trade": 500,  # Width of spread
             "monthly_fee_impact": 0.01,  # Two legs
         },
+        # Aliases for credit spreads - same as vertical_spread but lower min
+        "bull_put_spread": {
+            "name": "Bull Put Spread (Credit)",
+            "min_capital": 1000,  # $500 collateral + buffer (Jan 15 fix)
+            "tier": StrategyTier.TIER_3_DEFINED_RISK,
+            "description": "Sell put, buy lower put - defined risk",
+            "collateral_per_trade": 500,  # $5 wide spread
+            "monthly_fee_impact": 0.01,  # Two legs
+        },
+        "credit_spread": {
+            "name": "Credit Spread",
+            "min_capital": 1000,  # $500 collateral + buffer
+            "tier": StrategyTier.TIER_3_DEFINED_RISK,
+            "description": "Generic credit spread (bull put or bear call)",
+            "collateral_per_trade": 500,
+            "monthly_fee_impact": 0.01,
+        },
         "iron_condor": {
             "name": "Iron Condor",
             "min_capital": 10000,
