@@ -57,8 +57,11 @@ def calculate_basic_metrics():
 
     # ========== PAPER ACCOUNT (R&D - Simulation) ==========
     paper_account = system_state.get("paper_account", {})
-    paper_equity = paper_account.get("current_equity", 100000.0)
-    paper_starting = paper_account.get("starting_balance", 100000.0)
+    # FIX Jan 15, 2026: Check both current_equity AND equity before fallback
+    # ROOT CAUSE: system_state.json has "equity" but dashboard read "current_equity"
+    paper_equity = paper_account.get("current_equity") or paper_account.get("equity", 5000.0)
+    # FIX: Use $5000 as default starting balance per CLAUDE.md (not $100K)
+    paper_starting = paper_account.get("starting_balance", 5000.0)
     paper_pl = paper_account.get("total_pl", 0.0)
     paper_pl_pct = paper_account.get("total_pl_pct", 0.0)
     paper_win_rate = paper_account.get("win_rate", 0.0)
@@ -209,7 +212,7 @@ def calculate_simple_risk_metrics(perf_log: list, all_trades: list) -> dict:
         return {}
 
     # Extract equity values
-    equities = [entry.get("equity", 100000) for entry in perf_log]
+    equities = [entry.get("equity", 5000) for entry in perf_log]
     returns = []
     for i in range(1, len(equities)):
         if equities[i - 1] > 0:
@@ -312,7 +315,7 @@ def generate_world_class_dashboard() -> str:
     tax_recommendations = []
     pdt_status = {}
     system_state = load_json_file(DATA_DIR / "system_state.json")
-    current_equity = basic_metrics.get("current_equity", 100000.0)
+    current_equity = basic_metrics.get("current_equity", 5000.0)
 
     if TaxOptimizer and all_trades:
         try:
@@ -566,7 +569,7 @@ def generate_world_class_dashboard() -> str:
 | Account | Equity | Starting | Total P/L | Total % |
 |---------|--------|----------|-----------|---------|
 | **🔴 LIVE (Brokerage)** | ${basic_metrics.get("live_equity", 20):,.2f} | ${basic_metrics.get("live_starting", 20):,.2f} | ${basic_metrics.get("live_pl", 0):+,.2f} | {basic_metrics.get("live_pl_pct", 0):+.2f}% |
-| **📝 PAPER (R&D)** | ${basic_metrics.get("paper_equity", 100000):,.2f} | ${basic_metrics.get("paper_starting", 100000):,.2f} | ${basic_metrics.get("paper_pl", 0):+,.2f} | {basic_metrics.get("paper_pl_pct", 0):+.2f}% |
+| **📝 PAPER (R&D)** | ${basic_metrics.get("paper_equity", 5000):,.2f} | ${basic_metrics.get("paper_starting", 5000):,.2f} | ${basic_metrics.get("paper_pl", 0):+,.2f} | {basic_metrics.get("paper_pl_pct", 0):+.2f}% |
 
 > ⚠️ **LIVE account** = Real money. **PAPER account** = R&D simulation for testing strategies.
 
@@ -591,7 +594,7 @@ def generate_world_class_dashboard() -> str:
 
 | Metric | Value |
 |--------|-------|
-| **Equity** | ${basic_metrics.get("paper_equity", 100000):,.2f} |
+| **Equity** | ${basic_metrics.get("paper_equity", 5000):,.2f} |
 | **Total P/L** | ${basic_metrics.get("paper_pl", 0):+,.2f} ({basic_metrics.get("paper_pl_pct", 0):+.2f}%) |
 | **Today's P/L** | ${basic_metrics.get("today_paper_pl", 0):+,.2f} ({basic_metrics.get("today_paper_pl_pct", 0):+.2f}%) |
 | **Win Rate** | {basic_metrics.get("paper_win_rate", 0):.0f}% |
