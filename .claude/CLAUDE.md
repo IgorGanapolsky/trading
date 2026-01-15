@@ -17,6 +17,7 @@ CTO: Claude | CEO: Igor Ganapolsky
 - **Assignment risk**: Close positions MANUALLY before expiration if stock is between strikes
 - **Risk management**: NEVER more than 5% on single trade. NO NAKED PUTS.
 - **Paper phase**: 90 days to validate 80%+ win rate before scaling
+- **Future expansion**: CALL credit spreads for bearish/overbought conditions (see RAG LL-215)
 
 ## Recovery Path (Math-Validated Jan 15, 2026)
 | Phase | Capital | Monthly Income | Daily Equivalent | Timeline |
