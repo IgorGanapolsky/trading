@@ -8,9 +8,9 @@
 System created an orphan LONG put position (SPY260220P00660000) costing $307 without a matching short leg. This is NOT a credit spread - it's a naked debit position that loses money as the market rises.
 
 ## Evidence
-- SPY 660 LONG put: cost $307, currently worth ~$302 (-$5 unrealized loss)
+- SPY 660 LONG put: cost $307, currently worth ~$343 (+$36 unrealized GAIN as of Jan 15 4PM)
 - No matching 665 or 670 SHORT put to form a spread
-- Total account loss: -$53.41 (-1.07% from $5,000 starting capital)
+- Total account P/L: -$10.19 (-0.20%) as of Jan 15 close (recovered from -$53)
 
 ## Root Cause Analysis
 The 660 put was bought at 12:17 PM ET on Jan 15, 2026. This strike is:
@@ -50,9 +50,10 @@ This position violates Rule #1 (Don't Lose Money):
 3. ⏳ Orphan 660 put needs manual closure (PDT restriction)
 4. ⏳ execute_credit_spread.py needs fix to verify both legs
 
-## Resolution Criteria
-- [ ] execute_credit_spread.py validates both legs before submission
-- [ ] Position validation runs after each spread execution
-- [ ] Orphan 660 put is closed
+## Resolution Criteria (Updated Jan 15, 4:30 PM)
+- [x] execute_credit_spread.py validates both legs before submission (lines 450-549)
+- [x] SHORT leg submitted FIRST, verified before LONG leg (line 457-484)
+- [x] Auto-cancel short if long fails (line 509-513)
+- [ ] Orphan 660 put still open (currently +$36 profit - hold or close?)
 - [ ] Win rate tracking is implemented
 - [ ] Set halted=false in daily-trading.yml to resume
