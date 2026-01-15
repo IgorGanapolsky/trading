@@ -1,0 +1,91 @@
+{
+  "lesson_id": 215,
+  "date": "2026-01-15",
+  "category": "strategy",
+  "severity": "MEDIUM",
+  "title": "Call Credit Spreads for Bearish/Neutral Markets",
+  "source": {
+    "type": "YouTube",
+    "channel": "Invest with Henry",
+    "video": "Credit Spreads | Call Credit Spreads | Call Credit",
+    "url": "https://youtu.be/QTK6C5Cq97s"
+  },
+  "summary": "Call credit spreads complement put credit spreads for market-neutral income generation when stocks are overbought",
+  "context": {
+    "current_strategy": "PUT credit spreads (bullish bias) on SPY/IWM",
+    "gap_identified": "No strategy for bearish/neutral conditions",
+    "solution": "Add CALL credit spreads for overbought/peaked stocks"
+  },
+  "key_lessons": [
+    {
+      "topic": "When to Use Call Credit Spreads",
+      "details": [
+        "Stock has rallied aggressively and appears to be peaking",
+        "Bearish or neutral outlook on underlying",
+        "Ideal for generating passive income on overextended stocks"
+      ]
+    },
+    {
+      "topic": "Technical Entry Signals",
+      "details": [
+        "Bollinger Bands: Enter when stock is near/above upper band (20-day, 2 std dev)",
+        "RSI overbought conditions (>70) suggest reversal or sideways movement",
+        "Use technical resistance levels as buffer for strike selection"
+      ]
+    },
+    {
+      "topic": "Contract Specifications",
+      "details": [
+        "Expiration: 60+ DTE (2 months) for passive income and higher premiums",
+        "Delta: Target 0.15-0.20 (85% implied win rate)",
+        "Spread Width: $300-$500 (narrow spreads have poor liquidity)"
+      ]
+    },
+    {
+      "topic": "Risk Management",
+      "details": [
+        "10% max capital per trade (we use stricter 5%)",
+        "Maintain 10-12 diversified positions",
+        "Balance call AND put credit spreads for market neutrality"
+      ]
+    },
+    {
+      "topic": "Trade Management",
+      "details": [
+        "Monitor weekly, not daily (avoid babysitting)",
+        "If challenged: Roll up and out (higher strike, further expiration)",
+        "Accept losses objectively - 1 in 20 losing trades is normal for professionals"
+      ]
+    }
+  ],
+  "integration": {
+    "put_spreads": "Bullish bias, use at support levels, roll down and out",
+    "call_spreads": "Bearish/neutral bias, use at resistance levels, roll up and out",
+    "combined_strategy": "Market neutral income generation regardless of direction"
+  },
+  "modifications_for_5k_account": [
+    "Stick to 5% position sizing (not 10%)",
+    "Focus on SPY/IWM for liquidity",
+    "Use 45-60 DTE (balance premium vs time risk)",
+    "Target 0.15-0.20 delta for higher win rate"
+  ],
+  "prevention": [
+    "Only enter when technical signals align (overbought, near resistance)",
+    "Use 0.15-0.20 delta for 85%+ implied probability",
+    "Allow 60+ DTE for time to work in your favor",
+    "Roll up and out if challenged, don't panic close",
+    "Diversify with both call AND put spreads"
+  ],
+  "tags": [
+    "call_credit_spreads",
+    "bearish_strategy",
+    "neutral_strategy",
+    "options_education",
+    "technical_analysis",
+    "bollinger_bands",
+    "rsi",
+    "market_neutral",
+    "youtube_research",
+    "invest_with_henry"
+  ]
+}
