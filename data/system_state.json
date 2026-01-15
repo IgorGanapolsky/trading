@@ -5,6 +5,7 @@
     "cash": 4555.13
   },
   "paper_account": {
+    "current_equity": 4954.3,
     "equity": 4954.3,
     "cash": 4555.13,
     "buying_power": 9210.43,
@@ -63,5 +64,10 @@
     "total_pl": -45.69999999999982,
     "total_pl_pct": -0.91,
     "positions_count": 4
+  },
+  "meta": {
+    "last_updated": "2026-01-15T18:36:56.653712",
+    "last_sync": "2026-01-15T18:36:56.653719",
+    "sync_mode": "skipped_no_keys"
   }
 }
