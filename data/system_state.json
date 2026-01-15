@@ -79,5 +79,10 @@
     "total_pl": 3.5,
     "total_pl_pct": 0.07,
     "positions_count": 6
+  },
+  "meta": {
+    "last_updated": "2026-01-15T20:53:31.875756",
+    "last_sync": "2026-01-15T20:53:31.875764",
+    "sync_mode": "skipped_no_keys"
   }
 }

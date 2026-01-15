@@ -1,6 +1,6 @@
 # 📊 World-Class Trading Dashboard
 
-**Last Updated**: 2026-01-15 03:26 PM ET
+**Last Updated**: 2026-01-15 08:54 PM ET
 **Auto-Updated**: Daily via GitHub Actions
 **Dashboard Version**: Enhanced World-Class (v2.0)
 
@@ -10,8 +10,8 @@
 
 | Account | Equity | Starting | Total P/L | Total % |
 |---------|--------|----------|-----------|---------|
-| **🔴 LIVE (Brokerage)** | $5,006.45 | $20.00 | $+6.45 | +0.13% |
-| **📝 PAPER (R&D)** | $100,000.00 | $100,000.00 | $+6.45 | +0.13% |
+| **🔴 LIVE (Brokerage)** | $5,004.53 | $20.00 | $+4.53 | +0.09% |
+| **📝 PAPER (R&D)** | $5,004.53 | $5,000.00 | $+4.53 | +0.09% |
 
 > ⚠️ **LIVE account** = Real money. **PAPER account** = R&D simulation for testing strategies.
 
@@ -25,8 +25,8 @@
 
 | Metric | Value |
 |--------|-------|
-| **Equity** | $5,006.45 |
-| **Total P/L** | $+6.45 (+0.13%) |
+| **Equity** | $5,004.53 |
+| **Total P/L** | $+4.53 (+0.09%) |
 | **Today's P/L** | $+0.00 (+0.00%) |
 | **Status** | ✅ Active |
 
@@ -36,8 +36,8 @@
 
 | Metric | Value |
 |--------|-------|
-| **Equity** | $100,000.00 |
-| **Total P/L** | $+6.45 (+0.13%) |
+| **Equity** | $5,004.53 |
+| **Total P/L** | $+4.53 (+0.09%) |
 | **Today's P/L** | $+0.00 (+0.00%) |
 | **Win Rate** | 0% |
 | **Trades Today** | 0 |
@@ -66,11 +66,11 @@
 
 | Metric | Current | Target | Progress |
 |--------|---------|--------|----------|
-| **Average Daily Profit** | $0.81/day | $100.00/day | 0.81% |
-| **Total P/L** | $+6.45 (+0.13%) | TBD | ✅ |
+| **Average Daily Profit** | $0.57/day | $100.00/day | 0.57% |
+| **Total P/L** | $+4.53 (+0.09%) | TBD | ✅ |
 | **Win Rate** | 0.0% | >55% | ⚠️ |
 
-**Progress Bar**: `█░░░░░░░░░░░░░░░░░░░` (0.81%)
+**Progress Bar**: `█░░░░░░░░░░░░░░░░░░░` (0.57%)
 
 **Assessment**: ⚠️ **R&D PHASE** - Learning, not earning yet
 
@@ -189,8 +189,8 @@
 
 | Metric | Portfolio | Benchmark | Difference | Status |
 |--------|-----------|-----------|------------|--------|
-| **Total Return** | +0.13% | +0.00% | +0.13% | ✅ Outperforming |
-| **Alpha** | +0.13% | - | - | ✅ Positive Alpha |
+| **Total Return** | +0.09% | +0.00% | +0.09% | ✅ Outperforming |
+| **Alpha** | +0.09% | - | - | ✅ Positive Alpha |
 | **Beta** | 1.00 | 1.0 | +0.00 | Lower Risk |
 | **Data Available** | ⚠️ Limited | - | - | - |
 
@@ -243,9 +243,9 @@ Run full dashboard generation for AI insights.
 | Metric | Value |
 |--------|-------|
 | **Starting Balance** | $20.00 |
-| **Current Equity** | $5,006.45 |
-| **Total P/L** | $+6.45 (+0.13%) |
-| **Average Daily Profit** | $+0.81 |
+| **Current Equity** | $5,004.53 |
+| **Total P/L** | $+4.53 (+0.09%) |
+| **Average Daily Profit** | $+0.57 |
 | **Total Trades** | 0 |
 | **Win Rate** | 0.0% |
 | **Trades Today** | 0 |
