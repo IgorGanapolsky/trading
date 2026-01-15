@@ -72,11 +72,15 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
+          set -e
+          echo "Updating performance log from Alpaca..."
           python3 scripts/update_performance_log.py
+          echo "✅ Performance log updated"
 
       - name: Sync RAG lessons to blog
         if: steps.market_check.outputs.skip != 'true'
         run: |
+          set -e
           python3 scripts/sync_rag_to_blog.py
 
       - name: Generate blog post
@@ -85,7 +89,23 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
+          set -eo pipefail
+
+          TODAY=$(date +%Y-%m-%d)
+          EXPECTED_FILE="docs/_reports/${TODAY}-daily-report.md"
+
+          echo "Generating blog post for $TODAY..."
           python3 scripts/generate_daily_blog_post.py 2>&1 | tee /tmp/blog_output.txt
+
+          # CRITICAL: Verify blog post was actually created
+          if [ ! -f "$EXPECTED_FILE" ]; then
+            echo "::error::Blog post file was NOT created: $EXPECTED_FILE"
+            echo "Script output:"
+            cat /tmp/blog_output.txt
+            exit 1
+          fi
+
+          echo "✅ Blog post created: $EXPECTED_FILE"
 
           # Check if Dev.to posting succeeded
           if grep -q "Published to Dev.to:" /tmp/blog_output.txt; then
@@ -118,6 +138,7 @@ jobs:
       - name: Commit and push
         if: steps.market_check.outputs.skip != 'true'
         run: |
+          set -e
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
@@ -129,8 +150,10 @@ jobs:
 
           # Check if there are changes to commit
           if git diff --staged --quiet; then
-            echo "No changes to commit"
-            exit 0
+            echo "::warning::No changes to commit - this is suspicious on a market day!"
+            echo "Expected: performance_log.json update + new blog post"
+            echo "Check previous steps for silent failures."
+            exit 1
           fi
 
           # Get today's date for commit message
@@ -138,6 +161,7 @@ jobs:
 
           git commit -m "feat(blog): Daily revenue report for $TODAY"
           git push
+          echo "✅ Changes pushed to main"
 
       - name: Summary
         if: steps.market_check.outputs.skip != 'true'
