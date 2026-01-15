@@ -26,23 +26,23 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 def fetch_alpaca_data():
     """Fetch live data from Alpaca API (source of truth)."""
     try:
-        from src.utils.alpaca_client import get_alpaca_credentials
         import requests
+        from src.utils.alpaca_client import get_alpaca_credentials
 
         api_key, secret_key = get_alpaca_credentials()
         if not api_key or not secret_key:
             return None, "No Alpaca credentials available"
 
         headers = {
-            'APCA-API-KEY-ID': api_key,
-            'APCA-API-SECRET-KEY': secret_key
+            "APCA-API-KEY-ID": api_key,
+            "APCA-API-SECRET-KEY": secret_key,
         }
 
         # Fetch account
         resp = requests.get(
-            'https://paper-api.alpaca.markets/v2/account',
+            "https://paper-api.alpaca.markets/v2/account",
             headers=headers,
-            timeout=10
+            timeout=10,
         )
         if resp.status_code != 200:
             return None, f"Alpaca API error: {resp.status_code}"
@@ -51,27 +51,27 @@ def fetch_alpaca_data():
 
         # Fetch positions
         pos_resp = requests.get(
-            'https://paper-api.alpaca.markets/v2/positions',
+            "https://paper-api.alpaca.markets/v2/positions",
             headers=headers,
-            timeout=10
+            timeout=10,
         )
         positions = pos_resp.json() if pos_resp.status_code == 200 else []
 
-        equity = float(account['equity'])
-        last_equity = float(account['last_equity'])
+        equity = float(account["equity"])
+        last_equity = float(account["last_equity"])
         today_pl = equity - last_equity
         total_pl = equity - 5000.0  # From initial $5K
 
         return {
-            'source': 'ALPACA_API',
-            'equity': equity,
-            'cash': float(account['cash']),
-            'today_pl': today_pl,
-            'total_pl': total_pl,
-            'total_pl_pct': (total_pl / 5000.0) * 100,
-            'positions_count': len(positions),
-            'positions': positions,
-            'timestamp': datetime.now().isoformat()
+            "source": "ALPACA_API",
+            "equity": equity,
+            "cash": float(account["cash"]),
+            "today_pl": today_pl,
+            "total_pl": total_pl,
+            "total_pl_pct": (total_pl / 5000.0) * 100,
+            "positions_count": len(positions),
+            "positions": positions,
+            "timestamp": datetime.now().isoformat(),
         }, None
 
     except ImportError:
@@ -82,21 +82,21 @@ def fetch_alpaca_data():
 
 def fetch_local_cache():
     """Fetch data from local system_state.json."""
-    state_file = Path(__file__).parent.parent / 'data' / 'system_state.json'
+    state_file = Path(__file__).parent.parent / "data" / "system_state.json"
     if not state_file.exists():
         return None, "system_state.json not found"
 
     try:
         data = json.loads(state_file.read_text())
         return {
-            'source': 'LOCAL_CACHE',
-            'equity': data.get('paper_account', {}).get('equity', 0),
-            'cash': data.get('paper_account', {}).get('cash', 0),
-            'today_pl': data.get('paper_account', {}).get('daily_change', 0),
-            'total_pl': data.get('paper_account', {}).get('total_pl', 0),
-            'total_pl_pct': data.get('paper_account', {}).get('total_pl_pct', 0),
-            'positions_count': data.get('paper_account', {}).get('positions_count', 0),
-            'timestamp': data.get('last_updated', 'unknown')
+            "source": "LOCAL_CACHE",
+            "equity": data.get("paper_account", {}).get("equity", 0),
+            "cash": data.get("paper_account", {}).get("cash", 0),
+            "today_pl": data.get("paper_account", {}).get("daily_change", 0),
+            "total_pl": data.get("paper_account", {}).get("total_pl", 0),
+            "total_pl_pct": data.get("paper_account", {}).get("total_pl_pct", 0),
+            "positions_count": data.get("paper_account", {}).get("positions_count", 0),
+            "timestamp": data.get("last_updated", "unknown"),
         }, None
     except Exception as e:
         return None, f"Error reading cache: {str(e)}"
@@ -106,20 +106,21 @@ def fetch_github_pages():
     """Fetch data from GitHub Pages dashboard."""
     try:
         import requests
+
         resp = requests.get(
-            'https://igorganapolsky.github.io/trading/data/dashboard.json',
-            timeout=10
+            "https://igorganapolsky.github.io/trading/data/dashboard.json",
+            timeout=10,
         )
         if resp.status_code != 200:
             return None, f"GitHub Pages error: {resp.status_code}"
 
         data = resp.json()
         return {
-            'source': 'GITHUB_PAGES',
-            'equity': data.get('equity', 0),
-            'total_pl': data.get('total_pl', 0),
-            'total_pl_pct': data.get('total_pl_pct', 0),
-            'timestamp': data.get('last_updated', 'unknown')
+            "source": "GITHUB_PAGES",
+            "equity": data.get("equity", 0),
+            "total_pl": data.get("total_pl", 0),
+            "total_pl_pct": data.get("total_pl_pct", 0),
+            "timestamp": data.get("last_updated", "unknown"),
         }, None
     except Exception as e:
         return None, f"Error: {str(e)}"
@@ -128,10 +129,10 @@ def fetch_github_pages():
 def query_dialogflow():
     """Query Dialogflow for portfolio status."""
     try:
-        project_id = os.environ.get('DIALOGFLOW_PROJECT_ID', 'ai-trading-agent-igor')
+        project_id = os.environ.get("DIALOGFLOW_PROJECT_ID", "ai-trading-agent-igor")
 
         # Try using Google API key for simple query
-        google_api_key = os.environ.get('GOOGLE_API_KEY')
+        google_api_key = os.environ.get("GOOGLE_API_KEY")
         if not google_api_key:
             return None, "No GOOGLE_API_KEY available"
 
@@ -141,15 +142,15 @@ def query_dialogflow():
         url = f"https://dialogflow.googleapis.com/v2/projects/{project_id}/agent/sessions/session-verify:detectIntent"
 
         headers = {
-            'Authorization': f'Bearer {google_api_key}',
-            'Content-Type': 'application/json'
+            "Authorization": f"Bearer {google_api_key}",
+            "Content-Type": "application/json",
         }
 
         payload = {
-            'queryInput': {
-                'text': {
-                    'text': 'How much money did we make today?',
-                    'languageCode': 'en'
+            "queryInput": {
+                "text": {
+                    "text": "How much money did we make today?",
+                    "languageCode": "en",
                 }
             }
         }
@@ -159,12 +160,12 @@ def query_dialogflow():
             return None, f"Dialogflow error: {resp.status_code}"
 
         data = resp.json()
-        fulfillment = data.get('queryResult', {}).get('fulfillmentText', 'No response')
+        fulfillment = data.get("queryResult", {}).get("fulfillmentText", "No response")
 
         return {
-            'source': 'DIALOGFLOW',
-            'response': fulfillment,
-            'timestamp': datetime.now().isoformat()
+            "source": "DIALOGFLOW",
+            "response": fulfillment,
+            "timestamp": datetime.now().isoformat(),
         }, None
 
     except Exception as e:
@@ -176,18 +177,24 @@ def compare_sources(alpaca, cache, pages):
     discrepancies = []
 
     if alpaca and cache:
-        equity_diff = abs(alpaca['equity'] - cache['equity'])
+        equity_diff = abs(alpaca["equity"] - cache["equity"])
         if equity_diff > 1.0:  # $1 tolerance
-            discrepancies.append(f"Equity mismatch: Alpaca=${alpaca['equity']:.2f} vs Cache=${cache['equity']:.2f}")
+            discrepancies.append(
+                f"Equity mismatch: Alpaca=${alpaca['equity']:.2f} vs Cache=${cache['equity']:.2f}"
+            )
 
-        pos_diff = abs(alpaca['positions_count'] - cache['positions_count'])
+        pos_diff = abs(alpaca["positions_count"] - cache["positions_count"])
         if pos_diff > 0:
-            discrepancies.append(f"Position count mismatch: Alpaca={alpaca['positions_count']} vs Cache={cache['positions_count']}")
+            discrepancies.append(
+                f"Position count mismatch: Alpaca={alpaca['positions_count']} vs Cache={cache['positions_count']}"
+            )
 
     if alpaca and pages:
-        equity_diff = abs(alpaca['equity'] - pages.get('equity', 0))
+        equity_diff = abs(alpaca["equity"] - pages.get("equity", 0))
         if equity_diff > 1.0:
-            discrepancies.append(f"Equity mismatch: Alpaca=${alpaca['equity']:.2f} vs Pages=${pages.get('equity', 0):.2f}")
+            discrepancies.append(
+                f"Equity mismatch: Alpaca=${alpaca['equity']:.2f} vs Pages=${pages.get('equity', 0):.2f}"
+            )
 
     return discrepancies
 
@@ -211,7 +218,9 @@ def main():
         print(f"  Equity: ${alpaca_data['equity']:,.2f}")
         print(f"  Cash: ${alpaca_data['cash']:,.2f}")
         print(f"  Today's P/L: ${alpaca_data['today_pl']:+,.2f}")
-        print(f"  Total P/L: ${alpaca_data['total_pl']:+,.2f} ({alpaca_data['total_pl_pct']:+.2f}%)")
+        print(
+            f"  Total P/L: ${alpaca_data['total_pl']:+,.2f} ({alpaca_data['total_pl_pct']:+.2f}%)"
+        )
         print(f"  Positions: {alpaca_data['positions_count']}")
     else:
         print(f"  ❌ {alpaca_err}")
@@ -221,7 +230,9 @@ def main():
     if cache_data:
         print(f"  Equity: ${cache_data['equity']:,.2f}")
         print(f"  Today's P/L: ${cache_data['today_pl']:+,.2f}")
-        print(f"  Total P/L: ${cache_data['total_pl']:+,.2f} ({cache_data['total_pl_pct']:+.2f}%)")
+        print(
+            f"  Total P/L: ${cache_data['total_pl']:+,.2f} ({cache_data['total_pl_pct']:+.2f}%)"
+        )
         print(f"  Positions: {cache_data['positions_count']}")
         print(f"  Last Updated: {cache_data['timestamp']}")
     else:
@@ -257,14 +268,14 @@ def main():
 
     # Return summary for hook consumption
     return {
-        'alpaca': alpaca_data,
-        'cache': cache_data,
-        'pages': pages_data,
-        'dialogflow': dialogflow_data,
-        'discrepancies': discrepancies,
-        'verified_at': datetime.now().isoformat()
+        "alpaca": alpaca_data,
+        "cache": cache_data,
+        "pages": pages_data,
+        "dialogflow": dialogflow_data,
+        "discrepancies": discrepancies,
+        "verified_at": datetime.now().isoformat(),
     }
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
