@@ -25,7 +25,7 @@
     "profit_factor": null,
     "total_pnl": 0.0,
     "paper_phase_days": 0,
-    "last_updated": "2026-01-15T21:40:00Z"
+    "last_updated": "2026-01-16T15:39:00Z"
   },
   "trades": [
     {
@@ -38,14 +38,14 @@
           "side": "long",
           "qty": 1,
           "entry_price": 0.47,
-          "current_price": 0.50
+          "current_price": 0.52
         },
         {
           "symbol": "SPY260220P00570000",
           "side": "short",
           "qty": 1,
           "entry_price": 0.50,
-          "current_price": 0.54
+          "current_price": 0.57
         }
       ],
       "entry_date": "2026-01-15",
@@ -53,7 +53,7 @@
       "net_credit": 0.03,
       "max_risk": 4.97,
       "status": "open",
-      "current_pnl": -1.0,
+      "current_pnl": -2.0,
       "notes": "30-delta bull put spread on SPY"
     },
     {
@@ -66,14 +66,14 @@
           "side": "long",
           "qty": 1,
           "entry_price": 0.73,
-          "current_price": 0.78
+          "current_price": 0.83
         },
         {
           "symbol": "SPY260220P00600000",
           "side": "short",
           "qty": 1,
           "entry_price": 0.78,
-          "current_price": 0.86
+          "current_price": 0.91
         }
       ],
       "entry_date": "2026-01-15",
@@ -94,7 +94,7 @@
           "side": "long",
           "qty": 1,
           "entry_price": 3.07,
-          "current_price": 3.43
+          "current_price": 3.74
         }
       ],
       "entry_date": "2026-01-15",
@@ -102,7 +102,7 @@
       "net_debit": 3.07,
       "max_risk": 307.0,
       "status": "open",
-      "current_pnl": 36.0,
+      "current_pnl": 67.0,
       "notes": "ORPHAN - Created without matching short leg. Crisis position - see LL-221. Currently profitable but violates strategy."
     }
   ]
