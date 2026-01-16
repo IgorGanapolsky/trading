@@ -2,13 +2,42 @@
 # Staleness Circuit Breaker - HARD BLOCK on stale data
 # Prevents trading decisions based on outdated state
 #
-# Triggered: PreToolUse before any trading-related tool calls
-# Threshold: 4 hours (configurable)
+# Triggered: SessionStart hook
+# Threshold: 0.5 hours (30 min) during market hours, 4 hours after hours
+# FIX (Jan 16, 2026): Aggressive sync during market hours per CEO request
 
 set -e
 
-MAX_STALENESS_HOURS=${MAX_STALENESS_HOURS:-4}
 STATE_FILE="data/system_state.json"
+
+# Determine if we're in market hours (9:30 AM - 4:00 PM ET, Mon-Fri)
+# Uses TZ environment variable to avoid pytz dependency
+IS_MARKET_HOURS=$(TZ='America/New_York' python3 -c "
+from datetime import datetime
+
+now = datetime.now()
+weekday = now.weekday()  # 0=Mon, 6=Sun
+hour = now.hour
+minute = now.minute
+
+# Market hours: Mon-Fri, 9:30 AM - 4:00 PM ET
+is_weekday = weekday < 5
+after_open = (hour > 9) or (hour == 9 and minute >= 30)
+before_close = hour < 16
+
+if is_weekday and after_open and before_close:
+    print('true')
+else:
+    print('false')
+" 2>/dev/null || echo "false")
+
+# Use aggressive threshold during market hours (30 min), relaxed after hours (4h)
+if [ "$IS_MARKET_HOURS" == "true" ]; then
+    MAX_STALENESS_HOURS=${MAX_STALENESS_HOURS:-0.5}
+    echo "📈 Market hours detected - using 30-min staleness threshold"
+else
+    MAX_STALENESS_HOURS=${MAX_STALENESS_HOURS:-4}
+fi
 
 # Check if state file exists
 if [ ! -f "$STATE_FILE" ]; then
