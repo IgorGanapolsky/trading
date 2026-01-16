@@ -1,4 +1,4 @@
-# Lesson Learned: Dashboard Showing Wrong $100K Balance
+# LL-218: Dashboard Showing Wrong $100K Balance
 
 **ID**: LL-218
 **Date**: January 15, 2026

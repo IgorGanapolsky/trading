@@ -1,4 +1,4 @@
-# Lesson Learned: Session Start Verification Protocol
+# LL-223: Session Start Verification Protocol
 
 **ID**: LL-223
 **Date**: January 15, 2026

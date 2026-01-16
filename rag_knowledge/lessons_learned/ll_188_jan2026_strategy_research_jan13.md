@@ -1,4 +1,4 @@
-# Strategic Research: January 2026 Credit Spread Optimization
+# LL-188: Strategic Research: January 2026 Credit Spread Optimization
 
 **ID:** LL-188
 **Date:** January 13, 2026

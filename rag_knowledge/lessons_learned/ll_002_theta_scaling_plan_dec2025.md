@@ -1,4 +1,4 @@
-# Lesson Learned: Theta Scaling Plan - December 2025
+# LL-002: Theta Scaling Plan - December 2025
 
 **ID**: LL-002
 **Date**: December 2, 2025

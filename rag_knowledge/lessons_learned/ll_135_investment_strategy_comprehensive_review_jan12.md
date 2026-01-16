@@ -1,4 +1,4 @@
-# Lesson Learned: Comprehensive Investment Strategy Review - January 12, 2026
+# LL-135: Comprehensive Investment Strategy Review - January 12, 2026
 
 **ID**: ll_135
 **Date**: 2026-01-12

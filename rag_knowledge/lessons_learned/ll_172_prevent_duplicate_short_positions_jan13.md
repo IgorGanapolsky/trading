@@ -1,4 +1,4 @@
-# Lesson Learned: Prevent Duplicate Short Positions
+# LL-172: Prevent Duplicate Short Positions
 
 **ID**: ll_172
 **Date**: 2026-01-13

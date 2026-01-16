@@ -1,4 +1,4 @@
-# Lesson: Dead Code Cleanup - January 13, 2026
+# LL-225: Dead Code Cleanup - January 13, 2026
 
 ## Context
 Comprehensive codebase audit identified significant technical debt.

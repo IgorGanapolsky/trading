@@ -1,4 +1,4 @@
-# Lesson Learned: RAG System Gap - $100K Account Period Investigation Needed
+# LL-227: RAG System Gap - $100K Account Period Investigation Needed
 
 **ID**: LL-203
 **Date**: January 14, 2026

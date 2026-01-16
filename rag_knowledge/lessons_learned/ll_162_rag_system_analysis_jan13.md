@@ -1,4 +1,4 @@
-# Lesson Learned: RAG System Analysis - Build vs Buy vs Already Have
+# LL-162: RAG System Analysis - Build vs Buy vs Already Have
 
 **ID**: ll_162
 **Date**: 2026-01-13

@@ -1,4 +1,4 @@
-# Lesson Learned: $100K Paper Account - What Actually Worked
+# LL-203: $100K Paper Account - What Actually Worked
 
 ## Date: 2026-01-14
 ## Severity: **CRITICAL**

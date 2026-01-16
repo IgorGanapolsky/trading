@@ -1,4 +1,4 @@
-# Lesson Learned LL-217: OptionsRiskMonitor Paper Arg Crisis
+# LL-217: Lesson Learned LL-217: OptionsRiskMonitor Paper Arg Crisis
 
 ## Date
 2026-01-15

@@ -7,6 +7,8 @@ category: trading
 tags: [rule-one, loss, risk-management]
 ---
 
+# LL-171: Phil Town Rule #1 Violated - Lost $17.94 on Jan 13
+
 ## Problem
 Phil Town Rule #1: "Don't lose money" - VIOLATED on Jan 13, 2026.
 

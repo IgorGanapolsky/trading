@@ -1,4 +1,4 @@
-# Lesson Learned: Dialogflow Webhook Missing Vertex AI - Only Local Keyword Search
+# LL-166: Dialogflow Webhook Missing Vertex AI - Only Local Keyword Search
 
 **ID**: ll_166_dialogflow_vertex_ai_missing_jan13
 **Date**: 2026-01-13

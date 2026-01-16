@@ -1,4 +1,4 @@
-# Lesson Learned: Stale Order Threshold Must Be 4 Hours, Not 24
+# LL-144: Stale Order Threshold Must Be 4 Hours, Not 24
 
 **ID**: ll_144
 **Date**: 2026-01-12

@@ -1,4 +1,4 @@
-# Lesson Learned: Call Credit Spreads for Bearish/Neutral Markets
+# LL-215: Call Credit Spreads for Bearish/Neutral Markets
 
 **ID**: LL-215
 **Date**: January 15, 2026

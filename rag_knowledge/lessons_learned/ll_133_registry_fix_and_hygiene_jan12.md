@@ -1,4 +1,4 @@
-# Lesson Learned #133: Registry.py Missing Broke All Trading Strategies
+# LL-133: Lesson Learned #133: Registry.py Missing Broke All Trading Strategies
 
 **Date:** January 12, 2026
 **Author:** CTO Claude

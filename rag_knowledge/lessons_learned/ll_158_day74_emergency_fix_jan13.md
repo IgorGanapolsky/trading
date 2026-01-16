@@ -1,4 +1,4 @@
-# Lesson LL-158: Day 74 Emergency Fix - SPY to SOFI
+# LL-158: Lesson LL-158: Day 74 Emergency Fix - SPY to SOFI
 
 **Date**: 2026-01-13
 **Severity**: CRITICAL

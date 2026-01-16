@@ -1,4 +1,4 @@
-# Lesson Learned: Alpaca Does NOT Support Trailing Stops for Options
+# LL-168: Alpaca Does NOT Support Trailing Stops for Options
 
 **ID**: ll_168
 **Date**: 2026-01-13

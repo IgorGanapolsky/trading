@@ -1,4 +1,4 @@
-# Lesson Learned: PR Hygiene Session - Jan 15, 2026
+# LL-230: PR Hygiene Session - Jan 15, 2026
 
 **ID**: LL-212
 **Date**: January 15, 2026

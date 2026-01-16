@@ -1,4 +1,4 @@
-# Lesson: Joseph Hogue 2026 Market Outlook Evaluation
+# LL-199: Joseph Hogue 2026 Market Outlook Evaluation
 
 **ID**: ll_187
 **Date**: January 13, 2026

@@ -1,4 +1,4 @@
-# Lesson Learned: SOFI Ticker Blackout Violation
+# LL-197: SOFI Ticker Blackout Violation
 
 **ID**: LL-197
 **Date**: January 14, 2026

@@ -1,4 +1,4 @@
-# Lesson Learned: Research - Top AI Options Traders Starting Small
+# LL-229: Research - Top AI Options Traders Starting Small
 
 **ID**: LL-211
 **Date**: January 15, 2026

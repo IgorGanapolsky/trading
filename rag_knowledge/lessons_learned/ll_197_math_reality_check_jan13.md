@@ -7,6 +7,8 @@ category: strategy_math
 tags: [math, credit-spreads, risk-reward, north-star, win-rate]
 ---
 
+# LL-197: Critical Math Reality Check - Credit Spread Risk/Reward
+
 ## Critical Finding
 
 **Credit spreads have a 4:1 risk/reward ratio that requires 80%+ win rate to break even.**

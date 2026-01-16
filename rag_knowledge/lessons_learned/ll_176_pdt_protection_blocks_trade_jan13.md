@@ -1,4 +1,4 @@
-# Lesson ll_176: Pattern Day Trading (PDT) Protection Blocked Trade
+# LL-176: Lesson ll_176: Pattern Day Trading (PDT) Protection Blocked Trade
 
 **Date:** January 13, 2026
 **Category:** Regulatory Compliance

@@ -1,4 +1,4 @@
-# Lesson Learned: Plan Mode Video Evaluation (Matt Pocock)
+# LL-222: Plan Mode Video Evaluation (Matt Pocock)
 
 **ID**: LL-222
 **Date**: January 15, 2026

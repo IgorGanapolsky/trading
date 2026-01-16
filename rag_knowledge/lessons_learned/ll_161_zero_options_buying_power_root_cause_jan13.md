@@ -1,4 +1,4 @@
-# Lesson Learned: Options Buying Power $0 Despite $5K Cash - Root Cause
+# LL-161: Options Buying Power $0 Despite $5K Cash - Root Cause
 
 **ID**: ll_161
 **Date**: 2026-01-13

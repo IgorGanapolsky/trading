@@ -1,4 +1,4 @@
-# Lesson: Technical Debt Audit - January 13, 2026
+# LL-187: Technical Debt Audit - January 13, 2026
 
 **ID**: ll_187
 **Date**: January 13, 2026

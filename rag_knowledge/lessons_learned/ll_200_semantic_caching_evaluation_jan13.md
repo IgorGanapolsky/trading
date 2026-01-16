@@ -1,4 +1,4 @@
-# Semantic Caching for LLM Cost Reduction - Evaluation
+# LL-200: Semantic Caching for LLM Cost Reduction - Evaluation
 
 **Date:** January 13, 2026
 **Severity:** LOW

@@ -1,4 +1,4 @@
-# Lesson Learned: SOFI Earnings Risk - Emergency Close
+# LL-202: SOFI Earnings Risk - Emergency Close
 
 **ID:** LL-192
 **Date:** January 14, 2026

@@ -1,4 +1,4 @@
-# Lesson Learned: Branch and PR Hygiene Protocol (LL-137)
+# LL-137: Branch and PR Hygiene Protocol (LL-137)
 
 **Date**: January 12, 2026
 **Category**: DevOps / Git Workflow

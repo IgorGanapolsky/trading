@@ -1,4 +1,4 @@
-# Lesson Learned: North Star Math Roadmap - $100/Day Goal
+# LL-212: North Star Math Roadmap - $100/Day Goal
 
 **ID**: LL-212
 **Date**: January 15, 2026

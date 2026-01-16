@@ -1,4 +1,4 @@
-# Lesson Learned: Sandbox Git Proxy Limitations
+# LL-228: Sandbox Git Proxy Limitations
 
 **ID**: ll_206
 **Date**: 2026-01-14
