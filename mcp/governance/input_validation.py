@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 from typing import Any, TypeVar
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
 # Allowlist of tradeable symbols (from CLAUDE.md)
 ALLOWED_SYMBOLS = frozenset({"SPY", "IWM", "F", "T", "SOFI"})
@@ -65,7 +65,7 @@ class PositionSizeRequest(BaseModel):
 
     @field_validator("stop_loss")
     @classmethod
-    def validate_stop_loss(cls, v: float, info) -> float:
+    def validate_stop_loss(cls, v: float, info: ValidationInfo) -> float:
         entry_price = info.data.get("entry_price")
         if entry_price and v >= entry_price:
             raise ValueError("Stop loss must be below entry price for long positions")
