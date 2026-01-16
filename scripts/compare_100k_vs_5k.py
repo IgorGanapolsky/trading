@@ -143,7 +143,7 @@ def compare_strategies():
     print("## STRATEGY COMPARISON")
     print("=" * 70)
 
-    comparison = {
+    _comparison = {  # Stored for potential future JSON export
         "$100K Approach": {
             "Underlyings": "SPY, AMD, treasury ETFs",
             "Strategy": "Iron condors, put selling, defined risk",

@@ -1,9 +1,10 @@
 name: Sync Alpaca Status
 
-# Runs every 30 minutes during market hours to keep data fresh
+# Runs every 5 minutes during market hours for near-real-time data
+# Changed from 30 min to 5 min on Jan 16, 2026 for better sync
 on:
   schedule:
-    - cron: '*/30 14-21 * * 1-5'  # Every 30 min, 9:30 AM - 4 PM ET (UTC+5)
+    - cron: '*/5 14-21 * * 1-5'  # Every 5 min, 9:30 AM - 4 PM ET (UTC-5)
   workflow_dispatch:  # Manual trigger
 
 permissions:
@@ -13,7 +14,7 @@ jobs:
   sync:
     name: Sync Paper Account Status
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 3
 
     steps:
       - name: Checkout
@@ -35,7 +36,7 @@ jobs:
           python3 << 'EOF'
           import os
           import json
-          from datetime import datetime
+          from datetime import datetime, timezone
           from pathlib import Path
           from alpaca.trading.client import TradingClient
 
@@ -44,7 +45,7 @@ jobs:
 
           print("=" * 60)
           print("ALPACA PAPER ACCOUNT SYNC")
-          print(f"Timestamp: {datetime.now().isoformat()}")
+          print(f"Timestamp: {datetime.now(timezone.utc).isoformat()}")
           print("=" * 60)
 
           client = TradingClient(api_key, secret_key, paper=True)
@@ -90,8 +91,9 @@ jobs:
           print(f"\nTotal Unrealized P/L: ${total_unrealized:,.2f}")
           print(f"Total P/L (from $5K): ${total_pl:,.2f} ({total_pl_pct:.2f}%)")
 
-          # Count today's filled orders (FIX: webhook needs total_trades_today)
+          # Count today's filled orders
           today_str = datetime.now().strftime("%Y-%m-%d")
+          total_trades_today = 0
           try:
               from alpaca.trading.requests import GetOrdersRequest
               from alpaca.trading.enums import QueryOrderStatus
@@ -106,12 +108,11 @@ jobs:
               print(f"Filled orders today: {total_trades_today}")
           except Exception as e:
               print(f"Could not fetch orders: {e}")
-              total_trades_today = 0
 
-          # Update system_state.json
+          # Update system_state.json with UTC timestamp
           state_file = Path("data/system_state.json")
           state = {
-              "last_updated": datetime.now().isoformat(),
+              "last_updated": datetime.now(timezone.utc).isoformat(),
               "portfolio": {
                   "equity": equity,
                   "cash": cash
@@ -123,12 +124,12 @@ jobs:
                   "total_pl": total_pl,
                   "total_pl_pct": round(total_pl_pct, 2),
                   "positions_count": len(positions),
-                  "daily_change": today_pl
+                  "daily_change": round(today_pl, 2)
               },
               "positions": position_list,
               "trades": {
                   "last_trade_date": today_str,
-                  "today_trades": "synced",
+                  "today_trades": total_trades_today,  # FIX: was "synced" string
                   "total_trades_today": total_trades_today,
                   "last_trade_symbol": positions[0].symbol if positions else "none"
               },
@@ -142,6 +143,11 @@ jobs:
                   "total_pl": total_pl,
                   "total_pl_pct": round(total_pl_pct, 2),
                   "positions_count": len(positions)
+              },
+              "meta": {
+                  "last_updated": datetime.now(timezone.utc).isoformat(),
+                  "trade_sync": "alpaca_api",
+                  "sync_frequency_minutes": 5
               }
           }
 
@@ -172,9 +178,9 @@ jobs:
           git push -u origin "$BRANCH"
 
           # Create and merge PR using gh CLI
-          PR_URL=$(gh pr create --title "chore: Sync Alpaca status [auto]" --body "Automated sync of paper account data" --head "$BRANCH" --base main)
+          PR_URL=$(gh pr create --title "chore: Sync Alpaca status [auto]" --body "Automated sync of paper account data (every 5 min)" --head "$BRANCH" --base main)
           echo "Created PR: $PR_URL"
 
           # Auto-merge
-          gh pr merge "$BRANCH" --squash --delete-branch --admin
-          echo "PR merged and branch deleted"
+          gh pr merge "$BRANCH" --squash --delete-branch --admin || echo "Auto-merge may require manual approval"
+          echo "Sync complete"

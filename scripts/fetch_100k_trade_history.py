@@ -203,6 +203,7 @@ Analysis of {len(filled_orders)} filled orders from the $100K paper trading acco
 """
 
     lesson_file = Path("rag_knowledge/lessons_learned/ll_203_100k_account_analysis_jan14.md")
+    lesson_file.parent.mkdir(parents=True, exist_ok=True)
     lesson_file.write_text(lesson_content)
     print(f"✅ Lesson saved to {lesson_file}")
 
