@@ -2,7 +2,7 @@
 
 import json
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
@@ -34,7 +34,12 @@ class BiasSnapshot:
 class BiasProvider:
     """Provides market bias signals."""
 
-    def __init__(self):
+    def __init__(self, bias_store: "BiasStore" = None, freshness: timedelta = None):
+        # Accept bias_store and freshness for compatibility with TradingOrchestrator
+        # CEO FIX Jan 15, 2026: Orchestrator passes these args
+        # RE-APPLIED Jan 16, 2026: Was accidentally reverted
+        self.bias_store = bias_store
+        self.freshness = freshness
         self.current_bias = "neutral"
         self.confidence = 0.5
 
