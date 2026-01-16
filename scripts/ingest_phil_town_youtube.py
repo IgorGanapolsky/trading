@@ -833,7 +833,7 @@ def main():
         results["silent_failure"] = True
     else:
         # Verify files actually exist
-        transcript_files = list(RAG_TRANSCRIPTS.glob("*.json")) if RAG_TRANSCRIPTS.exists() else []
+        transcript_files = list(RAG_TRANSCRIPTS.glob("*.md")) if RAG_TRANSCRIPTS.exists() else []
         if results["success"] > 0 and len(transcript_files) == 0:
             logger.error(
                 "⛔ OUTPUT VERIFICATION FAILED: Claimed success but no transcript files exist!"
