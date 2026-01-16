@@ -44,18 +44,30 @@ jobs:
 
       - name: Run cleanup - List Only
         if: inputs.mode == 'list-only'
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          PYTHONPATH: ${{ github.workspace }}
         run: python3 scripts/cleanup_vertex_rag.py --list-only
 
       - name: Run cleanup - Dry Run
         if: inputs.mode == 'dry-run'
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          PYTHONPATH: ${{ github.workspace }}
         run: python3 scripts/cleanup_vertex_rag.py --dry-run
 
       - name: Run cleanup - Execute
         if: inputs.mode == 'execute'
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          PYTHONPATH: ${{ github.workspace }}
         run: python3 scripts/cleanup_vertex_rag.py --execute
 
       - name: Run cleanup - Execute with Refresh
         if: inputs.mode == 'execute-refresh'
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          PYTHONPATH: ${{ github.workspace }}
         run: python3 scripts/cleanup_vertex_rag.py --execute --refresh
 
       - name: Cleanup credentials
