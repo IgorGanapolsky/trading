@@ -41,7 +41,11 @@ jobs:
           ALPACA_PAPER_TRADING_5K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
         run: |
           echo "📊 Syncing latest Alpaca data..."
-          python3 scripts/sync_system_state.py || echo "Sync script not found, using existing state"
+          # Use the correct sync script name
+          python3 scripts/sync_alpaca_state.py || {
+            echo "⚠️ sync_alpaca_state.py failed, trying sync_trades_from_alpaca.py..."
+            python3 scripts/sync_trades_from_alpaca.py || echo "⚠️ Trade sync failed - dashboard may show stale data"
+          }
 
       - name: Generate Progress Dashboard
         run: |
