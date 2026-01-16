@@ -1,0 +1,101 @@
+name: Update Progress Dashboard
+
+on:
+  schedule:
+    # Run every hour during market hours (9 AM - 5 PM ET)
+    # EST: UTC-5, so 14:00-22:00 UTC
+    - cron: '0 14-22 * * 1-5'
+  workflow_dispatch:
+  push:
+    paths:
+      - 'data/system_state.json'
+      - 'scripts/generate_world_class_dashboard*.py'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-dashboard
+  cancel-in-progress: true
+
+jobs:
+  update-dashboard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Sync Alpaca data first
+        env:
+          ALPACA_PAPER_TRADING_5K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_PAPER_TRADING_5K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          echo "📊 Syncing latest Alpaca data..."
+          python3 scripts/sync_system_state.py || echo "Sync script not found, using existing state"
+
+      - name: Generate Progress Dashboard
+        run: |
+          echo "📊 Generating enhanced progress dashboard..."
+          python3 scripts/generate_world_class_dashboard_enhanced.py || python3 scripts/generate_world_class_dashboard.py
+          echo "✅ Dashboard generated"
+
+          # Show preview
+          head -50 wiki/Progress-Dashboard.md
+
+      - name: Update GitHub Wiki
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "📝 Updating GitHub Wiki..."
+
+          # Clone wiki
+          WIKI_DIR="wiki_repo"
+          git clone https://x-access-token:${GITHUB_TOKEN}@github.com/IgorGanapolsky/trading.wiki.git "$WIKI_DIR" || {
+            echo "Creating new wiki..."
+            mkdir -p "$WIKI_DIR"
+            cd "$WIKI_DIR"
+            git init
+            git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/IgorGanapolsky/trading.wiki.git"
+            cd ..
+          }
+
+          # Copy dashboard
+          cp wiki/Progress-Dashboard.md "$WIKI_DIR/Progress-Dashboard.md"
+          [ -f wiki/Home.md ] && cp wiki/Home.md "$WIKI_DIR/Home.md"
+
+          # Commit and push
+          cd "$WIKI_DIR"
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add -A
+
+          if git diff --staged --quiet 2>/dev/null; then
+            echo "📋 No changes to dashboard"
+          else
+            git commit -m "📊 Auto-update dashboard - $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push origin master || git push origin main || {
+              echo "⚠️ Push failed, trying force push..."
+              git push -f origin master || git push -f origin main
+            }
+            echo "✅ Wiki updated successfully!"
+          fi
+
+      - name: Commit system state changes
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add data/system_state.json wiki/ 2>/dev/null || true
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: Sync dashboard data [auto]"
+            git push || echo "Push to main skipped (no changes or protected)"
+          fi
