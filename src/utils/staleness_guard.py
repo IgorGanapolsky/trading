@@ -172,3 +172,129 @@ def get_staleness_warning() -> str | None:
         return f"⚠️ DATA STALE: {result.reason}"
 
     return None
+
+
+@dataclass
+class DataIntegrityResult:
+    """Result of data integrity validation."""
+
+    is_valid: bool
+    errors: list[str]
+    warnings: list[str]
+
+
+def validate_system_state(state_path: Path = SYSTEM_STATE_PATH) -> DataIntegrityResult:
+    """
+    Validate system_state.json data integrity.
+
+    Checks:
+    - Required fields exist
+    - Equity and cash are positive
+    - Positions count matches positions array
+    - No impossible values (negative prices, etc.)
+
+    Returns:
+        DataIntegrityResult with validation status
+    """
+    errors = []
+    warnings = []
+
+    try:
+        if not state_path.exists():
+            return DataIntegrityResult(
+                is_valid=False,
+                errors=["system_state.json does not exist"],
+                warnings=[],
+            )
+
+        with open(state_path) as f:
+            state = json.load(f)
+
+        # Check required top-level fields
+        required_fields = ["portfolio", "paper_account", "positions"]
+        for field in required_fields:
+            if field not in state:
+                errors.append(f"Missing required field: {field}")
+
+        if errors:
+            return DataIntegrityResult(is_valid=False, errors=errors, warnings=warnings)
+
+        # Validate portfolio values
+        portfolio = state.get("portfolio", {})
+        equity = portfolio.get("equity", 0)
+        cash = portfolio.get("cash", 0)
+
+        if equity <= 0:
+            errors.append(f"Invalid equity: {equity} (must be > 0)")
+        if cash < 0:
+            errors.append(f"Invalid cash: {cash} (must be >= 0)")
+
+        # Validate positions count consistency
+        paper_account = state.get("paper_account", {})
+        positions = state.get("positions", [])
+        positions_count = paper_account.get("positions_count", 0)
+
+        if positions_count != len(positions):
+            warnings.append(
+                f"Position count mismatch: positions_count={positions_count}, "
+                f"actual positions={len(positions)}"
+            )
+
+        # Validate each position
+        for i, pos in enumerate(positions):
+            if "symbol" not in pos:
+                errors.append(f"Position {i}: missing symbol")
+            if pos.get("price", 0) < 0:
+                errors.append(f"Position {i} ({pos.get('symbol', '?')}): negative price")
+
+        # Check for data drift (equity changed dramatically)
+        # This would compare against previous sync, but we need history for that
+        # For now, just warn if equity is suspiciously different from initial $5000
+        initial_equity = 5000.0
+        drift_pct = abs(equity - initial_equity) / initial_equity * 100
+        if drift_pct > 20:  # More than 20% change from initial
+            warnings.append(
+                f"Large equity drift: {drift_pct:.1f}% from initial ${initial_equity}"
+            )
+
+        return DataIntegrityResult(
+            is_valid=len(errors) == 0,
+            errors=errors,
+            warnings=warnings,
+        )
+
+    except json.JSONDecodeError as e:
+        return DataIntegrityResult(
+            is_valid=False,
+            errors=[f"Invalid JSON: {e}"],
+            warnings=[],
+        )
+    except Exception as e:
+        return DataIntegrityResult(
+            is_valid=False,
+            errors=[f"Validation failed: {e}"],
+            warnings=[],
+        )
+
+
+def check_data_integrity() -> bool:
+    """
+    Run data integrity check and log results.
+
+    Returns:
+        True if data is valid, False otherwise
+    """
+    result = validate_system_state()
+
+    if result.errors:
+        for error in result.errors:
+            logger.error(f"❌ Data integrity error: {error}")
+
+    if result.warnings:
+        for warning in result.warnings:
+            logger.warning(f"⚠️ Data integrity warning: {warning}")
+
+    if result.is_valid:
+        logger.info("✅ Data integrity check passed")
+
+    return result.is_valid
