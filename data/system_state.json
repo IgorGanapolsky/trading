@@ -1,83 +1,81 @@
 {
-  "last_updated": "2026-01-16T15:39:34.841210",
+  "last_updated": "2026-01-16T16:08:00.372102",
   "portfolio": {
-    "equity": 5007.98,
+    "equity": 4985.72,
     "cash": 4302.08
   },
   "paper_account": {
-    "equity": 4989.51,
+    "equity": 4985.72,
     "cash": 4302.08,
-    "buying_power": 9002.59,
-    "total_pl": -10.489999999999782,
-    "total_pl_pct": -0.20979999999999563,
+    "buying_power": 9002.8,
+    "total_pl": -14.279999999999745,
+    "total_pl_pct": -0.29,
     "positions_count": 8,
-    "daily_change": 48.79999999999927,
-    "current_equity": 4989.51,
-    "starting_balance": 5000.0
+    "daily_change": 26.539999999999964
   },
   "positions": [
     {
       "symbol": "SPY",
       "qty": 0.576037269,
-      "price": 690.76,
-      "value": 397.903504,
-      "pnl": -2.056495,
+      "price": 692.04,
+      "value": 398.640832,
+      "pnl": -1.319167,
       "type": "stock"
     },
     {
       "symbol": "SPY260220P00565000",
       "qty": 1.0,
-      "price": 0.52,
-      "value": 52.0,
-      "pnl": 5.0,
+      "price": 0.49,
+      "value": 49.0,
+      "pnl": 2.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00570000",
       "qty": -1.0,
-      "price": 0.57,
-      "value": -57.0,
-      "pnl": -7.0,
+      "price": 0.53,
+      "value": -53.0,
+      "pnl": -3.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00595000",
       "qty": 1.0,
-      "price": 0.83,
-      "value": 83.0,
-      "pnl": 10.0,
+      "price": 0.77,
+      "value": 77.0,
+      "pnl": 4.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00600000",
       "qty": -1.0,
-      "price": 0.91,
-      "value": -91.0,
-      "pnl": -13.0,
+      "price": 0.85,
+      "value": -85.0,
+      "pnl": -7.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00653000",
       "qty": 1.0,
-      "price": 3.03,
-      "value": 303.0,
-      "pnl": 24.0,
+      "price": 2.78,
+      "value": 278.0,
+      "pnl": -1.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00658000",
       "qty": -1.0,
-      "price": 3.56,
-      "value": -356.0,
-      "pnl": -35.0,
+      "price": 3.23,
+      "value": -323.0,
+      "pnl": -2.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00660000",
       "qty": 1.0,
-      "price": 3.74,
-      "value": 374.0,
-      "pnl": 67.0,
+      "price": 3.42,
+      "value": 342.0,
+      "pnl": 35.0,
       "type": "option"
     }
   ],
@@ -88,106 +86,14 @@
     "last_trade_symbol": "SPY"
   },
   "risk": {
-    "status": "MONITORING",
-    "total_pl": 7.979999999999563,
-    "unrealized_pl": 48.943505
+    "status": "WARNING - NEGATIVE P/L",
+    "total_pl": -14.279999999999745,
+    "unrealized_pl": 26.680833
   },
   "account": {
-    "current_equity": 4989.51,
-    "total_pl": -95010.49,
-    "total_pl_pct": -95.01049,
-    "positions_count": 8,
-    "cash": 4302.08,
-    "buying_power": 9002.59,
-    "positions_value": 687.4300000000003
-  },
-  "meta": {
-    "last_updated": "2026-01-16T16:03:04.866504",
-    "last_sync": "2026-01-16T16:03:04.865969",
-    "sync_mode": "paper"
-  },
-  "performance": {
-    "open_positions": [
-      {
-        "symbol": "SPY",
-        "quantity": 0.576037269,
-        "entry_price": 694.3300729383883,
-        "current_price": 691.6799996147472,
-        "market_value": 398.433458,
-        "unrealized_pl": -1.526541,
-        "unrealized_pl_pct": -0.0038167341829601314,
-        "side": "long"
-      },
-      {
-        "symbol": "SPY260220P00565000",
-        "quantity": 1.0,
-        "entry_price": 47.0,
-        "current_price": 49.0,
-        "market_value": 49.0,
-        "unrealized_pl": 2.0,
-        "unrealized_pl_pct": 0.0425531914893617,
-        "side": "long"
-      },
-      {
-        "symbol": "SPY260220P00570000",
-        "quantity": -1.0,
-        "entry_price": 50.0,
-        "current_price": 54.0,
-        "market_value": -54.0,
-        "unrealized_pl": -4.0,
-        "unrealized_pl_pct": 0.08,
-        "side": "long"
-      },
-      {
-        "symbol": "SPY260220P00595000",
-        "quantity": 1.0,
-        "entry_price": 73.0,
-        "current_price": 78.0,
-        "market_value": 78.0,
-        "unrealized_pl": 5.0,
-        "unrealized_pl_pct": 0.0684931506849315,
-        "side": "long"
-      },
-      {
-        "symbol": "SPY260220P00600000",
-        "quantity": -1.0,
-        "entry_price": 78.0,
-        "current_price": 86.0,
-        "market_value": -86.0,
-        "unrealized_pl": -8.0,
-        "unrealized_pl_pct": 0.10256410256410256,
-        "side": "long"
-      },
-      {
-        "symbol": "SPY260220P00653000",
-        "quantity": 1.0,
-        "entry_price": 279.0,
-        "current_price": 284.0,
-        "market_value": 284.0,
-        "unrealized_pl": 5.0,
-        "unrealized_pl_pct": 0.017921146953405017,
-        "side": "long"
-      },
-      {
-        "symbol": "SPY260220P00658000",
-        "quantity": -1.0,
-        "entry_price": 321.0,
-        "current_price": 331.0,
-        "market_value": -331.0,
-        "unrealized_pl": -10.0,
-        "unrealized_pl_pct": 0.03115264797507788,
-        "side": "long"
-      },
-      {
-        "symbol": "SPY260220P00660000",
-        "quantity": 1.0,
-        "entry_price": 307.0,
-        "current_price": 349.0,
-        "market_value": 349.0,
-        "unrealized_pl": 42.0,
-        "unrealized_pl_pct": 0.13680781758957655,
-        "side": "long"
-      }
-    ]
+    "current_equity": 4985.72,
+    "total_pl": -14.279999999999745,
+    "total_pl_pct": -0.29,
+    "positions_count": 8
   }
 }
