@@ -54,18 +54,20 @@ jobs:
       - name: Check if trading is halted
         id: check
         run: |
-          # CRITICAL: Trading HALTED due to orphan position crisis
-          # Root cause: execute_credit_spread.py created LONG put without matching SHORT leg
-          # Impact: -$48.55 loss (-0.97%) from $5K starting capital
-          # Date: Jan 15, 2026
+          # TRADING RESUMED Jan 16, 2026
+          # FIXES APPLIED (execute_credit_spread.py):
+          # 1. ✅ Short leg submitted FIRST and verified before long leg
+          # 2. ✅ If short fails, long leg is NOT submitted (prevents orphan)
+          # 3. ✅ If long fails after short succeeds, script tries to cancel short
+          # 4. ✅ Ticker whitelist: SPY/IWM only per CLAUDE.md
+          # 5. ✅ Earnings blackout check built into script
           #
-          # TO RESUME TRADING:
-          # 1. Fix execute_credit_spread.py to verify both legs before submission
-          # 2. Add position validation after each spread execution
-          # 3. Set halted=false below
+          # Previous issue (Jan 15): Orphan position crisis (-$48.55 loss)
+          # Root cause: Both legs submitted without verification
+          # Status: FIXED - see execute_credit_spread.py lines 449-531
           #
-          echo "🛑 TRADING HALTED - Orphan position crisis (Jan 15, 2026)"
-          echo "halted=true" >> $GITHUB_OUTPUT
+          echo "✅ Trading RESUMED - Orphan position fix verified (Jan 16, 2026)"
+          echo "halted=false" >> $GITHUB_OUTPUT
 
   # Quick validation and setup job
   validate-and-test:

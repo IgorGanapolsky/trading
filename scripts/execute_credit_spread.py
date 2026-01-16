@@ -537,11 +537,54 @@ def execute_bull_put_spread(
         logger.info(f"   Max Loss: ${spread['max_loss'] * 100:.2f}")
         logger.info(f"   Collateral Used: ${spread['collateral_required']:.2f}")
 
+        # STEP 4: POST-EXECUTION VALIDATION (Added Jan 16, 2026 - LL-221 fix)
+        # Verify BOTH legs exist in Alpaca to catch any orphan positions
+        logger.info("\n🔍 STEP 4: Post-execution position validation...")
+        import time
+        time.sleep(2)  # Brief delay for order processing
+
+        validation_status = "pending"
+        try:
+            positions = trading_client.get_all_positions()
+            short_symbol = spread["short_put"]["symbol"]
+            long_symbol = spread["long_put"]["symbol"]
+
+            has_short = any(p.symbol == short_symbol for p in positions)
+            has_long = any(p.symbol == long_symbol for p in positions)
+
+            if has_short and has_long:
+                logger.info("   ✅ VALIDATED: Both spread legs confirmed in Alpaca!")
+                validation_status = "passed"
+            elif has_short and not has_long:
+                logger.error("   ❌ ORPHAN DETECTED: Short leg exists but long leg missing!")
+                logger.error("   🚨 ACTION REQUIRED: Buy protective put or close short!")
+                return {
+                    "status": "ORPHAN_DETECTED",
+                    "reason": "Short leg filled but long leg not in positions",
+                    "short_order_id": str(short_result.id),
+                    "long_order_id": str(long_result.id),
+                    "spread": spread,
+                    "action_required": "Buy protective put or close short position!",
+                }
+            elif has_long and not has_short:
+                logger.warning("   ⚠️  Long leg exists but short leg pending/missing")
+                logger.warning("   This is safe (long put is protective)")
+                validation_status = "safe_long_only"
+            else:
+                logger.info("   ℹ️  Orders pending - positions not yet showing")
+                logger.info("   This is normal for limit orders awaiting fill")
+                validation_status = "pending"
+        except Exception as val_err:
+            logger.warning(f"   ⚠️  Could not validate positions: {val_err}")
+            logger.warning("   Manual verification recommended")
+            validation_status = "unknown"
+
         return {
             "status": "ORDER_SUBMITTED",
             "short_order_id": str(short_result.id),
             "long_order_id": str(long_result.id),
             "spread": spread,
+            "validation": validation_status,
         }
 
     except Exception as e:
