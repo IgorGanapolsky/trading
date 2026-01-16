@@ -1,5 +1,9 @@
 """
 Order execution helpers via `AlpacaTrader`.
+
+Protected by governance middleware:
+- Input validation (Pydantic)
+- Output sanitization (Anti-injection)
 """
 
 from __future__ import annotations
@@ -7,6 +11,7 @@ from __future__ import annotations
 from typing import Any
 
 from mcp.client import get_alpaca_trader
+from mcp.governance import OrderRequest, sanitize_response, validate_request
 from mcp.utils import ensure_env_var
 
 
@@ -35,15 +40,35 @@ def submit_market_order(
 ) -> dict[str, Any]:
     """
     Submit a market order via Alpaca.
-    """
 
-    trader = _get_trader(paper)
-    return trader.execute_order(
-        symbol=symbol,
-        amount_usd=amount_usd,
-        side=side,
-        tier=tier,
+    Protected by governance middleware:
+    - Validates symbol against allowlist
+    - Enforces max order amount ($248)
+    - Requires paper trading mode
+    - Sanitizes response output
+    """
+    # Input validation (Pydantic)
+    validated = validate_request(
+        OrderRequest,
+        {
+            "symbol": symbol,
+            "amount_usd": amount_usd,
+            "side": side,
+            "tier": tier,
+            "paper": paper,
+        },
     )
+
+    trader = _get_trader(validated.paper)
+    result = trader.execute_order(
+        symbol=validated.symbol,
+        amount_usd=validated.amount_usd,
+        side=validated.side,
+        tier=validated.tier,
+    )
+
+    # Output sanitization (Anti-injection)
+    return sanitize_response(result)
 
 
 def set_stop_loss(
