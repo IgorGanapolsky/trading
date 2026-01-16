@@ -1,0 +1,143 @@
+# Sync Lessons to Vertex AI RAG Corpus
+#
+# CEO Directive (Jan 16, 2026): Populate Vertex AI RAG corpus with all lessons
+# so Dialogflow queries use semantic search instead of local keyword fallback.
+#
+# This workflow:
+# 1. Reads all lessons from rag_knowledge/lessons_learned/
+# 2. Uploads each to Vertex AI RAG corpus
+# 3. Enables semantic search for CEO queries
+
+name: Sync Lessons to Vertex AI RAG
+
+on:
+  # Manual trigger for on-demand sync
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Limit number of lessons to sync (empty for all)'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Dry run (no actual sync)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+  # Auto-trigger when new lessons are added
+  push:
+    paths:
+      - 'rag_knowledge/lessons_learned/*.md'
+    branches:
+      - main
+
+  # Weekly full sync to catch any missed lessons
+  schedule:
+    - cron: '0 6 * * 0'  # Every Sunday at 6 AM UTC
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  sync-lessons:
+    name: Sync Lessons to Vertex AI RAG
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install google-cloud-aiplatform vertexai
+          pip install -r requirements-minimal.txt || pip install requests
+
+      - name: Authenticate with GCP
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        run: |
+          echo "Setting up GCP authentication..."
+          if [ -n "$GCP_SA_KEY" ]; then
+            echo "$GCP_SA_KEY" > /tmp/gcp_sa_key.json
+            chmod 600 /tmp/gcp_sa_key.json
+            export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp_sa_key.json
+            echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp_sa_key.json" >> $GITHUB_ENV
+            
+            # Extract project ID
+            PROJECT_ID=$(python3 -c "import json; print(json.load(open('/tmp/gcp_sa_key.json')).get('project_id', 'igor-trading-2025-v2'))")
+            echo "GOOGLE_CLOUD_PROJECT=$PROJECT_ID" >> $GITHUB_ENV
+            echo "Authenticated with project: $PROJECT_ID"
+          else
+            echo "::error::GCP_SA_KEY not set - cannot sync to Vertex AI"
+            exit 1
+          fi
+
+      - name: Count lessons before sync
+        id: before
+        run: |
+          COUNT=$(ls -1 rag_knowledge/lessons_learned/*.md 2>/dev/null | wc -l)
+          echo "lesson_count=$COUNT" >> $GITHUB_OUTPUT
+          echo "📚 Found $COUNT lessons to sync"
+
+      - name: Sync lessons to Vertex AI RAG
+        id: sync
+        run: |
+          echo "======================================================================="
+          echo "SYNCING LESSONS TO VERTEX AI RAG"
+          echo "======================================================================="
+          echo ""
+          
+          # Build command
+          CMD="python3 scripts/sync_lessons_to_vertex_rag.py"
+          
+          if [ "${{ inputs.dry_run }}" == "true" ]; then
+            CMD="$CMD --dry-run"
+            echo "🔍 DRY RUN MODE"
+          fi
+          
+          if [ -n "${{ inputs.limit }}" ]; then
+            CMD="$CMD --limit ${{ inputs.limit }}"
+            echo "📊 Limiting to ${{ inputs.limit }} lessons"
+          fi
+          
+          echo ""
+          echo "Running: $CMD"
+          echo ""
+          
+          $CMD 2>&1 | tee /tmp/sync_output.txt
+          
+          # Extract results
+          SYNCED=$(grep -oP 'Synced:\s+\K\d+' /tmp/sync_output.txt || echo "0")
+          FAILED=$(grep -oP 'Failed:\s+\K\d+' /tmp/sync_output.txt || echo "0")
+          
+          echo "synced=$SYNCED" >> $GITHUB_OUTPUT
+          echo "failed=$FAILED" >> $GITHUB_OUTPUT
+
+      - name: Summary
+        run: |
+          echo "## Vertex AI RAG Lesson Sync Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Total Lessons | ${{ steps.before.outputs.lesson_count }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Synced | ${{ steps.sync.outputs.synced }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Failed | ${{ steps.sync.outputs.failed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dry Run | ${{ inputs.dry_run || 'false' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Vertex AI RAG corpus now contains synced lessons for semantic search." >> $GITHUB_STEP_SUMMARY
+
+      - name: Cleanup credentials
+        if: always()
+        run: |
+          rm -f /tmp/gcp_sa_key.json
