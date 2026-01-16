@@ -154,4 +154,19 @@ print(state.get('meta', {}).get('sync_mode', 'unknown'))
     fi
 fi
 
+# Show sync health summary
+SYNC_HEALTH=$(python3 -c "
+import json
+try:
+    with open('$STATE_FILE') as f:
+        state = json.load(f)
+    sh = state.get('sync_health', {})
+    count = sh.get('sync_count_today', 'N/A')
+    source = sh.get('sync_source', 'unknown')
+    print(f'Syncs today: {count} | Source: {source}')
+except:
+    print('Sync health: unavailable')
+" 2>/dev/null || echo "Sync health: unavailable")
+
 echo "✅ State freshness OK: ${LAST_UPDATED} hours old (max: ${MAX_STALENESS_HOURS}h)"
+echo "   $SYNC_HEALTH"
