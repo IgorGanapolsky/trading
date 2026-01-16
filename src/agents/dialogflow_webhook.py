@@ -188,9 +188,16 @@ def query_alpaca_api_direct() -> dict | None:
     import json
     import urllib.request
 
-    # Get Alpaca credentials from environment
-    api_key = os.environ.get("ALPACA_PAPER_TRADING_5K_API_KEY", "")
-    api_secret = os.environ.get("ALPACA_PAPER_TRADING_5K_API_SECRET", "")
+    # Get Alpaca credentials using the standard priority chain
+    # Priority: 5K paper > 100K paper > legacy keys
+    try:
+        from src.utils.alpaca_client import get_alpaca_credentials
+
+        api_key, api_secret = get_alpaca_credentials()
+    except ImportError:
+        # Fallback if import fails - try direct env vars
+        api_key = os.environ.get("ALPACA_PAPER_TRADING_5K_API_KEY", "")
+        api_secret = os.environ.get("ALPACA_PAPER_TRADING_5K_API_SECRET", "")
 
     if not api_key or not api_secret:
         logger.warning(
@@ -440,7 +447,8 @@ def get_current_portfolio_status() -> dict:
         "last_trade_date": last_trade_date,
         "trades_today": trades_today,
         "actual_today": today_str,
-        "challenge_day": state.get("challenge", {}).get("current_day", 0),
+        # FIX: state.challenge.current_day doesn't exist - calculate dynamically
+        "challenge_day": _calculate_challenge_day(),
     }
 
 
@@ -1373,7 +1381,8 @@ async def webhook(
                     paper = portfolio.get("paper", {})
                     live = portfolio.get("live", {})
                     trades_today = portfolio.get("trades_today", 0)
-                    today_pl = portfolio.get("today_pl", 0)
+                    # FIX: today_pl doesn't exist - use daily_change from paper account
+                    today_pl = paper.get("daily_change", 0)
                     actual_today = portfolio.get("actual_today", "today")
 
                     if trades_today > 0 and today_pl != 0:
