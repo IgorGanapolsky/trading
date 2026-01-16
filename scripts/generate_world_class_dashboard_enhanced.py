@@ -54,6 +54,17 @@ def calculate_basic_metrics():
     live_starting = live_account.get("starting_balance", 20.0)
     live_pl = live_account.get("total_pl", 0.0)
     live_pl_pct = live_account.get("total_pl_pct", 0.0)
+    # FIX Jan 16, 2026: Also check daily_change for LIVE account
+    # NOTE: If LIVE and PAPER are same account (same equity), use paper's daily_change
+    paper_account_temp = system_state.get("paper_account", {})
+    if live_equity == paper_account_temp.get("equity", 0):
+        # Same account - use paper's daily_change
+        live_todays_pl = paper_account_temp.get("daily_change", 0.0)
+    else:
+        live_todays_pl = live_account.get("daily_change") or live_account.get("todays_pl", 0.0)
+    live_todays_pl_pct = live_account.get("todays_pl_pct", 0.0)
+    if live_todays_pl != 0 and live_todays_pl_pct == 0 and live_equity > 0:
+        live_todays_pl_pct = (live_todays_pl / (live_equity - live_todays_pl)) * 100
 
     # ========== PAPER ACCOUNT (R&D - Simulation) ==========
     paper_account = system_state.get("paper_account", {})
@@ -178,6 +189,9 @@ def calculate_basic_metrics():
         "live_starting": live_starting,
         "live_pl": live_pl,
         "live_pl_pct": live_pl_pct,
+        # FIX Jan 16, 2026: Add live today's P/L from system_state
+        "today_live_pl": live_todays_pl,
+        "today_live_pl_pct": live_todays_pl_pct,
         "paper_equity": paper_equity,
         "paper_starting": paper_starting,
         "paper_pl": paper_pl,
@@ -590,7 +604,7 @@ def generate_world_class_dashboard() -> str:
 |--------|-------|
 | **Equity** | ${basic_metrics.get("live_equity", 30):,.2f} |
 | **Total P/L** | ${basic_metrics.get("live_pl", 0):+,.2f} ({basic_metrics.get("live_pl_pct", 0):+.2f}%) |
-| **Today's P/L** | ${basic_metrics.get("today_pl", 0):+,.2f} ({basic_metrics.get("today_pl_pct", 0):+.2f}%) |
+| **Today's P/L** | ${basic_metrics.get("today_live_pl", 0):+,.2f} ({basic_metrics.get("today_live_pl_pct", 0):+.2f}%) |
 | **Status** | {"⏸️ Accumulation Phase" if basic_metrics.get("live_equity", 0) < 200 else "✅ Active"} |
 
 > *Live account is building capital through $25/day deposits. Target: $200 before first options trade.*
