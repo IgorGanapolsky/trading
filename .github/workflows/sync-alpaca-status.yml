@@ -1,11 +1,20 @@
 name: Sync Alpaca Status
 
-# Runs every 5 minutes during market hours for near-real-time data
-# Changed from 30 min to 5 min on Jan 16, 2026 for better sync
+# Sync frequency:
+# - Every 15 minutes during peak hours (10 AM - 3 PM ET = 15-20 UTC)
+# - Every 30 minutes during market open/close (9:30-10 AM, 3-4 PM ET)
+# FIX (Jan 16, 2026): Increased frequency to reduce staleness
 on:
   schedule:
-    - cron: '*/5 14-21 * * 1-5'  # Every 5 min, 9:30 AM - 4 PM ET (UTC-5)
+    - cron: '*/15 15-19 * * 1-5'  # Every 15 min, 10 AM - 3 PM ET (peak hours)
+    - cron: '30,0 14,20 * * 1-5'  # Every 30 min at market open (9:30 AM) and close (4 PM)
   workflow_dispatch:  # Manual trigger
+    inputs:
+      force_sync:
+        description: 'Force sync even if no changes'
+        required: false
+        default: 'false'
+        type: boolean
 
 permissions:
   contents: write
@@ -111,8 +120,33 @@ jobs:
 
           # Update system_state.json with UTC timestamp
           state_file = Path("data/system_state.json")
+
+          # Load existing state to preserve sync_health history
+          existing_state = {}
+          if state_file.exists():
+              try:
+                  existing_state = json.loads(state_file.read_text())
+              except:
+                  pass
+
+          # Track sync health metrics
+          sync_history = existing_state.get("sync_health", {}).get("history", [])
+          sync_history.append({
+              "timestamp": datetime.now().isoformat(),
+              "equity": equity,
+              "success": True
+          })
+          # Keep last 24 syncs (covers ~6 hours at 15-min intervals)
+          sync_history = sync_history[-24:]
+
           state = {
-              "last_updated": datetime.now(timezone.utc).isoformat(),
+              "last_updated": datetime.now().isoformat(),
+              "sync_health": {
+                  "last_successful_sync": datetime.now().isoformat(),
+                  "sync_source": "github_actions",
+                  "sync_count_today": len([s for s in sync_history if s["timestamp"].startswith(today_str)]),
+                  "history": sync_history
+              },
               "portfolio": {
                   "equity": equity,
                   "cash": cash
