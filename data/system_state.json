@@ -1,25 +1,25 @@
 {
-  "last_updated": "2026-01-16T19:01:54.864965+00:00",
+  "last_updated": "2026-01-16T19:14:34.340625+00:00",
   "portfolio": {
-    "equity": 4969.28,
+    "equity": 4976.0,
     "cash": 4302.08
   },
   "paper_account": {
-    "equity": 4969.28,
+    "equity": 4976.0,
     "cash": 4302.08,
-    "buying_power": 9003.36,
-    "total_pl": -30.720000000000255,
-    "total_pl_pct": -0.61,
+    "buying_power": 9003.08,
+    "total_pl": -24.0,
+    "total_pl_pct": -0.48,
     "positions_count": 8,
-    "daily_change": 10.1
+    "daily_change": 16.82
   },
   "positions": [
     {
       "symbol": "SPY",
       "qty": 0.576037269,
-      "price": 693.01,
-      "value": 399.199588,
-      "pnl": -0.760411,
+      "price": 692.54,
+      "value": 398.92885,
+      "pnl": -1.031149,
       "type": "stock"
     },
     {
@@ -33,49 +33,49 @@
     {
       "symbol": "SPY260220P00570000",
       "qty": -1.0,
-      "price": 0.5,
-      "value": -50.0,
-      "pnl": 0.0,
+      "price": 0.51,
+      "value": -51.0,
+      "pnl": -1.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00595000",
       "qty": 1.0,
-      "price": 0.72,
-      "value": 72.0,
-      "pnl": -1.0,
+      "price": 0.73,
+      "value": 73.0,
+      "pnl": 0.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00600000",
       "qty": -1.0,
-      "price": 0.79,
-      "value": -79.0,
-      "pnl": -1.0,
+      "price": 0.8,
+      "value": -80.0,
+      "pnl": -2.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00653000",
       "qty": 1.0,
-      "price": 2.61,
-      "value": 261.0,
-      "pnl": -18.0,
+      "price": 2.69,
+      "value": 269.0,
+      "pnl": -10.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00658000",
       "qty": -1.0,
-      "price": 3.04,
-      "value": -304.0,
-      "pnl": 17.0,
+      "price": 3.14,
+      "value": -314.0,
+      "pnl": 7.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00660000",
       "qty": 1.0,
-      "price": 3.22,
-      "value": 322.0,
-      "pnl": 15.0,
+      "price": 3.32,
+      "value": 332.0,
+      "pnl": 25.0,
       "type": "option"
     }
   ],
@@ -87,17 +87,17 @@
   },
   "risk": {
     "status": "WARNING - NEGATIVE P/L",
-    "total_pl": -30.720000000000255,
-    "unrealized_pl": 10.239588999999999
+    "total_pl": -24.0,
+    "unrealized_pl": 16.968851
   },
   "account": {
-    "current_equity": 4969.28,
-    "total_pl": -30.720000000000255,
-    "total_pl_pct": -0.61,
+    "current_equity": 4976.0,
+    "total_pl": -24.0,
+    "total_pl_pct": -0.48,
     "positions_count": 8
   },
   "meta": {
-    "last_updated": "2026-01-16T19:01:54.864992+00:00",
+    "last_updated": "2026-01-16T19:14:34.340643+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5
   }
