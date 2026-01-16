@@ -64,12 +64,13 @@ class CapitalThresholds:
     }
 
     # General strategy minimums (for capital efficiency calculator)
+    # Jan 16 fix: $3 spread = $300 collateral, not $5000!
     STRATEGY_MINIMUMS = {
         "equity_accumulation": 0,
         "covered_call": 1000,
         "cash_secured_put": 500,  # Lowered from 2000 for $5 strike stocks
-        "vertical_spread": 5000,
-        "iron_condor": 10000,
+        "vertical_spread": 300,  # $3 spread = $300 collateral (fixed Jan 16)
+        "iron_condor": 600,  # 2 spreads = $600 collateral (fixed Jan 16)
         "delta_neutral": 50000,
     }
 
@@ -84,9 +85,9 @@ class PositionSizing:
     MIN_CAPITAL = 500.0
 
     # Max allocation per position
-    # Tightened from 25% to 15% per Invest with Henry recommendation
-    # "Never allocate more than 15% to any single position"
-    MAX_POSITION_PCT = 0.15  # 15% max per position (was 25%)
+    # CRITICAL FIX Jan 16: Per CLAUDE.md 5% rule ($248 max risk on $5K account)
+    # Previous 15% allowed 96% SOFI position which almost wiped account
+    MAX_POSITION_PCT = 0.05  # 5% max per position (CLAUDE.md rule)
 
     # Cash reserve requirement
     MIN_CASH_RESERVE_PCT = 0.20  # Keep 20% in cash

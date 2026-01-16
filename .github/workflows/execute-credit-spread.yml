@@ -15,9 +15,9 @@ on:
           - SPY
           - IWM
       spread_width:
-        description: "Spread width in dollars"
+        description: "Spread width in dollars (CLAUDE.md: $3)"
         required: true
-        default: "5"
+        default: "3"
       quantity:
         description: "Number of spreads"
         required: true
@@ -49,7 +49,7 @@ jobs:
       - name: Execute Bull Put Credit Spread
         env:
           INPUT_SYMBOL: ${{ inputs.symbol || 'SPY' }}
-          INPUT_SPREAD_WIDTH: ${{ inputs.spread_width || '5' }}
+          INPUT_SPREAD_WIDTH: ${{ inputs.spread_width || '3' }}
           INPUT_QUANTITY: ${{ inputs.quantity || '1' }}
         run: |
           python3 << 'PYTHON_SCRIPT'

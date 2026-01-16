@@ -151,7 +151,7 @@ class OptionsExecutor:
     COVERED_CALL_TARGET_DELTA = 0.30  # Sell 30-delta calls
     IRON_CONDOR_TARGET_DELTA = 0.20  # Sell 20-delta wings
     CREDIT_SPREAD_TARGET_DELTA = 0.30  # Sell 30-delta spreads (default)
-    SPREAD_WIDTH = 5.0  # Default $5 width for spreads
+    SPREAD_WIDTH = 3.0  # Default $3 width per CLAUDE.md (Jan 16 fix)
 
     @staticmethod
     def get_optimal_delta_for_iv(iv_rank: float) -> float:
