@@ -1,25 +1,25 @@
 {
-  "last_updated": "2026-01-15T22:35:53.328567",
+  "last_updated": "2026-01-16T14:07:38.967274",
   "portfolio": {
-    "equity": 4989.98,
+    "equity": 4990.41,
     "cash": 4260.12
   },
   "paper_account": {
-    "equity": 4989.98,
+    "equity": 4990.41,
     "cash": 4260.12,
-    "buying_power": 8919.1,
-    "total_pl": -10.020000000000437,
-    "total_pl_pct": -0.2,
+    "buying_power": 8919.53,
+    "total_pl": -9.590000000000146,
+    "total_pl_pct": -0.19,
     "positions_count": 6,
-    "daily_change": 30.799999999999272
+    "daily_change": 31.229999999999563
   },
   "positions": [
     {
       "symbol": "SPY",
       "qty": 0.576037269,
-      "price": 692.42,
-      "value": 398.859726,
-      "pnl": -1.100273,
+      "price": 693.17,
+      "value": 399.291754,
+      "pnl": -0.668245,
       "type": "stock"
     },
     {
@@ -64,25 +64,20 @@
     }
   ],
   "trades": {
-    "last_trade_date": "2026-01-15",
+    "last_trade_date": "2026-01-16",
     "today_trades": "synced",
     "total_trades_today": 0,
     "last_trade_symbol": "SPY"
   },
   "risk": {
     "status": "WARNING - NEGATIVE P/L",
-    "total_pl": -10.020000000000437,
-    "unrealized_pl": 30.899727
+    "total_pl": -9.590000000000146,
+    "unrealized_pl": 31.331755
   },
   "account": {
-    "current_equity": 4989.98,
-    "total_pl": -10.020000000000437,
-    "total_pl_pct": -0.2,
+    "current_equity": 4990.41,
+    "total_pl": -9.590000000000146,
+    "total_pl_pct": -0.19,
     "positions_count": 6
-  },
-  "meta": {
-    "last_updated": "2026-01-16T13:58:55.475622",
-    "last_sync": "2026-01-16T13:58:55.475630",
-    "sync_mode": "skipped_no_keys"
   }
 }
