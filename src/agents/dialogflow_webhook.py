@@ -278,6 +278,31 @@ def query_alpaca_api_direct() -> dict | None:
         return None
 
 
+def _calculate_challenge_day() -> int:
+    """Calculate the current challenge day from start date.
+
+    Challenge started Oct 30, 2025 (Day 1).
+    Only counts trading days (Mon-Fri, excluding holidays).
+
+    FIX Jan 16, 2026: Replace hardcoded value with dynamic calculation.
+    """
+    from datetime import date
+
+    # Challenge start: Oct 30, 2025 (Day 1)
+    start_date = date(2025, 10, 30)
+    today = date.today()
+
+    # Count trading days (simplified - just weekdays)
+    trading_days = 0
+    current = start_date
+    while current <= today:
+        if current.weekday() < 5:  # Mon-Fri
+            trading_days += 1
+        current = current + __import__("datetime").timedelta(days=1)
+
+    return min(trading_days, 90)  # Cap at 90-day challenge
+
+
 def get_current_portfolio_status() -> dict:
     """Get current portfolio status - PREFER Alpaca API, fallback to cached files."""
     import json
@@ -314,7 +339,8 @@ def get_current_portfolio_status() -> dict:
             "last_trade_date": today_str if alpaca_data["trades_today"] > 0 else "unknown",
             "trades_today": alpaca_data["trades_today"],
             "actual_today": today_str,
-            "challenge_day": 76,  # Hardcoded for now
+            # FIX Jan 16, 2026: Calculate challenge day from start date (Oct 30, 2025)
+            "challenge_day": _calculate_challenge_day(),
             "source": "alpaca_api_direct",
         }
 
@@ -391,9 +417,11 @@ def get_current_portfolio_status() -> dict:
 
     return {
         "live": {
-            # FIX Jan 12, 2026: system_state.json uses "equity" or "cash" not "current_equity"
-            "equity": state.get("account", {}).get("equity", 0)
-            or state.get("account", {}).get("cash", 0),
+            # FIX Jan 16, 2026: system_state.json uses "current_equity" not "equity"
+            # Schema: account.current_equity, account.total_pl, account.total_pl_pct
+            "equity": state.get("account", {}).get("current_equity", 0)
+            or state.get("account", {}).get("equity", 0)
+            or state.get("portfolio", {}).get("equity", 0),
             "total_pl": state.get("account", {}).get("total_pl", 0),
             "total_pl_pct": state.get("account", {}).get("total_pl_pct", 0),
             "positions_count": state.get("account", {}).get("positions_count", 0),
