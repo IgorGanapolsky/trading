@@ -288,3 +288,74 @@ class OptionsRiskMonitor:
             position["current_price"] = new_price
 
         return True
+
+    def run_risk_check(
+        self, current_prices: dict | None = None, executor: object | None = None
+    ) -> dict:
+        """Run comprehensive risk check on all tracked positions.
+
+        This is the main entry point for portfolio-wide risk monitoring.
+        Checks all positions for stop-loss triggers and profit targets.
+
+        Args:
+            current_prices: Optional dict mapping symbols to current prices.
+                           If provided, position prices will be updated before checking.
+            executor: Optional executor object (not currently used, for interface compat)
+
+        Returns:
+            Dict with:
+            - positions_checked: Number of positions evaluated
+            - stop_loss_exits: List of positions that hit stop-loss
+            - profit_exits: List of positions that hit profit target
+            - delta_analysis: Dict with net_delta and rebalance_needed
+            - position_results: Detailed results for each position
+        """
+        # Update prices if provided
+        if current_prices:
+            for symbol, price in current_prices.items():
+                self.update_position_price(symbol, price)
+
+        stop_loss_exits = []
+        profit_exits = []
+        position_results = []
+        total_delta = 0.0
+
+        for symbol in list(self.positions.keys()):
+            # Check if position should be closed
+            should_close, reason = self.should_close_position(symbol)
+
+            # Get detailed risk status
+            risk_status = self.check_risk(symbol)
+
+            # Track delta for rebalancing
+            position = self.positions.get(symbol)
+            if isinstance(position, OptionsPosition):
+                total_delta += position.delta * position.quantity * 100
+
+            result = {
+                "symbol": symbol,
+                "risk_status": risk_status,
+                "should_close": should_close,
+                "reason": reason,
+            }
+            position_results.append(result)
+
+            if should_close:
+                if "profit" in reason.lower():
+                    profit_exits.append({"symbol": symbol, "reason": reason})
+                else:
+                    stop_loss_exits.append({"symbol": symbol, "reason": reason})
+
+        # Delta rebalancing: flag if net delta is too high (>60 or <-60)
+        rebalance_needed = abs(total_delta) > 60
+
+        return {
+            "positions_checked": len(self.positions),
+            "stop_loss_exits": stop_loss_exits,
+            "profit_exits": profit_exits,
+            "delta_analysis": {
+                "net_delta": total_delta,
+                "rebalance_needed": rebalance_needed,
+            },
+            "position_results": position_results,
+        }

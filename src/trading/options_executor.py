@@ -241,7 +241,7 @@ class OptionsExecutor:
 
         # 1. Validate we own the shares
         account = self.trader.get_account_info()
-        positions = self.trader.api.list_positions()
+        positions = self.trader.get_positions()
 
         share_position = None
         for pos in positions:

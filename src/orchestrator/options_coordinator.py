@@ -294,8 +294,17 @@ class OptionsStrategyCoordinator:
                         iv_percentile = 50.0
                         logger.warning(f"IV data unavailable for {ticker}, using neutral defaults")
 
-                    price_data = self.executor.get_current_price(ticker)
-                    stock_price = price_data.get("price", 100.0) if price_data else 100.0
+                    # Fetch current stock price from market data
+                    stock_price = 100.0  # Default fallback
+                    try:
+                        from src.utils.market_data import MarketDataFetcher
+
+                        fetcher = MarketDataFetcher()
+                        res = fetcher.get_daily_bars(symbol=ticker, lookback_days=5)
+                        if res.data is not None and not res.data.empty:
+                            stock_price = float(res.data["Close"].iloc[-1])
+                    except Exception as price_err:
+                        logger.warning(f"Failed to fetch price for {ticker}: {price_err}")
 
                     signal = signal_generator.generate_trade_signal(
                         ticker=ticker,

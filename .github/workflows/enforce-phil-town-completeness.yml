@@ -6,7 +6,8 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    - cron: '0 9,10 * * *'
+    # Run weekdays only (not weekends when markets closed)
+    - cron: '0 9,10 * * 1-5'
   workflow_dispatch:
 
 jobs:

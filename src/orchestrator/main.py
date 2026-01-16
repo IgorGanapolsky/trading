@@ -562,7 +562,7 @@ class TradingOrchestrator:
                     context={
                         "macro_context": macro_context,
                         "session_type": session_profile["session_type"],
-                        "portfolio_value": self.executor.get_account_info().get("equity", 100000),
+                        "portfolio_value": self.executor.account_equity or 100000,
                     },
                 )
                 if adk_decision:
@@ -2365,12 +2365,17 @@ class TradingOrchestrator:
 
         # Fetch price and history for risk calculation
         try:
-            price_data = self.executor.get_current_price(ticker)
-            ctx.current_price = price_data.get("price")
-            ctx.hist = self.momentum_agent._fetch_history(ticker)
-            if ctx.hist is not None and len(ctx.hist) >= 14:
-                atr = self.risk_manager._calculate_atr(ctx.hist, period=14)
-                ctx.atr_pct = (atr / ctx.current_price * 100) if ctx.current_price else None
+            from src.utils.market_data import MarketDataFetcher
+            from src.utils.technical_indicators import calculate_atr
+
+            fetcher = MarketDataFetcher()
+            res = fetcher.get_daily_bars(symbol=ticker, lookback_days=60)
+            ctx.hist = res.data
+            if ctx.hist is not None and not ctx.hist.empty:
+                ctx.current_price = float(ctx.hist["Close"].iloc[-1])
+                if len(ctx.hist) >= 14:
+                    atr = float(calculate_atr(ctx.hist))
+                    ctx.atr_pct = (atr / ctx.current_price * 100) if ctx.current_price else None
         except Exception as e:
             logger.warning("Failed to fetch price/history for %s: %s", ticker, e)
 
