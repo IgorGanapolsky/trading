@@ -65,8 +65,13 @@ def calculate_basic_metrics():
     paper_pl = paper_account.get("total_pl", 0.0)
     paper_pl_pct = paper_account.get("total_pl_pct", 0.0)
     paper_win_rate = paper_account.get("win_rate", 0.0)
-    paper_todays_pl = paper_account.get("todays_pl", 0.0)
+    # FIX Jan 16, 2026: system_state.json uses "daily_change" not "todays_pl"
+    paper_todays_pl = paper_account.get("daily_change") or paper_account.get("todays_pl", 0.0)
+    # Calculate today's P/L percentage from equity if not provided
     paper_todays_pl_pct = paper_account.get("todays_pl_pct", 0.0)
+    if paper_todays_pl != 0 and paper_todays_pl_pct == 0 and paper_equity > 0:
+        # Calculate as percentage of equity (approximation)
+        paper_todays_pl_pct = (paper_todays_pl / (paper_equity - paper_todays_pl)) * 100
 
     # Performance log (may contain paper or live data based on workflow)
     perf_log = load_json_file(DATA_DIR / "performance_log.json")
