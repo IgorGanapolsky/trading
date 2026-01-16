@@ -11,7 +11,7 @@
     "total_pl": -25.92,
     "total_pl_pct": -0.52,
     "positions_count": 8,
-    "daily_change": 14.90
+    "daily_change": 14.9
   },
   "positions": [
     {
@@ -81,9 +81,9 @@
   ],
   "trades": {
     "last_trade_date": "2026-01-16",
-    "today_trades": "synced",
-    "total_trades_today": 0,
-    "last_trade_symbol": "SPY"
+    "today_trades": 2,
+    "total_trades_today": 2,
+    "last_trade_symbol": "SYNCED"
   },
   "risk": {
     "status": "WARNING - NEGATIVE P/L",
@@ -95,5 +95,9 @@
     "total_pl": -25.92,
     "total_pl_pct": -0.52,
     "positions_count": 8
+  },
+  "meta": {
+    "last_updated": "2026-01-16T18:13:24.224907+00:00",
+    "trade_sync": "alpaca_api"
   }
 }
