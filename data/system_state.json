@@ -1,113 +1,355 @@
 {
-  "last_updated": "2026-01-16T23:05:39.002336+00:00",
-  "sync_health": {
-    "last_successful_sync": "2026-01-16T23:05:39.002339+00:00",
-    "sync_source": "github_actions",
-    "sync_count_today": 3,
-    "history": [
+  "last_updated": "2026-01-16T23:44:22.650560Z",
+  "portfolio": {
+    "equity": "4986.71",
+    "cash": "4761.71"
+  },
+  "paper_account": {
+    "positions_count": 6,
+    "positions": [
       {
-        "timestamp": "2026-01-16T20:17:46.349877",
-        "equity": 4974.71,
-        "success": true
+        "symbol": "SPY260220P00565000",
+        "qty": "1",
+        "market_value": "51",
+        "unrealized_pl": "4"
       },
       {
-        "timestamp": "2026-01-16T20:38:25.268869",
-        "equity": 4976.71,
-        "success": true
+        "symbol": "SPY260220P00570000",
+        "qty": "-1",
+        "market_value": "-56",
+        "unrealized_pl": "-6"
       },
       {
-        "timestamp": "2026-01-16T23:05:39.002322+00:00",
-        "equity": 4986.71,
-        "success": true
+        "symbol": "SPY260220P00595000",
+        "qty": "1",
+        "market_value": "80",
+        "unrealized_pl": "7"
+      },
+      {
+        "symbol": "SPY260220P00600000",
+        "qty": "-1",
+        "market_value": "-87",
+        "unrealized_pl": "-9"
+      },
+      {
+        "symbol": "SPY260220P00653000",
+        "qty": "2",
+        "market_value": "570",
+        "unrealized_pl": "14"
+      },
+      {
+        "symbol": "SPY260220P00658000",
+        "qty": "-1",
+        "market_value": "-333",
+        "unrealized_pl": "-12"
       }
     ]
   },
-  "portfolio": {
-    "equity": 4986.71,
-    "cash": 4761.71
-  },
-  "paper_account": {
-    "equity": 4986.71,
-    "cash": 4761.71,
-    "buying_power": 8523.42,
-    "total_pl": -13.289999999999964,
-    "total_pl_pct": -0.27,
-    "positions_count": 6,
-    "daily_change": 27.53,
-    "win_rate": 0,
-    "win_rate_sample_size": 0,
-    "starting_balance": 5000.0
-  },
-  "positions": [
+  "trade_history": [
     {
-      "symbol": "SPY260220P00565000",
-      "qty": 1.0,
-      "price": 0.51,
-      "value": 51.0,
-      "pnl": 4.0,
-      "type": "option"
+      "id": "ede1c2cd-620f-4956-9a33-6d1dc4b0ce08",
+      "symbol": "SPY260220P00660000",
+      "side": "OrderSide.SELL",
+      "qty": "1",
+      "price": "3.38",
+      "filled_at": "2026-01-16 19:29:31.625547+00:00"
     },
     {
-      "symbol": "SPY260220P00570000",
-      "qty": -1.0,
-      "price": 0.56,
-      "value": -56.0,
-      "pnl": -6.0,
-      "type": "option"
-    },
-    {
-      "symbol": "SPY260220P00595000",
-      "qty": 1.0,
-      "price": 0.8,
-      "value": 80.0,
-      "pnl": 7.0,
-      "type": "option"
-    },
-    {
-      "symbol": "SPY260220P00600000",
-      "qty": -1.0,
-      "price": 0.87,
-      "value": -87.0,
-      "pnl": -9.0,
-      "type": "option"
-    },
-    {
+      "id": "a61419b0-31a8-44e5-9810-ca275fc2e7ab",
       "symbol": "SPY260220P00653000",
-      "qty": 2.0,
-      "price": 2.85,
-      "value": 570.0,
-      "pnl": 14.0,
-      "type": "option"
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "2.77",
+      "filled_at": "2026-01-16 19:29:26.700182+00:00"
     },
     {
+      "id": "33d79629-3392-4483-af31-4ebd5b8883e4",
+      "symbol": "SPY",
+      "side": "OrderSide.SELL",
+      "qty": "0.576037269",
+      "price": "692.082",
+      "filled_at": "2026-01-16 19:29:16.057008+00:00"
+    },
+    {
+      "id": "60416b94-7087-479c-be6c-e7764786eda2",
+      "symbol": "SPY260220P00653000",
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "2.79",
+      "filled_at": "2026-01-16 15:25:09.264530+00:00"
+    },
+    {
+      "id": "4a390fd9-6844-49fa-8511-71b2315d861f",
       "symbol": "SPY260220P00658000",
-      "qty": -1.0,
-      "price": 3.33,
-      "value": -333.0,
-      "pnl": -12.0,
-      "type": "option"
+      "side": "OrderSide.SELL",
+      "qty": "1",
+      "price": "3.21",
+      "filled_at": "2026-01-16 15:25:09.293604+00:00"
+    },
+    {
+      "id": "3dcce366-4e18-406a-bcbe-7c88fb4bc5bc",
+      "symbol": "SPY",
+      "side": "OrderSide.BUY",
+      "qty": "0.143908188",
+      "price": "694.818",
+      "filled_at": "2026-01-15 18:28:44.090036+00:00"
+    },
+    {
+      "id": "dc7c4cb1-3b2f-4216-bd6f-88bbdc7649db",
+      "symbol": null,
+      "side": "None",
+      "qty": "1",
+      "price": "-0.05",
+      "filled_at": "2026-01-15 18:12:31.595069+00:00"
+    },
+    {
+      "id": "f5f0bb41-292b-4859-b12a-e055170f8f4f",
+      "symbol": "SPY",
+      "side": "OrderSide.BUY",
+      "qty": "0.143941335",
+      "price": "694.658",
+      "filled_at": "2026-01-15 18:08:10.431135+00:00"
+    },
+    {
+      "id": "8ed8f7be-7447-41d0-91af-df65b5248fd6",
+      "symbol": "SPY",
+      "side": "OrderSide.BUY",
+      "qty": "0.143989009",
+      "price": "694.428",
+      "filled_at": "2026-01-15 18:03:51.102132+00:00"
+    },
+    {
+      "id": "9cabec1d-0f3b-4f4c-8bae-b0c52b2d3524",
+      "symbol": null,
+      "side": "None",
+      "qty": "1",
+      "price": "-0.03",
+      "filled_at": "2026-01-15 17:19:53.902844+00:00"
+    },
+    {
+      "id": "9c7bb488-2254-4271-a7ef-0a31cb18e798",
+      "symbol": "SPY260220P00660000",
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "3.07",
+      "filled_at": "2026-01-15 17:17:13.307269+00:00"
+    },
+    {
+      "id": "ab8f60fc-77f5-478c-b46a-56c17eec707a",
+      "symbol": "SPY",
+      "side": "OrderSide.BUY",
+      "qty": "0.144198737",
+      "price": "693.418",
+      "filled_at": "2026-01-15 15:51:56.160751+00:00"
+    },
+    {
+      "id": "7e7b4588-c247-4621-8e9f-5d5db8dd33e9",
+      "symbol": "SOFI260206P00024000",
+      "side": "OrderSide.BUY",
+      "qty": "2",
+      "price": "0.87",
+      "filled_at": "2026-01-14 14:46:02.130458+00:00"
+    },
+    {
+      "id": "87db7dab-2369-4d8c-99b1-ccdde0ccf85d",
+      "symbol": "SOFI",
+      "side": "OrderSide.SELL",
+      "qty": "24.745561475",
+      "price": "26.35",
+      "filled_at": "2026-01-14 14:46:02.528488+00:00"
+    },
+    {
+      "id": "870f34da-371a-4f94-99a9-ed3a2c989f50",
+      "symbol": "SOFI",
+      "side": "OrderSide.BUY",
+      "qty": "2",
+      "price": "26.77",
+      "filled_at": "2026-01-13 19:39:49.668925+00:00"
+    },
+    {
+      "id": "471e8c54-a54f-406e-bb71-4f27c985c900",
+      "symbol": "SOFI",
+      "side": "OrderSide.BUY",
+      "qty": "3.784632853",
+      "price": "26.42",
+      "filled_at": "2026-01-13 15:34:28.628182+00:00"
+    },
+    {
+      "id": "e9d71925-dd57-4c59-a5a8-10367a2b4037",
+      "symbol": "SOFI",
+      "side": "OrderSide.BUY",
+      "qty": "3.794686907",
+      "price": "26.35",
+      "filled_at": "2026-01-13 15:33:32.149787+00:00"
+    },
+    {
+      "id": "bf97674d-cc41-416b-bcba-e075581c1c70",
+      "symbol": "SOFI",
+      "side": "OrderSide.BUY",
+      "qty": "3.8004561",
+      "price": "26.31",
+      "filled_at": "2026-01-13 15:31:53.663872+00:00"
+    },
+    {
+      "id": "7161a3d1-e31c-487c-9c43-5df2109a301c",
+      "symbol": "SOFI",
+      "side": "OrderSide.BUY",
+      "qty": "3.793626707",
+      "price": "26.357364",
+      "filled_at": "2026-01-13 15:23:03.181144+00:00"
+    },
+    {
+      "id": "224d18a4-47a8-49a3-a366-728d39eb3977",
+      "symbol": "SOFI",
+      "side": "OrderSide.BUY",
+      "qty": "3.793247344",
+      "price": "26.36",
+      "filled_at": "2026-01-13 15:16:50.049331+00:00"
+    },
+    {
+      "id": "8d2dfd09-146d-4f1a-891c-bb48773005ce",
+      "symbol": "SOFI260206P00024000",
+      "side": "OrderSide.SELL",
+      "qty": "1",
+      "price": "0.79",
+      "filled_at": "2026-01-13 15:09:55.816530+00:00"
+    },
+    {
+      "id": "fc1ec729-529a-4703-8a82-6e6d819364c6",
+      "symbol": "SOFI",
+      "side": "OrderSide.BUY",
+      "qty": "3.778911564",
+      "price": "26.46",
+      "filled_at": "2026-01-13 15:02:09.135744+00:00"
+    },
+    {
+      "id": "9e0bf2ae-e98f-4538-81e8-dafe192541fb",
+      "symbol": "SOFI",
+      "side": "OrderSide.SELL",
+      "qty": "3.774631936",
+      "price": "26.45",
+      "filled_at": "2026-01-13 15:02:05.557603+00:00"
+    },
+    {
+      "id": "f7c5db2a-8265-496e-89c1-510571e06708",
+      "symbol": "SOFI260206P00024000",
+      "side": "OrderSide.SELL",
+      "qty": "1",
+      "price": "0.78",
+      "filled_at": "2026-01-13 15:00:44.288414+00:00"
+    },
+    {
+      "id": "94e147c2-70b6-41db-b53d-e783c43232d6",
+      "symbol": "SOFI",
+      "side": "OrderSide.BUY",
+      "qty": "3.774631936",
+      "price": "26.49",
+      "filled_at": "2026-01-13 14:52:34.427988+00:00"
+    },
+    {
+      "id": "423e45ce-80df-47c4-b945-cfab6fa06ca6",
+      "symbol": "SOFI260220P00024000",
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "1.04",
+      "filled_at": "2026-01-13 14:52:32.511931+00:00"
+    },
+    {
+      "id": "1970c6ab-cc11-4b4b-bf18-eaacf479806d",
+      "symbol": "SOFI260130P00025000",
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "0.95",
+      "filled_at": "2026-01-13 14:52:32.403744+00:00"
+    },
+    {
+      "id": "1cd96e3b-3bcd-4729-9568-85c96a96826d",
+      "symbol": "SOFI",
+      "side": "OrderSide.SELL",
+      "qty": "7.513973746",
+      "price": "26.503309",
+      "filled_at": "2026-01-13 14:52:32.660446+00:00"
+    },
+    {
+      "id": "ce4495d7-65dd-40ef-8050-1271a5eb8f52",
+      "symbol": "SOFI",
+      "side": "OrderSide.BUY",
+      "qty": "3.774631936",
+      "price": "26.49",
+      "filled_at": "2026-01-13 14:51:33.479182+00:00"
+    },
+    {
+      "id": "f1323b4d-39d7-44ad-9a0b-eae1522bede1",
+      "symbol": "SOFI",
+      "side": "OrderSide.BUY",
+      "qty": "3.73934181",
+      "price": "26.74",
+      "filled_at": "2026-01-13 14:43:03.569200+00:00"
+    },
+    {
+      "id": "459c5bec-b1f2-4706-b7f4-6708bf504c63",
+      "symbol": "SOFI",
+      "side": "OrderSide.SELL",
+      "qty": "18.743387531",
+      "price": "26.73",
+      "filled_at": "2026-01-13 14:43:01.059110+00:00"
+    },
+    {
+      "id": "6cb230fd-7196-46e4-af37-f74979cac992",
+      "symbol": "SOFI",
+      "side": "OrderSide.BUY",
+      "qty": "3.754787833",
+      "price": "26.63",
+      "filled_at": "2026-01-13 14:31:31.147469+00:00"
+    },
+    {
+      "id": "52b85909-671f-4ceb-bcc1-68c38e82446e",
+      "symbol": "SOFI",
+      "side": "OrderSide.BUY",
+      "qty": "3.754787833",
+      "price": "26.63",
+      "filled_at": "2026-01-13 14:31:31.204952+00:00"
+    },
+    {
+      "id": "1574f18f-cad2-4e95-835a-f0fb6c7e19a1",
+      "symbol": "SOFI",
+      "side": "OrderSide.BUY",
+      "qty": "3.739049045",
+      "price": "26.742094",
+      "filled_at": "2026-01-13 14:31:23.708517+00:00"
+    },
+    {
+      "id": "7d645ac2-4b49-497e-a406-72c37afe619d",
+      "symbol": "SOFI",
+      "side": "OrderSide.BUY",
+      "qty": "3.741101536",
+      "price": "26.727422",
+      "filled_at": "2026-01-13 14:31:27.520322+00:00"
+    },
+    {
+      "id": "9fe6a825-51d5-422b-bcf6-38112309ec9a",
+      "symbol": "SOFI",
+      "side": "OrderSide.BUY",
+      "qty": "3.753661284",
+      "price": "26.637993",
+      "filled_at": "2026-01-13 14:31:34.983788+00:00"
+    },
+    {
+      "id": "7f01142f-70b9-453a-b491-e79188b5d67f",
+      "symbol": "SOFI260220P00024000",
+      "side": "OrderSide.SELL",
+      "qty": "1",
+      "price": "0.95",
+      "filled_at": "2026-01-12 18:35:57.801820+00:00"
+    },
+    {
+      "id": "ac471af4-c12c-4ac3-bed9-4d18d0582bb3",
+      "symbol": "SOFI260130P00025000",
+      "side": "OrderSide.SELL",
+      "qty": "1",
+      "price": "0.82",
+      "filled_at": "2026-01-12 14:30:54.357134+00:00"
     }
   ],
-  "trades": {
-    "last_trade_date": "2026-01-16",
-    "today_trades": 0,
-    "total_trades_today": 0,
-    "last_trade_symbol": "SPY260220P00565000"
-  },
-  "risk": {
-    "status": "WARNING - NEGATIVE P/L",
-    "total_pl": -13.289999999999964,
-    "unrealized_pl": -2.0
-  },
-  "account": {
-    "current_equity": 4986.71,
-    "total_pl": -13.289999999999964,
-    "total_pl_pct": -0.27,
-    "positions_count": 6
-  },
-  "meta": {
-    "last_updated": "2026-01-16T23:05:39.002354+00:00",
-    "trade_sync": "alpaca_api",
-    "sync_frequency_minutes": 5
-  }
+  "trades_loaded": 38
 }
