@@ -232,8 +232,17 @@ def main():
                 break
 
         if not corpus_name:
-            print("ERROR: RAG corpus 'trading-system-rag' not found")
-            return 1
+            print("RAG corpus 'trading-system-rag' not found - creating it...")
+            try:
+                corpus = rag.create_corpus(
+                    display_name="trading-system-rag",
+                    description="Trade history, lessons learned, and market insights for Igor's trading system",
+                )
+                corpus_name = corpus.name
+                print(f"✅ Created RAG corpus: {corpus_name}")
+            except Exception as create_err:
+                print(f"ERROR: Failed to create corpus: {create_err}")
+                return 1
 
         print(f"Corpus: {corpus_name}")
         print()

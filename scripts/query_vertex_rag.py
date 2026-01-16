@@ -94,8 +94,17 @@ def query_rag_corpus(query_text: str, top_k: int = 5) -> list[dict]:
                 break
 
         if not corpus_name:
-            logger.warning("RAG corpus 'trading-system-rag' not found")
-            return []
+            logger.info("RAG corpus 'trading-system-rag' not found - creating it...")
+            try:
+                corpus = rag.create_corpus(
+                    display_name="trading-system-rag",
+                    description="Trade history, lessons learned, and market insights for Igor's trading system",
+                )
+                corpus_name = corpus.name
+                logger.info(f"Created RAG corpus: {corpus_name}")
+            except Exception as e:
+                logger.warning(f"Failed to create corpus: {e}")
+                return []
 
         # Create retrieval tool
         rag_retrieval_tool = rag.Retrieval(
