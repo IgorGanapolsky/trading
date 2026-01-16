@@ -137,10 +137,14 @@ def is_weekend() -> bool:
 
 def is_market_holiday() -> bool:
     """
-    Check if today is a market holiday (market closed on a weekday).
+    Check if today is a market holiday (market SCHEDULED to be closed all day).
 
-    Uses Alpaca's clock API to determine if market is closed.
-    If market is closed AND it's a weekday, it's a holiday.
+    CRITICAL BUG FIX (Jan 16, 2026):
+    Previous logic: `not clock.is_open` returned True when market was CURRENTLY closed
+    This incorrectly blocked trading when workflow ran before 9:30 AM ET!
+
+    New logic: Check if today's date is NOT a trading day by comparing
+    next_open to today. If next_open is tomorrow or later, it's a holiday.
     """
     try:
         from src.core.alpaca_trader import AlpacaTrader
@@ -151,7 +155,34 @@ def is_market_holiday() -> bool:
 
         trader = AlpacaTrader(paper=True)
         clock = trader.trading_client.get_clock()
-        return not clock.is_open  # Market closed on weekday = holiday
+
+        # If market is open, definitely not a holiday
+        if clock.is_open:
+            return False
+
+        # Market is currently closed - check if it will open today
+        # If next_open is today, we're just waiting for market open (not a holiday)
+        # If next_open is tomorrow or later, today is a holiday
+        from datetime import timezone as tz
+        now_utc = datetime.now(tz.utc)
+        today_utc = now_utc.date()
+
+        # Handle both timezone-aware and naive datetimes from Alpaca
+        next_open = clock.next_open
+        if hasattr(next_open, 'date'):
+            next_open_date = next_open.date()
+        elif hasattr(next_open, 'astimezone'):
+            next_open_date = next_open.astimezone(tz.utc).date()
+        else:
+            # Fallback: assume it's a date-like string
+            next_open_date = today_utc  # Assume not holiday if we can't parse
+
+        # If next open is today, it's not a holiday - just waiting for 9:30 AM
+        if next_open_date == today_utc:
+            return False
+
+        # Next open is in the future (tomorrow+), so today is a holiday
+        return True
     except Exception as e:
         logger = setup_logging()
         logger.warning(f"Could not check market holiday status: {e}. Assuming not a holiday.")
