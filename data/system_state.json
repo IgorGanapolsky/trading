@@ -1,25 +1,25 @@
 {
-  "last_updated": "2026-01-16T19:27:21.448777+00:00",
+  "last_updated": "2026-01-16T19:28:18.907237+00:00",
   "portfolio": {
-    "equity": 4982.79,
+    "equity": 4983.74,
     "cash": 4302.08
   },
   "paper_account": {
-    "equity": 4982.79,
+    "equity": 4983.74,
     "cash": 4302.08,
-    "buying_power": 9002.87,
-    "total_pl": -17.210000000000036,
-    "total_pl_pct": -0.34,
+    "buying_power": 9002.82,
+    "total_pl": -16.26000000000022,
+    "total_pl_pct": -0.33,
     "positions_count": 8,
-    "daily_change": 23.61
+    "daily_change": 24.56
   },
   "positions": [
     {
       "symbol": "SPY",
       "qty": 0.576037269,
-      "price": 692.155,
-      "value": 398.707076,
-      "pnl": -1.252923,
+      "price": 692.065,
+      "value": 398.655233,
+      "pnl": -1.304766,
       "type": "stock"
     },
     {
@@ -57,25 +57,25 @@
     {
       "symbol": "SPY260220P00653000",
       "qty": 1.0,
-      "price": 2.75,
-      "value": 275.0,
-      "pnl": -4.0,
+      "price": 2.76,
+      "value": 276.0,
+      "pnl": -3.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00658000",
       "qty": -1.0,
-      "price": 3.2,
-      "value": -320.0,
-      "pnl": 1.0,
+      "price": 3.21,
+      "value": -321.0,
+      "pnl": 0.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00660000",
       "qty": 1.0,
-      "price": 3.38,
-      "value": 338.0,
-      "pnl": 31.0,
+      "price": 3.39,
+      "value": 339.0,
+      "pnl": 32.0,
       "type": "option"
     }
   ],
@@ -87,17 +87,17 @@
   },
   "risk": {
     "status": "WARNING - NEGATIVE P/L",
-    "total_pl": -17.210000000000036,
-    "unrealized_pl": 23.747077
+    "total_pl": -16.26000000000022,
+    "unrealized_pl": 24.695234
   },
   "account": {
-    "current_equity": 4982.79,
-    "total_pl": -17.210000000000036,
-    "total_pl_pct": -0.34,
+    "current_equity": 4983.74,
+    "total_pl": -16.26000000000022,
+    "total_pl_pct": -0.33,
     "positions_count": 8
   },
   "meta": {
-    "last_updated": "2026-01-16T19:27:21.448793+00:00",
+    "last_updated": "2026-01-16T19:28:18.907260+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5
   }
