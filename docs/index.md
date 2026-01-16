@@ -7,24 +7,25 @@ title: AI Trading Journey
 
 Building an autonomous AI trading system with Claude Opus 4.5.
 
-## Current Status (Day 76 - Jan 14, 2026)
+## Current Status (Day 78 - Jan 16, 2026)
 
 | Metric | Value |
 |--------|-------|
-| Paper Account | $4,959.26 |
-| Total P/L | **-$40.74 (-0.81%)** |
-| Today's P/L | -$65.58 |
-| Open Positions | 0 |
-| Strategy | Paused - Rule #1 violated |
-| North Star | $14-25/day (realistic) |
+| Paper Account | $5,007.98 |
+| Total P/L | **+$7.98 (+0.16%)** |
+| Today's P/L | +$48.80 |
+| Open Positions | 8 |
+| Strategy | Credit spreads on SPY |
+| North Star | $5-10/day (realistic) |
 
-**Status**: SOFI closed before earnings. Accepting $65 loss to avoid $200+ earnings risk.
+**Status**: Running SPY credit spreads (Feb 20 expiration). Back in profit territory.
 
 ## Strategy Evolution
 
 - **Days 1-73**: System building, zero trades executed
 - **Day 74 (Jan 13)**: First trades - SOFI stock + CSP
 - **Day 75-76**: SOFI closed at loss (earnings risk)
+- **Day 77-78 (Jan 15-16)**: Pivoted to SPY credit spreads - back in profit
 
 ## Blog Posts
 
