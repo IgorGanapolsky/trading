@@ -102,17 +102,27 @@ else:
 # Primary: Vertex AI RAG (cloud semantic search) - for accurate answers to CEO
 # Fallback: Local keyword RAG - when Vertex AI unavailable
 vertex_rag = None
+vertex_rag_init_error = None  # Track initialization error for diagnostics
+
 if VERTEX_RAG_AVAILABLE:
     try:
         vertex_rag = get_vertex_rag()
         if vertex_rag.is_initialized:
             logger.info("✅ Vertex AI RAG initialized (primary - semantic search)")
         else:
-            logger.warning("Vertex AI RAG not initialized - missing GCP credentials")
+            vertex_rag_init_error = "Vertex AI RAG not initialized - check GCP credentials/permissions"
+            logger.warning(vertex_rag_init_error)
             vertex_rag = None
-    except Exception as e:
-        logger.warning(f"Vertex AI RAG init failed: {e}")
+    except ImportError as e:
+        vertex_rag_init_error = f"Vertex AI RAG import failed: {e}"
+        logger.warning(vertex_rag_init_error)
         vertex_rag = None
+    except Exception as e:
+        vertex_rag_init_error = f"Vertex AI RAG init failed: {e}"
+        logger.warning(vertex_rag_init_error)
+        vertex_rag = None
+else:
+    vertex_rag_init_error = "VERTEX_RAG_AVAILABLE=False - vertexai package import failed"
 
 # Local RAG as fallback
 local_rag = LessonsLearnedRAG()
@@ -1508,11 +1518,40 @@ async def health():
     return {
         "status": "healthy",
         "vertex_ai_rag_enabled": vertex_rag is not None,
+        "vertex_ai_init_error": vertex_rag_init_error,
         "local_lessons_loaded": len(local_rag.lessons),
         "critical_lessons": len(local_rag.get_critical_lessons()),
         "trades_loaded": trade_count,
         "trade_history_source": "local_json",
         "rag_mode": "vertex_ai_primary" if vertex_rag else "local_only",
+    }
+
+
+@app.get("/diagnostics")
+async def diagnostics():
+    """Detailed diagnostic information for debugging Vertex AI RAG issues."""
+    import os
+    
+    return {
+        "vertex_ai": {
+            "enabled": vertex_rag is not None,
+            "init_error": vertex_rag_init_error,
+            "package_available": VERTEX_RAG_AVAILABLE,
+            "env_vars": {
+                "GOOGLE_CLOUD_PROJECT": os.getenv("GOOGLE_CLOUD_PROJECT", "NOT SET"),
+                "VERTEX_AI_LOCATION": os.getenv("VERTEX_AI_LOCATION", "NOT SET"),
+                "GCP_PROJECT_ID": os.getenv("GCP_PROJECT_ID", "NOT SET"),
+                "GOOGLE_APPLICATION_CREDENTIALS": "SET" if os.getenv("GOOGLE_APPLICATION_CREDENTIALS") else "NOT SET",
+            }
+        },
+        "local_rag": {
+            "lessons_loaded": len(local_rag.lessons) if local_rag else 0,
+            "critical_lessons": len(local_rag.get_critical_lessons()) if local_rag else 0,
+        },
+        "system": {
+            "python_path": os.getenv("PYTHONPATH", "NOT SET"),
+            "working_dir": os.getcwd(),
+        }
     }
 
 
@@ -1522,8 +1561,9 @@ async def root():
     trade_count = len(query_trades("all", limit=1000))
     return {
         "service": "Trading AI RAG Webhook",
-        "version": "3.5.0",  # Query Alpaca API DIRECTLY for real-time P/L
+        "version": "3.6.0",  # Added diagnostics endpoint for Vertex AI debugging
         "vertex_ai_rag_enabled": vertex_rag is not None,
+        "vertex_ai_init_error": vertex_rag_init_error,
         "local_lessons_loaded": len(local_rag.lessons),
         "trades_loaded": trade_count,
         "trade_history_source": "local_json",
@@ -1531,6 +1571,7 @@ async def root():
         "endpoints": {
             "/webhook": "POST - Dialogflow CX webhook (lessons + trades + readiness)",
             "/health": "GET - Health check",
+            "/diagnostics": "GET - Detailed diagnostic info for debugging",
             "/test": "GET - Test lessons query",
             "/test-trades": "GET - Test trade history query",
             "/test-readiness": "GET - Test trading readiness assessment",
