@@ -236,6 +236,38 @@ def check_blog_deployment():
     return results
 
 
+def check_data_integrity():
+    """Verify system_state.json data integrity.
+
+    Added Jan 16, 2026: Validates data consistency to catch
+    sync issues and data corruption early.
+    """
+    results = {"name": "Data Integrity", "status": "UNKNOWN", "details": []}
+
+    try:
+        from src.utils.staleness_guard import validate_system_state
+
+        validation = validate_system_state()
+
+        if validation.is_valid:
+            results["status"] = "OK"
+            results["details"].append("✓ system_state.json passes all validation checks")
+        else:
+            results["status"] = "BROKEN"
+            for error in validation.errors:
+                results["details"].append(f"✗ {error}")
+
+        # Add warnings even if valid
+        for warning in validation.warnings:
+            results["details"].append(f"⚠️ {warning}")
+
+    except Exception as e:
+        results["status"] = "BROKEN"
+        results["details"].append(f"✗ Error: {e}")
+
+    return results
+
+
 def main():
     """Run all health checks and report."""
     print("=" * 60)
@@ -244,6 +276,7 @@ def main():
 
     checks = [
         check_vector_db,  # CRITICAL: Must run first - RAG depends on this
+        check_data_integrity,  # Validate data before other checks
         check_rag_system,
         check_rl_system,
         check_ml_pipeline,
