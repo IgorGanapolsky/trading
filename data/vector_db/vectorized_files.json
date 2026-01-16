@@ -1,104 +1,344 @@
 {
   "files": {
     "rag_knowledge/youtube/transcripts/k2z7K4PLkQg_Building_a_Watchlist_-_Stock_Analysis_Process.md": {
-      "hash": "e31d4dfc1696168bd5a210a25d634a3b",
-      "chunks": 2,
-      "vectorized_at": "2026-01-06T22:11:05.397944"
+      "hash": "3b07cabf9fdc5dda2accffed9cd6b8ff",
+      "metadata": {
+        "source": "k2z7K4PLkQg_Building_a_Watchlist_-_Stock_Analysis_Process",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "moat",
+          "rule #1",
+          "sticker price",
+          "meaning"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/youtube/transcripts/k2z7K4PLkQg_Building_a_Watchlist_-_Stock_Analysis_Process.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.039550",
+      "size": 1241
     },
     "rag_knowledge/youtube/transcripts/Hfq4K1nP4v4_The_Wheel_Strategy_Explained.md": {
-      "hash": "003149dcec5ef473407e398670cc3629",
-      "chunks": 2,
-      "vectorized_at": "2026-01-06T22:11:05.703807"
+      "hash": "3817bbbc9f392cdbdeadf6a466d8d192",
+      "metadata": {
+        "source": "Hfq4K1nP4v4_The_Wheel_Strategy_Explained",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/youtube/transcripts/Hfq4K1nP4v4_The_Wheel_Strategy_Explained.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.040884",
+      "size": 1245
     },
     "rag_knowledge/youtube/transcripts/XyYjVrMbMpI_How_to_Calculate_Sticker_Price_-_Intrinsic_Value.md": {
-      "hash": "02e95b0c177ad60c0d0ccba719f02f98",
-      "chunks": 2,
-      "vectorized_at": "2026-01-06T22:11:06.001025"
+      "hash": "235d2e5d4d0282afbc6097fe7e67ccb3",
+      "metadata": {
+        "source": "XyYjVrMbMpI_How_to_Calculate_Sticker_Price_-_Intrinsic_Value",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "rule #1",
+          "sticker price",
+          "growth rate",
+          "cash flow"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/youtube/transcripts/XyYjVrMbMpI_How_to_Calculate_Sticker_Price_-_Intrinsic_Value.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.041267",
+      "size": 1218
     },
     "rag_knowledge/youtube/transcripts/oLaGH5LVhJ8_Covered_Calls_for_Income_-_Options_Strategy.md": {
-      "hash": "d56cc848f7733fb2f3536f64bde0c65b",
-      "chunks": 2,
-      "vectorized_at": "2026-01-06T22:11:06.283639"
+      "hash": "ff7e8a9ec89649d83ae2ee97794503d0",
+      "metadata": {
+        "source": "oLaGH5LVhJ8_Covered_Calls_for_Income_-_Options_Strategy",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "rule #1",
+          "sticker price"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/youtube/transcripts/oLaGH5LVhJ8_Covered_Calls_for_Income_-_Options_Strategy.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.041892",
+      "size": 1268
     },
     "rag_knowledge/youtube/transcripts/HcZRD3YUKZM_Value_Investing_vs_Growth_Investing.md": {
-      "hash": "c15e8a8396cedeb980ba45a45732582e",
-      "chunks": 2,
-      "vectorized_at": "2026-01-06T22:11:06.573562"
+      "hash": "914a0e4585a125453be25bb22eb54054",
+      "metadata": {
+        "source": "HcZRD3YUKZM_Value_Investing_vs_Growth_Investing",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "rule #1",
+          "wonderful company"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/youtube/transcripts/HcZRD3YUKZM_Value_Investing_vs_Growth_Investing.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.041749",
+      "size": 1371
     },
     "rag_knowledge/youtube/transcripts/QmVKxH2PdCI_Circle_of_Competence_-_Stay_in_Your_Lane.md": {
-      "hash": "e815dfaf64b55cb3dd6de0a335aee379",
-      "chunks": 2,
-      "vectorized_at": "2026-01-06T22:11:06.863371"
+      "hash": "6acd4c06f1b32d3c00a77c8678b7fb13",
+      "metadata": {
+        "source": "QmVKxH2PdCI_Circle_of_Competence_-_Stay_in_Your_Lane",
+        "content_type": "youtube",
+        "concepts": [
+          "rule #1",
+          "circle of competence"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/youtube/transcripts/QmVKxH2PdCI_Circle_of_Competence_-_Stay_in_Your_Lane.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.040994",
+      "size": 1210
     },
     "rag_knowledge/youtube/transcripts/P6dqZMjZxHA_The_Payback_Time_Strategy.md": {
-      "hash": "fc5ad438081794943c13ac502e9fccdf",
-      "chunks": 2,
-      "vectorized_at": "2026-01-06T22:11:07.180955"
+      "hash": "ad2437f1932d087bab4cdc6eaa20544f",
+      "metadata": {
+        "source": "P6dqZMjZxHA_The_Payback_Time_Strategy",
+        "content_type": "youtube",
+        "concepts": [
+          "rule #1",
+          "payback time",
+          "cash flow"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/youtube/transcripts/P6dqZMjZxHA_The_Payback_Time_Strategy.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.041600",
+      "size": 1239
     },
     "rag_knowledge/youtube/transcripts/iRvKG9yFNBo_Debt_and_the_Balance_Sheet.md": {
-      "hash": "7413e6cd225fccb8cf47ff3ecf730e57",
-      "chunks": 2,
-      "vectorized_at": "2026-01-06T22:11:07.498452"
+      "hash": "f10172c8c1a1f419f452f87df32049b9",
+      "metadata": {
+        "source": "iRvKG9yFNBo_Debt_and_the_Balance_Sheet",
+        "content_type": "youtube",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/youtube/transcripts/iRvKG9yFNBo_Debt_and_the_Balance_Sheet.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.040775",
+      "size": 1243
     },
     "rag_knowledge/youtube/transcripts/Z5chrxMuBoo_Rule_1_Dont_Lose_Money.md": {
-      "hash": "85fb5eabb1801bcac74e848c79ee951f",
-      "chunks": 2,
-      "vectorized_at": "2026-01-06T22:11:07.819830"
+      "hash": "6c708d82c1fc8d3b25903c9028a8803a",
+      "metadata": {
+        "source": "Z5chrxMuBoo_Rule_1_Dont_Lose_Money",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "moat",
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/youtube/transcripts/Z5chrxMuBoo_Rule_1_Dont_Lose_Money.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.040192",
+      "size": 1280
     },
     "rag_knowledge/youtube/transcripts/WRF86rX2wXs_Cash_Secured_Puts_Strategy.md": {
-      "hash": "2c6a463d1fba496250e6ec23f81c0292",
-      "chunks": 2,
-      "vectorized_at": "2026-01-06T22:11:08.145552"
+      "hash": "bf3893cd946d25fc5984ae7bb336d10d",
+      "metadata": {
+        "source": "WRF86rX2wXs_Cash_Secured_Puts_Strategy",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/youtube/transcripts/WRF86rX2wXs_Cash_Secured_Puts_Strategy.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.039931",
+      "size": 1260
     },
     "rag_knowledge/youtube/transcripts/K6CkCQU_qkE_The_4_Ms_of_Investing_-_Rule_1_Investing.md": {
-      "hash": "92473a5d69f96cea912db0e4aa8355ad",
-      "chunks": 2,
-      "vectorized_at": "2026-01-06T22:11:08.446140"
+      "hash": "9d50b1f472442cb5508a8ca6874d194e",
+      "metadata": {
+        "source": "K6CkCQU_qkE_The_4_Ms_of_Investing_-_Rule_1_Investing",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "moat",
+          "rule #1",
+          "sticker price",
+          "meaning",
+          "growth rate"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/youtube/transcripts/K6CkCQU_qkE_The_4_Ms_of_Investing_-_Rule_1_Investing.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.040067",
+      "size": 1243
     },
     "rag_knowledge/youtube/transcripts/B9xVBqxTHKI_Understanding_ROIC_-_Return_on_Invested_Capital.md": {
-      "hash": "5497c31d5115fafbb15b4ce407af5f06",
-      "chunks": 2,
-      "vectorized_at": "2026-01-06T22:11:08.742282"
+      "hash": "84229aafadf9eeb915ef48328ebf9d97",
+      "metadata": {
+        "source": "B9xVBqxTHKI_Understanding_ROIC_-_Return_on_Invested_Capital",
+        "content_type": "youtube",
+        "concepts": [
+          "moat",
+          "big five numbers",
+          "rule #1",
+          "roic",
+          "wonderful company"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/youtube/transcripts/B9xVBqxTHKI_Understanding_ROIC_-_Return_on_Invested_Capital.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.042041",
+      "size": 1227
     },
     "rag_knowledge/youtube/transcripts/Rm69dKSsTrA_How_to_Invest_in_Stocks_for_Beginners_2024.md": {
-      "hash": "8ba825d49cec28e1f84ca0325f4619da",
-      "chunks": 2,
-      "vectorized_at": "2026-01-06T22:11:09.057735"
+      "hash": "707fa6aabf4b9b0cc528d517ff4ee388",
+      "metadata": {
+        "source": "Rm69dKSsTrA_How_to_Invest_in_Stocks_for_Beginners_2024",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "moat",
+          "big five numbers",
+          "rule #1",
+          "meaning",
+          "roic",
+          "equity growth",
+          "eps growth",
+          "sales growth",
+          "cash flow",
+          "wonderful company"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/youtube/transcripts/Rm69dKSsTrA_How_to_Invest_in_Stocks_for_Beginners_2024.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.040631",
+      "size": 1297
     },
     "rag_knowledge/youtube/transcripts/9hWMAL0q-xw_How_to_Read_Financial_Statements.md": {
-      "hash": "39ef789e9c15222b46a12ff2d4a298e8",
-      "chunks": 2,
-      "vectorized_at": "2026-01-06T22:11:09.343736"
+      "hash": "203be801644488ad5954e2450d6fc271",
+      "metadata": {
+        "source": "9hWMAL0q-xw_How_to_Read_Financial_Statements",
+        "content_type": "youtube",
+        "concepts": [
+          "big five numbers",
+          "rule #1",
+          "growth rate",
+          "roic",
+          "equity growth",
+          "eps growth",
+          "sales growth",
+          "cash flow"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/youtube/transcripts/9hWMAL0q-xw_How_to_Read_Financial_Statements.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.042339",
+      "size": 1293
     },
     "rag_knowledge/youtube/transcripts/Yp7_oQEGfNc_Market_Crashes_-_Opportunity_of_a_Lifetime.md": {
-      "hash": "d3c1bfc70fed1937d7e33635e108a6b9",
-      "chunks": 2,
-      "vectorized_at": "2026-01-06T22:11:09.641565"
+      "hash": "d7a8ac431cccbea09b7f337da6c4e996",
+      "metadata": {
+        "source": "Yp7_oQEGfNc_Market_Crashes_-_Opportunity_of_a_Lifetime",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "rule #1",
+          "sticker price"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/youtube/transcripts/Yp7_oQEGfNc_Market_Crashes_-_Opportunity_of_a_Lifetime.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.041430",
+      "size": 1220
     },
     "rag_knowledge/youtube/transcripts/dVKjsPQbZNo_Owner_Earnings_Explained_-_Buffetts_Secret_Metric.md": {
-      "hash": "6cc4ad58934e383d1ddc1c78a6d42438",
-      "chunks": 2,
-      "vectorized_at": "2026-01-06T22:11:09.941382"
+      "hash": "8cd1ef5d58359f2e84261d78c4e14c8e",
+      "metadata": {
+        "source": "dVKjsPQbZNo_Owner_Earnings_Explained_-_Buffetts_Secret_Metric",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "rule #1",
+          "sticker price"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/youtube/transcripts/dVKjsPQbZNo_Owner_Earnings_Explained_-_Buffetts_Secret_Metric.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.039761",
+      "size": 1332
     },
     "rag_knowledge/youtube/transcripts/E7t8qPKGMxs_When_to_Sell_a_Stock_-_Exit_Strategy.md": {
-      "hash": "35cedf09ec17fad8b0fb94f1bd27bbfd",
-      "chunks": 2,
-      "vectorized_at": "2026-01-06T22:11:10.248096"
+      "hash": "14619c5395217a6e65205523d018ed58",
+      "metadata": {
+        "source": "E7t8qPKGMxs_When_to_Sell_a_Stock_-_Exit_Strategy",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "moat",
+          "rule #1",
+          "sticker price"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/youtube/transcripts/E7t8qPKGMxs_When_to_Sell_a_Stock_-_Exit_Strategy.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.040326",
+      "size": 1274
     },
     "rag_knowledge/youtube/transcripts/8pPnLzZmKKY_What_is_a_Moat_in_Investing.md": {
-      "hash": "840ded1909051e4f8ea8eaa13bcffba1",
-      "chunks": 2,
-      "vectorized_at": "2026-01-06T22:11:10.537086"
+      "hash": "637d25bab991d1b8bc4598da3e42e51e",
+      "metadata": {
+        "source": "8pPnLzZmKKY_What_is_a_Moat_in_Investing",
+        "content_type": "youtube",
+        "concepts": [
+          "moat",
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/youtube/transcripts/8pPnLzZmKKY_What_is_a_Moat_in_Investing.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.042184",
+      "size": 1223
     },
     "rag_knowledge/youtube/transcripts/gWIi6WLczZA_Warren_Buffett_How_to_Invest_for_Beginners.md": {
-      "hash": "3f1264adf4c5cb3b844c46e20869bf0c",
-      "chunks": 2,
-      "vectorized_at": "2026-01-06T22:11:10.822958"
+      "hash": "5d9298fda6bcf4e9f6411162d85ec9d2",
+      "metadata": {
+        "source": "gWIi6WLczZA_Warren_Buffett_How_to_Invest_for_Beginners",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "moat",
+          "rule #1",
+          "growth rate"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/youtube/transcripts/gWIi6WLczZA_Warren_Buffett_How_to_Invest_for_Beginners.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.040443",
+      "size": 1279
     },
     "rag_knowledge/youtube/transcripts/A9kZ_fVwLLo_Margin_of_Safety_Explained.md": {
-      "hash": "95bd8feb98df45bdd9a68a179fbd45a0",
-      "chunks": 2,
-      "vectorized_at": "2026-01-06T22:11:11.149834"
+      "hash": "fc4eb98edd4661d2dc440c89e01fcdc1",
+      "metadata": {
+        "source": "A9kZ_fVwLLo_Margin_of_Safety_Explained",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "rule #1",
+          "growth rate",
+          "cash flow",
+          "fear and greed"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/youtube/transcripts/A9kZ_fVwLLo_Margin_of_Safety_Explained.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.041105",
+      "size": 1247
     },
     "rag_knowledge/youtube/insights/gemini_notebooklm_analysis_20251228.md": {
       "hash": "aaeb1941e356c338381f7fb9cf50c5f1",
@@ -106,104 +346,316 @@
       "vectorized_at": "2026-01-06T22:11:11.478215"
     },
     "rag_knowledge/youtube/insights/B9xVBqxTHKI_insights.json": {
-      "hash": "7d647f50e09aeaaaf263cd277fa187d9",
-      "chunks": 1,
-      "vectorized_at": "2026-01-06T22:11:11.766963"
+      "hash": "2bb428fc83b787d3b76ea9b8d80241e3",
+      "metadata": {
+        "source": "B9xVBqxTHKI_insights",
+        "content_type": "youtube",
+        "concepts": [
+          "moat",
+          "big five numbers",
+          "rule #1",
+          "roic",
+          "wonderful company"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/youtube/insights/B9xVBqxTHKI_insights.json"
+      },
+      "indexed_at": "2026-01-16T16:45:52.043992",
+      "size": 480
     },
     "rag_knowledge/youtube/insights/iRvKG9yFNBo_insights.json": {
-      "hash": "f45c63b6731d2c9fcae7fa01c9e68332",
-      "chunks": 1,
-      "vectorized_at": "2026-01-06T22:11:12.067055"
+      "hash": "75aaaee7660da9dea9aa474742467631",
+      "metadata": {
+        "source": "iRvKG9yFNBo_insights",
+        "content_type": "youtube",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/youtube/insights/iRvKG9yFNBo_insights.json"
+      },
+      "indexed_at": "2026-01-16T16:45:52.045875",
+      "size": 386
     },
     "rag_knowledge/youtube/insights/QmVKxH2PdCI_insights.json": {
-      "hash": "2836b5fd064596411451886e59083b8a",
-      "chunks": 1,
-      "vectorized_at": "2026-01-06T22:11:12.365928"
+      "hash": "79dc05a15337c194d89ea0106415ca17",
+      "metadata": {
+        "source": "QmVKxH2PdCI_insights",
+        "content_type": "youtube",
+        "concepts": [
+          "rule #1",
+          "circle of competence"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/youtube/insights/QmVKxH2PdCI_insights.json"
+      },
+      "indexed_at": "2026-01-16T16:45:52.044703",
+      "size": 408
     },
     "rag_knowledge/youtube/insights/XyYjVrMbMpI_insights.json": {
-      "hash": "884d13805f821deeb68bb05013fcedaa",
-      "chunks": 1,
-      "vectorized_at": "2026-01-06T22:11:12.654544"
+      "hash": "747efbf0a91175463d0148bf58d0df6e",
+      "metadata": {
+        "source": "XyYjVrMbMpI_insights",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "rule #1",
+          "sticker price"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/youtube/insights/XyYjVrMbMpI_insights.json"
+      },
+      "indexed_at": "2026-01-16T16:45:52.044566",
+      "size": 477
     },
     "rag_knowledge/youtube/insights/WRF86rX2wXs_insights.json": {
-      "hash": "08e55ea198e2efc9bb325f37737c3e33",
-      "chunks": 1,
-      "vectorized_at": "2026-01-06T22:11:12.936124"
+      "hash": "471d280a6a3ae9caec18fb54e7f853dc",
+      "metadata": {
+        "source": "WRF86rX2wXs_insights",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/youtube/insights/WRF86rX2wXs_insights.json"
+      },
+      "indexed_at": "2026-01-16T16:45:52.045579",
+      "size": 519
     },
     "rag_knowledge/youtube/insights/Hfq4K1nP4v4_insights.json": {
-      "hash": "0610ff5ce130cb8239548568260da195",
-      "chunks": 1,
-      "vectorized_at": "2026-01-06T22:11:13.240418"
+      "hash": "7e3d1a505a224def384fca2a98de5fe0",
+      "metadata": {
+        "source": "Hfq4K1nP4v4_insights",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/youtube/insights/Hfq4K1nP4v4_insights.json"
+      },
+      "indexed_at": "2026-01-16T16:45:52.043432",
+      "size": 503
     },
     "rag_knowledge/youtube/insights/k2z7K4PLkQg_insights.json": {
-      "hash": "e33245327f8d6212bbe9371dafd85665",
-      "chunks": 1,
-      "vectorized_at": "2026-01-06T22:11:13.528011"
+      "hash": "b95ba1314c7fa8a9fc47f8af6b5d5253",
+      "metadata": {
+        "source": "k2z7K4PLkQg_insights",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "moat",
+          "rule #1"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/youtube/insights/k2z7K4PLkQg_insights.json"
+      },
+      "indexed_at": "2026-01-16T16:45:52.044267",
+      "size": 438
     },
     "rag_knowledge/youtube/insights/oLaGH5LVhJ8_insights.json": {
-      "hash": "b1e09b188e706d7199f28fde3f2ed160",
-      "chunks": 1,
-      "vectorized_at": "2026-01-06T22:11:13.810736"
+      "hash": "29984a1d5b895f0301e30bc69e4e8a7b",
+      "metadata": {
+        "source": "oLaGH5LVhJ8_insights",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/youtube/insights/oLaGH5LVhJ8_insights.json"
+      },
+      "indexed_at": "2026-01-16T16:45:52.043595",
+      "size": 484
     },
     "rag_knowledge/youtube/insights/9hWMAL0q-xw_insights.json": {
-      "hash": "0309b65547b4203d79478c5ca6b85da7",
-      "chunks": 1,
-      "vectorized_at": "2026-01-06T22:11:14.116385"
+      "hash": "5425cf214bc8fb937f92a1c8ff14d89a",
+      "metadata": {
+        "source": "9hWMAL0q-xw_insights",
+        "content_type": "youtube",
+        "concepts": [
+          "big five numbers",
+          "rule #1"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/youtube/insights/9hWMAL0q-xw_insights.json"
+      },
+      "indexed_at": "2026-01-16T16:45:52.045418",
+      "size": 449
     },
     "rag_knowledge/youtube/insights/dVKjsPQbZNo_insights.json": {
-      "hash": "c6b7c868a1bc2ec0fcef3b2f065c97c1",
-      "chunks": 1,
-      "vectorized_at": "2026-01-06T22:11:14.419936"
+      "hash": "3e8dc5d246c074085efdc300370ea8f8",
+      "metadata": {
+        "source": "dVKjsPQbZNo_insights",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "rule #1"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/youtube/insights/dVKjsPQbZNo_insights.json"
+      },
+      "indexed_at": "2026-01-16T16:45:52.043147",
+      "size": 490
     },
     "rag_knowledge/youtube/insights/A9kZ_fVwLLo_insights.json": {
-      "hash": "184d52e138702cd492a74c26d043f49e",
-      "chunks": 1,
-      "vectorized_at": "2026-01-06T22:11:14.729263"
+      "hash": "ac534a275fded07a31516056116125a4",
+      "metadata": {
+        "source": "A9kZ_fVwLLo_insights",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "rule #1"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/youtube/insights/A9kZ_fVwLLo_insights.json"
+      },
+      "indexed_at": "2026-01-16T16:45:52.043728",
+      "size": 478
     },
     "rag_knowledge/youtube/insights/Rm69dKSsTrA_insights.json": {
-      "hash": "9e2702816a8fac24b5e2bb23203c050a",
-      "chunks": 1,
-      "vectorized_at": "2026-01-06T22:11:15.027692"
+      "hash": "b043bc224d4822449edc231575c06a7a",
+      "metadata": {
+        "source": "Rm69dKSsTrA_insights",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "moat",
+          "big five numbers",
+          "rule #1",
+          "wonderful company"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/youtube/insights/Rm69dKSsTrA_insights.json"
+      },
+      "indexed_at": "2026-01-16T16:45:52.044134",
+      "size": 570
     },
     "rag_knowledge/youtube/insights/gWIi6WLczZA_insights.json": {
-      "hash": "1612efcc656f6170b4bae4e219e15ac5",
-      "chunks": 1,
-      "vectorized_at": "2026-01-06T22:11:15.306864"
+      "hash": "ae517dde5f0ea775acf5f310a0caa163",
+      "metadata": {
+        "source": "gWIi6WLczZA_insights",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "moat",
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/youtube/insights/gWIi6WLczZA_insights.json"
+      },
+      "indexed_at": "2026-01-16T16:45:52.045141",
+      "size": 531
     },
     "rag_knowledge/youtube/insights/P6dqZMjZxHA_insights.json": {
-      "hash": "8d9d2117cf6031fdfb5bc2628398ebe1",
-      "chunks": 1,
-      "vectorized_at": "2026-01-06T22:11:15.600102"
+      "hash": "400517b34b88503ce79f1e98bca5a072",
+      "metadata": {
+        "source": "P6dqZMjZxHA_insights",
+        "content_type": "youtube",
+        "concepts": [
+          "rule #1",
+          "payback time"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/youtube/insights/P6dqZMjZxHA_insights.json"
+      },
+      "indexed_at": "2026-01-16T16:45:52.044405",
+      "size": 409
     },
     "rag_knowledge/youtube/insights/K6CkCQU_qkE_insights.json": {
-      "hash": "d14c9e6acabdd1aacc8f5884d281d21f",
-      "chunks": 1,
-      "vectorized_at": "2026-01-06T22:11:15.897576"
+      "hash": "44438f2af104a4251b496f5d16c5b917",
+      "metadata": {
+        "source": "K6CkCQU_qkE_insights",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "moat",
+          "rule #1"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/youtube/insights/K6CkCQU_qkE_insights.json"
+      },
+      "indexed_at": "2026-01-16T16:45:52.045000",
+      "size": 497
     },
     "rag_knowledge/youtube/insights/HcZRD3YUKZM_insights.json": {
-      "hash": "41564f40d5e6af38f327ec19f54aab0d",
-      "chunks": 1,
-      "vectorized_at": "2026-01-06T22:11:16.182942"
+      "hash": "9396a306df0b9e692f878d070e3f40fa",
+      "metadata": {
+        "source": "HcZRD3YUKZM_insights",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "rule #1",
+          "wonderful company"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/youtube/insights/HcZRD3YUKZM_insights.json"
+      },
+      "indexed_at": "2026-01-16T16:45:52.043860",
+      "size": 551
     },
     "rag_knowledge/youtube/insights/E7t8qPKGMxs_insights.json": {
-      "hash": "c9243404fd48a6552c0ad7d4e7a49c36",
-      "chunks": 1,
-      "vectorized_at": "2026-01-06T22:11:16.476540"
+      "hash": "4976637963882152b9853907d021d215",
+      "metadata": {
+        "source": "E7t8qPKGMxs_insights",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "moat",
+          "rule #1"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/youtube/insights/E7t8qPKGMxs_insights.json"
+      },
+      "indexed_at": "2026-01-16T16:45:52.045716",
+      "size": 492
     },
     "rag_knowledge/youtube/insights/Yp7_oQEGfNc_insights.json": {
-      "hash": "b03d6aba702886e8608780ce00a2b97e",
-      "chunks": 1,
-      "vectorized_at": "2026-01-06T22:11:16.763273"
+      "hash": "86fa5d82af320c357b92c5cfc8313ae8",
+      "metadata": {
+        "source": "Yp7_oQEGfNc_insights",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "rule #1"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/youtube/insights/Yp7_oQEGfNc_insights.json"
+      },
+      "indexed_at": "2026-01-16T16:45:52.045281",
+      "size": 426
     },
     "rag_knowledge/youtube/insights/8pPnLzZmKKY_insights.json": {
-      "hash": "1cb124d0cef5e90e52f9ec7cd0092683",
-      "chunks": 1,
-      "vectorized_at": "2026-01-06T22:11:17.059805"
+      "hash": "fcb35a598bd1e453c56e49f8be5fd79d",
+      "metadata": {
+        "source": "8pPnLzZmKKY_insights",
+        "content_type": "youtube",
+        "concepts": [
+          "moat",
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/youtube/insights/8pPnLzZmKKY_insights.json"
+      },
+      "indexed_at": "2026-01-16T16:45:52.044861",
+      "size": 444
     },
     "rag_knowledge/youtube/insights/Z5chrxMuBoo_insights.json": {
-      "hash": "930848032e3334b6f4b5f9ca2083630d",
-      "chunks": 1,
-      "vectorized_at": "2026-01-06T22:11:17.353447"
+      "hash": "7490ab45dcac32c96e338d69d62c91f8",
+      "metadata": {
+        "source": "Z5chrxMuBoo_insights",
+        "content_type": "youtube",
+        "concepts": [
+          "margin of safety",
+          "moat",
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/youtube/insights/Z5chrxMuBoo_insights.json"
+      },
+      "indexed_at": "2026-01-16T16:45:52.043296",
+      "size": 505
     },
     "rag_knowledge/blogs/phil_town/value-investing_What_is_Value_Investing.md": {
       "hash": "480e09896ddc3f208b6533ed392510bb",
@@ -2062,7 +2514,547 @@
       },
       "indexed_at": "2026-01-14T03:47:41.397717",
       "size": 1562
+    },
+    "rag_knowledge/lessons_learned/ll_193_mandate_violation_manual_handoff_jan14.md": {
+      "hash": "5adb6eb52089217a9d11090630ec2924",
+      "metadata": {
+        "source": "ll_193_mandate_violation_manual_handoff_jan14",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_193_mandate_violation_manual_handoff_jan14.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.046365",
+      "size": 1207
+    },
+    "rag_knowledge/lessons_learned/ll_199_joseph_hogue_2026_outlook_evaluation_jan13.md": {
+      "hash": "cca0c91aef8b725edb7c8cc4a4a8ac5f",
+      "metadata": {
+        "source": "ll_199_joseph_hogue_2026_outlook_evaluation_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "margin of safety",
+          "moat",
+          "rule #1",
+          "meaning"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_199_joseph_hogue_2026_outlook_evaluation_jan13.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.046696",
+      "size": 3262
+    },
+    "rag_knowledge/lessons_learned/ll_196_trade_gateway_rule1_fix_jan13.md": {
+      "hash": "998ee635aecdd142bf14642a8bc67f6f",
+      "metadata": {
+        "source": "ll_196_trade_gateway_rule1_fix_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_196_trade_gateway_rule1_fix_jan13.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.046879",
+      "size": 1412
+    },
+    "rag_knowledge/lessons_learned/ll_197_sofi_ticker_blackout_violation_jan14.md": {
+      "hash": "4aa17e3dfdb3b6adfe964a8d12f0ad5c",
+      "metadata": {
+        "source": "ll_197_sofi_ticker_blackout_violation_jan14",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_197_sofi_ticker_blackout_violation_jan14.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.047088",
+      "size": 1582
+    },
+    "rag_knowledge/lessons_learned/ll_209_math_error_spy_spreads_affordable_jan15.md": {
+      "hash": "1ffdfd579fa38cf9db629da8ec366316",
+      "metadata": {
+        "source": "ll_209_math_error_spy_spreads_affordable_jan15",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_209_math_error_spy_spreads_affordable_jan15.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.047337",
+      "size": 1833
+    },
+    "rag_knowledge/lessons_learned/ll_220_north_star_30month_roadmap_jan15.md": {
+      "hash": "5aff5817d9104a14b346271a393e2aff",
+      "metadata": {
+        "source": "ll_220_north_star_30month_roadmap_jan15",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_220_north_star_30month_roadmap_jan15.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.047900",
+      "size": 15593
+    },
+    "rag_knowledge/lessons_learned/ll_231_failure_analysis_jan16.md": {
+      "hash": "17dfc4b541e23c0dfd7aa05644728cd2",
+      "metadata": {
+        "source": "ll_231_failure_analysis_jan16",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_231_failure_analysis_jan16.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.048082",
+      "size": 1599
+    },
+    "rag_knowledge/lessons_learned/ll_212_north_star_math_roadmap_jan15.md": {
+      "hash": "c03bd550f5c4c929ad79515a43042e94",
+      "metadata": {
+        "source": "ll_212_north_star_math_roadmap_jan15",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_212_north_star_math_roadmap_jan15.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.048398",
+      "size": 5421
+    },
+    "rag_knowledge/lessons_learned/ll_213_trading_system_fixes_jan15.md": {
+      "hash": "07316dce75155832855e4c5db6928f92",
+      "metadata": {
+        "source": "ll_213_trading_system_fixes_jan15",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_213_trading_system_fixes_jan15.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.048637",
+      "size": 3430
+    },
+    "rag_knowledge/lessons_learned/ll_203_100k_account_analysis_jan14.md": {
+      "hash": "6c33a6ef7a3d05d7388a62ab141e4e90",
+      "metadata": {
+        "source": "ll_203_100k_account_analysis_jan14",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_203_100k_account_analysis_jan14.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.048854",
+      "size": 3361
+    },
+    "rag_knowledge/lessons_learned/ll_230_deep_research_small_account_success_jan16.md": {
+      "hash": "ad16c0a94cf28a3da88daa4105abb8d3",
+      "metadata": {
+        "source": "ll_230_deep_research_small_account_success_jan16",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "margin of safety",
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_230_deep_research_small_account_success_jan16.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.049098",
+      "size": 4283
+    },
+    "rag_knowledge/lessons_learned/ll_215_call_credit_spreads_bearish_neutral_jan15.md": {
+      "hash": "f7b3db63a3c01cad39f639d72bfaf50c",
+      "metadata": {
+        "source": "ll_215_call_credit_spreads_bearish_neutral_jan15",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_215_call_credit_spreads_bearish_neutral_jan15.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.049425",
+      "size": 4458
+    },
+    "rag_knowledge/lessons_learned/ll_229_ai_options_traders_research_jan15.md": {
+      "hash": "aff6b6de6b957c44bb02cb5a1b579ce6",
+      "metadata": {
+        "source": "ll_229_ai_options_traders_research_jan15",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_229_ai_options_traders_research_jan15.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.049659",
+      "size": 2778
+    },
+    "rag_knowledge/lessons_learned/ll_226_cto_directive_violations_jan14.md": {
+      "hash": "a3c1afdf186c01245216267c87ed40a3",
+      "metadata": {
+        "source": "ll_226_cto_directive_violations_jan14",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/ll_226_cto_directive_violations_jan14.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.049891",
+      "size": 1839
+    },
+    "rag_knowledge/lessons_learned/ll_223_session_start_verification_jan15.md": {
+      "hash": "51e8aff4b853378e74773202aa8b0bb5",
+      "metadata": {
+        "source": "ll_223_session_start_verification_jan15",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/ll_223_session_start_verification_jan15.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.050054",
+      "size": 1680
+    },
+    "rag_knowledge/lessons_learned/ll_198_git_workflows_evaluation_jan13.md": {
+      "hash": "2cbec2f3a892acd76e6debc29adf5d96",
+      "metadata": {
+        "source": "ll_198_git_workflows_evaluation_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_198_git_workflows_evaluation_jan13.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.050250",
+      "size": 2378
+    },
+    "rag_knowledge/lessons_learned/ll_206_execution_failure_analysis_jan15.md": {
+      "hash": "a3847bc3d817bc91cd16a4f7c089eb9a",
+      "metadata": {
+        "source": "ll_206_execution_failure_analysis_jan15",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_206_execution_failure_analysis_jan15.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.050447",
+      "size": 2627
+    },
+    "rag_knowledge/lessons_learned/LL-191.md": {
+      "hash": "135cd9226c4b1cdd84cbfd040be66420",
+      "metadata": {
+        "source": "LL-191",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/LL-191.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.050678",
+      "size": 1051
+    },
+    "rag_knowledge/lessons_learned/ll_207_income_math_deep_research_jan15.md": {
+      "hash": "1715cd76921e2e6dc78ba37c1d2e04d3",
+      "metadata": {
+        "source": "ll_207_income_math_deep_research_jan15",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_207_income_math_deep_research_jan15.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.050891",
+      "size": 2074
+    },
+    "rag_knowledge/lessons_learned/ll_222_plan_mode_video_evaluation_jan15.md": {
+      "hash": "1c698101527cafaba8bffbd1e30f8225",
+      "metadata": {
+        "source": "ll_222_plan_mode_video_evaluation_jan15",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_222_plan_mode_video_evaluation_jan15.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.051072",
+      "size": 1807
+    },
+    "rag_knowledge/lessons_learned/ll_208_why_5k_failed_100k_succeeded_jan15.md": {
+      "hash": "e830449a71d6df80c9c0ab2af4b144bd",
+      "metadata": {
+        "source": "ll_208_why_5k_failed_100k_succeeded_jan15",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_208_why_5k_failed_100k_succeeded_jan15.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.051254",
+      "size": 1967
+    },
+    "rag_knowledge/lessons_learned/ll_227_rag_failure_100k_lessons_lost_jan14.md": {
+      "hash": "b7b8a72df0898ddcb0d2bdec9100f4b4",
+      "metadata": {
+        "source": "ll_227_rag_failure_100k_lessons_lost_jan14",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/ll_227_rag_failure_100k_lessons_lost_jan14.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.051428",
+      "size": 2031
+    },
+    "rag_knowledge/lessons_learned/ll_200_semantic_caching_evaluation_jan13.md": {
+      "hash": "c180a2bec472ac3a0a439f340f0e0e6d",
+      "metadata": {
+        "source": "ll_200_semantic_caching_evaluation_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_200_semantic_caching_evaluation_jan13.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.051648",
+      "size": 1507
+    },
+    "rag_knowledge/lessons_learned/ll_218_dashboard_100k_bug_jan15.md": {
+      "hash": "c4017e9ba3dac5dae7eeaa0cce909e28",
+      "metadata": {
+        "source": "ll_218_dashboard_100k_bug_jan15",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/ll_218_dashboard_100k_bug_jan15.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.051825",
+      "size": 1529
+    },
+    "rag_knowledge/lessons_learned/ll_195_pr_hygiene_jan14_2026.md": {
+      "hash": "02623d351db68faec3ac6a9277f0a0ff",
+      "metadata": {
+        "source": "ll_195_pr_hygiene_jan14_2026",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_195_pr_hygiene_jan14_2026.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.052003",
+      "size": 1173
+    },
+    "rag_knowledge/lessons_learned/ll_230_pr_hygiene_jan15.md": {
+      "hash": "a0ddfac3b011b51d5fbf194222cbeb99",
+      "metadata": {
+        "source": "ll_230_pr_hygiene_jan15",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/ll_230_pr_hygiene_jan15.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.052156",
+      "size": 1312
+    },
+    "rag_knowledge/lessons_learned/ll_225_dead_code_cleanup_jan13.md": {
+      "hash": "afdd9390afda7857c99dd067c12a8cdb",
+      "metadata": {
+        "source": "ll_225_dead_code_cleanup_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/ll_225_dead_code_cleanup_jan13.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.052332",
+      "size": 646
+    },
+    "rag_knowledge/lessons_learned/ll_002_theta_scaling_plan_dec2025.md": {
+      "hash": "0ebe02b03979a8f8ebc303273590cee6",
+      "metadata": {
+        "source": "ll_002_theta_scaling_plan_dec2025",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_002_theta_scaling_plan_dec2025.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.052506",
+      "size": 1855
+    },
+    "rag_knowledge/lessons_learned/ll_202_sofi_earnings_risk_jan14.md": {
+      "hash": "fe31186a78fd24cbf5988eb297d099a2",
+      "metadata": {
+        "source": "ll_202_sofi_earnings_risk_jan14",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_202_sofi_earnings_risk_jan14.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.052702",
+      "size": 1471
+    },
+    "rag_knowledge/lessons_learned/LL-195.md": {
+      "hash": "c083ddd99a3d3a8734315bec89b6cf73",
+      "metadata": {
+        "source": "LL-195",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/LL-195.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.052885",
+      "size": 841
+    },
+    "rag_knowledge/lessons_learned/ll_214_rolling_strategy_losing_trades_jan15.md": {
+      "hash": "3995c1c583364107678e55576e873f35",
+      "metadata": {
+        "source": "ll_214_rolling_strategy_losing_trades_jan15",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "margin of safety"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_214_rolling_strategy_losing_trades_jan15.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.053175",
+      "size": 2381
+    },
+    "rag_knowledge/lessons_learned/ll_221_orphan_put_crisis_jan15.md": {
+      "hash": "ed788094094da28c8e58b478b55f0271",
+      "metadata": {
+        "source": "ll_221_orphan_put_crisis_jan15",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_221_orphan_put_crisis_jan15.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.053374",
+      "size": 2646
+    },
+    "rag_knowledge/lessons_learned/ll_201_systems_thinking_audiobook_evaluation_jan14.md": {
+      "hash": "65293d581ae4dcb7f78bdd3c33ebfbee",
+      "metadata": {
+        "source": "ll_201_systems_thinking_audiobook_evaluation_jan14",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/ll_201_systems_thinking_audiobook_evaluation_jan14.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.053614",
+      "size": 1616
+    },
+    "rag_knowledge/lessons_learned/ll_211_100k_history_analysis_workflow_jan15.md": {
+      "hash": "6e468f974c83052dc823ee7ee1376e8b",
+      "metadata": {
+        "source": "ll_211_100k_history_analysis_workflow_jan15",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_211_100k_history_analysis_workflow_jan15.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.053813",
+      "size": 1685
+    },
+    "rag_knowledge/lessons_learned/ll_224_agentic_memory_paper_evaluation_jan13.md": {
+      "hash": "3a07d913564c40039bc79fec89efbef7",
+      "metadata": {
+        "source": "ll_224_agentic_memory_paper_evaluation_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_224_agentic_memory_paper_evaluation_jan13.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.054016",
+      "size": 1344
+    },
+    "rag_knowledge/lessons_learned/ll_228_sandbox_git_proxy_limitations_jan14.md": {
+      "hash": "68bab2aaffeb319afe9652f3c40864e2",
+      "metadata": {
+        "source": "ll_228_sandbox_git_proxy_limitations_jan14",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_228_sandbox_git_proxy_limitations_jan14.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.054206",
+      "size": 997
+    },
+    "rag_knowledge/lessons_learned/ll_217_options_risk_monitor_paper_arg_crisis_jan15.md": {
+      "hash": "9e576dfe20827a633864a4fe6c433adc",
+      "metadata": {
+        "source": "ll_217_options_risk_monitor_paper_arg_crisis_jan15",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_217_options_risk_monitor_paper_arg_crisis_jan15.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.054373",
+      "size": 1984
+    },
+    "rag_knowledge/lessons_learned/ll_001_phil_town_valuations_dec2025.md": {
+      "hash": "e0b63c7ac8fffd9fe9af897bb60ad193",
+      "metadata": {
+        "source": "ll_001_phil_town_valuations_dec2025",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "margin of safety",
+          "sticker price"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_001_phil_town_valuations_dec2025.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.054568",
+      "size": 2390
+    },
+    "rag_knowledge/lessons_learned/ll_197_math_reality_check_jan13.md": {
+      "hash": "f83d3c2435bb701b38918e4c392098ee",
+      "metadata": {
+        "source": "ll_197_math_reality_check_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_197_math_reality_check_jan13.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.054816",
+      "size": 1868
+    },
+    "rag_knowledge/lessons_learned/ll_205_jan14_loss_root_cause_analysis.md": {
+      "hash": "8fc5abd6d7e678db63a3f17a826b01d2",
+      "metadata": {
+        "source": "ll_205_jan14_loss_root_cause_analysis",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_205_jan14_loss_root_cause_analysis.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.055030",
+      "size": 4060
+    },
+    "rag_knowledge/lessons_learned/ll_194_cto_autonomous_sofi_exit_decision_jan14.md": {
+      "hash": "342c68a983decec92d4b38acec2d859d",
+      "metadata": {
+        "source": "ll_194_cto_autonomous_sofi_exit_decision_jan14",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "margin of safety",
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_194_cto_autonomous_sofi_exit_decision_jan14.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.055223",
+      "size": 2094
+    },
+    "rag_knowledge/lessons_learned/ll_210_options_position_import_fix_jan14.md": {
+      "hash": "9006274986405aade5a1c9b5f8a6b7d3",
+      "metadata": {
+        "source": "ll_210_options_position_import_fix_jan14",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_210_options_position_import_fix_jan14.md"
+      },
+      "indexed_at": "2026-01-16T16:45:52.055382",
+      "size": 1539
     }
   },
-  "last_updated": "2026-01-14T03:47:41.400198"
+  "last_updated": "2026-01-16T16:45:52.056183"
 }
