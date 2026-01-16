@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-01-16T09:35:04.439788",
+  "last_updated": "2026-01-15T22:35:53.328567",
   "portfolio": {
     "equity": 4989.98,
     "cash": 4260.12
@@ -7,12 +7,11 @@
   "paper_account": {
     "equity": 4989.98,
     "cash": 4260.12,
-    "buying_power": 8919.91,
+    "buying_power": 8919.1,
     "total_pl": -10.020000000000437,
     "total_pl_pct": -0.2,
     "positions_count": 6,
-    "daily_change": 30.799999999999272,
-    "current_equity": 4959.79
+    "daily_change": 30.799999999999272
   },
   "positions": [
     {
@@ -81,17 +80,9 @@
     "total_pl_pct": -0.2,
     "positions_count": 6
   },
-  "trailing_stops": {
-    "last_set": "2026-01-16T10:00:07.890359",
-    "stops_active": 1,
-    "positions_skipped": 0,
-    "value_protected": 500.0,
-    "default_trail_pct": 0.1,
-    "options_trail_pct": 0.2
-  },
   "meta": {
-    "last_updated": "2026-01-16T09:35:04.439788",
-    "last_sync": "2026-01-16T09:35:04.439795",
-    "sync_mode": "paper_account"
+    "last_updated": "2026-01-16T15:19:31.247619",
+    "last_sync": "2026-01-16T15:19:31.247626",
+    "sync_mode": "skipped_no_keys"
   }
 }
