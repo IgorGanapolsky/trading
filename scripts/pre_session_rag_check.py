@@ -151,8 +151,9 @@ def query_rag_for_operational_failures() -> list[dict]:
         from src.rag.lessons_search import LessonsSearch
 
         search = LessonsSearch()
-        stats = search.get_stats()
-        logger.info(f"RAG Stats: {stats['total_chunks']} chunks, {stats['total_files']} files")
+        # FIX Jan 16, 2026: Use count() instead of get_stats() which doesn't exist
+        lesson_count = search.count()
+        logger.info(f"RAG Stats: {lesson_count} lessons loaded")
 
         # Key queries for operational failures
         queries = [
@@ -165,17 +166,19 @@ def query_rag_for_operational_failures() -> list[dict]:
 
         all_results = []
         for query in queries:
-            results = search.query(query, top_k=3)
+            # FIX Jan 16, 2026: Use search() not query(), and correct field names
+            # LessonResult has: id, title, severity, snippet, prevention, file, score
+            results = search.search(query, top_k=3)
             all_results.extend(
                 [
                     {
-                        "lesson_file": r.lesson_file,
-                        "section_title": r.section_title,
-                        "score": r.score,
-                        "content_preview": r.content[:300],
+                        "lesson_file": r.file,  # FIX: was r.lesson_file
+                        "section_title": r.title,  # FIX: was r.section_title
+                        "score": score,  # FIX: score is returned separately in tuple
+                        "content_preview": r.snippet[:300],  # FIX: was r.content
                     }
-                    for r in results
-                    if r.score > 0.3
+                    for r, score in results  # FIX: search() returns (LessonResult, score) tuples
+                    if score > 0.3
                 ]
             )
 
