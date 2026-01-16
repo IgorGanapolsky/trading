@@ -97,5 +97,16 @@
     "pl_pct": -0.21,
     "account_type": "paper",
     "note": "Day 77/90 - Paper: $4,989.69 (-0.21% P/L). 0 positions. Market closed."
+  },
+  {
+    "date": "2026-01-16",
+    "timestamp": "2026-01-16T18:10:00.000000",
+    "equity": 4974.08,
+    "cash": 4382.08,
+    "buying_power": 9003.16,
+    "pl": -25.92,
+    "pl_pct": -0.52,
+    "account_type": "paper",
+    "note": "Day 78/90 - Paper: $4,974.08 (-0.52% total P/L). 8 positions. Daily: +$14.90 (+0.30%)."
   }
 ]
