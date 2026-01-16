@@ -1,33 +1,33 @@
 {
-  "last_updated": "2026-01-16T18:09:06.672125",
+  "last_updated": "2026-01-16T18:14:12.619391+00:00",
   "portfolio": {
-    "equity": 4978.02,
+    "equity": 4974.04,
     "cash": 4302.08
   },
   "paper_account": {
-    "equity": 4978.02,
+    "equity": 4974.04,
     "cash": 4302.08,
-    "buying_power": 9003.1,
-    "total_pl": -21.979999999999563,
-    "total_pl_pct": -0.44,
+    "buying_power": 9003.12,
+    "total_pl": -25.960000000000036,
+    "total_pl_pct": -0.52,
     "positions_count": 8,
-    "daily_change": 18.840000000000146
+    "daily_change": 14.86
   },
   "positions": [
     {
       "symbol": "SPY",
       "qty": 0.576037269,
-      "price": 692.56,
-      "value": 398.940371,
-      "pnl": -1.019628,
+      "price": 692.59,
+      "value": 398.957652,
+      "pnl": -1.002347,
       "type": "stock"
     },
     {
       "symbol": "SPY260220P00565000",
       "qty": 1.0,
-      "price": 0.48,
-      "value": 48.0,
-      "pnl": 1.0,
+      "price": 0.47,
+      "value": 47.0,
+      "pnl": 0.0,
       "type": "option"
     },
     {
@@ -41,9 +41,9 @@
     {
       "symbol": "SPY260220P00595000",
       "qty": 1.0,
-      "price": 0.75,
-      "value": 75.0,
-      "pnl": 2.0,
+      "price": 0.74,
+      "value": 74.0,
+      "pnl": 1.0,
       "type": "option"
     },
     {
@@ -57,43 +57,48 @@
     {
       "symbol": "SPY260220P00653000",
       "qty": 1.0,
-      "price": 2.71,
-      "value": 271.0,
-      "pnl": -8.0,
+      "price": 2.69,
+      "value": 269.0,
+      "pnl": -10.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00658000",
       "qty": -1.0,
-      "price": 3.16,
-      "value": -316.0,
-      "pnl": 5.0,
+      "price": 3.14,
+      "value": -314.0,
+      "pnl": 7.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00660000",
       "qty": 1.0,
-      "price": 3.33,
-      "value": 333.0,
-      "pnl": 26.0,
+      "price": 3.31,
+      "value": 331.0,
+      "pnl": 24.0,
       "type": "option"
     }
   ],
   "trades": {
     "last_trade_date": "2026-01-16",
-    "today_trades": "synced",
+    "today_trades": 0,
     "total_trades_today": 0,
     "last_trade_symbol": "SPY"
   },
   "risk": {
     "status": "WARNING - NEGATIVE P/L",
-    "total_pl": -21.979999999999563,
-    "unrealized_pl": 18.980372
+    "total_pl": -25.960000000000036,
+    "unrealized_pl": 14.997653
   },
   "account": {
-    "current_equity": 4978.02,
-    "total_pl": -21.979999999999563,
-    "total_pl_pct": -0.44,
+    "current_equity": 4974.04,
+    "total_pl": -25.960000000000036,
+    "total_pl_pct": -0.52,
     "positions_count": 8
+  },
+  "meta": {
+    "last_updated": "2026-01-16T18:14:12.619411+00:00",
+    "trade_sync": "alpaca_api",
+    "sync_frequency_minutes": 5
   }
 }
