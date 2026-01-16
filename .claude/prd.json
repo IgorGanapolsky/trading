@@ -58,16 +58,16 @@
       "category": "learning",
       "title": "Query RAG for pending lessons",
       "description": "Check Vertex AI RAG for any unimplemented lessons",
-      "passes": false,
+      "passes": true,
       "priority": 6,
       "acceptance_criteria": "RAG lessons reviewed"
     }
   ],
   "completed_tasks": [],
   "metadata": {
-    "total_iterations": 0,
-    "tasks_completed_this_session": 0,
-    "last_task_completed": null,
-    "last_iteration_at": null
+    "total_iterations": 53,
+    "tasks_completed_this_session": 6,
+    "last_task_completed": "T006",
+    "last_iteration_at": "2026-01-16T04:20:00Z"
   }
 }

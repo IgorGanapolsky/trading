@@ -14,6 +14,7 @@ Version History:
 - v3.3.0 Jan 13, 2026: Fix direct P/L queries - conversational "How much money" answers
 - v3.4.0 Jan 14, 2026: Fix stale P/L data - use GitHub API instead of raw URL (bypass CDN cache)
 - v3.5.0 Jan 15, 2026: Query Alpaca API DIRECTLY for real-time P/L (fixes stale data issue)
+- v3.5.1 Jan 16, 2026: Force redeployment to ensure Alpaca credentials are loaded
 
 Architecture (v3.0.0):
 - Primary: Vertex AI RAG (cloud semantic search with text-embedding-004)
@@ -192,7 +193,11 @@ def query_alpaca_api_direct() -> dict | None:
     api_secret = os.environ.get("ALPACA_PAPER_TRADING_5K_API_SECRET", "")
 
     if not api_key or not api_secret:
-        logger.warning("Alpaca API credentials not available in environment")
+        logger.warning(
+            f"Alpaca API credentials not available in environment. "
+            f"API_KEY present: {bool(api_key)}, API_SECRET present: {bool(api_secret)}. "
+            f"Env vars: {[k for k in os.environ if 'ALPACA' in k]}"
+        )
         return None
 
     try:
