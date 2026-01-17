@@ -18,7 +18,7 @@ WEBHOOK_URL = "https://trading-dialogflow-webhook-cqlewkvzdq-uc.a.run.app"
 def test_webhook_health():
     """Verify webhook is healthy and has trade data loaded."""
     print("🔍 Testing webhook health endpoint...")
-    
+
     try:
         req = urllib.request.Request(
             f"{WEBHOOK_URL}/health",
@@ -26,12 +26,12 @@ def test_webhook_health():
         )
         with urllib.request.urlopen(req, timeout=30) as response:
             data = json.loads(response.read().decode("utf-8"))
-        
+
         print(f"  Status: {data.get('status')}")
         print(f"  Trades Loaded: {data.get('trades_loaded')}")
         print(f"  Trade Source: {data.get('trade_history_source')}")
         print(f"  Vertex AI: {data.get('vertex_ai_rag_enabled')}")
-        
+
         # CRITICAL: Verify trades are loaded
         # This catches the LL-230 bug where Cloud Run couldn't find trade files
         trades_loaded = data.get("trades_loaded", 0)
@@ -40,14 +40,14 @@ def test_webhook_health():
             print("   This indicates a data source mismatch (see LL-230)")
             print("   Webhook should read from system_state.json -> trade_history")
             return False
-        
+
         if data.get("status") != "healthy":
             print(f"\n❌ FAIL: status={data.get('status')}")
             return False
-        
+
         print(f"\n✅ PASS: Webhook healthy with {trades_loaded} trades loaded")
         return True
-        
+
     except Exception as e:
         print(f"\n❌ FAIL: Could not reach webhook: {e}")
         return False
@@ -56,13 +56,15 @@ def test_webhook_health():
 def test_webhook_trade_query():
     """Verify webhook can respond to trade queries."""
     print("\n🔍 Testing webhook trade query...")
-    
+
     try:
-        payload = json.dumps({
-            "text": "show me recent trades",
-            "sessionInfo": {"session": "test-session"}
-        }).encode("utf-8")
-        
+        payload = json.dumps(
+            {
+                "text": "show me recent trades",
+                "sessionInfo": {"session": "test-session"},
+            }
+        ).encode("utf-8")
+
         req = urllib.request.Request(
             f"{WEBHOOK_URL}/webhook",
             data=payload,
@@ -73,29 +75,29 @@ def test_webhook_trade_query():
         )
         with urllib.request.urlopen(req, timeout=30) as response:
             data = json.loads(response.read().decode("utf-8"))
-        
+
         # Check response structure
         messages = data.get("fulfillmentResponse", {}).get("messages", [])
         if not messages:
             print("❌ FAIL: No messages in response")
             return False
-        
+
         text = messages[0].get("text", {}).get("text", [""])[0]
         if not text:
             print("❌ FAIL: Empty response text")
             return False
-        
+
         # Should contain trade info, not "No trades found"
         if "No trades found" in text:
             print("❌ FAIL: Webhook returned 'No trades found'")
             print(f"   Response: {text[:200]}...")
             return False
-        
+
         print(f"  Response length: {len(text)} chars")
         print(f"  Preview: {text[:100]}...")
         print("\n✅ PASS: Webhook returned trade data")
         return True
-        
+
     except Exception as e:
         print(f"\n❌ FAIL: Trade query failed: {e}")
         return False
@@ -106,22 +108,22 @@ def main():
     print("=" * 60)
     print("WEBHOOK INTEGRATION TESTS")
     print("=" * 60)
-    
+
     results = []
     results.append(("Health Check", test_webhook_health()))
     results.append(("Trade Query", test_webhook_trade_query()))
-    
+
     print("\n" + "=" * 60)
     print("RESULTS")
     print("=" * 60)
-    
+
     all_passed = True
     for name, passed in results:
         status = "✅ PASS" if passed else "❌ FAIL"
         print(f"  {status}: {name}")
         if not passed:
             all_passed = False
-    
+
     print()
     if all_passed:
         print("✅ All integration tests passed!")
