@@ -129,8 +129,10 @@ python scripts/validate_env_keys.py  # validate API key consistency
 | `data/system_state.json` | **CANONICAL** trade data | sync-system-state.yml, trade_sync.py |
 | `data/trades_*.json` | **DEPRECATED** | Legacy, do not use |
 
+See `docs/ARCHITECTURE.md` for detailed architecture documentation.
+
 ### Monitoring
-- CI workflow `webhook-health-check.yml` validates `trades_loaded > 0` after every deployment
+- CI workflow `webhook-integration-test.yml` validates `trades_loaded > 0` after every deployment
 - Failure = data source mismatch, see LL-230
 ## What NOT To Do
 - Don't create unnecessary documentation
@@ -144,4 +146,5 @@ Trust the hooks. They work.
 ## $5K Account Priority
 Use `ALPACA_PAPER_TRADING_5K_API_KEY` before `ALPACA_API_KEY`.
 All code must use `get_alpaca_credentials()` from `src/utils/alpaca_client.py`.
+
 
