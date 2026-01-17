@@ -7,12 +7,11 @@ Tests for Trade Sync Module.
 Tests:
 1. TradeSync initialization
 2. Sync to Vertex AI RAG
-3. Sync to local JSON
+3. Sync to system_state.json (single source of truth)
 4. Trade outcome calculation
-5. Lesson creation
-6. Trade history queries
+5. Trade history queries
 
-Updated: Jan 7, 2026 - Removed ChromaDB tests (CEO directive)
+Updated: Jan 17, 2026 - Architecture fix: system_state.json replaces trades_*.json
 """
 
 import json
@@ -63,75 +62,86 @@ class TestTradeSyncInitialization:
             assert sync is not None
 
 
-class TestSyncToLocalJSON:
-    """Test local JSON sync functionality."""
+class TestSyncToSystemState:
+    """Test system_state.json sync functionality (single source of truth)."""
 
-    def test_sync_to_local_json(self):
-        """Should save trade to local JSON file."""
+    def test_sync_to_system_state(self):
+        """Should save trade to system_state.json -> trade_history."""
         from src.observability.trade_sync import TradeSync
 
-        sync = TradeSync()
-
         with tempfile.TemporaryDirectory() as tmpdir:
-            # Override DATA_DIR for test
             import src.observability.trade_sync as module
 
             original_data_dir = module.DATA_DIR
+            original_state_file = module.SYSTEM_STATE_FILE
             module.DATA_DIR = Path(tmpdir)
+            module.SYSTEM_STATE_FILE = Path(tmpdir) / "system_state.json"
 
-            result = sync._sync_to_local_json(
+            sync = TradeSync()
+
+            result = sync._sync_to_system_state(
                 {
+                    "id": "test-123",
                     "symbol": "SPY",
                     "side": "buy",
-                    "qty": 10,
-                    "price": 450.0,
+                    "qty": "10",
+                    "price": "450.0",
                     "strategy": "momentum",
                     "pnl": 50.0,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "filled_at": datetime.now(timezone.utc).isoformat(),
                 }
             )
 
             # Restore
             module.DATA_DIR = original_data_dir
+            module.SYSTEM_STATE_FILE = original_state_file
 
             assert result is True
 
-    def test_sync_to_local_json_appends(self):
-        """Should append to existing JSON file."""
+    def test_sync_to_system_state_appends(self):
+        """Should append to existing trade_history in system_state.json."""
         from src.observability.trade_sync import TradeSync
-
-        sync = TradeSync()
 
         with tempfile.TemporaryDirectory() as tmpdir:
             import src.observability.trade_sync as module
 
             original_data_dir = module.DATA_DIR
+            original_state_file = module.SYSTEM_STATE_FILE
             module.DATA_DIR = Path(tmpdir)
+            state_file = Path(tmpdir) / "system_state.json"
+            module.SYSTEM_STATE_FILE = state_file
 
-            # Create initial file
-            today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-            trades_file = Path(tmpdir) / f"trades_{today}.json"
-            trades_file.write_text('[{"symbol": "EXISTING"}]')
+            # Create initial system_state.json with existing trade
+            state_file.write_text(json.dumps({
+                "trade_history": [{"id": "existing", "symbol": "EXISTING"}],
+                "trades_loaded": 1
+            }))
 
-            result = sync._sync_to_local_json(
+            sync = TradeSync()
+
+            result = sync._sync_to_system_state(
                 {
+                    "id": "new-123",
                     "symbol": "NEW",
                     "side": "buy",
-                    "qty": 5,
-                    "price": 100.0,
+                    "qty": "5",
+                    "price": "100.0",
                     "strategy": "test",
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "filled_at": datetime.now(timezone.utc).isoformat(),
                 }
             )
 
             # Verify both trades exist
-            with open(trades_file) as f:
-                trades = json.load(f)
+            with open(state_file) as f:
+                state = json.load(f)
 
             module.DATA_DIR = original_data_dir
+            module.SYSTEM_STATE_FILE = original_state_file
 
             assert result is True
-            assert len(trades) == 2
+            assert len(state["trade_history"]) == 2
+            # New trade should be first (most recent)
+            assert state["trade_history"][0]["symbol"] == "NEW"
 
 
 class TestSyncTrade:
@@ -145,7 +155,9 @@ class TestSyncTrade:
             import src.observability.trade_sync as module
 
             original_data_dir = module.DATA_DIR
+            original_state_file = module.SYSTEM_STATE_FILE
             module.DATA_DIR = Path(tmpdir)
+            module.SYSTEM_STATE_FILE = Path(tmpdir) / "system_state.json"
 
             sync = TradeSync()
 
@@ -160,9 +172,10 @@ class TestSyncTrade:
             )
 
             module.DATA_DIR = original_data_dir
+            module.SYSTEM_STATE_FILE = original_state_file
 
-            # At minimum, local_json should succeed
-            assert results["local_json"] is True
+            # At minimum, system_state should succeed
+            assert results["system_state"] is True
             # Results should include vertex_rag (may be False if not configured)
             assert "vertex_rag" in results
 
@@ -174,7 +187,9 @@ class TestSyncTrade:
             import src.observability.trade_sync as module
 
             original_data_dir = module.DATA_DIR
+            original_state_file = module.SYSTEM_STATE_FILE
             module.DATA_DIR = Path(tmpdir)
+            module.SYSTEM_STATE_FILE = Path(tmpdir) / "system_state.json"
 
             sync = TradeSync()
 
@@ -189,8 +204,9 @@ class TestSyncTrade:
             )
 
             module.DATA_DIR = original_data_dir
+            module.SYSTEM_STATE_FILE = original_state_file
 
-            assert results["local_json"] is True
+            assert results["system_state"] is True
 
 
 class TestSyncTradeOutcome:
@@ -204,9 +220,9 @@ class TestSyncTradeOutcome:
             import src.observability.trade_sync as module
 
             original_data_dir = module.DATA_DIR
-            original_lessons_dir = module.LESSONS_DIR
+            original_state_file = module.SYSTEM_STATE_FILE
             module.DATA_DIR = Path(tmpdir)
-            module.LESSONS_DIR = Path(tmpdir) / "lessons"
+            module.SYSTEM_STATE_FILE = Path(tmpdir) / "system_state.json"
 
             sync = TradeSync()
 
@@ -221,10 +237,10 @@ class TestSyncTradeOutcome:
             )
 
             module.DATA_DIR = original_data_dir
-            module.LESSONS_DIR = original_lessons_dir
+            module.SYSTEM_STATE_FILE = original_state_file
 
             # P/L should be (460-450)*10 = 100
-            assert results["local_json"] is True
+            assert results["system_state"] is True
 
     def test_sync_trade_outcome_long_loss(self):
         """Should calculate P/L for losing long trade."""
@@ -234,9 +250,9 @@ class TestSyncTradeOutcome:
             import src.observability.trade_sync as module
 
             original_data_dir = module.DATA_DIR
-            original_lessons_dir = module.LESSONS_DIR
+            original_state_file = module.SYSTEM_STATE_FILE
             module.DATA_DIR = Path(tmpdir)
-            module.LESSONS_DIR = Path(tmpdir) / "lessons"
+            module.SYSTEM_STATE_FILE = Path(tmpdir) / "system_state.json"
 
             sync = TradeSync()
 
@@ -250,10 +266,10 @@ class TestSyncTradeOutcome:
             )
 
             module.DATA_DIR = original_data_dir
-            module.LESSONS_DIR = original_lessons_dir
+            module.SYSTEM_STATE_FILE = original_state_file
 
             # P/L should be (170-180)*10 = -100
-            assert results["local_json"] is True
+            assert results["system_state"] is True
 
     def test_sync_trade_outcome_short_win(self):
         """Should calculate P/L for winning short trade."""
@@ -263,9 +279,9 @@ class TestSyncTradeOutcome:
             import src.observability.trade_sync as module
 
             original_data_dir = module.DATA_DIR
-            original_lessons_dir = module.LESSONS_DIR
+            original_state_file = module.SYSTEM_STATE_FILE
             module.DATA_DIR = Path(tmpdir)
-            module.LESSONS_DIR = Path(tmpdir) / "lessons"
+            module.SYSTEM_STATE_FILE = Path(tmpdir) / "system_state.json"
 
             sync = TradeSync()
 
@@ -279,59 +295,65 @@ class TestSyncTradeOutcome:
             )
 
             module.DATA_DIR = original_data_dir
-            module.LESSONS_DIR = original_lessons_dir
+            module.SYSTEM_STATE_FILE = original_state_file
 
             # P/L should be (250-240)*5 = 50
-            assert results["local_json"] is True
+            assert results["system_state"] is True
 
 
 class TestGetTradeHistory:
-    """Test trade history queries."""
+    """Test trade history queries from system_state.json."""
 
     def test_get_trade_history_empty(self):
-        """Should return empty list when no trades in directory."""
+        """Should return empty list when no trades in system_state.json."""
         from src.observability.trade_sync import TradeSync
 
         with tempfile.TemporaryDirectory() as tmpdir:
             import src.observability.trade_sync as module
 
             original_data_dir = module.DATA_DIR
+            original_state_file = module.SYSTEM_STATE_FILE
             module.DATA_DIR = Path(tmpdir)
+            module.SYSTEM_STATE_FILE = Path(tmpdir) / "system_state.json"
 
             sync = TradeSync()
             history = sync.get_trade_history(symbol="NONEXISTENT", limit=10)
 
             module.DATA_DIR = original_data_dir
+            module.SYSTEM_STATE_FILE = original_state_file
 
             assert isinstance(history, list)
             assert history == []
 
     def test_get_trade_history_with_data(self):
-        """Should return trades from JSON files."""
+        """Should return trades from system_state.json -> trade_history."""
         from src.observability.trade_sync import TradeSync
 
         with tempfile.TemporaryDirectory() as tmpdir:
             import src.observability.trade_sync as module
 
             original_data_dir = module.DATA_DIR
+            original_state_file = module.SYSTEM_STATE_FILE
             module.DATA_DIR = Path(tmpdir)
+            state_file = Path(tmpdir) / "system_state.json"
+            module.SYSTEM_STATE_FILE = state_file
 
-            # Create some test data
-            today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-            trades_file = Path(tmpdir) / f"trades_{today}.json"
-            trades_file.write_text(
-                json.dumps(
-                    [
-                        {"symbol": "SPY", "side": "buy", "qty": 10, "price": 450.0},
-                        {"symbol": "AAPL", "side": "sell", "qty": 5, "price": 180.0},
-                    ]
-                )
+            # Create system_state.json with trade_history
+            state_file.write_text(
+                json.dumps({
+                    "trade_history": [
+                        {"symbol": "SPY", "side": "buy", "qty": "10", "price": "450.0"},
+                        {"symbol": "AAPL", "side": "sell", "qty": "5", "price": "180.0"},
+                    ],
+                    "trades_loaded": 2
+                })
             )
 
             sync = TradeSync()
             history = sync.get_trade_history(limit=10)
 
             module.DATA_DIR = original_data_dir
+            module.SYSTEM_STATE_FILE = original_state_file
 
             assert isinstance(history, list)
             assert len(history) == 2
@@ -344,25 +366,28 @@ class TestGetTradeHistory:
             import src.observability.trade_sync as module
 
             original_data_dir = module.DATA_DIR
+            original_state_file = module.SYSTEM_STATE_FILE
             module.DATA_DIR = Path(tmpdir)
+            state_file = Path(tmpdir) / "system_state.json"
+            module.SYSTEM_STATE_FILE = state_file
 
-            # Create test data
-            today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-            trades_file = Path(tmpdir) / f"trades_{today}.json"
-            trades_file.write_text(
-                json.dumps(
-                    [
+            # Create system_state.json with trade_history
+            state_file.write_text(
+                json.dumps({
+                    "trade_history": [
                         {"symbol": "SPY", "side": "buy"},
                         {"symbol": "AAPL", "side": "sell"},
                         {"symbol": "SPY", "side": "sell"},
-                    ]
-                )
+                    ],
+                    "trades_loaded": 3
+                })
             )
 
             sync = TradeSync()
             history = sync.get_trade_history(symbol="SPY", limit=10)
 
             module.DATA_DIR = original_data_dir
+            module.SYSTEM_STATE_FILE = original_state_file
 
             assert len(history) == 2
             for trade in history:
@@ -397,7 +422,9 @@ class TestConvenienceFunction:
             import src.observability.trade_sync as module
 
             original_data_dir = module.DATA_DIR
+            original_state_file = module.SYSTEM_STATE_FILE
             module.DATA_DIR = Path(tmpdir)
+            module.SYSTEM_STATE_FILE = Path(tmpdir) / "system_state.json"
             module._trade_sync = None  # Reset singleton
 
             results = sync_trade(
@@ -409,9 +436,10 @@ class TestConvenienceFunction:
             )
 
             module.DATA_DIR = original_data_dir
+            module.SYSTEM_STATE_FILE = original_state_file
 
             assert isinstance(results, dict)
-            assert "local_json" in results
+            assert "system_state" in results
 
 
 class TestIntegration:

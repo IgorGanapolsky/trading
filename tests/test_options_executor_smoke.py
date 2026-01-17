@@ -259,6 +259,8 @@ class TestOptionsExecutorValidation:
     @patch("src.trading.options_executor.AlpacaTrader")
     def test_validate_order_approves_valid(self, mock_trader, mock_monitor, mock_client):
         """Should approve valid strategy within risk limits."""
+        from datetime import timedelta
+
         from src.trading.options_executor import OptionLeg, OptionsExecutor, OptionsStrategy
 
         executor = OptionsExecutor.__new__(OptionsExecutor)
@@ -269,11 +271,14 @@ class TestOptionsExecutorValidation:
         executor.MIN_DTE = 30
         executor.MAX_DTE = 60
 
-        # Create a valid strategy
+        # Create a valid strategy with expiration 45 DTE from today
+        # This ensures it's always within the 30-60 DTE range regardless of test date
+        expiration_date = date.today() + timedelta(days=45)
+
         leg = OptionLeg(
-            symbol="SPY260215C00600000",
+            symbol=f"SPY{expiration_date.strftime('%y%m%d')}C00600000",
             strike=600.0,
-            expiration=date(2026, 2, 15),  # ~30 DTE from Jan 13
+            expiration=expiration_date,
             option_type="call",
             side="sell",
             quantity=1,
