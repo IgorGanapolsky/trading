@@ -80,7 +80,8 @@ class TradeSync:
         }
 
         trade_data = {
-            "id": order_id or f"local-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
+            "id": order_id
+            or f"local-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
             "symbol": symbol,
             "side": side,
             "qty": str(qty),
@@ -134,7 +135,7 @@ class TradeSync:
     def _sync_to_system_state(self, trade_data: dict[str, Any]) -> bool:
         """
         Save trade to system_state.json -> trade_history.
-        
+
         This is the SINGLE SOURCE OF TRUTH for trade data.
         The Dialogflow webhook reads from this file (locally or via GitHub API).
         """
@@ -219,10 +220,12 @@ class TradeSync:
 
         return results
 
-    def get_trade_history(self, symbol: Optional[str] = None, limit: int = 100) -> list[dict]:
+    def get_trade_history(
+        self, symbol: Optional[str] = None, limit: int = 100
+    ) -> list[dict]:
         """
         Query trade history from system_state.json (single source of truth).
-        
+
         DEPRECATED: No longer reads from trades_*.json files.
         """
         trades = []
@@ -230,7 +233,7 @@ class TradeSync:
             if SYSTEM_STATE_FILE.exists():
                 with open(SYSTEM_STATE_FILE) as f:
                     state = json.load(f)
-                
+
                 trade_history = state.get("trade_history", [])
                 for trade in trade_history:
                     if symbol and trade.get("symbol") != symbol:
