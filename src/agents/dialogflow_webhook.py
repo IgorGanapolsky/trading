@@ -17,6 +17,7 @@ Version History:
 - v3.5.1 Jan 16, 2026: Force redeployment to ensure Alpaca credentials are loaded
 - v3.5.2 Jan 16, 2026: Fix Vertex AI RAG
 - v3.7.0 Jan 16, 2026: Fix trades_loaded=0 - check system_state.json for trade_history - requires roles/aiplatform.user on service account
+- v3.9.0 Jan 16, 2026: Fix trade data source priority - query_trades() now checks system_state.json FIRST (Alpaca source of truth), trades_*.json as fallback
 
 Architecture (v3.0.0):
 - Primary: Vertex AI RAG (cloud semantic search with text-embedding-004)
@@ -73,7 +74,7 @@ WEBHOOK_AUTH_TOKEN = os.environ.get("DIALOGFLOW_WEBHOOK_TOKEN", "")
 app = FastAPI(
     title="Trading AI RAG Webhook",
     description="Dialogflow CX webhook for lessons AND trade history queries",
-    version="3.8.0",  # Query Alpaca API DIRECTLY for real-time P/L
+    version="3.9.0",  # Fix trade data source priority - system_state.json first
 )
 
 # Initialize rate limiter if available
@@ -1150,7 +1151,16 @@ def format_lessons_response(lessons: list, query: str) -> str:
 
 
 def query_trades(query: str, limit: int = 10) -> list[dict]:
-    """Query trade history from local JSON files OR GitHub API."""
+    """Query trade history from system_state.json (Alpaca source of truth).
+
+    FIX Jan 16 2026: Reversed priority order.
+    - OLD: trades_*.json first, system_state.json fallback
+    - NEW: system_state.json FIRST (synced from Alpaca), trades_*.json fallback
+
+    The bug: On Cloud Run, trades_*.json files don't exist. The webhook was
+    checking them first and finding nothing. system_state.json has the real
+    trade_history synced directly from Alpaca API.
+    """
     import json
 
     import requests
@@ -1159,71 +1169,97 @@ def query_trades(query: str, limit: int = 10) -> list[dict]:
     data_dir = project_root / "data"
 
     try:
-        # First try trades_*.json files
-        for trades_file in sorted(data_dir.glob("trades_*.json"), reverse=True):
-            if len(trades) >= limit:
-                break
+        # PRIORITY 1: system_state.json - source of truth from Alpaca
+        # Try local first, then GitHub API
+        state = None
+        state_path = data_dir / "system_state.json"
 
-            with open(trades_file) as f:
-                file_trades = json.load(f)
-                for trade in file_trades:
-                    pnl = trade.get("pnl") or 0
-                    outcome = "profitable" if pnl > 0 else ("loss" if pnl < 0 else "breakeven")
-                    document = (
-                        f"Trade: {trade.get('side', '').upper()} {trade.get('qty', 0)} "
-                        f"{trade.get('symbol', '')} at ${trade.get('price', 0):.2f} "
-                        f"using {trade.get('strategy', '')} strategy. "
-                        f"Outcome: {outcome} with P/L ${pnl:.2f}. "
-                        f"Date: {trade.get('timestamp', '')[:10]}"
-                    )
-                    trades.append(
-                        {
-                            "document": document,
-                            "metadata": {
-                                "symbol": trade.get("symbol", "UNKNOWN"),
-                                "side": trade.get("side", ""),
-                                "strategy": trade.get("strategy", ""),
-                                "pnl": pnl,
-                                "outcome": outcome,
-                                "timestamp": trade.get("timestamp", ""),
-                            },
-                        }
-                    )
-                    if len(trades) >= limit:
-                        break
+        # Try local system_state.json
+        if state_path.exists():
+            try:
+                with open(state_path) as f:
+                    state = json.load(f)
+                logger.info("Loaded system_state.json from local file")
+            except Exception as e:
+                logger.warning(f"Failed to read local system_state.json: {e}")
 
-        # FIX Jan 16 2026: If no local trades, fetch from GitHub API
-        if not trades:
+        # Fallback to GitHub API if local not available
+        if not state:
             try:
                 github_url = "https://api.github.com/repos/IgorGanapolsky/trading/contents/data/system_state.json"
                 resp = requests.get(github_url, timeout=10)
                 if resp.status_code == 200:
                     import base64
-
                     content = base64.b64decode(resp.json()["content"]).decode("utf-8")
                     state = json.loads(content)
-                    trade_history = state.get("trade_history", [])
-                    for trade in trade_history[:limit]:
+                    logger.info("Loaded system_state.json from GitHub API")
+            except Exception as e:
+                logger.warning(f"GitHub API system_state.json fetch failed: {e}")
+
+        # Extract trade_history from system_state.json
+        if state:
+            trade_history = state.get("trade_history", [])
+            for trade in trade_history[:limit]:
+                # Clean up side string (remove "OrderSide." prefix)
+                side_raw = str(trade.get("side", ""))
+                side_clean = side_raw.replace("OrderSide.", "").upper()
+
+                document = (
+                    f"Trade: {side_clean} {trade.get('qty', 0)} "
+                    f"{trade.get('symbol', '')} at ${float(trade.get('price', 0)):.2f}. "
+                    f"Filled: {str(trade.get('filled_at', ''))[:10] if trade.get('filled_at') else 'N/A'}"
+                )
+                trades.append(
+                    {
+                        "document": document,
+                        "metadata": {
+                            "symbol": trade.get("symbol", "UNKNOWN"),
+                            "side": side_clean,
+                            "qty": trade.get("qty", 0),
+                            "price": trade.get("price", 0),
+                            "filled_at": trade.get("filled_at", ""),
+                        },
+                    }
+                )
+            if trades:
+                logger.info(f"Loaded {len(trades)} trades from system_state.json (Alpaca source)")
+
+        # PRIORITY 2: Fallback to trades_*.json files (legacy/local sync)
+        if not trades:
+            logger.info("No trades in system_state.json, trying trades_*.json files")
+            for trades_file in sorted(data_dir.glob("trades_*.json"), reverse=True):
+                if len(trades) >= limit:
+                    break
+
+                with open(trades_file) as f:
+                    file_trades = json.load(f)
+                    for trade in file_trades:
+                        pnl = trade.get("pnl") or 0
+                        outcome = "profitable" if pnl > 0 else ("loss" if pnl < 0 else "breakeven")
                         document = (
-                            f"Trade: {str(trade.get('side', '')).upper()} {trade.get('qty', 0)} "
-                            f"{trade.get('symbol', '')} at ${float(trade.get('price', 0)):.2f}. "
-                            f"Filled: {str(trade.get('filled_at', ''))[:10] if trade.get('filled_at') else 'N/A'}"
+                            f"Trade: {trade.get('side', '').upper()} {trade.get('qty', 0)} "
+                            f"{trade.get('symbol', '')} at ${trade.get('price', 0):.2f} "
+                            f"using {trade.get('strategy', '')} strategy. "
+                            f"Outcome: {outcome} with P/L ${pnl:.2f}. "
+                            f"Date: {trade.get('timestamp', '')[:10]}"
                         )
                         trades.append(
                             {
                                 "document": document,
                                 "metadata": {
                                     "symbol": trade.get("symbol", "UNKNOWN"),
-                                    "side": str(trade.get("side", "")),
-                                    "qty": trade.get("qty", 0),
-                                    "price": trade.get("price", 0),
-                                    "filled_at": trade.get("filled_at", ""),
+                                    "side": trade.get("side", ""),
+                                    "strategy": trade.get("strategy", ""),
+                                    "pnl": pnl,
+                                    "outcome": outcome,
+                                    "timestamp": trade.get("timestamp", ""),
                                 },
                             }
                         )
-                    logger.info(f"Loaded {len(trades)} trades from GitHub API")
-            except Exception as e:
-                logger.warning(f"GitHub API trade fetch failed: {e}")
+                        if len(trades) >= limit:
+                            break
+            if trades:
+                logger.info(f"Loaded {len(trades)} trades from trades_*.json files (fallback)")
 
         return trades[:limit]
 
@@ -1568,7 +1604,7 @@ async def health():
         "local_lessons_loaded": len(local_rag.lessons),
         "critical_lessons": len(local_rag.get_critical_lessons()),
         "trades_loaded": trade_count,
-        "trade_history_source": "local_json",
+        "trade_history_source": "system_state.json (Alpaca)",
         "rag_mode": "vertex_ai_primary" if vertex_rag else "local_only",
     }
 
@@ -1609,12 +1645,12 @@ async def root():
     trade_count = len(query_trades("all", limit=1000))
     return {
         "service": "Trading AI RAG Webhook",
-        "version": "3.8.0",  # Added diagnostics endpoint for Vertex AI debugging
+        "version": "3.9.0",  # Fix trade data source priority - system_state.json first
         "vertex_ai_rag_enabled": vertex_rag is not None,
         "vertex_ai_init_error": vertex_rag_init_error,
         "local_lessons_loaded": len(local_rag.lessons),
         "trades_loaded": trade_count,
-        "trade_history_source": "local_json",
+        "trade_history_source": "system_state.json (Alpaca)",
         "rag_mode": "vertex_ai_primary" if vertex_rag else "local_only",
         "endpoints": {
             "/webhook": "POST - Dialogflow CX webhook (lessons + trades + readiness)",
@@ -1668,7 +1704,7 @@ async def test_trades(query: str = "recent trades"):
     return {
         "query": query,
         "query_type": "trades",
-        "trade_history_source": "local_json",
+        "trade_history_source": "system_state.json (Alpaca)",
         "total_trade_count": total_trades,
         "results_count": len(trades),
         "results": [
@@ -1730,3 +1766,4 @@ if __name__ == "__main__":
 
     port = int(os.environ.get("PORT", 8080))
     uvicorn.run(app, host="0.0.0.0", port=port)  # noqa: S104 - Required for Cloud Run
+
