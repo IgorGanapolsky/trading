@@ -96,6 +96,42 @@ python scripts/validate_env_keys.py  # validate API key consistency
 4. Dry run trading logic if applicable
 5. Confirm CI passes on PR
 
+
+## Trade Data Architecture (CANONICAL - Jan 17, 2026)
+
+**SINGLE SOURCE OF TRUTH: `data/system_state.json -> trade_history`**
+
+```
+┌─────────────────┐    ┌──────────────────────┐    ┌─────────────────────┐
+│  Alpaca API     │───>│ sync-system-state.yml│───>│ system_state.json   │
+│  (broker)       │    │ (GitHub Actions)     │    │   └─ trade_history  │
+└─────────────────┘    └──────────────────────┘    └──────────┬──────────┘
+                                                              │
+                       ┌──────────────────────┐               │
+                       │   trade_sync.py      │───────────────┤
+                       │   (local/manual)     │               │
+                       └──────────────────────┘               │
+                                                              v
+                       ┌──────────────────────┐    ┌─────────────────────┐
+                       │ Dialogflow Webhook   │<───│ GitHub API (fetch)  │
+                       │ (Cloud Run)          │    │ OR local file read  │
+                       └──────────────────────┘    └─────────────────────┘
+```
+
+### Why This Matters
+- **Cloud Run has no local files** - webhook MUST fetch from GitHub API
+- **Alpaca is source of truth** - workflow syncs real broker data
+- **LL-230**: Previous bug where webhook looked for `trades_*.json` (didn't exist on Cloud Run)
+
+### Files
+| File | Purpose | Written By |
+|------|---------|------------|
+| `data/system_state.json` | **CANONICAL** trade data | sync-system-state.yml, trade_sync.py |
+| `data/trades_*.json` | **DEPRECATED** | Legacy, do not use |
+
+### Monitoring
+- CI workflow `webhook-health-check.yml` validates `trades_loaded > 0` after every deployment
+- Failure = data source mismatch, see LL-230
 ## What NOT To Do
 - Don't create unnecessary documentation
 - Don't over-engineer
@@ -108,3 +144,4 @@ Trust the hooks. They work.
 ## $5K Account Priority
 Use `ALPACA_PAPER_TRADING_5K_API_KEY` before `ALPACA_API_KEY`.
 All code must use `get_alpaca_credentials()` from `src/utils/alpaca_client.py`.
+
