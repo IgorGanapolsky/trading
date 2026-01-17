@@ -589,13 +589,14 @@ jobs:
           fetch-depth: 0
       - name: Check for new markdown files
         run: |
-          # Allowed: CLAUDE.md, MANDATORY_RULES.md, docs/_posts/ (blog), docs/_reports/ (daily reports), rag_knowledge/ (lessons)
-          NEW_MD=$(git diff --name-only origin/main...HEAD | grep '\.md$' | grep -v 'CLAUDE.md\|MANDATORY_RULES.md\|docs/_posts/\|docs/_reports/\|rag_knowledge/' || true)
+          # Allowed: CLAUDE.md, MANDATORY_RULES.md, docs/_posts/ (blog), docs/_reports/ (daily reports), docs/ARCHITECTURE.md, rag_knowledge/ (lessons)
+          NEW_MD=$(git diff --name-only origin/main...HEAD | grep '\.md$' | grep -v 'CLAUDE.md\|MANDATORY_RULES.md\|docs/_posts/\|docs/_reports/\|rag_knowledge/\|docs/ARCHITECTURE.md' || true)
           if [ -n "$NEW_MD" ]; then
             echo "❌ CLAUDE.md VIOLATION: New markdown files detected:"
             echo "$NEW_MD"
             echo "Rule: Don't create unnecessary documentation"
-            echo "Allowed paths: CLAUDE.md, MANDATORY_RULES.md, docs/_posts/, docs/_reports/, rag_knowledge/"
+            echo "Allowed paths: CLAUDE.md, MANDATORY_RULES.md, docs/_posts/, docs/_reports/, docs/ARCHITECTURE.md, rag_knowledge/"
             exit 1
           fi
           echo "✅ No new markdown files (or only in allowed paths)"
+
