@@ -1,0 +1,34 @@
+name: Webhook Integration Test
+
+on:
+  # Run after webhook deployment
+  workflow_run:
+    workflows: ["Deploy Dialogflow Webhook"]
+    types: [completed]
+  # Also run on schedule to catch staleness
+  schedule:
+    - cron: '0 15,18,21 * * 1-5'  # 3x during market hours
+  workflow_dispatch:
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name != 'workflow_run' }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Run Webhook Integration Tests
+        run: python tests/integration/test_webhook_integration.py
+      
+      - name: Alert on Failure
+        if: failure()
+        run: |
+          echo "::error::Webhook integration test failed!"
+          echo "Check if trades_loaded=0 (LL-230 regression)"
+          echo "Verify system_state.json has trade_history[]"
