@@ -1,35 +1,60 @@
 ---
 layout: post
-title: "Day 81: 1 Lessons Learned - January 17, 2026"
+title: "Day 81: What We Learned - January 17, 2026"
 date: 2026-01-17
 day_number: 81
 lessons_count: 1
 critical_count: 0
+excerpt: "Markets are closed, but the learning never stops. While other traders take the weekend off, we're refining our edge...."
 ---
 
-# Day 81/90 - Saturday, January 17, 2026
+# Day 81 of 90 | Saturday, January 17, 2026
 
-## Summary
+**9 days remaining** in our journey to build a profitable AI trading system.
 
-| Metric | Count |
-|--------|-------|
-| Total Lessons | 1 |
-| CRITICAL | 0 |
-| HIGH | 1 |
-| MEDIUM | 0 |
-| LOW | 0 |
+Markets are closed, but the learning never stops. While other traders take the weekend off, we're refining our edge.
 
 ---
 
-## Lessons Learned
+## Important Discoveries
 
-### [HIGH] LL-230: Webhook Trade Data Source Mismatch (Jan 17, 2026)
+*Not emergencies, but insights that will shape how we trade going forward.*
 
-**ID**: `ll_230_webhook_trade_data_source_jan17`
+### Webhook Trade Data Source Mismatch
 
-# LL-230: Webhook Trade Data Source Mismatch (Jan 17, 2026)  ## Severity: HIGH  ## Summary The Dialogflow webhook was showing `trades_loaded=0` on Cloud Run because it looked for local `trades_*.json` files first, but on Cloud Run these files don't exist. The actual Alpaca trade data was being synce...
+LL-230: Webhook Trade Data Source Mismatch (Jan 17, 2026)
+
+ Severity: HIGH
+
+ Summary
+The Dialogflow webhook was showing trades_loaded=0 on Cloud Run because it looked for local trades_.json files fir
 
 
 ---
 
-*Auto-generated from RAG knowledge base | [View Source](https://github.com/IgorGanapolsky/trading)*
+## Today's Numbers
+
+| What | Count |
+|------|-------|
+| Lessons Learned | **1** |
+| Critical Issues | 0 |
+| High Priority | 1 |
+| Improvements | 0 |
+
+---
+
+## The Journey So Far
+
+We're building an autonomous AI trading system that learns from every mistake. This isn't about getting rich quick - it's about building a system that can consistently generate income through disciplined options trading.
+
+**Our approach:**
+- Paper trade for 90 days to validate the strategy
+- Document every lesson, every failure, every win
+- Use AI (Claude) as CTO to automate and improve
+- Follow Phil Town's Rule #1: Don't lose money
+
+Want to follow along? Check out the [full project on GitHub](https://github.com/IgorGanapolsky/trading).
+
+---
+
+*Day 81/90 complete. 9 to go.*
