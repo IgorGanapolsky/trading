@@ -1,14 +1,21 @@
 #!/usr/bin/env python3
 """
-Sync RAG lessons to GitHub Pages blog posts.
+Sync RAG lessons to GitHub Pages blog posts AND Dev.to.
 
 Creates blog posts from RAG lessons for public visibility.
 CEO Directive: "We should have blog posts for every day of our journey"
+CEO Directive: "You are supposed to be always learning 24/7, and publishing blog posts every day!"
 """
 
+import os
 import re
 from datetime import datetime
 from pathlib import Path
+
+try:
+    import requests
+except ImportError:
+    requests = None  # Optional for local runs without requests
 
 # Paths
 RAG_LESSONS_DIR = Path(__file__).parent.parent / "rag_knowledge" / "lessons_learned"
@@ -132,10 +139,87 @@ critical_count: {critical}
     return post
 
 
-def sync_lessons_to_blog():
+def post_lessons_to_devto(date_str: str, lessons: list[dict]) -> str | None:
+    """Post lessons summary to Dev.to."""
+    if not requests:
+        print("  requests library not available, skipping Dev.to")
+        return None
+
+    api_key = os.getenv("DEVTO_API_KEY")
+    if not api_key:
+        print("  DEVTO_API_KEY not set, skipping Dev.to")
+        return None
+
+    date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+    formatted_date = date_obj.strftime("%B %d, %Y")
+    day_of_week = date_obj.strftime("%A")
+
+    # Calculate day number
+    start_date = datetime(2025, 10, 29)
+    day_num = (date_obj - start_date).days + 1
+
+    # Count severities
+    critical = sum(1 for item in lessons if item["severity"] == "CRITICAL")
+    high = sum(1 for item in lessons if item["severity"] == "HIGH")
+
+    # Build body
+    body = f"""## Day {day_num}/90 - {day_of_week}, {formatted_date}
+
+**{len(lessons)} lessons learned today** ({critical} critical, {high} high priority)
+
+"""
+    for lesson in sorted(lessons, key=lambda x: x["severity"], reverse=False)[:5]:
+        severity_badge = {
+            "CRITICAL": "**[CRITICAL]**",
+            "HIGH": "[HIGH]",
+            "MEDIUM": "[MEDIUM]",
+            "LOW": "[LOW]",
+        }.get(lesson["severity"], "[?]")
+        body += f"### {severity_badge} {lesson['title'][:80]}\n\n"
+        summary = lesson["content"][:200].replace("\n", " ").strip()
+        body += f"{summary}...\n\n"
+
+    body += """---
+
+*Auto-generated from our AI Trading System's RAG knowledge base.*
+
+Follow our journey: [AI Trading Journey on GitHub](https://github.com/IgorGanapolsky/trading)
+"""
+
+    headers = {"api-key": api_key, "Content-Type": "application/json"}
+    payload = {
+        "article": {
+            "title": f"AI Trading: Day {day_num} - {len(lessons)} Lessons Learned ({formatted_date})",
+            "body_markdown": body,
+            "published": True,
+            "series": "AI Trading Journey",
+            "tags": ["ai", "trading", "machinelearning", "automation"],
+        }
+    }
+
+    try:
+        resp = requests.post(
+            "https://dev.to/api/articles",
+            headers=headers,
+            json=payload,
+            timeout=30,
+        )
+        if resp.status_code == 201:
+            url = resp.json().get("url", "")
+            print(f"  Published to Dev.to: {url}")
+            return url
+        else:
+            print(f"  Dev.to publish failed: {resp.status_code} - {resp.text[:100]}")
+            return None
+    except Exception as e:
+        print(f"  Dev.to publish error: {e}")
+        return None
+
+
+def sync_lessons_to_blog(publish_devto: bool = True):
     """Main sync function."""
     print("=" * 70)
-    print("SYNCING RAG LESSONS TO BLOG")
+    print("SYNCING RAG LESSONS TO BLOG" + (" + DEV.TO" if publish_devto else ""))
     print("=" * 70)
 
     # Ensure directories exist
@@ -163,6 +247,7 @@ def sync_lessons_to_blog():
     # Generate blog posts for each day
     created = 0
     skipped = 0
+    devto_published = 0
 
     for date_str, lessons in sorted(lessons_by_date.items()):
         # Generate filename
@@ -185,12 +270,20 @@ def sync_lessons_to_blog():
         print(f"  CREATE {filename} ({len(lessons)} lessons)")
         created += 1
 
+        # Publish to Dev.to for new posts
+        if publish_devto:
+            url = post_lessons_to_devto(date_str, lessons)
+            if url:
+                devto_published += 1
+
     print("\n" + "=" * 70)
-    print(f"SYNC COMPLETE: {created} created, {skipped} skipped")
+    print(f"SYNC COMPLETE: {created} created, {skipped} skipped, {devto_published} to Dev.to")
     print("=" * 70)
 
     return created, skipped
 
 
 if __name__ == "__main__":
-    sync_lessons_to_blog()
+    import sys
+    publish_devto = "--no-devto" not in sys.argv
+    sync_lessons_to_blog(publish_devto=publish_devto)
