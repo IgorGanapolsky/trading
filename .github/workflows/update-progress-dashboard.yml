@@ -47,6 +47,12 @@ jobs:
             python3 scripts/sync_trades_from_alpaca.py || echo "⚠️ Trade sync failed - dashboard may show stale data"
           }
 
+      - name: Sync closed positions for win rate
+        run: |
+          echo "📊 Syncing closed positions for win rate calculation..."
+          python3 scripts/sync_closed_positions.py || echo "⚠️ Closed positions sync failed - win rate may be stale"
+          echo "✅ Closed positions synced"
+
       - name: Generate Progress Dashboard
         run: |
           echo "📊 Generating enhanced progress dashboard..."

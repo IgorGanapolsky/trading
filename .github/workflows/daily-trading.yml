@@ -1570,6 +1570,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          echo "📊 Syncing closed positions for accurate win rate..."
+          python3 scripts/sync_closed_positions.py || echo "⚠️ Closed positions sync failed"
+
           echo "📊 Generating enhanced world-class progress dashboard..."
           python3 scripts/generate_world_class_dashboard_enhanced.py || python3 scripts/generate_world_class_dashboard.py
 
