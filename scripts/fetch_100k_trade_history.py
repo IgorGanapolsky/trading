@@ -25,8 +25,15 @@ def main():
         print("ERROR: alpaca-py not installed")
         return
 
-    api_key = os.environ.get("ALPACA_API_KEY")
-    secret_key = os.environ.get("ALPACA_SECRET_KEY")
+    # Use unified credentials (prioritizes $5K paper account per CLAUDE.md)
+    try:
+        from src.utils.alpaca_client import get_alpaca_credentials
+
+        api_key, secret_key = get_alpaca_credentials()
+    except ImportError:
+        # Fallback: use $5K account credentials directly
+        api_key = os.environ.get("ALPACA_PAPER_TRADING_5K_API_KEY")
+        secret_key = os.environ.get("ALPACA_PAPER_TRADING_5K_API_SECRET")
 
     if not api_key or not secret_key:
         print("ERROR: Missing Alpaca credentials")

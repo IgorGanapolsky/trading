@@ -42,11 +42,15 @@ def get_alpaca_client():
         logger.error("alpaca-py not installed. Cannot verify stops.")
         return None
 
-    # Per CLAUDE.md: Use ALPACA_PAPER_TRADING_5K_API_KEY first
-    api_key = os.environ.get("ALPACA_PAPER_TRADING_5K_API_KEY") or os.environ.get("ALPACA_API_KEY")
-    api_secret = os.environ.get("ALPACA_PAPER_TRADING_5K_API_SECRET") or os.environ.get(
-        "ALPACA_SECRET_KEY"
-    )
+    # Use unified credentials (prioritizes $5K paper account per CLAUDE.md)
+    try:
+        from src.utils.alpaca_client import get_alpaca_credentials
+
+        api_key, api_secret = get_alpaca_credentials()
+    except ImportError:
+        # Fallback: use $5K account credentials directly
+        api_key = os.environ.get("ALPACA_PAPER_TRADING_5K_API_KEY")
+        api_secret = os.environ.get("ALPACA_PAPER_TRADING_5K_API_SECRET")
 
     if not api_key or not api_secret:
         logger.error("Alpaca credentials not found in environment")

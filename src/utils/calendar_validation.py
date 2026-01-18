@@ -10,16 +10,16 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from alpaca.trading.client import TradingClient
+from src.utils.alpaca_client import get_alpaca_credentials
 
 
 def get_alpaca_client() -> TradingClient:
-    """Get authenticated Alpaca client."""
-    api_key = os.environ.get("ALPACA_API_KEY")
-    secret_key = os.environ.get("ALPACA_SECRET_KEY")
+    """Get authenticated Alpaca client using unified credentials."""
+    api_key, secret_key = get_alpaca_credentials()
     paper = os.environ.get("PAPER_TRADING", "true").lower() == "true"
 
     if not api_key or not secret_key:
-        raise ValueError("ALPACA_API_KEY and ALPACA_SECRET_KEY must be set")
+        raise ValueError("Alpaca credentials not configured - use get_alpaca_credentials()")
 
     return TradingClient(api_key, secret_key, paper=paper)
 

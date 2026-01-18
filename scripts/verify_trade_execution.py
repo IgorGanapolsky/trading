@@ -106,8 +106,9 @@ def check_alpaca_orders(date_str: str) -> dict:
 
         api_key, api_secret = get_alpaca_credentials()
     except ImportError:
-        api_key = os.getenv("ALPACA_API_KEY")
-        api_secret = os.getenv("ALPACA_SECRET_KEY")
+        # Fallback: use $5K account credentials directly
+        api_key = os.getenv("ALPACA_PAPER_TRADING_5K_API_KEY")
+        api_secret = os.getenv("ALPACA_PAPER_TRADING_5K_API_SECRET")
 
     if not api_key or not api_secret:
         result["error"] = "Alpaca credentials not set"
