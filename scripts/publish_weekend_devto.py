@@ -82,17 +82,23 @@ def generate_weekend_post() -> tuple[str, str]:
 
     title = f"AI Trading: Weekend Learning Report | Day {day_number} - {date_str}"
 
-    recommendations = insights.get("recommendations", [
-        "Continue following Phil Town Rule #1 principles",
-        "Focus on credit spreads with defined risk",
-        "Monitor VIX for optimal entry timing",
-    ])
+    recommendations = insights.get(
+        "recommendations",
+        [
+            "Continue following Phil Town Rule #1 principles",
+            "Focus on credit spreads with defined risk",
+            "Monitor VIX for optimal entry timing",
+        ],
+    )
 
-    next_actions = insights.get("next_actions", [
-        "Review Monday pre-market conditions",
-        "Check SPY options chain for opportunities",
-        "Verify position sizes align with 5% max risk",
-    ])
+    next_actions = insights.get(
+        "next_actions",
+        [
+            "Review Monday pre-market conditions",
+            "Check SPY options chain for opportunities",
+            "Verify position sizes align with 5% max risk",
+        ],
+    )
 
     body = f"""---
 title: "{title}"
@@ -110,8 +116,8 @@ canonical_url: https://igorganapolsky.github.io/trading/
 Markets are closed, but learning never stops. Here's what the AI Trading System learned this weekend.
 
 ### Portfolio Status
-- **Equity**: ${portfolio['equity']}
-- **Open Positions**: {portfolio['positions']}
+- **Equity**: ${portfolio["equity"]}
+- **Open Positions**: {portfolio["positions"]}
 - **Strategy**: SPY Credit Spreads (30-45 DTE)
 
 ### This Week's Learning
