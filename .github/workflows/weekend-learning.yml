@@ -270,6 +270,17 @@ jobs:
           echo "Query 2: cash secured puts"
           python3 scripts/vectorize_rag_knowledge.py --query "cash secured puts options" --options-only || echo "Query completed"
 
+      # === PHASE 6: SYNC LESSONS TO BLOG ===
+      - name: "Phase 6: Sync RAG lessons to blog"
+        run: |
+          echo "📝 Syncing RAG lessons to blog..."
+          python3 scripts/sync_rag_to_blog.py || echo "Blog sync completed with warnings"
+
+          # Show what was created
+          echo ""
+          echo "📊 Blog posts status:"
+          ls -la docs/_posts/*lessons*.md 2>/dev/null | tail -10 || echo "No lesson posts found"
+
       # === CHECK FOR CHANGES BEFORE PR ===
       - name: Check for changes to commit
         id: check_changes
