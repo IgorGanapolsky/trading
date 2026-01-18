@@ -101,7 +101,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install yt-dlp youtube-transcript-api pandas numpy
+          pip install yt-dlp youtube-transcript-api pandas numpy requests
 
       - name: Weekend Learning Header
         run: |
@@ -280,6 +280,25 @@ jobs:
           echo ""
           echo "📊 Blog posts status:"
           ls -la docs/_posts/*lessons*.md 2>/dev/null | tail -10 || echo "No lesson posts found"
+
+      # === PHASE 7: PUBLISH TO DEV.TO ===
+      - name: "Phase 7: Publish weekend learning to Dev.to"
+        env:
+          DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
+        run: |
+          echo "📤 Publishing weekend learning summary to Dev.to..."
+
+          if [ -z "$DEVTO_API_KEY" ]; then
+            echo "⚠️ DEVTO_API_KEY not configured - skipping Dev.to publish"
+            exit 0
+          fi
+
+          python3 scripts/publish_weekend_devto.py || {
+            echo "⚠️ Dev.to publishing failed - will retry next weekend"
+            exit 0  # Don't fail the workflow
+          }
+
+          echo "✅ Weekend learning published to Dev.to"
 
       # === CHECK FOR CHANGES BEFORE PR ===
       - name: Check for changes to commit
