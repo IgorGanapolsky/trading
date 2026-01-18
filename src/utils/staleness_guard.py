@@ -211,7 +211,8 @@ def validate_system_state(state_path: Path = SYSTEM_STATE_PATH) -> DataIntegrity
             state = json.load(f)
 
         # Check required top-level fields
-        required_fields = ["portfolio", "paper_account", "positions"]
+        # Note: positions are under paper_account.positions, not top-level
+        required_fields = ["portfolio", "paper_account"]
         for field in required_fields:
             if field not in state:
                 errors.append(f"Missing required field: {field}")
@@ -219,10 +220,16 @@ def validate_system_state(state_path: Path = SYSTEM_STATE_PATH) -> DataIntegrity
         if errors:
             return DataIntegrityResult(is_valid=False, errors=errors, warnings=warnings)
 
-        # Validate portfolio values
+        # Validate portfolio values (may be strings from Alpaca API)
         portfolio = state.get("portfolio", {})
-        equity = portfolio.get("equity", 0)
-        cash = portfolio.get("cash", 0)
+        try:
+            equity = float(portfolio.get("equity", 0))
+        except (TypeError, ValueError):
+            equity = 0
+        try:
+            cash = float(portfolio.get("cash", 0))
+        except (TypeError, ValueError):
+            cash = 0
 
         if equity <= 0:
             errors.append(f"Invalid equity: {equity} (must be > 0)")
@@ -230,8 +237,9 @@ def validate_system_state(state_path: Path = SYSTEM_STATE_PATH) -> DataIntegrity
             errors.append(f"Invalid cash: {cash} (must be >= 0)")
 
         # Validate positions count consistency
+        # Positions are under paper_account.positions, not top-level
         paper_account = state.get("paper_account", {})
-        positions = state.get("positions", [])
+        positions = paper_account.get("positions", [])
         positions_count = paper_account.get("positions_count", 0)
 
         if positions_count != len(positions):
@@ -240,12 +248,16 @@ def validate_system_state(state_path: Path = SYSTEM_STATE_PATH) -> DataIntegrity
                 f"actual positions={len(positions)}"
             )
 
-        # Validate each position
+        # Validate each position (prices may be strings from Alpaca API)
         for i, pos in enumerate(positions):
             if "symbol" not in pos:
                 errors.append(f"Position {i}: missing symbol")
-            if pos.get("price", 0) < 0:
-                errors.append(f"Position {i} ({pos.get('symbol', '?')}): negative price")
+            try:
+                price = float(pos.get("price", 0) or 0)
+                if price < 0:
+                    errors.append(f"Position {i} ({pos.get('symbol', '?')}): negative price")
+            except (TypeError, ValueError):
+                pass  # Skip price validation if not a valid number
 
         # Check for data drift (equity changed dramatically)
         # This would compare against previous sync, but we need history for that
