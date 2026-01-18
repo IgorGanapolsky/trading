@@ -129,8 +129,61 @@ def generate_engaging_title() -> str:
     return random.choice(hooks)
 
 
+def get_weekly_struggle() -> str:
+    """Generate a vulnerable, relatable struggle story based on actual data."""
+    struggles = [
+        "I woke up at 3 AM last night, couldn't sleep, and caught myself checking futures. "
+        "My wife asked if I was okay. I lied and said yes. The truth? I'm terrified this won't work.",
+        "I spent 4 hours on Thursday debugging why my bot placed a trade at the worst possible moment. "
+        "Turns out I had a timezone bug. A $47 lesson in UTC vs Eastern time.",
+        "Someone on Reddit called my strategy 'naive' and 'destined to fail'. "
+        "I read it three times. Deleted my defensive reply. Maybe they're right. Maybe not. "
+        "Only the data will tell.",
+        "I almost quit this week. Stared at my screen for an hour, watching a losing position, "
+        "finger hovering over 'close all'. I didn't click it. I followed my rules instead. "
+        "Hardest thing I've done in months.",
+        "My friend made $20K day trading meme stocks last month. I made $12. "
+        "But he also lost $15K the month before. I didn't lose anything. "
+        "Slow and steady feels boring. But boring might be what keeps me in the game.",
+    ]
+    return random.choice(struggles)
+
+
+def get_honest_confession(pl: float) -> str:
+    """Generate an honest confession based on P/L performance."""
+    if pl > 100:
+        return (
+            "I'd be lying if I said I wasn't getting cocky. A few good weeks and suddenly "
+            "I'm imagining quitting my job. That's dangerous. The market humbles everyone eventually."
+        )
+    elif pl > 0:
+        return (
+            "I keep waiting for the other shoe to drop. Small profits feel like luck, not skill. "
+            "Maybe both. I genuinely don't know yet."
+        )
+    elif pl > -50:
+        return (
+            "I'm down, but not out. The weird thing? I'm not panicking. I've lost money before - "
+            "on stupid bets, impulsive decisions. This feels different. This is a tuition payment."
+        )
+    else:
+        return (
+            "Let me be brutally honest: I'm questioning everything right now. "
+            "Is this strategy fundamentally broken? Am I just bad at this? "
+            "The only thing keeping me going is that I haven't violated my rules. "
+            "The losses are within my risk parameters. That has to count for something."
+        )
+
+
 def generate_engaging_post() -> tuple[str, str]:
-    """Generate a blog post that humans actually want to read."""
+    """Generate a blog post that humans actually want to read.
+
+    Based on research of top AI trading blogs:
+    - Vulnerability beats perfection
+    - Specific struggles > generic updates
+    - Real emotions make content relatable
+    - Building in public means showing the ugly parts too
+    """
     today = datetime.now()
     day_name = today.strftime("%A")
     date_str = today.strftime("%B %d, %Y")
@@ -146,13 +199,17 @@ def generate_engaging_post() -> tuple[str, str]:
 
     title = generate_engaging_title()
 
+    # Get vulnerable content
+    struggle_story = get_weekly_struggle()
+    honest_confession = get_honest_confession(pl)
+
     # Build the narrative
     if pl >= 0:
-        mood = "cautiously optimistic"
         emoji = "📈"
+        verdict = "Still in the game"
     else:
-        mood = "learning from setbacks"
         emoji = "📉"
+        verdict = "Down but learning"
 
     # Format positions for display
     positions_text = ""
@@ -162,128 +219,152 @@ def generate_engaging_post() -> tuple[str, str]:
         positions_text += f"- `{symbol[:20]}`: ${pl_val:+.2f}\n"
 
     if not positions_text:
-        positions_text = "- No open positions this weekend\n"
+        positions_text = "- Cash gang this weekend (no open positions)\n"
 
-    # Format lessons
+    # Format lessons with more personality
     lessons_text = ""
-    for lesson in lessons:
-        lessons_text += f"**{lesson['title'][:50]}**\n"
+    for i, lesson in enumerate(lessons):
+        prefix = ["First,", "Also,", "And finally,"][i] if i < 3 else "Plus,"
+        lessons_text += f"{prefix} **{lesson['title'][:50]}**\n"
         if lesson["snippet"]:
             lessons_text += f"> {lesson['snippet'][:150]}...\n\n"
 
     if not lessons_text:
-        lessons_text = "This week was mostly about execution, not new lessons.\n"
+        lessons_text = (
+            "Honestly? This week was more about execution than epiphanies. "
+            "Sometimes the lesson is just *keep going*.\n"
+        )
 
     body = f"""---
 title: "{title}"
 published: true
-description: "Day {day_number} of building an AI trading system. Real money. Real lessons. No BS."
+description: "Day {day_number}: The unglamorous truth about building an AI trading system. Real money. Real fears. Real lessons."
 tags: trading, ai, python, investing
 series: "AI Trading Journey"
 cover_image: https://dev-to-uploads.s3.amazonaws.com/uploads/articles/trading-ai-cover.png
 canonical_url: https://igorganapolsky.github.io/trading/
 ---
 
-## {emoji} The Reality Check
+## A Confession Before We Start
 
-**Day {day_number}** | {day_name}, {date_str}
-
-Let me be real with you: I'm {mood} about this AI trading experiment.
-
-Started with **$5,000** in paper money. Today I have **${equity:,.2f}**.
-
-That's **{pl:+.2f}** ({pl_pct:+.1f}%) since I started.
-
-Not life-changing. Not terrible. Just... real.
+{struggle_story}
 
 ---
 
-## 💡 What Actually Happened This Week
+## {emoji} The Numbers (No Sugarcoating)
 
-Here's the unglamorous truth about what my AI did:
+**Day {day_number}** | {day_name}, {date_str} | **{verdict}**
 
-- **{story["week_trade_count"]} trades** executed
-- **{story["options_trades"]} options trades** (credit spreads on SPY)
-- **${story["unrealized_pl"]:+.2f}** unrealized P/L sitting in open positions
+Here's my account right now:
 
-### Current Positions
+| What | Amount |
+|------|--------|
+| Started with | $5,000.00 |
+| Currently at | **${equity:,.2f}** |
+| Net P/L | **{pl:+.2f}** ({pl_pct:+.1f}%) |
+
+{honest_confession}
+
+---
+
+## 🔍 What My AI Actually Did This Week
+
+No fancy algorithms. No secret sauce. Just:
+
+- **{story["week_trade_count"]} trades** placed (most were tiny position adjustments)
+- **{story["options_trades"]} SPY credit spreads** (selling premium to theta gang)
+- **${story["unrealized_pl"]:+.2f}** floating P/L that could evaporate Monday at 9:30 AM
+
+### Current Positions (a.k.a. What's Keeping Me Up at Night)
 {positions_text}
 
-I'm running **SPY credit spreads** with 30-45 days to expiration. The strategy is simple: sell premium, manage risk, don't blow up.
+The strategy is deliberately boring: sell SPY put spreads 30-45 days out, collect premium, manage losers early. No moonshots. No YOLO plays. Just math.
 
 ---
 
-## 🎓 This Week's Hard-Won Lessons
+## 🎓 What I Learned the Hard Way
 
 {lessons_text}
 
-The biggest lesson? **Patience pays more than prediction.**
+The meta-lesson? **The market doesn't care about my feelings.** It doesn't care that I spent months building this system. It doesn't care about my $100/day goal.
 
-I spent weeks trying to predict market direction. Now I just sell premium and let theta do the work.
-
----
-
-## 🤔 What I'm Thinking About
-
-### The Math That Keeps Me Going
-
-My target: **$100/day** from a **$50K account**. That's 2% monthly.
-
-Current reality: **$5K account**, targeting **$5-10/day**.
-
-The gap is huge. But compound growth is real:
-- $5K → $10K in ~12 months (with deposits)
-- $10K → $25K in another ~12 months
-- $25K → $50K in another ~8 months
-
-**~2.5 years** to reach my goal. Not fast. Not slow. Just math.
-
-### Why I'm Not Giving Up
-
-1. **The system is learning** - Every loss becomes a lesson in the RAG database
-2. **The process is repeatable** - No gut feelings, just rules
-3. **The risk is defined** - I know my max loss before entering any trade
+It just... moves. And I either adapt or lose money.
 
 ---
 
-## 🎯 Monday Game Plan
+## 🧮 The Math I Keep Coming Back To
 
-Markets open in ~15 hours. Here's what I'm watching:
+My goal: **$100/day** from trading.
 
-1. **SPY levels**: Looking for support/resistance to place spreads
-2. **VIX**: If volatility spikes, premiums get juicier
-3. **Position sizing**: Never more than 5% on a single trade
+What that actually requires:
+- A **$50,000** account (I have $5K)
+- **2% monthly returns** consistently (harder than it sounds)
+- **80%+ win rate** on credit spreads (I'm tracking every trade)
 
----
+The path from here to there:
 
-## 📊 The Scoreboard
+```
+Year 1: $5K → $10K (deposits + small gains)
+Year 2: $10K → $25K (compounding kicks in)
+Year 3: $25K → $50K (if I don't blow up first)
+```
 
-| Metric | Value |
-|--------|-------|
-| Starting Capital | $5,000 |
-| Current Equity | ${equity:,.2f} |
-| Total P/L | {pl:+.2f} ({pl_pct:+.1f}%) |
-| Day | {day_number}/90 |
-| Open Positions | {story["positions_count"]} |
-| This Week's Trades | {story["week_trade_count"]} |
+**~2.5 years** if everything goes right. Probably longer. Maybe never.
 
----
-
-## 🙋 Question for You
-
-I'm building this in public because I believe transparency beats secrecy.
-
-**What would you do differently?** Drop a comment - I read every one.
+But I'd rather try and fail than wonder "what if" for the rest of my life.
 
 ---
 
-*This is a real experiment with real (paper) money. I'm documenting every win, loss, and lesson. Follow along or laugh at my mistakes - either way, you'll learn something.*
+## 🎯 Monday's Game Plan
 
-**[📈 Live Dashboard](https://igorganapolsky.github.io/trading/)** | **[💻 Source Code](https://github.com/IgorGanapolsky/trading)**
+Markets reopen in ~15 hours. My bot will:
+
+1. Check if VIX spiked (fear = better premiums)
+2. Look for SPY support levels to sell puts against
+3. Size positions at max **5% of account** (protect the downside)
+
+If nothing looks good? **No trades.** The best trade is often no trade.
 
 ---
 
-*Built by Igor Ganapolsky with Claude as my AI CTO. Yes, I'm letting an AI help run my trading system. Yes, that's either genius or insanity. Time will tell.*
+## 📊 90-Day Challenge Progress
+
+| Metric | Status |
+|--------|--------|
+| Day | **{day_number}/90** |
+| Account Value | ${equity:,.2f} |
+| Win Rate | *Tracking...* |
+| Max Drawdown | *Tracking...* |
+| Trades This Week | {story["week_trade_count"]} |
+
+---
+
+## 🤔 The Question I Can't Stop Asking
+
+I'm building this entire system with Claude (yes, the AI) as my co-pilot.
+
+Every day I wonder: **Am I automating wisdom or automating my mistakes at scale?**
+
+I don't know yet. That's why I'm documenting everything. Win or lose, at least I'll understand what happened.
+
+---
+
+## 💬 Talk To Me
+
+If you've made it this far, you're either:
+- A fellow algo trader who gets it
+- A skeptic watching me crash and burn
+- Lost and confused (welcome, friend)
+
+**What would you do differently?** Seriously - I read every comment. My ego can take it.
+
+---
+
+*This is Week {day_number // 7} of my AI trading experiment. Real money (okay, paper money for now). Real emotions. Real lessons. Follow along: **[Live Dashboard](https://igorganapolsky.github.io/trading/)** | **[GitHub](https://github.com/IgorGanapolsky/trading)***
+
+---
+
+*Built by Igor Ganapolsky with Claude as my AI CTO. We're either geniuses or idiots. Probably both. Time will tell.*
 """
 
     return title, body
