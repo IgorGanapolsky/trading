@@ -3258,7 +3258,35 @@
       },
       "indexed_at": "2026-01-17T13:24:28.974047",
       "size": 2085
+    },
+    "rag_knowledge/youtube/transcripts/aCMb3BTsQ6k_Rule_1_Real_World_Sprouts_Farmers_Markets_Manageme.md": {
+      "hash": "e2ecdfcfd23743fdf7b6992561de6904",
+      "metadata": {
+        "source": "aCMb3BTsQ6k_Rule_1_Real_World_Sprouts_Farmers_Markets_Manageme",
+        "content_type": "youtube",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/youtube/transcripts/aCMb3BTsQ6k_Rule_1_Real_World_Sprouts_Farmers_Markets_Manageme.md"
+      },
+      "indexed_at": "2026-01-18T21:41:27.801156",
+      "size": 3439
+    },
+    "rag_knowledge/youtube/insights/aCMb3BTsQ6k_insights.json": {
+      "hash": "0d641ea10ffc0743429f636d225c6b43",
+      "metadata": {
+        "source": "aCMb3BTsQ6k_insights",
+        "content_type": "youtube",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/youtube/insights/aCMb3BTsQ6k_insights.json"
+      },
+      "indexed_at": "2026-01-18T21:41:27.802263",
+      "size": 419
     }
   },
-  "last_updated": "2026-01-18T13:23:49.995118"
+  "last_updated": "2026-01-18T21:41:27.805892"
 }

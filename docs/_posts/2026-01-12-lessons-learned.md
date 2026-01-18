@@ -1,10 +1,10 @@
 ---
 layout: post
-title: "Day 76: 7 Lessons Learned - January 12, 2026"
+title: "Day 76: 6 Lessons Learned - January 12, 2026"
 date: 2026-01-12
 day_number: 76
-lessons_count: 7
-critical_count: 1
+lessons_count: 6
+critical_count: 0
 ---
 
 # Day 76/90 - Monday, January 12, 2026
@@ -13,8 +13,8 @@ critical_count: 1
 
 | Metric | Count |
 |--------|-------|
-| Total Lessons | 7 |
-| CRITICAL | 1 |
+| Total Lessons | 6 |
+| CRITICAL | 0 |
 | HIGH | 2 |
 | MEDIUM | 2 |
 | LOW | 2 |
@@ -22,13 +22,6 @@ critical_count: 1
 ---
 
 ## Lessons Learned
-
-### **[CRITICAL]** Lesson Learned: API Key Environment Variable Mismatch
-
-**ID**: `ll_134_api_key_mismatch_fixed_jan12`
-
-# Lesson Learned: API Key Environment Variable Mismatch  **ID**: ll_134 **Date**: 2026-01-12 **Severity**: CRITICAL **Category**: operational-stability  ## What Happened Trading system failed to execute for multiple days with "401 Unauthorized" errors.  ## Root Cause Code expected `ALPACA_API_KEY` a...
-
 
 ### [HIGH] LL-144: Stale Order Threshold Must Be 4 Hours, Not 24
 
