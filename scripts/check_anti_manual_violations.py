@@ -48,6 +48,12 @@ ALLOWED_CONTEXTS = [
     r"(?i)automated",
     r"(?i)automatically",
     r"(?i)script runs",
+    r"(?i)synced",  # Claude describing completed work (past tense)
+    r"(?i)ran",  # Claude describing completed work
+    r"(?i)executed",  # Claude describing completed work
+    r"(?i)verified",  # Claude describing completed work
+    r"(?i)i manually",  # Claude describing own action
+    r"(?i)claude manually",  # Claude describing own action
 ]
 
 
