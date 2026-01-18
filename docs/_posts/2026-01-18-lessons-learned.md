@@ -1,9 +1,9 @@
 ---
 layout: post
-title: "Day 82: 7 Lessons Learned - January 18, 2026"
+title: "Day 82: 6 Lessons Learned - January 18, 2026"
 date: 2026-01-18
 day_number: 82
-lessons_count: 7
+lessons_count: 6
 critical_count: 2
 ---
 
@@ -13,9 +13,9 @@ critical_count: 2
 
 | Metric | Count |
 |--------|-------|
-| Total Lessons | 7 |
+| Total Lessons | 6 |
 | CRITICAL | 2 |
-| HIGH | 2 |
+| HIGH | 1 |
 | MEDIUM | 2 |
 | LOW | 1 |
 
@@ -35,13 +35,6 @@ critical_count: 2
 **ID**: `LL-195`
 
 # LL-195: SOFI Loss Realized - Jan 14, 2026  **Severity**: CRITICAL **Date**: 2026-01-14 **P/L Impact**: -$65.58 daily, -$40.74 total  ## What Happened 1. SOFI stock + CSP opened Day 74 (Jan 13) 2. Position crossed Jan 30 earnings blackout 3. Emergency closed Day 76 (Jan 14) 4. Realized $65.58 loss...
-
-
-### [HIGH] Portfolio sync failed - blind trading risk
-
-**ID**: `auto_sync_failed_jan18`
-
-# Portfolio sync failed - blind trading risk  **ID**: auto_sync_failed_20260118_105952 **Date**: 2026-01-18 **Severity**: HIGH **Type**: Auto-generated (Reflexion pattern)  ## Problem Cannot verify account state. Error: API Error  ## Context - Symbol: None - Strategy: None - Error: API Error  ## Pre...
 
 
 ### [HIGH] LL-226: Trade Data Source Priority Bug - Webhook Missing Alpaca Data
