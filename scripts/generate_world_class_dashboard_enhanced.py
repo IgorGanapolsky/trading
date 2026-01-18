@@ -75,7 +75,12 @@ def calculate_basic_metrics():
     paper_starting = paper_account.get("starting_balance", 5000.0)
     paper_pl = paper_account.get("total_pl", 0.0)
     paper_pl_pct = paper_account.get("total_pl_pct", 0.0)
-    paper_win_rate = paper_account.get("win_rate", 0.0)
+    # FIX Jan 18, 2026: Read win_rate from trades.json (master ledger)
+    # ROOT CAUSE: paper_account in system_state.json doesn't track win_rate
+    # The actual win rate is calculated in trades.json by calculate_win_rate.py
+    trades_data = load_json_file(DATA_DIR / "trades.json")
+    trades_stats = trades_data.get("stats", {}) if isinstance(trades_data, dict) else {}
+    paper_win_rate = trades_stats.get("win_rate_pct") or paper_account.get("win_rate", 0.0)
     # FIX Jan 16, 2026: system_state.json uses "daily_change" not "todays_pl"
     paper_todays_pl = paper_account.get("daily_change") or paper_account.get("todays_pl", 0.0)
     # Calculate today's P/L percentage from equity if not provided
@@ -103,8 +108,9 @@ def calculate_basic_metrics():
         progress_pct = max(0.01, (total_pl / north_star_target) * 100)
 
     performance = system_state.get("performance", {})
-    win_rate = performance.get("win_rate", 0.0)  # Already in percentage form (e.g., 50.0 = 50%)
-    total_trades = performance.get("total_trades", 0)
+    # FIX Jan 18, 2026: Use trades.json stats for win_rate, fallback to performance
+    win_rate = trades_stats.get("win_rate_pct") or performance.get("win_rate", 0.0)
+    total_trades = trades_stats.get("total_trades") or performance.get("total_trades", 0)
 
     challenge = system_state.get("challenge", {})
     # Always calculate current_day dynamically from start_date
@@ -197,6 +203,10 @@ def calculate_basic_metrics():
         "paper_pl": paper_pl,
         "paper_pl_pct": paper_pl_pct,
         "paper_win_rate": paper_win_rate,
+        # Win rate tracking stats from trades.json
+        "closed_trades": trades_stats.get("closed_trades", 0),
+        "open_trades": trades_stats.get("open_trades", 0),
+        "trades_needed_for_stats": max(0, 30 - trades_stats.get("closed_trades", 0)),
         # Today's paper P/L - read from system_state.json
         "today_paper_pl": paper_todays_pl,
         "today_paper_pl_pct": paper_todays_pl_pct,
@@ -525,9 +535,9 @@ def generate_world_class_dashboard() -> str:
                     continue
 
                 # Format quantity (could be shares or notional)
-                if isinstance(qty, (int, float)) and qty < 1:
+                if isinstance(qty, int | float) and qty < 1:
                     qty_display = f"{qty:.6f}"
-                elif isinstance(qty, (int, float)):
+                elif isinstance(qty, int | float):
                     qty_display = f"${qty:,.2f}" if trade.get("notional") else f"{qty}"
                 else:
                     qty_display = str(qty)
@@ -535,7 +545,7 @@ def generate_world_class_dashboard() -> str:
             price = trade.get("filled_avg_price", trade.get("price", trade.get("credit", 0)))
 
             # Format price
-            if isinstance(price, (int, float)) and price > 0:
+            if isinstance(price, int | float) and price > 0:
                 price_display = f"${price:,.2f}"
             else:
                 price_display = "Market"
@@ -616,7 +626,7 @@ def generate_world_class_dashboard() -> str:
 | **Equity** | ${basic_metrics.get("paper_equity", 5000):,.2f} |
 | **Total P/L** | ${basic_metrics.get("paper_pl", 0):+,.2f} ({basic_metrics.get("paper_pl_pct", 0):+.2f}%) |
 | **Today's P/L** | ${basic_metrics.get("today_paper_pl", 0):+,.2f} ({basic_metrics.get("today_paper_pl_pct", 0):+.2f}%) |
-| **Win Rate** | {basic_metrics.get("paper_win_rate", 0):.0f}% |
+| **Win Rate** | {f"{basic_metrics.get('paper_win_rate', 0):.0f}%" if basic_metrics.get("closed_trades", 0) > 0 else "N/A ({} open, 0 closed)".format(basic_metrics.get("open_trades", 0))} |
 | **Trades Today** | {basic_metrics.get("today_trade_count", 0)} |
 
 **Funnel Activity**: {order_count} orders, {stop_count} stops
@@ -637,7 +647,7 @@ def generate_world_class_dashboard() -> str:
 |--------|---------|--------|----------|
 | **Average Daily Profit** | ${basic_metrics["avg_daily_profit"]:.2f}/day | $100.00/day | {display_progress_pct:.2f}% |
 | **Total P/L** | ${basic_metrics["total_pl"]:+,.2f} ({basic_metrics["total_pl_pct"]:+.2f}%) | TBD | {status_emoji} |
-| **Win Rate** | {basic_metrics["win_rate"]:.1f}% | >55% | {"✅" if basic_metrics["win_rate"] >= 55 else "⚠️"} |
+| **Win Rate** | {f"{basic_metrics['win_rate']:.1f}%" if basic_metrics.get("closed_trades", 0) > 0 else f"N/A (need {basic_metrics.get('trades_needed_for_stats', 30)} closed trades)"} | >55% | {"✅" if basic_metrics["win_rate"] >= 55 else "⚠️" if basic_metrics.get("closed_trades", 0) > 0 else "📊"} |
 
 **Progress Bar**: `{north_star_bar}` ({display_progress_pct:.2f}%)
 
@@ -1028,8 +1038,8 @@ def generate_world_class_dashboard() -> str:
 | **Current Equity** | ${basic_metrics["current_equity"]:,.2f} |
 | **Total P/L** | ${basic_metrics["total_pl"]:+,.2f} ({basic_metrics["total_pl_pct"]:+.2f}%) |
 | **Average Daily Profit** | ${basic_metrics["avg_daily_profit"]:+.2f} |
-| **Total Trades** | {basic_metrics["total_trades"]} |
-| **Win Rate** | {basic_metrics["win_rate"]:.1f}% |
+| **Total Trades** | {basic_metrics["total_trades"]} ({basic_metrics.get("closed_trades", 0)} closed, {basic_metrics.get("open_trades", 0)} open) |
+| **Win Rate** | {f"{basic_metrics['win_rate']:.1f}%" if basic_metrics.get("closed_trades", 0) > 0 else "Pending (no closed trades yet)"} |
 | **Trades Today** | {basic_metrics["today_trade_count"]} |
 
 ---

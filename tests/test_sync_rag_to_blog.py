@@ -67,7 +67,9 @@ def test_generate_daily_summary_post():
 
     assert "Day" in post
     assert "2026-01-13" in post
-    assert "Total Lessons" in post
-    assert "2" in post  # 2 lessons
+    # Changed from "Total Lessons" to "Lessons Learned" in new engaging format
+    assert "Lessons Learned" in post
+    assert "**2**" in post  # 2 lessons (now bold in table)
     assert "Test Lesson" in post
-    assert "[HIGH]" in post
+    # [HIGH] is no longer shown - now uses section headers like "Important Discoveries"
+    assert "Important Discoveries" in post or "Hard Lessons" in post
