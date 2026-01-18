@@ -289,13 +289,77 @@ I'm building this in public because I believe transparency beats secrecy.
     return title, body
 
 
+def find_existing_article(api_key: str) -> dict | None:
+    """Find today's article if it exists."""
+    headers = {"api-key": api_key}
+
+    try:
+        response = requests.get(
+            "https://dev.to/api/articles/me/published?per_page=10",
+            headers=headers,
+            timeout=30,
+        )
+
+        if response.status_code == 200:
+            articles = response.json()
+            # Look for today's weekend learning post
+            for article in articles:
+                title = article.get("title", "")
+                if "Day 79" in title or "January 18" in title or "Weekend Learning" in title:
+                    print(f"Found existing article: {article['id']} - {title}")
+                    return article
+    except Exception as e:
+        print(f"Error checking existing articles: {e}")
+
+    return None
+
+
+def update_article(api_key: str, article_id: int, title: str, body: str) -> str | None:
+    """Update an existing article."""
+    headers = {
+        "api-key": api_key,
+        "Content-Type": "application/json",
+    }
+
+    payload = {"article": {"title": title, "body_markdown": body}}
+
+    try:
+        response = requests.put(
+            f"https://dev.to/api/articles/{article_id}",
+            headers=headers,
+            json=payload,
+            timeout=30,
+        )
+
+        if response.status_code == 200:
+            data = response.json()
+            url = data.get("url", "")
+            print(f"✅ Updated existing article: {url}")
+            return url
+        else:
+            print(f"Error updating article: {response.status_code}")
+            print(response.text)
+    except Exception as e:
+        print(f"Update failed: {e}")
+
+    return None
+
+
 def publish_to_devto(title: str, body: str) -> str | None:
-    """Publish article to Dev.to and return URL."""
+    """Publish or update article on Dev.to."""
     api_key = get_devto_api_key()
     if not api_key:
         print("No DEVTO_API_KEY found")
         return None
 
+    # First, check if we already have a post for today
+    existing = find_existing_article(api_key)
+    if existing:
+        print("Found existing post - updating with engaging content...")
+        return update_article(api_key, existing["id"], title, body)
+
+    # No existing post, create new one
+    print("No existing post found - creating new one...")
     headers = {
         "api-key": api_key,
         "Content-Type": "application/json",
