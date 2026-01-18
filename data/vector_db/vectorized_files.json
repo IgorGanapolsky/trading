@@ -1,7 +1,7 @@
 {
   "files": {
     "rag_knowledge/youtube/transcripts/k2z7K4PLkQg_Building_a_Watchlist_-_Stock_Analysis_Process.md": {
-      "hash": "79cf3ee7d381742297ae7ddea841499c",
+      "hash": "2f64d9a8371a0b23c4eacd52b77d7fb6",
       "metadata": {
         "source": "k2z7K4PLkQg_Building_a_Watchlist_-_Stock_Analysis_Process",
         "content_type": "youtube",
@@ -15,11 +15,11 @@
         "is_options_related": false,
         "file_path": "rag_knowledge/youtube/transcripts/k2z7K4PLkQg_Building_a_Watchlist_-_Stock_Analysis_Process.md"
       },
-      "indexed_at": "2026-01-18T13:23:49.985329",
+      "indexed_at": "2026-01-18T21:08:26.145923",
       "size": 1241
     },
     "rag_knowledge/youtube/transcripts/Hfq4K1nP4v4_The_Wheel_Strategy_Explained.md": {
-      "hash": "a8c468e5aef29d75cc3ebed8298b4880",
+      "hash": "bf816ed362daeff86b6d71636ea9a3ef",
       "metadata": {
         "source": "Hfq4K1nP4v4_The_Wheel_Strategy_Explained",
         "content_type": "youtube",
@@ -30,11 +30,11 @@
         "is_options_related": true,
         "file_path": "rag_knowledge/youtube/transcripts/Hfq4K1nP4v4_The_Wheel_Strategy_Explained.md"
       },
-      "indexed_at": "2026-01-18T13:23:49.986994",
+      "indexed_at": "2026-01-18T21:08:26.147566",
       "size": 1245
     },
     "rag_knowledge/youtube/transcripts/XyYjVrMbMpI_How_to_Calculate_Sticker_Price_-_Intrinsic_Value.md": {
-      "hash": "2e25d9806554567e0bdbe0ae707f1fcd",
+      "hash": "f64df40db05e6d83730db21a0798cb74",
       "metadata": {
         "source": "XyYjVrMbMpI_How_to_Calculate_Sticker_Price_-_Intrinsic_Value",
         "content_type": "youtube",
@@ -48,11 +48,11 @@
         "is_options_related": false,
         "file_path": "rag_knowledge/youtube/transcripts/XyYjVrMbMpI_How_to_Calculate_Sticker_Price_-_Intrinsic_Value.md"
       },
-      "indexed_at": "2026-01-18T13:23:49.987466",
+      "indexed_at": "2026-01-18T21:08:26.148071",
       "size": 1218
     },
     "rag_knowledge/youtube/transcripts/oLaGH5LVhJ8_Covered_Calls_for_Income_-_Options_Strategy.md": {
-      "hash": "438d12757a3283752c87c3890313923d",
+      "hash": "984c8beb2306d5cadcc9d799428983aa",
       "metadata": {
         "source": "oLaGH5LVhJ8_Covered_Calls_for_Income_-_Options_Strategy",
         "content_type": "youtube",
@@ -64,11 +64,11 @@
         "is_options_related": true,
         "file_path": "rag_knowledge/youtube/transcripts/oLaGH5LVhJ8_Covered_Calls_for_Income_-_Options_Strategy.md"
       },
-      "indexed_at": "2026-01-18T13:23:49.988075",
+      "indexed_at": "2026-01-18T21:08:26.148691",
       "size": 1268
     },
     "rag_knowledge/youtube/transcripts/HcZRD3YUKZM_Value_Investing_vs_Growth_Investing.md": {
-      "hash": "ec7c8296146baf568ddea19cbc0dccc5",
+      "hash": "a8e349d74ac68ef9247205227aebc57f",
       "metadata": {
         "source": "HcZRD3YUKZM_Value_Investing_vs_Growth_Investing",
         "content_type": "youtube",
@@ -80,11 +80,11 @@
         "is_options_related": true,
         "file_path": "rag_knowledge/youtube/transcripts/HcZRD3YUKZM_Value_Investing_vs_Growth_Investing.md"
       },
-      "indexed_at": "2026-01-18T13:23:49.987928",
+      "indexed_at": "2026-01-18T21:08:26.148524",
       "size": 1371
     },
     "rag_knowledge/youtube/transcripts/QmVKxH2PdCI_Circle_of_Competence_-_Stay_in_Your_Lane.md": {
-      "hash": "d9aa654168d2b9e6b54adb0e412bda4f",
+      "hash": "1aeaa4776dbdc6cc778d9525a8282823",
       "metadata": {
         "source": "QmVKxH2PdCI_Circle_of_Competence_-_Stay_in_Your_Lane",
         "content_type": "youtube",
@@ -95,11 +95,11 @@
         "is_options_related": false,
         "file_path": "rag_knowledge/youtube/transcripts/QmVKxH2PdCI_Circle_of_Competence_-_Stay_in_Your_Lane.md"
       },
-      "indexed_at": "2026-01-18T13:23:49.987152",
+      "indexed_at": "2026-01-18T21:08:26.147755",
       "size": 1210
     },
     "rag_knowledge/youtube/transcripts/P6dqZMjZxHA_The_Payback_Time_Strategy.md": {
-      "hash": "f84cdc26f7077c6650dc528d771e0ea6",
+      "hash": "71944b24b1297fb0c97d69768854af4b",
       "metadata": {
         "source": "P6dqZMjZxHA_The_Payback_Time_Strategy",
         "content_type": "youtube",
@@ -111,11 +111,11 @@
         "is_options_related": true,
         "file_path": "rag_knowledge/youtube/transcripts/P6dqZMjZxHA_The_Payback_Time_Strategy.md"
       },
-      "indexed_at": "2026-01-18T13:23:49.987781",
+      "indexed_at": "2026-01-18T21:08:26.148374",
       "size": 1239
     },
     "rag_knowledge/youtube/transcripts/iRvKG9yFNBo_Debt_and_the_Balance_Sheet.md": {
-      "hash": "45a8931844fe2f304d00d6a76c3dc1de",
+      "hash": "e03fd54ab841ff2cf184007ec42408a9",
       "metadata": {
         "source": "iRvKG9yFNBo_Debt_and_the_Balance_Sheet",
         "content_type": "youtube",
@@ -125,11 +125,11 @@
         "is_options_related": false,
         "file_path": "rag_knowledge/youtube/transcripts/iRvKG9yFNBo_Debt_and_the_Balance_Sheet.md"
       },
-      "indexed_at": "2026-01-18T13:23:49.986837",
+      "indexed_at": "2026-01-18T21:08:26.147411",
       "size": 1243
     },
     "rag_knowledge/youtube/transcripts/Z5chrxMuBoo_Rule_1_Dont_Lose_Money.md": {
-      "hash": "9df98c49757fe8f4547d3f5d1fe927c1",
+      "hash": "b7e5a49c6d378ed2e3a58527c531218a",
       "metadata": {
         "source": "Z5chrxMuBoo_Rule_1_Dont_Lose_Money",
         "content_type": "youtube",
@@ -141,11 +141,11 @@
         "is_options_related": true,
         "file_path": "rag_knowledge/youtube/transcripts/Z5chrxMuBoo_Rule_1_Dont_Lose_Money.md"
       },
-      "indexed_at": "2026-01-18T13:23:49.986098",
+      "indexed_at": "2026-01-18T21:08:26.146711",
       "size": 1280
     },
     "rag_knowledge/youtube/transcripts/WRF86rX2wXs_Cash_Secured_Puts_Strategy.md": {
-      "hash": "1eca0b982f3c10c9fb4f50f6c0da090e",
+      "hash": "bc0f81df5de6c6a29a1b4e7be0093735",
       "metadata": {
         "source": "WRF86rX2wXs_Cash_Secured_Puts_Strategy",
         "content_type": "youtube",
@@ -156,11 +156,11 @@
         "is_options_related": true,
         "file_path": "rag_knowledge/youtube/transcripts/WRF86rX2wXs_Cash_Secured_Puts_Strategy.md"
       },
-      "indexed_at": "2026-01-18T13:23:49.985737",
+      "indexed_at": "2026-01-18T21:08:26.146333",
       "size": 1260
     },
     "rag_knowledge/youtube/transcripts/K6CkCQU_qkE_The_4_Ms_of_Investing_-_Rule_1_Investing.md": {
-      "hash": "575dade9629b062c95ca8974560b056a",
+      "hash": "2336469879bd4e5758cbfb72448a30e7",
       "metadata": {
         "source": "K6CkCQU_qkE_The_4_Ms_of_Investing_-_Rule_1_Investing",
         "content_type": "youtube",
@@ -175,11 +175,11 @@
         "is_options_related": false,
         "file_path": "rag_knowledge/youtube/transcripts/K6CkCQU_qkE_The_4_Ms_of_Investing_-_Rule_1_Investing.md"
       },
-      "indexed_at": "2026-01-18T13:23:49.985920",
+      "indexed_at": "2026-01-18T21:08:26.146516",
       "size": 1243
     },
     "rag_knowledge/youtube/transcripts/B9xVBqxTHKI_Understanding_ROIC_-_Return_on_Invested_Capital.md": {
-      "hash": "99b31f0204d627d8cd1d6f25e1778121",
+      "hash": "e70a938b7655c9a40b54d75a80e629a7",
       "metadata": {
         "source": "B9xVBqxTHKI_Understanding_ROIC_-_Return_on_Invested_Capital",
         "content_type": "youtube",
@@ -193,11 +193,11 @@
         "is_options_related": false,
         "file_path": "rag_knowledge/youtube/transcripts/B9xVBqxTHKI_Understanding_ROIC_-_Return_on_Invested_Capital.md"
       },
-      "indexed_at": "2026-01-18T13:23:49.988227",
+      "indexed_at": "2026-01-18T21:08:26.148848",
       "size": 1227
     },
     "rag_knowledge/youtube/transcripts/Rm69dKSsTrA_How_to_Invest_in_Stocks_for_Beginners_2024.md": {
-      "hash": "82e1b49b0382a12165212663a82a1206",
+      "hash": "2d77260b7d90559407ec98c22e5a0839",
       "metadata": {
         "source": "Rm69dKSsTrA_How_to_Invest_in_Stocks_for_Beginners_2024",
         "content_type": "youtube",
@@ -217,11 +217,11 @@
         "is_options_related": false,
         "file_path": "rag_knowledge/youtube/transcripts/Rm69dKSsTrA_How_to_Invest_in_Stocks_for_Beginners_2024.md"
       },
-      "indexed_at": "2026-01-18T13:23:49.986615",
+      "indexed_at": "2026-01-18T21:08:26.147228",
       "size": 1297
     },
     "rag_knowledge/youtube/transcripts/9hWMAL0q-xw_How_to_Read_Financial_Statements.md": {
-      "hash": "abdc6e4f9fee58c4b0cf0d34db297446",
+      "hash": "87fcc9dcd759e977b2069eafdb1038fd",
       "metadata": {
         "source": "9hWMAL0q-xw_How_to_Read_Financial_Statements",
         "content_type": "youtube",
@@ -238,11 +238,11 @@
         "is_options_related": false,
         "file_path": "rag_knowledge/youtube/transcripts/9hWMAL0q-xw_How_to_Read_Financial_Statements.md"
       },
-      "indexed_at": "2026-01-18T13:23:49.988527",
+      "indexed_at": "2026-01-18T21:08:26.149158",
       "size": 1293
     },
     "rag_knowledge/youtube/transcripts/Yp7_oQEGfNc_Market_Crashes_-_Opportunity_of_a_Lifetime.md": {
-      "hash": "ebd54f239cabc306e134bf8db800af2b",
+      "hash": "e58565e9325e83cc299758e8db715401",
       "metadata": {
         "source": "Yp7_oQEGfNc_Market_Crashes_-_Opportunity_of_a_Lifetime",
         "content_type": "youtube",
@@ -254,11 +254,11 @@
         "is_options_related": false,
         "file_path": "rag_knowledge/youtube/transcripts/Yp7_oQEGfNc_Market_Crashes_-_Opportunity_of_a_Lifetime.md"
       },
-      "indexed_at": "2026-01-18T13:23:49.987620",
+      "indexed_at": "2026-01-18T21:08:26.148224",
       "size": 1220
     },
     "rag_knowledge/youtube/transcripts/dVKjsPQbZNo_Owner_Earnings_Explained_-_Buffetts_Secret_Metric.md": {
-      "hash": "3ba4b3746764cee3e288bc4f854aafcf",
+      "hash": "c939a00f885d363dcaabe43a7dc67df5",
       "metadata": {
         "source": "dVKjsPQbZNo_Owner_Earnings_Explained_-_Buffetts_Secret_Metric",
         "content_type": "youtube",
@@ -270,11 +270,11 @@
         "is_options_related": false,
         "file_path": "rag_knowledge/youtube/transcripts/dVKjsPQbZNo_Owner_Earnings_Explained_-_Buffetts_Secret_Metric.md"
       },
-      "indexed_at": "2026-01-18T13:23:49.985541",
+      "indexed_at": "2026-01-18T21:08:26.146136",
       "size": 1332
     },
     "rag_knowledge/youtube/transcripts/E7t8qPKGMxs_When_to_Sell_a_Stock_-_Exit_Strategy.md": {
-      "hash": "28f0d2916fb8be77b540b46af4462a89",
+      "hash": "dc9f9aded7b7868b7a3f6ceacc2a3a2b",
       "metadata": {
         "source": "E7t8qPKGMxs_When_to_Sell_a_Stock_-_Exit_Strategy",
         "content_type": "youtube",
@@ -287,11 +287,11 @@
         "is_options_related": false,
         "file_path": "rag_knowledge/youtube/transcripts/E7t8qPKGMxs_When_to_Sell_a_Stock_-_Exit_Strategy.md"
       },
-      "indexed_at": "2026-01-18T13:23:49.986271",
+      "indexed_at": "2026-01-18T21:08:26.146887",
       "size": 1274
     },
     "rag_knowledge/youtube/transcripts/8pPnLzZmKKY_What_is_a_Moat_in_Investing.md": {
-      "hash": "3833bd5a6ba0719da2a21dce44370660",
+      "hash": "909f116b2a514251a3f53a7fa760ffc4",
       "metadata": {
         "source": "8pPnLzZmKKY_What_is_a_Moat_in_Investing",
         "content_type": "youtube",
@@ -302,11 +302,11 @@
         "is_options_related": true,
         "file_path": "rag_knowledge/youtube/transcripts/8pPnLzZmKKY_What_is_a_Moat_in_Investing.md"
       },
-      "indexed_at": "2026-01-18T13:23:49.988376",
+      "indexed_at": "2026-01-18T21:08:26.149000",
       "size": 1223
     },
     "rag_knowledge/youtube/transcripts/gWIi6WLczZA_Warren_Buffett_How_to_Invest_for_Beginners.md": {
-      "hash": "cf41762ec97d02222415d63e8b057bdd",
+      "hash": "f31e17d0c28b950eabd3200e28a4f143",
       "metadata": {
         "source": "gWIi6WLczZA_Warren_Buffett_How_to_Invest_for_Beginners",
         "content_type": "youtube",
@@ -319,11 +319,11 @@
         "is_options_related": true,
         "file_path": "rag_knowledge/youtube/transcripts/gWIi6WLczZA_Warren_Buffett_How_to_Invest_for_Beginners.md"
       },
-      "indexed_at": "2026-01-18T13:23:49.986436",
+      "indexed_at": "2026-01-18T21:08:26.147046",
       "size": 1279
     },
     "rag_knowledge/youtube/transcripts/A9kZ_fVwLLo_Margin_of_Safety_Explained.md": {
-      "hash": "35065c97692f72a8a57cb131b209588d",
+      "hash": "52cdfcf1991d5c301d87e283099fefc8",
       "metadata": {
         "source": "A9kZ_fVwLLo_Margin_of_Safety_Explained",
         "content_type": "youtube",
@@ -337,7 +337,7 @@
         "is_options_related": false,
         "file_path": "rag_knowledge/youtube/transcripts/A9kZ_fVwLLo_Margin_of_Safety_Explained.md"
       },
-      "indexed_at": "2026-01-18T13:23:49.987308",
+      "indexed_at": "2026-01-18T21:08:26.147915",
       "size": 1247
     },
     "rag_knowledge/youtube/insights/gemini_notebooklm_analysis_20251228.md": {
@@ -346,7 +346,7 @@
       "vectorized_at": "2026-01-06T22:11:11.478215"
     },
     "rag_knowledge/youtube/insights/B9xVBqxTHKI_insights.json": {
-      "hash": "a9e57a78f919494db81e62225c322dc7",
+      "hash": "dbf69eabaac52bd265cd1e4711b83f57",
       "metadata": {
         "source": "B9xVBqxTHKI_insights",
         "content_type": "youtube",
@@ -360,11 +360,11 @@
         "is_options_related": false,
         "file_path": "rag_knowledge/youtube/insights/B9xVBqxTHKI_insights.json"
       },
-      "indexed_at": "2026-01-18T13:23:49.990029",
+      "indexed_at": "2026-01-18T21:08:26.150670",
       "size": 480
     },
     "rag_knowledge/youtube/insights/iRvKG9yFNBo_insights.json": {
-      "hash": "db0aed21e2a72b666a057aad0ca2382d",
+      "hash": "d7cff874b5ffb631fa0874839b6bf4aa",
       "metadata": {
         "source": "iRvKG9yFNBo_insights",
         "content_type": "youtube",
@@ -374,11 +374,11 @@
         "is_options_related": false,
         "file_path": "rag_knowledge/youtube/insights/iRvKG9yFNBo_insights.json"
       },
-      "indexed_at": "2026-01-18T13:23:49.991698",
+      "indexed_at": "2026-01-18T21:08:26.152477",
       "size": 386
     },
     "rag_knowledge/youtube/insights/QmVKxH2PdCI_insights.json": {
-      "hash": "3e45c03e2bd52f2ae3a40a82a0c685cd",
+      "hash": "a35a3c15c459797322e9ef236f1926ef",
       "metadata": {
         "source": "QmVKxH2PdCI_insights",
         "content_type": "youtube",
@@ -389,11 +389,11 @@
         "is_options_related": false,
         "file_path": "rag_knowledge/youtube/insights/QmVKxH2PdCI_insights.json"
       },
-      "indexed_at": "2026-01-18T13:23:49.990627",
+      "indexed_at": "2026-01-18T21:08:26.151374",
       "size": 408
     },
     "rag_knowledge/youtube/insights/XyYjVrMbMpI_insights.json": {
-      "hash": "6eec26d313525dc8257e64a1507e5d95",
+      "hash": "e8a574c18365fd2455d11fd4e4ea42f4",
       "metadata": {
         "source": "XyYjVrMbMpI_insights",
         "content_type": "youtube",
@@ -405,11 +405,11 @@
         "is_options_related": false,
         "file_path": "rag_knowledge/youtube/insights/XyYjVrMbMpI_insights.json"
       },
-      "indexed_at": "2026-01-18T13:23:49.990500",
+      "indexed_at": "2026-01-18T21:08:26.151239",
       "size": 477
     },
     "rag_knowledge/youtube/insights/WRF86rX2wXs_insights.json": {
-      "hash": "7db18788d5d762c04e399a0cc25c315c",
+      "hash": "01640d41a7a9ac8d413a5c3f66a828fc",
       "metadata": {
         "source": "WRF86rX2wXs_insights",
         "content_type": "youtube",
@@ -420,11 +420,11 @@
         "is_options_related": true,
         "file_path": "rag_knowledge/youtube/insights/WRF86rX2wXs_insights.json"
       },
-      "indexed_at": "2026-01-18T13:23:49.991430",
+      "indexed_at": "2026-01-18T21:08:26.152207",
       "size": 519
     },
     "rag_knowledge/youtube/insights/Hfq4K1nP4v4_insights.json": {
-      "hash": "daf63465d27cc601ef656c47621448e6",
+      "hash": "30fbf96396f01119cee26eb6f03d300d",
       "metadata": {
         "source": "Hfq4K1nP4v4_insights",
         "content_type": "youtube",
@@ -435,11 +435,11 @@
         "is_options_related": true,
         "file_path": "rag_knowledge/youtube/insights/Hfq4K1nP4v4_insights.json"
       },
-      "indexed_at": "2026-01-18T13:23:49.989477",
+      "indexed_at": "2026-01-18T21:08:26.150097",
       "size": 503
     },
     "rag_knowledge/youtube/insights/k2z7K4PLkQg_insights.json": {
-      "hash": "4c0320c623ac5c86a5a9e83b00b63640",
+      "hash": "fa9d88d57037acd7cf20b2c71cffad83",
       "metadata": {
         "source": "k2z7K4PLkQg_insights",
         "content_type": "youtube",
@@ -451,11 +451,11 @@
         "is_options_related": false,
         "file_path": "rag_knowledge/youtube/insights/k2z7K4PLkQg_insights.json"
       },
-      "indexed_at": "2026-01-18T13:23:49.990265",
+      "indexed_at": "2026-01-18T21:08:26.150945",
       "size": 438
     },
     "rag_knowledge/youtube/insights/oLaGH5LVhJ8_insights.json": {
-      "hash": "508f4e19bc46576e8fe1c81ba451252f",
+      "hash": "76959b29f34a2a0cb16a2cc5893c3ef2",
       "metadata": {
         "source": "oLaGH5LVhJ8_insights",
         "content_type": "youtube",
@@ -466,11 +466,11 @@
         "is_options_related": true,
         "file_path": "rag_knowledge/youtube/insights/oLaGH5LVhJ8_insights.json"
       },
-      "indexed_at": "2026-01-18T13:23:49.989609",
+      "indexed_at": "2026-01-18T21:08:26.150235",
       "size": 484
     },
     "rag_knowledge/youtube/insights/9hWMAL0q-xw_insights.json": {
-      "hash": "cffb8ec4a7b9d481403b2a7a04a197b8",
+      "hash": "ffadb7eb9b1dd7101b96705c71f4412d",
       "metadata": {
         "source": "9hWMAL0q-xw_insights",
         "content_type": "youtube",
@@ -481,11 +481,11 @@
         "is_options_related": false,
         "file_path": "rag_knowledge/youtube/insights/9hWMAL0q-xw_insights.json"
       },
-      "indexed_at": "2026-01-18T13:23:49.991304",
+      "indexed_at": "2026-01-18T21:08:26.152077",
       "size": 449
     },
     "rag_knowledge/youtube/insights/dVKjsPQbZNo_insights.json": {
-      "hash": "a853f9b4de762859dc92a424620cd9f5",
+      "hash": "cc5b8698961dd5e99a8f2d355f822e63",
       "metadata": {
         "source": "dVKjsPQbZNo_insights",
         "content_type": "youtube",
@@ -496,11 +496,11 @@
         "is_options_related": false,
         "file_path": "rag_knowledge/youtube/insights/dVKjsPQbZNo_insights.json"
       },
-      "indexed_at": "2026-01-18T13:23:49.989201",
+      "indexed_at": "2026-01-18T21:08:26.149820",
       "size": 490
     },
     "rag_knowledge/youtube/insights/A9kZ_fVwLLo_insights.json": {
-      "hash": "03f81c33bc0ebcaa1d3225fcd5fc9e65",
+      "hash": "593a957ea0696dbf1c821c605bf152e8",
       "metadata": {
         "source": "A9kZ_fVwLLo_insights",
         "content_type": "youtube",
@@ -511,11 +511,11 @@
         "is_options_related": false,
         "file_path": "rag_knowledge/youtube/insights/A9kZ_fVwLLo_insights.json"
       },
-      "indexed_at": "2026-01-18T13:23:49.989766",
+      "indexed_at": "2026-01-18T21:08:26.150373",
       "size": 478
     },
     "rag_knowledge/youtube/insights/Rm69dKSsTrA_insights.json": {
-      "hash": "e2f04ed6fcff95cab00de0c30c806e51",
+      "hash": "88bc12ecb7ce66af4063ece0d7d945be",
       "metadata": {
         "source": "Rm69dKSsTrA_insights",
         "content_type": "youtube",
@@ -529,11 +529,11 @@
         "is_options_related": false,
         "file_path": "rag_knowledge/youtube/insights/Rm69dKSsTrA_insights.json"
       },
-      "indexed_at": "2026-01-18T13:23:49.990152",
+      "indexed_at": "2026-01-18T21:08:26.150810",
       "size": 570
     },
     "rag_knowledge/youtube/insights/gWIi6WLczZA_insights.json": {
-      "hash": "ad9f78519431e5be16d16866536cdfee",
+      "hash": "9b0f7918f9d485e4893f2e6792df6c70",
       "metadata": {
         "source": "gWIi6WLczZA_insights",
         "content_type": "youtube",
@@ -545,11 +545,11 @@
         "is_options_related": true,
         "file_path": "rag_knowledge/youtube/insights/gWIi6WLczZA_insights.json"
       },
-      "indexed_at": "2026-01-18T13:23:49.991055",
+      "indexed_at": "2026-01-18T21:08:26.151806",
       "size": 531
     },
     "rag_knowledge/youtube/insights/P6dqZMjZxHA_insights.json": {
-      "hash": "f0fe0691bbbc39bf783262820e658fea",
+      "hash": "34f2bfcfc5f26977058533a4576911a9",
       "metadata": {
         "source": "P6dqZMjZxHA_insights",
         "content_type": "youtube",
@@ -560,11 +560,11 @@
         "is_options_related": true,
         "file_path": "rag_knowledge/youtube/insights/P6dqZMjZxHA_insights.json"
       },
-      "indexed_at": "2026-01-18T13:23:49.990379",
+      "indexed_at": "2026-01-18T21:08:26.151094",
       "size": 409
     },
     "rag_knowledge/youtube/insights/K6CkCQU_qkE_insights.json": {
-      "hash": "7f8f3f3947f8147c85ac5908d6cfa39c",
+      "hash": "80e0ae2373e9d547466f9859b98b5664",
       "metadata": {
         "source": "K6CkCQU_qkE_insights",
         "content_type": "youtube",
@@ -576,11 +576,11 @@
         "is_options_related": false,
         "file_path": "rag_knowledge/youtube/insights/K6CkCQU_qkE_insights.json"
       },
-      "indexed_at": "2026-01-18T13:23:49.990920",
+      "indexed_at": "2026-01-18T21:08:26.151664",
       "size": 497
     },
     "rag_knowledge/youtube/insights/HcZRD3YUKZM_insights.json": {
-      "hash": "051b59d89926aee5825d0581d9dedaf8",
+      "hash": "339cfc555b52346ac6768024d3659172",
       "metadata": {
         "source": "HcZRD3YUKZM_insights",
         "content_type": "youtube",
@@ -592,11 +592,11 @@
         "is_options_related": true,
         "file_path": "rag_knowledge/youtube/insights/HcZRD3YUKZM_insights.json"
       },
-      "indexed_at": "2026-01-18T13:23:49.989901",
+      "indexed_at": "2026-01-18T21:08:26.150511",
       "size": 551
     },
     "rag_knowledge/youtube/insights/E7t8qPKGMxs_insights.json": {
-      "hash": "4907ea989e15b3ad90dfcbd948d09b70",
+      "hash": "2182b0b6165b9f401dd6a6c32d449cb8",
       "metadata": {
         "source": "E7t8qPKGMxs_insights",
         "content_type": "youtube",
@@ -608,11 +608,11 @@
         "is_options_related": false,
         "file_path": "rag_knowledge/youtube/insights/E7t8qPKGMxs_insights.json"
       },
-      "indexed_at": "2026-01-18T13:23:49.991555",
+      "indexed_at": "2026-01-18T21:08:26.152346",
       "size": 492
     },
     "rag_knowledge/youtube/insights/Yp7_oQEGfNc_insights.json": {
-      "hash": "55debb3f65e6f8ea26f5c488f44b6973",
+      "hash": "c82283297ad5d954029803a6cb4482fe",
       "metadata": {
         "source": "Yp7_oQEGfNc_insights",
         "content_type": "youtube",
@@ -623,11 +623,11 @@
         "is_options_related": false,
         "file_path": "rag_knowledge/youtube/insights/Yp7_oQEGfNc_insights.json"
       },
-      "indexed_at": "2026-01-18T13:23:49.991177",
+      "indexed_at": "2026-01-18T21:08:26.151939",
       "size": 426
     },
     "rag_knowledge/youtube/insights/8pPnLzZmKKY_insights.json": {
-      "hash": "8d8ce78f035c34a70ecee569b967b81f",
+      "hash": "c52c64f0777eca43e279dcc28f6a2773",
       "metadata": {
         "source": "8pPnLzZmKKY_insights",
         "content_type": "youtube",
@@ -638,11 +638,11 @@
         "is_options_related": true,
         "file_path": "rag_knowledge/youtube/insights/8pPnLzZmKKY_insights.json"
       },
-      "indexed_at": "2026-01-18T13:23:49.990791",
+      "indexed_at": "2026-01-18T21:08:26.151510",
       "size": 444
     },
     "rag_knowledge/youtube/insights/Z5chrxMuBoo_insights.json": {
-      "hash": "a73b94e9062358be58061141fc83ff6e",
+      "hash": "be16699cf11c0a1bef9a6453ce7257ed",
       "metadata": {
         "source": "Z5chrxMuBoo_insights",
         "content_type": "youtube",
@@ -654,7 +654,7 @@
         "is_options_related": true,
         "file_path": "rag_knowledge/youtube/insights/Z5chrxMuBoo_insights.json"
       },
-      "indexed_at": "2026-01-18T13:23:49.989342",
+      "indexed_at": "2026-01-18T21:08:26.149957",
       "size": 505
     },
     "rag_knowledge/blogs/phil_town/value-investing_What_is_Value_Investing.md": {
@@ -3260,5 +3260,5 @@
       "size": 2085
     }
   },
-  "last_updated": "2026-01-18T13:23:49.995118"
+  "last_updated": "2026-01-18T21:08:26.155798"
 }
