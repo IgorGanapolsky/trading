@@ -108,5 +108,11 @@
     "pl_pct": -0.52,
     "account_type": "paper",
     "note": "Day 78/90 - Paper: $4,974.08 (-0.52% total P/L). 8 positions. Daily: +$14.90 (+0.30%)."
+  },
+  {
+    "date": "2026-01-19",
+    "equity": 4986.39,
+    "daily_pl": 12.31,
+    "total_pl": -13.609999999999673
   }
 ]
