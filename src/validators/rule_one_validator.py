@@ -236,8 +236,8 @@ class RuleOneValidator:
             logger.warning(f"Rule #1 REJECTED: {symbol} not in universe")
             return result
 
-        # CHECK 1.5: ETF bypass (Jan 14, 2026 - per CLAUDE.md)
-        # SPY/IWM are index ETFs - they don't require Big Five or Sticker Price analysis
+        # CHECK 1.5: ETF bypass (Jan 19, 2026 - per CLAUDE.md)
+        # SPY is an index ETF - it doesn't require Big Five or Sticker Price analysis
         underlying = self._extract_underlying(symbol)
         universe_info = RULE_ONE_UNIVERSE.get(underlying, {})
         if universe_info.get("skip_big_five", False):
@@ -451,7 +451,7 @@ class RuleOneValidator:
         Additional checks per CLAUDE.md:
         - Spread width enforcement ($5 default)
         - Max collateral per spread ($500)
-        - Primary targets: SPY, IWM ONLY (Jan 2026 update)
+        - Primary target: SPY ONLY (Jan 19, 2026 update)
         """
         result = self.validate(symbol)
 
