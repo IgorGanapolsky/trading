@@ -152,16 +152,58 @@ fi
 
 # Check market status - US Equities ONLY (we don't trade crypto)
 # UPDATED Jan 5, 2026: Fixed ambiguous output that caused Claude to misinterpret market status
+# UPDATED Jan 19, 2026: Added market holiday check (was hallucinating "OPEN" on MLK Day)
 # See LL-074: Hook output must be EXPLICIT about market state
 CURRENT_TIME=$(TZ=America/New_York date +%H:%M)
 CURRENT_HOUR=$(TZ=America/New_York date +%H)
+CURRENT_DATE=$(TZ=America/New_York date +%Y-%m-%d)
 
 TRADING_ALLOWED="NO"
 MARKET_STATE=""
 MARKET_REASON=""
 
-if [[ $DAY_NUM -ge 1 && $DAY_NUM -le 5 ]]; then
-    # Weekday (Mon-Fri)
+# 2026 US Stock Market Holidays (NYSE/NASDAQ)
+# Format: YYYY-MM-DD
+MARKET_HOLIDAYS_2026="
+2026-01-01
+2026-01-19
+2026-02-16
+2026-04-03
+2026-05-25
+2026-06-19
+2026-07-03
+2026-09-07
+2026-11-26
+2026-12-25
+"
+
+# Check if today is a market holiday
+IS_HOLIDAY="NO"
+HOLIDAY_NAME=""
+if echo "$MARKET_HOLIDAYS_2026" | grep -q "$CURRENT_DATE"; then
+    IS_HOLIDAY="YES"
+    case "$CURRENT_DATE" in
+        "2026-01-01") HOLIDAY_NAME="New Year's Day" ;;
+        "2026-01-19") HOLIDAY_NAME="Martin Luther King Jr. Day" ;;
+        "2026-02-16") HOLIDAY_NAME="Presidents' Day" ;;
+        "2026-04-03") HOLIDAY_NAME="Good Friday" ;;
+        "2026-05-25") HOLIDAY_NAME="Memorial Day" ;;
+        "2026-06-19") HOLIDAY_NAME="Juneteenth" ;;
+        "2026-07-03") HOLIDAY_NAME="Independence Day (observed)" ;;
+        "2026-09-07") HOLIDAY_NAME="Labor Day" ;;
+        "2026-11-26") HOLIDAY_NAME="Thanksgiving" ;;
+        "2026-12-25") HOLIDAY_NAME="Christmas" ;;
+        *) HOLIDAY_NAME="Market Holiday" ;;
+    esac
+fi
+
+if [[ "$IS_HOLIDAY" == "YES" ]]; then
+    # Market holiday - CLOSED all day
+    MARKET_STATE="HOLIDAY_CLOSED"
+    MARKET_REASON="$HOLIDAY_NAME - Markets closed all day"
+    TRADING_ALLOWED="NO"
+elif [[ $DAY_NUM -ge 1 && $DAY_NUM -le 5 ]]; then
+    # Weekday (Mon-Fri) - not a holiday
     if [[ "$CURRENT_TIME" > "09:30" && "$CURRENT_TIME" < "16:00" ]]; then
         MARKET_STATE="OPEN"
         MARKET_REASON="Regular trading hours (9:30 AM - 4:00 PM ET)"
