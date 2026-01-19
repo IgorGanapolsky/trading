@@ -74,12 +74,39 @@ def sync_from_alpaca() -> dict:
 
         positions = executor.get_positions()
 
+        # LL-237: Fetch trade history from closed orders to prevent knowledge loss
+        trade_history = []
+        try:
+            from alpaca.trading.enums import QueryOrderStatus
+            from alpaca.trading.requests import GetOrdersRequest
+
+            orders = executor.client.get_orders(
+                filter=GetOrdersRequest(status=QueryOrderStatus.CLOSED, limit=100)
+            )
+            trade_history = [
+                {
+                    "id": str(o.id),
+                    "symbol": o.symbol,
+                    "side": str(o.side),
+                    "qty": str(o.filled_qty),
+                    "price": str(o.filled_avg_price) if o.filled_avg_price else "0",
+                    "filled_at": str(o.filled_at) if o.filled_at else None,
+                }
+                for o in orders
+                if o.filled_at
+            ]
+            logger.info(f"📜 Fetched {len(trade_history)} closed trades from history")
+        except Exception as e:
+            logger.warning(f"⚠️ Could not fetch trade history: {e}")
+
         return {
             "equity": executor.account_equity,
             "cash": executor.account_snapshot.get("cash", 0),
             "buying_power": executor.account_snapshot.get("buying_power", 0),
             "positions": positions,
             "positions_count": len(positions),
+            "trade_history": trade_history,
+            "trades_loaded": len(trade_history),
             "mode": "paper" if executor.paper else "live",
             "synced_at": datetime.now().isoformat(),
         }
@@ -192,6 +219,19 @@ def update_system_state(alpaca_data: dict | None) -> None:
             for p in positions
             if p.get("symbol")
         ]
+
+        # LL-237: CRITICAL - Sync trade_history to prevent knowledge loss
+        # This is how we lost all $100K lessons - we didn't record trades
+        trade_history = alpaca_data.get("trade_history", [])
+        if trade_history:
+            state["trade_history"] = trade_history
+            state["trades_loaded"] = len(trade_history)
+            logger.info(f"📜 Recorded {len(trade_history)} trades to history")
+        else:
+            # Preserve existing trade_history if we couldn't fetch new data
+            existing_history = state.get("trade_history", [])
+            if existing_history:
+                logger.info(f"📜 Preserved {len(existing_history)} existing trades in history")
 
     # Write atomically
     SYSTEM_STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
