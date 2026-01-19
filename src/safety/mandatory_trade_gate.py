@@ -5,7 +5,7 @@ compliance with risk rules, RAG lessons, and position limits.
 
 ENFORCEMENT (Jan 2026): This is the FINAL checkpoint before execution.
 No trade bypasses this gate. It enforces:
-- Ticker whitelist (SPY/IWM only per CLAUDE.md strategy) - Jan 15, 2026
+- Ticker whitelist (SPY ONLY per CLAUDE.md Jan 19, 2026)
 - Position size limits (max 5% of portfolio per position per CLAUDE.md)
 - Daily loss limits (max 5% of portfolio per day)
 - RAG lesson blocking (CRITICAL lessons block trades)
@@ -30,7 +30,7 @@ try:
     from src.core.trading_constants import ALLOWED_TICKERS
 except ImportError:
     # Fallback if constants unavailable (shouldn't happen in production)
-    ALLOWED_TICKERS = {"SPY", "IWM"}  # Per CLAUDE.md strategy
+    ALLOWED_TICKERS = {"SPY"}  # SPY ONLY per CLAUDE.md Jan 19, 2026
 TICKER_WHITELIST_ENABLED = True  # Toggle for paper testing
 
 
@@ -54,7 +54,7 @@ def validate_ticker(symbol: str) -> tuple[bool, str]:
     underlying = _extract_underlying(symbol)
 
     if underlying not in ALLOWED_TICKERS:
-        return False, f"{underlying} not allowed. Strategy permits SPY/IWM only."
+        return False, f"{underlying} not allowed. SPY ONLY per CLAUDE.md."
     return True, ""
 
 

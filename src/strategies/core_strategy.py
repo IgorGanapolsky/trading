@@ -9,7 +9,7 @@ Created: 2025-12-24
 Status: CORE (productized, frozen)
 
 Strategy Overview:
-1. Universe: Major ETFs (SPY, QQQ, IWM, DIA)
+1. Universe: SPY ONLY per CLAUDE.md Jan 19, 2026 (best liquidity, tightest spreads)
 2. Signals: MACD crossover + RSI confirmation
 3. Timeframe: Daily with hourly confirmation
 4. Risk: 2% position sizing, volatility-adjusted stops
