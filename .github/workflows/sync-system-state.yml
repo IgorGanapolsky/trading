@@ -59,7 +59,15 @@ jobs:
             echo "No changes"
             exit 0
           fi
-          git commit -m "🔄 sync system state"
+          git commit -m "chore(data): Update system state sync timestamp"
           git push origin "$BRANCH"
-          gh pr create --title "🔄 Auto-sync system state" --body "Automated sync from Alpaca" --base main --head "$BRANCH"
-          gh pr merge "$BRANCH" --auto --squash
+
+          # Create PR - don't fail if already exists
+          gh pr create --title "chore(data): Update system state sync timestamp" \
+            --body "Automated sync from Alpaca API" \
+            --base main --head "$BRANCH" || echo "PR may already exist"
+
+          # Try to enable auto-merge, but don't fail if not allowed
+          gh pr merge "$BRANCH" --auto --squash 2>/dev/null || {
+            echo "::notice::Auto-merge not enabled. PR created for manual review."
+          }
