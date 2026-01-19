@@ -220,14 +220,14 @@ files = [
 
 [[package]]
 name = "anthropic"
-version = "0.75.0"
+version = "0.76.0"
 description = "The official Python library for the anthropic API"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "anthropic-0.75.0-py3-none-any.whl", hash = "sha256:ea8317271b6c15d80225a9f3c670152746e88805a7a61e14d4a374577164965b"},
-    {file = "anthropic-0.75.0.tar.gz", hash = "sha256:e8607422f4ab616db2ea5baacc215dd5f028da99ce2f022e33c7c535b29f3dfb"},
+    {file = "anthropic-0.76.0-py3-none-any.whl", hash = "sha256:81efa3113901192af2f0fe977d3ec73fdadb1e691586306c4256cd6d5ccc331c"},
+    {file = "anthropic-0.76.0.tar.gz", hash = "sha256:e0cae6a368986d5cf6df743dfbb1b9519e6a9eee9c6c942ad8121c0b34416ffe"},
 ]
 
 [package.dependencies]
