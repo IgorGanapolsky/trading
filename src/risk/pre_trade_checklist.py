@@ -1,7 +1,7 @@
 """Pre-trade checklist enforcement per CLAUDE.md.
 
 This module enforces the MANDATORY Pre-Trade Checklist from CLAUDE.md:
-1. Is ticker SPY or IWM? (NO individual stocks until proven)
+1. Is ticker SPY? (SPY ONLY - best liquidity, tightest spreads)
 2. Is position size <=5% of account ($248)?
 3. Is it a SPREAD (not naked put)?
 4. Checked earnings calendar? (No blackout violations)
@@ -132,7 +132,7 @@ class PreTradeChecklist:
         - Next 1 char: C or P for call/put
         - Last 8 digits: strike price * 1000
 
-        For standard symbols like SPY/IWM (3 chars), the underlying is the first 3.
+        For standard symbols like SPY (3 chars), the underlying is the first 3.
 
         Args:
             symbol: The option symbol (e.g., SPY260221P00555000) or underlying.
@@ -143,7 +143,7 @@ class PreTradeChecklist:
         symbol = symbol.upper().strip()
 
         if len(symbol) > 10:  # Options symbol like SPY260221P00555000
-            # For SPY/IWM (3 char tickers), underlying is first 3 chars
+            # For SPY (3 char tickers), underlying is first 3 chars
             if symbol[:3] in self.ALLOWED_TICKERS:
                 return symbol[:3]
             # For 4+ char tickers, extract until we hit a digit
@@ -185,7 +185,7 @@ class PreTradeChecklist:
             "ticker_allowed": {
                 "passed": underlying in self.ALLOWED_TICKERS,
                 "value": underlying,
-                "requirement": "SPY or IWM only",
+                "requirement": "SPY ONLY per CLAUDE.md",
             },
             "position_size": {
                 "passed": max_loss <= self.max_risk,

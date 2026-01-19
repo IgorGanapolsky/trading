@@ -7,7 +7,7 @@ Implements complete options strategy execution with comprehensive risk managemen
 3. Credit Spreads - Directional premium plays with defined risk
 
 Safety Features:
-- Ticker whitelist (SPY/IWM only per CLAUDE.md) - Jan 15, 2026
+- Ticker whitelist (SPY ONLY per CLAUDE.md) - Jan 19, 2026
 - Max 2% portfolio risk per trade
 - Min $0.30 premium per contract
 - IV Rank > 30 for premium selling
@@ -82,7 +82,7 @@ def validate_ticker_for_options(underlying: str) -> tuple[bool, str]:
     """
     Validate ticker is in allowed whitelist for options trading.
 
-    Only allow SPY and IWM trades per CLAUDE.md strategy.
+    Only allow SPY trades per CLAUDE.md strategy (Jan 19, 2026).
 
     Args:
         underlying: Underlying ticker symbol
@@ -95,7 +95,7 @@ def validate_ticker_for_options(underlying: str) -> tuple[bool, str]:
 
     underlying = underlying.upper()
     if underlying not in ALLOWED_TICKERS:
-        return False, f"{underlying} not allowed. Strategy permits SPY/IWM only per CLAUDE.md."
+        return False, f"{underlying} not allowed. Strategy permits SPY ONLY per CLAUDE.md."
     return True, ""
 
 
@@ -860,7 +860,7 @@ class OptionsExecutor:
         Validate options strategy against risk limits.
 
         Safety checks:
-        0. Ticker whitelist: SPY/IWM only per CLAUDE.md (Jan 15, 2026)
+        0. Ticker whitelist: SPY ONLY per CLAUDE.md (Jan 19, 2026)
         1. Max portfolio risk: 2% per trade
         2. Minimum premium: $0.30 per contract
         3. Position size limits: Max 5 contracts
@@ -873,8 +873,8 @@ class OptionsExecutor:
         Returns:
             Dict with 'approved' bool and 'reason' string
         """
-        # 0. TICKER WHITELIST CHECK (Jan 15, 2026)
-        # Per CLAUDE.md: "CREDIT SPREADS on SPY/IWM ONLY"
+        # 0. TICKER WHITELIST CHECK (Jan 19, 2026)
+        # Per CLAUDE.md: "IRON CONDORS on SPY ONLY"
         ticker_valid, ticker_error = validate_ticker_for_options(strategy.underlying)
         if not ticker_valid:
             logger.warning(f"🚫 TICKER BLOCKED: {ticker_error}")

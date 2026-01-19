@@ -64,7 +64,7 @@ class RejectionReason(Enum):
     )
     EARNINGS_BLACKOUT = "Ticker is in earnings blackout period - avoid new positions"
     POSITION_SIZE_TOO_LARGE = "Position max loss exceeds 5% of portfolio"
-    TICKER_NOT_ALLOWED = "Ticker not in whitelist - only SPY/IWM allowed per CLAUDE.md"
+    TICKER_NOT_ALLOWED = "Ticker not in whitelist - SPY ONLY per CLAUDE.md"
     FORBIDDEN_STRATEGY = "Strategy is forbidden - naked positions not allowed"
     PRE_TRADE_CHECKLIST_FAILED = "Pre-trade checklist failed - CLAUDE.md rules violated"
     DTE_OUT_OF_RANGE = "DTE must be 30-45 days per CLAUDE.md"
@@ -518,9 +518,9 @@ class TradeGateway:
             }
 
         # ============================================================
-        # CHECK 0.1: PRE-TRADE CHECKLIST (Jan 15, 2026)
+        # CHECK 0.1: PRE-TRADE CHECKLIST (Jan 19, 2026)
         # Enforces MANDATORY Pre-Trade Checklist from CLAUDE.md:
-        # 1. Is ticker SPY or IWM?
+        # 1. Is ticker SPY? (SPY ONLY per CLAUDE.md)
         # 2. Is position size <=5% of account?
         # 3. Is it a SPREAD (not naked)?
         # 4. Earnings blackout check
@@ -586,8 +586,8 @@ class TradeGateway:
                 }
 
         # ============================================================
-        # CHECK 0.3: TICKER WHITELIST (Jan 14, 2026 - LL-192)
-        # CLAUDE.md: "CREDIT SPREADS on SPY/IWM ONLY"
+        # CHECK 0.3: TICKER WHITELIST (Jan 19, 2026 - LL-244)
+        # CLAUDE.md: "IRON CONDORS on SPY ONLY"
         # This would have prevented the $40.74 SOFI loss
         # ============================================================
         if self.TICKER_WHITELIST_ENABLED:
@@ -596,13 +596,13 @@ class TradeGateway:
                 rejection_reasons.append(RejectionReason.TICKER_NOT_ALLOWED)
                 logger.warning(
                     f"🛑 TICKER BLOCKED: {underlying} not in whitelist {self.ALLOWED_TICKERS}. "
-                    f"Per CLAUDE.md: SPY/IWM ONLY!"
+                    f"Per CLAUDE.md: SPY ONLY!"
                 )
                 risk_score += 1.0  # Maximum risk - hard block
                 metadata["ticker_whitelist_violation"] = {
                     "ticker": underlying,
                     "allowed": list(self.ALLOWED_TICKERS),
-                    "rule": "CLAUDE.md: CREDIT SPREADS on SPY/IWM ONLY",
+                    "rule": "CLAUDE.md: IRON CONDORS on SPY ONLY",
                 }
 
         # ============================================================
