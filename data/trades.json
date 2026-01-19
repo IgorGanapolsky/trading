@@ -18,9 +18,9 @@
     "sync_source": "sync_closed_positions.py"
   },
   "stats": {
-    "total_trades": 9,
+    "total_trades": 8,
     "closed_trades": 6,
-    "open_trades": 3,
+    "open_trades": 2,
     "wins": 1,
     "losses": 5,
     "breakeven": 0,
@@ -31,7 +31,7 @@
     "total_pnl": -10.65,
     "paper_phase_start": "2026-01-15",
     "paper_phase_days": 3,
-    "last_updated": "2026-01-18T22:17:34.052030+00:00"
+    "last_updated": "2026-01-19T02:32:04.754427+00:00"
   },
   "trades": [
     {
@@ -89,27 +89,6 @@
       "status": "open",
       "current_pnl": -3.0,
       "notes": "30-delta bull put spread on SPY"
-    },
-    {
-      "id": "orphan_660_20260115",
-      "type": "orphan_long_put",
-      "underlying": "SPY",
-      "legs": [
-        {
-          "symbol": "SPY260220P00660000",
-          "side": "long",
-          "qty": 1,
-          "entry_price": 3.07,
-          "current_price": 3.74
-        }
-      ],
-      "entry_date": "2026-01-15",
-      "expiration": "2026-02-20",
-      "net_debit": 3.07,
-      "max_risk": 307.0,
-      "status": "open",
-      "current_pnl": 67.0,
-      "notes": "ORPHAN - Created without matching short leg. Crisis position - see LL-221. Currently profitable but violates strategy."
     },
     {
       "id": "closed_SPY260220P00660000_20260115",
