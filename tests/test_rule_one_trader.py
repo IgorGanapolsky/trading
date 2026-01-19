@@ -38,15 +38,15 @@ class TestRuleOneTraderConfig:
         for key in required_keys:
             assert key in CONFIG, f"Missing config key: {key}"
 
-    def test_watchlist_has_affordable_stocks(self):
-        """Watchlist should contain affordable stocks for small accounts."""
+    def test_watchlist_has_strategic_etfs(self):
+        """Watchlist should contain strategic ETFs per CLAUDE.md strategy."""
         from scripts.rule_one_trader import CONFIG
 
-        assert len(CONFIG["watchlist"]) >= 3
-        # Should include stocks with affordable option strikes (<= $50)
-        # Updated Jan 2026: Focus on low-strike stocks for $5K account
-        affordable_stocks = ["F", "SOFI", "T", "INTC", "BAC", "VZ"]
-        assert any(s in CONFIG["watchlist"] for s in affordable_stocks)
+        # Per CLAUDE.md: Credit spreads on SPY/IWM ONLY until strategy proven
+        assert len(CONFIG["watchlist"]) >= 2
+        # Strategy mandates: SPY (best liquidity) and IWM (small cap exposure)
+        strategic_etfs = ["SPY", "IWM"]
+        assert all(s in CONFIG["watchlist"] for s in strategic_etfs)
 
     def test_north_star_target_is_100(self):
         """North Star daily target should be $100."""
