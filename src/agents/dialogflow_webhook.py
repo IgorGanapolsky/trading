@@ -832,7 +832,8 @@ def assess_trading_readiness(
                     score += 5
                 else:
                     warnings.append(f"State STALE ({hours_old:.1f}h old) - data may be outdated")
-            except Exception:
+            except Exception as e:
+                logger.debug(f"State freshness check failed: {e}")
                 warnings.append("Could not verify state freshness")
 
     # 3. CAPITAL CHECK (context-aware: paper vs live)
@@ -899,7 +900,8 @@ def assess_trading_readiness(
                 score += 10
             else:
                 blockers.append(f"Backtests FAILING: only {passes}/{total} pass")
-    except Exception:
+    except Exception as e:
+        logger.debug(f"Backtest status check failed: {e}")
         warnings.append("Could not verify backtest status")
 
     # 5. WIN RATE CHECK (handles fresh starts with 0 trades)
@@ -997,8 +999,8 @@ def assess_trading_readiness(
                                 for lesson, score_val in recent_issues[:2]:
                                     if hasattr(lesson, "title"):
                                         diagnosis.append(f"  • {lesson.title}")
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug(f"RAG lessons query failed: {e}")
 
                         # Add actionable diagnostics
                         diagnosis.append("**Likely Causes:**")
@@ -1010,7 +1012,8 @@ def assess_trading_readiness(
                         diagnosis.append("**Action:** Monitor next 9:35 AM ET workflow run")
 
                         blockers.append("\n".join(diagnosis))
-            except Exception:
+            except Exception as e:
+                logger.debug(f"Last trade date check failed: {e}")
                 warnings.append("Could not verify last trade date")
         else:
             blockers.append("No trade history found - automation may not be running")
