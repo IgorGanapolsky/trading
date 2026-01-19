@@ -157,6 +157,8 @@ jobs:
           echo "Key concepts validated: $FOUND_CONCEPTS/6"
 
       - name: Commit changes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
@@ -174,7 +176,7 @@ jobs:
           TRANSCRIPT_COUNT=${{ steps.verify.outputs.transcript_count }}
           BLOG_COUNT=${{ steps.verify.outputs.blog_count }}
 
-          git commit -m "feat(rag): Auto-ingest Phil Town content
+          COMMIT_MSG="feat(rag): Auto-ingest Phil Town content
 
           YouTube transcripts: $TRANSCRIPT_COUNT
           Blog articles: $BLOG_COUNT
@@ -182,12 +184,31 @@ jobs:
           Mode: ${{ github.event.inputs.mode || 'recent' }}
           Run: ${{ github.run_id }}"
 
-          git push origin main || {
-            echo "::warning::Direct push to main failed, may need branch protection adjustment"
-            exit 1
-          }
+          git commit -m "$COMMIT_MSG"
 
-          echo "✅ Content committed directly to main"
+          # Try direct push first (fastest)
+          if git push origin main 2>/dev/null; then
+            echo "✅ Content committed directly to main"
+          else
+            # Fall back to PR workflow if direct push fails
+            echo "Direct push failed, creating PR..."
+            BRANCH="auto/phil-town-ingest-$(date +%Y%m%d-%H%M%S)"
+            git checkout -b "$BRANCH"
+            git push origin "$BRANCH"
+
+            gh pr create --title "feat(rag): Auto-ingest Phil Town content" \
+              --body "Automated Phil Town knowledge ingestion.
+
+              - YouTube transcripts: $TRANSCRIPT_COUNT
+              - Blog articles: $BLOG_COUNT
+              - Mode: ${{ github.event.inputs.mode || 'recent' }}" \
+              --base main --head "$BRANCH" || echo "::notice::PR may already exist"
+
+            # Try auto-merge (don't fail if not allowed)
+            gh pr merge "$BRANCH" --auto --squash 2>/dev/null || {
+              echo "::notice::PR created for manual review: $BRANCH"
+            }
+          fi
 
       - name: Create issue on failure
         if: failure()
