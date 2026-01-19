@@ -13,6 +13,12 @@ Phil Town Rule #1: Don't lose money.
 
 from datetime import datetime
 
+# UPDATED Jan 19: Import from central config (single source of truth)
+try:
+    from src.core.trading_constants import ALLOWED_TICKERS as _CENTRAL_ALLOWED_TICKERS
+except ImportError:
+    _CENTRAL_ALLOWED_TICKERS = {"SPY", "IWM"}  # Fallback
+
 
 class PreTradeChecklist:
     """Enforces CLAUDE.md mandatory pre-trade checklist.
@@ -28,7 +34,7 @@ class PreTradeChecklist:
         EARNINGS_BLACKOUTS: Dictionary of ticker blackout periods around earnings.
     """
 
-    ALLOWED_TICKERS = {"SPY", "IWM"}
+    ALLOWED_TICKERS = _CENTRAL_ALLOWED_TICKERS
     MAX_POSITION_PCT = 0.05  # 5% max
     MIN_DTE = 30
     MAX_DTE = 45
