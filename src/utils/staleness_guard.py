@@ -237,9 +237,10 @@ def validate_system_state(state_path: Path = SYSTEM_STATE_PATH) -> DataIntegrity
             errors.append(f"Invalid cash: {cash} (must be >= 0)")
 
         # Validate positions count consistency
-        # Positions are under paper_account.positions, not top-level
+        # Positions are at top level, positions_count is under paper_account
+        # FIX Jan 19, 2026: Was incorrectly looking for paper_account.positions
+        positions = state.get("positions", [])
         paper_account = state.get("paper_account", {})
-        positions = paper_account.get("positions", [])
         positions_count = paper_account.get("positions_count", 0)
 
         if positions_count != len(positions):
