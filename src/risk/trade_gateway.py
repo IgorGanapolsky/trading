@@ -133,9 +133,9 @@ class TradeGateway:
     """
 
     # Risk limits (HARD CODED - cannot be bypassed)
-    # UPDATED Jan 14, 2026: Reduced to 2% per INDUSTRY BEST PRACTICE research
-    # Previous: 25% per symbol (Dec 11) - TOO HIGH, caused SOFI 96% allocation
-    MAX_SYMBOL_ALLOCATION_PCT = 0.10  # 10% max per symbol (conservative)
+    # UPDATED Jan 19, 2026: Enforced 5% per CLAUDE.md (Phil Town Rule #1)
+    # Previous: 10% per symbol (Jan 14) - Still too high, caused 35% exposure
+    MAX_SYMBOL_ALLOCATION_PCT = 0.05  # 5% max per symbol per CLAUDE.md
     MAX_CORRELATION_THRESHOLD = 0.80  # 80% correlation threshold
     MAX_TRADES_PER_HOUR = 5  # Frequency limit
     MIN_TRADE_BATCH = (

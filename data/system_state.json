@@ -353,15 +353,23 @@
   ],
   "trades_loaded": 38,
   "meta": {
-    "last_updated": "2026-01-19T13:32:18.486940",
-    "last_sync": "2026-01-19T13:32:18.486946",
+    "last_updated": "2026-01-19T14:15:13.595031+00:00",
+    "last_sync": "2026-01-19T14:11:18.676519",
     "sync_mode": "skipped_no_keys",
     "trade_sync": "alpaca_api"
   },
   "trades": {
-    "last_trade_date": "2026-01-18",
+    "last_trade_date": "2026-01-19",
     "today_trades": 0,
     "total_trades_today": 0,
     "last_trade_symbol": "SYNCED"
+  },
+  "trailing_stops": {
+    "last_set": "2026-01-19T14:12:44.151921",
+    "stops_active": 1,
+    "positions_skipped": 0,
+    "value_protected": 500.0,
+    "default_trail_pct": 0.1,
+    "options_trail_pct": 0.2
   }
 }

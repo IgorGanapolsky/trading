@@ -271,3 +271,14 @@ jobs:
           else
             echo "🚨 **CRITICAL: Trading system may not be running!**" >> $GITHUB_STEP_SUMMARY
           fi
+
+      - name: Notify CEO on Critical
+        if: steps.check_execution.outputs.health_status == 'critical'
+        continue-on-error: true
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pip install -q requests || true
+          python3 scripts/notify_ceo.py --type critical --message "TRADING HEALTH CRITICAL - System may not be executing trades. Last execution count: ${{ steps.check_execution.outputs.exec_count }}. Check: https://github.com/${{ github.repository }}/actions"

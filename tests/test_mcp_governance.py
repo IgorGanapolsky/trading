@@ -6,21 +6,17 @@ Tests input validation (Pydantic) and output sanitization (anti-injection).
 
 import pytest
 
-# Skip entire module if dependencies not available (e.g., pydantic not installed in sandbox)
-try:
-    from mcp.governance import (
-        OrderRequest,
-        PositionSizeRequest,
-        StockAnalysisRequest,
-        sanitize_response,
-        validate_request,
-    )
-    from mcp.governance.input_validation import ALLOWED_SYMBOLS, MAX_ORDER_AMOUNT_USD
+# Skip entire module if pydantic is not available (sandbox environment)
+pytest.importorskip("pydantic", reason="pydantic required for MCP governance tests")
 
-    MCP_GOVERNANCE_AVAILABLE = True
-except ImportError as e:
-    MCP_GOVERNANCE_AVAILABLE = False
-    pytest.skip(f"MCP governance dependencies not available: {e}", allow_module_level=True)
+from mcp.governance import (
+    OrderRequest,
+    PositionSizeRequest,
+    StockAnalysisRequest,
+    sanitize_response,
+    validate_request,
+)
+from mcp.governance.input_validation import ALLOWED_SYMBOLS, MAX_ORDER_AMOUNT_USD
 
 
 class TestInputValidation:

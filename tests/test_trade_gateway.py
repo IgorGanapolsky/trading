@@ -214,15 +214,15 @@ class TestTradeGatewayAllocationLimits:
     """Test allocation limits per symbol."""
 
     def test_over_allocation_rejected(self):
-        """Test that > 25% allocation to single symbol is rejected."""
+        """Test that > 5% allocation to single symbol is rejected (per CLAUDE.md)."""
         gateway = TradeGateway(executor=None, paper=True)
         # Use XOM (not in any correlation group) to avoid HIGH_CORRELATION rejection
         gateway.executor = MockExecutor(
             account_equity=10000,
-            positions=[{"symbol": "XOM", "market_value": 2400}],  # 24% already
+            positions=[{"symbol": "XOM", "market_value": 400}],  # 4% already
         )
 
-        # Trying to add $200 more would push to 26% (> 25% limit)
+        # Trying to add $200 more would push to 6% (> 5% limit)
         request = TradeRequest(
             symbol="XOM",
             side="buy",
@@ -235,18 +235,18 @@ class TestTradeGatewayAllocationLimits:
         assert RejectionReason.MAX_ALLOCATION_EXCEEDED in decision.rejection_reasons
 
     def test_under_allocation_approved(self):
-        """Test that < 15% allocation is approved."""
+        """Test that < 5% allocation is approved (per CLAUDE.md)."""
         gateway = TradeGateway(executor=None, paper=True)
         gateway.executor = MockExecutor(
             account_equity=10000,
-            positions=[{"symbol": "TSLA", "market_value": 500}],  # 5% already
+            positions=[{"symbol": "TSLA", "market_value": 100}],  # 1% already
         )
 
-        # Adding $500 more would be 10% total (under 15%)
+        # Adding $300 more would be 4% total (under 5%)
         request = TradeRequest(
             symbol="TSLA",
             side="buy",
-            notional=500,
+            notional=300,
             source="test",
         )
         decision = gateway.evaluate(request)
