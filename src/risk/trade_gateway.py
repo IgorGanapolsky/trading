@@ -172,7 +172,7 @@ class TradeGateway:
 
     # ============================================================
     # TICKER WHITELIST - CRITICAL ENFORCEMENT (Jan 14, 2026)
-    # Per CLAUDE.md: "CREDIT SPREADS on SPY/IWM ONLY"
+    # Per CLAUDE.md Jan 19: "IRON CONDORS on SPY ONLY"
     # This prevents trades like SOFI that violated strategy
     # UPDATED Jan 19: Import from central config (single source of truth)
     # ============================================================
@@ -181,7 +181,7 @@ class TradeGateway:
 
         ALLOWED_TICKERS = _CENTRAL_TICKERS
     except ImportError:
-        ALLOWED_TICKERS = {"SPY", "IWM"}  # Fallback
+        ALLOWED_TICKERS = {"SPY"}  # Fallback - SPY ONLY per CLAUDE.md Jan 19
     TICKER_WHITELIST_ENABLED = True  # Toggle for paper testing
 
     # FORBIDDEN strategies - will be rejected outright

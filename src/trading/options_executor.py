@@ -32,15 +32,15 @@ logger = logging.getLogger(__name__)
 
 
 # ============================================================
-# TICKER WHITELIST - CRITICAL ENFORCEMENT (Jan 15, 2026)
-# Per CLAUDE.md: "CREDIT SPREADS on SPY/IWM ONLY"
+# TICKER WHITELIST - CRITICAL ENFORCEMENT (Jan 19, 2026)
+# Per CLAUDE.md: "IRON CONDORS on SPY ONLY"
 # This prevents trades like SOFI that violated strategy
 # UPDATED Jan 19: Import from central config (single source of truth)
 # ============================================================
 try:
     from src.core.trading_constants import ALLOWED_TICKERS
 except ImportError:
-    ALLOWED_TICKERS = {"SPY", "IWM"}  # Fallback
+    ALLOWED_TICKERS = {"SPY"}  # Fallback - SPY ONLY per CLAUDE.md Jan 19
 TICKER_WHITELIST_ENABLED = True  # Toggle for paper testing
 
 

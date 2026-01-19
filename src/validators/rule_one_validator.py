@@ -24,18 +24,14 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 # Approved wonderful companies (Rule #1 compliant or capital-appropriate)
-# Per CLAUDE.md: Primary strategy is "CREDIT SPREADS on SPY/IWM ONLY"
+# Per CLAUDE.md Jan 19: Primary strategy is "IRON CONDORS on SPY ONLY"
 # ETFs don't require Big Five analysis - they're index funds
 RULE_ONE_UNIVERSE = {
-    # PRIMARY: Index ETFs for credit spreads (Jan 14, 2026 - per CLAUDE.md)
+    # PRIMARY: SPY ONLY for iron condors (Jan 19, 2026 - per CLAUDE.md update)
+    # IWM REMOVED - $100K succeeded with SPY, $5K failed with diversification
     # These are EXEMPT from Big Five analysis as they're not individual companies
     "SPY": {"name": "S&P 500 ETF", "moat": "etf", "capital_tier": "any", "skip_big_five": True},
-    "IWM": {
-        "name": "Russell 2000 ETF",
-        "moat": "etf",
-        "capital_tier": "any",
-        "skip_big_five": True,
-    },
+    # NOTE: IWM removed Jan 19, 2026 per CLAUDE.md - SPY ONLY until proven
     # Secondary credit spread targets (low share price, liquid options)
     "F": {"name": "Ford", "moat": "brand", "capital_tier": "small"},
     "SOFI": {"name": "SoFi Technologies", "moat": "switching", "capital_tier": "small"},
@@ -461,13 +457,14 @@ class RuleOneValidator:
 
         # Credit spread specific checks
         underlying = self._extract_underlying(symbol)
-        # LL-236: Updated Jan 19, 2026 - SPY/IWM ONLY per CLAUDE.md
+        # LL-244: Updated Jan 19, 2026 - SPY ONLY per CLAUDE.md
+        # IWM removed - $100K succeeded with SPY focus, $5K failed with diversification
         # Individual stocks (F, SOFI, T) are BLACKLISTED until strategy proven
-        primary_targets = {"SPY", "IWM"}
+        primary_targets = {"SPY"}  # SPY ONLY per CLAUDE.md Jan 19
 
         if underlying not in primary_targets:
             result.warnings.append(
-                f"{underlying} is not a primary credit spread target (SPY, IWM only per CLAUDE.md)"
+                f"{underlying} is not a primary iron condor target (SPY ONLY per CLAUDE.md)"
             )
 
         # Collateral check

@@ -17,7 +17,7 @@ from datetime import datetime
 try:
     from src.core.trading_constants import ALLOWED_TICKERS as _CENTRAL_ALLOWED_TICKERS
 except ImportError:
-    _CENTRAL_ALLOWED_TICKERS = {"SPY", "IWM"}  # Fallback
+    _CENTRAL_ALLOWED_TICKERS = {"SPY"}  # Fallback - SPY ONLY per CLAUDE.md Jan 19
 
 
 class PreTradeChecklist:
@@ -27,7 +27,7 @@ class PreTradeChecklist:
     to protect capital and enforce disciplined trading.
 
     Attributes:
-        ALLOWED_TICKERS: Set of approved underlying tickers (SPY, IWM only).
+        ALLOWED_TICKERS: Set of approved underlying tickers (SPY ONLY per CLAUDE.md Jan 19).
         MAX_POSITION_PCT: Maximum position size as percentage of account (5%).
         MIN_DTE: Minimum days to expiration (30).
         MAX_DTE: Maximum days to expiration (45).

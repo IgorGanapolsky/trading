@@ -21,8 +21,8 @@ logger = logging.getLogger(__name__)
 
 
 # ============================================================
-# TICKER WHITELIST - CRITICAL ENFORCEMENT (Jan 15, 2026)
-# Per CLAUDE.md: "CREDIT SPREADS on SPY/IWM ONLY"
+# TICKER WHITELIST - CRITICAL ENFORCEMENT (Jan 19, 2026)
+# Per CLAUDE.md: "IRON CONDORS on SPY ONLY"
 # This prevents trades like SOFI that violated strategy
 # UPDATED Jan 19: Import from central config (single source of truth)
 # ============================================================
@@ -30,7 +30,7 @@ try:
     from src.core.trading_constants import ALLOWED_TICKERS
 except ImportError:
     # Fallback if constants unavailable (shouldn't happen in production)
-    ALLOWED_TICKERS = {"SPY", "IWM"}  # Per CLAUDE.md strategy
+    ALLOWED_TICKERS = {"SPY"}  # SPY ONLY per CLAUDE.md Jan 19
 TICKER_WHITELIST_ENABLED = True  # Toggle for paper testing
 
 
@@ -38,7 +38,7 @@ def validate_ticker(symbol: str) -> tuple[bool, str]:
     """
     Validate ticker is in allowed whitelist.
 
-    Only allow SPY and IWM trades per CLAUDE.md strategy.
+    Only allow SPY trades per CLAUDE.md strategy (Jan 19, 2026 update).
     Handles both stock symbols and OCC option symbols.
 
     Args:
