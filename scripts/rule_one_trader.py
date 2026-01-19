@@ -42,18 +42,15 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # Phil Town Strategy Configuration
-# CAPITAL-TIERED: With $5K, can only do CSPs on stocks with strike <= $50
+# FIXED Jan 19 2026: Changed from individual stocks to SPY/IWM per CLAUDE.md
+# FIXED Jan 19 2026: Reduced max_position_pct from 10% to 5% per CLAUDE.md mandate
 CONFIG = {
     "watchlist": [
-        # TIER 1: Affordable for $5K account (strike <= $50)
-        "F",  # Ford - ~$10 strike
-        "SOFI",  # SoFi - ~$15 strike
-        "T",  # AT&T - ~$20 strike
-        "INTC",  # Intel - ~$20 strike
-        "BAC",  # Bank of America - ~$35 strike
-        "VZ",  # Verizon - ~$40 strike
+        # Per CLAUDE.md: SPY/IWM ONLY until strategy proven
+        "SPY",  # Best liquidity, tightest spreads
+        "IWM",  # Small cap exposure, good vol
     ],
-    "max_position_pct": 0.10,  # Max 10% of portfolio per position
+    "max_position_pct": 0.05,  # Max 5% of portfolio per position - CLAUDE.md MANDATE
     "target_dte": 30,  # 30 days to expiration for puts
     "min_dte": 21,
     "max_dte": 45,

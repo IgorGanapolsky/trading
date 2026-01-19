@@ -75,18 +75,19 @@ class IronCondorStrategy:
     """
 
     def __init__(self):
-        # FIXED Jan 12 2026: Use SOFI not SPY (SPY needs $50K+, we have $5K)
+        # FIXED Jan 19 2026: Use IWM per CLAUDE.md (SOFI blackout until Feb 1)
+        # FIXED Jan 19 2026: Reduced position_size_pct from 15% to 5% per CLAUDE.md mandate
         self.config = {
-            "underlying": "SOFI",  # SOFI ~$14/share, iron condor on SOFI fits $5K account
+            "underlying": "IWM",  # IWM per CLAUDE.md ticker hierarchy - SPY/IWM only
             "target_dte": 30,
             "min_dte": 21,
             "max_dte": 45,
             "short_delta": 0.16,  # 16 delta = ~84% POP
-            "wing_width": 1,  # $1 wide spreads (appropriate for ~$14 stock)
+            "wing_width": 3,  # $3 wide spreads per CLAUDE.md spread setup
             "take_profit_pct": 0.50,  # Close at 50% profit
             "stop_loss_pct": 2.0,  # Close at 200% loss
-            "max_positions": 3,  # Can do more positions with smaller underlying
-            "position_size_pct": 0.15,  # 15% of portfolio per IC
+            "max_positions": 1,  # Per CLAUDE.md: "1 spread at a time"
+            "position_size_pct": 0.05,  # 5% of portfolio per position - CLAUDE.md MANDATE
         }
 
     def get_underlying_price(self) -> float:
