@@ -123,7 +123,8 @@ if [[ "$LIVE_DATA" == "false" ]]; then
     # PRIORITY: Use system_state.json (paper account) - per CLAUDE.md directive
     # performance_log.json tracks brokerage ($60), system_state tracks paper ($5K)
     if [[ -f "$STATE_FILE" ]]; then
-        PERF_DATE=$(jq -r '.last_updated // ""' "$STATE_FILE" 2>/dev/null | cut -d'T' -f1 || echo "")
+        # Check meta.last_updated first (sync-alpaca-status), then fallback to last_updated
+        PERF_DATE=$(jq -r '.meta.last_updated // .last_updated // ""' "$STATE_FILE" 2>/dev/null | cut -d'T' -f1 || echo "")
         CURRENT_EQUITY=$(jq -r '.paper_account.equity // .portfolio.equity // "N/A"' "$STATE_FILE" 2>/dev/null || echo "N/A")
         TOTAL_PL=$(jq -r '.paper_account.total_pl // "N/A"' "$STATE_FILE" 2>/dev/null || echo "N/A")
         TOTAL_PL_PCT_RAW=$(jq -r '.paper_account.total_pl_pct // "N/A"' "$STATE_FILE" 2>/dev/null || echo "N/A")
