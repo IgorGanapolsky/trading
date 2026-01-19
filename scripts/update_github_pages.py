@@ -44,12 +44,12 @@ def update_index_md(
     index_path: Path,
     equity: float,
     pl_pct: float,
-    total_pl: float,
-    positions_count: int,
     win_rate: float,
     lessons_count: int,
     day: int,
     total_days: int,
+    total_pl: float | None = None,
+    positions_count: int = 0,
 ) -> bool:
     """
     Update docs/index.md with current portfolio data.
@@ -75,25 +75,59 @@ def update_index_md(
     status_replacement = f"## Current Status (Day {day} - {date_str})"
     content = re.sub(status_pattern, status_replacement, content)
 
+    # =========================================================================
+    # NEW FORMAT (simple tables - current index.md)
+    # =========================================================================
+
     # Update Paper Account row
     # Pattern: | Paper Account | $X,XXX.XX |
     account_pattern = r"\| Paper Account \| \$[\d,]+\.?\d* \|"
     account_replacement = f"| Paper Account | {format_currency(equity)} |"
     content = re.sub(account_pattern, account_replacement, content)
 
-    # Update Total P/L row
+    # Update Total P/L row (if total_pl is provided)
     # Pattern: | Total P/L | **+$X.XX (+X.XX%)** | or | Total P/L | **-$X.XX (-X.XX%)** |
-    pl_sign = "+" if total_pl >= 0 else ""
-    pl_pattern = r"\| Total P/L \| \*\*[+\-]?\$[\d,]+\.?\d* \([+\-]?[\d.]+%\)\*\* \|"
-    pl_replacement = f"| Total P/L | **{pl_sign}{format_currency(total_pl)} ({format_percentage(pl_pct)})** |"
-    content = re.sub(pl_pattern, pl_replacement, content)
+    if total_pl is not None:
+        pl_sign = "+" if total_pl >= 0 else ""
+        pl_pattern = r"\| Total P/L \| \*\*[+\-]?\$[\d,]+\.?\d* \([+\-]?[\d.]+%\)\*\* \|"
+        pl_replacement = f"| Total P/L | **{pl_sign}{format_currency(total_pl)} ({format_percentage(pl_pct)})** |"
+        content = re.sub(pl_pattern, pl_replacement, content)
 
     # Update Open Positions row
     # Pattern: | Open Positions | X ... |
-    pos_pattern = r"\| Open Positions \| \d+ .*\|"
-    spread_count = positions_count // 2  # Approximate spread count
-    pos_replacement = f"| Open Positions | {positions_count} ({spread_count} SPY put spreads) |"
-    content = re.sub(pos_pattern, pos_replacement, content)
+    if positions_count > 0:
+        pos_pattern = r"\| Open Positions \| \d+ .*\|"
+        spread_count = positions_count // 2  # Approximate spread count
+        pos_replacement = f"| Open Positions | {positions_count} ({spread_count} SPY put spreads) |"
+        content = re.sub(pos_pattern, pos_replacement, content)
+
+    # =========================================================================
+    # OLD FORMAT (Daily Transparency Report tables - for backwards compatibility)
+    # =========================================================================
+
+    # Pattern: | **Portfolio** | $XXX,XXX.XX | +X.XX% |
+    portfolio_pattern = r"\| \*\*Portfolio\*\* \| \$[\d,]+\.\d+ \| [+\-]?\d+\.\d+% \|"
+    portfolio_replacement = (
+        f"| **Portfolio** | {format_currency(equity)} | {format_percentage(pl_pct)} |"
+    )
+    content = re.sub(portfolio_pattern, portfolio_replacement, content)
+
+    # Pattern: | **Win Rate** | XX% | ... |
+    win_rate_pattern = r"\| \*\*Win Rate\*\* \| \d+% \| \w+ \|"
+    win_rate_replacement = (
+        f"| **Win Rate** | {int(win_rate)}% | {'Improved' if win_rate >= 60 else 'Stable'} |"
+    )
+    content = re.sub(win_rate_pattern, win_rate_replacement, content)
+
+    # Pattern: | **Lessons** | XX+ | Growing |
+    lessons_pattern = r"\| \*\*Lessons\*\* \| \d+\+ \| Growing \|"
+    lessons_replacement = f"| **Lessons** | {lessons_count}+ | Growing |"
+    content = re.sub(lessons_pattern, lessons_replacement, content)
+
+    # Pattern: | **Day** | XX/90 | R&D Phase |
+    day_pattern = r"\| \*\*Day\*\* \| \d+/\d+ \| R&D Phase \|"
+    day_replacement = f"| **Day** | {day}/{total_days} | R&D Phase |"
+    content = re.sub(day_pattern, day_replacement, content)
 
     if content == original_content:
         return False
