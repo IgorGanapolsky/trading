@@ -227,15 +227,23 @@ fi
 # Build unambiguous status string
 MARKET_STATUS="$MARKET_STATE - $MARKET_REASON [TRADING_ALLOWED=$TRADING_ALLOWED]"
 
-# Next automated trade time - MUST be a weekday (Mon-Fri)
+# Next automated trade time - MUST be a weekday (Mon-Fri) AND not a holiday
 # Fixed Dec 30, 2025: Was showing tomorrow even on trading days before market close
+# Fixed Jan 19, 2026: Was showing TODAY on holidays (MLK Day bug)
 get_next_trading_day() {
     local dow=$(TZ=America/New_York date +%u)  # 1=Mon, 7=Sun
     local hour=$(TZ=America/New_York date +%H)  # Current hour in ET
     local days_to_add=0
 
+    # If today is a holiday, next trade is tomorrow (at minimum)
+    if [[ "$IS_HOLIDAY" == "YES" ]]; then
+        days_to_add=1
+        # If tomorrow is also a weekend, skip to Monday
+        if [[ $dow -eq 5 ]]; then
+            days_to_add=3  # Friday holiday -> Monday
+        fi
     # If it's a weekday (Mon-Fri, dow 1-5)
-    if [[ $dow -ge 1 && $dow -le 5 ]]; then
+    elif [[ $dow -ge 1 && $dow -le 5 ]]; then
         # If before market close (4 PM ET = 16:00), trade is TODAY
         if [[ $hour -lt 16 ]]; then
             days_to_add=0
