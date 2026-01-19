@@ -455,17 +455,19 @@ class RuleOneValidator:
         Additional checks per CLAUDE.md:
         - Spread width enforcement ($5 default)
         - Max collateral per spread ($500)
-        - Primary targets: F, SOFI, T
+        - Primary targets: SPY, IWM ONLY (Jan 2026 update)
         """
         result = self.validate(symbol)
 
         # Credit spread specific checks
         underlying = self._extract_underlying(symbol)
-        primary_targets = {"F", "SOFI", "T"}
+        # LL-236: Updated Jan 19, 2026 - SPY/IWM ONLY per CLAUDE.md
+        # Individual stocks (F, SOFI, T) are BLACKLISTED until strategy proven
+        primary_targets = {"SPY", "IWM"}
 
         if underlying not in primary_targets:
             result.warnings.append(
-                f"{underlying} is not a primary credit spread target (F, SOFI, T)"
+                f"{underlying} is not a primary credit spread target (SPY, IWM only per CLAUDE.md)"
             )
 
         # Collateral check

@@ -241,35 +241,17 @@ class RuleOneOptionsStrategy:
     MAX_PREMIUM_PCT = 0.012  # 1.2% of stock price max
     MIN_ANNUALIZED_RETURN = 0.12  # 12% minimum annualized yield
 
-    # Default wonderful companies (Rule #1 quality stocks)
-    # CAPITAL-TIERED: Ordered by affordability for CSPs
-    # $5K account can only do CSPs on stocks with strike <= $50
+    # Default trading universe - UPDATED Jan 19, 2026 (LL-236)
+    # Per CLAUDE.md: "SPY/IWM ONLY until strategy proven"
+    # Individual stocks (F, SOFI, T, etc.) are BLACKLISTED during 90-day paper trading phase
+    # 100K account succeeded with SPY focus (+$16,661), 5K account failed with SOFI (-$40.74)
     DEFAULT_UNIVERSE = [
-        # TIER 1: Affordable for $5K account (strike <= $50)
-        "F",  # Ford - ~$10 strike, solid dividend, EV transition
-        "SOFI",  # SoFi - ~$15 strike, fintech growth
-        "T",  # AT&T - ~$20 strike, high dividend, 5G
-        "INTC",  # Intel - ~$20 strike, semiconductor turnaround
-        "BAC",  # Bank of America - ~$35 strike, banking moat
-        "VZ",  # Verizon - ~$40 strike, high dividend, 5G
-        "C",  # Citigroup - ~$60 strike, banking (may need $6K)
-        # TIER 2: Need $10K+ account
-        "KO",  # Coca-Cola - ~$60 strike
-        "PG",  # Procter & Gamble - ~$160 strike
-        "JNJ",  # Johnson & Johnson - ~$150 strike
-        "HD",  # Home Depot - ~$350 strike
-        "MCD",  # McDonald's - ~$290 strike
-        # TIER 3: Need $20K+ account
-        "AAPL",  # Apple - ~$180 strike
-        "MSFT",  # Microsoft - ~$420 strike
-        "GOOGL",  # Alphabet - ~$180 strike
-        "AMZN",  # Amazon - ~$220 strike
-        "NVDA",  # Nvidia - ~$140 strike
-        "V",  # Visa - ~$290 strike
-        "MA",  # Mastercard - ~$500 strike
-        "COST",  # Costco - ~$900 strike
-        "UNH",  # UnitedHealth - ~$500 strike
-        "BRK-B",  # Berkshire B - ~$450 strike
+        # APPROVED TICKERS (per CLAUDE.md whitelist)
+        "SPY",  # S&P 500 ETF - Best liquidity, tightest spreads
+        "IWM",  # Russell 2000 ETF - Small cap exposure, good vol
+        # NOTE: Individual stocks below are BLOCKED by TradeGateway.TICKER_WHITELIST
+        # They remain here for reference only - will be rejected at trade execution
+        # Future expansion: After 90-day validation with 80%+ win rate
     ]
 
     def __init__(
