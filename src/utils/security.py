@@ -755,3 +755,305 @@ def is_sensitive_key(key_name: str) -> bool:
 
     key_lower = key_name.lower()
     return any(pattern in key_lower for pattern in sensitive_patterns)
+
+
+# =============================================================================
+# MCP SECURITY LAYER (Based on arXiv:2506.19676)
+# =============================================================================
+
+
+@dataclass
+class MCPSecurityResult:
+    """Result of MCP security validation."""
+
+    is_allowed: bool
+    server_id: str
+    tool_name: str | None
+    risk_level: str  # low, medium, high, critical
+    blocked_reason: str | None
+    audit_entry: dict[str, Any]
+
+
+class MCPSecurityValidator:
+    """
+    MCP-layer security validation based on arXiv:2506.19676 survey.
+
+    Implements:
+    - L1: Tool whitelisting per server
+    - L2: URL whitelisting for browser automation
+    - L3: Semantic validation of tool intent
+
+    Reference: "A Survey of LLM-Driven AI Agent Communication:
+    Protocols, Security Risks, and Defense Countermeasures"
+    """
+
+    # Allowed tools per MCP server (whitelist approach)
+    ALLOWED_TOOLS: dict[str, set[str]] = {
+        "trading-ui": {"get_components", "get_tokens", "render_preview"},
+        "playwright": {"navigate", "screenshot", "click", "fill", "evaluate"},
+        "alpaca": {
+            "get_account",
+            "get_positions",
+            "get_orders",
+            "place_order",
+            "cancel_order",
+            "get_bars",
+            "get_latest_quote",
+            "get_option_chain",
+        },
+        "rss": {"fetch_feed", "list_feeds", "get_articles"},
+        "youtube-transcript": {"get_transcript", "search_videos"},
+        "pal": {"challenge", "debug", "chat"},
+        "vertex-ai": {"query", "search", "generate"},
+        # Internal servers from registry
+        "trade-agent": {
+            "place_equity_order",
+            "get_positions",
+            "get_account_overview",
+            "cancel_order",
+        },
+        "mcp-trader": {"analyze_stock", "relative_strength", "position_size"},
+        "options-order-flow": {"live_summary", "unusual_activity", "flow_snapshot"},
+    }
+
+    # Risk levels per server (for audit/alerting)
+    SERVER_RISK_LEVELS: dict[str, str] = {
+        "alpaca": "critical",  # Direct broker access
+        "trade-agent": "critical",  # Can execute trades
+        "pal": "high",  # Multi-model, potential confusion
+        "playwright": "high",  # Browser automation, URL attacks
+        "gmail": "medium",  # Email access
+        "slack": "medium",  # Messaging
+        "rss": "medium",  # External content ingestion
+        "youtube-transcript": "medium",  # External content
+        "vertex-ai": "medium",  # Cloud AI
+        "mcp-trader": "low",  # Analysis only
+        "options-order-flow": "low",  # Read-only
+        "trading-ui": "low",  # Internal UI
+        "bogleheads-learner": "low",  # Forum reading
+    }
+
+    # URL whitelist for playwright browser automation (L3 defense)
+    ALLOWED_URL_PATTERNS: list[str] = [
+        r"^https://finance\.yahoo\.com/",
+        r"^https://www\.marketwatch\.com/",
+        r"^https://www\.tradingview\.com/",
+        r"^https://www\.finviz\.com/",
+        r"^https://unusualwhales\.com/",
+        r"^https://app\.alpaca\.markets/",
+        r"^https://www\.investopedia\.com/",
+        r"^https://seekingalpha\.com/",
+        r"^https://www\.barchart\.com/",
+        r"^https://stockanalysis\.com/",
+        # Allow GitHub for development
+        r"^https://github\.com/IgorGanapolsky/",
+    ]
+
+    # Blocked URL patterns (known malicious or risky)
+    BLOCKED_URL_PATTERNS: list[str] = [
+        r"^https?://localhost",
+        r"^https?://127\.",
+        r"^https?://192\.168\.",
+        r"^https?://10\.",
+        r"^file://",
+        r"javascript:",
+        r"data:",
+        # Known phishing/scam patterns
+        r"crypto.*airdrop",
+        r"free.*bitcoin",
+        r"wallet.*connect",
+    ]
+
+    def __init__(self):
+        """Initialize MCP security validator."""
+        self._url_allow_patterns = [
+            re.compile(p, re.IGNORECASE) for p in self.ALLOWED_URL_PATTERNS
+        ]
+        self._url_block_patterns = [
+            re.compile(p, re.IGNORECASE) for p in self.BLOCKED_URL_PATTERNS
+        ]
+
+    def validate_tool_access(
+        self, server_id: str, tool_name: str, params: dict[str, Any] | None = None
+    ) -> MCPSecurityResult:
+        """
+        Validate MCP tool access request.
+
+        Args:
+            server_id: The MCP server being accessed
+            tool_name: The tool being invoked
+            params: Tool parameters (for URL validation etc.)
+
+        Returns:
+            MCPSecurityResult with validation status
+        """
+        risk_level = self.SERVER_RISK_LEVELS.get(server_id, "medium")
+        audit_entry = {
+            "timestamp": __import__("datetime").datetime.now(
+                __import__("datetime").timezone.utc
+            ).isoformat(),
+            "server": server_id,
+            "tool": tool_name,
+            "risk_level": risk_level,
+            "params_keys": list(params.keys()) if params else [],
+        }
+
+        # Check if server is known
+        allowed_tools = self.ALLOWED_TOOLS.get(server_id)
+        if allowed_tools is None:
+            logger.warning(
+                "🛡️ MCP: Unknown server '%s' - blocking by default", server_id
+            )
+            return MCPSecurityResult(
+                is_allowed=False,
+                server_id=server_id,
+                tool_name=tool_name,
+                risk_level="high",
+                blocked_reason=f"Unknown MCP server: {server_id}",
+                audit_entry=audit_entry,
+            )
+
+        # Check if tool is whitelisted
+        if tool_name not in allowed_tools:
+            logger.warning(
+                "🛡️ MCP: Tool '%s' not whitelisted for server '%s'",
+                tool_name,
+                server_id,
+            )
+            return MCPSecurityResult(
+                is_allowed=False,
+                server_id=server_id,
+                tool_name=tool_name,
+                risk_level=risk_level,
+                blocked_reason=f"Tool '{tool_name}' not in whitelist for {server_id}",
+                audit_entry=audit_entry,
+            )
+
+        # Special validation for playwright URL navigation
+        if server_id == "playwright" and tool_name == "navigate" and params:
+            url = params.get("url", "")
+            url_result = self._validate_url(url)
+            if not url_result["allowed"]:
+                logger.warning("🛡️ MCP: Blocked URL navigation to '%s'", url[:100])
+                return MCPSecurityResult(
+                    is_allowed=False,
+                    server_id=server_id,
+                    tool_name=tool_name,
+                    risk_level="high",
+                    blocked_reason=url_result["reason"],
+                    audit_entry={**audit_entry, "blocked_url": url[:100]},
+                )
+
+        # Log high-risk tool access
+        if risk_level in ("high", "critical"):
+            logger.info(
+                "🛡️ MCP AUDIT: %s risk access - %s.%s",
+                risk_level.upper(),
+                server_id,
+                tool_name,
+            )
+
+        return MCPSecurityResult(
+            is_allowed=True,
+            server_id=server_id,
+            tool_name=tool_name,
+            risk_level=risk_level,
+            blocked_reason=None,
+            audit_entry=audit_entry,
+        )
+
+    def _validate_url(self, url: str) -> dict[str, Any]:
+        """Validate URL for browser automation."""
+        if not url:
+            return {"allowed": False, "reason": "Empty URL"}
+
+        # Check blocked patterns first
+        for pattern in self._url_block_patterns:
+            if pattern.search(url):
+                return {"allowed": False, "reason": "URL matches blocked pattern"}
+
+        # Check if URL matches allowed patterns
+        for pattern in self._url_allow_patterns:
+            if pattern.match(url):
+                return {"allowed": True, "reason": None}
+
+        # Default: block unknown URLs for security
+        return {"allowed": False, "reason": "URL not in whitelist"}
+
+    def validate_mcp_response(
+        self, server_id: str, tool_name: str, response: Any
+    ) -> bool:
+        """
+        Validate MCP tool response for anomalies.
+
+        Args:
+            server_id: The MCP server that responded
+            tool_name: The tool that was invoked
+            response: The response data
+
+        Returns:
+            True if response appears valid, False if suspicious
+        """
+        # Check for prompt injection in response content
+        if isinstance(response, str):
+            scan_result = scan_for_injection(response)
+            if scan_result.blocked:
+                logger.error(
+                    "🚨 MCP: Prompt injection detected in response from %s.%s",
+                    server_id,
+                    tool_name,
+                )
+                return False
+
+        # Check for excessively large responses (potential DoS)
+        if isinstance(response, str) and len(response) > 1_000_000:
+            logger.warning(
+                "🛡️ MCP: Suspiciously large response from %s.%s (%d bytes)",
+                server_id,
+                tool_name,
+                len(response),
+            )
+            return False
+
+        return True
+
+
+# Global MCP validator instance
+_mcp_validator = MCPSecurityValidator()
+
+
+def validate_mcp_tool(
+    server_id: str, tool_name: str, params: dict[str, Any] | None = None
+) -> MCPSecurityResult:
+    """
+    Validate MCP tool access.
+
+    Args:
+        server_id: MCP server ID
+        tool_name: Tool being invoked
+        params: Tool parameters
+
+    Returns:
+        MCPSecurityResult with validation status
+
+    Example:
+        result = validate_mcp_tool("playwright", "navigate", {"url": "https://evil.com"})
+        if not result.is_allowed:
+            raise SecurityError(result.blocked_reason)
+    """
+    return _mcp_validator.validate_tool_access(server_id, tool_name, params)
+
+
+def validate_mcp_response(server_id: str, tool_name: str, response: Any) -> bool:
+    """
+    Validate MCP tool response for security issues.
+
+    Args:
+        server_id: MCP server ID
+        tool_name: Tool that was invoked
+        response: Response data
+
+    Returns:
+        True if safe, False if suspicious
+    """
+    return _mcp_validator.validate_mcp_response(server_id, tool_name, response)
