@@ -219,7 +219,7 @@ jobs:
           "
 
       - name: Upload advice artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: rag-pretrade-advice-${{ github.run_id }}
           path: data/rag_pretrade_advice.json
