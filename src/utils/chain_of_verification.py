@@ -170,9 +170,25 @@ class ChainOfVerification:
                 evidence["modified"] = datetime.fromtimestamp(filepath.stat().st_mtime).isoformat()
 
         elif source.startswith("cmd:"):
-            cmd = source[4:]
+            cmd = source[4:].strip()
+            # SECURITY FIX Jan 19, 2026 (LL-244 Adversarial Audit):
+            # Command injection vulnerability - only allow whitelisted commands
+            # Do NOT use shell=True with untrusted input
+            ALLOWED_CMD_PREFIXES = (
+                "date ",
+                "git status",
+                "ls ",
+                "python3 -c",
+                "curl -s https://api.github.com/",
+            )
+            is_allowed = any(cmd.startswith(prefix) for prefix in ALLOWED_CMD_PREFIXES)
+            if not is_allowed:
+                evidence["error"] = f"Command not in whitelist: {cmd[:50]}..."
+                evidence["found"] = False
+                return evidence
             try:
-                result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=10)
+                # Use shell=True ONLY for pre-validated whitelisted commands
+                result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=10)  # noqa: S602
                 evidence["found"] = result.returncode == 0
                 evidence["type"] = "command"
                 evidence["output"] = result.stdout[:500] if result.stdout else None

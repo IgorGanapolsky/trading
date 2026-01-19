@@ -43,8 +43,9 @@ class TestPreTradeChecklistInitialization:
             PreTradeChecklist(account_equity=-1000.0)
 
     def test_constants_match_claude_md(self):
-        """Verify constants match CLAUDE.md specification."""
-        assert {"SPY", "IWM"} == PreTradeChecklist.ALLOWED_TICKERS
+        """Verify constants match CLAUDE.md specification (Jan 19, 2026 update)."""
+        # UPDATED Jan 19, 2026 (LL-244): SPY ONLY per CLAUDE.md
+        assert {"SPY"} == PreTradeChecklist.ALLOWED_TICKERS
         assert PreTradeChecklist.MAX_POSITION_PCT == 0.05
         assert PreTradeChecklist.MIN_DTE == 30
         assert PreTradeChecklist.MAX_DTE == 45
@@ -64,21 +65,21 @@ class TestTickerValidation:
         assert passed is True
         assert len(failures) == 0
 
-    def test_iwm_allowed(self, checklist):
-        """IWM should pass ticker check."""
+    def test_iwm_not_allowed(self, checklist):
+        """IWM should fail ticker check - UPDATED Jan 19, 2026: SPY ONLY per CLAUDE.md."""
         passed, failures = checklist.validate(symbol="IWM", max_loss=100.0, dte=35, is_spread=True)
-        assert passed is True
-        assert len(failures) == 0
+        assert passed is False
+        assert any("IWM not allowed" in f for f in failures)
 
     def test_spy_lowercase_allowed(self, checklist):
         """Lowercase spy should pass ticker check."""
         passed, failures = checklist.validate(symbol="spy", max_loss=100.0, dte=35, is_spread=True)
         assert passed is True
 
-    def test_iwm_mixed_case_allowed(self, checklist):
-        """Mixed case IwM should pass ticker check."""
+    def test_iwm_mixed_case_not_allowed(self, checklist):
+        """Mixed case IwM should fail - UPDATED Jan 19, 2026: SPY ONLY per CLAUDE.md."""
         passed, failures = checklist.validate(symbol="IwM", max_loss=100.0, dte=35, is_spread=True)
-        assert passed is True
+        assert passed is False
 
     def test_f_not_allowed(self, checklist):
         """F (Ford) should fail ticker check."""
@@ -121,12 +122,13 @@ class TestOptionsSymbolParsing:
         )
         assert passed is True
 
-    def test_iwm_options_symbol_extraction(self, checklist):
-        """IWM options symbol should extract IWM underlying."""
+    def test_iwm_options_symbol_rejected(self, checklist):
+        """IWM options symbol should fail - UPDATED Jan 19, 2026: SPY ONLY."""
         passed, failures = checklist.validate(
             symbol="IWM260221C00220000", max_loss=100.0, dte=35, is_spread=True
         )
-        assert passed is True
+        assert passed is False
+        assert any("IWM not allowed" in f for f in failures)
 
     def test_aapl_options_symbol_rejected(self, checklist):
         """AAPL options symbol should be rejected."""
@@ -245,11 +247,11 @@ class TestEarningsBlackoutValidation:
         assert passed is True
         assert not any("blackout" in f.lower() for f in failures)
 
-    def test_iwm_no_blackout(self, checklist):
-        """IWM has no earnings blackout."""
+    def test_iwm_fails_ticker_check(self, checklist):
+        """IWM should fail ticker check - UPDATED Jan 19, 2026: SPY ONLY per CLAUDE.md."""
         passed, failures = checklist.validate(symbol="IWM", max_loss=100.0, dte=35, is_spread=True)
-        assert passed is True
-        assert not any("blackout" in f.lower() for f in failures)
+        assert passed is False
+        assert any("IWM not allowed" in f for f in failures)
 
     def test_sofi_during_blackout_fails(self, checklist):
         """SOFI during earnings blackout should fail."""

@@ -83,8 +83,9 @@ class CoreStrategy(BaseStrategy):
     Used for daily trading on major ETFs.
     """
 
-    # Default universe
-    DEFAULT_UNIVERSE = ["SPY", "QQQ", "IWM", "DIA"]
+    # Default universe - UPDATED Jan 19, 2026 (LL-244 Adversarial Audit)
+    # CLAUDE.md mandates "SPY ONLY" - best liquidity, tightest spreads
+    DEFAULT_UNIVERSE = ["SPY"]
 
     # Strategy parameters
     MACD_FAST = 12

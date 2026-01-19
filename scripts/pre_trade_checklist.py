@@ -14,8 +14,8 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-# Allowed tickers (research-validated, no earnings risk)
-ALLOWED_TICKERS = ["SPY", "IWM"]
+# Allowed tickers - UPDATED Jan 19, 2026 (LL-244): SPY ONLY per CLAUDE.md
+ALLOWED_TICKERS = ["SPY"]  # SPY ONLY - IWM removed per adversarial audit
 
 # Earnings blackout periods (ticker: (start_date, end_date))
 EARNINGS_BLACKOUTS = {

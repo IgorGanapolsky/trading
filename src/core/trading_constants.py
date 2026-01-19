@@ -12,11 +12,12 @@ Created: Jan 19, 2026 (Adversarial audit finding - 4 duplicate definitions)
 # =============================================================================
 # TICKER WHITELIST - SINGLE SOURCE OF TRUTH
 # =============================================================================
-# Per CLAUDE.md strategy: "CREDIT SPREADS on SPY/IWM ONLY - defined risk"
+# Per CLAUDE.md Jan 19, 2026: "SPY ONLY - best liquidity, tightest spreads"
 # This is the ONLY place ticker whitelist should be defined.
 # All modules MUST import from here to avoid maintenance issues.
+# UPDATED Jan 19, 2026 (LL-244): IWM removed per adversarial audit
 # =============================================================================
-ALLOWED_TICKERS: set[str] = {"SPY", "IWM"}
+ALLOWED_TICKERS: set[str] = {"SPY"}  # SPY ONLY per CLAUDE.md Jan 19, 2026
 
 # =============================================================================
 # POSITION LIMITS - Phil Town Rule #1

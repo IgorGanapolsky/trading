@@ -12,8 +12,9 @@ from typing import Any, TypeVar
 
 from pydantic import BaseModel, Field, field_validator
 
-# Allowlist of tradeable symbols (from CLAUDE.md)
-ALLOWED_SYMBOLS = frozenset({"SPY", "IWM", "F", "T", "SOFI"})
+# Allowlist of tradeable symbols - UPDATED Jan 19, 2026 (LL-244)
+# Per CLAUDE.md: "SPY ONLY - best liquidity, tightest spreads"
+ALLOWED_SYMBOLS = frozenset({"SPY"})  # SPY ONLY per CLAUDE.md Jan 19, 2026
 
 # Maximum values to prevent resource exhaustion
 MAX_LOOKBACK_DAYS = 365
