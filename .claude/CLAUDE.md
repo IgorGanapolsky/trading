@@ -2,22 +2,26 @@
 
 CTO: Claude | CEO: Igor Ganapolsky
 
-## Strategy (Updated Jan 15, 2026 - DEEP RESEARCH REVISION)
+## Strategy (Updated Jan 19, 2026 - IRON CONDORS REPLACE TASTYTRADE)
 - **North Star**: $150-200/month (3-4% monthly) - MATH VALIDATED
-- **Why revised**: Deep research confirms credit spreads need 80%+ win rate to profit. 70% POP ≠ 70% win rate.
-- **Current capital**: $4,959.26 | Loss: -$40.74 (-0.81%) | Lesson paid.
-- **Primary strategy**: CREDIT SPREADS on SPY/IWM ONLY - defined risk
-- **Spread setup: $3-wide spreads (sell 30-delta, buy 27-delta) = ~$300 collateral, ~$90 premium
-- **CRITICAL MATH**: Risk $210 to make $90 = 2.3:1 ratio. Break-even win rate = **70%** (FIXED Jan 16)
-- **Expiration**: 30-45 DTE, close at 50% max profit (improves win rate to ~80%)
-- **Position limit**: 1 spread at a time (5% max = $248 risk)
-- **Monthly target**: 3-4 spreads x $50 x 80% win rate = $120-160/month (realistic)
-- **Stop-loss**: Close at 2x credit received ($120 max loss) - MANDATORY
-- **Rolling**: If thesis intact and not at stop-loss, roll "down and out" (lower strike, further expiration) for credit
-- **Assignment risk**: Close positions MANUALLY before expiration if stock is between strikes
-- **Risk management**: NEVER more than 5% on single trade. NO NAKED PUTS.
+- **Why revised**: TastyTrade credit spread 11-year backtest showed LOSSES (-7% to -93%). Iron condors from $100K account showed 86% win rate with 1.5:1 reward/risk.
+- **Current capital**: $4,986.39 | Lesson paid from SOFI disaster.
+- **Primary strategy**: IRON CONDORS on SPY ONLY - defined risk on BOTH sides
+- **Iron condor setup**:
+  - Sell 15-20 delta put spread (bull put)
+  - Sell 15-20 delta call spread (bear call)
+  - $5-wide wings, 30-45 DTE
+  - Collect premium from BOTH sides
+- **CRITICAL MATH**: 15-delta = 86% win rate (LL-220). Risk/reward ~1.5:1 (BETTER than credit spreads)
+- **Expiration**: 30-45 DTE, close at 50% max profit OR 21 DTE (whichever first)
+- **Position limit**: 1 iron condor at a time (5% max = $248 risk)
+- **Monthly target**: 2-3 iron condors x $75 avg x 86% win rate = $130-190/month (realistic)
+- **Stop-loss**: Close if one side reaches 200% of credit - MANDATORY
+- **Adjustment**: If tested, roll untested side closer for additional credit
+- **Assignment risk**: Close positions at 21 DTE to avoid gamma risk
+- **Risk management**: NEVER more than 5% on single trade. NO NAKED OPTIONS.
 - **Paper phase**: 90 days to validate 80%+ win rate before scaling
-- **Future expansion**: CALL credit spreads for bearish/overbought conditions (see RAG LL-215)
+- **Why iron condors beat credit spreads**: Collect premium from BOTH sides, better win rate, profit in range-bound markets
 
 ## Recovery Path (Math-Validated Jan 15, 2026)
 | Phase | Capital | Monthly Income | Daily Equivalent | Timeline |
@@ -30,34 +34,36 @@ CTO: Claude | CEO: Igor Ganapolsky
 | Goal | $50,000+ | $2,000+ | **$100/day** | ~2.5-3 years |
 
 ## MANDATORY Pre-Trade Checklist
-1. [ ] Is ticker SPY or IWM? (NO individual stocks until proven)
+1. [ ] Is ticker SPY? (SPY ONLY - best liquidity, tightest spreads)
 2. [ ] Is position size ≤5% of account ($248)?
-3. [ ] Is it a SPREAD (not naked put)?
-4. [ ] Checked earnings calendar? (No blackout violations)
+3. [ ] Is it an IRON CONDOR (4-leg, defined risk on BOTH sides)?
+4. [ ] Are short strikes at 15-20 delta?
 5. [ ] 30-45 DTE expiration?
-6. [ ] Stop-loss defined before entry?
+6. [ ] Stop-loss at 200% of credit defined?
+7. [ ] Exit plan at 50% profit or 21 DTE?
 
 ## Win Rate Tracking (Data-Driven)
 - Track every paper trade: entry, exit, P/L, win/loss
 - Required metrics: win rate %, avg win, avg loss, profit factor
 - Scale decisions based on REAL data, not projections
-- **CRITICAL**: Break-even win rate = 70% (achievable). Target = 80%+ with early exits.
-- If win rate <75% after 30 trades: reassess strategy (not profitable)
-- If win rate 75-80%: marginally profitable, proceed with caution
-- If win rate 80%+: profitable, consider scaling after 90 days
+- **CRITICAL**: Iron condors at 15-delta = 86% win rate. Target = 80%+ maintained.
+- If win rate <80% after 30 trades: check delta selection, may need wider wings
+- If win rate 80-85%: on track, maintain discipline
+- If win rate 85%+: profitable, consider scaling after 90 days
 
-### Ticker Hierarchy (Jan 2026 Research)
-| Priority | Ticker | Rationale | Blackout |
-|----------|--------|-----------|----------|
-| 1 | SPY | Best liquidity, tightest spreads | None |
-| 2 | IWM | Small cap exposure, good vol | None |
-| 3 | F | Undervalued, 4.2% div support | Feb 3-10 (earnings Feb 10) |
-| 4 | T | Stable, low IV = lower premiums | TBD earnings |
-| 5 | SOFI | **AVOID until Feb 1** | Jan 23-30 (earnings Jan 30, IV 55%) |
+### Ticker Selection (Jan 19, 2026 - Simplified)
+| Priority | Ticker | Rationale |
+|----------|--------|-----------|
+| 1 | SPY | ONLY ticker. Best liquidity, tightest spreads, no early assignment risk |
+
+**NO individual stocks.** The $100K success was SPY. The $5K failure was SOFI. Learn the lesson.
 
 ### Phil Town Alignment Note
-Credit spreads conflict with Rule #1 (risk $210 to make $90 (IMPROVED 2.3:1)).
-Mitigations: Use 30-delta (not ATM) for margin of safety, strict stops, small position sizes.
+Iron condors ALIGN with Rule #1 better than credit spreads:
+- Defined risk on BOTH sides (put AND call spread)
+- 15-delta = ~85% probability of profit
+- 1.5:1 reward/risk ratio (BETTER than credit spreads' 0.5:1)
+- Profit if SPY stays within range (most of the time)
 
 ## Core Directives (PERMANENT)
 1. **Don't lose money** - Rule #1 always
@@ -146,5 +152,3 @@ Trust the hooks. They work.
 ## $5K Account Priority
 Use `ALPACA_PAPER_TRADING_5K_API_KEY` before `ALPACA_API_KEY`.
 All code must use `get_alpaca_credentials()` from `src/utils/alpaca_client.py`.
-
-

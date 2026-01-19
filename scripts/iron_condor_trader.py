@@ -75,44 +75,45 @@ class IronCondorStrategy:
     """
 
     def __init__(self):
-        # FIXED Jan 19 2026: Use IWM per CLAUDE.md (SOFI blackout until Feb 1)
-        # FIXED Jan 19 2026: Reduced position_size_pct from 15% to 5% per CLAUDE.md mandate
+        # FIXED Jan 19 2026: SPY ONLY per CLAUDE.md (TastyTrade strategy scrapped)
+        # Iron condors replace credit spreads - 86% win rate from $100K success
         self.config = {
-            "underlying": "IWM",  # IWM per CLAUDE.md ticker hierarchy - SPY/IWM only
+            "underlying": "SPY",  # SPY ONLY per CLAUDE.md - best liquidity, $100K success
             "target_dte": 30,
             "min_dte": 21,
             "max_dte": 45,
-            "short_delta": 0.16,  # 16 delta = ~84% POP
-            "wing_width": 3,  # $3 wide spreads per CLAUDE.md spread setup
+            "short_delta": 0.15,  # 15 delta = ~85% POP (research-backed)
+            "wing_width": 5,  # $5 wide spreads per updated CLAUDE.md
             "take_profit_pct": 0.50,  # Close at 50% profit
             "stop_loss_pct": 2.0,  # Close at 200% loss
-            "max_positions": 1,  # Per CLAUDE.md: "1 spread at a time"
+            "exit_dte": 21,  # Exit at 21 DTE to avoid gamma risk
+            "max_positions": 1,  # Per CLAUDE.md: "1 iron condor at a time"
             "position_size_pct": 0.05,  # 5% of portfolio per position - CLAUDE.md MANDATE
         }
 
     def get_underlying_price(self) -> float:
-        """Get current price of underlying (IWM per CLAUDE.md)."""
-        # FIXED Jan 19 2026: Was returning SOFI price even with IWM config!
-        # IWM trades around $220-230 in Jan 2026
-        return 225.0  # Approximate IWM price Jan 2026
+        """Get current price of SPY."""
+        # In production: use market data API
+        # For now, estimate SPY price
+        return 595.0  # Approximate SPY price Jan 2026
 
     def calculate_strikes(self, price: float) -> tuple[float, float, float, float]:
         """
         Calculate iron condor strikes based on delta targeting.
 
-        For 16 delta on IWM (~$225):
-        - Short put: ~7% below price (~$209)
-        - Short call: ~7% above price (~$241)
-        - Wing width: $3 per CLAUDE.md spread setup
+        For 15 delta on SPY (~$595):
+        - Short put: ~5% below price (~$565)
+        - Short call: ~5% above price (~$625)
+        - Wing width: $5 (appropriate for SPY)
         """
-        # 16 delta is roughly 1 standard deviation move
-        # For 30 DTE on smaller stocks, use ~7% OTM
+        # 15 delta is roughly 1.5 standard deviation move
+        # For 30 DTE on SPY, use ~5% OTM for 15-delta equivalent
 
         wing = self.config["wing_width"]
-        short_put = round(price * 0.93)  # Round to $1 for small stocks
+        short_put = round(price * 0.95)  # 5% OTM for puts
         long_put = short_put - wing
 
-        short_call = round(price * 1.07)  # Round to $1 for small stocks
+        short_call = round(price * 1.05)  # 5% OTM for calls
         long_call = short_call + wing
 
         return long_put, short_put, short_call, long_call
@@ -125,10 +126,11 @@ class IronCondorStrategy:
         """
         long_put, short_put, short_call, long_call = legs
 
-        # Rough estimates based on typical SOFI premiums (~$14 stock)
-        # At 30 DTE, 16 delta options ~$0.20-0.40 for SOFI
-        put_spread_credit = 0.25  # Sell short put, buy long put
-        call_spread_credit = 0.25  # Sell short call, buy long call
+        # SPY premium estimates (~$595 stock)
+        # At 30 DTE, 15-delta 5% OTM options: ~$1.50-2.50 for SPY
+        # $5 wide spreads collect roughly $0.75-1.25 net credit per side
+        put_spread_credit = 1.00  # Sell short put, buy long put
+        call_spread_credit = 1.00  # Sell short call, buy long call
 
         total_credit = put_spread_credit + call_spread_credit
         wing_width = self.config["wing_width"]

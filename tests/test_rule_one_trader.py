@@ -38,15 +38,21 @@ class TestRuleOneTraderConfig:
         for key in required_keys:
             assert key in CONFIG, f"Missing config key: {key}"
 
-    def test_watchlist_has_affordable_stocks(self):
-        """Watchlist should contain affordable stocks for small accounts."""
+    def test_watchlist_has_liquid_etfs(self):
+        """Watchlist should contain liquid ETFs for iron condors.
+
+        Updated Jan 19, 2026: Strategy pivoted from individual stocks to
+        SPY iron condors based on $100K account success (LL-216, LL-220).
+        TastyTrade credit spread backtests showed losses; iron condors on
+        SPY had 86% win rate with 1.5:1 reward/risk.
+        """
         from scripts.rule_one_trader import CONFIG
 
-        assert len(CONFIG["watchlist"]) >= 3
-        # Should include stocks with affordable option strikes (<= $50)
-        # Updated Jan 2026: Focus on low-strike stocks for $5K account
-        affordable_stocks = ["F", "SOFI", "T", "INTC", "BAC", "VZ"]
-        assert any(s in CONFIG["watchlist"] for s in affordable_stocks)
+        # SPY ONLY per updated CLAUDE.md - best liquidity, proven results
+        assert len(CONFIG["watchlist"]) >= 1
+        # Must include SPY (primary) or IWM (secondary)
+        liquid_etfs = ["SPY", "IWM"]
+        assert any(s in CONFIG["watchlist"] for s in liquid_etfs)
 
     def test_north_star_target_is_100(self):
         """North Star daily target should be $100."""
