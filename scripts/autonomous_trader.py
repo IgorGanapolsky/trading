@@ -829,9 +829,9 @@ def execute_reit_trading() -> None:
         else:
             logger.info("📋 REIT Analysis complete (no trader - signals only)")
             for sig in signals:
-                logger.info(
-                    f"   {sig['symbol']}: {sig.get('action', 'hold')} (score: {sig.get('strength', 0):.2f})"
-                )
+                action = sig.get('action', 'hold')
+                strength = sig.get('strength', 0)
+                logger.info(f"   {sig['symbol']}: {action} (score: {strength:.2f})")
 
     except ImportError as e:
         logger.warning(f"⚠️  REIT strategy not available: {e}")
@@ -937,9 +937,9 @@ def main() -> None:
             logger.warning(
                 f"🚨 Found {enforcement_result.violations_found} positions violating lessons"
             )
-            logger.warning(
-                f"   Closed {enforcement_result.positions_closed} positions: {enforcement_result.closed_symbols}"
-            )
+            closed = enforcement_result.positions_closed
+            symbols = enforcement_result.closed_symbols
+            logger.warning(f"   Closed {closed} positions: {symbols}")
             logger.warning(f"   Total value closed: ${enforcement_result.total_value_closed:.2f}")
         else:
             logger.info("✅ No violations found - all positions comply with lessons")
@@ -1073,9 +1073,8 @@ def main() -> None:
             if plan.target_daily_profit > 0
             else 0
         )
-        logger.info(
-            f"$100/day Progress: {progress_pct:.1f}% (current: ${plan.current_daily_profit:.2f}/day)"
-        )
+        daily = plan.current_daily_profit
+        logger.info(f"$100/day Progress: {progress_pct:.1f}% (current: ${daily:.2f}/day)")
 
         # If avg_return is positive and we have a recommended budget, log it
         if plan.recommended_daily_budget and plan.avg_return_pct > 0:
