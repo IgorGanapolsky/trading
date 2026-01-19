@@ -365,7 +365,7 @@
     "last_trade_symbol": "SYNCED"
   },
   "trailing_stops": {
-    "last_set": "2026-01-19T14:12:44.151921",
+    "last_set": "2026-01-19T16:33:29.741516",
     "stops_active": 1,
     "positions_skipped": 0,
     "value_protected": 500.0,
