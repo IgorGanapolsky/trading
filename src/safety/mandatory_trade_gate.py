@@ -108,8 +108,8 @@ class TradeBlockedError(Exception):
         super().__init__(gate_result.reason)
 
 
-# Configuration from environment
-MAX_POSITION_PCT = float(os.getenv("MAX_POSITION_PCT", "0.10"))  # 10% max per position
+# Configuration from environment (CLAUDE.md mandates 5% max)
+MAX_POSITION_PCT = float(os.getenv("MAX_POSITION_PCT", "0.05"))  # 5% max per CLAUDE.md
 MAX_DAILY_LOSS_PCT = float(os.getenv("MAX_DAILY_LOSS_PCT", "0.05"))  # 5% max daily loss
 MIN_TRADE_AMOUNT = float(os.getenv("MIN_TRADE_AMOUNT", "1.0"))  # $1 minimum trade
 
