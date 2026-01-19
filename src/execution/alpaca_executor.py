@@ -783,7 +783,7 @@ class AlpacaExecutor:
                         f"Entry: ${entry_price:.2f}\n"
                         f"Intended Stop: ${stop_price:.2f}\n"
                         f"Error: {e}\n"
-                        f"ACTION REQUIRED: Set stop-loss manually or close position!"
+                        f"ALERT: Position opened without stop-loss - requires review."
                     ),
                     level="error",
                 )

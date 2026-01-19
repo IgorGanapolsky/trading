@@ -88,7 +88,7 @@ def generate_failure_reflection(
     elif failure_type == "STOP_LOSS_FAILED":
         title = f"CRITICAL: Stop-loss not placed for {symbol}"
         root_cause = f"Position opened WITHOUT protection. Error: {error_message}"
-        prevention = "NEVER open positions without stop-loss. If stop fails, immediately close position manually."
+        prevention = "NEVER open positions without stop-loss. If stop fails, system will auto-close position."
         severity = "CRITICAL"
 
     elif failure_type == "SYNC_FAILED":
