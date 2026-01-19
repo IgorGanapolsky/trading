@@ -33,7 +33,10 @@ def main():
     project_root = Path(__file__).parent.parent
     healer = SelfHealer(project_root)
 
-    print("Running health checks...")
+    # Only print status message when not in JSON mode
+    if not args.json:
+        print("Running health checks...")
+
     healer.run_all_checks()
 
     if args.heal:
