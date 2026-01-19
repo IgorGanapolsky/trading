@@ -3,16 +3,47 @@ layout: post
 title: "Day 83: What We Learned - January 19, 2026"
 date: 2026-01-19
 day_number: 83
-lessons_count: 12
-critical_count: 3
-excerpt: "Today was a wake-up call. Two critical issues surfaced that could have derailed our entire trading operation. Here's what went wrong and how we're fix..."
+lessons_count: 14
+critical_count: 5
+excerpt: "Adversarial audit found CRITICAL security vulnerabilities. Two env var bypasses could have allowed unlimited position sizes. Fixed and hardened."
 ---
 
 # Day 83 of 90 | Monday, January 19, 2026
 
 **7 days remaining** in our journey to build a profitable AI trading system.
 
-Today was a wake-up call. Two critical issues surfaced that could have derailed our entire trading operation. Here's what went wrong and how we're fixing it.
+Today's adversarial audit uncovered **critical security vulnerabilities** that could have bypassed Phil Town Rule #1. We fixed them immediately.
+
+---
+
+## CRITICAL Security Fixes (Today)
+
+### LL-245: Environment Variable Bypass Vulnerability
+
+**SEVERITY: CRITICAL**
+
+Position limits could be overridden via environment variables:
+```python
+# VULNERABLE (FIXED)
+MAX_POSITION_PCT = float(os.getenv("MAX_POSITION_PCT", "0.05"))
+```
+
+An attacker could set `MAX_POSITION_PCT=1.0` and risk 100% of account on a single trade.
+
+**Fix:** Hardcoded from central constants module. No env var override possible.
+
+### LL-246: Position Count Not Enforced at Entry
+
+**SEVERITY: CRITICAL**
+
+The mandatory trade gate validated position SIZE (5%) but NOT position COUNT. This allowed accumulating 6 positions when CLAUDE.md limits to 4 (1 iron condor).
+
+**Fix:** Added position count validation to mandatory_trade_gate.py:
+```python
+MAX_POSITIONS = 4  # HARDCODED
+if current_position_count >= MAX_POSITIONS:
+    return GateResult(approved=False)
+```
 
 ---
 
