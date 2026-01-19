@@ -92,13 +92,13 @@ Iron condors ALIGN with Rule #1 better than credit spreads:
 python3 -c "from src.orchestrator.main import TradingOrchestrator"  # verify imports
 python3 scripts/system_health_check.py  # health check
 pytest tests/ -q --tb=no  # run tests
-python scripts/validate_env_keys.py  # validate API key consistency
+python scripts/validate_secrets.py  # validate API key consistency
 ```
 
 ## Pre-Merge Checklist
 1. Run tests: `pytest tests/ -q`
 2. Run lint: `ruff check src/`
-3. Validate env keys: `python scripts/validate_env_keys.py`
+3. Validate secrets: `python scripts/validate_secrets.py`
 4. Dry run trading logic if applicable
 5. Confirm CI passes on PR
 
