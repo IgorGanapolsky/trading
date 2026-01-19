@@ -1,8 +1,8 @@
 {
-  "last_updated": "2026-01-16T23:44:22.650560Z",
+  "last_updated": "2026-01-19T14:09:09.762407Z",
   "portfolio": {
-    "equity": "4986.71",
-    "cash": "4761.71"
+    "equity": "4986.39",
+    "cash": "4761.39"
   },
   "paper_account": {
     "positions_count": 6,
@@ -351,17 +351,5 @@
       "filled_at": "2026-01-12 14:30:54.357134+00:00"
     }
   ],
-  "trades_loaded": 38,
-  "meta": {
-    "last_updated": "2026-01-19T13:31:20.217538",
-    "last_sync": "2026-01-19T13:31:20.217549",
-    "sync_mode": "skipped_no_keys",
-    "trade_sync": "alpaca_api"
-  },
-  "trades": {
-    "last_trade_date": "2026-01-18",
-    "today_trades": 0,
-    "total_trades_today": 0,
-    "last_trade_symbol": "SYNCED"
-  }
+  "trades_loaded": 38
 }
