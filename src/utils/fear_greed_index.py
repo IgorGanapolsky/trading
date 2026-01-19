@@ -16,12 +16,18 @@ Usage:
 """
 
 import logging
+import time
 from datetime import datetime
 from typing import Any
 
 import requests
 
 logger = logging.getLogger(__name__)
+
+# Retry configuration for external API calls
+MAX_RETRIES = 3
+INITIAL_DELAY = 1.0  # seconds
+BACKOFF_MULTIPLIER = 2.0
 
 
 class FearGreedIndex:
@@ -60,41 +66,51 @@ class FearGreedIndex:
 
     def fetch_current(self) -> dict[str, Any]:
         """
-        Fetch current Fear & Greed Index value.
+        Fetch current Fear & Greed Index value with retry logic.
 
         Returns:
             Dict with value, classification, and timestamp
         """
-        try:
-            response = requests.get(self.API_URL, timeout=10)
-            response.raise_for_status()
-            data = response.json()
+        last_error = None
+        delay = INITIAL_DELAY
 
-            if data.get("data"):
-                fng_data = data["data"][0]
-                self.last_value = int(fng_data["value"])
-                self.last_classification = fng_data["value_classification"]
-                self.last_update = datetime.now()
+        for attempt in range(MAX_RETRIES):
+            try:
+                response = requests.get(self.API_URL, timeout=15)
+                response.raise_for_status()
+                data = response.json()
 
-                logger.info(f"Fear & Greed Index: {self.last_value} ({self.last_classification})")
+                if data.get("data"):
+                    fng_data = data["data"][0]
+                    self.last_value = int(fng_data["value"])
+                    self.last_classification = fng_data["value_classification"]
+                    self.last_update = datetime.now()
 
-                return {
-                    "value": self.last_value,
-                    "classification": self.last_classification,
-                    "timestamp": fng_data.get("timestamp"),
-                    "time_until_update": fng_data.get("time_until_update"),
-                    "success": True,
-                }
-            else:
-                logger.warning("No data in Fear & Greed API response")
-                return {"success": False, "error": "No data in response"}
+                    logger.info(f"Fear & Greed Index: {self.last_value} ({self.last_classification})")
 
-        except requests.RequestException as e:
-            logger.error(f"Failed to fetch Fear & Greed Index: {e}")
-            return {"success": False, "error": str(e)}
-        except Exception as e:
-            logger.error(f"Error processing Fear & Greed data: {e}")
-            return {"success": False, "error": str(e)}
+                    return {
+                        "value": self.last_value,
+                        "classification": self.last_classification,
+                        "timestamp": fng_data.get("timestamp"),
+                        "time_until_update": fng_data.get("time_until_update"),
+                        "success": True,
+                    }
+                else:
+                    logger.warning("No data in Fear & Greed API response")
+                    return {"success": False, "error": "No data in response"}
+
+            except requests.RequestException as e:
+                last_error = e
+                if attempt < MAX_RETRIES - 1:
+                    logger.warning(f"Fear & Greed API attempt {attempt + 1}/{MAX_RETRIES} failed: {e}, retrying in {delay:.1f}s")
+                    time.sleep(delay)
+                    delay *= BACKOFF_MULTIPLIER
+            except Exception as e:
+                logger.error(f"Error processing Fear & Greed data: {e}")
+                return {"success": False, "error": str(e)}
+
+        logger.error(f"Failed to fetch Fear & Greed Index after {MAX_RETRIES} attempts: {last_error}")
+        return {"success": False, "error": str(last_error)}
 
     def get_trading_signal(self) -> dict[str, Any]:
         """
@@ -176,7 +192,7 @@ class FearGreedIndex:
 
     def get_historical(self, days: int = 30) -> list[dict]:
         """
-        Fetch historical Fear & Greed Index values.
+        Fetch historical Fear & Greed Index values with retry logic.
 
         Args:
             days: Number of days of history to fetch (max 100)
@@ -184,25 +200,38 @@ class FearGreedIndex:
         Returns:
             List of historical values
         """
-        try:
-            response = requests.get(f"{self.API_URL}?limit={min(days, 100)}", timeout=10)
-            response.raise_for_status()
-            data = response.json()
+        last_error = None
+        delay = INITIAL_DELAY
 
-            if data.get("data"):
-                return [
-                    {
-                        "value": int(d["value"]),
-                        "classification": d["value_classification"],
-                        "timestamp": d["timestamp"],
-                    }
-                    for d in data["data"]
-                ]
-            return []
+        for attempt in range(MAX_RETRIES):
+            try:
+                response = requests.get(f"{self.API_URL}?limit={min(days, 100)}", timeout=15)
+                response.raise_for_status()
+                data = response.json()
 
-        except Exception as e:
-            logger.error(f"Failed to fetch historical Fear & Greed data: {e}")
-            return []
+                if data.get("data"):
+                    return [
+                        {
+                            "value": int(d["value"]),
+                            "classification": d["value_classification"],
+                            "timestamp": d["timestamp"],
+                        }
+                        for d in data["data"]
+                    ]
+                return []
+
+            except requests.RequestException as e:
+                last_error = e
+                if attempt < MAX_RETRIES - 1:
+                    logger.warning(f"Historical Fear & Greed API attempt {attempt + 1}/{MAX_RETRIES} failed: {e}, retrying in {delay:.1f}s")
+                    time.sleep(delay)
+                    delay *= BACKOFF_MULTIPLIER
+            except Exception as e:
+                logger.error(f"Failed to fetch historical Fear & Greed data: {e}")
+                return []
+
+        logger.error(f"Failed to fetch historical Fear & Greed data after {MAX_RETRIES} attempts: {last_error}")
+        return []
 
     def calculate_trend(self, days: int = 7) -> dict[str, Any]:
         """

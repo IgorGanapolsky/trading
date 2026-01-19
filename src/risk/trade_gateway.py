@@ -1213,8 +1213,8 @@ class TradeGateway:
         if self.executor:
             try:
                 return float(self.executor.account_equity or 5000)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Failed to get account equity from executor: {e}, using default")
         # Default to $5K (our paper trading account size) not $100K
         return float(os.getenv("ACCOUNT_EQUITY", "5000"))
 
@@ -1246,8 +1246,8 @@ class TradeGateway:
         if self.executor:
             try:
                 return self.executor.get_positions() or []
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Failed to get positions from executor: {e}, returning empty list")
         return []
 
     def _get_price(self, symbol: str) -> float:
