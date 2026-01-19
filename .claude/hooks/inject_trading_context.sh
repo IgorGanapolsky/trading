@@ -83,7 +83,8 @@ if [[ "$LIVE_DATA" == "false" ]]; then
     # PRIORITY: Use system_state.json (paper account) - per CLAUDE.md directive
     # performance_log.json tracks brokerage ($60), system_state tracks paper ($5K)
     if [[ -f "$STATE_FILE" ]]; then
-        PERF_DATE=$(jq -r '.last_updated // ""' "$STATE_FILE" 2>/dev/null | cut -d'T' -f1 || echo "")
+        # Check meta.last_updated first (sync-alpaca-status), then fallback to last_updated
+        PERF_DATE=$(jq -r '.meta.last_updated // .last_updated // ""' "$STATE_FILE" 2>/dev/null | cut -d'T' -f1 || echo "")
         CURRENT_EQUITY=$(jq -r '.paper_account.equity // .portfolio.equity // "N/A"' "$STATE_FILE" 2>/dev/null || echo "N/A")
         TOTAL_PL=$(jq -r '.paper_account.total_pl // "N/A"' "$STATE_FILE" 2>/dev/null || echo "N/A")
         TOTAL_PL_PCT_RAW=$(jq -r '.paper_account.total_pl_pct // "N/A"' "$STATE_FILE" 2>/dev/null || echo "N/A")
@@ -152,15 +153,59 @@ fi
 
 # Check market status - US Equities ONLY (we don't trade crypto)
 # UPDATED Jan 5, 2026: Fixed ambiguous output that caused Claude to misinterpret market status
+# UPDATED Jan 19, 2026: Added market holiday detection (MLK Day bug fix)
 # See LL-074: Hook output must be EXPLICIT about market state
 CURRENT_TIME=$(TZ=America/New_York date +%H:%M)
 CURRENT_HOUR=$(TZ=America/New_York date +%H)
+TODAY_DATE=$(TZ=America/New_York date +%Y-%m-%d)
+
+# 2026 US Market Holidays (NYSE/NASDAQ closed)
+MARKET_HOLIDAYS=(
+    "2026-01-01"  # New Year's Day
+    "2026-01-19"  # MLK Day
+    "2026-02-16"  # Presidents Day
+    "2026-04-03"  # Good Friday
+    "2026-05-25"  # Memorial Day
+    "2026-06-19"  # Juneteenth
+    "2026-07-03"  # Independence Day (observed)
+    "2026-09-07"  # Labor Day
+    "2026-11-26"  # Thanksgiving
+    "2026-12-25"  # Christmas
+)
+
+# Check if today is a market holiday
+IS_HOLIDAY="NO"
+HOLIDAY_NAME=""
+for holiday in "${MARKET_HOLIDAYS[@]}"; do
+    if [[ "$TODAY_DATE" == "$holiday" ]]; then
+        IS_HOLIDAY="YES"
+        case "$holiday" in
+            "2026-01-01") HOLIDAY_NAME="New Year's Day" ;;
+            "2026-01-19") HOLIDAY_NAME="MLK Day" ;;
+            "2026-02-16") HOLIDAY_NAME="Presidents Day" ;;
+            "2026-04-03") HOLIDAY_NAME="Good Friday" ;;
+            "2026-05-25") HOLIDAY_NAME="Memorial Day" ;;
+            "2026-06-19") HOLIDAY_NAME="Juneteenth" ;;
+            "2026-07-03") HOLIDAY_NAME="Independence Day (observed)" ;;
+            "2026-09-07") HOLIDAY_NAME="Labor Day" ;;
+            "2026-11-26") HOLIDAY_NAME="Thanksgiving" ;;
+            "2026-12-25") HOLIDAY_NAME="Christmas" ;;
+            *) HOLIDAY_NAME="Market Holiday" ;;
+        esac
+        break
+    fi
+done
 
 TRADING_ALLOWED="NO"
 MARKET_STATE=""
 MARKET_REASON=""
 
-if [[ $DAY_NUM -ge 1 && $DAY_NUM -le 5 ]]; then
+# Holiday check FIRST (takes precedence over weekday check)
+if [[ "$IS_HOLIDAY" == "YES" ]]; then
+    MARKET_STATE="HOLIDAY_CLOSED"
+    MARKET_REASON="$HOLIDAY_NAME - Markets closed"
+    TRADING_ALLOWED="NO"
+elif [[ $DAY_NUM -ge 1 && $DAY_NUM -le 5 ]]; then
     # Weekday (Mon-Fri)
     if [[ "$CURRENT_TIME" > "09:30" && "$CURRENT_TIME" < "16:00" ]]; then
         MARKET_STATE="OPEN"
@@ -185,15 +230,23 @@ fi
 # Build unambiguous status string
 MARKET_STATUS="$MARKET_STATE - $MARKET_REASON [TRADING_ALLOWED=$TRADING_ALLOWED]"
 
-# Next automated trade time - MUST be a weekday (Mon-Fri)
+# Next automated trade time - MUST be a weekday (Mon-Fri) AND not a holiday
 # Fixed Dec 30, 2025: Was showing tomorrow even on trading days before market close
+# Fixed Jan 19, 2026: Account for market holidays
 get_next_trading_day() {
     local dow=$(TZ=America/New_York date +%u)  # 1=Mon, 7=Sun
     local hour=$(TZ=America/New_York date +%H)  # Current hour in ET
     local days_to_add=0
 
+    # If today is a holiday, next trade is tomorrow (at minimum)
+    if [[ "$IS_HOLIDAY" == "YES" ]]; then
+        days_to_add=1
+        # If Friday holiday, skip to Monday
+        if [[ $dow -eq 5 ]]; then
+            days_to_add=3
+        fi
     # If it's a weekday (Mon-Fri, dow 1-5)
-    if [[ $dow -ge 1 && $dow -le 5 ]]; then
+    elif [[ $dow -ge 1 && $dow -le 5 ]]; then
         # If before market close (4 PM ET = 16:00), trade is TODAY
         if [[ $hour -lt 16 ]]; then
             days_to_add=0
