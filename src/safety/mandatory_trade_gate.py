@@ -25,8 +25,13 @@ logger = logging.getLogger(__name__)
 # TICKER WHITELIST - CRITICAL ENFORCEMENT (Jan 15, 2026)
 # Per CLAUDE.md: "CREDIT SPREADS on SPY/IWM ONLY"
 # This prevents trades like SOFI that violated strategy
+# UPDATED Jan 19: Import from central config (single source of truth)
 # ============================================================
-ALLOWED_TICKERS = {"SPY", "IWM"}  # Per CLAUDE.md strategy
+try:
+    from src.core.trading_constants import ALLOWED_TICKERS
+except ImportError:
+    # Fallback if constants unavailable (shouldn't happen in production)
+    ALLOWED_TICKERS = {"SPY", "IWM"}  # Per CLAUDE.md strategy
 TICKER_WHITELIST_ENABLED = True  # Toggle for paper testing
 
 
