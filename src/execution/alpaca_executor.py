@@ -525,8 +525,8 @@ class AlpacaExecutor:
             try:
                 breaker = get_api_circuit_breaker()
                 breaker.record_success()
-            except Exception:
-                pass
+            except Exception as cb_err:
+                logger.debug(f"Circuit breaker success recording failed: {cb_err}")
 
             # Convert OrderResult back to dict for compatibility
             # Validate required attributes exist
@@ -596,8 +596,8 @@ class AlpacaExecutor:
 
                 breaker = get_api_circuit_breaker()
                 breaker.record_failure(str(e))
-            except Exception:
-                pass
+            except Exception as cb_err:
+                logger.debug(f"Circuit breaker failure recording failed: {cb_err}")
 
             # Auto-reflect on broker failure (Reflexion pattern)
             try:
@@ -819,8 +819,8 @@ class AlpacaExecutor:
                     quote_data = self.trader.get_current_quote(symbol)
                     if quote_data and quote_data.get("ask_price"):
                         return float(quote_data["ask_price"])
-            except Exception:
-                pass
+            except Exception as quote_err:
+                logger.debug(f"Quote fetch for {symbol} failed (notional calc): {quote_err}")
             # Default estimate: assume 1 share = notional (rough)
             return notional / 1.0 if notional > 0 else 0.0
 
@@ -831,8 +831,8 @@ class AlpacaExecutor:
                 quote_data = self.trader.get_current_quote(symbol)
                 if quote_data and quote_data.get("ask_price"):
                     return float(quote_data["ask_price"])
-        except Exception:
-            pass
+        except Exception as quote_err:
+            logger.debug(f"Quote fetch for {symbol} failed (share calc): {quote_err}")
 
         return 0.0
 

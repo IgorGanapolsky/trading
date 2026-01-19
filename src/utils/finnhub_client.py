@@ -9,11 +9,17 @@ from __future__ import annotations
 
 import logging
 import os
+import time
 from datetime import date, timedelta
 
 import requests
 
 logger = logging.getLogger(__name__)
+
+# Retry configuration for API calls
+MAX_RETRIES = 3
+INITIAL_DELAY = 1.0
+BACKOFF_MULTIPLIER = 2.0
 
 
 class FinnhubClient:
@@ -58,35 +64,48 @@ class FinnhubClient:
         if end_date is None:
             end_date = date.today()
 
-        try:
-            url = f"{self.BASE_URL}/calendar/economic"
-            params = {
-                "token": self.api_key,
-                "from": start_date.strftime("%Y-%m-%d"),
-                "to": end_date.strftime("%Y-%m-%d"),
-            }
+        url = f"{self.BASE_URL}/calendar/economic"
+        params = {
+            "token": self.api_key,
+            "from": start_date.strftime("%Y-%m-%d"),
+            "to": end_date.strftime("%Y-%m-%d"),
+        }
 
-            response = requests.get(url, params=params, timeout=10)
-            response.raise_for_status()
-            data = response.json()
+        last_error = None
+        delay = INITIAL_DELAY
 
-            # Check for API errors (plan limitations, etc.)
-            if "error" in data:
-                error_msg = data.get("error", "Unknown error")
-                if "access" in error_msg.lower() or "permission" in error_msg.lower():
-                    logger.warning(
-                        "Finnhub economic calendar requires premium plan - feature unavailable"
-                    )
+        for attempt in range(MAX_RETRIES):
+            try:
+                response = requests.get(url, params=params, timeout=15)
+                response.raise_for_status()
+                data = response.json()
+
+                # Check for API errors (plan limitations, etc.)
+                if "error" in data:
+                    error_msg = data.get("error", "Unknown error")
+                    if "access" in error_msg.lower() or "permission" in error_msg.lower():
+                        logger.warning(
+                            "Finnhub economic calendar requires premium plan - feature unavailable"
+                        )
+                        return []
+                    logger.warning("Finnhub API error: %s", error_msg)
                     return []
-                logger.warning("Finnhub API error: %s", error_msg)
+
+                events = data.get("economicCalendar", [])
+                logger.info("Fetched %d economic events from Finnhub", len(events))
+                return events
+            except requests.RequestException as exc:
+                last_error = exc
+                if attempt < MAX_RETRIES - 1:
+                    logger.warning(f"Finnhub economic calendar attempt {attempt + 1}/{MAX_RETRIES} failed: {exc}, retrying in {delay:.1f}s")
+                    time.sleep(delay)
+                    delay *= BACKOFF_MULTIPLIER
+            except Exception as exc:
+                logger.warning("Failed to fetch economic calendar: %s", exc)
                 return []
 
-            events = data.get("economicCalendar", [])
-            logger.info("Fetched %d economic events from Finnhub", len(events))
-            return events
-        except Exception as exc:
-            logger.warning("Failed to fetch economic calendar: %s", exc)
-            return []
+        logger.warning(f"Failed to fetch economic calendar after {MAX_RETRIES} attempts: {last_error}")
+        return []
 
     def has_major_event_today(self) -> bool:
         """
@@ -143,24 +162,37 @@ class FinnhubClient:
         if end_date is None:
             end_date = date.today() + timedelta(days=7)
 
-        try:
-            url = f"{self.BASE_URL}/calendar/earnings"
-            params = {
-                "token": self.api_key,
-                "from": start_date.strftime("%Y-%m-%d"),
-                "to": end_date.strftime("%Y-%m-%d"),
-            }
+        url = f"{self.BASE_URL}/calendar/earnings"
+        params = {
+            "token": self.api_key,
+            "from": start_date.strftime("%Y-%m-%d"),
+            "to": end_date.strftime("%Y-%m-%d"),
+        }
 
-            response = requests.get(url, params=params, timeout=10)
-            response.raise_for_status()
-            data = response.json()
+        last_error = None
+        delay = INITIAL_DELAY
 
-            earnings = data.get("earningsCalendar", [])
-            logger.info("Fetched %d earnings announcements from Finnhub", len(earnings))
-            return earnings
-        except Exception as exc:
-            logger.warning("Failed to fetch earnings calendar: %s", exc)
-            return []
+        for attempt in range(MAX_RETRIES):
+            try:
+                response = requests.get(url, params=params, timeout=15)
+                response.raise_for_status()
+                data = response.json()
+
+                earnings = data.get("earningsCalendar", [])
+                logger.info("Fetched %d earnings announcements from Finnhub", len(earnings))
+                return earnings
+            except requests.RequestException as exc:
+                last_error = exc
+                if attempt < MAX_RETRIES - 1:
+                    logger.warning(f"Finnhub earnings calendar attempt {attempt + 1}/{MAX_RETRIES} failed: {exc}, retrying in {delay:.1f}s")
+                    time.sleep(delay)
+                    delay *= BACKOFF_MULTIPLIER
+            except Exception as exc:
+                logger.warning("Failed to fetch earnings calendar: %s", exc)
+                return []
+
+        logger.warning(f"Failed to fetch earnings calendar after {MAX_RETRIES} attempts: {last_error}")
+        return []
 
     def is_earnings_week(self, symbol: str | None = None) -> bool:
         """
