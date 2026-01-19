@@ -75,7 +75,7 @@ def parse_lesson_file(filepath: Path) -> dict | None:
 
 def get_engaging_intro(day_num: int, day_of_week: str, lessons: list[dict]) -> str:
     """Generate an engaging intro based on the day's lessons."""
-    critical = sum(1 for l in lessons if l["severity"] == "CRITICAL")
+    critical = sum(1 for lesson in lessons if lesson["severity"] == "CRITICAL")
 
     if critical >= 2:
         return "Today was a wake-up call. Two critical issues surfaced that could have derailed our entire trading operation. Here's what went wrong and how we're fixing it."
@@ -191,7 +191,7 @@ def generate_daily_summary_post(date_str: str, lessons: list[dict]) -> str:
     lessons_md = ""
 
     # Critical lessons first - these are the headlines
-    critical_lessons = [l for l in lessons if l["severity"] == "CRITICAL"]
+    critical_lessons = [item for item in lessons if item["severity"] == "CRITICAL"]
     if critical_lessons:
         lessons_md += "\n## The Hard Lessons\n\n"
         lessons_md += "*These are the moments that test us. Critical issues that demanded immediate attention.*\n\n"
@@ -206,7 +206,7 @@ def generate_daily_summary_post(date_str: str, lessons: list[dict]) -> str:
                 lessons_md += f"**Key takeaway:** {takeaway}\n\n"
 
     # High priority lessons - important but not fires
-    high_lessons = [l for l in lessons if l["severity"] == "HIGH"]
+    high_lessons = [item for item in lessons if item["severity"] == "HIGH"]
     if high_lessons:
         lessons_md += "\n## Important Discoveries\n\n"
         lessons_md += (
@@ -220,7 +220,7 @@ def generate_daily_summary_post(date_str: str, lessons: list[dict]) -> str:
             lessons_md += f"{insight}\n\n"
 
     # Quick wins and improvements
-    other_lessons = [l for l in lessons if l["severity"] in ["MEDIUM", "LOW"]]
+    other_lessons = [item for item in lessons if item["severity"] in ["MEDIUM", "LOW"]]
     if other_lessons:
         lessons_md += "\n## Quick Wins & Refinements\n\n"
         for lesson in other_lessons[:4]:  # Limit to top 4
