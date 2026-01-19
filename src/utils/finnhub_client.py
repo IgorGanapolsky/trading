@@ -97,14 +97,18 @@ class FinnhubClient:
             except requests.RequestException as exc:
                 last_error = exc
                 if attempt < MAX_RETRIES - 1:
-                    logger.warning(f"Finnhub economic calendar attempt {attempt + 1}/{MAX_RETRIES} failed: {exc}, retrying in {delay:.1f}s")
+                    logger.warning(
+                        f"Finnhub economic calendar attempt {attempt + 1}/{MAX_RETRIES} failed: {exc}, retrying in {delay:.1f}s"
+                    )
                     time.sleep(delay)
                     delay *= BACKOFF_MULTIPLIER
             except Exception as exc:
                 logger.warning("Failed to fetch economic calendar: %s", exc)
                 return []
 
-        logger.warning(f"Failed to fetch economic calendar after {MAX_RETRIES} attempts: {last_error}")
+        logger.warning(
+            f"Failed to fetch economic calendar after {MAX_RETRIES} attempts: {last_error}"
+        )
         return []
 
     def has_major_event_today(self) -> bool:
@@ -184,14 +188,18 @@ class FinnhubClient:
             except requests.RequestException as exc:
                 last_error = exc
                 if attempt < MAX_RETRIES - 1:
-                    logger.warning(f"Finnhub earnings calendar attempt {attempt + 1}/{MAX_RETRIES} failed: {exc}, retrying in {delay:.1f}s")
+                    logger.warning(
+                        f"Finnhub earnings calendar attempt {attempt + 1}/{MAX_RETRIES} failed: {exc}, retrying in {delay:.1f}s"
+                    )
                     time.sleep(delay)
                     delay *= BACKOFF_MULTIPLIER
             except Exception as exc:
                 logger.warning("Failed to fetch earnings calendar: %s", exc)
                 return []
 
-        logger.warning(f"Failed to fetch earnings calendar after {MAX_RETRIES} attempts: {last_error}")
+        logger.warning(
+            f"Failed to fetch earnings calendar after {MAX_RETRIES} attempts: {last_error}"
+        )
         return []
 
     def is_earnings_week(self, symbol: str | None = None) -> bool:
