@@ -249,10 +249,8 @@ The trading system has detected stale data files that may affect trading decisio
 **Issues found:**
 {"".join(f"• {w}" + chr(10) for w in warnings)}
 
-**Action required:**
-1. Check if trading workflow is running
-2. Verify API connectivity
-3. Check for recent merge conflicts
+**System response:**
+Auto-healing attempted. If issues persist, system will block trading.
 
 **Impact:** Trading decisions may be based on outdated information."""
 

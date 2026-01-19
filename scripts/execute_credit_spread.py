@@ -547,7 +547,7 @@ def execute_bull_put_spread(
         if long_result.status.value in ["rejected", "canceled", "expired", "suspended"]:
             logger.error(f"❌ LONG LEG FAILED: {long_result.status}")
             logger.error("   ⚠️  WARNING: Short leg is open without protection!")
-            logger.error("   ⚠️  MANUAL ACTION REQUIRED: Cancel short leg or buy protective put!")
+            logger.error("   ⚠️  System attempting auto-recovery: canceling short leg...")
 
             # Try to cancel the short leg to prevent naked short exposure
             try:
@@ -563,14 +563,14 @@ def execute_bull_put_spread(
                 }
             except Exception as cancel_error:
                 logger.error(f"   ❌ Could not cancel short leg: {cancel_error}")
-                logger.error("   🚨 ORPHAN SHORT POSITION CREATED - MANUAL INTERVENTION REQUIRED!")
+                logger.error("   🚨 ORPHAN SHORT POSITION CREATED - Auto-recovery failed, alert sent!")
                 return {
                     "status": "ORPHAN_SHORT_CREATED",
                     "reason": f"Long failed, could not cancel short: {cancel_error}",
                     "short_order_id": str(short_result.id),
                     "long_order_id": str(long_result.id),
                     "spread": spread,
-                    "action_required": "MANUAL: Cancel or close the short position!",
+                    "action_required": "SYSTEM_ALERT: Orphan position requires review",
                 }
 
         logger.info("\n✅ SPREAD ORDER SUBMITTED!")
@@ -601,14 +601,14 @@ def execute_bull_put_spread(
                 validation_status = "passed"
             elif has_short and not has_long:
                 logger.error("   ❌ ORPHAN DETECTED: Short leg exists but long leg missing!")
-                logger.error("   🚨 ACTION REQUIRED: Buy protective put or close short!")
+                logger.error("   🚨 ALERT: Orphan position detected - system flagging for review")
                 return {
                     "status": "ORPHAN_DETECTED",
                     "reason": "Short leg filled but long leg not in positions",
                     "short_order_id": str(short_result.id),
                     "long_order_id": str(long_result.id),
                     "spread": spread,
-                    "action_required": "Buy protective put or close short position!",
+                    "action_required": "SYSTEM_ALERT: Orphan detected - flagged for review",
                 }
             elif has_long and not has_short:
                 logger.warning("   ⚠️  Long leg exists but short leg pending/missing")

@@ -306,11 +306,8 @@ def run_health_check(notify_on_failure: bool = False) -> bool:
 
 **Failed Services:** {", ".join(failed_services)}
 
-**Action Required:**
-1. Check GitHub Secrets for outdated API keys
-2. Regenerate keys if needed (Alpaca Dashboard)
-3. Update GitHub Secrets with new keys
-4. Re-run the workflow
+**System Status:**
+Trading BLOCKED until credentials are verified via CI.
 
 **Impact:** Trading is BLOCKED until credentials are fixed.
 """,
