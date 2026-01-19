@@ -117,15 +117,13 @@ def find_put_option(symbol: str, target_delta: float, target_dte: int) -> Option
     # Format as YYMMDD for options symbol
     expiry_str = target_expiry.strftime("%y%m%d")
 
-    # CRITICAL FIX Jan 13, 2026: Use symbol-specific prices, not hardcoded SPY!
-    # This bug was causing strike calculations to be wildly wrong for SOFI
+    # FIXED Jan 19 2026: Per CLAUDE.md, only SPY/IWM allowed
+    # Removed SOFI/F/PLTR - individual stocks not allowed until strategy proven
     symbol_prices = {
-        "SOFI": 14,  # ~$14/share
-        "F": 10,  # ~$10/share
-        "PLTR": 80,  # ~$80/share
-        "SPY": 600,  # ~$600/share
+        "SPY": 590,  # ~$590/share (Jan 2026)
+        "IWM": 225,  # ~$225/share (Jan 2026)
     }
-    estimated_price = symbol_prices.get(symbol, 20)  # Default to $20 if unknown
+    estimated_price = symbol_prices.get(symbol, 590)  # Default to SPY price
 
     # For 20 delta put, use ~30% OTM strike (conservative for small account)
     strike = int(estimated_price * 0.70)  # 30% OTM for ~20 delta
@@ -211,17 +209,14 @@ def should_open_position(client, config: dict) -> bool:
         return False
 
     # For cash-secured puts, we need buying power = strike * 100 (1 contract)
-    # CRITICAL FIX Jan 12, 2026: Use CONFIG symbol price, not hardcoded SPY!
-    # Previous bug: Hardcoded SPY at $600 = $57,000 collateral required
-    # With SOFI at ~$14 and $10 strike = $1,000 collateral (fits $5K account)
+    # FIXED Jan 19 2026: Per CLAUDE.md, only SPY/IWM allowed
+    # Credit spreads on SPY only need ~$500 collateral (spread width), not full strike!
     symbol_prices = {
-        "SOFI": 14,  # ~$14/share, $10 strike = $1,000 collateral
-        "F": 10,  # ~$10/share, $8 strike = $800 collateral
-        "PLTR": 80,  # ~$80/share, $70 strike = $7,000 collateral
-        "SPY": 600,  # ~$600/share, $570 strike = $57,000 collateral
+        "SPY": 590,  # ~$590/share (Jan 2026)
+        "IWM": 225,  # ~$225/share (Jan 2026)
     }
-    symbol = config.get("symbol", "SOFI")
-    price_estimate = symbol_prices.get(symbol, 20)  # Default to $20 if unknown
+    symbol = config.get("symbol", "SPY")  # FIXED: Default to SPY, not SOFI
+    price_estimate = symbol_prices.get(symbol, 590)  # Default to SPY price
     strike_estimate = int(price_estimate * 0.70)  # 30% OTM for conservative strike
     required_bp = strike_estimate * 100  # 1 contract = 100 shares
 

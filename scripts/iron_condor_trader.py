@@ -91,19 +91,19 @@ class IronCondorStrategy:
         }
 
     def get_underlying_price(self) -> float:
-        """Get current price of underlying."""
-        # In production: use market data API
-        # For now, estimate SOFI price
-        return 14.0  # Approximate SOFI price Jan 2026
+        """Get current price of underlying (IWM per CLAUDE.md)."""
+        # FIXED Jan 19 2026: Was returning SOFI price even with IWM config!
+        # IWM trades around $220-230 in Jan 2026
+        return 225.0  # Approximate IWM price Jan 2026
 
     def calculate_strikes(self, price: float) -> tuple[float, float, float, float]:
         """
         Calculate iron condor strikes based on delta targeting.
 
-        For 16 delta on SOFI (~$14):
-        - Short put: ~7% below price (~$13)
-        - Short call: ~7% above price (~$15)
-        - Wing width: $1 (appropriate for small stocks)
+        For 16 delta on IWM (~$225):
+        - Short put: ~7% below price (~$209)
+        - Short call: ~7% above price (~$241)
+        - Wing width: $3 per CLAUDE.md spread setup
         """
         # 16 delta is roughly 1 standard deviation move
         # For 30 DTE on smaller stocks, use ~7% OTM

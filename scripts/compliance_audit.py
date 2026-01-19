@@ -32,10 +32,10 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 
-# Compliance thresholds
+# Compliance thresholds - FIXED Jan 19 2026: Aligned with CLAUDE.md 5% mandate
 THRESHOLDS = {
-    "max_kelly_fraction": 0.10,  # 10% max per position
-    "max_position_concentration": 0.20,  # 20% max in single position
+    "max_kelly_fraction": 0.05,  # 5% max per position - CLAUDE.md MANDATE
+    "max_position_concentration": 0.05,  # 5% max in single position - CLAUDE.md MANDATE
     "max_daily_loss_pct": 0.02,  # 2% max daily loss
     "trading_hours_start": 9.5,  # 9:30 AM ET
     "trading_hours_end": 16.0,  # 4:00 PM ET
