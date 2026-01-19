@@ -260,22 +260,23 @@ class AlpacaExecutor:
             # but we need to ensure keys align with what downstream expects
             formatted_pos = []
             for p in positions:
+                # SECURITY FIX (Jan 19, 2026): Check for zero BEFORE division
+                # Previous bug: ternary evaluated division first, causing ZeroDivisionError
+                qty = float(p.get("quantity", 0))
+                cost_basis = float(p.get("cost_basis", 0))
+                market_value = float(p.get("market_value", 0))
+                unrealized_pl = float(p.get("unrealized_pl", 0))
+
                 formatted_pos.append(
                     {
                         "symbol": p["symbol"],
-                        "qty": float(p["quantity"]),
-                        "avg_entry_price": float(p.get("cost_basis", 0)) / float(p["quantity"])
-                        if float(p["quantity"])
-                        else 0.0,
-                        "current_price": float(p.get("market_value", 0)) / float(p["quantity"])
-                        if float(p["quantity"])
-                        else 0.0,
-                        "unrealized_pl": float(p["unrealized_pl"]),
-                        "unrealized_plpc": (float(p["unrealized_pl"]) / float(p["cost_basis"]))
-                        if float(p.get("cost_basis", 0)) != 0
-                        else 0.0,
-                        "market_value": float(p["market_value"]),
-                        "cost_basis": float(p.get("cost_basis", 0)),
+                        "qty": qty,
+                        "avg_entry_price": (cost_basis / qty) if qty != 0 else 0.0,
+                        "current_price": (market_value / qty) if qty != 0 else 0.0,
+                        "unrealized_pl": unrealized_pl,
+                        "unrealized_plpc": (unrealized_pl / cost_basis) if cost_basis != 0 else 0.0,
+                        "market_value": market_value,
+                        "cost_basis": cost_basis,
                         "broker": used_broker.value,
                     }
                 )
@@ -296,20 +297,22 @@ class AlpacaExecutor:
 
         This method ALWAYS validates through the trade gate before execution.
         """
-        # ========== MANDATORY TRADE GATE - NEVER SKIP ==========
+        # ========== MANDATORY TRADE GATE - FAIL CLOSED ==========
+        # CRITICAL SECURITY: If gate import fails, BLOCK all trades (Jan 19, 2026)
+        # Previous bug: Import failure would bypass all validation
         try:
             from src.safety.mandatory_trade_gate import TradeBlockedError, validate_trade_mandatory
-        except ImportError:
-            logger.warning("⚠️ Mandatory trade gate not available - proceeding without validation")
+            gate_available = True
+        except ImportError as import_err:
+            logger.error(f"🚨 CRITICAL: Mandatory trade gate import failed: {import_err}")
+            logger.error("🚫 FAIL CLOSED: All trades blocked until gate is restored")
+            raise RuntimeError(
+                "SECURITY: Mandatory trade gate unavailable. "
+                "Cannot execute trades without safety validation. "
+                "Fix import or restore src/safety/mandatory_trade_gate.py"
+            ) from import_err
 
-            # Define dummy class to avoid NameError
-            class TradeBlockedError(Exception):
-                pass
-
-            # Continue without gate validation
-            gate_result = None
-
-        if "validate_trade_mandatory" in locals():
+        if gate_available:
             amount = notional or (qty * 100.0 if qty else 0.0)  # Estimate for qty-based orders
 
             # Get account context for context-aware blocking (ll_051 prevention)
@@ -512,6 +515,11 @@ class AlpacaExecutor:
                 side=side,
             )
 
+            # SECURITY FIX (Jan 19, 2026): Validate broker response before use
+            # Previous bug: None response would crash on attribute access
+            if order_result is None:
+                raise ValueError("Broker returned None - order submission failed silently")
+
             # Record success for circuit breaker (Jan 13, 2026)
             try:
                 breaker = get_api_circuit_breaker()
@@ -520,13 +528,19 @@ class AlpacaExecutor:
                 pass
 
             # Convert OrderResult back to dict for compatibility
+            # Validate required attributes exist
+            required_attrs = ["order_id", "symbol", "side", "quantity", "status", "broker", "timestamp"]
+            for attr in required_attrs:
+                if not hasattr(order_result, attr):
+                    raise ValueError(f"Broker response missing required attribute: {attr}")
+
             order = {
                 "id": order_result.order_id,
                 "symbol": order_result.symbol,
                 "side": order_result.side,
                 "qty": order_result.quantity,
                 "status": order_result.status,
-                "filled_avg_price": order_result.filled_price,
+                "filled_avg_price": getattr(order_result, "filled_price", None),  # May be None for pending
                 "broker": order_result.broker.value,
                 "submitted_at": order_result.timestamp,
             }

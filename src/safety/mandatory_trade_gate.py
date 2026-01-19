@@ -6,7 +6,7 @@ compliance with risk rules, RAG lessons, and position limits.
 ENFORCEMENT (Jan 2026): This is the FINAL checkpoint before execution.
 No trade bypasses this gate. It enforces:
 - Ticker whitelist (SPY/IWM only per CLAUDE.md strategy) - Jan 15, 2026
-- Position size limits (max 10% of portfolio per position)
+- Position size limits (max 5% of portfolio per position per CLAUDE.md)
 - Daily loss limits (max 5% of portfolio per day)
 - RAG lesson blocking (CRITICAL lessons block trades)
 - Blind trading prevention (no $0 equity trades)
@@ -114,13 +114,18 @@ MAX_DAILY_LOSS_PCT = float(os.getenv("MAX_DAILY_LOSS_PCT", "0.05"))  # 5% max da
 MIN_TRADE_AMOUNT = float(os.getenv("MIN_TRADE_AMOUNT", "1.0"))  # $1 minimum trade
 
 # Track daily losses (reset daily in production)
+# SECURITY FIX (Jan 19, 2026): Added thread lock to prevent race condition
+# where concurrent trades could bypass daily loss limit
+import threading
+_daily_loss_lock = threading.Lock()
 _daily_loss_tracker: dict[str, float] = {"total": 0.0, "date": ""}
 
 
 def _reset_daily_tracker_if_needed():
-    """Reset daily loss tracker at start of new day."""
+    """Reset daily loss tracker at start of new day. Thread-safe."""
     from datetime import date
 
+    # Lock is acquired by caller (_check_daily_loss_limit)
     today = str(date.today())
     if _daily_loss_tracker["date"] != today:
         _daily_loss_tracker["total"] = 0.0
@@ -145,22 +150,24 @@ def _check_position_size(symbol: str, amount: float, equity: float) -> tuple[boo
 
 
 def _check_daily_loss_limit(equity: float, potential_loss: float = 0.0) -> tuple[bool, str]:
-    """Check if daily loss limit would be exceeded."""
-    _reset_daily_tracker_if_needed()
+    """Check if daily loss limit would be exceeded. Thread-safe."""
+    # SECURITY FIX (Jan 19, 2026): Use lock to prevent race condition
+    with _daily_loss_lock:
+        _reset_daily_tracker_if_needed()
 
-    if equity <= 0:
-        return False, "Cannot calculate daily loss with zero equity"
+        if equity <= 0:
+            return False, "Cannot calculate daily loss with zero equity"
 
-    max_loss = equity * MAX_DAILY_LOSS_PCT
-    projected_loss = _daily_loss_tracker["total"] + potential_loss
+        max_loss = equity * MAX_DAILY_LOSS_PCT
+        projected_loss = _daily_loss_tracker["total"] + potential_loss
 
-    if projected_loss > max_loss:
-        return False, (
-            f"Daily loss ${projected_loss:.2f} would exceed "
-            f"max {MAX_DAILY_LOSS_PCT:.0%} (${max_loss:.2f})"
-        )
+        if projected_loss > max_loss:
+            return False, (
+                f"Daily loss ${projected_loss:.2f} would exceed "
+                f"max {MAX_DAILY_LOSS_PCT:.0%} (${max_loss:.2f})"
+            )
 
-    return True, f"Daily loss OK: ${projected_loss:.2f} of ${max_loss:.2f} limit"
+        return True, f"Daily loss OK: ${projected_loss:.2f} of ${max_loss:.2f} limit"
 
 
 def _query_rag_for_blocking_lessons(symbol: str, strategy: str) -> tuple[bool, list[str]]:
@@ -339,7 +346,9 @@ def validate_trade_mandatory(
 
 
 def record_trade_loss(loss_amount: float):
-    """Record a trade loss for daily tracking."""
-    _reset_daily_tracker_if_needed()
-    _daily_loss_tracker["total"] += abs(loss_amount)
-    logger.info(f"Daily loss updated: ${_daily_loss_tracker['total']:.2f}")
+    """Record a trade loss for daily tracking. Thread-safe."""
+    # SECURITY FIX (Jan 19, 2026): Use lock to prevent race condition
+    with _daily_loss_lock:
+        _reset_daily_tracker_if_needed()
+        _daily_loss_tracker["total"] += abs(loss_amount)
+        logger.info(f"Daily loss updated: ${_daily_loss_tracker['total']:.2f}")
