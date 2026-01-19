@@ -51,6 +51,44 @@ jobs:
     outputs:
       trading_halted: ${{ steps.check.outputs.halted }}
     steps:
+      - name: Install Alpaca SDK for calendar check
+        run: pip install alpaca-py
+
+      - name: Check Market Calendar (LL-241 holiday validation)
+        id: calendar_check
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          python3 << 'CALENDAR_EOF'
+          import os
+          from datetime import date
+          from alpaca.trading.client import TradingClient
+          from alpaca.trading.requests import GetCalendarRequest
+
+          client = TradingClient(
+              os.environ['ALPACA_API_KEY'],
+              os.environ['ALPACA_API_SECRET'],
+              paper=True
+          )
+
+          today = date.today()
+          calendar_request = GetCalendarRequest(start=today, end=today)
+          calendar = client.get_calendar(calendar_request)
+
+          if not calendar:
+              print(f"⚠️ {today} is NOT a trading day (holiday/weekend)")
+              print("::notice::Market is CLOSED - skipping all trading")
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write("is_holiday=true\n")
+          else:
+              print(f"✅ {today} is a valid trading day")
+              print(f"   Market opens: {calendar[0].open}")
+              print(f"   Market closes: {calendar[0].close}")
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write("is_holiday=false\n")
+          CALENDAR_EOF
+
       - name: Check if trading is halted
         id: check
         run: |
@@ -59,15 +97,21 @@ jobs:
           # 1. ✅ Short leg submitted FIRST and verified before long leg
           # 2. ✅ If short fails, long leg is NOT submitted (prevents orphan)
           # 3. ✅ If long fails after short succeeds, script tries to cancel short
-          # 4. ✅ Ticker whitelist: SPY/IWM only per CLAUDE.md
+          # 4. ✅ Ticker whitelist: SPY ONLY per CLAUDE.md Jan 19, 2026
           # 5. ✅ Earnings blackout check built into script
+          # 6. ✅ Holiday validation added (LL-241) - checks Alpaca calendar
           #
           # Previous issue (Jan 15): Orphan position crisis (-$48.55 loss)
           # Root cause: Both legs submitted without verification
           # Status: FIXED - see execute_credit_spread.py lines 449-531
           #
-          echo "✅ Trading RESUMED - Orphan position fix verified (Jan 16, 2026)"
-          echo "halted=false" >> $GITHUB_OUTPUT
+          if [ "${{ steps.calendar_check.outputs.is_holiday }}" == "true" ]; then
+            echo "⚠️ Market is CLOSED (holiday) - halting all trading"
+            echo "halted=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Trading RESUMED - Orphan position fix verified (Jan 16, 2026)"
+            echo "halted=false" >> $GITHUB_OUTPUT
+          fi
 
   # Quick validation and setup job
   validate-and-test:
@@ -1016,7 +1060,7 @@ jobs:
           echo "💰 HARVESTING THETA - OPTIONS INCOME"
           echo "💰 ========================================"
           echo ""
-          echo "Options strategy: Wheel (Cash-Secured Puts + Covered Calls)"
+          echo "Options strategy: Iron Condors on SPY ONLY (per CLAUDE.md Jan 19, 2026)"
           echo "Using RAG-based ticker selection (Dec 16 upgrade)"
           echo ""
 
@@ -1069,43 +1113,39 @@ jobs:
             echo "⚠️  Low options buying power (<\$1000) - using CREDIT SPREADS"
             echo "   Credit spreads need only \$200-500 collateral vs \$1k-65k for CSPs"
 
-            # Credit spreads - much more capital efficient!
-            # $2-wide spread = $200 collateral (vs $2500 for SOFI CSP)
-            # FIXED Jan 14, 2026: Removed SOFI (blackout until Feb 1 per CLAUDE.md)
-            # FIXED Jan 14, 2026: Removed F (earnings Feb 10, blackout until Feb 11)
-            # Using SPY/IWM ONLY per ticker hierarchy - best liquidity, no earnings risk
-            TICKERS="SPY IWM"  # SAFE: No individual stock earnings risk
-            SPREAD_WIDTH=2
+            # Iron Condors - defined risk on BOTH sides per CLAUDE.md Jan 19, 2026
+            # FIXED Jan 19, 2026: SPY ONLY per CLAUDE.md - best liquidity, no assignment risk
+            # Iron condor = sell put spread + sell call spread (15-20 delta)
+            TICKERS="SPY"  # SPY ONLY per CLAUDE.md Jan 19, 2026
 
             for TICKER in $TICKERS; do
               echo ""
-              echo "   📊 Credit spread on ${TICKER} (\$${SPREAD_WIDTH} wide)..."
-              python3 scripts/execute_credit_spread.py --symbol "${TICKER}" --width ${SPREAD_WIDTH} || {
-                echo "   ⚠️  ${TICKER} spread returned non-zero"
+              echo "   📊 Iron Condor on ${TICKER} (15-20 delta, 30-45 DTE)..."
+              python3 scripts/iron_condor_trader.py --symbol "${TICKER}" || {
+                echo "   ⚠️  ${TICKER} iron condor returned non-zero"
               }
             done
 
             echo ""
-            echo "✅ Executed credit spreads on low-buying-power account"
+            echo "✅ Executed iron condors on SPY ONLY per CLAUDE.md"
           else
             echo ""
-            echo "✅ Sufficient buying power (\$${OPTIONS_BP}) - using CASH-SECURED PUTS"
-            # FIXED Jan 14, 2026: Removed SOFI (blackout until Feb 1 per CLAUDE.md)
-            # FIXED Jan 14, 2026: Removed F (earnings Feb 10, blackout until Feb 11)
-            # FIXED Jan 14, 2026: Using SPY/IWM ONLY - no individual stock earnings risk
-            echo "   Tickers: SPY, IWM (SAFE - no individual earnings)"
+            echo "✅ Sufficient buying power (\$${OPTIONS_BP}) - using IRON CONDORS"
+            # FIXED Jan 19, 2026: SPY ONLY per CLAUDE.md - NO WHEEL, NO CSPs
+            # Iron condors have defined risk on BOTH sides (Phil Town Rule #1)
+            echo "   Ticker: SPY ONLY (per CLAUDE.md Jan 19, 2026)"
 
-            # Full wheel strategy with CSPs - SPY/IWM only for safety
-            for TICKER in SPY IWM; do
+            # Iron Condors on SPY ONLY - defined risk, no assignment risk
+            for TICKER in SPY; do
               echo ""
-              echo "   📊 Wheel on ${TICKER}..."
-              python3 scripts/execute_options_trade.py --strategy wheel --symbol "${TICKER}" || {
-                echo "   ⚠️  ${TICKER} wheel returned non-zero"
+              echo "   📊 Iron Condor on ${TICKER} (15-20 delta, 30-45 DTE)..."
+              python3 scripts/iron_condor_trader.py --symbol "${TICKER}" || {
+                echo "   ⚠️  ${TICKER} iron condor returned non-zero"
               }
             done
 
             echo ""
-            echo "✅ Executed wheel strategy on 6 tickers (no SOFI until Feb 1)"
+            echo "✅ Executed iron condors on SPY ONLY per CLAUDE.md"
           fi
 
           # Update theta harvest timestamp in system state
@@ -1163,11 +1203,11 @@ jobs:
                   json.dump(state, f, indent=2)
 
               print(f'✅ Options execution recorded:')
-              print(f'   Selection method: adaptive (CSPs or spreads)')
-              print(f'   Target tickers: SOFI, PLTR, F, BAC, AMD, SPY')
+              print(f'   Selection method: Iron Condors (per CLAUDE.md Jan 19, 2026)')
+              print(f'   Target tickers: SPY ONLY')
               print(f'   Tickers scanned: {len(log_files)}')
               print(f'   Orders submitted: {orders_submitted}')
-              print(f'   Strategy: Credit spreads if buying power < $1000, CSPs otherwise')
+              print(f'   Strategy: Iron Condors - defined risk on BOTH sides')
           else:
               print('⚠️  system_state.json not found')
           "
