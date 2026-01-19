@@ -448,7 +448,7 @@ class AlpacaTrader:
             quote = self.get_current_quote(symbol)
             intended_price = None
             limit_price = None
-            # Only use limit orders for notional if supported (Alpaca doesn't support notional limit orders yet)
+            # Only use limit orders for notional if supported (Alpaca doesn't yet)
             # But we can calculate qty from notional if we have a price.
             # For qty-based orders, we can use limit.
             use_limit_order = self.config.USE_LIMIT_ORDERS and quote is not None
@@ -531,7 +531,7 @@ class AlpacaTrader:
             if order and str(order.status) not in ["filled", "partially_filled"]:
                 if use_limit_order:
                     logger.warning(
-                        f"Limit order {order.id} not filled. Cancelling and retrying with market order."
+                        f"Limit order {order.id} not filled. Retrying as market order."
                     )
                     try:
                         self.trading_client.cancel_order_by_id(order.id)
@@ -917,7 +917,7 @@ class AlpacaTrader:
         """
         valid_timeframes = {
             "1Min": TimeFrame.Minute,
-            "5Min": TimeFrame.Minute,  # Alpaca-py handles multipliers differently, but for simplicity mapping to Minute
+            "5Min": TimeFrame.Minute,  # Alpaca-py maps to Minute for simplicity
             "15Min": TimeFrame.Minute,
             "1Hour": TimeFrame.Hour,
             "1Day": TimeFrame.Day,
@@ -935,11 +935,9 @@ class AlpacaTrader:
         elif timeframe == "1Day":
             tf = TimeFrame.Day
         else:
-            # Fallback or error - for now defaulting to Day if unknown to avoid crash, but logging warning
+            # Fallback to Day if unknown timeframe to avoid crash
             if timeframe not in valid_timeframes:
-                logger.warning(
-                    f"Timeframe {timeframe} not fully supported in simple mapping, defaulting to Day"
-                )
+                logger.warning(f"Timeframe {timeframe} not supported, defaulting to Day")
 
         if limit <= 0 or limit > 10000:
             raise ValueError(f"Limit must be between 1 and 10000. Got {limit}")

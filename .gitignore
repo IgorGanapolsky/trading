@@ -46,8 +46,9 @@ data/cache/
 *.pid
 
 # Core dumps (prevent accidental commits from crashes)
-core
-core.*
+# Use /core to only match at root, not src/core/
+/core
+/core.*
 *.core
 
 # Secrets
