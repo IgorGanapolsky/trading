@@ -82,13 +82,15 @@ jobs:
                   f.write("skip=false\n")
           CALENDAR_EOF
 
-      # ===== NEW: POSITION COMPLIANCE CHECK (LL-240 fix) =====
+      # ===== POSITION COMPLIANCE CHECK (LL-240 + LL-232 fix) =====
       - name: Check Position Compliance
         id: compliance_check
         if: steps.calendar_check.outputs.skip != 'true'
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
           ALPACA_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+          SPREAD_WIDTH: ${{ inputs.spread_width || '3' }}
+          QUANTITY: ${{ inputs.quantity || '1' }}
         run: |
           python3 << 'COMPLIANCE_EOF'
           import os
@@ -104,34 +106,53 @@ jobs:
           equity = float(account.equity)
           positions = client.get_all_positions()
 
+          # Get proposed trade parameters
+          spread_width = int(os.environ.get('SPREAD_WIDTH', '3'))
+          quantity = int(os.environ.get('QUANTITY', '1'))
+          proposed_risk = spread_width * 100 * quantity  # $3 spread = $300 collateral per contract
+
           # Calculate current exposure
-          total_risk = 0
-          option_positions = [p for p in positions if len(p.symbol) > 10]  # Options have longer symbols
-
-          print(f"Account Equity: ${equity:.2f}")
-          print(f"5% Position Limit: ${equity * 0.05:.2f}")
-          print(f"15% Total Limit: ${equity * 0.15:.2f}")
-          print(f"Current option positions: {len(option_positions)}")
-
-          # Estimate risk (simplified: count spreads * $500 max)
+          option_positions = [p for p in positions if len(p.symbol) > 10]
           spread_count = len(option_positions) // 2
-          estimated_risk = spread_count * 500
-          risk_pct = (estimated_risk / equity) * 100
+          current_risk = spread_count * 500  # Estimate existing risk
 
-          print(f"Estimated current risk: ${estimated_risk} ({risk_pct:.1f}%)")
+          print(f"=== COMPLIANCE CHECK (CLAUDE.md Rules) ===")
+          print(f"Account Equity: ${equity:.2f}")
+          print(f"")
+          print(f"--- Per-Position Limit (5% Rule) ---")
+          max_per_position = equity * 0.05
+          print(f"5% Position Limit: ${max_per_position:.2f}")
+          print(f"Proposed trade risk: ${proposed_risk}")
 
-          # CLAUDE.md rule: max 15% total exposure
-          MAX_EXPOSURE_PCT = 15
-          if risk_pct > MAX_EXPOSURE_PCT:
-              print(f"::error::COMPLIANCE VIOLATION: {risk_pct:.1f}% exposure exceeds {MAX_EXPOSURE_PCT}% limit")
-              print(f"::error::Cannot open new positions until exposure is reduced")
+          # CRITICAL: Check 5% per-position limit BEFORE placing trade
+          if proposed_risk > max_per_position:
+              print(f"::error::POSITION SIZE VIOLATION: ${proposed_risk} exceeds 5% limit (${max_per_position:.2f})")
+              print(f"::error::Reduce quantity or spread width to comply with CLAUDE.md")
               with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
                   f.write("compliant=false\n")
               exit(1)
-          else:
-              print(f"✅ Position compliance OK ({risk_pct:.1f}% < {MAX_EXPOSURE_PCT}%)")
+
+          print(f"✅ Per-position check PASSED (${proposed_risk} <= ${max_per_position:.2f})")
+          print(f"")
+          print(f"--- Total Exposure Limit (15% Rule) ---")
+          total_risk = current_risk + proposed_risk
+          total_risk_pct = (total_risk / equity) * 100
+          print(f"Current exposure: ${current_risk}")
+          print(f"After trade: ${total_risk} ({total_risk_pct:.1f}%)")
+
+          # Check 15% total exposure limit
+          MAX_TOTAL_EXPOSURE_PCT = 15
+          if total_risk_pct > MAX_TOTAL_EXPOSURE_PCT:
+              print(f"::error::TOTAL EXPOSURE VIOLATION: {total_risk_pct:.1f}% exceeds {MAX_TOTAL_EXPOSURE_PCT}% limit")
               with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-                  f.write("compliant=true\n")
+                  f.write("compliant=false\n")
+              exit(1)
+
+          print(f"✅ Total exposure check PASSED ({total_risk_pct:.1f}% < {MAX_TOTAL_EXPOSURE_PCT}%)")
+          print(f"")
+          print(f"✅ ALL COMPLIANCE CHECKS PASSED")
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write("compliant=true\n")
           COMPLIANCE_EOF
 
       - name: Execute Bull Put Credit Spread
