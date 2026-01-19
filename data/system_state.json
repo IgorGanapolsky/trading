@@ -436,5 +436,37 @@
     "last_updated": "2026-01-19T19:03:26.449130+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5
+  },
+  "remediation_queue": {
+    "created_at": "2026-01-19T20:15:37.183750",
+    "reason": "Position compliance self-healing",
+    "actions": [
+      {
+        "action": "REDUCE",
+        "symbol": "SPY260220P00653000",
+        "contracts_to_close": 1,
+        "reason": "Position $570.00 exceeds 5% limit ($249.32)",
+        "priority": "HIGH"
+      },
+      {
+        "action": "REVIEW",
+        "symbol": "SPY260220P00658000",
+        "reason": "Single contract exceeds 5% limit - strategy mismatch",
+        "priority": "CRITICAL"
+      },
+      {
+        "action": "CLOSE",
+        "symbol": "SPY260220P00565000",
+        "reason": "Excess position (count violation). Value: $51.00",
+        "priority": "MEDIUM"
+      },
+      {
+        "action": "CLOSE",
+        "symbol": "SPY260220P00570000",
+        "reason": "Excess position (count violation). Value: $-56.00",
+        "priority": "MEDIUM"
+      }
+    ],
+    "status": "PENDING"
   }
 }
