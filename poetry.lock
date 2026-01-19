@@ -697,19 +697,19 @@ files = [
 
 [[package]]
 name = "chromadb"
-version = "1.4.0"
+version = "1.4.1"
 description = "Chroma."
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
 markers = "extra == \"rag\""
 files = [
-    {file = "chromadb-1.4.0-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:ab4ad96c21d0038f6d8d84b9cac2010ce1f448926e9a2ee35251552f2e85da07"},
-    {file = "chromadb-1.4.0-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:4d3c8abd762f092f73482e3eb1dae560a8a1c2674575d11eaac0dddf35e9cc6d"},
-    {file = "chromadb-1.4.0-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:29fe47563c460a6cadbdc481b503c520ab4e424730c97d6a85d488a13009b6ce"},
-    {file = "chromadb-1.4.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1942e1ee074c7d1e421ea04391a1fccfd18a4b3b94a8e61e853d88dc6924abfa"},
-    {file = "chromadb-1.4.0-cp39-abi3-win_amd64.whl", hash = "sha256:2ec0485e715357a41078c20ebed65d5d5b941bf2fff418c6f1c64176dc36f837"},
-    {file = "chromadb-1.4.0.tar.gz", hash = "sha256:5b4e6d1ede4faaaf12ec772c3c603ea19f39b255ef0795855b40dd79f00a4183"},
+    {file = "chromadb-1.4.1-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:05d98ffe4a9a5549c9a78eee7624277f9d99c53200a01f1176ecb1d31ea3c819"},
+    {file = "chromadb-1.4.1-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:38336431c01562cffdb3ef693f22f7a88df5304f942e01ed66ee0bbaf08f35da"},
+    {file = "chromadb-1.4.1-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ffaaf9c7d4ddbbdc74bd7cac45d9729032020cc6e65a2b8f313257e6c949beed"},
+    {file = "chromadb-1.4.1-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ad50fbb5799dcaef5ae7613be583a06b44b637283db066396490863266f48623"},
+    {file = "chromadb-1.4.1-cp39-abi3-win_amd64.whl", hash = "sha256:cedc9941dad1081eb9be89a7f5f66374715d4f99f731f1eb9da900636c501330"},
+    {file = "chromadb-1.4.1.tar.gz", hash = "sha256:3cceb83e0a7a3c2db0752ebf62e9cfe652da657594c093fe07e74022581a58eb"},
 ]
 
 [package.dependencies]
