@@ -100,19 +100,39 @@ jobs:
           print(f"\nTotal Unrealized P/L: ${total_unrealized:,.2f}")
           print(f"Total P/L (from $5K): ${total_pl:,.2f} ({total_pl_pct:.2f}%)")
 
-          # Count today's filled orders (use UTC for consistency)
+          # LL-237 FIX: Sync trade_history to prevent knowledge loss
+          # Fetch ALL closed orders, not just today's
           today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
           total_trades_today = 0
+          trade_history = []
           try:
               from alpaca.trading.requests import GetOrdersRequest
               from alpaca.trading.enums import QueryOrderStatus
-              request = GetOrdersRequest(
+
+              # Fetch all closed orders (up to 100)
+              all_orders_request = GetOrdersRequest(
                   status=QueryOrderStatus.CLOSED,
-                  after=datetime.strptime(today_str, "%Y-%m-%d"),
                   limit=100
               )
-              orders = client.get_orders(filter=request)
-              filled_orders = [o for o in orders if str(o.status) == 'filled']
+              all_orders = client.get_orders(filter=all_orders_request)
+
+              # Build trade_history from filled orders
+              trade_history = [
+                  {
+                      "id": str(o.id),
+                      "symbol": o.symbol,
+                      "side": str(o.side),
+                      "qty": str(o.filled_qty),
+                      "price": str(o.filled_avg_price) if o.filled_avg_price else "0",
+                      "filled_at": str(o.filled_at) if o.filled_at else None,
+                  }
+                  for o in all_orders
+                  if o.filled_at
+              ]
+              print(f"📜 Trade history: {len(trade_history)} closed orders")
+
+              # Count today's orders specifically
+              filled_orders = [o for o in all_orders if str(o.status) == 'filled' and str(o.filled_at).startswith(today_str)]
               total_trades_today = len(filled_orders)
               print(f"Filled orders today: {total_trades_today}")
           except Exception as e:
@@ -138,6 +158,9 @@ jobs:
           })
           # Keep last 24 syncs (covers ~6 hours at 15-min intervals)
           sync_history = sync_history[-24:]
+
+          # LL-237: Preserve existing trade_history if we couldn't fetch new data
+          final_trade_history = trade_history if trade_history else existing_state.get("trade_history", [])
 
           state = {
               "last_updated": datetime.now(timezone.utc).isoformat(),
@@ -166,6 +189,9 @@ jobs:
                   "starting_balance": 5000.0  # Per CLAUDE.md - $5K paper account
               },
               "positions": position_list,
+              # LL-237 FIX: Add trade_history to prevent knowledge loss
+              "trade_history": final_trade_history,
+              "trades_loaded": len(final_trade_history),
               "trades": {
                   "last_trade_date": today_str,
                   "today_trades": total_trades_today,  # FIX: was "synced" string
