@@ -98,7 +98,7 @@ jobs:
         # TODO: Increase to 40% then 70% as more tests are added
         run: python -m pytest -v --tb=long --cov=src --cov-report=term-missing --cov-report=xml --cov-fail-under=15 2>&1 || (echo "Tests failed - showing last 100 lines" && tail -100 && exit 1)
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: coverage-report
           path: coverage.xml
@@ -128,7 +128,7 @@ jobs:
           mkdir -p out
           ./scripts/run_smoke.sh tests/fixtures/fixture.csv 42 out/smoke.json
       - name: Upload smoke artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: smoke-result
           path: out/smoke.json
