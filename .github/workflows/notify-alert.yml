@@ -1,0 +1,79 @@
+name: Alert Notification
+
+# Reusable workflow for critical alerts via GitHub Issues
+# Usage: Called by other workflows on failure
+
+on:
+  workflow_call:
+    inputs:
+      alert_type:
+        description: "Type of alert (trade-failure, compliance, health)"
+        required: true
+        type: string
+      alert_title:
+        description: "Short alert title"
+        required: true
+        type: string
+      alert_body:
+        description: "Alert details"
+        required: true
+        type: string
+      severity:
+        description: "Severity level (critical, high, medium)"
+        required: false
+        type: string
+        default: "high"
+    secrets:
+      GH_PAT:
+        required: true
+
+jobs:
+  create-alert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set Labels
+        id: labels
+        run: |
+          case "${{ inputs.severity }}" in
+            critical) echo "labels=alert,critical,automated" >> $GITHUB_OUTPUT ;;
+            high) echo "labels=alert,high-priority,automated" >> $GITHUB_OUTPUT ;;
+            *) echo "labels=alert,automated" >> $GITHUB_OUTPUT ;;
+          esac
+
+      - name: Create Alert Issue
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GH_PAT }}
+          script: |
+            const severity = '${{ inputs.severity }}'.toUpperCase();
+            const emoji = severity === 'CRITICAL' ? '🚨' : severity === 'HIGH' ? '⚠️' : 'ℹ️';
+
+            const title = `${emoji} ALERT: ${{ inputs.alert_title }}`;
+            const body = `## ${severity} Alert - ${{ inputs.alert_type }}
+
+            **Timestamp**: ${new Date().toISOString()}
+            **Workflow**: ${{ github.workflow }}
+            **Run**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            ---
+
+            ${{ inputs.alert_body }}
+
+            ---
+
+            *This is an automated alert from the trading system.*`;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: '${{ steps.labels.outputs.labels }}'.split(',')
+            });
+
+            console.log(`✅ Alert issue created: ${title}`);
+
+      - name: Log Alert
+        run: |
+          echo "::error::ALERT [${{ inputs.severity }}]: ${{ inputs.alert_title }}"
+          echo "${{ inputs.alert_body }}"
