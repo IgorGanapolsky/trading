@@ -3,6 +3,18 @@ Retry Decorator with Exponential Backoff and Timeout Support
 
 Provides retry functionality for API calls and network operations.
 Updated: 2025-12-04 - Added timeout support to prevent indefinite hangs.
+
+DEPRECATION NOTICE (Jan 19, 2026):
+This module is superseded by src.resilience.retry which provides:
+- Circuit breaker integration
+- Better configuration via RetryConfig dataclass
+- Consistent with other resilience patterns
+
+For new code, use:
+    from src.resilience import retry_with_backoff
+
+This module is kept for backwards compatibility with existing code
+(e.g., src/core/alpaca_trader.py uses this version with timeout features).
 """
 
 import logging
