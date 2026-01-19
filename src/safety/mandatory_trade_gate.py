@@ -14,6 +14,7 @@ No trade bypasses this gate. It enforces:
 
 import logging
 import re
+import threading
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -130,8 +131,6 @@ MIN_TRADE_AMOUNT = 1.0  # $1 minimum trade - HARDCODED
 # Track daily losses (reset daily in production)
 # SECURITY FIX (Jan 19, 2026): Added thread lock to prevent race condition
 # where concurrent trades could bypass daily loss limit
-import threading
-
 _daily_loss_lock = threading.Lock()
 _daily_loss_tracker: dict[str, float] = {"total": 0.0, "date": ""}
 

@@ -3,7 +3,7 @@ layout: post
 title: "Day 80: What We Learned - January 16, 2026"
 date: 2026-01-16
 day_number: 80
-lessons_count: 18
+lessons_count: 15
 critical_count: 2
 excerpt: "Today was a wake-up call. Two critical issues surfaced that could have derailed our entire trading operation. Here's what went wrong and how we're fix..."
 ---
@@ -46,17 +46,17 @@ Directive: "Never argue with CEO - Follow
 
 *Not emergencies, but insights that will shape how we trade going forward.*
 
-### Portfolio sync failed - blind trading risk
+### Rule 1 Compliance Check - Jan 16, 2026
 
-Cannot verify account state. Error: API Error
+CEO reminded: "We are not allowed to lose money!!!"
 
-### Position Sizing Violation - $5-Wide Spreads Exceed 5% Rule
+### Close Position Workflow Bugs Discovered
 
-During Ralph Mode iteration, CTO discovered current positions violate CLAUDE.md position sizing rules.
+Attempted to close 653/658 spread and orphan put to reduce position sizing from 30% to comply with 5% rule.
 
-### Deep Research - Small Account Success Stories & Path to $...
+### Vertex AI RAG Optimization - COMPLETE
 
-CEO asked for deep research on traders who started with nothing and reached financial independence, instead of being discouraged by the math. This lesson documents proven paths to the North Star goal.
+Vertex AI RAG was initialized but queries returned empty results, falling back to local keyword search.
 
 
 ## Quick Wins & Refinements
@@ -71,10 +71,12 @@ Ca...
 
  Date
 January 16, 2026 (Friday, 5...
-- **Failure Analysis - Why Critical Fixes Were Lost** - LL-231: Failure Analysis - Why Critical Fixes Were Lost (Jan 16, 2026)
+- **is market holiday() Incorrectly Blocked Pre-Market Trading** - LL-229: is_market_holiday() Incorrectly Blocked Pre-Market Trading
 
- Incident Summary
-The critic...
+ Date
+January 16, 2026
+
+ Categor...
 
 
 ---
@@ -83,9 +85,9 @@ The critic...
 
 | What | Count |
 |------|-------|
-| Lessons Learned | **18** |
+| Lessons Learned | **15** |
 | Critical Issues | 2 |
-| High Priority | 10 |
+| High Priority | 7 |
 | Improvements | 6 |
 
 ---
