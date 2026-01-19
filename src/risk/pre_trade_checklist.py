@@ -70,7 +70,7 @@ class PreTradeChecklist:
         """Run all checklist items. Returns (passed, failures).
 
         Validates a proposed trade against all CLAUDE.md checklist items:
-        1. Ticker must be SPY or IWM
+        1. Ticker must be SPY ONLY (Jan 19, 2026 update)
         2. Max loss must be <= 5% of account
         3. Must be a spread (not naked)
         4. Must not be in earnings blackout period
@@ -94,7 +94,7 @@ class PreTradeChecklist:
         # 1. Ticker check
         underlying = self._extract_underlying(symbol)
         if underlying not in self.ALLOWED_TICKERS:
-            failures.append(f"Ticker {underlying} not allowed (SPY/IWM only)")
+            failures.append(f"Ticker {underlying} not allowed (SPY ONLY per CLAUDE.md)")
 
         # 2. Position size check
         if max_loss > self.max_risk:
