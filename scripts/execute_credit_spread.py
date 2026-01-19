@@ -339,6 +339,33 @@ def check_earnings_blackout(symbol: str) -> tuple[bool, str]:
     return False, ""
 
 
+def check_position_limit(trading_client, collateral_required: float) -> tuple[bool, str]:
+    """
+    Check if proposed trade violates 5% per-position limit (CLAUDE.md mandate).
+    Returns (is_blocked, reason).
+
+    Added Jan 19, 2026 (LL-232): The workflow execute-credit-spread.yml has this check,
+    but daily-trading.yml calls this script directly, bypassing the workflow check.
+    This ensures 5% limit is enforced regardless of how the script is called.
+    """
+    try:
+        account = trading_client.get_account()
+        equity = float(account.equity)
+        max_per_position = equity * 0.05  # 5% per CLAUDE.md
+
+        if collateral_required > max_per_position:
+            return (
+                True,
+                f"POSITION SIZE VIOLATION: ${collateral_required:.2f} exceeds 5% limit (${max_per_position:.2f}). "
+                f"Account equity: ${equity:.2f}",
+            )
+
+        return False, f"OK: ${collateral_required:.2f} within 5% limit (${max_per_position:.2f})"
+    except Exception as e:
+        logger.warning(f"Could not verify position limit: {e}")
+        return False, f"Warning: Could not verify (proceeding): {e}"
+
+
 def execute_bull_put_spread(
     trading_client, options_client, symbol: str, spread_width: float = 2.0, dry_run: bool = False
 ):
@@ -430,6 +457,21 @@ def execute_bull_put_spread(
     spread = find_bull_put_spread(options_client, symbol, spread_width)
     if not spread:
         return {"status": "NO_TRADE", "reason": "No suitable spread found"}
+
+    # CHECK 2: 5% per-position limit (LL-232 fix - Jan 19, 2026)
+    # CRITICAL: This check was missing! The workflow has it, but when daily-trading.yml
+    # calls this script directly, the workflow check is bypassed. Now enforced here.
+    is_blocked, limit_reason = check_position_limit(trading_client, spread["collateral_required"])
+    if is_blocked:
+        logger.error(f"5% LIMIT VIOLATION: {limit_reason}")
+        return {
+            "status": "BLOCKED_POSITION_LIMIT",
+            "reason": limit_reason,
+            "collateral_required": spread["collateral_required"],
+            "spread": spread,
+            "action": "Reduce spread width or wait for larger account equity",
+        }
+    logger.info(f" Position limit check: {limit_reason}")
 
     # Check if we have enough buying power
     if options_bp < spread["collateral_required"]:
