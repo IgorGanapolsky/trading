@@ -110,9 +110,7 @@ class CircuitBreaker:
     def allow_request(self) -> bool:
         """Check if a request should be allowed."""
         current_state = self.state  # Triggers timeout check
-        if current_state == CircuitState.OPEN:
-            return False
-        return True
+        return current_state != CircuitState.OPEN
 
     def __call__(self, func: Callable[..., T]) -> Callable[..., T]:
         """Decorator to wrap function with circuit breaker."""
