@@ -7,13 +7,12 @@ on:
   workflow_dispatch:
     inputs:
       symbol:
-        description: "Underlying symbol (SPY/IWM per $100K success)"
+        description: "Underlying symbol (SPY ONLY per CLAUDE.md Jan 19, 2026)"
         required: true
         default: "SPY"
         type: choice
         options:
           - SPY
-          - IWM
       spread_width:
         description: "Spread width in dollars (CLAUDE.md: $3)"
         required: true
