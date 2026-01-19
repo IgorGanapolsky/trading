@@ -2490,5 +2490,63 @@
       "alpaca",
       "system_improvement"
     ]
+  },
+  {
+    "id": "LL-238",
+    "timestamp": "2026-01-19T18:39:54.926766",
+    "category": "resource_evaluation",
+    "title": "NeurIPS 2025 RL Representation Depth - FLUFF",
+    "summary": "Evaluated VentureBeat article on NeurIPS 2025 deep RL research. Conclusion: FLUFF for our trading system.",
+    "details": {
+      "resource": "VentureBeat: Why RL plateaus without representation depth (NeurIPS 2025)",
+      "verdict": "FLUFF",
+      "reason": "Academic deep RL research irrelevant to our LLM-based rules trading system with $5K capital",
+      "key_findings": [
+        "Research shows 1000-layer networks improve RL 20-50x with Contrastive RL",
+        "Requires massive compute and training data",
+        "Our system uses Claude LLM + rules, not custom RL",
+        "Our rl_agent.py is just a stub returning neutral signals",
+        "Phil Town Rule #1 requires simplicity, not complex ML"
+      ],
+      "action": "No implementation needed. Do not re-evaluate similar deep RL papers."
+    },
+    "phil_town_aligned": true,
+    "severity": "low"
+  },
+  {
+    "id": "LL-239",
+    "timestamp": "2026-01-19T18:40:11.513818",
+    "category": "root_cause_analysis",
+    "title": "$5K Account Underperformance - SOFI Rule Violations",
+    "summary": "$5K account lost $40.74 due to 5 critical rule violations on SOFI trade. Emergency exit prevented $4,800+ catastrophic loss.",
+    "details": {
+      "loss_amount": -40.74,
+      "potential_loss_avoided": 4800,
+      "violations": [
+        "Ticker: SOFI instead of SPY/IWM only",
+        "Position size: 96% instead of 5% max ($248)",
+        "Strategy: Naked puts instead of credit spreads",
+        "Earnings: 16 days to earnings (violated blackout)",
+        "DTE: 24 days instead of 30-45"
+      ],
+      "comparison_100k": {
+        "documentation_failure": "74 days with ZERO lessons recorded",
+        "loss": "95% ($100K -> $5K)",
+        "what_worked": "SPY credit spreads, iron condors before collapse"
+      },
+      "current_status": {
+        "positions": "6 SPY spreads (now compliant)",
+        "unrealized_pl": -2.0,
+        "dte_remaining": 32
+      },
+      "action_items": [
+        "Enforce SPY/IWM only (PR #2188 merged)",
+        "Enforce position sizing validation",
+        "Close current spreads at 50% profit",
+        "Monitor 32 DTE positions daily"
+      ]
+    },
+    "phil_town_aligned": true,
+    "severity": "high"
   }
 ]
