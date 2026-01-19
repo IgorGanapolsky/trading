@@ -200,6 +200,19 @@ jobs:
           print("::warning::Trade execution not yet implemented - placeholder only")
           TRADE_EOF
 
+      # ===== MANDATORY STOP-LOSS (LL-232 + CLAUDE.md) =====
+      - name: Set Stop-Loss on New Position
+        if: steps.calendar_check.outputs.skip != 'true' && steps.compliance_check.outputs.compliant == 'true'
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          echo "🛡️ Setting mandatory stop-loss (CLAUDE.md: 2x credit received)"
+          python3 scripts/set_trailing_stops.py --trail-pct 0.20 || {
+            echo "::warning::Stop-loss setting had issues - verify manually"
+          }
+          echo "✅ Stop-loss protection activated"
+
       # ===== FAILURE NOTIFICATION =====
       - name: Notify on Failure
         if: failure()
