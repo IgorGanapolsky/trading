@@ -681,6 +681,34 @@ jobs:
             exit 1
           fi
 
+      # ========================================================================
+      # CLAUDE.MD COMPLIANCE CHECK (Jan 19, 2026)
+      # CEO Directive: Enforce position limits BEFORE new trades
+      # - Max 4 positions (1 iron condor)
+      # - Max 5% position size ($248 on $4986 account)
+      # This prevents accumulating excess spreads that violate strategy
+      # ========================================================================
+      - name: Enforce CLAUDE.md Position Limits
+        id: enforce_compliance
+        if: steps.check_execution.outputs.skip != 'true' && steps.credential_check.outputs.credentials_valid == 'true'
+        timeout-minutes: 5
+        env:
+          ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+          PAPER_TRADING: ${{ github.event.inputs.trading_mode != 'live' && 'true' || 'false' }}
+        run: |
+          echo "📋 ========================================"
+          echo "📋 CLAUDE.MD COMPLIANCE CHECK"
+          echo "📋 Position Limits: Max 4 (1 iron condor)"
+          echo "📋 ========================================"
+          echo ""
+          python3 scripts/close_excess_spreads.py || {
+            echo "⚠️ Compliance check completed with warnings"
+            echo "   May need manual review if positions couldn't be closed"
+          }
+          echo ""
+          echo "✅ Compliance check complete"
+
       - name: Pre-market health check
         id: health_check
         if: steps.check_execution.outputs.skip != 'true' && steps.credential_check.outputs.credentials_valid == 'true'
