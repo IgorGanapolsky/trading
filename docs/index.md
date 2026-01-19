@@ -5,12 +5,12 @@ title: AI Trading Journey
 
 Building an autonomous AI trading system with Claude Opus 4.5.
 
-## Current Status (Day 83 - Jan 19, 2026)
+## Current Status (Day 84 - Jan 19, 2026)
 
 | Metric | Value |
 |--------|-------|
 | Paper Account | $4,986.39 |
-| Total P/L | **-$13.61 (-0.27%)** |
+| Total P/L | **$-13.61 (-0.27%)** |
 | Open Positions | 6 (3 SPY put spreads) |
 | Strategy | Iron condors on SPY |
 | North Star | $5-10/day (realistic) |
