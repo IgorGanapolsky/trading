@@ -39,8 +39,8 @@ class RiskManager:
     - Cash reserve requirements (keep 20% cash minimum)
     """
 
-    # Default risk parameters (conservative for small capital)
-    DEFAULT_MAX_POSITION_PCT = 0.20  # 20% max per position for small accounts
+    # Default risk parameters (CLAUDE.md mandates 5% max - Phil Town Rule #1)
+    DEFAULT_MAX_POSITION_PCT = 0.05  # 5% max per position per CLAUDE.md
     DEFAULT_MAX_DAILY_LOSS_PCT = 0.02  # 2% max daily loss
     DEFAULT_MIN_CASH_RESERVE_PCT = 0.20  # Keep 20% cash
     DEFAULT_MAX_SECTOR_CONCENTRATION = 0.40  # 40% max in one sector

@@ -223,3 +223,14 @@ jobs:
           # Auto-merge
           gh pr merge "$BRANCH" --squash --delete-branch --admin || echo "Auto-merge may require manual approval"
           echo "Sync complete"
+
+      - name: Notify on Failure
+        if: failure()
+        continue-on-error: true
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pip install -q requests || true
+          python3 scripts/notify_ceo.py --type warning --message "ALPACA SYNC FAILED - Data may become stale. Run: ${{ github.run_id }}. Check: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"

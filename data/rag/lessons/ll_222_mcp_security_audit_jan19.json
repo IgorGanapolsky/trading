@@ -1,0 +1,105 @@
+{
+  "lesson_id": 222,
+  "date": "2026-01-19",
+  "category": "security_infrastructure",
+  "severity": "HIGH",
+  "title": "MCP Security Layer Implementation (arXiv:2506.19676 Survey)",
+  "source": {
+    "type": "academic_paper",
+    "title": "A Survey of LLM-Driven AI Agent Communication: Protocols, Security Risks, and Defense Countermeasures",
+    "arxiv_id": "2506.19676",
+    "authors": "Dezhang Kong et al. (19 authors)",
+    "url": "https://arxiv.org/abs/2506.19676",
+    "publication_date": "2025-11-27",
+    "papers_surveyed": "~350",
+    "companion_repo": "https://github.com/theshi-1128/awesome-agent-communication-security"
+  },
+  "key_findings": {
+    "attack_surface": {
+      "l1_data_transmission": "Unencrypted tool communication, eavesdropping, traffic analysis",
+      "l2_protocol": "Unauthorized tool access, privilege escalation, authentication bypass",
+      "l3_semantic": "Malicious website navigation, tool output manipulation, unintended operations"
+    },
+    "mcp_specific_risks": [
+      "Tool manifest spoofing",
+      "Malicious MCP server impersonation",
+      "Cross-server data exfiltration",
+      "Environment manipulation via external tools"
+    ],
+    "protocols_analyzed": ["MCP (Anthropic)", "A2A (Google)"]
+  },
+  "our_mcp_audit": {
+    "servers_analyzed": 7,
+    "critical_risk": ["alpaca", "trade-agent"],
+    "high_risk": ["playwright", "pal"],
+    "medium_risk": ["rss", "youtube-transcript", "gmail", "slack", "vertex-ai"],
+    "low_risk": ["trading-ui", "mcp-trader", "options-order-flow", "bogleheads-learner"]
+  },
+  "implementation": {
+    "file": "src/utils/security.py",
+    "class": "MCPSecurityValidator",
+    "defenses": {
+      "tool_whitelisting": "Only registered tools per server allowed",
+      "url_whitelisting": "For playwright - blocks localhost, internal IPs, JS/data URIs, crypto scams",
+      "risk_classification": "Critical/High/Medium/Low per server",
+      "response_validation": "Injection detection + size limits (1MB max)",
+      "audit_logging": "All tool access generates audit entries"
+    },
+    "api": [
+      "validate_mcp_tool(server_id, tool_name, params) -> MCPSecurityResult",
+      "validate_mcp_response(server_id, tool_name, response) -> bool"
+    ],
+    "tests_added": 45,
+    "tests_total": 129,
+    "tests_passing": "100%"
+  },
+  "allowed_urls": [
+    "finance.yahoo.com",
+    "marketwatch.com",
+    "tradingview.com",
+    "finviz.com",
+    "unusualwhales.com",
+    "app.alpaca.markets",
+    "investopedia.com",
+    "seekingalpha.com",
+    "barchart.com",
+    "stockanalysis.com",
+    "github.com/IgorGanapolsky/"
+  ],
+  "blocked_patterns": [
+    "localhost",
+    "127.x.x.x",
+    "192.168.x.x",
+    "10.x.x.x",
+    "file://",
+    "javascript:",
+    "data:",
+    "crypto.*airdrop",
+    "free.*bitcoin",
+    "wallet.*connect"
+  ],
+  "action_items_completed": [
+    "Read MCP sections of arXiv paper",
+    "Audit 7 MCP servers against attack patterns",
+    "Implement MCPSecurityValidator class",
+    "Add URL whitelisting for playwright",
+    "Add response validation with injection detection",
+    "Write 45 comprehensive tests",
+    "Record lesson in RAG"
+  ],
+  "verdict": {
+    "resource_rating": "VALUABLE",
+    "reason": "Directly addresses security gaps in our MCP infrastructure",
+    "implementation_status": "COMPLETE"
+  },
+  "tags": [
+    "mcp_security",
+    "agent_communication",
+    "arxiv_paper",
+    "tool_whitelisting",
+    "url_validation",
+    "prompt_injection",
+    "playwright_security",
+    "alpaca_protection"
+  ]
+}

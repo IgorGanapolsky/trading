@@ -52,7 +52,7 @@ jobs:
           from alpaca.trading.requests import MarketOrderRequest
           from alpaca.trading.enums import OrderSide, TimeInForce
 
-          target_symbol = os.environ['TARGET_SYMBOL'].strip()
+          target_symbol = os.environ['TARGET_SYMBOL'].strip().upper()  # Normalize to match Alpaca format
           target_qty = int(os.environ['TARGET_QTY'])
 
           print(f"=== CLOSE POSITION ===")

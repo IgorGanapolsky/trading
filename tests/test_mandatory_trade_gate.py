@@ -39,10 +39,10 @@ class TestValidateTradeMandatory:
         """Test that valid trade is approved (within 10% position limit)."""
         from src.safety.mandatory_trade_gate import validate_trade_mandatory
 
-        # Trade must be <10% of equity to pass
+        # Trade must be <5% of equity to pass (per CLAUDE.md)
         result = validate_trade_mandatory(
             symbol="SPY",
-            amount=400.0,  # 8% of 5000 - within 10% limit
+            amount=200.0,  # 4% of 5000 - within 5% limit
             side="BUY",
             strategy="CSP",
             context={"equity": 5000.0},
@@ -51,12 +51,12 @@ class TestValidateTradeMandatory:
         assert "approved" in result.reason.lower()
 
     def test_position_too_large_rejected(self):
-        """Test that position >10% of equity is rejected."""
+        """Test that position >5% of equity is rejected (per CLAUDE.md)."""
         from src.safety.mandatory_trade_gate import validate_trade_mandatory
 
         result = validate_trade_mandatory(
             symbol="SPY",
-            amount=1000.0,  # 20% of 5000 - exceeds 10% limit
+            amount=300.0,  # 6% of 5000 - exceeds 5% limit
             side="BUY",
             strategy="CSP",
             context={"equity": 5000.0},
