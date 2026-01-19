@@ -909,14 +909,12 @@ jobs:
           echo "✅ Position management complete - stop-losses enforced"
           # ================================================================
 
-          # ========== GUARANTEED TRADER (Dec 18, 2025) ==========
-          # Problem: Complex gates blocked ALL trades for 50 days
-          # Solution: Run simple guaranteed trader FIRST
-          echo "🎯 Running guaranteed trader (bypass complex gates)..."
-          python3 -u scripts/guaranteed_trader.py 2>&1 | tee /tmp/guaranteed_output.log || {
-            echo "⚠️ Guaranteed trader had issues, continuing with main orchestrator..."
-          }
-          echo "✅ Guaranteed trader complete"
+          # ========== GUARANTEED TRADER - DISABLED Jan 19, 2026 ==========
+          # DISABLED: LL-242 audit found this buys SPY SHARES, not iron condors
+          # CLAUDE.md mandates: Iron condors only, SPY only, defined risk
+          # This was causing strategy mismatch - iron_condor_trader.py is the ONLY trader
+          # See: rag_knowledge/lessons_learned/ll_242_adversarial_audit_strategy_mismatch_jan19.md
+          echo "⏭️ Guaranteed trader DISABLED (strategy mismatch - iron condors only)"
           # ======================================================
 
           # ========== DIAGNOSTIC CHECKPOINT (Jan 5, 2026) ==========
@@ -1055,19 +1053,16 @@ jobs:
           # FIX Jan 15, 2026: When options_buying_power=$0, fall back to equity
           if (( $(echo "$OPTIONS_BP == 0" | bc -l) )); then
             echo ""
-            echo "🚨 OPTIONS BUYING POWER = \$0 - EQUITY FALLBACK MODE"
+            echo "🚨 OPTIONS BUYING POWER = \$0 - CANNOT TRADE TODAY"
             echo "   Root cause: Stale orders or margin calculation issue"
-            echo "   Action: Buy SPY shares instead of options"
+            echo "   Action: WAIT - do not buy equity (LL-242: iron condors only)"
             echo ""
-
-            # Buy $100 of SPY as fallback (builds towards credit spread collateral)
-            echo "   📈 Buying \$100 of SPY (equity fallback)..."
-            python3 scripts/guaranteed_trader.py || {
-              echo "   ⚠️  Equity fallback also failed - check account state"
-            }
-
+            # DISABLED Jan 19, 2026: guaranteed_trader buys SPY SHARES, not iron condors
+            # This violates CLAUDE.md strategy - iron condors ONLY for defined risk
+            # See: rag_knowledge/lessons_learned/ll_242_adversarial_audit_strategy_mismatch_jan19.md
+            echo "   ⏭️ Equity fallback DISABLED - resolve buying power issue instead"
             echo ""
-            echo "⚠️  Options blocked - used equity fallback. Check Alpaca for stale orders."
+            echo "⚠️  Options blocked - investigate Alpaca for stale orders."
 
           elif (( $(echo "$OPTIONS_BP < 1000" | bc -l) )); then
             echo ""
@@ -1205,48 +1200,15 @@ jobs:
           echo ""
           echo "✅ Iron condor strategy complete"
 
-      - name: Simple Daily Trader (CSP fallback)
-        if: steps.execute_trading.conclusion == 'success'
-        # FIXED Dec 30, 2025: Removed continue-on-error - trading failures must be visible
-        env:
-          ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
-        run: |
-          echo ""
-          echo "💰 ========================================"
-          echo "💰 SIMPLE DAILY TRADER - GUARANTEED EXECUTION"
-          echo "💰 ========================================"
-          echo "Strategy: Cash-secured puts on SPY (20 delta, 30 DTE)"
-          echo "Target: $20-40/day additional income"
-          echo ""
-          python3 scripts/simple_daily_trader.py || {
-            echo "⚠️  Simple daily trader returned non-zero"
-            echo "   Check logs for details"
-          }
-          echo ""
-          echo "✅ Simple daily trader complete"
-
-      - name: Rule #1 Options (Phil Town Strategy)
-        if: steps.execute_trading.conclusion == 'success'
-        # FIXED Dec 30, 2025: Removed continue-on-error - trading failures must be visible
-        env:
-          ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
-        run: |
-          echo ""
-          echo "📚 ========================================"
-          echo "📚 RULE #1 OPTIONS - PHIL TOWN STRATEGY"
-          echo "📚 ========================================"
-          echo "Strategy: Sell puts at 50% MOS, calls at Sticker Price"
-          echo "Based on: Rule #1 and Payback Time books"
-          echo "Target: $20-50/day on quality stocks with moats"
-          echo ""
-          python3 scripts/rule_one_trader.py || {
-            echo "⚠️  Rule #1 trader returned non-zero"
-            echo "   This is informational - strategy may need configuration"
-          }
-          echo ""
-          echo "✅ Rule #1 strategy complete"
+      # ========================================================================
+      # DISABLED Jan 19, 2026 - LL-242: Strategy Mismatch Crisis
+      # These traders VIOLATE CLAUDE.md strategy (iron condors only, SPY only)
+      # simple_daily_trader: Sells NAKED puts (undefined risk)
+      # rule_one_trader: Trades individual stocks (F, SOFI, etc.)
+      # See: rag_knowledge/lessons_learned/ll_242_adversarial_audit_strategy_mismatch_jan19.md
+      # ========================================================================
+      # - name: Simple Daily Trader (CSP fallback) - DISABLED
+      # - name: Rule #1 Options (Phil Town Strategy) - DISABLED
 
       - name: Update performance log
         if: steps.execute_trading.conclusion == 'success'
