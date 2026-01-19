@@ -520,7 +520,8 @@ class TestChecklistStatus:
             symbol="SPY", max_loss=100.0, dte=35, is_spread=True
         )
 
-        assert "SPY or IWM only" in status["ticker_allowed"]["requirement"]
+        # CLAUDE.md strategy update Jan 19, 2026: SPY ONLY (no IWM)
+        assert "SPY" in status["ticker_allowed"]["requirement"]
         assert "5%" in status["position_size"]["requirement"]
         assert "spread" in status["is_spread"]["requirement"].lower()
         assert "30-45" in status["dte_range"]["requirement"]
