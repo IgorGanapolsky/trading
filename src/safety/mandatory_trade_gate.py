@@ -113,10 +113,20 @@ class TradeBlockedError(Exception):
         super().__init__(gate_result.reason)
 
 
-# Configuration from environment (CLAUDE.md mandates 5% max)
-MAX_POSITION_PCT = float(os.getenv("MAX_POSITION_PCT", "0.05"))  # 5% max per CLAUDE.md
-MAX_DAILY_LOSS_PCT = float(os.getenv("MAX_DAILY_LOSS_PCT", "0.05"))  # 5% max daily loss
-MIN_TRADE_AMOUNT = float(os.getenv("MIN_TRADE_AMOUNT", "1.0"))  # $1 minimum trade
+# Configuration - HARDCODED from central constants (NO ENV VAR OVERRIDE)
+# SECURITY FIX Jan 19, 2026: Removed env var bypass that allowed overriding position limits
+# Per CLAUDE.md and LL-244 adversarial audit: These limits are NON-NEGOTIABLE
+try:
+    from src.constants.trading_thresholds import PositionSizing
+    MAX_POSITION_PCT = PositionSizing.MAX_POSITION_PCT  # 5% max per CLAUDE.md
+    MAX_DAILY_LOSS_PCT = PositionSizing.MAX_DAILY_LOSS_PCT  # 2% max daily loss
+except ImportError:
+    # Fallback - STILL HARDCODED, not from env var
+    MAX_POSITION_PCT = 0.05  # 5% max per CLAUDE.md - HARDCODED
+    MAX_DAILY_LOSS_PCT = 0.02  # 2% max daily loss - HARDCODED
+    logger.warning("Using fallback position limits - constants module unavailable")
+
+MIN_TRADE_AMOUNT = 1.0  # $1 minimum trade - HARDCODED
 
 # Track daily losses (reset daily in production)
 # SECURITY FIX (Jan 19, 2026): Added thread lock to prevent race condition
