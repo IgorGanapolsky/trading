@@ -152,16 +152,58 @@ fi
 
 # Check market status - US Equities ONLY (we don't trade crypto)
 # UPDATED Jan 5, 2026: Fixed ambiguous output that caused Claude to misinterpret market status
+# UPDATED Jan 19, 2026: Added US market holiday check (MLK Day bug fix)
 # See LL-074: Hook output must be EXPLICIT about market state
 CURRENT_TIME=$(TZ=America/New_York date +%H:%M)
 CURRENT_HOUR=$(TZ=America/New_York date +%H)
+
+# US Stock Market Holidays 2026 (NYSE/NASDAQ closed)
+# Format: YYYY-MM-DD
+US_MARKET_HOLIDAYS_2026=(
+    "2026-01-01"  # New Year's Day
+    "2026-01-19"  # MLK Day (3rd Monday Jan)
+    "2026-02-16"  # Presidents Day (3rd Monday Feb)
+    "2026-04-03"  # Good Friday
+    "2026-05-25"  # Memorial Day (last Monday May)
+    "2026-07-03"  # Independence Day observed (Jul 4 is Sat)
+    "2026-09-07"  # Labor Day (1st Monday Sep)
+    "2026-11-26"  # Thanksgiving (4th Thursday Nov)
+    "2026-12-25"  # Christmas Day
+)
+
+# Check if today is a holiday
+IS_HOLIDAY="false"
+HOLIDAY_NAME=""
+for holiday in "${US_MARKET_HOLIDAYS_2026[@]}"; do
+    if [[ "$TODAY" == "$holiday" ]]; then
+        IS_HOLIDAY="true"
+        case "$holiday" in
+            "2026-01-01") HOLIDAY_NAME="New Year's Day" ;;
+            "2026-01-19") HOLIDAY_NAME="Martin Luther King Jr. Day" ;;
+            "2026-02-16") HOLIDAY_NAME="Presidents Day" ;;
+            "2026-04-03") HOLIDAY_NAME="Good Friday" ;;
+            "2026-05-25") HOLIDAY_NAME="Memorial Day" ;;
+            "2026-07-03") HOLIDAY_NAME="Independence Day (observed)" ;;
+            "2026-09-07") HOLIDAY_NAME="Labor Day" ;;
+            "2026-11-26") HOLIDAY_NAME="Thanksgiving Day" ;;
+            "2026-12-25") HOLIDAY_NAME="Christmas Day" ;;
+            *) HOLIDAY_NAME="Market Holiday" ;;
+        esac
+        break
+    fi
+done
 
 TRADING_ALLOWED="NO"
 MARKET_STATE=""
 MARKET_REASON=""
 
-if [[ $DAY_NUM -ge 1 && $DAY_NUM -le 5 ]]; then
-    # Weekday (Mon-Fri)
+# HOLIDAY CHECK FIRST (takes precedence over weekday)
+if [[ "$IS_HOLIDAY" == "true" ]]; then
+    MARKET_STATE="HOLIDAY_CLOSED"
+    MARKET_REASON="🎉 $HOLIDAY_NAME - Markets CLOSED. Next open: next business day 9:30 AM ET"
+    TRADING_ALLOWED="NO"
+elif [[ $DAY_NUM -ge 1 && $DAY_NUM -le 5 ]]; then
+    # Weekday (Mon-Fri) - not a holiday
     if [[ "$CURRENT_TIME" > "09:30" && "$CURRENT_TIME" < "16:00" ]]; then
         MARKET_STATE="OPEN"
         MARKET_REASON="Regular trading hours (9:30 AM - 4:00 PM ET)"
@@ -185,17 +227,26 @@ fi
 # Build unambiguous status string
 MARKET_STATUS="$MARKET_STATE - $MARKET_REASON [TRADING_ALLOWED=$TRADING_ALLOWED]"
 
-# Next automated trade time - MUST be a weekday (Mon-Fri)
+# Next automated trade time - MUST be a weekday (Mon-Fri) AND not a holiday
 # Fixed Dec 30, 2025: Was showing tomorrow even on trading days before market close
+# Fixed Jan 19, 2026: Now checks for holidays (MLK Day bug)
 get_next_trading_day() {
     local dow=$(TZ=America/New_York date +%u)  # 1=Mon, 7=Sun
     local hour=$(TZ=America/New_York date +%H)  # Current hour in ET
     local days_to_add=0
 
-    # If it's a weekday (Mon-Fri, dow 1-5)
-    if [[ $dow -ge 1 && $dow -le 5 ]]; then
+    # If today is a HOLIDAY, next trade is tomorrow (at earliest)
+    if [[ "$IS_HOLIDAY" == "true" ]]; then
+        if [[ $dow -eq 5 ]]; then
+            days_to_add=3  # Holiday on Friday -> Monday
+        else
+            days_to_add=1  # Holiday Mon-Thu -> next day
+        fi
+    # If it's a weekday (Mon-Fri, dow 1-5) and NOT a holiday
+    elif [[ $dow -ge 1 && $dow -le 5 ]]; then
         # If before market close (4 PM ET = 16:00), trade is TODAY
-        if [[ $hour -lt 16 ]]; then
+        # 10# forces decimal interpretation (avoids octal error for 08, 09)
+        if [[ 10#$hour -lt 16 ]]; then
             days_to_add=0
         else
             # After market close - next trade is tomorrow (or Monday if Friday)
