@@ -3,7 +3,7 @@
 Tests for Pre-Trade Checklist Module - CLAUDE.md Enforcement
 
 Comprehensive test suite covering:
-- Ticker validation (SPY/IWM only)
+- Ticker validation (SPY ONLY per CLAUDE.md Jan 19)
 - Position size limits (5% max)
 - Spread requirement enforcement
 - Earnings blackout detection
@@ -12,6 +12,7 @@ Comprehensive test suite covering:
 - Options symbol parsing
 
 Created: January 15, 2026
+Updated: January 19, 2026 - SPY ONLY enforcement
 Phil Town Rule #1: Don't Lose Money
 """
 
@@ -652,7 +653,7 @@ class TestCLAUDEMDCompliance:
 
     def test_individual_stock_rejected(self, checklist_4959):
         """Individual stocks (F, SOFI) should be rejected per CLAUDE.md."""
-        # CLAUDE.md: "SPY or IWM? (NO individual stocks until proven)"
+        # CLAUDE.md Jan 19: "Is ticker SPY? (SPY ONLY - best liquidity)"
         for ticker in ["F", "SOFI", "T", "AAPL", "NVDA"]:
             passed, failures = checklist_4959.validate(
                 symbol=ticker,
@@ -704,7 +705,7 @@ class TestPhilTownRule1:
         assert passed is False
 
     def test_ticker_restriction_limits_volatility(self):
-        """Limiting to SPY/IWM reduces single-stock volatility risk."""
+        """Limiting to SPY ONLY reduces single-stock volatility risk."""
         checklist = PreTradeChecklist(account_equity=5000.0)
         # Meme stocks like GME should fail
         passed, failures = checklist.validate(symbol="GME", max_loss=100.0, dte=35, is_spread=True)

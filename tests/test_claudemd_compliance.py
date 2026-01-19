@@ -48,8 +48,8 @@ class TestClaudeMdCompliance:
     def test_only_spy_tickers_in_workflow(self, daily_trading_workflow: str):
         """Verify workflow only trades SPY (per CLAUDE.md ticker whitelist)."""
         # Find all ticker references
-        # Allowed: SPY, IWM (per CLAUDE.md)
-        # Forbidden: SOFI, F, T, INTC, BAC, VZ, etc.
+        # Allowed: SPY ONLY (per CLAUDE.md Jan 19 - IWM removed)
+        # Forbidden: IWM, SOFI, F, T, INTC, BAC, VZ, etc.
         forbidden_tickers = ["SOFI", "F", "T", "INTC", "BAC", "VZ", "AMD", "NVDA"]
 
         for ticker in forbidden_tickers:
@@ -131,10 +131,10 @@ class TestClaudeMdCompliance:
             # Extract underlying from option symbol (e.g., SPY260220P00565000 -> SPY)
             underlying = symbol[:3] if len(symbol) > 3 else symbol
 
+            # UPDATED Jan 19: SPY ONLY per CLAUDE.md
             assert underlying in [
                 "SPY",
-                "IWM",
-            ], f"Non-whitelisted ticker in positions: {symbol} (underlying: {underlying})"
+            ], f"Non-whitelisted ticker in positions: {symbol} (underlying: {underlying}). SPY ONLY per CLAUDE.md."
 
     def test_no_individual_stocks_in_positions(self, system_state: dict):
         """Verify no individual stock positions exist."""

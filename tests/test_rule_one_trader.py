@@ -39,19 +39,19 @@ class TestRuleOneTraderConfig:
             assert key in CONFIG, f"Missing config key: {key}"
 
     def test_watchlist_has_whitelisted_tickers(self):
-        """Watchlist should contain only whitelisted ETFs per LL-236.
+        """Watchlist should contain only whitelisted ETFs per LL-244.
 
-        Updated Jan 19, 2026: Strategy pivoted to SPY/IWM ONLY based on
-        $100K account success (LL-216, LL-220). LL-236 enforces strict
-        whitelist - no individual stocks allowed until strategy proven.
+        Updated Jan 19, 2026: Strategy pivoted to SPY ONLY based on
+        $100K account success (LL-216, LL-220). LL-244 enforces strict
+        whitelist - SPY only, no IWM, no individual stocks.
         """
         from scripts.rule_one_trader import CONFIG
 
-        # Per CLAUDE.md: "CREDIT SPREADS on SPY/IWM ONLY"
-        # LL-236: Removed non-whitelisted tickers from workflows
+        # Per CLAUDE.md Jan 19: "IRON CONDORS on SPY ONLY"
+        # LL-244: SPY ONLY - IWM removed per adversarial audit
         assert len(CONFIG["watchlist"]) >= 1
-        # SPY and IWM are the ONLY approved tickers for credit spreads
-        whitelisted_etfs = ["SPY", "IWM"]
+        # SPY is the ONLY approved ticker for iron condors
+        whitelisted_etfs = ["SPY"]  # SPY ONLY per CLAUDE.md Jan 19
         assert all(s in whitelisted_etfs for s in CONFIG["watchlist"])
 
     def test_north_star_target_is_100(self):
