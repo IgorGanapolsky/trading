@@ -99,6 +99,12 @@ class PositionSizing:
     TARGET_CSP_DELTA = 0.20  # 20% chance of assignment
     MAX_CSP_DELTA = 0.30  # Never sell puts above 30 delta
 
+    # Iron condor delta thresholds (per CLAUDE.md Jan 19)
+    # "Sell 15-20 delta put spread + Sell 15-20 delta call spread"
+    IRON_CONDOR_MIN_DELTA = 0.15  # Minimum delta for short strikes
+    IRON_CONDOR_MAX_DELTA = 0.20  # Maximum delta for short strikes (86% win rate)
+    IRON_CONDOR_TARGET_DELTA = 0.15  # Target 15-delta = 85% probability of profit
+
 
 class RiskThresholds:
     """Risk management thresholds."""
@@ -116,9 +122,18 @@ class RiskThresholds:
     CSP_TAKE_PROFIT_PCT = 0.50  # Close at 50% profit
     IRON_CONDOR_TAKE_PROFIT_PCT = 0.50
 
+    # DTE thresholds (per CLAUDE.md Jan 19 - Iron Condor strategy)
+    # Entry: 30-45 DTE optimal for theta decay
+    IRON_CONDOR_MIN_DTE = 30
+    IRON_CONDOR_MAX_DTE = 45
+
+    # Exit at 21 DTE to avoid gamma risk (CLAUDE.md rule)
+    # "Close positions at 21 DTE to avoid gamma risk"
+    EXIT_AT_DTE = 21  # Close iron condors at 21 DTE
+
     # Rolling threshold (Invest with Henry: "Roll before expiration")
     # Roll options when DTE falls below this to avoid assignment risk
-    ROLL_AT_DTE = 5  # Roll positions when 5 DTE or less
+    ROLL_AT_DTE = 5  # Roll positions when 5 DTE or less (backup if 21 DTE exit missed)
 
     # Trade frequency limit (Invest with Henry: "10-15 trades/week max")
     # Prevents overtrading which "primarily benefits the brokerage"
@@ -130,18 +145,18 @@ class RiskThresholds:
 
 
 class TargetSymbols:
-    """Target symbols for trading strategies (per CLAUDE.md - Jan 15 revision).
+    """Target symbols for trading strategies (per CLAUDE.md - Jan 19 revision).
 
-    CRITICAL UPDATE Jan 15, 2026 (Deep Research Revision):
+    CRITICAL UPDATE Jan 19, 2026 (Iron Condor Strategy):
     - 100K account succeeded with SPY focus (+$16,661)
     - 5K account failed with SOFI (individual stock risk)
-    - CREDIT SPREADS on SPY/IWM only - defined risk, $500 collateral
-    - NO individual stocks until proven in paper trading
+    - IRON CONDORS on SPY ONLY - defined risk on BOTH sides
+    - NO individual stocks, NO IWM until proven in paper trading
     """
 
-    # Primary targets - ETFs ONLY per CLAUDE.md strategy
-    # Credit spread collateral = spread width (~$500), NOT full strike price
-    CSP_WATCHLIST = ["SPY", "IWM"]
+    # Primary targets - SPY ONLY per CLAUDE.md strategy
+    # Iron condor collateral = spread width x 2 (~$1000 for $5-wide wings)
+    CSP_WATCHLIST = ["SPY"]  # SPY ONLY - best liquidity, tightest spreads
 
     # Max strike for credit spreads (SPY ~$590, IWM ~$220)
     # This is informational - actual strike from 30-delta put
