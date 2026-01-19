@@ -92,15 +92,15 @@ class TestInputValidation:
         request = validate_request(
             PositionSizeRequest,
             {
-                "symbol": "IWM",
-                "entry_price": 200.0,
-                "stop_loss": 195.0,
+                "symbol": "SPY",
+                "entry_price": 590.0,
+                "stop_loss": 585.0,
                 "risk_dollars": 100.0,
             },
         )
-        assert request.symbol == "IWM"
-        assert request.entry_price == 200.0
-        assert request.stop_loss == 195.0
+        assert request.symbol == "SPY"
+        assert request.entry_price == 590.0
+        assert request.stop_loss == 585.0
 
     def test_position_size_stop_loss_above_entry_rejected(self):
         """Stop loss above entry price is rejected for longs."""
