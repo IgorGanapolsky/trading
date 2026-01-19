@@ -24,7 +24,7 @@ on:
         description: 'Comma-separated symbols to query advice for'
         required: false
         type: string
-        default: 'SPY,SOFI,PLTR,AMD'
+        default: 'SPY,IWM'
     outputs:
       advice_file:
         description: 'Path to the generated advice file'
@@ -39,7 +39,7 @@ on:
       symbols:
         description: 'Comma-separated symbols to query advice for'
         required: false
-        default: 'SPY,SOFI,PLTR,AMD'
+        default: 'SPY,IWM'
       custom_query:
         description: 'Custom query (optional)'
         required: false
@@ -110,12 +110,12 @@ jobs:
           echo "VERTEX AI RAG PRE-TRADE QUERY"
           echo "======================================================================"
           echo ""
-          echo "Symbols: ${{ inputs.symbols || 'SPY,SOFI,PLTR,AMD' }}"
+          echo "Symbols: ${{ inputs.symbols || 'SPY,IWM' }}"
           echo ""
 
           # Parse symbols into arguments
           SYMBOL_ARGS=""
-          IFS=',' read -ra SYMBOLS <<< "${{ inputs.symbols || 'SPY,SOFI,PLTR,AMD' }}"
+          IFS=',' read -ra SYMBOLS <<< "${{ inputs.symbols || 'SPY,IWM' }}"
           for symbol in "${SYMBOLS[@]}"; do
             SYMBOL_ARGS="$SYMBOL_ARGS --symbol $symbol"
           done
@@ -241,7 +241,7 @@ jobs:
         run: |
           echo "## Vertex AI RAG Pre-Trade Query Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Symbols**: ${{ inputs.symbols || 'SPY,SOFI,PLTR,AMD' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Symbols**: ${{ inputs.symbols || 'SPY,IWM' }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Timestamp**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
           echo "- **Has Warnings**: ${{ steps.analyze.outputs.has_warnings }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

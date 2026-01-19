@@ -227,9 +227,9 @@ jobs:
             export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp_sa_key.json
           fi
 
-          # Query for pre-trade advice
+          # Query for pre-trade advice - FIXED Jan 19: SPY/IWM only per CLAUDE.md
           python3 scripts/query_vertex_rag.py \
-            --symbol SPY --symbol IWM --symbol AMD --symbol PLTR \
+            --symbol SPY --symbol IWM \
             --json --output data/rag_pretrade_advice.json 2>&1 || {
             echo "::warning::Vertex AI RAG query failed - proceeding with local lessons only"
             echo '{"error": "RAG query failed", "fallback": true}' > data/rag_pretrade_advice.json
@@ -1137,7 +1137,7 @@ jobs:
               state['options']['execution_date'] = datetime.utcnow().strftime('%Y-%m-%d')
               # Track strategy based on buying power
               state['options']['selection_method'] = 'adaptive'  # CSPs or spreads based on buying power
-              state['options']['target_tickers'] = ['SPY', 'IWM', 'F', 'T', 'PLTR', 'AMD']  # FIXED Jan 14: No SOFI until Feb 1
+              state['options']['target_tickers'] = ['SPY', 'IWM']  # FIXED Jan 19: SPY/IWM ONLY per CLAUDE.md mandate
               state['options']['strategy_note'] = 'Uses credit spreads when buying power < $1000, CSPs otherwise'
 
               # Count today's options logs to verify execution
