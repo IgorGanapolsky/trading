@@ -1,9 +1,9 @@
 {
-  "last_updated": "2026-01-19T18:01:20.894375+00:00",
+  "last_updated": "2026-01-19T18:22:33.228467+00:00",
   "sync_health": {
-    "last_successful_sync": "2026-01-19T18:01:20.894378+00:00",
+    "last_successful_sync": "2026-01-19T18:22:33.228470+00:00",
     "sync_source": "github_actions",
-    "sync_count_today": 3,
+    "sync_count_today": 4,
     "history": [
       {
         "timestamp": "2026-01-19T17:37:15.575996+00:00",
@@ -17,6 +17,11 @@
       },
       {
         "timestamp": "2026-01-19T18:01:20.894367+00:00",
+        "equity": 4986.39,
+        "success": true
+      },
+      {
+        "timestamp": "2026-01-19T18:22:33.228452+00:00",
         "equity": 4986.39,
         "success": true
       }
@@ -92,7 +97,7 @@
     "last_trade_date": "2026-01-19",
     "today_trades": 0,
     "total_trades_today": 0,
-    "last_trade_symbol": "SYNCED"
+    "last_trade_symbol": "SPY260220P00565000"
   },
   "risk": {
     "status": "WARNING - NEGATIVE P/L",
@@ -106,7 +111,7 @@
     "positions_count": 6
   },
   "meta": {
-    "last_updated": "2026-01-19T18:15:01.710830+00:00",
+    "last_updated": "2026-01-19T18:22:33.228486+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5
   }
