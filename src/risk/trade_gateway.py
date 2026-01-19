@@ -142,7 +142,12 @@ class TradeGateway:
         10.0  # $10 minimum for paper trading - FIXED Jan 12, 2026 (was $50, blocked all trades)
     )
     MIN_TRADE_BATCH_LIVE = 50.0  # $50 for live trading - fee protection
-    MAX_DAILY_LOSS_PCT = 0.03  # 3% max daily loss
+    # FIXED Jan 19, 2026: Import from central constants for consistency
+    try:
+        from src.core.trading_constants import MAX_DAILY_LOSS_PCT as _CENTRAL_DAILY_LOSS
+        MAX_DAILY_LOSS_PCT = _CENTRAL_DAILY_LOSS
+    except ImportError:
+        MAX_DAILY_LOSS_PCT = 0.05  # 5% fallback per trading_constants.py
     MAX_DRAWDOWN_PCT = 0.10  # 10% max drawdown
     MAX_RISK_PER_TRADE_PCT = 0.02  # 2% max risk per trade - INDUSTRY STANDARD (was 1%)
     MAX_RISK_SCORE = 0.75  # Risk score threshold
