@@ -132,8 +132,9 @@ class RetryableOperation:
     def __enter__(self) -> "RetryableOperation":
         return self
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> bool:
-        return False
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        # Don't suppress exceptions - let them propagate
+        pass
 
     def __iter__(self):
         """Iterate through retry attempts."""
