@@ -3,27 +3,18 @@ layout: post
 title: "Day 76: What We Learned - January 12, 2026"
 date: 2026-01-12
 day_number: 76
-lessons_count: 7
-critical_count: 1
-excerpt: "Every mistake is a lesson in disguise. Today we uncovered a critical flaw in our system - the kind that separates amateur traders from professionals w..."
+lessons_count: 6
+critical_count: 0
+excerpt: "Another day in the 90-day journey to build a profitable AI trading system. Here's what we learned today...."
 ---
 
 # Day 76 of 90 | Monday, January 12, 2026
 
 **14 days remaining** in our journey to build a profitable AI trading system.
 
-Every mistake is a lesson in disguise. Today we uncovered a critical flaw in our system - the kind that separates amateur traders from professionals who survive long-term.
+Another day in the 90-day journey to build a profitable AI trading system. Here's what we learned today.
 
 ---
-
-## The Hard Lessons
-
-*These are the moments that test us. Critical issues that demanded immediate attention.*
-
-### API Key Environment Variable Mismatch
-
-Trading system failed to execute for multiple days with "401 Unauthorized" errors.
-
 
 ## Important Discoveries
 
@@ -40,13 +31,13 @@ CEO requested comprehensive audit of all trading systems. CTO conducted thorough
 
 ## Quick Wins & Refinements
 
+- **Lesson Learned 133: Registry.py Missing Broke All Trading...** - During a system health check, discovered that `src/strategies/registry.py` was deleted in the NUCLEA...
+- **CTO Wrongly Assumed API Keys Were Invalid - January 12, 2026** - CTO (Claude) tested Alpaca API from sandbox environment and received "Access denied"....
+- **NEVER Tell CEO to Run CI - Do It Yourself** - On Jan 12, 2026, CTO (Claude) reported CI status by observing GitHub Actions results instead of acti...
 - **Branch and PR Hygiene Protocol (LL-137)** - LL-137: Branch and PR Hygiene Protocol (LL-137)
 
 Date: January 12, 2026
 Category: DevOps / Git Workf...
-- **Lesson Learned 133: Registry.py Missing Broke All Trading...** - During a system health check, discovered that `src/strategies/registry.py` was deleted in the NUCLEA...
-- **NEVER Tell CEO to Run CI - Do It Yourself** - On Jan 12, 2026, CTO (Claude) reported CI status by observing GitHub Actions results instead of acti...
-- **CTO Wrongly Assumed API Keys Were Invalid - January 12, 2026** - CTO (Claude) tested Alpaca API from sandbox environment and received "Access denied"....
 
 
 ---
@@ -55,8 +46,8 @@ Category: DevOps / Git Workf...
 
 | What | Count |
 |------|-------|
-| Lessons Learned | **7** |
-| Critical Issues | 1 |
+| Lessons Learned | **6** |
+| Critical Issues | 0 |
 | High Priority | 2 |
 | Improvements | 4 |
 

@@ -1,16 +1,16 @@
 ---
 layout: post
-title: "Daily Report: January 16, 2026 | $+48.80"
+title: "Daily Report: January 16, 2026 | $-15.61"
 date: 2026-01-16
-daily_pl: 48.80
-total_pl: 7.98
-equity: 5007.98
-day_number: 80
+daily_pl: -15.61
+total_pl: -25.92
+equity: 4974.08
+day_number: 83
 ---
 
-# Profitable Day: Thursday, January 16, 2026
+# Learning Day: Friday, January 16, 2026
 
-**Day 80/90** of our AI Trading R&D Phase
+**Day 83/90** of our AI Trading R&D Phase
 
 ---
 
@@ -18,60 +18,53 @@ day_number: 80
 
 | Metric | Value |
 |--------|-------|
-| **Daily P/L** | **$+48.80** (+0.98%) |
-| **Total P/L** | $+7.98 (+0.16%) |
-| **Portfolio Value** | $5,007.98 |
-| **Cash** | $4,302.08 |
-| **Buying Power** | $9,002.06 |
+| **Daily P/L** | **$-15.61** (-0.31%) |
+| **Total P/L** | $-25.92 (-0.03%) |
+| **Portfolio Value** | $4,974.08 |
+| **Cash** | $4,382.08 |
+| **Buying Power** | $9,003.16 |
 
 ---
 
-## Win Rate Status
+## Today's Trades
 
-| Metric | Value |
-|--------|-------|
-| **Open Trades** | 3 |
-| **Closed Trades** | 0 |
-| **Win Rate** | N/A (no closed trades yet) |
-
-*Note: Win rate is calculated from CLOSED trades only. All 3 current trades are still open.*
-
----
-
-## Current Positions
-
-| Symbol | Type | Qty | Current Price | P/L |
-|--------|------|-----|---------------|-----|
-| SPY | Stock | 0.576 | $690.76 | -$2.06 |
-| SPY260220P00565000 | Long Put | 1 | $0.52 | +$5.00 |
-| SPY260220P00570000 | Short Put | -1 | $0.57 | -$7.00 |
-| SPY260220P00595000 | Long Put | 1 | $0.83 | +$10.00 |
-| SPY260220P00600000 | Short Put | -1 | $0.91 | -$13.00 |
-| SPY260220P00653000 | Long Put | 1 | $3.03 | +$24.00 |
-| SPY260220P00658000 | Short Put | -1 | $3.56 | -$35.00 |
-| SPY260220P00660000 | Long Put (Orphan) | 1 | $3.74 | **+$67.00** |
-
-**Open Positions Summary:**
-- Bull Put Spread 565/570: -$2.00 net
-- Bull Put Spread 595/600: -$3.00 net
-- Bull Put Spread 653/658: -$11.00 net
-- Orphan Put 660: **+$67.00** (crisis position - see LL-221)
+No trades executed today (market closed or no signals).
 
 ---
 
 ## Portfolio Allocation
 
 Our current strategy focuses on:
-- **Credit Spreads**: Bull put spreads on SPY (primary strategy)
-- **Position Management**: Monitoring orphan 660 put for exit opportunity
+- **US Equities**: SPY, sector ETFs
+- **Options**: Cash-secured puts, covered calls
+- **Fixed Income**: Treasury ETFs (SHY, IEF, TLT)
+
+---
+
+## Treasury & Fixed Income
+
+**Live Treasury Yields (FRED API):**
+
+| Maturity | Yield |
+|----------|-------|
+| 2-Year | 4.30% |
+| 5-Year | 4.35% |
+| 10-Year | 4.50% |
+| 30-Year | 4.70% |
+
+**Yield Curve Spread (10Y-2Y)**: +0.20%
+
+**Curve Status**: Normal (positive slope)
+
+*Data source: Federal Reserve Economic Data (FRED) API*
 
 ---
 
 ## Risk Metrics
 
-- **Max Position Size**: 5% of portfolio ($250)
-- **Stop Loss**: 2x credit received (mandatory)
-- **Trailing Stops**: Active (1 position, $500 protected)
+- **Max Position Size**: 2% of portfolio (Kelly Criterion)
+- **Stop Loss**: Volatility-adjusted per position
+- **Circuit Breakers**: Active (no triggers today)
 
 ---
 
@@ -83,10 +76,10 @@ Our current strategy focuses on:
 
 ## What's Next
 
-Day 81 focus:
-- Monitor orphan 660 put for profit-taking opportunity (+$67 currently)
-- Track credit spread performance
-- Continue 90-day paper trading validation
+Day 84 focus:
+- Continue systematic strategy execution
+- Monitor open positions
+- Refine ML signals based on today's data
 
 ---
 
