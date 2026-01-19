@@ -301,6 +301,24 @@ def validate_trade_mandatory(
     checks_performed.append(f"equity_check: PASS (${equity:.2f})")
 
     # =========================================================================
+    # CHECK 2.5: Position COUNT limit (Jan 19, 2026 - LL-246)
+    # Per CLAUDE.md: "Position limit: 1 iron condor at a time" = 4 legs max
+    # This prevents accumulating unlimited positions (root cause of 6 position issue)
+    # =========================================================================
+    MAX_POSITIONS = 4  # 1 iron condor = 4 legs (HARDCODED per CLAUDE.md)
+    current_positions = context.get("positions", []) if context else []
+    current_position_count = len(current_positions)
+
+    if side == "BUY" and current_position_count >= MAX_POSITIONS:
+        return GateResult(
+            approved=False,
+            reason=f"Position count {current_position_count} >= max {MAX_POSITIONS} (CLAUDE.md: 1 iron condor at a time)",
+            checks_performed=checks_performed + ["position_count: BLOCKED"],
+        )
+
+    checks_performed.append(f"position_count: PASS ({current_position_count}/{MAX_POSITIONS})")
+
+    # =========================================================================
     # CHECK 3: Position size limit
     # =========================================================================
     position_ok, position_msg = _check_position_size(symbol, amount, equity)
