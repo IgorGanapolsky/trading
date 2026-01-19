@@ -24,18 +24,13 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 # Approved wonderful companies (Rule #1 compliant or capital-appropriate)
-# Per CLAUDE.md: Primary strategy is "CREDIT SPREADS on SPY/IWM ONLY"
+# Per CLAUDE.md Jan 19, 2026: SPY ONLY - best liquidity, tightest spreads
 # ETFs don't require Big Five analysis - they're index funds
 RULE_ONE_UNIVERSE = {
-    # PRIMARY: Index ETFs for credit spreads (Jan 14, 2026 - per CLAUDE.md)
-    # These are EXEMPT from Big Five analysis as they're not individual companies
+    # PRIMARY: SPY ONLY for iron condors (Jan 19, 2026 - per CLAUDE.md)
+    # SPY is EXEMPT from Big Five analysis as it's an index fund
     "SPY": {"name": "S&P 500 ETF", "moat": "etf", "capital_tier": "any", "skip_big_five": True},
-    "IWM": {
-        "name": "Russell 2000 ETF",
-        "moat": "etf",
-        "capital_tier": "any",
-        "skip_big_five": True,
-    },
+    # NOTE: IWM REMOVED Jan 19, 2026 - SPY ONLY per CLAUDE.md
     # Secondary credit spread targets (low share price, liquid options)
     "F": {"name": "Ford", "moat": "brand", "capital_tier": "small"},
     "SOFI": {"name": "SoFi Technologies", "moat": "switching", "capital_tier": "small"},

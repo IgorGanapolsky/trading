@@ -117,11 +117,10 @@ def find_put_option(symbol: str, target_delta: float, target_dte: int) -> Option
     # Format as YYMMDD for options symbol
     expiry_str = target_expiry.strftime("%y%m%d")
 
-    # FIXED Jan 19 2026: Per CLAUDE.md, only SPY/IWM allowed
-    # Removed SOFI/F/PLTR - individual stocks not allowed until strategy proven
+    # FIXED Jan 19 2026: Per CLAUDE.md, SPY ONLY - best liquidity, tightest spreads
+    # IWM and individual stocks removed per CLAUDE.md mandate
     symbol_prices = {
-        "SPY": 590,  # ~$590/share (Jan 2026)
-        "IWM": 225,  # ~$225/share (Jan 2026)
+        "SPY": 590,  # ~$590/share (Jan 2026) - ONLY ticker allowed
     }
     estimated_price = symbol_prices.get(symbol, 590)  # Default to SPY price
 
@@ -209,13 +208,12 @@ def should_open_position(client, config: dict) -> bool:
         return False
 
     # For cash-secured puts, we need buying power = strike * 100 (1 contract)
-    # FIXED Jan 19 2026: Per CLAUDE.md, only SPY/IWM allowed
+    # FIXED Jan 19 2026: Per CLAUDE.md, SPY ONLY - best liquidity, tightest spreads
     # Credit spreads on SPY only need ~$500 collateral (spread width), not full strike!
     symbol_prices = {
-        "SPY": 590,  # ~$590/share (Jan 2026)
-        "IWM": 225,  # ~$225/share (Jan 2026)
+        "SPY": 590,  # ~$590/share (Jan 2026) - ONLY ticker allowed
     }
-    symbol = config.get("symbol", "SPY")  # FIXED: Default to SPY, not SOFI
+    symbol = config.get("symbol", "SPY")  # SPY ONLY per CLAUDE.md
     price_estimate = symbol_prices.get(symbol, 590)  # Default to SPY price
     strike_estimate = int(price_estimate * 0.70)  # 30% OTM for conservative strike
     required_bp = strike_estimate * 100  # 1 contract = 100 shares

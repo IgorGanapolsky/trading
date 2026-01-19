@@ -42,13 +42,13 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # Phil Town Strategy Configuration
-# FIXED Jan 19 2026: Changed from individual stocks to SPY/IWM per CLAUDE.md
+# FIXED Jan 19 2026: Changed from individual stocks to SPY ONLY per CLAUDE.md
 # FIXED Jan 19 2026: Reduced max_position_pct from 10% to 5% per CLAUDE.md mandate
 CONFIG = {
     "watchlist": [
-        # Per CLAUDE.md: SPY/IWM ONLY until strategy proven
-        "SPY",  # Best liquidity, tightest spreads
-        "IWM",  # Small cap exposure, good vol
+        # Per CLAUDE.md Jan 19, 2026: SPY ONLY - best liquidity, tightest spreads
+        "SPY",  # ONLY ticker allowed per CLAUDE.md
+        # NOTE: IWM REMOVED Jan 19, 2026 - SPY ONLY per CLAUDE.md
     ],
     "max_position_pct": 0.05,  # Max 5% of portfolio per position - CLAUDE.md MANDATE
     "target_dte": 30,  # 30 days to expiration for puts
