@@ -6,6 +6,7 @@ This CI check ensures workflow ticker lists match the approved tickers in CLAUDE
 Prevents incidents like LL-197 where SOFI was traded during earnings blackout.
 
 Created: January 15, 2026
+Updated: January 19, 2026 - SPY ONLY per CLAUDE.md strategy update
 Author: CTO (Claude)
 """
 
@@ -23,14 +24,13 @@ def get_approved_tickers_from_claude_md() -> set[str]:
 
     content = claude_md.read_text()
 
-    # Look for "SPY/IWM ONLY" pattern
-    approved = {"SPY", "IWM"}  # Default from strategy
+    # Jan 19, 2026 update: SPY ONLY per CLAUDE.md iron condor strategy
+    # Look for "SPY ONLY" or "IRON CONDORS on SPY ONLY" pattern
+    if "SPY ONLY" in content or "IRON CONDORS on SPY" in content:
+        return {"SPY"}
 
-    # Check if there's a ticker hierarchy table
-    if "CREDIT SPREADS on SPY/IWM ONLY" in content:
-        approved = {"SPY", "IWM"}
-
-    return approved
+    # Fallback to SPY only (default per CLAUDE.md Jan 19)
+    return {"SPY"}
 
 
 def get_blackout_tickers_from_claude_md() -> dict[str, str]:
