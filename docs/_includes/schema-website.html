@@ -1,0 +1,30 @@
+<!-- WebSite Schema for AI Agent Discovery -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "AI Trading Journey",
+  "description": {{ site.description | jsonify }},
+  "url": "{{ site.url }}{{ site.baseurl }}",
+  "author": {
+    "@type": "Person",
+    "name": "Igor Ganapolsky",
+    "url": "https://github.com/IgorGanapolsky"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "AI Trading Journey",
+    "url": "{{ site.url }}{{ site.baseurl }}"
+  },
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "{{ site.url }}{{ site.baseurl }}/?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  },
+  "sameAs": [
+    "https://github.com/IgorGanapolsky/trading",
+    "https://twitter.com/igorganapolsky",
+    "https://linkedin.com/in/igorganapolsky"
+  ]
+}
+</script>
