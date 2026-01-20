@@ -486,7 +486,11 @@ def main():
     logger.info("IRON CONDOR TRADER - STARTING")
     logger.info(f"Mode: {'LIVE' if live_mode else 'SIMULATED'}")
 
+    # HARD BLOCK: Validate ticker before proceeding (Jan 20 2026 - SOFI crisis)
+    from src.utils.ticker_validator import validate_ticker
+
     strategy = IronCondorStrategy()
+    validate_ticker(strategy.config["underlying"], context="iron_condor_trader")
 
     # Check entry conditions
     should_enter, reason = strategy.check_entry_conditions()
