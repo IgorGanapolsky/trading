@@ -353,8 +353,8 @@
   ],
   "trades_loaded": 38,
   "meta": {
-    "last_updated": "2026-01-20T11:26:05.313442+00:00",
-    "last_sync": "2026-01-20T11:20:47.571563",
+    "last_updated": "2026-01-20T11:30:58.288654",
+    "last_sync": "2026-01-20T11:30:58.288661",
     "sync_mode": "skipped_no_keys",
     "trade_sync": "alpaca_api"
   },
