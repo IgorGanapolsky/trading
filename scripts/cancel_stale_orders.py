@@ -40,9 +40,10 @@ def main() -> int:
 
         api_key, secret_key = get_alpaca_credentials()
     except ImportError:
-        # Fallback: use $5K account credentials directly
-        api_key = os.getenv("ALPACA_PAPER_TRADING_5K_API_KEY")
-        secret_key = os.getenv("ALPACA_PAPER_TRADING_5K_API_SECRET")
+        # Fallback for CI: workflow sets ALPACA_API_KEY / ALPACA_SECRET_KEY
+        # Or use $5K account credentials directly if those aren't set
+        api_key = os.getenv("ALPACA_API_KEY") or os.getenv("ALPACA_PAPER_TRADING_5K_API_KEY")
+        secret_key = os.getenv("ALPACA_SECRET_KEY") or os.getenv("ALPACA_PAPER_TRADING_5K_API_SECRET")
     paper = os.getenv("PAPER_TRADING", "true").lower() == "true"
 
     if not api_key or not secret_key:
