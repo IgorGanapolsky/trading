@@ -1,0 +1,51 @@
+name: Sync Blog on New Lesson
+
+# CEO Directive: Blog posts should appear immediately, not wait until 5 PM
+# This workflow triggers whenever a new lesson is added to RAG
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'rag_knowledge/lessons_learned/*.md'
+
+permissions:
+  contents: write
+
+jobs:
+  sync-blog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests || true
+
+      - name: Sync Lessons to Blog
+        run: |
+          echo "New lesson detected - syncing to blog immediately"
+          python3 scripts/sync_rag_to_blog.py --no-devto 2>&1
+
+      - name: Commit Blog Updates
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          git add docs/_posts/
+
+          if git diff --staged --quiet; then
+            echo "Blog already up to date"
+            exit 0
+          fi
+
+          git commit -m "docs(blog): Auto-sync lessons to blog"
+          git push origin main
+
+          echo "Blog synced with latest lessons"

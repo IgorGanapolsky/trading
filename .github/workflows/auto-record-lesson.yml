@@ -1,0 +1,143 @@
+name: Auto Record Lesson on Failure
+
+# CEO Directive: "Why wasn't this recorded? I have to keep reminding you!"
+# This workflow automatically captures lessons when critical workflows fail
+
+on:
+  workflow_run:
+    workflows:
+      - "Execute Credit Spread"
+      - "Close Non-SPY Positions"
+      - "Auto Position Compliance Check"
+      - "Emergency Close SOFI Position"
+    types:
+      - completed
+
+permissions:
+  contents: write
+
+jobs:
+  record-lesson:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Get Failure Details
+        id: failure
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          WORKFLOW_NAME="${{ github.event.workflow_run.name }}"
+          RUN_ID="${{ github.event.workflow_run.id }}"
+          RUN_URL="${{ github.event.workflow_run.html_url }}"
+
+          echo "workflow_name=$WORKFLOW_NAME" >> $GITHUB_OUTPUT
+          echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
+          echo "run_url=$RUN_URL" >> $GITHUB_OUTPUT
+
+          # Try to get failure logs
+          gh run view $RUN_ID --log-failed 2>/dev/null | head -100 > /tmp/failure_log.txt || echo "Could not fetch logs" > /tmp/failure_log.txt
+
+          # Extract error message
+          ERROR_MSG=$(grep -i "error\|failed\|denied\|exception" /tmp/failure_log.txt | head -5 | tr '\n' ' ' | cut -c1-500)
+          echo "error_msg=$ERROR_MSG" >> $GITHUB_OUTPUT
+
+      - name: Generate Lesson ID
+        id: lesson_id
+        run: |
+          # Find highest existing lesson number
+          HIGHEST=$(ls rag_knowledge/lessons_learned/ll_*.md 2>/dev/null | sed 's/.*ll_\([0-9]*\).*/\1/' | sort -n | tail -1)
+          NEXT=$((HIGHEST + 1))
+          echo "id=$NEXT" >> $GITHUB_OUTPUT
+          echo "Next lesson ID: LL-$NEXT"
+
+      - name: Create Lesson Learned
+        run: |
+          LESSON_ID="${{ steps.lesson_id.outputs.id }}"
+          WORKFLOW_NAME="${{ steps.failure.outputs.workflow_name }}"
+          RUN_URL="${{ steps.failure.outputs.run_url }}"
+          ERROR_MSG="${{ steps.failure.outputs.error_msg }}"
+          TODAY=$(date +%Y-%m-%d)
+          TODAY_SHORT=$(date +jan%d | tr '[:upper:]' '[:lower:]')
+
+          # Sanitize workflow name for filename
+          FILENAME_PART=$(echo "$WORKFLOW_NAME" | tr '[:upper:]' '[:lower:]' | tr ' ' '_' | tr -cd 'a-z0-9_')
+
+          LESSON_FILE="rag_knowledge/lessons_learned/ll_${LESSON_ID}_${FILENAME_PART}_failure_${TODAY_SHORT}.md"
+
+          cat > "$LESSON_FILE" << EOF
+          # LL-${LESSON_ID}: ${WORKFLOW_NAME} Workflow Failed
+
+          **Date**: ${TODAY}
+          **Category**: Automated Error Detection
+          **Severity**: HIGH
+          **Auto-Generated**: Yes
+
+          ## What Happened
+
+          The "${WORKFLOW_NAME}" workflow failed during execution.
+
+          **Run URL**: ${RUN_URL}
+
+          ## Error Details
+
+          \`\`\`
+          ${ERROR_MSG:-No specific error message captured}
+          \`\`\`
+
+          ## Impact
+
+          - Workflow did not complete successfully
+          - Manual intervention may be required
+          - This lesson was auto-generated to ensure the failure is documented
+
+          ## Next Steps
+
+          1. Review the workflow run logs at the URL above
+          2. Identify root cause
+          3. Fix the issue and re-run if needed
+          4. Update this lesson with resolution details
+
+          ## Tags
+
+          \`auto-generated\`, \`workflow-failure\`, \`${FILENAME_PART}\`
+          EOF
+
+          echo "Created lesson: $LESSON_FILE"
+          cat "$LESSON_FILE"
+
+      - name: Sync to Blog
+        run: |
+          pip install requests || true
+          python3 scripts/sync_rag_to_blog.py --no-devto 2>&1 || echo "Blog sync attempted"
+
+      - name: Commit and Push
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          git add rag_knowledge/lessons_learned/
+          git add docs/_posts/
+
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          WORKFLOW_NAME="${{ steps.failure.outputs.workflow_name }}"
+          LESSON_ID="${{ steps.lesson_id.outputs.id }}"
+
+          git commit -m "docs(rag): Auto-record LL-${LESSON_ID} - ${WORKFLOW_NAME} failure"
+          git push origin main
+
+          echo "Lesson recorded and synced to blog automatically"
