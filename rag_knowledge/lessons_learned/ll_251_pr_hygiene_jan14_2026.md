@@ -1,4 +1,4 @@
-# LL-195: PR Management & System Hygiene Session
+# LL-251: PR Management & System Hygiene Session
 
 **Date**: January 14, 2026
 **Severity**: LOW

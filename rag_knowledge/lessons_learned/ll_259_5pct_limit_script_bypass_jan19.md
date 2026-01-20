@@ -1,4 +1,4 @@
-# LL-233: 5% Position Limit Check Missing from execute_credit_spread.py
+# LL-259: 5% Position Limit Check Missing from execute_credit_spread.py
 
 **Date**: 2026-01-19
 **Severity**: CRITICAL

@@ -1,4 +1,4 @@
-# LL-234: Data Sync Infrastructure Improvements
+# LL-262: Data Sync Infrastructure Improvements
 
 ## Date: January 16, 2026
 ## Severity: IMPROVEMENT

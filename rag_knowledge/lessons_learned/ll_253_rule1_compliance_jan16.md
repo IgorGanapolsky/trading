@@ -1,6 +1,6 @@
-# LL-228: Rule #1 Compliance Check - Jan 16, 2026
+# LL-253: Rule #1 Compliance Check - Jan 16, 2026
 
-**ID**: LL-228
+**ID**: LL-253
 **Date**: January 16, 2026
 **Category**: Risk Management / Rule #1
 **Severity**: HIGH

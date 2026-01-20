@@ -1,4 +1,4 @@
-# LL-241: Credit Spread Exit Strategies - Data-Backed Rules for Win Rate Improvement
+# LL-265: Credit Spread Exit Strategies - Data-Backed Rules for Win Rate Improvement
 
 **Date**: 2026-01-19
 **Category**: Strategy, Options Education, Risk Management

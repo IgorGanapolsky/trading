@@ -1,4 +1,4 @@
-# LL-235: PDT Protection Blocks Spread Fix - Automated Retry Scheduled
+# LL-263: PDT Protection Blocks Spread Fix - Automated Retry Scheduled
 
 **Date**: 2026-01-16 14:40 ET
 **Category**: Constraint, Risk Management

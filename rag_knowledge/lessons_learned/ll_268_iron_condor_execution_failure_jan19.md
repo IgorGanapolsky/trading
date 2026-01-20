@@ -1,4 +1,4 @@
-# LL-245: Iron Condor Execution Failure - Call Legs Missing
+# LL-268: Iron Condor Execution Failure - Call Legs Missing
 
 **Date**: 2026-01-19
 **Category**: Trading, Execution, Strategy

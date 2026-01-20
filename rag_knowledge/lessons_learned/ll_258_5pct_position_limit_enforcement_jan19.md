@@ -1,4 +1,4 @@
-# LL-232: 5% Position Limit Must Be Enforced BEFORE Trade Execution
+# LL-258: 5% Position Limit Must Be Enforced BEFORE Trade Execution
 
 **Date**: 2026-01-19
 **Severity**: CRITICAL

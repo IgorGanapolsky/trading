@@ -1,4 +1,4 @@
-# LL-234: Multiple Scripts Had Hardcoded Position Size Violations
+# LL-261: Multiple Scripts Had Hardcoded Position Size Violations
 
 **Date**: 2026-01-19
 **Severity**: CRITICAL

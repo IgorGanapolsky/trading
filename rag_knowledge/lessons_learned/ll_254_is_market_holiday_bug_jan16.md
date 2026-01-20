@@ -1,4 +1,4 @@
-# LL-229: is_market_holiday() Incorrectly Blocked Pre-Market Trading
+# LL-254: is_market_holiday() Incorrectly Blocked Pre-Market Trading
 
 ## Date
 January 16, 2026

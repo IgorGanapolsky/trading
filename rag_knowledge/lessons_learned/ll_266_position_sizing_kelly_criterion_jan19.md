@@ -1,4 +1,4 @@
-# LL-242: Position Sizing & Kelly Criterion for Small Options Accounts
+# LL-266: Position Sizing & Kelly Criterion for Small Options Accounts
 
 **Date**: 2026-01-19
 **Category**: Risk Management, Position Sizing, Math

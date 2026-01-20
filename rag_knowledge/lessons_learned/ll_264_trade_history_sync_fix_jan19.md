@@ -1,4 +1,4 @@
-# LL-237: Trade History Sync Bug Fix
+# LL-264: Trade History Sync Bug Fix
 
 **Date**: 2026-01-19
 **Category**: Data Integrity, System Bug
@@ -56,7 +56,7 @@ Without trade_history, we cannot:
 
 - LL-208: Why $5K Failed While $100K Succeeded
 - LL-227: RAG System Gap Investigation
-- LL-228: Learning from $100K Account
+- LL-208: Why $5K Failed While $100K Succeeded
 
 ## Tags
 

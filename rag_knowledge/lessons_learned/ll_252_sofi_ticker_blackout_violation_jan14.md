@@ -1,6 +1,6 @@
-# LL-197: SOFI Ticker Blackout Violation
+# LL-252: SOFI Ticker Blackout Violation
 
-**ID**: LL-197
+**ID**: LL-252
 **Date**: January 14, 2026
 **Severity**: CRITICAL
 **Category**: Configuration / Risk Management

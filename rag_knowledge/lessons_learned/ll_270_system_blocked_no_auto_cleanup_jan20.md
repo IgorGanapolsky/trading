@@ -1,4 +1,4 @@
-# LL-247: System Blocked But No Auto-Cleanup Mechanism
+# LL-270: System Blocked But No Auto-Cleanup Mechanism
 
 **Date**: 2026-01-20
 **Severity**: CRITICAL
@@ -73,7 +73,7 @@ Created automated position compliance system:
 BEFORE (LL-246):
 [Trade Request] → [Gateway Blocks] → [System Stuck] → [Manual Fix Needed]
 
-AFTER (LL-247):
+AFTER (LL-270):
 [Trade Request] → [Gateway Blocks] → [Auto-Compliance Detects] → [Auto-Close Excess] → [System Resumes]
 ```
 
@@ -93,7 +93,7 @@ If a system can detect a violation, it must also have an automated path to RESOL
 ## Related
 
 - LL-246: 30% risk violation discovered (detection)
-- LL-247: This lesson (resolution)
+- LL-270: This lesson (resolution)
 - CLAUDE.md: "1 iron condor at a time", "15% max risk"
 
 ## Tags

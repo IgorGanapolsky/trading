@@ -1,4 +1,4 @@
-# LL-230: Webhook Trade Data Source Mismatch (Jan 17, 2026)
+# LL-256: Webhook Trade Data Source Mismatch (Jan 17, 2026)
 
 ## Severity: HIGH
 

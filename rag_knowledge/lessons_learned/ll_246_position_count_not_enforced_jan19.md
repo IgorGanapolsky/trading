@@ -60,7 +60,7 @@ if side == "BUY" and current_position_count >= MAX_POSITIONS:
 ## Related
 
 - LL-244: Adversarial audit findings
-- LL-245: Env var bypass vulnerability
+- LL-267: Env var bypass vulnerability
 - CLAUDE.md: "Position limit: 1 iron condor at a time"
 
 ## Tags

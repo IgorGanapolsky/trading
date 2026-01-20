@@ -1,4 +1,4 @@
-# LL-247: CI Failure Due to Legacy SOFI Position
+# LL-269: CI Failure Due to Legacy SOFI Position
 
 **Date**: January 20, 2026
 **Severity**: CRITICAL
