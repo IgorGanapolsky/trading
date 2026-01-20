@@ -153,11 +153,18 @@ if [[ "$LIVE_DATA" == "false" ]]; then
 fi
 
 CURRENT_DAY=$(jq -r '.challenge.current_day // "N/A"' "$STATE_FILE")
-# FIXED Jan 9, 2026: Read from paper_account (current) instead of performance (stale pre-reset data)
-WIN_RATE=$(jq -r '.paper_account.win_rate // "N/A"' "$STATE_FILE")
+# FIXED Jan 20, 2026: Read win_rate from trades.json (canonical source per CLAUDE.md)
+# ROOT CAUSE: paper_account in system_state.json doesn't have win_rate field
+TRADES_FILE="$CLAUDE_PROJECT_DIR/data/trades.json"
+if [[ -f "$TRADES_FILE" ]]; then
+    WIN_RATE=$(jq -r '.stats.win_rate_pct // "N/A"' "$TRADES_FILE")
+    WIN_RATE_SAMPLE=$(jq -r '.stats.closed_trades // "N/A"' "$TRADES_FILE")
+else
+    WIN_RATE="N/A"
+    WIN_RATE_SAMPLE="N/A"
+fi
 # paper_account doesn't track avg_return per trade yet - calculate from total_pl_pct if needed
 AVG_RETURN=$(jq -r '.paper_account.total_pl_pct // "0"' "$STATE_FILE")
-WIN_RATE_SAMPLE=$(jq -r '.paper_account.win_rate_sample_size // "N/A"' "$STATE_FILE")
 
 # HONEST REPORTING (LL-118): Win rate without avg_return is MISLEADING
 # If avg_return is negative, the win rate is lying to us
