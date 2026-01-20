@@ -5,7 +5,7 @@
   "@type": "WebSite",
   "name": "AI Trading Journey",
   "description": {{ site.description | jsonify }},
-  "url": "{{ site.url }}{{ site.baseurl }}",
+  "url": "{{ "/" | absolute_url }}",
   "author": {
     "@type": "Person",
     "name": "Igor Ganapolsky",
@@ -14,11 +14,11 @@
   "publisher": {
     "@type": "Organization",
     "name": "AI Trading Journey",
-    "url": "{{ site.url }}{{ site.baseurl }}"
+    "url": "{{ "/" | absolute_url }}"
   },
   "potentialAction": {
     "@type": "SearchAction",
-    "target": "{{ site.url }}{{ site.baseurl }}/?q={search_term_string}",
+    "target": "{{ "/" | absolute_url }}?q={search_term_string}",
     "query-input": "required name=search_term_string"
   },
   "sameAs": [

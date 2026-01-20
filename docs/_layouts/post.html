@@ -51,15 +51,15 @@ layout: default
   "author": {
     "@type": "Person",
     "name": {{ page.author | default: site.author | jsonify }},
-    "url": "{{ site.url }}"
+    "url": "{{ "/" | absolute_url }}"
   },
   "publisher": {
     "@type": "Organization",
     "name": "AI Trading Journey",
-    "url": "{{ site.url }}{{ site.baseurl }}",
+    "url": "{{ "/" | absolute_url }}",
     "logo": {
       "@type": "ImageObject",
-      "url": "{{ site.url }}{{ site.baseurl }}/assets/og-image.png"
+      "url": "{{ "/assets/og-image.png" | absolute_url }}"
     }
   },
   "mainEntityOfPage": {
