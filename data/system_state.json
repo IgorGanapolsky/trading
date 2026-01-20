@@ -399,5 +399,15 @@
       "filled_at": "2026-01-12 14:30:54.357134+00:00"
     }
   ],
-  "trades_loaded": 47
+  "trades_loaded": 47,
+  "trades": {
+    "last_trade_date": "2026-01-20",
+    "today_trades": 9,
+    "total_trades_today": 9,
+    "last_trade_symbol": "SYNCED"
+  },
+  "meta": {
+    "last_updated": "2026-01-20T16:36:24.498947+00:00",
+    "trade_sync": "alpaca_api"
+  }
 }
