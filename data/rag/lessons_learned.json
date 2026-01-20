@@ -2587,5 +2587,23 @@
     },
     "phil_town_aligned": true,
     "severity": "high"
+  },
+  {
+    "id": "LL-039",
+    "title": "System Too Conservative - No Trades Despite Open Markets",
+    "category": "strategy",
+    "severity": "HIGH",
+    "description": "Backtest shows -1.74 Sharpe ratio (worst case COVID scenario), but 19/19 scenarios pass with 100% capital preservation. Win rates 12-35%, returns essentially flat. NO TRADES TODAY despite markets being OPEN. System preserves capital (Rule #1) but doesn't generate income.",
+    "root_cause": "Strategy is optimized for capital preservation over income generation. In 90-day paper validation phase but not executing any trades.",
+    "fix": "1) Review trade entry criteria - may be too restrictive. 2) Check if position limits or safety gates are blocking all opportunities. 3) Validate iron condor setup parameters against market conditions.",
+    "prevention": "Add monitoring for 'no trades in X hours during market hours' alert. Track opportunity cost of not trading.",
+    "created": "2026-01-20",
+    "tags": [
+      "strategy",
+      "no-trades",
+      "iron-condors",
+      "capital-preservation",
+      "income-generation"
+    ]
   }
 ]
