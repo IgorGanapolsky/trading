@@ -114,9 +114,9 @@ jobs:
           positions = client.get_all_positions()
 
           # Get proposed trade parameters
-          spread_width = int(os.environ.get('SPREAD_WIDTH', '3'))
+          spread_width = int(os.environ.get('SPREAD_WIDTH', '2'))  # Default $2 for 5% compliance
           quantity = int(os.environ.get('QUANTITY', '1'))
-          proposed_risk = spread_width * 100 * quantity  # $3 spread = $300 collateral per contract
+          proposed_risk = spread_width * 100 * quantity  # $2 spread = $200 collateral per contract
 
           # Calculate current exposure
           option_positions = [p for p in positions if len(p.symbol) > 10]
