@@ -62,11 +62,13 @@ jobs:
           positions = client.get_all_positions()
           print(f"Total Positions: {len(positions)}")
 
-          # Analyze SPY puts
+          # Analyze SPY puts (options only, not stock)
           puts = {}
           for pos in positions:
               symbol = pos.symbol
-              if "P" in symbol and symbol.startswith("SPY"):
+              # Option symbols are like SPY260220P00653000 (21+ chars)
+              # Stock "SPY" is only 3 chars - must filter it out
+              if len(symbol) > 10 and "P" in symbol and symbol.startswith("SPY"):
                   strike = int(symbol[-8:]) / 1000
                   puts[strike] = {
                       "symbol": symbol,
