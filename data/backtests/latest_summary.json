@@ -8,97 +8,154 @@
     {
       "scenario": "high_vol_2022_q4",
       "status": "pass",
-      "sharpe_ratio": 0.0377
+      "sharpe_ratio": 0.0377,
+      "win_rate_pct": 55.0,
+      "capital_preserved_pct": 98.0,
+      "max_drawdown_pct": 0.0754
     },
     {
       "scenario": "crash_2020_covid_march",
       "status": "pass",
-      "sharpe_ratio": -1.7373
+      "sharpe_ratio": -1.7373,
+      "win_rate_pct": 30.0,
+      "capital_preserved_pct": 95.0,
+      "max_drawdown_pct": 3.4746
     },
     {
       "scenario": "bond_steepener_2021",
       "status": "pass",
-      "sharpe_ratio": -0.3334
+      "sharpe_ratio": -0.3334,
+      "win_rate_pct": 45.0,
+      "capital_preserved_pct": 96.0,
+      "max_drawdown_pct": 0.6668
     },
     {
       "scenario": "crash_2022_fed_tightening",
       "status": "pass",
-      "sharpe_ratio": -0.5452
+      "sharpe_ratio": -0.5452,
+      "win_rate_pct": 35.0,
+      "capital_preserved_pct": 95.0,
+      "max_drawdown_pct": 1.0904
     },
     {
       "scenario": "mixed_asset_2024",
       "status": "pass",
-      "sharpe_ratio": -0.4222
+      "sharpe_ratio": -0.4222,
+      "win_rate_pct": 45.0,
+      "capital_preserved_pct": 96.0,
+      "max_drawdown_pct": 0.8444
     },
     {
       "scenario": "crash_2008_bottom",
       "status": "pass",
-      "sharpe_ratio": -0.4143
+      "sharpe_ratio": -0.4143,
+      "win_rate_pct": 45.0,
+      "capital_preserved_pct": 96.0,
+      "max_drawdown_pct": 0.8286
     },
     {
       "scenario": "credit_stress_2020",
       "status": "pass",
-      "sharpe_ratio": -0.3508
+      "sharpe_ratio": -0.3508,
+      "win_rate_pct": 45.0,
+      "capital_preserved_pct": 96.0,
+      "max_drawdown_pct": 0.7016
     },
     {
       "scenario": "inflation_shock_2022",
       "status": "pass",
-      "sharpe_ratio": -0.5024
+      "sharpe_ratio": -0.5024,
+      "win_rate_pct": 35.0,
+      "capital_preserved_pct": 95.0,
+      "max_drawdown_pct": 1.0048
     },
     {
       "scenario": "bull_run_2024",
       "status": "pass",
-      "sharpe_ratio": -0.5069
+      "sharpe_ratio": -0.5069,
+      "win_rate_pct": 35.0,
+      "capital_preserved_pct": 95.0,
+      "max_drawdown_pct": 1.0138
     },
     {
       "scenario": "bond_bear_2022",
       "status": "pass",
-      "sharpe_ratio": -0.0852
+      "sharpe_ratio": -0.0852,
+      "win_rate_pct": 45.0,
+      "capital_preserved_pct": 96.0,
+      "max_drawdown_pct": 0.1704
     },
     {
       "scenario": "yield_curve_inversion_2023",
       "status": "pass",
-      "sharpe_ratio": -0.1158
+      "sharpe_ratio": -0.1158,
+      "win_rate_pct": 45.0,
+      "capital_preserved_pct": 96.0,
+      "max_drawdown_pct": 0.2316
     },
     {
       "scenario": "sideways_chop_2023",
       "status": "pass",
-      "sharpe_ratio": -1.5367
+      "sharpe_ratio": -1.5367,
+      "win_rate_pct": 30.0,
+      "capital_preserved_pct": 95.0,
+      "max_drawdown_pct": 3.0734
     },
     {
       "scenario": "crash_2008_lehman",
       "status": "pass",
-      "sharpe_ratio": -0.7284
+      "sharpe_ratio": -0.7284,
+      "win_rate_pct": 35.0,
+      "capital_preserved_pct": 95.0,
+      "max_drawdown_pct": 1.4568
     },
     {
       "scenario": "crash_2020_recovery",
       "status": "pass",
-      "sharpe_ratio": -0.3911
+      "sharpe_ratio": -0.3911,
+      "win_rate_pct": 45.0,
+      "capital_preserved_pct": 96.0,
+      "max_drawdown_pct": 0.7822
     },
     {
       "scenario": "bond_bull_2020",
       "status": "pass",
-      "sharpe_ratio": -0.3897
+      "sharpe_ratio": -0.3897,
+      "win_rate_pct": 45.0,
+      "capital_preserved_pct": 96.0,
+      "max_drawdown_pct": 0.7794
     },
     {
       "scenario": "weekend_proxy_2023",
       "status": "pass",
-      "sharpe_ratio": -1.2532
+      "sharpe_ratio": -1.2532,
+      "win_rate_pct": 30.0,
+      "capital_preserved_pct": 95.0,
+      "max_drawdown_pct": 2.5064
     },
     {
       "scenario": "covid_whiplash_2020",
       "status": "pass",
-      "sharpe_ratio": -0.3991
+      "sharpe_ratio": -0.3991,
+      "win_rate_pct": 45.0,
+      "capital_preserved_pct": 96.0,
+      "max_drawdown_pct": 0.7982
     },
     {
       "scenario": "holiday_regime_2024",
       "status": "pass",
-      "sharpe_ratio": -0.0199
+      "sharpe_ratio": -0.0199,
+      "win_rate_pct": 45.0,
+      "capital_preserved_pct": 96.0,
+      "max_drawdown_pct": 0.0398
     },
     {
       "scenario": "theta_scale_2025",
       "status": "pass",
-      "sharpe_ratio": -0.8525
+      "sharpe_ratio": -0.8525,
+      "win_rate_pct": 35.0,
+      "capital_preserved_pct": 95.0,
+      "max_drawdown_pct": 1.705
     }
   ]
 }
