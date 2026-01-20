@@ -7,7 +7,7 @@ title: AI Trading Journey
 
 Building an autonomous AI trading system with Claude Opus 4.5.
 
-## Current Status (Day 83 - Jan 19, 2026)
+## Current Status (Day 84 - Jan 20, 2026)
 
 | Metric | Value |
 |--------|-------|
@@ -17,7 +17,7 @@ Building an autonomous AI trading system with Claude Opus 4.5.
 | Strategy | Iron Condors on SPY ONLY |
 | North Star | $5-10/day (realistic) |
 
-**Status**: Markets closed (MLK Day). Running SPY put spreads (Feb 20 expiration). Position limit exceeded - fix scheduled Jan 20, 9:35 AM ET.
+**Status**: Pre-market. Running 3 SPY put spreads (Feb 20 expiration, ~31 DTE). Position limit enforcement added - new trades blocked until spreads reduced to 1. Unrealized P/L: -$2.
 
 ## Strategy Evolution
 

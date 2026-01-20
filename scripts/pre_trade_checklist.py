@@ -29,6 +29,7 @@ EARNINGS_BLACKOUTS = {
 MAX_POSITION_PCT = 0.05  # 5% max per trade
 MIN_DTE = 30
 MAX_DTE = 45
+MAX_OPEN_SPREADS = 1  # Position limit: 1 spread at a time per CLAUDE.md
 
 
 def load_account_state() -> dict:
@@ -88,6 +89,45 @@ def check_dte(days_to_expiry: int) -> tuple[bool, str]:
     return False, f"❌ DTE {days_to_expiry} outside range ({MIN_DTE}-{MAX_DTE})"
 
 
+def count_open_spreads(state: dict) -> int:
+    """
+    Count number of open spreads from positions.
+
+    A spread consists of a long and short option at different strikes.
+    We count spreads by pairing long/short positions.
+    """
+    positions = state.get("paper_account", {}).get("positions", [])
+    if not positions:
+        return 0
+
+    # Count long and short option positions
+    longs = 0
+    shorts = 0
+    for pos in positions:
+        qty = int(pos.get("qty", 0))
+        symbol = pos.get("symbol", "")
+        # Only count options (have P or C in symbol for puts/calls)
+        if "P" in symbol or "C" in symbol:
+            if qty > 0:
+                longs += qty
+            elif qty < 0:
+                shorts += abs(qty)
+
+    # A spread is one long + one short, so count pairs
+    return min(longs, shorts)
+
+
+def check_spread_limit(state: dict) -> tuple[bool, str]:
+    """Check if number of open spreads is within limit."""
+    current_spreads = count_open_spreads(state)
+    if current_spreads < MAX_OPEN_SPREADS:
+        return True, f"✅ Open spreads: {current_spreads}/{MAX_OPEN_SPREADS} (can open new spread)"
+    elif current_spreads == MAX_OPEN_SPREADS:
+        return False, f"❌ Position limit reached: {current_spreads}/{MAX_OPEN_SPREADS} spreads open. Close existing before opening new."
+    else:
+        return False, f"❌ OVER LIMIT: {current_spreads} spreads open (max {MAX_OPEN_SPREADS}). Must close {current_spreads - MAX_OPEN_SPREADS} spreads!"
+
+
 def run_full_checklist(
     ticker: str,
     collateral: float,
@@ -132,6 +172,12 @@ def run_full_checklist(
 
     # Check 5: DTE range
     passed, msg = check_dte(days_to_expiry)
+    results.append(msg)
+    if not passed:
+        all_passed = False
+
+    # Check 6: Spread limit (max 1 spread at a time per CLAUDE.md)
+    passed, msg = check_spread_limit(state)
     results.append(msg)
     if not passed:
         all_passed = False
