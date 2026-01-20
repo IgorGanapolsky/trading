@@ -1,0 +1,21 @@
+{
+  "id": "param_sweep_20260120_121101",
+  "type": "PARAMETER_OPTIMIZATION",
+  "title": "Optimal Bull Put Spread Parameters Found",
+  "content": "\n## Parameter Optimization Results\n\n**Sweep Date**: 2026-01-20\n**Period Tested**: 2025-12-20 to 2026-01-19\n**Combinations Tested**: 20\n\n### Best Parameters Found (by Sharpe Ratio)\n\n| Parameter | Value |\n|-----------|-------|\n| Short Delta Range | [-0.6, -0.25] |\n| Long Delta Range | [-0.45, -0.25] |\n| Spread Width | $2.0 - $4.0 |\n| Profit Target | 40.0% |\n| Stop Loss Multiplier | 1.5x |\n\n### Performance Metrics\n- **Sharpe Ratio**: 0.00\n- **Total P&L**: $720.00\n- **Win Rate**: 100.0%\n- **Max Drawdown**: $0.00\n- **Trade Count**: 18\n\n### Recommendation\nThese parameters showed the best risk-adjusted returns over the test period.\nConsider using these as the baseline for live trading.\n        ",
+  "metadata": {
+    "best_params": {
+      "short_put_delta_min": -0.6,
+      "short_put_delta_max": -0.25,
+      "long_put_delta_min": -0.45,
+      "long_put_delta_max": -0.25,
+      "spread_width_min": 2.0,
+      "spread_width_max": 4.0,
+      "target_profit_pct": 0.4,
+      "delta_stop_loss_multiplier": 1.5
+    },
+    "sharpe": "0",
+    "total_pnl": 720.0,
+    "win_rate": 1.0
+  }
+}
