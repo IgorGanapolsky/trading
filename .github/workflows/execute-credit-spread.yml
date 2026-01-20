@@ -122,6 +122,27 @@ jobs:
           print(f"=== COMPLIANCE CHECK (CLAUDE.md Rules) ===")
           print(f"Account Equity: ${equity:.2f}")
           print(f"")
+
+          # NEW: PDT (Pattern Day Trading) Check - LL-271 Prevention
+          print(f"--- PDT (Pattern Day Trading) Check ---")
+          daytrade_count = int(getattr(account, 'daytrade_count', 0))
+          is_pdt = getattr(account, 'pattern_day_trader', False)
+          print(f"Day trades in last 5 days: {daytrade_count}")
+          print(f"PDT status: {'FLAGGED' if is_pdt else 'OK'}")
+
+          if is_pdt and equity < 25000:
+              print(f"::error::PDT BLOCKED: Account is PDT-flagged with equity under $25K")
+              print(f"::error::Cannot execute any day trades until restriction clears")
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write("compliant=false\n")
+              exit(1)
+
+          if daytrade_count >= 3 and equity < 25000:
+              print(f"::warning::PDT WARNING: {daytrade_count}/4 day trades used. One more day trade will trigger PDT.")
+              # Allow trade but warn - the position won't be a day trade if held overnight
+
+          print(f"✅ PDT check PASSED")
+          print(f"")
           print(f"--- Per-Position Limit (5% Rule) ---")
           max_per_position = equity * 0.05
           print(f"5% Position Limit: ${max_per_position:.2f}")
