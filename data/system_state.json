@@ -435,9 +435,9 @@
   "trades_loaded": 48,
   "trades": {
     "last_trade_date": "2026-01-20",
-    "today_trades": 0,
-    "total_trades_today": 0,
-    "last_trade_symbol": "SOFI260213P00032000"
+    "today_trades": 10,
+    "total_trades_today": 10,
+    "last_trade_symbol": "SYNCED"
   },
   "risk": {
     "status": "MONITORING",
@@ -451,7 +451,7 @@
     "positions_count": 2
   },
   "meta": {
-    "last_updated": "2026-01-20T16:57:03.783411+00:00",
+    "last_updated": "2026-01-20T17:00:15.080846+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5
   }
