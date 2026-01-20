@@ -1,26 +1,104 @@
 {
-  "total_trades": 6,
-  "total_pnl": 240.0,
-  "win_rate": 1.0,
-  "avg_trade": 40.0,
-  "max_win": 40.0,
-  "max_loss": 40.0,
-  "std_dev": 0.0,
-  "sharpe_ratio": 0,
-  "config": {
-    "underlying_symbol": "SPY",
-    "short_put_delta_min": -0.6,
-    "short_put_delta_max": -0.2,
-    "long_put_delta_min": -0.4,
-    "long_put_delta_max": -0.2,
-    "spread_width_min": 2.0,
-    "spread_width_max": 4.0,
-    "target_profit_pct": 0.5,
-    "delta_stop_loss_multiplier": 2.0,
-    "risk_free_rate": 0.05,
-    "buffer_pct": 0.05
+  "scenario_count": 19,
+  "aggregate_metrics": {
+    "passes": 19,
+    "min_sharpe_ratio": -1.7373
   },
-  "start_date": "2026-01-09",
-  "end_date": "2026-01-19",
-  "timestamp": "2026-01-20T11:58:22.943896"
+  "scenarios": [
+    {
+      "scenario": "high_vol_2022_q4",
+      "status": "pass",
+      "sharpe_ratio": 0.0377
+    },
+    {
+      "scenario": "crash_2020_covid_march",
+      "status": "pass",
+      "sharpe_ratio": -1.7373
+    },
+    {
+      "scenario": "bond_steepener_2021",
+      "status": "pass",
+      "sharpe_ratio": -0.3334
+    },
+    {
+      "scenario": "crash_2022_fed_tightening",
+      "status": "pass",
+      "sharpe_ratio": -0.5452
+    },
+    {
+      "scenario": "mixed_asset_2024",
+      "status": "pass",
+      "sharpe_ratio": -0.4222
+    },
+    {
+      "scenario": "crash_2008_bottom",
+      "status": "pass",
+      "sharpe_ratio": -0.4143
+    },
+    {
+      "scenario": "credit_stress_2020",
+      "status": "pass",
+      "sharpe_ratio": -0.3508
+    },
+    {
+      "scenario": "inflation_shock_2022",
+      "status": "pass",
+      "sharpe_ratio": -0.5024
+    },
+    {
+      "scenario": "bull_run_2024",
+      "status": "pass",
+      "sharpe_ratio": -0.5069
+    },
+    {
+      "scenario": "bond_bear_2022",
+      "status": "pass",
+      "sharpe_ratio": -0.0852
+    },
+    {
+      "scenario": "yield_curve_inversion_2023",
+      "status": "pass",
+      "sharpe_ratio": -0.1158
+    },
+    {
+      "scenario": "sideways_chop_2023",
+      "status": "pass",
+      "sharpe_ratio": -1.5367
+    },
+    {
+      "scenario": "crash_2008_lehman",
+      "status": "pass",
+      "sharpe_ratio": -0.7284
+    },
+    {
+      "scenario": "crash_2020_recovery",
+      "status": "pass",
+      "sharpe_ratio": -0.3911
+    },
+    {
+      "scenario": "bond_bull_2020",
+      "status": "pass",
+      "sharpe_ratio": -0.3897
+    },
+    {
+      "scenario": "weekend_proxy_2023",
+      "status": "pass",
+      "sharpe_ratio": -1.2532
+    },
+    {
+      "scenario": "covid_whiplash_2020",
+      "status": "pass",
+      "sharpe_ratio": -0.3991
+    },
+    {
+      "scenario": "holiday_regime_2024",
+      "status": "pass",
+      "sharpe_ratio": -0.0199
+    },
+    {
+      "scenario": "theta_scale_2025",
+      "status": "pass",
+      "sharpe_ratio": -0.8525
+    }
+  ]
 }
