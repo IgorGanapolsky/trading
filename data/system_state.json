@@ -1,71 +1,26 @@
 {
-  "last_updated": "2026-01-20T16:23:19.775080+00:00",
-  "sync_health": {
-    "last_successful_sync": "2026-01-20T16:23:19.775082+00:00",
-    "sync_source": "github_actions",
-    "sync_count_today": 5,
-    "history": [
+  "last_updated": "2026-01-20T16:26:43.613952Z",
+  "portfolio": {
+    "equity": "5002.49",
+    "cash": "5657.24"
+  },
+  "paper_account": {
+    "positions_count": 2,
+    "positions": [
       {
-        "timestamp": "2026-01-20T15:23:02.687104+00:00",
-        "equity": 5002.53,
-        "success": true
+        "symbol": "SOFI260213P00032000",
+        "qty": "-1",
+        "market_value": "-755",
+        "unrealized_pl": "-150"
       },
       {
-        "timestamp": "2026-01-20T15:41:14.254385+00:00",
-        "equity": 5002.7,
-        "success": true
-      },
-      {
-        "timestamp": "2026-01-20T15:53:50.452639+00:00",
-        "equity": 5002.59,
-        "success": true
-      },
-      {
-        "timestamp": "2026-01-20T16:03:49.574088+00:00",
-        "equity": 5002.6,
-        "success": true
-      },
-      {
-        "timestamp": "2026-01-20T16:23:19.775072+00:00",
-        "equity": 5002.61,
-        "success": true
+        "symbol": "SPY",
+        "qty": "0.146822157",
+        "market_value": "100.253105",
+        "unrealized_pl": "0.263105"
       }
     ]
   },
-  "portfolio": {
-    "equity": 5002.61,
-    "cash": 5657.24
-  },
-  "paper_account": {
-    "equity": 5002.61,
-    "cash": 5657.24,
-    "buying_power": 5014.85,
-    "total_pl": 2.6099999999996726,
-    "total_pl_pct": 0.05,
-    "positions_count": 2,
-    "daily_change": 4.22,
-    "win_rate": 0,
-    "win_rate_sample_size": 0,
-    "starting_balance": 5000.0
-  },
-  "positions": [
-    {
-      "symbol": "SOFI260213P00032000",
-      "qty": -1.0,
-      "price": 7.55,
-      "value": -755.0,
-      "pnl": -150.0,
-      "type": "option"
-    },
-    {
-      "symbol": "SPY",
-      "qty": 0.146822157,
-      "price": 683.59,
-      "value": 100.366158,
-      "pnl": 0.376158,
-      "type": "stock"
-    }
-  ],
   "trade_history": [
     {
       "id": "5fd66112-099a-4207-bcf1-6e655e1fef24",
@@ -444,27 +399,5 @@
       "filled_at": "2026-01-12 14:30:54.357134+00:00"
     }
   ],
-  "trades_loaded": 47,
-  "trades": {
-    "last_trade_date": "2026-01-20",
-    "today_trades": 0,
-    "total_trades_today": 0,
-    "last_trade_symbol": "SOFI260213P00032000"
-  },
-  "risk": {
-    "status": "MONITORING",
-    "total_pl": 2.6099999999996726,
-    "unrealized_pl": -149.623842
-  },
-  "account": {
-    "current_equity": 5002.61,
-    "total_pl": 2.6099999999996726,
-    "total_pl_pct": 0.05,
-    "positions_count": 2
-  },
-  "meta": {
-    "last_updated": "2026-01-20T16:23:19.775096+00:00",
-    "trade_sync": "alpaca_api",
-    "sync_frequency_minutes": 5
-  }
+  "trades_loaded": 47
 }
