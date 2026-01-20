@@ -2,8 +2,8 @@
 """
 Close Orphan Put Position
 
-The SPY260220P00653000 long put is an orphan position that needs to be closed
-to free up capital and comply with the 1-spread position limit in CLAUDE.md.
+The SOFI260213P00032000 short put is an orphan position that violates the
+SPY-only mandate in CLAUDE.md and needs to be closed immediately.
 """
 
 import os
@@ -17,7 +17,7 @@ from src.utils.alpaca_client import get_alpaca_client
 
 
 def close_orphan_put():
-    """Close the orphan SPY 660 put position."""
+    """Close the orphan SOFI put position (violates SPY-only rule)."""
     paper = os.getenv("PAPER_TRADING", "true").lower() == "true"
     client = get_alpaca_client(paper=paper)
 
@@ -28,7 +28,7 @@ def close_orphan_put():
     # Get current positions
     positions = client.get_all_positions()
 
-    orphan_symbol = "SPY260220P00653000"
+    orphan_symbol = "SOFI260213P00032000"
     orphan_position = None
 
     for pos in positions:
@@ -54,18 +54,22 @@ def close_orphan_put():
     print(f"   Unrealized P/L: ${unrealized_pl:.2f}")
     print()
 
-    # Close the position by selling
+    # Determine order side based on position (short = BUY to close, long = SELL to close)
     from alpaca.trading.enums import OrderSide, TimeInForce
     from alpaca.trading.requests import MarketOrderRequest
+
+    is_short = float(orphan_position.qty) < 0
+    side = OrderSide.BUY if is_short else OrderSide.SELL
+    side_desc = "BUY to close short" if is_short else "SELL to close long"
 
     order_request = MarketOrderRequest(
         symbol=orphan_symbol,
         qty=qty,
-        side=OrderSide.SELL,
+        side=side,
         time_in_force=TimeInForce.GTC,  # Good til canceled - will execute at next market open
     )
 
-    print(f"🔄 Submitting SELL order for {qty} {orphan_symbol}...")
+    print(f"🔄 Submitting {side_desc} order for {qty} {orphan_symbol}...")
 
     try:
         order = client.submit_order(order_request)
