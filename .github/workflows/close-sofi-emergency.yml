@@ -1,7 +1,9 @@
 name: Emergency Close SOFI Position
 
 # Self-triggers on push to close the SOFI position that violates SPY-only rule
+# Triggered: Jan 20, 2026 12:33 PM ET - URGENT! Losing $150
 on:
+  workflow_dispatch:  # Manual trigger
   push:
     branches: [main]
     paths:
