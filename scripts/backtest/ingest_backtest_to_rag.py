@@ -18,7 +18,6 @@ from pathlib import Path
 
 try:
     from google.cloud import aiplatform
-    from google.cloud.aiplatform_v1beta1 import RagCorpus
 
     HAS_VERTEX = True
 except ImportError:
@@ -84,8 +83,8 @@ def ingest_to_vertex_rag(
 
     for lesson in lessons:
         try:
-            # Format the lesson content
-            content = format_lesson_for_rag(lesson)
+            # Format the lesson content (call validates lesson structure)
+            _ = format_lesson_for_rag(lesson)
             lesson_id = lesson.get("id", f"lesson_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
 
             # In production, this would use the RAG API

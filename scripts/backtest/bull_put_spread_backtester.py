@@ -32,10 +32,9 @@ from scipy.stats import norm
 try:
     from alpaca.data.historical.option import OptionHistoricalDataClient
     from alpaca.data.historical.stock import StockHistoricalDataClient
-    from alpaca.data.requests import OptionBarsRequest, StockBarsRequest
+    from alpaca.data.requests import StockBarsRequest
     from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
     from alpaca.trading.client import TradingClient
-    from alpaca.trading.enums import ContractType
     from alpaca.trading.requests import GetCalendarRequest
 except ImportError:
     print("ERROR: alpaca-py not installed. Run: pip install alpaca-py")
@@ -281,8 +280,8 @@ class BullPutSpreadBacktester:
 
         # Estimate premiums (simplified Black-Scholes approximation)
         # In real backtest, these come from historical option data
-        T = 1 / 365  # 0DTE = 1 day
-        iv_estimate = 0.20  # Typical SPY IV
+        # Note: T=1/365 for 0DTE, iv_estimate=0.20 for typical SPY IV
+        # These values inform the simplified premium estimate below
 
         # Simplified premium estimate
         short_premium = max(0.50, (short_strike - underlying_price + 2) * 0.3)
