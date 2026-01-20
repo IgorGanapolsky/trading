@@ -1,0 +1,26 @@
+{
+  "total_trades": 6,
+  "total_pnl": 240.0,
+  "win_rate": 1.0,
+  "avg_trade": 40.0,
+  "max_win": 40.0,
+  "max_loss": 40.0,
+  "std_dev": 0.0,
+  "sharpe_ratio": 0,
+  "config": {
+    "underlying_symbol": "SPY",
+    "short_put_delta_min": -0.6,
+    "short_put_delta_max": -0.2,
+    "long_put_delta_min": -0.4,
+    "long_put_delta_max": -0.2,
+    "spread_width_min": 2.0,
+    "spread_width_max": 4.0,
+    "target_profit_pct": 0.5,
+    "delta_stop_loss_multiplier": 2.0,
+    "risk_free_rate": 0.05,
+    "buffer_pct": 0.05
+  },
+  "start_date": "2026-01-09",
+  "end_date": "2026-01-19",
+  "timestamp": "2026-01-20T11:58:22.943896"
+}
