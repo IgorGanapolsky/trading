@@ -460,3 +460,123 @@ class TestEarningsPositionMonitor:
         gateway = TradeGateway(executor=None, paper=True)
         action = gateway._get_earnings_action(days_to_blackout=0, unrealized_pl=-50, symbol="SOFI")
         assert "MONITOR_CLOSELY" in action
+
+
+class TestMaxPositionsCheck:
+    """Test MAX_POSITIONS_EXCEEDED check (Jan 20, 2026 - LL-231).
+
+    Per CLAUDE.md: "Position limit: 1 iron condor at a time"
+    """
+
+    def test_blocks_new_position_when_spread_exists(self):
+        """Test that new sell is blocked when spread already exists."""
+        gateway = TradeGateway(executor=None, paper=True)
+        # Simulate existing spread positions
+        gateway.executor = MockExecutor(
+            account_equity=5000,
+            positions=[
+                {"symbol": "SPY260220P00565000", "qty": 1},  # Long put
+                {"symbol": "SPY260220P00570000", "qty": -1},  # Short put
+            ],
+        )
+
+        request = TradeRequest(
+            symbol="SPY260220P00600000",
+            side="sell",
+            quantity=1,
+            source="test",
+            is_option=True,
+        )
+        decision = gateway.evaluate(request)
+
+        assert not decision.approved
+        assert RejectionReason.MAX_POSITIONS_EXCEEDED in decision.rejection_reasons
+
+    def test_allows_buy_to_close_when_spread_exists(self):
+        """Test that buy orders are allowed (to close positions)."""
+        gateway = TradeGateway(executor=None, paper=True)
+        gateway.executor = MockExecutor(
+            account_equity=5000,
+            positions=[
+                {"symbol": "SPY260220P00565000", "qty": 1},
+                {"symbol": "SPY260220P00570000", "qty": -1},
+            ],
+        )
+
+        request = TradeRequest(
+            symbol="SPY260220P00570000",
+            side="buy",  # Buy to close
+            quantity=1,
+            source="test",
+            is_option=True,
+        )
+        decision = gateway.evaluate(request)
+
+        # Should NOT be rejected for max positions (it's a close)
+        assert RejectionReason.MAX_POSITIONS_EXCEEDED not in decision.rejection_reasons
+
+
+class TestTotalPortfolioRiskCheck:
+    """Test TOTAL_PORTFOLIO_RISK_EXCEEDED check (Jan 20, 2026).
+
+    Blocks new trades if total portfolio risk exceeds 15%.
+    """
+
+    def test_blocks_when_over_15_percent_risk(self):
+        """Test that new sell is blocked when total risk > 15%."""
+        gateway = TradeGateway(executor=None, paper=True)
+        # Simulate 3 spreads = $1500 risk on $5000 = 30%
+        gateway.executor = MockExecutor(
+            account_equity=5000,
+            positions=[
+                {"symbol": "SPY260220P00565000", "qty": 1},
+                {"symbol": "SPY260220P00570000", "qty": -1},  # Spread 1
+                {"symbol": "SPY260220P00595000", "qty": 1},
+                {"symbol": "SPY260220P00600000", "qty": -1},  # Spread 2
+                {"symbol": "SPY260220P00653000", "qty": 1},
+                {"symbol": "SPY260220P00658000", "qty": -1},  # Spread 3
+            ],
+        )
+
+        request = TradeRequest(
+            symbol="SPY260220P00680000",
+            side="sell",
+            quantity=1,
+            source="test",
+            is_option=True,
+        )
+        decision = gateway.evaluate(request)
+
+        assert not decision.approved
+        assert RejectionReason.TOTAL_PORTFOLIO_RISK_EXCEEDED in decision.rejection_reasons
+
+
+class TestOrphanPositionCheck:
+    """Test ORPHAN_POSITION_EXISTS check (Jan 20, 2026).
+
+    Per CLAUDE.md: No unhedged positions allowed.
+    """
+
+    def test_blocks_new_sell_when_orphan_exists(self):
+        """Test that new sell is blocked when orphan position exists."""
+        gateway = TradeGateway(executor=None, paper=True)
+        # Simulate orphan (2 longs, 1 short = 1 orphan)
+        gateway.executor = MockExecutor(
+            account_equity=5000,
+            positions=[
+                {"symbol": "SPY260220P00653000", "qty": 2},  # 2 longs
+                {"symbol": "SPY260220P00658000", "qty": -1},  # Only 1 short
+            ],
+        )
+
+        request = TradeRequest(
+            symbol="SPY260220P00700000",
+            side="sell",
+            quantity=1,
+            source="test",
+            is_option=True,
+        )
+        decision = gateway.evaluate(request)
+
+        assert not decision.approved
+        assert RejectionReason.ORPHAN_POSITION_EXISTS in decision.rejection_reasons
