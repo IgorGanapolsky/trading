@@ -351,5 +351,10 @@
       "filled_at": "2026-01-12 14:30:54.357134+00:00"
     }
   ],
-  "trades_loaded": 38
+  "trades_loaded": 38,
+  "meta": {
+    "last_updated": "2026-01-20T11:25:20.779702",
+    "last_sync": "2026-01-20T11:25:20.779709",
+    "sync_mode": "skipped_no_keys"
+  }
 }
