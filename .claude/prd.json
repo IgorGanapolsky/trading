@@ -65,9 +65,11 @@
   ],
   "completed_tasks": [],
   "metadata": {
-    "total_iterations": 99,
-    "tasks_completed_this_session": 3,
+    "total_iterations": 100,
+    "tasks_completed_this_session": 4,
     "last_task_completed": "T006",
-    "last_iteration_at": "2026-01-20T18:41:00Z"
+    "last_iteration_at": "2026-01-20T19:31:00Z",
+    "session_complete": true,
+    "lessons_added": ["LL-039", "LL-040", "LL-041"]
   }
 }

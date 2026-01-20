@@ -2605,5 +2605,23 @@
       "capital-preservation",
       "income-generation"
     ]
+  },
+  {
+    "id": "LL-040",
+    "title": "Final Iteration Jan 20 - Crisis Prevention & Success Synthesis",
+    "category": "synthesis",
+    "severity": "HIGH",
+    "description": "Final Ralph iteration synthesizing today's crisis (over-positioned blocking trades) and success (deep research $100K vs $5K). Crisis: 6 positions/7 legs blocked all new trades (limit 4). Success: Identified $100K formula (SPY + defined risk + $12/day premium). Tomorrow's fix: Run close_excess_spreads.py BEFORE market open.",
+    "root_cause": "Position count exceeded MAX_POSITIONS (6/4), mandatory trade gate blocked all orders.",
+    "fix": "1) Pre-market: verify position_count < 4. 2) Run close_excess_spreads.py before new trades. 3) Workflow sequence: Close \u2192 Verify \u2192 Trade.",
+    "prevention": "Add pre-market position count alert. Enforce close-before-trade sequence in workflow.",
+    "created": "2026-01-20",
+    "tags": [
+      "crisis",
+      "synthesis",
+      "final-iteration",
+      "position-limits",
+      "prevention"
+    ]
   }
 ]
