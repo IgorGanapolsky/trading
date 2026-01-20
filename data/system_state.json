@@ -1,21 +1,60 @@
 {
-  "last_updated": "2026-01-20T15:09:25.512627Z",
-  "portfolio": {
-    "equity": "5002.23",
-    "cash": "5757.23"
-  },
-  "paper_account": {
-    "positions_count": 1,
-    "positions": [
+  "last_updated": "2026-01-20T15:23:02.687111+00:00",
+  "sync_health": {
+    "last_successful_sync": "2026-01-20T15:23:02.687114+00:00",
+    "sync_source": "github_actions",
+    "sync_count_today": 1,
+    "history": [
       {
-        "symbol": "SOFI260213P00032000",
-        "qty": "-1",
-        "market_value": "-755",
-        "unrealized_pl": "-150"
+        "timestamp": "2026-01-20T15:23:02.687104+00:00",
+        "equity": 5002.53,
+        "success": true
       }
     ]
   },
+  "portfolio": {
+    "equity": 5002.53,
+    "cash": 5657.24
+  },
+  "paper_account": {
+    "equity": 5002.53,
+    "cash": 5657.24,
+    "buying_power": 5014.77,
+    "total_pl": 2.5299999999997453,
+    "total_pl_pct": 0.05,
+    "positions_count": 2,
+    "daily_change": 4.14,
+    "win_rate": 0,
+    "win_rate_sample_size": 0,
+    "starting_balance": 5000.0
+  },
+  "positions": [
+    {
+      "symbol": "SOFI260213P00032000",
+      "qty": -1.0,
+      "price": 7.55,
+      "value": -755.0,
+      "pnl": -150.0,
+      "type": "option"
+    },
+    {
+      "symbol": "SPY",
+      "qty": 0.146822157,
+      "price": 683.095,
+      "value": 100.293481,
+      "pnl": 0.303481,
+      "type": "stock"
+    }
+  ],
   "trade_history": [
+    {
+      "id": "5fd66112-099a-4207-bcf1-6e655e1fef24",
+      "symbol": "SPY",
+      "side": "OrderSide.BUY",
+      "qty": "0.146822157",
+      "price": "681.028",
+      "filled_at": "2026-01-20 15:09:31.046524+00:00"
+    },
     {
       "id": "f5d09a44-101d-4dcd-a421-1a0ce270c2eb",
       "symbol": "SPY260220P00653000",
@@ -30,7 +69,7 @@
       "side": "OrderSide.SELL",
       "qty": "1",
       "price": "1.28",
-      "filled_at": "2026-01-20 14:56:08.352402+00:00"
+      "filled_at": "2026-01-20 14:56:08.352403+00:00"
     },
     {
       "id": "c1eadfb8-3966-4b2b-9dcf-3398604517e1",
@@ -38,7 +77,7 @@
       "side": "OrderSide.SELL",
       "qty": "1",
       "price": "0.79",
-      "filled_at": "2026-01-20 14:56:08.242116+00:00"
+      "filled_at": "2026-01-20 14:56:08.242117+00:00"
     },
     {
       "id": "385d6072-0f6e-4544-81af-80845fc1bc9b",
@@ -46,7 +85,7 @@
       "side": "OrderSide.BUY",
       "qty": "1",
       "price": "5.64",
-      "filled_at": "2026-01-20 14:56:08.130738+00:00"
+      "filled_at": "2026-01-20 14:56:08.130739+00:00"
     },
     {
       "id": "e5031560-e1d3-4e1f-9a37-90ea4e088913",
@@ -62,7 +101,7 @@
       "side": "OrderSide.BUY",
       "qty": "1",
       "price": "0.86",
-      "filled_at": "2026-01-20 14:56:08.017494+00:00"
+      "filled_at": "2026-01-20 14:56:08.017495+00:00"
     },
     {
       "id": "72a4af42-1ccc-417a-8ff7-44ac53acc5a4",
@@ -385,5 +424,27 @@
       "filled_at": "2026-01-12 14:30:54.357134+00:00"
     }
   ],
-  "trades_loaded": 46
+  "trades_loaded": 47,
+  "trades": {
+    "last_trade_date": "2026-01-20",
+    "today_trades": 0,
+    "total_trades_today": 0,
+    "last_trade_symbol": "SOFI260213P00032000"
+  },
+  "risk": {
+    "status": "MONITORING",
+    "total_pl": 2.5299999999997453,
+    "unrealized_pl": -149.696519
+  },
+  "account": {
+    "current_equity": 5002.53,
+    "total_pl": 2.5299999999997453,
+    "total_pl_pct": 0.05,
+    "positions_count": 2
+  },
+  "meta": {
+    "last_updated": "2026-01-20T15:23:02.687126+00:00",
+    "trade_sync": "alpaca_api",
+    "sync_frequency_minutes": 5
+  }
 }
