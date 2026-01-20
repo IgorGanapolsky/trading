@@ -4,6 +4,10 @@ on:
   schedule:
     # Run at 9:35 AM ET on weekdays (covers EST/EDT)
     - cron: '35 13,14 * * 1-5'
+  push:
+    branches: [main]
+    paths:
+      - 'EXECUTE_SPREAD.trigger'
   workflow_dispatch:
     inputs:
       symbol:
