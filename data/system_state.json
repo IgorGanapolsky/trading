@@ -1,7 +1,7 @@
 {
-  "last_updated": "2026-01-20T17:30:06.767112Z",
+  "last_updated": "2026-01-20T17:36:26.845312Z",
   "portfolio": {
-    "equity": "5071.49",
+    "equity": "5070.96",
     "cash": "4974.18"
   },
   "paper_account": {
@@ -16,8 +16,8 @@
       {
         "symbol": "SPY",
         "qty": "1.146822157",
-        "market_value": "782.293266",
-        "unrealized_pl": "-0.756734"
+        "market_value": "781.777196",
+        "unrealized_pl": "-1.272804"
       }
     ]
   },
