@@ -149,7 +149,7 @@ class OptionsExecutor:
     MIN_IV_RANK = 20  # Sell when IV > 20 (was 30 - blocked 60% of days)
     MAX_POSITION_SIZE = 15  # 15 contracts max (was 5)
     MIN_DTE = 30  # Minimum days to expiration
-    MAX_DTE = 60  # Maximum days to expiration
+    MAX_DTE = 45  # Maximum days to expiration per CLAUDE.md (was 60)
 
     # Strategy-specific parameters
     COVERED_CALL_TARGET_DELTA = 0.30  # Sell 30-delta calls
