@@ -1,0 +1,24 @@
+{
+  "id": "LL-232",
+  "title": "Position Data Mismatch Crisis - Local vs Broker Data",
+  "date": "2026-01-20",
+  "category": "system-failure",
+  "severity": "CRITICAL",
+  "description": "Trading system failed to execute on market day because position compliance check failed. Root cause: local system_state.json showed 6 SPY put options but actual broker positions were completely different (SOFI short put and fractional SPY shares).",
+  "root_cause": "Close script was hardcoded to look for SPY260220P00653000 which didn't exist. Actual position was SOFI260213P00032000 (short put) which violates SPY-only mandate.",
+  "symptoms": [
+    "Daily Trading Execution workflow failed twice",
+    "Check Position Compliance step failing",
+    "close-orphan-position workflow failing to find position",
+    "Local system_state.json out of sync with Alpaca broker"
+  ],
+  "fix": "Update close_orphan_put.py to target SOFI260213P00032000 with correct order side (BUY to close short, not SELL)",
+  "prevention": [
+    "ALWAYS verify broker positions before writing close scripts",
+    "Scripts should query actual positions, not hardcode symbols",
+    "sync-system-state workflow should run more frequently",
+    "Position data should never be cached locally for close operations"
+  ],
+  "lesson_learned": "Never trust local cached position data for close operations. Always query the broker API for current positions. Hardcoding symbols in scripts is dangerous.",
+  "tags": ["position-management", "sofi", "sync", "compliance", "crisis"]
+}
