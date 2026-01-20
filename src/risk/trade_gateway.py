@@ -70,6 +70,8 @@ class RejectionReason(Enum):
     DTE_OUT_OF_RANGE = "DTE must be 30-45 days per CLAUDE.md"
     NOT_IRON_CONDOR = "Position structure is not a valid iron condor per CLAUDE.md"
     ORPHAN_POSITION_EXISTS = "Orphan (unhedged) positions exist - clean up before new trades"
+    MAX_POSITIONS_EXCEEDED = "Maximum open positions exceeded - 1 iron condor at a time per CLAUDE.md"
+    TOTAL_PORTFOLIO_RISK_EXCEEDED = "Total portfolio risk exceeds 15% - close positions before opening new"
 
 
 @dataclass
@@ -685,6 +687,46 @@ class TradeGateway:
             metadata["position_size_risk"] = {
                 "reason": risk_reason,
                 "max_allowed": f"{self.MAX_POSITION_RISK_PCT * 100:.0f}% of ${account_equity:.0f} = ${account_equity * self.MAX_POSITION_RISK_PCT:.0f}",
+            }
+
+        # ============================================================
+        # CHECK 0.7: MAX OPEN POSITIONS (Jan 20, 2026 - LL-231)
+        # Per CLAUDE.md: "Position limit: 1 iron condor at a time"
+        # Block new trades if already have positions open
+        # ============================================================
+        if request.side.lower() == "sell" and request.is_option:
+            # Count existing option spreads
+            existing_spreads = self._count_option_spreads()
+            if existing_spreads >= 1:
+                rejection_reasons.append(RejectionReason.MAX_POSITIONS_EXCEEDED)
+                logger.warning(
+                    f"🛑 MAX POSITIONS: Already have {existing_spreads} spread(s) open. "
+                    f"Per CLAUDE.md: 1 iron condor at a time!"
+                )
+                risk_score += 1.0  # Hard block
+                metadata["max_positions_violation"] = {
+                    "existing_spreads": existing_spreads,
+                    "max_allowed": 1,
+                    "rule": "CLAUDE.md: Position limit: 1 iron condor at a time",
+                }
+
+        # ============================================================
+        # CHECK 0.8: TOTAL PORTFOLIO RISK (Jan 20, 2026)
+        # If total portfolio risk exceeds 15%, block new trades
+        # Current state: 3 spreads x $500 = $1500 = 30% risk (VIOLATION)
+        # ============================================================
+        total_portfolio_risk = self._calculate_total_portfolio_risk(account_equity)
+        if total_portfolio_risk > 0.15 and request.side.lower() == "sell":
+            rejection_reasons.append(RejectionReason.TOTAL_PORTFOLIO_RISK_EXCEEDED)
+            logger.warning(
+                f"🛑 TOTAL RISK: Portfolio risk is {total_portfolio_risk*100:.1f}% (max 15%). "
+                f"Close positions before opening new trades!"
+            )
+            risk_score += 1.0  # Hard block
+            metadata["total_portfolio_risk"] = {
+                "current_risk_pct": total_portfolio_risk * 100,
+                "max_allowed_pct": 15,
+                "action": "Close existing positions before opening new trades",
             }
 
         # ============================================================
@@ -1397,6 +1439,94 @@ class TradeGateway:
                             diff -= abs(pos["qty"])
 
         return orphans
+
+    def _count_option_spreads(self) -> int:
+        """
+        Count the number of option spreads currently open.
+
+        Per CLAUDE.md: "Position limit: 1 iron condor at a time"
+
+        Returns:
+            Number of complete spreads (pairs of matched long/short options)
+        """
+        import re
+
+        positions = self._get_positions()
+        if not positions:
+            return 0
+
+        # Parse option positions
+        option_positions = []
+        for pos in positions:
+            symbol = pos.get("symbol", "")
+            match = re.match(r"^([A-Z]{1,6})(\d{6})([PC])(\d{8})$", symbol.upper())
+            if match:
+                option_positions.append({
+                    "qty": int(pos.get("qty", 0)),
+                })
+
+        if not option_positions:
+            return 0
+
+        # Count spreads by matching longs and shorts
+        total_longs = sum(p["qty"] for p in option_positions if p["qty"] > 0)
+        total_shorts = abs(sum(p["qty"] for p in option_positions if p["qty"] < 0))
+
+        # A spread consists of 1 long + 1 short
+        return min(total_longs, total_shorts)
+
+    def _calculate_total_portfolio_risk(self, account_equity: float) -> float:
+        """
+        Calculate total portfolio risk as percentage of equity.
+
+        Per CLAUDE.md: Max 5% risk per trade, but also need to check total.
+        Current violation: 3 spreads x $500 = $1500 = 30% of $5K
+
+        Returns:
+            Total risk as decimal (0.30 = 30%)
+        """
+        import re
+
+        positions = self._get_positions()
+        if not positions or account_equity <= 0:
+            return 0.0
+
+        total_max_loss = 0.0
+
+        # Group option positions to identify spreads
+        option_groups = {}
+        for pos in positions:
+            symbol = pos.get("symbol", "")
+            match = re.match(r"^([A-Z]{1,6})(\d{6})([PC])(\d{8})$", symbol.upper())
+            if match:
+                underlying, exp_date, opt_type, strike_raw = match.groups()
+                key = (underlying, exp_date, opt_type)
+                if key not in option_groups:
+                    option_groups[key] = []
+                option_groups[key].append({
+                    "strike": int(strike_raw) / 1000,
+                    "qty": int(pos.get("qty", 0)),
+                })
+
+        # Calculate max loss for each group (spread)
+        for key, group in option_groups.items():
+            longs = [p for p in group if p["qty"] > 0]
+            shorts = [p for p in group if p["qty"] < 0]
+
+            if longs and shorts:
+                # It's a spread - max loss = width x 100 x qty
+                long_strike = min(p["strike"] for p in longs)
+                short_strike = max(p["strike"] for p in shorts)
+                width = abs(short_strike - long_strike)
+                qty = min(sum(p["qty"] for p in longs), abs(sum(p["qty"] for p in shorts)))
+                spread_max_loss = width * 100 * qty
+                total_max_loss += spread_max_loss
+            elif shorts:
+                # Naked short - very dangerous, estimate max loss conservatively
+                for p in shorts:
+                    total_max_loss += p["strike"] * 100 * abs(p["qty"])
+
+        return total_max_loss / account_equity if account_equity > 0 else 0.0
 
     def _check_correlation(self, symbol: str, positions: list[dict]) -> float:
         """
