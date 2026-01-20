@@ -1,0 +1,184 @@
+name: Verify Web Pages (Agent-Browser)
+
+on:
+  schedule:
+    - cron: '0 14 * * 1-5'  # 2 PM UTC daily (market hours)
+  workflow_dispatch:
+    inputs:
+      pages:
+        description: 'Pages to verify (comma-separated: github-pages,devto)'
+        default: 'github-pages,devto'
+        type: string
+
+env:
+  GITHUB_PAGES_URL: https://igorganapolsky.github.io/trading
+  DEVTO_URL: https://dev.to/igorganapolsky
+  VERIFICATION_TIMEOUT: 30000
+
+jobs:
+  verify-pages:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install agent-browser
+        run: |
+          npm install -g agent-browser
+          agent-browser install --with-deps
+
+      - name: Verify GitHub Pages Dashboard
+        id: github-pages
+        if: contains(inputs.pages || 'github-pages', 'github-pages')
+        run: |
+          echo "=== Verifying GitHub Pages Dashboard ==="
+
+          # Start a browser session
+          SESSION_ID=$(agent-browser session create | grep -oP 'session-\w+')
+          echo "Session: $SESSION_ID"
+
+          # Navigate to the page
+          agent-browser navigate --session $SESSION_ID --url "$GITHUB_PAGES_URL" --wait-until networkidle
+
+          # Get accessibility tree for AI analysis
+          echo "### Accessibility Tree ###"
+          agent-browser snapshot --session $SESSION_ID --format accessibility > github_pages_snapshot.txt
+
+          # Check for expected content
+          CONTENT=$(agent-browser text --session $SESSION_ID --selector "body")
+
+          # Verify key elements exist
+          if echo "$CONTENT" | grep -qi "trading\|portfolio\|P/L"; then
+            echo "github_pages_status=success" >> $GITHUB_OUTPUT
+            echo "✅ GitHub Pages verified - trading content found"
+          else
+            echo "github_pages_status=warning" >> $GITHUB_OUTPUT
+            echo "⚠️ GitHub Pages accessible but expected content not found"
+          fi
+
+          # Take screenshot
+          agent-browser screenshot --session $SESSION_ID --path github_pages.png --full-page
+
+          # Close session
+          agent-browser session close --session $SESSION_ID
+
+      - name: Verify Dev.to Profile
+        id: devto
+        if: contains(inputs.pages || 'devto', 'devto')
+        run: |
+          echo "=== Verifying Dev.to Profile ==="
+
+          SESSION_ID=$(agent-browser session create | grep -oP 'session-\w+')
+          echo "Session: $SESSION_ID"
+
+          agent-browser navigate --session $SESSION_ID --url "$DEVTO_URL" --wait-until networkidle
+
+          # Get accessibility tree
+          echo "### Accessibility Tree ###"
+          agent-browser snapshot --session $SESSION_ID --format accessibility > devto_snapshot.txt
+
+          # Check for articles
+          CONTENT=$(agent-browser text --session $SESSION_ID --selector "body")
+
+          if echo "$CONTENT" | grep -qi "article\|post\|trading"; then
+            echo "devto_status=success" >> $GITHUB_OUTPUT
+            echo "✅ Dev.to profile verified - articles found"
+          else
+            echo "devto_status=warning" >> $GITHUB_OUTPUT
+            echo "⚠️ Dev.to accessible but no articles found"
+          fi
+
+          agent-browser screenshot --session $SESSION_ID --path devto.png --full-page
+          agent-browser session close --session $SESSION_ID
+
+      - name: Upload Verification Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: page-verification-${{ github.run_id }}
+          path: |
+            *.png
+            *_snapshot.txt
+          retention-days: 7
+
+      - name: Summary
+        run: |
+          echo "## Web Page Verification Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Page | Status | URL |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|-----|" >> $GITHUB_STEP_SUMMARY
+          echo "| GitHub Pages | ${{ steps.github-pages.outputs.github_pages_status || 'skipped' }} | $GITHUB_PAGES_URL |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dev.to | ${{ steps.devto.outputs.devto_status || 'skipped' }} | $DEVTO_URL |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Note:** Alpaca & Dialogflow require OAuth - use API verification instead" >> $GITHUB_STEP_SUMMARY
+
+  verify-alpaca-api:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Verify Alpaca API (Paper Account)
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          python3 << 'EOF'
+          import os
+          import requests
+
+          api_key = os.environ.get("ALPACA_API_KEY")
+          secret_key = os.environ.get("ALPACA_SECRET_KEY")
+
+          if not api_key or not secret_key:
+              print("⚠️ Alpaca credentials not configured")
+              exit(0)
+
+          headers = {
+              "APCA-API-KEY-ID": api_key,
+              "APCA-API-SECRET-KEY": secret_key
+          }
+
+          # Verify account access
+          resp = requests.get(
+              "https://paper-api.alpaca.markets/v2/account",
+              headers=headers
+          )
+
+          if resp.status_code == 200:
+              account = resp.json()
+              print(f"✅ Alpaca API verified")
+              print(f"   Portfolio: ${float(account['portfolio_value']):,.2f}")
+              print(f"   Buying Power: ${float(account['buying_power']):,.2f}")
+          else:
+              print(f"❌ Alpaca API error: {resp.status_code}")
+              exit(1)
+          EOF
+
+      - name: Verify Dialogflow Webhook
+        env:
+          WEBHOOK_URL: https://trading-webhook-667608976880.us-central1.run.app
+        run: |
+          echo "=== Verifying Dialogflow Webhook ==="
+
+          # Health check endpoint
+          RESP=$(curl -s -o /dev/null -w "%{http_code}" "$WEBHOOK_URL/")
+
+          if [ "$RESP" = "200" ] || [ "$RESP" = "404" ]; then
+            echo "✅ Dialogflow webhook is responding (HTTP $RESP)"
+          else
+            echo "⚠️ Dialogflow webhook returned HTTP $RESP"
+          fi

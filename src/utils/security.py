@@ -847,6 +847,12 @@ class MCPSecurityValidator:
         r"^https://stockanalysis\.com/",
         # Allow GitHub for development
         r"^https://github\.com/IgorGanapolsky/",
+        # GitHub Pages dashboard
+        r"^https://igorganapolsky\.github\.io/",
+        # Dev.to posts
+        r"^https://dev\.to/igorganapolsky",
+        # Dialogflow console (read-only verification)
+        r"^https://dialogflow\.cloud\.google\.com/",
     ]
 
     # Blocked URL patterns (known malicious or risky)
