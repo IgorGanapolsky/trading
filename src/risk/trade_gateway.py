@@ -68,6 +68,8 @@ class RejectionReason(Enum):
     FORBIDDEN_STRATEGY = "Strategy is forbidden - naked positions not allowed"
     PRE_TRADE_CHECKLIST_FAILED = "Pre-trade checklist failed - CLAUDE.md rules violated"
     DTE_OUT_OF_RANGE = "DTE must be 30-45 days per CLAUDE.md"
+    NOT_IRON_CONDOR = "Position structure is not a valid iron condor per CLAUDE.md"
+    ORPHAN_POSITION_EXISTS = "Orphan (unhedged) positions exist - clean up before new trades"
 
 
 @dataclass
@@ -627,6 +629,34 @@ class TradeGateway:
                 "reason": "Naked positions have undefined risk",
                 "alternative": "Use bull_put_spread or bear_call_spread instead",
             }
+
+        # ============================================================
+        # CHECK 0.45: ORPHAN POSITION CHECK (Jan 20, 2026)
+        # Per CLAUDE.md: No unhedged positions allowed
+        # Block new trades if orphan (unmatched) positions exist
+        # ============================================================
+        try:
+            orphan_positions = self._check_for_orphan_positions()
+            if orphan_positions and request.side.lower() == "sell":
+                # Only block new short positions when orphans exist
+                # Allow closing trades (buys to close shorts)
+                rejection_reasons.append(RejectionReason.ORPHAN_POSITION_EXISTS)
+                logger.warning(
+                    f"🛑 ORPHAN POSITIONS DETECTED: {len(orphan_positions)} unhedged positions exist. "
+                    f"Clean up before opening new positions!"
+                )
+                risk_score += 0.5
+                metadata["orphan_positions"] = {
+                    "count": len(orphan_positions),
+                    "positions": [
+                        {"symbol": p.get("symbol"), "qty": p.get("qty")}
+                        for p in orphan_positions[:3]  # Show first 3
+                    ],
+                    "action": "Close orphan positions before opening new trades",
+                }
+        except Exception as e:
+            # Don't block if orphan check fails - just log
+            logger.debug(f"Orphan check skipped: {e}")
 
         # ============================================================
         # CHECK 0.5: EARNINGS BLACKOUT (LL-190)
@@ -1288,6 +1318,85 @@ class TradeGateway:
             if pos.get("symbol") == symbol:
                 return float(pos.get("market_value", 0))
         return 0.0
+
+    def _check_for_orphan_positions(self) -> list[dict[str, Any]]:
+        """
+        Check for orphan (unmatched) option positions.
+
+        Per CLAUDE.md (Jan 20, 2026): Iron condors only, no unhedged positions.
+
+        An orphan position is a long or short option that doesn't have
+        a matching leg to form a complete spread.
+
+        Returns:
+            List of orphan positions (empty if all positions are properly matched)
+        """
+        import re
+
+        positions = self._get_positions()
+        if not positions:
+            return []
+
+        # Parse option positions
+        option_positions = []
+        for pos in positions:
+            symbol = pos.get("symbol", "")
+            # Match OCC option format
+            match = re.match(r"^([A-Z]{1,6})(\d{6})([PC])(\d{8})$", symbol.upper())
+            if match:
+                underlying, exp_date, opt_type, strike_raw = match.groups()
+                option_positions.append({
+                    "symbol": symbol,
+                    "underlying": underlying,
+                    "expiration": exp_date,
+                    "option_type": opt_type,
+                    "strike": int(strike_raw) / 1000,
+                    "qty": int(pos.get("qty", 0)),
+                })
+
+        if not option_positions:
+            return []
+
+        # Group by underlying/expiration/type
+        groups = {}
+        for pos in option_positions:
+            key = (pos["underlying"], pos["expiration"], pos["option_type"])
+            if key not in groups:
+                groups[key] = []
+            groups[key].append(pos)
+
+        orphans = []
+
+        for key, group in groups.items():
+            # Separate longs and shorts
+            longs = [p for p in group if p["qty"] > 0]
+            shorts = [p for p in group if p["qty"] < 0]
+
+            # Sort by strike
+            longs.sort(key=lambda p: p["strike"])
+            shorts.sort(key=lambda p: p["strike"])
+
+            # Count total quantities
+            total_long_qty = sum(p["qty"] for p in longs)
+            total_short_qty = abs(sum(p["qty"] for p in shorts))
+
+            # If quantities don't match, there are orphans
+            if total_long_qty != total_short_qty:
+                diff = abs(total_long_qty - total_short_qty)
+                if total_long_qty > total_short_qty:
+                    # Extra longs - find which ones
+                    for pos in longs:
+                        if diff > 0 and pos["qty"] > 0:
+                            orphans.append(pos)
+                            diff -= pos["qty"]
+                else:
+                    # Extra shorts - find which ones (more dangerous!)
+                    for pos in shorts:
+                        if diff > 0 and pos["qty"] < 0:
+                            orphans.append(pos)
+                            diff -= abs(pos["qty"])
+
+        return orphans
 
     def _check_correlation(self, symbol: str, positions: list[dict]) -> float:
         """
