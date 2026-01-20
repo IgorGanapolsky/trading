@@ -1,7 +1,11 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Ralph Wiggum technique - Structured task backlog for autonomous CTO mode",
-  "last_updated": "2026-01-16",
+  "last_updated": "2026-01-20",
+  "directives": {
+    "summary_required": true,
+    "summary_format": "Every iteration MUST end with an IMPROVEMENTS SUMMARY showing: what was improved, metrics before/after, and next priorities"
+  },
   "tasks": [
     {
       "id": "T001",
@@ -65,10 +69,10 @@
   ],
   "completed_tasks": [],
   "metadata": {
-    "total_iterations": 126,
+    "total_iterations": 127,
     "tasks_completed_this_session": 6,
     "last_task_completed": "T006",
-    "last_iteration_at": "2026-01-20T21:40:00Z",
-    "notes": "Iteration 6: Stability verified - 846 tests passed, CI green, 0 PRs, 1 branch. System healthy."
+    "last_iteration_at": "2026-01-20T21:55:00Z",
+    "notes": "Iteration 7: Added summary directive to prd.json (v1.0.0→v1.1.0). 846 tests, CI green, system healthy."
   }
 }
