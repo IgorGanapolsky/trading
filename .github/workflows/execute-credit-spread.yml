@@ -14,9 +14,9 @@ on:
         options:
           - SPY
       spread_width:
-        description: "Spread width in dollars (CLAUDE.md: $3)"
+        description: "Spread width in dollars (max $2 for 5% compliance with $5K account)"
         required: true
-        default: "3"
+        default: "2"
       quantity:
         description: "Number of spreads"
         required: true
@@ -88,7 +88,7 @@ jobs:
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
           ALPACA_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
-          SPREAD_WIDTH: ${{ inputs.spread_width || '3' }}
+          SPREAD_WIDTH: ${{ inputs.spread_width || '2' }}
           QUANTITY: ${{ inputs.quantity || '1' }}
         run: |
           python3 << 'COMPLIANCE_EOF'
@@ -158,7 +158,7 @@ jobs:
         if: steps.calendar_check.outputs.skip != 'true' && steps.compliance_check.outputs.compliant == 'true'
         env:
           SYMBOL: ${{ inputs.symbol || 'SPY' }}
-          SPREAD_WIDTH: ${{ inputs.spread_width || '3' }}
+          SPREAD_WIDTH: ${{ inputs.spread_width || '2' }}
           QUANTITY: ${{ inputs.quantity || '1' }}
         run: |
           python3 << 'TRADE_EOF'
