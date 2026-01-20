@@ -42,15 +42,55 @@ def load_backtest_summary() -> dict | None:
         return json.load(f)
 
 
-def validate_metrics(summary: dict) -> tuple[bool, list[str]]:
-    """Validate metrics against thresholds.
+def validate_flat_format(summary: dict) -> tuple[bool, list[str]]:
+    """Validate flat format backtest (single result, no scenarios).
 
     Returns:
         (passed, issues) tuple
     """
     issues = []
 
+    # Extract metrics from flat format
+    win_rate = summary.get("win_rate", 0) * 100  # Convert to percentage
+    sharpe = summary.get("sharpe_ratio", 0)
+    total_pnl = summary.get("total_pnl", 0)
+
+    # For flat format, check if we're profitable (Rule #1)
+    if total_pnl < 0:
+        issues.append(f"Total P/L is negative: ${total_pnl:.2f} (Rule #1 violation)")
+
+    # Sharpe check (relaxed for flat format since it's a single backtest)
+    if sharpe < THRESHOLDS["min_sharpe"]:
+        issues.append(f"Sharpe ratio {sharpe:.2f} < {THRESHOLDS['min_sharpe']:.2f}")
+
+    # Win rate check
+    if win_rate < THRESHOLDS["min_win_rate"]:
+        # For flat format with positive P/L, win rate is less critical
+        if total_pnl <= 0:
+            issues.append(f"Win rate {win_rate:.1f}% < {THRESHOLDS['min_win_rate']:.1f}%")
+
+    return len(issues) == 0, issues
+
+
+def validate_metrics(summary: dict) -> tuple[bool, list[str]]:
+    """Validate metrics against thresholds.
+
+    Returns:
+        (passed, issues) tuple
+
+    Handles two formats:
+    1. Scenario-based (old): Has 'scenarios' array with multiple test scenarios
+    2. Flat (new): Single backtest result with direct metrics
+    """
+    issues = []
+
     scenarios = summary.get("scenarios", [])
+
+    # Handle flat format (no scenarios array, has total_trades)
+    if not scenarios and "total_trades" in summary:
+        print("Detected flat format backtest (single result)")
+        return validate_flat_format(summary)
+
     if not scenarios:
         issues.append("No scenarios found in backtest summary")
         return False, issues
@@ -119,8 +159,15 @@ def main() -> int:
         return 0
 
     # Report summary info
-    print(f"Summary generated: {summary.get('generated_at', 'unknown')}")
-    print(f"Scenarios: {summary.get('scenario_count', 0)}")
+    if "scenarios" in summary:
+        print(f"Summary generated: {summary.get('generated_at', 'unknown')}")
+        print(f"Scenarios: {summary.get('scenario_count', 0)}")
+    else:
+        # Flat format
+        print(f"Summary generated: {summary.get('timestamp', 'unknown')}")
+        print(f"Total trades: {summary.get('total_trades', 0)}")
+        print(f"Total P/L: ${summary.get('total_pnl', 0):.2f}")
+        print(f"Win rate: {summary.get('win_rate', 0) * 100:.1f}%")
     print()
 
     # Validate
