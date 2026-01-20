@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-01-19T21:05:19.182547Z",
+  "last_updated": "2026-01-20T14:10:54.144944Z",
   "portfolio": {
     "equity": "4986.39",
     "cash": "4761.39"
@@ -351,17 +351,5 @@
       "filled_at": "2026-01-12 14:30:54.357134+00:00"
     }
   ],
-  "trades_loaded": 38,
-  "meta": {
-    "last_updated": "2026-01-20T13:46:28.977388+00:00",
-    "last_sync": "2026-01-20T13:35:41.023927",
-    "sync_mode": "skipped_no_keys",
-    "trade_sync": "alpaca_api"
-  },
-  "trades": {
-    "last_trade_date": "2026-01-20",
-    "today_trades": 0,
-    "total_trades_today": 0,
-    "last_trade_symbol": "SYNCED"
-  }
+  "trades_loaded": 38
 }
