@@ -92,10 +92,31 @@ class IronCondorStrategy:
         }
 
     def get_underlying_price(self) -> float:
-        """Get current price of SPY."""
-        # In production: use market data API
-        # For now, estimate SPY price
-        return 595.0  # Approximate SPY price Jan 2026
+        """Get current price of SPY from Alpaca or estimate."""
+        # FIX Jan 20, 2026: Fetch real price from Alpaca instead of hardcoding
+        # ROOT CAUSE: Hardcoded $595 was causing wrong strike calculations
+        # SPY was actually ~$600, causing PUT-only fills (CALL strikes too low)
+        try:
+            from alpaca.data.historical import StockHistoricalDataClient
+            from alpaca.data.requests import StockLatestQuoteRequest
+            from src.utils.alpaca_client import get_alpaca_credentials
+
+            api_key, secret = get_alpaca_credentials()
+            if api_key and secret:
+                data_client = StockHistoricalDataClient(api_key, secret)
+                request = StockLatestQuoteRequest(symbol_or_symbols=["SPY"])
+                quote = data_client.get_stock_latest_quote(request)
+                if "SPY" in quote:
+                    mid_price = (quote["SPY"].ask_price + quote["SPY"].bid_price) / 2
+                    logger.info(f"Live SPY price from Alpaca: ${mid_price:.2f}")
+                    return mid_price
+        except Exception as e:
+            logger.warning(f"Could not fetch live SPY price: {e}")
+
+        # Fallback: Use recent estimate (updated Jan 20, 2026)
+        fallback_price = 600.0
+        logger.info(f"Using fallback SPY price: ${fallback_price:.2f}")
+        return fallback_price
 
     def calculate_strikes(self, price: float) -> tuple[float, float, float, float]:
         """
@@ -283,19 +304,50 @@ class IronCondorStrategy:
                         (long_call_sym, OrderSide.BUY, "long_call"),
                     ]
 
+                    # FIX Jan 20, 2026: Get actual option prices instead of hardcoded $0.50
+                    # ROOT CAUSE: Hardcoded limit_price=0.50 caused CALL legs to not fill
+                    # CALL options are often more expensive than $0.50
+                    def get_option_price(symbol: str, side: OrderSide) -> float:
+                        """Get limit price for option based on side and market data."""
+                        try:
+                            from alpaca.data.historical import OptionHistoricalDataClient
+                            from alpaca.data.requests import OptionLatestQuoteRequest
+
+                            options_data = OptionHistoricalDataClient(api_key, secret)
+                            request = OptionLatestQuoteRequest(symbol_or_symbols=[symbol])
+                            quotes = options_data.get_option_latest_quote(request)
+                            if symbol in quotes:
+                                bid = quotes[symbol].bid_price
+                                ask = quotes[symbol].ask_price
+                                # For BUY: use ask (what we pay)
+                                # For SELL: use bid (what we receive)
+                                if side == OrderSide.BUY:
+                                    price = ask if ask > 0 else 1.50
+                                else:
+                                    price = bid if bid > 0 else 1.50
+                                logger.info(f"  {symbol}: b=${bid:.2f} a=${ask:.2f} ->${price:.2f}")
+                                return price
+                        except Exception as price_err:
+                            logger.warning(f"   Could not get price for {symbol}: {price_err}")
+                        # Fallback to reasonable estimate based on delta (15-delta ~$1.50)
+                        return 1.50
+
                     for sym, side, leg_name in legs:
                         try:
+                            limit_price = get_option_price(sym, side)
                             order_req = LimitOrderRequest(
                                 symbol=sym,
                                 qty=1,
                                 side=side,
                                 type="limit",
-                                limit_price=0.50,  # Will need real pricing
+                                limit_price=limit_price,
                                 time_in_force=TimeInForce.GTC,  # Options require GTC
                             )
                             order = client.submit_order(order_req)
-                            order_ids.append({"leg": leg_name, "order_id": str(order.id)})
-                            logger.info(f"   ✅ {leg_name} order submitted: {order.id}")
+                            order_ids.append({
+                                "leg": leg_name, "order_id": str(order.id), "price": limit_price
+                            })
+                            logger.info(f"   ✅ {leg_name}: {order.id} @ ${limit_price:.2f}")
                         except Exception as leg_error:
                             logger.warning(f"   ⚠️ {leg_name} order failed: {leg_error}")
 
