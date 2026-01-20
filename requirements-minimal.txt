@@ -37,14 +37,12 @@ python-dateutil==2.9.0.post0
 anthropic>=0.73.0,<1.0.0  # Aligned with pyproject.toml
 vaderSentiment==3.3.2      # Sentiment scoring for macro/analyst agent
 # cohere - REMOVED: Listed but never imported (Dec 2025)
-# LLM orchestration (kept minimal but required for trading agent)
-# IMPORTANT: These versions are tightly coupled - do not upgrade independently
-# All langchain packages must stay in the 0.3.x series
-langchain==0.3.27
-langchain-core>=0.3.78,<2.0.0  # Range: langchain needs >=0.3.72, anthropic needs >=0.3.78
-langchain-anthropic==0.3.22
-langchain-community==0.3.27  # Must match langchain version (0.3.x series)
-sentence-transformers==3.4.1   # Required for RAG embedder used by trading orchestrator
+# LLM orchestration - REMOVED (never imported):
+# langchain==0.3.27 - not used, removed Jan 2026
+# langchain-core - not used, removed Jan 2026
+# langchain-anthropic - not used, removed Jan 2026
+# langchain-community - not used, removed Jan 2026
+# sentence-transformers - not used (RAG uses Vertex AI), removed Jan 2026
 
 # Testing (for CI)
 pytest>=7.0.0,<8.0.0
@@ -63,6 +61,4 @@ uvicorn==0.40.0                 # ASGI server for MCP
 
 # RAG Vector Databases (Updated Jan 8, 2026)
 # chromadb>=1.0.0              # REMOVED: Using Vertex AI RAG + local JSON (Jan 2026)
-lancedb>=0.26.0                # RLHF trajectory storage (Jan 2026)
-
-# NOTE: sentence-transformers already included above (line 45)
+# lancedb>=0.26.0              # REMOVED: Never imported (Jan 2026)
