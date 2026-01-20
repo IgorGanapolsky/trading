@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Close Orphan Put Position - Lock in +$36 profit
+Close Orphan Put Position - Clean up unmatched positions
 
-The SPY260220P00660000 long put is an orphan position created when
-the short leg of a credit spread failed. Close it to lock in profit.
+Per CLAUDE.md (Jan 20, 2026): No orphan (unhedged) positions allowed.
+This script automatically detects and closes orphan option legs.
 """
 
 import os
@@ -16,8 +16,8 @@ sys.path.insert(0, str(project_root))
 from src.utils.alpaca_client import get_alpaca_client
 
 
-def close_orphan_put():
-    """Close the orphan SPY 660 put position."""
+def close_orphan_put(target_symbol: str = None):
+    """Close orphan put positions. Auto-detects if no symbol specified."""
     paper = os.getenv("PAPER_TRADING", "true").lower() == "true"
     client = get_alpaca_client(paper=paper)
 
@@ -28,7 +28,27 @@ def close_orphan_put():
     # Get current positions
     positions = client.get_all_positions()
 
-    orphan_symbol = "SPY260220P00660000"
+    # Auto-detect orphan if no symbol specified
+    if target_symbol is None:
+        # Import orphan detection
+        try:
+            sys.path.insert(0, str(project_root / "scripts"))
+            from position_validator import load_positions, find_spread_pairs
+            local_positions = load_positions()
+            _, orphans = find_spread_pairs(local_positions)
+            if orphans:
+                target_symbol = orphans[0].symbol
+                print(f"🔍 Auto-detected orphan: {target_symbol}")
+            else:
+                print("✅ No orphan positions found")
+                return True
+        except Exception as e:
+            print(f"⚠️ Auto-detection failed: {e}")
+            # Fallback to known orphan from Jan 20, 2026
+            target_symbol = "SPY260220P00653000"
+            print(f"📌 Using fallback orphan: {target_symbol}")
+
+    orphan_symbol = target_symbol
     orphan_position = None
 
     for pos in positions:

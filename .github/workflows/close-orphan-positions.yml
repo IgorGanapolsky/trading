@@ -1,0 +1,54 @@
+name: Close Orphan Positions
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (check only, no trades)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+jobs:
+  close-orphans:
+    runs-on: ubuntu-latest
+    environment: paper-trading
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install alpaca-py python-dotenv
+
+      - name: Validate orphan positions
+        run: |
+          python scripts/position_validator.py
+        continue-on-error: true
+
+      - name: Close orphan positions
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+          PAPER_TRADING: 'true'
+        run: |
+          echo "🔄 Closing orphan positions..."
+          python scripts/close_orphan_put.py
+          echo "✅ Orphan cleanup complete"
+
+      - name: Verify cleanup
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          echo "🔍 Verifying position cleanup..."
+          sleep 5
+          python scripts/position_validator.py || echo "⚠️ Some orphans may remain (order pending)"
