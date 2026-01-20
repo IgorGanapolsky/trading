@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Close Orphan Put Position - Lock in +$36 profit
+Close Orphan Put Position
 
-The SPY260220P00660000 long put is an orphan position created when
-the short leg of a credit spread failed. Close it to lock in profit.
+The SPY260220P00653000 long put is an orphan position that needs to be closed
+to free up capital and comply with the 1-spread position limit in CLAUDE.md.
 """
 
 import os
@@ -28,7 +28,7 @@ def close_orphan_put():
     # Get current positions
     positions = client.get_all_positions()
 
-    orphan_symbol = "SPY260220P00660000"
+    orphan_symbol = "SPY260220P00653000"
     orphan_position = None
 
     for pos in positions:
