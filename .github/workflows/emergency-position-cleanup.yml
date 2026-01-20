@@ -1,0 +1,99 @@
+name: Emergency Position Cleanup
+
+# Automatically closes excess positions to restore compliance with CLAUDE.md limits:
+# - Max 1 iron condor at a time
+# - Max 15% total portfolio risk
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (no actual trades)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    name: Close Excess Positions
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install alpaca-py
+
+      - name: Run Emergency Cleanup
+        if: inputs.dry_run == 'false'
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: python scripts/emergency_position_cleanup.py
+
+      - name: Dry Run - Analysis Only
+        if: inputs.dry_run == 'true'
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          python3 << 'EOF'
+          import os
+          from alpaca.trading.client import TradingClient
+
+          client = TradingClient(
+              os.environ['ALPACA_API_KEY'],
+              os.environ['ALPACA_SECRET_KEY'],
+              paper=True
+          )
+
+          account = client.get_account()
+          print(f"Account Equity: ${float(account.equity):,.2f}")
+
+          positions = client.get_all_positions()
+          print(f"\nPositions ({len(positions)}):")
+
+          short_count = 0
+          for pos in positions:
+              qty = float(pos.qty)
+              side = "LONG" if qty > 0 else "SHORT"
+              if qty < 0:
+                  short_count += 1
+              print(f"  {pos.symbol} | {side} {abs(qty):.0f} | P/L: ${float(pos.unrealized_pl):+.2f}")
+
+          print(f"\nShort positions (spreads): {short_count}")
+          print(f"Max allowed: 1")
+          print(f"Excess: {max(0, short_count - 1)}")
+
+          if short_count > 1:
+              print("\n⚠️  DRY RUN: Would close excess positions")
+          else:
+              print("\n✅ DRY RUN: No excess positions")
+          EOF
+
+      - name: Trigger State Sync
+        if: inputs.dry_run == 'false'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'sync-system-state.yml',
+              ref: 'main'
+            });
+            console.log('Triggered sync-system-state.yml');
