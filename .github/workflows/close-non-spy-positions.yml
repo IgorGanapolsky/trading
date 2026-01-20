@@ -1,0 +1,136 @@
+name: Close Non-SPY Positions
+
+# CRITICAL: Enforces SPY-only mandate from CLAUDE.md
+# Runs daily at market open to close any non-SPY option positions
+# This prevents crisis situations like the SOFI position opened Jan 20, 2026
+
+on:
+  schedule:
+    # 9:35 AM ET = 14:35 UTC (5 minutes after market open)
+    - cron: '35 14 * * 1-5'  # Mon-Fri
+  workflow_dispatch:  # Allow manual trigger
+
+permissions:
+  contents: write
+
+jobs:
+  close-violations:
+    name: Close Non-SPY Options
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install alpaca-py
+
+      - name: Close Non-SPY Option Positions
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          python3 << 'EOF'
+          import os
+          import sys
+          from datetime import datetime
+          from alpaca.trading.client import TradingClient
+          from alpaca.trading.requests import MarketOrderRequest
+          from alpaca.trading.enums import OrderSide, TimeInForce
+
+          print("=" * 60)
+          print(f"NON-SPY POSITION COMPLIANCE - {datetime.now()}")
+          print("=" * 60)
+          print("Per CLAUDE.md: SPY ONLY - No individual stocks.")
+          print()
+
+          client = TradingClient(
+              os.environ['ALPACA_API_KEY'],
+              os.environ['ALPACA_SECRET_KEY'],
+              paper=True
+          )
+
+          # Get all positions
+          positions = client.get_all_positions()
+          print(f"Total positions: {len(positions)}")
+
+          # Find non-SPY option positions
+          violations = []
+          for pos in positions:
+              symbol = pos.symbol
+              # Options are 15+ chars (e.g., SOFI260213P00032000)
+              # Skip SPY options and SPY stock
+              if len(symbol) > 10 and not symbol.startswith("SPY"):
+                  violations.append({
+                      "symbol": symbol,
+                      "qty": float(pos.qty),
+                      "pl": float(pos.unrealized_pl),
+                  })
+                  print(f"  VIOLATION: {symbol} (qty: {pos.qty}, P/L: ${pos.unrealized_pl})")
+
+          if not violations:
+              print("\n✅ COMPLIANT - No non-SPY option positions found")
+              sys.exit(0)
+
+          print(f"\n⚠️ FOUND {len(violations)} VIOLATION(S)")
+          print("Closing positions to enforce SPY-only mandate...")
+
+          orders_submitted = 0
+          for v in violations:
+              symbol = v["symbol"]
+              qty = v["qty"]
+
+              # Determine order side: if short (qty < 0), buy to close; if long (qty > 0), sell to close
+              if qty < 0:
+                  order_side = OrderSide.BUY
+                  order_qty = abs(int(qty))
+              else:
+                  order_side = OrderSide.SELL
+                  order_qty = int(qty)
+
+              print(f"\nClosing {symbol}: {order_side.value} {order_qty}")
+
+              try:
+                  order = client.submit_order(MarketOrderRequest(
+                      symbol=symbol,
+                      qty=order_qty,
+                      side=order_side,
+                      time_in_force=TimeInForce.DAY,
+                  ))
+                  print(f"  ✅ Order submitted: {order.id}")
+                  orders_submitted += 1
+              except Exception as e:
+                  error_msg = str(e)
+                  if "pattern day trading" in error_msg.lower():
+                      print(f"  ⚠️ PDT BLOCK - Will retry tomorrow: {e}")
+                  else:
+                      print(f"  ❌ Failed: {e}")
+
+          print(f"\n{'=' * 60}")
+          print(f"SUBMITTED {orders_submitted}/{len(violations)} CLOSE ORDERS")
+          print(f"{'=' * 60}")
+          EOF
+
+      - name: Trigger State Sync
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            try {
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'sync-system-state.yml',
+                ref: 'main'
+              });
+              console.log('Triggered sync-system-state.yml');
+            } catch (error) {
+              console.log('Could not trigger sync:', error.message);
+            }
