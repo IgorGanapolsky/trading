@@ -1,0 +1,17 @@
+{
+  "total_trades": 0,
+  "wins": 0,
+  "losses": 0,
+  "open_trades": 0,
+  "win_rate": 0.0,
+  "avg_winner": 0.0,
+  "avg_loser": 0.0,
+  "profit_factor": 0.0,
+  "expectancy": 0.0,
+  "total_pnl": 0,
+  "avg_days_held": 0.0,
+  "is_profitable": false,
+  "meets_target_win_rate": false,
+  "sample_size_adequate": false,
+  "calculated_at": "2026-01-20T11:31:11.988134"
+}
