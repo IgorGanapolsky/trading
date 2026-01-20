@@ -185,10 +185,14 @@ else
     DATA_SOURCE="📁 Local files"
 fi
 
-# Check if today's trade file exists
+# Check for today's trades in system_state.json (canonical source)
+# FIXED Jan 20, 2026: trades_*.json is DEPRECATED per CLAUDE.md architecture
 TRADE_WARNING=""
-if [[ ! -f "$TRADE_FILE" ]]; then
+TODAY_TRADE_COUNT=$(jq -r --arg today "$TODAY" '[.trade_history[] | select(.filled_at | startswith($today))] | length' "$STATE_FILE" 2>/dev/null || echo "0")
+if [[ "$TODAY_TRADE_COUNT" == "0" || -z "$TODAY_TRADE_COUNT" ]]; then
     TRADE_WARNING="⚠️ NO TRADES TODAY"
+else
+    TRADE_WARNING="✅ $TODAY_TRADE_COUNT trades today"
 fi
 
 # Check market status - US Equities ONLY (we don't trade crypto)
