@@ -1,0 +1,1 @@
+Trigger close of SOFI260213P00032000 short put - 2026-01-20T16:47:04+00:00

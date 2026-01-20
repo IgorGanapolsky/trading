@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """
-Close Orphan Put Position - Lock in +$36 profit
+Close Orphan/Violating Put Positions
 
-The SPY260220P00660000 long put is an orphan position created when
-the short leg of a credit spread failed. Close it to lock in profit.
+Closes positions that violate CLAUDE.md rules:
+- SOFI positions (SPY ONLY policy)
+- Orphan puts without matching spreads
+
+Updated: Jan 20, 2026 - Target SOFI260213P00032000 short put
 """
 
 import os
@@ -17,7 +20,7 @@ from src.utils.alpaca_client import get_alpaca_client
 
 
 def close_orphan_put():
-    """Close the orphan SPY 660 put position."""
+    """Close orphan or violating put positions."""
     paper = os.getenv("PAPER_TRADING", "true").lower() == "true"
     client = get_alpaca_client(paper=paper)
 
@@ -27,56 +30,89 @@ def close_orphan_put():
 
     # Get current positions
     positions = client.get_all_positions()
+    print(f"📋 Found {len(positions)} positions")
 
-    orphan_symbol = "SPY260220P00660000"
-    orphan_position = None
+    # Priority: SOFI positions first (violate SPY ONLY rule)
+    # Then SPY orphans
+    target_symbols = [
+        "SOFI260213P00032000",  # Current SOFI short put - VIOLATES SPY ONLY
+        "SPY260220P00653000",   # Legacy orphan
+    ]
 
-    for pos in positions:
-        if pos.symbol == orphan_symbol:
-            orphan_position = pos
+    target_position = None
+    for symbol in target_symbols:
+        for pos in positions:
+            if pos.symbol == symbol:
+                target_position = pos
+                print(f"🎯 Found target: {symbol}")
+                break
+        if target_position:
             break
 
-    if not orphan_position:
-        print(f"❌ Orphan position {orphan_symbol} not found")
+    if not target_position:
+        print("❌ No target positions found to close")
         print("Available positions:")
         for pos in positions:
-            print(f"  - {pos.symbol}: {pos.qty} @ ${float(pos.current_price):.2f}")
+            qty = float(pos.qty)
+            price = float(pos.current_price)
+            pl = float(pos.unrealized_pl)
+            print(f"  - {pos.symbol}: {qty} @ ${price:.2f} (P/L: ${pl:.2f})")
         return False
 
-    qty = abs(float(orphan_position.qty))
-    current_price = float(orphan_position.current_price)
-    unrealized_pl = float(orphan_position.unrealized_pl)
+    symbol = target_position.symbol
+    qty = float(target_position.qty)
+    current_price = float(target_position.current_price)
+    unrealized_pl = float(target_position.unrealized_pl)
 
-    print("📊 Found orphan position:")
-    print(f"   Symbol: {orphan_symbol}")
+    print("📊 Target position:")
+    print(f"   Symbol: {symbol}")
     print(f"   Qty: {qty}")
     print(f"   Current Price: ${current_price:.2f}")
     print(f"   Unrealized P/L: ${unrealized_pl:.2f}")
     print()
 
-    # Close the position by selling
+    # Determine order side based on position
     from alpaca.trading.enums import OrderSide, TimeInForce
     from alpaca.trading.requests import MarketOrderRequest
 
+    if qty < 0:
+        # SHORT position -> BUY to close
+        order_side = OrderSide.BUY
+        order_qty = abs(qty)
+        print(f"🔄 SHORT position detected -> BUY {int(order_qty)} to close")
+    else:
+        # LONG position -> SELL to close
+        order_side = OrderSide.SELL
+        order_qty = qty
+        print(f"🔄 LONG position detected -> SELL {int(order_qty)} to close")
+
     order_request = MarketOrderRequest(
-        symbol=orphan_symbol,
-        qty=qty,
-        side=OrderSide.SELL,
-        time_in_force=TimeInForce.GTC,  # Good til canceled - will execute at next market open
+        symbol=symbol,
+        qty=order_qty,
+        side=order_side,
+        time_in_force=TimeInForce.DAY,
     )
 
-    print(f"🔄 Submitting SELL order for {qty} {orphan_symbol}...")
+    print(f"\n📝 Submitting {order_side.value} order for {int(order_qty)} {symbol}...")
 
     try:
         order = client.submit_order(order_request)
         print("✅ Order submitted successfully!")
         print(f"   Order ID: {order.id}")
         print(f"   Status: {order.status}")
-        print(f"   Expected profit: ~${unrealized_pl:.2f}")
+        print(f"   Expected P/L: ~${unrealized_pl:.2f}")
         return True
     except Exception as e:
         print(f"❌ Order failed: {e}")
-        return False
+        # Try close_position as backup
+        print("\n🔄 Trying close_position() as backup...")
+        try:
+            order = client.close_position(symbol)
+            print(f"✅ Backup close succeeded! Order ID: {order.id}")
+            return True
+        except Exception as e2:
+            print(f"❌ Backup also failed: {e2}")
+            return False
 
 
 if __name__ == "__main__":
