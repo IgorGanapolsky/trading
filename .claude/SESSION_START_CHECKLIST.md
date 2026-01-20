@@ -51,13 +51,14 @@
 ## 3. Deferred Items
 
 Track items that need attention but aren't blocking:
-1. [ITEM] - [REASON DEFERRED]
-2. ...
+1. Close excess positions (6 → 4 legs) - Workflow dispatched, awaiting execution
+2. Sync system_state.json - Data is 21h stale, sync workflow triggered
 
 ---
 
 ## 4. Ralph Mode Status
 
-- Iteration: X/100
-- Current PRD tasks remaining: X
-- Last completed task: [TASK_ID]
+- Iteration: 10/100
+- Current PRD tasks remaining: 0 (all passing)
+- Last completed task: T006
+- Last updated: 2026-01-20 18:18 UTC
