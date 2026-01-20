@@ -235,6 +235,10 @@ def generate_engaging_post() -> tuple[str, str]:
             "Sometimes the lesson is just *keep going*.\n"
         )
 
+    # Generate canonical URL for specific post (improves SEO)
+    post_slug = today.strftime("%Y/%m/%d") + "/lessons-learned"
+    canonical = f"https://igorganapolsky.github.io/trading/{post_slug}/"
+
     body = f"""---
 title: "{title}"
 published: true
@@ -242,7 +246,7 @@ description: "Day {day_number}: The unglamorous truth about building an AI tradi
 tags: trading, ai, python, investing
 series: "AI Trading Journey"
 cover_image: https://dev-to-uploads.s3.amazonaws.com/uploads/articles/trading-ai-cover.png
-canonical_url: https://igorganapolsky.github.io/trading/
+canonical_url: {canonical}
 ---
 
 ## A Confession Before We Start
