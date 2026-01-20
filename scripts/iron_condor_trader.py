@@ -252,6 +252,43 @@ class IronCondorStrategy:
 
         logger.info("RAG checks passed - proceeding with execution")
 
+        # FIX Jan 20, 2026: Check position limits BEFORE placing new trades
+        # ROOT CAUSE: No position check caused system to keep placing orders
+        # when max_positions already reached (incomplete iron condors)
+        if live:
+            try:
+                from alpaca.trading.client import TradingClient
+                from src.utils.alpaca_client import get_alpaca_credentials
+
+                api_key, secret = get_alpaca_credentials()
+                if api_key and secret:
+                    client = TradingClient(api_key, secret, paper=True)
+                    positions = client.get_all_positions()
+
+                    # Count SPY option positions (iron condor = 4 legs)
+                    spy_positions = [p for p in positions if "SPY" in p.symbol]
+                    position_count = len(spy_positions)
+
+                    logger.info(f"Current SPY positions: {position_count}")
+                    max_positions = self.config["max_positions"] * 4  # 4 legs per condor
+
+                    if position_count >= max_positions:
+                        logger.warning(
+                            f"⚠️ POSITION LIMIT REACHED: {position_count}/{max_positions}"
+                        )
+                        logger.warning("   Skipping new iron condor - manage existing first")
+                        return {
+                            "timestamp": datetime.now().isoformat(),
+                            "strategy": "iron_condor",
+                            "underlying": ic.underlying,
+                            "status": "SKIPPED_POSITION_LIMIT",
+                            "reason": f"Have {position_count} positions (max: {max_positions})",
+                            "existing_positions": [p.symbol for p in spy_positions],
+                        }
+            except Exception as pos_err:
+                logger.warning(f"Could not check positions: {pos_err}")
+                # Continue anyway - better to try than to skip
+
         logger.info("=" * 60)
         logger.info("EXECUTING IRON CONDOR" + (" (LIVE)" if live else " (SIMULATED)"))
         logger.info("=" * 60)
