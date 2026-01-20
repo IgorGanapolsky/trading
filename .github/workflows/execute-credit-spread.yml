@@ -47,7 +47,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install alpaca-py requests
+          pip install alpaca-py requests yfinance numpy
 
       # ===== NEW: CALENDAR VALIDATION (LL-240 fix) =====
       - name: Validate Trading Day
@@ -163,45 +163,12 @@ jobs:
         env:
           SYMBOL: ${{ inputs.symbol || 'SPY' }}
           SPREAD_WIDTH: ${{ inputs.spread_width || '2' }}
-          QUANTITY: ${{ inputs.quantity || '1' }}
+          PAPER_TRADING: "true"
         run: |
-          python3 << 'TRADE_EOF'
-          import os
-          import json
-          from datetime import datetime, timedelta
-          from alpaca.trading.client import TradingClient
-          from alpaca.trading.requests import LimitOrderRequest
-          from alpaca.trading.enums import OrderSide, TimeInForce, OrderClass
-
-          # Get parameters
-          symbol = os.environ.get('SYMBOL', 'SPY')
-          spread_width = int(os.environ.get('SPREAD_WIDTH', '3'))
-          quantity = int(os.environ.get('QUANTITY', '1'))
-
-          print(f"=== Executing {symbol} Bull Put Credit Spread ===")
-          print(f"Spread width: ${spread_width}")
-          print(f"Quantity: {quantity}")
-
-          client = TradingClient(
-              os.environ['ALPACA_API_KEY'],
-              os.environ['ALPACA_API_SECRET'],
-              paper=True
-          )
-
-          # Get account info
-          account = client.get_account()
-          print(f"Account equity: ${account.equity}")
-          print(f"Buying power: ${account.buying_power}")
-
-          # TODO: Implement actual spread execution
-          # This is a placeholder - need to:
-          # 1. Get current price of underlying
-          # 2. Calculate 30-delta strike
-          # 3. Find appropriate expiration (30-45 DTE)
-          # 4. Submit multi-leg order
-
-          print("::warning::Trade execution not yet implemented - placeholder only")
-          TRADE_EOF
+          echo "=== Executing Bull Put Credit Spread via scripts/execute_credit_spread.py ==="
+          echo "Symbol: $SYMBOL"
+          echo "Spread Width: \$$SPREAD_WIDTH"
+          python3 scripts/execute_credit_spread.py --symbol "$SYMBOL" --width "$SPREAD_WIDTH"
 
       # ===== MANDATORY STOP-LOSS (LL-232 + CLAUDE.md) =====
       - name: Set Stop-Loss on New Position
