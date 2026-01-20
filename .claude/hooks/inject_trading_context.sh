@@ -194,9 +194,11 @@ fi
 # Check market status - US Equities ONLY (we don't trade crypto)
 # UPDATED Jan 5, 2026: Fixed ambiguous output that caused Claude to misinterpret market status
 # UPDATED Jan 19, 2026: Added US market holiday detection (MLK Day bug fix)
+# FIXED Jan 20, 2026: Use %-H (no leading zero) to avoid bash octal interpretation bug
+# BUG: "09" with leading zero was interpreted as octal, causing -lt/-eq to fail silently
 # See LL-074: Hook output must be EXPLICIT about market state
 CURRENT_TIME=$(TZ=America/New_York date +%H:%M)
-CURRENT_HOUR=$(TZ=America/New_York date +%H)
+CURRENT_HOUR=$(TZ=America/New_York date +%-H)  # %-H removes leading zero (9 not 09)
 
 TRADING_ALLOWED="NO"
 MARKET_STATE=""
