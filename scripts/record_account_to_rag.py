@@ -108,6 +108,11 @@ def update_system_state(brokerage_data: dict, paper_data: dict):
 
     now = datetime.now().isoformat()
 
+    # Safely initialize keys if they don't exist
+    state.setdefault("account", {})
+    state.setdefault("meta", {})
+    state.setdefault("paper_account", {})
+
     # Update brokerage account
     if brokerage_data:
         state["account"]["current_equity"] = brokerage_data["equity"]
@@ -116,7 +121,7 @@ def update_system_state(brokerage_data: dict, paper_data: dict):
         state["account"]["positions_value"] = brokerage_data["equity"] - brokerage_data["cash"]
 
     # Update paper account if exists
-    if paper_data and "paper_account" in state:
+    if paper_data:
         state["paper_account"]["current_equity"] = paper_data["equity"]
         state["paper_account"]["cash"] = paper_data["cash"]
         state["paper_account"]["buying_power"] = paper_data["buying_power"]
