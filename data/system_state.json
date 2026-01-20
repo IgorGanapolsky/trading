@@ -1,48 +1,20 @@
 {
-  "last_updated": "2026-01-20T15:04:57.854096+00:00",
-  "sync_health": {
-    "last_successful_sync": "2026-01-20T15:04:57.854098+00:00",
-    "sync_source": "github_actions",
-    "sync_count_today": 2,
-    "history": [
+  "last_updated": "2026-01-20T15:09:25.512627Z",
+  "portfolio": {
+    "equity": "5002.23",
+    "cash": "5757.23"
+  },
+  "paper_account": {
+    "positions_count": 1,
+    "positions": [
       {
-        "timestamp": "2026-01-20T14:45:33.860869+00:00",
-        "equity": 4985.37,
-        "success": true
-      },
-      {
-        "timestamp": "2026-01-20T15:04:57.854087+00:00",
-        "equity": 5002.23,
-        "success": true
+        "symbol": "SOFI260213P00032000",
+        "qty": "-1",
+        "market_value": "-755",
+        "unrealized_pl": "-150"
       }
     ]
   },
-  "portfolio": {
-    "equity": 5002.23,
-    "cash": 5757.23
-  },
-  "paper_account": {
-    "equity": 5002.23,
-    "cash": 5757.23,
-    "buying_power": 5014.46,
-    "total_pl": 2.2299999999995634,
-    "total_pl_pct": 0.04,
-    "positions_count": 1,
-    "daily_change": 3.84,
-    "win_rate": 0,
-    "win_rate_sample_size": 0,
-    "starting_balance": 5000.0
-  },
-  "positions": [
-    {
-      "symbol": "SOFI260213P00032000",
-      "qty": -1.0,
-      "price": 7.55,
-      "value": -755.0,
-      "pnl": -150.0,
-      "type": "option"
-    }
-  ],
   "trade_history": [
     {
       "id": "f5d09a44-101d-4dcd-a421-1a0ce270c2eb",
@@ -413,27 +385,5 @@
       "filled_at": "2026-01-12 14:30:54.357134+00:00"
     }
   ],
-  "trades_loaded": 46,
-  "trades": {
-    "last_trade_date": "2026-01-20",
-    "today_trades": 0,
-    "total_trades_today": 0,
-    "last_trade_symbol": "SOFI260213P00032000"
-  },
-  "risk": {
-    "status": "MONITORING",
-    "total_pl": 2.2299999999995634,
-    "unrealized_pl": -150.0
-  },
-  "account": {
-    "current_equity": 5002.23,
-    "total_pl": 2.2299999999995634,
-    "total_pl_pct": 0.04,
-    "positions_count": 1
-  },
-  "meta": {
-    "last_updated": "2026-01-20T15:04:57.854112+00:00",
-    "trade_sync": "alpaca_api",
-    "sync_frequency_minutes": 5
-  }
+  "trades_loaded": 46
 }
