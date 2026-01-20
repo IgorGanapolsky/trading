@@ -281,15 +281,20 @@ NEXT_TRADE=$(get_next_trading_day)
 # Get backtest status from actual results if available
 BACKTEST_SUMMARY="$CLAUDE_PROJECT_DIR/data/backtests/latest_summary.json"
 if [[ -f "$BACKTEST_SUMMARY" ]]; then
-    PASSES=$(jq -r '.aggregate_metrics.passes // 0' "$BACKTEST_SUMMARY" 2>/dev/null || echo "0")
-    TOTAL=$(jq -r '.scenario_count // 19' "$BACKTEST_SUMMARY" 2>/dev/null || echo "19")
-    MIN_SHARPE=$(jq -r '.aggregate_metrics.min_sharpe_ratio // "N/A"' "$BACKTEST_SUMMARY" 2>/dev/null || echo "N/A")
-    if [[ "$MIN_SHARPE" != "N/A" ]]; then
-        SHARPE_NOTE="Sharpe: $MIN_SHARPE"
+    # Handle both old format (aggregate_metrics) and new format (flat structure)
+    PASSES=$(jq -r '.aggregate_metrics.passes // .total_trades // 0' "$BACKTEST_SUMMARY" 2>/dev/null || echo "0")
+    TOTAL=$(jq -r '.scenario_count // .total_trades // 6' "$BACKTEST_SUMMARY" 2>/dev/null || echo "6")
+    WIN_RATE=$(jq -r '.win_rate // 0' "$BACKTEST_SUMMARY" 2>/dev/null || echo "0")
+    SHARPE=$(jq -r '.aggregate_metrics.min_sharpe_ratio // .sharpe_ratio // "N/A"' "$BACKTEST_SUMMARY" 2>/dev/null || echo "N/A")
+    if [[ "$WIN_RATE" != "0" ]] && [[ "$WIN_RATE" != "null" ]]; then
+        WIN_PCT=$(echo "$WIN_RATE * 100" | bc 2>/dev/null || echo "N/A")
+        SHARPE_NOTE="Win: ${WIN_PCT}%, Sharpe: $SHARPE"
+    elif [[ "$SHARPE" != "N/A" ]] && [[ "$SHARPE" != "null" ]]; then
+        SHARPE_NOTE="Sharpe: $SHARPE"
     else
-        SHARPE_NOTE="Sharpe: negative"
+        SHARPE_NOTE="Sharpe: N/A"
     fi
-    BACKTEST_STATUS="$PASSES/$TOTAL scenarios pass ($SHARPE_NOTE)"
+    BACKTEST_STATUS="$PASSES/$TOTAL trades ($SHARPE_NOTE)"
 else
     BACKTEST_STATUS="Not run yet (run scripts/run_backtest_matrix.py)"
 fi
