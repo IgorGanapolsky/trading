@@ -134,23 +134,21 @@ class TradingOrchestrator:
         # Persist execution mode; some gates/logging reference self.paper.
         self.paper = paper
 
-        import os as _os
-
         self.macro_agent = MacroeconomicAgent()
         self.momentum_agent = MomentumAgent(
-            min_score=float(_os.getenv("MOMENTUM_MIN_SCORE", "0.0"))
+            min_score=float(os.getenv("MOMENTUM_MIN_SCORE", "0.0"))
         )
 
         # Jan 10, 2026: DISABLED RL FILTER (CEO directive - reduce complexity)
         # Evidence: 1,601 lines of RL code, 0 trades using it
         # With $30 portfolio, RL has nothing to learn from
         # Re-enable when: portfolio >= $500 AND trades being executed
-        self.rl_filter_enabled = _os.getenv("RL_FILTER_ENABLED", "false").lower() in {
+        self.rl_filter_enabled = os.getenv("RL_FILTER_ENABLED", "false").lower() in {
             "1",
             "true",
             "yes",
         }
-        self.llm_sentiment_enabled = _os.getenv("LLM_SENTIMENT_ENABLED", "true").lower() in {
+        self.llm_sentiment_enabled = os.getenv("LLM_SENTIMENT_ENABLED", "true").lower() in {
             "1",
             "true",
             "yes",
@@ -158,10 +156,10 @@ class TradingOrchestrator:
 
         # Dec 2025: Parallel ticker processing (ADK Fan-Out/Gather pattern)
         # Reduces latency from O(n) to O(1) for n tickers
-        self.parallel_processing_enabled = _os.getenv(
+        self.parallel_processing_enabled = os.getenv(
             "PARALLEL_TICKER_PROCESSING", "true"
         ).lower() in {"1", "true", "yes"}
-        self.parallel_max_workers = int(_os.getenv("PARALLEL_MAX_WORKERS", "5"))
+        self.parallel_max_workers = int(os.getenv("PARALLEL_MAX_WORKERS", "5"))
         self.parallel_processor: ParallelTickerProcessor | None = None  # Lazy init
 
         # Only initialize if enabled (saves memory and API costs)

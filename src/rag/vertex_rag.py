@@ -16,6 +16,7 @@ CEO Directive: "I want to be able to speak to Dialogflow about my trades
 and get accurate information"
 """
 
+import json
 import logging
 import os
 from datetime import datetime, timezone
@@ -76,8 +77,6 @@ class VertexRAG:
         sa_key = os.getenv("GCP_SA_KEY") or os.getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON")
         if sa_key:
             try:
-                import json
-
                 sa_data = json.loads(sa_key)
                 project_id = sa_data.get("project_id")
                 if project_id:
@@ -90,8 +89,6 @@ class VertexRAG:
         creds_file = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
         if creds_file and os.path.exists(creds_file):
             try:
-                import json
-
                 with open(creds_file) as f:
                     sa_data = json.load(f)
                     project_id = sa_data.get("project_id")

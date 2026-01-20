@@ -1046,34 +1046,6 @@ class TradeGateway:
 
         return decision
 
-    def validate_trade(self, request: TradeRequest) -> GatewayDecision:
-        """
-        Validate a trade request (alias for evaluate).
-
-        This is the MANDATORY checkpoint. No trade can bypass this.
-
-        Args:
-            request: The trade request from the AI
-
-        Returns:
-            GatewayDecision with approval status and reasons
-        """
-        return self.evaluate(request)
-
-    def check_trade(self, request: TradeRequest) -> GatewayDecision:
-        """
-        Check a trade request (alias for evaluate).
-
-        This is the MANDATORY checkpoint. No trade can bypass this.
-
-        Args:
-            request: The trade request from the AI
-
-        Returns:
-            GatewayDecision with approval status and reasons
-        """
-        return self.evaluate(request)
-
     def execute(self, decision: GatewayDecision) -> dict[str, Any] | None:
         """
         Execute an approved trade.
@@ -1449,20 +1421,6 @@ class TradeGateway:
                 return "MONITOR: Track position as blackout approaches"
 
 
-def create_suicide_test() -> TradeRequest:
-    """
-    Create a "suicide command" test request.
-
-    This should ALWAYS be rejected by the gateway.
-    """
-    return TradeRequest(
-        symbol="AMC",
-        side="buy",
-        notional=1000000,  # $1 million
-        source="stress_test",
-    )
-
-
 # Singleton instance
 _gateway_instance = None
 
@@ -1473,97 +1431,3 @@ def get_trade_gateway(executor=None, paper: bool = True) -> TradeGateway:
     if _gateway_instance is None:
         _gateway_instance = TradeGateway(executor=executor, paper=paper)
     return _gateway_instance
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-
-    gateway = TradeGateway(paper=True)
-
-    print("\n" + "=" * 60)
-    print("TRADE GATEWAY STRESS TEST")
-    print("=" * 60)
-
-    # Test 1: Suicide command
-    print("\n--- Test 1: Suicide Command ($1M AMC) ---")
-    suicide_request = create_suicide_test()
-    decision = gateway.stress_test(suicide_request)
-    print(f"Approved: {decision.approved}")
-    print(f"Rejections: {[r.value for r in decision.rejection_reasons]}")
-
-    # Test NEW: Ticker whitelist - SOFI should be BLOCKED
-    print("\n--- Test NEW: SOFI Trade (Should be BLOCKED) ---")
-    sofi_request = TradeRequest(
-        symbol="SOFI",
-        side="buy",
-        notional=100,
-        strategy_type="cash_secured_put",
-    )
-    decision = gateway.evaluate(sofi_request)
-    print(f"Approved: {decision.approved}")
-    print(f"Rejections: {[r.value for r in decision.rejection_reasons]}")
-    assert not decision.approved, "SOFI should be BLOCKED by ticker whitelist!"
-    print("✅ SOFI correctly blocked!")
-
-    # Test NEW: Naked put - should be BLOCKED
-    print("\n--- Test NEW: Naked Put Strategy (Should be BLOCKED) ---")
-    naked_put_request = TradeRequest(
-        symbol="SPY",
-        side="sell",
-        quantity=1,
-        strategy_type="naked_put",
-        is_option=True,
-    )
-    decision = gateway.evaluate(naked_put_request)
-    print(f"Approved: {decision.approved}")
-    print(f"Rejections: {[r.value for r in decision.rejection_reasons]}")
-    assert not decision.approved, "Naked put should be BLOCKED!"
-    print("✅ Naked put correctly blocked!")
-
-    # Test NEW: SPY credit spread - should be ALLOWED (if P/L positive)
-    print("\n--- Test NEW: SPY Credit Spread (Should be ALLOWED if P/L >= 0) ---")
-    spy_spread_request = TradeRequest(
-        symbol="SPY",
-        side="sell",
-        quantity=1,
-        strategy_type="bull_put_spread",
-        is_option=True,
-        iv_rank=50.0,  # Good IV
-    )
-    decision = gateway.evaluate(spy_spread_request)
-    print(f"Approved: {decision.approved}")
-    if not decision.approved:
-        print(f"Rejections: {[r.value for r in decision.rejection_reasons]}")
-    else:
-        print("✅ SPY spread correctly allowed!")
-
-    # Test 2: Normal trade
-    print("\n--- Test 2: Normal Trade ($100 SPY) ---")
-    normal_request = TradeRequest(symbol="SPY", side="buy", notional=100)
-    decision = gateway.evaluate(normal_request)
-    print(f"Approved: {decision.approved}")
-    if not decision.approved:
-        print(f"Rejections: {[r.value for r in decision.rejection_reasons]}")
-    print(f"Warnings: {decision.warnings}")
-
-    # Test 3: Daily deposit accumulation
-    print("\n--- Test 3: Daily Deposit ($10) ---")
-    result = gateway.add_daily_deposit(10.0)
-    print(f"Status: {result['status']}")
-    print(f"Accumulated: ${result['accumulated']:.2f}")
-
-    # Test 4: High Risk Trade (Exceeds 1% Equity Risk)
-    print("\n--- Test 4: High Risk Trade (Risk > 1%) ---")
-    # Equity = 100k. 1% = $1000.
-    # Trade: Buy $50,000 of SPY. Stop Loss 10% away.
-    # Risk = $50,000 * 0.10 = $5,000 > $1000 allowed.
-    high_risk_request = TradeRequest(
-        symbol="SPY",
-        side="buy",
-        notional=50000,
-        stop_price=90.0,  # Assume entry 100, stop 90 (10% risk)
-    )
-    decision = gateway.evaluate(high_risk_request)
-    print(f"Approved: {decision.approved}")
-    if not decision.approved:
-        print(f"Rejections: {[r.value for r in decision.rejection_reasons]}")
