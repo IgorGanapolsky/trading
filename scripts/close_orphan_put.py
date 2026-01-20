@@ -28,7 +28,7 @@ def close_orphan_put():
     # Get current positions
     positions = client.get_all_positions()
 
-    orphan_symbol = "SPY260220P00660000"
+    orphan_symbol = "SPY260220P00653000"
     orphan_position = None
 
     for pos in positions:
