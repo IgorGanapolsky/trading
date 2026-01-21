@@ -156,9 +156,6 @@ class TestPositionSpreadIntegrity:
         if not put_positions:
             return
 
-        # Check net quantity
-        total_qty = sum(put_positions.values())
-
         # For a spread: long qty + short qty should roughly balance
         # (long = positive, short = negative in most systems)
         # If highly unbalanced, it's not a proper spread
