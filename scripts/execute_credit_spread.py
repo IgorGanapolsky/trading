@@ -267,11 +267,13 @@ def find_bull_put_spread(
     return best_spread
 
 
-# Ticker whitelist - MUST match mandatory_trade_gate.py and pre_trade_checklist.py
-# Added Jan 15, 2026 (LL-209): Ensures this script can't bypass ticker restrictions
-# UPDATED Jan 19, 2026 (LL-244): CLAUDE.md mandates "SPY ONLY"
-# Even if someone runs `python execute_credit_spread.py --symbol SOFI` directly
-ALLOWED_TICKERS = {"SPY"}  # SPY ONLY per CLAUDE.md Jan 19, 2026
+# Ticker whitelist - Import from canonical source (single source of truth)
+# UPDATED Jan 21, 2026: Now imports from trading_constants.py to avoid maintenance issues
+# See LL-244 and trading_constants.py for the canonical definition
+try:
+    from src.core.trading_constants import ALLOWED_TICKERS
+except ImportError:
+    ALLOWED_TICKERS = {"SPY"}  # Fallback - SPY ONLY per CLAUDE.md Jan 19, 2026
 
 # Earnings blackout calendar - MUST match trade_gateway.py
 # Added Jan 14, 2026 (LL-205): Script was bypassing TradeGateway blackout checks

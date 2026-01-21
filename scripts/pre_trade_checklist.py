@@ -14,8 +14,16 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-# Allowed tickers - UPDATED Jan 19, 2026 (LL-244): SPY ONLY per CLAUDE.md
-ALLOWED_TICKERS = ["SPY"]  # SPY ONLY - IWM removed per adversarial audit
+# Add project root to path for imports
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
+# Allowed tickers - Import from canonical source (single source of truth)
+# UPDATED Jan 21, 2026: Now imports from trading_constants.py
+try:
+    from src.core.trading_constants import ALLOWED_TICKERS
+except ImportError:
+    ALLOWED_TICKERS = {"SPY"}  # Fallback - SPY ONLY per CLAUDE.md Jan 19, 2026
 
 # Earnings blackout periods (ticker: (start_date, end_date))
 EARNINGS_BLACKOUTS = {
