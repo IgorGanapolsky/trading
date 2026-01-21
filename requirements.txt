@@ -181,3 +181,5 @@ yarl==1.22.0
 yfinance==0.2.58
 youtube-transcript-api==1.2.3
 zstandard==0.23.0
+# RAG Evaluation (added Jan 21, 2026 - LL-268)
+ragas==0.2.14
