@@ -113,6 +113,13 @@ class RiskThresholds:
     VIX_HALT_THRESHOLD = 30  # Halt all new trades above VIX 30
     VIX_REDUCE_THRESHOLD = 25  # Reduce position sizing above VIX 25
 
+    # VIX optimal range for iron condors (LL-269 research, Jan 21 2026)
+    # VIX 15-25: Ideal - premiums decent, risk manageable
+    # VIX < 15: Avoid - premiums too thin
+    # VIX > 25: Caution - volatility too high, wider strikes needed
+    VIX_OPTIMAL_MIN = 15  # Don't trade when VIX < 15 (thin premiums)
+    VIX_OPTIMAL_MAX = 25  # Use caution when VIX > 25 (high volatility)
+
     # Stop loss levels
     CSP_STOP_LOSS_MULTIPLIER = 2.0  # Exit at 2x premium received
     COVERED_CALL_STOP_LOSS_MULTIPLIER = 2.0
@@ -127,9 +134,9 @@ class RiskThresholds:
     IRON_CONDOR_MIN_DTE = 30
     IRON_CONDOR_MAX_DTE = 45
 
-    # Exit at 21 DTE to avoid gamma risk (CLAUDE.md rule)
-    # "Close positions at 21 DTE to avoid gamma risk"
-    EXIT_AT_DTE = 21  # Close iron condors at 21 DTE
+    # Exit at 7 DTE per LL-268 research (Jan 21, 2026)
+    # 7 DTE exit improves win rate to 80%+ (from 71,417 trade study)
+    EXIT_AT_DTE = 7  # Close iron condors at 7 DTE for higher win rate
 
     # Rolling threshold (Invest with Henry: "Roll before expiration")
     # Roll options when DTE falls below this to avoid assignment risk
