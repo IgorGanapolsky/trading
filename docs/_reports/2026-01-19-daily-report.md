@@ -5,12 +5,12 @@ date: 2026-01-19
 daily_pl: 12.31
 total_pl: 0.00
 equity: 4986.39
-day_number: 83
+day_number: 85
 ---
 
 # Profitable Day: Monday, January 19, 2026
 
-**Day 83/90** of our AI Trading R&D Phase
+**Day 85/90** of our AI Trading R&D Phase
 
 ---
 
@@ -68,6 +68,44 @@ Our current strategy focuses on:
 
 ---
 
+## Tech Stack in Action
+
+Today's trading decisions were powered by our AI stack:
+
+<div class="mermaid">
+flowchart LR
+    subgraph Today["Today's Pipeline"]
+        DATA["Market Data<br/>(Alpaca)"] --> GATES["Gate Pipeline"]
+        GATES --> CLAUDE["Claude Opus 4.5<br/>(Risk Decision)"]
+        GATES --> RAG["Vertex AI RAG<br/>(Past Lessons)"]
+        CLAUDE --> EXEC["Trade Execution"]
+        RAG --> CLAUDE
+    end
+</div>
+
+### Technologies Used Today
+
+| Component | Technology | Role |
+|-----------|------------|------|
+| **Decision Engine** | Claude Opus 4.5 | Final trade approval, risk assessment |
+| **Cost-Optimized LLM** | OpenRouter (DeepSeek/Kimi) | Sentiment analysis, market research |
+| **Knowledge Base** | Vertex AI RAG | Query 200+ lessons learned |
+| **Retrieval** | Gemini 2.0 Flash | Semantic search over trade history |
+| **Broker** | Alpaca API | Paper trading execution |
+| **Data** | FRED API | Treasury yields, macro indicators |
+
+### How It Works
+
+1. **Market Data Ingestion**: Alpaca streams real-time quotes and positions
+2. **Gate Pipeline**: Sequential checks (Momentum → Sentiment → Risk)
+3. **RAG Query**: System retrieves similar past trades and lessons
+4. **Claude Decision**: Final approval with full context (86% accuracy)
+5. **Execution**: Order submitted to Alpaca if all gates pass
+
+*[Full Tech Stack Documentation](/trading/tech-stack/)*
+
+---
+
 ## Market Context
 
 *US equity markets trade Monday-Friday, 9:30 AM - 4:00 PM ET.*
@@ -76,7 +114,7 @@ Our current strategy focuses on:
 
 ## What's Next
 
-Day 84 focus:
+Day 86 focus:
 - Continue systematic strategy execution
 - Monitor open positions
 - Refine ML signals based on today's data
