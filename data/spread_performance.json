@@ -2,7 +2,9 @@
   "meta": {
     "created": "2026-01-13",
     "purpose": "Track credit spread win rate for data-driven decisions",
-    "decision_point": "After 30 trades OR 90 days, evaluate strategy"
+    "decision_point": "After 30 trades OR 90 days, evaluate strategy",
+    "updated": "2026-01-21",
+    "note": "SPY-only stats added after ticker whitelist implementation (Jan 21)"
   },
   "summary": {
     "total_trades": 6,
@@ -16,6 +18,17 @@
     "profit_factor": 1.6,
     "start_date": "2026-01-13",
     "days_tracked": 7
+  },
+  "spy_only_summary": {
+    "note": "SPY trades only (SOFI excluded per LL-188 and ticker whitelist)",
+    "total_trades": 3,
+    "wins": 2,
+    "losses": 1,
+    "win_rate_pct": 66.7,
+    "total_pnl": 207.0,
+    "avg_win": 225.0,
+    "avg_loss": 243.0,
+    "profit_factor": 1.85
   },
   "trades": [
     {
