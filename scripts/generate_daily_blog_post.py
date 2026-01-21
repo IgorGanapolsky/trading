@@ -64,6 +64,30 @@ def get_latest_performance() -> dict:
     return data[-1]
 
 
+def get_latest_backtest_summary() -> dict:
+    """Get latest backtest summary for blog post metrics."""
+    backtest_dir = DATA_DIR / "backtests"
+    latest_file = backtest_dir / "latest_summary.json"
+
+    if latest_file.exists():
+        try:
+            with open(latest_file) as f:
+                return json.load(f)
+        except Exception:
+            pass
+
+    # Fallback: find most recent summary file
+    try:
+        summaries = sorted(backtest_dir.glob("backtest_summary_*.json"), reverse=True)
+        if summaries:
+            with open(summaries[0]) as f:
+                return json.load(f)
+    except Exception:
+        pass
+
+    return {}
+
+
 def get_previous_day_equity(perf_data: list, current_date: str) -> float:
     """Get previous trading day's equity for daily P/L calculation."""
     for i, entry in enumerate(perf_data):
@@ -230,6 +254,45 @@ Our current strategy focuses on:
 - **Max Position Size**: 2% of portfolio (Kelly Criterion)
 - **Stop Loss**: Volatility-adjusted per position
 - **Circuit Breakers**: Active (no triggers today)
+
+---
+
+## Sharpe Ratio Explained
+
+The **Sharpe Ratio** measures risk-adjusted returns - how much excess return we earn per unit of volatility.
+
+**Formula**: `(Portfolio Return - Risk-Free Rate) / Standard Deviation of Returns`
+
+| Component | Our Approach |
+|-----------|--------------|
+| Risk-Free Rate | 5% annual (current T-bill rate) |
+| Measurement | Daily returns, annualized (x sqrt(252)) |
+| Target | > 1.0 (good), > 2.0 (excellent) |
+
+**Why it matters**: A high return with wild swings (high volatility) may be worse than a moderate return with steady growth. The Sharpe Ratio helps us compare strategies on a level playing field.
+
+---
+
+## Backtesting Strategy
+
+Our backtesting validates the **Iron Condor** strategy before risking real capital:
+
+**Strategy Parameters**:
+- **Underlying**: SPY only (best liquidity, tightest spreads)
+- **Short Strike Delta**: 15-20 delta (80-86% probability of profit)
+- **Wing Width**: $5 wide (defined risk)
+- **Expiration**: 30-45 DTE (optimal theta decay)
+- **Profit Target**: 50% of max credit
+- **Stop Loss**: 200% of credit received
+
+**Backtesting Methodology**:
+1. Simulate trades over 30-day rolling windows
+2. Include realistic adverse events (market drops, IV spikes)
+3. Calculate Sharpe, Sortino, and Calmar ratios
+4. Run Monte Carlo simulation for confidence intervals
+5. Detect market regimes (bull/bear/sideways) for strategy fit
+
+**Key Insight**: Iron condors at 15-20 delta have shown 86% win rates historically. Our backtesting validates this before deployment.
 
 ---
 

@@ -319,6 +319,50 @@ But I'd rather try and fail than wonder "what if" for the rest of my life.
 
 ---
 
+## 📈 Sharpe Ratio: Are We Actually Good?
+
+Here's the metric that separates lucky traders from skilled ones: the **Sharpe Ratio**.
+
+**What it measures**: Risk-adjusted returns. How much extra return do we get per unit of risk (volatility)?
+
+**The formula** (simplified):
+```
+Sharpe = (Our Returns - Risk-Free Rate) / Volatility
+```
+
+**What the numbers mean**:
+- **< 1.0**: We're probably just getting lucky, or taking too much risk
+- **1.0 - 2.0**: Decent. We're doing something right.
+- **> 2.0**: Excellent. Either we're skilled, or the market is being unusually kind.
+
+**Why I obsess over this**: Making money is easy when markets go up. The Sharpe Ratio tells me if I'd still make money when things get choppy. That's the real test.
+
+---
+
+## 🔬 Backtesting: Trusting the System
+
+Before I risk a single dollar, my AI runs thousands of simulated trades. Here's what we test:
+
+**Iron Condor Parameters**:
+| Setting | Value | Why |
+|---------|-------|-----|
+| Underlying | SPY only | Best liquidity, no earnings surprises |
+| Short Delta | 15-20 | 80-86% probability of profit |
+| Wing Width | $5 | Defined, limited risk |
+| DTE | 30-45 days | Optimal theta decay curve |
+| Profit Target | 50% | Take wins before they become losses |
+| Stop Loss | 200% of credit | Live to trade another day |
+
+**What the backtest validates**:
+1. Historical win rate matches expected probability
+2. Losses are contained within risk parameters
+3. Strategy survives market stress (COVID, rate hikes, etc.)
+4. Monte Carlo simulations show consistent profitability
+
+**The uncomfortable truth**: Backtests can lie. Past performance ≠ future results. But a strategy that fails backtesting will definitely fail live. So we test first.
+
+---
+
 ## 🎯 Monday's Game Plan
 
 Markets reopen in ~15 hours. My bot will:
