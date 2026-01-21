@@ -409,13 +409,13 @@
   ],
   "trades_loaded": 48,
   "trades": {
-    "last_trade_date": "2026-01-20",
-    "today_trades": 10,
-    "total_trades_today": 10,
+    "last_trade_date": "2026-01-21",
+    "today_trades": 0,
+    "total_trades_today": 0,
     "last_trade_symbol": "SYNCED"
   },
   "meta": {
-    "last_updated": "2026-01-21T03:05:51.040434",
+    "last_updated": "2026-01-21T11:57:55.551170+00:00",
     "trade_sync": "alpaca_api",
     "last_sync": "2026-01-21T03:05:51.040440",
     "sync_mode": "skipped_no_keys"
