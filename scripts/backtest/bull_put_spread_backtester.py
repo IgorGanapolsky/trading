@@ -265,9 +265,7 @@ class BullPutSpreadBacktester:
 
         return symbols
 
-    def black_scholes_put(
-        self, S: float, K: float, T: float, r: float, sigma: float
-    ) -> float:
+    def black_scholes_put(self, S: float, K: float, T: float, r: float, sigma: float) -> float:
         """
         Calculate Black-Scholes put option price.
 
@@ -325,9 +323,7 @@ class BullPutSpreadBacktester:
         short_strike = round(short_strike)
 
         # Vary spread width within config range
-        spread_width = np.random.uniform(
-            self.config.spread_width_min, self.config.spread_width_max
-        )
+        spread_width = np.random.uniform(self.config.spread_width_min, self.config.spread_width_max)
         spread_width = round(spread_width)
         long_strike = short_strike - spread_width
 
@@ -433,7 +429,7 @@ class BullPutSpreadBacktester:
 
         # Estimate historical volatility for realistic IV
         base_iv = self.estimate_historical_volatility(bars)
-        print(f"📈 Estimated historical volatility: {base_iv*100:.1f}%")
+        print(f"📈 Estimated historical volatility: {base_iv * 100:.1f}%")
 
         # Filter to actual backtest period
         bars_in_range = bars[bars["timestamp"] >= pd.Timestamp(start_date)]
