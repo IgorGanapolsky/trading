@@ -1034,30 +1034,15 @@ jobs:
           echo "🔍 ========================================"
           # =========================================================
 
-          set +e  # Don't exit on error
-          # Run directly (not captured) to ensure all output is immediately visible
-          python3 -u scripts/autonomous_trader.py 2>&1 | tee /tmp/trading_output.log
-          EXIT_CODE=${PIPESTATUS[0]}
-          echo "::notice::BASH: Python exit code captured = $EXIT_CODE"
-          set -e
-
-          # Read output for later use if needed
-          OUTPUT=$(cat /tmp/trading_output.log 2>/dev/null || echo "No output captured")
-
-          if [ $EXIT_CODE -eq 0 ]; then
-            EXEC_STATUS="SUCCESS"
-            echo "::notice::BASH: EXIT_CODE is 0 - SUCCESS branch"
-            echo "✅ Trading execution completed successfully"
-          else
-            EXEC_STATUS="FAILED"
-            echo "::error::BASH: EXIT_CODE is $EXIT_CODE - FAILURE branch"
-            echo "::error::Trading execution failed with exit code $EXIT_CODE"
-            echo "❌ Trading execution failed with exit code $EXIT_CODE"
-
-            # Save output for debugging
-            echo "$OUTPUT" > logs/trading_output.log 2>/dev/null || true
-            exit $EXIT_CODE
-          fi
+          # DISABLED Jan 21, 2026: SmartDCA buys SPY STOCK, not iron condors
+          # Per CLAUDE.md: "Primary strategy: IRON CONDORS on SPY ONLY"
+          # autonomous_trader.py uses SmartDCA which buys STOCK - WRONG STRATEGY
+          # Iron condors are executed in "Harvest theta" step below
+          echo "⏭️ SKIPPING autonomous_trader.py - uses SmartDCA (stock buying)"
+          echo "   Per CLAUDE.md: IRON CONDORS ONLY - not stock accumulation"
+          echo "   Iron condor execution happens in 'Harvest theta' step"
+          EXEC_STATUS="SKIPPED"
+          EXIT_CODE=0
 
           # Track execution end
           EXEC_END=$(date +%s)
