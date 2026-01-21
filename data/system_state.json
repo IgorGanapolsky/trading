@@ -1,9 +1,9 @@
 {
-  "last_updated": "2026-01-21T15:05:07.531776+00:00",
+  "last_updated": "2026-01-21T15:23:09.115300+00:00",
   "sync_health": {
-    "last_successful_sync": "2026-01-21T15:05:07.531778+00:00",
+    "last_successful_sync": "2026-01-21T15:23:09.115303+00:00",
     "sync_source": "github_actions",
-    "sync_count_today": 3,
+    "sync_count_today": 4,
     "history": [
       {
         "timestamp": "2026-01-21T14:14:20.618970+00:00",
@@ -19,21 +19,26 @@
         "timestamp": "2026-01-21T15:05:07.531768+00:00",
         "equity": 5026.32,
         "success": true
+      },
+      {
+        "timestamp": "2026-01-21T15:23:09.115293+00:00",
+        "equity": 5026.4,
+        "success": true
       }
     ]
   },
   "portfolio": {
-    "equity": 5026.32,
+    "equity": 5026.4,
     "cash": 4243.89
   },
   "paper_account": {
-    "equity": 5026.32,
+    "equity": 5026.4,
     "cash": 4243.89,
-    "buying_power": 9270.21,
-    "total_pl": 26.31999999999971,
+    "buying_power": 9270.29,
+    "total_pl": 26.399999999999636,
     "total_pl_pct": 0.53,
     "positions_count": 1,
-    "daily_change": -72.65,
+    "daily_change": -72.57,
     "win_rate": 0,
     "win_rate_sample_size": 0,
     "starting_balance": 5000.0
@@ -42,9 +47,9 @@
     {
       "symbol": "SPY",
       "qty": 1.146822157,
-      "price": 682.26,
-      "value": 782.430885,
-      "pnl": -0.619115,
+      "price": 682.325,
+      "value": 782.505428,
+      "pnl": -0.544572,
       "type": "stock"
     }
   ],
@@ -451,17 +456,17 @@
   },
   "risk": {
     "status": "MONITORING",
-    "total_pl": 26.31999999999971,
-    "unrealized_pl": -0.619115
+    "total_pl": 26.399999999999636,
+    "unrealized_pl": -0.544572
   },
   "account": {
-    "current_equity": 5026.32,
-    "total_pl": 26.31999999999971,
+    "current_equity": 5026.4,
+    "total_pl": 26.399999999999636,
     "total_pl_pct": 0.53,
     "positions_count": 1
   },
   "meta": {
-    "last_updated": "2026-01-21T15:05:07.531792+00:00",
+    "last_updated": "2026-01-21T15:23:09.115316+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5
   }
