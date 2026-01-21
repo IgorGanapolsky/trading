@@ -1,12 +1,12 @@
 {
-  "total_trades": 18,
-  "total_pnl": 720.0,
-  "win_rate": 1.0,
-  "avg_trade": 40.0,
-  "max_win": 40.0,
-  "max_loss": 40.0,
-  "std_dev": 0.0,
-  "sharpe_ratio": 0,
+  "total_trades": 6,
+  "total_pnl": 168.0,
+  "win_rate": 0.33299999999999996,
+  "avg_trade": 28.0,
+  "max_win": 419.0,
+  "max_loss": -243.0,
+  "std_dev": 0.04302495584421703,
+  "sharpe_ratio": 2.0002,
   "config": {
     "underlying_symbol": "SPY",
     "short_put_delta_min": -0.6,
@@ -20,7 +20,13 @@
     "risk_free_rate": 0.05,
     "buffer_pct": 0.05
   },
-  "start_date": "2025-12-20",
-  "end_date": "2026-01-19",
-  "timestamp": "2026-01-20T23:04:55.342649"
+  "start_date": "2026-01-13",
+  "end_date": "2026-01-21",
+  "timestamp": "2026-01-21T12:05:53.194422",
+  "sortino_ratio": 3.7403,
+  "max_drawdown": 0.0463,
+  "profit_factor": 1.5957,
+  "calmar_ratio": 0.7254,
+  "volatility": 0.683,
+  "data_source": "spread_performance.json (real trades)"
 }
