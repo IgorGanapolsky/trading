@@ -303,6 +303,7 @@ class IronCondorStrategy:
         # FIX Jan 20, 2026: Check position limits BEFORE placing new trades
         # ROOT CAUSE: No position check caused system to keep placing orders
         # when max_positions already reached (incomplete iron condors)
+        # LL-280 FIX (Jan 21, 2026): Count TOTAL CONTRACTS, not just unique symbols
         if live:
             try:
                 from alpaca.trading.client import TradingClient
@@ -322,27 +323,53 @@ class IronCondorStrategy:
                         if p.symbol.startswith("SPY")
                         and len(p.symbol) > 5  # Options have longer symbols
                     ]
-                    position_count = len(spy_option_positions)
 
-                    logger.info(f"Current SPY OPTION positions: {position_count}")
-                    max_positions = self.config["max_positions"] * 4  # 4 legs per condor
+                    # LL-280 FIX: Count TOTAL CONTRACTS, not unique symbols
+                    # Before: position_count = len(spy_option_positions) = 4 (unique symbols)
+                    # After: position_count = sum of abs(qty) = 17 (total contracts)
+                    total_contracts = sum(
+                        abs(int(float(p.qty))) for p in spy_option_positions
+                    )
+                    unique_symbols = len(spy_option_positions)
 
-                    if position_count >= max_positions:
+                    logger.info(
+                        f"Current SPY OPTION positions: {unique_symbols} symbols, {total_contracts} contracts"
+                    )
+                    max_contracts = self.config["max_positions"] * 4  # 4 legs per condor
+
+                    if total_contracts >= max_contracts:
                         logger.warning(
-                            f"⚠️ POSITION LIMIT REACHED: {position_count}/{max_positions}"
+                            f"⚠️ POSITION LIMIT REACHED: {total_contracts}/{max_contracts} contracts"
                         )
                         logger.warning("   Skipping new iron condor - manage existing first")
+
+                        # Log position details for debugging
+                        for p in spy_option_positions:
+                            logger.warning(f"   - {p.symbol}: {p.qty} contracts")
+
                         return {
                             "timestamp": datetime.now().isoformat(),
                             "strategy": "iron_condor",
                             "underlying": ic.underlying,
                             "status": "SKIPPED_POSITION_LIMIT",
-                            "reason": f"Have {position_count} option positions (max: {max_positions})",
-                            "existing_positions": [p.symbol for p in spy_option_positions],
+                            "reason": f"Have {total_contracts} contracts (max: {max_contracts})",
+                            "existing_positions": [
+                                {"symbol": p.symbol, "qty": p.qty}
+                                for p in spy_option_positions
+                            ],
                         }
             except Exception as pos_err:
-                logger.warning(f"Could not check positions: {pos_err}")
-                # Continue anyway - better to try than to skip
+                # LL-280 FIX: Don't skip position check on error - this is dangerous!
+                # If we can't verify positions, we might place duplicate trades
+                logger.error(f"CRITICAL: Could not check positions: {pos_err}")
+                logger.error("   Blocking trade to prevent position accumulation")
+                return {
+                    "timestamp": datetime.now().isoformat(),
+                    "strategy": "iron_condor",
+                    "underlying": ic.underlying,
+                    "status": "BLOCKED_POSITION_CHECK_FAILED",
+                    "reason": f"Position check failed: {pos_err}",
+                }
 
         logger.info("=" * 60)
         logger.info("EXECUTING IRON CONDOR" + (" (LIVE)" if live else " (SIMULATED)"))
