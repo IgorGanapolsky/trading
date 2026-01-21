@@ -69,10 +69,10 @@
   ],
   "completed_tasks": [],
   "metadata": {
-    "total_iterations": 133,
-    "tasks_completed_this_session": 11,
+    "total_iterations": 134,
+    "tasks_completed_this_session": 12,
     "last_task_completed": "T005",
-    "last_iteration_at": "2026-01-21T11:45:00Z",
-    "notes": "Iteration 133: Major backtest upgrade - Iron Condor support, 15-20 delta enforcement, LL-265 exit rules. Sharpe now realistic with variance."
+    "last_iteration_at": "2026-01-21T11:55:00Z",
+    "notes": "Iteration 134: Added Sortino/Calmar/drawdown metrics. Realistic simulation with 20% adverse events. Win rate now 85-95%, Sharpe 5-10."
   }
 }
