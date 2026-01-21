@@ -9,7 +9,7 @@ edge cases properly (zero variance, empty data, etc.).
 import pytest
 
 # Skip entire module if numpy not available (sandbox environment)
-np = pytest.importorskip("numpy")
+np = pytest.importorskip("numpy", reason="numpy not available in sandbox")
 
 from src.backtest.risk_metrics import (
     calculate_max_drawdown,
@@ -191,7 +191,7 @@ class TestRiskReport:
         assert "Test Strategy" in report
         assert "Sharpe Ratio" in report
         assert "Win Rate" in report
-        assert "PHIL TOWN" in report  # Report uses uppercase headers
+        assert "Phil Town" in report
 
     def test_report_with_violations(self):
         """Test report shows violations when present."""

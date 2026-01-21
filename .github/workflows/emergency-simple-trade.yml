@@ -1,16 +1,23 @@
 name: Emergency Simple Trade (Proof of Life)
 
+# ========================================================================
+# DISABLED Jan 21, 2026 - LL-272: Strategy Violation Crisis
+# This workflow defaults to SOFI, violating CLAUDE.md mandate:
+# "No individual stocks. The $100K success was SPY. The $5K failure was SOFI."
+# This workflow caused the SOFI option purchase at 14:48 on Jan 21, 2026.
+# See: rag_knowledge/lessons_learned/ll_272_strategy_violation_crisis_jan21.md
+# ========================================================================
 # SECURITY FIX Jan 21, 2026: Added SPY-only validation
 # CEO Directive (Jan 13, 2026): After 74 days of zero trades, we need proof
-# UPDATED: Must validate ticker before execution - no more SOFI accidents
+# SUPERSEDED Jan 21, 2026: Iron condor execution now works - disable this.
 
 on:
   workflow_dispatch:
     inputs:
       symbol:
-        description: "Symbol to trade (SPY ONLY per CLAUDE.md)"
+        description: "Symbol to trade (DISABLED - use iron_condor_trader.py)"
         required: true
-        default: "SPY"
+        default: "SPY"  # Changed from SOFI per CLAUDE.md SPY-only mandate
       quantity:
         description: "Shares to buy"
         required: true
@@ -20,8 +27,31 @@ permissions:
   contents: write
 
 jobs:
+  # DISABLED Jan 21, 2026 - This buys SHARES not iron condors
+  # See LL-272: Strategy Violation Crisis
+  warn-disabled:
+    name: WORKFLOW DISABLED
+    runs-on: ubuntu-latest
+    steps:
+      - name: Warn - Workflow Disabled
+        run: |
+          echo "🚫 =================================================="
+          echo "🚫 WORKFLOW DISABLED - LL-272: Strategy Violation"
+          echo "🚫 =================================================="
+          echo ""
+          echo "This workflow is DISABLED because it violates CLAUDE.md:"
+          echo "- Buys SHARES, not iron condors"
+          echo "- Previously defaulted to SOFI (non-SPY ticker)"
+          echo ""
+          echo "Use iron_condor_trader.py instead for compliant trading."
+          echo ""
+          echo "See: rag_knowledge/lessons_learned/ll_272_strategy_violation_crisis_jan21.md"
+          exit 1
+
   simple-trade:
-    name: Execute Simple Trade
+    name: Execute Simple Trade (DISABLED)
+    needs: warn-disabled  # Will never run because warn-disabled fails
+    if: false  # Double protection - never run
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
