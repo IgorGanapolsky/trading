@@ -1,6 +1,6 @@
 # LL-250: Trading Crisis - System Stuck for 7 Days (Jan 20, 2026)
 
-## Severity: CRITICAL
+## Severity: RESOLVED (was CRITICAL)
 
 ## Summary
 Trading system was completely stuck for 7+ days (Jan 13-20, 2026) due to multiple compounding bugs. No new trades could execute despite market being open.
@@ -61,5 +61,12 @@ python3 -c "import json; d=json.load(open('data/system_state.json')); print(f'Po
 - #2279: Fix market status octal bug
 - #2293: Add position limit check
 
+## Resolution (Jan 21, 2026)
+All root causes fixed:
+- ✅ PR #2279: Octal bug fixed
+- ✅ PR #2293: Position limit check added
+- ✅ PR #2270: Real option pricing
+- ✅ Ticker whitelist in ticker_validator.py
+
 ## Tags
-crisis, bash, octal, position-limit, iron-condor, stuck, no-trades
+crisis, bash, octal, position-limit, iron-condor, stuck, no-trades, resolved
