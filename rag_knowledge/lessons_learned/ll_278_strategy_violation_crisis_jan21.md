@@ -1,4 +1,4 @@
-# LL-272: Strategy Violation Crisis - Multiple Rogue Workflows
+# LL-278: Strategy Violation Crisis - Multiple Rogue Workflows
 
 **Date**: 2026-01-21
 **Category**: Trading, Strategy, Compliance

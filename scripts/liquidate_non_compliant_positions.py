@@ -2,7 +2,7 @@
 """
 Liquidate Non-Compliant Positions - Enforce CLAUDE.md Strategy
 
-Created: Jan 21, 2026 (LL-272: Strategy Violation Crisis)
+Created: Jan 21, 2026 (LL-278: Strategy Violation Crisis)
 
 Per CLAUDE.md:
 - "Primary strategy: IRON CONDORS on SPY ONLY"

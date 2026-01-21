@@ -1,11 +1,11 @@
 name: Daily VOO DCA
 
 # ========================================================================
-# DISABLED Jan 21, 2026 - LL-272: Strategy Violation Crisis
+# DISABLED Jan 21, 2026 - LL-278: Strategy Violation Crisis
 # This workflow buys SPY/VOO SHARES, violating CLAUDE.md mandate:
 # "Primary strategy: IRON CONDORS on SPY ONLY - defined risk on BOTH sides"
 # Stock buying is NOT part of the iron condor strategy.
-# See: rag_knowledge/lessons_learned/ll_272_strategy_violation_crisis_jan21.md
+# See: rag_knowledge/lessons_learned/ll_278_strategy_violation_crisis_jan21.md
 # ========================================================================
 
 on:
