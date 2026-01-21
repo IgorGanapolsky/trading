@@ -449,7 +449,8 @@ class IronCondorStrategy:
                         status = "LIVE_SUBMITTED"
                         logger.info("✅ IRON CONDOR COMPLETE: All 4 legs submitted")
                     elif len(order_ids) > 0:
-                        # PARTIAL FILL - This is dangerous! Alert and mark as failed
+                        # PARTIAL FILL - This is dangerous! AUTO-CLOSE to avoid directional risk
+                        # LL-279 FIX (Jan 21, 2026): Actually close partial positions
                         status = "LIVE_PARTIAL_FAILED"
                         filled_legs = [o["leg"] for o in order_ids]
                         missing_legs = [
@@ -462,9 +463,45 @@ class IronCondorStrategy:
                         )
                         logger.error(f"   Filled: {filled_legs}")
                         logger.error(f"   Missing: {missing_legs}")
-                        logger.error(
-                            "   ACTION REQUIRED: Close partial position to avoid directional risk"
-                        )
+                        logger.error("   AUTO-CLOSING partial position to prevent losses...")
+
+                        # AUTO-CLOSE: Cancel/reverse partial fills immediately
+                        for order_info in order_ids:
+                            try:
+                                order_id = order_info["order_id"]
+                                leg = order_info["leg"]
+                                # First try to cancel if not filled yet
+                                try:
+                                    client.cancel_order_by_id(order_id)
+                                    logger.info(f"   ✅ Cancelled {leg}: {order_id}")
+                                except Exception:
+                                    # Order already filled, need to close position
+                                    # Get the symbol from legs list
+                                    leg_symbol = None
+                                    for sym, side, name in legs:
+                                        if name == leg:
+                                            leg_symbol = sym
+                                            break
+                                    if leg_symbol:
+                                        # Reverse the position
+                                        reverse_side = (
+                                            OrderSide.SELL
+                                            if leg.startswith("long")
+                                            else OrderSide.BUY
+                                        )
+                                        close_order = LimitOrderRequest(
+                                            symbol=leg_symbol,
+                                            qty=1,
+                                            side=reverse_side,
+                                            type="market",  # Market order to close immediately
+                                            time_in_force=TimeInForce.GTC,
+                                        )
+                                        client.submit_order(close_order)
+                                        logger.info(f"   ✅ Closed {leg}: {leg_symbol}")
+                            except Exception as close_err:
+                                logger.error(f"   ❌ Failed to close {leg}: {close_err}")
+
+                        logger.warning("   Partial position cleanup attempted")
                     else:
                         status = "LIVE_FAILED"
                         logger.warning("❌ No orders could be submitted")
