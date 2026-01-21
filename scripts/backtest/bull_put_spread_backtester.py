@@ -590,6 +590,18 @@ def main():
     parser.add_argument("--end", type=str, help="End date (YYYY-MM-DD)")
     parser.add_argument("--output", type=str, default="data/backtests", help="Output directory")
     parser.add_argument("--config", type=str, help="Path to config JSON file")
+    parser.add_argument(
+        "--monte-carlo",
+        type=int,
+        default=0,
+        metavar="N",
+        help="Run N Monte Carlo simulations (0 = disabled)",
+    )
+    parser.add_argument(
+        "--stress-test",
+        action="store_true",
+        help="Run stress test scenarios",
+    )
 
     args = parser.parse_args()
 
@@ -668,6 +680,48 @@ def main():
     print("-" * 60)
     print(f"Lessons Generated: {len(lessons)}")
     print("=" * 60)
+
+    # Monte Carlo simulation (optional)
+    if args.monte_carlo > 0 and results:
+        print("\n🎲 Running Monte Carlo simulation...")
+        try:
+            from src.backtest.monte_carlo import (
+                generate_monte_carlo_report,
+                run_monte_carlo,
+                stress_test_strategy,
+            )
+
+            pnls = [r.theoretical_pnl for r in results]
+            mc_results = run_monte_carlo(pnls, n_simulations=args.monte_carlo, random_seed=42)
+            print(generate_monte_carlo_report(mc_results, "Bull Put Spread"))
+
+            # Save Monte Carlo results
+            mc_path = output_dir / f"monte_carlo_{timestamp}.json"
+            with open(mc_path, "w") as f:
+                json.dump(mc_results.to_dict(), f, indent=2)
+            print(f"📁 Monte Carlo results saved to: {mc_path}")
+
+            # Stress test if requested
+            if args.stress_test:
+                print("\n💥 Running stress tests...")
+                stress_results = stress_test_strategy(pnls, n_simulations=min(1000, args.monte_carlo))
+                print("\nStress Test Results:")
+                for scenario, data in stress_results.items():
+                    status = "✅" if data["passes_validation"] else "❌"
+                    print(
+                        f"  {status} {scenario}: "
+                        f"P(profit)={data['prob_profit']:.1%}, "
+                        f"P(ruin)={data['prob_ruin']:.1%}"
+                    )
+
+                # Save stress test results
+                stress_path = output_dir / f"stress_test_{timestamp}.json"
+                with open(stress_path, "w") as f:
+                    json.dump(stress_results, f, indent=2)
+                print(f"📁 Stress test results saved to: {stress_path}")
+
+        except ImportError as e:
+            print(f"⚠️ Monte Carlo module not available: {e}")
 
     return 0 if summary.get("total_pnl", 0) >= 0 else 1
 
