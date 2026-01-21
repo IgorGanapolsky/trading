@@ -87,6 +87,161 @@ DATA_DIR = Path(__file__).parent.parent / "data"
 DOCS_DIR = Path(__file__).parent.parent / "docs"
 REPORTS_DIR = DOCS_DIR / "_reports"
 PERF_FILE = DATA_DIR / "performance_log.json"
+BACKTEST_DIR = DATA_DIR / "backtests"
+SPREAD_PERF_FILE = DATA_DIR / "spread_performance.json"
+
+
+def get_backtest_metrics() -> dict:
+    """Get latest backtest metrics including Sharpe ratio and strategy info."""
+    result = {
+        "available": False,
+        "sharpe_ratio": 0.0,
+        "sortino_ratio": 0.0,
+        "win_rate": 0.0,
+        "total_trades": 0,
+        "profit_factor": 0.0,
+        "max_drawdown": 0.0,
+        "strategy": "Iron Condors on SPY",
+    }
+
+    # Try to load from latest backtest summary
+    try:
+        latest_summary = BACKTEST_DIR / "latest_summary.json"
+        if latest_summary.exists():
+            with open(latest_summary) as f:
+                data = json.load(f)
+                result.update(
+                    {
+                        "available": True,
+                        "sharpe_ratio": data.get("sharpe_ratio", 0.0),
+                        "sortino_ratio": data.get("sortino_ratio", 0.0),
+                        "win_rate": data.get("win_rate", 0.0),
+                        "total_trades": data.get("total_trades", 0),
+                        "profit_factor": data.get("profit_factor", 0.0),
+                        "max_drawdown": data.get("max_drawdown", 0.0),
+                        "backtest_period": f"{data.get('start_date', 'N/A')} to {data.get('end_date', 'N/A')}",
+                    }
+                )
+                return result
+    except Exception as e:
+        print(f"Warning: Could not load backtest summary: {e}")
+
+    # Fallback to spread_performance.json
+    try:
+        if SPREAD_PERF_FILE.exists():
+            with open(SPREAD_PERF_FILE) as f:
+                data = json.load(f)
+                summary = data.get("summary", {})
+                result.update(
+                    {
+                        "available": True,
+                        "win_rate": summary.get("win_rate_pct", 0.0) / 100,
+                        "total_trades": summary.get("total_trades", 0),
+                        "profit_factor": summary.get("profit_factor", 0.0),
+                    }
+                )
+    except Exception as e:
+        print(f"Warning: Could not load spread performance: {e}")
+
+    return result
+
+
+def generate_backtest_section() -> str:
+    """Generate the Sharpe ratio and backtesting strategy section for blog posts."""
+    metrics = get_backtest_metrics()
+
+    if not metrics.get("available"):
+        return """
+## Backtesting & Risk Metrics
+
+*Backtest data currently being generated. Check back tomorrow for updated metrics.*
+
+### Our Strategy
+
+We use **Iron Condors on SPY** with the following parameters:
+- **Delta Selection**: 15-20 delta puts and calls
+- **Spread Width**: $5 wide wings
+- **DTE**: 30-45 days to expiration
+- **Exit**: 50% max profit OR 21 DTE
+
+This strategy is designed for Phil Town Rule #1 compliance: **Don't lose money.**
+"""
+
+    sharpe = metrics.get("sharpe_ratio", 0.0)
+    sortino = metrics.get("sortino_ratio", 0.0)
+    win_rate = metrics.get("win_rate", 0.0)
+    total_trades = metrics.get("total_trades", 0)
+    profit_factor = metrics.get("profit_factor", 0.0)
+    max_dd = metrics.get("max_drawdown", 0.0)
+
+    # Sharpe interpretation
+    if sharpe >= 2.0:
+        sharpe_quality = "Excellent (institutional quality)"
+    elif sharpe >= 1.0:
+        sharpe_quality = "Good (market-beating)"
+    elif sharpe >= 0.5:
+        sharpe_quality = "Acceptable (positive risk-adjusted return)"
+    elif sharpe > 0:
+        sharpe_quality = "Below average (needs improvement)"
+    else:
+        sharpe_quality = "Negative (strategy losing money)"
+
+    return f"""
+## Backtesting & Risk-Adjusted Returns
+
+### Sharpe Ratio Analysis
+
+The **Sharpe Ratio** measures risk-adjusted return: how much excess return we get per unit of risk.
+
+| Metric | Value | Interpretation |
+|--------|-------|----------------|
+| **Sharpe Ratio** | **{sharpe:.2f}** | {sharpe_quality} |
+| **Sortino Ratio** | {sortino:.2f} | Downside risk-adjusted |
+| **Profit Factor** | {profit_factor:.2f} | Gross profit / Gross loss |
+| **Max Drawdown** | {max_dd * 100:.1f}% | Worst peak-to-trough decline |
+
+### Backtest Performance
+
+| Metric | Value |
+|--------|-------|
+| **Total Trades** | {total_trades} |
+| **Win Rate** | {win_rate * 100:.1f}% |
+| **Strategy** | {metrics.get('strategy', 'Iron Condors on SPY')} |
+
+### Our Backtesting Methodology
+
+1. **Historical Data**: We use Alpaca's historical options data with realistic IV estimation
+2. **Black-Scholes Pricing**: Options priced using Black-Scholes with rolling historical volatility
+3. **Slippage & Costs**: 0-5% slippage built into simulation
+4. **Exit Rules**: 50% profit target, 200% stop loss, or 21 DTE exit
+
+### Strategy: Iron Condors on SPY
+
+Our strategy sells both put spreads and call spreads on SPY:
+
+```
+Bull Put Spread (downside protection)
+  └── Sell 15-delta put
+  └── Buy 20-delta put ($5 wide)
+
+Bear Call Spread (upside protection)
+  └── Sell 15-delta call
+  └── Buy 20-delta call ($5 wide)
+```
+
+**Why Iron Condors?**
+- Collect premium from BOTH sides
+- 15-delta = ~85% probability of profit
+- Defined risk on both directions
+- Profit when SPY stays within range
+
+**Risk Management:**
+- Max 5% of capital per trade ($248 on $5K account)
+- Stop loss at 200% of credit received
+- Close at 21 DTE to avoid gamma risk
+
+*Sharpe ratio calculated using annualized returns with 4.5% risk-free rate (current 3-month T-bill).*
+"""
 
 
 def get_latest_performance() -> dict:
@@ -272,6 +427,8 @@ Our current strategy focuses on:
 - **Stop Loss**: Volatility-adjusted per position
 - **Circuit Breakers**: Active (no triggers today)
 
+---
+{generate_backtest_section()}
 ---
 {generate_tech_stack_section()}
 ---

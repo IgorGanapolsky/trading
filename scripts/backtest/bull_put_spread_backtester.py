@@ -463,23 +463,51 @@ class BullPutSpreadBacktester:
                     f"  {status_emoji} {trade_date}: ${result.theoretical_pnl:.2f} ({result.status})"
                 )
 
-        # Calculate summary metrics
+        # Calculate summary metrics using enhanced performance_metrics module
         if results:
             pnls = [r.theoretical_pnl for r in results]
-            summary = {
-                "total_trades": len(results),
-                "total_pnl": sum(pnls),
-                "win_rate": sum(1 for p in pnls if p > 0) / len(pnls),
-                "avg_trade": np.mean(pnls),
-                "max_win": max(pnls),
-                "max_loss": min(pnls),
-                "std_dev": np.std(pnls),
-                "sharpe_ratio": np.mean(pnls) / np.std(pnls) if np.std(pnls) > 0 else 0,
-                "config": self.config.to_dict(),
-                "start_date": start_date.isoformat(),
-                "end_date": end_date.isoformat(),
-                "timestamp": datetime.now().isoformat(),
-            }
+
+            # Try to use enhanced metrics module, fall back to basic calculation
+            try:
+                from src.utils.performance_metrics import calculate_all_metrics
+
+                metrics = calculate_all_metrics(pnls, initial_capital=5000.0)
+                summary = {
+                    "total_trades": len(results),
+                    "total_pnl": sum(pnls),
+                    "win_rate": metrics.win_rate,
+                    "avg_trade": np.mean(pnls),
+                    "max_win": max(pnls),
+                    "max_loss": min(pnls),
+                    "std_dev": np.std(pnls),
+                    # Enhanced metrics (annualized, risk-adjusted)
+                    "sharpe_ratio": metrics.sharpe_ratio,
+                    "sortino_ratio": metrics.sortino_ratio,
+                    "calmar_ratio": metrics.calmar_ratio,
+                    "max_drawdown": metrics.max_drawdown,
+                    "profit_factor": metrics.profit_factor,
+                    "volatility": metrics.volatility,
+                    "config": self.config.to_dict(),
+                    "start_date": start_date.isoformat(),
+                    "end_date": end_date.isoformat(),
+                    "timestamp": datetime.now().isoformat(),
+                }
+            except ImportError:
+                # Fallback to basic metrics if module not available
+                summary = {
+                    "total_trades": len(results),
+                    "total_pnl": sum(pnls),
+                    "win_rate": sum(1 for p in pnls if p > 0) / len(pnls),
+                    "avg_trade": np.mean(pnls),
+                    "max_win": max(pnls),
+                    "max_loss": min(pnls),
+                    "std_dev": np.std(pnls),
+                    "sharpe_ratio": np.mean(pnls) / np.std(pnls) if np.std(pnls) > 0 else 0,
+                    "config": self.config.to_dict(),
+                    "start_date": start_date.isoformat(),
+                    "end_date": end_date.isoformat(),
+                    "timestamp": datetime.now().isoformat(),
+                }
         else:
             summary = {"total_trades": 0, "error": "No trades executed"}
 
@@ -506,7 +534,13 @@ class BullPutSpreadBacktester:
 **Total P&L**: ${summary.get("total_pnl", 0):.2f}
 **Win Rate**: {summary.get("win_rate", 0) * 100:.1f}%
 **Average Trade**: ${summary.get("avg_trade", 0):.2f}
+
+### Risk-Adjusted Metrics (Annualized)
 **Sharpe Ratio**: {summary.get("sharpe_ratio", 0):.2f}
+**Sortino Ratio**: {summary.get("sortino_ratio", 0):.2f}
+**Calmar Ratio**: {summary.get("calmar_ratio", 0):.2f}
+**Max Drawdown**: {summary.get("max_drawdown", 0) * 100:.1f}%
+**Profit Factor**: {summary.get("profit_factor", 0):.2f}
 
 ### Configuration Used
 - Short Delta Range: [{self.config.short_put_delta_min}, {self.config.short_put_delta_max}]
