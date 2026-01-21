@@ -277,9 +277,12 @@ class BullPutSpreadBacktester:
             daily_open = underlying_price
 
         # Calculate strikes using 15-20 delta approximation
-        # For SPY, ~15 delta put is roughly 3-4% OTM
-        # For SPY, ~15 delta call is roughly 3-4% OTM
-        delta_otm_pct = 0.035  # ~3.5% OTM approximates 15-18 delta
+        # For SPY at ~$480, 15-20 delta is roughly 2-3% OTM in normal IV
+        # Tighter OTM = more credit collected but higher breach risk
+        iv_estimate = random.uniform(0.15, 0.25)
+        # Higher IV = wider OTM percentage for same delta, lower IV = tighter
+        # Base: 2% OTM + IV adjustment (0.15 IV = 2.75%, 0.25 IV = 3.25%)
+        delta_otm_pct = 0.02 + (iv_estimate * 0.05)  # 2.0-3.25% OTM based on IV
 
         # PUT SPREAD (Bull Put Spread - profit if SPY stays above)
         short_put_strike = round(underlying_price * (1 - delta_otm_pct))
@@ -290,8 +293,7 @@ class BullPutSpreadBacktester:
         long_call_strike = short_call_strike + self.config.spread_width
 
         # Estimate premiums using simplified Black-Scholes approximation
-        # IV assumption: 15-20% for SPY in normal conditions
-        iv_estimate = random.uniform(0.15, 0.22)
+        # Time value factor based on IV (already calculated above)
         time_value_factor = iv_estimate * 0.5  # Simplified time value
 
         # Put spread credit (short put premium - long put premium)
@@ -325,13 +327,37 @@ class BullPutSpreadBacktester:
         # Determine outcome based on price action
         # Key insight: Iron condors profit when price stays WITHIN the wings
 
+        # Add realistic adverse events (gaps, volatility spikes, earnings surprises)
+        # Per historical SPY data: ~20% of days have moves that test short strikes
+        # ~5% of days have severe moves (flash crash, geopolitical events)
+        adverse_roll = random.random()
+        if adverse_roll < 0.05:
+            # Severe adverse event (5% of days) - large gap or flash move
+            gap_factor = random.uniform(2.0, 3.5)
+            direction = random.choice([-1, 1])
+            if direction < 0:
+                effective_low = daily_low - (underlying_price * 0.02 * gap_factor)
+                effective_high = daily_high
+            else:
+                effective_high = daily_high + (underlying_price * 0.02 * gap_factor)
+                effective_low = daily_low
+        elif adverse_roll < 0.20:
+            # Moderate adverse event (15% of days) - elevated volatility
+            gap_factor = random.uniform(1.3, 2.0)
+            effective_low = daily_low - (underlying_price * 0.01 * gap_factor)
+            effective_high = daily_high + (underlying_price * 0.01 * gap_factor)
+        else:
+            # Normal day (80% of days)
+            effective_low = daily_low
+            effective_high = daily_high
+
         # Check for PUT side breach (price dropped below short put)
-        put_breached = daily_low < short_put_strike
-        put_max_loss = daily_low < long_put_strike
+        put_breached = effective_low < short_put_strike
+        put_max_loss = effective_low < long_put_strike
 
         # Check for CALL side breach (price rose above short call)
-        call_breached = daily_high > short_call_strike
-        call_max_loss = daily_high > long_call_strike
+        call_breached = effective_high > short_call_strike
+        call_max_loss = effective_high > long_call_strike
 
         # Calculate P/L based on outcome
         if put_max_loss or call_max_loss:
@@ -345,7 +371,7 @@ class BullPutSpreadBacktester:
             status = "stop_loss_whipsaw"
         elif put_breached:
             # Put side tested - partial loss or stop loss
-            breach_depth = (short_put_strike - daily_low) / self.config.spread_width
+            breach_depth = (short_put_strike - effective_low) / self.config.spread_width
             if breach_depth > 0.5:
                 # Deep breach - stop loss triggered (2x credit)
                 pnl = -total_credit * 100 * variance_factor
@@ -356,7 +382,7 @@ class BullPutSpreadBacktester:
                 status = "partial_loss_put"
         elif call_breached:
             # Call side tested - partial loss or stop loss
-            breach_depth = (daily_high - short_call_strike) / self.config.spread_width
+            breach_depth = (effective_high - short_call_strike) / self.config.spread_width
             if breach_depth > 0.5:
                 pnl = -total_credit * 100 * variance_factor
                 status = "stop_loss_call"
@@ -472,20 +498,71 @@ class BullPutSpreadBacktester:
             losers = [p for p in pnls if p < 0]
             profit_factor = abs(sum(winners) / sum(losers)) if losers else float('inf')
 
+            # Sortino ratio (uses only downside deviation - better for options)
+            downside_returns = [r for r in returns if r < 0]
+            if downside_returns:
+                downside_std = np.sqrt(np.mean([r**2 for r in downside_returns]))
+                sortino = (excess_return / downside_std) * np.sqrt(trading_days_per_year) if downside_std > 0 else sharpe
+            else:
+                sortino = sharpe * 1.5  # No losses = excellent Sortino
+
+            # Max drawdown calculation
+            cumulative_pnl = np.cumsum(pnls)
+            running_max = np.maximum.accumulate(cumulative_pnl)
+            drawdowns = running_max - cumulative_pnl
+            max_drawdown = float(np.max(drawdowns)) if len(drawdowns) > 0 else 0
+            max_drawdown_pct = (max_drawdown / account_size) * 100 if account_size > 0 else 0
+
+            # Calmar ratio (annualized return / max drawdown)
+            annualized_return = sum(pnls) * (trading_days_per_year / len(pnls)) if len(pnls) > 0 else 0
+            calmar = annualized_return / max_drawdown if max_drawdown > 0 else float('inf')
+
+            # Consecutive wins/losses tracking
+            max_consecutive_wins = 0
+            max_consecutive_losses = 0
+            current_wins = 0
+            current_losses = 0
+            for p in pnls:
+                if p > 0:
+                    current_wins += 1
+                    current_losses = 0
+                    max_consecutive_wins = max(max_consecutive_wins, current_wins)
+                else:
+                    current_losses += 1
+                    current_wins = 0
+                    max_consecutive_losses = max(max_consecutive_losses, current_losses)
+
+            # Recovery factor (total profit / max drawdown)
+            recovery_factor = sum(pnls) / max_drawdown if max_drawdown > 0 else float('inf')
+
+            # Expectancy (avg win * win rate - avg loss * loss rate)
+            win_rate = sum(1 for p in pnls if p > 0) / len(pnls)
+            avg_win = np.mean(winners) if winners else 0
+            avg_loss = abs(np.mean(losers)) if losers else 0
+            expectancy = (avg_win * win_rate) - (avg_loss * (1 - win_rate))
+
             summary = {
                 "total_trades": len(results),
                 "winners": len(winners),
                 "losers": len(losers),
-                "total_pnl": sum(pnls),
-                "win_rate": sum(1 for p in pnls if p > 0) / len(pnls),
-                "avg_trade": np.mean(pnls),
-                "avg_win": np.mean(winners) if winners else 0,
-                "avg_loss": np.mean(losers) if losers else 0,
-                "max_win": max(pnls),
-                "max_loss": min(pnls),
-                "std_dev": std_pnl,
+                "total_pnl": round(sum(pnls), 2),
+                "win_rate": round(win_rate, 4),
+                "avg_trade": round(float(np.mean(pnls)), 2),
+                "avg_win": round(float(avg_win), 2),
+                "avg_loss": round(float(np.mean(losers)), 2) if losers else 0,
+                "max_win": round(float(max(pnls)), 2),
+                "max_loss": round(float(min(pnls)), 2),
+                "std_dev": round(float(std_pnl), 2),
                 "sharpe_ratio": round(sharpe, 2),
+                "sortino_ratio": round(sortino, 2),
+                "max_drawdown": round(max_drawdown, 2),
+                "max_drawdown_pct": round(max_drawdown_pct, 2),
+                "calmar_ratio": round(calmar, 2) if calmar != float('inf') else "inf",
                 "profit_factor": round(profit_factor, 2) if profit_factor != float('inf') else "inf",
+                "recovery_factor": round(recovery_factor, 2) if recovery_factor != float('inf') else "inf",
+                "expectancy": round(expectancy, 2),
+                "max_consecutive_wins": max_consecutive_wins,
+                "max_consecutive_losses": max_consecutive_losses,
                 "config": self.config.to_dict(),
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -520,10 +597,11 @@ class BullPutSpreadBacktester:
 **Sharpe Ratio**: {summary.get("sharpe_ratio", 0):.2f}
 
 ### Configuration Used
-- Short Delta Range: [{self.config.short_put_delta_min}, {self.config.short_put_delta_max}]
-- Long Delta Range: [{self.config.long_put_delta_min}, {self.config.long_put_delta_max}]
-- Spread Width: ${self.config.spread_width_min} - ${self.config.spread_width_max}
+- Short Delta Range: [{self.config.short_delta_min}, {self.config.short_delta_max}]
+- Spread Width: ${self.config.spread_width}
 - Profit Target: {self.config.target_profit_pct * 100}% of credit
+- Stop Loss: {self.config.stop_loss_multiplier}x credit
+- Iron Condor Mode: {self.config.iron_condor_mode}
 
 ### Key Insight
 {"Strategy was profitable over this period." if summary.get("total_pnl", 0) > 0 else "Strategy needs refinement - consider tighter stops or different delta ranges."}
@@ -636,16 +714,32 @@ def main():
     print(f"📁 Lessons saved to: {lessons_path}")
 
     # Print summary
-    print("\n" + "=" * 50)
-    print("📊 BACKTEST SUMMARY")
-    print("=" * 50)
-    print(f"Total Trades: {summary.get('total_trades', 0)}")
-    print(f"Total P&L: ${summary.get('total_pnl', 0):.2f}")
-    print(f"Win Rate: {summary.get('win_rate', 0) * 100:.1f}%")
-    print(f"Average Trade: ${summary.get('avg_trade', 0):.2f}")
-    print(f"Sharpe Ratio: {summary.get('sharpe_ratio', 0):.2f}")
+    print("\n" + "=" * 60)
+    print("📊 IRON CONDOR BACKTEST SUMMARY")
+    print("=" * 60)
+    print(f"Total Trades:     {summary.get('total_trades', 0)}")
+    print(f"Winners/Losers:   {summary.get('winners', 0)}/{summary.get('losers', 0)}")
+    print(f"Win Rate:         {summary.get('win_rate', 0) * 100:.1f}%")
+    print(f"Total P&L:        ${summary.get('total_pnl', 0):.2f}")
+    print(f"Avg Trade:        ${summary.get('avg_trade', 0):.2f}")
+    print("-" * 60)
+    print("📈 RISK-ADJUSTED METRICS")
+    print("-" * 60)
+    print(f"Sharpe Ratio:     {summary.get('sharpe_ratio', 0):.2f}")
+    print(f"Sortino Ratio:    {summary.get('sortino_ratio', 0):.2f}")
+    print(f"Calmar Ratio:     {summary.get('calmar_ratio', 'N/A')}")
+    print(f"Profit Factor:    {summary.get('profit_factor', 'N/A')}")
+    print(f"Expectancy:       ${summary.get('expectancy', 0):.2f}/trade")
+    print("-" * 60)
+    print("📉 DRAWDOWN ANALYSIS")
+    print("-" * 60)
+    print(f"Max Drawdown:     ${summary.get('max_drawdown', 0):.2f} ({summary.get('max_drawdown_pct', 0):.1f}%)")
+    print(f"Recovery Factor:  {summary.get('recovery_factor', 'N/A')}")
+    print(f"Max Win Streak:   {summary.get('max_consecutive_wins', 0)}")
+    print(f"Max Loss Streak:  {summary.get('max_consecutive_losses', 0)}")
+    print("-" * 60)
     print(f"Lessons Generated: {len(lessons)}")
-    print("=" * 50)
+    print("=" * 60)
 
     return 0 if summary.get("total_pnl", 0) >= 0 else 1
 
