@@ -10,19 +10,18 @@ Any attempt to trade non-SPY tickers will be BLOCKED.
 
 Created: Jan 21, 2026
 Reason: SOFI position violated SPY-only rule, blocked trading for 2 days
+Updated: Jan 21, 2026 - Now imports from trading_constants.py (single source of truth)
 """
 
 import logging
 
+from src.core.trading_constants import ALLOWED_TICKERS
+
 logger = logging.getLogger(__name__)
 
-# WHITELIST - SPY ONLY
-# Do NOT add other tickers without CEO approval
-ALLOWED_TICKERS = frozenset({"SPY"})
-
-# Options on allowed tickers are permitted
-# Format: SPY + date + P/C + strike (e.g., SPY260220P00653000)
-ALLOWED_UNDERLYING = frozenset({"SPY"})
+# Import from single source of truth - DO NOT define separately!
+# See src/core/trading_constants.py for the canonical definition
+ALLOWED_UNDERLYING = frozenset(ALLOWED_TICKERS)
 
 
 class TickerWhitelistViolation(Exception):
