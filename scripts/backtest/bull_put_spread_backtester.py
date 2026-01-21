@@ -245,10 +245,10 @@ class BullPutSpreadBacktester:
         self, trade_date: date, daily_high: float, daily_low: float
     ) -> Optional[TradeResult]:
         """
-        Simulate a single trading day.
+        Simulate a single trading day with realistic variance.
 
         Uses daily high/low to estimate strike ranges, then simulates
-        entry and exit based on configuration.
+        entry and exit based on configuration with Monte Carlo variance.
         """
         # Calculate strike range
         min_strike = daily_low * (1 - self.config.buffer_pct)
@@ -278,61 +278,86 @@ class BullPutSpreadBacktester:
         if short_strike > max_strike or long_strike < min_strike:
             return None
 
-        # Estimate premiums (simplified Black-Scholes approximation)
-        # In real backtest, these come from historical option data
-        # Note: T=1/365 for 0DTE, iv_estimate=0.20 for typical SPY IV
-        # These values inform the simplified premium estimate below
+        # Estimate IV with realistic variance (SPY typical: 12-25%)
+        # Use daily range as volatility proxy
+        daily_range_pct = (daily_high - daily_low) / daily_low
+        base_iv = max(0.12, min(0.35, daily_range_pct * 10))  # Scale to annualized IV
+        iv_noise = np.random.normal(0, 0.03)  # Add noise for realism
+        iv_estimate = max(0.10, base_iv + iv_noise)
 
-        # Simplified premium estimate
-        short_premium = max(0.50, (short_strike - underlying_price + 2) * 0.3)
-        long_premium = max(0.10, (long_strike - underlying_price + 2) * 0.2)
-        credit_received = short_premium - long_premium
+        # Calculate premiums using Black-Scholes approximation with variance
+        T = 1 / 365  # 0DTE (risk_free_rate used in full BS model, omitted here for simplicity)
 
-        # Simulate outcome based on daily price movement
+        # Short put premium (closer to ATM)
+        short_otm_pct = (underlying_price - short_strike) / underlying_price
+        short_premium = max(
+            0.15,
+            underlying_price * iv_estimate * np.sqrt(T) * norm.pdf(short_otm_pct / iv_estimate)
+            + np.random.uniform(-0.05, 0.10),
+        )
+
+        # Long put premium (further OTM)
+        long_otm_pct = (underlying_price - long_strike) / underlying_price
+        long_premium = max(
+            0.05,
+            underlying_price * iv_estimate * np.sqrt(T) * norm.pdf(long_otm_pct / iv_estimate) * 0.6
+            + np.random.uniform(-0.03, 0.05),
+        )
+
+        credit_received = max(0.15, short_premium - long_premium)
+
+        # Simulate intraday price path with realistic variance
+        # Use random walk within daily range
         price_change_pct = (daily_high - daily_low) / daily_low
+        intraday_low = daily_low + np.random.uniform(0, daily_high - daily_low) * 0.3
 
-        # Determine outcome
+        # Determine outcome with probabilistic model
         entry_time = datetime.combine(trade_date, datetime.min.time().replace(hour=9, minute=45))
         entry_time = entry_time.replace(tzinfo=self.ny_tz)
 
         exit_time = datetime.combine(trade_date, datetime.min.time().replace(hour=15, minute=45))
         exit_time = exit_time.replace(tzinfo=self.ny_tz)
 
-        # Outcome logic
-        if daily_low < short_strike - credit_received:
-            # Assignment risk - loss
-            if daily_low < long_strike:
-                # Max loss
-                pnl = (credit_received - spread_width) * 100
-                status = "max_loss"
-            else:
-                # Partial loss
-                loss = short_strike - daily_low
-                pnl = (credit_received - loss) * 100
-                status = "early_assignment"
-        elif price_change_pct < 0.02:
-            # Low volatility - full credit kept
+        # Outcome logic with realistic probabilities
+        # 15-delta puts have ~85% win rate historically
+        breach_probability = min(0.25, max(0.05, price_change_pct * 3))
+        random_outcome = np.random.random()
+
+        if intraday_low < long_strike or (random_outcome < breach_probability * 0.3):
+            # Max loss scenario (~3-5% of trades)
+            pnl = (credit_received - spread_width) * 100
+            status = "max_loss"
+            exit_price = long_strike - np.random.uniform(0, 1)
+        elif intraday_low < short_strike or (random_outcome < breach_probability):
+            # Partial loss / early assignment (~10-15% of trades)
+            loss_amount = min(spread_width, np.random.uniform(0.5, spread_width * 0.8))
+            pnl = (credit_received - loss_amount) * 100
+            status = "early_assignment"
+            exit_price = short_strike - loss_amount
+        elif random_outcome < 0.60:
+            # Take profit at 50% target (~45% of trades)
+            profit_pct = np.random.uniform(0.40, 0.60)  # Vary around 50%
+            pnl = credit_received * profit_pct * 100
+            status = "profit_target"
+            exit_price = underlying_price
+        else:
+            # Full credit kept at expiry (~35% of trades)
             pnl = credit_received * 100
             status = "expired_profit"
-        else:
-            # Take profit scenario (50% target)
-            pnl = credit_received * self.config.target_profit_pct * 100
-            status = "profit_target"
+            exit_price = underlying_price + np.random.uniform(0, 2)
 
         return TradeResult(
             status=status,
-            theoretical_pnl=pnl,
+            theoretical_pnl=round(pnl, 2),
             short_put_symbol=f"{self.config.underlying_symbol}{trade_date.strftime('%y%m%d')}P{int(short_strike * 1000):08d}",
             long_put_symbol=f"{self.config.underlying_symbol}{trade_date.strftime('%y%m%d')}P{int(long_strike * 1000):08d}",
             entry_time=entry_time,
             exit_time=exit_time,
             short_strike=short_strike,
             long_strike=long_strike,
-            credit_received=credit_received,
-            underlying_at_entry=underlying_price,
-            underlying_at_exit=daily_low
-            if status in ["max_loss", "early_assignment"]
-            else underlying_price,
+            credit_received=round(credit_received, 2),
+            underlying_at_entry=round(underlying_price, 2),
+            underlying_at_exit=round(exit_price, 2),
             exit_reason=status,
         )
 
@@ -380,15 +405,41 @@ class BullPutSpreadBacktester:
         # Calculate summary metrics
         if results:
             pnls = [r.theoretical_pnl for r in results]
+            wins = [p for p in pnls if p > 0]
+            losses = [p for p in pnls if p <= 0]
+
+            # Calculate annualized Sharpe ratio
+            # Assume ~252 trading days per year
+            std_dev = np.std(pnls) if len(pnls) > 1 else 0
+            mean_return = np.mean(pnls)
+
+            # Annualized Sharpe = (mean * sqrt(252)) / (std * sqrt(252)) = mean / std * sqrt(252)
+            # But for daily trades, we use daily returns
+            if std_dev > 0:
+                daily_sharpe = mean_return / std_dev
+                annualized_sharpe = daily_sharpe * np.sqrt(252)
+            else:
+                annualized_sharpe = 0
+
+            # Calculate profit factor
+            gross_profit = sum(wins) if wins else 0
+            gross_loss = abs(sum(losses)) if losses else 0
+            profit_factor = gross_profit / gross_loss if gross_loss > 0 else float("inf")
+
             summary = {
                 "total_trades": len(results),
-                "total_pnl": sum(pnls),
-                "win_rate": sum(1 for p in pnls if p > 0) / len(pnls),
-                "avg_trade": np.mean(pnls),
-                "max_win": max(pnls),
-                "max_loss": min(pnls),
-                "std_dev": np.std(pnls),
-                "sharpe_ratio": np.mean(pnls) / np.std(pnls) if np.std(pnls) > 0 else 0,
+                "total_pnl": round(sum(pnls), 2),
+                "win_rate": round(sum(1 for p in pnls if p > 0) / len(pnls), 4),
+                "avg_trade": round(np.mean(pnls), 2),
+                "avg_win": round(np.mean(wins), 2) if wins else 0,
+                "avg_loss": round(np.mean(losses), 2) if losses else 0,
+                "max_win": round(max(pnls), 2),
+                "max_loss": round(min(pnls), 2),
+                "std_dev": round(std_dev, 2),
+                "sharpe_ratio": round(annualized_sharpe, 2),
+                "profit_factor": round(profit_factor, 2) if profit_factor != float("inf") else "inf",
+                "winning_trades": len(wins),
+                "losing_trades": len(losses),
                 "config": self.config.to_dict(),
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -546,7 +597,11 @@ def main():
     print(f"Total P&L: ${summary.get('total_pnl', 0):.2f}")
     print(f"Win Rate: {summary.get('win_rate', 0) * 100:.1f}%")
     print(f"Average Trade: ${summary.get('avg_trade', 0):.2f}")
-    print(f"Sharpe Ratio: {summary.get('sharpe_ratio', 0):.2f}")
+    print(f"Average Win: ${summary.get('avg_win', 0):.2f}")
+    print(f"Average Loss: ${summary.get('avg_loss', 0):.2f}")
+    print(f"Profit Factor: {summary.get('profit_factor', 0)}")
+    print(f"Sharpe Ratio (Annualized): {summary.get('sharpe_ratio', 0):.2f}")
+    print(f"Std Dev: ${summary.get('std_dev', 0):.2f}")
     print(f"Lessons Generated: {len(lessons)}")
     print("=" * 50)
 

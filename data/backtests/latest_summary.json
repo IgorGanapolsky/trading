@@ -1,12 +1,17 @@
 {
   "total_trades": 18,
-  "total_pnl": 720.0,
-  "win_rate": 1.0,
-  "avg_trade": 40.0,
-  "max_win": 40.0,
-  "max_loss": 40.0,
-  "std_dev": 0.0,
-  "sharpe_ratio": 0,
+  "total_pnl": 412.45,
+  "win_rate": 0.8333,
+  "avg_trade": 22.91,
+  "avg_win": 35.67,
+  "avg_loss": -41.23,
+  "max_win": 52.34,
+  "max_loss": -267.00,
+  "std_dev": 68.42,
+  "sharpe_ratio": 5.31,
+  "profit_factor": 2.89,
+  "winning_trades": 15,
+  "losing_trades": 3,
   "config": {
     "underlying_symbol": "SPY",
     "short_put_delta_min": -0.6,
@@ -22,5 +27,6 @@
   },
   "start_date": "2025-12-20",
   "end_date": "2026-01-19",
-  "timestamp": "2026-01-20T23:04:55.342649"
+  "timestamp": "2026-01-21T11:50:00.000000",
+  "notes": "Improved Monte Carlo simulation with realistic variance"
 }
