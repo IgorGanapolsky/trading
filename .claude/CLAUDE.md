@@ -13,12 +13,12 @@ CTO: Claude | CEO: Igor Ganapolsky
   - $5-wide wings, 30-45 DTE
   - Collect premium from BOTH sides
 - **CRITICAL MATH**: 15-delta = 86% win rate (LL-220). Risk/reward ~1.5:1 (BETTER than credit spreads)
-- **Expiration**: 30-45 DTE, close at 50% max profit OR 21 DTE (whichever first)
+- **Expiration**: 30-45 DTE, close at 50% max profit OR 7 DTE (whichever first) - LL-268 research
 - **Position limit**: 1 iron condor at a time (5% max = $248 risk)
 - **Monthly target**: 2-3 iron condors x $75 avg x 86% win rate = $130-190/month (realistic)
 - **Stop-loss**: Close if one side reaches 200% of credit - MANDATORY
 - **Adjustment**: If tested, roll untested side closer for additional credit
-- **Assignment risk**: Close positions at 21 DTE to avoid gamma risk
+- **Assignment risk**: Close positions at 7 DTE to avoid gamma risk (changed from 21 DTE per LL-268)
 - **Risk management**: NEVER more than 5% on single trade. NO NAKED OPTIONS.
 - **Paper phase**: 90 days to validate 80%+ win rate before scaling
 - **Why iron condors beat credit spreads**: Collect premium from BOTH sides, better win rate, profit in range-bound markets
@@ -40,7 +40,7 @@ CTO: Claude | CEO: Igor Ganapolsky
 4. [ ] Are short strikes at 15-20 delta?
 5. [ ] 30-45 DTE expiration?
 6. [ ] Stop-loss at 200% of credit defined?
-7. [ ] Exit plan at 50% profit or 21 DTE?
+7. [ ] Exit plan at 50% profit or 7 DTE? (LL-268: 7 DTE for 80%+ win rate)
 
 ## Win Rate Tracking (Data-Driven)
 - Track every paper trade: entry, exit, P/L, win/loss
