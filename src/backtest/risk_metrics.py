@@ -307,9 +307,6 @@ def calculate_risk_metrics(
     total_return = float(np.sum(pnls))
     avg_trade_return = float(np.mean(pnls))
 
-    # Convert to return percentages for ratio calculations
-    returns_pct = pnls / initial_capital
-
     # Annualized return (assuming trades are spread over the year)
     # For n trades over 252 days, annualized = total_return * (252 / n_trades)
     annualized_return = (total_return / initial_capital) * (periods_per_year / max(n_trades, 1))
@@ -439,6 +436,183 @@ PHIL TOWN RULE #1 COMPLIANCE
     return report
 
 
+def calculate_rolling_sharpe(
+    returns: np.ndarray,
+    window_size: int = 20,
+    risk_free_rate: float = 0.05,
+    periods_per_year: int = 252,
+) -> tuple[np.ndarray, float]:
+    """
+    Calculate rolling Sharpe ratio to detect regime changes.
+
+    Industry best practice: Sharpe should exceed 1.0 in at least 80% of windows
+    to indicate strategy robustness.
+
+    Args:
+        returns: Array of trade returns
+        window_size: Rolling window size (default 20 trades)
+        risk_free_rate: Annual risk-free rate
+        periods_per_year: Trading periods per year
+
+    Returns:
+        (rolling_sharpes, consistency_ratio) where consistency_ratio is
+        the fraction of windows with Sharpe > 1.0
+    """
+    if len(returns) < window_size:
+        return np.array([]), 0.0
+
+    n_windows = len(returns) - window_size + 1
+    rolling_sharpes = np.zeros(n_windows)
+
+    for i in range(n_windows):
+        window_returns = returns[i : i + window_size]
+        rolling_sharpes[i] = calculate_sharpe_ratio(
+            window_returns, risk_free_rate, periods_per_year, min_observations=5
+        )
+
+    # Calculate consistency (fraction of windows with Sharpe > 1.0)
+    consistency = np.mean(rolling_sharpes > 1.0)
+
+    return rolling_sharpes, float(consistency)
+
+
+def monte_carlo_sharpe_confidence(
+    returns: np.ndarray,
+    n_simulations: int = 1000,
+    confidence_level: float = 0.95,
+    risk_free_rate: float = 0.05,
+    periods_per_year: int = 252,
+) -> tuple[float, float, float]:
+    """
+    Calculate bootstrap confidence interval for Sharpe ratio.
+
+    Industry insight: Backtested Sharpe ratios typically overstate live
+    performance by 30-50%. This provides statistical bounds.
+
+    Args:
+        returns: Array of trade returns
+        n_simulations: Number of bootstrap samples
+        confidence_level: Confidence level (0.95 = 95%)
+        risk_free_rate: Annual risk-free rate
+        periods_per_year: Trading periods per year
+
+    Returns:
+        (sharpe_estimate, lower_bound, upper_bound) tuple
+    """
+    if len(returns) < 10:
+        return 0.0, 0.0, 0.0
+
+    # Bootstrap sampling
+    bootstrap_sharpes = np.zeros(n_simulations)
+    n_samples = len(returns)
+
+    for i in range(n_simulations):
+        # Sample with replacement
+        sample_idx = np.random.randint(0, n_samples, size=n_samples)
+        sample_returns = returns[sample_idx]
+        bootstrap_sharpes[i] = calculate_sharpe_ratio(
+            sample_returns, risk_free_rate, periods_per_year, min_observations=5
+        )
+
+    # Calculate confidence interval
+    alpha = 1 - confidence_level
+    lower_bound = float(np.percentile(bootstrap_sharpes, alpha / 2 * 100))
+    upper_bound = float(np.percentile(bootstrap_sharpes, (1 - alpha / 2) * 100))
+    estimate = float(np.mean(bootstrap_sharpes))
+
+    return estimate, lower_bound, upper_bound
+
+
+def benchmark_comparison(
+    strategy_returns: np.ndarray,
+    benchmark_returns: np.ndarray,
+    risk_free_rate: float = 0.05,
+    periods_per_year: int = 252,
+) -> dict:
+    """
+    Compare strategy performance to a benchmark (e.g., SPY buy-and-hold).
+
+    Args:
+        strategy_returns: Strategy trade returns
+        benchmark_returns: Benchmark returns (same period)
+        risk_free_rate: Annual risk-free rate
+        periods_per_year: Trading periods per year
+
+    Returns:
+        Dictionary with comparison metrics
+    """
+    strategy_sharpe = calculate_sharpe_ratio(
+        strategy_returns, risk_free_rate, periods_per_year
+    )
+    benchmark_sharpe = calculate_sharpe_ratio(
+        benchmark_returns, risk_free_rate, periods_per_year
+    )
+
+    # Information ratio = (strategy return - benchmark return) / tracking error
+    excess_returns = strategy_returns - benchmark_returns
+    tracking_error = np.std(excess_returns, ddof=1) if len(excess_returns) > 1 else 0.0
+    info_ratio = (
+        np.mean(excess_returns) / tracking_error if tracking_error > 0 else 0.0
+    )
+
+    return {
+        "strategy_sharpe": round(strategy_sharpe, 3),
+        "benchmark_sharpe": round(benchmark_sharpe, 3),
+        "sharpe_difference": round(strategy_sharpe - benchmark_sharpe, 3),
+        "outperforms_benchmark": strategy_sharpe > benchmark_sharpe,
+        "information_ratio": round(info_ratio, 3),
+        "tracking_error": round(tracking_error, 2),
+        "alpha": round(
+            float(np.sum(strategy_returns) - np.sum(benchmark_returns)), 2
+        ),
+    }
+
+
+def validate_backtest_realism(metrics: RiskMetrics) -> tuple[bool, list[str]]:
+    """
+    Validate backtest results for realism (detect potential overfitting).
+
+    Industry insight: Backtested Sharpe > 2.5 or Win Rate > 90% often
+    indicates overfitting or unrealistic assumptions.
+
+    Returns:
+        (is_realistic, warnings) tuple
+    """
+    warnings = []
+
+    # Sharpe > 2.5 is suspicious for options strategies
+    if metrics.sharpe_ratio > 2.5:
+        warnings.append(
+            f"Sharpe ratio {metrics.sharpe_ratio:.2f} > 2.5 may indicate overfitting"
+        )
+
+    # Win rate > 90% is suspicious
+    if metrics.win_rate > 0.90:
+        warnings.append(
+            f"Win rate {metrics.win_rate:.1%} > 90% may be unrealistic"
+        )
+
+    # Sortino >> Sharpe suggests tail risk underestimation
+    if metrics.sortino_ratio > metrics.sharpe_ratio * 2:
+        warnings.append(
+            "Sortino/Sharpe ratio suggests possible tail risk underestimation"
+        )
+
+    # Zero or near-zero std_dev indicates degenerate results
+    if metrics.std_dev < 1.0 and metrics.total_return != 0:
+        warnings.append(
+            f"Std dev ${metrics.std_dev:.2f} is suspiciously low - check for data issues"
+        )
+
+    # Negative kurtosis indicates thinner tails than normal
+    if metrics.kurtosis < -1.0:
+        warnings.append(
+            f"Negative kurtosis {metrics.kurtosis:.2f} suggests unrealistic return distribution"
+        )
+
+    return len(warnings) == 0, warnings
+
+
 # CLI for testing
 if __name__ == "__main__":
     # Example usage with sample data
@@ -446,6 +620,23 @@ if __name__ == "__main__":
 
     metrics = calculate_risk_metrics(sample_pnls, initial_capital=5000.0)
     print(generate_risk_report(metrics))
+
+    # New: Rolling Sharpe analysis
+    pnls_array = np.array(sample_pnls, dtype=float)
+    rolling_sharpes, consistency = calculate_rolling_sharpe(pnls_array, window_size=10)
+    print(f"\nRolling Sharpe Consistency (>1.0): {consistency:.1%}")
+
+    # New: Bootstrap confidence interval
+    estimate, lower, upper = monte_carlo_sharpe_confidence(pnls_array)
+    print(f"Sharpe 95% CI: [{lower:.3f}, {upper:.3f}] (est: {estimate:.3f})")
+
+    # New: Realism validation
+    is_realistic, warnings = validate_backtest_realism(metrics)
+    if not is_realistic:
+        print("\nREALISM WARNINGS:")
+        for w in warnings:
+            print(f"  - {w}")
+
     print("\nJSON Output:")
     import json
 
