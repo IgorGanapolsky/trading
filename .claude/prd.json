@@ -1,7 +1,7 @@
 {
   "version": "1.1.0",
   "description": "Ralph Wiggum technique - Structured task backlog for autonomous CTO mode",
-  "last_updated": "2026-01-20",
+  "last_updated": "2026-01-21",
   "directives": {
     "summary_required": true,
     "summary_format": "Every iteration MUST end with an IMPROVEMENTS SUMMARY showing: what was improved, metrics before/after, and next priorities"
@@ -69,10 +69,10 @@
   ],
   "completed_tasks": [],
   "metadata": {
-    "total_iterations": 129,
+    "total_iterations": 135,
     "tasks_completed_this_session": 6,
-    "last_task_completed": "T006",
-    "last_iteration_at": "2026-01-21T03:00:00Z",
-    "notes": "Iteration 9: FIXED spread_performance.json tracking! 0→6 trades tracked. Win rate: 33.3%, P/L: $168, Profit factor: 1.6"
+    "last_task_completed": "T001",
+    "last_iteration_at": "2026-01-21T12:00:00Z",
+    "notes": "Iteration 15: BACKTEST - Added Monte Carlo simulation (792 LOC). Bootstrap sampling, stress testing, probability of profit/ruin. 846 tests pass."
   }
 }
