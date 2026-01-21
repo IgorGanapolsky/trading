@@ -1,7 +1,7 @@
 # LL-276: Day 2 Crisis - Position Imbalance and Missing CALL Legs
 
 **Date:** January 21, 2026
-**Severity:** CRITICAL
+**Severity:** RESOLVED (was CRITICAL)
 **Category:** Position Management, Iron Condor Structure
 
 ## Issue
@@ -48,7 +48,14 @@ The 1 failing test (`test_system_state_has_balanced_positions`) is CORRECT - we 
 2. Verify BOTH put AND call spreads exist before marking trade complete
 3. Add alerting when position count doesn't match expected (4 legs per IC)
 
+## Resolution (Jan 21, 2026)
+1. ✅ 4-leg validation added to iron_condor_trader.py:405
+2. ✅ Argparse --symbol bug fixed
+3. ✅ Liquidation script created (scripts/liquidate_non_compliant_positions.py)
+4. ⏳ Existing positions need liquidation during market hours
+
 ## Related
 - LL-268: Iron condor execution failure
 - LL-275: Argparse --symbol missing
 - LL-270: System blocked, no auto cleanup
+- LL-278: Strategy violation crisis (rogue workflows disabled)
