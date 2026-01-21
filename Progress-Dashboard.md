@@ -60,9 +60,9 @@
 
 ---
 
-## 🎯 North Star Goal
+## 🎯 North Star Goal (PERMANENT - CEO MANDATE)
 
-**Target**: **$100+/day profit**
+**Target**: **$100/day after-tax profit** - NON-NEGOTIABLE
 
 | Metric | Current | Target | Progress |
 |--------|---------|--------|----------|
