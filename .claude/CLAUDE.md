@@ -2,8 +2,8 @@
 
 CTO: Claude | CEO: Igor Ganapolsky
 
-## Strategy (Updated Jan 19, 2026 - IRON CONDORS REPLACE TASTYTRADE)
-- **North Star**: $150-200/month (3-4% monthly) - MATH VALIDATED
+## Strategy (Updated Jan 21, 2026 - IRON CONDORS REPLACE TASTYTRADE)
+- **North Star**: $100/day after-tax profit - CEO MANDATE (PERMANENT)
 - **Why revised**: TastyTrade credit spread 11-year backtest showed LOSSES (-7% to -93%). Iron condors from $100K account showed 86% win rate with 1.5:1 reward/risk.
 - **Current capital**: $4,986.39 | Lesson paid from SOFI disaster.
 - **Primary strategy**: IRON CONDORS on SPY ONLY - defined risk on BOTH sides
