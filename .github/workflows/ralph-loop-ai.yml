@@ -1,0 +1,258 @@
+name: Ralph Loop - AI Self-Healing (Cost-Optimized)
+
+# Real Ralph Wiggum implementation:
+# 1. Quick health check first (< 1 min)
+# 2. Only call Claude API if tests/lint FAILING
+# 3. Skip entirely if system is healthy
+# 4. Max 5 iterations to limit API costs
+
+# COST CONTROLS:
+# - Runs every 6 hours (not 4) = 4 runs/day max
+# - Skips if healthy (no API calls)
+# - Concurrency limit = 1 (no parallel runs)
+# - Max 5 iterations per run
+# - Uses claude-sonnet (cheaper than opus)
+
+on:
+  schedule:
+    # Run every 6 hours - cost efficient
+    - cron: '30 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Task type'
+        required: false
+        default: 'auto'
+        type: choice
+        options:
+          - auto
+          - fix_tests
+          - fix_lint
+          - improve_code
+      max_iterations:
+        description: 'Max iterations'
+        required: false
+        default: '5'
+        type: string
+      target:
+        description: 'Target directory (optional)'
+        required: false
+        default: ''
+        type: string
+
+env:
+  PYTHON_VERSION: '3.11'
+
+# COST CONTROL: Only one Ralph loop at a time
+concurrency:
+  group: ralph-loop
+  cancel-in-progress: false
+
+jobs:
+  # Job 0: Quick health check (< 1 minute, no API calls)
+  health-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      needs_fixing: ${{ steps.check.outputs.needs_fixing }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Quick test check
+        id: check
+        run: |
+          pip install -q pytest ruff 2>/dev/null
+          pip install -q -r requirements.txt 2>/dev/null || true
+
+          echo "=== Quick Health Check (no API calls) ==="
+
+          # Run tests
+          pytest tests/ -q --tb=no -x 2>&1 | tail -5
+          TEST_EXIT=$?
+
+          # Run lint
+          ruff check src/ scripts/ --select=E,F 2>&1 | tail -3
+          LINT_EXIT=$?
+
+          if [ $TEST_EXIT -eq 0 ] && [ $LINT_EXIT -eq 0 ]; then
+            echo "::notice::System HEALTHY - skipping Ralph Loop (saves API costs)"
+            echo "needs_fixing=false" >> $GITHUB_OUTPUT
+          else
+            echo "::warning::System needs fixing - will run Ralph Loop"
+            echo "needs_fixing=true" >> $GITHUB_OUTPUT
+          fi
+
+
+  ralph-loop:
+    runs-on: ubuntu-latest
+    needs: health-check
+    # COST CONTROL: Only run if system needs fixing OR manual trigger
+    if: needs.health-check.outputs.needs_fixing == 'true' || github.event_name == 'workflow_dispatch'
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+          fetch-depth: 2  # For git diff
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -q pytest ruff anthropic
+          pip install -q -r requirements.txt || true
+
+      - name: Configure git
+        run: |
+          git config user.name "ralph-bot[bot]"
+          git config user.email "ralph-bot[bot]@users.noreply.github.com"
+
+      - name: Check current status (dry run)
+        id: status
+        run: |
+          echo "=== Pre-Ralph Status Check ==="
+          python scripts/ralph_loop.py --dry-run || true
+
+          # Capture test/lint status
+          pytest tests/ -q --tb=no 2>&1 | tail -3 || true
+          TESTS_PASS=$?
+
+          ruff check src/ scripts/ --select=E,F 2>&1 | tail -3 || true
+          LINT_PASS=$?
+
+          if [ $TESTS_PASS -eq 0 ] && [ $LINT_PASS -eq 0 ]; then
+            echo "status=healthy" >> $GITHUB_OUTPUT
+            echo "::notice::System is healthy - tests and lint passing"
+          else
+            echo "status=needs_fixing" >> $GITHUB_OUTPUT
+            echo "::warning::System needs fixing"
+          fi
+
+      - name: Run Ralph Loop
+        if: steps.status.outputs.status == 'needs_fixing' || github.event_name == 'workflow_dispatch'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          echo "=== Starting Ralph Loop ==="
+
+          TASK="${{ github.event.inputs.task || 'auto' }}"
+          MAX_ITER="${{ github.event.inputs.max_iterations || '5' }}"
+          TARGET="${{ github.event.inputs.target || '' }}"
+
+          python scripts/ralph_loop.py \
+            --task "$TASK" \
+            --max-iterations "$MAX_ITER" \
+            ${TARGET:+--target "$TARGET"} \
+            2>&1 | tee ralph_output.txt
+
+          # Check result
+          if grep -q '"success": true' ralph_output.txt; then
+            echo "::notice::Ralph Loop completed successfully!"
+          else
+            echo "::warning::Ralph Loop did not fully complete"
+          fi
+
+      - name: Push changes
+        if: steps.status.outputs.status == 'needs_fixing' || github.event_name == 'workflow_dispatch'
+        run: |
+          # Check for uncommitted changes
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A
+            git commit -m "fix(ralph): AI-driven fixes from Ralph Loop" || true
+          fi
+
+          # Push any commits
+          git push origin main || true
+
+      - name: Post-Ralph verification
+        run: |
+          echo "=== Post-Ralph Status ==="
+          pytest tests/ -q --tb=no 2>&1 | tail -5 || true
+          ruff check src/ scripts/ --select=E,F 2>&1 | tail -3 || true
+
+      - name: Update summary
+        run: |
+          echo "## Ralph Loop Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Pre-status | ${{ steps.status.outputs.status }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Task | ${{ github.event.inputs.task || 'auto' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Max Iterations | ${{ github.event.inputs.max_iterations || '5' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f ralph_output.txt ]; then
+            echo "### Output" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -50 ralph_output.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # Job 2: Research and learning (only if Ralph loop ran)
+  research-learn:
+    runs-on: ubuntu-latest
+    needs: [health-check, ralph-loop]
+    # COST CONTROL: Only run if Ralph loop actually ran
+    if: needs.health-check.outputs.needs_fixing == 'true' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -q -r requirements.txt || true
+
+      - name: Query RAG for lessons
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        continue-on-error: true
+        run: |
+          echo "=== Querying RAG for recent lessons ==="
+          # If we have a RAG query script, run it
+          if [ -f scripts/query_vertex_rag.py ]; then
+            python scripts/query_vertex_rag.py --query "recent CI failures and fixes" --limit 3 || true
+          fi
+
+      - name: Record iteration in prd.json
+        run: |
+          # Update iteration count
+          if [ -f .claude/prd.json ]; then
+            python3 << 'EOF'
+          import json
+          from datetime import datetime
+
+          with open('.claude/prd.json', 'r') as f:
+              data = json.load(f)
+
+          data['metadata']['total_iterations'] = data['metadata'].get('total_iterations', 0) + 1
+          data['metadata']['last_ralph_run'] = datetime.utcnow().isoformat() + 'Z'
+          data['metadata']['ralph_type'] = 'ai_loop'
+
+          with open('.claude/prd.json', 'w') as f:
+              json.dump(data, f, indent=2)
+          EOF
+            echo "Updated prd.json iteration count"
+          fi
+
+      - name: Summary
+        run: |
+          echo "## Research & Learning" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Ralph Loop iteration recorded." >> $GITHUB_STEP_SUMMARY
