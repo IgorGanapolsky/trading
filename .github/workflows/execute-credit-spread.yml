@@ -2,8 +2,12 @@ name: Execute Credit Spread
 
 on:
   schedule:
-    # Run at 9:35 AM ET on weekdays (covers EST/EDT)
-    - cron: '35 13,14 * * 1-5'
+    # Run multiple times during trading hours to ensure execution
+    # EST (winter, UTC-5): 14:35=9:35AM, 15:35=10:35AM, 18:35=1:35PM
+    # EDT (summer, UTC-4): 13:35=9:35AM, 14:35=10:35AM, 17:35=1:35PM
+    - cron: '35 14 * * 1-5'   # 9:35 AM ET (winter) / 10:35 AM ET (summer)
+    - cron: '35 15 * * 1-5'   # 10:35 AM ET (winter) / 11:35 AM ET (summer)
+    - cron: '35 18 * * 1-5'   # 1:35 PM ET (winter) / 2:35 PM ET (summer)
   push:
     branches: [main]
     paths:
@@ -89,10 +93,45 @@ jobs:
                   f.write("skip=false\n")
           CALENDAR_EOF
 
+      # ===== SINGLE POSITION CHECK (CLAUDE.md: 1 spread at a time) =====
+      - name: Check Existing Positions
+        id: position_check
+        if: steps.calendar_check.outputs.skip != 'true'
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          python3 << 'POSITION_EOF'
+          import os
+          from alpaca.trading.client import TradingClient
+
+          client = TradingClient(
+              os.environ['ALPACA_API_KEY'],
+              os.environ['ALPACA_API_SECRET'],
+              paper=True
+          )
+
+          positions = client.get_all_positions()
+          option_positions = [p for p in positions if len(p.symbol) > 10]
+
+          print(f"=== POSITION CHECK (CLAUDE.md: 1 spread at a time) ===")
+          print(f"Current option positions: {len(option_positions)}")
+
+          if len(option_positions) >= 2:
+              print(f"::notice::Already have an open spread ({len(option_positions)} legs)")
+              print(f"::notice::Skipping trade per CLAUDE.md position limit")
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write("has_position=true\n")
+          else:
+              print(f"✅ No existing spreads - OK to trade")
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write("has_position=false\n")
+          POSITION_EOF
+
       # ===== POSITION COMPLIANCE CHECK (LL-240 + LL-232 fix) =====
       - name: Check Position Compliance
         id: compliance_check
-        if: steps.calendar_check.outputs.skip != 'true'
+        if: steps.calendar_check.outputs.skip != 'true' && steps.position_check.outputs.has_position != 'true'
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
           ALPACA_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
@@ -184,7 +223,7 @@ jobs:
           COMPLIANCE_EOF
 
       - name: Execute Bull Put Credit Spread
-        if: steps.calendar_check.outputs.skip != 'true' && steps.compliance_check.outputs.compliant == 'true'
+        if: steps.calendar_check.outputs.skip != 'true' && steps.position_check.outputs.has_position != 'true' && steps.compliance_check.outputs.compliant == 'true'
         env:
           SYMBOL: ${{ inputs.symbol || 'SPY' }}
           SPREAD_WIDTH: ${{ inputs.spread_width || '2' }}
@@ -197,7 +236,7 @@ jobs:
 
       # ===== MANDATORY STOP-LOSS (LL-232 + CLAUDE.md) =====
       - name: Set Stop-Loss on New Position
-        if: steps.calendar_check.outputs.skip != 'true' && steps.compliance_check.outputs.compliant == 'true'
+        if: steps.calendar_check.outputs.skip != 'true' && steps.position_check.outputs.has_position != 'true' && steps.compliance_check.outputs.compliant == 'true'
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
           ALPACA_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
