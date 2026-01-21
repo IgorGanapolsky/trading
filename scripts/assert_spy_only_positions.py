@@ -44,13 +44,8 @@ def get_all_positions():
 
 def is_spy_position(symbol: str) -> bool:
     """Check if position is SPY or SPY option."""
-    # SPY stock
-    if symbol == "SPY":
-        return True
-    # SPY options (format: SPY + date + P/C + strike)
-    if symbol.startswith("SPY") and len(symbol) > 5:
-        return True
-    return False
+    # SPY stock or SPY options (format: SPY + date + P/C + strike)
+    return symbol == "SPY" or (symbol.startswith("SPY") and len(symbol) > 5)
 
 
 def main():
