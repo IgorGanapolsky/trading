@@ -463,45 +463,51 @@ class BullPutSpreadBacktester:
                     f"  {status_emoji} {trade_date}: ${result.theoretical_pnl:.2f} ({result.status})"
                 )
 
-        # Calculate summary metrics using advanced risk module
+        # Calculate summary metrics using enhanced performance_metrics module
         if results:
             pnls = [r.theoretical_pnl for r in results]
 
-            # Import advanced risk metrics (lazy import to avoid circular deps)
+            # Try to use enhanced metrics module, fall back to basic calculation
             try:
-                from src.backtest.risk_metrics import calculate_risk_metrics
+                from src.utils.performance_metrics import calculate_all_metrics
 
-                risk_metrics = calculate_risk_metrics(pnls, initial_capital=5000.0)
-                advanced_metrics = risk_metrics.to_dict()
+                metrics = calculate_all_metrics(pnls, initial_capital=5000.0)
+                summary = {
+                    "total_trades": len(results),
+                    "total_pnl": sum(pnls),
+                    "win_rate": metrics.win_rate,
+                    "avg_trade": np.mean(pnls),
+                    "max_win": max(pnls),
+                    "max_loss": min(pnls),
+                    "std_dev": np.std(pnls),
+                    # Enhanced metrics (annualized, risk-adjusted)
+                    "sharpe_ratio": metrics.sharpe_ratio,
+                    "sortino_ratio": metrics.sortino_ratio,
+                    "calmar_ratio": metrics.calmar_ratio,
+                    "max_drawdown": metrics.max_drawdown,
+                    "profit_factor": metrics.profit_factor,
+                    "volatility": metrics.volatility,
+                    "config": self.config.to_dict(),
+                    "start_date": start_date.isoformat(),
+                    "end_date": end_date.isoformat(),
+                    "timestamp": datetime.now().isoformat(),
+                }
             except ImportError:
-                # Fallback if risk_metrics module not available
-                advanced_metrics = {}
-
-            summary = {
-                "total_trades": len(results),
-                "total_pnl": sum(pnls),
-                "win_rate": sum(1 for p in pnls if p > 0) / len(pnls),
-                "avg_trade": np.mean(pnls),
-                "max_win": max(pnls),
-                "max_loss": min(pnls),
-                "std_dev": np.std(pnls),
-                # Use advanced Sharpe (annualized, handles edge cases)
-                "sharpe_ratio": advanced_metrics.get(
-                    "sharpe_ratio",
-                    np.mean(pnls) / np.std(pnls) if np.std(pnls) > 0 else 0,
-                ),
-                # New metrics from advanced module
-                "sortino_ratio": advanced_metrics.get("sortino_ratio", 0),
-                "calmar_ratio": advanced_metrics.get("calmar_ratio", 0),
-                "max_drawdown": advanced_metrics.get("max_drawdown", 0),
-                "var_95": advanced_metrics.get("var_95", 0),
-                "cvar_95": advanced_metrics.get("cvar_95", 0),
-                "profit_factor": advanced_metrics.get("profit_factor", 0),
-                "config": self.config.to_dict(),
-                "start_date": start_date.isoformat(),
-                "end_date": end_date.isoformat(),
-                "timestamp": datetime.now().isoformat(),
-            }
+                # Fallback to basic metrics if module not available
+                summary = {
+                    "total_trades": len(results),
+                    "total_pnl": sum(pnls),
+                    "win_rate": sum(1 for p in pnls if p > 0) / len(pnls),
+                    "avg_trade": np.mean(pnls),
+                    "max_win": max(pnls),
+                    "max_loss": min(pnls),
+                    "std_dev": np.std(pnls),
+                    "sharpe_ratio": np.mean(pnls) / np.std(pnls) if np.std(pnls) > 0 else 0,
+                    "config": self.config.to_dict(),
+                    "start_date": start_date.isoformat(),
+                    "end_date": end_date.isoformat(),
+                    "timestamp": datetime.now().isoformat(),
+                }
         else:
             summary = {"total_trades": 0, "error": "No trades executed"}
 
@@ -528,7 +534,13 @@ class BullPutSpreadBacktester:
 **Total P&L**: ${summary.get("total_pnl", 0):.2f}
 **Win Rate**: {summary.get("win_rate", 0) * 100:.1f}%
 **Average Trade**: ${summary.get("avg_trade", 0):.2f}
+
+### Risk-Adjusted Metrics (Annualized)
 **Sharpe Ratio**: {summary.get("sharpe_ratio", 0):.2f}
+**Sortino Ratio**: {summary.get("sortino_ratio", 0):.2f}
+**Calmar Ratio**: {summary.get("calmar_ratio", 0):.2f}
+**Max Drawdown**: {summary.get("max_drawdown", 0) * 100:.1f}%
+**Profit Factor**: {summary.get("profit_factor", 0):.2f}
 
 ### Configuration Used
 - Short Delta Range: [{self.config.short_put_delta_min}, {self.config.short_put_delta_max}]
@@ -590,18 +602,6 @@ def main():
     parser.add_argument("--end", type=str, help="End date (YYYY-MM-DD)")
     parser.add_argument("--output", type=str, default="data/backtests", help="Output directory")
     parser.add_argument("--config", type=str, help="Path to config JSON file")
-    parser.add_argument(
-        "--monte-carlo",
-        type=int,
-        default=0,
-        metavar="N",
-        help="Run N Monte Carlo simulations (0 = disabled)",
-    )
-    parser.add_argument(
-        "--stress-test",
-        action="store_true",
-        help="Run stress test scenarios",
-    )
 
     args = parser.parse_args()
 
@@ -659,71 +659,16 @@ def main():
     print(f"📁 Lessons saved to: {lessons_path}")
 
     # Print summary
-    print("\n" + "=" * 60)
+    print("\n" + "=" * 50)
     print("📊 BACKTEST SUMMARY")
-    print("=" * 60)
+    print("=" * 50)
     print(f"Total Trades: {summary.get('total_trades', 0)}")
     print(f"Total P&L: ${summary.get('total_pnl', 0):.2f}")
     print(f"Win Rate: {summary.get('win_rate', 0) * 100:.1f}%")
     print(f"Average Trade: ${summary.get('avg_trade', 0):.2f}")
-    print("-" * 60)
-    print("RISK-ADJUSTED METRICS (Annualized)")
-    print(f"  Sharpe Ratio:  {summary.get('sharpe_ratio', 0):.3f}")
-    print(f"  Sortino Ratio: {summary.get('sortino_ratio', 0):.3f}")
-    print(f"  Calmar Ratio:  {summary.get('calmar_ratio', 0):.3f}")
-    print("-" * 60)
-    print("RISK METRICS")
-    print(f"  Max Drawdown:  {summary.get('max_drawdown', 0):.2%}")
-    print(f"  VaR (95%):     ${summary.get('var_95', 0):.2f}")
-    print(f"  CVaR (95%):    ${summary.get('cvar_95', 0):.2f}")
-    print(f"  Profit Factor: {summary.get('profit_factor', 0):.2f}")
-    print("-" * 60)
+    print(f"Sharpe Ratio: {summary.get('sharpe_ratio', 0):.2f}")
     print(f"Lessons Generated: {len(lessons)}")
-    print("=" * 60)
-
-    # Monte Carlo simulation (optional)
-    if args.monte_carlo > 0 and results:
-        print("\n🎲 Running Monte Carlo simulation...")
-        try:
-            from src.backtest.monte_carlo import (
-                generate_monte_carlo_report,
-                run_monte_carlo,
-                stress_test_strategy,
-            )
-
-            pnls = [r.theoretical_pnl for r in results]
-            mc_results = run_monte_carlo(pnls, n_simulations=args.monte_carlo, random_seed=42)
-            print(generate_monte_carlo_report(mc_results, "Bull Put Spread"))
-
-            # Save Monte Carlo results
-            mc_path = output_dir / f"monte_carlo_{timestamp}.json"
-            with open(mc_path, "w") as f:
-                json.dump(mc_results.to_dict(), f, indent=2)
-            print(f"📁 Monte Carlo results saved to: {mc_path}")
-
-            # Stress test if requested
-            if args.stress_test:
-                print("\n💥 Running stress tests...")
-                stress_results = stress_test_strategy(
-                    pnls, n_simulations=min(1000, args.monte_carlo)
-                )
-                print("\nStress Test Results:")
-                for scenario, data in stress_results.items():
-                    status = "✅" if data["passes_validation"] else "❌"
-                    print(
-                        f"  {status} {scenario}: "
-                        f"P(profit)={data['prob_profit']:.1%}, "
-                        f"P(ruin)={data['prob_ruin']:.1%}"
-                    )
-
-                # Save stress test results
-                stress_path = output_dir / f"stress_test_{timestamp}.json"
-                with open(stress_path, "w") as f:
-                    json.dump(stress_results, f, indent=2)
-                print(f"📁 Stress test results saved to: {stress_path}")
-
-        except ImportError as e:
-            print(f"⚠️ Monte Carlo module not available: {e}")
+    print("=" * 50)
 
     return 0 if summary.get("total_pnl", 0) >= 0 else 1
 
