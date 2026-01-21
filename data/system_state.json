@@ -344,14 +344,6 @@
       "filled_at": "2026-01-15 18:28:44.090036+00:00"
     },
     {
-      "id": "dc7c4cb1-3b2f-4216-bd6f-88bbdc7649db",
-      "symbol": null,
-      "side": "None",
-      "qty": "1",
-      "price": "-0.05",
-      "filled_at": "2026-01-15 18:12:31.595069+00:00"
-    },
-    {
       "id": "f5f0bb41-292b-4859-b12a-e055170f8f4f",
       "symbol": "SPY",
       "side": "OrderSide.BUY",
@@ -366,14 +358,6 @@
       "qty": "0.143989009",
       "price": "694.428",
       "filled_at": "2026-01-15 18:03:51.102132+00:00"
-    },
-    {
-      "id": "9cabec1d-0f3b-4f4c-8bae-b0c52b2d3524",
-      "symbol": null,
-      "side": "None",
-      "qty": "1",
-      "price": "-0.03",
-      "filled_at": "2026-01-15 17:19:53.902844+00:00"
     },
     {
       "id": "9c7bb488-2254-4271-a7ef-0a31cb18e798",
@@ -600,7 +584,7 @@
       "filled_at": "2026-01-12 14:30:54.357134+00:00"
     }
   ],
-  "trades_loaded": 69,
+  "trades_loaded": 67,
   "trades": {
     "last_trade_date": "2026-01-21",
     "today_trades": 33,
@@ -619,8 +603,10 @@
     "positions_count": 2
   },
   "meta": {
-    "last_updated": "2026-01-21T19:49:28.375527+00:00",
+    "last_updated": "2026-01-21T23:11:04.958328",
     "trade_sync": "alpaca_api",
-    "sync_frequency_minutes": 5
+    "sync_frequency_minutes": 5,
+    "last_sync": "2026-01-21T23:11:04.958338",
+    "sync_mode": "skipped_no_keys"
   }
 }
