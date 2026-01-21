@@ -497,6 +497,7 @@ def main():
     parser = argparse.ArgumentParser(description="Iron Condor Trader")
     parser.add_argument("--live", action="store_true", help="Execute LIVE trades on Alpaca")
     parser.add_argument("--dry-run", action="store_true", help="Dry run (simulate only)")
+    parser.add_argument("--symbol", type=str, default="SPY", help="Underlying symbol (default: SPY)")
     args = parser.parse_args()
 
     # Default to LIVE mode as of Dec 29, 2025 to hit $100/day target
@@ -504,11 +505,17 @@ def main():
 
     logger.info("IRON CONDOR TRADER - STARTING")
     logger.info(f"Mode: {'LIVE' if live_mode else 'SIMULATED'}")
+    logger.info(f"Symbol: {args.symbol}")
 
     # HARD BLOCK: Validate ticker before proceeding (Jan 20 2026 - SOFI crisis)
     from src.utils.ticker_validator import validate_ticker
 
     strategy = IronCondorStrategy()
+    # Override symbol from command line if provided (Jan 21, 2026 fix)
+    # ROOT CAUSE: Workflow called with --symbol SPY but argparse rejected it
+    # This blocked trading for 8+ days with silent "unrecognized arguments" error
+    if args.symbol:
+        strategy.config["underlying"] = args.symbol.upper()
     validate_ticker(strategy.config["underlying"], context="iron_condor_trader")
 
     # Check entry conditions
