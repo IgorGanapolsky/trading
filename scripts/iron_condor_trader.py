@@ -522,7 +522,8 @@ def main():
     logger.info(f"Symbol: {args.symbol}")
 
     # HARD BLOCK: Validate ticker before proceeding (Jan 20 2026 - SOFI crisis)
-    from src.utils.ticker_validator import validate_ticker
+    # UPDATED Jan 21: Use canonical ticker_whitelist module
+    from src.utils.ticker_whitelist import validate_ticker
 
     strategy = IronCondorStrategy()
     # Override symbol from command line if provided (Jan 21, 2026 fix)
@@ -530,7 +531,8 @@ def main():
     # This blocked trading for 8+ days with silent "unrecognized arguments" error
     if args.symbol:
         strategy.config["underlying"] = args.symbol.upper()
-    validate_ticker(strategy.config["underlying"], context="iron_condor_trader")
+    # Validate underlying ticker - will raise TickerWhitelistViolation if invalid
+    validate_ticker(strategy.config["underlying"])
 
     # Check entry conditions
     should_enter, reason = strategy.check_entry_conditions()

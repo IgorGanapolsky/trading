@@ -1,18 +1,40 @@
 """
-Ticker Validator - HARD BLOCK on non-SPY trades.
+Ticker Validator - DEPRECATED Jan 21, 2026.
 
+DEPRECATED: Use src.utils.ticker_whitelist instead.
+
+This module is kept for backward compatibility but should not be used in new code.
+The canonical ticker validation module is src/utils/ticker_whitelist.py which:
+- Handles both stock and option symbols correctly
+- Extracts underlying from OCC option format (e.g., SPY260220P00653000 -> SPY)
+- Is used by mandatory_trade_gate.py and other critical components
+
+Migration:
+    # Old (deprecated):
+    from src.utils.ticker_validator import validate_ticker
+    validate_ticker("SPY", context="my_module")
+
+    # New (preferred):
+    from src.utils.ticker_whitelist import validate_ticker
+    validate_ticker("SPY")  # Raises TickerWhitelistViolation if invalid
+
+Original purpose:
 Created: January 20, 2026
 Root cause: SOFI position opened today violating SPY ONLY rule, causing -$150 loss.
-
-Per CLAUDE.md:
-- Primary strategy: IRON CONDORS on SPY ONLY
-- NO individual stocks. The $100K success was SPY. The $5K failure was SOFI.
 """
 
 import logging
+import warnings
 from typing import NoReturn
 
 logger = logging.getLogger(__name__)
+
+# Emit deprecation warning on import
+warnings.warn(
+    "ticker_validator is deprecated. Use src.utils.ticker_whitelist instead.",
+    DeprecationWarning,
+    stacklevel=2
+)
 
 # WHITELIST: Only these tickers are allowed for trading
 # Per CLAUDE.md "Ticker Selection (Jan 19, 2026 - Simplified)"
