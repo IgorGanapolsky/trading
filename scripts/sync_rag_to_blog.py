@@ -133,6 +133,43 @@ def get_lesson_takeaway(lesson: dict) -> str:
     return ""
 
 
+def generate_tech_stack_section() -> str:
+    """Generate tech stack section with architecture diagram for blog post."""
+    return """
+## Tech Stack Behind the Lessons
+
+Every lesson we learn is captured, analyzed, and stored by our AI infrastructure:
+
+<div class="mermaid">
+flowchart LR
+    subgraph Learning["Learning Pipeline"]
+        ERROR["Error/Insight<br/>Detected"] --> CLAUDE["Claude Opus<br/>(Analysis)"]
+        CLAUDE --> RAG["Vertex AI RAG<br/>(Storage)"]
+        RAG --> BLOG["GitHub Pages<br/>(Publishing)"]
+        BLOG --> DEVTO["Dev.to<br/>(Distribution)"]
+    end
+</div>
+
+### How We Learn Autonomously
+
+| Component | Role in Learning |
+|-----------|------------------|
+| **Claude Opus 4.5** | Analyzes errors, extracts insights, determines severity |
+| **Vertex AI RAG** | Stores lessons with 768D embeddings for semantic search |
+| **Gemini 2.0 Flash** | Retrieves relevant past lessons before new trades |
+| **OpenRouter (DeepSeek)** | Cost-effective sentiment analysis and research |
+
+### Why This Matters
+
+1. **No Lesson Lost**: Every insight persists in our RAG corpus
+2. **Contextual Recall**: Before each trade, we query similar past situations
+3. **Continuous Improvement**: 200+ lessons shape every decision
+4. **Transparent Journey**: All learnings published publicly
+
+*[Full Tech Stack Documentation](/trading/tech-stack/)*
+"""
+
+
 def get_human_readable_title(lesson: dict) -> str:
     """Get a human-readable title from the lesson."""
     raw_title = lesson["title"]
@@ -259,6 +296,8 @@ excerpt: "{intro[:150]}..."
 | Improvements | {len(other_lessons)} |
 
 ---
+{generate_tech_stack_section()}
+---
 
 ## The Journey So Far
 
@@ -318,6 +357,21 @@ def post_lessons_to_devto(date_str: str, lessons: list[dict]) -> str | None:
         body += f"{summary}\n\n"
 
     body += """---
+
+## Tech Stack Behind the Scenes
+
+Our AI trading system uses:
+- **Claude Opus 4.5** - Primary reasoning engine for trade decisions
+- **OpenRouter** - Cost-optimized LLM gateway (DeepSeek, Mistral, Kimi)
+- **Vertex AI RAG** - Cloud semantic search with 768D embeddings
+- **Gemini 2.0 Flash** - Retrieval-augmented generation
+- **MCP Protocol** - Standardized tool integration layer
+
+Every lesson is stored in our RAG corpus, enabling the system to learn from past mistakes and improve continuously.
+
+*[Full Tech Stack Documentation](https://igorganapolsky.github.io/trading/tech-stack/)*
+
+---
 
 *Auto-generated from our AI Trading System's RAG knowledge base.*
 

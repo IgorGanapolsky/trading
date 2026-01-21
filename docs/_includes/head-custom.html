@@ -1,0 +1,39 @@
+<!-- Mermaid.js for Architecture Diagrams -->
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'neutral',
+    securityLevel: 'loose',
+    flowchart: {
+      useMaxWidth: true,
+      htmlLabels: true,
+      curve: 'basis'
+    }
+  });
+</script>
+
+<!-- Custom styles for tech stack diagrams -->
+<style>
+  .mermaid {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+  }
+  .tech-stack-section {
+    border-left: 4px solid #0366d6;
+    padding-left: 16px;
+    margin: 24px 0;
+  }
+  .tech-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #e1e4e8;
+    border-radius: 16px;
+    font-size: 0.9em;
+    margin: 4px;
+  }
+  .tech-badge.active { background: #28a745; color: white; }
+  .tech-badge.deprecated { background: #ffc107; color: black; }
+</style>

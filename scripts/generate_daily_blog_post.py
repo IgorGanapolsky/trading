@@ -41,6 +41,47 @@ def get_treasury_yields() -> dict:
         return {"available": False}
 
 
+def generate_tech_stack_section() -> str:
+    """Generate tech stack section with architecture diagram for blog post."""
+    return """
+## Tech Stack in Action
+
+Today's trading decisions were powered by our AI stack:
+
+<div class="mermaid">
+flowchart LR
+    subgraph Today["Today's Pipeline"]
+        DATA["Market Data<br/>(Alpaca)"] --> GATES["Gate Pipeline"]
+        GATES --> CLAUDE["Claude Opus 4.5<br/>(Risk Decision)"]
+        GATES --> RAG["Vertex AI RAG<br/>(Past Lessons)"]
+        CLAUDE --> EXEC["Trade Execution"]
+        RAG --> CLAUDE
+    end
+</div>
+
+### Technologies Used Today
+
+| Component | Technology | Role |
+|-----------|------------|------|
+| **Decision Engine** | Claude Opus 4.5 | Final trade approval, risk assessment |
+| **Cost-Optimized LLM** | OpenRouter (DeepSeek/Kimi) | Sentiment analysis, market research |
+| **Knowledge Base** | Vertex AI RAG | Query 200+ lessons learned |
+| **Retrieval** | Gemini 2.0 Flash | Semantic search over trade history |
+| **Broker** | Alpaca API | Paper trading execution |
+| **Data** | FRED API | Treasury yields, macro indicators |
+
+### How It Works
+
+1. **Market Data Ingestion**: Alpaca streams real-time quotes and positions
+2. **Gate Pipeline**: Sequential checks (Momentum → Sentiment → Risk)
+3. **RAG Query**: System retrieves similar past trades and lessons
+4. **Claude Decision**: Final approval with full context (86% accuracy)
+5. **Execution**: Order submitted to Alpaca if all gates pass
+
+*[Full Tech Stack Documentation](/trading/tech-stack/)*
+"""
+
+
 # Paths
 DATA_DIR = Path(__file__).parent.parent / "data"
 DOCS_DIR = Path(__file__).parent.parent / "docs"
@@ -231,6 +272,8 @@ Our current strategy focuses on:
 - **Stop Loss**: Volatility-adjusted per position
 - **Circuit Breakers**: Active (no triggers today)
 
+---
+{generate_tech_stack_section()}
 ---
 
 ## Market Context
