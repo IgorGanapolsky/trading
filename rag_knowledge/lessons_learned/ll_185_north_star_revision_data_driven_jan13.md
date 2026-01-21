@@ -1,7 +1,7 @@
 # LL-185: North Star Revision - From $100/day to $25/day (Data-Driven)
 
 **Date:** January 13, 2026
-**Severity:** CRITICAL
+**Severity:** SUPERSEDED (strategy updated to iron condors per CLAUDE.md Jan 19, 2026)
 **Category:** strategy, risk-management
 
 ## The Problem

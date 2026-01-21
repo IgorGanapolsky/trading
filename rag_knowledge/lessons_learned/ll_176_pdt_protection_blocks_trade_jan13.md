@@ -2,7 +2,7 @@
 
 **Date:** January 13, 2026
 **Category:** Regulatory Compliance
-**Severity:** CRITICAL
+**Severity:** INFORMATIONAL (regulatory constraint, not a bug - accounts <$25K have PDT limits)
 
 ## What Happened
 Attempted to close a profitable short put position (+$5 unrealized P/L) to lock in gains per Phil Town Rule #1. Order was rejected by Alpaca with:

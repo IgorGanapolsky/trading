@@ -2,7 +2,7 @@
 
 **ID:** LL-192
 **Date:** January 14, 2026
-**Severity:** CRITICAL
+**Severity:** RESOLVED (was CRITICAL - SOFI trading now blocked via ticker whitelist)
 **Category:** risk-management
 
 ## Incident

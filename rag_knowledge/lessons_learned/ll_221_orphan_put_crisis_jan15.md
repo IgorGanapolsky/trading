@@ -1,6 +1,6 @@
 # LL-221: CRISIS - Orphan Long Put Created $53 Loss
 
-## Severity: CRITICAL
+## Severity: RESOLVED (was CRITICAL)
 
 ## Date: 2026-01-15
 
