@@ -1,5 +1,11 @@
 """Backtesting module for options trading strategies."""
 
+from src.backtest.monte_carlo import (
+    MonteCarloResults,
+    generate_monte_carlo_report,
+    run_monte_carlo,
+    stress_test_strategy,
+)
 from src.backtest.risk_metrics import (
     RiskMetrics,
     calculate_max_drawdown,
@@ -8,13 +14,6 @@ from src.backtest.risk_metrics import (
     calculate_sortino_ratio,
     calculate_var_cvar,
     generate_risk_report,
-)
-
-from src.backtest.monte_carlo import (
-    MonteCarloResults,
-    generate_monte_carlo_report,
-    run_monte_carlo,
-    stress_test_strategy,
 )
 
 __all__ = [

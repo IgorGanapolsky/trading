@@ -17,8 +17,6 @@ from typing import Optional
 
 import numpy as np
 
-from src.backtest.risk_metrics import RiskMetrics, calculate_risk_metrics
-
 
 @dataclass
 class MonteCarloResults:
