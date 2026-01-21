@@ -124,15 +124,15 @@ if __name__ == "__main__":
     print("=== TICKER WHITELIST TESTS ===")
 
     # Should pass
-    assert is_ticker_allowed("SPY") == True
-    assert is_ticker_allowed("SPY260220P00653000") == True
-    assert is_ticker_allowed("SPY260115C00700000") == True
+    assert is_ticker_allowed("SPY")
+    assert is_ticker_allowed("SPY260220P00653000")
+    assert is_ticker_allowed("SPY260115C00700000")
 
     # Should fail
-    assert is_ticker_allowed("SOFI") == False
-    assert is_ticker_allowed("SOFI260213P00032000") == False
-    assert is_ticker_allowed("AAPL") == False
-    assert is_ticker_allowed("TSLA") == False
+    assert not is_ticker_allowed("SOFI")
+    assert not is_ticker_allowed("SOFI260213P00032000")
+    assert not is_ticker_allowed("AAPL")
+    assert not is_ticker_allowed("TSLA")
 
     print("✅ All whitelist tests passed!")
     print(f"Allowed tickers: {ALLOWED_UNDERLYING}")
