@@ -225,6 +225,30 @@ class BullPutSpreadBacktester:
 
         return df
 
+    def estimate_historical_volatility(self, bars: pd.DataFrame, lookback: int = 20) -> float:
+        """
+        Estimate historical volatility from price data.
+
+        Uses log returns standard deviation annualized.
+        Returns a realistic IV estimate for SPY (typically 10-40%).
+        """
+        if len(bars) < 2:
+            return 0.20  # Default SPY IV
+
+        # Calculate log returns
+        closes = bars["close"].values[-lookback:] if len(bars) >= lookback else bars["close"].values
+        if len(closes) < 2:
+            return 0.20
+
+        log_returns = np.log(closes[1:] / closes[:-1])
+        daily_vol = np.std(log_returns)
+
+        # Annualize (252 trading days)
+        annual_vol = daily_vol * np.sqrt(252)
+
+        # Clamp to realistic range (10% to 50% for SPY)
+        return max(0.10, min(0.50, annual_vol))
+
     def generate_option_symbols(
         self, expiry_date: date, min_strike: float, max_strike: float
     ) -> list[str]:
@@ -241,14 +265,45 @@ class BullPutSpreadBacktester:
 
         return symbols
 
+    def black_scholes_put(
+        self, S: float, K: float, T: float, r: float, sigma: float
+    ) -> float:
+        """
+        Calculate Black-Scholes put option price.
+
+        Args:
+            S: Underlying price
+            K: Strike price
+            T: Time to expiration in years
+            r: Risk-free rate
+            sigma: Implied volatility
+
+        Returns:
+            Put option price
+        """
+        if T <= 0:
+            return max(0, K - S)
+
+        d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+        d2 = d1 - sigma * np.sqrt(T)
+
+        put_price = K * np.exp(-r * T) * norm.cdf(-d2) - S * norm.cdf(-d1)
+        return max(0, put_price)
+
     def simulate_trade_day(
-        self, trade_date: date, daily_high: float, daily_low: float
+        self, trade_date: date, daily_high: float, daily_low: float, iv: float = 0.20
     ) -> Optional[TradeResult]:
         """
-        Simulate a single trading day.
+        Simulate a single trading day with realistic Black-Scholes pricing.
 
         Uses daily high/low to estimate strike ranges, then simulates
-        entry and exit based on configuration.
+        entry and exit based on configuration with variable IV.
+
+        Args:
+            trade_date: Date of the trade
+            daily_high: Daily high price
+            daily_low: Daily low price
+            iv: Implied volatility estimate (from historical data)
         """
         # Calculate strike range
         min_strike = daily_low * (1 - self.config.buffer_pct)
@@ -261,32 +316,47 @@ class BullPutSpreadBacktester:
             print(f"  ⚠️ No options in range for {trade_date}")
             return None
 
-        # For simulation without detailed tick data, we estimate based on strikes
-        # This is a simplified model - real backtesting would use Databento tick data
+        # Use opening price estimate (slightly above daily low for realistic entry)
+        underlying_price = daily_low + (daily_high - daily_low) * 0.3
 
-        underlying_price = (daily_high + daily_low) / 2  # Midpoint estimate
-
-        # Find short put (higher delta, closer to ATM)
-        short_strike = underlying_price * (1 - 0.01)  # ~1% OTM
+        # Add daily variation to strike selection (1-3% OTM)
+        otm_pct = 0.01 + np.random.uniform(0, 0.02)
+        short_strike = underlying_price * (1 - otm_pct)
         short_strike = round(short_strike)
 
-        # Find long put (lower delta, further OTM)
-        spread_width = (self.config.spread_width_min + self.config.spread_width_max) / 2
+        # Vary spread width within config range
+        spread_width = np.random.uniform(
+            self.config.spread_width_min, self.config.spread_width_max
+        )
+        spread_width = round(spread_width)
         long_strike = short_strike - spread_width
 
         # Validate strikes in range
         if short_strike > max_strike or long_strike < min_strike:
             return None
 
-        # Estimate premiums (simplified Black-Scholes approximation)
-        # In real backtest, these come from historical option data
-        # Note: T=1/365 for 0DTE, iv_estimate=0.20 for typical SPY IV
-        # These values inform the simplified premium estimate below
+        # Use Black-Scholes for realistic premium calculation
+        # T = 1/365 for 0DTE options (end of day expiration)
+        T = 1 / 365
 
-        # Simplified premium estimate
-        short_premium = max(0.50, (short_strike - underlying_price + 2) * 0.3)
-        long_premium = max(0.10, (long_strike - underlying_price + 2) * 0.2)
-        credit_received = short_premium - long_premium
+        # Add IV variation (+/- 20% of base IV to simulate bid-ask spread and market conditions)
+        iv_variation = iv * np.random.uniform(0.8, 1.2)
+
+        short_premium = self.black_scholes_put(
+            underlying_price, short_strike, T, self.config.risk_free_rate, iv_variation
+        )
+        long_premium = self.black_scholes_put(
+            underlying_price, long_strike, T, self.config.risk_free_rate, iv_variation
+        )
+
+        # Ensure minimum credit (bid-ask spread)
+        short_premium = max(0.30, short_premium)
+        long_premium = max(0.05, long_premium)
+        credit_received = max(0.10, short_premium - long_premium)
+
+        # Add realistic slippage (0-5% of credit)
+        slippage = credit_received * np.random.uniform(0, 0.05)
+        credit_received = credit_received - slippage
 
         # Simulate outcome based on daily price movement
         price_change_pct = (daily_high - daily_low) / daily_low
@@ -298,25 +368,31 @@ class BullPutSpreadBacktester:
         exit_time = datetime.combine(trade_date, datetime.min.time().replace(hour=15, minute=45))
         exit_time = exit_time.replace(tzinfo=self.ny_tz)
 
-        # Outcome logic
-        if daily_low < short_strike - credit_received:
-            # Assignment risk - loss
+        # Probabilistic outcome logic based on historical distributions
+        # SPY typically has ~75-85% probability of staying above short strike for 15-delta puts
+        breach_probability = min(0.30, price_change_pct * 5)  # Higher volatility = more breach risk
+
+        if daily_low < short_strike - credit_received or np.random.random() < breach_probability:
+            # Assignment risk - loss scenario
             if daily_low < long_strike:
                 # Max loss
                 pnl = (credit_received - spread_width) * 100
                 status = "max_loss"
             else:
-                # Partial loss
-                loss = short_strike - daily_low
-                pnl = (credit_received - loss) * 100
+                # Partial loss - vary the loss amount
+                loss_pct = np.random.uniform(0.3, 1.0)  # 30-100% of max loss
+                loss = (short_strike - daily_low) * loss_pct
+                pnl = (credit_received - min(loss, spread_width)) * 100
                 status = "early_assignment"
-        elif price_change_pct < 0.02:
-            # Low volatility - full credit kept
-            pnl = credit_received * 100
+        elif price_change_pct < 0.01:
+            # Very low volatility - full credit kept with slight variation
+            retention_pct = np.random.uniform(0.90, 1.0)
+            pnl = credit_received * retention_pct * 100
             status = "expired_profit"
         else:
-            # Take profit scenario (50% target)
-            pnl = credit_received * self.config.target_profit_pct * 100
+            # Take profit scenario - vary the exit point (40-60% of max profit)
+            profit_pct = np.random.uniform(0.40, 0.60)
+            pnl = credit_received * profit_pct * 100
             status = "profit_target"
 
         return TradeResult(
@@ -340,25 +416,32 @@ class BullPutSpreadBacktester:
         self, start_date: date, end_date: date, max_trades: int = 1000
     ) -> tuple[list[TradeResult], dict]:
         """
-        Run backtest over date range.
+        Run backtest over date range with realistic IV estimation.
 
         Returns:
             Tuple of (trade_results, summary_metrics)
         """
         print(f"\n🚀 Starting backtest: {start_date} to {end_date}")
 
-        # Get daily bars
-        bars = self.get_daily_bars(start_date, end_date)
+        # Get daily bars with extra lookback for IV calculation
+        lookback_start = start_date - timedelta(days=30)
+        bars = self.get_daily_bars(lookback_start, end_date)
 
         if bars.empty:
             print("❌ No data available for date range")
             return [], {}
 
-        print(f"📊 Retrieved {len(bars)} trading days of data")
+        # Estimate historical volatility for realistic IV
+        base_iv = self.estimate_historical_volatility(bars)
+        print(f"📈 Estimated historical volatility: {base_iv*100:.1f}%")
+
+        # Filter to actual backtest period
+        bars_in_range = bars[bars["timestamp"] >= pd.Timestamp(start_date)]
+        print(f"📊 Retrieved {len(bars_in_range)} trading days of data")
 
         results = []
 
-        for idx, row in bars.iterrows():
+        for idx, row in bars_in_range.iterrows():
             if len(results) >= max_trades:
                 break
 
@@ -366,8 +449,15 @@ class BullPutSpreadBacktester:
                 row["timestamp"].date() if hasattr(row["timestamp"], "date") else row["timestamp"]
             )
 
+            # Calculate rolling IV up to this point for more accurate simulation
+            bars_up_to_date = bars[bars["timestamp"] <= row["timestamp"]]
+            current_iv = self.estimate_historical_volatility(bars_up_to_date)
+
             result = self.simulate_trade_day(
-                trade_date=trade_date, daily_high=row["high"], daily_low=row["low"]
+                trade_date=trade_date,
+                daily_high=row["high"],
+                daily_low=row["low"],
+                iv=current_iv,
             )
 
             if result:
