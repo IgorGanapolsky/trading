@@ -177,6 +177,67 @@ class TestClaudeMdCompliance:
                 )
 
 
+class TestWorkflowTickerCompliance:
+    """Test that ALL workflows only trade SPY (LL-273: SOFI violation Jan 21, 2026)."""
+
+    @pytest.fixture
+    def all_workflows(self) -> dict[str, str]:
+        """Load all workflow files."""
+        workflows = {}
+        workflow_dir = Path(".github/workflows")
+        if not workflow_dir.exists():
+            pytest.skip("workflows directory not found")
+        for wf in workflow_dir.glob("*.yml"):
+            workflows[wf.name] = wf.read_text()
+        return workflows
+
+    def test_no_sofi_defaults_in_workflows(self, all_workflows: dict[str, str]):
+        """
+        Verify NO workflow has SOFI as a default ticker.
+
+        LL-273 Root Cause: emergency-simple-trade.yml had default: "SOFI"
+        which bypassed all validation gates and caused the Jan 21 loss.
+        """
+        for workflow_name, content in all_workflows.items():
+            # Check for default: "SOFI" in workflow inputs
+            sofi_default_patterns = [
+                r'default:\s*["\']?SOFI["\']?',
+                r'default:\s*["\']?sofi["\']?',
+            ]
+            for pattern in sofi_default_patterns:
+                matches = re.findall(pattern, content, re.IGNORECASE)
+                assert len(matches) == 0, (
+                    f"Workflow {workflow_name} has SOFI as default! "
+                    f"This BYPASSES SPY-only validation. Fix: Change default to SPY."
+                )
+
+    def test_workflows_have_ticker_validation(self, all_workflows: dict[str, str]):
+        """
+        Verify workflows that trade have ticker validation steps.
+
+        Trading workflows should validate tickers BEFORE executing trades.
+        """
+        trading_workflows = [
+            "daily-trading.yml",
+            "emergency-simple-trade.yml",
+        ]
+        for workflow_name in trading_workflows:
+            if workflow_name not in all_workflows:
+                continue
+            content = all_workflows[workflow_name]
+            # Check for some form of ticker validation
+            has_validation = (
+                "validate" in content.lower()
+                or "ALLOWED_TICKERS" in content
+                or "SPY ONLY" in content
+                or "ticker validation" in content.lower()
+            )
+            assert has_validation, (
+                f"Workflow {workflow_name} lacks ticker validation! "
+                f"Add a validation step before trade execution."
+            )
+
+
 class TestStrategyDocumentation:
     """Test that strategy documentation exists and is consistent."""
 

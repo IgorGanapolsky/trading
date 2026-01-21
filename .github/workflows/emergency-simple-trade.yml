@@ -1,15 +1,16 @@
 name: Emergency Simple Trade (Proof of Life)
 
-# BYPASS ALL GATES - Just prove the system can execute a trade
+# SECURITY FIX Jan 21, 2026: Added SPY-only validation
 # CEO Directive (Jan 13, 2026): After 74 days of zero trades, we need proof
+# UPDATED: Must validate ticker before execution - no more SOFI accidents
 
 on:
   workflow_dispatch:
     inputs:
       symbol:
-        description: "Symbol to trade"
+        description: "Symbol to trade (SPY ONLY per CLAUDE.md)"
         required: true
-        default: "SOFI"
+        default: "SPY"
       quantity:
         description: "Shares to buy"
         required: true
@@ -36,6 +37,28 @@ jobs:
       - name: Install minimal dependencies
         run: |
           pip install alpaca-py
+
+      - name: Validate Ticker (SPY ONLY)
+        run: |
+          SYMBOL="${{ github.event.inputs.symbol }}"
+          # Extract underlying from option symbol if needed
+          UNDERLYING=$(echo "$SYMBOL" | sed -E 's/^([A-Z]+)[0-9]+[PC][0-9]+$/\1/' | tr '[:lower:]' '[:upper:]')
+          if [ -z "$UNDERLYING" ]; then
+            UNDERLYING="$SYMBOL"
+          fi
+
+          echo "🔍 Ticker Validation"
+          echo "   Input Symbol: $SYMBOL"
+          echo "   Underlying: $UNDERLYING"
+
+          if [ "$UNDERLYING" != "SPY" ]; then
+            echo "❌ BLOCKED: $UNDERLYING is NOT allowed!"
+            echo "   Per CLAUDE.md: SPY ONLY - best liquidity, tightest spreads"
+            echo "   This trade would violate the SPY-only mandate."
+            exit 1
+          fi
+
+          echo "✅ Ticker validated: $UNDERLYING is allowed"
 
       - name: Execute Trade
         id: trade
