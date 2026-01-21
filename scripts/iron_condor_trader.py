@@ -265,11 +265,16 @@ class IronCondorStrategy:
                     client = TradingClient(api_key, secret, paper=True)
                     positions = client.get_all_positions()
 
-                    # Count SPY option positions (iron condor = 4 legs)
-                    spy_positions = [p for p in positions if "SPY" in p.symbol]
-                    position_count = len(spy_positions)
+                    # Count SPY OPTION positions only (iron condor = 4 legs)
+                    # FIX Jan 21, 2026: Exclude SPY shares - only count options
+                    # Options have format like SPY260220P00565000, shares are just "SPY"
+                    spy_option_positions = [
+                        p for p in positions
+                        if p.symbol.startswith("SPY") and len(p.symbol) > 5  # Options have longer symbols
+                    ]
+                    position_count = len(spy_option_positions)
 
-                    logger.info(f"Current SPY positions: {position_count}")
+                    logger.info(f"Current SPY OPTION positions: {position_count}")
                     max_positions = self.config["max_positions"] * 4  # 4 legs per condor
 
                     if position_count >= max_positions:
@@ -282,8 +287,8 @@ class IronCondorStrategy:
                             "strategy": "iron_condor",
                             "underlying": ic.underlying,
                             "status": "SKIPPED_POSITION_LIMIT",
-                            "reason": f"Have {position_count} positions (max: {max_positions})",
-                            "existing_positions": [p.symbol for p in spy_positions],
+                            "reason": f"Have {position_count} option positions (max: {max_positions})",
+                            "existing_positions": [p.symbol for p in spy_option_positions],
                         }
             except Exception as pos_err:
                 logger.warning(f"Could not check positions: {pos_err}")
