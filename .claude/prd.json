@@ -69,10 +69,10 @@
   ],
   "completed_tasks": [],
   "metadata": {
-    "total_iterations": 134,
-    "tasks_completed_this_session": 12,
+    "total_iterations": 135,
+    "tasks_completed_this_session": 13,
     "last_task_completed": "T005",
-    "last_iteration_at": "2026-01-21T11:55:00Z",
-    "notes": "Iteration 134: Added Sortino/Calmar/drawdown metrics. Realistic simulation with 20% adverse events. Win rate now 85-95%, Sharpe 5-10."
+    "last_iteration_at": "2026-01-21T12:05:00Z",
+    "notes": "Iteration 135: Added Monte Carlo simulation, market regime detection, parameter sensitivity analysis. Full statistical toolkit for backtesting."
   }
 }
