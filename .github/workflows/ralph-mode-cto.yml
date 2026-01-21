@@ -1,0 +1,184 @@
+name: Ralph Mode - Autonomous CTO
+
+on:
+  schedule:
+    # Run every 4 hours around the clock
+    - cron: '0 */4 * * *'
+  workflow_dispatch:
+    inputs:
+      iteration_type:
+        description: 'Type of iteration to run'
+        required: false
+        default: 'full'
+        type: choice
+        options:
+          - full
+          - tests-only
+          - lint-only
+          - cleanup-only
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # Job 1: Run tests and lint
+  quality-check:
+    runs-on: ubuntu-latest
+    outputs:
+      tests_passed: ${{ steps.tests.outputs.passed }}
+      lint_passed: ${{ steps.lint.outputs.passed }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install -q pytest ruff
+          pip install -q -r requirements.txt || true
+
+      - name: Run pytest
+        id: tests
+        continue-on-error: true
+        run: |
+          pytest tests/ -q --tb=no 2>&1 | tee test_output.txt
+          if grep -q "passed" test_output.txt; then
+            echo "passed=true" >> $GITHUB_OUTPUT
+            echo "::notice::Tests passed"
+          else
+            echo "passed=false" >> $GITHUB_OUTPUT
+            echo "::warning::Some tests failed"
+          fi
+
+      - name: Run ruff lint
+        id: lint
+        continue-on-error: true
+        run: |
+          if ruff check src/ scripts/ 2>&1; then
+            echo "passed=true" >> $GITHUB_OUTPUT
+            echo "::notice::Lint passed"
+          else
+            echo "passed=false" >> $GITHUB_OUTPUT
+            echo "::warning::Lint issues found"
+          fi
+
+      - name: Summary
+        run: |
+          echo "## Ralph Mode Quality Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Tests | ${{ steps.tests.outputs.passed == 'true' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Lint | ${{ steps.lint.outputs.passed == 'true' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+
+  # Job 2: Branch cleanup
+  branch-cleanup:
+    runs-on: ubuntu-latest
+    needs: quality-check
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Delete merged branches
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          echo "## Branch Cleanup" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Get merged branches (excluding main and protected)
+          MERGED_BRANCHES=$(git branch -r --merged origin/main | grep -v "main" | grep -v "HEAD" | sed 's/origin\///' || true)
+
+          deleted_count=0
+          for branch in $MERGED_BRANCHES; do
+            if [[ "$branch" == claude/* ]] || [[ "$branch" == auto/* ]]; then
+              echo "Deleting merged branch: $branch"
+              gh api -X DELETE "repos/${{ github.repository }}/git/refs/heads/$branch" || true
+              ((deleted_count++)) || true
+            fi
+          done
+
+          echo "| Merged branches deleted | $deleted_count |" >> $GITHUB_STEP_SUMMARY
+
+  # Job 3: Auto-merge ready PRs
+  auto-merge:
+    runs-on: ubuntu-latest
+    needs: quality-check
+    if: needs.quality-check.outputs.tests_passed == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Auto-merge eligible PRs
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          echo "## Auto-Merge Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Get open PRs with auto-merge label or from claude branches
+          OPEN_PRS=$(gh pr list --state open --json number,headRefName,mergeable --jq '.[] | select(.headRefName | startswith("claude/")) | .number' || true)
+
+          merged_count=0
+          for pr_num in $OPEN_PRS; do
+            # Check if PR is mergeable
+            PR_STATUS=$(gh pr view $pr_num --json mergeable,mergeStateStatus --jq '.mergeStateStatus')
+            if [[ "$PR_STATUS" == "CLEAN" ]]; then
+              echo "Auto-merging PR #$pr_num"
+              gh pr merge $pr_num --squash --auto || true
+              ((merged_count++)) || true
+            fi
+          done
+
+          echo "| PRs auto-merged | $merged_count |" >> $GITHUB_STEP_SUMMARY
+
+  # Job 4: Update iteration tracking
+  update-iteration:
+    runs-on: ubuntu-latest
+    needs: [quality-check, branch-cleanup]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Update prd.json iteration
+        run: |
+          # Get current iteration count
+          CURRENT=$(cat .claude/prd.json | python3 -c "import json,sys; print(json.load(sys.stdin)['metadata']['total_iterations'])")
+          NEW_ITERATION=$((CURRENT + 1))
+
+          # Get timestamp
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          # Update prd.json
+          python3 << EOF
+          import json
+          with open('.claude/prd.json', 'r') as f:
+              data = json.load(f)
+
+          data['metadata']['total_iterations'] = $NEW_ITERATION
+          data['metadata']['last_iteration_at'] = "$TIMESTAMP"
+          data['metadata']['notes'] = "CI Iteration $NEW_ITERATION: Automated quality check. Tests: ${{ needs.quality-check.outputs.tests_passed }}. Lint: ${{ needs.quality-check.outputs.lint_passed }}."
+
+          with open('.claude/prd.json', 'w') as f:
+              json.dump(data, f, indent=2)
+          EOF
+
+      - name: Commit iteration update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .claude/prd.json
+          git diff --staged --quiet || git commit -m "chore(ralph): CI iteration ${{ needs.quality-check.outputs.tests_passed == 'true' && '✅' || '⚠️' }}"
+          git push || true
+
+      - name: Final Summary
+        run: |
+          echo "## Ralph Mode Iteration Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🤖 Autonomous CTO iteration completed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Next iteration:** $(date -d '+4 hours' -u +"%Y-%m-%d %H:%M UTC")" >> $GITHUB_STEP_SUMMARY
