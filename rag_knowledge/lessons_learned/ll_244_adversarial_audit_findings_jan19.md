@@ -2,7 +2,9 @@
 
 **Date**: 2026-01-19
 **Category**: Security, Audit, System Architecture
-**Severity**: CRITICAL
+**Severity**: HIGH
+**Resolution Date**: 2026-01-21
+**Resolution**: Main findings fixed per PR #2193 (disabled conflicting traders, added compliance tests)
 
 ## Summary
 
