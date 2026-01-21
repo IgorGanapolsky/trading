@@ -732,6 +732,31 @@ jobs:
       # - Max 5% position size ($248 on $4986 account)
       # This prevents accumulating excess spreads that violate strategy
       # ========================================================================
+      # ========================================================================
+      # SPY-ONLY ASSERTION (Added Jan 21, 2026 - LL-272)
+      # CRITICAL: Fail workflow if non-SPY positions exist
+      # These rogue positions consume buying power and block trading
+      # ========================================================================
+      - name: Assert SPY-Only Positions (LL-272 Prevention)
+        id: spy_only_check
+        if: steps.check_execution.outputs.skip != 'true' && steps.credential_check.outputs.credentials_valid == 'true'
+        timeout-minutes: 2
+        env:
+          ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          echo "🔒 ========================================"
+          echo "🔒 SPY-ONLY ASSERTION (LL-272)"
+          echo "🔒 CLAUDE.md: 'SPY ONLY - NO individual stocks'"
+          echo "🔒 ========================================"
+          echo ""
+          if ! python3 scripts/assert_spy_only_positions.py; then
+            echo ""
+            echo "::error::NON-SPY POSITIONS DETECTED - Workflow blocked"
+            echo "::error::Run: gh workflow run close-non-spy-positions.yml"
+            exit 1
+          fi
+
       - name: Enforce CLAUDE.md Position Limits
         id: enforce_compliance
         if: steps.check_execution.outputs.skip != 'true' && steps.credential_check.outputs.credentials_valid == 'true'
