@@ -1,53 +1,20 @@
 {
-  "last_updated": "2026-01-21T15:05:07.531776+00:00",
-  "sync_health": {
-    "last_successful_sync": "2026-01-21T15:05:07.531778+00:00",
-    "sync_source": "github_actions",
-    "sync_count_today": 3,
-    "history": [
+  "last_updated": "2026-01-21T15:09:17.814079Z",
+  "portfolio": {
+    "equity": "5026.23",
+    "cash": "4243.89"
+  },
+  "paper_account": {
+    "positions_count": 1,
+    "positions": [
       {
-        "timestamp": "2026-01-21T14:14:20.618970+00:00",
-        "equity": 5068.79,
-        "success": true
-      },
-      {
-        "timestamp": "2026-01-21T14:45:37.769318+00:00",
-        "equity": 5023.94,
-        "success": true
-      },
-      {
-        "timestamp": "2026-01-21T15:05:07.531768+00:00",
-        "equity": 5026.32,
-        "success": true
+        "symbol": "SPY",
+        "qty": "1.146822157",
+        "market_value": "782.339139",
+        "unrealized_pl": "-0.710861"
       }
     ]
   },
-  "portfolio": {
-    "equity": 5026.32,
-    "cash": 4243.89
-  },
-  "paper_account": {
-    "equity": 5026.32,
-    "cash": 4243.89,
-    "buying_power": 9270.21,
-    "total_pl": 26.31999999999971,
-    "total_pl_pct": 0.53,
-    "positions_count": 1,
-    "daily_change": -72.65,
-    "win_rate": 0,
-    "win_rate_sample_size": 0,
-    "starting_balance": 5000.0
-  },
-  "positions": [
-    {
-      "symbol": "SPY",
-      "qty": 1.146822157,
-      "price": 682.26,
-      "value": 782.430885,
-      "pnl": -0.619115,
-      "type": "stock"
-    }
-  ],
   "trade_history": [
     {
       "id": "db1a5517-bcf0-4308-a549-6c690557a075",
@@ -442,27 +409,5 @@
       "filled_at": "2026-01-12 14:30:54.357134+00:00"
     }
   ],
-  "trades_loaded": 49,
-  "trades": {
-    "last_trade_date": "2026-01-21",
-    "today_trades": 0,
-    "total_trades_today": 0,
-    "last_trade_symbol": "SPY"
-  },
-  "risk": {
-    "status": "MONITORING",
-    "total_pl": 26.31999999999971,
-    "unrealized_pl": -0.619115
-  },
-  "account": {
-    "current_equity": 5026.32,
-    "total_pl": 26.31999999999971,
-    "total_pl_pct": 0.53,
-    "positions_count": 1
-  },
-  "meta": {
-    "last_updated": "2026-01-21T15:05:07.531792+00:00",
-    "trade_sync": "alpaca_api",
-    "sync_frequency_minutes": 5
-  }
+  "trades_loaded": 49
 }
