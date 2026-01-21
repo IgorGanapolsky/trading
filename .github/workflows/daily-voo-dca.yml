@@ -1,11 +1,17 @@
 name: Daily VOO DCA
 
+# ========================================================================
+# DISABLED Jan 21, 2026 - LL-272: Strategy Violation Crisis
+# This workflow buys SPY/VOO SHARES, violating CLAUDE.md mandate:
+# "Primary strategy: IRON CONDORS on SPY ONLY - defined risk on BOTH sides"
+# Stock buying is NOT part of the iron condor strategy.
+# See: rag_knowledge/lessons_learned/ll_272_strategy_violation_crisis_jan21.md
+# ========================================================================
+
 on:
-  schedule:
-    # Run every weekday at 10:00 AM Eastern (after market opens, deposits settle)
-    # EST (Nov-Mar): UTC-5 -> 10:00 AM ET = 15:00 UTC
-    # EDT (Mar-Nov): UTC-4 -> 10:00 AM ET = 14:00 UTC
-    - cron: '0 14,15 * * 1-5'
+  # DISABLED: Schedule removed - no stock buying allowed
+  # schedule:
+  #   - cron: '0 14,15 * * 1-5'
   workflow_dispatch:
     inputs:
       amount:
