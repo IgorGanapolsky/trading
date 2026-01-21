@@ -37,6 +37,7 @@ header_pages:
   - index.md
   - lessons.md
   - reports.md
+  - tech-stack.md
 
 # Collections
 collections:
