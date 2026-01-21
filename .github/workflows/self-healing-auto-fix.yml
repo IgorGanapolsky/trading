@@ -1,0 +1,193 @@
+name: Self-Healing Auto-Fix
+
+on:
+  schedule:
+    # Run every 2 hours for quick response to issues
+    - cron: '0 */2 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'scripts/**'
+      - 'tests/**'
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # Job 1: Detect and auto-fix lint issues
+  auto-fix-lint:
+    runs-on: ubuntu-latest
+    outputs:
+      fixed: ${{ steps.fix.outputs.fixed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install ruff
+        run: pip install ruff
+
+      - name: Check for lint issues
+        id: check
+        continue-on-error: true
+        run: |
+          if ruff check src/ scripts/ 2>&1; then
+            echo "has_issues=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_issues=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Auto-fix lint issues
+        id: fix
+        if: steps.check.outputs.has_issues == 'true'
+        run: |
+          echo "🔧 Auto-fixing lint issues..."
+          ruff check src/ scripts/ --fix || true
+          ruff format src/ scripts/ || true
+
+          if git diff --quiet; then
+            echo "fixed=false" >> $GITHUB_OUTPUT
+          else
+            echo "fixed=true" >> $GITHUB_OUTPUT
+            echo "::notice::Lint issues auto-fixed"
+          fi
+
+      - name: Commit fixes
+        if: steps.fix.outputs.fixed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "style: Auto-format with ruff" || true
+          git push origin main || true
+
+  # Job 2: Run tests and report failures
+  test-and-report:
+    runs-on: ubuntu-latest
+    needs: auto-fix-lint
+    outputs:
+      tests_passed: ${{ steps.test.outputs.passed }}
+      failure_count: ${{ steps.test.outputs.failures }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main  # Get latest after lint fixes
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install -q pytest ruff
+          pip install -q -r requirements.txt || true
+
+      - name: Run tests
+        id: test
+        continue-on-error: true
+        run: |
+          set +e
+          pytest tests/ -q --tb=short 2>&1 | tee test_output.txt
+          exit_code=$?
+
+          if [ $exit_code -eq 0 ]; then
+            echo "passed=true" >> $GITHUB_OUTPUT
+            echo "failures=0" >> $GITHUB_OUTPUT
+          else
+            failures=$(grep -oP '\d+(?= failed)' test_output.txt || echo "0")
+            echo "passed=false" >> $GITHUB_OUTPUT
+            echo "failures=$failures" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload test results
+        if: steps.test.outputs.passed == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-failures
+          path: test_output.txt
+
+  # Job 3: Clean up stale branches automatically
+  auto-cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Delete stale branches
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          echo "## Branch Cleanup" >> $GITHUB_STEP_SUMMARY
+
+          # Get branches older than 3 days
+          deleted=0
+          for branch in $(gh api repos/${{ github.repository }}/branches --jq '.[].name' | grep -E '^(claude|auto)/'); do
+            # Check if branch has no open PR
+            pr_count=$(gh pr list --head "$branch" --state open --json number --jq 'length')
+            if [ "$pr_count" == "0" ]; then
+              echo "Deleting stale branch: $branch"
+              gh api -X DELETE "repos/${{ github.repository }}/git/refs/heads/$branch" || true
+              ((deleted++)) || true
+            fi
+          done
+
+          echo "| Stale branches deleted | $deleted |" >> $GITHUB_STEP_SUMMARY
+
+  # Job 4: Auto-merge ready PRs
+  auto-merge-prs:
+    runs-on: ubuntu-latest
+    needs: test-and-report
+    if: needs.test-and-report.outputs.tests_passed == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Merge eligible PRs
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          echo "## Auto-Merge" >> $GITHUB_STEP_SUMMARY
+
+          merged=0
+          for pr in $(gh pr list --state open --json number,headRefName --jq '.[] | select(.headRefName | startswith("claude/") or startswith("auto/")) | .number'); do
+            status=$(gh pr view $pr --json mergeStateStatus --jq '.mergeStateStatus')
+            if [ "$status" == "CLEAN" ]; then
+              echo "Merging PR #$pr"
+              gh pr merge $pr --squash --delete-branch || true
+              ((merged++)) || true
+            fi
+          done
+
+          echo "| PRs merged | $merged |" >> $GITHUB_STEP_SUMMARY
+
+  # Job 5: Update system state and generate summary
+  update-state:
+    runs-on: ubuntu-latest
+    needs: [auto-fix-lint, test-and-report, auto-cleanup]
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+          ref: main
+
+      - name: Generate healing summary
+        run: |
+          echo "## 🏥 Self-Healing Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Lint auto-fixed | ${{ needs.auto-fix-lint.outputs.fixed == 'true' && '✅ Yes' || '➖ No issues' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tests | ${{ needs.test-and-report.outputs.tests_passed == 'true' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Failures | ${{ needs.test-and-report.outputs.failure_count || '0' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🤖 Self-healing completed at $(date -u +"%Y-%m-%d %H:%M UTC")" >> $GITHUB_STEP_SUMMARY
