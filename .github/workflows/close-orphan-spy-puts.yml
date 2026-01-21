@@ -1,0 +1,37 @@
+name: Close Orphan SPY Puts
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type 'CLOSE' to confirm closing orphan SPY puts"
+        required: true
+        default: ""
+  push:
+    paths:
+      - 'CLOSE_SPY_PUTS.trigger'
+
+jobs:
+  close-positions:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.confirm == 'CLOSE' || github.event_name == 'push' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install alpaca-py yfinance python-dotenv
+
+      - name: Close Orphan SPY Puts
+        env:
+          ALPACA_PAPER_TRADING_5K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_PAPER_TRADING_5K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+          PAPER_TRADING: "true"
+        run: |
+          python3 scripts/close_orphan_spy_puts.py
