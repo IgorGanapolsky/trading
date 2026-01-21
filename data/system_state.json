@@ -1,7 +1,7 @@
 {
-  "last_updated": "2026-01-21T20:54:52.827410Z",
+  "last_updated": "2026-01-21T21:01:44.735809Z",
   "portfolio": {
-    "equity": "4639.41",
+    "equity": "4658.79",
     "cash": "1694.16"
   },
   "paper_account": {
@@ -10,8 +10,8 @@
       {
         "symbol": "SPY",
         "qty": "3.753569343",
-        "market_value": "2572.245999",
-        "unrealized_pl": "5.126003"
+        "market_value": "2573.63482",
+        "unrealized_pl": "6.514824"
       },
       {
         "symbol": "SPY260220P00565000",
@@ -28,14 +28,14 @@
       {
         "symbol": "SPY260220P00653000",
         "qty": "-6",
-        "market_value": "-2034",
-        "unrealized_pl": "288"
+        "market_value": "-2022",
+        "unrealized_pl": "300"
       },
       {
         "symbol": "SPY260220P00658000",
         "qty": "6",
-        "market_value": "2352",
-        "unrealized_pl": "-504"
+        "market_value": "2358",
+        "unrealized_pl": "-498"
       }
     ]
   },
