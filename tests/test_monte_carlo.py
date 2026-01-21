@@ -135,8 +135,8 @@ class TestMonteCarloReport:
         report = generate_monte_carlo_report(results, "Test Strategy")
 
         assert "Test Strategy" in report
-        assert "Probability of Profit" in report
-        assert "Confidence Intervals" in report
+        assert "Probability of Profit" in report.upper() or "PROBABILITY OF PROFIT" in report
+        assert "CONFIDENCE INTERVALS" in report  # Report uses uppercase headers
         assert "PASS" in report or "FAIL" in report
 
     def test_to_dict_serializable(self):

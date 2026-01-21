@@ -49,23 +49,26 @@ class MonteCarloResults:
     sharpe_ci_95: float
 
     def to_dict(self) -> dict:
-        """Convert to dictionary for JSON serialization."""
+        """Convert to dictionary for JSON serialization.
+
+        Note: Explicitly convert numpy types to Python types for JSON compatibility.
+        """
         return {
-            "n_simulations": self.n_simulations,
-            "n_trades_per_sim": self.n_trades_per_sim,
-            "mean_total_return": round(self.mean_total_return, 2),
-            "median_total_return": round(self.median_total_return, 2),
-            "std_total_return": round(self.std_total_return, 2),
-            "ci_5_pct": round(self.ci_5, 2),
-            "ci_25_pct": round(self.ci_25, 2),
-            "ci_75_pct": round(self.ci_75, 2),
-            "ci_95_pct": round(self.ci_95, 2),
-            "probability_of_profit": round(self.probability_of_profit, 4),
-            "probability_of_ruin": round(self.probability_of_ruin, 4),
-            "expected_max_drawdown": round(self.expected_max_drawdown, 4),
-            "mean_sharpe": round(self.mean_sharpe, 3),
-            "sharpe_ci_5": round(self.sharpe_ci_5, 3),
-            "sharpe_ci_95": round(self.sharpe_ci_95, 3),
+            "n_simulations": int(self.n_simulations),
+            "n_trades_per_sim": int(self.n_trades_per_sim),
+            "mean_total_return": float(round(self.mean_total_return, 2)),
+            "median_total_return": float(round(self.median_total_return, 2)),
+            "std_total_return": float(round(self.std_total_return, 2)),
+            "ci_5_pct": float(round(self.ci_5, 2)),
+            "ci_25_pct": float(round(self.ci_25, 2)),
+            "ci_75_pct": float(round(self.ci_75, 2)),
+            "ci_95_pct": float(round(self.ci_95, 2)),
+            "probability_of_profit": float(round(self.probability_of_profit, 4)),
+            "probability_of_ruin": float(round(self.probability_of_ruin, 4)),
+            "expected_max_drawdown": float(round(self.expected_max_drawdown, 4)),
+            "mean_sharpe": float(round(self.mean_sharpe, 3)),
+            "sharpe_ci_5": float(round(self.sharpe_ci_5, 3)),
+            "sharpe_ci_95": float(round(self.sharpe_ci_95, 3)),
         }
 
     def is_statistically_profitable(self) -> tuple[bool, str]:
