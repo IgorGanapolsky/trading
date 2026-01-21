@@ -573,6 +573,228 @@ class BullPutSpreadBacktester:
 
         return results, summary
 
+    def monte_carlo_simulation(
+        self, results: list[TradeResult], num_simulations: int = 1000, num_trades: int = 252
+    ) -> dict:
+        """
+        Run Monte Carlo simulation to estimate confidence intervals for key metrics.
+
+        Uses bootstrap resampling of actual trade results to project future performance
+        with statistical confidence intervals.
+
+        Args:
+            results: List of TradeResult from backtest
+            num_simulations: Number of Monte Carlo iterations (default 1000)
+            num_trades: Number of trades per simulation (default 252 = 1 year)
+
+        Returns:
+            Dict with confidence intervals for Sharpe, total P/L, max drawdown
+        """
+        if not results or len(results) < 5:
+            return {"error": "Insufficient data for Monte Carlo simulation"}
+
+        pnls = [r.theoretical_pnl for r in results]
+        account_size = self.config.account_size
+
+        # Store simulation results
+        sim_sharpes = []
+        sim_total_pnls = []
+        sim_max_drawdowns = []
+        sim_win_rates = []
+
+        for _ in range(num_simulations):
+            # Bootstrap resample with replacement
+            sim_pnls = np.random.choice(pnls, size=num_trades, replace=True)
+
+            # Calculate metrics for this simulation
+            sim_total = float(np.sum(sim_pnls))
+            sim_std = float(np.std(sim_pnls))
+
+            # Sharpe ratio
+            if sim_std > 0:
+                returns = sim_pnls / account_size
+                sharpe = (np.mean(returns) - 0.05/252) / np.std(returns) * np.sqrt(252)
+                sim_sharpes.append(float(sharpe))
+
+            # Max drawdown
+            cumsum = np.cumsum(sim_pnls)
+            running_max = np.maximum.accumulate(cumsum)
+            drawdown = float(np.max(running_max - cumsum))
+            sim_max_drawdowns.append(drawdown)
+
+            # Win rate
+            win_rate = float(np.sum(sim_pnls > 0) / len(sim_pnls))
+            sim_win_rates.append(win_rate)
+
+            sim_total_pnls.append(sim_total)
+
+        # Calculate confidence intervals (5th, 50th, 95th percentiles)
+        def ci(data):
+            return {
+                "p5": round(float(np.percentile(data, 5)), 2),
+                "p50": round(float(np.percentile(data, 50)), 2),
+                "p95": round(float(np.percentile(data, 95)), 2),
+                "mean": round(float(np.mean(data)), 2),
+                "std": round(float(np.std(data)), 2),
+            }
+
+        return {
+            "num_simulations": num_simulations,
+            "trades_per_sim": num_trades,
+            "sharpe_ci": ci(sim_sharpes) if sim_sharpes else {},
+            "total_pnl_ci": ci(sim_total_pnls),
+            "max_drawdown_ci": ci(sim_max_drawdowns),
+            "win_rate_ci": ci(sim_win_rates),
+            "probability_profitable": round(float(np.sum(np.array(sim_total_pnls) > 0) / num_simulations), 4),
+        }
+
+    def detect_market_regime(self, bars_df) -> dict:
+        """
+        Detect market regime from price data.
+
+        Classifies market as:
+        - Bull: Sustained uptrend (price above 20-day MA, MA rising)
+        - Bear: Sustained downtrend (price below 20-day MA, MA falling)
+        - Sideways: Range-bound (price oscillating around MA)
+        - High Vol: VIX equivalent > 25 or daily range > 2%
+        - Low Vol: VIX equivalent < 15 or daily range < 0.5%
+
+        Returns:
+            Dict with regime classification and metrics
+        """
+        if bars_df.empty or len(bars_df) < 20:
+            return {"regime": "unknown", "confidence": 0}
+
+        closes = bars_df["close"].values if "close" in bars_df.columns else (bars_df["high"] + bars_df["low"]) / 2
+
+        # Calculate 20-day moving average
+        ma_20 = np.convolve(closes, np.ones(20)/20, mode='valid')
+
+        # Calculate trend direction
+        if len(ma_20) >= 2:
+            ma_slope = (ma_20[-1] - ma_20[-5]) / ma_20[-5] if len(ma_20) >= 5 else 0
+        else:
+            ma_slope = 0
+
+        # Current price vs MA
+        current_price = closes[-1]
+        current_ma = ma_20[-1] if len(ma_20) > 0 else current_price
+        price_vs_ma = (current_price - current_ma) / current_ma
+
+        # Calculate volatility (daily range as % of price)
+        highs = bars_df["high"].values
+        lows = bars_df["low"].values
+        daily_ranges = (highs - lows) / ((highs + lows) / 2)
+        avg_daily_range = float(np.mean(daily_ranges[-20:]))  # Last 20 days
+
+        # Classify regime
+        if avg_daily_range > 0.02:
+            volatility_regime = "high_vol"
+        elif avg_daily_range < 0.005:
+            volatility_regime = "low_vol"
+        else:
+            volatility_regime = "normal_vol"
+
+        if ma_slope > 0.02 and price_vs_ma > 0.01:
+            trend_regime = "bull"
+            confidence = min(0.9, abs(ma_slope) * 10 + abs(price_vs_ma) * 5)
+        elif ma_slope < -0.02 and price_vs_ma < -0.01:
+            trend_regime = "bear"
+            confidence = min(0.9, abs(ma_slope) * 10 + abs(price_vs_ma) * 5)
+        else:
+            trend_regime = "sideways"
+            confidence = 0.7 - abs(ma_slope) * 5
+
+        return {
+            "trend_regime": trend_regime,
+            "volatility_regime": volatility_regime,
+            "combined_regime": f"{trend_regime}_{volatility_regime}",
+            "confidence": round(confidence, 2),
+            "ma_slope_pct": round(ma_slope * 100, 2),
+            "price_vs_ma_pct": round(price_vs_ma * 100, 2),
+            "avg_daily_range_pct": round(avg_daily_range * 100, 2),
+            "iron_condor_favorable": trend_regime == "sideways" and volatility_regime in ["normal_vol", "low_vol"],
+        }
+
+    def parameter_sensitivity(
+        self, bars_df, param_ranges: dict | None = None
+    ) -> list[dict]:
+        """
+        Analyze sensitivity of strategy performance to parameter changes.
+
+        Tests different combinations of delta, spread width, and profit targets
+        to identify optimal parameters and robustness.
+
+        Args:
+            bars_df: DataFrame with OHLC data
+            param_ranges: Dict of parameter ranges to test
+
+        Returns:
+            List of dicts with parameter combinations and their performance
+        """
+        if param_ranges is None:
+            param_ranges = {
+                "delta_otm_pct": [0.02, 0.025, 0.03, 0.035],
+                "spread_width": [3.0, 5.0, 7.0],
+                "target_profit_pct": [0.40, 0.50, 0.60],
+            }
+
+        results = []
+
+        # Store original config
+        original_spread = self.config.spread_width
+        original_target = self.config.target_profit_pct
+
+        for delta in param_ranges.get("delta_otm_pct", [0.03]):
+            for spread in param_ranges.get("spread_width", [5.0]):
+                for target in param_ranges.get("target_profit_pct", [0.50]):
+                    # Update config
+                    self.config.spread_width = spread
+                    self.config.target_profit_pct = target
+
+                    # Run simulation on the data
+                    sim_results = []
+                    for idx, row in bars_df.iterrows():
+                        if len(sim_results) >= 30:  # Limit for speed
+                            break
+                        trade_date = row["timestamp"].date() if hasattr(row["timestamp"], "date") else row["timestamp"]
+                        result = self.simulate_trade_day(
+                            trade_date=trade_date,
+                            daily_high=row["high"],
+                            daily_low=row["low"],
+                            daily_open=row.get("open", 0),
+                        )
+                        if result:
+                            sim_results.append(result)
+
+                    if sim_results:
+                        pnls = [r.theoretical_pnl for r in sim_results]
+                        win_rate = sum(1 for p in pnls if p > 0) / len(pnls)
+                        total_pnl = sum(pnls)
+                        avg_trade = np.mean(pnls)
+                        std_dev = np.std(pnls)
+                        sharpe = (avg_trade / self.config.account_size - 0.05/252) / (std_dev / self.config.account_size) * np.sqrt(252) if std_dev > 0 else 0
+
+                        results.append({
+                            "delta_otm_pct": delta,
+                            "spread_width": spread,
+                            "target_profit_pct": target,
+                            "num_trades": len(sim_results),
+                            "win_rate": round(win_rate, 4),
+                            "total_pnl": round(total_pnl, 2),
+                            "avg_trade": round(float(avg_trade), 2),
+                            "sharpe": round(float(sharpe), 2),
+                        })
+
+        # Restore original config
+        self.config.spread_width = original_spread
+        self.config.target_profit_pct = original_target
+
+        # Sort by Sharpe ratio descending
+        results.sort(key=lambda x: x.get("sharpe", 0), reverse=True)
+
+        return results
+
     def generate_rag_lessons(self, results: list[TradeResult], summary: dict) -> list[dict]:
         """Generate lessons for RAG database from backtest results."""
         lessons = []
