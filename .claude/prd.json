@@ -69,10 +69,10 @@
   ],
   "completed_tasks": [],
   "metadata": {
-    "total_iterations": 132,
-    "tasks_completed_this_session": 10,
+    "total_iterations": 133,
+    "tasks_completed_this_session": 11,
     "last_task_completed": "T005",
-    "last_iteration_at": "2026-01-21T11:35:00Z",
-    "notes": "Iteration 132: Fixed Sharpe ratio calculation. Added P/L variance, annualized Sharpe with risk-free rate, profit factor metric. Tests pass."
+    "last_iteration_at": "2026-01-21T11:45:00Z",
+    "notes": "Iteration 133: Major backtest upgrade - Iron Condor support, 15-20 delta enforcement, LL-265 exit rules. Sharpe now realistic with variance."
   }
 }
