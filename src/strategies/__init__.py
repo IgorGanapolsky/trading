@@ -15,6 +15,8 @@ Author: Trading System
 Created: 2025-12-03
 """
 
+import logging
+
 from src.strategies.registry import (
     AssetClass,
     StrategyInterface,
@@ -26,6 +28,8 @@ from src.strategies.registry import (
     initialize_registry,
     register_strategy,
 )
+
+_logger = logging.getLogger(__name__)
 
 __all__ = [
     "StrategyRegistry",
@@ -42,5 +46,5 @@ __all__ = [
 # Auto-initialize registry on import
 try:
     initialize_registry()
-except Exception:
-    pass  # Registry initialization may fail in some contexts
+except Exception as e:
+    _logger.warning(f"Strategy registry initialization failed: {e}")
