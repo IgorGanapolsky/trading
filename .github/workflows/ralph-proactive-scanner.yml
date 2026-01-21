@@ -1,0 +1,209 @@
+name: Ralph Proactive Scanner
+
+# Proactive problem detection - finds issues BEFORE they cause failures
+# Enhancement to Ralph Wiggum methodology:
+# - Scan for security issues
+# - Detect dead code
+# - Find code smells
+# - Record findings in RAG for learning
+
+on:
+  schedule:
+    # Run daily at 3 AM UTC (low activity time)
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      scan_type:
+        description: 'Type of scan'
+        required: false
+        default: 'full'
+        type: choice
+        options:
+          - full
+          - security
+          - dead_code
+          - code_quality
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # Job 1: Security scanning
+  security-scan:
+    runs-on: ubuntu-latest
+    outputs:
+      issues_found: ${{ steps.scan.outputs.issues_found }}
+      issue_count: ${{ steps.scan.outputs.count }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install security tools
+        run: |
+          pip install bandit safety
+
+      - name: Run Bandit security scan
+        id: scan
+        continue-on-error: true
+        run: |
+          echo "## Security Scan Results" >> $GITHUB_STEP_SUMMARY
+
+          # Run bandit on src and scripts
+          bandit -r src/ scripts/ -f json -o bandit_report.json 2>/dev/null || true
+
+          # Count issues
+          if [ -f bandit_report.json ]; then
+            count=$(python3 -c "import json; d=json.load(open('bandit_report.json')); print(len(d.get('results', [])))")
+            echo "count=$count" >> $GITHUB_OUTPUT
+
+            if [ "$count" -gt 0 ]; then
+              echo "issues_found=true" >> $GITHUB_OUTPUT
+              echo "⚠️ Found $count potential security issues" >> $GITHUB_STEP_SUMMARY
+
+              # Show high severity issues
+              python3 << 'EOF'
+import json
+with open('bandit_report.json') as f:
+    data = json.load(f)
+for issue in data.get('results', [])[:5]:
+    severity = issue.get('issue_severity', 'UNKNOWN')
+    text = issue.get('issue_text', 'No description')
+    filename = issue.get('filename', 'Unknown')
+    line = issue.get('line_number', 0)
+    print(f"- [{severity}] {filename}:{line} - {text}")
+EOF
+            else
+              echo "issues_found=false" >> $GITHUB_OUTPUT
+              echo "✅ No security issues found" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "issues_found=false" >> $GITHUB_OUTPUT
+            echo "count=0" >> $GITHUB_OUTPUT
+          fi
+
+  # Job 2: Dead code detection
+  dead-code-scan:
+    runs-on: ubuntu-latest
+    outputs:
+      dead_code_found: ${{ steps.scan.outputs.found }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install vulture
+        run: pip install vulture
+
+      - name: Run dead code scan
+        id: scan
+        continue-on-error: true
+        run: |
+          echo "## Dead Code Scan" >> $GITHUB_STEP_SUMMARY
+
+          # Run vulture with min confidence
+          vulture src/ scripts/ --min-confidence 80 > vulture_report.txt 2>&1 || true
+
+          count=$(wc -l < vulture_report.txt)
+          if [ "$count" -gt 0 ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+            echo "⚠️ Found $count potentially unused code items" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            head -20 vulture_report.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+            echo "✅ No dead code detected" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # Job 3: Code quality metrics
+  code-quality:
+    runs-on: ubuntu-latest
+    outputs:
+      quality_issues: ${{ steps.quality.outputs.issues }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install tools
+        run: pip install ruff radon
+
+      - name: Check code complexity
+        id: quality
+        run: |
+          echo "## Code Quality Metrics" >> $GITHUB_STEP_SUMMARY
+
+          # Check cyclomatic complexity
+          echo "### Cyclomatic Complexity (High complexity functions)" >> $GITHUB_STEP_SUMMARY
+          radon cc src/ scripts/ -a -s -n C 2>/dev/null | head -20 >> $GITHUB_STEP_SUMMARY || echo "All functions have acceptable complexity" >> $GITHUB_STEP_SUMMARY
+
+          # Check maintainability index
+          echo "### Maintainability Index (Low scores)" >> $GITHUB_STEP_SUMMARY
+          radon mi src/ scripts/ -s -n B 2>/dev/null | head -20 >> $GITHUB_STEP_SUMMARY || echo "All files have good maintainability" >> $GITHUB_STEP_SUMMARY
+
+          # Extended ruff checks
+          echo "### Ruff Extended Checks" >> $GITHUB_STEP_SUMMARY
+          ruff check src/ scripts/ --select=C90,PLR --statistics 2>&1 | tail -10 >> $GITHUB_STEP_SUMMARY || echo "No complexity issues" >> $GITHUB_STEP_SUMMARY
+
+          echo "issues=false" >> $GITHUB_OUTPUT
+
+  # Job 4: Generate digest and record lessons
+  generate-digest:
+    runs-on: ubuntu-latest
+    needs: [security-scan, dead-code-scan, code-quality]
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Generate proactive scan digest
+        run: |
+          echo "## 🔍 Ralph Proactive Scanner Digest" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Scan | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Security | ${{ needs.security-scan.outputs.issues_found == 'true' && '⚠️ Issues found' || '✅ Clean' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dead Code | ${{ needs.dead-code-scan.outputs.dead_code_found == 'true' && '⚠️ Found' || '✅ Clean' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Quality | ${{ needs.code-quality.outputs.quality_issues == 'true' && '⚠️ Issues' || '✅ Good' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🤖 Scan completed at $(date -u +"%Y-%m-%d %H:%M UTC")" >> $GITHUB_STEP_SUMMARY
+
+      - name: Record findings in lessons
+        if: needs.security-scan.outputs.issues_found == 'true' || needs.dead-code-scan.outputs.dead_code_found == 'true'
+        run: |
+          # Create lesson file if issues found
+          DATE=$(date +%Y%m%d)
+          LESSON_FILE="rag_knowledge/lessons_learned/ll_proactive_scan_${DATE}.md"
+
+          cat > "$LESSON_FILE" << 'EOF'
+          # Ralph Proactive Scan Findings
+
+          **Date:** $(date +%Y-%m-%d)
+          **Type:** Automated Proactive Scan
+
+          ## Issues Found
+
+          - Security issues: ${{ needs.security-scan.outputs.issue_count || '0' }}
+          - Dead code detected: ${{ needs.dead-code-scan.outputs.dead_code_found || 'false' }}
+
+          ## Action Required
+
+          Review the workflow run summary for details and prioritize fixes.
+          EOF
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "$LESSON_FILE" || true
+          git commit -m "chore(ralph): Record proactive scan findings" || true
+          git push || true
