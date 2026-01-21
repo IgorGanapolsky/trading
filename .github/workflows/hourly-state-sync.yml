@@ -1,0 +1,133 @@
+name: Hourly State Sync & Monitor
+
+# Sync Alpaca state and monitor system health every hour
+# Created: Jan 21, 2026 - 24/7 automation
+
+on:
+  schedule:
+    # Run every hour at minute 15
+    - cron: '15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync-and-monitor:
+    name: Sync State & Monitor
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install alpaca-py python-dotenv
+
+      - name: Sync Alpaca State
+        env:
+          ALPACA_PAPER_TRADING_5K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_PAPER_TRADING_5K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          python3 << 'EOF'
+          import json
+          import os
+          from datetime import datetime, timezone
+
+          try:
+              from alpaca.trading.client import TradingClient
+
+              api_key = os.environ.get('ALPACA_PAPER_TRADING_5K_API_KEY')
+              secret_key = os.environ.get('ALPACA_PAPER_TRADING_5K_API_SECRET')
+
+              if not api_key or not secret_key:
+                  print("⚠️ Alpaca credentials not available")
+                  exit(0)
+
+              client = TradingClient(api_key, secret_key, paper=True)
+
+              # Get account info
+              account = client.get_account()
+              positions = client.get_all_positions()
+
+              # Load existing state
+              with open('data/system_state.json', 'r') as f:
+                  state = json.load(f)
+
+              # Update state
+              state['last_updated'] = datetime.now(timezone.utc).isoformat()
+              state['paper_account'] = {
+                  'equity': float(account.equity),
+                  'cash': float(account.cash),
+                  'buying_power': float(account.buying_power),
+                  'positions_count': len(positions),
+              }
+
+              state['positions'] = [
+                  {
+                      'symbol': p.symbol,
+                      'qty': str(p.qty),
+                      'market_value': str(p.market_value),
+                      'unrealized_pl': str(p.unrealized_pl),
+                  }
+                  for p in positions
+              ]
+
+              # Save state
+              with open('data/system_state.json', 'w') as f:
+                  json.dump(state, f, indent=2)
+
+              print(f"✅ State synced at {state['last_updated']}")
+              print(f"   Equity: ${float(account.equity):,.2f}")
+              print(f"   Positions: {len(positions)}")
+
+          except Exception as e:
+              print(f"⚠️ Sync error: {e}")
+              exit(0)  # Don't fail workflow
+          EOF
+
+      - name: Commit State Update
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add data/system_state.json
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore(data): Hourly state sync [auto]"
+            git push || echo "Push failed - may have conflicts"
+          fi
+
+      - name: Monitor Alerts
+        run: |
+          echo "=== POSITION MONITOR ==="
+          python3 << 'EOF'
+          import json
+
+          with open('data/system_state.json') as f:
+              state = json.load(f)
+
+          positions = state.get('positions', [])
+          alerts = []
+
+          for p in positions:
+              pl = float(p.get('unrealized_pl', 0) or 0)
+              symbol = p.get('symbol', 'UNKNOWN')
+
+              # Alert if any position has > $100 loss
+              if pl < -100:
+                  alerts.append(f"⚠️ {symbol}: ${pl:.2f} unrealized loss")
+
+          if alerts:
+              print("=== ALERTS ===")
+              for alert in alerts:
+                  print(alert)
+          else:
+              print("✅ No position alerts")
+          EOF
