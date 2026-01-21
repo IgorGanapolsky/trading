@@ -53,7 +53,8 @@ CONFIG = {
     "take_profit_pct": 0.50,  # Close at 50% profit (improves win rate)
     "max_positions": 1,  # Per CLAUDE.md: "1 spread at a time"
     "north_star_daily_target": 10.0,  # $5-10/day realistic for $5K (CLAUDE.md updated)
-    "fallback_symbols": ["IWM"],  # Only IWM as backup per CLAUDE.md whitelist
+    # NOTE: No fallback symbols - SPY ONLY per CLAUDE.md Jan 19, 2026
+    # IWM removed because $100K success was SPY-only, $5K failure was SOFI
 }
 
 
@@ -507,6 +508,21 @@ def run_daily_trading():
     logger.info("=" * 60)
     logger.info("SIMPLE DAILY TRADER - STARTING")
     logger.info("=" * 60)
+
+    # MANDATORY TICKER VALIDATION - SPY ONLY per CLAUDE.md Jan 19, 2026
+    symbol = CONFIG["symbol"]
+    try:
+        from src.utils.ticker_whitelist import TickerWhitelistViolation, validate_ticker
+
+        validate_ticker(symbol)
+        logger.info(f"✅ Ticker {symbol} validated")
+    except TickerWhitelistViolation as e:
+        logger.error(f"❌ TICKER BLOCKED: {e}")
+        return {"success": False, "reason": "ticker_blocked"}
+    except ImportError:
+        if symbol.upper() != "SPY":
+            logger.error(f"❌ TICKER BLOCKED: {symbol} not allowed. SPY ONLY.")
+            return {"success": False, "reason": "ticker_blocked"}
 
     # Get client
     client = get_alpaca_client()

@@ -276,6 +276,21 @@ def run_rule_one_strategy():
     logger.info("RULE #1 OPTIONS TRADER - PHIL TOWN STRATEGY")
     logger.info("=" * 60)
 
+    # MANDATORY TICKER VALIDATION - SPY ONLY per CLAUDE.md Jan 19, 2026
+    for symbol in CONFIG["watchlist"]:
+        try:
+            from src.utils.ticker_whitelist import TickerWhitelistViolation, validate_ticker
+
+            validate_ticker(symbol)
+            logger.info(f"✅ Ticker {symbol} validated")
+        except TickerWhitelistViolation as e:
+            logger.error(f"❌ TICKER BLOCKED: {e}")
+            return {"success": False, "reason": "ticker_blocked", "symbol": symbol}
+        except ImportError:
+            if symbol.upper() != "SPY":
+                logger.error(f"❌ TICKER BLOCKED: {symbol} not allowed. SPY ONLY.")
+                return {"success": False, "reason": "ticker_blocked", "symbol": symbol}
+
     try:
         from src.strategies.rule_one_options import RuleOneOptionsStrategy
 

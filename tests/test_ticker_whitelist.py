@@ -38,30 +38,30 @@ class TestIsTickerAllowed:
     """Test whitelist checking."""
 
     def test_spy_allowed(self):
-        assert is_ticker_allowed("SPY") == True
+        assert is_ticker_allowed("SPY")
 
     def test_spy_options_allowed(self):
-        assert is_ticker_allowed("SPY260220P00653000") == True
-        assert is_ticker_allowed("SPY260115C00700000") == True
+        assert is_ticker_allowed("SPY260220P00653000")
+        assert is_ticker_allowed("SPY260115C00700000")
 
     def test_sofi_blocked(self):
-        assert is_ticker_allowed("SOFI") == False
-        assert is_ticker_allowed("SOFI260213P00032000") == False
+        assert not is_ticker_allowed("SOFI")
+        assert not is_ticker_allowed("SOFI260213P00032000")
 
     def test_other_tickers_blocked(self):
-        assert is_ticker_allowed("AAPL") == False
-        assert is_ticker_allowed("TSLA") == False
-        assert is_ticker_allowed("NVDA") == False
-        assert is_ticker_allowed("QQQ") == False
-        assert is_ticker_allowed("IWM") == False
+        assert not is_ticker_allowed("AAPL")
+        assert not is_ticker_allowed("TSLA")
+        assert not is_ticker_allowed("NVDA")
+        assert not is_ticker_allowed("QQQ")
+        assert not is_ticker_allowed("IWM")
 
 
 class TestValidateTicker:
     """Test validation with exception raising."""
 
     def test_spy_passes(self):
-        assert validate_ticker("SPY") == True
-        assert validate_ticker("SPY260220P00653000") == True
+        assert validate_ticker("SPY")
+        assert validate_ticker("SPY260220P00653000")
 
     def test_sofi_raises_exception(self):
         with pytest.raises(TickerWhitelistViolation) as excinfo:
@@ -71,7 +71,7 @@ class TestValidateTicker:
 
     def test_sofi_no_raise_returns_false(self):
         result = validate_ticker("SOFI", raise_on_violation=False)
-        assert result == False
+        assert not result
 
     def test_random_ticker_raises(self):
         with pytest.raises(TickerWhitelistViolation):
@@ -82,7 +82,7 @@ class TestWhitelistConfiguration:
     """Test whitelist is correctly configured."""
 
     def test_only_spy_in_whitelist(self):
-        assert ALLOWED_UNDERLYING == frozenset({"SPY"})
+        assert frozenset({"SPY"}) == ALLOWED_UNDERLYING
 
     def test_whitelist_is_immutable(self):
         # frozenset cannot be modified

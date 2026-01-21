@@ -15,8 +15,10 @@ Target Parameters (from RAG knowledge):
 
 Usage:
     python3 scripts/execute_options_trade.py --strategy cash_secured_put --symbol SPY
-    python3 scripts/execute_options_trade.py --strategy covered_call --symbol QQQ
+    python3 scripts/execute_options_trade.py --strategy covered_call --symbol SPY
     python3 scripts/execute_options_trade.py --strategy wheel --symbol SPY --dry-run
+
+NOTE: Per CLAUDE.md Jan 19, 2026 - SPY ONLY. Other tickers will be rejected.
 """
 
 import argparse
@@ -587,6 +589,22 @@ def main():
     logger.info(f"   Symbol: {args.symbol}")
     logger.info(f"   Dry Run: {args.dry_run}")
     logger.info("")
+
+    # MANDATORY TICKER VALIDATION - SPY ONLY per CLAUDE.md Jan 19, 2026
+    try:
+        from src.utils.ticker_whitelist import TickerWhitelistViolation, validate_ticker
+
+        validate_ticker(args.symbol)  # Raises if not SPY
+        logger.info(f"   ✅ Ticker {args.symbol} validated")
+    except TickerWhitelistViolation as e:
+        logger.error(f"❌ TICKER BLOCKED: {e}")
+        logger.error("   Per CLAUDE.md: SPY ONLY - NO individual stocks")
+        return 1
+    except ImportError:
+        # Fallback validation if import fails
+        if args.symbol.upper() != "SPY":
+            logger.error(f"❌ TICKER BLOCKED: {args.symbol} not allowed. SPY ONLY.")
+            return 1
 
     try:
         trading_client, options_client = get_alpaca_clients()
