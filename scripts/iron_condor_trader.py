@@ -423,8 +423,12 @@ class IronCondorStrategy:
                     # FIX Jan 20, 2026: Get actual option prices instead of hardcoded $0.50
                     # ROOT CAUSE: Hardcoded limit_price=0.50 caused CALL legs to not fill
                     # CALL options are often more expensive than $0.50
+                    # LL-281 FIX (Jan 21, 2026): Use aggressive fallback prices to ensure fills
                     def get_option_price(symbol: str, side: OrderSide) -> float:
                         """Get limit price for option based on side and market data."""
+                        # Determine if this is a CALL or PUT based on symbol
+                        is_call = "C" in symbol[-9:-8]  # OCC format: ...C00720000
+
                         try:
                             from alpaca.data.historical import OptionHistoricalDataClient
                             from alpaca.data.requests import OptionLatestQuoteRequest
@@ -435,18 +439,38 @@ class IronCondorStrategy:
                             if symbol in quotes:
                                 bid = quotes[symbol].bid_price
                                 ask = quotes[symbol].ask_price
-                                # For BUY: use ask (what we pay)
-                                # For SELL: use bid (what we receive)
-                                if side == OrderSide.BUY:
-                                    price = ask if ask > 0 else 1.50
+
+                                # Validate we got real prices
+                                if bid > 0 and ask > 0:
+                                    # For BUY: use ask (what we pay)
+                                    # For SELL: use bid (what we receive)
+                                    if side == OrderSide.BUY:
+                                        # Add 10% buffer to ensure fill
+                                        price = ask * 1.10
+                                    else:
+                                        # Use bid minus small buffer for sells
+                                        price = bid * 0.95
+                                    logger.info(
+                                        f"  {symbol}: b=${bid:.2f} a=${ask:.2f} -> ${price:.2f}"
+                                    )
+                                    return round(price, 2)
                                 else:
-                                    price = bid if bid > 0 else 1.50
-                                logger.info(f"  {symbol}: b=${bid:.2f} a=${ask:.2f} ->${price:.2f}")
-                                return price
+                                    logger.warning(
+                                        f"  {symbol}: Invalid quotes b=${bid} a=${ask}"
+                                    )
                         except Exception as price_err:
                             logger.warning(f"   Could not get price for {symbol}: {price_err}")
-                        # Fallback to reasonable estimate based on delta (15-delta ~$1.50)
-                        return 1.50
+
+                        # LL-281: Use more realistic fallback prices
+                        # CALL options are typically MORE expensive than PUTs at same delta
+                        # 15-delta options: PUTs ~$1.50, CALLs ~$3-5
+                        if is_call:
+                            fallback = 4.00  # Higher fallback for CALLs
+                            logger.warning(f"  {symbol}: Using CALL fallback ${fallback:.2f}")
+                        else:
+                            fallback = 2.00  # Conservative PUT fallback
+                            logger.warning(f"  {symbol}: Using PUT fallback ${fallback:.2f}")
+                        return fallback
 
                     for sym, side, leg_name in legs:
                         try:
