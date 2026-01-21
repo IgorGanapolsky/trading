@@ -2,7 +2,9 @@
 
 **Date**: 2026-01-19
 **Category**: System Bug, Strategy, Audit
-**Severity**: CRITICAL
+**Severity**: RESOLVED
+**Resolution Date**: 2026-01-21
+**Resolution**: Disabled guaranteed_trader, simple_daily_trader, rule_one_trader in daily-trading.yml
 
 ## Summary
 

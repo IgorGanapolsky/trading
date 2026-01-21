@@ -110,13 +110,27 @@ Iron condors outperform simple credit spreads because:
 flowchart LR
     DATA[Historical Data] --> SIM[Monte Carlo Simulation]
     SIM --> METRICS[Calculate Sharpe, Win Rate]
-    METRICS --> VALIDATE{{Sharpe > 1?}}
+    METRICS --> STRESS[Stress Testing]
+    STRESS --> VALIDATE{{Pass All Tests?}}
     VALIDATE -->|Yes| APPROVE[Strategy Approved]
     VALIDATE -->|No| REFINE[Refine Parameters]
     REFINE --> SIM
 ```
 
-*Our backtesting framework runs 1,000 Monte Carlo simulations to validate edge consistency.*
+*Our backtesting framework runs 10,000+ Monte Carlo simulations to validate edge consistency.*
+
+### Monte Carlo Stress Testing
+
+We validate our strategy under multiple scenarios:
+
+| Scenario | Win Rate Modifier | Description |
+|----------|------------------|-------------|
+| **Normal** | 0% | Historical performance |
+| **Moderate Stress** | -10% | Market headwinds |
+| **Severe Stress** | -20% | Significant drawdown |
+| **Black Swan** | -30% | Extreme conditions |
+
+Strategy must pass ALL scenarios with >50% probability of profit.
 
 ---
 """

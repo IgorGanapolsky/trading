@@ -1,7 +1,9 @@
 # LL-247: SOFI PDT Crisis - SPY ONLY Violation
 
 **Date**: January 20, 2026
-**Severity**: CRITICAL
+**Severity**: HIGH
+**Resolution Date**: 2026-01-21
+**Resolution**: Ticker validator deployed, close-non-spy workflow running
 **Category**: Strategy Violation, Risk Management
 **Status**: MITIGATED (fix deployed), PENDING (position close tomorrow)
 

@@ -56,28 +56,31 @@ class RiskMetrics:
     kurtosis: float
 
     def to_dict(self) -> dict:
-        """Convert to dictionary for JSON serialization."""
+        """Convert to dictionary for JSON serialization.
+
+        Note: Explicitly convert numpy types to Python types for JSON compatibility.
+        """
         return {
-            "total_return": round(self.total_return, 2),
-            "annualized_return": round(self.annualized_return, 4),
-            "avg_trade_return": round(self.avg_trade_return, 2),
-            "sharpe_ratio": round(self.sharpe_ratio, 3),
-            "sortino_ratio": round(self.sortino_ratio, 3),
-            "calmar_ratio": round(self.calmar_ratio, 3),
-            "max_drawdown": round(self.max_drawdown, 4),
-            "max_drawdown_duration": self.max_drawdown_duration,
-            "avg_drawdown": round(self.avg_drawdown, 4),
-            "var_95": round(self.var_95, 2),
-            "cvar_95": round(self.cvar_95, 2),
-            "win_rate": round(self.win_rate, 4),
-            "profit_factor": round(self.profit_factor, 3),
-            "avg_win": round(self.avg_win, 2),
-            "avg_loss": round(self.avg_loss, 2),
-            "win_loss_ratio": round(self.win_loss_ratio, 3),
-            "std_dev": round(self.std_dev, 2),
-            "downside_dev": round(self.downside_dev, 2),
-            "skewness": round(self.skewness, 3),
-            "kurtosis": round(self.kurtosis, 3),
+            "total_return": float(round(self.total_return, 2)),
+            "annualized_return": float(round(self.annualized_return, 4)),
+            "avg_trade_return": float(round(self.avg_trade_return, 2)),
+            "sharpe_ratio": float(round(self.sharpe_ratio, 3)),
+            "sortino_ratio": float(round(self.sortino_ratio, 3)),
+            "calmar_ratio": float(round(self.calmar_ratio, 3)),
+            "max_drawdown": float(round(self.max_drawdown, 4)),
+            "max_drawdown_duration": int(self.max_drawdown_duration),
+            "avg_drawdown": float(round(self.avg_drawdown, 4)),
+            "var_95": float(round(self.var_95, 2)),
+            "cvar_95": float(round(self.cvar_95, 2)),
+            "win_rate": float(round(self.win_rate, 4)),
+            "profit_factor": float(round(self.profit_factor, 3)),
+            "avg_win": float(round(self.avg_win, 2)),
+            "avg_loss": float(round(self.avg_loss, 2)),
+            "win_loss_ratio": float(round(self.win_loss_ratio, 3)),
+            "std_dev": float(round(self.std_dev, 2)),
+            "downside_dev": float(round(self.downside_dev, 2)),
+            "skewness": float(round(self.skewness, 3)),
+            "kurtosis": float(round(self.kurtosis, 3)),
         }
 
     def is_phil_town_compliant(self) -> tuple[bool, list[str]]:

@@ -6,7 +6,10 @@ These tests validate that our risk calculations are correct and handle
 edge cases properly (zero variance, empty data, etc.).
 """
 
-import numpy as np
+import pytest
+
+# Skip entire module if numpy not available (sandbox environment)
+np = pytest.importorskip("numpy", reason="numpy not available in sandbox")
 
 from src.backtest.risk_metrics import (
     calculate_max_drawdown,

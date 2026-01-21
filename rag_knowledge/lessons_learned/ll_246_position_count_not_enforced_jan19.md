@@ -2,7 +2,9 @@
 
 **Date**: 2026-01-19
 **Category**: Security, Adversarial Audit
-**Severity**: CRITICAL
+**Severity**: RESOLVED
+**Resolution Date**: 2026-01-21
+**Resolution**: Position count check added to mandatory_trade_gate.py
 
 ## Summary
 

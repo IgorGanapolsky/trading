@@ -2,14 +2,15 @@ name: EMERGENCY - Close Options Position
 
 # CRITICAL: Close short options before earnings
 # Created: Jan 14, 2026 - SOFI earnings risk mitigation
+# UPDATED Jan 21, 2026: Changed default from SOFI to SPY (LL-273 compliance)
 
 on:
   workflow_dispatch:
     inputs:
       option_symbol:
-        description: "Option symbol (e.g., SOFI260206P00024000)"
+        description: "Option symbol (e.g., SPY260220P00565000)"
         required: true
-        default: "SOFI260206P00024000"
+        default: "SPY260220P00565000"
       quantity:
         description: "Contracts to close (positive number)"
         required: true
