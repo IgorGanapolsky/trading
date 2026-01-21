@@ -17,16 +17,17 @@
     "cash": 4973.91
   },
   "paper_account": {
-    "equity": 5068.79,
+    "equity": 5024.39,
     "cash": 4973.91,
-    "buying_power": 4327.7,
-    "total_pl": 68.78999999999996,
-    "total_pl_pct": 1.38,
+    "buying_power": 4328.3,
+    "total_pl": 24.390000000000327,
+    "total_pl_pct": 0.48780000000000656,
     "positions_count": 2,
     "daily_change": -30.18,
     "win_rate": 0,
     "win_rate_sample_size": 0,
-    "starting_balance": 5000.0
+    "starting_balance": 5000.0,
+    "current_equity": 5024.39
   },
   "positions": [
     {
@@ -445,14 +446,43 @@
     "unrealized_pl": -83.16506
   },
   "account": {
-    "current_equity": 5068.79,
-    "total_pl": 68.78999999999996,
-    "total_pl_pct": 1.38,
-    "positions_count": 2
+    "current_equity": 5024.39,
+    "total_pl": -94975.61,
+    "total_pl_pct": -94.97561,
+    "positions_count": 2,
+    "cash": 4973.91,
+    "buying_power": 4328.3,
+    "positions_value": 50.48000000000047
   },
   "meta": {
-    "last_updated": "2026-01-21T14:14:20.618994+00:00",
+    "last_updated": "2026-01-21T14:38:46.817891",
     "trade_sync": "alpaca_api",
-    "sync_frequency_minutes": 5
+    "sync_frequency_minutes": 5,
+    "last_sync": "2026-01-21T14:38:46.817530",
+    "sync_mode": "paper"
+  },
+  "performance": {
+    "open_positions": [
+      {
+        "symbol": "SOFI260213P00032000",
+        "quantity": -1.0,
+        "entry_price": 605.0,
+        "current_price": 730.0,
+        "market_value": -730.0,
+        "unrealized_pl": -125.0,
+        "unrealized_pl_pct": 0.2066115702479339,
+        "side": "long"
+      },
+      {
+        "symbol": "SPY",
+        "quantity": 1.146822157,
+        "entry_price": 682.7998528110056,
+        "current_price": 680.559999853578,
+        "market_value": 780.481287,
+        "unrealized_pl": -2.568713,
+        "unrealized_pl_pct": -0.0032803946108166783,
+        "side": "long"
+      }
+    ]
   }
 }
