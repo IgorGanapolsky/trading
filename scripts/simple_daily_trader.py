@@ -52,7 +52,7 @@ CONFIG = {
     "position_size_pct": 0.05,  # FIXED Jan 19, 2026: 5% max per position - CLAUDE.md MANDATE
     "take_profit_pct": 0.50,  # Close at 50% profit (improves win rate)
     "max_positions": 1,  # Per CLAUDE.md: "1 spread at a time"
-    "north_star_daily_target": 10.0,  # $5-10/day realistic for $5K (CLAUDE.md updated)
+    "north_star_daily_target": 100.0,  # $100/day after-tax profit - CEO MANDATE (PERMANENT)
     "fallback_symbols": ["IWM"],  # Only IWM as backup per CLAUDE.md whitelist
 }
 
