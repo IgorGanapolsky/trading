@@ -5,17 +5,66 @@
     "decision_point": "After 30 trades OR 90 days, evaluate strategy"
   },
   "summary": {
-    "total_trades": 0,
-    "wins": 0,
-    "losses": 0,
-    "win_rate_pct": 0,
-    "total_premium_collected": 0,
-    "total_pnl": 0,
-    "avg_win": 0,
-    "avg_loss": 0,
-    "profit_factor": 0,
+    "total_trades": 6,
+    "wins": 2,
+    "losses": 4,
+    "win_rate_pct": 33.3,
+    "total_premium_collected": 2250.0,
+    "total_pnl": 168.0,
+    "avg_win": 225.0,
+    "avg_loss": 70.5,
+    "profit_factor": 1.6,
     "start_date": "2026-01-13",
-    "days_tracked": 0
+    "days_tracked": 7
   },
-  "trades": []
+  "trades": [
+    {
+      "date": "2026-01-20",
+      "symbol": "SPY260220P00653000",
+      "premium": 975.0,
+      "pnl": 419.0,
+      "is_win": true,
+      "trade_num": 1
+    },
+    {
+      "date": "2026-01-20",
+      "symbol": "SPY260220P00658000",
+      "premium": 564.0,
+      "pnl": -243.0,
+      "is_win": false,
+      "trade_num": 2
+    },
+    {
+      "date": "2026-01-20",
+      "symbol": "SPY260220P00660000",
+      "premium": 338.0,
+      "pnl": 31.0,
+      "is_win": true,
+      "trade_num": 3
+    },
+    {
+      "date": "2026-01-20",
+      "symbol": "SOFI260206P00024000",
+      "premium": 174.0,
+      "pnl": -17.0,
+      "is_win": false,
+      "trade_num": 4
+    },
+    {
+      "date": "2026-01-20",
+      "symbol": "SOFI260220P00024000",
+      "premium": 104.0,
+      "pnl": -9.0,
+      "is_win": false,
+      "trade_num": 5
+    },
+    {
+      "date": "2026-01-20",
+      "symbol": "SOFI260130P00025000",
+      "premium": 95.0,
+      "pnl": -13.0,
+      "is_win": false,
+      "trade_num": 6
+    }
+  ]
 }
