@@ -23,6 +23,11 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.core.alpaca_trader import AlpacaTrader
 
+# Import Alpaca SDK for option orders
+from alpaca.trading.client import TradingClient
+from alpaca.trading.requests import MarketOrderRequest
+from alpaca.trading.enums import OrderSide, TimeInForce
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -77,13 +82,16 @@ def main():
         logger.info(f"Closing: {side.upper()} {qty} {symbol}")
 
         try:
-            # Use AlpacaTrader to close position
-            if side == "sell":
-                # Selling long position
-                order = trader.sell_option(symbol, qty)
-            else:
-                # Buying to close short position
-                order = trader.buy_option(symbol, qty)
+            # Use Alpaca TradingClient directly for option orders
+            # (AlpacaTrader doesn't have option methods - it's for stocks only)
+            order_side = OrderSide.SELL if side == "sell" else OrderSide.BUY
+            order_req = MarketOrderRequest(
+                symbol=symbol,
+                qty=qty,
+                side=order_side,
+                time_in_force=TimeInForce.DAY,
+            )
+            order = trader.trading_client.submit_order(order_req)
 
             if order:
                 logger.info(f"  ✅ Order submitted: {order.id}")
