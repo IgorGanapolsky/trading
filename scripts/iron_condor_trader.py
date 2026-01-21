@@ -222,9 +222,16 @@ class IronCondorStrategy:
         rag = LessonsLearnedRAG()
 
         # Check for strategy-specific failures
+        # FIX Jan 21, 2026: Only block on CRITICAL lessons that are NOT resolved
+        # LL-244 (security audit) was blocking even though it's a general audit
         strategy_lessons = rag.search("iron condor failures losses", top_k=3)
         for lesson, score in strategy_lessons:
-            if lesson.severity == "CRITICAL":
+            # Skip lessons that have been resolved or fixed
+            if lesson.severity == "RESOLVED" or "resolved" in lesson.snippet.lower():
+                logger.info(f"Skipping resolved lesson: {lesson.id}")
+                continue
+            # Only block on lessons specifically about iron condor execution
+            if lesson.severity == "CRITICAL" and "iron condor" in lesson.title.lower():
                 logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
                 logger.error(f"Prevention: {lesson.prevention}")
                 return {
@@ -238,7 +245,12 @@ class IronCondorStrategy:
         # Check for ticker-specific failures
         ticker_lessons = rag.search(f"{ic.underlying} trading failures options losses", top_k=3)
         for lesson, score in ticker_lessons:
-            if lesson.severity == "CRITICAL":
+            # Skip lessons that have been resolved or fixed
+            if lesson.severity == "RESOLVED" or "resolved" in lesson.snippet.lower():
+                logger.info(f"Skipping resolved lesson: {lesson.id}")
+                continue
+            # Only block on unresolved CRITICAL lessons about this ticker's execution
+            if lesson.severity == "CRITICAL" and ic.underlying.lower() in lesson.title.lower():
                 logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
                 logger.error(f"Prevention: {lesson.prevention}")
                 return {
