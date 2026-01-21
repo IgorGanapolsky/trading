@@ -69,10 +69,10 @@
   ],
   "completed_tasks": [],
   "metadata": {
-    "total_iterations": 135,
-    "tasks_completed_this_session": 13,
+    "total_iterations": 136,
+    "tasks_completed_this_session": 14,
     "last_task_completed": "T005",
-    "last_iteration_at": "2026-01-21T12:05:00Z",
-    "notes": "Iteration 135: Added Monte Carlo simulation, market regime detection, parameter sensitivity analysis. Full statistical toolkit for backtesting."
+    "last_iteration_at": "2026-01-21T12:10:00Z",
+    "notes": "Iteration 136: Added Sharpe ratio and backtesting strategy explanations to all blog posts (GitHub Pages + dev.to). Every post now educates readers on risk-adjusted returns and our Iron Condor validation methodology."
   }
 }
