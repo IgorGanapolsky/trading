@@ -603,8 +603,8 @@
   "trades_loaded": 69,
   "trades": {
     "last_trade_date": "2026-01-21",
-    "today_trades": 33,
-    "total_trades_today": 33,
+    "today_trades": 34,
+    "total_trades_today": 34,
     "last_trade_symbol": "SYNCED"
   },
   "risk": {
@@ -619,7 +619,7 @@
     "positions_count": 2
   },
   "meta": {
-    "last_updated": "2026-01-21T19:49:28.375527+00:00",
+    "last_updated": "2026-01-21T19:55:52.622407+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5
   }
