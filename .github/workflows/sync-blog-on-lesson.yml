@@ -46,6 +46,18 @@ jobs:
           fi
 
           git commit -m "docs(blog): Auto-sync lessons to blog"
-          git push origin main
 
-          echo "Blog synced with latest lessons"
+          # Handle race conditions: pull with rebase, retry on conflict
+          for i in 1 2 3; do
+            echo "Push attempt $i..."
+            git pull --rebase origin main || true
+            if git push origin main; then
+              echo "Blog synced with latest lessons"
+              exit 0
+            fi
+            echo "Push failed, retrying in 5s..."
+            sleep 5
+          done
+
+          echo "::warning::Failed to push after 3 attempts - another workflow may have updated"
+          exit 0  # Don't fail the workflow, just warn
