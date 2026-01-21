@@ -1,7 +1,7 @@
 # LL-269: CI Failure Due to Legacy SOFI Position
 
 **Date**: January 20, 2026
-**Severity**: CRITICAL
+**Severity**: RESOLVED (was CRITICAL)
 **Impact**: NO TRADES EXECUTED TODAY
 
 ## What Happened

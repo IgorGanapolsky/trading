@@ -2,7 +2,7 @@
 
 **Date**: 2026-01-19
 **Category**: Data Integrity, System Bug
-**Severity**: CRITICAL
+**Severity**: RESOLVED (was CRITICAL)
 
 ## The Bug
 

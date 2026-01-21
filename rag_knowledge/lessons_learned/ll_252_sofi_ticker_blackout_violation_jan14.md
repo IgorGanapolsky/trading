@@ -2,7 +2,7 @@
 
 **ID**: LL-252
 **Date**: January 14, 2026
-**Severity**: CRITICAL
+**Severity**: RESOLVED (was CRITICAL)
 **Category**: Configuration / Risk Management
 
 ## What Happened

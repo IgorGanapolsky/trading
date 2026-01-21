@@ -1,7 +1,7 @@
 # LL-261: Multiple Scripts Had Hardcoded Position Size Violations
 
 **Date**: 2026-01-19
-**Severity**: CRITICAL
+**Severity**: RESOLVED (was CRITICAL)
 **Category**: Risk Management Configuration Error
 
 ## Problems Found

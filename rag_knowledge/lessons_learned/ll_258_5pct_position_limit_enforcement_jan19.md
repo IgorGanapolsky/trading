@@ -1,7 +1,7 @@
 # LL-258: 5% Position Limit Must Be Enforced BEFORE Trade Execution
 
 **Date**: 2026-01-19
-**Severity**: CRITICAL
+**Severity**: RESOLVED (was CRITICAL)
 **Category**: Risk Management Bug
 
 ## Problem Found
