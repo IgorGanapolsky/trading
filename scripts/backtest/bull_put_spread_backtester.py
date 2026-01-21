@@ -463,9 +463,20 @@ class BullPutSpreadBacktester:
                     f"  {status_emoji} {trade_date}: ${result.theoretical_pnl:.2f} ({result.status})"
                 )
 
-        # Calculate summary metrics
+        # Calculate summary metrics using advanced risk module
         if results:
             pnls = [r.theoretical_pnl for r in results]
+
+            # Import advanced risk metrics (lazy import to avoid circular deps)
+            try:
+                from src.backtest.risk_metrics import calculate_risk_metrics
+
+                risk_metrics = calculate_risk_metrics(pnls, initial_capital=5000.0)
+                advanced_metrics = risk_metrics.to_dict()
+            except ImportError:
+                # Fallback if risk_metrics module not available
+                advanced_metrics = {}
+
             summary = {
                 "total_trades": len(results),
                 "total_pnl": sum(pnls),
@@ -474,7 +485,18 @@ class BullPutSpreadBacktester:
                 "max_win": max(pnls),
                 "max_loss": min(pnls),
                 "std_dev": np.std(pnls),
-                "sharpe_ratio": np.mean(pnls) / np.std(pnls) if np.std(pnls) > 0 else 0,
+                # Use advanced Sharpe (annualized, handles edge cases)
+                "sharpe_ratio": advanced_metrics.get(
+                    "sharpe_ratio",
+                    np.mean(pnls) / np.std(pnls) if np.std(pnls) > 0 else 0,
+                ),
+                # New metrics from advanced module
+                "sortino_ratio": advanced_metrics.get("sortino_ratio", 0),
+                "calmar_ratio": advanced_metrics.get("calmar_ratio", 0),
+                "max_drawdown": advanced_metrics.get("max_drawdown", 0),
+                "var_95": advanced_metrics.get("var_95", 0),
+                "cvar_95": advanced_metrics.get("cvar_95", 0),
+                "profit_factor": advanced_metrics.get("profit_factor", 0),
                 "config": self.config.to_dict(),
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -625,16 +647,27 @@ def main():
     print(f"📁 Lessons saved to: {lessons_path}")
 
     # Print summary
-    print("\n" + "=" * 50)
+    print("\n" + "=" * 60)
     print("📊 BACKTEST SUMMARY")
-    print("=" * 50)
+    print("=" * 60)
     print(f"Total Trades: {summary.get('total_trades', 0)}")
     print(f"Total P&L: ${summary.get('total_pnl', 0):.2f}")
     print(f"Win Rate: {summary.get('win_rate', 0) * 100:.1f}%")
     print(f"Average Trade: ${summary.get('avg_trade', 0):.2f}")
-    print(f"Sharpe Ratio: {summary.get('sharpe_ratio', 0):.2f}")
+    print("-" * 60)
+    print("RISK-ADJUSTED METRICS (Annualized)")
+    print(f"  Sharpe Ratio:  {summary.get('sharpe_ratio', 0):.3f}")
+    print(f"  Sortino Ratio: {summary.get('sortino_ratio', 0):.3f}")
+    print(f"  Calmar Ratio:  {summary.get('calmar_ratio', 0):.3f}")
+    print("-" * 60)
+    print("RISK METRICS")
+    print(f"  Max Drawdown:  {summary.get('max_drawdown', 0):.2%}")
+    print(f"  VaR (95%):     ${summary.get('var_95', 0):.2f}")
+    print(f"  CVaR (95%):    ${summary.get('cvar_95', 0):.2f}")
+    print(f"  Profit Factor: {summary.get('profit_factor', 0):.2f}")
+    print("-" * 60)
     print(f"Lessons Generated: {len(lessons)}")
-    print("=" * 50)
+    print("=" * 60)
 
     return 0 if summary.get("total_pnl", 0) >= 0 else 1
 
