@@ -82,6 +82,89 @@ flowchart LR
 """
 
 
+def get_backtest_metrics() -> dict:
+    """Load latest backtest metrics from summary file."""
+    backtest_file = Path(__file__).parent.parent / "data" / "backtests" / "latest_summary.json"
+    if backtest_file.exists():
+        try:
+            with open(backtest_file) as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Warning: Could not load backtest metrics: {e}")
+    return {}
+
+
+def generate_sharpe_backtest_section() -> str:
+    """Generate Sharpe ratio and backtesting strategy section for blog post."""
+    metrics = get_backtest_metrics()
+
+    sharpe = metrics.get("sharpe_ratio", "N/A")
+    win_rate = metrics.get("win_rate", 0)
+    profit_factor = metrics.get("profit_factor", "N/A")
+    total_trades = metrics.get("total_trades", 0)
+    avg_win = metrics.get("avg_win", 0)
+    avg_loss = metrics.get("avg_loss", 0)
+    std_dev = metrics.get("std_dev", 0)
+
+    # Format win rate as percentage
+    win_rate_pct = f"{win_rate * 100:.1f}%" if isinstance(win_rate, (int, float)) else "N/A"
+
+    return f"""
+## Sharpe Ratio & Backtesting Strategy
+
+### What is Sharpe Ratio?
+
+The **Sharpe Ratio** measures risk-adjusted returns. It tells us how much excess return we get per unit of risk (volatility). A higher Sharpe means better risk-adjusted performance.
+
+**Formula**: `Sharpe = (Mean Return) / (Std Dev of Returns) × √252`
+
+The √252 annualizes daily returns (252 trading days/year).
+
+### Our Current Metrics
+
+| Metric | Value | Interpretation |
+|--------|-------|----------------|
+| **Sharpe Ratio** | **{sharpe}** | {"Excellent (>2)" if isinstance(sharpe, (int, float)) and sharpe > 2 else "Good (1-2)" if isinstance(sharpe, (int, float)) and sharpe > 1 else "Needs improvement (<1)" if isinstance(sharpe, (int, float)) else "N/A"} |
+| **Win Rate** | {win_rate_pct} | Target: 80%+ for credit spreads |
+| **Profit Factor** | {profit_factor} | Gross profits / Gross losses |
+| **Avg Win** | ${avg_win:.2f} | Average profitable trade |
+| **Avg Loss** | ${avg_loss:.2f} | Average losing trade |
+| **Std Dev** | ${std_dev:.2f} | Volatility of returns |
+| **Total Trades** | {total_trades} | Backtest sample size |
+
+### Our Backtesting Methodology
+
+We backtest our **SPY bull put spread strategy** using:
+
+1. **Monte Carlo Simulation**: Random variance in premium calculations to simulate real market conditions
+2. **IV-Based Pricing**: Implied volatility estimated from daily price ranges
+3. **Probabilistic Outcomes**:
+   - ~85% win rate for 15-delta puts (historically validated)
+   - Max loss scenarios (~5% of trades)
+   - Partial losses (~10% of trades)
+   - Profit targets (~45% of trades)
+   - Full credit at expiry (~35% of trades)
+
+4. **Risk Parameters**:
+   - Short put delta: 15-20 (86% probability of profit)
+   - Spread width: $3 (defined max risk)
+   - Profit target: 50% of credit received
+   - Stop loss: 200% of credit
+
+### Why Sharpe Matters for Options Trading
+
+For **credit spread strategies**, Sharpe ratio helps us:
+- Compare risk-adjusted returns vs buy-and-hold
+- Identify if our edge is statistically significant
+- Optimize position sizing using Kelly Criterion
+- Validate that losses are within acceptable bounds
+
+**Phil Town Rule #1 Alignment**: A positive Sharpe with high win rate confirms we're not losing money while generating consistent income.
+
+*Backtest data updates daily via GitHub Actions CI*
+"""
+
+
 # Paths
 DATA_DIR = Path(__file__).parent.parent / "data"
 DOCS_DIR = Path(__file__).parent.parent / "docs"
@@ -272,6 +355,8 @@ Our current strategy focuses on:
 - **Stop Loss**: Volatility-adjusted per position
 - **Circuit Breakers**: Active (no triggers today)
 
+---
+{generate_sharpe_backtest_section()}
 ---
 {generate_tech_stack_section()}
 ---
