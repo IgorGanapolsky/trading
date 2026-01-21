@@ -1,7 +1,7 @@
 {
-  "last_updated": "2026-01-21T20:54:52.827410Z",
+  "last_updated": "2026-01-21T21:09:43.156094Z",
   "portfolio": {
-    "equity": "4639.41",
+    "equity": "4659.17",
     "cash": "1694.16"
   },
   "paper_account": {
@@ -10,8 +10,8 @@
       {
         "symbol": "SPY",
         "qty": "3.753569343",
-        "market_value": "2572.245999",
-        "unrealized_pl": "5.126003"
+        "market_value": "2574.010177",
+        "unrealized_pl": "6.890181"
       },
       {
         "symbol": "SPY260220P00565000",
@@ -28,14 +28,14 @@
       {
         "symbol": "SPY260220P00653000",
         "qty": "-6",
-        "market_value": "-2034",
-        "unrealized_pl": "288"
+        "market_value": "-2022",
+        "unrealized_pl": "300"
       },
       {
         "symbol": "SPY260220P00658000",
         "qty": "6",
-        "market_value": "2352",
-        "unrealized_pl": "-504"
+        "market_value": "2358",
+        "unrealized_pl": "-498"
       }
     ]
   },
@@ -46,7 +46,7 @@
       "side": "OrderSide.BUY",
       "qty": "0.145854119",
       "price": "685.548",
-      "filled_at": "2026-01-21 20:42:07.187128+00:00"
+      "filled_at": "2026-01-21 20:42:07.187129+00:00"
     },
     {
       "id": "abe9bfde-a873-4c60-876a-f0238d11618a",
@@ -721,15 +721,5 @@
       "filled_at": "2026-01-12 14:30:54.357134+00:00"
     }
   ],
-  "trades_loaded": 85,
-  "trades": {
-    "last_trade_date": "2026-01-21",
-    "today_trades": 37,
-    "total_trades_today": 37,
-    "last_trade_symbol": "SYNCED"
-  },
-  "meta": {
-    "last_updated": "2026-01-21T21:06:42.359089+00:00",
-    "trade_sync": "alpaca_api"
-  }
+  "trades_loaded": 85
 }
