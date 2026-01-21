@@ -17,8 +17,10 @@ Target Parameters:
 - Min Premium: >$0.30 for the spread
 
 Usage:
-    python3 scripts/execute_credit_spread.py --symbol SOFI
-    python3 scripts/execute_credit_spread.py --symbol F --width 1
+    python3 scripts/execute_credit_spread.py --symbol SPY
+    python3 scripts/execute_credit_spread.py --symbol SPY --width 5
+
+NOTE: Per CLAUDE.md Jan 19, 2026 - SPY ONLY. Other tickers will be rejected.
 """
 
 import argparse
