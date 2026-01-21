@@ -415,9 +415,15 @@
     "last_trade_symbol": "SYNCED"
   },
   "meta": {
+<<<<<<< Updated upstream
     "last_updated": "2026-01-21T12:02:40.558551+00:00",
     "trade_sync": "alpaca_api",
     "last_sync": "2026-01-21T12:00:28.172433",
+=======
+    "last_updated": "2026-01-21T12:10:29.575208",
+    "trade_sync": "alpaca_api",
+    "last_sync": "2026-01-21T12:10:29.575213",
+>>>>>>> Stashed changes
     "sync_mode": "skipped_no_keys"
   }
 }
