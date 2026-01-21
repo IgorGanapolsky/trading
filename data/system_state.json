@@ -415,9 +415,9 @@
     "last_trade_symbol": "SYNCED"
   },
   "meta": {
-    "last_updated": "2026-01-21T12:04:07.470809",
+    "last_updated": "2026-01-21T13:19:49.644816",
     "trade_sync": "alpaca_api",
-    "last_sync": "2026-01-21T12:04:07.470819",
+    "last_sync": "2026-01-21T13:19:49.644823",
     "sync_mode": "skipped_no_keys"
   }
 }
