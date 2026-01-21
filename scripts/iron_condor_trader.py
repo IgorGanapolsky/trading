@@ -86,7 +86,7 @@ class IronCondorStrategy:
             "wing_width": 5,  # $5 wide spreads per updated CLAUDE.md
             "take_profit_pct": 0.50,  # Close at 50% profit
             "stop_loss_pct": 2.0,  # Close at 200% loss
-            "exit_dte": 21,  # Exit at 21 DTE to avoid gamma risk
+            "exit_dte": 7,  # Exit at 7 DTE per LL-268 research (80%+ win rate)
             "max_positions": 1,  # Per CLAUDE.md: "1 iron condor at a time"
             "position_size_pct": 0.05,  # 5% of portfolio per position - CLAUDE.md MANDATE
         }
@@ -200,14 +200,48 @@ class IronCondorStrategy:
         """
         Check if conditions are right for entry.
 
-        Simple rules (no complex ML):
-        1. VIX > 15 (enough premium)
-        2. VIX < 35 (not too crazy)
-        3. No major events (earnings, FOMC) in next 7 days
+        Per LL-269 research (Jan 21, 2026):
+        1. VIX 15-25: Ideal - premiums decent, risk manageable
+        2. VIX < 15: AVOID - premiums too thin
+        3. VIX > 25: CAUTION - volatility too high
         """
-        # For now, always allow entry
-        # In production: check VIX, event calendar
-        return True, "Conditions favorable"
+        from src.constants.trading_thresholds import RiskThresholds
+
+        try:
+            from src.options.vix_monitor import VIXMonitor
+
+            vix_monitor = VIXMonitor()
+            current_vix = vix_monitor.get_current_vix()
+
+            logger.info(f"VIX Check: Current VIX = {current_vix:.2f}")
+
+            # Check VIX is in optimal range (15-25 per LL-269)
+            if current_vix < RiskThresholds.VIX_OPTIMAL_MIN:
+                reason = f"VIX {current_vix:.2f} < {RiskThresholds.VIX_OPTIMAL_MIN} (premiums too thin)"
+                logger.warning(f"BLOCKED: {reason}")
+                return False, reason
+
+            if current_vix > RiskThresholds.VIX_HALT_THRESHOLD:
+                reason = f"VIX {current_vix:.2f} > {RiskThresholds.VIX_HALT_THRESHOLD} (volatility too extreme)"
+                logger.warning(f"BLOCKED: {reason}")
+                return False, reason
+
+            if current_vix > RiskThresholds.VIX_OPTIMAL_MAX:
+                # Between 25-30: Allow with caution
+                logger.warning(
+                    f"CAUTION: VIX {current_vix:.2f} > {RiskThresholds.VIX_OPTIMAL_MAX} (elevated volatility)"
+                )
+                logger.warning("   Consider wider strikes or smaller position size")
+                return True, f"VIX {current_vix:.2f} elevated but acceptable"
+
+            # VIX in optimal range (15-25)
+            logger.info(f"VIX {current_vix:.2f} is in optimal range (15-25)")
+            return True, f"VIX {current_vix:.2f} favorable"
+
+        except Exception as e:
+            # If VIX check fails, log warning but allow trade
+            logger.warning(f"VIX check failed: {e} - proceeding with caution")
+            return True, "VIX check failed, proceeding with caution"
 
     def execute(self, ic: IronCondorLegs, live: bool = False) -> dict:
         """
