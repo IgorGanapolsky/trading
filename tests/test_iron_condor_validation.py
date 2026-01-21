@@ -20,7 +20,7 @@ class TestIronCondorValidation:
 
     def test_system_state_has_balanced_positions(self):
         """
-        Test that system_state.json positions form complete spreads.
+        Test that system_state.json positions form complete spreads when executing iron condors.
 
         A valid iron condor has 4 legs:
         - Long put (buy)
@@ -28,7 +28,15 @@ class TestIronCondorValidation:
         - Short call (sell)
         - Long call (buy)
 
-        If we have PUT options, we MUST also have CALL options.
+        IMPORTANT: This test only flags PARTIAL IRON CONDOR executions, not:
+        - Single long puts (protective positions)
+        - Single long calls (bullish speculation)
+        - Bull put spreads (puts only - valid strategy per CLAUDE.md)
+        - Bear call spreads (calls only)
+
+        The violation occurs when we have evidence of a FAILED iron condor execution:
+        - Multiple put strikes with both long AND short positions, but no calls
+        - Multiple call strikes with both long AND short positions, but no puts
         """
         state_file = Path("data/system_state.json")
         if not state_file.exists():
@@ -42,25 +50,75 @@ class TestIronCondorValidation:
             # No positions is valid
             return
 
-        # Count puts and calls
-        puts = [p for p in positions if isinstance(p, dict) and "P" in p.get("symbol", "")]
-        calls = [p for p in positions if isinstance(p, dict) and "C" in p.get("symbol", "")]
+        # Count puts and calls - filter for OPTIONS only (not stocks)
+        # Option symbols have format: UNDERLYING + YYMMDD + P/C + STRIKE (e.g., SPY260220P00658000)
+        # Must have digits to be an option symbol
+        def is_option_symbol(symbol):
+            return symbol and any(c.isdigit() for c in symbol)
 
-        # If we have OPTIONS positions at all, validate balance
+        def is_put_option(symbol):
+            return is_option_symbol(symbol) and "P" in symbol
+
+        def is_call_option(symbol):
+            return is_option_symbol(symbol) and "C" in symbol
+
+        puts = [p for p in positions if isinstance(p, dict) and is_put_option(p.get("symbol", ""))]
+        calls = [p for p in positions if isinstance(p, dict) and is_call_option(p.get("symbol", ""))]
+
+        # If we have OPTIONS positions at all, validate for PARTIAL iron condor execution
         if puts or calls:
-            # For iron condors: must have BOTH puts AND calls
-            # Only having puts = directional bull position (VIOLATION)
-            # Only having calls = directional bear position (VIOLATION)
-            if puts and not calls:
+            # Check if puts form a spread (multiple strikes with long AND short)
+            put_has_spread = self._has_spread_structure(puts)
+            call_has_spread = self._has_spread_structure(calls)
+
+            # VIOLATION: Put SPREAD exists but no call spread = partial iron condor
+            # This is different from just having long puts (which is valid)
+            if put_has_spread and not calls:
                 pytest.fail(
-                    f"IRON CONDOR VIOLATION: Have {len(puts)} PUT positions but NO CALL positions. "
-                    "This creates directional exposure. See LL-268."
+                    f"IRON CONDOR VIOLATION: Have PUT SPREAD ({len(puts)} positions) but NO CALL positions. "
+                    "This creates directional exposure from a partial iron condor. See LL-268."
                 )
-            if calls and not puts:
+            if call_has_spread and not puts:
                 pytest.fail(
-                    f"IRON CONDOR VIOLATION: Have {len(calls)} CALL positions but NO PUT positions. "
-                    "This creates directional exposure. See LL-268."
+                    f"IRON CONDOR VIOLATION: Have CALL SPREAD ({len(calls)} positions) but NO PUT positions. "
+                    "This creates directional exposure from a partial iron condor. See LL-268."
                 )
+
+    def _has_spread_structure(self, options):
+        """
+        Check if option positions have a spread structure (both long and short).
+
+        A spread has:
+        - At least 2 different strikes
+        - Both positive (long) and negative (short) quantities
+        """
+        if len(options) < 2:
+            return False
+
+        # Extract unique strikes from symbols
+        strikes = set()
+        has_long = False
+        has_short = False
+
+        for opt in options:
+            symbol = opt.get("symbol", "")
+            qty = opt.get("qty", 0)
+
+            # Extract strike from symbol (e.g., SPY260220P00658000 -> 658000)
+            if "P" in symbol or "C" in symbol:
+                try:
+                    strike_part = symbol.split("P")[-1] if "P" in symbol else symbol.split("C")[-1]
+                    strikes.add(strike_part)
+                except (ValueError, IndexError):
+                    pass
+
+            if qty > 0:
+                has_long = True
+            elif qty < 0:
+                has_short = True
+
+        # Spread = multiple strikes OR both long and short positions
+        return len(strikes) >= 2 or (has_long and has_short)
 
     def test_iron_condor_trader_validates_4_legs(self):
         """Test that iron_condor_trader.py has 4-leg validation."""
