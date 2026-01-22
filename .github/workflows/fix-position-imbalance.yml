@@ -1,0 +1,149 @@
+name: Fix Position Imbalance - URGENT
+
+# Triggered by push to close excess long puts
+# Created: Jan 22, 2026 - LL-282 Crisis Response
+
+on:
+  push:
+    paths:
+      - 'TRIGGER_IMBALANCE_FIX.md'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-imbalance:
+    name: Close Excess Longs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install alpaca-py
+
+      - name: Fix Position Imbalance
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          python3 << 'EOF'
+          import os
+          from datetime import datetime
+          from alpaca.trading.client import TradingClient
+          from alpaca.trading.requests import MarketOrderRequest
+          from alpaca.trading.enums import OrderSide, TimeInForce
+
+          print("=" * 60)
+          print("FIX POSITION IMBALANCE - LL-282 Crisis Response")
+          print(f"Timestamp: {datetime.now().isoformat()}")
+          print("=" * 60)
+
+          client = TradingClient(
+              os.environ['ALPACA_API_KEY'],
+              os.environ['ALPACA_SECRET_KEY'],
+              paper=True
+          )
+
+          # Check market
+          clock = client.get_clock()
+          print(f"\nMarket: {'OPEN' if clock.is_open else 'CLOSED'}")
+          if not clock.is_open:
+              print(f"Next open: {clock.next_open}")
+              print("⚠️ Market closed - orders will queue for next open")
+
+          # Get positions
+          positions = client.get_all_positions()
+
+          print("\nCurrent Positions:")
+          puts_by_strike = {}
+          for pos in positions:
+              symbol = pos.symbol
+              qty = float(pos.qty)
+              pl = float(pos.unrealized_pl)
+
+              # Filter for SPY puts only
+              if len(symbol) > 10 and symbol.startswith("SPY") and "P" in symbol:
+                  strike = int(symbol[-8:]) / 1000
+                  side = "LONG" if qty > 0 else "SHORT"
+                  puts_by_strike[strike] = {
+                      "symbol": symbol,
+                      "qty": int(qty),
+                      "abs_qty": abs(int(qty)),
+                      "side": side,
+                      "pl": pl
+                  }
+                  print(f"  {symbol}: {qty:+.0f} ({side}) | P/L: ${pl:+.2f}")
+
+          # Find imbalanced positions (qty > 1)
+          imbalances = []
+          for strike, info in puts_by_strike.items():
+              if info["abs_qty"] > 1:
+                  excess = info["abs_qty"] - 1  # Keep only 1
+                  imbalances.append({
+                      "strike": strike,
+                      "symbol": info["symbol"],
+                      "current_qty": info["qty"],
+                      "excess": excess,
+                      "side": info["side"]
+                  })
+
+          if not imbalances:
+              print("\n✅ No quantity imbalances found - positions are balanced")
+              exit(0)
+
+          print(f"\n⚠️ Found {len(imbalances)} imbalanced position(s):")
+          for imb in imbalances:
+              print(f"  ${imb['strike']:.0f}: {imb['current_qty']:+d} ({imb['excess']} excess)")
+
+          # Close excess positions
+          orders_submitted = 0
+          for imb in imbalances:
+              symbol = imb["symbol"]
+              excess = imb["excess"]
+
+              # SELL to close LONG, BUY to close SHORT
+              if imb["side"] == "LONG":
+                  close_side = OrderSide.SELL
+                  action = "SELL TO CLOSE"
+              else:
+                  close_side = OrderSide.BUY
+                  action = "BUY TO CLOSE"
+
+              print(f"\nClosing {excess}x {symbol} ({action})...")
+
+              try:
+                  order = client.submit_order(MarketOrderRequest(
+                      symbol=symbol,
+                      qty=excess,
+                      side=close_side,
+                      time_in_force=TimeInForce.DAY,
+                  ))
+                  print(f"  ✅ Order {order.id}: {order.status}")
+                  orders_submitted += 1
+              except Exception as e:
+                  print(f"  ❌ Failed: {e}")
+
+          print(f"\n{'=' * 60}")
+          print(f"SUMMARY: {orders_submitted} order(s) submitted")
+          print("=" * 60)
+          EOF
+
+      - name: Clean Trigger File
+        run: |
+          if [ -f "TRIGGER_IMBALANCE_FIX.md" ]; then
+            rm TRIGGER_IMBALANCE_FIX.md
+            git config user.name "GitHub Actions"
+            git config user.email "actions@github.com"
+            git add TRIGGER_IMBALANCE_FIX.md
+            git commit -m "chore: Clean up imbalance fix trigger" || echo "No changes"
+            git push || echo "Push failed"
+          fi
