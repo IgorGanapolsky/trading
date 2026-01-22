@@ -53,8 +53,8 @@ jobs:
       - name: Verify trade execution
         id: verify
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
           PAPER_TRADING: "true"
         run: |
           echo "🔍 Verifying trades for ${{ steps.get_date.outputs.date }}..."
