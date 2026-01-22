@@ -2,9 +2,9 @@
 
 CTO: Claude | CEO: Igor Ganapolsky
 
-## Strategy (Updated Jan 22, 2026 - NEW $30K ACCOUNT)
-- **North Star**: $100/day after-tax profit - CEO MANDATE (PERMANENT)
-- **Why revised**: TastyTrade credit spread 11-year backtest showed LOSSES (-7% to -93%). Iron condors from $100K account showed 86% win rate with 1.5:1 reward/risk.
+## Strategy (Updated Jan 22, 2026 - FINANCIAL INDEPENDENCE PATH)
+- **North Star**: $6,000/month after-tax = FINANCIAL INDEPENDENCE
+- **Philosophy**: Grow $30K → $600K through disciplined compounding (Phil Town Rule #1)
 - **Current capital**: $30,000 | Fresh start - clean slate Jan 22, 2026
 - **Primary strategy**: IRON CONDORS on SPY ONLY - defined risk on BOTH sides
 - **Iron condor setup**:
@@ -24,14 +24,49 @@ CTO: Claude | CEO: Igor Ganapolsky
 - **Why iron condors beat credit spreads**: Collect premium from BOTH sides, better win rate, profit in range-bound markets
 - **PDT NOTE**: $30K > $25K = NO PDT RESTRICTIONS (can day trade freely)
 
-## Recovery Path (ACCELERATED - Jan 22, 2026)
-| Phase | Capital | Monthly Income | Daily Equivalent | Timeline |
-|-------|---------|----------------|------------------|----------|
-| Now | $30,000 | $400-860 | **$13-29/day** | Immediate |
-| +6mo | $35,000 | $470-1,000 | $16-33/day | Conservative growth |
-| +12mo | $42,000 | $560-1,200 | $19-40/day | Compounding |
-| +18mo | $50,000 | $670-1,430 | $22-48/day | Near goal |
-| Goal | $75,000+ | $2,000+ | **$100/day** | ~18-24 months |
+## Financial Independence Framework (Jan 22, 2026)
+
+### The Four Pillars
+1. **Capital Preservation** (Phil Town Rule #1)
+   - NEVER lose more than 5% on a single trade
+   - Stop-loss at 200% of credit - NO EXCEPTIONS
+   - Exit at 7 DTE to avoid gamma risk
+   - No naked options, no undefined risk trades
+
+2. **Compounding** (The Wealth Engine)
+   - Reinvest 100% of profits during growth phase
+   - Target: 8% monthly return (conservative iron condor avg)
+   - $30K → $76K (Year 1) → $192K (Year 2) → $600K (Year 3)
+   - DO NOT WITHDRAW until $600K target reached
+
+3. **Tax Optimization** (Keep What You Earn)
+   - Iron condors held >60 days = 60% long-term / 40% short-term (Section 1256)
+   - Track cost basis meticulously for wash sale compliance
+   - Consider tax-loss harvesting on losing trades
+   - Estimated tax rate: ~25-30% blended (vs 37% short-term max)
+   - Set aside 30% of profits quarterly for estimated taxes
+
+4. **Reinvestment Strategy** (Scale Intelligently)
+   - Phase 1 ($30K-$50K): 1 iron condor max, prove the system
+   - Phase 2 ($50K-$100K): Scale to 2 iron condors if 80%+ win rate
+   - Phase 3 ($100K-$300K): 3-4 iron condors, diversify expirations
+   - Phase 4 ($300K+): Consider adding covered calls on SPY shares
+
+### Path to $6K/Month (Financial Independence)
+| Phase | Capital | Monthly Income | After Tax | Timeline |
+|-------|---------|----------------|-----------|----------|
+| Now | $30,000 | ~$500 | ~$350 | Jan 2026 |
+| +12mo | $76,000 | ~$1,200 | ~$840 | Jan 2027 |
+| +24mo | $192,000 | ~$3,000 | ~$2,100 | Jan 2028 |
+| +30mo | $340,000 | ~$5,400 | ~$3,800 | Jul 2028 |
+| +36mo | $600,000 | ~$9,000 | **$6,300** | Jan 2029 🎯 |
+
+### Why This Works (Phil Town Math)
+- Conservative 8% monthly = 150% annual (iron condor territory)
+- 86% win rate provides margin of safety
+- Compounding turns $30K → $600K in 3 years
+- At $600K with 15% annual (Phil Town conservative): $90K/year = $7.5K/month
+- **FINANCIAL INDEPENDENCE = work optional**
 
 **Note**: $30K starting capital means NO PDT RESTRICTIONS and faster path to goal!
 
