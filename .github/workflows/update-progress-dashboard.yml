@@ -2,9 +2,11 @@ name: Update Progress Dashboard
 
 on:
   schedule:
-    # Run every hour during market hours (9 AM - 5 PM ET)
+    # Run every hour during market hours (9 AM - 5 PM ET, M-F)
     # EST: UTC-5, so 14:00-22:00 UTC
     - cron: '0 14-22 * * 1-5'
+    # Also run daily at 6 AM ET (11:00 UTC) to keep dashboard fresh
+    - cron: '0 11 * * *'
   workflow_dispatch:
   push:
     paths:
@@ -62,6 +64,12 @@ jobs:
           # Show preview
           head -50 wiki/Progress-Dashboard.md
 
+      - name: Update GitHub Pages index
+        run: |
+          echo "📊 Updating docs/index.md..."
+          python3 scripts/update_docs_index.py
+          echo "✅ GitHub Pages index updated"
+
       - name: Update GitHub Wiki
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -104,7 +112,7 @@ jobs:
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          git add data/system_state.json wiki/ 2>/dev/null || true
+          git add data/system_state.json wiki/ docs/index.md 2>/dev/null || true
           if ! git diff --staged --quiet; then
             git commit -m "chore: Sync dashboard data [auto]"
             git push || echo "Push to main skipped (no changes or protected)"
