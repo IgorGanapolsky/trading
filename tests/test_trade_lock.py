@@ -47,22 +47,22 @@ class TestTradeLock:
         with patch("src.safety.trade_lock.LOCK_FILE", lock_file):
             from src.safety.trade_lock import TradeLockTimeout, acquire_trade_lock
 
-            def worker(worker_id):
+            def worker(worker_id, hold_time=0.5, timeout=1):
                 try:
-                    with acquire_trade_lock(timeout=1):
+                    with acquire_trade_lock(timeout=timeout):
                         results.append(f"worker_{worker_id}_acquired")
-                        time.sleep(0.5)
+                        time.sleep(hold_time)
                         results.append(f"worker_{worker_id}_released")
                 except TradeLockTimeout:
                     results.append(f"worker_{worker_id}_timeout")
 
-            # Start first worker
-            t1 = threading.Thread(target=worker, args=(1,))
+            # Start first worker - holds lock for 1.5s
+            t1 = threading.Thread(target=worker, args=(1,), kwargs={"hold_time": 1.5, "timeout": 5})
             t1.start()
             time.sleep(0.1)  # Let t1 acquire lock
 
-            # Start second worker - should timeout
-            t2 = threading.Thread(target=worker, args=(2,))
+            # Start second worker - 0.5s timeout (< 1.4s remaining hold time)
+            t2 = threading.Thread(target=worker, args=(2,), kwargs={"hold_time": 0.5, "timeout": 0.5})
             t2.start()
 
             t1.join()
