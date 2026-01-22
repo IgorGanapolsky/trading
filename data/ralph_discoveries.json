@@ -37,8 +37,12 @@
         "Centralized validation prevents drift across scripts",
         "Autonomous agents can catch security gaps humans miss"
       ],
-      "blog_published": false,
-      "blog_urls": {}
+      "blog_published": true,
+      "blog_urls": {
+        "github_pages": "/home/user/trading/docs/_posts/2026-01-22-ralph-discovery-critical-security-fix-trading-scripts-missing-tick.md",
+        "devto": null
+      },
+      "blog_published_at": "2026-01-22T00:27:47.868024"
     }
   ],
   "categories": {
