@@ -1328,7 +1328,9 @@ def format_trades_response(trades: list, query: str) -> str:
             # Matched trades have P/L data
             outcome = meta.get("outcome", "unknown")
             pnl = meta.get("pnl", 0)
-            outcome_emoji = "✅" if outcome == "profitable" else ("❌" if outcome == "loss" else "➖")
+            outcome_emoji = (
+                "✅" if outcome == "profitable" else ("❌" if outcome == "loss" else "➖")
+            )
             response_parts.append(
                 f"\n{i}. {outcome_emoji} **{symbol}** {side} | P/L: ${pnl:.2f} | {timestamp}\n"
                 f"   {doc[:150]}\n"
