@@ -84,10 +84,42 @@ print(f"  Qty: {qty} LONG")
 print(f"  Current Price: ${current_price:.2f}")
 print(f"  P/L: ${float(target_pos.unrealized_pl):+.2f}")
 
-# Try close_position for entire position
-print(f"\nAttempt 1: close_position() for all {qty} contracts...")
+# Step 2.5: Calculate non-daytrade quantity (PDT bypass)
+from datetime import datetime, timezone
+today = datetime.now(timezone.utc).date()
+
+print("\nCalculating PDT-safe close quantity...")
 try:
-    result = client.close_position(target)
+    all_orders = client.get_orders(filter=GetOrdersRequest(status=QueryOrderStatus.ALL, limit=100))
+    buys_today = 0
+    buys_before = 0
+    for order in all_orders:
+        if order.symbol == target and order.side.name == 'BUY' and order.filled_at:
+            filled_qty = int(float(order.filled_qty or 0))
+            if order.filled_at.date() == today:
+                buys_today += filled_qty
+            else:
+                buys_before += filled_qty
+    print(f"  Bought today (would be day trade): {buys_today}")
+    print(f"  Bought before today (PDT safe): {buys_before}")
+
+    # Only close contracts bought before today
+    safe_qty = min(buys_before, qty)  # Can't close more than we have
+    if safe_qty > 0 and safe_qty < qty:
+        print(f"\n🔧 ADJUSTED: Will close {safe_qty} (not {qty}) to avoid PDT")
+        qty = safe_qty
+except Exception as e:
+    print(f"  ⚠️ Could not calculate PDT-safe qty: {e}")
+    print("  Proceeding with full close attempt...")
+
+# Try close_position for entire position
+print(f"\nAttempt 1: close_position() for {qty} contracts...")
+try:
+    if qty < int(float(target_pos.qty)):
+        # Partial close
+        result = client.close_position(target, qty=str(qty))
+    else:
+        result = client.close_position(target)
     print("  ✅ SUCCESS!")
     if hasattr(result, "id"):
         print(f"  Order ID: {result.id}")
