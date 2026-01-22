@@ -12,9 +12,8 @@ Usage:
 """
 
 import json
-import os
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 
@@ -78,9 +77,7 @@ def generate_dashboard():
                 "Review security scan results and fix high-severity issues"
             )
         if not scan_data.get("dead_code_clean"):
-            dashboard["recommendations"].append(
-                "Remove dead code identified by vulture"
-            )
+            dashboard["recommendations"].append("Remove dead code identified by vulture")
         if not scan_data.get("quality_good"):
             dashboard["recommendations"].append(
                 "Refactor complex functions with high cyclomatic complexity"
@@ -106,9 +103,7 @@ def print_dashboard(dashboard: dict, as_json: bool = False):
     # Health score with emoji
     score = dashboard["health_score"]
     status = dashboard["status"]
-    emoji = {"healthy": "✅", "warning": "⚠️", "degraded": "🟡", "critical": "🔴"}.get(
-        status, "❓"
-    )
+    emoji = {"healthy": "✅", "warning": "⚠️", "degraded": "🟡", "critical": "🔴"}.get(status, "❓")
 
     print(f"Health Score: {score}/100 {emoji} ({status.upper()})")
     print(f"Generated: {dashboard['generated_at']}")
@@ -119,12 +114,8 @@ def print_dashboard(dashboard: dict, as_json: bool = False):
     if scan:
         print("📊 Latest Scan Results:")
         print(f"  - Security: {'✅ Clean' if scan.get('security_clean') else '❌ Issues'}")
-        print(
-            f"  - Dead Code: {'✅ Clean' if scan.get('dead_code_clean') else '⚠️ Found'}"
-        )
-        print(
-            f"  - Code Quality: {'✅ Good' if scan.get('quality_good') else '⚠️ Issues'}"
-        )
+        print(f"  - Dead Code: {'✅ Clean' if scan.get('dead_code_clean') else '⚠️ Found'}")
+        print(f"  - Code Quality: {'✅ Good' if scan.get('quality_good') else '⚠️ Issues'}")
         print(f"  - Scan Time: {scan.get('timestamp', 'Unknown')}")
     else:
         print("📊 No scan data available yet")

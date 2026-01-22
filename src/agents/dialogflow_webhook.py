@@ -1446,9 +1446,13 @@ async def webhook(
 
                 if trades_today > 0:
                     if daily_change > 0:
-                        pl_response = f"**Today's P/L:** +${daily_change:,.2f} from {trades_today} trade(s)"
+                        pl_response = (
+                            f"**Today's P/L:** +${daily_change:,.2f} from {trades_today} trade(s)"
+                        )
                     elif daily_change < 0:
-                        pl_response = f"**Today's P/L:** ${daily_change:,.2f} from {trades_today} trade(s)"
+                        pl_response = (
+                            f"**Today's P/L:** ${daily_change:,.2f} from {trades_today} trade(s)"
+                        )
                     else:
                         pl_response = f"**Today's P/L:** Flat from {trades_today} trade(s)"
                 else:
