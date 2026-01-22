@@ -2,42 +2,10 @@
 
 CTO: Claude | CEO: Igor Ganapolsky
 
-## Strategy (Updated Jan 22, 2026 - NEW $30K ACCOUNT)
-- **North Star**: $6,000/month after-tax = FINANCIAL INDEPENDENCE - CEO MANDATE
-- **Why revised**: TastyTrade credit spread 11-year backtest showed LOSSES (-7% to -93%). Iron condors from $100K account showed 86% win rate with 1.5:1 reward/risk.
+## Strategy (Updated Jan 22, 2026 - FINANCIAL INDEPENDENCE PATH)
+- **North Star**: $6,000/month after-tax = FINANCIAL INDEPENDENCE
+- **Philosophy**: Grow $30K → $600K through disciplined compounding (Phil Town Rule #1)
 - **Current capital**: $30,000 | Fresh start - clean slate Jan 22, 2026
-
-## Four Pillars of Wealth Building (Phil Town Aligned)
-### 1. Capital Preservation (Rule #1: Don't Lose Money)
-- NEVER risk more than 5% per trade ($1,500 max)
-- Iron condors = defined risk on BOTH sides
-- Stop-loss at 200% of credit - NO EXCEPTIONS
-- Exit at 7 DTE to avoid gamma risk
-
-### 2. Compounding (Let Money Work for You)
-- Reinvest ALL profits back into trading capital
-- Target 2-3% monthly returns (24-36% annually)
-- Small consistent gains > big risky bets
-- $30K → $350K in ~4 years at 25% annual compound
-
-### 3. Reinvestment Strategy
-- 100% of trading profits stay in account until $350K reached
-- No withdrawals during accumulation phase
-- Scale position size as account grows (maintain 5% rule)
-- Add external capital when possible to accelerate
-
-### 4. Tax Optimization (CRITICAL - LL-295)
-- **SPX/XSP vs SPY**: SPX options get 60/40 tax treatment (Section 1256)
-  - SPY: 100% short-term gains (32% tax bracket = 32%)
-  - SPX: 60% long-term + 40% short-term = ~22.4% effective rate
-  - **Saves ~30% on tax bill** = $15-20K extra over 7 years
-- **XSP (Mini-SPX)**: Same tax benefits as SPX at SPY-like prices
-  - ⚠️ **ALPACA LIMITATION**: Alpaca does NOT support index options (SPX/XSP)
-  - Current strategy uses SPY (equity options) until broker switch
-  - Future: Consider TastyTrade or IBKR for Section 1256 benefits
-- Track ALL trades for Schedule D / Form 6781 reporting
-- Consider tax-loss harvesting on losing positions
-- Target: $8,600/month pre-tax = $6,000/month after-tax
 - **Primary strategy**: IRON CONDORS on SPY ONLY - defined risk on BOTH sides
 - **Iron condor setup**:
   - Sell 15-20 delta put spread (bull put)
@@ -56,18 +24,51 @@ CTO: Claude | CEO: Igor Ganapolsky
 - **Why iron condors beat credit spreads**: Collect premium from BOTH sides, better win rate, profit in range-bound markets
 - **PDT NOTE**: $30K > $25K = NO PDT RESTRICTIONS (can day trade freely)
 
-## Path to Financial Independence ($6K/month After Tax)
-| Year | Capital | Monthly Pre-Tax | After-Tax | Status |
-|------|---------|-----------------|-----------|--------|
-| Now | $30,000 | $600-900 | ~$420-630 | **Building foundation** |
-| Year 1 | $50,000 | $1,000-1,500 | ~$700-1,050 | Compounding |
-| Year 2 | $100,000 | $2,000-3,000 | ~$1,400-2,100 | Growing |
-| Year 3 | $200,000 | $4,000-6,000 | ~$2,800-4,200 | Scaling |
-| Year 4 | $350,000+ | $8,600+ | **$6,000+** | **FINANCIAL INDEPENDENCE** |
+## Financial Independence Framework (Jan 22, 2026)
 
-**Math**: $350K × 2.5% monthly = $8,750/month pre-tax = ~$6,125/month after 30% tax
+### The Four Pillars
+1. **Capital Preservation** (Phil Town Rule #1)
+   - NEVER lose more than 5% on a single trade
+   - Stop-loss at 200% of credit - NO EXCEPTIONS
+   - Exit at 7 DTE to avoid gamma risk
+   - No naked options, no undefined risk trades
 
-**Note**: $30K > $25K = NO PDT RESTRICTIONS. Patience + discipline = freedom.
+2. **Compounding** (The Wealth Engine)
+   - Reinvest 100% of profits during growth phase
+   - Target: 8% monthly return (conservative iron condor avg)
+   - $30K → $76K (Year 1) → $192K (Year 2) → $600K (Year 3)
+   - DO NOT WITHDRAW until $600K target reached
+
+3. **Tax Optimization** (Keep What You Earn)
+   - Iron condors held >60 days = 60% long-term / 40% short-term (Section 1256)
+   - Track cost basis meticulously for wash sale compliance
+   - Consider tax-loss harvesting on losing trades
+   - Estimated tax rate: ~25-30% blended (vs 37% short-term max)
+   - Set aside 30% of profits quarterly for estimated taxes
+
+4. **Reinvestment Strategy** (Scale Intelligently)
+   - Phase 1 ($30K-$50K): 1 iron condor max, prove the system
+   - Phase 2 ($50K-$100K): Scale to 2 iron condors if 80%+ win rate
+   - Phase 3 ($100K-$300K): 3-4 iron condors, diversify expirations
+   - Phase 4 ($300K+): Consider adding covered calls on SPY shares
+
+### Path to $6K/Month (Financial Independence)
+| Phase | Capital | Monthly Income | After Tax | Timeline |
+|-------|---------|----------------|-----------|----------|
+| Now | $30,000 | ~$500 | ~$350 | Jan 2026 |
+| +12mo | $76,000 | ~$1,200 | ~$840 | Jan 2027 |
+| +24mo | $192,000 | ~$3,000 | ~$2,100 | Jan 2028 |
+| +30mo | $340,000 | ~$5,400 | ~$3,800 | Jul 2028 |
+| +36mo | $600,000 | ~$9,000 | **$6,300** | Jan 2029 🎯 |
+
+### Why This Works (Phil Town Math)
+- Conservative 8% monthly = 150% annual (iron condor territory)
+- 86% win rate provides margin of safety
+- Compounding turns $30K → $600K in 3 years
+- At $600K with 15% annual (Phil Town conservative): $90K/year = $7.5K/month
+- **FINANCIAL INDEPENDENCE = work optional**
+
+**Note**: $30K starting capital means NO PDT RESTRICTIONS and faster path to goal!
 
 ## MANDATORY Pre-Trade Checklist
 1. [ ] Is ticker SPY? (SPY ONLY - best liquidity, tightest spreads)
