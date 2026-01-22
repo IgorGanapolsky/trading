@@ -106,7 +106,7 @@ def main():
 
     print(f"\n{'=' * 60}")
     print(f"DONE - Closed {excess_qty} excess long puts")
-    print(f"Run sync-system-state.yml to update local state after fills")
+    print("Run sync-system-state.yml to update local state after fills")
     print(f"{'=' * 60}")
 
 
