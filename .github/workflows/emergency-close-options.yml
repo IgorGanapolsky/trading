@@ -135,7 +135,7 @@ jobs:
                   symbol=option_symbol,
                   qty=qty,
                   side=close_side,  # SELL for long, BUY for short
-                  time_in_force=TimeInForce.DAY
+                  time_in_force=TimeInForce.GTC  # GTC required for options
               )
 
               order = client.submit_order(order_request)
