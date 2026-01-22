@@ -319,6 +319,29 @@ def validate_trade_mandatory(
     checks_performed.append(f"position_count: PASS ({current_position_count}/{MAX_POSITIONS})")
 
     # =========================================================================
+    # CHECK 2.6: Position STACKING prevention (Jan 22, 2026 - LL-275)
+    # Bug fix: Gate was allowing unlimited contracts in same symbol
+    # Root cause of 8 long 658 puts disaster (-$1,472 loss)
+    # If buying, block if we already hold this exact symbol
+    # =========================================================================
+    if side == "BUY" and current_positions:
+        existing_symbols = [p.get("symbol", "") for p in current_positions]
+        if symbol in existing_symbols:
+            # Find existing quantity
+            existing_qty = 0
+            for p in current_positions:
+                if p.get("symbol") == symbol:
+                    existing_qty = abs(int(float(p.get("qty", 0))))
+                    break
+            return GateResult(
+                approved=False,
+                reason=f"POSITION STACKING BLOCKED: Already hold {existing_qty} contracts of {symbol}. Cannot buy more. (LL-275: Fix for 658 put disaster)",
+                checks_performed=checks_performed + ["position_stacking: BLOCKED"],
+            )
+
+    checks_performed.append("position_stacking: PASS (no duplicate)")
+
+    # =========================================================================
     # CHECK 3: Position size limit
     # =========================================================================
     position_ok, position_msg = _check_position_size(symbol, amount, equity)
