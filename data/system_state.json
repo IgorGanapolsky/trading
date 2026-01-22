@@ -816,9 +816,9 @@
   "trades_loaded": 92,
   "trades": {
     "last_trade_date": "2026-01-22",
-    "today_trades": 0,
-    "total_trades_today": 0,
-    "last_trade_symbol": "SPY"
+    "today_trades": 7,
+    "total_trades_today": 7,
+    "last_trade_symbol": "SYNCED"
   },
   "risk": {
     "status": "WARNING - NEGATIVE P/L",
@@ -832,7 +832,7 @@
     "positions_count": 5
   },
   "meta": {
-    "last_updated": "2026-01-22T16:45:58.914219+00:00",
+    "last_updated": "2026-01-22T17:00:32.680349+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5
   }
