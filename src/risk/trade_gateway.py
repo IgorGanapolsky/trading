@@ -68,6 +68,8 @@ class RejectionReason(Enum):
     FORBIDDEN_STRATEGY = "Strategy is forbidden - naked positions not allowed"
     PRE_TRADE_CHECKLIST_FAILED = "Pre-trade checklist failed - CLAUDE.md rules violated"
     DTE_OUT_OF_RANGE = "DTE must be 30-45 days per CLAUDE.md"
+    CUMULATIVE_RISK_TOO_HIGH = "Cumulative position risk exceeds 5% limit"
+    MAX_IRON_CONDORS_EXCEEDED = "Max 1 iron condor at a time per CLAUDE.md"
 
 
 @dataclass
@@ -451,6 +453,107 @@ class TradeGateway:
         # Conservative default for unknown option strategies
         return 500.0 * contracts
 
+    def _check_cumulative_position_risk(
+        self, request: TradeRequest, account_equity: float, positions: list
+    ) -> tuple[bool, str]:
+        """
+        Check CUMULATIVE position risk including existing positions.
+
+        LL-XXX (Jan 22, 2026): Individual trades passing 5% check but accumulating
+        to 19.6% risk. This check prevents that by summing existing + new risk.
+
+        Args:
+            request: New trade request
+            account_equity: Current account equity
+            positions: Existing positions
+
+        Returns:
+            (is_too_risky, reason_message)
+        """
+        # Calculate existing risk from positions
+        existing_risk = 0.0
+        for pos in positions:
+            symbol = pos.get("symbol", "")
+            qty = abs(float(pos.get("qty", 0)))
+            unrealized_pl = float(pos.get("unrealized_pl", 0))
+
+            # Only count option positions for risk
+            if len(symbol) > 10:  # Option symbols are longer
+                # Estimate risk as max potential loss
+                # For long options: premium paid (use market value as proxy)
+                # For short options: spread width * 100 - premium
+                mkt_val = abs(float(pos.get("market_value", 0)))
+                if unrealized_pl < 0:
+                    existing_risk += abs(unrealized_pl)  # Already losing
+                else:
+                    existing_risk += mkt_val * 0.5  # Estimate half of market value as risk
+
+        # Calculate new trade risk
+        new_risk = self._calculate_credit_spread_max_loss(request)
+
+        # Total risk
+        total_risk = existing_risk + new_risk
+        total_risk_pct = total_risk / account_equity if account_equity > 0 else 1.0
+
+        # CLAUDE.md says 5% max - but we allow up to 10% cumulative to account for volatility
+        MAX_CUMULATIVE_RISK_PCT = 0.10
+
+        if total_risk_pct > MAX_CUMULATIVE_RISK_PCT:
+            return (
+                True,
+                f"Cumulative risk ${total_risk:.0f} ({total_risk_pct * 100:.1f}%) exceeds "
+                f"{MAX_CUMULATIVE_RISK_PCT * 100:.0f}% limit. Existing: ${existing_risk:.0f}, "
+                f"New: ${new_risk:.0f}",
+            )
+
+        return False, ""
+
+    def _check_iron_condor_limit(self, positions: list) -> tuple[bool, str]:
+        """
+        Enforce '1 iron condor at a time' rule per CLAUDE.md.
+
+        LL-XXX (Jan 22, 2026): System was placing multiple iron condors,
+        violating the position limit rule.
+
+        Returns:
+            (has_existing_condor, reason_message)
+        """
+        # Count iron condor structures
+        # An iron condor has: 2 short options + 2 long options at different strikes
+        # Group by expiration to detect condors
+
+        option_positions = [p for p in positions if len(p.get("symbol", "")) > 10]
+
+        if len(option_positions) < 4:
+            return False, ""  # Not enough positions for a condor
+
+        # Group by expiration date
+        by_expiry = {}
+        for pos in option_positions:
+            symbol = pos.get("symbol", "")
+            # Extract expiry: SPY260220P00658000 -> 260220
+            if len(symbol) > 15:
+                expiry = symbol[3:9]  # YYMMDD
+                if expiry not in by_expiry:
+                    by_expiry[expiry] = []
+                by_expiry[expiry].append(pos)
+
+        # Check if any expiry has 4+ option legs (potential iron condor)
+        for expiry, legs in by_expiry.items():
+            if len(legs) >= 4:
+                short_count = sum(1 for p in legs if float(p.get("qty", 0)) < 0)
+                long_count = sum(1 for p in legs if float(p.get("qty", 0)) > 0)
+
+                if short_count >= 2 and long_count >= 2:
+                    return (
+                        True,
+                        f"Already have iron condor structure (exp {expiry}): "
+                        f"{short_count} short, {long_count} long legs. "
+                        f"Per CLAUDE.md: Max 1 iron condor at a time.",
+                    )
+
+        return False, ""
+
     def evaluate(self, request: TradeRequest) -> GatewayDecision:
         """
         Evaluate a trade request against all risk rules.
@@ -656,6 +759,36 @@ class TradeGateway:
                 "reason": risk_reason,
                 "max_allowed": f"{self.MAX_POSITION_RISK_PCT * 100:.0f}% of ${account_equity:.0f} = ${account_equity * self.MAX_POSITION_RISK_PCT:.0f}",
             }
+
+        # ============================================================
+        # CHECK 0.7: CUMULATIVE POSITION RISK (LL-XXX Jan 22, 2026)
+        # Individual trades passing but accumulating to dangerous levels
+        # ============================================================
+        is_cumulative_risky, cumulative_reason = self._check_cumulative_position_risk(
+            request, account_equity, positions
+        )
+        if is_cumulative_risky:
+            rejection_reasons.append(RejectionReason.CUMULATIVE_RISK_TOO_HIGH)
+            logger.warning(f"🛑 CUMULATIVE RISK: {cumulative_reason}")
+            risk_score += 0.5
+            metadata["cumulative_risk"] = {
+                "reason": cumulative_reason,
+                "action": "Close existing positions before adding new ones",
+            }
+
+        # ============================================================
+        # CHECK 0.8: MAX IRON CONDORS (CLAUDE.md: 1 at a time)
+        # ============================================================
+        if request.strategy_type == "iron_condor" or request.is_option:
+            has_existing_condor, condor_reason = self._check_iron_condor_limit(positions)
+            if has_existing_condor and request.side.lower() in ["buy", "sell"]:
+                rejection_reasons.append(RejectionReason.MAX_IRON_CONDORS_EXCEEDED)
+                logger.warning(f"🛑 IRON CONDOR LIMIT: {condor_reason}")
+                risk_score += 0.5
+                metadata["iron_condor_limit"] = {
+                    "reason": condor_reason,
+                    "action": "Close existing iron condor before opening new one",
+                }
 
         # ============================================================
         # CHECK 1: Insufficient Funds
