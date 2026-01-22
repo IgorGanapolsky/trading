@@ -39,6 +39,36 @@ CTO: Claude | CEO: Igor Ganapolsky
 3. Capital growth > income chasing - build the base first
 4. Math-based targets - $6K/month needs $75K, not more aggressive returns
 
+## Capital Management (Phil Town Pillars)
+
+### 1. Capital Preservation (Rule #1)
+- **Never risk more than 5%** of account on single trade
+- **Stop-loss discipline**: Close at 200% of credit received - NO EXCEPTIONS
+- **Cash reserve**: Keep 20% in cash for opportunities/emergencies
+- **Drawdown limit**: If account drops 15%, HALT trading and review
+
+### 2. Compounding Strategy
+- **Reinvest 100%** of profits until $75K goal reached
+- **Position size scales** with account: 5% of current equity (not starting balance)
+- **Monthly compounding math**:
+  - $30K × 8% × 12mo = $47,600 (59% annual)
+  - $30K × 10% × 12mo = $54,800 (82% annual)
+  - Conservative 8% gets to $75K in ~12 months
+
+### 3. Reinvestment Rules
+- **Paper phase (Day 1-90)**: No withdrawals, 100% reinvestment
+- **Growth phase ($30K-$75K)**: Reinvest all gains, compound monthly
+- **Income phase ($75K+)**: Withdraw 50% of monthly gains, reinvest 50%
+- **Emergency rule**: Never withdraw principal below $30K
+
+### 4. Tax Optimization (Options-Specific)
+- **Hold period**: Options <1 year = short-term gains (ordinary income ~30%)
+- **Tax-loss harvesting**: Close losers in December to offset gains
+- **Wash sale awareness**: Wait 31 days before re-entering similar position
+- **Estimated taxes**: Set aside 30% of realized gains quarterly
+- **Track cost basis**: Every trade entry/exit for accurate reporting
+- **Consider IRA**: Tax-deferred growth if eligible (no PDT rule either)
+
 ## MANDATORY Pre-Trade Checklist
 1. [ ] Is ticker SPY? (SPY ONLY - best liquidity, tightest spreads)
 2. [ ] Is position size ≤5% of account ($248)?
