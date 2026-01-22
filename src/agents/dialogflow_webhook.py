@@ -1229,6 +1229,10 @@ def query_trades(query: str, limit: int = 10) -> list[dict]:
                     f"{trade.get('symbol', '')} at ${float(trade.get('price', 0)):.2f}. "
                     f"Filled: {str(trade.get('filled_at', ''))[:10] if trade.get('filled_at') else 'N/A'}"
                 )
+                # FIX Jan 22, 2026: Add timestamp and source fields
+                # Note: system_state.json trades are order FILLS, not matched trades
+                # They don't have P/L data - that would require matching buy/sell pairs
+                filled_at = str(trade.get("filled_at", ""))[:10] if trade.get("filled_at") else ""
                 trades.append(
                     {
                         "document": document,
@@ -1238,11 +1242,13 @@ def query_trades(query: str, limit: int = 10) -> list[dict]:
                             "qty": trade.get("qty", 0),
                             "price": trade.get("price", 0),
                             "filled_at": trade.get("filled_at", ""),
+                            "timestamp": filled_at,  # For formatter compatibility
+                            "source": "alpaca_fills",  # Indicates these are order fills
                         },
                     }
                 )
             if trades:
-                logger.info(f"Loaded {len(trades)} trades from system_state.json (Alpaca source)")
+                logger.info(f"Loaded {len(trades)} trades from system_state.json (Alpaca fills)")
 
         # PRIORITY 2: Fallback to trades_*.json files (legacy/local sync)
         if not trades:
@@ -1289,7 +1295,12 @@ def query_trades(query: str, limit: int = 10) -> list[dict]:
 
 
 def format_trades_response(trades: list, query: str) -> str:
-    """Format trade history into a response."""
+    """Format trade history into a response.
+
+    FIX Jan 22, 2026: Handle different trade sources properly.
+    - alpaca_fills: Order fills from system_state.json - no P/L data
+    - matched_trades: From trades_*.json - have P/L data
+    """
     if not trades:
         return f"No trades found matching '{query}'. The trade history may be empty or the query didn't match any trades."
 
@@ -1301,16 +1312,27 @@ def format_trades_response(trades: list, query: str) -> str:
 
         symbol = meta.get("symbol", "UNKNOWN")
         side = meta.get("side", "").upper()
-        outcome = meta.get("outcome", "unknown")
-        pnl = meta.get("pnl", 0)
         timestamp = meta.get("timestamp", "")[:10]
+        source = meta.get("source", "")
 
-        outcome_emoji = "✅" if outcome == "profitable" else ("❌" if outcome == "loss" else "➖")
-
-        response_parts.append(
-            f"\n{i}. {outcome_emoji} **{symbol}** {side} | P/L: ${pnl:.2f} | {timestamp}\n"
-            f"   {doc[:200]}...\n"
-        )
+        # FIX: Only show P/L for sources that have real P/L data
+        if source == "alpaca_fills":
+            # Order fills don't have P/L - just show the fill info
+            price = float(meta.get("price", 0))
+            qty = meta.get("qty", 0)
+            response_parts.append(
+                f"\n{i}. **{symbol}** {side} | Qty: {qty} @ ${price:.2f} | {timestamp}\n"
+                f"   {doc[:150]}\n"
+            )
+        else:
+            # Matched trades have P/L data
+            outcome = meta.get("outcome", "unknown")
+            pnl = meta.get("pnl", 0)
+            outcome_emoji = "✅" if outcome == "profitable" else ("❌" if outcome == "loss" else "➖")
+            response_parts.append(
+                f"\n{i}. {outcome_emoji} **{symbol}** {side} | P/L: ${pnl:.2f} | {timestamp}\n"
+                f"   {doc[:150]}\n"
+            )
 
     return "\n".join(response_parts)
 
