@@ -1,0 +1,123 @@
+name: Diagnose PDT Issue
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    name: Diagnose PDT Configuration
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Full PDT Diagnosis
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          python3 << 'EOF'
+          import os
+          import requests
+          import json
+
+          base_url = "https://paper-api.alpaca.markets"
+          headers = {
+              "APCA-API-KEY-ID": os.environ['ALPACA_API_KEY'],
+              "APCA-API-SECRET-KEY": os.environ['ALPACA_SECRET_KEY'],
+          }
+
+          print("=" * 70)
+          print("PDT DIAGNOSTIC REPORT")
+          print("=" * 70)
+
+          # 1. Get account info
+          print("\n1️⃣ ACCOUNT STATUS")
+          resp = requests.get(f"{base_url}/v2/account", headers=headers)
+          if resp.ok:
+              acc = resp.json()
+              print(f"   Equity: ${float(acc['equity']):,.2f}")
+              print(f"   Cash: ${float(acc['cash']):,.2f}")
+              print(f"   PDT Flag: {acc.get('pattern_day_trader', 'N/A')}")
+              print(f"   Daytrade Count: {acc.get('daytrade_count', 'N/A')}")
+              print(f"   Trading Blocked: {acc.get('trading_blocked', 'N/A')}")
+          else:
+              print(f"   ERROR: {resp.status_code} - {resp.text[:100]}")
+
+          # 2. Get current config
+          print("\n2️⃣ CURRENT CONFIGURATION")
+          resp = requests.get(f"{base_url}/v2/account/configurations", headers=headers)
+          if resp.ok:
+              config = resp.json()
+              print(f"   pdt_check: {config.get('pdt_check', 'N/A')}")
+              print(f"   dtbp_check: {config.get('dtbp_check', 'N/A')}")
+              print(f"   Full config: {json.dumps(config, indent=6)}")
+          else:
+              print(f"   ERROR: {resp.status_code} - {resp.text[:100]}")
+
+          # 3. Try to change pdt_check
+          print("\n3️⃣ ATTEMPTING TO SET pdt_check='entry'")
+          resp = requests.patch(
+              f"{base_url}/v2/account/configurations",
+              headers=headers,
+              json={"pdt_check": "entry"}
+          )
+          print(f"   Response Code: {resp.status_code}")
+          print(f"   Response Body: {resp.text[:200]}")
+
+          # 4. Verify the change
+          print("\n4️⃣ VERIFYING CONFIGURATION CHANGE")
+          resp = requests.get(f"{base_url}/v2/account/configurations", headers=headers)
+          if resp.ok:
+              config = resp.json()
+              print(f"   pdt_check is now: {config.get('pdt_check', 'N/A')}")
+          else:
+              print(f"   ERROR: {resp.status_code} - {resp.text[:100]}")
+
+          # 5. Get positions
+          print("\n5️⃣ CURRENT POSITIONS")
+          resp = requests.get(f"{base_url}/v2/positions", headers=headers)
+          if resp.ok:
+              positions = resp.json()
+              for p in positions:
+                  if len(p['symbol']) > 10:
+                      print(f"   {p['symbol']}: {p['qty']} | P/L: ${float(p['unrealized_pl']):+,.2f}")
+          else:
+              print(f"   ERROR: {resp.status_code} - {resp.text[:100]}")
+
+          # 6. Try to close ONE position as a test
+          print("\n6️⃣ ATTEMPTING TO CLOSE ONE POSITION (TEST)")
+          target = "SPY260220P00658000"  # The biggest loser
+          print(f"   Target: {target}")
+
+          # Try DELETE endpoint
+          print(f"   Method: DELETE /v2/positions/{target}")
+          resp = requests.delete(f"{base_url}/v2/positions/{target}", headers=headers)
+          print(f"   Response Code: {resp.status_code}")
+          print(f"   Response Body: {resp.text[:300]}")
+
+          # 7. Reset pdt_check
+          print("\n7️⃣ RESETTING pdt_check='both'")
+          resp = requests.patch(
+              f"{base_url}/v2/account/configurations",
+              headers=headers,
+              json={"pdt_check": "both"}
+          )
+          print(f"   Response: {resp.status_code}")
+
+          print("\n" + "=" * 70)
+          print("DIAGNOSIS COMPLETE")
+          print("=" * 70)
+          EOF
