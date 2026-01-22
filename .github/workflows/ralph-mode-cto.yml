@@ -20,10 +20,75 @@ on:
 env:
   PYTHON_VERSION: '3.11'
 
+# Prevent concurrent runs to avoid race conditions
+concurrency:
+  group: ralph-mode-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  # Job 1: Run tests and lint
+  # Job 0: Quick health check - skip full run if system healthy
+  health-check:
+    name: Quick Health Check
+    runs-on: ubuntu-latest
+    outputs:
+      needs_work: ${{ steps.check.outputs.needs_work }}
+      has_open_prs: ${{ steps.check.outputs.has_open_prs }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install minimal dependencies
+        run: pip install -q ruff
+
+      - name: Quick health check
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          needs_work=false
+
+          # Check 1: Any lint issues?
+          if ! ruff check src/ scripts/ --quiet 2>/dev/null; then
+            echo "::notice::Lint issues detected"
+            needs_work=true
+          fi
+
+          # Check 2: Any open claude/* PRs?
+          OPEN_PRS=$(gh pr list --state open --json headRefName --jq '[.[] | select(.headRefName | startswith("claude/"))] | length' 2>/dev/null || echo "0")
+          if [ "$OPEN_PRS" -gt 0 ]; then
+            echo "::notice::$OPEN_PRS open PRs from Claude"
+            echo "has_open_prs=true" >> $GITHUB_OUTPUT
+            needs_work=true
+          else
+            echo "has_open_prs=false" >> $GITHUB_OUTPUT
+          fi
+
+          # Check 3: Any merged branches to clean?
+          MERGED=$(git branch -r --merged origin/main | grep -c "claude/" 2>/dev/null || echo "0")
+          if [ "$MERGED" -gt 0 ]; then
+            echo "::notice::$MERGED merged branches to clean"
+            needs_work=true
+          fi
+
+          # Manual dispatch always runs full workflow
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "::notice::Manual dispatch - forcing full run"
+            needs_work=true
+          fi
+
+          echo "needs_work=$needs_work" >> $GITHUB_OUTPUT
+          echo "## Quick Health Check" >> $GITHUB_STEP_SUMMARY
+          echo "Needs work: $needs_work" >> $GITHUB_STEP_SUMMARY
+
+  # Job 1: Run tests and lint (only if needed)
   quality-check:
     runs-on: ubuntu-latest
+    needs: health-check
+    if: needs.health-check.outputs.needs_work == 'true'
     outputs:
       tests_passed: ${{ steps.tests.outputs.passed }}
       lint_passed: ${{ steps.lint.outputs.passed }}

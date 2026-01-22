@@ -7,22 +7,17 @@ title: AI Trading Journey
 
 Building an autonomous AI trading system with Claude Opus 4.5.
 
-## Current Status (Day 86 - Jan 22, 2026)
+## Current Status (Day 85 - Jan 21, 2026)
 
 | Metric | Value |
 |--------|-------|
 | Paper Account | $5,066.39 |
-| Total P/L | **+$66.39 (+1.33%)** |
-| Open Positions | 6 (3 spreads) |
+| Total P/L | **-$86 (unrealized)** |
+| Open Positions | 2 (SOFI put + SPY shares) |
 | Strategy | Iron Condors on SPY ONLY |
 | North Star | $5-10/day (realistic) |
 
-**Status**: Running 3 SPY put spreads (Feb 20 expiration, ~29 DTE). Ralph Loop 24/7 self-healing active. StruggleDetector prevents infinite API loops.
-
-### What's New Today
-- **Ralph Loop**: Real AI iteration with struggle detection (PR #2565)
-- **Auto-blogging**: Ralph publishes discoveries to Dev.to + GitHub Pages (PR #2566)
-- **SEO**: Added llms.txt, robots.txt for AI discoverability (PR #2574-2575)
+**Status**: Markets closed (MLK Day was Jan 20). SOFI position violates SPY-ONLY mandate - auto-close workflow scheduled for 9:35 AM ET Jan 22. Multiple fixes deployed today: LL-279 (partial iron condor auto-close), LL-280 (position limit counting), LL-281 (CALL pricing fallbacks).
 
 ## Strategy Evolution
 
@@ -31,6 +26,8 @@ Building an autonomous AI trading system with Claude Opus 4.5.
 - **Day 75-76**: SOFI closed at loss (earnings risk)
 - **Day 77-78 (Jan 15-16)**: Pivoted to SPY credit spreads
 - **Day 79-83 (Jan 17-19)**: Strategy refined to IRON CONDORS + SPY ONLY
+- **Day 84 (Jan 20)**: MLK Day - Markets closed
+- **Day 85 (Jan 21)**: Fixed 3 critical bugs (LL-279, LL-280, LL-281). Added SEO + blog auto-publish
 
 ## Recent Lessons Learned
 
