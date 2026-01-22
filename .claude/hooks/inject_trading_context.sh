@@ -34,36 +34,41 @@ fi
 # US MARKET HOLIDAYS 2025-2026 (NYSE/NASDAQ closed)
 # CRITICAL: Markets are CLOSED on these dates - DO NOT TRADE
 # Updated Jan 19, 2026 after MLK Day bug discovery
+# Updated Jan 22, 2026: Fixed bash 3.x compatibility (macOS default)
 # ============================================================================
-declare -A US_MARKET_HOLIDAYS=(
-    # 2025 Holidays
-    ["2025-01-01"]="New Year's Day"
-    ["2025-01-20"]="Martin Luther King Jr. Day"
-    ["2025-02-17"]="Presidents Day"
-    ["2025-04-18"]="Good Friday"
-    ["2025-05-26"]="Memorial Day"
-    ["2025-06-19"]="Juneteenth"
-    ["2025-07-04"]="Independence Day"
-    ["2025-09-01"]="Labor Day"
-    ["2025-11-27"]="Thanksgiving Day"
-    ["2025-12-25"]="Christmas Day"
-    # 2026 Holidays
-    ["2026-01-01"]="New Year's Day"
-    ["2026-01-19"]="Martin Luther King Jr. Day"
-    ["2026-02-16"]="Presidents Day"
-    ["2026-04-03"]="Good Friday"
-    ["2026-05-25"]="Memorial Day"
-    ["2026-06-19"]="Juneteenth"
-    ["2026-07-03"]="Independence Day (observed)"
-    ["2026-09-07"]="Labor Day"
-    ["2026-11-26"]="Thanksgiving Day"
-    ["2026-12-25"]="Christmas Day"
-)
+# Using case statement for bash 3.x compatibility (no associative arrays)
+get_holiday_name() {
+    case "$1" in
+        # 2025 Holidays
+        "2025-01-01") echo "New Year's Day" ;;
+        "2025-01-20") echo "Martin Luther King Jr. Day" ;;
+        "2025-02-17") echo "Presidents Day" ;;
+        "2025-04-18") echo "Good Friday" ;;
+        "2025-05-26") echo "Memorial Day" ;;
+        "2025-06-19") echo "Juneteenth" ;;
+        "2025-07-04") echo "Independence Day" ;;
+        "2025-09-01") echo "Labor Day" ;;
+        "2025-11-27") echo "Thanksgiving Day" ;;
+        "2025-12-25") echo "Christmas Day" ;;
+        # 2026 Holidays
+        "2026-01-01") echo "New Year's Day" ;;
+        "2026-01-19") echo "Martin Luther King Jr. Day" ;;
+        "2026-02-16") echo "Presidents Day" ;;
+        "2026-04-03") echo "Good Friday" ;;
+        "2026-05-25") echo "Memorial Day" ;;
+        "2026-06-19") echo "Juneteenth" ;;
+        "2026-07-03") echo "Independence Day (observed)" ;;
+        "2026-09-07") echo "Labor Day" ;;
+        "2026-11-26") echo "Thanksgiving Day" ;;
+        "2026-12-25") echo "Christmas Day" ;;
+        *) echo "" ;;
+    esac
+}
 
 # Check if today is a US market holiday
-if [[ -v "US_MARKET_HOLIDAYS[$TODAY_DATE]" ]]; then
+HOLIDAY_NAME=$(get_holiday_name "$TODAY_DATE")
+if [[ -n "$HOLIDAY_NAME" ]]; then
     IS_HOLIDAY="true"
-    HOLIDAY_NAME="${US_MARKET_HOLIDAYS[$TODAY_DATE]}"
 fi
 
 # ============================================================================
