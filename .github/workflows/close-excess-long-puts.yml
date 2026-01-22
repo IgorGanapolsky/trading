@@ -2,9 +2,13 @@ name: Close Excess Long Puts
 
 # Emergency workflow to close the imbalanced SPY260220P00658000 position
 # Jan 22, 2026: 8 long vs 2 short = 6 excess contracts bleeding money
+# SCHEDULED: Runs every 15 min during market hours until position closes
 
 on:
   workflow_dispatch:
+  schedule:
+    # Every 15 minutes during market hours (9:30 AM - 4 PM ET = 14:30 - 21:00 UTC)
+    - cron: '*/15 14-20 * * 1-5'
 
 permissions:
   contents: write
