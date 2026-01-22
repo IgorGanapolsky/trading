@@ -110,7 +110,7 @@ def analyze_positions_for_closure(
                     PositionCloseRecommendation(
                         symbol=symbol,
                         qty=qty,
-                        reason=f"Single position loss {loss_ratio*100:.0f}% exceeds {SINGLE_POSITION_LOSS_THRESHOLD*100}% threshold",
+                        reason=f"Single position loss {loss_ratio * 100:.0f}% exceeds {SINGLE_POSITION_LOSS_THRESHOLD * 100}% threshold",
                         priority="CRITICAL",
                         unrealized_pl=unrealized_pl,
                         cost_basis=cost_basis,
@@ -145,7 +145,7 @@ def analyze_positions_for_closure(
                 PositionCloseRecommendation(
                     symbol=symbol,
                     qty=qty,
-                    reason=f"Portfolio loss {loss_pct*100:.1f}% exceeds {LOSS_THRESHOLD*100}% threshold - closing largest losers",
+                    reason=f"Portfolio loss {loss_pct * 100:.1f}% exceeds {LOSS_THRESHOLD * 100}% threshold - closing largest losers",
                     priority="HIGH",
                     unrealized_pl=unrealized_pl,
                     cost_basis=cost_basis,

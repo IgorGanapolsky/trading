@@ -19,7 +19,6 @@ def disable_circuit_breaker_for_tests():
     The circuit breaker was added to prevent trading during crisis mode,
     but tests should run without this restriction.
     """
-    import os
     from pathlib import Path
 
     halt_file = Path("data/TRADING_HALTED")

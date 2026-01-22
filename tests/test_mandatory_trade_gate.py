@@ -105,6 +105,48 @@ class TestValidateTradeMandatory:
         assert "blind trading" in result.reason.lower()
         assert any("ll_051" in w for w in result.rag_warnings)
 
+    def test_position_stacking_blocked(self):
+        """Test that buying more of an existing symbol is blocked (LL-275).
+
+        This is the fix for the 658 put disaster where 9 separate BUY orders
+        accumulated 8 contracts because the gate didn't check for existing positions.
+        """
+        from src.safety.mandatory_trade_gate import validate_trade_mandatory
+
+        # Simulate already holding SPY260220P00658000
+        existing_positions = [
+            {"symbol": "SPY260220P00658000", "qty": "2"},  # Already hold 2
+        ]
+
+        result = validate_trade_mandatory(
+            symbol="SPY260220P00658000",  # Try to buy MORE of same symbol
+            amount=100.0,
+            side="BUY",
+            strategy="iron_condor",
+            context={"equity": 5000.0, "positions": existing_positions},
+        )
+        assert result.approved is False
+        assert "stacking" in result.reason.lower() or "already hold" in result.reason.lower()
+        assert "658000" in result.reason
+
+    def test_sell_existing_position_allowed(self):
+        """Test that SELLING an existing position is still allowed."""
+        from src.safety.mandatory_trade_gate import validate_trade_mandatory
+
+        existing_positions = [
+            {"symbol": "SPY260220P00658000", "qty": "2"},
+        ]
+
+        result = validate_trade_mandatory(
+            symbol="SPY260220P00658000",
+            amount=100.0,
+            side="SELL",  # Selling should be allowed
+            strategy="iron_condor",
+            context={"equity": 5000.0, "positions": existing_positions},
+        )
+        # SELL should not be blocked by stacking rule
+        assert "stacking" not in result.reason.lower()
+
 
 class TestTradeBlockedError:
     """Test TradeBlockedError exception."""

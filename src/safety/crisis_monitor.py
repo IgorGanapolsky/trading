@@ -113,7 +113,7 @@ def check_crisis_conditions(
                 condition_type="EXCESS_UNREALIZED_LOSS",
                 current_value=loss_pct,
                 threshold=CRISIS_LOSS_PCT,
-                details=f"Unrealized loss: ${abs(total_unrealized_loss):.2f} ({loss_pct*100:.1f}% of equity)",
+                details=f"Unrealized loss: ${abs(total_unrealized_loss):.2f} ({loss_pct * 100:.1f}% of equity)",
             )
         )
 
@@ -129,7 +129,7 @@ def check_crisis_conditions(
                         condition_type="SINGLE_POSITION_CRISIS",
                         current_value=loss_ratio,
                         threshold=0.50,
-                        details=f"{pos.get('symbol')}: Lost {loss_ratio*100:.0f}% (${abs(unrealized_pl):.2f})",
+                        details=f"{pos.get('symbol')}: Lost {loss_ratio * 100:.0f}% (${abs(unrealized_pl):.2f})",
                     )
                 )
 
@@ -156,7 +156,7 @@ def trigger_trading_halt(
 
     # Create TRADING_HALTED file
     today = datetime.now()
-    content = f"""CRISIS MODE - {today.strftime('%b %d, %Y')}
+    content = f"""CRISIS MODE - {today.strftime("%b %d, %Y")}
 ===========================
 
 Trading halted automatically due to crisis conditions:
