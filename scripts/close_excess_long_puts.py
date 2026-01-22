@@ -95,7 +95,7 @@ def main():
                 symbol=target_symbol,
                 qty=excess_qty,
                 side=OrderSide.SELL,  # Sell to close long
-                time_in_force=TimeInForce.GTC,  # Use GTC for options
+                time_in_force=TimeInForce.DAY,  # Use GTC for options
             )
         )
         print(f"  ✅ Order submitted: {order.id}")
