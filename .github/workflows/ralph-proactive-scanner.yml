@@ -65,17 +65,7 @@ jobs:
               echo "⚠️ Found $count potential security issues" >> $GITHUB_STEP_SUMMARY
 
               # Show high severity issues
-              python3 << 'EOF'
-import json
-with open('bandit_report.json') as f:
-    data = json.load(f)
-for issue in data.get('results', [])[:5]:
-    severity = issue.get('issue_severity', 'UNKNOWN')
-    text = issue.get('issue_text', 'No description')
-    filename = issue.get('filename', 'Unknown')
-    line = issue.get('line_number', 0)
-    print(f"- [{severity}] {filename}:{line} - {text}")
-EOF
+              python3 -c "import json; data=json.load(open('bandit_report.json')); [print(f\"- [{i.get('issue_severity','?')}] {i.get('filename','?')}:{i.get('line_number',0)} - {i.get('issue_text','?')}\") for i in data.get('results',[])[:5]]"
             else
               echo "issues_found=false" >> $GITHUB_OUTPUT
               echo "✅ No security issues found" >> $GITHUB_STEP_SUMMARY
