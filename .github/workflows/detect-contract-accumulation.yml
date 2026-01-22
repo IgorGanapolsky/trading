@@ -1,0 +1,127 @@
+name: Detect Contract Accumulation
+
+# SECOND LINE OF DEFENSE: Detects when contracts accumulate beyond safe levels
+# Root cause of LL-275 disaster: 9 BUY orders accumulated 8 contracts of same symbol
+# Prevention: mandatory_trade_gate.py CHECK 2.6
+# Detection: This workflow (runs every 15 min during market hours)
+
+on:
+  schedule:
+    # Every 15 minutes during market hours (9:30 AM - 4 PM ET = 14:30 - 21:00 UTC)
+    - cron: '*/15 14-20 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  detect-accumulation:
+    name: Contract Accumulation Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install alpaca-py
+
+      - name: Check for Contract Accumulation
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          python3 -c "
+          import os
+          import sys
+          from datetime import datetime
+          from alpaca.trading.client import TradingClient
+
+          print('=' * 60)
+          print(f'CONTRACT ACCUMULATION CHECK - {datetime.now()}')
+          print('LL-275 Prevention: Detect stacking before it causes losses')
+          print('=' * 60)
+
+          # Max contracts per symbol (1 iron condor = 1-2 contracts per leg)
+          MAX_CONTRACTS_PER_SYMBOL = 2
+
+          client = TradingClient(
+              os.environ['ALPACA_API_KEY'],
+              os.environ['ALPACA_SECRET_KEY'],
+              paper=True
+          )
+
+          positions = client.get_all_positions()
+          print(f'\nTotal Positions: {len(positions)}')
+
+          violations = []
+          warnings = []
+
+          for pos in positions:
+              symbol = pos.symbol
+              qty = abs(int(float(pos.qty)))
+              side = 'LONG' if float(pos.qty) > 0 else 'SHORT'
+              pl = float(pos.unrealized_pl)
+
+              # Only check options (symbols > 10 chars)
+              if len(symbol) > 10:
+                  print(f'  {symbol}: {qty} {side} (P/L: \${pl:+.2f})')
+
+                  if qty > MAX_CONTRACTS_PER_SYMBOL:
+                      violations.append({
+                          'symbol': symbol,
+                          'qty': qty,
+                          'side': side,
+                          'pl': pl,
+                          'excess': qty - MAX_CONTRACTS_PER_SYMBOL
+                      })
+                  elif qty == MAX_CONTRACTS_PER_SYMBOL:
+                      warnings.append({
+                          'symbol': symbol,
+                          'qty': qty,
+                          'side': side
+                      })
+
+          print(f'\n' + '=' * 60)
+          print('ACCUMULATION CHECK RESULTS')
+          print('=' * 60)
+
+          if violations:
+              print(f'\n🚨 VIOLATIONS FOUND: {len(violations)}')
+              for v in violations:
+                  print(f'  ❌ {v[\"symbol\"]}: {v[\"qty\"]} contracts ({v[\"excess\"]} excess)')
+                  print(f'     Side: {v[\"side\"]} | P/L: \${v[\"pl\"]:+.2f}')
+                  print(f'     ACTION REQUIRED: Close excess contracts')
+
+              print(f'\n⚠️  This is the LL-275 pattern that caused -\$1,472 loss')
+              print('Prevention layer (mandatory_trade_gate.py) may have been bypassed')
+              sys.exit(1)  # FAIL the workflow
+
+          if warnings:
+              print(f'\n⚠️  WARNINGS: {len(warnings)} positions at max capacity')
+              for w in warnings:
+                  print(f'  ⚠️  {w[\"symbol\"]}: {w[\"qty\"]} contracts (at limit)')
+
+          if not violations and not warnings:
+              print('\n✅ No accumulation detected - all positions within limits')
+
+          print(f'\nMax allowed per symbol: {MAX_CONTRACTS_PER_SYMBOL} contracts')
+          print('=' * 60)
+          "
+
+      - name: Post summary
+        if: always()
+        run: |
+          echo "## Contract Accumulation Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Purpose:** Detect when contracts accumulate beyond safe levels (LL-275 prevention)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Max contracts per symbol:** 2" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "This is the SECOND line of defense after \`mandatory_trade_gate.py\` CHECK 2.6" >> $GITHUB_STEP_SUMMARY
