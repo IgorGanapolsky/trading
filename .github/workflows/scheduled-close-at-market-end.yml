@@ -1,0 +1,137 @@
+name: Scheduled Close at Market End
+
+# Emergency: Close excess long puts at market close to avoid PDT
+# Created: Jan 22, 2026 - Crisis Response
+
+on:
+  schedule:
+    # Run at 3:55 PM ET (20:55 UTC) - just before market close
+    - cron: '55 20 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  close-at-end:
+    name: Close Excess Positions at Market End
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install alpaca-py
+
+      - name: Close Excess Long Puts
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          python3 << 'EOF'
+          import os
+          from datetime import datetime
+          from alpaca.trading.client import TradingClient
+          from alpaca.trading.requests import MarketOrderRequest
+          from alpaca.trading.enums import OrderSide, TimeInForce
+
+          print("=" * 60)
+          print(f"MARKET END POSITION CLOSE - {datetime.now()}")
+          print("=" * 60)
+
+          client = TradingClient(
+              os.environ['ALPACA_API_KEY'],
+              os.environ['ALPACA_SECRET_KEY'],
+              paper=True
+          )
+
+          # Check market status
+          clock = client.get_clock()
+          print(f"\nMarket: {'OPEN' if clock.is_open else 'CLOSED'}")
+
+          if not clock.is_open:
+              print("Market is closed - cannot execute orders")
+              exit(0)
+
+          # Get account
+          account = client.get_account()
+          print(f"Account Equity: ${float(account.equity):,.2f}")
+          print(f"Day Trade Count: {account.daytrade_count}")
+          print(f"PDT Flag: {account.pattern_day_trader}")
+
+          # Get positions
+          positions = client.get_all_positions()
+
+          # Find imbalanced positions
+          target_symbol = "SPY260220P00658000"
+          target_position = None
+
+          print(f"\nPositions:")
+          for pos in positions:
+              qty = float(pos.qty)
+              pl = float(pos.unrealized_pl)
+              marker = " <-- TARGET" if pos.symbol == target_symbol else ""
+              print(f"  {pos.symbol}: {qty:+.0f} | P/L: ${pl:+.2f}{marker}")
+              if pos.symbol == target_symbol:
+                  target_position = pos
+
+          if not target_position:
+              print(f"\n✅ {target_symbol} not found")
+              exit(0)
+
+          current_qty = int(float(target_position.qty))
+          if current_qty <= 2:
+              print(f"\n✅ Position balanced (qty={current_qty})")
+              exit(0)
+
+          excess = current_qty - 2
+          print(f"\n⚠️ EXCESS: {excess} contracts to close")
+
+          # Try to close
+          try:
+              order = client.submit_order(
+                  MarketOrderRequest(
+                      symbol=target_symbol,
+                      qty=excess,
+                      side=OrderSide.SELL,
+                      time_in_force=TimeInForce.DAY,
+                  )
+              )
+              print(f"\n✅ Order submitted: {order.id}")
+              print(f"   Status: {order.status}")
+          except Exception as e:
+              error_str = str(e)
+              print(f"\n❌ Failed: {error_str}")
+
+              # If PDT still blocks, try closing entire position
+              if "pattern day trading" in error_str.lower():
+                  print("\nPDT still active - trying close_position() API...")
+                  try:
+                      result = client.close_position(target_symbol)
+                      print(f"✅ close_position result: {result}")
+                  except Exception as e2:
+                      print(f"❌ close_position also failed: {e2}")
+                      exit(1)
+              else:
+                  exit(1)
+
+          print(f"\n{'=' * 60}")
+          print("DONE")
+          print(f"{'=' * 60}")
+          EOF
+
+      - name: Trigger State Sync
+        if: success()
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GH_PAT }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/sync-system-state.yml/dispatches" \
+            -d '{"ref": "main"}'
