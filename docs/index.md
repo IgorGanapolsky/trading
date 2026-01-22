@@ -11,7 +11,7 @@ Building an autonomous self-healing AI trading system with Claude Opus 4.5 and t
 
 | Metric | Value |
 |--------|-------|
-| Paper Account | $4,478.58 |
+| Paper Account | $4,441.68 |
 | Today's P/L | **TBD** (market open) |
 | Total P/L | **-$430.35** (-8.61% from $5K) |
 | Unrealized | -$86 (SOFI: -$80, SPY: -$6) |
