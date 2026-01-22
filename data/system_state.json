@@ -1,9 +1,9 @@
 {
-  "last_updated": "2026-01-22T17:40:30.052056+00:00",
+  "last_updated": "2026-01-22T17:52:33.450805+00:00",
   "sync_health": {
-    "last_successful_sync": "2026-01-22T17:40:30.052059+00:00",
+    "last_successful_sync": "2026-01-22T17:52:33.450808+00:00",
     "sync_source": "github_actions",
-    "sync_count_today": 5,
+    "sync_count_today": 6,
     "history": [
       {
         "timestamp": "2026-01-22T16:23:11.478656+00:00",
@@ -29,21 +29,26 @@
         "timestamp": "2026-01-22T17:40:30.052049+00:00",
         "equity": 4231.46,
         "success": true
+      },
+      {
+        "timestamp": "2026-01-22T17:52:33.450796+00:00",
+        "equity": 4203.46,
+        "success": true
       }
     ]
   },
   "portfolio": {
-    "equity": 4231.46,
+    "equity": 4203.46,
     "cash": 2607.46
   },
   "paper_account": {
-    "equity": 4231.46,
+    "equity": 4203.46,
     "cash": 2607.46,
     "buying_power": 5214.92,
-    "total_pl": -768.54,
-    "total_pl_pct": -15.37,
+    "total_pl": -796.54,
+    "total_pl_pct": -15.93,
     "positions_count": 4,
-    "daily_change": -419.33,
+    "daily_change": -447.33,
     "win_rate": 0,
     "win_rate_sample_size": 0,
     "starting_balance": 5000.0
@@ -68,17 +73,17 @@
     {
       "symbol": "SPY260220P00653000",
       "qty": -2.0,
-      "price": 2.16,
-      "value": -432.0,
-      "pnl": 122.0,
+      "price": 2.14,
+      "value": -428.0,
+      "pnl": 126.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00658000",
       "qty": 8.0,
-      "price": 2.56,
-      "value": 2048.0,
-      "pnl": -1456.0,
+      "price": 2.52,
+      "value": 2016.0,
+      "pnl": -1488.0,
       "type": "option"
     }
   ],
@@ -837,17 +842,17 @@
   },
   "risk": {
     "status": "WARNING - NEGATIVE P/L",
-    "total_pl": -768.54,
-    "unrealized_pl": -1341.3334
+    "total_pl": -796.54,
+    "unrealized_pl": -1369.3334
   },
   "account": {
-    "current_equity": 4231.46,
-    "total_pl": -768.54,
-    "total_pl_pct": -15.37,
+    "current_equity": 4203.46,
+    "total_pl": -796.54,
+    "total_pl_pct": -15.93,
     "positions_count": 4
   },
   "meta": {
-    "last_updated": "2026-01-22T17:40:30.052072+00:00",
+    "last_updated": "2026-01-22T17:52:33.450823+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5
   }
