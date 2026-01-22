@@ -116,7 +116,7 @@ def text_to_sentiment_vector(text: str) -> list[float]:
 def fact_check_sentiment(
     llm_sentiment: float,
     raw_text: str,
-    baseline_text: str | None = None,
+    _baseline_text: str | None = None,
     threshold: float = COSINE_SIM_THRESHOLD,
 ) -> dict[str, Any]:
     """

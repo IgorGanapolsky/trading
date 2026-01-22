@@ -27,7 +27,6 @@ import logging
 import signal
 from datetime import datetime
 
-from anthropic import Anthropic
 from src.utils.error_monitoring import init_sentry
 
 # Setup logging
@@ -56,7 +55,7 @@ class TimeoutError(Exception):
     pass
 
 
-def timeout_handler(signum, frame):
+def timeout_handler(_signum, _frame):
     """Signal handler for timeouts."""
     raise TimeoutError("Operation timeout")
 
@@ -153,37 +152,6 @@ def check_anthropic_api() -> bool:
     # Skip Anthropic check - not critical and can hang (we have fallback)
     print("✅ Anthropic API: Skipped (not critical, fallback available)")
     return True  # Not critical - we have fallback
-
-    # DISABLED: Can hang in GitHub Actions environment
-    # # Set 5-second timeout for Anthropic API call
-    # signal.signal(signal.SIGALRM, timeout_handler)
-    # signal.alarm(5)
-
-    try:
-        client = Anthropic(api_key=ANTHROPIC_KEY)
-        # Simple test call
-        client.messages.create(
-            model="claude-3-5-sonnet-20241022",
-            max_tokens=10,
-            messages=[{"role": "user", "content": "test"}],
-        )
-
-        signal.alarm(0)  # Cancel timeout
-        print("✅ Anthropic API: Connected")
-        return True
-    except TimeoutError:
-        signal.alarm(0)  # Cancel timeout
-        print("⚠️  Anthropic API: Timeout (5s) - continuing without LLM check")
-        return True  # Fail-open, not critical
-    except Exception as e:
-        signal.alarm(0)  # Cancel timeout
-        error_str = str(e)
-        if "credit balance" in error_str.lower():
-            print("⚠️  Anthropic API: Low credits (will use fallback mode)")
-            return True  # Not critical - we have fallback
-        else:
-            print(f"❌ Anthropic API: FAILED - {e}")
-            return True  # Still allow trading with fallback
 
 
 def check_market_status() -> bool:

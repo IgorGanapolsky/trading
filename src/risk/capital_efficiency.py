@@ -324,7 +324,7 @@ class CapitalEfficiencyCalculator:
         )
 
     def calculate_sequence_risk(
-        self, strategy_id: str, account_equity: float, num_positions: int = 1
+        self, strategy_id: str, account_equity: float, _num_positions: int = 1
     ) -> dict[str, Any]:
         """
         Calculate sequence risk for a strategy.
