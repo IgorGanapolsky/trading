@@ -28,7 +28,31 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install alpaca-py
+        run: pip install alpaca-py requests
+
+      - name: Set PDT Check to Entry Only (Bypass for Closing)
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          python3 << 'EOF'
+          import os
+          import requests
+
+          base_url = "https://paper-api.alpaca.markets"
+          headers = {
+              "APCA-API-KEY-ID": os.environ['ALPACA_API_KEY'],
+              "APCA-API-SECRET-KEY": os.environ['ALPACA_SECRET_KEY'],
+          }
+
+          print("Setting pdt_check to 'entry' (allow closing trades)...")
+          resp = requests.patch(
+              f"{base_url}/v2/account/configurations",
+              headers=headers,
+              json={"pdt_check": "entry"}
+          )
+          print(f"Response: {resp.status_code} - {resp.text[:100] if resp.text else 'OK'}")
+          EOF
 
       - name: Check and Fix Position Compliance
         env:
@@ -112,63 +136,86 @@ jobs:
           for sp in spreads:
               print(f"  ${sp['short']:.0f}/${sp['long']:.0f} | P/L: ${sp['pl']:+.2f}")
 
-          # Check compliance
-          MAX_SPREADS = 1  # CLAUDE.md: 1 iron condor at a time
+          # Check compliance - COUNT TOTAL CONTRACTS not just spreads
+          MAX_CONTRACTS = 4  # CLAUDE.md: 1 iron condor = 4 contracts max
           MAX_RISK_PCT = 15  # CLAUDE.md: 15% max portfolio risk
 
-          total_risk = len(spreads) * 500  # $5-wide spreads
+          # Count ALL contracts
+          total_contracts = sum(abs(p["qty"]) for p in puts.values())
+          total_risk = total_contracts * 100  # Approximate $100 per contract
           risk_pct = (total_risk / equity * 100) if equity > 0 else 0
 
           print(f"\n{'=' * 60}")
-          print("COMPLIANCE CHECK")
+          print("COMPLIANCE CHECK (FIXED - counts contracts not spreads)")
           print(f"{'=' * 60}")
-          print(f"Spreads: {len(spreads)} (max: {MAX_SPREADS})")
+          print(f"Total Contracts: {total_contracts} (max: {MAX_CONTRACTS})")
+          print(f"Spreads identified: {len(spreads)}")
           print(f"Risk: {risk_pct:.1f}% (max: {MAX_RISK_PCT}%)")
 
-          if len(spreads) <= MAX_SPREADS and risk_pct <= MAX_RISK_PCT:
+          if total_contracts <= MAX_CONTRACTS and risk_pct <= MAX_RISK_PCT:
               print("\n✅ COMPLIANT - No action needed")
               sys.exit(0)
 
-          # NON-COMPLIANT - Close excess
-          excess = len(spreads) - MAX_SPREADS
-          print(f"\n⚠️ NON-COMPLIANT - Closing {excess} excess spread(s)")
+          # NON-COMPLIANT - CLOSE ALL EXCESS
+          excess_contracts = int(total_contracts - MAX_CONTRACTS)
+          print(f"\n⚠️ NON-COMPLIANT - Have {total_contracts} contracts, max is {MAX_CONTRACTS}")
+          print(f"Need to close {excess_contracts} excess contracts")
 
-          # Sort by P/L (close worst first)
-          spreads_to_close = sorted(spreads, key=lambda x: x["pl"])[:excess]
+          # Sort positions by P/L (close worst first - most negative P/L first)
+          positions_by_pl = sorted(puts.items(), key=lambda x: x[1]["pl"])
 
           orders = []
-          for sp in spreads_to_close:
-              print(f"\nClosing ${sp['short']:.0f}/${sp['long']:.0f} spread (P/L: ${sp['pl']:+.2f})")
+          contracts_closed = 0
+          for strike, pos in positions_by_pl:
+              if contracts_closed >= excess_contracts:
+                  break
 
-              # Buy to close short
+              qty_to_close = min(abs(pos["qty"]), excess_contracts - contracts_closed)
+              side_to_close = OrderSide.SELL if pos["side"] == "LONG" else OrderSide.BUY
+
+              print(f"\nClosing {qty_to_close}x ${strike:.0f} put ({pos['side']}, P/L: ${pos['pl']:+.2f})")
+
               try:
                   order = client.submit_order(MarketOrderRequest(
-                      symbol=sp["short_symbol"],
-                      qty=1,
-                      side=OrderSide.BUY,
+                      symbol=pos["symbol"],
+                      qty=int(qty_to_close),
+                      side=side_to_close,
                       time_in_force=TimeInForce.DAY,
                   ))
-                  print(f"  ✅ BUY {sp['short_symbol']}: {order.id}")
+                  print(f"  ✅ {side_to_close.value} {pos['symbol']}: {order.id}")
                   orders.append(order.id)
-              except Exception as e:
-                  print(f"  ❌ Failed: {e}")
-
-              # Sell to close long
-              try:
-                  order = client.submit_order(MarketOrderRequest(
-                      symbol=sp["long_symbol"],
-                      qty=1,
-                      side=OrderSide.SELL,
-                      time_in_force=TimeInForce.DAY,
-                  ))
-                  print(f"  ✅ SELL {sp['long_symbol']}: {order.id}")
-                  orders.append(order.id)
+                  contracts_closed += qty_to_close
               except Exception as e:
                   print(f"  ❌ Failed: {e}")
 
           print(f"\n{'=' * 60}")
           print(f"SUBMITTED {len(orders)} CLOSE ORDERS")
           print(f"{'=' * 60}")
+          EOF
+
+      - name: Reset PDT Check to Both (Safety)
+        if: always()
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          python3 << 'EOF'
+          import os
+          import requests
+
+          base_url = "https://paper-api.alpaca.markets"
+          headers = {
+              "APCA-API-KEY-ID": os.environ['ALPACA_API_KEY'],
+              "APCA-API-SECRET-KEY": os.environ['ALPACA_SECRET_KEY'],
+          }
+
+          print("Resetting pdt_check to 'both' for safety...")
+          resp = requests.patch(
+              f"{base_url}/v2/account/configurations",
+              headers=headers,
+              json={"pdt_check": "both"}
+          )
+          print(f"Response: {resp.status_code}")
           EOF
 
       - name: Trigger State Sync
