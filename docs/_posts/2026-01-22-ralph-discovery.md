@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Ralph's Discovery Log: 3 Fixes in 24 Hours"
-date: 2026-01-22 00:35:02
+date: 2026-01-22 00:43:38
 categories: [ralph, automation, ai-engineering]
 tags: [self-healing, ci-cd, autonomous-systems]
 ---
@@ -12,23 +12,10 @@ Our AI system, Ralph (named after the [Ralph Wiggum iterative coding technique](
 continuously monitors, discovers, and fixes issues in our trading system. Here's what it found today.
 
 
-### Discovery #1: LL-262: Data Sync Infrastructure Improvements
+### Discovery #1: LL-277: Iron Condor Optimization Research - 86% Win Rate Strategy
 
 **🔍 What Ralph Found:**
-- Max staleness during market hours: 15 min (was 30 min) - Data integrity check: Passes on every health check - Sync health visibility: Full history available
-
-**🔧 The Fix:**
-- Peak hours (10am-3pm ET): Every 15 minutes - Market open/close: Every 30 minutes - Added manual trigger option with force_sync parameter Added to `src/utils/staleness_guard.py`:
-
-**📈 Impact:**
-System stability improved
-
----
-
-### Discovery #2: LL-266: OptiMind Evaluation - Not Relevant to Our System
-
-**🔍 What Ralph Found:**
-- Manufacturing resource allocation Not every impressive technology is relevant to our system. Our $5K account with simple rules doesn't need mathematical optimization. The SOFI disaster taught us: complexity ≠ profitability. - evaluation - microsoft-research - optimization - not-applicable
+Identified during automated scanning
 
 **🔧 The Fix:**
 Automated fix applied by Ralph
@@ -38,10 +25,23 @@ System stability improved
 
 ---
 
-### Discovery #3: LL-277: Iron Condor Optimization Research - 86% Win Rate Strategy
+### Discovery #2: LL-281: CALL Leg Pricing Fix - Aggressive Fallbacks
 
 **🔍 What Ralph Found:**
 Identified during automated scanning
+
+**🔧 The Fix:**
+1. **Detect CALL vs PUT**: Check symbol for "C" to identify calls 2. **Higher CALL fallback**: $4.00 for CALLs vs $2.00 for PUTs 3. **Price buffer**: Add 10% buffer on BUY orders to ensure fills 4. **Quote validation**: Check for $0 bids/asks before using ```python fallback = 1.50 if is_call: fallback = 4.00  # CALLs are more expensive else: fallback = 2.00  # PUTs ``` 1. **Use realistic fallbacks**: Match typical option prices for each type 2. **Add price buffers**: Ensure aggressive enough for
+
+**📈 Impact:**
+System stability improved
+
+---
+
+### Discovery #3: LL-278: Position Imbalance Crisis - Orphan Long Puts
+
+**🔍 What Ralph Found:**
+The orphan longs are decaying and losing money without corresponding short premium to offset. 1. Trade execution submitted 6 long puts but only 4 short puts filled 2. OR partial fills weren't detected and corrected 3. Position monitoring didn't catch the imbalance 1. Close the 2 excess long puts (SPY260220P00658000) 2. Verify all other positions are balanced 3. Add position balance validation to daily workflow 1. **Pre-trade validation**: Verify both legs have equal quantities 2. **Post-trade va
 
 **🔧 The Fix:**
 Automated fix applied by Ralph
@@ -55,11 +55,11 @@ System stability improved
 
 | SHA | Message |
 |-----|---------|
-| `d51315d0` | fix(ci): Make daily blog workflow resilient to Alpaca sync f |
-| `2a0cda5b` | fix(dashboard): Update stale status to Jan 21, 2026 (#2577) |
-| `65928b4d` | docs(ralph): Auto-publish discovery blog post |
-| `8ec26ccd` | docs(ralph): Auto-publish discovery blog post |
-| `e91c79f8` | docs(ralph): Auto-publish discovery blog post |
+| `6a1d2f98` | feat(ralph): Enhance proactive scanning and weekly digest wo |
+| `4d9e524e` | docs(ralph): Update GitHub Pages to Day 86 + Ralph Mode bran |
+| `d61736fd` | docs(ralph): Update GitHub Pages to Day 86 + Ralph Mode bran |
+| `76e99c83` | fix(dialogflow): Handle compound P/L + analytical queries (# |
+| `c6c2fa5e` | docs(ralph): Auto-publish discovery blog post |
 
 
 ## 🎯 Why This Matters
@@ -75,7 +75,7 @@ This is the future of software engineering: systems that improve themselves.
 
 ---
 
-*Generated automatically by Ralph Mode on 2026-01-22 00:35:02*
+*Generated automatically by Ralph Mode on 2026-01-22 00:43:38*
 
 **Follow our journey:** [GitHub](https://github.com/IgorGanapolsky/trading) |
 Building a $100/day trading system with AI.
