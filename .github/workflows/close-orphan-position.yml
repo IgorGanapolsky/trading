@@ -1,12 +1,23 @@
 name: Close Orphan Position
 
+# Uses close_position() API - the recommended way to close positions
+# Updated Jan 22, 2026
+
 on:
   workflow_dispatch:
     inputs:
-      confirm:
-        description: "Type 'CLOSE' to confirm closing the orphan put position"
+      target_symbol:
+        description: "Symbol to close (e.g., SPY260220P00658000)"
         required: true
-        default: ""
+        default: "SPY260220P00658000"
+      dry_run:
+        description: "Dry run only"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
   push:
     paths:
       - 'CLOSE_ORPHAN.trigger'
@@ -14,7 +25,7 @@ on:
 jobs:
   close-position:
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.confirm == 'CLOSE' || github.event_name == 'push' }}
+    if: ${{ github.event.inputs.target_symbol != '' || github.event_name == 'push' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -25,13 +36,24 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: |
-          pip install alpaca-py yfinance
+        run: pip install alpaca-py
 
-      - name: Close Orphan Put
+      - name: Close Orphan Position
         env:
           ALPACA_PAPER_TRADING_5K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
           ALPACA_PAPER_TRADING_5K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
           PAPER_TRADING: "true"
+          TARGET_SYMBOL: ${{ github.event.inputs.target_symbol || 'SPY260220P00658000' }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: python3 scripts/close_orphan_put.py
+
+      - name: Summary
+        if: always()
         run: |
-          python3 scripts/close_orphan_put.py
+          echo ""
+          echo "=========================================="
+          echo "CLOSE ORPHAN POSITION SUMMARY"
+          echo "=========================================="
+          echo "Target Symbol: ${{ github.event.inputs.target_symbol || 'SPY260220P00658000' }}"
+          echo "Dry Run: ${{ github.event.inputs.dry_run || 'false' }}"
+          echo "=========================================="
