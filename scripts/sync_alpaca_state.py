@@ -47,7 +47,7 @@ def sync_from_alpaca() -> dict:
     Sync account state from Alpaca.
 
     Returns:
-        Dict with REAL account data from Alpaca.
+        Dict with REAL account data from Alpaca (both PAPER and LIVE).
 
     Raises:
         AlpacaSyncError: If API keys missing or connection fails.
@@ -66,6 +66,9 @@ def sync_from_alpaca() -> dict:
         # Return None to signal that we should only update timestamp, not values
         return None
 
+    result = {"paper": None, "live": None}
+
+    # ========== SYNC PAPER ACCOUNT ==========
     try:
         from src.execution.alpaca_executor import AlpacaExecutor
 
@@ -95,11 +98,11 @@ def sync_from_alpaca() -> dict:
                 for o in orders
                 if o.filled_at
             ]
-            logger.info(f"📜 Fetched {len(trade_history)} closed trades from history")
+            logger.info(f"📜 Fetched {len(trade_history)} closed trades from PAPER history")
         except Exception as e:
-            logger.warning(f"⚠️ Could not fetch trade history: {e}")
+            logger.warning(f"⚠️ Could not fetch PAPER trade history: {e}")
 
-        return {
+        result["paper"] = {
             "equity": executor.account_equity,
             "cash": executor.account_snapshot.get("cash", 0),
             "buying_power": executor.account_snapshot.get("buying_power", 0),
@@ -107,13 +110,48 @@ def sync_from_alpaca() -> dict:
             "positions_count": len(positions),
             "trade_history": trade_history,
             "trades_loaded": len(trade_history),
-            "mode": "paper" if executor.paper else "live",
+            "mode": "paper",
             "synced_at": datetime.now().isoformat(),
         }
+        logger.info(f"✅ PAPER account synced: ${executor.account_equity:,.2f}")
 
     except Exception as e:
-        logger.error(f"❌ Failed to sync from Alpaca: {e}")
-        raise
+        logger.error(f"❌ Failed to sync PAPER account: {e}")
+
+    # ========== SYNC LIVE (BROKERAGE) ACCOUNT ==========
+    # LL-281: Dashboard was showing PAPER data for LIVE account because we never fetched LIVE
+    import os
+    live_api_key = os.environ.get("ALPACA_BROKERAGE_TRADING_API_KEY")
+    live_api_secret = os.environ.get("ALPACA_BROKERAGE_TRADING_API_SECRET")
+
+    if live_api_key and live_api_secret:
+        try:
+            from alpaca.trading.client import TradingClient
+
+            live_client = TradingClient(live_api_key, live_api_secret, paper=False)
+            live_account = live_client.get_account()
+
+            result["live"] = {
+                "equity": float(live_account.equity),
+                "cash": float(live_account.cash),
+                "buying_power": float(live_account.buying_power),
+                "positions_count": 0,  # Can add position fetch later
+                "mode": "live",
+                "synced_at": datetime.now().isoformat(),
+            }
+            logger.info(f"✅ LIVE account synced: ${float(live_account.equity):,.2f}")
+
+        except Exception as e:
+            logger.warning(f"⚠️ Could not sync LIVE account: {e}")
+            # Don't fail - LIVE account sync is optional
+    else:
+        logger.info("ℹ️ No LIVE account credentials - skipping LIVE sync")
+
+    # Return combined result
+    if result["paper"] is None and result["live"] is None:
+        raise AlpacaSyncError("Failed to sync both PAPER and LIVE accounts")
+
+    return result
 
 
 def update_system_state(alpaca_data: dict | None) -> None:
@@ -121,6 +159,7 @@ def update_system_state(alpaca_data: dict | None) -> None:
     Update system_state.json with fresh Alpaca data.
 
     If alpaca_data is None, only update timestamp (preserve existing values).
+    Now handles both PAPER and LIVE accounts separately (LL-281 fix).
     """
     logger.info("📝 Updating system_state.json...")
 
@@ -141,97 +180,111 @@ def update_system_state(alpaca_data: dict | None) -> None:
         state["meta"]["sync_mode"] = "skipped_no_keys"
         logger.info("⚠️ No API keys - preserving existing account values, only updating timestamp")
     else:
-        # CRITICAL: Reject simulated data - this would overwrite real data with garbage
-        mode = alpaca_data.get("mode", "unknown")
-        if mode == "simulated":
-            raise AlpacaSyncError(
-                f"REFUSING to update system_state.json with SIMULATED data!\n"
-                f"  Received mode='{mode}'\n"
-                f"  This would overwrite real portfolio data with lies.\n"
-                f"  Fix the Alpaca connection first."
-            )
+        # LL-281: Handle new structure with separate PAPER and LIVE data
+        paper_data = alpaca_data.get("paper")
+        live_data = alpaca_data.get("live")
 
-        # Full sync - update account section
-        state.setdefault("account", {})
-        state["account"]["current_equity"] = alpaca_data.get("equity", 0)
-        state["account"]["cash"] = alpaca_data.get("cash", 0)
-        state["account"]["buying_power"] = alpaca_data.get("buying_power", 0)
-        state["account"]["positions_value"] = alpaca_data.get("equity", 0) - alpaca_data.get(
-            "cash", 0
-        )
-
-        # Calculate P/L if starting balance exists
-        starting = state["account"].get("starting_balance", 100000.0)
-        current = alpaca_data.get("equity", 0)
-        state["account"]["total_pl"] = current - starting
-        state["account"]["total_pl_pct"] = (
-            ((current - starting) / starting) * 100 if starting > 0 else 0
-        )
-
-        # Update meta
-        state["meta"]["last_sync"] = alpaca_data.get("synced_at")
-        state["meta"]["sync_mode"] = alpaca_data.get("mode", "unknown")
-
-        # Store positions count
-        state["account"]["positions_count"] = alpaca_data.get("positions_count", 0)
-
-        # CRITICAL FIX (Jan 15, 2026): Also update paper_account section
-        # Dashboard reads from paper_account.current_equity, not account.current_equity
-        # Without this, dashboard defaults to $100,000 instead of real value
-        if alpaca_data.get("mode") == "paper":
-            state.setdefault("paper_account", {})
-            state["paper_account"]["current_equity"] = alpaca_data.get("equity", 0)
-            state["paper_account"]["equity"] = alpaca_data.get("equity", 0)
-            state["paper_account"]["cash"] = alpaca_data.get("cash", 0)
-            state["paper_account"]["buying_power"] = alpaca_data.get("buying_power", 0)
-            state["paper_account"]["positions_count"] = alpaca_data.get("positions_count", 0)
-            state["paper_account"]["starting_balance"] = state["paper_account"].get(
-                "starting_balance", 5000.0
-            )
-            state["paper_account"]["total_pl"] = (
-                current - state["paper_account"]["starting_balance"]
-            )
-            state["paper_account"]["total_pl_pct"] = (
-                (
-                    (current - state["paper_account"]["starting_balance"])
-                    / state["paper_account"]["starting_balance"]
+        # ========== UPDATE PAPER ACCOUNT ==========
+        if paper_data:
+            # CRITICAL: Reject simulated data
+            mode = paper_data.get("mode", "unknown")
+            if mode == "simulated":
+                raise AlpacaSyncError(
+                    f"REFUSING to update with SIMULATED data! mode='{mode}'"
                 )
-                * 100
-                if state["paper_account"]["starting_balance"] > 0
-                else 0
+
+            # Update account section (primary account = PAPER for R&D)
+            state.setdefault("account", {})
+            state["account"]["current_equity"] = paper_data.get("equity", 0)
+            state["account"]["cash"] = paper_data.get("cash", 0)
+            state["account"]["buying_power"] = paper_data.get("buying_power", 0)
+            state["account"]["positions_count"] = paper_data.get("positions_count", 0)
+
+            # Calculate P/L for PAPER
+            paper_starting = state.get("paper_account", {}).get("starting_balance", 5000.0)
+            paper_current = paper_data.get("equity", 0)
+            state["account"]["total_pl"] = paper_current - paper_starting
+            state["account"]["total_pl_pct"] = (
+                ((paper_current - paper_starting) / paper_starting) * 100 if paper_starting > 0 else 0
             )
 
-        # CRITICAL: Store actual positions in performance.open_positions
-        # This is what the blog and verify_positions.py use to display positions
-        positions = alpaca_data.get("positions", [])
-        state.setdefault("performance", {})
-        state["performance"]["open_positions"] = [
-            {
-                "symbol": p.get("symbol"),
-                "quantity": p.get("qty") or p.get("quantity", 0),
-                "entry_price": p.get("avg_entry_price", 0),
-                "current_price": p.get("current_price", 0),
-                "market_value": p.get("market_value", 0),
-                "unrealized_pl": p.get("unrealized_pl", 0),
-                "unrealized_pl_pct": p.get("unrealized_plpc", 0),
-                "side": p.get("side", "long"),
-            }
-            for p in positions
-            if p.get("symbol")
-        ]
+            # Update paper_account section
+            state.setdefault("paper_account", {})
+            state["paper_account"]["current_equity"] = paper_data.get("equity", 0)
+            state["paper_account"]["equity"] = paper_data.get("equity", 0)
+            state["paper_account"]["cash"] = paper_data.get("cash", 0)
+            state["paper_account"]["buying_power"] = paper_data.get("buying_power", 0)
+            state["paper_account"]["positions_count"] = paper_data.get("positions_count", 0)
+            state["paper_account"]["starting_balance"] = paper_starting
+            state["paper_account"]["total_pl"] = paper_current - paper_starting
+            state["paper_account"]["total_pl_pct"] = (
+                ((paper_current - paper_starting) / paper_starting) * 100 if paper_starting > 0 else 0
+            )
 
-        # LL-237: CRITICAL - Sync trade_history to prevent knowledge loss
-        # This is how we lost all $100K lessons - we didn't record trades
-        trade_history = alpaca_data.get("trade_history", [])
-        if trade_history:
-            state["trade_history"] = trade_history
-            state["trades_loaded"] = len(trade_history)
-            logger.info(f"📜 Recorded {len(trade_history)} trades to history")
+            # Update meta
+            state["meta"]["last_sync"] = paper_data.get("synced_at")
+            state["meta"]["sync_mode"] = "paper"
+
+            # Store positions in performance.open_positions
+            positions = paper_data.get("positions", [])
+            state.setdefault("performance", {})
+            state["performance"]["open_positions"] = [
+                {
+                    "symbol": p.get("symbol"),
+                    "quantity": p.get("qty") or p.get("quantity", 0),
+                    "entry_price": p.get("avg_entry_price", 0),
+                    "current_price": p.get("current_price", 0),
+                    "market_value": p.get("market_value", 0),
+                    "unrealized_pl": p.get("unrealized_pl", 0),
+                    "unrealized_pl_pct": p.get("unrealized_plpc", 0),
+                    "side": p.get("side", "long"),
+                }
+                for p in positions
+                if p.get("symbol")
+            ]
+
+            # Sync trade_history
+            trade_history = paper_data.get("trade_history", [])
+            if trade_history:
+                state["trade_history"] = trade_history
+                state["trades_loaded"] = len(trade_history)
+                logger.info(f"📜 Recorded {len(trade_history)} trades to history")
+            else:
+                existing_history = state.get("trade_history", [])
+                if existing_history:
+                    logger.info(f"📜 Preserved {len(existing_history)} existing trades")
+
+        # ========== UPDATE LIVE (BROKERAGE) ACCOUNT ==========
+        # LL-281: This was MISSING - dashboard showed PAPER data for LIVE
+        if live_data:
+            state.setdefault("live_account", {})
+            live_starting = state["live_account"].get("starting_balance", 20.0)
+            live_current = live_data.get("equity", 0)
+
+            state["live_account"]["current_equity"] = live_current
+            state["live_account"]["equity"] = live_current
+            state["live_account"]["cash"] = live_data.get("cash", 0)
+            state["live_account"]["buying_power"] = live_data.get("buying_power", 0)
+            state["live_account"]["positions_count"] = live_data.get("positions_count", 0)
+            state["live_account"]["starting_balance"] = live_starting
+            state["live_account"]["total_pl"] = live_current - live_starting
+            state["live_account"]["total_pl_pct"] = (
+                ((live_current - live_starting) / live_starting) * 100 if live_starting > 0 else 0
+            )
+            state["live_account"]["synced_at"] = live_data.get("synced_at")
+
+            logger.info(f"✅ LIVE account stored: ${live_current:,.2f}")
         else:
-            # Preserve existing trade_history if we couldn't fetch new data
-            existing_history = state.get("trade_history", [])
-            if existing_history:
-                logger.info(f"📜 Preserved {len(existing_history)} existing trades in history")
+            # Preserve existing live_account data if we didn't fetch new
+            if "live_account" not in state:
+                state["live_account"] = {
+                    "current_equity": 20.0,
+                    "equity": 20.0,
+                    "starting_balance": 20.0,
+                    "total_pl": 0.0,
+                    "total_pl_pct": 0.0,
+                    "note": "LIVE account not synced - building capital via deposits",
+                }
 
     # Write atomically
     SYSTEM_STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -241,10 +294,11 @@ def update_system_state(alpaca_data: dict | None) -> None:
     temp_file.rename(SYSTEM_STATE_FILE)
 
     # Log result
-    current_equity = state.get("account", {}).get("current_equity", 0)
+    paper_equity = state.get("paper_account", {}).get("equity", 0)
+    live_equity = state.get("live_account", {}).get("equity", 0)
     positions_count = state.get("account", {}).get("positions_count", 0)
     logger.info(
-        f"✅ Updated system_state.json (equity=${current_equity:.2f}, positions={positions_count})"
+        f"✅ Updated system_state.json (PAPER=${paper_equity:.2f}, LIVE=${live_equity:.2f}, positions={positions_count})"
     )
 
 

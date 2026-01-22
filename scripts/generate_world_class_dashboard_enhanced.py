@@ -49,19 +49,15 @@ def calculate_basic_metrics():
         days_elapsed = max(challenge.get("current_day", 1), 1)
 
     # ========== LIVE ACCOUNT (Brokerage - Real Money) ==========
-    live_account = system_state.get("account", {})
-    live_equity = live_account.get("current_equity", 20.0)
+    # FIX Jan 22, 2026 (LL-281): Read from live_account, NOT account
+    # PROBLEM: Dashboard was showing PAPER data for LIVE because we read from wrong key
+    # SOLUTION: Read from dedicated live_account section that sync_alpaca_state.py populates
+    live_account = system_state.get("live_account", {})
+    live_equity = live_account.get("current_equity") or live_account.get("equity", 20.0)
     live_starting = live_account.get("starting_balance", 20.0)
     live_pl = live_account.get("total_pl", 0.0)
     live_pl_pct = live_account.get("total_pl_pct", 0.0)
-    # FIX Jan 16, 2026: Also check daily_change for LIVE account
-    # NOTE: If LIVE and PAPER are same account (same equity), use paper's daily_change
-    paper_account_temp = system_state.get("paper_account", {})
-    if live_equity == paper_account_temp.get("equity", 0):
-        # Same account - use paper's daily_change
-        live_todays_pl = paper_account_temp.get("daily_change", 0.0)
-    else:
-        live_todays_pl = live_account.get("daily_change") or live_account.get("todays_pl", 0.0)
+    live_todays_pl = live_account.get("daily_change") or live_account.get("todays_pl", 0.0)
     live_todays_pl_pct = live_account.get("todays_pl_pct", 0.0)
     if live_todays_pl != 0 and live_todays_pl_pct == 0 and live_equity > 0:
         live_todays_pl_pct = (live_todays_pl / (live_equity - live_todays_pl)) * 100
