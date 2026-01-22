@@ -37,6 +37,7 @@ header_pages:
   - index.md
   - lessons.md
   - reports.md
+  - discoveries.md
   - tech-stack.md
 
 # Collections
@@ -47,6 +48,9 @@ collections:
   reports:
     output: true
     permalink: /reports/:name/
+  discoveries:
+    output: true
+    permalink: /discoveries/:name/
 
 # Defaults
 defaults:
@@ -62,6 +66,12 @@ defaults:
     values:
       layout: "post"
       author: "AI Trading System"
+  - scope:
+      path: ""
+      type: "discoveries"
+    values:
+      layout: "post"
+      author: "Ralph (AI CTO)"
 
 # Analytics (add your GA4 ID)
 google_analytics:

@@ -256,3 +256,86 @@ jobs:
           echo "## Research & Learning" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Ralph Loop iteration recorded." >> $GITHUB_STEP_SUMMARY
+
+  # Job 3: Publish blog post about discoveries
+  publish-discovery:
+    runs-on: ubuntu-latest
+    needs: [health-check, ralph-loop]
+    # Only publish if Ralph loop ran AND made changes
+    if: (needs.health-check.outputs.needs_fixing == 'true' || github.event_name == 'workflow_dispatch') && always()
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+          ref: main  # Get latest after Ralph's changes
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -q requests
+          pip install -q -r requirements.txt || true
+
+      - name: Check for Ralph output
+        id: check_output
+        run: |
+          # Check if Ralph made changes by looking at recent commits
+          RECENT_COMMIT=$(git log -1 --pretty=format:"%s" 2>/dev/null || echo "")
+
+          if [[ "$RECENT_COMMIT" == *"ralph"* ]] || [[ "$RECENT_COMMIT" == *"Ralph"* ]]; then
+            echo "has_discovery=true" >> $GITHUB_OUTPUT
+            echo "discovery=$(echo $RECENT_COMMIT | head -c 100)" >> $GITHUB_OUTPUT
+          else
+            echo "has_discovery=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate and publish blog post
+        if: steps.check_output.outputs.has_discovery == 'true'
+        env:
+          DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
+        run: |
+          echo "=== Publishing Ralph Discovery Blog Post ==="
+
+          DISCOVERY="${{ steps.check_output.outputs.discovery }}"
+
+          # Get changed files from recent commit
+          CHANGED_FILES=$(git diff --name-only HEAD~1 2>/dev/null | head -5 | tr '\n' ' ' || echo "")
+
+          python scripts/ralph_blog_publisher.py \
+            --discovery "$DISCOVERY" \
+            --details "Automated fix applied by Ralph Loop CI" \
+            --files $CHANGED_FILES \
+            --iterations 1 \
+            --cost 0.05 \
+            --reason "ai_fix_applied" || true
+
+      - name: Commit blog post
+        if: steps.check_output.outputs.has_discovery == 'true'
+        run: |
+          git config user.name "ralph-bot[bot]"
+          git config user.email "ralph-bot[bot]@users.noreply.github.com"
+
+          if [ -n "$(git status --porcelain docs/)" ]; then
+            git add docs/
+            git commit -m "docs(blog): Ralph discovery - ${{ steps.check_output.outputs.discovery }}" || true
+            git push origin main || true
+            echo "::notice::Blog post published!"
+          else
+            echo "::notice::No blog post changes to commit"
+          fi
+
+      - name: Blog Summary
+        run: |
+          echo "## 📝 Blog Publication" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.check_output.outputs.has_discovery }}" == "true" ]; then
+            echo "✅ Discovery blog post generated and published" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Discovery:** ${{ steps.check_output.outputs.discovery }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ No significant discovery to blog about" >> $GITHUB_STEP_SUMMARY
+          fi
