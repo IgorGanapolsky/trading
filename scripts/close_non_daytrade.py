@@ -68,37 +68,78 @@ if safe_to_close <= 0:
     print("\n⚠️  No contracts safe to close without day trade")
     sys.exit(0)
 
-# Try to close just the non-day-trade contracts
-print(f"\n=== Attempting to close {safe_to_close} contracts ===")
+# Try to close using close_position with percentage
+# This is more reliable than submit_order for closing existing positions
+print(f"\n=== Attempting to close {safe_to_close} contracts using close_position API ===")
+
+# Get current position qty
+positions = client.get_all_positions()
+current_qty = 0
+for pos in positions:
+    if pos.symbol == target:
+        current_qty = int(float(pos.qty))
+        break
+
+print(f"  Current position qty: {current_qty}")
+
+if current_qty <= 0:
+    print("  No long position found")
+    sys.exit(0)
+
+# Calculate percentage to close (safe_to_close out of current_qty)
+# But max out at what we can close without day trade
+close_qty = min(safe_to_close, current_qty)
+percentage = (close_qty / current_qty) * 100
+
+print(f"  Closing {close_qty} contracts ({percentage:.1f}% of position)")
 
 try:
-    order = client.submit_order(
-        MarketOrderRequest(
-            symbol=target,
-            qty=safe_to_close,
-            side=OrderSide.SELL,
-            time_in_force=TimeInForce.DAY,
-        )
-    )
-    print(f"  ✅ Order submitted: {order.id}")
-    print(f"  Status: {order.status}")
-except Exception as e:
-    print(f"  ❌ Failed: {e}")
+    # Use close_position with qty parameter
+    from alpaca.trading.requests import ClosePositionRequest
+    close_request = ClosePositionRequest(qty=str(close_qty))
+    result = client.close_position(target, close_options=close_request)
 
-    # Try smaller qty
-    print(f"\n  Trying {safe_to_close - 1} contracts...")
+    if isinstance(result, list):
+        for order in result:
+            print(f"  ✅ Order: {order.id} - {order.status}")
+    else:
+        print(f"  ✅ Order: {result.id} - {result.status}")
+except Exception as e:
+    print(f"  ❌ close_position failed: {e}")
+
+    # Fallback: try submit_order with explicit options
+    print("\n  Trying submit_order fallback...")
     try:
+        # For options, we need to be explicit about the order type
+        from alpaca.trading.requests import MarketOrderRequest
         order = client.submit_order(
             MarketOrderRequest(
                 symbol=target,
-                qty=safe_to_close - 1,
+                qty=close_qty,
                 side=OrderSide.SELL,
                 time_in_force=TimeInForce.DAY,
             )
         )
-        print(f"  ✅ Order submitted: {order.id}")
+        print(f"  ✅ Fallback order: {order.id}")
     except Exception as e2:
-        print(f"  ❌ Failed: {e2}")
+        print(f"  ❌ Fallback also failed: {e2}")
+
+        # Try closing just 1 contract at a time
+        print("\n  Trying one contract at a time...")
+        for i in range(close_qty):
+            try:
+                order = client.submit_order(
+                    MarketOrderRequest(
+                        symbol=target,
+                        qty=1,
+                        side=OrderSide.SELL,
+                        time_in_force=TimeInForce.DAY,
+                    )
+                )
+                print(f"  ✅ Contract {i+1}: {order.id}")
+            except Exception as e3:
+                print(f"  ❌ Contract {i+1} failed: {e3}")
+                break
         sys.exit(1)
 
 print("\n" + "=" * 60)
