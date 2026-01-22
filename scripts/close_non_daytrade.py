@@ -48,26 +48,57 @@ if not target_pos:
     print(f"\n✅ {target} not found - may be closed already")
     sys.exit(0)
 
-# Calculate PDT-safe quantity
-print("\nCalculating PDT-safe quantity...")
-try:
-    orders = client.get_orders(filter=GetOrdersRequest(status=QueryOrderStatus.ALL, limit=100))
-    buys_today = 0
-    buys_before = 0
-    for order in orders:
-        if order.symbol == target and order.side.name == "BUY" and order.filled_at:
-            filled_qty = int(float(order.filled_qty or 0))
-            if order.filled_at.date() == today:
-                buys_today += filled_qty
-            else:
-                buys_before += filled_qty
-    print(f"  Bought TODAY (day trade if sold): {buys_today}")
-    print(f"  Bought BEFORE today (SAFE to sell): {buys_before}")
+# Calculate PDT-safe quantity using local trade history (more reliable than API)
+print("\nCalculating PDT-safe quantity from trade history...")
+import json
+from datetime import timedelta
 
-    safe_qty = min(buys_before, total_qty)
+buys_today = 0
+buys_before = 0
+
+# First try local trade history (most complete)
+try:
+    with open("data/system_state.json") as f:
+        state = json.load(f)
+    for trade in state.get("trade_history", []):
+        if trade.get("symbol") == target and "BUY" in str(trade.get("side", "")):
+            qty = int(float(trade.get("qty", 0)))
+            filled_str = trade.get("filled_at", "")
+            if filled_str:
+                filled_date = datetime.fromisoformat(filled_str.replace("+00:00", "")).date()
+                if filled_date == today:
+                    buys_today += qty
+                else:
+                    buys_before += qty
+    print(f"  (from local trade history)")
 except Exception as e:
-    print(f"  Warning: Could not calculate - {e}")
-    safe_qty = total_qty - 1  # Conservative: assume 1 bought today
+    print(f"  Local history failed: {e}, trying API with date range...")
+    # Fallback: Query API with explicit date range (30 days back)
+    try:
+        from datetime import timedelta
+        start_date = today - timedelta(days=30)
+        orders = client.get_orders(filter=GetOrdersRequest(
+            status=QueryOrderStatus.ALL,
+            limit=500,
+            after=datetime.combine(start_date, datetime.min.time()).replace(tzinfo=timezone.utc)
+        ))
+        for order in orders:
+            if order.symbol == target and order.side.name == "BUY" and order.filled_at:
+                filled_qty = int(float(order.filled_qty or 0))
+                if order.filled_at.date() == today:
+                    buys_today += filled_qty
+                else:
+                    buys_before += filled_qty
+    except Exception as e2:
+        print(f"  API also failed: {e2}")
+        # Final fallback: assume 2 bought today (conservative based on known data)
+        buys_today = 2
+        buys_before = total_qty - 2
+
+print(f"  Bought TODAY (day trade if sold): {buys_today}")
+print(f"  Bought BEFORE today (SAFE to sell): {buys_before}")
+
+safe_qty = min(buys_before, total_qty)
 
 if safe_qty <= 0:
     print("\n⚠️ No PDT-safe contracts to close")
