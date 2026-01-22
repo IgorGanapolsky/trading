@@ -2,10 +2,10 @@
 
 CTO: Claude | CEO: Igor Ganapolsky
 
-## Strategy (Updated Jan 21, 2026 - IRON CONDORS REPLACE TASTYTRADE)
+## Strategy (Updated Jan 22, 2026 - NEW $30K ACCOUNT)
 - **North Star**: $100/day after-tax profit - CEO MANDATE (PERMANENT)
 - **Why revised**: TastyTrade credit spread 11-year backtest showed LOSSES (-7% to -93%). Iron condors from $100K account showed 86% win rate with 1.5:1 reward/risk.
-- **Current capital**: $4,986.39 | Lesson paid from SOFI disaster.
+- **Current capital**: $30,000 | Fresh start - clean slate Jan 22, 2026
 - **Primary strategy**: IRON CONDORS on SPY ONLY - defined risk on BOTH sides
 - **Iron condor setup**:
   - Sell 15-20 delta put spread (bull put)
@@ -14,28 +14,30 @@ CTO: Claude | CEO: Igor Ganapolsky
   - Collect premium from BOTH sides
 - **CRITICAL MATH**: 15-delta = 86% win rate (LL-220). Risk/reward ~1.5:1 (BETTER than credit spreads)
 - **Expiration**: 30-45 DTE, close at 50% max profit OR 7 DTE (whichever first) - LL-268 research
-- **Position limit**: 1 iron condor at a time (5% max = $248 risk)
-- **Monthly target**: 2-3 iron condors x $75 avg x 86% win rate = $130-190/month (realistic)
+- **Position limit**: 1 iron condor at a time (5% max = $1,500 risk)
+- **Monthly target**: 3-4 iron condors x $150-250 avg x 86% win rate = $400-860/month (conservative)
 - **Stop-loss**: Close if one side reaches 200% of credit - MANDATORY
 - **Adjustment**: If tested, roll untested side closer for additional credit
 - **Assignment risk**: Close positions at 7 DTE to avoid gamma risk (changed from 21 DTE per LL-268)
 - **Risk management**: NEVER more than 5% on single trade. NO NAKED OPTIONS.
 - **Paper phase**: 90 days to validate 80%+ win rate before scaling
 - **Why iron condors beat credit spreads**: Collect premium from BOTH sides, better win rate, profit in range-bound markets
+- **PDT NOTE**: $30K > $25K = NO PDT RESTRICTIONS (can day trade freely)
 
-## Recovery Path (Math-Validated Jan 15, 2026)
+## Recovery Path (ACCELERATED - Jan 22, 2026)
 | Phase | Capital | Monthly Income | Daily Equivalent | Timeline |
 |-------|---------|----------------|------------------|----------|
-| Now | $4,959 | $150-200 | **$5-10/day** | Immediate |
-| +6mo | $9,500 | $285-380 | $14-19/day | With deposits |
-| +12mo | $16,000 | $480-640 | $24-32/day | Compounding |
-| +24mo | $33,000 | $990-1,320 | $50-66/day | On track |
-| +30mo | $45,000 | $1,350-1,800 | **$68-90/day** | Near goal |
-| Goal | $50,000+ | $2,000+ | **$100/day** | ~2.5-3 years |
+| Now | $30,000 | $400-860 | **$13-29/day** | Immediate |
+| +6mo | $35,000 | $470-1,000 | $16-33/day | Conservative growth |
+| +12mo | $42,000 | $560-1,200 | $19-40/day | Compounding |
+| +18mo | $50,000 | $670-1,430 | $22-48/day | Near goal |
+| Goal | $75,000+ | $2,000+ | **$100/day** | ~18-24 months |
+
+**Note**: $30K starting capital means NO PDT RESTRICTIONS and faster path to goal!
 
 ## MANDATORY Pre-Trade Checklist
 1. [ ] Is ticker SPY? (SPY ONLY - best liquidity, tightest spreads)
-2. [ ] Is position size ≤5% of account ($248)?
+2. [ ] Is position size ≤5% of account ($1,500)?
 3. [ ] Is it an IRON CONDOR (4-leg, defined risk on BOTH sides)?
 4. [ ] Are short strikes at 15-20 delta?
 5. [ ] 30-45 DTE expiration?
@@ -149,6 +151,8 @@ See `docs/ARCHITECTURE.md` for detailed architecture documentation.
 Hooks provide: portfolio status, market hours, trade count, date verification.
 Trust the hooks. They work.
 
-## $5K Account Priority
-Use `ALPACA_PAPER_TRADING_5K_API_KEY` before `ALPACA_API_KEY`.
+## $30K Paper Account (Jan 22, 2026)
+Account ID: PA3PYE0C9MN - Fresh start with no positions.
+Use `ALPACA_PAPER_TRADING_5K_API_KEY` (now points to $30K account).
 All code must use `get_alpaca_credentials()` from `src/utils/alpaca_client.py`.
+**NO PDT RESTRICTIONS** - Can freely close positions same-day.

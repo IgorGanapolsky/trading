@@ -26,7 +26,7 @@ Generate $100/day after-tax profit through compounding, following Phil Town Rule
 | DTE | 30-45 days |
 | Exit | 50% profit OR 7 DTE (whichever first) |
 | Stop-loss | 200% of credit received |
-| Max risk per trade | 5% of portfolio |
+| Max risk per trade | 5% of portfolio ($1,500) |
 
 ---
 
@@ -114,14 +114,17 @@ AFTER task  → Record outcomes + mistakes
 
 ---
 
-## Recovery Path (Current State - Jan 2026)
+## Recovery Path (NEW $30K Account - Jan 22, 2026)
 
 | Phase | Capital | Monthly Target | Timeline |
 |-------|---------|----------------|----------|
-| Now | ~$3,000 | $260-390 | After position close |
-| +6mo | $5,300 | $400-500 | With compounding |
-| +12mo | $10,000 | $800-1,000 | Scaling |
-| +30mo | $50,000 | $2,000+ | **$100/day goal** |
+| Now | $30,000 | $400-860 | Immediate |
+| +6mo | $35,000 | $470-1,000 | Conservative growth |
+| +12mo | $42,000 | $560-1,200 | Compounding |
+| +18mo | $50,000 | $670-1,430 | Near goal |
+| Goal | $75,000+ | $2,000+ | **$100/day goal** (~18-24mo) |
+
+**Note**: $30K = NO PDT RESTRICTIONS. Clean slate, no bleeding positions.
 
 ---
 
