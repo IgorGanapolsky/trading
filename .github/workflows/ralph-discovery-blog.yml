@@ -1,0 +1,114 @@
+name: Ralph Discovery Blog Publisher
+
+# Automatically publishes blog posts when Ralph makes significant discoveries
+# Posts go to GitHub Pages AND Dev.to for maximum reach
+
+on:
+  # Trigger after Ralph workflows complete
+  workflow_run:
+    workflows:
+      - "Ralph Loop - AI Self-Healing (Cost-Optimized)"
+      - "Self-Healing Auto-Fix"
+      - "Ralph Proactive Scanner"
+    types:
+      - completed
+
+  # Also run daily to catch any missed discoveries
+  schedule:
+    - cron: '0 18 * * *'  # 6 PM UTC daily
+
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      force_publish:
+        description: 'Publish even if no new discoveries'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  check-discoveries:
+    runs-on: ubuntu-latest
+    outputs:
+      should_publish: ${{ steps.check.outputs.should_publish }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 50  # Get enough history for commit analysis
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Check for discoveries
+        id: check
+        run: |
+          # Check for recent lesson files (last 24 hours)
+          RECENT_LESSONS=$(find rag_knowledge/lessons_learned -name "*.md" -mtime -1 2>/dev/null | wc -l)
+
+          # Check for significant commits
+          RECENT_COMMITS=$(git log --since="24 hours ago" --oneline --grep="fix\|feat" | wc -l)
+
+          echo "Recent lessons: $RECENT_LESSONS"
+          echo "Recent significant commits: $RECENT_COMMITS"
+
+          if [ "${{ inputs.force_publish }}" == "true" ] || [ "$RECENT_LESSONS" -gt 0 ] || [ "$RECENT_COMMITS" -gt 2 ]; then
+            echo "should_publish=true" >> $GITHUB_OUTPUT
+            echo "✅ Will publish blog post"
+          else
+            echo "should_publish=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No significant discoveries to publish"
+          fi
+
+  publish-blog:
+    runs-on: ubuntu-latest
+    needs: check-discoveries
+    if: needs.check-discoveries.outputs.should_publish == 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+          fetch-depth: 50
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Generate and publish blog post
+        env:
+          DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
+        run: |
+          python scripts/ralph_discovery_blog.py
+
+      - name: Commit GitHub Pages post
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Check for new blog posts
+          if [ -n "$(git status --porcelain docs/_posts/)" ]; then
+            git add docs/_posts/
+            git commit -m "docs(ralph): Auto-publish discovery blog post"
+            git push
+            echo "✅ Blog post committed to GitHub Pages"
+          else
+            echo "ℹ️ No new blog posts to commit"
+          fi
+
+      - name: Summary
+        run: |
+          echo "## 📝 Ralph Discovery Blog Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Blog post generated and published:" >> $GITHUB_STEP_SUMMARY
+          echo "- GitHub Pages: ✅ Committed to docs/_posts/" >> $GITHUB_STEP_SUMMARY
+          echo "- Dev.to: Check logs above" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🤖 Automated by Ralph Mode" >> $GITHUB_STEP_SUMMARY
