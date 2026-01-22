@@ -13,13 +13,13 @@ This validator MUST be called before any trade. It:
 """
 
 import logging
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 
 class PreTradeValidationError(Exception):
     """Raised when pre-trade validation fails."""
+
     pass
 
 
@@ -111,6 +111,7 @@ class PreTradeValidator:
         """
         try:
             from src.rag.lessons_learned_rag import LessonsLearnedRAG
+
             rag = LessonsLearnedRAG()
             results = rag.search(f"{symbol} {strategy} lessons", top_k=3)
 
