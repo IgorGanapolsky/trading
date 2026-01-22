@@ -67,9 +67,9 @@
   "trades_loaded": 0,
   "trades": {
     "last_trade_date": "2026-01-22",
-    "today_trades": 0,
-    "total_trades_today": 0,
-    "last_trade_symbol": "SPY260220P00565000"
+    "today_trades": 10,
+    "total_trades_today": 10,
+    "last_trade_symbol": "SYNCED"
   },
   "risk": {
     "status": "WARNING - NEGATIVE P/L",
@@ -86,8 +86,9 @@
     "starting_balance": 30000.0
   },
   "meta": {
-    "last_updated": "2026-01-22T21:25:04.421914",
+    "last_updated": "2026-01-22T21:25:54.484143+00:00",
     "note": "Reset for new $30K paper account",
-    "previous_account": "archived - $5K account with position crisis"
+    "previous_account": "archived - $5K account with position crisis",
+    "trade_sync": "alpaca_api"
   }
 }
