@@ -114,5 +114,16 @@
     "equity": 4986.39,
     "daily_pl": 12.31,
     "total_pl": -13.609999999999673
+  },
+  {
+    "date": "2026-01-22",
+    "timestamp": "2026-01-22T22:36:08.063950",
+    "equity": 30000.0,
+    "cash": 30000.0,
+    "buying_power": 60000.0,
+    "pl": 0.0,
+    "pl_pct": 0.0,
+    "account_type": "paper",
+    "note": "NEW $30K PAPER ACCOUNT - PA3PYE0C9MN - Fresh start, clean slate"
   }
 ]
