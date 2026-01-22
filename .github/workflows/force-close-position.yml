@@ -2,6 +2,12 @@ name: EMERGENCY Force Close Position
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'FORCE_CLOSE.trigger'
+  schedule:
+    # Run every 5 minutes during market hours - CRISIS MODE
+    - cron: '*/5 14-20 * * 1-5'
 
 permissions:
   contents: write
