@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Ralph's Discovery Log: 3 Fixes in 24 Hours"
-date: 2026-01-22 02:18:32
+date: 2026-01-22 02:18:57
 categories: [ralph, automation, ai-engineering]
 tags: [self-healing, ci-cd, autonomous-systems]
 ---
@@ -12,20 +12,7 @@ Our AI system, Ralph (named after the [Ralph Wiggum iterative coding technique](
 continuously monitors, discovers, and fixes issues in our trading system. Here's what it found today.
 
 
-### Discovery #1: LL-262: Data Sync Infrastructure Improvements
-
-**🔍 What Ralph Found:**
-- Max staleness during market hours: 15 min (was 30 min) - Data integrity check: Passes on every health check - Sync health visibility: Full history available
-
-**🔧 The Fix:**
-- Peak hours (10am-3pm ET): Every 15 minutes - Market open/close: Every 30 minutes - Added manual trigger option with force_sync parameter Added to `src/utils/staleness_guard.py`:
-
-**📈 Impact:**
-System stability improved
-
----
-
-### Discovery #2: LL-266: OptiMind Evaluation - Not Relevant to Our System
+### Discovery #1: LL-266: OptiMind Evaluation - Not Relevant to Our System
 
 **🔍 What Ralph Found:**
 - Manufacturing resource allocation Not every impressive technology is relevant to our system. Our $5K account with simple rules doesn't need mathematical optimization. The SOFI disaster taught us: complexity ≠ profitability. - evaluation - microsoft-research - optimization - not-applicable
@@ -38,7 +25,7 @@ System stability improved
 
 ---
 
-### Discovery #3: LL-277: Iron Condor Optimization Research - 86% Win Rate Strategy
+### Discovery #2: LL-277: Iron Condor Optimization Research - 86% Win Rate Strategy
 
 **🔍 What Ralph Found:**
 Identified during automated scanning
@@ -51,15 +38,28 @@ System stability improved
 
 ---
 
+### Discovery #3: LL-272: PDT Protection Blocks SOFI Position Close
+
+**🔍 What Ralph Found:**
+Identified during automated scanning
+
+**🔧 The Fix:**
+**Option 1**: Wait for a day trade to fall off (5 business days from oldest day trade) **Option 2**: Deposit funds to reach $25K (removes PDT restriction) **Option 3**: Accept the loss and let the option expire worthless (Feb 13, 2026) 1. **Check day trade count BEFORE opening positions** - query Alpaca API for day trade status 2. **Never open non-SPY positions** - this was the original violation 3. **Close positions on different days from opening** - avoid same-day round trips 4. **Track day tr
+
+**📈 Impact:**
+System stability improved
+
+---
+
 ## 📝 Commits This Session
 
 | SHA | Message |
 |-----|---------|
+| `b786cd01` | docs(ralph): Auto-publish discovery blog post |
 | `3db343ce` | docs(ralph): Auto-publish discovery blog post |
 | `a666c8ce` | fix(dialogflow): Fix RAG field name mismatch in compound que |
 | `f95ba287` | fix(dashboard): Add Today's P/L to GitHub Pages (#2592) |
 | `6f5dd3d0` | chore(ralph): Iteration 146 - system healthy (#2590) |
-| `dcbef00a` | chore: Update system state timestamp (#2589) |
 
 
 ## 🎯 Why This Matters
@@ -75,7 +75,7 @@ This is the future of software engineering: systems that improve themselves.
 
 ---
 
-*Generated automatically by Ralph Mode on 2026-01-22 02:18:32*
+*Generated automatically by Ralph Mode on 2026-01-22 02:18:57*
 
 **Follow our journey:** [GitHub](https://github.com/IgorGanapolsky/trading) |
 Building a $100/day trading system with AI.
