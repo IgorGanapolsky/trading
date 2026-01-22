@@ -35,7 +35,10 @@ print(f"\nAccount Equity: ${float(account.equity):,.2f}")
 print(f"Day Trade Count: {account.daytrade_count}")
 
 # Get orders to check when positions were opened
-orders = list(client.get_orders(status="all", limit=100))
+from alpaca.trading.requests import GetOrdersRequest
+from alpaca.trading.enums import QueryOrderStatus
+orders_request = GetOrdersRequest(status=QueryOrderStatus.ALL, limit=100)
+orders = list(client.get_orders(filter=orders_request))
 print(f"Recent Orders: {len(orders)}")
 
 # Find when SPY260220P00658000 was bought
