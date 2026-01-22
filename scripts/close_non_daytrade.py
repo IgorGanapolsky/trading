@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Last resort - close via limit order at 0.01."""
+"""Close ONLY contracts bought BEFORE today to bypass PDT."""
 
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 
 api_key = os.environ.get("ALPACA_API_KEY") or os.environ.get("ALPACA_PAPER_TRADING_5K_API_KEY")
 api_secret = os.environ.get("ALPACA_SECRET_KEY") or os.environ.get(
@@ -15,19 +15,20 @@ if not api_key or not api_secret:
     sys.exit(1)
 
 from alpaca.trading.client import TradingClient
-from alpaca.trading.enums import OrderSide, TimeInForce
-from alpaca.trading.requests import LimitOrderRequest
+from alpaca.trading.enums import OrderSide, TimeInForce, QueryOrderStatus
+from alpaca.trading.requests import MarketOrderRequest, GetOrdersRequest
 
 print("=" * 60)
-print(f"EMERGENCY CLOSE - LAST RESORT - {datetime.now()}")
+print(f"PDT BYPASS - CLOSE NON-DAYTRADE ONLY - {datetime.now()}")
 print("=" * 60)
 
 client = TradingClient(api_key, api_secret, paper=True)
 account = client.get_account()
 print(f"\nEquity: ${float(account.equity):,.2f}")
-print(f"Options Buying Power: ${float(account.options_buying_power):,.2f}")
+print(f"Day Trade Count: {account.daytrade_count}")
 
 target = "SPY260220P00658000"
+today = datetime.now(timezone.utc).date()
 
 # Get position
 positions = client.get_all_positions()
@@ -35,69 +36,73 @@ target_pos = None
 for p in positions:
     if p.symbol == target:
         target_pos = p
-        qty = int(float(p.qty))
+        total_qty = int(float(p.qty))
         price = float(p.current_price)
         print(f"\nPosition: {target}")
-        print(f"  Qty: {qty}")
+        print(f"  Total Qty: {total_qty}")
         print(f"  Price: ${price:.2f}")
         print(f"  P/L: ${float(p.unrealized_pl):+,.2f}")
         break
 
 if not target_pos:
-    print(f"\n{target} not found")
+    print(f"\n✅ {target} not found - may be closed already")
     sys.exit(0)
 
-# Try limit order at current price - slightly below to ensure fill
-limit_price = round(price * 0.95, 2)  # 5% below current
-print(f"\nTrying limit sell at ${limit_price:.2f}...")
+# Calculate PDT-safe quantity
+print("\nCalculating PDT-safe quantity...")
+try:
+    orders = client.get_orders(filter=GetOrdersRequest(status=QueryOrderStatus.ALL, limit=100))
+    buys_today = 0
+    buys_before = 0
+    for order in orders:
+        if order.symbol == target and order.side.name == 'BUY' and order.filled_at:
+            filled_qty = int(float(order.filled_qty or 0))
+            if order.filled_at.date() == today:
+                buys_today += filled_qty
+            else:
+                buys_before += filled_qty
+    print(f"  Bought TODAY (day trade if sold): {buys_today}")
+    print(f"  Bought BEFORE today (SAFE to sell): {buys_before}")
 
+    safe_qty = min(buys_before, total_qty)
+except Exception as e:
+    print(f"  Warning: Could not calculate - {e}")
+    safe_qty = total_qty - 1  # Conservative: assume 1 bought today
+
+if safe_qty <= 0:
+    print("\n⚠️ No PDT-safe contracts to close")
+    sys.exit(0)
+
+print(f"\n🔧 Will close {safe_qty} of {total_qty} contracts (PDT bypass)")
+
+# Try market order for PDT-safe quantity
+print(f"\nSubmitting SELL order for {safe_qty} contracts...")
 try:
     order = client.submit_order(
-        LimitOrderRequest(
+        MarketOrderRequest(
             symbol=target,
-            qty=qty,
+            qty=safe_qty,
             side=OrderSide.SELL,
             time_in_force=TimeInForce.DAY,
-            limit_price=limit_price,
         )
     )
     print(f"✅ Order submitted: {order.id}")
     print(f"   Status: {order.status}")
+    print(f"   Qty: {order.qty}")
 except Exception as e:
-    print(f"❌ Limit order failed: {e}")
+    print(f"❌ Market order failed: {e}")
 
-    # Try even lower price
-    print("\nTrying limit sell at $0.01...")
+    # Try close_position with specific qty
+    print(f"\nTrying close_position({safe_qty})...")
     try:
-        order = client.submit_order(
-            LimitOrderRequest(
-                symbol=target,
-                qty=qty,
-                side=OrderSide.SELL,
-                time_in_force=TimeInForce.DAY,
-                limit_price=0.01,
-            )
-        )
-        print(f"✅ Order submitted: {order.id}")
+        result = client.close_position(target, qty=str(safe_qty))
+        print(f"✅ close_position succeeded!")
+        if hasattr(result, 'id'):
+            print(f"   Order ID: {result.id}")
     except Exception as e2:
-        print(f"❌ Failed: {e2}")
+        print(f"❌ close_position failed: {e2}")
+        sys.exit(1)
 
-        # Final attempt - close 1 contract only
-        print("\nTrying to close just 1 contract...")
-        try:
-            order = client.submit_order(
-                LimitOrderRequest(
-                    symbol=target,
-                    qty=1,
-                    side=OrderSide.SELL,
-                    time_in_force=TimeInForce.DAY,
-                    limit_price=0.01,
-                )
-            )
-            print(f"✅ Closed 1 contract: {order.id}")
-        except Exception as e3:
-            print(f"❌ All attempts failed: {e3}")
-            print("\n⚠️ BROKER RESTRICTION - CANNOT CLOSE VIA API")
-            sys.exit(1)
-
-print("\nDONE")
+print("\n" + "=" * 60)
+print("✅ PDT BYPASS COMPLETE")
+print("=" * 60)
