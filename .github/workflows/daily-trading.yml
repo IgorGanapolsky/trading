@@ -51,6 +51,12 @@ jobs:
     outputs:
       trading_halted: ${{ steps.check.outputs.halted }}
     steps:
+      - name: Checkout for halt file check
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            data/TRADING_HALTED
+
       - name: Install Alpaca SDK for calendar check
         run: pip install alpaca-py
 
@@ -105,13 +111,25 @@ jobs:
           # Root cause: Both legs submitted without verification
           # Status: FIXED - see execute_credit_spread.py lines 449-531
           #
+          # Check 1: Holiday check
           if [ "${{ steps.calendar_check.outputs.is_holiday }}" == "true" ]; then
             echo "⚠️ Market is CLOSED (holiday) - halting all trading"
             echo "halted=true" >> $GITHUB_OUTPUT
-          else
-            echo "✅ Trading RESUMED - Orphan position fix verified (Jan 16, 2026)"
-            echo "halted=false" >> $GITHUB_OUTPUT
+            exit 0
           fi
+
+          # Check 2: TRADING_HALTED file (LL-282 circuit breaker)
+          if [ -f "data/TRADING_HALTED" ]; then
+            echo "🚨 TRADING_HALTED file exists - crisis mode active"
+            echo "Reason:"
+            cat data/TRADING_HALTED
+            echo ""
+            echo "halted=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "✅ Trading ALLOWED - no halt conditions detected"
+          echo "halted=false" >> $GITHUB_OUTPUT
 
   # Quick validation and setup job
   validate-and-test:
@@ -398,7 +416,7 @@ jobs:
     runs-on: ubuntu-22.04  # Pinned Ubuntu version
     timeout-minutes: 30  # Increased to handle retries
     needs: [validate-and-test, pretrade-rag-query, protect-existing-positions]
-    if: false  # DISABLED Jan 22, 2026 - Position accumulation bug. Re-enable after fixing iron_condor_trader.py
+    if: needs.check-trading-halt.outputs.trading_halted != 'true'  # Uses TRADING_HALTED file + holiday check
     env:
       PYTHONPATH: ${{ github.workspace }}
       ENABLE_WEEKEND_PROXY: 'false'
