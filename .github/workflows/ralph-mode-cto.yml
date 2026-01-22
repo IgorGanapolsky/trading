@@ -182,3 +182,78 @@ jobs:
           echo "🤖 Autonomous CTO iteration completed successfully" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Next iteration:** $(date -d '+4 hours' -u +"%Y-%m-%d %H:%M UTC")" >> $GITHUB_STEP_SUMMARY
+
+  # Job 5: Publish blog post about discoveries
+  publish-discoveries:
+    name: Publish Discovery Blog Post
+    runs-on: ubuntu-latest
+    needs: [quality-check, update-iteration]
+    # Only publish when there are significant discoveries (tests or lint changes)
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+          # Fetch latest including iteration update
+          ref: main
+
+      - name: Pull latest changes
+        run: git pull origin main || true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -q requests
+
+      - name: Check for recent lessons
+        id: check_lessons
+        run: |
+          # Count lessons modified in last 6 hours
+          RECENT_LESSONS=$(find rag_knowledge/lessons_learned -name "*.md" -mmin -360 | wc -l)
+          echo "recent_lessons=$RECENT_LESSONS" >> $GITHUB_OUTPUT
+          echo "Found $RECENT_LESSONS lessons in last 6 hours"
+
+          # Check if any critical/high severity lessons exist
+          HAS_CRITICAL=$(grep -rl "CRITICAL\|Severity.*High" rag_knowledge/lessons_learned/*.md 2>/dev/null | head -5 | wc -l)
+          echo "critical_count=$HAS_CRITICAL" >> $GITHUB_OUTPUT
+
+      - name: Generate and Publish Blog Post
+        if: steps.check_lessons.outputs.recent_lessons != '0'
+        env:
+          DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
+        run: |
+          echo "📝 Publishing Ralph iteration discoveries..."
+
+          python3 scripts/publish_ralph_iteration_blog.py \
+            --tests-passed "${{ needs.quality-check.outputs.tests_passed }}" \
+            --lint-passed "${{ needs.quality-check.outputs.lint_passed }}" \
+            --hours 6 \
+            --min-lessons 1
+
+      - name: Commit blog post
+        if: steps.check_lessons.outputs.recent_lessons != '0'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Add any new blog posts
+          git add docs/_posts/*.md 2>/dev/null || true
+
+          if git diff --staged --quiet; then
+            echo "No new blog posts to commit"
+          else
+            git commit -m "📝 Ralph discovery blog: Iteration $(cat .claude/prd.json | python3 -c 'import json,sys; print(json.load(sys.stdin)[\"metadata\"][\"total_iterations\"])')"
+            git push || echo "Push failed, will retry next iteration"
+          fi
+
+      - name: Blog Summary
+        run: |
+          echo "## 📝 Discovery Blog Publishing" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Recent lessons | ${{ steps.check_lessons.outputs.recent_lessons }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Blog published | ${{ steps.check_lessons.outputs.recent_lessons != '0' && '✅ Yes' || '⏭️ Skipped' }} |" >> $GITHUB_STEP_SUMMARY
