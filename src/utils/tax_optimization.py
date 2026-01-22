@@ -277,7 +277,7 @@ class TaxOptimizer:
         }
 
     def calculate_after_tax_returns(
-        self, gross_returns: list[float], tax_events: list[TaxEvent] | None = None
+        self, _gross_returns: list[float], tax_events: list[TaxEvent] | None = None
     ) -> dict[str, Any]:
         """
         Calculate after-tax returns based on tax events.

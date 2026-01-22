@@ -41,11 +41,11 @@ class TradeVerifier:
     async def verify_order_execution(
         self,
         order_id: str = "",
-        expected_symbol: str = "",
-        expected_qty: float = 0,
-        expected_side: str = "",
-        api_response: dict = None,
-        **kwargs,
+        _expected_symbol: str = "",
+        _expected_qty: float = 0,
+        _expected_side: str = "",
+        _api_response: dict = None,
+        **_kwargs,
     ) -> dict[str, Any]:
         """Stub for verify_order_execution - always returns success."""
         return {"verified": True, "order_id": order_id, "status": "stub_verified"}

@@ -337,7 +337,7 @@ class RegimeDetector:
         self,
         closes: Any,
         current_regime_id: int,
-        lookback_periods: int = 20,
+        _lookback_periods: int = 20,
     ) -> TransitionPrediction:
         """
         Predict regime transition using forward-looking indicators.

@@ -139,7 +139,7 @@ class CircuitBreaker:
             raise CircuitBreakerOpenError(f"Circuit breaker [{self.name}] is OPEN")
         return self
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> bool:
+    def __exit__(self, exc_type: Any, exc_val: Any, _exc_tb: Any) -> bool:
         """Context manager exit."""
         if exc_type is None:
             self._record_success()
