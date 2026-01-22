@@ -157,7 +157,7 @@ EOF
 
           echo "issues=false" >> $GITHUB_OUTPUT
 
-  # Job 4: Generate digest and record lessons
+  # Job 4: Generate digest and trigger fixes if needed
   generate-digest:
     runs-on: ubuntu-latest
     needs: [security-scan, dead-code-scan, code-quality]
@@ -168,6 +168,7 @@ EOF
           token: ${{ secrets.GH_PAT }}
 
       - name: Generate proactive scan digest
+        id: digest
         run: |
           echo "## 🔍 Ralph Proactive Scanner Digest" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -179,14 +180,44 @@ EOF
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "🤖 Scan completed at $(date -u +"%Y-%m-%d %H:%M UTC")" >> $GITHUB_STEP_SUMMARY
 
+          # Determine if we need to trigger Ralph Loop
+          if [ "${{ needs.security-scan.outputs.issues_found }}" == "true" ] || \
+             [ "${{ needs.dead-code-scan.outputs.dead_code_found }}" == "true" ]; then
+            echo "needs_action=true" >> $GITHUB_OUTPUT
+          else
+            echo "needs_action=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update workflow health dashboard
+        run: |
+          mkdir -p data/workflow_health
+          cat > data/workflow_health/latest_scan.json << EOF
+          {
+            "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+            "security_clean": ${{ needs.security-scan.outputs.issues_found != 'true' }},
+            "security_issues": ${{ needs.security-scan.outputs.issue_count || 0 }},
+            "dead_code_clean": ${{ needs.dead-code-scan.outputs.dead_code_found != 'true' }},
+            "quality_good": ${{ needs.code-quality.outputs.quality_issues != 'true' }},
+            "overall_healthy": ${{ needs.security-scan.outputs.issues_found != 'true' && needs.dead-code-scan.outputs.dead_code_found != 'true' }}
+          }
+          EOF
+
+          git config user.name "ralph-bot[bot]"
+          git config user.email "ralph-bot[bot]@users.noreply.github.com"
+          git add data/workflow_health/ || true
+          if ! git diff --staged --quiet; then
+            git commit -m "chore(ralph): Update workflow health dashboard" || true
+            git push || true
+          fi
+
       - name: Record findings in lessons
         if: needs.security-scan.outputs.issues_found == 'true' || needs.dead-code-scan.outputs.dead_code_found == 'true'
         run: |
-          # Create lesson file if issues found
           DATE=$(date +%Y%m%d)
           LESSON_FILE="rag_knowledge/lessons_learned/ll_proactive_scan_${DATE}.md"
+          mkdir -p rag_knowledge/lessons_learned
 
-          cat > "$LESSON_FILE" << 'EOF'
+          cat > "$LESSON_FILE" << EOF
           # Ralph Proactive Scan Findings
 
           **Date:** $(date +%Y-%m-%d)
@@ -202,8 +233,16 @@ EOF
           Review the workflow run summary for details and prioritize fixes.
           EOF
 
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add "$LESSON_FILE" || true
-          git commit -m "chore(ralph): Record proactive scan findings" || true
-          git push || true
+          if ! git diff --staged --quiet; then
+            git commit -m "chore(ralph): Record proactive scan findings" || true
+            git push || true
+          fi
+
+      - name: Trigger Ralph Loop if issues found
+        if: steps.digest.outputs.needs_action == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          echo "::notice::Issues found - triggering Ralph Loop for auto-fix"
+          gh workflow run ralph-loop-ai.yml -f task=improve_code || echo "Could not trigger Ralph Loop"
