@@ -1,0 +1,132 @@
+name: Scheduled Position Close (Jan 23)
+
+# Scheduled to run after market open on Jan 23, 2026
+# This is a one-time workflow to close positions after PDT restriction resets
+
+on:
+  schedule:
+    # Run at 9:45 AM ET (14:45 UTC) on Jan 23, 2026
+    - cron: '45 14 23 1 *'
+  workflow_dispatch:
+    inputs:
+      target_symbol:
+        description: 'Symbol to close (leave empty for SPY260220P00658000)'
+        required: false
+        default: 'SPY260220P00658000'
+
+permissions:
+  contents: write
+
+jobs:
+  close-positions:
+    name: Close Positions After PDT Reset
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install alpaca-py
+
+      - name: Check Market Status
+        id: market
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          python3 -c "
+          from alpaca.trading.client import TradingClient
+          import os
+          client = TradingClient(os.environ['ALPACA_API_KEY'], os.environ['ALPACA_SECRET_KEY'], paper=True)
+          clock = client.get_clock()
+          print(f'Market open: {clock.is_open}')
+          if not clock.is_open:
+              print('::warning::Market is closed')
+              exit(1)
+          "
+
+      - name: Close Excess Positions
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          python3 << 'EOF'
+          import os
+          from alpaca.trading.client import TradingClient
+          from alpaca.trading.requests import MarketOrderRequest
+          from alpaca.trading.enums import OrderSide, TimeInForce
+
+          api_key = os.environ['ALPACA_API_KEY']
+          api_secret = os.environ['ALPACA_SECRET_KEY']
+          target_symbol = "${{ github.event.inputs.target_symbol }}" or "SPY260220P00658000"
+
+          client = TradingClient(api_key, api_secret, paper=True)
+
+          print("=" * 60)
+          print("SCHEDULED POSITION CLOSE - Jan 23, 2026")
+          print("=" * 60)
+
+          # Get positions
+          positions = client.get_all_positions()
+          print(f"\nCurrent Positions: {len(positions)}")
+
+          for pos in positions:
+              unrealized_pl = float(pos.unrealized_pl) if pos.unrealized_pl else 0
+              print(f"  {pos.symbol}: qty={pos.qty}, P/L=${unrealized_pl:+.2f}")
+
+          # Find target position
+          target = None
+          for pos in positions:
+              if pos.symbol == target_symbol:
+                  target = pos
+                  break
+
+          if not target:
+              print(f"\n{target_symbol} not found - may already be closed")
+              exit(0)
+
+          print(f"\nTarget: {target.symbol}, qty={target.qty}")
+          qty = abs(int(float(target.qty)))
+
+          # Try close_position first
+          print(f"\nAttempting close_position({target_symbol})...")
+          try:
+              result = client.close_position(target_symbol)
+              print(f"SUCCESS! Order ID: {result.id if hasattr(result, 'id') else result}")
+              exit(0)
+          except Exception as e:
+              print(f"close_position failed: {e}")
+
+          # Fallback to market order
+          print(f"\nTrying market order to sell {qty} contracts...")
+          try:
+              order_request = MarketOrderRequest(
+                  symbol=target_symbol,
+                  qty=qty,
+                  side=OrderSide.SELL,
+                  time_in_force=TimeInForce.DAY
+              )
+              result = client.submit_order(order_request)
+              print(f"SUCCESS! Order ID: {result.id}")
+          except Exception as e:
+              print(f"Market order failed: {e}")
+              print("\n⚠️ MANUAL CLOSE REQUIRED")
+              print("https://app.alpaca.markets/paper/dashboard/positions")
+              exit(1)
+          EOF
+
+      - name: Trigger State Sync
+        if: success()
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GH_PAT }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/sync-system-state.yml/dispatches" \
+            -d '{"ref": "main"}'

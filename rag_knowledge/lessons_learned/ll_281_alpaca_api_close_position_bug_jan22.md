@@ -29,6 +29,19 @@ Error: {"code":40310000,"message":"insufficient options buying power for cash-se
 2. **Limit order at 95% price**: Same error
 3. **Limit order at $0.01**: Same error
 4. **Close just 1 contract**: PDT restriction blocked
+5. **close_position() DELETE endpoint**: Same error (tested Jan 22, 17:03 UTC)
+6. **Partial close via ClosePositionRequest**: Wrong API syntax + same underlying bug
+
+## PDT Lock Status (Jan 22, 2026)
+
+The account is **fully PDT-locked** today:
+- SPY260220P00658000: Blocked by API bug ("insufficient options buying power")
+- All other positions: Blocked by "trade denied due to pattern day trading protection"
+
+**Portfolio Status:**
+- Equity: ~$4,231
+- Total unrealized P/L: -$1,341.33
+- All 5 positions locked until Jan 23
 
 ## Contributing Factors
 
