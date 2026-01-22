@@ -2,9 +2,17 @@ name: Close Non-Daytrade Positions
 
 # Closes positions opened BEFORE today to bypass PDT restriction
 # Only yesterday's contracts are closed, not today's
+# CRISIS: Run every 5 min until resolved
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '*/5 14-20 * * 1-5'
+  push:
+    paths:
+      - 'CLOSE_NONDT.trigger'
+    branches:
+      - main
 
 permissions:
   contents: write
