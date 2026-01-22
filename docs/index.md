@@ -15,7 +15,7 @@ Building an autonomous self-healing AI trading system with Claude Opus 4.5 and t
 | Today's P/L | **$0.00** (post-market) |
 | Total P/L | **+$66.39** (+1.33% from $5K) |
 | Unrealized | -$86 (SOFI: -$80, SPY: -$6) |
-| Open Positions | 2 (SOFI put + SPY shares) |
+| Open Positions | 2 |
 | Strategy | Iron Condors on SPY ONLY |
 | North Star | $5-10/day (realistic) |
 | Ralph Iterations | 39+ autonomous CI runs |
