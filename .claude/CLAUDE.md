@@ -26,10 +26,13 @@ CTO: Claude | CEO: Igor Ganapolsky
 - Scale position size as account grows (maintain 5% rule)
 - Add external capital when possible to accelerate
 
-### 4. Tax Optimization
-- Track ALL trades for Schedule D reporting
-- Short-term gains taxed as ordinary income (~30%)
-- Hold winners >1 year when possible for long-term rates (~15%)
+### 4. Tax Optimization (CRITICAL - LL-295)
+- **SPX/XSP vs SPY**: SPX options get 60/40 tax treatment (Section 1256)
+  - SPY: 100% short-term gains (32% tax bracket = 32%)
+  - SPX: 60% long-term + 40% short-term = ~22.4% effective rate
+  - **Saves ~30% on tax bill** = $15-20K extra over 7 years
+- **XSP (Mini-SPX)**: Same tax benefits as SPX at SPY-like prices
+- Track ALL trades for Schedule D / Form 6781 reporting
 - Consider tax-loss harvesting on losing positions
 - Target: $8,600/month pre-tax = $6,000/month after-tax
 - **Primary strategy**: IRON CONDORS on SPY ONLY - defined risk on BOTH sides
