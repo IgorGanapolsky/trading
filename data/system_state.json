@@ -1,9 +1,9 @@
 {
-  "last_updated": "2026-01-22T15:53:51.285613+00:00",
+  "last_updated": "2026-01-22T16:03:36.171519+00:00",
   "sync_health": {
-    "last_successful_sync": "2026-01-22T15:53:51.285616+00:00",
+    "last_successful_sync": "2026-01-22T16:03:36.171522+00:00",
     "sync_source": "github_actions",
-    "sync_count_today": 2,
+    "sync_count_today": 3,
     "history": [
       {
         "timestamp": "2026-01-22T15:41:12.702452+00:00",
@@ -14,21 +14,26 @@
         "timestamp": "2026-01-22T15:53:51.285603+00:00",
         "equity": 4416.49,
         "success": true
+      },
+      {
+        "timestamp": "2026-01-22T16:03:36.171511+00:00",
+        "equity": 4441.68,
+        "success": true
       }
     ]
   },
   "portfolio": {
-    "equity": 4416.49,
+    "equity": 4441.68,
     "cash": 17.83
   },
   "paper_account": {
-    "equity": 4416.49,
+    "equity": 4441.68,
     "cash": 17.83,
-    "buying_power": 2622.32,
-    "total_pl": -583.5100000000002,
-    "total_pl_pct": -11.67,
+    "buying_power": 2621.51,
+    "total_pl": -558.3199999999997,
+    "total_pl_pct": -11.17,
     "positions_count": 5,
-    "daily_change": -234.3,
+    "daily_change": -209.11,
     "win_rate": 0,
     "win_rate_sample_size": 0,
     "starting_balance": 5000.0
@@ -37,9 +42,9 @@
     {
       "symbol": "SPY",
       "qty": 3.753569343,
-      "price": 689.13,
-      "value": 2586.697241,
-      "pnl": 19.577245,
+      "price": 688.91,
+      "value": 2585.871456,
+      "pnl": 18.75146,
       "type": "stock"
     },
     {
@@ -61,17 +66,17 @@
     {
       "symbol": "SPY260220P00653000",
       "qty": -2.0,
-      "price": 2.42,
-      "value": -484.0,
-      "pnl": 70.0,
+      "price": 2.45,
+      "value": -490.0,
+      "pnl": 64.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00658000",
       "qty": 8.0,
-      "price": 2.86,
-      "value": 2288.0,
-      "pnl": -1216.0,
+      "price": 2.9,
+      "value": 2320.0,
+      "pnl": -1184.0,
       "type": "option"
     }
   ],
@@ -822,17 +827,17 @@
   },
   "risk": {
     "status": "WARNING - NEGATIVE P/L",
-    "total_pl": -583.5100000000002,
-    "unrealized_pl": -1133.756155
+    "total_pl": -558.3199999999997,
+    "unrealized_pl": -1108.58194
   },
   "account": {
-    "current_equity": 4416.49,
-    "total_pl": -583.5100000000002,
-    "total_pl_pct": -11.67,
+    "current_equity": 4441.68,
+    "total_pl": -558.3199999999997,
+    "total_pl_pct": -11.17,
     "positions_count": 5
   },
   "meta": {
-    "last_updated": "2026-01-22T15:53:51.285630+00:00",
+    "last_updated": "2026-01-22T16:03:36.171535+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5
   }
