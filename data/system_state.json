@@ -1,9 +1,9 @@
 {
-  "last_updated": "2026-01-22T16:45:58.914202+00:00",
+  "last_updated": "2026-01-22T17:06:15.160185+00:00",
   "sync_health": {
-    "last_successful_sync": "2026-01-22T16:45:58.914204+00:00",
+    "last_successful_sync": "2026-01-22T17:06:15.160188+00:00",
     "sync_source": "github_actions",
-    "sync_count_today": 2,
+    "sync_count_today": 3,
     "history": [
       {
         "timestamp": "2026-01-22T16:23:11.478656+00:00",
@@ -14,34 +14,31 @@
         "timestamp": "2026-01-22T16:45:58.914192+00:00",
         "equity": 4282.58,
         "success": true
+      },
+      {
+        "timestamp": "2026-01-22T17:06:15.160176+00:00",
+        "equity": 4305.46,
+        "success": true
       }
     ]
   },
   "portfolio": {
-    "equity": 4282.58,
-    "cash": 17.83
+    "equity": 4305.46,
+    "cash": 2607.46
   },
   "paper_account": {
-    "equity": 4282.58,
-    "cash": 17.83,
-    "buying_power": 2626.41,
-    "total_pl": -717.4200000000001,
-    "total_pl_pct": -14.35,
-    "positions_count": 5,
-    "daily_change": -368.21,
+    "equity": 4305.46,
+    "cash": 2607.46,
+    "buying_power": 5214.92,
+    "total_pl": -694.54,
+    "total_pl_pct": -13.89,
+    "positions_count": 4,
+    "daily_change": -345.33,
     "win_rate": 0,
     "win_rate_sample_size": 0,
     "starting_balance": 5000.0
   },
   "positions": [
-    {
-      "symbol": "SPY",
-      "qty": 3.753569343,
-      "price": 690.21,
-      "value": 2590.751096,
-      "pnl": 23.6311,
-      "type": "stock"
-    },
     {
       "symbol": "SPY260220P00565000",
       "qty": -4.0,
@@ -61,28 +58,36 @@
     {
       "symbol": "SPY260220P00653000",
       "qty": -2.0,
-      "price": 2.23,
-      "value": -446.0,
-      "pnl": 108.0,
+      "price": 2.27,
+      "value": -454.0,
+      "pnl": 100.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00658000",
       "qty": 8.0,
-      "price": 2.64,
-      "value": 2112.0,
-      "pnl": -1392.0,
+      "price": 2.68,
+      "value": 2144.0,
+      "pnl": -1360.0,
       "type": "option"
     }
   ],
   "trade_history": [
+    {
+      "id": "c87803dc-0c9b-4d4c-9344-9bc01eda2e1c",
+      "symbol": "SPY",
+      "side": "OrderSide.SELL",
+      "qty": "3.753569343",
+      "price": "689.91",
+      "filled_at": "2026-01-22 17:03:48.731171+00:00"
+    },
     {
       "id": "5cebeda8-e0c9-4778-a1c5-1e0b5425384e",
       "symbol": "SPY260220P00570000",
       "side": "OrderSide.BUY",
       "qty": "1",
       "price": "0.42",
-      "filled_at": "2026-01-22 15:07:19.417955+00:00"
+      "filled_at": "2026-01-22 15:07:19.417956+00:00"
     },
     {
       "id": "9313f332-b349-4bcf-b884-c680ddae5d51",
@@ -98,7 +103,7 @@
       "side": "OrderSide.BUY",
       "qty": "1",
       "price": "3.31",
-      "filled_at": "2026-01-22 15:07:19.208030+00:00"
+      "filled_at": "2026-01-22 15:07:19.208031+00:00"
     },
     {
       "id": "2593ec68-177f-49b9-bb29-3fe0937f0351",
@@ -106,7 +111,7 @@
       "side": "OrderSide.SELL",
       "qty": "2",
       "price": "2.77",
-      "filled_at": "2026-01-22 15:07:19.103290+00:00"
+      "filled_at": "2026-01-22 15:07:19.103291+00:00"
     },
     {
       "id": "8cb5b841-4072-4539-b012-da0006ffb678",
@@ -813,26 +818,26 @@
       "filled_at": "2026-01-12 14:30:54.357134+00:00"
     }
   ],
-  "trades_loaded": 92,
+  "trades_loaded": 93,
   "trades": {
     "last_trade_date": "2026-01-22",
-    "today_trades": 7,
-    "total_trades_today": 7,
-    "last_trade_symbol": "SYNCED"
+    "today_trades": 0,
+    "total_trades_today": 0,
+    "last_trade_symbol": "SPY260220P00565000"
   },
   "risk": {
     "status": "WARNING - NEGATIVE P/L",
-    "total_pl": -717.4200000000001,
-    "unrealized_pl": -1267.7023
+    "total_pl": -694.54,
+    "unrealized_pl": -1267.3334
   },
   "account": {
-    "current_equity": 4282.58,
-    "total_pl": -717.4200000000001,
-    "total_pl_pct": -14.35,
-    "positions_count": 5
+    "current_equity": 4305.46,
+    "total_pl": -694.54,
+    "total_pl_pct": -13.89,
+    "positions_count": 4
   },
   "meta": {
-    "last_updated": "2026-01-22T17:01:31.757153+00:00",
+    "last_updated": "2026-01-22T17:06:15.160202+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5
   }
