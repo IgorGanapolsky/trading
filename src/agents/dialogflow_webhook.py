@@ -1466,17 +1466,29 @@ async def webhook(
             rag_explanation = ""
             if results:
                 # Extract key insights from RAG results
+                # FIX Jan 22, 2026: Handle correct field names for each RAG source
+                # - Vertex AI: {text: str}
+                # - Local: {id, severity, content, snippet}
                 insights = []
                 for r in results[:3]:
-                    title = r.get("title", r.get("lesson_id", "Insight"))
-                    summary = r.get("summary", r.get("root_cause", ""))[:150]
-                    if summary:
-                        insights.append(f"- **{title}**: {summary}")
+                    if source == "vertex_ai":
+                        # Vertex AI returns Gemini-generated text
+                        text = r.get("text", "")
+                        if text:
+                            # Take first 200 chars of Vertex AI response
+                            insights.append(f"- {text[:200]}...")
+                    else:
+                        # Local RAG returns structured lessons
+                        lesson_id = r.get("id", "Insight")
+                        content = r.get("content", r.get("snippet", ""))[:150]
+                        if content:
+                            insights.append(f"- **{lesson_id}**: {content}")
 
                 if insights:
                     rag_explanation = "\n**Analysis from lessons learned:**\n" + "\n".join(insights)
-            else:
-                # Provide default explanation context
+
+            # If no insights extracted, provide default explanation
+            if not rag_explanation:
                 rag_explanation = """
 **Common reasons for P/L results:**
 - Market closed (weekends/holidays) - no trading possible
