@@ -112,19 +112,22 @@ class TradeBlockedError(Exception):
         super().__init__(gate_result.reason)
 
 
-# Configuration - HARDCODED from central constants (NO ENV VAR OVERRIDE)
+# Configuration - SINGLE SOURCE OF TRUTH (NO ENV VAR OVERRIDE)
 # SECURITY FIX Jan 19, 2026: Removed env var bypass that allowed overriding position limits
 # Per CLAUDE.md and LL-244 adversarial audit: These limits are NON-NEGOTIABLE
+# LL-281 (Jan 22, 2026): Import from trading_constants.py to prevent scattered definitions
 try:
-    from src.constants.trading_thresholds import PositionSizing
-
-    MAX_POSITION_PCT = PositionSizing.MAX_POSITION_PCT  # 5% max per CLAUDE.md
-    MAX_DAILY_LOSS_PCT = PositionSizing.MAX_DAILY_LOSS_PCT  # 2% max daily loss
+    from src.core.trading_constants import (
+        MAX_DAILY_LOSS_PCT,
+        MAX_POSITION_PCT,
+        MAX_POSITIONS,
+    )
 except ImportError:
     # Fallback - STILL HARDCODED, not from env var
     MAX_POSITION_PCT = 0.05  # 5% max per CLAUDE.md - HARDCODED
-    MAX_DAILY_LOSS_PCT = 0.02  # 2% max daily loss - HARDCODED
-    logger.warning("Using fallback position limits - constants module unavailable")
+    MAX_DAILY_LOSS_PCT = 0.05  # 5% max daily loss - HARDCODED
+    MAX_POSITIONS = 4  # 1 iron condor = 4 legs (HARDCODED per CLAUDE.md)
+    logger.warning("Using fallback position limits - trading_constants unavailable")
 
 MIN_TRADE_AMOUNT = 1.0  # $1 minimum trade - HARDCODED
 
@@ -301,11 +304,11 @@ def validate_trade_mandatory(
     checks_performed.append(f"equity_check: PASS (${equity:.2f})")
 
     # =========================================================================
-    # CHECK 2.5: Position COUNT limit (Jan 19, 2026 - LL-246)
+    # CHECK 2.5: Position COUNT limit (Jan 19, 2026 - LL-246, Jan 22, 2026 - LL-281)
     # Per CLAUDE.md: "Position limit: 1 iron condor at a time" = 4 legs max
-    # This prevents accumulating unlimited positions (root cause of 6 position issue)
+    # This prevents accumulating unlimited positions (root cause of 8 contract crisis)
+    # NOTE: MAX_POSITIONS imported from trading_constants.py (single source of truth)
     # =========================================================================
-    MAX_POSITIONS = 4  # 1 iron condor = 4 legs (HARDCODED per CLAUDE.md)
     current_positions = context.get("positions", []) if context else []
     current_position_count = len(current_positions)
 
