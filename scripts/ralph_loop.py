@@ -15,6 +15,7 @@ Usage:
 """
 
 import argparse
+import hashlib
 import json
 import os
 import subprocess
@@ -29,6 +30,102 @@ try:
     ANTHROPIC_AVAILABLE = True
 except ImportError:
     ANTHROPIC_AVAILABLE = False
+
+
+class StruggleDetector:
+    """Detect when AI is stuck in a loop to prevent wasted API costs.
+
+    Detects:
+    1. Repetitive responses (hash-based similarity)
+    2. No file changes for multiple iterations
+    3. Same test failures persisting
+    4. API cost budget exceeded
+    """
+
+    def __init__(
+        self,
+        max_no_change_iterations: int = 3,
+        max_same_error_iterations: int = 3,
+        max_api_cost_usd: float = 5.0,
+    ):
+        self.max_no_change = max_no_change_iterations
+        self.max_same_error = max_same_error_iterations
+        self.max_cost = max_api_cost_usd
+        self.response_hashes: list[str] = []
+        self.no_change_count = 0
+        self.error_hashes: list[str] = []
+        self.api_calls = 0
+        self.estimated_cost = 0.0
+        # Approximate costs (Claude Sonnet)
+        self.cost_per_1k_input = 0.003
+        self.cost_per_1k_output = 0.015
+
+    def _hash_text(self, text: str) -> str:
+        return hashlib.md5(text.encode()).hexdigest()[:16]
+
+    def record_api_call(self, input_tokens: int = 2000, output_tokens: int = 1000):
+        self.api_calls += 1
+        self.estimated_cost += (input_tokens / 1000) * self.cost_per_1k_input
+        self.estimated_cost += (output_tokens / 1000) * self.cost_per_1k_output
+
+    def check_response_repetition(self, response: str) -> tuple[bool, str]:
+        response_hash = self._hash_text(response)
+        if response_hash in self.response_hashes[-2:]:
+            return True, "repetitive_response"
+        self.response_hashes.append(response_hash)
+        self.response_hashes = self.response_hashes[-5:]
+        return False, ""
+
+    def check_no_progress(self, files_changed: int) -> tuple[bool, str]:
+        if files_changed == 0:
+            self.no_change_count += 1
+            if self.no_change_count >= self.max_no_change:
+                return True, f"no_changes_for_{self.no_change_count}_iterations"
+        else:
+            self.no_change_count = 0
+        return False, ""
+
+    def check_same_error(self, error_output: str) -> tuple[bool, str]:
+        error_hash = self._hash_text(error_output[:500])
+        if self.error_hashes and error_hash == self.error_hashes[-1]:
+            consecutive = sum(1 for h in reversed(self.error_hashes) if h == error_hash)
+            if consecutive >= self.max_same_error:
+                return True, f"same_error_for_{consecutive}_iterations"
+        self.error_hashes.append(error_hash)
+        self.error_hashes = self.error_hashes[-5:]
+        return False, ""
+
+    def check_cost_budget(self) -> tuple[bool, str]:
+        if self.estimated_cost >= self.max_cost:
+            return True, f"cost_budget_exceeded_${self.estimated_cost:.2f}"
+        return False, ""
+
+    def is_stuck(
+        self, response: str | None = None, files_changed: int = 0, error_output: str = ""
+    ) -> tuple[bool, str]:
+        stuck, reason = self.check_cost_budget()
+        if stuck:
+            return True, reason
+        if response:
+            stuck, reason = self.check_response_repetition(response)
+            if stuck:
+                return True, reason
+        stuck, reason = self.check_no_progress(files_changed)
+        if stuck:
+            return True, reason
+        if error_output:
+            stuck, reason = self.check_same_error(error_output)
+            if stuck:
+                return True, reason
+        return False, ""
+
+    def get_status(self) -> dict:
+        return {
+            "api_calls": self.api_calls,
+            "estimated_cost_usd": round(self.estimated_cost, 3),
+            "no_change_streak": self.no_change_count,
+            "budget_remaining_usd": round(self.max_cost - self.estimated_cost, 3),
+        }
 
 
 def log(message: str, level: str = "INFO"):
@@ -197,7 +294,11 @@ def commit_changes(iteration: int, task: str) -> bool:
 
 
 def ralph_loop(
-    task: str = "fix_tests", target: str = "", max_iterations: int = 10, auto_commit: bool = True
+    task: str = "fix_tests",
+    target: str = "",
+    max_iterations: int = 10,
+    auto_commit: bool = True,
+    max_cost_usd: float = 5.0,
 ) -> dict:
     """
     Main Ralph loop - iterative AI coding until success.
@@ -207,11 +308,19 @@ def ralph_loop(
         target: Specific file or directory to focus on
         max_iterations: Maximum number of iterations
         auto_commit: Whether to auto-commit successful changes
+        max_cost_usd: Maximum API cost budget in USD
 
     Returns:
         dict with success status and iteration details
     """
-    log(f"Starting Ralph Loop: task={task}, max_iterations={max_iterations}")
+    log(f"Starting Ralph Loop: task={task}, max_iterations={max_iterations}, budget=${max_cost_usd}")
+
+    # Initialize struggle detector to prevent infinite loops
+    struggle_detector = StruggleDetector(
+        max_no_change_iterations=3,
+        max_same_error_iterations=3,
+        max_api_cost_usd=max_cost_usd,
+    )
 
     results = {
         "success": False,
@@ -221,6 +330,8 @@ def ralph_loop(
         "final_test_status": False,
         "final_lint_status": False,
         "history": [],
+        "struggle_status": {},
+        "termination_reason": None,
     }
 
     # System prompt for Claude
@@ -309,9 +420,21 @@ LINT STATUS: {"PASSING" if lint_pass else "FAILING"}
 
 Fix the issues. Output ONLY files that need changes."""
 
+        # Check if stuck before making API call (save costs)
+        error_context = test_output if not tests_pass else lint_output
+        stuck, reason = struggle_detector.is_stuck(error_output=error_context)
+        if stuck:
+            log(f"STRUGGLE DETECTED: {reason} - terminating early to save costs", "WARN")
+            results["termination_reason"] = f"struggle_detected:{reason}"
+            results["struggle_status"] = struggle_detector.get_status()
+            break
+
         # Call Claude API
         log("Calling Claude API for fixes...")
         response = call_claude_api(prompt, system_prompt)
+
+        # Record API call for cost tracking
+        struggle_detector.record_api_call(input_tokens=2500, output_tokens=1500)
 
         if not response:
             log("No response from Claude API", "ERROR")
@@ -325,16 +448,27 @@ Fix the issues. Output ONLY files that need changes."""
             )
             continue
 
+        # Check for repetitive responses (struggle detection)
+        stuck, reason = struggle_detector.is_stuck(response=response)
+        if stuck:
+            log(f"STRUGGLE DETECTED: {reason} - AI giving same responses", "WARN")
+            results["termination_reason"] = f"struggle_detected:{reason}"
+            results["struggle_status"] = struggle_detector.get_status()
+            break
+
         # Check for completion signal
         if "<promise>MISSION_COMPLETE</promise>" in response:
             log("Claude indicates mission complete")
             results["success"] = True
+            results["termination_reason"] = "mission_complete"
             break
 
         # Parse and apply changes
         changes = parse_code_changes(response)
+        files_changed = 0
         if changes:
             applied = apply_changes(changes)
+            files_changed = applied
             results["changes_made"] += applied
             log(f"Applied {applied} file changes")
 
@@ -343,6 +477,14 @@ Fix the issues. Output ONLY files that need changes."""
         else:
             log("No code changes parsed from response")
 
+        # Check for no progress (struggle detection)
+        stuck, reason = struggle_detector.is_stuck(files_changed=files_changed)
+        if stuck:
+            log(f"STRUGGLE DETECTED: {reason} - no progress being made", "WARN")
+            results["termination_reason"] = f"struggle_detected:{reason}"
+            results["struggle_status"] = struggle_detector.get_status()
+            break
+
         results["history"].append(
             {
                 "iteration": iteration,
@@ -350,15 +492,24 @@ Fix the issues. Output ONLY files that need changes."""
                 "tests_pass": tests_pass,
                 "lint_pass": lint_pass,
                 "files_changed": len(changes),
+                "api_cost_so_far": struggle_detector.estimated_cost,
             }
         )
 
     # Final status
+    results["struggle_status"] = struggle_detector.get_status()
+
     if results["success"]:
         log(f"Ralph Loop COMPLETE after {results['iterations']} iterations")
+        log(f"Total estimated cost: ${struggle_detector.estimated_cost:.3f}")
+    elif results.get("termination_reason") and "struggle" in str(results["termination_reason"]):
+        log(f"Ralph Loop STOPPED due to struggle: {results['termination_reason']}", "WARN")
+        log("Saved money by detecting stuck state early!")
     else:
         log("Ralph Loop reached max iterations without full success", "WARN")
+        results["termination_reason"] = "max_iterations_reached"
 
+    log(f"Final cost: ${struggle_detector.estimated_cost:.3f} / ${max_cost_usd:.2f} budget")
     return results
 
 
@@ -375,6 +526,9 @@ def main():
         "--max-iterations", type=int, default=10, help="Maximum iterations (default: 10)"
     )
     parser.add_argument("--no-commit", action="store_true", help="Don't auto-commit changes")
+    parser.add_argument(
+        "--max-cost", type=float, default=5.0, help="Maximum API cost budget in USD (default: $5.00)"
+    )
     parser.add_argument("--dry-run", action="store_true", help="Run tests/lint only, don't call AI")
 
     args = parser.parse_args()
@@ -400,6 +554,7 @@ def main():
         target=args.target,
         max_iterations=args.max_iterations,
         auto_commit=not args.no_commit,
+        max_cost_usd=args.max_cost,
     )
 
     # Output results as JSON for CI parsing
