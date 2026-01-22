@@ -581,6 +581,78 @@ class TradeGateway:
         positions = self._get_positions()
 
         # ============================================================
+        # CIRCUIT BREAKER: CRISIS MODE CHECK (LL-281, Jan 22, 2026)
+        # Hard stop when portfolio is in crisis mode:
+        # 1. Check for TRADING_HALTED flag file
+        # 2. Block when total unrealized loss > 25% of equity
+        # 3. Block when option positions > 4 (max 1 iron condor)
+        # This CANNOT be bypassed - prevents position accumulation disasters
+        # ============================================================
+        is_position_opening = (
+            request.side.lower() == "buy"
+            or (request.is_option and request.side.lower() == "sell")
+        )
+
+        if is_position_opening:
+            # Check 1: TRADING_HALTED flag file
+            halt_file = Path("data/TRADING_HALTED")
+            if halt_file.exists():
+                halt_reason = halt_file.read_text().strip() or "Manual trading halt"
+                logger.error(f"🚨 CIRCUIT BREAKER: Trading halted - {halt_reason}")
+                return GatewayDecision(
+                    approved=False,
+                    request=request,
+                    rejection_reasons=[RejectionReason.CIRCUIT_BREAKER_DAILY_LOSS],
+                    risk_score=1.0,
+                    metadata={"circuit_breaker": "TRADING_HALTED file exists", "reason": halt_reason},
+                )
+
+            # Check 2: Total unrealized loss > 25% of equity
+            total_unrealized_loss = sum(
+                float(p.get("unrealized_pl", 0))
+                for p in positions
+                if float(p.get("unrealized_pl", 0)) < 0
+            )
+            loss_pct = abs(total_unrealized_loss) / account_equity if account_equity > 0 else 0
+            if loss_pct > 0.25:
+                logger.error(
+                    f"🚨 CIRCUIT BREAKER: Unrealized loss ${abs(total_unrealized_loss):.2f} "
+                    f"({loss_pct*100:.1f}%) exceeds 25% of equity. NO NEW POSITIONS."
+                )
+                return GatewayDecision(
+                    approved=False,
+                    request=request,
+                    rejection_reasons=[RejectionReason.CIRCUIT_BREAKER_DRAWDOWN],
+                    risk_score=1.0,
+                    metadata={
+                        "circuit_breaker": "CRISIS_MODE",
+                        "unrealized_loss": total_unrealized_loss,
+                        "loss_pct": loss_pct,
+                        "action": "Close bleeding positions before opening new ones",
+                    },
+                )
+
+            # Check 3: Too many option positions (max 4 = 1 iron condor)
+            option_positions = [p for p in positions if len(p.get("symbol", "")) > 10]
+            if len(option_positions) > 4:
+                logger.error(
+                    f"🚨 CIRCUIT BREAKER: {len(option_positions)} option positions "
+                    f"exceeds max 4 (1 iron condor). NO NEW POSITIONS."
+                )
+                return GatewayDecision(
+                    approved=False,
+                    request=request,
+                    rejection_reasons=[RejectionReason.MAX_IRON_CONDORS_EXCEEDED],
+                    risk_score=1.0,
+                    metadata={
+                        "circuit_breaker": "TOO_MANY_POSITIONS",
+                        "option_positions": len(option_positions),
+                        "max_allowed": 4,
+                        "action": "Close excess positions before opening new ones",
+                    },
+                )
+
+        # ============================================================
         # CHECK 0: DAILY LOSS LIMIT - Block trading when daily loss exceeds 5%
         # Phil Town Rule #1: Don't lose money - enforced via daily limit, not total P/L
         # FIXED Jan 14, 2026 (LL-205): Previous logic blocked ALL trades when total P/L
