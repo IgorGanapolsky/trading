@@ -37,36 +37,39 @@ class TestUpdateSystemStatePositions:
 
     def test_positions_stored_in_performance(self, temp_state_file):
         """CRITICAL: Verify positions are saved to performance.open_positions."""
-        # Mock alpaca data with positions
+        # Mock alpaca data with positions (LL-281: uses nested paper/live structure)
         alpaca_data = {
-            "equity": 100942.23,
-            "cash": 86629.95,
-            "buying_power": 1341.99,
-            "positions": [
-                {
-                    "symbol": "SPY",
-                    "qty": 10.5,
-                    "avg_entry_price": 590.00,
-                    "current_price": 595.00,
-                    "market_value": 6247.50,
-                    "unrealized_pl": 52.50,
-                    "unrealized_plpc": 0.85,
-                    "side": "long",
-                },
-                {
-                    "symbol": "AAPL",
-                    "qty": 5.0,
-                    "avg_entry_price": 180.00,
-                    "current_price": 185.00,
-                    "market_value": 925.00,
-                    "unrealized_pl": 25.00,
-                    "unrealized_plpc": 2.78,
-                    "side": "long",
-                },
-            ],
-            "positions_count": 2,
-            "mode": "paper",
-            "synced_at": "2026-01-04T12:00:00",
+            "paper": {
+                "equity": 100942.23,
+                "cash": 86629.95,
+                "buying_power": 1341.99,
+                "positions": [
+                    {
+                        "symbol": "SPY",
+                        "qty": 10.5,
+                        "avg_entry_price": 590.00,
+                        "current_price": 595.00,
+                        "market_value": 6247.50,
+                        "unrealized_pl": 52.50,
+                        "unrealized_plpc": 0.85,
+                        "side": "long",
+                    },
+                    {
+                        "symbol": "AAPL",
+                        "qty": 5.0,
+                        "avg_entry_price": 180.00,
+                        "current_price": 185.00,
+                        "market_value": 925.00,
+                        "unrealized_pl": 25.00,
+                        "unrealized_plpc": 2.78,
+                        "side": "long",
+                    },
+                ],
+                "positions_count": 2,
+                "mode": "paper",
+                "synced_at": "2026-01-04T12:00:00",
+            },
+            "live": None,
         }
 
         # Import and run update_system_state
@@ -95,13 +98,16 @@ class TestUpdateSystemStatePositions:
     def test_empty_positions_stored_correctly(self, temp_state_file):
         """Test that empty positions array is stored correctly."""
         alpaca_data = {
-            "equity": 100000.00,
-            "cash": 100000.00,
-            "buying_power": 100000.00,
-            "positions": [],
-            "positions_count": 0,
-            "mode": "paper",
-            "synced_at": "2026-01-04T12:00:00",
+            "paper": {
+                "equity": 100000.00,
+                "cash": 100000.00,
+                "buying_power": 100000.00,
+                "positions": [],
+                "positions_count": 0,
+                "mode": "paper",
+                "synced_at": "2026-01-04T12:00:00",
+            },
+            "live": None,
         }
 
         with patch("sync_alpaca_state.SYSTEM_STATE_FILE", temp_state_file):
@@ -118,44 +124,47 @@ class TestUpdateSystemStatePositions:
     def test_positions_count_matches(self, temp_state_file):
         """Verify positions_count matches actual positions stored."""
         alpaca_data = {
-            "equity": 100942.23,
-            "cash": 86629.95,
-            "buying_power": 1341.99,
-            "positions": [
-                {
-                    "symbol": "SPY",
-                    "qty": 10,
-                    "avg_entry_price": 590,
-                    "current_price": 595,
-                    "market_value": 5950,
-                    "unrealized_pl": 50,
-                    "unrealized_plpc": 0.85,
-                    "side": "long",
-                },
-                {
-                    "symbol": "AAPL",
-                    "qty": 5,
-                    "avg_entry_price": 180,
-                    "current_price": 185,
-                    "market_value": 925,
-                    "unrealized_pl": 25,
-                    "unrealized_plpc": 2.78,
-                    "side": "long",
-                },
-                {
-                    "symbol": "GOOGL",
-                    "qty": 2,
-                    "avg_entry_price": 150,
-                    "current_price": 155,
-                    "market_value": 310,
-                    "unrealized_pl": 10,
-                    "unrealized_plpc": 3.33,
-                    "side": "long",
-                },
-            ],
-            "positions_count": 3,
-            "mode": "paper",
-            "synced_at": "2026-01-04T12:00:00",
+            "paper": {
+                "equity": 100942.23,
+                "cash": 86629.95,
+                "buying_power": 1341.99,
+                "positions": [
+                    {
+                        "symbol": "SPY",
+                        "qty": 10,
+                        "avg_entry_price": 590,
+                        "current_price": 595,
+                        "market_value": 5950,
+                        "unrealized_pl": 50,
+                        "unrealized_plpc": 0.85,
+                        "side": "long",
+                    },
+                    {
+                        "symbol": "AAPL",
+                        "qty": 5,
+                        "avg_entry_price": 180,
+                        "current_price": 185,
+                        "market_value": 925,
+                        "unrealized_pl": 25,
+                        "unrealized_plpc": 2.78,
+                        "side": "long",
+                    },
+                    {
+                        "symbol": "GOOGL",
+                        "qty": 2,
+                        "avg_entry_price": 150,
+                        "current_price": 155,
+                        "market_value": 310,
+                        "unrealized_pl": 10,
+                        "unrealized_plpc": 3.33,
+                        "side": "long",
+                    },
+                ],
+                "positions_count": 3,
+                "mode": "paper",
+                "synced_at": "2026-01-04T12:00:00",
+            },
+            "live": None,
         }
 
         with patch("sync_alpaca_state.SYSTEM_STATE_FILE", temp_state_file):
@@ -201,24 +210,27 @@ class TestUpdateSystemStatePositions:
     def test_position_with_quantity_field(self, temp_state_file):
         """Test handling of 'quantity' field instead of 'qty'."""
         alpaca_data = {
-            "equity": 100000,
-            "cash": 90000,
-            "buying_power": 90000,
-            "positions": [
-                {
-                    "symbol": "SPY",
-                    "quantity": 10,
-                    "avg_entry_price": 590,
-                    "current_price": 595,
-                    "market_value": 5950,
-                    "unrealized_pl": 50,
-                    "unrealized_plpc": 0.85,
-                    "side": "long",
-                },
-            ],
-            "positions_count": 1,
-            "mode": "paper",
-            "synced_at": "2026-01-04T12:00:00",
+            "paper": {
+                "equity": 100000,
+                "cash": 90000,
+                "buying_power": 90000,
+                "positions": [
+                    {
+                        "symbol": "SPY",
+                        "quantity": 10,
+                        "avg_entry_price": 590,
+                        "current_price": 595,
+                        "market_value": 5950,
+                        "unrealized_pl": 50,
+                        "unrealized_plpc": 0.85,
+                        "side": "long",
+                    },
+                ],
+                "positions_count": 1,
+                "mode": "paper",
+                "synced_at": "2026-01-04T12:00:00",
+            },
+            "live": None,
         }
 
         with patch("sync_alpaca_state.SYSTEM_STATE_FILE", temp_state_file):
@@ -248,13 +260,16 @@ class TestRejectSimulatedData:
     def test_rejects_simulated_mode(self, temp_state_file):
         """CRITICAL: Simulated data must be rejected to prevent lies."""
         alpaca_data = {
-            "equity": 999999.99,
-            "cash": 999999.99,
-            "buying_power": 999999.99,
-            "positions": [],
-            "positions_count": 0,
-            "mode": "simulated",  # This is simulated - should be rejected
-            "synced_at": "2026-01-04T12:00:00",
+            "paper": {
+                "equity": 999999.99,
+                "cash": 999999.99,
+                "buying_power": 999999.99,
+                "positions": [],
+                "positions_count": 0,
+                "mode": "simulated",  # This is simulated - should be rejected
+                "synced_at": "2026-01-04T12:00:00",
+            },
+            "live": None,
         }
 
         with patch("sync_alpaca_state.SYSTEM_STATE_FILE", temp_state_file):
@@ -321,24 +336,27 @@ class TestPositionFieldMapping:
     def test_all_position_fields_mapped(self, temp_state_file):
         """Verify all required fields are mapped from Alpaca data."""
         alpaca_data = {
-            "equity": 100000,
-            "cash": 90000,
-            "buying_power": 90000,
-            "positions": [
-                {
-                    "symbol": "TEST",
-                    "qty": 100,
-                    "avg_entry_price": 50.00,
-                    "current_price": 55.00,
-                    "market_value": 5500.00,
-                    "unrealized_pl": 500.00,
-                    "unrealized_plpc": 10.0,
-                    "side": "long",
-                }
-            ],
-            "positions_count": 1,
-            "mode": "paper",
-            "synced_at": "2026-01-04T12:00:00",
+            "paper": {
+                "equity": 100000,
+                "cash": 90000,
+                "buying_power": 90000,
+                "positions": [
+                    {
+                        "symbol": "TEST",
+                        "qty": 100,
+                        "avg_entry_price": 50.00,
+                        "current_price": 55.00,
+                        "market_value": 5500.00,
+                        "unrealized_pl": 500.00,
+                        "unrealized_plpc": 10.0,
+                        "side": "long",
+                    }
+                ],
+                "positions_count": 1,
+                "mode": "paper",
+                "synced_at": "2026-01-04T12:00:00",
+            },
+            "live": None,
         }
 
         with patch("sync_alpaca_state.SYSTEM_STATE_FILE", temp_state_file):
@@ -379,27 +397,30 @@ class TestPositionFieldMapping:
     def test_filters_positions_without_symbol(self, temp_state_file):
         """Positions without symbol should be filtered out."""
         alpaca_data = {
-            "equity": 100000,
-            "cash": 90000,
-            "buying_power": 90000,
-            "positions": [
-                {
-                    "symbol": "VALID",
-                    "qty": 10,
-                    "avg_entry_price": 100,
-                    "current_price": 105,
-                    "market_value": 1050,
-                    "unrealized_pl": 50,
-                    "unrealized_plpc": 5,
-                    "side": "long",
-                },
-                {"qty": 10, "avg_entry_price": 100},  # Missing symbol - should be filtered
-                {"symbol": None, "qty": 5},  # None symbol - should be filtered
-                {"symbol": "", "qty": 5},  # Empty symbol - should be filtered
-            ],
-            "positions_count": 4,
-            "mode": "paper",
-            "synced_at": "2026-01-04T12:00:00",
+            "paper": {
+                "equity": 100000,
+                "cash": 90000,
+                "buying_power": 90000,
+                "positions": [
+                    {
+                        "symbol": "VALID",
+                        "qty": 10,
+                        "avg_entry_price": 100,
+                        "current_price": 105,
+                        "market_value": 1050,
+                        "unrealized_pl": 50,
+                        "unrealized_plpc": 5,
+                        "side": "long",
+                    },
+                    {"qty": 10, "avg_entry_price": 100},  # Missing symbol - should be filtered
+                    {"symbol": None, "qty": 5},  # None symbol - should be filtered
+                    {"symbol": "", "qty": 5},  # Empty symbol - should be filtered
+                ],
+                "positions_count": 4,
+                "mode": "paper",
+                "synced_at": "2026-01-04T12:00:00",
+            },
+            "live": None,
         }
 
         with patch("sync_alpaca_state.SYSTEM_STATE_FILE", temp_state_file):
