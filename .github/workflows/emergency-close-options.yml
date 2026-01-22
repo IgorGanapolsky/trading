@@ -100,12 +100,19 @@ jobs:
                   print(f"   - {pos.symbol}")
               exit(1)
 
+          # CRITICAL: Detect position direction to use correct close side
+          position_qty = float(target_position.qty)
+          is_long = position_qty > 0
+          close_side = OrderSide.SELL if is_long else OrderSide.BUY
+          close_action = "SELL TO CLOSE" if is_long else "BUY TO CLOSE"
+
           print(f"\n🎯 Target Position Found:")
           print(f"   Symbol: {target_position.symbol}")
           print(f"   Qty: {target_position.qty}")
+          print(f"   Position Type: {'LONG' if is_long else 'SHORT'}")
+          print(f"   Close Action: {close_action}")
           print(f"   Current Price: ${float(target_position.current_price):.2f}")
           print(f"   Unrealized P/L: ${float(target_position.unrealized_pl):.2f}")
-          print(f"   Cost to close: ~${float(target_position.current_price) * qty * 100:.2f}")
 
           # Check market status
           clock = client.get_clock()
@@ -113,21 +120,21 @@ jobs:
 
           if dry_run:
               print("\n🔍 DRY RUN - No order submitted")
-              print("   Would submit: BUY TO CLOSE")
+              print(f"   Would submit: {close_action}")
               print(f"   Symbol: {option_symbol}")
               print(f"   Qty: {qty}")
               with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
                   f.write(f"order_id=DRY_RUN\n")
                   f.write(f"status=simulated\n")
-                  f.write(f"cost_estimate={float(target_position.current_price) * qty * 100:.2f}\n")
+                  f.write(f"close_action={close_action}\n")
           else:
-              # Submit BUY TO CLOSE order
-              print(f"\n📝 Submitting BUY TO CLOSE order...")
+              # Submit close order with correct side based on position direction
+              print(f"\n📝 Submitting {close_action} order...")
 
               order_request = MarketOrderRequest(
                   symbol=option_symbol,
                   qty=qty,
-                  side=OrderSide.BUY,  # BUY to close short position
+                  side=close_side,  # SELL for long, BUY for short
                   time_in_force=TimeInForce.DAY
               )
 
@@ -147,7 +154,7 @@ jobs:
                   f.write(f"symbol={order.symbol}\n")
 
           print("\n" + "=" * 60)
-          print("🛡️ RISK MITIGATION: Short option position closing")
+          print(f"🛡️ RISK MITIGATION: {close_action} completed")
           print("=" * 60)
           PYTHON_SCRIPT
 
