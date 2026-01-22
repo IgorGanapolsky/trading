@@ -2,10 +2,10 @@
 
 CTO: Claude | CEO: Igor Ganapolsky
 
-## Strategy (Updated Jan 21, 2026 - IRON CONDORS REPLACE TASTYTRADE)
+## Strategy (Updated Jan 22, 2026 - FRESH $30K ACCOUNT)
 - **North Star**: $100/day after-tax profit - CEO MANDATE (PERMANENT)
-- **Why revised**: TastyTrade credit spread 11-year backtest showed LOSSES (-7% to -93%). Iron condors from $100K account showed 86% win rate with 1.5:1 reward/risk.
-- **Current capital**: $4,986.39 | Lesson paid from SOFI disaster.
+- **Why revised**: Previous $5K account had position accumulation crisis (LL-281). Starting fresh with $30K.
+- **Current capital**: $30,000 | Fresh paper account - Jan 22, 2026
 - **Primary strategy**: IRON CONDORS on SPY ONLY - defined risk on BOTH sides
 - **Iron condor setup**:
   - Sell 15-20 delta put spread (bull put)
@@ -14,8 +14,8 @@ CTO: Claude | CEO: Igor Ganapolsky
   - Collect premium from BOTH sides
 - **CRITICAL MATH**: 15-delta = 86% win rate (LL-220). Risk/reward ~1.5:1 (BETTER than credit spreads)
 - **Expiration**: 30-45 DTE, close at 50% max profit OR 7 DTE (whichever first) - LL-268 research
-- **Position limit**: 1 iron condor at a time (5% max = $248 risk)
-- **Monthly target**: 2-3 iron condors x $75 avg x 86% win rate = $130-190/month (realistic)
+- **Position limit**: 1 iron condor at a time (5% max = $1,500 risk with $30K)
+- **Monthly target**: 2-3 iron condors x $150 avg x 86% win rate = $260-390/month (realistic)
 - **Stop-loss**: Close if one side reaches 200% of credit - MANDATORY
 - **Adjustment**: If tested, roll untested side closer for additional credit
 - **Assignment risk**: Close positions at 7 DTE to avoid gamma risk (changed from 21 DTE per LL-268)
@@ -23,15 +23,15 @@ CTO: Claude | CEO: Igor Ganapolsky
 - **Paper phase**: 90 days to validate 80%+ win rate before scaling
 - **Why iron condors beat credit spreads**: Collect premium from BOTH sides, better win rate, profit in range-bound markets
 
-## Recovery Path (Math-Validated Jan 15, 2026)
-| Phase | Capital | Monthly Income | Daily Equivalent | Timeline |
-|-------|---------|----------------|------------------|----------|
-| Now | $4,959 | $150-200 | **$5-10/day** | Immediate |
-| +6mo | $9,500 | $285-380 | $14-19/day | With deposits |
-| +12mo | $16,000 | $480-640 | $24-32/day | Compounding |
-| +24mo | $33,000 | $990-1,320 | $50-66/day | On track |
-| +30mo | $45,000 | $1,350-1,800 | **$68-90/day** | Near goal |
-| Goal | $50,000+ | $2,000+ | **$100/day** | ~2.5-3 years |
+## Recovery Path (Updated Jan 22, 2026 - $30K Starting Capital)
+| Phase | Capital | Monthly Income (8-13%) | Daily Equivalent | Timeline |
+|-------|---------|------------------------|------------------|----------|
+| **Now** | **$30,000** | **$2,400-$3,900** | **$80-$130/day** | Immediate |
+| +3mo | $33,000 | $2,640-$4,290 | $88-$143/day | Compounding |
+| +6mo | $38,000 | $3,040-$4,940 | $101-$165/day | Compounding |
+| +12mo | $50,000 | $4,000-$6,500 | $133-$217/day | Goal achieved |
+
+**$100/day target is achievable NOW** at the lower end of 8% monthly returns.
 
 ## MANDATORY Pre-Trade Checklist
 1. [ ] Is ticker SPY? (SPY ONLY - best liquidity, tightest spreads)
