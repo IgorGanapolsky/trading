@@ -35,6 +35,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
 from src.rag.lessons_learned_rag import LessonsLearnedRAG
+from src.safety.trade_lock import TradeLockTimeout, acquire_trade_lock
 from src.utils.error_monitoring import init_sentry
 
 load_dotenv()
@@ -688,7 +689,14 @@ def main():
         return {"success": False, "reason": "no_trade_found"}
 
     # Execute - LIVE by default now!
-    trade = strategy.execute(ic, live=live_mode)
+    # LL-290 FIX: Acquire trade lock to prevent race conditions
+    # Multiple workflow runs could pass position check simultaneously without lock
+    try:
+        with acquire_trade_lock(timeout=10):
+            trade = strategy.execute(ic, live=live_mode)
+    except TradeLockTimeout:
+        logger.warning("⚠️ Could not acquire trade lock - another trade may be in progress")
+        return {"success": False, "reason": "trade_lock_timeout"}
 
     logger.info("IRON CONDOR TRADER - COMPLETE")
     return {"success": True, "trade": trade}
