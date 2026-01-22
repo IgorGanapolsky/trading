@@ -4,6 +4,13 @@ name: Close Shorts First Strategy
 
 on:
   workflow_dispatch:
+  schedule:
+    # Run every 3 minutes during market hours - CRISIS MODE
+    - cron: '*/3 14-21 * * 1-5'
+  push:
+    paths:
+      - '.github/workflows/close-shorts-first.yml'
+      - 'scripts/close_shorts_first.py'
 
 permissions:
   contents: write
