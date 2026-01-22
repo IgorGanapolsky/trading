@@ -130,28 +130,42 @@ jobs:
           else:
               # Submit close order with correct side based on position direction
               print(f"\n📝 Submitting {close_action} order...")
+              print(f"   DEBUG: symbol={option_symbol}")
+              print(f"   DEBUG: qty={qty}")
+              print(f"   DEBUG: side={close_side}")
+              print(f"   DEBUG: time_in_force=DAY")
 
-              order_request = MarketOrderRequest(
-                  symbol=option_symbol,
-                  qty=qty,
-                  side=close_side,  # SELL for long, BUY for short
-                  time_in_force=TimeInForce.DAY  # DAY for market orders on options
-              )
+              try:
+                  order_request = MarketOrderRequest(
+                      symbol=option_symbol,
+                      qty=qty,
+                      side=close_side,  # SELL for long, BUY for short
+                      time_in_force=TimeInForce.DAY  # DAY for market orders on options
+                  )
+                  print(f"   DEBUG: order_request created successfully")
 
-              order = client.submit_order(order_request)
+                  order = client.submit_order(order_request)
 
-              print(f"\n✅ ORDER SUBMITTED!")
-              print(f"   Order ID: {order.id}")
-              print(f"   Status: {order.status}")
-              print(f"   Symbol: {order.symbol}")
-              print(f"   Qty: {order.qty}")
-              print(f"   Side: {order.side}")
-              print(f"   Created: {order.created_at}")
+                  print(f"\n✅ ORDER SUBMITTED!")
+                  print(f"   Order ID: {order.id}")
+                  print(f"   Status: {order.status}")
+                  print(f"   Symbol: {order.symbol}")
+                  print(f"   Qty: {order.qty}")
+                  print(f"   Side: {order.side}")
+                  print(f"   Created: {order.created_at}")
 
-              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-                  f.write(f"order_id={order.id}\n")
-                  f.write(f"status={order.status}\n")
-                  f.write(f"symbol={order.symbol}\n")
+                  with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                      f.write(f"order_id={order.id}\n")
+                      f.write(f"status={order.status}\n")
+                      f.write(f"symbol={order.symbol}\n")
+              except Exception as e:
+                  print(f"\n❌ ORDER SUBMISSION FAILED!")
+                  print(f"   Error Type: {type(e).__name__}")
+                  print(f"   Error Message: {str(e)}")
+                  import traceback
+                  traceback.print_exc()
+                  import sys
+                  sys.exit(1)
 
           print("\n" + "=" * 60)
           print(f"🛡️ RISK MITIGATION: {close_action} completed")
