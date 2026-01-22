@@ -648,6 +648,22 @@ def is_direct_pl_query(query: str) -> bool:
     return any(re.search(pattern, query_lower) for pattern in direct_pl_patterns)
 
 
+def is_compound_pl_analytical_query(query: str) -> bool:
+    """
+    Detect if query asks BOTH for P/L data AND explanation/analysis.
+
+    Examples that are compound queries:
+    - "How much money did we make today and why?"
+    - "What's our profit and explain why?"
+    - "Did we make money? Why or why not?"
+
+    These need BOTH:
+    1. Direct P/L answer (conversational, not dump)
+    2. RAG analysis for the "why" part
+    """
+    return is_direct_pl_query(query) and is_analytical_query(query)
+
+
 def is_trade_query(query: str) -> bool:
     """
     Detect if query is about trades vs lessons.
@@ -1410,6 +1426,67 @@ async def webhook(
                 f"Readiness assessment: {assessment['status']} ({assessment['readiness_pct']:.0f}%) "
                 f"[future={context['is_future']}, paper={context['is_paper']}]"
             )
+
+        elif is_compound_pl_analytical_query(user_query):
+            # FIX Jan 21, 2026: Handle compound P/L + analytical queries
+            # E.g., "How much money did we make today and why?"
+            # 1. Answer the P/L question directly (conversational)
+            # 2. Query RAG for the "why" explanation
+            logger.info(f"Detected COMPOUND P/L + ANALYTICAL query: {user_query}")
+
+            # Part 1: Get direct P/L answer
+            portfolio = get_current_portfolio_status()
+            pl_response = ""
+            if portfolio:
+                paper = portfolio.get("paper", {})
+                trades_today = portfolio.get("trades_today", 0)
+                daily_change = paper.get("daily_change", 0)
+                total_pl = paper.get("total_pl", 0)
+                actual_today = portfolio.get("actual_today", "today")
+
+                if trades_today > 0:
+                    if daily_change > 0:
+                        pl_response = f"**Today's P/L:** +${daily_change:,.2f} from {trades_today} trade(s)"
+                    elif daily_change < 0:
+                        pl_response = f"**Today's P/L:** ${daily_change:,.2f} from {trades_today} trade(s)"
+                    else:
+                        pl_response = f"**Today's P/L:** Flat from {trades_today} trade(s)"
+                else:
+                    pl_response = f"**Today ({actual_today}):** No trades executed yet"
+            else:
+                pl_response = "**P/L Status:** Unable to retrieve portfolio data"
+
+            # Part 2: Query RAG for analytical explanation
+            results, source = query_rag_hybrid(user_query, top_k=3)
+
+            rag_explanation = ""
+            if results:
+                # Extract key insights from RAG results
+                insights = []
+                for r in results[:3]:
+                    title = r.get("title", r.get("lesson_id", "Insight"))
+                    summary = r.get("summary", r.get("root_cause", ""))[:150]
+                    if summary:
+                        insights.append(f"- **{title}**: {summary}")
+
+                if insights:
+                    rag_explanation = "\n**Analysis from lessons learned:**\n" + "\n".join(insights)
+            else:
+                # Provide default explanation context
+                rag_explanation = """
+**Common reasons for P/L results:**
+- Market closed (weekends/holidays) - no trading possible
+- Entry signals not triggered - waiting for setup
+- Strategy parameters - iron condor requires specific conditions
+- Position sizing - staying within 5% risk limit"""
+
+            response_text = f"""📊 **{user_query}**
+
+{pl_response}
+{rag_explanation}
+
+💡 *Ask "are we ready to trade?" for full status*"""
+            logger.info(f"Returning compound P/L + analytical response (RAG source: {source})")
 
         elif is_trade_query(user_query):
             # Query trade history from local JSON files
