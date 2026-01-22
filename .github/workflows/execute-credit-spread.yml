@@ -26,6 +26,11 @@ on:
         required: true
         default: "1"
 
+# CRITICAL: Global trade concurrency - prevents race conditions (LL-281)
+concurrency:
+  group: global-trade-execution
+  cancel-in-progress: false
+
 env:
   # Note: get_alpaca_client() expects these specific names
   ALPACA_PAPER_TRADING_5K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}

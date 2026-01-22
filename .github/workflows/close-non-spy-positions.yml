@@ -13,6 +13,11 @@ on:
 permissions:
   contents: write
 
+# CRITICAL: Global trade concurrency - prevents race conditions (LL-281)
+concurrency:
+  group: global-trade-execution
+  cancel-in-progress: false
+
 jobs:
   close-violations:
     name: Close Non-SPY Options

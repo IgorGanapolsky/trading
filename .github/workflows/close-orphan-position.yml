@@ -22,6 +22,11 @@ on:
     paths:
       - 'CLOSE_ORPHAN.trigger'
 
+# CRITICAL: Global trade concurrency - prevents race conditions (LL-281)
+concurrency:
+  group: global-trade-execution
+  cancel-in-progress: false
+
 jobs:
   close-position:
     runs-on: ubuntu-latest

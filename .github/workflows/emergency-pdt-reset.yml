@@ -6,6 +6,11 @@ on:
 permissions:
   contents: write
 
+# CRITICAL: Global trade concurrency - prevents race conditions (LL-281)
+concurrency:
+  group: global-trade-execution
+  cancel-in-progress: false
+
 jobs:
   emergency-close:
     name: Emergency PDT Reset and Close

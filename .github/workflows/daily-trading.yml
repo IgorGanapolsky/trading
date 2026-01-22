@@ -35,9 +35,10 @@ permissions:
   contents: write
   pages: write
 
-# Prevent multiple concurrent trading runs
+# CRITICAL: Global trade concurrency - prevents race conditions (LL-281)
+# All workflows that can execute trades MUST use this same concurrency group
 concurrency:
-  group: daily-trading
+  group: global-trade-execution
   cancel-in-progress: false
 
 jobs:
