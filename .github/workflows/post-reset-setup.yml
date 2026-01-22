@@ -1,0 +1,150 @@
+name: Post Paper Account Reset Setup
+
+# Run this AFTER resetting paper account and updating API keys
+# This workflow verifies the new account and sets up proper configurations
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_balance:
+        description: "Expected starting balance (e.g., 30000)"
+        required: true
+        default: "30000"
+
+permissions:
+  contents: write
+
+jobs:
+  setup-new-account:
+    name: Setup New Paper Account
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install alpaca-py requests
+
+      - name: Verify New Account
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+          EXPECTED_BALANCE: ${{ inputs.expected_balance }}
+        run: |
+          python3 << 'EOF'
+          import os
+          import sys
+          import requests
+
+          print("=" * 60)
+          print("POST-RESET ACCOUNT VERIFICATION")
+          print("=" * 60)
+
+          api_key = os.environ['ALPACA_API_KEY']
+          api_secret = os.environ['ALPACA_SECRET_KEY']
+          expected = float(os.environ.get('EXPECTED_BALANCE', 30000))
+
+          base_url = "https://paper-api.alpaca.markets"
+          headers = {
+              "APCA-API-KEY-ID": api_key,
+              "APCA-API-SECRET-KEY": api_secret,
+          }
+
+          # 1. Check account
+          print("\n1️⃣ CHECKING ACCOUNT")
+          resp = requests.get(f"{base_url}/v2/account", headers=headers)
+          if resp.status_code != 200:
+              print(f"❌ API KEY INVALID OR NOT UPDATED!")
+              print(f"   Error: {resp.status_code} - {resp.text[:100]}")
+              print("\n   Please update GitHub secrets with new API keys from:")
+              print("   https://app.alpaca.markets/paper/dashboard/overview")
+              sys.exit(1)
+
+          account = resp.json()
+          equity = float(account['equity'])
+          cash = float(account['cash'])
+
+          print(f"   Equity: ${equity:,.2f}")
+          print(f"   Cash: ${cash:,.2f}")
+          print(f"   Expected: ${expected:,.2f}")
+
+          if abs(equity - expected) > 100:
+              print(f"   ⚠️ Balance mismatch! Expected ~${expected:,.0f}, got ${equity:,.2f}")
+          else:
+              print(f"   ✅ Balance verified!")
+
+          # 2. Check positions (should be empty)
+          print("\n2️⃣ CHECKING POSITIONS")
+          resp = requests.get(f"{base_url}/v2/positions", headers=headers)
+          positions = resp.json() if resp.ok else []
+
+          if positions:
+              print(f"   ⚠️ Found {len(positions)} positions (expected 0)")
+              for p in positions:
+                  print(f"      - {p['symbol']}: {p['qty']}")
+          else:
+              print("   ✅ No positions (clean slate)")
+
+          # 3. Check PDT status
+          print("\n3️⃣ PDT STATUS")
+          pdt_flag = account.get('pattern_day_trader', False)
+          dt_count = account.get('daytrade_count', 0)
+
+          print(f"   PDT Flag: {pdt_flag}")
+          print(f"   Day Trade Count: {dt_count}")
+
+          if equity >= 25000:
+              print("   ✅ Above $25K - NO PDT RESTRICTIONS!")
+          else:
+              print(f"   ⚠️ Below $25K - PDT rules apply (3 day trades per 5 days)")
+
+          # 4. Set optimal configuration
+          print("\n4️⃣ CONFIGURING ACCOUNT")
+          config_update = {
+              "pdt_check": "both",
+              "dtbp_check": "entry",
+              "fractional_trading": True,
+              "no_shorting": False
+          }
+
+          resp = requests.patch(
+              f"{base_url}/v2/account/configurations",
+              headers=headers,
+              json=config_update
+          )
+
+          if resp.ok:
+              print("   ✅ Configuration updated")
+              config = resp.json()
+              print(f"   pdt_check: {config.get('pdt_check')}")
+              print(f"   dtbp_check: {config.get('dtbp_check')}")
+          else:
+              print(f"   ⚠️ Config update failed: {resp.text[:100]}")
+
+          print("\n" + "=" * 60)
+          print("✅ NEW PAPER ACCOUNT READY FOR TRADING!")
+          print("=" * 60)
+          print("\nNext steps:")
+          print("1. Trigger sync-system-state.yml to update local state")
+          print("2. Trading workflow is still DISABLED (re-enable when ready)")
+          print("3. Start with paper trading for 90 days per CLAUDE.md")
+          EOF
+
+      - name: Sync State
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'sync-system-state.yml',
+              ref: 'main'
+            });
