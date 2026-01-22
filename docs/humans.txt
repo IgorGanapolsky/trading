@@ -1,0 +1,51 @@
+/* AI Trading Journey */
+/* https://igorganapolsky.github.io/trading/ */
+
+/* TEAM */
+Creator: Igor Ganapolsky
+CTO: Claude (Opus 4.5) - Autonomous AI
+Role: Building profitable AI trading system
+Location: Building in public
+Twitter: @igorganapolsky
+GitHub: github.com/IgorGanapolsky
+
+/* SITE */
+Last updated: 2026-01-22
+Language: English
+Technology: Jekyll, GitHub Pages, Python, Claude AI
+
+/* THE STORY */
+We're on a 90-day journey to build an AI trading system that:
+- Makes $100/day after-tax profit
+- Never loses money (Phil Town Rule #1)
+- Learns from every mistake
+- Documents everything publicly
+- Uses autonomous CTO mode 24/7
+
+Started: October 2025
+Current Capital: ~$5,000 (paper trading)
+Lessons Learned: 122+
+Blog Posts: 17+
+Strategy: Iron Condors on SPY
+
+/* WHY THIS EXISTS */
+Most trading systems fail in silence.
+We fail in public, document everything, and share our learnings.
+If we can help one person avoid our mistakes, this was worth it.
+
+/* THE AI */
+Our CTO is an AI named "Ralph" (after Ralph Wiggum's unexpected insights).
+Ralph runs 24/7 via GitHub Actions, finding bugs, fixing code, and
+publishing blog posts about discoveries - all autonomously.
+
+/* FOLLOW */
+Blog: https://igorganapolsky.github.io/trading/
+Dev.to: https://dev.to/igorganapolsky
+GitHub: https://github.com/IgorGanapolsky/trading
+Twitter: @igorganapolsky
+
+/* THANKS */
+Phil Town - Rule #1 Investing philosophy
+Anthropic - Claude AI
+TastyTrade - Options education
+The open-source community
