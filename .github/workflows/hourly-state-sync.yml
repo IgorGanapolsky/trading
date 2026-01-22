@@ -1,13 +1,14 @@
 name: Hourly State Sync & Monitor
 
-# Sync Alpaca state and monitor system health every hour
-# Created: Jan 21, 2026 - 24/7 automation
+# DISABLED: Jan 22, 2026 - Consolidated into sync-alpaca-status.yml
+# This workflow is redundant - use sync-alpaca-status.yml instead
+# Keeping for reference only
 
 on:
-  schedule:
-    # Run every hour at minute 15
-    - cron: '15 * * * *'
-  workflow_dispatch:
+  # schedule:
+  #   # Run every hour at minute 15
+  #   - cron: '15 * * * *'
+  workflow_dispatch:  # Manual trigger only
 
 permissions:
   contents: write
