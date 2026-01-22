@@ -2,9 +2,9 @@
 
 CTO: Claude | CEO: Igor Ganapolsky
 
-## Strategy (Updated Jan 22, 2026 - FRESH $30K ACCOUNT)
-- **North Star**: $100/day after-tax profit - CEO MANDATE (PERMANENT)
-- **Why revised**: Previous $5K account had position accumulation crisis (LL-281). Starting fresh with $30K.
+## Strategy (Updated Jan 22, 2026 - PHIL TOWN RULE #1 ALIGNED)
+- **North Star**: $6,000/month after-tax profit (requires $75K capital at 8-13% returns)
+- **Phil Town Rule #1**: Don't lose money. Build capital FIRST, income follows.
 - **Current capital**: $30,000 | Fresh paper account - Jan 22, 2026
 - **Primary strategy**: IRON CONDORS on SPY ONLY - defined risk on BOTH sides
 - **Iron condor setup**:
@@ -23,15 +23,21 @@ CTO: Claude | CEO: Igor Ganapolsky
 - **Paper phase**: 90 days to validate 80%+ win rate before scaling
 - **Why iron condors beat credit spreads**: Collect premium from BOTH sides, better win rate, profit in range-bound markets
 
-## Recovery Path (Updated Jan 22, 2026 - $30K Starting Capital)
-| Phase | Capital | Monthly Income (8-13%) | Daily Equivalent | Timeline |
-|-------|---------|------------------------|------------------|----------|
-| **Now** | **$30,000** | **$2,400-$3,900** | **$80-$130/day** | Immediate |
-| +3mo | $33,000 | $2,640-$4,290 | $88-$143/day | Compounding |
-| +6mo | $38,000 | $3,040-$4,940 | $101-$165/day | Compounding |
-| +12mo | $50,000 | $4,000-$6,500 | $133-$217/day | Goal achieved |
+## Capital Building Path to $6K/Month (Phil Town Aligned)
+**Goal**: Build to $75K capital → $6K/month after-tax becomes achievable at 8-13% returns
 
-**$100/day target is achievable NOW** at the lower end of 8% monthly returns.
+| Phase | Capital | Monthly Gross (8-13%) | After Tax (~30%) | Status |
+|-------|---------|----------------------|------------------|--------|
+| **Now** | **$30,000** | $2,400-$3,900 | **$1,680-$2,730** | Starting |
+| +6mo | $40,000 | $3,200-$5,200 | $2,240-$3,640 | Compounding |
+| +12mo | $55,000 | $4,400-$7,150 | $3,080-$5,005 | Growing |
+| **Goal** | **$75,000** | $6,000-$9,750 | **$4,200-$6,825** | $6K achievable |
+
+**Why this approach aligns with Phil Town:**
+1. Rule #1: Don't lose money - realistic targets = less pressure = fewer forced trades
+2. Monthly thinking > daily thinking - patience over pressure
+3. Capital growth > income chasing - build the base first
+4. Math-based targets - $6K/month needs $75K, not more aggressive returns
 
 ## MANDATORY Pre-Trade Checklist
 1. [ ] Is ticker SPY? (SPY ONLY - best liquidity, tightest spreads)
