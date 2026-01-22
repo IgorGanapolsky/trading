@@ -1,0 +1,127 @@
+name: PROFIT LOCK - Close Profitable Short Positions
+
+# Closes SHORT positions opened on PREVIOUS days
+# BUY TO CLOSE is NOT a day trade if position was opened yesterday
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  close-shorts:
+    name: Lock In Short Position Profits
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install alpaca-py
+
+      - name: Close Profitable Short Positions
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          python3 << 'EOF'
+          import os
+          from datetime import datetime
+          from alpaca.trading.client import TradingClient
+          from alpaca.trading.enums import OrderSide, TimeInForce, PositionIntent
+          from alpaca.trading.requests import MarketOrderRequest
+
+          print("=" * 60)
+          print(f"PROFIT LOCK - Close Short Positions - {datetime.now()}")
+          print("=" * 60)
+
+          api_key = os.environ['ALPACA_API_KEY']
+          api_secret = os.environ['ALPACA_SECRET_KEY']
+
+          client = TradingClient(api_key, api_secret, paper=True)
+
+          # Get account status
+          account = client.get_account()
+          print(f"\nAccount Status:")
+          print(f"  Equity: ${float(account.equity):,.2f}")
+          print(f"  PDT Flag: {account.pattern_day_trader}")
+          print(f"  Day Trade Count: {account.daytrade_count}")
+
+          # Targets: SHORT puts that are profitable
+          targets = [
+              "SPY260220P00565000",  # Short 4, +$69 profit
+              "SPY260220P00653000",  # Short 2, +$108 profit
+          ]
+
+          positions = client.get_all_positions()
+          total_profit = 0
+
+          for p in positions:
+              if p.symbol in targets:
+                  qty = abs(int(float(p.qty)))
+                  pnl = float(p.unrealized_pl)
+                  print(f"\n📍 {p.symbol}:")
+                  print(f"   Qty: {p.qty} (SHORT)")
+                  print(f"   P/L: ${pnl:+,.2f}")
+
+                  if float(p.qty) >= 0:
+                      print(f"   ⚠️ Not a SHORT position, skipping")
+                      continue
+
+                  # BUY TO CLOSE the short position
+                  print(f"   Attempting BUY TO CLOSE {qty} contracts...")
+                  try:
+                      order = client.submit_order(
+                          MarketOrderRequest(
+                              symbol=p.symbol,
+                              qty=qty,
+                              side=OrderSide.BUY,
+                              time_in_force=TimeInForce.DAY,
+                              position_intent=PositionIntent.BUY_TO_CLOSE
+                          )
+                      )
+                      print(f"   ✅ Order submitted: {order.id}")
+                      print(f"   Status: {order.status}")
+                      total_profit += pnl
+                  except Exception as e:
+                      print(f"   ❌ Failed: {e}")
+
+                      # Try without position_intent
+                      print(f"   Trying without position_intent...")
+                      try:
+                          order = client.submit_order(
+                              MarketOrderRequest(
+                                  symbol=p.symbol,
+                                  qty=qty,
+                                  side=OrderSide.BUY,
+                                  time_in_force=TimeInForce.DAY,
+                              )
+                          )
+                          print(f"   ✅ Order submitted: {order.id}")
+                          total_profit += pnl
+                      except Exception as e2:
+                          print(f"   ❌ Also failed: {e2}")
+
+          print("\n" + "=" * 60)
+          if total_profit > 0:
+              print(f"✅ PROFIT LOCKED: ${total_profit:+,.2f}")
+          else:
+              print("⚠️ No short positions closed")
+          print("=" * 60)
+          EOF
+
+      - name: Sync State
+        if: always()
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GH_PAT }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/sync-system-state.yml/dispatches" \
+            -d '{"ref": "main"}'
