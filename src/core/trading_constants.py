@@ -20,10 +20,18 @@ Created: Jan 19, 2026 (Adversarial audit finding - 4 duplicate definitions)
 ALLOWED_TICKERS: set[str] = {"SPY"}  # SPY ONLY per CLAUDE.md Jan 19, 2026
 
 # =============================================================================
-# POSITION LIMITS - Phil Town Rule #1
+# POSITION LIMITS - Phil Town Rule #1 (SINGLE SOURCE OF TRUTH)
+# =============================================================================
+# CRITICAL: All modules MUST import from HERE to avoid duplicates
+# LL-281 (Jan 22, 2026): 8 contracts accumulated when max was 4 due to
+# scattered definitions and race conditions.
 # =============================================================================
 MAX_POSITION_PCT: float = 0.05  # 5% max per position per CLAUDE.md
 MAX_DAILY_LOSS_PCT: float = 0.05  # 5% max daily loss
+MAX_POSITIONS: int = 4  # 1 iron condor = 4 legs max (HARDCODED per CLAUDE.md)
+MAX_CONTRACTS_PER_TRADE: int = 1  # Max contracts per single trade
+CRISIS_LOSS_PCT: float = 0.25  # 25% unrealized loss triggers crisis mode
+CRISIS_POSITION_COUNT: int = 4  # More than 4 positions triggers crisis mode
 
 # =============================================================================
 # OPTIONS PARAMETERS

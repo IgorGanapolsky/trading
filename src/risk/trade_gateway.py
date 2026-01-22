@@ -36,6 +36,15 @@ from src.risk.capital_efficiency import get_capital_calculator
 from src.risk.pre_trade_checklist import PreTradeChecklist
 from src.validators.rule_one_validator import RuleOneValidator
 
+# Import safety features - LL-281 Jan 22, 2026
+try:
+    from src.safety.crisis_monitor import monitor_and_halt_if_needed
+    from src.safety.trade_lock import TradeLockTimeout, acquire_trade_lock
+
+    SAFETY_FEATURES_AVAILABLE = True
+except ImportError:
+    SAFETY_FEATURES_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 # Observability: Vertex AI RAG + Local logs (Jan 9, 2026)
@@ -571,6 +580,31 @@ class TradeGateway:
             f"(qty={request.quantity}, notional={request.notional})"
         )
 
+        # ============================================================
+        # TRADE LOCK - Prevents race conditions (LL-281, Jan 22, 2026)
+        # Multiple trades were passing position checks simultaneously
+        # resulting in 8 contracts instead of max 4.
+        # ============================================================
+        if SAFETY_FEATURES_AVAILABLE:
+            try:
+                # Use context manager for automatic lock release
+                with acquire_trade_lock(timeout=30):
+                    return self._evaluate_with_lock(request)
+            except TradeLockTimeout as e:
+                logger.error(f"🚨 Trade lock timeout: {e}")
+                return GatewayDecision(
+                    approved=False,
+                    request=request,
+                    rejection_reasons=[RejectionReason.FREQUENCY_LIMIT],
+                    risk_score=1.0,
+                    metadata={"error": "Trade lock timeout - another trade in progress"},
+                )
+        else:
+            # Fallback if safety features not available
+            return self._evaluate_with_lock(request)
+
+    def _evaluate_with_lock(self, request: TradeRequest) -> GatewayDecision:
+        """Internal evaluation method called while holding trade lock."""
         rejection_reasons = []
         warnings = []
         risk_score = 0.0
@@ -579,6 +613,18 @@ class TradeGateway:
         # Get account info
         account_equity = self._get_account_equity()
         positions = self._get_positions()
+
+        # ============================================================
+        # AUTO-HALT TRIGGER (LL-281, Jan 22, 2026)
+        # Automatically create TRADING_HALTED when crisis conditions detected
+        # This prevents position accumulation disasters.
+        # ============================================================
+        if SAFETY_FEATURES_AVAILABLE:
+            was_halted, conditions = monitor_and_halt_if_needed(positions, account_equity)
+            if was_halted:
+                logger.critical("🚨 AUTO-HALT TRIGGERED - Crisis conditions detected!")
+                for c in conditions:
+                    logger.critical(f"  - {c.condition_type}: {c.details}")
 
         # ============================================================
         # CIRCUIT BREAKER: CRISIS MODE CHECK (LL-281, Jan 22, 2026)
