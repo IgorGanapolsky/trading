@@ -1,34 +1,379 @@
 {
-  "last_updated": "2026-01-20T21:08:34.887389Z",
-  "portfolio": {
-    "equity": "5066.39",
-    "cash": "4974.18"
-  },
-  "paper_account": {
-    "positions_count": 2,
-    "positions": [
+  "last_updated": "2026-01-22T14:15:07.994189+00:00",
+  "sync_health": {
+    "last_successful_sync": "2026-01-22T14:15:07.994191+00:00",
+    "sync_source": "github_actions",
+    "sync_count_today": 1,
+    "history": [
       {
-        "symbol": "SOFI260213P00032000",
-        "qty": "-1",
-        "market_value": "-685",
-        "unrealized_pl": "-80"
-      },
-      {
-        "symbol": "SPY",
-        "qty": "1.146822157",
-        "market_value": "777.212844",
-        "unrealized_pl": "-5.837156"
+        "timestamp": "2026-01-22T14:15:07.994180+00:00",
+        "equity": 4673.0,
+        "success": true
       }
     ]
   },
+  "portfolio": {
+    "equity": 4673.0,
+    "cash": 1693.09
+  },
+  "paper_account": {
+    "equity": 4673.0,
+    "cash": 1693.09,
+    "buying_power": 5975.09,
+    "total_pl": -327.0,
+    "total_pl_pct": -6.54,
+    "positions_count": 5,
+    "daily_change": 22.21,
+    "win_rate": 0,
+    "win_rate_sample_size": 0,
+    "starting_balance": 5000.0
+  },
+  "positions": [
+    {
+      "symbol": "SPY",
+      "qty": 3.753569343,
+      "price": 689.72,
+      "value": 2588.911847,
+      "pnl": 21.791851,
+      "type": "stock"
+    },
+    {
+      "symbol": "SPY260220P00565000",
+      "qty": -2.0,
+      "price": 0.49,
+      "value": -98.0,
+      "pnl": 24.6666,
+      "type": "option"
+    },
+    {
+      "symbol": "SPY260220P00570000",
+      "qty": 3.0,
+      "price": 0.51,
+      "value": 153.0,
+      "pnl": -18.0,
+      "type": "option"
+    },
+    {
+      "symbol": "SPY260220P00653000",
+      "qty": -6.0,
+      "price": 3.37,
+      "value": -2022.0,
+      "pnl": 351.0,
+      "type": "option"
+    },
+    {
+      "symbol": "SPY260220P00658000",
+      "qty": 6.0,
+      "price": 3.93,
+      "value": 2358.0,
+      "pnl": -498.0,
+      "type": "option"
+    }
+  ],
   "trade_history": [
+    {
+      "id": "d7e48ff3-5d26-4eb1-90ab-300dce4d6ca2",
+      "symbol": "SPY",
+      "side": "OrderSide.BUY",
+      "qty": "0.145854119",
+      "price": "685.548",
+      "filled_at": "2026-01-21 20:42:07.187129+00:00"
+    },
+    {
+      "id": "abe9bfde-a873-4c60-876a-f0238d11618a",
+      "symbol": "SPY",
+      "side": "OrderSide.BUY",
+      "qty": "0.145444654",
+      "price": "687.478",
+      "filled_at": "2026-01-21 20:06:49.844442+00:00"
+    },
+    {
+      "id": "ca7e9b54-11f9-4bf0-b8d1-ed9ca684292a",
+      "symbol": "SPY",
+      "side": "OrderSide.BUY",
+      "qty": "0.145294599",
+      "price": "688.188",
+      "filled_at": "2026-01-21 19:58:36.669580+00:00"
+    },
+    {
+      "id": "db3ec7b0-2df9-40bc-a978-d8a4e6d8a6b5",
+      "symbol": "SPY",
+      "side": "OrderSide.BUY",
+      "qty": "0.145489095",
+      "price": "687.268",
+      "filled_at": "2026-01-21 19:52:10.136471+00:00"
+    },
+    {
+      "id": "f79472ad-ab39-4aa2-add7-c1611d49b0d1",
+      "symbol": "SPY",
+      "side": "OrderSide.BUY",
+      "qty": "0.145482745",
+      "price": "687.298",
+      "filled_at": "2026-01-21 19:43:03.644057+00:00"
+    },
+    {
+      "id": "c8f1e9b3-cee6-49a0-a107-67d6c888be9c",
+      "symbol": "SPY260220P00570000",
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "0.51",
+      "filled_at": "2026-01-21 19:42:49.907299+00:00"
+    },
+    {
+      "id": "50671a56-1dac-47c8-85c0-6a53c60be667",
+      "symbol": "SPY260220P00653000",
+      "side": "OrderSide.SELL",
+      "qty": "2",
+      "price": "3.08",
+      "filled_at": "2026-01-21 19:42:49.800453+00:00"
+    },
+    {
+      "id": "bcd6d72a-9eae-431b-957a-f0ce7783cbae",
+      "symbol": "SPY260220P00570000",
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "0.53",
+      "filled_at": "2026-01-21 19:37:34.790265+00:00"
+    },
+    {
+      "id": "68565056-f722-455c-a4af-6c3c99a13f11",
+      "symbol": "SPY260220P00565000",
+      "side": "OrderSide.SELL",
+      "qty": "1",
+      "price": "0.48",
+      "filled_at": "2026-01-21 19:37:34.685204+00:00"
+    },
+    {
+      "id": "3782a4ab-07bb-4d65-9758-e0831f764a02",
+      "symbol": "SPY260220P00658000",
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "3.93",
+      "filled_at": "2026-01-21 19:37:34.681900+00:00"
+    },
+    {
+      "id": "3206b6c0-f976-473e-a1bd-1a51a2df2444",
+      "symbol": "SPY",
+      "side": "OrderSide.BUY",
+      "qty": "0.145949922",
+      "price": "685.098",
+      "filled_at": "2026-01-21 19:33:07.594744+00:00"
+    },
+    {
+      "id": "936a0145-e44f-4129-a77f-592ba8e4e4ac",
+      "symbol": "SPY260220P00570000",
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "0.55",
+      "filled_at": "2026-01-21 19:32:44.028169+00:00"
+    },
+    {
+      "id": "c65ecc8f-c480-444b-85c1-7cca3c83c996",
+      "symbol": "SPY260220P00653000",
+      "side": "OrderSide.SELL",
+      "qty": "2",
+      "price": "3.47",
+      "filled_at": "2026-01-21 19:32:43.922420+00:00"
+    },
+    {
+      "id": "672d864d-5e15-4d61-9008-53a1f02a9c76",
+      "symbol": "SPY",
+      "side": "OrderSide.BUY",
+      "qty": "0.147243762",
+      "price": "679.078",
+      "filled_at": "2026-01-21 17:46:23.123716+00:00"
+    },
+    {
+      "id": "a59e2c19-b4c0-42a0-88ea-cd3d93804de7",
+      "symbol": "SPY260220P00565000",
+      "side": "OrderSide.SELL",
+      "qty": "1",
+      "price": "0.73",
+      "filled_at": "2026-01-21 17:46:08.991746+00:00"
+    },
+    {
+      "id": "ffa664c9-6848-44d4-b1ee-5de8b705780f",
+      "symbol": "SPY260220P00653000",
+      "side": "OrderSide.SELL",
+      "qty": "2",
+      "price": "5.06",
+      "filled_at": "2026-01-21 17:46:08.881138+00:00"
+    },
+    {
+      "id": "e4164353-3491-4e6f-b9c1-26ee918a1066",
+      "symbol": "SPY260220P00570000",
+      "side": "OrderSide.SELL",
+      "qty": "2",
+      "price": "0.78",
+      "filled_at": "2026-01-21 17:32:37.239831+00:00"
+    },
+    {
+      "id": "beceb0db-6b4e-4dc7-848c-e9dc9b4be406",
+      "symbol": "SPY260220P00653000",
+      "side": "OrderSide.BUY",
+      "qty": "2",
+      "price": "5.1",
+      "filled_at": "2026-01-21 17:32:37.242887+00:00"
+    },
+    {
+      "id": "3880ae2f-0414-4a75-8ebc-d3a416c80e6b",
+      "symbol": "SPY260220P00565000",
+      "side": "OrderSide.BUY",
+      "qty": "4",
+      "price": "0.73",
+      "filled_at": "2026-01-21 17:32:37.129842+00:00"
+    },
+    {
+      "id": "4ef4b4cd-0a8d-4440-b48e-ef0201f3e8c8",
+      "symbol": "SPY260220P00565000",
+      "side": "OrderSide.SELL",
+      "qty": "1",
+      "price": "0.72",
+      "filled_at": "2026-01-21 17:32:27.862265+00:00"
+    },
+    {
+      "id": "f1bbfcd1-aaf3-4c9e-b557-b0169de8c212",
+      "symbol": "SPY260220P00658000",
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "5.87",
+      "filled_at": "2026-01-21 17:32:27.756440+00:00"
+    },
+    {
+      "id": "d829daa3-5007-40a7-9ad0-2460d07bdb27",
+      "symbol": "SPY",
+      "side": "OrderSide.BUY",
+      "qty": "0.147172244",
+      "price": "679.408",
+      "filled_at": "2026-01-21 17:32:06.481535+00:00"
+    },
+    {
+      "id": "fa484276-68c3-4864-96eb-11f16c3627e7",
+      "symbol": "SPY260220P00570000",
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "0.67",
+      "filled_at": "2026-01-21 16:44:17.355851+00:00"
+    },
+    {
+      "id": "816fb3c9-5cba-4986-8af7-942614312307",
+      "symbol": "SPY260220P00565000",
+      "side": "OrderSide.SELL",
+      "qty": "1",
+      "price": "0.61",
+      "filled_at": "2026-01-21 16:44:17.250121+00:00"
+    },
+    {
+      "id": "2df0c212-19e3-4025-bc7f-99cdbc04e9cc",
+      "symbol": "SPY260220P00658000",
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "5.05",
+      "filled_at": "2026-01-21 16:44:17.145365+00:00"
+    },
+    {
+      "id": "64ecf275-ae59-48aa-9b4e-c6ac18df0734",
+      "symbol": "SPY",
+      "side": "OrderSide.BUY",
+      "qty": "0.146619782",
+      "price": "681.968",
+      "filled_at": "2026-01-21 16:41:22.393426+00:00"
+    },
+    {
+      "id": "27ce713d-0848-4bbc-8393-0c3373e2a11d",
+      "symbol": "SPY260220P00565000",
+      "side": "OrderSide.SELL",
+      "qty": "1",
+      "price": "0.6",
+      "filled_at": "2026-01-21 16:39:10.601766+00:00"
+    },
+    {
+      "id": "87e8bfbc-4863-4550-915d-976d5fba070a",
+      "symbol": "SPY260220P00658000",
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "4.94",
+      "filled_at": "2026-01-21 16:39:10.495105+00:00"
+    },
+    {
+      "id": "904e6785-4f72-4765-8ffe-0cdcd25ce77f",
+      "symbol": "SPY260220P00653000",
+      "side": "OrderSide.SELL",
+      "qty": "2",
+      "price": "4.21",
+      "filled_at": "2026-01-21 16:39:10.389854+00:00"
+    },
+    {
+      "id": "45db0145-f879-4f25-aeba-2445bfc5151f",
+      "symbol": "SPY260220P00565000",
+      "side": "OrderSide.SELL",
+      "qty": "1",
+      "price": "0.54",
+      "filled_at": "2026-01-21 16:23:53.190503+00:00"
+    },
+    {
+      "id": "19c2b0db-0f17-406a-940f-f202ac659666",
+      "symbol": "SPY260220P00658000",
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "4.43",
+      "filled_at": "2026-01-21 16:23:53.082874+00:00"
+    },
+    {
+      "id": "f6230a14-65ca-4a79-b600-8e8bd143963d",
+      "symbol": "SPY260220P00570000",
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "0.59",
+      "filled_at": "2026-01-21 16:18:59.688588+00:00"
+    },
+    {
+      "id": "1884e09d-bc85-4ee4-81c7-8c989ff5ede4",
+      "symbol": "SPY260220P00658000",
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "4.34",
+      "filled_at": "2026-01-21 16:18:59.581808+00:00"
+    },
+    {
+      "id": "4930cec9-843f-4248-94ac-a2a3f2165a1c",
+      "symbol": "SPY",
+      "side": "OrderSide.BUY",
+      "qty": "0.146092795",
+      "price": "684.428",
+      "filled_at": "2026-01-21 16:17:51.752614+00:00"
+    },
+    {
+      "id": "a5afcea5-7ddb-4ebf-b1bb-d5bd938c341d",
+      "symbol": "SPY",
+      "side": "OrderSide.BUY",
+      "qty": "0.146103469",
+      "price": "684.378",
+      "filled_at": "2026-01-21 16:17:19.840793+00:00"
+    },
+    {
+      "id": "499b2536-c8d9-4060-b9f1-e23448510f58",
+      "symbol": "SPY",
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "684.18",
+      "filled_at": "2026-01-21 16:08:46.255918+00:00"
+    },
+    {
+      "id": "db1a5517-bcf0-4308-a549-6c690557a075",
+      "symbol": "SOFI260213P00032000",
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "7.3",
+      "filled_at": "2026-01-21 14:48:16.150233+00:00"
+    },
     {
       "id": "64d953de-3c5e-431e-9a93-936c0a0ca3f5",
       "symbol": "SPY",
       "side": "OrderSide.BUY",
       "qty": "1",
       "price": "683.06",
-      "filled_at": "2026-01-20 16:43:33.394313+00:00"
+      "filled_at": "2026-01-20 16:43:33.394314+00:00"
     },
     {
       "id": "5fd66112-099a-4207-bcf1-6e655e1fef24",
@@ -407,17 +752,27 @@
       "filled_at": "2026-01-12 14:30:54.357134+00:00"
     }
   ],
-  "trades_loaded": 48,
+  "trades_loaded": 85,
   "trades": {
     "last_trade_date": "2026-01-22",
     "today_trades": 0,
     "total_trades_today": 0,
-    "last_trade_symbol": "SYNCED"
+    "last_trade_symbol": "SPY"
+  },
+  "risk": {
+    "status": "WARNING - NEGATIVE P/L",
+    "total_pl": -327.0,
+    "unrealized_pl": -118.54154900000003
+  },
+  "account": {
+    "current_equity": 4673.0,
+    "total_pl": -327.0,
+    "total_pl_pct": -6.54,
+    "positions_count": 5
   },
   "meta": {
-    "last_updated": "2026-01-22T13:27:02.820546+00:00",
+    "last_updated": "2026-01-22T14:15:07.994205+00:00",
     "trade_sync": "alpaca_api",
-    "last_sync": "2026-01-22T13:22:26.337768",
-    "sync_mode": "skipped_no_keys"
+    "sync_frequency_minutes": 5
   }
 }
