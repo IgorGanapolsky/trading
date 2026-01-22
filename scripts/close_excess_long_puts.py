@@ -87,21 +87,37 @@ def main():
     print(f"  Want: {target_qty}")
     print(f"  Closing: {excess_qty}")
 
-    # Execute close
-    print(f"\nSubmitting sell order for {excess_qty} contracts...")
+    # Check market status first
+    clock = client.get_clock()
+    print(f"\nMarket Status: {'OPEN' if clock.is_open else 'CLOSED'}")
+    if not clock.is_open:
+        print(f"  Next open: {clock.next_open}")
+        print("  ⚠️ Market closed - order will queue for next open")
+
+    # Execute close - SELL to close LONG positions
+    print(f"\nSubmitting SELL order for {excess_qty} contracts...")
+    print(f"  Symbol: {target_symbol}")
+    print(f"  Side: SELL (to close long)")
+    print(f"  Time in Force: DAY")
+
     try:
         order = client.submit_order(
             MarketOrderRequest(
                 symbol=target_symbol,
                 qty=excess_qty,
                 side=OrderSide.SELL,  # Sell to close long
-                time_in_force=TimeInForce.DAY,  # Use GTC for options
+                time_in_force=TimeInForce.DAY,  # DAY is correct for options
             )
         )
         print(f"  ✅ Order submitted: {order.id}")
         print(f"  Status: {order.status}")
+        print(f"  Symbol: {order.symbol}")
+        print(f"  Qty: {order.qty}")
+        print(f"  Side: {order.side}")
     except Exception as e:
-        print(f"  ❌ Failed: {e}")
+        print(f"  ❌ FAILED: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
     print(f"\n{'=' * 60}")
