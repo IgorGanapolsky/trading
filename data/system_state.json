@@ -8,44 +8,44 @@
     "history": []
   },
   "portfolio": {
-    "equity": 30000.00,
-    "cash": 30000.00
+    "equity": 30000.0,
+    "cash": 30000.0
   },
   "paper_account": {
-    "equity": 30000.00,
-    "cash": 30000.00,
-    "buying_power": 60000.00,
-    "total_pl": 0.00,
-    "total_pl_pct": 0.00,
+    "equity": 30000.0,
+    "cash": 30000.0,
+    "buying_power": 60000.0,
+    "total_pl": 0.0,
+    "total_pl_pct": 0.0,
     "positions_count": 0,
-    "daily_change": 0.00,
+    "daily_change": 0.0,
     "win_rate": 0,
     "win_rate_sample_size": 0,
-    "starting_balance": 30000.00
+    "starting_balance": 30000.0
   },
   "positions": [],
   "trade_history": [],
   "trades_loaded": 0,
   "trades": {
-    "last_trade_date": null,
-    "today_trades": 0,
-    "total_trades_today": 0,
-    "last_trade_symbol": null
+    "last_trade_date": "2026-01-22",
+    "today_trades": 10,
+    "total_trades_today": 10,
+    "last_trade_symbol": "SYNCED"
   },
   "risk": {
     "status": "OK - CLEAN SLATE",
-    "total_pl": 0.00,
-    "unrealized_pl": 0.00
+    "total_pl": 0.0,
+    "unrealized_pl": 0.0
   },
   "account": {
-    "current_equity": 30000.00,
-    "total_pl": 0.00,
-    "total_pl_pct": 0.00,
+    "current_equity": 30000.0,
+    "total_pl": 0.0,
+    "total_pl_pct": 0.0,
     "positions_count": 0
   },
   "meta": {
-    "last_updated": "2026-01-22T21:00:00.000000+00:00",
-    "trade_sync": "awaiting_first_sync",
+    "last_updated": "2026-01-22T21:31:35.304184+00:00",
+    "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5,
     "account_change_note": "NEW $30K PAPER ACCOUNT - PA3PYE0C9MN - clean start Jan 22, 2026"
   }
