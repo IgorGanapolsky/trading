@@ -253,6 +253,87 @@ class IronCondorStrategy:
             ic: Iron condor legs to execute
             live: If True, execute on Alpaca. If False, simulate only.
         """
+        # POSITION CHECK FIRST - Prevent race conditions from parallel workflow runs
+        # FIX Jan 22, 2026: Move position check to VERY START before any other logic
+        # ROOT CAUSE: Multiple workflow runs could race past position check if it ran late
+        if live:
+            logger.info("=" * 60)
+            logger.info("POSITION CHECK (MANDATORY FIRST STEP)")
+            logger.info("=" * 60)
+            try:
+                from alpaca.trading.client import TradingClient
+                from src.utils.alpaca_client import get_alpaca_credentials
+
+                api_key, secret = get_alpaca_credentials()
+                if api_key and secret:
+                    client = TradingClient(api_key, secret, paper=True)
+                    positions = client.get_all_positions()
+
+                    # Count SPY OPTION positions only (iron condor = 4 legs)
+                    # Options have format like SPY260220P00565000, shares are just "SPY"
+                    spy_option_positions = [
+                        p
+                        for p in positions
+                        if p.symbol.startswith("SPY")
+                        and len(p.symbol) > 5  # Options have longer symbols
+                    ]
+
+                    # Count TOTAL CONTRACTS
+                    total_contracts = sum(abs(int(float(p.qty))) for p in spy_option_positions)
+                    unique_symbols = len(spy_option_positions)
+
+                    logger.info(
+                        f"Current SPY OPTION positions: {unique_symbols} symbols, {total_contracts} contracts"
+                    )
+
+                    # STRICT CHECK: If ANY option positions exist, SKIP
+                    # This prevents accumulation from race conditions
+                    if total_contracts > 0:
+                        logger.warning("=" * 60)
+                        logger.warning("POSITION LIMIT BLOCKING NEW TRADE")
+                        logger.warning("=" * 60)
+                        logger.warning(
+                            f"REASON: Already have {total_contracts} contracts (max allowed: 0 for new entry)"
+                        )
+                        logger.warning("ACTION: Manage existing positions before opening new ones")
+                        logger.warning("POSITIONS:")
+
+                        # Log position details for debugging
+                        for p in spy_option_positions:
+                            logger.warning(f"   - {p.symbol}: {p.qty} contracts @ ${float(p.avg_entry_price):.2f}")
+
+                        logger.warning("=" * 60)
+
+                        return {
+                            "timestamp": datetime.now().isoformat(),
+                            "strategy": "iron_condor",
+                            "underlying": ic.underlying,
+                            "status": "SKIPPED_POSITION_EXISTS",
+                            "reason": f"Already have {total_contracts} option contracts - cannot open new position",
+                            "existing_positions": [
+                                {"symbol": p.symbol, "qty": p.qty} for p in spy_option_positions
+                            ],
+                        }
+                    else:
+                        logger.info("No existing option positions - OK to proceed")
+            except Exception as pos_err:
+                # CRITICAL: If we can't verify positions, BLOCK the trade
+                # This prevents placing duplicate trades when Alpaca API fails
+                logger.error("=" * 60)
+                logger.error("POSITION CHECK FAILED - BLOCKING TRADE")
+                logger.error("=" * 60)
+                logger.error(f"ERROR: {pos_err}")
+                logger.error("REASON: Cannot verify current positions")
+                logger.error("ACTION: Trade blocked to prevent position accumulation")
+                logger.error("=" * 60)
+                return {
+                    "timestamp": datetime.now().isoformat(),
+                    "strategy": "iron_condor",
+                    "underlying": ic.underlying,
+                    "status": "BLOCKED_POSITION_CHECK_FAILED",
+                    "reason": f"Position check failed: {pos_err}",
+                }
+
         # Query RAG for lessons before trading
         logger.info("Checking RAG lessons before execution...")
         rag = LessonsLearnedRAG()
@@ -299,74 +380,6 @@ class IronCondorStrategy:
                 }
 
         logger.info("RAG checks passed - proceeding with execution")
-
-        # FIX Jan 20, 2026: Check position limits BEFORE placing new trades
-        # ROOT CAUSE: No position check caused system to keep placing orders
-        # when max_positions already reached (incomplete iron condors)
-        # LL-280 FIX (Jan 21, 2026): Count TOTAL CONTRACTS, not just unique symbols
-        if live:
-            try:
-                from alpaca.trading.client import TradingClient
-                from src.utils.alpaca_client import get_alpaca_credentials
-
-                api_key, secret = get_alpaca_credentials()
-                if api_key and secret:
-                    client = TradingClient(api_key, secret, paper=True)
-                    positions = client.get_all_positions()
-
-                    # Count SPY OPTION positions only (iron condor = 4 legs)
-                    # FIX Jan 21, 2026: Exclude SPY shares - only count options
-                    # Options have format like SPY260220P00565000, shares are just "SPY"
-                    spy_option_positions = [
-                        p
-                        for p in positions
-                        if p.symbol.startswith("SPY")
-                        and len(p.symbol) > 5  # Options have longer symbols
-                    ]
-
-                    # LL-280 FIX: Count TOTAL CONTRACTS, not unique symbols
-                    # Before: position_count = len(spy_option_positions) = 4 (unique symbols)
-                    # After: position_count = sum of abs(qty) = 17 (total contracts)
-                    total_contracts = sum(abs(int(float(p.qty))) for p in spy_option_positions)
-                    unique_symbols = len(spy_option_positions)
-
-                    logger.info(
-                        f"Current SPY OPTION positions: {unique_symbols} symbols, {total_contracts} contracts"
-                    )
-                    max_contracts = self.config["max_positions"] * 4  # 4 legs per condor
-
-                    if total_contracts >= max_contracts:
-                        logger.warning(
-                            f"⚠️ POSITION LIMIT REACHED: {total_contracts}/{max_contracts} contracts"
-                        )
-                        logger.warning("   Skipping new iron condor - manage existing first")
-
-                        # Log position details for debugging
-                        for p in spy_option_positions:
-                            logger.warning(f"   - {p.symbol}: {p.qty} contracts")
-
-                        return {
-                            "timestamp": datetime.now().isoformat(),
-                            "strategy": "iron_condor",
-                            "underlying": ic.underlying,
-                            "status": "SKIPPED_POSITION_LIMIT",
-                            "reason": f"Have {total_contracts} contracts (max: {max_contracts})",
-                            "existing_positions": [
-                                {"symbol": p.symbol, "qty": p.qty} for p in spy_option_positions
-                            ],
-                        }
-            except Exception as pos_err:
-                # LL-280 FIX: Don't skip position check on error - this is dangerous!
-                # If we can't verify positions, we might place duplicate trades
-                logger.error(f"CRITICAL: Could not check positions: {pos_err}")
-                logger.error("   Blocking trade to prevent position accumulation")
-                return {
-                    "timestamp": datetime.now().isoformat(),
-                    "strategy": "iron_condor",
-                    "underlying": ic.underlying,
-                    "status": "BLOCKED_POSITION_CHECK_FAILED",
-                    "reason": f"Position check failed: {pos_err}",
-                }
 
         logger.info("=" * 60)
         logger.info("EXECUTING IRON CONDOR" + (" (LIVE)" if live else " (SIMULATED)"))

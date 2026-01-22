@@ -398,7 +398,7 @@ jobs:
     runs-on: ubuntu-22.04  # Pinned Ubuntu version
     timeout-minutes: 30  # Increased to handle retries
     needs: [validate-and-test, pretrade-rag-query, protect-existing-positions]
-    if: needs.validate-and-test.outputs.secrets_valid == 'true'
+    if: false  # DISABLED Jan 22, 2026 - Position accumulation bug. Re-enable after fixing iron_condor_trader.py
     env:
       PYTHONPATH: ${{ github.workspace }}
       ENABLE_WEEKEND_PROXY: 'false'
