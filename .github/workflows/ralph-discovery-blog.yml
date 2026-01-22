@@ -1,0 +1,115 @@
+name: Ralph Discovery Blog Publisher
+
+on:
+  # Trigger when ralph_discoveries.json is updated
+  push:
+    paths:
+      - 'data/ralph_discoveries.json'
+    branches:
+      - main
+
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      discovery_id:
+        description: 'Specific discovery ID to publish (leave empty for all unpublished)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
+
+jobs:
+  publish-discoveries:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests python-dotenv
+
+      - name: Check for unpublished discoveries
+        id: check
+        run: |
+          # Count unpublished discoveries
+          UNPUBLISHED=$(python3 -c "
+          import json
+          with open('data/ralph_discoveries.json') as f:
+              data = json.load(f)
+          count = sum(1 for d in data.get('discoveries', []) if not d.get('blog_published'))
+          print(count)
+          ")
+          echo "unpublished_count=$UNPUBLISHED" >> $GITHUB_OUTPUT
+
+          if [ "$UNPUBLISHED" -eq 0 ]; then
+            echo "No unpublished discoveries found"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "Found $UNPUBLISHED unpublished discoveries"
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish discoveries to blog
+        if: steps.check.outputs.skip != 'true'
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          set -e
+
+          if [ -n "${{ github.event.inputs.discovery_id }}" ]; then
+            echo "Publishing specific discovery: ${{ github.event.inputs.discovery_id }}"
+            python3 scripts/generate_ralph_discovery_post.py --discovery "${{ github.event.inputs.discovery_id }}"
+          else
+            echo "Publishing all unpublished discoveries..."
+            python3 scripts/generate_ralph_discovery_post.py --all
+          fi
+
+      - name: Commit blog posts
+        if: steps.check.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          git config --local user.email "ralph@autonomous-agent.ai"
+          git config --local user.name "Ralph (Autonomous AI Agent)"
+
+          # Add blog posts and updated discoveries file
+          git add docs/_posts/ || true
+          git add data/ralph_discoveries.json || true
+
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "feat(blog): 🤖 Ralph discovery blog post [auto]
+
+Published by Ralph's autonomous discovery system.
+See https://igorganapolsky.github.io/trading/ for the full post."
+
+          git push origin main
+
+      - name: Summary
+        if: steps.check.outputs.skip != 'true'
+        run: |
+          echo "## 🤖 Ralph Discovery Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Ralph's discoveries have been published to:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ GitHub Pages: https://igorganapolsky.github.io/trading/" >> $GITHUB_STEP_SUMMARY
+          echo "- 📝 Dev.to: Check the workflow logs for URL" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Discoveries published: ${{ steps.check.outputs.unpublished_count }}" >> $GITHUB_STEP_SUMMARY

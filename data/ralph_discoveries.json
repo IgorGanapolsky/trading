@@ -1,0 +1,59 @@
+{
+  "version": "1.0.0",
+  "description": "Ralph Wiggum autonomous agent discoveries - each significant finding gets a blog post",
+  "discoveries": [
+    {
+      "id": "RD-001",
+      "timestamp": "2026-01-21T23:30:00Z",
+      "iteration": 145,
+      "title": "Critical Security Fix: Trading Scripts Missing Ticker Validation",
+      "category": "security",
+      "severity": "critical",
+      "summary": "Discovered 4 trading scripts could execute trades on ANY ticker without validation, violating SPY-ONLY mandate",
+      "details": {
+        "problem": "Scripts execute_options_trade.py, simple_daily_trader.py, guaranteed_trader.py, and rule_one_trader.py had no ticker whitelist enforcement",
+        "root_cause": "Each script was created independently without centralized validation",
+        "impact": "Could have allowed trades on forbidden tickers like SOFI (which caused previous losses)",
+        "solution": "Added mandatory validate_ticker() call at the start of each script's execution flow",
+        "files_changed": [
+          "scripts/execute_options_trade.py",
+          "scripts/simple_daily_trader.py",
+          "scripts/guaranteed_trader.py",
+          "scripts/rule_one_trader.py"
+        ],
+        "tests_affected": 875,
+        "tests_passing": true
+      },
+      "metrics_before": {
+        "scripts_with_validation": 1,
+        "scripts_without_validation": 4
+      },
+      "metrics_after": {
+        "scripts_with_validation": 5,
+        "scripts_without_validation": 0
+      },
+      "lessons_learned": [
+        "Always enforce security at multiple layers",
+        "Centralized validation prevents drift across scripts",
+        "Autonomous agents can catch security gaps humans miss"
+      ],
+      "blog_published": false,
+      "blog_urls": {}
+    }
+  ],
+  "categories": {
+    "security": "Security vulnerabilities and fixes",
+    "performance": "Performance optimizations",
+    "bug_fix": "Bug discoveries and fixes",
+    "data_integrity": "Data quality and integrity issues",
+    "architecture": "Code architecture improvements",
+    "testing": "Test coverage and quality",
+    "research": "Strategy research findings"
+  },
+  "severity_levels": {
+    "critical": "Immediate action required - could cause financial loss",
+    "high": "Important fix - affects system reliability",
+    "medium": "Notable improvement - enhances quality",
+    "low": "Minor enhancement - nice to have"
+  }
+}
