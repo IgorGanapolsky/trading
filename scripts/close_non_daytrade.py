@@ -16,7 +16,7 @@ if not api_key or not api_secret:
 
 from alpaca.trading.client import TradingClient
 from alpaca.trading.enums import OrderSide, QueryOrderStatus, TimeInForce
-from alpaca.trading.requests import GetOrdersRequest, MarketOrderRequest
+from alpaca.trading.requests import ClosePositionRequest, GetOrdersRequest, MarketOrderRequest
 
 print("=" * 60)
 print(f"PDT BYPASS - CLOSE NON-DAYTRADE ONLY - {datetime.now()}")
@@ -75,33 +75,43 @@ if safe_qty <= 0:
 
 print(f"\n🔧 Will close {safe_qty} of {total_qty} contracts (PDT bypass)")
 
-# Try market order for PDT-safe quantity
-print(f"\nSubmitting SELL order for {safe_qty} contracts...")
+# METHOD 1: Use close_position API (correct way to close LONG positions)
+# This tells Alpaca we're CLOSING, not opening a new short position
+print(f"\nMethod 1: close_position({safe_qty} contracts)...")
 try:
-    order = client.submit_order(
-        MarketOrderRequest(
-            symbol=target,
-            qty=safe_qty,
-            side=OrderSide.SELL,
-            time_in_force=TimeInForce.DAY,
-        )
-    )
-    print(f"✅ Order submitted: {order.id}")
-    print(f"   Status: {order.status}")
-    print(f"   Qty: {order.qty}")
+    close_request = ClosePositionRequest(qty=str(safe_qty))
+    result = client.close_position(target, close_options=close_request)
+    print("✅ close_position succeeded!")
+    if hasattr(result, "id"):
+        print(f"   Order ID: {result.id}")
+        print(f"   Status: {result.status}")
 except Exception as e:
-    print(f"❌ Market order failed: {e}")
+    print(f"❌ Method 1 failed: {e}")
 
-    # Try close_position with specific qty
-    print(f"\nTrying close_position({safe_qty})...")
+    # METHOD 2: Close ALL (full position)
+    print(f"\nMethod 2: close_position (full position)...")
     try:
-        result = client.close_position(target, qty=str(safe_qty))
-        print("✅ close_position succeeded!")
+        result = client.close_position(target)
+        print("✅ Full position close succeeded!")
         if hasattr(result, "id"):
             print(f"   Order ID: {result.id}")
     except Exception as e2:
-        print(f"❌ close_position failed: {e2}")
-        sys.exit(1)
+        print(f"❌ Method 2 failed: {e2}")
+
+        # METHOD 3: Try closing just 1 contract at a time
+        print(f"\nMethod 3: close_position (1 contract)...")
+        try:
+            close_request = ClosePositionRequest(qty="1")
+            result = client.close_position(target, close_options=close_request)
+            print("✅ Closed 1 contract!")
+            if hasattr(result, "id"):
+                print(f"   Order ID: {result.id}")
+        except Exception as e3:
+            print(f"❌ Method 3 failed: {e3}")
+            print("\n" + "=" * 60)
+            print("ALL METHODS FAILED - Alpaca API issue")
+            print("=" * 60)
+            sys.exit(1)
 
 print("\n" + "=" * 60)
 print("✅ PDT BYPASS COMPLETE")
