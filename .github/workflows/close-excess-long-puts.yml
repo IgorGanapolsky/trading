@@ -35,7 +35,18 @@ jobs:
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
-        run: python scripts/close_excess_long_puts.py
+        run: |
+          mkdir -p data/logs
+          python scripts/close_excess_long_puts.py 2>&1 | tee data/logs/close_excess_$(date +%Y%m%d_%H%M%S).log
+
+      - name: Commit Log
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/logs/ || true
+          git commit -m "log: Close excess attempt $(date -u +%Y-%m-%dT%H:%M:%SZ)" || true
+          git push || true
 
       - name: Trigger State Sync
         if: success()
