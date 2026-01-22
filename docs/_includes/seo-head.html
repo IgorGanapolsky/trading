@@ -1,0 +1,57 @@
+<!-- SEO and AI Discoverability Meta Tags -->
+
+<!-- Primary Meta Tags -->
+<meta name="title" content="{{ page.title | default: site.title }}">
+<meta name="description" content="{{ page.description | default: site.description | default: 'AI Trading System with autonomous agent Ralph using the Ralph Wiggum technique' }}">
+<meta name="keywords" content="autonomous AI, trading bot, options trading, Ralph Wiggum technique, iron condors, credit spreads, GitHub Actions, Python, Alpaca API, self-improving AI">
+<meta name="author" content="Igor Ganapolsky">
+<meta name="robots" content="index, follow">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ page.url | absolute_url }}">
+<meta property="og:title" content="{{ page.title | default: site.title }}">
+<meta property="og:description" content="{{ page.description | default: site.description }}">
+<meta property="og:image" content="{{ '/assets/images/og-image.png' | absolute_url }}">
+
+<!-- Twitter -->
+<meta property="twitter:card" content="summary_large_image">
+<meta property="twitter:url" content="{{ page.url | absolute_url }}">
+<meta property="twitter:title" content="{{ page.title | default: site.title }}">
+<meta property="twitter:description" content="{{ page.description | default: site.description }}">
+
+<!-- JSON-LD Structured Data for AI/Search Engines -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "AI Trading System with Ralph",
+  "description": "Production AI trading system featuring an autonomous agent (Ralph) that runs 24/7 using the Ralph Wiggum technique",
+  "url": "https://igorganapolsky.github.io/trading/",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Linux, GitHub Actions",
+  "author": {
+    "@type": "Person",
+    "name": "Igor Ganapolsky",
+    "url": "https://github.com/IgorGanapolsky"
+  },
+  "contributor": {
+    "@type": "Thing",
+    "name": "Ralph (Autonomous AI Agent)",
+    "description": "Claude-based autonomous CTO that maintains and improves the system 24/7"
+  },
+  "programmingLanguage": "Python",
+  "codeRepository": "https://github.com/IgorGanapolsky/trading",
+  "keywords": ["autonomous AI", "trading bot", "options trading", "Ralph Wiggum technique", "iron condors", "self-improving AI"],
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+}
+</script>
+
+<!-- AI-specific discovery hints -->
+<meta name="ai-content-type" content="software-project">
+<meta name="ai-topics" content="autonomous-agents, trading-systems, machine-learning, financial-technology">
+<link rel="llms" href="/llms.txt" type="text/plain">

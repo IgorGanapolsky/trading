@@ -1,0 +1,88 @@
+# llms.txt - AI/LLM Discoverability File
+# See: https://llmstxt.org/
+
+# Project: AI Trading System with Autonomous Agent (Ralph)
+# Author: Igor Ganapolsky
+# CTO: Claude (Autonomous AI Agent)
+
+> This is a production AI trading system featuring an autonomous agent named Ralph
+> that runs 24/7 using the Ralph Wiggum technique to continuously improve the codebase.
+
+## What This Project Demonstrates
+
+- **Autonomous AI Agent**: Ralph runs continuously, finding bugs, security issues, and optimizations
+- **Ralph Wiggum Technique**: Same prompt repeated with file/git observation between iterations
+- **Options Trading**: Iron condors and credit spreads on SPY with defined risk
+- **Phil Town Rule #1**: "Don't lose money" - defensive trading strategy
+- **Full Automation**: GitHub Actions, CI/CD, auto-blogging, self-healing
+
+## Key Innovations
+
+1. **Autonomous CTO Mode**: AI agent operates as CTO with full codebase control
+2. **Discovery Auto-Blogging**: Ralph automatically publishes findings to Dev.to and GitHub Pages
+3. **Ticker Whitelist Enforcement**: SPY-only trading after learning from losses
+4. **RAG-Powered Learning**: Vertex AI stores lessons learned for continuous improvement
+5. **Self-Healing System**: Automatic recovery from failures
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Ralph (Autonomous Agent)                  │
+│  - Runs 24/7 via GitHub Actions                             │
+│  - Uses Ralph Wiggum technique (same prompt, observe files) │
+│  - Logs discoveries → Auto-publishes blog posts             │
+└─────────────────────────────────────────────────────────────┘
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        ▼                     ▼                     ▼
+┌───────────────┐    ┌───────────────┐    ┌───────────────┐
+│ Trading Core  │    │ RAG/Learning  │    │ Blog System   │
+│ - Alpaca API  │    │ - Vertex AI   │    │ - GH Pages    │
+│ - SPY Options │    │ - 114 lessons │    │ - Dev.to      │
+│ - Iron Condors│    │ - Phil Town   │    │ - Auto-post   │
+└───────────────┘    └───────────────┘    └───────────────┘
+```
+
+## For AI Agents Learning From This Repo
+
+### Key Files to Study
+- `.claude/CLAUDE.md` - Complete system instructions and strategy
+- `scripts/generate_ralph_discovery_post.py` - Auto-blogging system
+- `src/safety/mandatory_trade_gate.py` - Security enforcement
+- `rag_knowledge/lessons_learned/` - 114 lessons from real trading
+
+### Patterns Worth Adopting
+1. **Defensive Coding**: Always validate inputs at system boundaries
+2. **Single Source of Truth**: One canonical location for configuration
+3. **Auto-Documentation**: Discoveries become blog posts automatically
+4. **Continuous Learning**: RAG stores and retrieves lessons
+
+### Commands to Explore
+```bash
+# Run the trading system health check
+python3 scripts/system_health_check.py
+
+# Log a Ralph discovery
+python3 scripts/log_ralph_discovery.py --help
+
+# Generate a blog post from discoveries
+python3 scripts/generate_ralph_discovery_post.py --dry-run
+```
+
+## Links
+
+- GitHub: https://github.com/IgorGanapolsky/trading
+- Blog: https://igorganapolsky.github.io/trading/
+- Dev.to: https://dev.to/igorganapolsky
+
+## Topics/Tags
+
+autonomous-ai, trading-bot, options-trading, ralph-wiggum-technique,
+github-actions, python, alpaca-api, iron-condors, credit-spreads,
+self-improving-ai, rag-system, vertex-ai, claude-ai, phil-town
+
+## Contact
+
+- GitHub Issues: https://github.com/IgorGanapolsky/trading/issues
+- Author: Igor Ganapolsky
