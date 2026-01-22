@@ -63,28 +63,35 @@ def close_orphan_spy_puts():
     print(f"   Unrealized P/L: ${unrealized_pl:.2f}")
     print()
 
-    # SELL to close long puts
-    from alpaca.trading.enums import OrderSide, TimeInForce
-    from alpaca.trading.requests import MarketOrderRequest
-
-    order_request = MarketOrderRequest(
-        symbol=orphan_symbol,
-        qty=int(qty),  # Options must be whole numbers
-        side=OrderSide.SELL,
-        time_in_force=TimeInForce.GTC,
-    )
-
-    print(f"🔄 Submitting SELL to close order for {int(qty)} {orphan_symbol}...")
+    # Use close_position() API - the recommended way to close positions
+    # This automatically handles order side (SELL for long, BUY for short)
+    print(f"🔄 Calling close_position('{orphan_symbol}')...")
 
     try:
-        order = client.submit_order(order_request)
-        print("✅ Order submitted successfully!")
-        print(f"   Order ID: {order.id}")
-        print(f"   Status: {order.status}")
-        print(f"   Expected P/L: ~${unrealized_pl:.2f}")
-        return True
+        result = client.close_position(orphan_symbol)
+
+        # Handle response
+        if isinstance(result, list):
+            orders = result
+        else:
+            orders = [result] if result else []
+
+        if orders:
+            print("✅ Position close initiated!")
+            for order in orders:
+                print(f"   Order ID: {order.id}")
+                print(f"   Status: {order.status}")
+                print(f"   Symbol: {order.symbol}")
+                print(f"   Qty: {order.qty}")
+                print(f"   Side: {order.side}")
+            return True
+        else:
+            print("⚠️ close_position returned no orders")
+            return False
     except Exception as e:
         print(f"❌ Order failed: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 
