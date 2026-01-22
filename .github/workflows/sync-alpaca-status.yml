@@ -3,11 +3,14 @@ name: Sync Alpaca Status
 # Sync frequency:
 # - Every 15 minutes during peak hours (10 AM - 3 PM ET = 15-20 UTC)
 # - Every 30 minutes during market open/close (9:30-10 AM, 3-4 PM ET)
+# - Once daily on weekends to maintain freshness
 # FIX (Jan 16, 2026): Increased frequency to reduce staleness
+# FIX (Jan 22, 2026): Consolidated from 3 separate sync workflows (hourly-state-sync, sync-system-state)
 on:
   schedule:
     - cron: '*/15 15-19 * * 1-5'  # Every 15 min, 10 AM - 3 PM ET (peak hours)
     - cron: '30,0 14,20 * * 1-5'  # Every 30 min at market open (9:30 AM) and close (4 PM)
+    - cron: '0 15 * * 0,6'        # Once daily on weekends at 10 AM ET
   workflow_dispatch:  # Manual trigger
     inputs:
       force_sync:
