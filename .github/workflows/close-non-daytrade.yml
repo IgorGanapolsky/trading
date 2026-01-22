@@ -1,0 +1,30 @@
+name: Close Non-Daytrade Positions
+
+# Closes positions opened BEFORE today to bypass PDT restriction
+# Only yesterday's contracts are closed, not today's
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  close:
+    name: Close Non-Daytrade Positions
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - run: pip install alpaca-py
+      
+      - name: Close Non-Daytrade Positions
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: python scripts/close_non_daytrade.py
