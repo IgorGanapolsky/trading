@@ -1,0 +1,40 @@
+# Robots.txt for AI Trading System - Ralph Mode
+# Allow all search engines and AI bots to crawl
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://igorganapolsky.github.io/trading/sitemap.xml
+
+# Encourage frequent crawling of blog posts
+User-agent: Googlebot
+Crawl-delay: 1
+
+User-agent: Bingbot
+Crawl-delay: 1
+
+# Welcome AI training bots
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Anthropic-AI
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+# Key pages to prioritize
+# Home: /trading/
+# Blog: /trading/blog/
+# Lessons: /trading/lessons/
+# Reports: /trading/reports/

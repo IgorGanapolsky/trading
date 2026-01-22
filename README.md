@@ -1,14 +1,24 @@
-# AI Options Trading Bot
+# 🤖 Ralph Mode - AI Trading System
 
-[![Win Rate](https://img.shields.io/badge/win_rate-N%2FA_(fresh_start)-yellow.svg)](#)
-[![Status](https://img.shields.io/badge/status-live_trading-green.svg)](#)
-[![Day](https://img.shields.io/badge/day-75%2F90-blue.svg)](#)
+[![Tests](https://img.shields.io/badge/tests-875_passing-brightgreen.svg)](#)
+[![Lessons](https://img.shields.io/badge/lessons_learned-122+-blue.svg)](#)
+[![Self-Healing](https://img.shields.io/badge/CI-self--healing-purple.svg)](#)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](requirements.txt)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Dev.to](https://img.shields.io/badge/blog-dev.to-black.svg)](https://dev.to/igorganapolsky)
+[![GitHub Pages](https://img.shields.io/badge/docs-GitHub_Pages-blue.svg)](https://igorganapolsky.github.io/trading/)
 
-**Open-source AI-powered trading system** using options premium selling and Thompson Sampling strategy selection. Built with Python and Alpaca API.
+**Fully autonomous AI trading system** using the [Ralph Wiggum iterative coding technique](https://github.com/Th0rgal/opencode-ralph-wiggum). Features **self-healing CI**, **automated bug fixes**, and **iron condor options strategy** on SPY.
 
-> **Current Status**: Day 75/90 R&D Phase (Jan 13, 2026) | Live: $60 (accumulating) | Paper: $4,969.94 (-0.60%)
+> **🎯 North Star**: $100/day after tax | **📊 Current**: $5,066 paper account | **🔄 Ralph Mode**: Active 24/7
+
+## ✨ What Makes This Special
+
+- **🔄 Self-Healing CI** - Ralph Mode runs 24/7, automatically finding and fixing bugs
+- **🤖 AI-Powered Fixes** - Uses Claude API to analyze failures and generate fixes
+- **📚 122+ Lessons Learned** - Every failure documented for continuous learning
+- **📝 Auto-Published Blog** - Discoveries automatically posted to Dev.to and GitHub Pages
+- **🎯 Iron Condor Strategy** - Defined-risk options trading on SPY only
 
 ---
 

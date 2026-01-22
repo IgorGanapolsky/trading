@@ -1,14 +1,14 @@
 # GitHub Pages Configuration
-title: "AI Trading Journey"
-tagline: "Building an Autonomous AI Trading System with Claude"
-description: "90-day experiment building an autonomous AI options trading system with Claude Opus 4.5. 75% win rate on options, 66+ documented lessons learned. Real failures, real fixes, real lessons from paper trading to production."
+title: "Ralph Mode - AI Trading System"
+tagline: "Self-Healing Autonomous Trading with Claude Opus 4.5"
+description: "Open source autonomous AI trading system using the Ralph Wiggum iterative coding technique. Features self-healing CI, automated bug fixes, iron condor options strategy, and 122+ documented lessons learned. Building from $5K to $100/day with full transparency."
 url: "https://igorganapolsky.github.io"
 baseurl: "/trading"
 lang: en
 
 # SEO - Enhanced for search visibility
 author: "Igor Ganapolsky & Claude"
-keywords: "AI trading, autonomous trading bot, Claude AI, options trading, algorithmic trading, machine learning trading, LLM trading, paper trading, lessons learned"
+keywords: "AI trading, autonomous trading bot, Claude AI, Claude Opus 4.5, options trading, algorithmic trading, machine learning trading, LLM trading, paper trading, lessons learned, ralph wiggum technique, self-healing CI, GitHub Actions automation, iron condor strategy, SPY options, autonomous systems, AI engineering, dev.to"
 twitter:
   card: summary_large_image
   username: igorganapolsky
