@@ -120,46 +120,52 @@ jobs:
 
           if dry_run:
               print("\n🔍 DRY RUN - No order submitted")
-              print(f"   Would submit: {close_action}")
-              print(f"   Symbol: {option_symbol}")
-              print(f"   Qty: {qty}")
+              print(f"   Would use: close_position({option_symbol})")
+              print(f"   Position Type: {'LONG' if is_long else 'SHORT'}")
+              print(f"   Qty: {abs(position_qty)}")
               with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
                   f.write(f"order_id=DRY_RUN\n")
                   f.write(f"status=simulated\n")
                   f.write(f"close_action={close_action}\n")
           else:
-              # Submit close order with correct side based on position direction
-              print(f"\n📝 Submitting {close_action} order...")
-              print(f"   DEBUG: symbol={option_symbol}")
-              print(f"   DEBUG: qty={qty}")
-              print(f"   DEBUG: side={close_side}")
-              print(f"   DEBUG: time_in_force=DAY")
+              # Use close_position() API - the correct way to close positions
+              # This automatically handles order side and quantity
+              print(f"\n📝 Closing position using close_position() API...")
+              print(f"   Symbol: {option_symbol}")
+              print(f"   Position Qty: {position_qty}")
+              print(f"   Position Type: {'LONG' if is_long else 'SHORT'}")
 
               try:
-                  order_request = MarketOrderRequest(
-                      symbol=option_symbol,
-                      qty=qty,
-                      side=close_side,  # SELL for long, BUY for short
-                      time_in_force=TimeInForce.DAY  # DAY for market orders on options
-                  )
-                  print(f"   DEBUG: order_request created successfully")
+                  # close_position() liquidates the entire position automatically
+                  # It handles SELL for long, BUY for short internally
+                  orders = client.close_position(option_symbol)
 
-                  order = client.submit_order(order_request)
+                  # close_position returns list of orders or single order
+                  if isinstance(orders, list):
+                      order = orders[0] if orders else None
+                  else:
+                      order = orders
 
-                  print(f"\n✅ ORDER SUBMITTED!")
-                  print(f"   Order ID: {order.id}")
-                  print(f"   Status: {order.status}")
-                  print(f"   Symbol: {order.symbol}")
-                  print(f"   Qty: {order.qty}")
-                  print(f"   Side: {order.side}")
-                  print(f"   Created: {order.created_at}")
+                  if order:
+                      print(f"\n✅ POSITION CLOSE INITIATED!")
+                      print(f"   Order ID: {order.id}")
+                      print(f"   Status: {order.status}")
+                      print(f"   Symbol: {order.symbol}")
+                      print(f"   Qty: {order.qty}")
+                      print(f"   Side: {order.side}")
+                      print(f"   Created: {order.created_at}")
 
-                  with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-                      f.write(f"order_id={order.id}\n")
-                      f.write(f"status={order.status}\n")
-                      f.write(f"symbol={order.symbol}\n")
+                      with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                          f.write(f"order_id={order.id}\n")
+                          f.write(f"status={order.status}\n")
+                          f.write(f"symbol={order.symbol}\n")
+                  else:
+                      print(f"\n⚠️ close_position returned no orders")
+                      with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                          f.write(f"order_id=NONE\n")
+                          f.write(f"status=no_orders\n")
               except Exception as e:
-                  print(f"\n❌ ORDER SUBMISSION FAILED!")
+                  print(f"\n❌ POSITION CLOSE FAILED!")
                   print(f"   Error Type: {type(e).__name__}")
                   print(f"   Error Message: {str(e)}")
                   import traceback
