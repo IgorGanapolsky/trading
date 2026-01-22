@@ -1,0 +1,124 @@
+name: Reset PDT Flag - Emergency
+
+# Attempt to reset PDT protection on paper account
+# Uses Alpaca's account configuration API
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  reset-pdt:
+    name: Reset PDT Flag
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install alpaca-py requests
+
+      - name: Check PDT Status and Attempt Reset
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          python3 << 'EOF'
+          import os
+          import requests
+          from datetime import datetime
+          from alpaca.trading.client import TradingClient
+
+          print("=" * 60)
+          print(f"PDT STATUS CHECK - {datetime.now()}")
+          print("=" * 60)
+
+          api_key = os.environ['ALPACA_API_KEY']
+          api_secret = os.environ['ALPACA_SECRET_KEY']
+
+          # Get account info via Trading Client
+          client = TradingClient(api_key, api_secret, paper=True)
+          account = client.get_account()
+
+          print(f"\nAccount ID: {account.id}")
+          print(f"Account Status: {account.status}")
+          print(f"Equity: ${float(account.equity):,.2f}")
+          print(f"Cash: ${float(account.cash):,.2f}")
+          print(f"Pattern Day Trader: {account.pattern_day_trader}")
+          print(f"Day Trade Count: {account.daytrade_count}")
+          print(f"Trading Blocked: {account.trading_blocked}")
+          print(f"Account Blocked: {account.account_blocked}")
+
+          # Check if PDT is the issue
+          if account.pattern_day_trader:
+              print("\n⚠️ Account is flagged as Pattern Day Trader")
+              print("   Need $25,000+ equity or PDT reset to trade")
+
+          # Try to get detailed account config
+          base_url = "https://paper-api.alpaca.markets"
+          headers = {
+              "APCA-API-KEY-ID": api_key,
+              "APCA-API-SECRET-KEY": api_secret,
+          }
+
+          # Get account configurations
+          print("\n📋 Account Configurations:")
+          resp = requests.get(f"{base_url}/v2/account/configurations", headers=headers)
+          if resp.status_code == 200:
+              config = resp.json()
+              for key, value in config.items():
+                  print(f"   {key}: {value}")
+          else:
+              print(f"   Failed to get config: {resp.status_code}")
+
+          # Check day trades
+          print("\n📊 Recent Activities (checking for day trades):")
+          resp = requests.get(
+              f"{base_url}/v2/account/activities/FILL",
+              headers=headers,
+              params={"direction": "desc", "page_size": 20}
+          )
+          if resp.status_code == 200:
+              activities = resp.json()
+              for act in activities[:10]:
+                  print(f"   {act.get('transaction_time', 'N/A')[:19]} | {act.get('symbol', 'N/A')} | {act.get('side', 'N/A')} | {act.get('qty', 'N/A')}")
+
+          # The key insight: For paper accounts, the ONLY way to reset PDT is to:
+          # 1. Contact Alpaca support, or
+          # 2. Reset the entire paper account via dashboard
+
+          print("\n" + "=" * 60)
+          print("RECOMMENDATIONS:")
+          print("=" * 60)
+          print("1. Reset paper account via Alpaca Dashboard:")
+          print("   https://app.alpaca.markets/paper/dashboard/overview")
+          print("   Click 'Reset Account' and set balance to $30,000+")
+          print("")
+          print("2. Or wait 5 business days for PDT to clear")
+          print("   Oldest day trade will age out and allow trading")
+          print("")
+          print("3. Crypto trading is NOT subject to PDT")
+          print("   Can trade crypto without restriction")
+          print("=" * 60)
+          EOF
+
+      - name: Summary
+        if: always()
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "PDT RESET SUMMARY"
+          echo "=========================================="
+          echo "For paper accounts, PDT can only be reset by:"
+          echo "1. Resetting the account via Alpaca Dashboard"
+          echo "2. Waiting 5 business days"
+          echo "=========================================="
