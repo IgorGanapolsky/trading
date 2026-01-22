@@ -88,28 +88,22 @@ def update_docs_index():
     content = re.sub(
         r"## Current Status \(Day \d+ - [A-Za-z]+ \d+, \d{4}\)",
         f"## Current Status (Day {day_number} - {current_date})",
-        content
+        content,
     )
 
     # Update Paper Account row
     content = re.sub(
-        r"\| Paper Account \| \$[\d,.]+ \|",
-        f"| Paper Account | ${float(equity):,.2f} |",
-        content
+        r"\| Paper Account \| \$[\d,.]+ \|", f"| Paper Account | ${float(equity):,.2f} |", content
     )
 
     # Update Total P/L row
     content = re.sub(
-        r"\| Total P/L \| \*\*[+-]?\$\d+[^|]*\*\* \|",
-        f"| Total P/L | {total_pl} |",
-        content
+        r"\| Total P/L \| \*\*[+-]?\$\d+[^|]*\*\* \|", f"| Total P/L | {total_pl} |", content
     )
 
     # Update Open Positions row
     content = re.sub(
-        r"\| Open Positions \| \d+[^|]* \|",
-        f"| Open Positions | {position_count} |",
-        content
+        r"\| Open Positions \| \d+[^|]* \|", f"| Open Positions | {position_count} |", content
     )
 
     # Check if anything changed
