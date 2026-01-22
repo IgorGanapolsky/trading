@@ -3,7 +3,7 @@ layout: post
 title: "Day 85: What We Learned - January 21, 2026"
 date: 2026-01-21
 day_number: 85
-lessons_count: 16
+lessons_count: 12
 critical_count: 6
 excerpt: "Today was a wake-up call. Two critical issues surfaced that could have derailed our entire trading operation. Here's what went wrong and how we're fix..."
 ---
@@ -20,23 +20,11 @@ Today was a wake-up call. Two critical issues surfaced that could have derailed 
 
 *These are the moments that test us. Critical issues that demanded immediate attention.*
 
-### SOFI Position Held Through Earnings Blackout
+### Position Limit - Count Contracts Not Symbols
 
-SOFI CSP (Feb 6 expiration) was held despite Jan 30 earnings date approaching.
+The position limit check was counting UNIQUE SYMBOLS instead of TOTAL CONTRACTS:
 
-**Key takeaway:** Put option loss: -$13.
-
-### CTO Failure - Stale Data Led to Misinformation
-
-CTO (Claude) gave CEO incorrect P/L information multiple times:
-
-**Key takeaway:** Claimed $0.
-
-### Position Imbalance Crisis - Orphan Long Puts
-
-Portfolio lost $329.42 (-6.59%) due to position imbalance:
-
-**Key takeaway:** The orphan longs are decaying and losing money without corresponding short premium to offset.
+**Key takeaway:** 3. **Log details**: Show exact positions when limit reached
 
 ### Strategy Violation Crisis - Multiple Rogue Workflows
 
@@ -44,26 +32,43 @@ On Jan 21, 2026, the trading system LOST $70.13 due to executing trades that VIO
 
 **Key takeaway:** Portfolio: $5,028.
 
+### CTO Failure - Stale Data Led to Misinformation
+
+CTO (Claude) gave CEO incorrect P/L information multiple times:
+
+**Key takeaway:** Claimed $0.
+
 ### SOFI Position Blocked All Trading - Buying Power Crisis
 
 1. SOFI260213P00032000 (short put) was open with -$685 market value
 
 **Key takeaway:** 1. Triggered `close-non-spy-positions.yml` workflow
 
-### SOFI Loss Realized - Jan 14, 2026
+### Partial Iron Condor Auto-Close
 
-1. SOFI stock + CSP opened Day 74 (Jan 13)
+Iron condors were being placed with only PUT legs filling. CALL legs were failing silently, leaving dangerous directional positions:
 
-**Key takeaway:** System allowed trade despite CLAUDE.
+### Position Imbalance Crisis - Orphan Long Puts
+
+Portfolio lost $329.42 (-6.59%) due to position imbalance:
+
+**Key takeaway:** The orphan longs are decaying and losing money without corresponding short premium to offset.
 
 
 ## Important Discoveries
 
 *Not emergencies, but insights that will shape how we trade going forward.*
 
-### Trade Data Source Priority Bug - Webhook Missing Alpaca Data
+### Iron Condor Optimization Research - 86% Win Rate Strategy
 
-**Status**: FIXED
+LL-277: Iron Condor Optimization Research - 86% Win Rate Strategy
+
+Date: January 21, 2026
+Category: strategy, research, optimization
+Severity: HIGH
+
+ Source
+- Options Trading IQ: Iron Condor Success
 
 ### RAG Testing Evaluation - Retrieval Accuracy and Grounding
 
@@ -77,27 +82,16 @@ Category: Testing
  Summary
 Evaluated Medium article "RAG Testing — Validating Retrieval
 
-### Iron Condor Optimization Research - 86% Win Rate Strategy
+### CALL Leg Pricing Fix - Aggressive Fallbacks
 
-LL-277: Iron Condor Optimization Research - 86% Win Rate Strategy
-
-Date: January 21, 2026
-Category: strategy, research, optimization
-Severity: HIGH
-
- Source
-- Options Trading IQ: Iron Condor Success
+Iron condors were placing PUT legs successfully but CALL legs were failing:
 
 
 ## Quick Wins & Refinements
 
+- **OptiMind Evaluation - Not Relevant to Our System** - 3. **Single ticker strategy** - SPY ONLY per CLAUDE.md; no portfolio allocation needed...
 - **Day 2 Crisis - Position Imbalance and Missing CALL Legs** - Two consecutive days of trading crises:...
 - **RAG Without Vectors - Article Evaluation** - Evaluated article: "You Probably Don't Need a Vector Database for Your RAG — Yet" (Towards Data Scie...
-- **Deep Operational Integrity Audit - 14 Issues Found** - LL-240: Deep Operational Integrity Audit - 14 Issues Found
-
- Date
-January 16, 2026 (Friday, 6:00 PM ...
-- **Phil Town Valuations - December 2025** - This lesson documents Phil Town valuations generated on December 4, 2025 during the $100K paper trad...
 
 
 ---
@@ -106,10 +100,10 @@ January 16, 2026 (Friday, 6:00 PM ...
 
 | What | Count |
 |------|-------|
-| Lessons Learned | **16** |
+| Lessons Learned | **12** |
 | Critical Issues | 6 |
 | High Priority | 3 |
-| Improvements | 7 |
+| Improvements | 3 |
 
 ---
 
