@@ -3,9 +3,35 @@
 CTO: Claude | CEO: Igor Ganapolsky
 
 ## Strategy (Updated Jan 22, 2026 - NEW $30K ACCOUNT)
-- **North Star**: $100/day after-tax profit - CEO MANDATE (PERMANENT)
+- **North Star**: $6,000/month after-tax = FINANCIAL INDEPENDENCE - CEO MANDATE
 - **Why revised**: TastyTrade credit spread 11-year backtest showed LOSSES (-7% to -93%). Iron condors from $100K account showed 86% win rate with 1.5:1 reward/risk.
 - **Current capital**: $30,000 | Fresh start - clean slate Jan 22, 2026
+
+## Four Pillars of Wealth Building (Phil Town Aligned)
+### 1. Capital Preservation (Rule #1: Don't Lose Money)
+- NEVER risk more than 5% per trade ($1,500 max)
+- Iron condors = defined risk on BOTH sides
+- Stop-loss at 200% of credit - NO EXCEPTIONS
+- Exit at 7 DTE to avoid gamma risk
+
+### 2. Compounding (Let Money Work for You)
+- Reinvest ALL profits back into trading capital
+- Target 2-3% monthly returns (24-36% annually)
+- Small consistent gains > big risky bets
+- $30K → $350K in ~4 years at 25% annual compound
+
+### 3. Reinvestment Strategy
+- 100% of trading profits stay in account until $350K reached
+- No withdrawals during accumulation phase
+- Scale position size as account grows (maintain 5% rule)
+- Add external capital when possible to accelerate
+
+### 4. Tax Optimization
+- Track ALL trades for Schedule D reporting
+- Short-term gains taxed as ordinary income (~30%)
+- Hold winners >1 year when possible for long-term rates (~15%)
+- Consider tax-loss harvesting on losing positions
+- Target: $8,600/month pre-tax = $6,000/month after-tax
 - **Primary strategy**: IRON CONDORS on SPY ONLY - defined risk on BOTH sides
 - **Iron condor setup**:
   - Sell 15-20 delta put spread (bull put)
@@ -24,16 +50,18 @@ CTO: Claude | CEO: Igor Ganapolsky
 - **Why iron condors beat credit spreads**: Collect premium from BOTH sides, better win rate, profit in range-bound markets
 - **PDT NOTE**: $30K > $25K = NO PDT RESTRICTIONS (can day trade freely)
 
-## Recovery Path (ACCELERATED - Jan 22, 2026)
-| Phase | Capital | Monthly Income | Daily Equivalent | Timeline |
-|-------|---------|----------------|------------------|----------|
-| Now | $30,000 | $400-860 | **$13-29/day** | Immediate |
-| +6mo | $35,000 | $470-1,000 | $16-33/day | Conservative growth |
-| +12mo | $42,000 | $560-1,200 | $19-40/day | Compounding |
-| +18mo | $50,000 | $670-1,430 | $22-48/day | Near goal |
-| Goal | $75,000+ | $2,000+ | **$100/day** | ~18-24 months |
+## Path to Financial Independence ($6K/month After Tax)
+| Year | Capital | Monthly Pre-Tax | After-Tax | Status |
+|------|---------|-----------------|-----------|--------|
+| Now | $30,000 | $600-900 | ~$420-630 | **Building foundation** |
+| Year 1 | $50,000 | $1,000-1,500 | ~$700-1,050 | Compounding |
+| Year 2 | $100,000 | $2,000-3,000 | ~$1,400-2,100 | Growing |
+| Year 3 | $200,000 | $4,000-6,000 | ~$2,800-4,200 | Scaling |
+| Year 4 | $350,000+ | $8,600+ | **$6,000+** | **FINANCIAL INDEPENDENCE** |
 
-**Note**: $30K starting capital means NO PDT RESTRICTIONS and faster path to goal!
+**Math**: $350K × 2.5% monthly = $8,750/month pre-tax = ~$6,125/month after 30% tax
+
+**Note**: $30K > $25K = NO PDT RESTRICTIONS. Patience + discipline = freedom.
 
 ## MANDATORY Pre-Trade Checklist
 1. [ ] Is ticker SPY? (SPY ONLY - best liquidity, tightest spreads)
