@@ -12,6 +12,15 @@ on:
         required: false
         default: '30'
         type: string
+      strategy:
+        description: 'Strategy to backtest'
+        required: false
+        default: 'iron_condor'
+        type: choice
+        options:
+          - iron_condor
+          - bull_put_spread
+          - both
       parameter_sweep:
         description: 'Run parameter optimization'
         required: false
@@ -97,17 +106,28 @@ jobs:
       - name: Run backtest
         id: backtest
         run: |
+          STRATEGY="${{ github.event.inputs.strategy || 'iron_condor' }}"
+          DAYS="${{ steps.params.outputs.days }}"
+
           if [ "${{ steps.params.outputs.sweep }}" = "true" ]; then
             python scripts/backtest/parameter_sweep.py \
-              --days ${{ steps.params.outputs.days }} \
+              --days $DAYS \
               --max-combos ${{ steps.params.outputs.max_combos }} \
               --output data/backtests/parameter_sweeps
-          else
-            python scripts/backtest/bull_put_spread_backtester.py \
-              --days ${{ steps.params.outputs.days }} \
+          elif [ "$STRATEGY" = "iron_condor" ] || [ "$STRATEGY" = "both" ]; then
+            echo "🦅 Running Iron Condor backtest..."
+            python scripts/backtest/iron_condor_backtester.py \
+              --days $DAYS \
               --output data/backtests
           fi
-          
+
+          if [ "$STRATEGY" = "bull_put_spread" ] || [ "$STRATEGY" = "both" ]; then
+            echo "🐂 Running Bull Put Spread backtest..."
+            python scripts/backtest/bull_put_spread_backtester.py \
+              --days $DAYS \
+              --output data/backtests
+          fi
+
           if ls data/backtests/*.json 1>/dev/null 2>&1; then
             echo "has_results=true" >> $GITHUB_OUTPUT
           else
