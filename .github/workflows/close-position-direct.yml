@@ -1,0 +1,43 @@
+name: Close Position Direct
+
+# Uses DELETE /v2/positions/{symbol} endpoint directly
+# May bypass cash-secured put calculation bug
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  close-direct:
+    name: Close Position Direct
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install alpaca-py
+
+      - name: Close Position Direct
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: python scripts/close_position_direct.py
+
+      - name: Trigger State Sync
+        if: success()
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GH_PAT }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/sync-system-state.yml/dispatches" \
+            -d '{"ref": "main"}'
