@@ -27,8 +27,19 @@ jobs:
 
       - run: pip install alpaca-py
 
-      - name: Force Close Position
+      - name: Emergency Cancel and Close
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
-        run: python scripts/force_close_position.py
+        run: python scripts/emergency_cancel_and_close.py
+
+      - name: Sync State After Close
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          curl -X POST \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/sync-system-state.yml/dispatches" \
+            -d '{"ref": "main"}'
