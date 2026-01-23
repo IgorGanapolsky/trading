@@ -45,8 +45,8 @@ jobs:
       - name: Close Position
         id: close
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
           TARGET_SYMBOL: ${{ inputs.symbol }}
           TARGET_QTY: ${{ inputs.quantity }}
         run: |

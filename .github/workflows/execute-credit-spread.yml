@@ -33,11 +33,11 @@ concurrency:
 
 env:
   # Note: get_alpaca_client() expects these specific names
-  ALPACA_PAPER_TRADING_30K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
-  ALPACA_PAPER_TRADING_30K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
+  ALPACA_PAPER_TRADING_5K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+  ALPACA_PAPER_TRADING_5K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
   # Legacy fallback names
-  ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
-  ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
+  ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+  ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
   ALPACA_BASE_URL: "https://paper-api.alpaca.markets"
 
 jobs:
@@ -62,8 +62,8 @@ jobs:
       - name: Validate Trading Day
         id: calendar_check
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
-          ALPACA_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
         run: |
           python3 << 'CALENDAR_EOF'
           import os
@@ -99,8 +99,8 @@ jobs:
         id: compliance_check
         if: steps.calendar_check.outputs.skip != 'true'
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
-          ALPACA_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
           SPREAD_WIDTH: ${{ inputs.spread_width || '2' }}
           QUANTITY: ${{ inputs.quantity || '1' }}
         run: |
@@ -204,8 +204,8 @@ jobs:
       - name: Set Stop-Loss on New Position
         if: steps.calendar_check.outputs.skip != 'true' && steps.compliance_check.outputs.compliant == 'true'
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
-          ALPACA_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
         run: |
           echo "🛡️ Setting mandatory stop-loss (CLAUDE.md: 2x credit received)"
           python3 scripts/set_trailing_stops.py --trail-pct 0.20 || {

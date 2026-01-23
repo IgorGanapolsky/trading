@@ -38,8 +38,8 @@ jobs:
 
       - name: Set PDT Check to Entry Only (Bypass for Closing)
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
         run: |
           python3 << 'EOF'
           import os
@@ -62,8 +62,8 @@ jobs:
 
       - name: Check and Fix Position Compliance
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
         run: |
           python3 << 'EOF'
           import os
@@ -202,8 +202,8 @@ jobs:
       - name: Reset PDT Check to Both (Safety)
         if: always()
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
         run: |
           python3 << 'EOF'
           import os
