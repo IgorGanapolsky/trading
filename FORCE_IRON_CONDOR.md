@@ -33,3 +33,4 @@ python3 scripts/iron_condor_trader.py --force --live --symbol SPY
 - Long Call: $725
 
 EXECUTE NOW!
+Trigger: 20260123_185015
