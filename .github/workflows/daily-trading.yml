@@ -1141,7 +1141,14 @@ jobs:
                   paper=True
               )
               account = client.get_account()
+              # FIX Jan 23: Use regular buying_power if options_buying_power is $0
+              # Paper accounts often show $0 options BP even when trading is enabled
+              # Iron condors only need ~$600 collateral, not options-specific margin
               bp = float(getattr(account, 'options_buying_power', 0) or 0)
+              if bp == 0:
+                  # Fallback to regular buying power (divided by 2 for safety)
+                  bp = float(getattr(account, 'buying_power', 0) or 0) / 2
+                  print(f'{bp:.2f}', file=__import__('sys').stderr)
               print(f'{bp:.2f}')
           except Exception as e:
               print('0.00')

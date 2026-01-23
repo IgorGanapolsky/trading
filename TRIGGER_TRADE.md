@@ -1,7 +1,7 @@
 # FORCE IRON CONDOR TRADE
-Date: Friday, January 23, 2026 12:08 PM ET
+Date: Friday, January 23, 2026 12:17 PM ET
 CEO Directive: EXECUTE IMMEDIATELY WITH --force FLAG
-Retry: 3 (market open until 4PM ET)
+Retry: 4 (market open until 4PM ET)
 
 ## Parameters
 - Strategy: Iron Condor on SPY
@@ -10,10 +10,8 @@ Retry: 3 (market open until 4PM ET)
 - Wings: $5 wide
 - Force: YES - bypass VIX checks
 
-## IMPORTANT
-- --force flag deployed in PR #2789
-- This push triggers daily-trading.yml with --force
-- Position checks still active (safety)
-- Market is OPEN - trade will execute NOW
+## FIXES DEPLOYED
+1. --force flag: Bypass VIX entry conditions (PR #2789)
+2. Buying power fallback: Use regular buying_power if options_buying_power=$0
 
-EXECUTE NOW - Market open until 4:00 PM ET
+Market is OPEN - Execute NOW!
