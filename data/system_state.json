@@ -5,6 +5,11 @@
     "cash": "29725.74"
   },
   "paper_account": {
+    "equity": 29994.74,
+    "cash": 29725.74,
+    "starting_balance": 30000.0,
+    "total_pl": -5.26,
+    "total_pl_pct": -0.02,
     "positions_count": 3,
     "positions": [
       {
