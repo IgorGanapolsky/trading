@@ -12,6 +12,9 @@ on:
       - 'FORCE_IRON_CONDOR.md'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   execute-iron-condor:
     runs-on: ubuntu-latest
