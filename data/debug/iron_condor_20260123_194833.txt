@@ -1,0 +1,101 @@
+2026-01-23 19:48:30,622 - INFO - IRON CONDOR TRADER - STARTING
+2026-01-23 19:48:30,622 - INFO - Mode: LIVE
+2026-01-23 19:48:30,623 - INFO - Symbol: SPY
+2026-01-23 19:48:30,623 - INFO - Ticker 'SPY' validated OK. Context: iron_condor_trader
+2026-01-23 19:48:30,623 - WARNING - ============================================================
+2026-01-23 19:48:30,623 - WARNING - 🚨 FORCE MODE ENABLED - CEO DIRECTIVE
+2026-01-23 19:48:30,623 - WARNING - ============================================================
+2026-01-23 19:48:30,624 - WARNING - Bypassing VIX entry conditions per CEO directive
+2026-01-23 19:48:30,624 - WARNING - Position check and RAG safety checks still active
+2026-01-23 19:48:30,624 - WARNING - ============================================================
+2026-01-23 19:48:31,242 - INFO - Credential lookup (checking env vars):
+2026-01-23 19:48:31,242 - INFO -   ❌ ALPACA_PAPER_TRADING_5K_API_KEY: NOT SET
+2026-01-23 19:48:31,242 - INFO -   ✅ ALPACA_API_KEY: SET (length=26)
+2026-01-23 19:48:31,243 - INFO -   ✅ ALPACA_PAPER_TRADING_30K_API_KEY: SET (length=26)
+2026-01-23 19:48:31,243 - INFO -   ❌ ALPACA_PAPER_TRADING_API_KEY: NOT SET
+2026-01-23 19:48:31,243 - INFO - Selected: ALPACA_API_KEY fallback
+2026-01-23 19:48:31,861 - INFO - Live SPY price from Alpaca: $689.27
+2026-01-23 19:48:31,862 - INFO - Underlying price: $689.27
+2026-01-23 19:48:31,862 - INFO - Strikes: LP=650 SP=655 SC=725 LC=730
+2026-01-23 19:48:31,862 - INFO - Expiry: 2026-02-27 (Friday) - 34 DTE
+2026-01-23 19:48:31,862 - INFO - 🔒 Trade lock acquired
+2026-01-23 19:48:31,862 - INFO - ============================================================
+2026-01-23 19:48:31,862 - INFO - POSITION CHECK (MANDATORY FIRST STEP)
+2026-01-23 19:48:31,862 - INFO - ============================================================
+2026-01-23 19:48:31,862 - INFO - Credential lookup (checking env vars):
+2026-01-23 19:48:31,862 - INFO -   ❌ ALPACA_PAPER_TRADING_5K_API_KEY: NOT SET
+2026-01-23 19:48:31,862 - INFO -   ✅ ALPACA_API_KEY: SET (length=26)
+2026-01-23 19:48:31,862 - INFO -   ✅ ALPACA_PAPER_TRADING_30K_API_KEY: SET (length=26)
+2026-01-23 19:48:31,862 - INFO -   ❌ ALPACA_PAPER_TRADING_API_KEY: NOT SET
+2026-01-23 19:48:31,862 - INFO - Selected: ALPACA_API_KEY fallback
+2026-01-23 19:48:32,296 - INFO - Current SPY OPTION positions: 0 symbols, 0 contracts
+2026-01-23 19:48:32,296 - INFO - No existing option positions - OK to proceed
+2026-01-23 19:48:32,296 - INFO - Checking RAG lessons before execution...
+2026-01-23 19:48:32,308 - INFO - LessonsSearch: Loaded 138 lessons
+2026-01-23 19:48:32,308 - INFO - ✅ LessonsSearch initialized with 138 lessons
+2026-01-23 19:48:32,315 - INFO - Loaded 138 lessons from rag_knowledge/lessons_learned
+2026-01-23 19:48:32,318 - INFO - Skipping resolved lesson: ll_268_iron_condor_execution_failure_jan19
+2026-01-23 19:48:32,318 - INFO - Skipping resolved lesson: ll_272_strategy_violation_crisis_jan21
+2026-01-23 19:48:32,321 - INFO - Skipping resolved lesson: ll_272_strategy_violation_crisis_jan21
+2026-01-23 19:48:32,321 - INFO - Skipping resolved lesson: LL-291_CTO_Three_Day_Crisis_Jan22
+2026-01-23 19:48:32,321 - INFO - RAG checks passed - proceeding with execution
+2026-01-23 19:48:32,321 - INFO - ============================================================
+2026-01-23 19:48:32,321 - INFO - EXECUTING IRON CONDOR (LIVE)
+2026-01-23 19:48:32,321 - INFO - ============================================================
+2026-01-23 19:48:32,322 - INFO - Underlying: SPY
+2026-01-23 19:48:32,322 - INFO - Expiry: 2026-02-27 (30 DTE)
+2026-01-23 19:48:32,322 - INFO - Put Spread: 650/655
+2026-01-23 19:48:32,322 - INFO - Call Spread: 725/730
+2026-01-23 19:48:32,322 - INFO - Credit: $2.00 per share
+2026-01-23 19:48:32,322 - INFO - Max Profit: $200.00
+2026-01-23 19:48:32,322 - INFO - Max Risk: $300.00
+2026-01-23 19:48:32,322 - INFO - ============================================================
+2026-01-23 19:48:32,322 - INFO - ============================================================
+2026-01-23 19:48:32,322 - INFO - EXECUTION MODE DEBUG: live=True
+2026-01-23 19:48:32,322 - INFO - ============================================================
+2026-01-23 19:48:32,322 - INFO - Entering LIVE execution block...
+2026-01-23 19:48:32,322 - INFO - Credential lookup (checking env vars):
+2026-01-23 19:48:32,322 - INFO -   ❌ ALPACA_PAPER_TRADING_5K_API_KEY: NOT SET
+2026-01-23 19:48:32,322 - INFO -   ✅ ALPACA_API_KEY: SET (length=26)
+2026-01-23 19:48:32,322 - INFO -   ✅ ALPACA_PAPER_TRADING_30K_API_KEY: SET (length=26)
+2026-01-23 19:48:32,322 - INFO -   ❌ ALPACA_PAPER_TRADING_API_KEY: NOT SET
+2026-01-23 19:48:32,322 - INFO - Selected: ALPACA_API_KEY fallback
+2026-01-23 19:48:32,322 - INFO - Credentials check: api_key=SET, secret=SET
+2026-01-23 19:48:32,322 - INFO -   api_key length: 26, starts with: PKOC...
+2026-01-23 19:48:32,323 - INFO - Option symbols: LP=SPY260227P00650000, SP=SPY260227P00655000
+2026-01-23 19:48:32,323 - INFO -                 SC=SPY260227C00725000, LC=SPY260227C00730000
+2026-01-23 19:48:32,528 - INFO -   SPY260227P00650000: b=$2.82 a=$2.90 -> $3.19
+2026-01-23 19:48:32,771 - WARNING -    ⚠️ long_put order failed: {"code":42210000,"message":"order_time_in_force provided not supported for options trading"}
+2026-01-23 19:48:32,975 - INFO -   SPY260227P00655000: b=$3.34 a=$3.40 -> $3.17
+2026-01-23 19:48:33,040 - WARNING -    ⚠️ short_put order failed: {"code":42210000,"message":"order_time_in_force provided not supported for options trading"}
+2026-01-23 19:48:33,244 - INFO -   SPY260227C00725000: b=$0.70 a=$0.71 -> $0.66
+2026-01-23 19:48:33,322 - WARNING -    ⚠️ short_call order failed: {"code":42210000,"message":"order_time_in_force provided not supported for options trading"}
+2026-01-23 19:48:33,825 - INFO -   SPY260227C00730000: b=$0.42 a=$0.43 -> $0.47
+2026-01-23 19:48:33,885 - WARNING -    ⚠️ long_call order failed: {"code":42210000,"message":"order_time_in_force provided not supported for options trading"}
+2026-01-23 19:48:33,885 - WARNING - ❌ No orders could be submitted
+2026-01-23 19:48:33,885 - WARNING - Trade NOT recorded due to failure status: LIVE_FAILED
+2026-01-23 19:48:33,886 - INFO - 🔓 Trade lock released
+2026-01-23 19:48:33,886 - INFO - IRON CONDOR TRADER - COMPLETE
+
+Result: {
+  "success": true,
+  "trade": {
+    "timestamp": "2026-01-23T19:48:33.885391",
+    "strategy": "iron_condor",
+    "underlying": "SPY",
+    "symbol": "SPY",
+    "expiry": "2026-02-27",
+    "dte": 30,
+    "legs": {
+      "long_put": 650,
+      "short_put": 655,
+      "short_call": 725,
+      "long_call": 730
+    },
+    "credit": 2.0,
+    "max_profit": 200.0,
+    "max_risk": 300.0,
+    "status": "LIVE_FAILED",
+    "order_ids": []
+  }
+}
