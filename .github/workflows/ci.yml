@@ -325,8 +325,8 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
           # Use paper trading keys for CI backtests
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
         run: |
           python scripts/run_core_strategy_reference_backtest.py || {
             echo "::error::Core strategy metrics degraded. Add 'ACCEPT_METRIC_DEGRADATION' to PR description if intentional."
