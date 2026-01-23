@@ -1,14 +1,43 @@
 {
-  "last_updated": "2026-01-23T15:25:36.744654Z",
+  "last_updated": "2026-01-23T15:28:07.288691Z",
   "portfolio": {
-    "equity": "29997.88",
-    "cash": "29997.88"
+    "equity": "30001.84",
+    "cash": "29693.84"
   },
   "paper_account": {
-    "positions_count": 0,
-    "positions": []
+    "positions_count": 2,
+    "positions": [
+      {
+        "symbol": "SPY260220P00570000",
+        "qty": "1",
+        "market_value": "34",
+        "unrealized_pl": "0"
+      },
+      {
+        "symbol": "SPY260220P00658000",
+        "qty": "1",
+        "market_value": "274",
+        "unrealized_pl": "4"
+      }
+    ]
   },
   "trade_history": [
+    {
+      "id": "fde2ae12-0769-4c68-a38b-c589845ec3ac",
+      "symbol": "SPY260220P00570000",
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "0.34",
+      "filled_at": "2026-01-23 15:25:38.615727+00:00"
+    },
+    {
+      "id": "a942ede5-f9f7-44bc-9bda-c545bbec2824",
+      "symbol": "SPY260220P00658000",
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "2.7",
+      "filled_at": "2026-01-23 15:25:38.502904+00:00"
+    },
     {
       "id": "69946224-d6f2-45e1-9d64-2cd674901cc8",
       "symbol": "SPY260220P00658000",
@@ -31,7 +60,7 @@
       "side": "OrderSide.BUY",
       "qty": "1",
       "price": "0.32",
-      "filled_at": "2026-01-23 15:13:16.886821+00:00"
+      "filled_at": "2026-01-23 15:13:16.886822+00:00"
     },
     {
       "id": "6d64b712-7dc1-41ff-8615-d935238d44b5",
@@ -58,5 +87,5 @@
       "filled_at": "2026-01-23 15:02:57.333180+00:00"
     }
   ],
-  "trades_loaded": 6
+  "trades_loaded": 8
 }
