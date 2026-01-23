@@ -17,5 +17,40 @@
     "max_risk": 300.0,
     "status": "SIMULATED",
     "order_ids": []
+  },
+  {
+    "timestamp": "2026-01-23T19:50:09.165480",
+    "strategy": "iron_condor",
+    "underlying": "SPY",
+    "symbol": "SPY",
+    "expiry": "2026-02-27",
+    "dte": 30,
+    "legs": {
+      "long_put": 650,
+      "short_put": 655,
+      "short_call": 725,
+      "long_call": 730
+    },
+    "credit": 2.0,
+    "max_profit": 200.0,
+    "max_risk": 300.0,
+    "status": "LIVE_PARTIAL_FAILED",
+    "order_ids": [
+      {
+        "leg": "long_put",
+        "order_id": "90bfff8d-7063-4b78-86ba-ddf86a002864",
+        "price": 3.2
+      },
+      {
+        "leg": "short_put",
+        "order_id": "9928e8b5-a066-4592-8c14-1727654bbf92",
+        "price": 3.16
+      },
+      {
+        "leg": "long_call",
+        "order_id": "56a8bffe-2747-4d9c-9fb8-d1afe626438b",
+        "price": 0.46
+      }
+    ]
   }
 ]
