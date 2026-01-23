@@ -200,7 +200,8 @@ def update_system_state(alpaca_data: dict | None) -> None:
             state["account"]["positions_count"] = paper_data.get("positions_count", 0)
 
             # Calculate P/L for PAPER
-            paper_starting = state.get("paper_account", {}).get("starting_balance", 5000.0)
+            # NOTE: Default changed from 5000 to 30000 on Jan 23, 2026 (new paper account)
+            paper_starting = state.get("paper_account", {}).get("starting_balance", 30000.0)
             paper_current = paper_data.get("equity", 0)
             state["account"]["total_pl"] = paper_current - paper_starting
             state["account"]["total_pl_pct"] = (
