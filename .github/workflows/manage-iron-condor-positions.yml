@@ -1,0 +1,89 @@
+name: Manage Iron Condor Positions
+
+# Monitor and manage iron condor positions per LL-268/LL-277 research
+# Exit rules: 50% profit, 200% stop-loss, 7 DTE
+#
+# SAFE SCHEDULE: Hourly during market hours (not aggressive like crisis workflows)
+# This is the correct replacement for the disabled crisis workflows
+
+on:
+  schedule:
+    # Run hourly during market hours: 10 AM - 3:30 PM ET (15:00 - 20:30 UTC)
+    # EST: UTC-5, EDT: UTC-4 (covers both)
+    - cron: '0 15,16,17,18,19,20 * * 1-5'  # Top of hour, Mon-Fri
+  workflow_dispatch:  # Allow manual trigger
+
+permissions:
+  contents: write
+
+jobs:
+  manage-positions:
+    name: Monitor IC Positions
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install alpaca-py
+
+      - name: Check market status
+        id: market
+        run: |
+          # Skip if market is closed
+          HOUR=$(TZ=America/New_York date +%H)
+          DAY=$(date +%u)  # 1=Monday, 7=Sunday
+
+          if [[ $DAY -gt 5 ]]; then
+            echo "Weekend - market closed"
+            echo "open=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          if [[ $HOUR -lt 9 || $HOUR -gt 16 ]]; then
+            echo "Outside market hours (9 AM - 4 PM ET)"
+            echo "open=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "Market hours - proceeding"
+          echo "open=true" >> $GITHUB_OUTPUT
+
+      - name: Manage Iron Condor Positions
+        if: steps.market.outputs.open == 'true'
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
+          ALPACA_PAPER_TRADING_30K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
+          ALPACA_PAPER_TRADING_30K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
+        run: |
+          echo "═══════════════════════════════════════════════════════════"
+          echo "IRON CONDOR POSITION MANAGEMENT"
+          echo "Exit Rules (LL-268/LL-277):"
+          echo "  - 50% profit target"
+          echo "  - 200% stop-loss"
+          echo "  - 7 DTE exit"
+          echo "═══════════════════════════════════════════════════════════"
+
+          python3 scripts/manage_iron_condor_positions.py
+
+      - name: Post summary
+        if: always()
+        run: |
+          echo "## Iron Condor Position Management" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Schedule**: Hourly during market hours (Mon-Fri)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Exit Rules**:" >> $GITHUB_STEP_SUMMARY
+          echo "- 50% profit target (of credit)" >> $GITHUB_STEP_SUMMARY
+          echo "- 200% stop-loss (2x credit)" >> $GITHUB_STEP_SUMMARY
+          echo "- 7 DTE exit (gamma risk)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Research**: LL-268, LL-277" >> $GITHUB_STEP_SUMMARY
