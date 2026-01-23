@@ -44,11 +44,11 @@
     "positions_count": 0
   },
   "meta": {
-    "last_updated": "2026-01-23T02:24:21.691454",
+    "last_updated": "2026-01-23T13:49:46.520517",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5,
     "account_change_note": "NEW $30K PAPER ACCOUNT - PA3PYE0C9MN - clean start Jan 22, 2026",
-    "last_sync": "2026-01-23T02:24:21.691462",
+    "last_sync": "2026-01-23T13:49:46.520523",
     "sync_mode": "skipped_no_keys"
   }
 }
