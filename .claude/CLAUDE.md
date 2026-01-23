@@ -188,6 +188,7 @@ Trust the hooks. They work.
 
 ## $30K Paper Account (Jan 22, 2026)
 Account ID: PA3PYE0C9MN - Fresh start with no positions.
-Use `ALPACA_PAPER_TRADING_5K_API_KEY` (now points to $30K account).
+Use `ALPACA_PAPER_TRADING_30K_API_KEY` (the ACTUAL GitHub secret name!).
+CRITICAL: The 5K secrets DON'T EXIST - always use 30K secret names!
 All code must use `get_alpaca_credentials()` from `src/utils/alpaca_client.py`.
 **NO PDT RESTRICTIONS** - Can freely close positions same-day.
