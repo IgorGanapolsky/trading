@@ -1,0 +1,32 @@
+id: LL-292
+title: "Lost $22.61 on Jan 23, 2026 - Iron Condor Execution Failure"
+date: "2026-01-23"
+severity: critical
+status: unresolved
+
+root_causes:
+  - "Option expiration calculated for Sunday (Feb 22) instead of Friday"
+  - "SPY options only expire on Fridays - asset not found errors"
+  - "20+ workflow triggers but Friday fix didn't execute in time"
+  - "Spent hours on credential debugging when real issue was expiration"
+
+financial_impact:
+  daily_loss: -22.61
+  source: "SPY share liquidation"
+  iron_condor_trades: 0
+
+lessons:
+  - "ALWAYS check option expiration lands on Friday BEFORE other debugging"
+  - "Options expire on Fridays - calculate to nearest Friday, not exact DTE"
+  - "Test expiration calculation locally before relying on workflow"
+  - "Time is money - faster root cause analysis needed"
+
+fix_applied:
+  file: "scripts/iron_condor_trader.py"
+  change: "Expiration now calculates to next Friday >= 30 DTE"
+  verified: false
+
+next_steps:
+  - "Monday: Verify iron condor executes with Friday expiration"
+  - "Add unit test for expiration calculation"
+  - "Pre-market validation of option symbols before trading"

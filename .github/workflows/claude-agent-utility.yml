@@ -574,14 +574,16 @@ jobs:
           print(f'Buying power: \${float(account.buying_power):,.2f}')
           "
 
-          # PERMANENTLY DISABLED Jan 23, 2026
-          # guaranteed_trader.py buys SPY SHARES which violates CLAUDE.md
-          # CLAUDE.md mandates: IRON CONDORS ONLY
+          # PERMANENTLY DISABLED Jan 23, 2026 - CHURNING FIX (LL-298)
+          # guaranteed_trader.py was buying SPY STOCK which:
+          # 1. Violated CLAUDE.md (iron condors ONLY)
+          # 2. Caused 22+ trades on Jan 23, losing -$22.61 to bid/ask spreads
+          # 3. Contradicts Phil Town Rule #1: Don't lose money
           # Use daily-trading.yml with iron_condor_trader.py instead
           echo ""
-          echo "❌ GUARANTEED TRADER DISABLED"
+          echo "❌ GUARANTEED TRADER PERMANENTLY DISABLED"
           echo "Reason: Buys SPY shares, violates 'IRON CONDORS ONLY' mandate"
-          echo "Impact: Caused -\$22.61 loss on Jan 23, 2026"
+          echo "Impact: Caused -\$22.61 loss on Jan 23, 2026 from churning"
           echo "Solution: Use daily-trading.yml for iron condor execution"
           echo ""
 

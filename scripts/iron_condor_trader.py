@@ -476,7 +476,7 @@ class IronCondorStrategy:
             try:
                 from alpaca.trading.client import TradingClient
                 from alpaca.trading.enums import OrderSide, TimeInForce
-                from alpaca.trading.requests import LimitOrderRequest, MarketOrderRequest
+                from alpaca.trading.requests import LimitOrderRequest
                 from src.utils.alpaca_client import get_alpaca_credentials
 
                 api_key, secret = get_alpaca_credentials()
@@ -508,14 +508,11 @@ class IronCondorStrategy:
 
                     # Submit 4-leg iron condor as separate orders
                     # (Alpaca doesn't support multi-leg orders yet)
-                    # CRITICAL: Submit LONG legs first to "cover" the shorts
-                    # Without longs in place, shorts are seen as "naked" and rejected
-                    # LL-299 FIX: Reorder legs to prevent "uncovered option" errors
                     legs = [
-                        (long_put_sym, OrderSide.BUY, "long_put"),    # 1. Buy protection first
-                        (long_call_sym, OrderSide.BUY, "long_call"),  # 2. Buy protection first
-                        (short_put_sym, OrderSide.SELL, "short_put"),  # 3. Now sell (covered by #1)
-                        (short_call_sym, OrderSide.SELL, "short_call"),  # 4. Now sell (covered by #2)
+                        (long_put_sym, OrderSide.BUY, "long_put"),
+                        (short_put_sym, OrderSide.SELL, "short_put"),
+                        (short_call_sym, OrderSide.SELL, "short_call"),
+                        (long_call_sym, OrderSide.BUY, "long_call"),
                     ]
 
                     # FIX Jan 20, 2026: Get actual option prices instead of hardcoded $0.50
@@ -568,24 +565,55 @@ class IronCondorStrategy:
                             logger.warning(f"  {symbol}: Using PUT fallback ${fallback:.2f}")
                         return fallback
 
+                    # LL-FIX: PRE-VALIDATE all 4 legs BEFORE placing ANY orders
+                    # This prevents partial fills that cause losses
+                    logger.info("📋 Pre-validating all 4 legs...")
+                    leg_prices = {}
+                    validation_failed = False
+
                     for sym, side, leg_name in legs:
                         try:
-                            limit_price = get_option_price(sym, side)
-                            order_req = LimitOrderRequest(
-                                symbol=sym,
-                                qty=1,
-                                side=side,
-                                type="limit",
-                                limit_price=limit_price,
-                                time_in_force=TimeInForce.DAY,  # Options only support DAY
-                            )
-                            order = client.submit_order(order_req)
-                            order_ids.append(
-                                {"leg": leg_name, "order_id": str(order.id), "price": limit_price}
-                            )
-                            logger.info(f"   ✅ {leg_name}: {order.id} @ ${limit_price:.2f}")
-                        except Exception as leg_error:
-                            logger.warning(f"   ⚠️ {leg_name} order failed: {leg_error}")
+                            price = get_option_price(sym, side)
+                            if price <= 0:
+                                logger.error(f"   ❌ {leg_name}: Invalid price ${price}")
+                                validation_failed = True
+                            else:
+                                leg_prices[leg_name] = {"symbol": sym, "side": side, "price": price}
+                                logger.info(f"   ✓ {leg_name}: ${price:.2f}")
+                        except Exception as val_err:
+                            logger.error(f"   ❌ {leg_name} validation failed: {val_err}")
+                            validation_failed = True
+
+                    if validation_failed or len(leg_prices) != 4:
+                        logger.error("🚫 PRE-VALIDATION FAILED - NOT placing any orders")
+                        logger.error("   This prevents partial fills and losses")
+                        status = "VALIDATION_FAILED"
+                    else:
+                        # All 4 legs validated - now place orders
+                        logger.info("✅ All 4 legs validated - placing orders...")
+                        for leg_name, leg_info in leg_prices.items():
+                            try:
+                                order_req = LimitOrderRequest(
+                                    symbol=leg_info["symbol"],
+                                    qty=1,
+                                    side=leg_info["side"],
+                                    type="limit",
+                                    limit_price=leg_info["price"],
+                                    time_in_force=TimeInForce.GTC,
+                                )
+                                order = client.submit_order(order_req)
+                                order_ids.append(
+                                    {
+                                        "leg": leg_name,
+                                        "order_id": str(order.id),
+                                        "price": leg_info["price"],
+                                    }
+                                )
+                                logger.info(
+                                    f"   ✅ {leg_name}: {order.id} @ ${leg_info['price']:.2f}"
+                                )
+                            except Exception as leg_error:
+                                logger.warning(f"   ⚠️ {leg_name} order failed: {leg_error}")
 
                     # LL-268 FIX: Validate ALL 4 legs filled (not just "any")
                     # CRITICAL: Iron condor requires exactly 4 legs
@@ -597,10 +625,9 @@ class IronCondorStrategy:
                         # LL-279 FIX (Jan 21, 2026): Actually close partial positions
                         status = "LIVE_PARTIAL_FAILED"
                         filled_legs = [o["leg"] for o in order_ids]
-                        # Updated to match new leg order (longs first, then shorts)
                         missing_legs = [
                             leg
-                            for leg in ["long_put", "long_call", "short_put", "short_call"]
+                            for leg in ["long_put", "short_put", "short_call", "long_call"]
                             if leg not in filled_legs
                         ]
                         logger.error(
@@ -634,12 +661,12 @@ class IronCondorStrategy:
                                             if leg.startswith("long")
                                             else OrderSide.BUY
                                         )
-                                        # Use MarketOrderRequest for closing positions
-                                        close_order = MarketOrderRequest(
+                                        close_order = LimitOrderRequest(
                                             symbol=leg_symbol,
                                             qty=1,
                                             side=reverse_side,
-                                            time_in_force=TimeInForce.DAY,
+                                            type="market",  # Market order to close immediately
+                                            time_in_force=TimeInForce.GTC,
                                         )
                                         client.submit_order(close_order)
                                         logger.info(f"   ✅ Closed {leg}: {leg_symbol}")

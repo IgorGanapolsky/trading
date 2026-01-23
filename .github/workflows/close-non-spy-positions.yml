@@ -1,14 +1,19 @@
 name: Close Non-SPY Positions
 
-# CRITICAL: Enforces SPY-only mandate from CLAUDE.md
+# DISABLED Jan 23, 2026 - CONTRIBUTED TO $22.61 LOSS FROM SHARE CHURNING
+# LL-298: Automated position closing workflows caused excessive trading
+# DO NOT RE-ENABLE without CEO approval
+
+# Original purpose: Enforces SPY-only mandate from CLAUDE.md
 # Runs daily at market open to close any non-SPY option positions
 # This prevents crisis situations like the SOFI position opened Jan 20, 2026
 
 on:
-  schedule:
-    # 9:35 AM ET = 14:35 UTC (5 minutes after market open)
-    - cron: '35 14 * * 1-5'  # Mon-Fri
-  workflow_dispatch:  # Allow manual trigger
+  # DISABLED - schedule removed to stop losses
+  # schedule:
+  #   # 9:35 AM ET = 14:35 UTC (5 minutes after market open)
+  #   - cron: '35 14 * * 1-5'  # Mon-Fri
+  workflow_dispatch:  # Manual trigger only now
 
 permissions:
   contents: write
