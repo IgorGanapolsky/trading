@@ -75,7 +75,7 @@ jobs:
             --min-instances 0 \
             --max-instances 3 \
             --timeout 60s \
-            --set-env-vars "GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }},VERTEX_AI_LOCATION=europe-west4,ALPACA_PAPER_TRADING_5K_API_KEY=${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }},ALPACA_PAPER_TRADING_5K_API_SECRET=${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}"
+            --set-env-vars "GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }},VERTEX_AI_LOCATION=europe-west4,ALPACA_PAPER_TRADING_30K_API_KEY=${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }},ALPACA_PAPER_TRADING_30K_API_SECRET=${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}"
 
       - name: Get service URL
         run: |
