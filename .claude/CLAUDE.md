@@ -6,7 +6,8 @@ CTO: Claude | CEO: Igor Ganapolsky
 - **North Star**: $6,000/month after-tax = FINANCIAL INDEPENDENCE
 - **Philosophy**: Grow $30K → $600K through disciplined compounding (Phil Town Rule #1)
 - **Current capital**: $30,000 | Fresh start - clean slate Jan 22, 2026
-- **Primary strategy**: IRON CONDORS on SPY ONLY - defined risk on BOTH sides
+- **Primary strategy**: IRON CONDORS on SPY (current) - evaluating XSP for tax optimization
+- **Tax note**: XSP (Mini-SPX) = same size as SPY but Section 1256 (60/40 tax treatment, no wash sales)
 - **Iron condor setup**:
   - Sell 15-20 delta put spread (bull put)
   - Sell 15-20 delta call spread (bear call)
@@ -39,12 +40,16 @@ CTO: Claude | CEO: Igor Ganapolsky
    - $30K → $76K (Year 1) → $192K (Year 2) → $600K (Year 3)
    - DO NOT WITHDRAW until $600K target reached
 
-3. **Tax Optimization** (Keep What You Earn)
-   - Iron condors held >60 days = 60% long-term / 40% short-term (Section 1256)
-   - Track cost basis meticulously for wash sale compliance
-   - Consider tax-loss harvesting on losing trades
-   - Estimated tax rate: ~25-30% blended (vs 37% short-term max)
-   - Set aside 30% of profits quarterly for estimated taxes
+3. **Tax Optimization** (Keep What You Earn) - UPDATED Jan 23, 2026
+   - **CRITICAL**: SPY options are EQUITY options - taxed as 100% short-term capital gains
+   - **XSP/SPX alternative**: Mini-SPX (XSP) options qualify for Section 1256 (60/40 treatment)
+   - Section 1256 benefits: 60% long-term / 40% short-term tax rates, NO wash sale rules
+   - **Recommendation**: Evaluate XSP iron condors for ~30% tax savings (see LL-296)
+   - Track cost basis for SPY positions (wash sale rules APPLY to SPY)
+   - Tax-loss harvest losing SPY trades (offset gains)
+   - Estimated tax rate: ~32% for SPY (short-term), ~22% for XSP (60/40 blended)
+   - Set aside 30% of profits quarterly for estimated taxes (due Apr 15, Jun 16, Sep 15, Jan 15)
+   - File Form 6781 for any Section 1256 contracts (XSP/SPX)
 
 4. **Reinvestment Strategy** (Scale Intelligently)
    - Phase 1 ($30K-$50K): 1 iron condor max, prove the system
