@@ -44,6 +44,19 @@ jobs:
           echo "Date: $(date)"
           echo "Mode: LIVE with --force --live flags"
           echo ""
+          
+          # DEBUG: Verify credentials are set
+          echo "Checking credentials..."
+          if [ -n "$ALPACA_API_KEY" ]; then
+            echo "✅ ALPACA_API_KEY is set (length: ${#ALPACA_API_KEY})"
+          else
+            echo "❌ ALPACA_API_KEY is NOT SET!"
+          fi
+          if [ -n "$ALPACA_PAPER_TRADING_30K_API_KEY" ]; then
+            echo "✅ ALPACA_PAPER_TRADING_30K_API_KEY is set (length: ${#ALPACA_PAPER_TRADING_30K_API_KEY})"
+          else
+            echo "❌ ALPACA_PAPER_TRADING_30K_API_KEY is NOT SET!"
+          fi
 
           # Run iron condor trader with --force --live to ensure live execution
           python3 scripts/iron_condor_trader.py --force --live --symbol SPY || {
