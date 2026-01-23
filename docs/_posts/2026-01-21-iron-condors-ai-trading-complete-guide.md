@@ -326,5 +326,5 @@ The goal: $100/day passive income from a $50K account.
 
 ---
 
-*Follow the journey: [GitHub](https://github.com/IgorGanapolsky/trading) | [Tech Stack](/tech-stack/)*
+*Follow the journey: [GitHub](https://github.com/IgorGanapolsky/trading) | [Tech Stack](/trading/tech-stack/)*
 
