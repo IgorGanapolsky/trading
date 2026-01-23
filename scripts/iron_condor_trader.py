@@ -114,8 +114,9 @@ class IronCondorStrategy:
         except Exception as e:
             logger.warning(f"Could not fetch live SPY price: {e}")
 
-        # Fallback: Use recent estimate (updated Jan 20, 2026)
-        fallback_price = 600.0
+        # Fallback: Use recent estimate (updated Jan 23, 2026)
+        # NOTE: SPY at $688 as of Jan 23, 2026 - update if stale
+        fallback_price = 688.0
         logger.info(f"Using fallback SPY price: ${fallback_price:.2f}")
         return fallback_price
 
