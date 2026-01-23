@@ -1,0 +1,68 @@
+2026-01-23 19:53:16,863 - INFO - IRON CONDOR TRADER - STARTING
+2026-01-23 19:53:16,863 - INFO - Mode: LIVE
+2026-01-23 19:53:16,863 - INFO - Symbol: SPY
+2026-01-23 19:53:16,864 - INFO - Ticker 'SPY' validated OK. Context: iron_condor_trader
+2026-01-23 19:53:16,864 - WARNING - ============================================================
+2026-01-23 19:53:16,864 - WARNING - 🚨 FORCE MODE ENABLED - CEO DIRECTIVE
+2026-01-23 19:53:16,864 - WARNING - ============================================================
+2026-01-23 19:53:16,864 - WARNING - Bypassing VIX entry conditions per CEO directive
+2026-01-23 19:53:16,864 - WARNING - Position check and RAG safety checks still active
+2026-01-23 19:53:16,864 - WARNING - ============================================================
+2026-01-23 19:53:17,386 - INFO - Credential lookup (checking env vars):
+2026-01-23 19:53:17,386 - INFO -   ❌ ALPACA_PAPER_TRADING_5K_API_KEY: NOT SET
+2026-01-23 19:53:17,386 - INFO -   ✅ ALPACA_API_KEY: SET (length=26)
+2026-01-23 19:53:17,386 - INFO -   ✅ ALPACA_PAPER_TRADING_30K_API_KEY: SET (length=26)
+2026-01-23 19:53:17,386 - INFO -   ❌ ALPACA_PAPER_TRADING_API_KEY: NOT SET
+2026-01-23 19:53:17,386 - INFO - Selected: ALPACA_API_KEY fallback
+2026-01-23 19:53:17,605 - INFO - Live SPY price from Alpaca: $689.46
+2026-01-23 19:53:17,606 - INFO - Underlying price: $689.46
+2026-01-23 19:53:17,607 - INFO - Strikes: LP=650 SP=655 SC=725 LC=730
+2026-01-23 19:53:17,607 - INFO - Expiry: 2026-02-27 (Friday) - 34 DTE
+2026-01-23 19:53:17,607 - INFO - 🔒 Trade lock acquired
+2026-01-23 19:53:17,607 - INFO - ============================================================
+2026-01-23 19:53:17,607 - INFO - POSITION CHECK (MANDATORY FIRST STEP)
+2026-01-23 19:53:17,607 - INFO - ============================================================
+2026-01-23 19:53:17,607 - INFO - Credential lookup (checking env vars):
+2026-01-23 19:53:17,607 - INFO -   ❌ ALPACA_PAPER_TRADING_5K_API_KEY: NOT SET
+2026-01-23 19:53:17,607 - INFO -   ✅ ALPACA_API_KEY: SET (length=26)
+2026-01-23 19:53:17,607 - INFO -   ✅ ALPACA_PAPER_TRADING_30K_API_KEY: SET (length=26)
+2026-01-23 19:53:17,607 - INFO -   ❌ ALPACA_PAPER_TRADING_API_KEY: NOT SET
+2026-01-23 19:53:17,607 - INFO - Selected: ALPACA_API_KEY fallback
+2026-01-23 19:53:18,061 - INFO - Current SPY OPTION positions: 3 symbols, 3 contracts
+2026-01-23 19:53:18,061 - WARNING - ============================================================
+2026-01-23 19:53:18,061 - WARNING - POSITION LIMIT BLOCKING NEW TRADE
+2026-01-23 19:53:18,061 - WARNING - ============================================================
+2026-01-23 19:53:18,061 - WARNING - REASON: Already have 3 contracts (max allowed: 0 for new entry)
+2026-01-23 19:53:18,061 - WARNING - ACTION: Manage existing positions before opening new ones
+2026-01-23 19:53:18,061 - WARNING - POSITIONS:
+2026-01-23 19:53:18,061 - WARNING -    - SPY260227C00730000: 1 contracts @ $0.40
+2026-01-23 19:53:18,061 - WARNING -    - SPY260227P00650000: 1 contracts @ $2.89
+2026-01-23 19:53:18,061 - WARNING -    - SPY260227P00655000: -1 contracts @ $3.35
+2026-01-23 19:53:18,061 - WARNING - ============================================================
+2026-01-23 19:53:18,062 - INFO - 🔓 Trade lock released
+2026-01-23 19:53:18,062 - INFO - IRON CONDOR TRADER - COMPLETE
+
+Result: {
+  "success": true,
+  "trade": {
+    "timestamp": "2026-01-23T19:53:18.061375",
+    "strategy": "iron_condor",
+    "underlying": "SPY",
+    "status": "SKIPPED_POSITION_EXISTS",
+    "reason": "Already have 3 option contracts - cannot open new position",
+    "existing_positions": [
+      {
+        "symbol": "SPY260227C00730000",
+        "qty": "1"
+      },
+      {
+        "symbol": "SPY260227P00650000",
+        "qty": "1"
+      },
+      {
+        "symbol": "SPY260227P00655000",
+        "qty": "-1"
+      }
+    ]
+  }
+}
