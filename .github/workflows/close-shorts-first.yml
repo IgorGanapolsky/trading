@@ -4,10 +4,8 @@ name: Close Shorts First Strategy
 
 on:
   workflow_dispatch:
-  # DISABLED Jan 23, 2026 - This was destroying iron condor positions!
-  # The scheduled run closes ALL short positions every 3 min,
-  # which breaks iron condors that REQUIRE short legs.
-  # Only enable manually during actual crisis situations.
+  # DISABLED Jan 23, 2026 - EMERGENCY FIX
+  # This was destroying iron condor positions by closing short legs!
   # schedule:
   #   - cron: '*/3 14-21 * * 1-5'
   push:

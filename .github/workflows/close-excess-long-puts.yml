@@ -6,8 +6,7 @@ name: Close Excess Long Puts
 
 on:
   workflow_dispatch:
-  # DISABLED Jan 23, 2026 - Crisis mode ended, clean $30K account
-  # Was created for old account's orphan position crisis
+  # DISABLED Jan 23, 2026 - Crisis mode ended, new $30K account
   # schedule:
   #   - cron: '*/15 14-20 * * 1-5'
 
