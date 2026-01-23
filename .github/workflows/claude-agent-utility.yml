@@ -574,12 +574,15 @@ jobs:
           print(f'Buying power: \${float(account.buying_power):,.2f}')
           "
 
-          # Run guaranteed trader for immediate execution
+          # DISABLED Jan 23, 2026 - CHURNING FIX
+          # guaranteed_trader.py was buying SPY STOCK which:
+          # 1. Violated CLAUDE.md (iron condors ONLY)
+          # 2. Caused 22+ trades on Jan 23, losing money to bid/ask spreads
+          # 3. Contradicts Phil Town Rule #1
+          # See: data/guaranteed_trader_daily.json for block state
           echo ""
-          echo "Running guaranteed_trader.py..."
-          python3 scripts/guaranteed_trader.py 2>&1 || {
-            echo "::warning::Guaranteed trader had issues"
-          }
+          echo "guaranteed_trader.py DISABLED - Iron condors ONLY per CLAUDE.md"
+          echo "Stock buying caused churning (-\$23.41 loss on Jan 23)"
 
           # Verify results
           echo ""
