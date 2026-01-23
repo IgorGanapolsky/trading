@@ -1,13 +1,18 @@
 name: Auto Position Compliance Check
 
-# Automatically monitors and fixes position limit violations
-# Runs every 30 minutes during market hours
+# DISABLED Jan 23, 2026 - CONTRIBUTED TO $22.61 LOSS FROM SHARE CHURNING
+# LL-298: Running every 30 min caused excessive trades and bid/ask spread losses
+# DO NOT RE-ENABLE without CEO approval
+
+# Original purpose: Automatically monitors and fixes position limit violations
+# Was running every 30 minutes during market hours
 
 on:
-  schedule:
-    # Every 30 minutes during market hours (9:30 AM - 4 PM ET = 14:30 - 21:00 UTC)
-    - cron: '0,30 14-20 * * 1-5'  # Mon-Fri, 9:30 AM - 4 PM ET
-  workflow_dispatch:  # Allow manual trigger
+  # DISABLED - schedule removed to stop losses
+  # schedule:
+  #   # Every 30 minutes during market hours (9:30 AM - 4 PM ET = 14:30 - 21:00 UTC)
+  #   - cron: '0,30 14-20 * * 1-5'  # Mon-Fri, 9:30 AM - 4 PM ET
+  workflow_dispatch:  # Manual trigger only now
 
 permissions:
   contents: write
