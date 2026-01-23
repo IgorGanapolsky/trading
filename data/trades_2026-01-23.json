@@ -1,0 +1,21 @@
+[
+  {
+    "timestamp": "2026-01-23T18:02:34.114274",
+    "strategy": "iron_condor",
+    "underlying": "SPY",
+    "symbol": "SPY",
+    "expiry": "2026-02-22",
+    "dte": 30,
+    "legs": {
+      "long_put": 565,
+      "short_put": 570,
+      "short_call": 630,
+      "long_call": 635
+    },
+    "credit": 2.0,
+    "max_profit": 200.0,
+    "max_risk": 300.0,
+    "status": "SIMULATED",
+    "order_ids": []
+  }
+]
