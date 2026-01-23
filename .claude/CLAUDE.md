@@ -32,6 +32,9 @@ CTO: Claude | CEO: Igor Ganapolsky
   - SPX: 60% long-term + 40% short-term = ~22.4% effective rate
   - **Saves ~30% on tax bill** = $15-20K extra over 7 years
 - **XSP (Mini-SPX)**: Same tax benefits as SPX at SPY-like prices
+  - ⚠️ **ALPACA LIMITATION**: Alpaca does NOT support index options (SPX/XSP)
+  - Current strategy uses SPY (equity options) until broker switch
+  - Future: Consider TastyTrade or IBKR for Section 1256 benefits
 - Track ALL trades for Schedule D / Form 6781 reporting
 - Consider tax-loss harvesting on losing positions
 - Target: $8,600/month pre-tax = $6,000/month after-tax
