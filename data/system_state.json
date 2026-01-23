@@ -37,6 +37,14 @@
     "total_trades_today": 0,
     "last_trade_symbol": "none"
   },
+  "pdt_tracking": {
+    "day_trade_count": 0,
+    "rolling_5_day_trades": [],
+    "pattern_day_trader": false,
+    "pdt_threshold_met": true,
+    "last_checked": "2026-01-23T14:10:26.553408+00:00",
+    "notes": "LL-296: Track day trades to prevent PDT Protection blocks. With $30K equity > $25K, we can accept PDT status."
+  },
   "risk": {
     "status": "MONITORING",
     "total_pl": 25000.0,

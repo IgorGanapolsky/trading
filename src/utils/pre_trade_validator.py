@@ -45,6 +45,47 @@ class PreTradeValidator:
         self.account_value = account_value
         self.max_risk = account_value * self.MAX_POSITION_PCT
 
+    def _check_pdt_status(self) -> dict:
+        """
+        Check PDT status from Alpaca.
+
+        LL-296: Track day trades to prevent PDT Protection blocks.
+
+        Returns:
+            Dict with PDT status info or empty dict on error
+        """
+        try:
+            from src.core.options_client import AlpacaOptionsClient
+
+            client = AlpacaOptionsClient(paper=True)
+            pdt_info = client.get_day_trade_count()
+
+            # If we have > $25K equity, we can accept PDT status
+            if pdt_info.get("pdt_threshold_met", False):
+                pdt_info["can_day_trade"] = True
+                logger.info(
+                    f"PDT OK: Equity ${pdt_info.get('equity', 0):,.2f} >= $25K, "
+                    f"can accept PDT status if needed."
+                )
+            else:
+                # Under $25K, check day trade count
+                count = pdt_info.get("daytrade_count", 0)
+                pdt_info["can_day_trade"] = count < 3
+                if count >= 3:
+                    logger.warning(
+                        f"PDT WARNING: {count} day trades and equity < $25K. "
+                        f"Next day trade will be blocked!"
+                    )
+
+            return pdt_info
+
+        except ImportError:
+            logger.debug("Options client not available for PDT check")
+            return {"can_day_trade": True}  # Allow if we can't check
+        except Exception as e:
+            logger.warning(f"PDT check failed: {e}")
+            return {"can_day_trade": True}  # Allow if we can't check
+
     def validate(
         self,
         symbol: str,
@@ -91,6 +132,17 @@ class PreTradeValidator:
             errors.append(
                 f"BLOCKED: Strategy '{strategy}' not allowed. "
                 f"LL-203: Use defined risk strategies only (iron condors, spreads)."
+            )
+
+        # Check 5: PDT Protection check (from LL-296)
+        # If this would be a day trade, validate we won't trigger PDT block
+        pdt_check = self._check_pdt_status()
+        if pdt_check.get("warning") and not pdt_check.get("can_day_trade"):
+            errors.append(
+                f"BLOCKED: PDT Protection would block this trade. "
+                f"Day trade count: {pdt_check.get('daytrade_count', 0)}/3, "
+                f"Equity: ${pdt_check.get('equity', 0):,.2f}. "
+                f"LL-296: Either bypass PDT Protection or wait until window clears."
             )
 
         # If any errors, raise exception

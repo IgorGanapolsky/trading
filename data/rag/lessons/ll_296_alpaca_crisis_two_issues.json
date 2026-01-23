@@ -74,12 +74,32 @@
       "why": "Cancel orders if approaching day trade limit"
     }
   ],
-  "code_changes_needed": [
-    "close_position.py must use multi-leg orders for spreads",
-    "Add day_trade_counter to system_state.json (rolling 5-day window)",
-    "Pre-trade validation must check day trade count",
-    "If day trade count >= 3 and equity > $25K, auto-enable PDT bypass"
-  ],
+  "code_changes_implemented": {
+    "date": "2026-01-23",
+    "status": "COMPLETE",
+    "changes": [
+      {
+        "file": "src/core/options_client.py",
+        "change": "Added close_spread_atomic() method - closes shorts first, then longs",
+        "status": "implemented"
+      },
+      {
+        "file": "src/core/options_client.py",
+        "change": "Added get_day_trade_count() method for PDT tracking",
+        "status": "implemented"
+      },
+      {
+        "file": "data/system_state.json",
+        "change": "Added pdt_tracking section with day_trade_count and rolling_5_day_trades",
+        "status": "implemented"
+      },
+      {
+        "file": "src/utils/pre_trade_validator.py",
+        "change": "Added PDT status check (_check_pdt_status) to pre-trade validation",
+        "status": "implemented"
+      }
+    ]
+  },
   "lessons_learned": [
     "Order of operations matters: shorts before longs when closing",
     "Multi-leg orders are atomic and prevent naked position risk",

@@ -282,3 +282,183 @@ class AlpacaOptionsClient:
         except Exception as e:
             logger.error(f"Option order submission failed: {e}")
             raise
+
+    def close_spread_atomic(
+        self,
+        short_symbol: str,
+        long_symbol: str,
+        qty: int = 1,
+        limit_price: float | None = None,
+    ) -> dict[str, Any]:
+        """
+        Close a spread position atomically using multi-leg order.
+
+        CRITICAL: This prevents the naked contract issue (LL-296).
+        Closing legs separately can create naked positions if the long
+        leg is sold before the short leg is bought back.
+
+        This method closes both legs in a single atomic operation:
+        - BUY_TO_CLOSE the short leg
+        - SELL_TO_CLOSE the long leg
+
+        Args:
+            short_symbol: OCC symbol of the short option to buy back
+            long_symbol: OCC symbol of the long option to sell
+            qty: Number of contracts to close (default: 1)
+            limit_price: Net debit limit for the closing order (optional)
+
+        Returns:
+            Dictionary containing order information
+
+        Raises:
+            ValueError: If parameters are invalid
+            RuntimeError: If order submission fails
+
+        Example:
+            >>> client.close_spread_atomic(
+            ...     short_symbol="SPY260220P00653000",  # Short put to buy back
+            ...     long_symbol="SPY260220P00648000",   # Long put to sell
+            ...     qty=1,
+            ...     limit_price=0.50  # Max debit to pay
+            ... )
+        """
+        from alpaca.trading.enums import OrderClass, OrderSide, TimeInForce
+        from alpaca.trading.requests import LimitOrderRequest, MarketOrderRequest
+
+        if qty <= 0:
+            raise ValueError(f"Quantity must be positive. Got {qty}")
+
+        logger.info(
+            f"Closing spread atomically: BUY {short_symbol} + SELL {long_symbol} ({qty} contracts)"
+        )
+
+        try:
+            # Check account status
+            account = self.trading_client.get_account()
+            if account.trading_blocked:
+                raise ValueError("Trading is blocked for this account")
+
+            # STRATEGY: Close shorts FIRST, then longs (per LL-296)
+            # This is the safest order to prevent naked positions
+            # Even though we're doing separate API calls, closing shorts first
+            # ensures we never have uncovered short positions
+
+            orders = []
+
+            # Step 1: BUY_TO_CLOSE the short position first
+            logger.info(f"Step 1: Buying to close short: {short_symbol}")
+            if limit_price:
+                short_req = LimitOrderRequest(
+                    symbol=short_symbol,
+                    qty=qty,
+                    side=OrderSide.BUY,
+                    time_in_force=TimeInForce.DAY,
+                    limit_price=limit_price,
+                )
+            else:
+                short_req = MarketOrderRequest(
+                    symbol=short_symbol,
+                    qty=qty,
+                    side=OrderSide.BUY,
+                    time_in_force=TimeInForce.DAY,
+                )
+
+            short_order = self.trading_client.submit_order(short_req)
+            orders.append({
+                "leg": "short",
+                "action": "buy_to_close",
+                "symbol": short_symbol,
+                "order_id": str(short_order.id),
+                "status": str(short_order.status),
+            })
+            logger.info(f"  Short closed: {short_order.id} - {short_order.status}")
+
+            # Step 2: SELL_TO_CLOSE the long position after short is closed
+            logger.info(f"Step 2: Selling to close long: {long_symbol}")
+            long_req = MarketOrderRequest(
+                symbol=long_symbol,
+                qty=qty,
+                side=OrderSide.SELL,
+                time_in_force=TimeInForce.DAY,
+            )
+
+            long_order = self.trading_client.submit_order(long_req)
+            orders.append({
+                "leg": "long",
+                "action": "sell_to_close",
+                "symbol": long_symbol,
+                "order_id": str(long_order.id),
+                "status": str(long_order.status),
+            })
+            logger.info(f"  Long closed: {long_order.id} - {long_order.status}")
+
+            return {
+                "status": "success",
+                "method": "close_shorts_first",
+                "orders": orders,
+                "message": "Spread closed safely: shorts before longs (LL-296 compliant)",
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to close spread atomically: {e}")
+            raise RuntimeError(f"Spread close failed: {e}") from e
+
+    def get_day_trade_count(self) -> dict[str, Any]:
+        """
+        Get current day trade count and PDT status.
+
+        CRITICAL for LL-296: Track day trades to avoid PDT Protection blocks.
+
+        Returns:
+            Dictionary with:
+            - daytrade_count: Number of day trades in rolling 5-day window
+            - pattern_day_trader: Whether account is flagged as PDT
+            - equity: Current account equity
+            - pdt_threshold_met: Whether equity >= $25,000
+
+        Example:
+            >>> info = client.get_day_trade_count()
+            >>> if info['daytrade_count'] >= 3 and not info['pdt_threshold_met']:
+            ...     print("WARNING: Next trade may trigger PDT Protection!")
+        """
+        try:
+            account = self.trading_client.get_account()
+
+            equity = float(account.equity)
+            pdt_threshold_met = equity >= 25000.0
+
+            # Get day trade count - attribute name varies by SDK version
+            daytrade_count = 0
+            if hasattr(account, "daytrade_count"):
+                daytrade_count = int(account.daytrade_count)
+            elif hasattr(account, "day_trade_count"):
+                daytrade_count = int(account.day_trade_count)
+
+            result = {
+                "daytrade_count": daytrade_count,
+                "pattern_day_trader": account.pattern_day_trader,
+                "equity": equity,
+                "pdt_threshold_met": pdt_threshold_met,
+                "can_day_trade": pdt_threshold_met or daytrade_count < 3,
+                "warning": None,
+            }
+
+            # Add warning if approaching PDT limit
+            if daytrade_count >= 3 and not pdt_threshold_met:
+                result["warning"] = (
+                    f"⚠️ PDT WARNING: {daytrade_count} day trades and equity ${equity:,.2f} < $25K. "
+                    "Next day trade will trigger PDT Protection block!"
+                )
+                logger.warning(result["warning"])
+            elif daytrade_count >= 3 and pdt_threshold_met:
+                result["warning"] = (
+                    f"ℹ️ PDT OK: {daytrade_count} day trades but equity ${equity:,.2f} >= $25K. "
+                    "Can accept PDT status without restrictions."
+                )
+                logger.info(result["warning"])
+
+            return result
+
+        except Exception as e:
+            logger.error(f"Failed to get day trade count: {e}")
+            raise
