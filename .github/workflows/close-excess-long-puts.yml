@@ -6,9 +6,10 @@ name: Close Excess Long Puts
 
 on:
   workflow_dispatch:
-  schedule:
-    # Every 15 minutes during market hours (9:30 AM - 4 PM ET = 14:30 - 21:00 UTC)
-    - cron: '*/15 14-20 * * 1-5'
+  # DISABLED Jan 23, 2026 - Crisis mode ended, clean $30K account
+  # Was created for old account's orphan position crisis
+  # schedule:
+  #   - cron: '*/15 14-20 * * 1-5'
 
 permissions:
   contents: write
