@@ -694,6 +694,10 @@ def main():
     parser.add_argument(
         "--symbol", type=str, default="SPY", help="Underlying symbol (default: SPY)"
     )
+    parser.add_argument(
+        "--force", action="store_true",
+        help="Force execution - bypass VIX checks (CEO directive mode)"
+    )
     args = parser.parse_args()
 
     # Default to LIVE mode as of Dec 29, 2025 to hit $100/day target
@@ -749,9 +753,19 @@ def main():
         strategy.config["underlying"] = args.symbol.upper()
     validate_ticker(strategy.config["underlying"], context="iron_condor_trader")
 
-    # Check entry conditions
-    should_enter, reason = strategy.check_entry_conditions()
-    logger.info(f"Entry conditions: {should_enter} ({reason})")
+    # Check entry conditions (unless --force bypasses VIX checks)
+    if args.force:
+        logger.warning("=" * 60)
+        logger.warning("🚨 FORCE MODE ENABLED - CEO DIRECTIVE")
+        logger.warning("=" * 60)
+        logger.warning("Bypassing VIX entry conditions per CEO directive")
+        logger.warning("Position check and RAG safety checks still active")
+        logger.warning("=" * 60)
+        should_enter = True
+        reason = "FORCED - CEO directive bypassing VIX checks"
+    else:
+        should_enter, reason = strategy.check_entry_conditions()
+        logger.info(f"Entry conditions: {should_enter} ({reason})")
 
     if not should_enter:
         logger.info("Skipping trade - conditions not met")

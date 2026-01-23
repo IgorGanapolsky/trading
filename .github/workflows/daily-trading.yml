@@ -1175,10 +1175,17 @@ jobs:
             # Iron condor = sell put spread + sell call spread (15-20 delta)
             TICKERS="SPY"  # SPY ONLY per CLAUDE.md Jan 19, 2026
 
+            # Determine force flag - use --force when triggered by TRIGGER_TRADE.md push
+            FORCE_FLAG=""
+            if [ "${{ github.event_name }}" = "push" ]; then
+              echo "   🚨 CEO DIRECTIVE MODE: Push trigger detected - forcing execution"
+              FORCE_FLAG="--force"
+            fi
+
             for TICKER in $TICKERS; do
               echo ""
               echo "   📊 Iron Condor on ${TICKER} (15-20 delta, 30-45 DTE)..."
-              python3 scripts/iron_condor_trader.py --symbol "${TICKER}" || {
+              python3 scripts/iron_condor_trader.py --symbol "${TICKER}" $FORCE_FLAG || {
                 echo "   ⚠️  ${TICKER} iron condor returned non-zero"
               }
             done
@@ -1192,11 +1199,18 @@ jobs:
             # Iron condors have defined risk on BOTH sides (Phil Town Rule #1)
             echo "   Ticker: SPY ONLY (per CLAUDE.md Jan 19, 2026)"
 
+            # Determine force flag - use --force when triggered by TRIGGER_TRADE.md push
+            FORCE_FLAG=""
+            if [ "${{ github.event_name }}" = "push" ]; then
+              echo "   🚨 CEO DIRECTIVE MODE: Push trigger detected - forcing execution"
+              FORCE_FLAG="--force"
+            fi
+
             # Iron Condors on SPY ONLY - defined risk, no assignment risk
             for TICKER in SPY; do
               echo ""
               echo "   📊 Iron Condor on ${TICKER} (15-20 delta, 30-45 DTE)..."
-              python3 scripts/iron_condor_trader.py --symbol "${TICKER}" || {
+              python3 scripts/iron_condor_trader.py --symbol "${TICKER}" $FORCE_FLAG || {
                 echo "   ⚠️  ${TICKER} iron condor returned non-zero"
               }
             done
@@ -1290,7 +1304,15 @@ jobs:
           echo "Strategy: Sell OTM put spread + call spread"
           echo "Target: $30-80/day additional income"
           echo ""
-          python3 scripts/iron_condor_trader.py || {
+
+          # Determine force flag - use --force when triggered by TRIGGER_TRADE.md push
+          FORCE_FLAG=""
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "🚨 CEO DIRECTIVE MODE: Push trigger detected - forcing execution"
+            FORCE_FLAG="--force"
+          fi
+
+          python3 scripts/iron_condor_trader.py $FORCE_FLAG || {
             echo "⚠️  Iron condor execution returned non-zero"
             echo "   This is often due to market conditions - not fatal"
           }
