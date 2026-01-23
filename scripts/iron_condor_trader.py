@@ -565,24 +565,49 @@ class IronCondorStrategy:
                             logger.warning(f"  {symbol}: Using PUT fallback ${fallback:.2f}")
                         return fallback
 
+                    # LL-FIX: PRE-VALIDATE all 4 legs BEFORE placing ANY orders
+                    # This prevents partial fills that cause losses
+                    logger.info("📋 Pre-validating all 4 legs...")
+                    leg_prices = {}
+                    validation_failed = False
+
                     for sym, side, leg_name in legs:
                         try:
-                            limit_price = get_option_price(sym, side)
-                            order_req = LimitOrderRequest(
-                                symbol=sym,
-                                qty=1,
-                                side=side,
-                                type="limit",
-                                limit_price=limit_price,
-                                time_in_force=TimeInForce.GTC,  # Options require GTC
-                            )
-                            order = client.submit_order(order_req)
-                            order_ids.append(
-                                {"leg": leg_name, "order_id": str(order.id), "price": limit_price}
-                            )
-                            logger.info(f"   ✅ {leg_name}: {order.id} @ ${limit_price:.2f}")
-                        except Exception as leg_error:
-                            logger.warning(f"   ⚠️ {leg_name} order failed: {leg_error}")
+                            price = get_option_price(sym, side)
+                            if price <= 0:
+                                logger.error(f"   ❌ {leg_name}: Invalid price ${price}")
+                                validation_failed = True
+                            else:
+                                leg_prices[leg_name] = {"symbol": sym, "side": side, "price": price}
+                                logger.info(f"   ✓ {leg_name}: ${price:.2f}")
+                        except Exception as val_err:
+                            logger.error(f"   ❌ {leg_name} validation failed: {val_err}")
+                            validation_failed = True
+
+                    if validation_failed or len(leg_prices) != 4:
+                        logger.error("🚫 PRE-VALIDATION FAILED - NOT placing any orders")
+                        logger.error("   This prevents partial fills and losses")
+                        status = "VALIDATION_FAILED"
+                    else:
+                        # All 4 legs validated - now place orders
+                        logger.info("✅ All 4 legs validated - placing orders...")
+                        for leg_name, leg_info in leg_prices.items():
+                            try:
+                                order_req = LimitOrderRequest(
+                                    symbol=leg_info["symbol"],
+                                    qty=1,
+                                    side=leg_info["side"],
+                                    type="limit",
+                                    limit_price=leg_info["price"],
+                                    time_in_force=TimeInForce.GTC,
+                                )
+                                order = client.submit_order(order_req)
+                                order_ids.append(
+                                    {"leg": leg_name, "order_id": str(order.id), "price": leg_info["price"]}
+                                )
+                                logger.info(f"   ✅ {leg_name}: {order.id} @ ${leg_info['price']:.2f}")
+                            except Exception as leg_error:
+                                logger.warning(f"   ⚠️ {leg_name} order failed: {leg_error}")
 
                     # LL-268 FIX: Validate ALL 4 legs filled (not just "any")
                     # CRITICAL: Iron condor requires exactly 4 legs
