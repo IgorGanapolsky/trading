@@ -703,6 +703,38 @@ def main():
     logger.info(f"Mode: {'LIVE' if live_mode else 'SIMULATED'}")
     logger.info(f"Symbol: {args.symbol}")
 
+    # CHECK TRADING HALT FILE FIRST
+    halt_file = Path("data/trading_halt.txt")
+    if halt_file.exists():
+        logger.warning("=" * 60)
+        logger.warning("TRADING HALTED - Manual halt in effect")
+        logger.warning("=" * 60)
+        with open(halt_file) as f:
+            logger.warning(f.read())
+        logger.warning("Remove data/trading_halt.txt to resume trading")
+        logger.warning("=" * 60)
+        return {"success": False, "reason": "Trading halted - manual halt in effect"}
+
+    # LL-297 FIX (Jan 23, 2026): Daily trade limit to prevent churning
+    # ROOT CAUSE: 21 trades in one day caused $11.29 loss from bid/ask spreads
+    # SOLUTION: Only 1 iron condor entry per day (4 legs max)
+    MAX_TRADES_PER_DAY = 4  # 1 iron condor = 4 legs
+    trades_file = Path(f"data/trades_{datetime.now().strftime('%Y-%m-%d')}.json")
+    if trades_file.exists():
+        try:
+            with open(trades_file) as f:
+                today_trades = json.load(f)
+            if len(today_trades) >= MAX_TRADES_PER_DAY:
+                logger.warning("=" * 60)
+                logger.warning("DAILY TRADE LIMIT REACHED - BLOCKING NEW TRADES")
+                logger.warning("=" * 60)
+                logger.warning(f"Trades today: {len(today_trades)} (max: {MAX_TRADES_PER_DAY})")
+                logger.warning("Reason: Prevent churning and bid/ask spread losses")
+                logger.warning("=" * 60)
+                return {"success": False, "reason": f"Daily limit reached: {len(today_trades)}/{MAX_TRADES_PER_DAY}"}
+        except Exception as e:
+            logger.warning(f"Could not check daily trades: {e}")
+
     # HARD BLOCK: Validate ticker before proceeding (Jan 20 2026 - SOFI crisis)
     from src.utils.ticker_validator import validate_ticker
 
