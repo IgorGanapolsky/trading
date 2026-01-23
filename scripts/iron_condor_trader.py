@@ -205,16 +205,56 @@ class IronCondorStrategy:
         1. VIX 15-25: Ideal - premiums decent, risk manageable
         2. VIX < 15: AVOID - premiums too thin
         3. VIX > 25: CAUTION - volatility too high
+
+        Enhanced with VIX Mean Reversion Signal (LL-296, Jan 22, 2026):
+        - Optimal entry when VIX drops FROM a spike (premium still rich)
+        - Uses 3-day MA and 2 std dev threshold for signal quality
         """
         from src.constants.trading_thresholds import RiskThresholds
 
+        # LL-296: Try VIX Mean Reversion Signal first (enhanced entry timing)
+        try:
+            from src.signals.vix_mean_reversion_signal import VIXMeanReversionSignal
+
+            vix_signal = VIXMeanReversionSignal()
+            signal = vix_signal.calculate_signal()
+
+            logger.info("=" * 50)
+            logger.info("VIX MEAN REVERSION SIGNAL (LL-296)")
+            logger.info("=" * 50)
+            logger.info(f"Signal: {signal.signal} (confidence: {signal.confidence:.2f})")
+            logger.info(f"Current VIX: {signal.current_vix:.2f}")
+            logger.info(f"3-day MA: {signal.vix_3day_ma:.2f}")
+            logger.info(f"Recent High: {signal.recent_high:.2f}")
+            logger.info(f"Reason: {signal.reason}")
+            logger.info("=" * 50)
+
+            if signal.signal == "OPTIMAL_ENTRY":
+                logger.info("OPTIMAL ENTRY - VIX dropped from spike!")
+                return True, f"OPTIMAL: {signal.reason}"
+
+            if signal.signal == "GOOD_ENTRY":
+                logger.info("GOOD ENTRY - VIX in favorable range")
+                return True, f"GOOD: {signal.reason}"
+
+            if signal.signal == "AVOID":
+                logger.warning(f"BLOCKED by VIX signal: {signal.reason}")
+                return False, signal.reason
+
+            # NEUTRAL: Fall through to legacy check for additional validation
+            logger.info("NEUTRAL signal - running legacy VIX check")
+
+        except Exception as e:
+            logger.warning(f"VIX Mean Reversion Signal failed: {e} - using legacy check")
+
+        # Legacy VIX check (fallback)
         try:
             from src.options.vix_monitor import VIXMonitor
 
             vix_monitor = VIXMonitor()
             current_vix = vix_monitor.get_current_vix()
 
-            logger.info(f"VIX Check: Current VIX = {current_vix:.2f}")
+            logger.info(f"Legacy VIX Check: Current VIX = {current_vix:.2f}")
 
             # Check VIX is in optimal range (15-25 per LL-269)
             if current_vix < RiskThresholds.VIX_OPTIMAL_MIN:
