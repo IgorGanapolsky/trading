@@ -135,7 +135,7 @@ class TestMonteCarloReport:
         report = generate_monte_carlo_report(results, "Test Strategy")
 
         assert "Test Strategy" in report
-        assert "Probability of Profit" in report.upper() or "PROBABILITY OF PROFIT" in report
+        assert "probability of profit" in report.lower()  # Case-insensitive check
         assert "CONFIDENCE INTERVALS" in report  # Report uses uppercase headers
         assert "PASS" in report or "FAIL" in report
 

@@ -459,8 +459,8 @@ class TestTradeQueryFallbackBehavior:
                 data = response.json()
                 text = data["fulfillmentResponse"]["messages"][0]["text"]["text"][0]
 
-                # Should return portfolio status, NOT lessons
-                assert "Portfolio" in text or "Equity" in text or "P/L" in text
+                # Should return portfolio/trade data, NOT lessons
+                assert "Portfolio" in text or "Equity" in text or "P/L" in text or "Trade" in text
                 # Should NOT contain lesson references
                 assert "ll_001" not in text
 

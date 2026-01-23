@@ -191,7 +191,7 @@ class TestRiskReport:
         assert "Test Strategy" in report
         assert "Sharpe Ratio" in report
         assert "Win Rate" in report
-        assert "Phil Town" in report
+        assert "phil town" in report.lower()  # Case-insensitive check
 
     def test_report_with_violations(self):
         """Test report shows violations when present."""

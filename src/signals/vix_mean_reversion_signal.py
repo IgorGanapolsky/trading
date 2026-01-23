@@ -177,7 +177,7 @@ class VIXMeanReversionSignal:
 
         # OPTIMAL_ENTRY: VIX dropped from spike (the sweet spot!)
         # Recent high was elevated AND VIX has dropped significantly
-        if recent_high >= self.VIX_SPIKE_THRESHOLD and drop_from_high >= threshold:
+        if recent_high >= self.VIX_SPIKE_THRESHOLD and threshold > 0 and drop_from_high >= threshold:
             confidence = min(1.0, drop_from_high / (threshold * 2))
             return (
                 "OPTIMAL_ENTRY",
