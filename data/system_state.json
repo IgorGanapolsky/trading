@@ -432,9 +432,9 @@
   "trades_loaded": 48,
   "trades": {
     "last_trade_date": "2026-01-23",
-    "today_trades": 0,
-    "total_trades_today": 0,
-    "last_trade_symbol": "SPY"
+    "today_trades": 49,
+    "total_trades_today": 49,
+    "last_trade_symbol": "SYNCED"
   },
   "risk": {
     "status": "MONITORING",
@@ -448,7 +448,7 @@
     "positions_count": 1
   },
   "meta": {
-    "last_updated": "2026-01-23T18:01:19.054708+00:00",
+    "last_updated": "2026-01-23T18:11:58.183901+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5
   }
