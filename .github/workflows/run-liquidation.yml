@@ -49,11 +49,48 @@ jobs:
           ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
         run: |
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            python3 scripts/liquidate_all_options.py --dry-run
-          else
-            python3 scripts/liquidate_all_options.py
-          fi
+          python3 << 'EOF'
+          import os
+          from datetime import datetime
+          from alpaca.trading.client import TradingClient
+
+          print("=" * 60)
+          print("🚨 EMERGENCY LIQUIDATION - ALL OPTIONS")
+          print(f"   Timestamp: {datetime.now().isoformat()}")
+          print("=" * 60)
+
+          client = TradingClient(
+              os.environ['ALPACA_API_KEY'],
+              os.environ['ALPACA_SECRET_KEY'],
+              paper=True
+          )
+
+          account = client.get_account()
+          print(f"\n📊 Account:")
+          print(f"   Equity: ${float(account.equity):,.2f}")
+
+          positions = client.get_all_positions()
+          option_positions = [p for p in positions if len(p.symbol) > 10]
+
+          if not option_positions:
+              print("\n✅ No option positions to close")
+              exit(0)
+
+          print(f"\n📋 Closing {len(option_positions)} positions:")
+          closed = 0
+          for pos in option_positions:
+              qty = float(pos.qty)
+              side = "LONG" if qty > 0 else "SHORT"
+              print(f"   {pos.symbol} | {side} {abs(qty):.0f}")
+              try:
+                  client.close_position(pos.symbol)
+                  print(f"   ✅ Closed!")
+                  closed += 1
+              except Exception as e:
+                  print(f"   ❌ Failed: {e}")
+
+          print(f"\n🎯 LIQUIDATION COMPLETE: {closed}/{len(option_positions)}")
+          EOF
 
       - name: Remove Trigger File
         if: github.event_name == 'push'
