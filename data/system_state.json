@@ -1,12 +1,17 @@
 {
-  "last_updated": "2026-01-23T19:06:55.788502+00:00",
+  "last_updated": "2026-01-23T19:21:48.587332+00:00",
   "sync_health": {
-    "last_successful_sync": "2026-01-23T19:06:55.788504+00:00",
+    "last_successful_sync": "2026-01-23T19:21:48.587334+00:00",
     "sync_source": "github_actions",
-    "sync_count_today": 1,
+    "sync_count_today": 2,
     "history": [
       {
         "timestamp": "2026-01-23T19:06:55.788495+00:00",
+        "equity": 29977.39,
+        "success": true
+      },
+      {
+        "timestamp": "2026-01-23T19:21:48.587323+00:00",
         "equity": 29977.39,
         "success": true
       }
@@ -442,7 +447,7 @@
     "positions_count": 0
   },
   "meta": {
-    "last_updated": "2026-01-23T19:06:55.788516+00:00",
+    "last_updated": "2026-01-23T19:21:48.587347+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5
   }
