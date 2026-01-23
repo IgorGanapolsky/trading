@@ -16,11 +16,41 @@ verify dashboard matches Alpaca (source of truth), and query Dialogflow to verif
 import json
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# Staleness threshold per LL-273: Data older than 4 hours is stale
+STALENESS_THRESHOLD_HOURS = 4
+
+
+def check_data_staleness(timestamp_str: str) -> tuple[bool, float]:
+    """
+    Check if data is stale (>4 hours old) per LL-273.
+
+    Returns: (is_stale: bool, age_hours: float)
+    """
+    if not timestamp_str or timestamp_str == "unknown":
+        return True, float("inf")
+
+    try:
+        # Handle various timestamp formats
+        if timestamp_str.endswith("Z"):
+            timestamp_str = timestamp_str.replace("Z", "+00:00")
+        timestamp = datetime.fromisoformat(timestamp_str)
+
+        # Ensure timezone aware
+        if timestamp.tzinfo is None:
+            timestamp = timestamp.replace(tzinfo=timezone.utc)
+
+        now = datetime.now(timezone.utc)
+        age_hours = (now - timestamp).total_seconds() / 3600
+
+        return age_hours > STALENESS_THRESHOLD_HOURS, age_hours
+    except Exception:
+        return True, float("inf")
 
 
 def fetch_alpaca_data():
@@ -211,7 +241,7 @@ def main():
     else:
         print(f"  ❌ {alpaca_err}")
 
-    # Report Local Cache
+    # Report Local Cache with staleness check (per LL-273)
     print("\n📁 LOCAL CACHE (system_state.json)")
     if cache_data:
         print(f"  Equity: ${cache_data['equity']:,.2f}")
@@ -219,6 +249,14 @@ def main():
         print(f"  Total P/L: ${cache_data['total_pl']:+,.2f} ({cache_data['total_pl_pct']:+.2f}%)")
         print(f"  Positions: {cache_data['positions_count']}")
         print(f"  Last Updated: {cache_data['timestamp']}")
+
+        # Check staleness per LL-273
+        is_stale, age_hours = check_data_staleness(cache_data['timestamp'])
+        if is_stale:
+            print(f"  ⚠️  DATA STALE: {age_hours:.1f} hours old (threshold: {STALENESS_THRESHOLD_HOURS}h)")
+            print("  ⚠️  Run: gh workflow run sync-system-state.yml")
+        else:
+            print(f"  ✅ Data fresh: {age_hours:.1f} hours old")
     else:
         print(f"  ❌ {cache_err}")
 
