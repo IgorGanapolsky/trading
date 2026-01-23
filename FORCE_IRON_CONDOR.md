@@ -30,3 +30,4 @@ python3 scripts/iron_condor_trader.py --force --live --symbol SPY
 
 EXECUTE NOW!
 Trigger: 20260123_185015
+Trigger: 20260123_185251
