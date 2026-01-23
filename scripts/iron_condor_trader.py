@@ -574,7 +574,7 @@ class IronCondorStrategy:
                                 side=side,
                                 type="limit",
                                 limit_price=limit_price,
-                                time_in_force=TimeInForce.GTC,  # Options require GTC
+                                time_in_force=TimeInForce.DAY,  # Options only support DAY
                             )
                             order = client.submit_order(order_req)
                             order_ids.append(
@@ -635,7 +635,7 @@ class IronCondorStrategy:
                                             qty=1,
                                             side=reverse_side,
                                             type="market",  # Market order to close immediately
-                                            time_in_force=TimeInForce.GTC,
+                                            time_in_force=TimeInForce.DAY,  # Options only support DAY
                                         )
                                         client.submit_order(close_order)
                                         logger.info(f"   ✅ Closed {leg}: {leg_symbol}")
