@@ -189,7 +189,7 @@ jobs:
                   # Will be updated by trade completion logic when trades close
                   "win_rate": existing_state.get("paper_account", {}).get("win_rate", 0),
                   "win_rate_sample_size": existing_state.get("paper_account", {}).get("win_rate_sample_size", 0),
-                  "starting_balance": 5000.0  # Per CLAUDE.md - $5K paper account
+                  "starting_balance": 30000.0  # Per CLAUDE.md - $30K paper account (Jan 22, 2026)
               },
               "positions": position_list,
               # LL-237 FIX: Add trade_history to prevent knowledge loss
