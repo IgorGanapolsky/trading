@@ -574,12 +574,16 @@ jobs:
           print(f'Buying power: \${float(account.buying_power):,.2f}')
           "
 
-          # Run guaranteed trader for immediate execution
+          # PERMANENTLY DISABLED Jan 23, 2026
+          # guaranteed_trader.py buys SPY SHARES which violates CLAUDE.md
+          # CLAUDE.md mandates: IRON CONDORS ONLY
+          # Use daily-trading.yml with iron_condor_trader.py instead
           echo ""
-          echo "Running guaranteed_trader.py..."
-          python3 scripts/guaranteed_trader.py 2>&1 || {
-            echo "::warning::Guaranteed trader had issues"
-          }
+          echo "❌ GUARANTEED TRADER DISABLED"
+          echo "Reason: Buys SPY shares, violates 'IRON CONDORS ONLY' mandate"
+          echo "Impact: Caused -\$22.61 loss on Jan 23, 2026"
+          echo "Solution: Use daily-trading.yml for iron condor execution"
+          echo ""
 
           # Verify results
           echo ""

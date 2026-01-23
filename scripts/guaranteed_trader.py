@@ -173,20 +173,30 @@ def record_trade(trade: dict):
 
 def run():
     """
-    GUARANTEED EXECUTION - NO GATES, NO EXCUSES.
+    DEPRECATED - DO NOT USE (Jan 23, 2026)
 
-    Jan 12, 2026 Fix:
-    - Removed RSI logic (was blocking trades)
-    - Removed RAG checks (was blocking trades)
-    - Jan 15, 2026: Back to SPY per Deep Research findings
-    - Simple rule: Accumulate SPY or cash for credit spread collateral
+    This script buys SPY SHARES which violates CLAUDE.md strategy.
+    CLAUDE.md mandates: IRON CONDORS ONLY on SPY.
 
-    Position size: $100/day (build towards $500 credit spread collateral)
+    SPY share accumulation is NOT the strategy. Iron condors are.
+    This script caused -$22.61 loss on Jan 23, 2026 from churning.
 
-    Jan 23, 2026 Fix (LL-298): Added daily trade limit
-    - Prevents churning from multiple workflow triggers
-    - Only 1 guaranteed_trader execution per day
+    Use scripts/iron_condor_trader.py instead.
     """
+    # CIRCUIT BREAKER: Script permanently disabled (Jan 23, 2026)
+    # Reason: Violates CLAUDE.md "IRON CONDORS ONLY" mandate
+    # Impact: -$22.61 loss from SPY share churning on Jan 23
+    logger.error("=" * 60)
+    logger.error("GUARANTEED_TRADER PERMANENTLY DISABLED")
+    logger.error("Reason: Violates CLAUDE.md 'IRON CONDORS ONLY' mandate")
+    logger.error("This script bought SPY SHARES, not iron condors")
+    logger.error("Use iron_condor_trader.py for trading instead")
+    logger.error("=" * 60)
+    return {
+        "success": False,
+        "reason": "script_permanently_disabled",
+        "message": "Use iron_condor_trader.py instead - CLAUDE.md mandates iron condors only",
+    }
     # LL-298 FIX: Daily trade limit to prevent churning
     # ROOT CAUSE: 35 trades on Jan 23 caused -$17.56 loss from bid/ask spreads
     MAX_DAILY_RUNS = 1
