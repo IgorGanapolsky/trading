@@ -20,13 +20,13 @@
     "equity": 29982.41,
     "cash": 29382.54,
     "buying_power": 59364.95,
-    "total_pl": 24982.41,
-    "total_pl_pct": 499.65,
+    "total_pl": -17.59,
+    "total_pl_pct": -0.06,
     "positions_count": 1,
     "daily_change": -17.59,
     "win_rate": 0,
     "win_rate_sample_size": 0,
-    "starting_balance": 5000.0
+    "starting_balance": 30000.0
   },
   "positions": [
     {
