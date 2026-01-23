@@ -24,36 +24,37 @@ def get_alpaca_credentials() -> tuple[Optional[str], Optional[str]]:
     Get Alpaca API credentials with proper priority (paper trading).
 
     Priority order (first found wins):
-    1. ALPACA_PAPER_TRADING_30K_API_KEY / SECRET ($30K account - PRIMARY as of Jan 22, 2026)
-    2. ALPACA_PAPER_TRADING_5K_API_KEY / SECRET (legacy $5K account)
-    3. ALPACA_PAPER_TRADING_API_KEY / SECRET ($100K account)
-    4. ALPACA_API_KEY / ALPACA_SECRET_KEY (legacy fallback)
+    1. ALPACA_PAPER_TRADING_5K_API_KEY / SECRET (GitHub secret - points to $30K account!)
+    2. ALPACA_API_KEY / ALPACA_SECRET_KEY (workflow fallback)
+    3. ALPACA_PAPER_TRADING_30K_API_KEY / SECRET (if renamed in future)
+    4. ALPACA_PAPER_TRADING_API_KEY / SECRET ($100K account)
+
+    NOTE: The GitHub secret is NAMED "5K" but actually points to the $30K account!
+    This is historical naming - don't change secret names to avoid breaking workflows.
 
     Returns:
         Tuple of (api_key, secret_key) or (None, None) if not found.
     """
     api_key = (
-        os.getenv("ALPACA_PAPER_TRADING_30K_API_KEY")  # $30K account - PRIMARY
-        or os.getenv("ALPACA_PAPER_TRADING_5K_API_KEY")
+        os.getenv("ALPACA_PAPER_TRADING_5K_API_KEY")  # ACTUAL secret -> $30K account
+        or os.getenv("ALPACA_API_KEY")  # Workflow fallback
+        or os.getenv("ALPACA_PAPER_TRADING_30K_API_KEY")  # If renamed
         or os.getenv("ALPACA_PAPER_TRADING_API_KEY")
-        or os.getenv("ALPACA_API_KEY")
     )
     secret_key = (
-        os.getenv("ALPACA_PAPER_TRADING_30K_API_SECRET")  # $30K account - PRIMARY
-        or os.getenv("ALPACA_PAPER_TRADING_5K_API_SECRET")
+        os.getenv("ALPACA_PAPER_TRADING_5K_API_SECRET")  # ACTUAL secret -> $30K account
+        or os.getenv("ALPACA_SECRET_KEY")  # Workflow fallback
+        or os.getenv("ALPACA_PAPER_TRADING_30K_API_SECRET")  # If renamed
         or os.getenv("ALPACA_PAPER_TRADING_API_SECRET")
-        or os.getenv("ALPACA_SECRET_KEY")
     )
 
     if api_key:
-        if os.getenv("ALPACA_PAPER_TRADING_30K_API_KEY"):
-            logger.debug("Using $30K paper trading account credentials")
-        elif os.getenv("ALPACA_PAPER_TRADING_5K_API_KEY"):
-            logger.debug("Using $5K paper trading account credentials")
-        elif os.getenv("ALPACA_PAPER_TRADING_API_KEY"):
-            logger.debug("Using $100K paper trading account credentials")
+        if os.getenv("ALPACA_PAPER_TRADING_5K_API_KEY"):
+            logger.debug("Using paper trading credentials (5K secret -> $30K account)")
+        elif os.getenv("ALPACA_API_KEY"):
+            logger.debug("Using ALPACA_API_KEY fallback credentials")
         else:
-            logger.debug("Using legacy ALPACA_API_KEY credentials")
+            logger.debug("Using alternate paper trading credentials")
 
     return api_key, secret_key
 

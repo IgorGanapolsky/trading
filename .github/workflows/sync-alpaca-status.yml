@@ -42,9 +42,9 @@ jobs:
 
       - name: Sync Alpaca Status
         env:
-          # CRITICAL: Use $30K paper trading account (Jan 23, 2026)
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
+          # CRITICAL: Use 5K secrets (they point to $30K account - historical naming)
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
         run: |
           python3 << 'EOF'
           import os

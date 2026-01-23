@@ -43,8 +43,8 @@ jobs:
 
       - name: Capture screenshots
         env:
-          ALPACA_PAPER_TRADING_30K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
-          ALPACA_PAPER_TRADING_30K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
+          ALPACA_PAPER_TRADING_5K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_PAPER_TRADING_5K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
         run: |
           python3 scripts/capture_trading_screenshots.py \
             --dashboard ${{ github.event.inputs.dashboard || 'all' }}

@@ -159,8 +159,8 @@ jobs:
       - name: Task - Dry Run Trading
         if: github.event.inputs.task == 'dry-run-trading'
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
           ALPACA_PAPER: "true"
         run: |
           echo "Running trading system dry run..."
@@ -195,8 +195,8 @@ jobs:
       - name: Task - Set Trailing Stops
         if: github.event.inputs.task == 'set-trailing-stops'
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
           PAPER_TRADING: "true"
         run: |
           echo "=================================================="
@@ -214,8 +214,8 @@ jobs:
       - name: Task - Manage Positions
         if: github.event.inputs.task == 'manage-positions'
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
           PAPER_TRADING: "true"
         run: |
           echo "=================================================="
@@ -231,8 +231,8 @@ jobs:
       - name: Task - Verify Alpaca Account
         if: github.event.inputs.task == 'verify-alpaca-account'
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
         run: |
           echo "=================================================="
           echo "VERIFYING ALPACA PAPER ACCOUNT STATUS"
@@ -326,8 +326,8 @@ jobs:
       - name: Task - Verify All Accounts
         if: github.event.inputs.task == 'verify-all-accounts'
         env:
-          PAPER_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
-          PAPER_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
+          PAPER_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          PAPER_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
           LIVE_API_KEY: ${{ secrets.ALPACA_BROKERAGE_TRADING_API_KEY }}
           LIVE_SECRET_KEY: ${{ secrets.ALPACA_BROKERAGE_TRADING_API_SECRET }}
         run: |
@@ -407,8 +407,8 @@ jobs:
       - name: Task - Query Dialogflow
         if: github.event.inputs.task == 'query-dialogflow'
         env:
-          PAPER_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
-          PAPER_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
+          PAPER_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          PAPER_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
           LIVE_API_KEY: ${{ secrets.ALPACA_BROKERAGE_TRADING_API_KEY }}
           LIVE_SECRET_KEY: ${{ secrets.ALPACA_BROKERAGE_TRADING_API_SECRET }}
           GCP_PROJECT_ID: igor-trading-2025-v2
@@ -549,8 +549,8 @@ jobs:
         # Iron condors are handled by daily-trading.yml, not here!
         if: github.event.inputs.task == 'execute-paper-trade'
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
           PAPER_TRADING: "true"
           PYTHONPATH: ${{ github.workspace }}
         run: |
