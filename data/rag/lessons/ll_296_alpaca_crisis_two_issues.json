@@ -1,0 +1,100 @@
+{
+  "lesson_id": 296,
+  "date": "2026-01-23",
+  "category": "broker_rules",
+  "severity": "CRITICAL",
+  "title": "Alpaca Crisis Root Cause - Naked Contracts + PDT Protection",
+  "summary": "Alpaca support revealed two blocking issues: 1) Closing long positions before shorts creates naked contracts (blocked), 2) PDT Protection prevents 4th day trade in 5 days until PDT status accepted",
+  "source": "Alpaca Support Email from Braxton, Jan 22, 2026 5:02 PM EST",
+  "context": {
+    "account_positions": {
+      "short_contracts": "2 contracts SPY260220P00653000",
+      "long_contracts": "8 contracts (protective puts)",
+      "problem": "Attempting to sell longs would leave shorts naked"
+    }
+  },
+  "issue_1_naked_contracts": {
+    "description": "Alpaca does NOT allow naked contracts. If you have a spread (long + short), closing the long leg first would leave the short leg uncovered (naked).",
+    "blocked_action": "Selling all 8 long contracts would leave 2 short contracts naked",
+    "solutions": [
+      "Close entire spread as multi-leg trade (atomic operation)",
+      "Close 6 long contracts only (leave 2 long to cover 2 short)",
+      "Close short contracts FIRST, then close long contracts"
+    ],
+    "rule": "ALWAYS close shorts before longs, or use multi-leg orders"
+  },
+  "issue_2_pdt_protection": {
+    "description": "PDT Protection safeguard prevents the 4th day trade that would trigger PDT designation",
+    "rules": {
+      "day_trade_definition": "Round-trip pair of trades within same day (including extended hours)",
+      "includes": [
+        "Opening buy followed by closing sell same day",
+        "Opening sell followed by closing buy same day",
+        "Expiring same-day option contracts (potential liquidation)"
+      ],
+      "pdt_threshold": "4+ day trades within 5 business days AND >6% of total trades",
+      "non_pdt_limit": "3 day trades within rolling 5 business days",
+      "drop_off": "Day trades drop off after 5 business days (Monday trade clears next Monday)"
+    },
+    "solutions": [
+      "Bypass PDT Protection (accept PDT status - OK if equity > $25K)",
+      "Wait until next business day for rolling window to clear",
+      "Cancel open orders that may contribute to day trade count"
+    ]
+  },
+  "key_insight_30k_account": {
+    "fact": "Account has $30K > $25K PDT minimum",
+    "implication": "We CAN accept PDT status without restrictions",
+    "but": "PDT Protection blocks 4th trade UNTIL you accept PDT status",
+    "action": "Should have bypassed PDT Protection since we meet $25K requirement"
+  },
+  "prevention_rules": [
+    {
+      "rule": "ALWAYS use multi-leg orders to close spreads",
+      "why": "Prevents creating naked positions during execution"
+    },
+    {
+      "rule": "If closing leg-by-leg, close SHORT leg FIRST",
+      "why": "Shorts need covering; closing longs first creates naked shorts"
+    },
+    {
+      "rule": "Track day trade count (max 3 per 5 business days if avoiding PDT)",
+      "why": "4th day trade triggers PDT Protection block"
+    },
+    {
+      "rule": "With $30K+, bypass PDT Protection to accept PDT status",
+      "why": "$30K > $25K meets PDT equity requirement"
+    },
+    {
+      "rule": "Expiring same-day options count as day trades",
+      "why": "Plan exits BEFORE expiration day or account for day trade count"
+    },
+    {
+      "rule": "Review open orders - they may contribute to day trade count",
+      "why": "Cancel orders if approaching day trade limit"
+    }
+  ],
+  "code_changes_needed": [
+    "close_position.py must use multi-leg orders for spreads",
+    "Add day_trade_counter to system_state.json (rolling 5-day window)",
+    "Pre-trade validation must check day trade count",
+    "If day trade count >= 3 and equity > $25K, auto-enable PDT bypass"
+  ],
+  "lessons_learned": [
+    "Order of operations matters: shorts before longs when closing",
+    "Multi-leg orders are atomic and prevent naked position risk",
+    "PDT Protection is a safeguard that can be bypassed with sufficient equity",
+    "Day trade counting includes expiring options - plan accordingly",
+    "$30K account should proactively bypass PDT Protection"
+  ],
+  "tags": [
+    "critical",
+    "alpaca",
+    "pdt",
+    "naked_contracts",
+    "multi_leg",
+    "spread_closing",
+    "broker_rules",
+    "day_trade_count"
+  ]
+}
