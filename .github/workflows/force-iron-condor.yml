@@ -12,6 +12,9 @@ on:
       - 'FORCE_IRON_CONDOR.md'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   execute-iron-condor:
     runs-on: ubuntu-latest
@@ -28,11 +31,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install alpaca-py python-dotenv yfinance
+          pip install alpaca-py python-dotenv yfinance pytz
 
       - name: Execute Iron Condor NOW
         env:
-          # CRITICAL: Set correct env var names that script expects
+          # CRITICAL: Use EXISTING 5K secrets (they point to $30K account)
+          # Note: 30K secrets DON'T EXIST - must use 5K secret names
           ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
           ALPACA_PAPER_TRADING_5K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
@@ -45,11 +49,28 @@ jobs:
           echo "Mode: LIVE with --force --live flags"
           echo ""
 
+          # DEBUG: Verify credentials are set
+          echo "Checking credentials..."
+          if [ -n "$ALPACA_API_KEY" ]; then
+            echo "✅ ALPACA_API_KEY is set (length: ${#ALPACA_API_KEY})"
+          else
+            echo "❌ ALPACA_API_KEY is NOT SET!"
+          fi
+          if [ -n "$ALPACA_PAPER_TRADING_5K_API_KEY" ]; then
+            echo "✅ ALPACA_PAPER_TRADING_5K_API_KEY is set (length: ${#ALPACA_PAPER_TRADING_5K_API_KEY})"
+          else
+            echo "❌ ALPACA_PAPER_TRADING_5K_API_KEY is NOT SET!"
+          fi
+
           # Run iron condor trader with --force --live to ensure live execution
-          python3 scripts/iron_condor_trader.py --force --live --symbol SPY || {
+          # Capture FULL output to debug file
+          python3 scripts/iron_condor_trader.py --force --live --symbol SPY 2>&1 | tee /tmp/ic_output.txt || {
             echo "⚠️ Iron condor returned non-zero"
-            echo "Checking what happened..."
           }
+
+          # Save debug output to repo
+          mkdir -p data/debug
+          cp /tmp/ic_output.txt data/debug/iron_condor_$(date +%Y%m%d_%H%M%S).txt
 
           echo ""
           echo "✅ Execution complete"
@@ -87,3 +108,19 @@ jobs:
           else:
               print('\\n❌ No option positions')
           "
+
+      - name: Commit trade results and debug output
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Add debug output and any trade files
+          git add data/debug/*.txt 2>/dev/null || true
+          git add data/trades_*.json data/system_state.json 2>/dev/null || true
+
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: Record iron condor execution debug output [auto]"
+            git push
+          fi
