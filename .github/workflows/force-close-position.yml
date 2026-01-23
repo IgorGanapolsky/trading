@@ -1,20 +1,20 @@
-name: EMERGENCY Force Close Position
+name: EMERGENCY Force Close ALL Positions
 
 on:
   workflow_dispatch:
   push:
     paths:
       - 'FORCE_CLOSE.trigger'
-  schedule:
-    # Run every 5 minutes during market hours - CRISIS MODE
-    - cron: '*/5 14-20 * * 1-5'
+  # DISABLED Jan 23, 2026: 5-min schedule was too aggressive
+  # schedule:
+  #   - cron: '*/5 14-20 * * 1-5'
 
 permissions:
   contents: write
 
 jobs:
   force-close:
-    name: Force Close Bleeding Position
+    name: Force Close ALL Positions (Phil Town Rule #1)
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -27,18 +27,18 @@ jobs:
 
       - run: pip install alpaca-py
 
-      - name: Close ALL Option Positions (Phil Town Rule #1)
+      - name: Close ALL Positions - Stocks AND Options
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
-        run: python scripts/close_all_options.py
+        run: python scripts/close_all_positions.py
 
-      - name: Fallback - Close Non-Daytrade
+      - name: Fallback - Close Options Only
         if: failure()
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
-        run: python scripts/close_non_daytrade.py
+        run: python scripts/close_all_options.py
 
       - name: Sync State After Close
         if: success()
