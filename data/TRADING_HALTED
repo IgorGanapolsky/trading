@@ -1,0 +1,24 @@
+TRADING HALTED - Jan 23, 2026
+
+Reason: Strategy Violation - System executing wrong trades
+
+Violations detected today:
+1. Fractional SPY share buying (DCA) - NOT allowed per CLAUDE.md
+2. Put spreads being day-traded (no theta decay) - WRONG strategy
+3. No iron condors executed - CLAUDE.md mandates iron condors ONLY
+4. Result: -$22.61 loss from bid/ask spreads and slippage
+
+CLAUDE.md Strategy (MANDATORY):
+- IRON CONDORS on SPY ONLY
+- 30-45 DTE, exit at 50% profit or 7 DTE
+- HOLD positions for theta decay
+- NO fractional share buying
+- NO same-day closing of options
+
+Resume trading only when:
+1. guaranteed_trader.py is disabled
+2. Iron condor logic is verified
+3. Day-trading of options is prevented
+
+Created by: Claude CTO
+Time: 2026-01-23 21:20 UTC
