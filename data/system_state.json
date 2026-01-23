@@ -227,10 +227,10 @@
     "positions_count": 1
   },
   "meta": {
-    "last_updated": "2026-01-23T16:40:52.396448",
+    "last_updated": "2026-01-23T16:47:38.470041",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5,
-    "last_sync": "2026-01-23T16:40:52.396454",
+    "last_sync": "2026-01-23T16:47:38.470046",
     "sync_mode": "skipped_no_keys"
   }
 }
