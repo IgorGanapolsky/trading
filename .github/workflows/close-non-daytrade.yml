@@ -1,13 +1,14 @@
 name: Close Non-Daytrade Positions
 
-# Closes positions opened BEFORE today to bypass PDT restriction
-# Only yesterday's contracts are closed, not today's
-# SCHEDULED: Every 5 minutes during market hours until crisis resolved
+# DISABLED Jan 23, 2026 - CAUSED $22.61 LOSS FROM SHARE CHURNING
+# LL-298: Running every 5 min caused 49 trades and bid/ask spread losses
+# DO NOT RE-ENABLE without CEO approval
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '*/5 14-20 * * 1-5'
+  # DISABLED - schedule removed to stop losses
+  # schedule:
+  #   - cron: '*/5 14-20 * * 1-5'
   push:
     paths:
       - 'CLOSE_NONDT.trigger'

@@ -1,12 +1,13 @@
 name: Scheduled Close at Market End
 
-# Emergency: Close excess long puts at market close to avoid PDT
-# Created: Jan 22, 2026 - Crisis Response
+# DISABLED Jan 23, 2026 - CAUSED $22.61 LOSS FROM SHARE TRADING
+# LL-298: This workflow destroys iron condor positions
+# DO NOT RE-ENABLE without CEO approval
 
 on:
-  schedule:
-    # Run at 3:55 PM ET (20:55 UTC) - just before market close
-    - cron: '55 20 * * 1-5'
+  # DISABLED - schedule removed
+  # schedule:
+  #   - cron: '55 20 * * 1-5'
   workflow_dispatch:
 
 permissions:
