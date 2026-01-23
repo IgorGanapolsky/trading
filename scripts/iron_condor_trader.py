@@ -187,8 +187,21 @@ class IronCondorStrategy:
         long_put, short_put, short_call, long_call = self.calculate_strikes(price)
         logger.info(f"Strikes: LP={long_put} SP={short_put} SC={short_call} LC={long_call}")
 
-        # Calculate expiry
-        expiry_date = datetime.now() + timedelta(days=self.config["target_dte"])
+        # Calculate expiry - MUST be a Friday (options expire on Fridays)
+        target_date = datetime.now() + timedelta(days=self.config["target_dte"])
+        # Adjust to nearest Friday: weekday() returns 0=Mon, 4=Fri
+        days_until_friday = (4 - target_date.weekday()) % 7
+        if days_until_friday == 0 and target_date.weekday() != 4:
+            days_until_friday = 7  # Next Friday if we're past Friday
+        # If target is Sat/Sun, go to next Friday; otherwise go to this week's Friday
+        if target_date.weekday() > 4:  # Saturday=5, Sunday=6
+            days_until_friday = (4 - target_date.weekday()) % 7
+        expiry_date = target_date + timedelta(days=days_until_friday)
+        # If this pushed us too close (<21 DTE), use the Friday after
+        actual_dte = (expiry_date - datetime.now()).days
+        if actual_dte < 21:
+            expiry_date += timedelta(days=7)
+        logger.info(f"Expiry: {expiry_date.strftime('%Y-%m-%d')} ({expiry_date.strftime('%A')}) - {(expiry_date - datetime.now()).days} DTE")
 
         # Estimate premiums
         premiums = self.calculate_premiums(
