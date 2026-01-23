@@ -1,56 +1,36 @@
 {
-  "last_updated": "2026-01-23T17:22:28.586093+00:00",
-  "sync_health": {
-    "last_successful_sync": "2026-01-23T17:22:28.586096+00:00",
-    "sync_source": "github_actions",
-    "sync_count_today": 2,
-    "history": [
+  "last_updated": "2026-01-23T17:36:56.208133Z",
+  "portfolio": {
+    "equity": "29982.1",
+    "cash": "27982.68"
+  },
+  "paper_account": {
+    "positions_count": 1,
+    "positions": [
       {
-        "timestamp": "2026-01-23T16:55:01.989632+00:00",
-        "equity": 29982.41,
-        "success": true
-      },
-      {
-        "timestamp": "2026-01-23T17:22:28.586084+00:00",
-        "equity": 29982.16,
-        "success": true
+        "symbol": "SPY",
+        "qty": "2.898193837",
+        "market_value": "1999.420455",
+        "unrealized_pl": "-0.379538"
       }
     ]
   },
-  "portfolio": {
-    "equity": 29982.16,
-    "cash": 28082.67
-  },
-  "paper_account": {
-    "equity": 29982.16,
-    "cash": 28082.67,
-    "buying_power": 58064.83,
-    "total_pl": 24982.16,
-    "total_pl_pct": 499.64,
-    "positions_count": 1,
-    "daily_change": -17.84,
-    "win_rate": 0,
-    "win_rate_sample_size": 0,
-    "starting_balance": 30000.0
-  },
-  "positions": [
-    {
-      "symbol": "SPY",
-      "qty": 2.753322366,
-      "price": 689.89,
-      "value": 1899.489567,
-      "pnl": -0.320427,
-      "type": "stock"
-    }
-  ],
   "trade_history": [
+    {
+      "id": "314e3ce6-7a8f-467c-be52-0f714ce3e3b5",
+      "symbol": "SPY",
+      "side": "OrderSide.BUY",
+      "qty": "0.144871471",
+      "price": "690.198",
+      "filled_at": "2026-01-23 17:30:06.896791+00:00"
+    },
     {
       "id": "27a28085-4a12-483e-b0c3-b31fa1c85a5b",
       "symbol": "SPY",
       "side": "OrderSide.BUY",
       "qty": "0.144934468",
       "price": "689.898",
-      "filled_at": "2026-01-23 17:16:10.889915+00:00"
+      "filled_at": "2026-01-23 17:16:10.889916+00:00"
     },
     {
       "id": "690f2d3f-d948-4651-aaf1-223e02f9dd35",
@@ -381,27 +361,5 @@
       "filled_at": "2026-01-23 15:02:57.333180+00:00"
     }
   ],
-  "trades_loaded": 42,
-  "trades": {
-    "last_trade_date": "2026-01-23",
-    "today_trades": 0,
-    "total_trades_today": 0,
-    "last_trade_symbol": "SPY"
-  },
-  "risk": {
-    "status": "MONITORING",
-    "total_pl": 24982.16,
-    "unrealized_pl": -0.320427
-  },
-  "account": {
-    "current_equity": 29982.16,
-    "total_pl": 24982.16,
-    "total_pl_pct": 499.64,
-    "positions_count": 1
-  },
-  "meta": {
-    "last_updated": "2026-01-23T17:22:28.586110+00:00",
-    "trade_sync": "alpaca_api",
-    "sync_frequency_minutes": 5
-  }
+  "trades_loaded": 43
 }
