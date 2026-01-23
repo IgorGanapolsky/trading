@@ -2,7 +2,7 @@ name: Close Non-Daytrade Positions
 
 # Closes positions opened BEFORE today to bypass PDT restriction
 # Only yesterday's contracts are closed, not today's
-# CRISIS: Run every 5 min until resolved
+# SCHEDULED: Every 5 minutes during market hours until crisis resolved
 
 on:
   workflow_dispatch:
@@ -33,6 +33,6 @@ jobs:
       
       - name: Close Non-Daytrade Positions
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
         run: python scripts/close_non_daytrade.py

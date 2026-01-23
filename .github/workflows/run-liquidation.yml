@@ -1,7 +1,13 @@
 name: Run Liquidation Script
 
-# Manually trigger to close ALL option positions
+# Trigger: Push LIQUIDATE_NOW file OR manual workflow_dispatch
 on:
+  push:
+    branches:
+      - main
+      - 'claude/*'
+    paths:
+      - 'LIQUIDATE_NOW'
   workflow_dispatch:
     inputs:
       dry_run:
@@ -47,6 +53,18 @@ jobs:
             python3 scripts/liquidate_all_options.py --dry-run
           else
             python3 scripts/liquidate_all_options.py
+          fi
+
+      - name: Remove Trigger File
+        if: github.event_name == 'push'
+        run: |
+          if [ -f "LIQUIDATE_NOW" ]; then
+            rm -f LIQUIDATE_NOW
+            git config user.name "GitHub Actions"
+            git config user.email "actions@github.com"
+            git add -A
+            git commit -m "🚨 LIQUIDATED: Closed all option positions" || echo "No changes"
+            git push || echo "Push skipped"
           fi
 
       - name: Trigger State Sync
