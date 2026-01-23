@@ -123,19 +123,29 @@ class IronCondorStrategy:
         """
         Calculate iron condor strikes based on delta targeting.
 
-        For 15 delta on SPY (~$595):
-        - Short put: ~5% below price (~$565)
-        - Short call: ~5% above price (~$625)
+        For 15 delta on SPY (~$690):
+        - Short put: ~5% below price (~$655)
+        - Short call: ~5% above price (~$725)
         - Wing width: $5 (appropriate for SPY)
+
+        CRITICAL FIX Jan 23, 2026:
+        SPY options have $5 strike increments for OTM options.
+        Must round to nearest $5 multiple or orders will fail!
+        ROOT CAUSE: $724/$729 strikes don't exist, only $725/$730
         """
         # 15 delta is roughly 1.5 standard deviation move
         # For 30 DTE on SPY, use ~5% OTM for 15-delta equivalent
 
         wing = self.config["wing_width"]
-        short_put = round(price * 0.95)  # 5% OTM for puts
+
+        # FIX: Round to nearest $5 increment (SPY OTM options only exist at $5 intervals)
+        def round_to_5(x: float) -> float:
+            return round(x / 5) * 5
+
+        short_put = round_to_5(price * 0.95)  # 5% OTM for puts, rounded to $5
         long_put = short_put - wing
 
-        short_call = round(price * 1.05)  # 5% OTM for calls
+        short_call = round_to_5(price * 1.05)  # 5% OTM for calls, rounded to $5
         long_call = short_call + wing
 
         return long_put, short_put, short_call, long_call
