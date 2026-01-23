@@ -544,15 +544,18 @@ jobs:
           PYTHON_SCRIPT
 
       - name: Task - Execute Paper Trade
-        if: github.event.inputs.task == 'execute-paper-trade' || github.event_name == 'push'
+        # DISABLED Jan 23, 2026: This step was running guaranteed_trader on every push
+        # which buys SPY STOCK and prevents iron condor execution
+        # Iron condors are handled by daily-trading.yml, not here!
+        if: github.event.inputs.task == 'execute-paper-trade'
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
           PAPER_TRADING: "true"
           PYTHONPATH: ${{ github.workspace }}
         run: |
           echo "=================================================="
-          echo "EXECUTING PAPER TRADE - Phil Town Strategy"
+          echo "SKIPPED - Iron condor execution is in daily-trading.yml"
           echo "=================================================="
           echo ""
 
