@@ -28,22 +28,25 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install alpaca-py python-dotenv
+          pip install alpaca-py python-dotenv yfinance
 
       - name: Execute Iron Condor NOW
         env:
+          # CRITICAL: Set correct env var names that script expects
           ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
-          ALPACA_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+          ALPACA_PAPER_TRADING_5K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_PAPER_TRADING_5K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
           PYTHONPATH: ${{ github.workspace }}
         run: |
           echo "🚀 FORCE IRON CONDOR EXECUTION"
           echo "=============================="
           echo "Date: $(date)"
-          echo "Mode: LIVE with --force flag"
+          echo "Mode: LIVE with --force --live flags"
           echo ""
 
-          # Run iron condor trader with --force to bypass VIX checks
-          python3 scripts/iron_condor_trader.py --force --symbol SPY || {
+          # Run iron condor trader with --force --live to ensure live execution
+          python3 scripts/iron_condor_trader.py --force --live --symbol SPY || {
             echo "⚠️ Iron condor returned non-zero"
             echo "Checking what happened..."
           }
@@ -54,7 +57,7 @@ jobs:
       - name: Verify positions
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
-          ALPACA_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
         run: |
           echo "📊 Verifying positions..."
           python3 -c "
