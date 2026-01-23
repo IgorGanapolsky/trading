@@ -30,3 +30,4 @@ python3 scripts/iron_condor_trader.py --force --live --symbol SPY
 - Long Call: ~$725 (15 delta)
 
 EXECUTE NOW - MARKET STILL OPEN!
+Trigger: 20260123_193451 - USING 30K SECRETS (matches screenshot)
