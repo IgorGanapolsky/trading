@@ -39,7 +39,6 @@ try:
     from alpaca.data.requests import StockBarsRequest
     from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
     from alpaca.trading.client import TradingClient
-    from alpaca.trading.requests import GetCalendarRequest
 except ImportError:
     print("ERROR: alpaca-py not installed. Run: pip install alpaca-py")
     sys.exit(1)
@@ -278,11 +277,7 @@ class IronCondorBacktester:
         slippage = total_credit * np.random.uniform(0.05, 0.10)
         total_credit = total_credit - slippage
 
-        # Max loss = wing width - credit (per side)
-        max_loss_per_side = self.config.wing_width - total_credit / 2
-
         # Simulate holding period
-        target_exit_date = entry_date + timedelta(days=self.config.dte_min - self.config.max_dte)
         profit_target = total_credit * self.config.profit_target_pct
         stop_loss = total_credit * self.config.stop_loss_pct
 
@@ -304,12 +299,6 @@ class IronCondorBacktester:
                 break
 
             current_price = bar["close"]
-            daily_low = bar["low"]
-            daily_high = bar["high"]
-
-            # Check for breach
-            put_breached = daily_low < short_put_strike
-            call_breached = daily_high > short_call_strike
 
             # Estimate current position value
             T_remaining = dte_remaining / 365
