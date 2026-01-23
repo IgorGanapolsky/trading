@@ -1,12 +1,17 @@
 {
-  "last_updated": "2026-01-23T14:10:26.553408+00:00",
+  "last_updated": "2026-01-23T14:42:36.604375+00:00",
   "sync_health": {
-    "last_successful_sync": "2026-01-23T14:10:26.553411+00:00",
+    "last_successful_sync": "2026-01-23T14:42:36.604378+00:00",
     "sync_source": "github_actions",
-    "sync_count_today": 1,
+    "sync_count_today": 2,
     "history": [
       {
         "timestamp": "2026-01-23T14:10:26.553398+00:00",
+        "equity": 30000.0,
+        "success": true
+      },
+      {
+        "timestamp": "2026-01-23T14:42:36.604361+00:00",
         "equity": 30000.0,
         "success": true
       }
@@ -26,8 +31,7 @@
     "daily_change": 0.0,
     "win_rate": 0,
     "win_rate_sample_size": 0,
-    "starting_balance": 5000.0,
-    "current_equity": 30000.0
+    "starting_balance": 5000.0
   },
   "positions": [],
   "trade_history": [],
@@ -47,26 +51,11 @@
     "current_equity": 30000.0,
     "total_pl": 25000.0,
     "total_pl_pct": 500.0,
-    "positions_count": 0,
-    "cash": 30000.0,
-    "buying_power": 60000.0
+    "positions_count": 0
   },
   "meta": {
-    "last_updated": "2026-01-23T14:37:01.692178",
+    "last_updated": "2026-01-23T14:42:36.604392+00:00",
     "trade_sync": "alpaca_api",
-    "sync_frequency_minutes": 5,
-    "last_sync": "2026-01-23T14:37:01.691874",
-    "sync_mode": "paper"
-  },
-  "performance": {
-    "open_positions": []
-  },
-  "live_account": {
-    "current_equity": 20.0,
-    "equity": 20.0,
-    "starting_balance": 20.0,
-    "total_pl": 0.0,
-    "total_pl_pct": 0.0,
-    "note": "LIVE account not synced - building capital via deposits"
+    "sync_frequency_minutes": 5
   }
 }
