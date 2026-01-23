@@ -33,8 +33,8 @@ jobs:
 
       - name: Sync Alpaca State
         env:
-          ALPACA_PAPER_TRADING_30K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
-          ALPACA_PAPER_TRADING_30K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
+          ALPACA_PAPER_TRADING_5K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_PAPER_TRADING_5K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
         run: |
           python3 << 'EOF'
           import json
@@ -44,8 +44,8 @@ jobs:
           try:
               from alpaca.trading.client import TradingClient
 
-              api_key = os.environ.get('ALPACA_PAPER_TRADING_30K_API_KEY')
-              secret_key = os.environ.get('ALPACA_PAPER_TRADING_30K_API_SECRET')
+              api_key = os.environ.get('ALPACA_PAPER_TRADING_5K_API_KEY')
+              secret_key = os.environ.get('ALPACA_PAPER_TRADING_5K_API_SECRET')
 
               if not api_key or not secret_key:
                   print("⚠️ Alpaca credentials not available")
