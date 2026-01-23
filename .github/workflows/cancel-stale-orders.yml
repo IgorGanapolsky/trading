@@ -48,8 +48,8 @@ jobs:
             echo "ALPACA_SECRET_KEY=${{ secrets.ALPACA_BROKERAGE_TRADING_API_SECRET }}" >> $GITHUB_ENV
           else
             echo "Using PAPER trading account"
-            echo "ALPACA_API_KEY=${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}" >> $GITHUB_ENV
-            echo "ALPACA_SECRET_KEY=${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}" >> $GITHUB_ENV
+            echo "ALPACA_API_KEY=${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}" >> $GITHUB_ENV
+            echo "ALPACA_SECRET_KEY=${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}" >> $GITHUB_ENV
           fi
 
       - name: Cancel stale orders

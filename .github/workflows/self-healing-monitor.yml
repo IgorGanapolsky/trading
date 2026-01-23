@@ -34,8 +34,8 @@ jobs:
       - name: Run Self-Healing Check
         id: health_check
         env:
-          ALPACA_PAPER_TRADING_5K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
-          ALPACA_PAPER_TRADING_5K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+          ALPACA_PAPER_TRADING_30K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
+          ALPACA_PAPER_TRADING_30K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
         run: |
           python3 scripts/self_healing_check.py --json > health_report.json
 
@@ -49,8 +49,8 @@ jobs:
       - name: Auto-Heal if Requested
         if: github.event.inputs.heal == 'true' || github.event_name == 'schedule'
         env:
-          ALPACA_PAPER_TRADING_5K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
-          ALPACA_PAPER_TRADING_5K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+          ALPACA_PAPER_TRADING_30K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
+          ALPACA_PAPER_TRADING_30K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
         run: |
           echo "Attempting auto-heal..."
           python3 scripts/self_healing_check.py --heal

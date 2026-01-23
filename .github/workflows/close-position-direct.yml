@@ -34,8 +34,8 @@ jobs:
 
       - name: Close Position Direct
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
         run: python scripts/close_position_direct.py
 
       - name: Trigger State Sync
