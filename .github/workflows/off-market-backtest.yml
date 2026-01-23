@@ -134,6 +134,14 @@ jobs:
             echo "has_results=false" >> $GITHUB_OUTPUT
           fi
             
+      - name: Compare strategies
+        if: success()
+        continue-on-error: true
+        run: |
+          echo "📊 Comparing strategies..."
+          python scripts/backtest/compare_strategies.py \
+            --output data/backtests/strategy_comparison.json
+
       - name: Ingest to RAG
         if: success()
         continue-on-error: true
@@ -150,6 +158,7 @@ jobs:
             data/backtests/*.json
             data/backtests/*.csv
             data/backtests/parameter_sweeps/*
+            data/backtests/strategy_comparison.json
             data/rag_staging/*.md
           retention-days: 30
 
