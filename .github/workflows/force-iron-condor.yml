@@ -87,3 +87,21 @@ jobs:
           else:
               print('\\n❌ No option positions')
           "
+
+      - name: Commit trade results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Check if there are changes to commit
+          if [ -f "data/trades_$(date +%Y-%m-%d).json" ]; then
+            git add data/trades_*.json data/system_state.json 2>/dev/null || true
+            if git diff --staged --quiet; then
+              echo "No changes to commit"
+            else
+              git commit -m "chore: Record iron condor trade results [auto]"
+              git push
+            fi
+          else
+            echo "No trade file found"
+          fi
