@@ -28,15 +28,17 @@ on:
           - 'true'
 
   # Auto-trigger when new lessons are added
-  push:
-    paths:
-      - 'rag_knowledge/lessons_learned/*.md'
-    branches:
-      - main
+  # DISABLED Jan 23, 2026 - Cost reduction ($200/month GCP bill)
+  # push:
+  #   paths:
+  #     - 'rag_knowledge/lessons_learned/*.md'
+  #   branches:
+  #     - main
 
   # Weekly full sync to catch any missed lessons
-  schedule:
-    - cron: '0 6 * * 0'  # Every Sunday at 6 AM UTC
+  # DISABLED Jan 23, 2026 - Cost reduction ($200/month GCP bill)
+  # schedule:
+  #   - cron: '0 6 * * 0'  # Every Sunday at 6 AM UTC
 
 env:
   PYTHON_VERSION: '3.11'

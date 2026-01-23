@@ -1,10 +1,11 @@
 name: Weekend Learning Pipeline
 
 on:
-  schedule:
-    # Run Saturday and Sunday at 8:00 AM Eastern
-    # When markets are closed, we learn and improve
-    - cron: '0 13 * * 0,6'  # 13:00 UTC = 8:00 AM ET
+  # DISABLED Jan 23, 2026 - Cost reduction ($200/month GCP bill)
+  # schedule:
+  #   # Run Saturday and Sunday at 8:00 AM Eastern
+  #   # When markets are closed, we learn and improve
+  #   - cron: '0 13 * * 0,6'  # 13:00 UTC = 8:00 AM ET
   workflow_dispatch:
     inputs:
       full_rebuild:

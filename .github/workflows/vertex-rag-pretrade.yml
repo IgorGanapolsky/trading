@@ -45,12 +45,12 @@ on:
         required: false
         default: ''
 
-  # Trigger on push to RAG-related files (for testing)
-  push:
-    paths:
-      - 'scripts/query_vertex_rag.py'
-      - 'src/rag/vertex_rag.py'
-      - '.github/workflows/vertex-rag-pretrade.yml'
+  # DISABLED Jan 23, 2026 - Cost reduction ($200/month GCP bill)
+  # push:
+  #   paths:
+  #     - 'scripts/query_vertex_rag.py'
+  #     - 'src/rag/vertex_rag.py'
+  #     - '.github/workflows/vertex-rag-pretrade.yml'
 
 env:
   PYTHON_VERSION: '3.11'

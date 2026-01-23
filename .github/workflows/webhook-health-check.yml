@@ -5,9 +5,9 @@ on:
   workflow_run:
     workflows: ["Deploy Dialogflow Webhook"]
     types: [completed]
-  # Also run on schedule to catch drift
-  schedule:
-    - cron: '0 15 * * 1-5'  # 10 AM ET on trading days
+  # DISABLED Jan 23, 2026 - Cost reduction ($200/month GCP bill)
+  # schedule:
+  #   - cron: '0 15 * * 1-5'  # 10 AM ET on trading days
   workflow_dispatch:
 
 jobs:
