@@ -1,0 +1,4 @@
+HALT
+CRITICAL: System churning again - 35 trades, losing money
+Halted by CTO on Fri Jan 23 17:05:45 UTC 2026 
+DO NOT REMOVE WITHOUT CEO APPROVAL
