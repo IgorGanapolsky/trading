@@ -201,7 +201,9 @@ class IronCondorStrategy:
         actual_dte = (expiry_date - datetime.now()).days
         if actual_dte < 21:
             expiry_date += timedelta(days=7)
-        logger.info(f"Expiry: {expiry_date.strftime('%Y-%m-%d')} ({expiry_date.strftime('%A')}) - {(expiry_date - datetime.now()).days} DTE")
+        logger.info(
+            f"Expiry: {expiry_date.strftime('%Y-%m-%d')} ({expiry_date.strftime('%A')}) - {(expiry_date - datetime.now()).days} DTE"
+        )
 
         # Estimate premiums
         premiums = self.calculate_premiums(
