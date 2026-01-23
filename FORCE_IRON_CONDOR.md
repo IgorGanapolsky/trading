@@ -30,3 +30,4 @@ python3 scripts/iron_condor_trader.py --force --live --symbol SPY
 
 EXECUTE NOW!
 Trigger: 20260123_185911 - DEBUG CREDENTIALS
+Trigger: 20260123_190537 - FINAL with all 30K secrets configured
