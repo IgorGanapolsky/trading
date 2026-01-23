@@ -1,25 +1,18 @@
-# FORCE IRON CONDOR - FRIDAY EXPIRY FIX IN PLACE
-Date: Friday, January 23, 2026 2:50 PM ET
-Last trigger: 2026-01-23 19:50 UTC
-Retry: 20 (FRIDAY EXPIRY FIX MERGED TO MAIN)
+# FORCE IRON CONDOR - RETRY #21
+Date: Friday, January 23, 2026 2:55 PM ET
+Last trigger: 2026-01-23 19:55 UTC
+Retry: 21 (FRIDAY EXPIRY FIX)
 CEO Directive: MAKE MONEY TODAY
 
-## FIX CONFIRMED IN MAIN:
-The expiration calculation now finds the next FRIDAY, not any day.
-Target: Feb 22 (Sunday) -> Adjusted to: Feb 28 (Friday)
+## FIX IN PLACE:
+Expiration now calculated to land on FRIDAY.
+
+## Time remaining:
+Market closes at 4 PM ET (21:00 UTC)
+Current: ~2:55 PM ET - still ~1 hour to execute!
 
 ## Account Status:
 - Equity: $29,977.39
-- Cash: $29,977.39 (ALL CASH)
 - Positions: 0
-- Credentials: WORKING (api_key starts with PKOC...)
 
-## Expected result with fix:
-Option expiry: 2026-02-28 (FRIDAY!)
-4 option positions:
-- Long Put: ~$650
-- Short Put: ~$655
-- Short Call: ~$725
-- Long Call: ~$730
-
-EXECUTE NOW!
+EXECUTE IRON CONDOR NOW!
