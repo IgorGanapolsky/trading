@@ -5,9 +5,29 @@
 **Severity**: HIGH (CEO Decision Required)
 **Related**: LL-295 (Four Pillars of Wealth Building)
 
+## CRITICAL: Alpaca Does NOT Support XSP/SPX
+
+```
+⚠️  BLOCKER: Alpaca only supports EQUITY options (SPY, stocks)
+⚠️  Alpaca does NOT support INDEX options (SPX, XSP, NDX)
+⚠️  This tax optimization REQUIRES A DIFFERENT BROKER
+```
+
+**Alternative brokers that support XSP/SPX:**
+- TastyTrade (recommended for options)
+- Interactive Brokers
+- Schwab/TD Ameritrade
+- Fidelity
+
+**Alpaca Roadmap**: Index options planned for 2026, but not available yet.
+
+---
+
 ## Executive Summary
 
 Research indicates switching from SPY to XSP (Mini-SPX) iron condors could save **~30% on taxes** through Section 1256 60/40 treatment, adding **$15,000-20,000** to the account over 7 years.
+
+**However, this requires a broker that supports index options (not Alpaca).**
 
 ## Current State
 
@@ -58,10 +78,11 @@ Savings: $1,020 (31.9%)
 
 ## Risk Considerations
 
-1. **Liquidity**: XSP less liquid than SPY (wider bid-ask spreads)
-2. **Fills**: May get slightly worse fills
-3. **Learning curve**: Different option chain structure
-4. **Broker support**: Verify TastyTrade supports XSP
+1. **BROKER LIMITATION**: Alpaca does NOT support XSP/SPX - requires different broker
+2. **Liquidity**: XSP less liquid than SPY (wider bid-ask spreads)
+3. **Fills**: May get slightly worse fills
+4. **Learning curve**: Different option chain structure
+5. **Account management**: Would need to manage two broker accounts
 
 ## Recommendation
 
@@ -69,19 +90,27 @@ Savings: $1,020 (31.9%)
 **Phase 2 (Small Live)**: If fills acceptable, switch 50% of trades to XSP
 **Phase 3 (Full Migration)**: If Phase 2 successful, fully migrate to XSP
 
-## Implementation Steps
+## Implementation Steps (Requires New Broker)
 
-1. [ ] CEO approves XSP testing
-2. [ ] Add XSP to paper trading watchlist
-3. [ ] Compare XSP vs SPY bid-ask spreads
-4. [ ] Run parallel paper trades for 30 days
-5. [ ] Analyze fill quality and slippage
-6. [ ] Update CLAUDE.md strategy if approved
+1. [ ] CEO decides if tax savings worth managing second broker
+2. [ ] Open paper account at TastyTrade or IBKR
+3. [ ] Test XSP iron condors on new broker
+4. [ ] Compare XSP vs SPY bid-ask spreads
+5. [ ] Run parallel paper trades for 30 days
+6. [ ] If successful, allocate portion of capital to XSP broker
 
-## Infrastructure Ready
+## Current Alpaca Strategy (No Change Needed)
 
-The `iron_condor_backtester.py` already supports XSP:
+Continue SPY iron condors on Alpaca:
+- $30K account = no PDT restrictions ✅
+- SPY has best liquidity ✅
+- Tax treatment: 100% short-term (accept this for now)
+
+## Backtester Note
+
+The `iron_condor_backtester.py` supports XSP ticker for analysis, but **cannot execute trades** on Alpaca:
 ```bash
+# For research/analysis only - Alpaca cannot trade XSP
 python scripts/backtest/iron_condor_backtester.py --ticker XSP --days 90
 ```
 
@@ -90,6 +119,9 @@ python scripts/backtest/iron_condor_backtester.py --ticker XSP --days 90
 - [CBOE XSP Tax Benefit](https://www.cboe.com/tradable_products/sp_500/mini_spx_options/tax_benefit/)
 - [Section 1256 Contracts](https://www.irs.gov/forms-pubs/about-form-6781)
 - [Green Trader Tax](https://greentradertax.com/trading-futures-other-section-1256-contracts-has-tax-advantages/)
+- [Alpaca Options Trading Docs](https://docs.alpaca.markets/docs/options-trading) - equity options only
+- [Alpaca Forum: SPX Options Request](https://forum.alpaca.markets/t/spx-options-trading/16510) - not supported
+- [GitHub Issue #265: Index Options](https://github.com/alpacahq/Alpaca-API/issues/265) - feature request
 
 ## Tags
 
