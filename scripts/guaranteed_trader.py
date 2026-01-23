@@ -182,7 +182,35 @@ def run():
     - Simple rule: Accumulate SPY or cash for credit spread collateral
 
     Position size: $100/day (build towards $500 credit spread collateral)
+
+    Jan 23, 2026 Fix (LL-298): Added daily trade limit
+    - Prevents churning from multiple workflow triggers
+    - Only 1 guaranteed_trader execution per day
     """
+    # LL-298 FIX: Daily trade limit to prevent churning
+    # ROOT CAUSE: 35 trades on Jan 23 caused -$17.56 loss from bid/ask spreads
+    MAX_DAILY_RUNS = 1
+    state_file = Path("data/guaranteed_trader_daily.json")
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    if state_file.exists():
+        try:
+            with open(state_file) as f:
+                state = json.load(f)
+            if state.get("date") == today and state.get("runs", 0) >= MAX_DAILY_RUNS:
+                logger.warning("=" * 60)
+                logger.warning("DAILY LIMIT REACHED - BLOCKING EXECUTION")
+                logger.warning(f"Already ran {state['runs']} time(s) today")
+                logger.warning("Reason: Prevent churning and bid/ask spread losses")
+                logger.warning("=" * 60)
+                return {
+                    "success": False,
+                    "reason": "daily_limit_reached",
+                    "runs_today": state["runs"],
+                }
+        except Exception as e:
+            logger.warning(f"Could not read state file: {e}")
+
     logger.info("=" * 60)
     logger.info("GUARANTEED TRADER - STARTING")
     logger.info("Strategy: Accumulate SPY shares for credit spread collateral")
@@ -269,6 +297,20 @@ def run():
         record_trade(trade)
         trades_executed.append(trade)
         logger.info(f"SUCCESS: Order {trade['id']} submitted")
+
+        # LL-298: Record successful run to prevent churning
+        try:
+            state = {"date": today, "runs": 1}
+            if state_file.exists():
+                with open(state_file) as f:
+                    old_state = json.load(f)
+                if old_state.get("date") == today:
+                    state["runs"] = old_state.get("runs", 0) + 1
+            with open(state_file, "w") as f:
+                json.dump(state, f, indent=2)
+            logger.info(f"Daily run count: {state['runs']}/{MAX_DAILY_RUNS}")
+        except Exception as e:
+            logger.warning(f"Could not update daily state: {e}")
     else:
         logger.error(f"FAILED to submit order for {symbol}")
 
