@@ -1461,6 +1461,7 @@ async def webhook(
             # Part 1: Get direct P/L answer
             portfolio = get_current_portfolio_status()
             pl_response = ""
+            trades_today = 0  # Initialize for use in Part 2
             if portfolio:
                 paper = portfolio.get("paper", {})
                 trades_today = portfolio.get("trades_today", 0)
@@ -1485,7 +1486,14 @@ async def webhook(
                 pl_response = "**P/L Status:** Unable to retrieve portfolio data"
 
             # Part 2: Query RAG for analytical explanation
-            results, source = query_rag_hybrid(user_query, top_k=3)
+            # FIX Jan 23, 2026: When no trades, use relevant query instead of user query
+            # User query "How much money did we make" was matching random failure lessons
+            if trades_today == 0:
+                # Query for reasons why no trades (more relevant than user query)
+                rag_query = "trading signals market conditions iron condor entry criteria"
+            else:
+                rag_query = user_query
+            results, source = query_rag_hybrid(rag_query, top_k=3)
 
             rag_explanation = ""
             if results:
