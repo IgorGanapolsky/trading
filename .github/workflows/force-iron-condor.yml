@@ -28,7 +28,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install alpaca-py python-dotenv yfinance
+          pip install alpaca-py python-dotenv yfinance pytz
 
       - name: Execute Iron Condor NOW
         env:
