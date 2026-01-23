@@ -59,10 +59,14 @@ jobs:
           fi
 
           # Run iron condor trader with --force --live to ensure live execution
-          python3 scripts/iron_condor_trader.py --force --live --symbol SPY || {
+          # Capture FULL output to debug file
+          python3 scripts/iron_condor_trader.py --force --live --symbol SPY 2>&1 | tee /tmp/ic_output.txt || {
             echo "⚠️ Iron condor returned non-zero"
-            echo "Checking what happened..."
           }
+
+          # Save debug output to repo
+          mkdir -p data/debug
+          cp /tmp/ic_output.txt data/debug/iron_condor_$(date +%Y%m%d_%H%M%S).txt
 
           echo ""
           echo "✅ Execution complete"
@@ -101,20 +105,18 @@ jobs:
               print('\\n❌ No option positions')
           "
 
-      - name: Commit trade results
+      - name: Commit trade results and debug output
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Check if there are changes to commit
-          if [ -f "data/trades_$(date +%Y-%m-%d).json" ]; then
-            git add data/trades_*.json data/system_state.json 2>/dev/null || true
-            if git diff --staged --quiet; then
-              echo "No changes to commit"
-            else
-              git commit -m "chore: Record iron condor trade results [auto]"
-              git push
-            fi
+          # Add debug output and any trade files
+          git add data/debug/*.txt 2>/dev/null || true
+          git add data/trades_*.json data/system_state.json 2>/dev/null || true
+
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
           else
-            echo "No trade file found"
+            git commit -m "chore: Record iron condor execution debug output [auto]"
+            git push
           fi
