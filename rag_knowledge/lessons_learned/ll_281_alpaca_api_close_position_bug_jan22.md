@@ -77,5 +77,15 @@ Should file ticket with:
 - Error: "insufficient options buying power for cash-secured put"
 - Expected: Position should close, not require $113K collateral
 
+## Resolution (Jan 22, 2026 - RESOLVED)
+
+**Account was reset** - CEO created new $30K paper trading account (PA3PYE0C9MN):
+- Old stuck positions abandoned (couldn't close via API)
+- Fresh start with clean slate - 0 positions
+- New account > $25K = NO PDT RESTRICTIONS
+- All workflows updated to use new credentials (PR #2723)
+
+**Lesson Applied**: Document Alpaca API bugs for future reference. If stuck again, reset account.
+
 ## Tags
-`critical`, `alpaca-api`, `broker-bug`, `position-close`, `pdt`, `emergency`, `manual-required`
+`resolved`, `alpaca-api`, `broker-bug`, `position-close`, `pdt`, `account-reset`
