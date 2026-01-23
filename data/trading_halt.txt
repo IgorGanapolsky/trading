@@ -1,0 +1,3 @@
+HALT
+Halted by CTO on Fri Jan 23 16:39:10 UTC 2026 - Protecting capital after 1.29 loss
+Reason: 21 trades in one day = excessive churning
