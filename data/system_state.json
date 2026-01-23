@@ -1,14 +1,116 @@
 {
-  "last_updated": "2026-01-23T15:25:36.744654Z",
+  "last_updated": "2026-01-23T15:38:29.079449+00:00",
+  "sync_health": {
+    "last_successful_sync": "2026-01-23T15:38:29.079451+00:00",
+    "sync_source": "github_actions",
+    "sync_count_today": 1,
+    "history": [
+      {
+        "timestamp": "2026-01-23T15:38:29.079441+00:00",
+        "equity": 29996.74,
+        "success": true
+      }
+    ]
+  },
   "portfolio": {
-    "equity": "29997.88",
-    "cash": "29997.88"
+    "equity": 29996.74,
+    "cash": 29725.74
   },
   "paper_account": {
-    "positions_count": 0,
-    "positions": []
+    "equity": 29996.74,
+    "cash": 29725.74,
+    "buying_power": 59451.48,
+    "total_pl": 24996.74,
+    "total_pl_pct": 499.93,
+    "positions_count": 3,
+    "daily_change": -3.26,
+    "win_rate": 0,
+    "win_rate_sample_size": 0,
+    "starting_balance": 5000.0
   },
+  "positions": [
+    {
+      "symbol": "SPY260220P00565000",
+      "qty": -1.0,
+      "price": 0.31,
+      "value": -31.0,
+      "pnl": -1.0,
+      "type": "option"
+    },
+    {
+      "symbol": "SPY260220P00570000",
+      "qty": 1.0,
+      "price": 0.33,
+      "value": 33.0,
+      "pnl": -1.0,
+      "type": "option"
+    },
+    {
+      "symbol": "SPY260220P00658000",
+      "qty": 1.0,
+      "price": 2.69,
+      "value": 269.0,
+      "pnl": -4.0,
+      "type": "option"
+    }
+  ],
   "trade_history": [
+    {
+      "id": "148e8972-00d7-46de-baa0-52d428775472",
+      "symbol": "SPY260220P00570000",
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "0.34",
+      "filled_at": "2026-01-23 15:37:24.270043+00:00"
+    },
+    {
+      "id": "e85182bf-a9e6-4798-89df-b72b17bebbc8",
+      "symbol": "SPY260220P00565000",
+      "side": "OrderSide.SELL",
+      "qty": "1",
+      "price": "0.3",
+      "filled_at": "2026-01-23 15:37:24.152866+00:00"
+    },
+    {
+      "id": "a8c39d31-72d6-4bf5-9470-98d45ccd2433",
+      "symbol": "SPY260220P00658000",
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "2.73",
+      "filled_at": "2026-01-23 15:37:24.041811+00:00"
+    },
+    {
+      "id": "ca339fb5-b8d7-4a87-a8ad-2a3227044abc",
+      "symbol": "SPY260220P00658000",
+      "side": "OrderSide.SELL",
+      "qty": "1",
+      "price": "2.76",
+      "filled_at": "2026-01-23 15:28:58.050092+00:00"
+    },
+    {
+      "id": "d4048e84-7c33-4471-951b-04cb66b3b58e",
+      "symbol": "SPY260220P00570000",
+      "side": "OrderSide.SELL",
+      "qty": "1",
+      "price": "0.33",
+      "filled_at": "2026-01-23 15:28:58.044981+00:00"
+    },
+    {
+      "id": "fde2ae12-0769-4c68-a38b-c589845ec3ac",
+      "symbol": "SPY260220P00570000",
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "0.34",
+      "filled_at": "2026-01-23 15:25:38.615728+00:00"
+    },
+    {
+      "id": "a942ede5-f9f7-44bc-9bda-c545bbec2824",
+      "symbol": "SPY260220P00658000",
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "2.7",
+      "filled_at": "2026-01-23 15:25:38.502905+00:00"
+    },
     {
       "id": "69946224-d6f2-45e1-9d64-2cd674901cc8",
       "symbol": "SPY260220P00658000",
@@ -31,7 +133,7 @@
       "side": "OrderSide.BUY",
       "qty": "1",
       "price": "0.32",
-      "filled_at": "2026-01-23 15:13:16.886821+00:00"
+      "filled_at": "2026-01-23 15:13:16.886822+00:00"
     },
     {
       "id": "6d64b712-7dc1-41ff-8615-d935238d44b5",
@@ -58,5 +160,27 @@
       "filled_at": "2026-01-23 15:02:57.333180+00:00"
     }
   ],
-  "trades_loaded": 6
+  "trades_loaded": 13,
+  "trades": {
+    "last_trade_date": "2026-01-23",
+    "today_trades": 0,
+    "total_trades_today": 0,
+    "last_trade_symbol": "SPY260220P00565000"
+  },
+  "risk": {
+    "status": "MONITORING",
+    "total_pl": 24996.74,
+    "unrealized_pl": -6.0
+  },
+  "account": {
+    "current_equity": 29996.74,
+    "total_pl": 24996.74,
+    "total_pl_pct": 499.93,
+    "positions_count": 3
+  },
+  "meta": {
+    "last_updated": "2026-01-23T15:38:29.079463+00:00",
+    "trade_sync": "alpaca_api",
+    "sync_frequency_minutes": 5
+  }
 }
