@@ -1,56 +1,50 @@
 {
-  "last_updated": "2026-01-23T18:01:19.054693+00:00",
+  "last_updated": "2026-01-23T18:56:28.772041+00:00",
   "sync_health": {
-    "last_successful_sync": "2026-01-23T18:01:19.054696+00:00",
+    "last_successful_sync": "2026-01-23T18:56:28.772044+00:00",
     "sync_source": "github_actions",
-    "sync_count_today": 2,
+    "sync_count_today": 1,
     "history": [
       {
-        "timestamp": "2026-01-23T17:49:19.734836+00:00",
-        "equity": 29978.84,
-        "success": true
-      },
-      {
-        "timestamp": "2026-01-23T18:01:19.054687+00:00",
-        "equity": 29976.59,
+        "timestamp": "2026-01-23T18:56:28.772033+00:00",
+        "equity": 29977.39,
         "success": true
       }
     ]
   },
   "portfolio": {
-    "equity": 29976.59,
-    "cash": 27482.73
+    "equity": 29977.39,
+    "cash": 29977.39
   },
   "paper_account": {
-    "equity": 29976.59,
-    "cash": 27482.73,
-    "buying_power": 57459.32,
-    "total_pl": 24976.59,
-    "total_pl_pct": 499.53,
-    "positions_count": 1,
-    "daily_change": -23.41,
+    "equity": 29977.39,
+    "cash": 29977.39,
+    "buying_power": 59954.78,
+    "total_pl": 24977.39,
+    "total_pl_pct": 499.55,
+    "positions_count": 0,
+    "daily_change": -22.61,
     "win_rate": 0,
     "win_rate_sample_size": 0,
     "starting_balance": 30000.0
   },
-  "positions": [
-    {
-      "symbol": "SPY",
-      "qty": 3.623692514,
-      "price": 688.205,
-      "value": 2493.843307,
-      "pnl": -5.906684,
-      "type": "stock"
-    }
-  ],
+  "positions": [],
   "trade_history": [
+    {
+      "id": "79e71d02-cba1-41c4-b9cb-38a27179e8da",
+      "symbol": "SPY",
+      "side": "OrderSide.SELL",
+      "qty": "3.623692514",
+      "price": "688.43",
+      "filled_at": "2026-01-23 18:14:23.878889+00:00"
+    },
     {
       "id": "8f4f050b-884a-4d74-9488-18fd7539a4f4",
       "symbol": "SPY",
       "side": "OrderSide.BUY",
       "qty": "0.145142747",
       "price": "688.908",
-      "filled_at": "2026-01-23 17:47:58.798425+00:00"
+      "filled_at": "2026-01-23 17:47:58.798426+00:00"
     },
     {
       "id": "c0dea66e-4be2-431e-b622-ac65d5b88b8d",
@@ -429,27 +423,27 @@
       "filled_at": "2026-01-23 15:02:57.333180+00:00"
     }
   ],
-  "trades_loaded": 48,
+  "trades_loaded": 49,
   "trades": {
     "last_trade_date": "2026-01-23",
-    "today_trades": 51,
-    "total_trades_today": 51,
-    "last_trade_symbol": "SYNCED"
+    "today_trades": 0,
+    "total_trades_today": 0,
+    "last_trade_symbol": "none"
   },
   "risk": {
     "status": "MONITORING",
-    "total_pl": 24976.59,
-    "unrealized_pl": -5.906684
+    "total_pl": 24977.39,
+    "unrealized_pl": 0
   },
   "account": {
-    "current_equity": 29976.59,
-    "total_pl": 24976.59,
-    "total_pl_pct": 499.53,
-    "positions_count": 1
+    "current_equity": 29977.39,
+    "total_pl": 24977.39,
+    "total_pl_pct": 499.55,
+    "positions_count": 0
   },
   "meta": {
-    "last_updated": "2026-01-23T18:50:30.016170+00:00",
+    "last_updated": "2026-01-23T18:56:28.772056+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5
   }
-}Trigger: 20260123_185523
+}
