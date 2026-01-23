@@ -450,8 +450,14 @@ class IronCondorStrategy:
         status = "SIMULATED"
         order_ids = []
 
+        # DEBUG: Log execution mode (Jan 23, 2026 - trace SIMULATED issue)
+        logger.info("=" * 60)
+        logger.info(f"EXECUTION MODE DEBUG: live={live}")
+        logger.info("=" * 60)
+
         # LIVE EXECUTION - Dec 29, 2025 fix
         if live:
+            logger.info("Entering LIVE execution block...")
             try:
                 from alpaca.trading.client import TradingClient
                 from alpaca.trading.enums import OrderSide, TimeInForce
@@ -459,6 +465,11 @@ class IronCondorStrategy:
                 from src.utils.alpaca_client import get_alpaca_credentials
 
                 api_key, secret = get_alpaca_credentials()
+
+                # DEBUG: Log credential status
+                logger.info(f"Credentials check: api_key={'SET' if api_key else 'NONE'}, secret={'SET' if secret else 'NONE'}")
+                if api_key:
+                    logger.info(f"  api_key length: {len(api_key)}, starts with: {api_key[:4]}...")
 
                 if api_key and secret:
                     client = TradingClient(api_key, secret, paper=True)
@@ -619,10 +630,19 @@ class IronCondorStrategy:
                         status = "LIVE_FAILED"
                         logger.warning("❌ No orders could be submitted")
                 else:
-                    logger.warning("No Alpaca credentials - running in simulation mode")
+                    logger.error("=" * 60)
+                    logger.error("CREDENTIAL FAILURE - LIVE EXECUTION BLOCKED")
+                    logger.error("=" * 60)
+                    logger.error(f"api_key is {'set' if api_key else 'NONE'}")
+                    logger.error(f"secret is {'set' if secret else 'NONE'}")
+                    logger.error("Check workflow env vars and GitHub secrets!")
+                    logger.error("Expected: ALPACA_PAPER_TRADING_5K_API_KEY")
+                    logger.error("=" * 60)
 
             except Exception as e:
                 logger.error(f"Live execution error: {e}")
+                import traceback
+                logger.error(f"Traceback: {traceback.format_exc()}")
                 status = "LIVE_ERROR"
 
         trade = {

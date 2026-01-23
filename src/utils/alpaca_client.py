@@ -35,6 +35,21 @@ def get_alpaca_credentials() -> tuple[Optional[str], Optional[str]]:
     Returns:
         Tuple of (api_key, secret_key) or (None, None) if not found.
     """
+    # DEBUG: Log all env var checks (Jan 23, 2026 - trace SIMULATED issue)
+    env_vars_checked = [
+        ("ALPACA_PAPER_TRADING_5K_API_KEY", os.getenv("ALPACA_PAPER_TRADING_5K_API_KEY")),
+        ("ALPACA_API_KEY", os.getenv("ALPACA_API_KEY")),
+        ("ALPACA_PAPER_TRADING_30K_API_KEY", os.getenv("ALPACA_PAPER_TRADING_30K_API_KEY")),
+        ("ALPACA_PAPER_TRADING_API_KEY", os.getenv("ALPACA_PAPER_TRADING_API_KEY")),
+    ]
+
+    logger.info("Credential lookup (checking env vars):")
+    for var_name, var_val in env_vars_checked:
+        if var_val:
+            logger.info(f"  ✅ {var_name}: SET (length={len(var_val)})")
+        else:
+            logger.info(f"  ❌ {var_name}: NOT SET")
+
     api_key = (
         os.getenv("ALPACA_PAPER_TRADING_5K_API_KEY")  # ACTUAL secret -> $30K account
         or os.getenv("ALPACA_API_KEY")  # Workflow fallback
@@ -50,11 +65,16 @@ def get_alpaca_credentials() -> tuple[Optional[str], Optional[str]]:
 
     if api_key:
         if os.getenv("ALPACA_PAPER_TRADING_5K_API_KEY"):
-            logger.debug("Using paper trading credentials (5K secret -> $30K account)")
+            logger.info("Selected: ALPACA_PAPER_TRADING_5K_API_KEY (->$30K account)")
         elif os.getenv("ALPACA_API_KEY"):
-            logger.debug("Using ALPACA_API_KEY fallback credentials")
+            logger.info("Selected: ALPACA_API_KEY fallback")
         else:
-            logger.debug("Using alternate paper trading credentials")
+            logger.info("Selected: alternate paper trading credentials")
+    else:
+        logger.error("NO API KEY FOUND - all env vars are empty!")
+
+    if not secret_key:
+        logger.error("NO SECRET KEY FOUND - all secret env vars are empty!")
 
     return api_key, secret_key
 
