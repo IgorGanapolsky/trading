@@ -1,0 +1,16 @@
+LL-297: Daily Trade Limit (Jan 23, 2026)
+SEVERITY: CRITICAL
+PROBLEM: 21 trades caused $11.29 loss from churning
+ROOT CAUSE: Multiple workflow runs, no daily limit
+FIX: Added MAX_TRADES_PER_DAY=4, halt file check
+
+
+=== LL-297: Daily Trade Limit to Prevent Churning (Jan 23, 2026) ===
+SEVERITY: CRITICAL
+PROBLEM: 21 trades in one day caused $11.29 loss from bid/ask spreads
+ROOT CAUSE: Multiple workflow runs, no daily limit, file-based lock doesn't work across runners
+FIX APPLIED:
+1. Added MAX_TRADES_PER_DAY = 4 (1 iron condor = 4 legs)
+2. Added trading_halt.txt check at start of iron_condor_trader.py
+3. Created data/trading_halt.txt to halt trading immediately
+PREVENTION: Always check trade count before executing. Use halt file for emergencies.
