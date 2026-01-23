@@ -11,11 +11,11 @@ Building an autonomous self-healing AI trading system with Claude Opus 4.5 and t
 
 | Metric | Value |
 |--------|-------|
-| Paper Account | $30,000.00 |
+| Paper Account | $29,978.84 |
 | Today's P/L | **TBD** (market open) |
 | Total P/L | **-$430.35** (-8.61% from $5K) |
 | Unrealized | -$86 (SOFI: -$80, SPY: -$6) |
-| Open Positions | 0 |
+| Open Positions | 1 |
 | Strategy | Iron Condors on SPY ONLY |
 | North Star | $5-10/day (realistic) |
 | Ralph Iterations | 39+ autonomous CI runs |
