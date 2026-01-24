@@ -154,9 +154,9 @@ def extract_discovery_content(lesson_file: Path) -> dict:
     # If no structured content, use first meaningful paragraph
     if not problem and not solution:
         non_header_lines = [
-            l.strip()
-            for l in lines
-            if l.strip() and not l.startswith("#") and not l.startswith("---")
+            line.strip()
+            for line in lines
+            if line.strip() and not line.startswith("#") and not line.startswith("---")
         ]
         if non_header_lines:
             problem = " ".join(non_header_lines[:3])[:400]
