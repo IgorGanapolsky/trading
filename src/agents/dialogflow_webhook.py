@@ -50,7 +50,7 @@ except ImportError:
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.rag.lessons_learned_rag import LessonsLearnedRAG
+from src.rag.lessons_learned_rag import LessonsLearnedRAG  # noqa: E402
 
 # Import Vertex AI RAG for cloud-based semantic search (primary)
 try:

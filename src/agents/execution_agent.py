@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """
 Execution Agent: Order execution and timing optimization
 
@@ -11,6 +9,7 @@ Responsibilities:
 
 Ensures best execution
 """
+from __future__ import annotations
 
 import builtins
 import contextlib
