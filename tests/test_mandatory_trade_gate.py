@@ -148,6 +148,49 @@ class TestValidateTradeMandatory:
         assert "stacking" not in result.reason.lower()
 
 
+class TestMLFeedbackModel:
+    """Test ML feedback model integration (LL-302)."""
+
+    def test_ml_check_included_in_result(self):
+        """Test that ML feedback check is included in checks_performed."""
+        from src.safety.mandatory_trade_gate import validate_trade_mandatory
+
+        result = validate_trade_mandatory(
+            symbol="SPY",
+            amount=200.0,
+            side="BUY",
+            strategy="iron_condor",
+            context={"equity": 5000.0},
+        )
+        # ML feedback check should be in the performed checks
+        ml_checks = [c for c in result.checks_performed if "ml_feedback" in c]
+        assert len(ml_checks) == 1
+        assert "confidence=" in ml_checks[0]
+
+    def test_ml_anomalies_populated(self):
+        """Test that ml_anomalies field is populated when model exists."""
+        from src.safety.mandatory_trade_gate import validate_trade_mandatory
+
+        result = validate_trade_mandatory(
+            symbol="SPY",
+            amount=200.0,
+            side="BUY",
+            strategy="test",  # 'test' is a positive pattern in feedback model
+            context={"equity": 5000.0},
+        )
+        # ml_anomalies should be a list (may be empty if no anomalies)
+        assert isinstance(result.ml_anomalies, list)
+
+    def test_query_feedback_model_function(self):
+        """Test the _query_feedback_model function directly."""
+        from src.safety.mandatory_trade_gate import _query_feedback_model
+
+        confidence, anomalies = _query_feedback_model("iron_condor", {"equity": 5000})
+        # Should return valid confidence and anomalies list
+        assert 0 <= confidence <= 1.0
+        assert isinstance(anomalies, list)
+
+
 class TestTradeBlockedError:
     """Test TradeBlockedError exception."""
 

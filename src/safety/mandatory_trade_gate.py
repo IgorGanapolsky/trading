@@ -12,12 +12,17 @@ No trade bypasses this gate. It enforces:
 - Blind trading prevention (no $0 equity trades)
 """
 
+import json
 import logging
 import re
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+# Feedback model path (Thompson Sampling RLHF)
+FEEDBACK_MODEL_PATH = Path(__file__).parent.parent.parent / "models" / "ml" / "feedback_model.json"
 
 
 # ============================================================
@@ -187,6 +192,71 @@ def _check_daily_loss_limit(equity: float, potential_loss: float = 0.0) -> tuple
             )
 
         return True, f"Daily loss OK: ${projected_loss:.2f} of ${max_loss:.2f} limit"
+
+
+def _query_feedback_model(strategy: str, context: dict | None) -> tuple[float, list[str]]:
+    """
+    Query the RLHF feedback model for confidence adjustment.
+
+    Uses Thompson Sampling posterior and feature weights to assess
+    whether this trade type has historically led to positive outcomes.
+
+    Args:
+        strategy: Trade strategy name
+        context: Trade context with additional info
+
+    Returns:
+        (confidence_adjustment, anomalies_list)
+        - confidence_adjustment: multiplier (0.8-1.0) based on patterns
+        - anomalies_list: warnings about negative patterns detected
+    """
+    anomalies = []
+    confidence = 1.0
+
+    try:
+        if not FEEDBACK_MODEL_PATH.exists():
+            return 1.0, []
+
+        with open(FEEDBACK_MODEL_PATH) as f:
+            model = json.load(f)
+
+        alpha = model.get("alpha", 1.0)
+        beta = model.get("beta", 1.0)
+        feature_weights = model.get("feature_weights", {})
+
+        # Calculate Thompson Sampling posterior (overall model confidence)
+        posterior = alpha / (alpha + beta)
+
+        # Check if we have enough samples to trust the model
+        total_samples = int(alpha + beta - 2)  # Subtract priors
+        if total_samples < 5:
+            # Not enough data yet - don't adjust confidence
+            return 1.0, ["ML model insufficient samples (<5)"]
+
+        # Check for negative feature patterns in strategy/context
+        strategy_lower = strategy.lower() if strategy else ""
+        context_str = str(context).lower() if context else ""
+        combined = f"{strategy_lower} {context_str}"
+
+        negative_patterns = []
+        for feature, weight in feature_weights.items():
+            if weight < -0.1 and feature in combined:
+                negative_patterns.append(f"{feature}({weight:+.2f})")
+
+        if negative_patterns:
+            # Reduce confidence based on negative patterns
+            confidence = max(0.7, posterior - 0.1)
+            anomalies.append(f"Negative ML patterns: {', '.join(negative_patterns)}")
+
+        # If overall model posterior is low, add warning
+        if posterior < 0.6:
+            anomalies.append(f"Low ML confidence: posterior={posterior:.2f}")
+            confidence = min(confidence, posterior)
+
+    except Exception as e:
+        logger.debug(f"Feedback model query failed (non-fatal): {e}")
+
+    return confidence, anomalies
 
 
 def _query_rag_for_blocking_lessons(symbol: str, strategy: str) -> tuple[bool, list[str]]:
@@ -392,16 +462,29 @@ def validate_trade_mandatory(
     checks_performed.append(f"rag_check: PASS ({len(rag_warnings)} warnings)")
 
     # =========================================================================
+    # CHECK 6: ML Feedback Model (Jan 24, 2026 - LL-302)
+    # Query Thompson Sampling model for confidence adjustment based on
+    # learned patterns from user feedback. Does NOT block, only adjusts confidence.
+    # =========================================================================
+    ml_confidence, ml_anomalies = _query_feedback_model(strategy, context)
+    checks_performed.append(f"ml_feedback: confidence={ml_confidence:.2f}")
+
+    # =========================================================================
     # ALL CHECKS PASSED
     # =========================================================================
+    # Calculate final confidence from RAG warnings and ML model
+    base_confidence = 1.0 if not warnings else 0.8
+    final_confidence = min(base_confidence, ml_confidence)
+
     logger.info(f"✅ Mandatory gate APPROVED: {side} ${amount:.2f} {symbol} ({strategy})")
 
     return GateResult(
         approved=True,
         reason="Trade approved - all mandatory checks passed",
         rag_warnings=warnings,
+        ml_anomalies=ml_anomalies,
         checks_performed=checks_performed,
-        confidence=1.0 if not warnings else 0.8,
+        confidence=final_confidence,
     )
 
 
