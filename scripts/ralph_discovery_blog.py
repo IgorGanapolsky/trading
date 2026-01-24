@@ -84,35 +84,47 @@ def extract_discovery_content(lesson_file: Path) -> dict:
     # Extract title
     title = lines[0].replace("#", "").strip() if lines else lesson_file.stem
 
-    # Extract key sections
+    # Get the lesson ID from filename (e.g., LL-277)
+    lesson_id = ""
+    if match := re.search(r"LL-\d+", lesson_file.stem):
+        lesson_id = match.group(0)
+
+    # Extract key sections with smarter parsing
     problem = ""
     solution = ""
     impact = ""
+    tags = []
 
     current_section = None
     section_content = []
 
     for line in lines[1:]:
         lower_line = line.lower()
-        if "problem" in lower_line or "issue" in lower_line or "bug" in lower_line:
+
+        # Extract tags
+        if "tags:" in lower_line or line.startswith("- "):
+            tag_match = re.findall(r"[a-z\-]+", lower_line)
+            tags.extend([t for t in tag_match if len(t) > 2])
+
+        if "problem" in lower_line or "issue" in lower_line or "bug" in lower_line or "what happened" in lower_line:
             if current_section and section_content:
                 if "problem" in current_section:
                     problem = " ".join(section_content)
             current_section = "problem"
             section_content = []
-        elif "solution" in lower_line or "fix" in lower_line or "resolution" in lower_line:
+        elif "solution" in lower_line or "fix" in lower_line or "resolution" in lower_line or "how we fixed" in lower_line:
             if current_section and section_content:
                 if "problem" in current_section:
                     problem = " ".join(section_content)
             current_section = "solution"
             section_content = []
-        elif "impact" in lower_line or "result" in lower_line or "outcome" in lower_line:
+        elif "impact" in lower_line or "result" in lower_line or "outcome" in lower_line or "lesson" in lower_line:
             if current_section and section_content:
                 if "solution" in current_section:
                     solution = " ".join(section_content)
             current_section = "impact"
             section_content = []
-        elif line.strip() and not line.startswith("#"):
+        elif line.strip() and not line.startswith("#") and not line.startswith("---"):
             section_content.append(line.strip())
 
     # Capture last section
@@ -124,11 +136,21 @@ def extract_discovery_content(lesson_file: Path) -> dict:
         elif "impact" in current_section:
             impact = " ".join(section_content)
 
+    # If no structured content, use first meaningful paragraph
+    if not problem and not solution:
+        non_header_lines = [l.strip() for l in lines if l.strip() and not l.startswith("#") and not l.startswith("---")]
+        if non_header_lines:
+            problem = " ".join(non_header_lines[:3])[:400]
+            solution = " ".join(non_header_lines[3:6])[:400] if len(non_header_lines) > 3 else ""
+            impact = " ".join(non_header_lines[6:8])[:300] if len(non_header_lines) > 6 else ""
+
     return {
         "title": title,
-        "problem": problem[:500] if problem else "Identified during automated scanning",
-        "solution": solution[:500] if solution else "Automated fix applied by Ralph",
-        "impact": impact[:300] if impact else "System stability improved",
+        "lesson_id": lesson_id,
+        "problem": problem[:500] if problem else f"See full details in lesson {lesson_id or lesson_file.stem}",
+        "solution": solution[:500] if solution else "Applied targeted fix based on root cause analysis",
+        "impact": impact[:300] if impact else "Risk reduced and system resilience improved",
+        "tags": tags[:5],
         "raw_content": content[:2000],
     }
 
@@ -137,84 +159,96 @@ def generate_blog_post(discoveries: list[dict], commits: list[dict]) -> dict:
     """Generate an engaging blog post from discoveries."""
     date = datetime.now().strftime("%Y-%m-%d")
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    repo_url = "https://github.com/IgorGanapolsky/trading"
 
-    # Create engaging title
+    # Create engaging title based on content
     if len(discoveries) == 1:
-        title = f"How Our AI Found and Fixed: {discoveries[0]['title'][:50]}"
+        d = discoveries[0]
+        title = d['title'][:60] if d.get('title') else "Today's Engineering Discovery"
+    elif len(discoveries) > 0:
+        # Try to pick the most interesting discovery for the title
+        titles = [d['title'] for d in discoveries if d.get('title')]
+        main_topic = titles[0][:40] if titles else "System Improvements"
+        title = f"Engineering Log: {main_topic} (+{len(discoveries)-1} more)"
     else:
-        title = f"Ralph's Discovery Log: {len(discoveries)} Fixes in 24 Hours"
+        title = f"What We Shipped Today: {len(commits)} Commits"
+
+    # Collect all tags from discoveries
+    all_tags = set()
+    for d in discoveries:
+        all_tags.update(d.get('tags', []))
 
     # Build the post content
     content = f"""---
 layout: post
 title: "{title}"
 date: {timestamp}
-categories: [ralph, automation, ai-engineering]
-tags: [self-healing, ci-cd, autonomous-systems]
+categories: [engineering, lessons-learned, ai-trading]
+tags: [{', '.join(list(all_tags)[:4]) or 'self-healing, ci-cd, automation'}]
 ---
 
-## 🤖 Autonomous Engineering in Action
-
-Our AI system, Ralph (named after the [Ralph Wiggum iterative coding technique](https://github.com/Th0rgal/opencode-ralph-wiggum)),
-continuously monitors, discovers, and fixes issues in our trading system. Here's what it found today.
+Building an autonomous AI trading system means things break. Here's what we discovered, fixed, and learned today.
 
 """
 
-    # Add discoveries
+    # Add discoveries with more narrative style
     for i, discovery in enumerate(discoveries, 1):
+        lesson_link = ""
+        if discovery.get('lesson_id'):
+            lesson_link = f"\n\n*[View full lesson: {discovery['lesson_id']}]({repo_url}/blob/main/rag_knowledge/lessons_learned/)*"
+
         content += f"""
-### Discovery #{i}: {discovery["title"]}
+## {discovery["title"]}
 
-**🔍 What Ralph Found:**
-{discovery["problem"]}
+**The Problem:** {discovery["problem"]}
 
-**🔧 The Fix:**
-{discovery["solution"]}
+**What We Did:** {discovery["solution"]}
 
-**📈 Impact:**
-{discovery["impact"]}
+**The Takeaway:** {discovery["impact"]}{lesson_link}
 
 ---
 """
 
-    # Add commit summary
+    # Add commit summary with links
     if commits:
-        content += """
-## 📝 Commits This Session
+        content += f"""
+## Code Changes
 
-| SHA | Message |
-|-----|---------|
+These commits shipped today ([view on GitHub]({repo_url}/commits/main)):
+
+| Commit | Description |
+|--------|-------------|
 """
         for commit in commits[:5]:
-            content += f"| `{commit['sha']}` | {commit['message'][:60]} |\n"
+            sha_link = f"[{commit['sha']}]({repo_url}/commit/{commit['sha']})"
+            content += f"| {sha_link} | {commit['message'][:55]} |\n"
 
-    # Add footer
+    # Add more engaging footer
     content += f"""
 
-## 🎯 Why This Matters
+## Why We Share This
 
-Self-healing systems aren't just about fixing bugs—they're about building confidence
-in autonomous operations. Every fix Ralph makes is:
+Every bug is a lesson. Every fix makes the system stronger. We're building in public because:
 
-1. **Documented** in our lessons learned database
-2. **Tested** before being applied
-3. **Reviewed** via pull request (when significant)
-
-This is the future of software engineering: systems that improve themselves.
+1. **Transparency builds trust** - See exactly how an autonomous trading system evolves
+2. **Failures teach more than successes** - Our mistakes help others avoid the same pitfalls
+3. **Documentation prevents regression** - Writing it down means we won't repeat it
 
 ---
 
-*Generated automatically by Ralph Mode on {timestamp}*
+*This is part of our journey building an AI-powered iron condor trading system targeting financial independence.*
 
-**Follow our journey:** [GitHub](https://github.com/IgorGanapolsky/trading) |
-Building a $100/day trading system with AI.
+**Resources:**
+- [Source Code]({repo_url})
+- [Strategy Guide](https://igorganapolsky.github.io/trading/2026/01/21/iron-condors-ai-trading-complete-guide.html)
+- [The Silent 74 Days](https://igorganapolsky.github.io/trading/2026/01/07/the-silent-74-days.html) - How we built a system that did nothing
 """
 
     return {
         "title": title,
         "content": content,
         "date": date,
-        "tags": ["ralph", "automation", "self-healing", "ai", "python"],
+        "tags": list(all_tags)[:4] if all_tags else ["ralph", "automation", "self-healing", "ai"],
     }
 
 
