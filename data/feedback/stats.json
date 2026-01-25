@@ -1,7 +1,12 @@
 {
-  "total": 191,
+  "total": 192,
   "positive": 114,
-  "negative": 77,
-  "satisfaction_rate": 59.69,
-  "last_updated": "2026-01-23 23:50:00"
+  "negative": 78,
+  "satisfaction_rate": 59.38,
+  "last_updated": "2026-01-25 10:30:00",
+  "recent_negative_patterns": [
+    "ignoring_surfaced_rag_lessons",
+    "responding_before_reading_context",
+    "apologizing_without_behavior_change"
+  ]
 }
