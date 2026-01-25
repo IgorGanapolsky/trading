@@ -1,0 +1,49 @@
+{
+  "lesson_id": 310,
+  "date": "2026-01-25",
+  "category": "process",
+  "severity": "LOW",
+  "title": "Iteration 7 - RAG Learning Cycle Complete",
+  "summary": "Session demonstrated proper RAG learning cycle: read surfaced lessons, verify implementations, merge open PRs, read new research (LL-309), document learnings.",
+  "source": "Session Jan 25, 2026 - Iteration 7 Ralph Mode",
+  "lessons_read": [
+    {
+      "id": "LL-268",
+      "topic": "Iron Condor Win Rate Improvement",
+      "key_finding": "7 DTE exit + 50% profit target = 80%+ win rate",
+      "verified": "Implemented in 4+ code locations"
+    },
+    {
+      "id": "LL-300",
+      "topic": "Dialogflow RAG Query Fix",
+      "key_finding": "Context-aware query routing for no-trade days",
+      "verified": "Implemented at dialogflow_webhook.py:1489-1493"
+    },
+    {
+      "id": "LL-309",
+      "topic": "Iron Condor Optimal Control Research",
+      "key_finding": "Asymmetric left-biased structure is optimal for SPX",
+      "action": "Consider for future optimization after 90-day validation"
+    }
+  ],
+  "pr_merged": {
+    "number": 2962,
+    "title": "chore: Update RLHF feedback model state",
+    "commit": "df8a8ff"
+  },
+  "system_status": {
+    "tests": "925 passed",
+    "lint": "All checks passed",
+    "open_prs": 0,
+    "stale_branches": 0
+  },
+  "rag_learning_cycle": [
+    "1. Read surfaced lessons (LL-268, LL-300)",
+    "2. Verify implementations in code",
+    "3. Merge open PRs (#2962)",
+    "4. Read new research (LL-309)",
+    "5. Document learnings in new lesson (LL-310)"
+  ],
+  "key_insight": "Continuous learning requires: read → verify → apply → record. Each session should complete this cycle.",
+  "tags": ["process", "rag", "learning-cycle", "iteration"]
+}
