@@ -1,0 +1,8 @@
+
+---
+Date: 2026-01-25
+Resource: Agentic-R: Learning to Retrieve for Agentic Search (arxiv:2601.11888)
+Verdict: FLUFF
+Reason: Academic ML research for QA benchmarks. Zero applicability to options trading. Our RAG use case (lesson retrieval) is trivially simple and doesn't need multi-hop reasoning or custom retriever training. Would add massive complexity for zero trading benefit.
+Evaluator: Claude CTO
+---
