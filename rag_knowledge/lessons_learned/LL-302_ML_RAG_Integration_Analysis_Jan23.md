@@ -16,8 +16,8 @@
 
 ### ML Feedback Model
 - **Algorithm**: Thompson Sampling (Beta-Bernoulli conjugate prior)
-- **Current State**: α=9.0, β=1.0 → 90.0% posterior ✅ TARGET MET
-- **Positive Patterns**: test(+0.70), ci(+0.20), entry(+0.10), pr(+0.10), refactor(+0.10)
+- **Current State**: α=11.0, β=1.0 → 91.7% posterior ✅ TARGET EXCEEDED
+- **Positive Patterns**: test(+0.90), ci(+0.30), entry(+0.10), pr(+0.10), refactor(+0.10), rag(+0.10)
 - **Negative Patterns**: None detected yet
 - **Total Feedback**: 191 (114 👍, 77 👎) → 59.69% satisfaction
 
@@ -31,7 +31,7 @@
 ## Key Insights
 
 ### 1. Testing Correlates with Success
-The strongest positive pattern is `test` (+0.70), suggesting:
+The strongest positive pattern is `test` (+0.90), suggesting:
 - Running tests before claiming "done" leads to user satisfaction
 - CI validation catches issues before they reach users
 - **Action**: Continue prioritizing test verification
@@ -62,9 +62,9 @@ LL-268 research shows:
    - Consider: auto-sync on PR merge to main
 
 ### Medium-term
-1. **Feature expansion for feedback model** ✅ DONE
-   - Added: `pr`(+0.10), `refactor`(+0.10) on Jan 24, 2026
-   - Remaining: `rag`, `fix`, `trade`
+1. **Feature expansion for feedback model** ✅ IN PROGRESS
+   - Added: `pr`(+0.10), `refactor`(+0.10), `rag`(+0.10) as of Jan 25, 2026
+   - Remaining: `fix`, `trade`
    - Track which activities lead to thumbs down
 
 2. **RAG quality scoring**
@@ -75,11 +75,11 @@ LL-268 research shows:
 | Metric | Current | Target | Status |
 |--------|---------|--------|--------|
 | Satisfaction rate | 59.69% | 80%+ | In progress |
-| Thompson posterior | **0.900** | 0.90+ | ✅ TARGET MET |
+| Thompson posterior | **0.917** | 0.90+ | ✅ TARGET EXCEEDED |
 | Iron condor win rate | 33% (old) | 80%+ | Paper testing |
 | Data staleness | ~5 hours | <4 hours | Auto-sync added |
 | Trade gate ML check | ✅ Added | Integrated | DONE |
-| Feature expansion | pr, refactor | +5 features | 2/5 DONE |
+| Feature expansion | pr, refactor, rag | +5 features | 3/5 DONE |
 
 ## Tags
 ml, rag, integration, analysis, feedback, thompson-sampling
