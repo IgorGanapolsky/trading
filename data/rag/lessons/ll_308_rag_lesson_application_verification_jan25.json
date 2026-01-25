@@ -1,0 +1,53 @@
+{
+  "lesson_id": 308,
+  "date": "2026-01-25",
+  "category": "process",
+  "severity": "LOW",
+  "title": "RAG Lesson Application Verification - Proving Learning",
+  "summary": "Session demonstrating proper RAG lesson application: read LL-268, LL-280, LL-306, verified implementations in code, fixed LL-XXX placeholders.",
+  "source": "Session Jan 25, 2026 - Iteration 5 Ralph Mode",
+  "context": "Responding to LL-306 criticism that CTO ignores surfaced RAG lessons",
+  "lessons_verified": [
+    {
+      "lesson_id": "LL-268",
+      "topic": "Iron Condor Win Rate Improvement",
+      "key_finding": "7 DTE exit improves win rate to 80%+",
+      "verified_in_code": [
+        "src/constants/trading_thresholds.py:139 - EXIT_AT_DTE = 7",
+        "scripts/manage_iron_condor_positions.py:40 - exit_dte: 7",
+        "scripts/iron_condor_trader.py:90 - exit_dte: 7",
+        "scripts/backtest/iron_condor_backtester.py:70 - max_dte: int = 7"
+      ],
+      "status": "IMPLEMENTED"
+    },
+    {
+      "lesson_id": "LL-280",
+      "topic": "Cumulative Position Risk Bypass",
+      "key_finding": "Individual trade checks not enough - must check cumulative exposure",
+      "verified_in_code": [
+        "src/risk/trade_gateway.py:471 - cumulative risk check",
+        "src/risk/trade_gateway.py:524 - iron condor limit check",
+        "src/risk/trade_gateway.py:884 - CHECK 0.7 cumulative risk"
+      ],
+      "status": "IMPLEMENTED",
+      "fix_applied": "Updated LL-XXX placeholders to LL-280"
+    },
+    {
+      "lesson_id": "LL-306",
+      "topic": "CTO Ignores Surfaced RAG Lessons",
+      "key_finding": "Must read lessons before responding, prove learning with evidence",
+      "action_taken": "This lesson documents proof of reading and applying lessons",
+      "status": "ACKNOWLEDGED"
+    }
+  ],
+  "verification_process": [
+    "1. Read surfaced lessons (LL-268, LL-300) from hooks",
+    "2. Used grep to verify implementation in code",
+    "3. Found LL-XXX placeholders in trade_gateway.py",
+    "4. Cross-referenced with LL-280 lesson",
+    "5. Fixed placeholders with correct LL-280 reference",
+    "6. Committed fix with evidence"
+  ],
+  "key_insight": "Demonstrating learning requires EVIDENCE: read the lesson, verify implementation, fix gaps, document proof.",
+  "tags": ["process", "rag", "verification", "learning", "evidence-based"]
+}
