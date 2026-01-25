@@ -2775,5 +2775,35 @@
       "Prioritize tastylive and Option Alpha content",
       "Link to regime detector for entry timing"
     ]
+  },
+  {
+    "id": "LL-249",
+    "timestamp": "2026-01-25T19:36:39.338118",
+    "category": "system-hygiene",
+    "title": "PR & Branch Cleanup - Jan 25, 2026",
+    "description": "Closed 2 stale PRs with merge conflicts (#2952, #2950) and deleted their branches. PR #2950 had XSP tax research that was already in main as LL-296 (duplicate). PR #2952 had RLHF state changes superseded by main. Reduced open PRs from 2 to 0, branches from 3 to 1 (main only).",
+    "root_cause": "PRs fell behind main, causing merge conflicts (dirty state)",
+    "prevention": "Merge or close PRs within 24 hours to avoid drift from main",
+    "tags": [
+      "hygiene",
+      "pr-management",
+      "cleanup",
+      "branches"
+    ],
+    "severity": "LOW",
+    "metrics": {
+      "prs_before": 2,
+      "prs_after": 0,
+      "branches_before": 3,
+      "branches_after": 1,
+      "closed_prs": [
+        "#2952",
+        "#2950"
+      ],
+      "deleted_branches": [
+        "claude/pr-hygiene-JRhBc",
+        "claude/trading-system-assistant-oaINn"
+      ]
+    }
   }
 ]
