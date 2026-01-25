@@ -468,7 +468,7 @@ class TradeGateway:
         """
         Check CUMULATIVE position risk including existing positions.
 
-        LL-XXX (Jan 22, 2026): Individual trades passing 5% check but accumulating
+        LL-280 (Jan 22, 2026): Individual trades passing 5% check but accumulating
         to 19.6% risk. This check prevents that by summing existing + new risk.
 
         Args:
@@ -521,7 +521,7 @@ class TradeGateway:
         """
         Enforce '1 iron condor at a time' rule per CLAUDE.md.
 
-        LL-XXX (Jan 22, 2026): System was placing multiple iron condors,
+        LL-280 (Jan 22, 2026): System was placing multiple iron condors,
         violating the position limit rule.
 
         Returns:
@@ -881,7 +881,7 @@ class TradeGateway:
             }
 
         # ============================================================
-        # CHECK 0.7: CUMULATIVE POSITION RISK (LL-XXX Jan 22, 2026)
+        # CHECK 0.7: CUMULATIVE POSITION RISK (LL-280 Jan 22, 2026)
         # Individual trades passing but accumulating to dangerous levels
         # ============================================================
         is_cumulative_risky, cumulative_reason = self._check_cumulative_position_risk(
