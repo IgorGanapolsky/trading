@@ -2587,5 +2587,193 @@
     },
     "phil_town_aligned": true,
     "severity": "high"
+  },
+  {
+    "id": "LL-244",
+    "timestamp": "2026-01-25T00:24:58.504979",
+    "category": "research-evaluation",
+    "title": "RLM (Recursive Language Models) Architecture Evaluation",
+    "description": "Evaluated brainqub3/claude_code_RLM repository for potential integration. RLM enables processing documents 100x beyond context limits through hierarchical model delegation (Opus orchestrator + Haiku sub-processor + persistent REPL). VERDICT: REDUNDANT for our system - our RAG is already chunked (8.2MB), and we don't hit context limits.",
+    "root_cause": "N/A - Research evaluation, not bug fix",
+    "prevention": "N/A",
+    "tags": [
+      "research",
+      "architecture",
+      "llm",
+      "context-management",
+      "evaluated"
+    ],
+    "severity": "LOW",
+    "key_insights": [
+      "Model tiering (Opus for strategy, Haiku for routine) can optimize costs",
+      "Persistent REPL state pattern could improve session continuity",
+      "Hierarchical delegation enables processing large documents",
+      "Not needed at our scale - 8.2MB RAG fits in context"
+    ],
+    "verdict": "REDUNDANT - adds complexity without measurable benefit for current scale",
+    "source_url": "https://github.com/brainqub3/claude_code_RLM"
+  },
+  {
+    "id": "LL-245",
+    "timestamp": "2026-01-25T00:24:58.505006",
+    "category": "architecture",
+    "title": "Model Tiering Pattern for Cost Optimization",
+    "description": "From RLM research: Use lighter models (Haiku) for routine analysis tasks while reserving premium models (Opus) for strategic decisions. This mirrors optimal resource allocation in trading - don't use premium resources for commodity operations.",
+    "root_cause": "N/A - Best practice pattern",
+    "prevention": "N/A",
+    "tags": [
+      "architecture",
+      "cost-optimization",
+      "llm",
+      "best-practice"
+    ],
+    "severity": "LOW",
+    "key_insights": [
+      "Haiku for: parsing trade history, formatting data, routine analysis",
+      "Opus for: strategy decisions, risk assessment, complex reasoning",
+      "Persistent state (REPL pattern) reduces context re-loading",
+      "Hierarchical delegation enables parallel processing"
+    ],
+    "applicability": "Consider if API costs become significant or processing volume increases"
+  },
+  {
+    "id": "LL-246",
+    "timestamp": "2026-01-25T00:26:22.697919",
+    "category": "continuous-learning",
+    "title": "Weekend Learning System - YouTube Knowledge Ingestion",
+    "description": "System has YouTube ingestion capability for continuous learning during market closed hours (weekends). Scripts ingest content from: 1) Phil Town Rule #1 channel (20 videos processed), 2) Option Alpha (options mechanics), 3) InTheMoney (wheel strategy), 4) tastylive (greeks/volatility). YOUTUBE_API_KEY enabled Jan 10, 2026.",
+    "root_cause": "N/A - Feature documentation",
+    "prevention": "N/A",
+    "tags": [
+      "weekend",
+      "youtube",
+      "continuous-learning",
+      "options-education",
+      "phil-town"
+    ],
+    "severity": "LOW",
+    "key_insights": [
+      "20 Phil Town videos already ingested with insights and transcripts",
+      "Content stored in rag_knowledge/youtube/{insights,transcripts}/",
+      "Last updated: Jan 20, 2026 - needs fresh content ingestion",
+      "GAP: No iron condor-specific content yet (our current strategy)",
+      "OPPORTUNITY: Add tastylive iron condor videos to ingestion queue"
+    ],
+    "scripts": [
+      "scripts/ingest_phil_town_youtube.py",
+      "scripts/ingest_options_youtube.py"
+    ],
+    "action_items": [
+      "Add iron condor videos to ingestion queue",
+      "Schedule weekend learning workflow",
+      "Synthesize insights into strategy improvements"
+    ]
+  },
+  {
+    "id": "LL-247",
+    "timestamp": "2026-01-25T00:27:28.850581",
+    "category": "ml-architecture",
+    "title": "ML System Audit - Improvement Opportunities Identified",
+    "description": "Comprehensive audit of ML capabilities revealed: 1) RLHF feedback model ACTIVE (Thompson Sampling \u03b1=9.0, \u03b2=1.0, 191 samples), 2) RL filter weights EXIST but code is STUB (weights defined for SPY/QQQ/default with momentum, RSI, ATR, ADX features), 3) Regime detector ACTIVE (HMM 4-state: calm/trending/volatile/spike), 4) Transformer state exists (307KB .pt file).",
+    "root_cause": "N/A - System audit",
+    "prevention": "N/A",
+    "tags": [
+      "ml",
+      "architecture",
+      "improvement",
+      "audit",
+      "reinforcement-learning"
+    ],
+    "severity": "MEDIUM",
+    "current_state": {
+      "rlhf_feedback": "ACTIVE - Thompson Sampling, 59.69% satisfaction",
+      "rl_filter": "STUB - weights exist but unused",
+      "regime_detector": "ACTIVE - HMM with VIX/VVIX",
+      "transformer": "UNKNOWN - 307KB state file exists"
+    },
+    "improvement_opportunities": [
+      {
+        "id": "ML-IMP-1",
+        "title": "Activate RL Filter Weights",
+        "description": "rl_filter_weights.json has SPY/QQQ-specific weights for momentum, RSI, ATR, ADX but rl_agent.py is a stub. Connect weights to actual filtering.",
+        "priority": "MEDIUM",
+        "effort": "LOW"
+      },
+      {
+        "id": "ML-IMP-2",
+        "title": "Iron Condor Entry Optimization",
+        "description": "Use regime detector for iron condor timing. Enter in 'calm' regime (80% allocation), avoid 'spike' regime (pause_trading=True).",
+        "priority": "HIGH",
+        "effort": "MEDIUM"
+      },
+      {
+        "id": "ML-IMP-3",
+        "title": "Thompson Sampling for Trade Confidence",
+        "description": "Extend RLHF feedback model pattern to trade entry decisions. Use Beta distribution to estimate trade success probability.",
+        "priority": "MEDIUM",
+        "effort": "MEDIUM"
+      },
+      {
+        "id": "ML-IMP-4",
+        "title": "Investigate Transformer State",
+        "description": "The 307KB rl_transformer_state.pt file exists but purpose unknown. Check if usable for sequence-based trade prediction.",
+        "priority": "LOW",
+        "effort": "LOW"
+      }
+    ]
+  },
+  {
+    "id": "LL-248",
+    "timestamp": "2026-01-25T00:27:47.487304",
+    "category": "content-gap",
+    "title": "Iron Condor Education Content Missing from YouTube RAG",
+    "description": "CRITICAL GAP: Our primary strategy is iron condors (per CLAUDE.md) but zero iron condor educational content exists in rag_knowledge/youtube/. Current content covers: Phil Town Rule #1 (20 videos), Wheel strategy, CSPs, Covered calls. Need to ingest: tastylive iron condor mechanics, Option Alpha probability concepts, adjustment strategies.",
+    "root_cause": "YouTube ingestion scripts focus on Phil Town and basic options (wheel/CSP), not iron condors",
+    "prevention": "Update ingest_options_youtube.py to include iron condor search terms",
+    "tags": [
+      "iron-condor",
+      "content-gap",
+      "youtube",
+      "education",
+      "strategy-alignment"
+    ],
+    "severity": "HIGH",
+    "missing_content": [
+      "Iron condor construction and mechanics",
+      "15-20 delta wing selection rationale",
+      "Iron condor adjustment strategies (when tested)",
+      "Gamma risk management at 7 DTE",
+      "Iron condor vs credit spread comparison",
+      "Rolling techniques for iron condors"
+    ],
+    "recommended_sources": [
+      {
+        "channel": "tastylive",
+        "topics": [
+          "iron condor mechanics",
+          "adjustment strategies"
+        ]
+      },
+      {
+        "channel": "Option Alpha",
+        "topics": [
+          "probability of profit",
+          "delta selection"
+        ]
+      },
+      {
+        "channel": "projectoption",
+        "topics": [
+          "iron condor examples",
+          "management"
+        ]
+      }
+    ],
+    "action_items": [
+      "Add 'iron condor' search to ingest_options_youtube.py",
+      "Create iron_condor_education queue",
+      "Prioritize tastylive and Option Alpha content",
+      "Link to regime detector for entry timing"
+    ]
   }
 ]
