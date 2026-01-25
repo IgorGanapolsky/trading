@@ -258,6 +258,92 @@ def _query_feedback_model(strategy: str, context: dict | None) -> tuple[float, l
     return confidence, anomalies
 
 
+def _check_market_regime(strategy: str, context: dict | None) -> tuple[float, list[str]]:
+    """
+    Check market regime for iron condor entry optimization (LL-247 ML-IMP-2).
+
+    Regime-based trading rules:
+    - "calm": Ideal for iron condors (80% allocation, high confidence)
+    - "trending": Caution - directional risk (70% allocation)
+    - "volatile": Higher premium but higher risk (40% allocation, reduced confidence)
+    - "spike": DO NOT TRADE - crisis mode (0% allocation, block trade)
+
+    Args:
+        strategy: Trade strategy name
+        context: Trade context with regime info if available
+
+    Returns:
+        (confidence_adjustment, warnings_list)
+        - 0.0 means block the trade (spike regime)
+        - 0.7-1.0 is normal confidence range
+    """
+    warnings = []
+    confidence = 1.0
+
+    try:
+        # Try to get regime from context first (pre-computed by orchestrator)
+        regime_snapshot = context.get("regime_snapshot") if context else None
+
+        if not regime_snapshot:
+            # Try to detect live regime
+            try:
+                from src.utils.regime_detector import RegimeDetector
+
+                detector = RegimeDetector()
+                # Use simple heuristic detection if no VIX data available
+                features = context.get("features", {}) if context else {}
+                if features:
+                    result = detector.detect(features)
+                    regime_label = result.get("label", "unknown")
+                else:
+                    # Default to calm if no data (conservative)
+                    regime_label = "calm"
+            except ImportError:
+                logger.debug("RegimeDetector not available - skipping regime check")
+                return 1.0, []
+        else:
+            regime_label = regime_snapshot.get("label", "unknown")
+
+        # Apply regime-based rules
+        regime_lower = regime_label.lower()
+
+        if "spike" in regime_lower or "crisis" in regime_lower:
+            # CRITICAL: Block all trades in spike/crisis regime
+            warnings.append(f"🚨 SPIKE REGIME DETECTED - Trade blocked (regime={regime_label})")
+            return 0.0, warnings  # 0.0 = block trade
+
+        elif "volatile" in regime_lower or "vol" in regime_lower:
+            # High volatility - reduce confidence but allow with warning
+            warnings.append(f"⚠️ VOLATILE regime - reduced confidence (regime={regime_label})")
+            confidence = 0.7
+
+        elif "trending" in regime_lower or "trend" in regime_lower:
+            # Trending market - iron condors at risk of being tested on one side
+            if "iron" in strategy.lower() or "condor" in strategy.lower():
+                warnings.append(f"⚠️ TRENDING regime - iron condor may be directionally tested (regime={regime_label})")
+                confidence = 0.8
+            else:
+                confidence = 0.9
+
+        elif "calm" in regime_lower or "range" in regime_lower:
+            # Ideal for iron condors - boost confidence
+            if "iron" in strategy.lower() or "condor" in strategy.lower():
+                logger.info(f"✅ CALM regime - ideal for iron condors (regime={regime_label})")
+            confidence = 1.0
+
+        else:
+            # Unknown regime - proceed with caution
+            warnings.append(f"Unknown regime: {regime_label} - proceeding with caution")
+            confidence = 0.85
+
+    except Exception as e:
+        logger.debug(f"Regime check failed (non-fatal): {e}")
+        # Fail open - don't block trades due to regime check errors
+        return 1.0, []
+
+    return confidence, warnings
+
+
 def _query_rag_for_blocking_lessons(symbol: str, strategy: str) -> tuple[bool, list[str]]:
     """
     Query RAG for lessons that should block this trade.
@@ -469,11 +555,31 @@ def validate_trade_mandatory(
     checks_performed.append(f"ml_feedback: confidence={ml_confidence:.2f}")
 
     # =========================================================================
+    # CHECK 7: Regime Detection Gate (Jan 25, 2026 - LL-247 ML-IMP-2)
+    # Use market regime to optimize iron condor entry timing:
+    # - BLOCK in "spike" regime (crisis mode, pause_trading=True)
+    # - WARN in "volatile" regime (high risk, adjust confidence)
+    # - BOOST confidence in "calm" regime (ideal for iron condors)
+    # =========================================================================
+    regime_confidence, regime_warnings = _check_market_regime(strategy, context)
+    warnings.extend(regime_warnings)
+    checks_performed.append(f"regime_check: {regime_confidence:.2f}")
+
+    if regime_confidence == 0.0:
+        # Spike regime - block the trade
+        return GateResult(
+            approved=False,
+            reason="Trade blocked by SPIKE regime - markets in crisis mode (LL-247)",
+            rag_warnings=warnings,
+            checks_performed=checks_performed + ["regime_check: BLOCKED"],
+        )
+
+    # =========================================================================
     # ALL CHECKS PASSED
     # =========================================================================
-    # Calculate final confidence from RAG warnings and ML model
+    # Calculate final confidence from RAG warnings, ML model, and regime
     base_confidence = 1.0 if not warnings else 0.8
-    final_confidence = min(base_confidence, ml_confidence)
+    final_confidence = min(base_confidence, ml_confidence, regime_confidence)
 
     logger.info(f"✅ Mandatory gate APPROVED: {side} ${amount:.2f} {symbol} ({strategy})")
 

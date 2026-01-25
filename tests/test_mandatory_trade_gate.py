@@ -191,6 +191,62 @@ class TestMLFeedbackModel:
         assert isinstance(anomalies, list)
 
 
+class TestRegimeCheck:
+    """Test regime-based trade gating (LL-247 ML-IMP-2)."""
+
+    def test_regime_check_included_in_result(self):
+        """Test that regime check is included in checks_performed."""
+        from src.safety.mandatory_trade_gate import validate_trade_mandatory
+
+        result = validate_trade_mandatory(
+            symbol="SPY",
+            amount=200.0,
+            side="BUY",
+            strategy="iron_condor",
+            context={"equity": 5000.0},
+        )
+        # Regime check should be in the performed checks
+        regime_checks = [c for c in result.checks_performed if "regime_check" in c]
+        assert len(regime_checks) == 1
+
+    def test_regime_check_function(self):
+        """Test the _check_market_regime function directly."""
+        from src.safety.mandatory_trade_gate import _check_market_regime
+
+        # Test with no context - should return 1.0 (default to calm)
+        confidence, warnings = _check_market_regime("iron_condor", None)
+        assert 0 <= confidence <= 1.0
+        assert isinstance(warnings, list)
+
+    def test_spike_regime_blocks_trade(self):
+        """Test that spike regime blocks trades."""
+        from src.safety.mandatory_trade_gate import _check_market_regime
+
+        # Simulate spike regime in context
+        context = {"regime_snapshot": {"label": "spike"}}
+        confidence, warnings = _check_market_regime("iron_condor", context)
+        assert confidence == 0.0  # 0.0 means block
+        assert any("SPIKE" in w for w in warnings)
+
+    def test_volatile_regime_reduces_confidence(self):
+        """Test that volatile regime reduces confidence."""
+        from src.safety.mandatory_trade_gate import _check_market_regime
+
+        context = {"regime_snapshot": {"label": "volatile"}}
+        confidence, warnings = _check_market_regime("iron_condor", context)
+        assert confidence == 0.7  # Reduced confidence
+        assert any("VOLATILE" in w for w in warnings)
+
+    def test_calm_regime_maintains_confidence(self):
+        """Test that calm regime maintains full confidence."""
+        from src.safety.mandatory_trade_gate import _check_market_regime
+
+        context = {"regime_snapshot": {"label": "calm"}}
+        confidence, warnings = _check_market_regime("iron_condor", context)
+        assert confidence == 1.0  # Full confidence
+        assert len(warnings) == 0  # No warnings for calm
+
+
 class TestTradeBlockedError:
     """Test TradeBlockedError exception."""
 

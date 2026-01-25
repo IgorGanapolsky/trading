@@ -2805,5 +2805,51 @@
         "claude/trading-system-assistant-oaINn"
       ]
     }
+  },
+  {
+    "id": "LL-250",
+    "timestamp": "2026-01-25T23:15:32.792086",
+    "category": "ml-implementation",
+    "title": "Regime-Based Iron Condor Entry Gating Implemented (ML-IMP-2)",
+    "description": "Implemented CHECK 7: Regime Detection Gate in mandatory_trade_gate.py. Iron condor entries now consider market regime: BLOCK in 'spike' regime (crisis mode), WARN in 'volatile' regime (reduced confidence to 0.7), CAUTION in 'trending' regime (0.8 confidence for iron condors), BOOST in 'calm' regime (ideal for iron condors, full confidence). This fulfills ML-IMP-2 from LL-247.",
+    "root_cause": "Gap identified in LL-247 ML System Audit - regime detector existed but wasn't used for trade gating",
+    "prevention": "Regime check now mandatory before all trades via mandatory_trade_gate.py",
+    "tags": [
+      "ml",
+      "implementation",
+      "regime-detection",
+      "iron-condor",
+      "trade-gating",
+      "safety"
+    ],
+    "severity": "HIGH",
+    "files_changed": [
+      "src/safety/mandatory_trade_gate.py",
+      "tests/test_mandatory_trade_gate.py"
+    ],
+    "tests_added": 5,
+    "tests_passing": 18,
+    "regime_rules": {
+      "spike": {
+        "action": "BLOCK",
+        "confidence": 0.0,
+        "reason": "Crisis mode - no trading"
+      },
+      "volatile": {
+        "action": "WARN",
+        "confidence": 0.7,
+        "reason": "High risk - reduced confidence"
+      },
+      "trending": {
+        "action": "CAUTION",
+        "confidence": 0.8,
+        "reason": "Directional risk for iron condors"
+      },
+      "calm": {
+        "action": "BOOST",
+        "confidence": 1.0,
+        "reason": "Ideal for iron condors"
+      }
+    }
   }
 ]
