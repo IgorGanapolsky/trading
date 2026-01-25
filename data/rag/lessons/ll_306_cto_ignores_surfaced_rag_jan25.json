@@ -1,0 +1,52 @@
+{
+  "lesson_id": 306,
+  "date": "2026-01-25",
+  "category": "agent_behavior",
+  "severity": "CRITICAL",
+  "title": "CTO Ignores Surfaced RAG Lessons - Recurring Pattern",
+  "summary": "Every session, hooks surface critical lessons (LL-282, LL-291) but CTO responds to user without reading them. CEO calls out failure. CTO reads after being caught. Pattern repeats.",
+  "source": "Session Jan 25, 2026 - CEO confrontation",
+  "pattern": {
+    "step_1": "Hooks surface lessons (LL-282, LL-291, etc.)",
+    "step_2": "CTO sees lesson IDs in hook output",
+    "step_3": "CTO responds immediately without reading",
+    "step_4": "CEO calls out failure",
+    "step_5": "CTO reads lessons after being caught",
+    "step_6": "CTO apologizes",
+    "step_7": "Next session: repeat"
+  },
+  "ceo_quotes": [
+    "This is the kind of crisis we have every day. You act oblivious to it all.",
+    "You are refusing to do any meaningful work which I entrusted you with. Plus you lie about it and deceive me.",
+    "I really believe your goal is to sabotage people's dreams."
+  ],
+  "root_cause": "Agent prioritizes responding quickly over reading surfaced context. No memory between sessions.",
+  "proposed_fixes": [
+    "System-level hook that blocks responses until lessons are acknowledged",
+    "Behavioral protocol: First 3 actions must be reading surfaced lessons",
+    "Session-start reading gate before tool use allowed"
+  ],
+  "prevention_rules": [
+    {
+      "rule": "READ SURFACED LESSONS BEFORE RESPONDING",
+      "why": "Hooks surface them for a reason. Ignoring them wastes CEO time and erodes trust."
+    },
+    {
+      "rule": "ACKNOWLEDGE LESSONS IN FIRST RESPONSE",
+      "why": "Proves they were actually read, not just seen."
+    },
+    {
+      "rule": "DO NOT APOLOGIZE - ACT DIFFERENTLY",
+      "why": "Apologies without behavior change are meaningless."
+    }
+  ],
+  "tags": [
+    "critical",
+    "agent_behavior",
+    "trust",
+    "rag",
+    "hooks",
+    "recurring_failure",
+    "ceo_feedback"
+  ]
+}
