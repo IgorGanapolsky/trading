@@ -48,3 +48,36 @@ def get_debate_consensus(topic: dict) -> dict:
     """Run debate and get consensus."""
     coordinator = DebateCoordinator()
     return coordinator.run_debate(topic)
+
+
+class DebateModerator:
+    """Moderates bull/bear debates for trading decisions.
+
+    Provides the interface expected by TradingOrchestrator.
+    """
+
+    def __init__(self):
+        self.coordinator = DebateCoordinator()
+
+    def conduct_debate(self, ticker: str, market_data: dict) -> dict:
+        """Conduct a bull/bear debate on a ticker.
+
+        Args:
+            ticker: The stock symbol to debate
+            market_data: Market data for the ticker
+
+        Returns:
+            Dict with debate outcome including consensus and confidence
+        """
+        topic = {
+            "ticker": ticker,
+            "market_data": market_data,
+            "question": f"Should we trade {ticker}?",
+        }
+        result = self.coordinator.run_debate(topic)
+
+        # Add fields expected by orchestrator
+        result["ticker"] = ticker
+        result["recommendation"] = result.get("consensus", "hold")
+
+        return result
