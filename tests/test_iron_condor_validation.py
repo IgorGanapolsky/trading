@@ -80,37 +80,45 @@ class TestIronCondorValidation:
                 )
 
     def test_iron_condor_trader_validates_4_legs(self):
-        """Test that iron_condor_trader.py has 4-leg validation."""
+        """Test that iron_condor_trader.py uses MLeg orders for 4-leg validation.
+
+        Updated Jan 26, 2026: Changed from individual order validation to MLeg order
+        validation. MLeg orders ensure all 4 legs fill atomically - no partial fills.
+        """
         trader_file = Path("scripts/iron_condor_trader.py")
         if not trader_file.exists():
             pytest.skip("iron_condor_trader.py not found")
 
         content = trader_file.read_text()
 
-        # Must check for exactly 4 legs
-        assert "len(order_ids) == 4" in content, (
-            "iron_condor_trader.py MUST validate all 4 legs filled. "
-            "See LL-268: previous bug only checked 'if order_ids' (any legs)."
+        # Must use MLeg (multi-leg) orders to ensure atomic 4-leg execution
+        assert "OrderClass.MLEG" in content, (
+            "iron_condor_trader.py MUST use MLeg orders for atomic 4-leg execution. "
+            "See Jan 26, 2026 fix: individual orders caused partial fills."
         )
 
-        # Must have partial fill handling
-        assert "LIVE_PARTIAL_FAILED" in content or "PARTIAL" in content, (
-            "iron_condor_trader.py MUST handle partial fills (1-3 legs). "
-            "See LL-268: incomplete iron condors create directional risk."
+        # Must have all 4 legs defined in the MLeg order
+        assert "OptionLegRequest" in content, (
+            "iron_condor_trader.py MUST use OptionLegRequest for MLeg legs. "
+            "See Alpaca MLeg order API documentation."
         )
 
     def test_iron_condor_has_critical_alerts(self):
-        """Test that iron_condor_trader.py alerts on incomplete execution."""
+        """Test that iron_condor_trader.py handles MLeg order failures.
+
+        Updated Jan 26, 2026: With MLeg orders, partial fills are impossible.
+        Instead, we check for MLeg order failure handling.
+        """
         trader_file = Path("scripts/iron_condor_trader.py")
         if not trader_file.exists():
             pytest.skip("iron_condor_trader.py not found")
 
         content = trader_file.read_text()
 
-        # Must log errors for partial fills
-        assert "INCOMPLETE IRON CONDOR" in content or "missing_legs" in content, (
-            "iron_condor_trader.py MUST alert when not all 4 legs fill. "
-            "See LL-268 Prevention Item #3."
+        # Must handle MLeg order failures
+        assert "MLeg order failed" in content or "LIVE_FAILED" in content, (
+            "iron_condor_trader.py MUST handle MLeg order failures. "
+            "See Jan 26, 2026 MLeg implementation."
         )
 
 
