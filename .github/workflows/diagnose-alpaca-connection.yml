@@ -14,8 +14,8 @@ jobs:
     steps:
       - name: Test API Connection
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
         run: |
           pip install -q alpaca-py
 
@@ -33,13 +33,13 @@ jobs:
           # Check if secrets are set
           if not api_key:
               print('❌ ALPACA_API_KEY: EMPTY or NOT SET')
-              print('   This means the GitHub secret ALPACA_PAPER_TRADING_5K_API_KEY is missing or empty')
+              print('   This means the GitHub secret ALPACA_PAPER_TRADING_30K_API_KEY is missing or empty')
           else:
               print(f'✅ ALPACA_API_KEY: {api_key[:8]}...{api_key[-4:]} (length: {len(api_key)})')
 
           if not secret_key:
               print('❌ ALPACA_SECRET_KEY: EMPTY or NOT SET')
-              print('   This means the GitHub secret ALPACA_PAPER_TRADING_5K_API_SECRET is missing or empty')
+              print('   This means the GitHub secret ALPACA_PAPER_TRADING_30K_API_SECRET is missing or empty')
           else:
               print(f'✅ ALPACA_SECRET_KEY: {secret_key[:4]}...{secret_key[-4:]} (length: {len(secret_key)})')
 
