@@ -124,7 +124,7 @@ jobs:
             }
 
       - name: Upload Health Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: health-report
           path: health_report.json

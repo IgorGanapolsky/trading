@@ -97,7 +97,7 @@ jobs:
           agent-browser session close --session $SESSION_ID
 
       - name: Upload Verification Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: page-verification-${{ github.run_id }}
