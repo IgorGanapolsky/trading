@@ -219,15 +219,13 @@ jobs:
                   "sync_frequency_minutes": 5
               },
               # LL-312 Gap 1: Preserve paper_trading tracking across syncs
-              "paper_trading": (lambda pt: {
-                  **pt,
-                  "current_day": (datetime.now(timezone.utc).date() - datetime.fromisoformat(pt.get("start_date", "2026-01-22")).date()).days + 1
-              })(existing_state.get("paper_trading", {
-                  "start_date": "2026-01-22",
+              "paper_trading": {
+                  "start_date": existing_state.get("paper_trading", {}).get("start_date", "2026-01-22"),
                   "target_duration_days": 90,
                   "target_win_rate": 0.80,
+                  "current_day": max(1, (datetime.now(timezone.utc).date() - datetime.strptime(existing_state.get("paper_trading", {}).get("start_date", "2026-01-22"), "%Y-%m-%d").date()).days + 1),
                   "notes": "Paper phase per CLAUDE.md - validate 80%+ win rate before scaling"
-              }))
+              }
           }
 
           state_file.write_text(json.dumps(state, indent=2))
