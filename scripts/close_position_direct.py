@@ -68,9 +68,7 @@ def main():
         total_pl += pl
         qty = float(pos.qty)
         side = "LONG" if qty > 0 else "SHORT"
-        print(
-            f"  {pos.symbol}: {side} {abs(qty):.0f} @ ${float(pos.current_price):.2f} | P/L: ${pl:+.2f}"
-        )
+        print(f"  {pos.symbol}: {side} {abs(qty):.0f} @ ${float(pos.current_price):.2f} | P/L: ${pl:+.2f}")
 
     print(f"\nTotal Option P/L: ${total_pl:+.2f}")
 
@@ -93,7 +91,7 @@ def main():
             # close_position() automatically handles order side
             result = client.close_position(symbol)
 
-            if hasattr(result, "id"):
+            if hasattr(result, 'id'):
                 print(f"  ✅ SUCCESS - Order ID: {result.id}")
             else:
                 print(f"  ✅ SUCCESS - Result: {result}")
