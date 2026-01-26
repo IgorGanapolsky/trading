@@ -1,21 +1,75 @@
 {
-  "last_updated": "2026-01-26T16:43:09.553266Z",
+  "last_updated": "2026-01-26T16:57:21.286384+00:00",
+  "sync_health": {
+    "last_successful_sync": "2026-01-26T16:57:21.286387+00:00",
+    "sync_source": "github_actions",
+    "sync_count_today": 1,
+    "history": [
+      {
+        "timestamp": "2026-01-26T16:57:21.286375+00:00",
+        "equity": 29988.32,
+        "success": true
+      }
+    ]
+  },
   "portfolio": {
-    "equity": "29991.36",
-    "cash": "29991.36"
+    "equity": 29988.32,
+    "cash": 29686.32
   },
   "paper_account": {
-    "positions_count": 0,
-    "positions": []
+    "equity": 29988.32,
+    "cash": 29686.32,
+    "buying_power": 59372.64,
+    "total_pl": -11.680000000000291,
+    "total_pl_pct": -0.04,
+    "positions_count": 2,
+    "daily_change": 34.9,
+    "win_rate": 0,
+    "win_rate_sample_size": 0,
+    "starting_balance": 30000.0
   },
+  "positions": [
+    {
+      "symbol": "SPY260227C00735000",
+      "qty": 1.0,
+      "price": 0.32,
+      "value": 32.0,
+      "pnl": -1.0,
+      "type": "option"
+    },
+    {
+      "symbol": "SPY260227P00655000",
+      "qty": 1.0,
+      "price": 2.7,
+      "value": 270.0,
+      "pnl": -2.0,
+      "type": "option"
+    }
+  ],
   "trade_history": [
+    {
+      "id": "b92f8450-ff8c-48cb-87bd-5421bcdfad66",
+      "symbol": "SPY260227C00735000",
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "0.33",
+      "filled_at": "2026-01-26 16:54:22.459150+00:00"
+    },
+    {
+      "id": "bd589735-f201-47b7-9868-e1fd7d27d7a1",
+      "symbol": "SPY260227P00655000",
+      "side": "OrderSide.BUY",
+      "qty": "1",
+      "price": "2.72",
+      "filled_at": "2026-01-26 16:54:22.346585+00:00"
+    },
     {
       "id": "d8907806-251a-4fbe-88b9-a98a28897002",
       "symbol": "SPY260227P00650000",
       "side": "OrderSide.SELL",
       "qty": "1",
       "price": "2.35",
-      "filled_at": "2026-01-26 16:23:00.280265+00:00"
+      "filled_at": "2026-01-26 16:23:00.280266+00:00"
     },
     {
       "id": "8ceb4dab-2c4e-4931-a754-ce8c883796b8",
@@ -450,5 +504,34 @@
       "filled_at": "2026-01-23 15:02:57.333180+00:00"
     }
   ],
-  "trades_loaded": 55
+  "trades_loaded": 57,
+  "trades": {
+    "last_trade_date": "2026-01-26",
+    "today_trades": 0,
+    "total_trades_today": 0,
+    "last_trade_symbol": "SPY260227C00735000"
+  },
+  "risk": {
+    "status": "WARNING - NEGATIVE P/L",
+    "total_pl": -11.680000000000291,
+    "unrealized_pl": -3.0
+  },
+  "account": {
+    "current_equity": 29988.32,
+    "total_pl": -11.680000000000291,
+    "total_pl_pct": -0.04,
+    "positions_count": 2
+  },
+  "meta": {
+    "last_updated": "2026-01-26T16:57:21.286402+00:00",
+    "trade_sync": "alpaca_api",
+    "sync_frequency_minutes": 5
+  },
+  "paper_trading": {
+    "start_date": "2026-01-22",
+    "target_duration_days": 90,
+    "target_win_rate": 0.8,
+    "current_day": 5,
+    "notes": "Paper phase per CLAUDE.md - validate 80%+ win rate before scaling"
+  }
 }
