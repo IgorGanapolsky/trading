@@ -48,38 +48,23 @@ jobs:
         run: |
           python3 << 'EOF'
           import os
-          import sys
           import json
           from datetime import datetime, timezone
           from pathlib import Path
+          from alpaca.trading.client import TradingClient
+
+          api_key = os.environ['ALPACA_API_KEY']
+          secret_key = os.environ['ALPACA_SECRET_KEY']
 
           print("=" * 60)
           print("ALPACA PAPER ACCOUNT SYNC")
           print(f"Timestamp: {datetime.now(timezone.utc).isoformat()}")
           print("=" * 60)
 
-          # Validate environment variables first
-          api_key = os.environ.get('ALPACA_API_KEY', '')
-          secret_key = os.environ.get('ALPACA_SECRET_KEY', '')
+          client = TradingClient(api_key, secret_key, paper=True)
 
-          if not api_key or not secret_key:
-              print("❌ ERROR: ALPACA_API_KEY or ALPACA_SECRET_KEY not set")
-              print("Check GitHub secrets configuration")
-              sys.exit(1)
-
-          try:
-              from alpaca.trading.client import TradingClient
-          except ImportError as e:
-              print(f"❌ ERROR: Failed to import alpaca-py: {e}")
-              sys.exit(1)
-
-          try:
-              client = TradingClient(api_key, secret_key, paper=True)
-              # Get account
-              account = client.get_account()
-          except Exception as e:
-              print(f"❌ ERROR: Failed to connect to Alpaca API: {e}")
-              sys.exit(1)
+          # Get account
+          account = client.get_account()
           equity = float(account.equity)
           cash = float(account.cash)
           buying_power = float(account.buying_power)
@@ -111,7 +96,7 @@ jobs:
                   "type": "option" if len(pos.symbol) > 10 else "stock"
               })
 
-          # Calculate total P/L from initial $30K (Jan 22, 2026 - CLAUDE.md)
+          # Calculate total P/L from initial $30,000 (Jan 22, 2026 paper account reset)
           initial_equity = 30000.0
           total_pl = equity - initial_equity
           total_pl_pct = (total_pl / initial_equity) * 100
@@ -232,14 +217,6 @@ jobs:
                   "last_updated": datetime.now(timezone.utc).isoformat(),
                   "trade_sync": "alpaca_api",
                   "sync_frequency_minutes": 5
-              },
-              # LL-312 Gap 1: Preserve paper_trading tracking across syncs
-              "paper_trading": {
-                  "start_date": existing_state.get("paper_trading", {}).get("start_date", "2026-01-22"),
-                  "target_duration_days": 90,
-                  "target_win_rate": 0.80,
-                  "current_day": max(1, (datetime.now(timezone.utc).date() - datetime.strptime(existing_state.get("paper_trading", {}).get("start_date", "2026-01-22"), "%Y-%m-%d").date()).days + 1),
-                  "notes": "Paper phase per CLAUDE.md - validate 80%+ win rate before scaling"
               }
           }
 
