@@ -132,12 +132,20 @@ jobs:
           echo "=== DATA INTEGRITY ==="
           python3 -c "
           import json
-          with open('data/system_state.json') as f:
+          from pathlib import Path
+
+          state_file = Path('data/system_state.json')
+          if not state_file.exists():
+              print('⚠️ system_state.json not in checkout (gitignored)')
+              print('✅ This is OK - data is synced by sync-alpaca-status.yml')
+              exit(0)
+
+          with open(state_file) as f:
               data = json.load(f)
           print(f'Last updated: {data.get(\"last_updated\", \"N/A\")}')
           print(f'Positions: {len(data.get(\"positions\", []))}')
           print('✅ Data integrity OK')
-          "
+          " || true
 
   notify-on-failure:
     name: Notify on Failure

@@ -23,8 +23,6 @@ jobs:
   cancel-stale:
     runs-on: ubuntu-22.04
     timeout-minutes: 5
-    env:
-      PAPER_TRADING: ${{ github.event.inputs.account == 'live' && 'false' || 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -42,14 +40,19 @@ jobs:
 
       - name: Set credentials based on account type
         run: |
-          if [ "${{ github.event.inputs.account }}" = "live" ]; then
+          # For scheduled runs, github.event.inputs is undefined - default to 'paper'
+          ACCOUNT="${{ github.event.inputs.account || 'paper' }}"
+
+          if [ "$ACCOUNT" = "live" ]; then
             echo "Using LIVE brokerage account"
             echo "ALPACA_API_KEY=${{ secrets.ALPACA_BROKERAGE_TRADING_API_KEY }}" >> $GITHUB_ENV
             echo "ALPACA_SECRET_KEY=${{ secrets.ALPACA_BROKERAGE_TRADING_API_SECRET }}" >> $GITHUB_ENV
+            echo "PAPER_TRADING=false" >> $GITHUB_ENV
           else
             echo "Using PAPER trading account"
             echo "ALPACA_API_KEY=${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}" >> $GITHUB_ENV
             echo "ALPACA_SECRET_KEY=${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}" >> $GITHUB_ENV
+            echo "PAPER_TRADING=true" >> $GITHUB_ENV
           fi
 
       - name: Cancel stale orders

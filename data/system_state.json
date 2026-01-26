@@ -442,10 +442,17 @@
     "positions_count": 0
   },
   "meta": {
-    "last_updated": "2026-01-26T13:55:54.510047",
+    "last_updated": "2026-01-26T13:51:06.303122",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5,
-    "last_sync": "2026-01-26T13:55:54.510052",
+    "last_sync": "2026-01-26T13:51:06.303137",
     "sync_mode": "skipped_no_keys"
+  },
+  "paper_trading": {
+    "start_date": "2026-01-22",
+    "target_duration_days": 90,
+    "target_win_rate": 0.8,
+    "notes": "Paper phase per CLAUDE.md - validate 80%+ win rate before scaling",
+    "current_day": 5
   }
 }
