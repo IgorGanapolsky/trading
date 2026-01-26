@@ -13,6 +13,11 @@ on:
       - '.github/workflows/close-shorts-first.yml'
       - 'scripts/close_shorts_first.py'
 
+# Prevent concurrent trade execution (LL-281 race condition fix)
+concurrency:
+  group: global-trade-execution
+  cancel-in-progress: false
+
 permissions:
   contents: write
 

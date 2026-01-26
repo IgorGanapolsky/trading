@@ -11,6 +11,11 @@ on:
     paths:
       - 'CLOSE_SPY_PUTS.trigger'
 
+# Prevent concurrent trade execution (LL-281 race condition fix)
+concurrency:
+  group: global-trade-execution
+  cancel-in-progress: false
+
 jobs:
   close-positions:
     runs-on: ubuntu-latest
