@@ -13,6 +13,11 @@ on:
     - cron: '0 15,16,17,18,19,20 * * 1-5'  # Top of hour, Mon-Fri
   workflow_dispatch:  # Allow manual trigger
 
+# Prevent concurrent trade execution (LL-281 race condition fix)
+concurrency:
+  group: global-trade-execution
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
