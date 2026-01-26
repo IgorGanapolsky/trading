@@ -1,13 +1,13 @@
 {
-  "alpha": 21.0,
+  "alpha": 22.0,
   "beta": 1.0,
   "feature_weights": {
     "ci": 0.3,
     "entry": 0.1,
-    "test": 1.9,
+    "test": 2.0,
     "pr": 0.1,
     "refactor": 0.1,
     "rag": 0.1
   },
-  "last_updated": "2026-01-26T14:47:55.261860"
+  "last_updated": "2026-01-26T15:04:24.534143"
 }
