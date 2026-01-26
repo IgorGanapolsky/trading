@@ -1,0 +1,38 @@
+{
+  "lesson_id": 311,
+  "date": "2026-01-26",
+  "category": "data-integrity",
+  "severity": "HIGH",
+  "title": "Git Merge Conflict Markers Break JSON Parsing",
+  "summary": "Git merge conflict markers (<<<<<<< ======= >>>>>>>) in system_state.json caused JSON parse errors and 5 test failures. Always check for unresolved conflicts after git operations.",
+  "source": "Session Jan 26, 2026 - Iteration 8 Ralph Mode",
+  "root_cause": {
+    "issue": "Unresolved git merge/stash conflict in data/system_state.json",
+    "symptoms": [
+      "JSON parse error at line 445",
+      "5 failing tests related to system state",
+      "Data integrity check marked BROKEN"
+    ],
+    "detection": "python3 scripts/system_health_check.py showed 'Invalid JSON: Expecting property name'"
+  },
+  "fix": {
+    "action": "Removed conflict markers and kept the more recent timestamp",
+    "file": "data/system_state.json",
+    "lines_removed": 7,
+    "lines_added": 0
+  },
+  "prevention": [
+    "1. After git stash pop or merge, always validate JSON: python3 -c \"import json; json.load(open('data/system_state.json'))\"",
+    "2. Run system_health_check.py at session start to catch issues early",
+    "3. Git hooks could auto-validate JSON files before commit"
+  ],
+  "tests_affected": [
+    "test_system_state_persistence",
+    "test_system_state_has_balanced_positions",
+    "test_puts_are_paired",
+    "test_position_manager_import",
+    "test_exit_conditions_defaults"
+  ],
+  "key_insight": "Data files (JSON, YAML) should be validated after ANY git operation that could introduce conflicts. A single conflict marker breaks the entire file.",
+  "tags": ["git", "data-integrity", "json", "merge-conflict", "testing"]
+}
