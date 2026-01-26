@@ -1,16 +1,20 @@
 # Force Iron Condor Trigger
 
-Triggered at: 2026-01-26T17:19:34Z
+Triggered at: 2026-01-26T17:24:59Z
 
-## Context
-- Account: $29,991.36 (clean, 0 positions)
-- Crisis Day 6: Must make money today per CEO directive
-- VIX threshold lowered to 12 per LL-316
-- Orphan positions closed per LL-317
+## RULE #1: DON'T LOSE MONEY
+
+Account: $29,991.36 (clean, 0 positions)
+Current Loss: $8.64 (-0.03%)
+Markets: OPEN (12:24 PM ET)
+
+## Execute NOW
+
+Per CEO directive: We must make money today.
+- Iron condor on SPY
+- 15-20 delta
+- 30-45 DTE
+- $5 wide wings
 
 ## North Star
 $6,000/month after-tax = FINANCIAL INDEPENDENCE
-
-## Phil Town Rule #1
-Don't lose money. Execute disciplined iron condor.
-
