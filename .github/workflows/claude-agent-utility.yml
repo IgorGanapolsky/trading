@@ -357,7 +357,7 @@ jobs:
           print(f'Equity: \${paper_equity:,.2f}')
           print(f'Cash: \${float(paper_acct.cash):,.2f}')
           print(f'Today P/L: \${paper_daily:,.2f}')
-          print(f'Total P/L: \${paper_equity - 5000:,.2f} ({((paper_equity/5000)-1)*100:.2f}%)')
+          print(f'Total P/L: \${paper_equity - 30000:,.2f} ({((paper_equity/30000)-1)*100:.2f}%)')
 
           paper_positions = paper_client.get_all_positions()
           print(f'Positions: {len(paper_positions)}')
