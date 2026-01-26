@@ -543,18 +543,11 @@ class IronCondorStrategy:
                         logger.info("🚀 Submitting MLeg iron condor order...")
                         order = client.submit_order(order_req)
 
-                        order_ids.append(
-                            {
-                                "order_id": str(order.id),
-                                "type": "mleg_iron_condor",
-                                "legs": [
-                                    long_put_sym,
-                                    short_put_sym,
-                                    short_call_sym,
-                                    long_call_sym,
-                                ],
-                            }
-                        )
+                        order_ids.append({
+                            "order_id": str(order.id),
+                            "type": "mleg_iron_condor",
+                            "legs": [long_put_sym, short_put_sym, short_call_sym, long_call_sym],
+                        })
 
                         logger.info(f"✅ MLeg order submitted: {order.id}")
                         logger.info(f"   Status: {order.status}")
