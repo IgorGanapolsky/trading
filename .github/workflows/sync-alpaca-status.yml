@@ -42,9 +42,10 @@ jobs:
 
       - name: Sync Alpaca Status
         env:
-          # CRITICAL: Use 5K secrets (they point to $30K account - historical naming)
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+          # CRITICAL: Use 30K secrets (5K secrets appear to be empty/invalid)
+          # The 30K secrets point to the $30K paper account (Jan 22, 2026 reset)
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
         run: |
           python3 << 'EOF'
           import os
@@ -96,7 +97,7 @@ jobs:
                   "type": "option" if len(pos.symbol) > 10 else "stock"
               })
 
-          # Calculate total P/L from initial $30,000 (Jan 22, 2026 paper account reset)
+          # Calculate total P/L from initial $30K (Jan 22, 2026 - CLAUDE.md)
           initial_equity = 30000.0
           total_pl = equity - initial_equity
           total_pl_pct = (total_pl / initial_equity) * 100
@@ -217,6 +218,14 @@ jobs:
                   "last_updated": datetime.now(timezone.utc).isoformat(),
                   "trade_sync": "alpaca_api",
                   "sync_frequency_minutes": 5
+              },
+              # LL-312 Gap 1: Preserve paper_trading tracking across syncs
+              "paper_trading": {
+                  "start_date": existing_state.get("paper_trading", {}).get("start_date", "2026-01-22"),
+                  "target_duration_days": 90,
+                  "target_win_rate": 0.80,
+                  "current_day": max(1, (datetime.now(timezone.utc).date() - datetime.strptime(existing_state.get("paper_trading", {}).get("start_date", "2026-01-22"), "%Y-%m-%d").date()).days + 1),
+                  "notes": "Paper phase per CLAUDE.md - validate 80%+ win rate before scaling"
               }
           }
 
