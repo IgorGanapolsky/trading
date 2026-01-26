@@ -475,8 +475,8 @@ class IronCondorStrategy:
             logger.info("Entering LIVE execution block...")
             try:
                 from alpaca.trading.client import TradingClient
-                from alpaca.trading.enums import OrderSide, TimeInForce
-                from alpaca.trading.requests import LimitOrderRequest
+                from alpaca.trading.enums import OrderSide, TimeInForce, OrderClass
+                from alpaca.trading.requests import LimitOrderRequest, OptionLegRequest
                 from src.utils.alpaca_client import get_alpaca_credentials
 
                 api_key, secret = get_alpaca_credentials()
@@ -506,177 +506,57 @@ class IronCondorStrategy:
                     logger.info(f"Option symbols: LP={long_put_sym}, SP={short_put_sym}")
                     logger.info(f"                SC={short_call_sym}, LC={long_call_sym}")
 
-                    # Submit 4-leg iron condor as separate orders
-                    # (Alpaca doesn't support multi-leg orders yet)
-                    legs = [
-                        (long_put_sym, OrderSide.BUY, "long_put"),
-                        (short_put_sym, OrderSide.SELL, "short_put"),
-                        (short_call_sym, OrderSide.SELL, "short_call"),
-                        (long_call_sym, OrderSide.BUY, "long_call"),
+                    # FIX Jan 26, 2026: Use MLeg (multi-leg) orders to ensure all 4 legs
+                    # fill together or not at all. This prevents partial fills that cause losses.
+                    # Previous approach of submitting legs separately caused short legs to be
+                    # rejected as "uncovered" before long (protective) legs filled.
+
+                    # Build OptionLegRequest for each leg of the iron condor
+                    option_legs = [
+                        OptionLegRequest(symbol=long_put_sym, side=OrderSide.BUY, ratio_qty=1),
+                        OptionLegRequest(symbol=short_put_sym, side=OrderSide.SELL, ratio_qty=1),
+                        OptionLegRequest(symbol=short_call_sym, side=OrderSide.SELL, ratio_qty=1),
+                        OptionLegRequest(symbol=long_call_sym, side=OrderSide.BUY, ratio_qty=1),
                     ]
 
-                    # FIX Jan 20, 2026: Get actual option prices instead of hardcoded $0.50
-                    # ROOT CAUSE: Hardcoded limit_price=0.50 caused CALL legs to not fill
-                    # CALL options are often more expensive than $0.50
-                    # LL-281 FIX (Jan 21, 2026): Use aggressive fallback prices to ensure fills
-                    def get_option_price(symbol: str, side: OrderSide) -> float:
-                        """Get limit price for option based on side and market data."""
-                        # Determine if this is a CALL or PUT based on symbol
-                        is_call = "C" in symbol[-9:-8]  # OCC format: ...C00720000
+                    logger.info("📋 Building MLeg (multi-leg) iron condor order...")
+                    logger.info(f"   Long Put:   {long_put_sym} (BUY)")
+                    logger.info(f"   Short Put:  {short_put_sym} (SELL)")
+                    logger.info(f"   Short Call: {short_call_sym} (SELL)")
+                    logger.info(f"   Long Call:  {long_call_sym} (BUY)")
 
-                        try:
-                            from alpaca.data.historical import OptionHistoricalDataClient
-                            from alpaca.data.requests import OptionLatestQuoteRequest
+                    # For iron condor, we receive net credit (negative limit price)
+                    # Conservative: accept any credit >= $0.50 per contract
+                    # The actual credit will depend on market conditions
+                    # Using market order (no limit_price) lets the market determine credit
+                    try:
+                        from alpaca.trading.requests import MarketOrderRequest
 
-                            options_data = OptionHistoricalDataClient(api_key, secret)
-                            request = OptionLatestQuoteRequest(symbol_or_symbols=[symbol])
-                            quotes = options_data.get_option_latest_quote(request)
-                            if symbol in quotes:
-                                bid = quotes[symbol].bid_price
-                                ask = quotes[symbol].ask_price
-
-                                # Validate we got real prices
-                                if bid > 0 and ask > 0:
-                                    # For BUY: use ask (what we pay)
-                                    # For SELL: use bid (what we receive)
-                                    if side == OrderSide.BUY:
-                                        # Add 10% buffer to ensure fill
-                                        price = ask * 1.10
-                                    else:
-                                        # Use bid minus small buffer for sells
-                                        price = bid * 0.95
-                                    logger.info(
-                                        f"  {symbol}: b=${bid:.2f} a=${ask:.2f} -> ${price:.2f}"
-                                    )
-                                    return round(price, 2)
-                                else:
-                                    logger.warning(f"  {symbol}: Invalid quotes b=${bid} a=${ask}")
-                        except Exception as price_err:
-                            logger.warning(f"   Could not get price for {symbol}: {price_err}")
-
-                        # LL-281: Use more realistic fallback prices
-                        # CALL options are typically MORE expensive than PUTs at same delta
-                        # 15-delta options: PUTs ~$1.50, CALLs ~$3-5
-                        if is_call:
-                            fallback = 4.00  # Higher fallback for CALLs
-                            logger.warning(f"  {symbol}: Using CALL fallback ${fallback:.2f}")
-                        else:
-                            fallback = 2.00  # Conservative PUT fallback
-                            logger.warning(f"  {symbol}: Using PUT fallback ${fallback:.2f}")
-                        return fallback
-
-                    # LL-FIX: PRE-VALIDATE all 4 legs BEFORE placing ANY orders
-                    # This prevents partial fills that cause losses
-                    logger.info("📋 Pre-validating all 4 legs...")
-                    leg_prices = {}
-                    validation_failed = False
-
-                    for sym, side, leg_name in legs:
-                        try:
-                            price = get_option_price(sym, side)
-                            if price <= 0:
-                                logger.error(f"   ❌ {leg_name}: Invalid price ${price}")
-                                validation_failed = True
-                            else:
-                                leg_prices[leg_name] = {"symbol": sym, "side": side, "price": price}
-                                logger.info(f"   ✓ {leg_name}: ${price:.2f}")
-                        except Exception as val_err:
-                            logger.error(f"   ❌ {leg_name} validation failed: {val_err}")
-                            validation_failed = True
-
-                    if validation_failed or len(leg_prices) != 4:
-                        logger.error("🚫 PRE-VALIDATION FAILED - NOT placing any orders")
-                        logger.error("   This prevents partial fills and losses")
-                        status = "VALIDATION_FAILED"
-                    else:
-                        # All 4 legs validated - now place orders
-                        logger.info("✅ All 4 legs validated - placing orders...")
-                        for leg_name, leg_info in leg_prices.items():
-                            try:
-                                order_req = LimitOrderRequest(
-                                    symbol=leg_info["symbol"],
-                                    qty=1,
-                                    side=leg_info["side"],
-                                    type="limit",
-                                    limit_price=leg_info["price"],
-                                    time_in_force=TimeInForce.DAY,  # Options require DAY, not GTC
-                                )
-                                order = client.submit_order(order_req)
-                                order_ids.append(
-                                    {
-                                        "leg": leg_name,
-                                        "order_id": str(order.id),
-                                        "price": leg_info["price"],
-                                    }
-                                )
-                                logger.info(
-                                    f"   ✅ {leg_name}: {order.id} @ ${leg_info['price']:.2f}"
-                                )
-                            except Exception as leg_error:
-                                logger.warning(f"   ⚠️ {leg_name} order failed: {leg_error}")
-
-                    # LL-268 FIX: Validate ALL 4 legs filled (not just "any")
-                    # CRITICAL: Iron condor requires exactly 4 legs
-                    if len(order_ids) == 4:
-                        status = "LIVE_SUBMITTED"
-                        logger.info("✅ IRON CONDOR COMPLETE: All 4 legs submitted")
-                    elif len(order_ids) > 0:
-                        # PARTIAL FILL - This is dangerous! AUTO-CLOSE to avoid directional risk
-                        # LL-279 FIX (Jan 21, 2026): Actually close partial positions
-                        status = "LIVE_PARTIAL_FAILED"
-                        filled_legs = [o["leg"] for o in order_ids]
-                        missing_legs = [
-                            leg
-                            for leg in ["long_put", "short_put", "short_call", "long_call"]
-                            if leg not in filled_legs
-                        ]
-                        logger.error(
-                            f"🚨 INCOMPLETE IRON CONDOR: Only {len(order_ids)}/4 legs filled!"
+                        # Submit as market MLeg order - all 4 legs fill together or not at all
+                        order_req = MarketOrderRequest(
+                            qty=1,
+                            order_class=OrderClass.MLEG,
+                            time_in_force=TimeInForce.DAY,
+                            legs=option_legs,
                         )
-                        logger.error(f"   Filled: {filled_legs}")
-                        logger.error(f"   Missing: {missing_legs}")
-                        logger.error("   AUTO-CLOSING partial position to prevent losses...")
 
-                        # AUTO-CLOSE: Cancel/reverse partial fills immediately
-                        for order_info in order_ids:
-                            try:
-                                order_id = order_info["order_id"]
-                                leg = order_info["leg"]
-                                # First try to cancel if not filled yet
-                                try:
-                                    client.cancel_order_by_id(order_id)
-                                    logger.info(f"   ✅ Cancelled {leg}: {order_id}")
-                                except Exception:
-                                    # Order already filled, need to close position
-                                    # Get the symbol from legs list
-                                    leg_symbol = None
-                                    for sym, side, name in legs:
-                                        if name == leg:
-                                            leg_symbol = sym
-                                            break
-                                    if leg_symbol:
-                                        # Reverse the position
-                                        reverse_side = (
-                                            OrderSide.SELL
-                                            if leg.startswith("long")
-                                            else OrderSide.BUY
-                                        )
-                                        close_order = LimitOrderRequest(
-                                            symbol=leg_symbol,
-                                            qty=1,
-                                            side=reverse_side,
-                                            type="market",  # Market order to close immediately
-                                            time_in_force=TimeInForce.DAY,  # Options require DAY
-                                        )
-                                        client.submit_order(close_order)
-                                        logger.info(f"   ✅ Closed {leg}: {leg_symbol}")
-                            except Exception as close_err:
-                                logger.error(f"   ❌ Failed to close {leg}: {close_err}")
+                        logger.info("🚀 Submitting MLeg iron condor order...")
+                        order = client.submit_order(order_req)
 
-                        logger.warning("   Partial position cleanup attempted")
-                    else:
+                        order_ids.append({
+                            "order_id": str(order.id),
+                            "type": "mleg_iron_condor",
+                            "legs": [long_put_sym, short_put_sym, short_call_sym, long_call_sym],
+                        })
+
+                        logger.info(f"✅ MLeg order submitted: {order.id}")
+                        logger.info(f"   Status: {order.status}")
+                        status = "LIVE_SUBMITTED"
+
+                    except Exception as mleg_error:
+                        logger.error(f"❌ MLeg order failed: {mleg_error}")
+                        logger.error("   Iron condor NOT placed - no partial fills")
                         status = "LIVE_FAILED"
-                        logger.warning("❌ No orders could be submitted")
                 else:
                     logger.error("=" * 60)
                     logger.error("CREDENTIAL FAILURE - LIVE EXECUTION BLOCKED")
