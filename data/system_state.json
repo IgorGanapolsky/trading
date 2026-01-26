@@ -481,7 +481,7 @@
     "last_trade_date": "2026-01-26",
     "today_trades": 0,
     "total_trades_today": 0,
-    "last_trade_symbol": "none"
+    "last_trade_symbol": "SYNCED"
   },
   "risk": {
     "status": "WARNING - NEGATIVE P/L",
@@ -495,7 +495,7 @@
     "positions_count": 0
   },
   "meta": {
-    "last_updated": "2026-01-26T16:23:07.974839+00:00",
+    "last_updated": "2026-01-26T17:19:56.473388+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5
   },
