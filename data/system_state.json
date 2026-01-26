@@ -442,10 +442,10 @@
     "positions_count": 0
   },
   "meta": {
-    "last_updated": "2026-01-26T14:47:20.567070",
+    "last_updated": "2026-01-26T15:15:19.625106",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5,
-    "last_sync": "2026-01-26T14:47:20.567076",
+    "last_sync": "2026-01-26T15:15:19.625112",
     "sync_mode": "skipped_no_keys"
   }
 }
