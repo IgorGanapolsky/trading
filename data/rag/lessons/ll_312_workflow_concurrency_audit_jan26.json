@@ -1,0 +1,41 @@
+{
+  "lesson_id": 312,
+  "date": "2026-01-26",
+  "category": "safety-audit",
+  "severity": "HIGH",
+  "title": "Workflow Concurrency Audit - 6 Missing Global Trade Locks",
+  "summary": "Audit discovered 6 trading workflows missing the global-trade-execution concurrency group, which was mandated by LL-281 after the position accumulation crisis.",
+  "source": "Session Jan 26, 2026 - Ralph Mode Iteration 9",
+  "root_cause": {
+    "issue": "Incomplete implementation of LL-281 concurrency fix",
+    "symptoms": [
+      "6 workflows could run trades concurrently with other workflows",
+      "Potential for position accumulation race condition to recur"
+    ],
+    "detection": "Systematic grep audit of all trading workflows"
+  },
+  "workflows_fixed": [
+    "bypass-pdt-close.yml",
+    "close-excess-long-puts.yml",
+    "close-non-daytrade.yml",
+    "close-orphan-spy-puts.yml",
+    "close-shorts-first.yml",
+    "force-close-position.yml",
+    "manage-iron-condor-positions.yml"
+  ],
+  "fix": {
+    "action": "Added concurrency group to all 6 workflows",
+    "concurrency_config": {
+      "group": "global-trade-execution",
+      "cancel-in-progress": false
+    }
+  },
+  "prevention": [
+    "1. When creating new trading workflows, ALWAYS include global-trade-execution concurrency",
+    "2. Run periodic audits: grep -L 'global-trade-execution' .github/workflows/*trade*.yml",
+    "3. Add CI check to validate all trading workflows have concurrency group"
+  ],
+  "key_insight": "Safety measures must be systematically audited - partial implementation creates false sense of security.",
+  "related_lessons": ["LL-281", "LL-282"],
+  "tags": ["safety", "concurrency", "workflows", "race-condition", "audit"]
+}
