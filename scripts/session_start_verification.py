@@ -83,7 +83,8 @@ def fetch_alpaca_data():
         equity = float(account["equity"])
         last_equity = float(account["last_equity"])
         today_pl = equity - last_equity
-        total_pl = equity - 5000.0  # From initial $5K
+        initial_equity = 30000.0  # $30K paper account (Jan 22, 2026)
+        total_pl = equity - initial_equity
 
         return {
             "source": "ALPACA_API",
@@ -91,7 +92,7 @@ def fetch_alpaca_data():
             "cash": float(account["cash"]),
             "today_pl": today_pl,
             "total_pl": total_pl,
-            "total_pl_pct": (total_pl / 5000.0) * 100,
+            "total_pl_pct": (total_pl / initial_equity) * 100,
             "positions_count": len(positions),
             "positions": positions,
             "timestamp": datetime.now().isoformat(),

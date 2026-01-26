@@ -263,8 +263,8 @@ def validate_system_state(state_path: Path = SYSTEM_STATE_PATH) -> DataIntegrity
 
         # Check for data drift (equity changed dramatically)
         # This would compare against previous sync, but we need history for that
-        # For now, just warn if equity is suspiciously different from initial $5000
-        initial_equity = 5000.0
+        # For now, just warn if equity is suspiciously different from initial $30,000 (Jan 22, 2026)
+        initial_equity = 30000.0
         drift_pct = abs(equity - initial_equity) / initial_equity * 100
         if drift_pct > 20:  # More than 20% change from initial
             warnings.append(f"Large equity drift: {drift_pct:.1f}% from initial ${initial_equity}")
