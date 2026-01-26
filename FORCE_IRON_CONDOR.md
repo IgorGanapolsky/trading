@@ -1,3 +1,4 @@
 # Force Iron Condor Trigger
 
-Triggered at Mon Jan 26 16:53:34 UTC 2026 by Claude to execute iron condor trade.
+Triggered at Mon Jan 26 17:08:10 UTC 2026 to test MLeg order implementation.
+This should submit all 4 legs as a single atomic order.
