@@ -1,14 +1,23 @@
-# LL-313: RAG Hooks Audit - SessionEnd Hook Ineffective
+# LL-313: RAG Hooks Audit - SessionEnd Hook Ineffective (FIXED)
 
 **ID**: LL-313
 **Date**: 2026-01-26
 **Severity**: HIGH
 **Category**: system-architecture, hooks
 **Tags**: `rag`, `hooks`, `claude-code`, `session-end`, `stop-hook`
+**Status**: RESOLVED
 
 ## Incident Summary
 
 Audit of RAG hooks against official Claude Code documentation revealed that `capture_session_learnings.sh` is configured as a **SessionEnd** hook, which cannot inject context to Claude. This means lesson recording prompts are never seen by Claude.
+
+## Resolution (Jan 26, 2026)
+
+Created new `lesson_capture_stop_hook.sh` that:
+1. Runs as a **Stop** hook (can inject context to Claude)
+2. Uses `"decision": "block"` JSON output to prevent stopping
+3. Prompts Claude to capture lessons before session ends
+4. Detects significant work via transcript analysis
 
 ## Root Cause
 

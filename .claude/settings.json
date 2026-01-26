@@ -197,6 +197,11 @@
             "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/ralph_stop_hook.sh",
             "timeout": 5000
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/lesson_capture_stop_hook.sh",
+            "timeout": 10
           }
         ]
       }
