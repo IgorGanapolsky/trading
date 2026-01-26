@@ -1,9 +1,16 @@
 #!/bin/bash
 # Ralph Wiggum Stop Hook - Intercepts exit and re-feeds prompt for autonomous looping
 # Based on: https://ghuntley.com/ralph/
+# Per Claude Code docs: Stop hooks must output JSON with "decision": "block" to prevent stopping
+
+set -euo pipefail
 
 RALPH_STATE_FILE="${CLAUDE_PROJECT_DIR:-.}/.claude/ralph_state.json"
 RALPH_PROMPT_FILE="${CLAUDE_PROJECT_DIR:-.}/.claude/ralph_prompt.txt"
+
+# Read hook input from stdin (contains stop_hook_active flag)
+HOOK_INPUT=$(cat)
+STOP_HOOK_ACTIVE=$(echo "$HOOK_INPUT" | jq -r '.stop_hook_active // false')
 
 # Check if Ralph mode is active
 if [ ! -f "$RALPH_STATE_FILE" ]; then
@@ -51,17 +58,16 @@ with open('$RALPH_STATE_FILE', 'w') as f:
     json.dump(state, f, indent=2)
 "
 
-echo "═══════════════════════════════════════════════════════════"
-echo "🔄 RALPH MODE: Iteration $NEW_ITERATION/$MAX_ITERATIONS"
-echo "═══════════════════════════════════════════════════════════"
-echo ""
-echo "📋 Continuing with prompt:"
-echo "---"
-cat "$RALPH_PROMPT_FILE" 2>/dev/null
-echo "---"
-echo ""
-echo "💡 To cancel: /cancel-ralph"
-echo "═══════════════════════════════════════════════════════════"
+# Read the prompt for the reason
+RALPH_PROMPT=$(cat "$RALPH_PROMPT_FILE" 2>/dev/null || echo "Continue with the assigned task")
 
-# Exit cleanly - Ralph mode continuation is handled by prompt injection
+# Per Claude Code docs: output JSON with "decision": "block" to prevent stopping
+# The "reason" tells Claude why it should continue
+cat <<EOF
+{
+  "decision": "block",
+  "reason": "🔄 RALPH MODE: Iteration $NEW_ITERATION/$MAX_ITERATIONS. Continue working on your mission: $RALPH_PROMPT. To stop, output <promise>MISSION_COMPLETE</promise> or use /cancel-ralph."
+}
+EOF
+
 exit 0

@@ -62,7 +62,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [[ \"$CLAUDE_FILE_PATH\" == *.py ]]; then ruff format --quiet \"$CLAUDE_FILE_PATH\" 2>/dev/null || true; fi",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/format_python.sh",
             "timeout": 5
           },
           {
@@ -75,7 +75,6 @@
     ],
     "UserPromptSubmit": [
       {
-        "matcher": ".*",
         "hooks": [
           {
             "type": "command",
@@ -117,7 +116,6 @@
     ],
     "SessionStart": [
       {
-        "matcher": ".*",
         "hooks": [
           {
             "type": "command",
@@ -179,7 +177,6 @@
     ],
     "SessionEnd": [
       {
-        "matcher": ".*",
         "hooks": [
           {
             "type": "command",
@@ -191,7 +188,6 @@
     ],
     "Stop": [
       {
-        "matcher": ".*",
         "hooks": [
           {
             "type": "command",

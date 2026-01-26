@@ -1,11 +1,18 @@
 #!/bin/bash
 # Auto-run tests when test files are edited
 # Triggered by PostToolUse hook on Write|Edit
+# Per Claude Code docs: hook data comes via JSON on stdin, not env vars
 
-FILE_PATH="${CLAUDE_FILE_PATH:-}"
+set -euo pipefail
+
+# Read hook input from stdin
+HOOK_INPUT=$(cat)
+
+# Extract file_path from tool_input JSON
+FILE_PATH=$(echo "$HOOK_INPUT" | jq -r '.tool_input.file_path // empty')
 
 # Only run for test files
-if [[ ! "$FILE_PATH" =~ test.*\.py$ ]] && [[ ! "$FILE_PATH" =~ _test\.py$ ]]; then
+if [[ -z "$FILE_PATH" ]] || { [[ ! "$FILE_PATH" =~ test.*\.py$ ]] && [[ ! "$FILE_PATH" =~ _test\.py$ ]]; }; then
     exit 0
 fi
 

@@ -42,8 +42,18 @@ BLOCKED_FILES=(
 # Check if file is in blocked list
 for BLOCKED in "${BLOCKED_FILES[@]}"; do
     if [[ "$RELATIVE_PATH" == "$BLOCKED" ]]; then
-        echo "{\"continue\": false, \"decision\": \"deny\", \"reason\": \"🚫 BLOCKED: $BLOCKED is a critical file. It should not be manually edited.\n\nWhy protected:\n- .env: Contains API credentials, manual edits can corrupt format\n- system_state.json: Modified only by autonomous_trader.py\n- backtest_results_60day.json: Validation proof, must remain unmodified\n\nIf you need to modify this file, ask Igor for approval.\"}" >&1
-        exit 2
+        # Per Claude Code docs: use exit 0 with JSON for PreToolUse decision control
+        # Exit code 2 only uses stderr, JSON in stdout is ignored
+        cat <<EOF
+{
+  "hookSpecificOutput": {
+    "hookEventName": "PreToolUse",
+    "permissionDecision": "deny",
+    "permissionDecisionReason": "🚫 BLOCKED: $BLOCKED is a critical file. It should not be manually edited. Why protected: .env (API credentials), system_state.json (trading state), backtest_results_60day.json (validation proof). Ask Igor for approval."
+  }
+}
+EOF
+        exit 0
     fi
 done
 
