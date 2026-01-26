@@ -215,6 +215,24 @@ def close_iron_condor(client, ic: dict, reason: str, dry_run: bool = False) -> b
     return success
 
 
+def get_alpaca_credentials():
+    """Get Alpaca credentials from environment variables (CI-compatible)."""
+    import os
+
+    # Try multiple env var names for compatibility
+    api_key = (
+        os.environ.get("ALPACA_API_KEY")
+        or os.environ.get("ALPACA_PAPER_TRADING_5K_API_KEY")
+        or os.environ.get("ALPACA_PAPER_TRADING_30K_API_KEY")
+    )
+    secret_key = (
+        os.environ.get("ALPACA_SECRET_KEY")
+        or os.environ.get("ALPACA_PAPER_TRADING_5K_API_SECRET")
+        or os.environ.get("ALPACA_PAPER_TRADING_30K_API_SECRET")
+    )
+    return api_key, secret_key
+
+
 def main(dry_run: bool = False):
     """Main position management loop."""
     try:
@@ -222,8 +240,6 @@ def main(dry_run: bool = False):
     except ImportError:
         logger.error("alpaca-py not installed")
         sys.exit(1)
-
-    from src.utils.alpaca_client import get_alpaca_credentials
 
     api_key, secret_key = get_alpaca_credentials()
     if not api_key or not secret_key:
