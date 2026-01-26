@@ -15,8 +15,12 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import requests
+
+# Use Eastern Time for all blog dates (CEO timezone)
+ET = ZoneInfo("America/New_York")
 
 
 def get_devto_api_key() -> str | None:
@@ -180,8 +184,11 @@ def extract_discovery_content(lesson_file: Path) -> dict:
 
 def generate_blog_post(discoveries: list[dict], commits: list[dict]) -> dict:
     """Generate an engaging blog post from discoveries."""
-    date = datetime.now().strftime("%Y-%m-%d")
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # Use Eastern Time for dates (CEO timezone)
+    now_et = datetime.now(ET)
+    date = now_et.strftime("%Y-%m-%d")
+    timestamp = now_et.strftime("%Y-%m-%d %H:%M:%S")
+    day_of_week = now_et.strftime("%A")  # e.g., "Sunday"
     repo_url = "https://github.com/IgorGanapolsky/trading"
 
     # Create engaging title based on content
@@ -209,6 +216,8 @@ date: {timestamp}
 categories: [engineering, lessons-learned, ai-trading]
 tags: [{", ".join(list(all_tags)[:4]) or "self-healing, ci-cd, automation"}]
 ---
+
+**{day_of_week}, {now_et.strftime('%B %d, %Y')}** (Eastern Time)
 
 Building an autonomous AI trading system means things break. Here's what we discovered, fixed, and learned today.
 
