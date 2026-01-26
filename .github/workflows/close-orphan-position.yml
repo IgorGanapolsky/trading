@@ -48,9 +48,16 @@ jobs:
           ALPACA_PAPER_TRADING_30K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
           ALPACA_PAPER_TRADING_30K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
           PAPER_TRADING: "true"
-          TARGET_SYMBOL: ${{ github.event.inputs.target_symbol || 'SPY260220P00658000' }}
+          TARGET_SYMBOL: ${{ github.event.inputs.target_symbol || 'ALL' }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
-        run: python3 scripts/close_orphan_put.py
+        run: |
+          if [ "$TARGET_SYMBOL" = "ALL" ]; then
+            echo "Closing ALL option positions..."
+            python3 scripts/close_all_options.py
+          else
+            echo "Closing specific symbol: $TARGET_SYMBOL"
+            python3 scripts/close_orphan_put.py
+          fi
 
       - name: Summary
         if: always()

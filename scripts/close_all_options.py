@@ -1,73 +1,82 @@
 #!/usr/bin/env python3
 """
-EMERGENCY: Close ALL option positions to stop losses.
-Phil Town Rule #1: Don't lose money.
+Close All Option Positions
+
+Closes all open option positions using Alpaca's close_position() API.
+Created Jan 26, 2026 to clean up orphan positions from partial fills.
 """
 
 import os
 import sys
+from datetime import datetime
+from pathlib import Path
 
-api_key = os.environ.get("ALPACA_API_KEY") or os.environ.get("ALPACA_PAPER_TRADING_30K_API_KEY")
-api_secret = os.environ.get("ALPACA_SECRET_KEY") or os.environ.get(
-    "ALPACA_PAPER_TRADING_30K_API_SECRET"
-)
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
-if not api_key or not api_secret:
-    print("ERROR: Missing Alpaca API credentials")
-    sys.exit(1)
+from src.utils.alpaca_client import get_alpaca_client
 
-from alpaca.trading.client import TradingClient
 
-print("=" * 60)
-print("CLOSE ALL OPTIONS - Phil Town Rule #1")
-print("=" * 60)
+def close_all_options():
+    """Close all option positions."""
+    paper = os.getenv("PAPER_TRADING", "true").lower() == "true"
+    dry_run = os.getenv("DRY_RUN", "false").lower() == "true"
 
-client = TradingClient(api_key, api_secret, paper=True)
+    print("=" * 60)
+    print(f"CLOSE ALL OPTION POSITIONS - {datetime.now()}")
+    print("=" * 60)
+    print(f"Paper Trading: {paper}")
+    print(f"Dry Run: {dry_run}")
+    print()
 
-# Get account status
-account = client.get_account()
-print(f"\nEquity: ${float(account.equity):,.2f}")
-print(f"Cash: ${float(account.cash):,.2f}")
+    client = get_alpaca_client(paper=paper)
 
-# Get all positions
-positions = client.get_all_positions()
-option_positions = [p for p in positions if len(p.symbol) > 10]  # Options have long symbols
+    if not client:
+        print("Failed to get Alpaca client")
+        return False
 
-print(f"\nFound {len(option_positions)} option positions:")
-total_pl = 0
-for pos in option_positions:
-    pl = float(pos.unrealized_pl)
-    total_pl += pl
-    qty = float(pos.qty)
-    print(f"  {pos.symbol}: qty={qty:+.0f}, P/L=${pl:+.2f}")
+    # Get current positions
+    positions = client.get_all_positions()
 
-print(f"\nTotal Unrealized P/L: ${total_pl:+.2f}")
+    # Filter for option positions (symbols > 10 chars)
+    option_positions = [p for p in positions if len(p.symbol) > 10]
 
-if not option_positions:
-    print("\n✅ No option positions to close!")
-    sys.exit(0)
+    print(f"Total positions: {len(positions)}")
+    print(f"Option positions: {len(option_positions)}")
+    print()
 
-print("\n" + "=" * 60)
-print("CLOSING ALL POSITIONS")
-print("=" * 60)
+    if not option_positions:
+        print("No option positions to close")
+        return True
 
-closed = 0
-failed = 0
+    print("Option positions to close:")
+    for pos in option_positions:
+        qty = float(pos.qty)
+        pl = float(pos.unrealized_pl)
+        print(f"  {pos.symbol}: {qty:+.0f} | P/L: ${pl:+.2f}")
 
-for pos in option_positions:
-    symbol = pos.symbol
-    print(f"\nClosing {symbol}...")
-    try:
-        result = client.close_position(symbol)
-        print(f"  ✅ SUCCESS - Order ID: {result.id if hasattr(result, 'id') else 'N/A'}")
-        closed += 1
-    except Exception as e:
-        print(f"  ❌ FAILED: {e}")
-        failed += 1
+    if dry_run:
+        print(f"\nDRY RUN - Would close {len(option_positions)} positions")
+        return True
 
-print("\n" + "=" * 60)
-print(f"RESULT: {closed} closed, {failed} failed")
-print("=" * 60)
+    # Close each option position
+    success_count = 0
+    for pos in option_positions:
+        print(f"\nClosing {pos.symbol}...")
+        try:
+            result = client.close_position(pos.symbol)
+            print(f"   Close initiated: Order {result.id if hasattr(result, 'id') else result}")
+            success_count += 1
+        except Exception as e:
+            print(f"   Failed: {e}")
 
-if failed > 0:
-    sys.exit(1)
+    print(f"\n{'=' * 60}")
+    print(f"Closed {success_count}/{len(option_positions)} positions")
+    print("=" * 60)
+
+    return success_count == len(option_positions)
+
+
+if __name__ == "__main__":
+    success = close_all_options()
+    sys.exit(0 if success else 1)
