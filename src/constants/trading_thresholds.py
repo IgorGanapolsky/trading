@@ -115,9 +115,13 @@ class RiskThresholds:
 
     # VIX optimal range for iron condors (LL-269 research, Jan 21 2026)
     # VIX 15-25: Ideal - premiums decent, risk manageable
-    # VIX < 15: Avoid - premiums too thin
+    # VIX < 15: Lower premiums but still tradeable in paper phase
     # VIX > 25: Caution - volatility too high, wider strikes needed
-    VIX_OPTIMAL_MIN = 15  # Don't trade when VIX < 15 (thin premiums)
+    #
+    # CRITICAL FIX Jan 26, 2026 (LL-316):
+    # VIX_OPTIMAL_MIN=15 blocked ALL trades for 5 days during paper validation!
+    # Lowered to 12 to allow paper trading validation. Live trading may want 15.
+    VIX_OPTIMAL_MIN = 12  # Allow paper trading even with thin premiums
     VIX_OPTIMAL_MAX = 25  # Use caution when VIX > 25 (high volatility)
 
     # Stop loss levels
