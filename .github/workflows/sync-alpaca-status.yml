@@ -48,23 +48,38 @@ jobs:
         run: |
           python3 << 'EOF'
           import os
+          import sys
           import json
           from datetime import datetime, timezone
           from pathlib import Path
-          from alpaca.trading.client import TradingClient
-
-          api_key = os.environ['ALPACA_API_KEY']
-          secret_key = os.environ['ALPACA_SECRET_KEY']
 
           print("=" * 60)
           print("ALPACA PAPER ACCOUNT SYNC")
           print(f"Timestamp: {datetime.now(timezone.utc).isoformat()}")
           print("=" * 60)
 
-          client = TradingClient(api_key, secret_key, paper=True)
+          # Validate environment variables first
+          api_key = os.environ.get('ALPACA_API_KEY', '')
+          secret_key = os.environ.get('ALPACA_SECRET_KEY', '')
 
-          # Get account
-          account = client.get_account()
+          if not api_key or not secret_key:
+              print("❌ ERROR: ALPACA_API_KEY or ALPACA_SECRET_KEY not set")
+              print("Check GitHub secrets configuration")
+              sys.exit(1)
+
+          try:
+              from alpaca.trading.client import TradingClient
+          except ImportError as e:
+              print(f"❌ ERROR: Failed to import alpaca-py: {e}")
+              sys.exit(1)
+
+          try:
+              client = TradingClient(api_key, secret_key, paper=True)
+              # Get account
+              account = client.get_account()
+          except Exception as e:
+              print(f"❌ ERROR: Failed to connect to Alpaca API: {e}")
+              sys.exit(1)
           equity = float(account.equity)
           cash = float(account.cash)
           buying_power = float(account.buying_power)
