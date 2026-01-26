@@ -2,7 +2,14 @@
 
 **Date**: 2026-01-15
 **Category**: Strategy, Math, Research
-**Severity**: CRITICAL
+**Severity**: INFO
+**Status**: SUPERSEDED
+
+> **Note (Jan 22, 2026)**: This analysis was for the $5K account. Strategy has been updated:
+> - New account: $30K (fresh start Jan 22, 2026)
+> - New strategy: Iron condors on SPY (not credit spreads)
+> - New target: $6K/month after-tax at $600K capital (see CLAUDE.md)
+> - The math principles remain valid but projections are outdated.
 
 ## The Core Problem
 

@@ -1,10 +1,17 @@
 # LL-220: North Star 30-Month Roadmap to $100/Day
 
 **Created**: January 15, 2026
+**Status**: SUPERSEDED
 **Starting Capital**: $4,959.26
 **Daily Deposits**: $25/day (~$750/month)
 **Target**: $100/day ($2,000/month) capacity
 **Strategy**: Credit spreads on SPY/IWM with 30-delta short strikes
+
+> **Note (Jan 22, 2026)**: This roadmap was for the $5K account. New strategy:
+> - Fresh start with $30K (Jan 22, 2026)
+> - Iron condors on SPY (15-20 delta, $5-wide wings)
+> - New target: $6K/month after-tax at $600K (see CLAUDE.md Financial Independence Framework)
+> - 90-day paper phase to validate 80%+ win rate before scaling
 
 ---
 
