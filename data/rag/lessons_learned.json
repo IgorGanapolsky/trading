@@ -2851,5 +2851,58 @@
         "reason": "Ideal for iron condors"
       }
     }
+  },
+  {
+    "id": "LL-251",
+    "timestamp": "2026-01-26T11:14:17.819594",
+    "category": "ml-implementation",
+    "title": "ML System Improvements Completed (ML-IMP-1, ML-IMP-3, ML-IMP-4)",
+    "description": "Completed 3 ML improvement items from LL-247 audit: (1) ML-IMP-1: Activated RLFilter with linear scoring model using pre-trained weights for SPY/QQQ. (2) ML-IMP-3: Created Thompson Sampling trade confidence model with regime adjustments. (3) ML-IMP-4: Investigated transformer state - found orphan 300KB PyTorch file with no code references.",
+    "root_cause": "Gap identified in LL-247 ML System Audit",
+    "prevention": "ML models now actively used in trade decisions",
+    "tags": [
+      "ml",
+      "implementation",
+      "rl-filter",
+      "thompson-sampling",
+      "trade-confidence"
+    ],
+    "severity": "MEDIUM",
+    "improvements": {
+      "ML-IMP-1": {
+        "title": "Activate RL Filter Weights",
+        "status": "COMPLETED",
+        "description": "RLFilter now uses linear scoring with weights from rl_filter_weights.json",
+        "files_added": [
+          "tests/test_rl_filter.py"
+        ],
+        "files_modified": [
+          "src/agents/rl_agent.py"
+        ],
+        "tests_added": 12
+      },
+      "ML-IMP-3": {
+        "title": "Thompson Sampling for Trade Confidence",
+        "status": "COMPLETED",
+        "description": "Created TradeConfidenceModel using Beta distribution for trade entry decisions",
+        "files_added": [
+          "src/ml/trade_confidence.py",
+          "models/ml/trade_confidence_model.json",
+          "tests/test_trade_confidence.py"
+        ],
+        "tests_added": 12
+      },
+      "ML-IMP-4": {
+        "title": "Investigate Transformer State",
+        "status": "COMPLETED - ORPHAN FILE",
+        "description": "rl_transformer_state.pt is 300KB valid PyTorch file but NO CODE REFERENCES it. Technical debt - orphan from past experiment.",
+        "recommendation": "Consider deleting or documenting purpose"
+      }
+    },
+    "metrics": {
+      "tests_before": 930,
+      "tests_after": 954,
+      "tests_added": 24
+    }
   }
 ]

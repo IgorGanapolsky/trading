@@ -1,0 +1,28 @@
+{
+  "model_type": "thompson_sampling",
+  "description": "Trade entry confidence using Thompson Sampling (ML-IMP-3)",
+  "created": "2026-01-26",
+  "iron_condor": {
+    "alpha": 2.0,
+    "beta": 1.0,
+    "wins": 1,
+    "losses": 0,
+    "prior_alpha": 1.0,
+    "prior_beta": 1.0,
+    "_note": "Initial prior of Beta(1,1) = uniform. Updated as: alpha += wins, beta += losses"
+  },
+  "spy_specific": {
+    "alpha": 2.0,
+    "beta": 1.0,
+    "wins": 1,
+    "losses": 0,
+    "_note": "SPY-specific tracking for iron condors"
+  },
+  "regime_adjustments": {
+    "calm": 1.1,
+    "trending": 0.9,
+    "volatile": 0.8,
+    "spike": 0.0
+  },
+  "last_updated": "2026-01-26T11:10:00.000000"
+}
