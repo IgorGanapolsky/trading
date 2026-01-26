@@ -1,0 +1,88 @@
+name: Diagnose Alpaca Connection
+
+# ONE-TIME DIAGNOSTIC - Delete after troubleshooting
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    name: Test Alpaca API Connection
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Test API Connection
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          pip install -q alpaca-py
+
+          python3 -c "
+          import os
+          import sys
+
+          print('=' * 60)
+          print('ALPACA CONNECTION DIAGNOSTIC')
+          print('=' * 60)
+
+          api_key = os.environ.get('ALPACA_API_KEY', '')
+          secret_key = os.environ.get('ALPACA_SECRET_KEY', '')
+
+          # Check if secrets are set
+          if not api_key:
+              print('❌ ALPACA_API_KEY: EMPTY or NOT SET')
+              print('   This means the GitHub secret ALPACA_PAPER_TRADING_5K_API_KEY is missing or empty')
+          else:
+              print(f'✅ ALPACA_API_KEY: {api_key[:8]}...{api_key[-4:]} (length: {len(api_key)})')
+
+          if not secret_key:
+              print('❌ ALPACA_SECRET_KEY: EMPTY or NOT SET')
+              print('   This means the GitHub secret ALPACA_PAPER_TRADING_5K_API_SECRET is missing or empty')
+          else:
+              print(f'✅ ALPACA_SECRET_KEY: {secret_key[:4]}...{secret_key[-4:]} (length: {len(secret_key)})')
+
+          if not api_key or not secret_key:
+              print()
+              print('🚨 DIAGNOSIS: GitHub secrets are not configured correctly')
+              print('   ACTION: Go to repo Settings > Secrets and check these secrets exist and have values')
+              sys.exit(1)
+
+          print()
+          print('Testing API connection...')
+
+          from alpaca.trading.client import TradingClient
+
+          try:
+              client = TradingClient(api_key, secret_key, paper=True)
+              account = client.get_account()
+              print()
+              print('✅ API CONNECTION SUCCESSFUL!')
+              print(f'   Account ID: {account.id}')
+              print(f'   Account Status: {account.status}')
+              print(f'   Equity: \${float(account.equity):,.2f}')
+              print(f'   Cash: \${float(account.cash):,.2f}')
+              print(f'   Buying Power: \${float(account.buying_power):,.2f}')
+              print()
+              print('🎉 Alpaca API is working correctly!')
+
+          except Exception as e:
+              print()
+              print(f'❌ API CONNECTION FAILED!')
+              print(f'   Error: {e}')
+              print(f'   Error Type: {type(e).__name__}')
+              print()
+              print('🚨 DIAGNOSIS: API credentials may be invalid or expired')
+              print('   ACTION: Verify API keys on Alpaca dashboard (https://app.alpaca.markets)')
+              print('   ACTION: Check if keys were regenerated recently')
+              print('   ACTION: Ensure paper trading is enabled on the account')
+              sys.exit(1)
+          "
+
+      - name: Output Summary
+        if: always()
+        run: |
+          echo "## Alpaca Connection Diagnostic" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Check the job logs above for detailed connection status." >> $GITHUB_STEP_SUMMARY
