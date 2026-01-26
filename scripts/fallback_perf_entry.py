@@ -21,17 +21,18 @@ def main():
         print(f"Entry for {today} already exists")
         return
 
-    equity = 5000.0
+    initial_equity = 30000.0  # $30K paper account (Jan 22, 2026)
+    equity = initial_equity
     if state_file.exists():
         with open(state_file) as f:
             state = json.load(f)
-            equity = state.get("paper_account", {}).get("equity", 5000.0)
+            equity = state.get("paper_account", {}).get("equity", initial_equity)
 
     new_entry = {
         "date": today,
         "equity": equity,
         "daily_pl": 0.0,
-        "total_pl": equity - 5000.0,
+        "total_pl": equity - initial_equity,
         "note": "Fallback entry - Alpaca sync unavailable",
     }
     perf_data.append(new_entry)

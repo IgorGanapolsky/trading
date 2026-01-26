@@ -66,9 +66,10 @@ def calculate_basic_metrics():
     paper_account = system_state.get("paper_account", {})
     # FIX Jan 15, 2026: Check both current_equity AND equity before fallback
     # ROOT CAUSE: system_state.json has "equity" but dashboard read "current_equity"
-    paper_equity = paper_account.get("current_equity") or paper_account.get("equity", 5000.0)
-    # FIX: Use $5000 as default starting balance per CLAUDE.md (not $100K)
-    paper_starting = paper_account.get("starting_balance", 5000.0)
+    # UPDATE Jan 26, 2026: Changed default to $30K (paper account reset Jan 22, 2026)
+    paper_equity = paper_account.get("current_equity") or paper_account.get("equity", 30000.0)
+    # FIX: Use $30,000 as default starting balance per CLAUDE.md (Jan 22, 2026 reset)
+    paper_starting = paper_account.get("starting_balance", 30000.0)
     paper_pl = paper_account.get("total_pl", 0.0)
     paper_pl_pct = paper_account.get("total_pl_pct", 0.0)
     # FIX Jan 18, 2026: Read win_rate from trades.json (master ledger)
@@ -340,7 +341,7 @@ def generate_world_class_dashboard() -> str:
     tax_recommendations = []
     pdt_status = {}
     system_state = load_json_file(DATA_DIR / "system_state.json")
-    current_equity = basic_metrics.get("current_equity", 5000.0)
+    current_equity = basic_metrics.get("current_equity", 30000.0)  # $30K default (Jan 22, 2026)
 
     if TaxOptimizer and all_trades:
         try:
