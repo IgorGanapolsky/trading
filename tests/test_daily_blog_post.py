@@ -25,7 +25,7 @@ class TestCalculateDayNumber:
         # Should be a positive integer
         assert isinstance(day_num, int)
         assert day_num > 0
-        assert day_num <= 90  # Within 90-day R&D phase
+        assert day_num <= 365  # Within first year of trading
 
     def test_calculate_day_number_correct_for_jan_6_2026(self):
         """Test specific day calculation for Jan 6, 2026."""
