@@ -1,9 +1,9 @@
 {
-  "last_updated": "2026-01-27T17:22:45.378681+00:00",
+  "last_updated": "2026-01-27T17:40:11.579898+00:00",
   "sync_health": {
-    "last_successful_sync": "2026-01-27T17:22:45.378684+00:00",
+    "last_successful_sync": "2026-01-27T17:40:11.579901+00:00",
     "sync_source": "github_actions",
-    "sync_count_today": 12,
+    "sync_count_today": 13,
     "history": [
       {
         "timestamp": "2026-01-26T19:58:14.361928+00:00",
@@ -79,21 +79,26 @@
         "timestamp": "2026-01-27T17:22:45.378674+00:00",
         "equity": 29992.83,
         "success": true
+      },
+      {
+        "timestamp": "2026-01-27T17:40:11.579890+00:00",
+        "equity": 29993.83,
+        "success": true
       }
     ]
   },
   "portfolio": {
-    "equity": 29992.83,
+    "equity": 29993.83,
     "cash": 29992.83
   },
   "paper_account": {
-    "equity": 29992.83,
+    "equity": 29993.83,
     "cash": 29992.83,
     "buying_power": 58985.66,
-    "total_pl": -7.169999999998254,
+    "total_pl": -6.169999999998254,
     "total_pl_pct": -0.02,
     "positions_count": 3,
-    "daily_change": 9.98,
+    "daily_change": 10.98,
     "win_rate": 0,
     "win_rate_sample_size": 0,
     "starting_balance": 30000.0
@@ -102,25 +107,25 @@
     {
       "symbol": "SPY260227C00735000",
       "qty": 1.0,
-      "price": 0.42,
-      "value": 42.0,
-      "pnl": 8.0,
+      "price": 0.43,
+      "value": 43.0,
+      "pnl": 9.0,
       "type": "option"
     },
     {
       "symbol": "SPY260227P00655000",
       "qty": 1.0,
-      "price": 2.43,
-      "value": 243.0,
-      "pnl": -28.6667,
+      "price": 2.45,
+      "value": 245.0,
+      "pnl": -26.6667,
       "type": "option"
     },
     {
       "symbol": "SPY260227P00660000",
       "qty": -1.0,
-      "price": 2.85,
-      "value": -285.0,
-      "pnl": 21.0,
+      "price": 2.87,
+      "value": -287.0,
+      "pnl": 19.0,
       "type": "option"
     }
   ],
@@ -623,17 +628,17 @@
   },
   "risk": {
     "status": "WARNING - NEGATIVE P/L",
-    "total_pl": -7.169999999998254,
-    "unrealized_pl": 0.33330000000000126
+    "total_pl": -6.169999999998254,
+    "unrealized_pl": 1.3333000000000013
   },
   "account": {
-    "current_equity": 29992.83,
-    "total_pl": -7.169999999998254,
+    "current_equity": 29993.83,
+    "total_pl": -6.169999999998254,
     "total_pl_pct": -0.02,
     "positions_count": 3
   },
   "meta": {
-    "last_updated": "2026-01-27T17:22:45.378700+00:00",
+    "last_updated": "2026-01-27T17:40:11.579918+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5
   },
