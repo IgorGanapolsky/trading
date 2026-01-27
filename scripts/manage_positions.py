@@ -127,8 +127,8 @@ def identify_iron_condor_legs(positions: list) -> dict:
                 iron_condors[key] = [leg["symbol"] for leg in legs]
             continue
 
-        puts = [l for l in legs if l["type"] == "P"]
-        calls = [l for l in legs if l["type"] == "C"]
+        puts = [leg for leg in legs if leg["type"] == "P"]
+        calls = [leg for leg in legs if leg["type"] == "C"]
 
         # Iron condor: 2 puts, 2 calls
         if len(puts) == 2 and len(calls) == 2:
