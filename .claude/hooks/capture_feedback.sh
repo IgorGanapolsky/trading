@@ -1,11 +1,15 @@
 #!/bin/bash
-# Capture user feedback (thumbs up/down) - FULLY AUTONOMOUS
+# Capture user feedback (thumbs up/down) - FULLY AUTONOMOUS with LanceDB
 # No human review required - system logs and learns automatically
 #
-# Simplified Dec 28, 2025: Removed dead RLHF pipeline
-# Fixed Dec 28, 2025: Made fully autonomous - no human action needed
+# UPGRADED Jan 27, 2026: Added LanceDB semantic memory (from Random-Timer)
+# - Records feedback WITH context (what went wrong)
+# - Embeds semantically for retrieval
+# - Auto-reindexes on new feedback
+# - Provides session context from negative patterns
 
 FEEDBACK_DIR="$CLAUDE_PROJECT_DIR/data/feedback"
+SEMANTIC_MEMORY="$CLAUDE_PROJECT_DIR/.claude/scripts/feedback/semantic-memory-v2.py"
 mkdir -p "$FEEDBACK_DIR"
 
 DATE=$(date +%Y-%m-%d)
@@ -28,10 +32,10 @@ fi
 
 # Only record if feedback detected
 if [ "$FEEDBACK_TYPE" != "neutral" ]; then
-    # Log to file
+    # Log to legacy file (backward compatibility)
     echo "{\"timestamp\": \"$DATE $TIME\", \"type\": \"$FEEDBACK_TYPE\", \"score\": $FEEDBACK_SCORE}" >> "$FEEDBACK_FILE"
 
-    # Update stats
+    # Update legacy stats
     STATS_FILE="$FEEDBACK_DIR/stats.json"
     if [ -f "$STATS_FILE" ]; then
         TOTAL=$(jq '.total' "$STATS_FILE")
@@ -66,16 +70,28 @@ if [ "$FEEDBACK_TYPE" != "neutral" ]; then
 }
 EOF
 
-    # Train RL model from feedback (connected to training pipeline)
-    if command -v python3 &> /dev/null; then
-        TRAIN_SCRIPT="$CLAUDE_PROJECT_DIR/scripts/train_from_feedback.py"
-        if [ -f "$TRAIN_SCRIPT" ]; then
-            python3 "$TRAIN_SCRIPT" --feedback "$FEEDBACK_TYPE" --context "$USER_MESSAGE" 2>/dev/null &
+    # NEW: Record to LanceDB semantic memory
+    if [ -f "$SEMANTIC_MEMORY" ] && command -v python3 &> /dev/null; then
+        echo ""
+        echo "=================================================="
+        if [ "$FEEDBACK_TYPE" = "positive" ]; then
+            echo "✅ THUMBS UP DETECTED - RECORD SUCCESS PATTERN"
+        else
+            echo "🚨 THUMBS DOWN DETECTED - MANDATORY RECORDING"
         fi
-    fi
-
-    # For negative feedback, Claude must ask what went wrong
-    if [ "$FEEDBACK_TYPE" = "negative" ]; then
-        echo "⚠️ NEGATIVE FEEDBACK - Claude MUST ask: 'What did I do wrong?'"
+        echo "=================================================="
+        echo ""
+        echo "Claude MUST record in LanceDB:"
+        echo ""
+        echo "   1. RECORD feedback:"
+        echo "      echo \"<context of what happened>\" | python3 $SEMANTIC_MEMORY --add-feedback --feedback-type $FEEDBACK_TYPE"
+        echo ""
+        echo "   2. RE-INDEX (happens automatically)"
+        echo ""
+        if [ "$FEEDBACK_TYPE" = "negative" ]; then
+            echo "   3. ASK what went wrong"
+            echo "   4. APOLOGIZE and explain prevention"
+        fi
+        echo "=================================================="
     fi
 fi
