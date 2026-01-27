@@ -98,7 +98,9 @@ def calculate_basic_metrics():
     trading_days = max(trading_days, 1)
 
     avg_daily_profit = total_pl / trading_days if trading_days > 0 else 0.0
-    north_star_target = 100.0
+    # North Star: $6,000/month after-tax = ~$200/day after-tax = ~$286/day pre-tax
+    # Updated Jan 22, 2026 per CLAUDE.md Financial Independence Framework
+    north_star_target = 200.0  # Daily after-tax target
     progress_pct = (avg_daily_profit / north_star_target * 100) if north_star_target > 0 else 0.0
 
     if total_pl > 0 and progress_pct < 0.01:
@@ -638,23 +640,23 @@ def generate_world_class_dashboard() -> str:
 
 ## 🎯 North Star Goal
 
-**Target**: **$100+/day profit**
+**Target**: **$6,000/month after-tax** = Financial Independence
 
 | Metric | Current | Target | Progress |
 |--------|---------|--------|----------|
-| **Average Daily Profit** | ${basic_metrics["avg_daily_profit"]:.2f}/day | $100.00/day | {display_progress_pct:.2f}% |
+| **Average Daily Profit** | ${basic_metrics["avg_daily_profit"]:.2f}/day | $200.00/day (after-tax) | {display_progress_pct:.2f}% |
 | **Total P/L** | ${basic_metrics["total_pl"]:+,.2f} ({basic_metrics["total_pl_pct"]:+.2f}%) | TBD | {status_emoji} |
-| **Win Rate** | {f"{basic_metrics['win_rate']:.1f}%" if basic_metrics.get("closed_trades", 0) > 0 else f"N/A (need {basic_metrics.get('trades_needed_for_stats', 30)} closed trades)"} | >55% | {"✅" if basic_metrics["win_rate"] >= 55 else "⚠️" if basic_metrics.get("closed_trades", 0) > 0 else "📊"} |
+| **Win Rate** | {f"{basic_metrics['win_rate']:.1f}%" if basic_metrics.get("closed_trades", 0) > 0 else f"N/A (need {basic_metrics.get('trades_needed_for_stats', 30)} closed trades)"} | >80% | {"✅" if basic_metrics["win_rate"] >= 80 else "⚠️" if basic_metrics.get("closed_trades", 0) > 0 else "📊"} |
 
 **Progress Bar**: `{north_star_bar}` ({display_progress_pct:.2f}%)
 
-**Assessment**: {"✅ **ON TRACK**" if basic_metrics["total_pl"] > 0 and basic_metrics["win_rate"] >= 55 else "⚠️ **R&D PHASE** - Learning, not earning yet"}
+**Assessment**: {"✅ **ON TRACK**" if basic_metrics["total_pl"] > 0 and basic_metrics["win_rate"] >= 80 else "⚠️ **R&D PHASE** - Learning, not earning yet"}
 
 > ℹ️ **Note**: ⚠️ warning icons indicate metrics that haven't reached targets yet. This is **expected** during R&D phase while building capital. ✅ indicates target met.
 
 ---
 
-## 💡 $100/Day Progress & Capital Scaling Plan
+## 💡 Financial Independence Progress & Capital Scaling Plan
 
 """
 
@@ -674,7 +676,7 @@ def generate_world_class_dashboard() -> str:
         # Calculate progress percentage
         progress_to_target = (projected_profit / target_profit * 100) if target_profit > 0 else 0.0
 
-        # Progress bar for $100/day target
+        # Progress bar for $200/day (after-tax) target = $6K/month
         progress_bars_100 = max(0, min(int(progress_to_target / 5), 20))
         progress_bar_100 = "█" * progress_bars_100 + "░" * (20 - progress_bars_100)
 
@@ -687,7 +689,7 @@ def generate_world_class_dashboard() -> str:
 | **Current Daily Budget** | ${current_budget:.2f}/day | Variable | - |
 | **Avg Return %** | {avg_return_pct:+.2f}% | >0% | {"✅" if avg_return_pct > 0 else "⚠️"} |
 
-**Progress to $100/Day**: `{progress_bar_100}` ({progress_to_target:.1f}%)
+**Progress to $6K/Month**: `{progress_bar_100}` ({progress_to_target:.1f}%)
 
 ### Capital Scaling Recommendations
 
