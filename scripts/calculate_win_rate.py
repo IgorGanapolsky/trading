@@ -31,13 +31,56 @@ def load_trades() -> dict:
         return json.load(f)
 
 
-def calculate_stats(trades: list[dict], paper_phase_start: str = None) -> dict:
+def is_iron_condor_trade(trade: dict) -> bool:
+    """Check if trade is an iron condor (options on SPY per CLAUDE.md strategy).
+
+    Iron condor trades have:
+    - Option symbols (SPY followed by date/strike, e.g., SPY260227P00655000)
+    - type == 'option' or symbol matches option pattern
+    - NOT fractional SPY share purchases (DCA)
+    """
+    symbol = trade.get("symbol", "")
+    trade_type = trade.get("type", "")
+    qty = trade.get("qty", 0)
+
+    # Explicit option type
+    if trade_type == "option":
+        return True
+
+    # Option symbol pattern: SPY + date + type + strike (e.g., SPY260227P00655000)
+    if symbol and symbol.startswith("SPY") and len(symbol) > 10:
+        # Option symbols are 18+ chars, stock is just "SPY"
+        return True
+
+    # Exclude fractional share purchases (DCA) and plain SPY stock
+    if symbol == "SPY":
+        # Fractional quantities are DCA purchases, not iron condors
+        if isinstance(qty, (int, float)) and 0 < qty < 1:
+            return False
+        # Even whole share SPY trades are not iron condors
+        return False
+
+    # Exclude SOFI and other non-SPY trades (per CLAUDE.md: SPY ONLY)
+    if symbol and not symbol.startswith("SPY"):
+        return False
+
+    return False
+
+
+def calculate_stats(
+    trades: list[dict], paper_phase_start: str = None, strategy_filter: str = None
+) -> dict:
     """Calculate win rate statistics from closed trades.
 
     Args:
         trades: List of trade dictionaries
         paper_phase_start: ISO date string when paper phase started (e.g., '2026-01-15')
+        strategy_filter: Optional filter - 'iron_condor' to only count iron condor trades
     """
+    # Apply strategy filter if specified (per CLAUDE.md: track iron condors separately)
+    if strategy_filter == "iron_condor":
+        trades = [t for t in trades if is_iron_condor_trade(t)]
+
     closed = [t for t in trades if t.get("status") == "closed"]
     open_trades = [t for t in trades if t.get("status") == "open"]
 
@@ -210,11 +253,11 @@ def close_trade(trade_id: str, exit_price: float, exit_date: str = None) -> bool
             trade["unrealized_pnl"] = None
             trade["outcome"] = outcome
 
-            # Recalculate stats
+            # Recalculate stats (iron_condor filter by default per CLAUDE.md)
             paper_phase_start = data.get("stats", {}).get("paper_phase_start") or data.get(
                 "metadata", {}
             ).get("paper_phase_start")
-            stats = calculate_stats(trades, paper_phase_start)
+            stats = calculate_stats(trades, paper_phase_start, strategy_filter="iron_condor")
             update_trades_file(data, stats)
 
             logger.info(f"✅ Closed {trade_id}: ${pnl:.2f} ({outcome})")
@@ -283,7 +326,7 @@ def add_trade(
     paper_phase_start = data.get("stats", {}).get("paper_phase_start") or data.get(
         "metadata", {}
     ).get("paper_phase_start")
-    stats = calculate_stats(trades, paper_phase_start)
+    stats = calculate_stats(trades, paper_phase_start, strategy_filter="iron_condor")
     update_trades_file(data, stats)
 
     logger.info(f"✅ Added trade {trade_id}")
@@ -296,6 +339,12 @@ def main():
 
     parser = argparse.ArgumentParser(description="Calculate win rate statistics")
     parser.add_argument("--update", action="store_true", help="Update stats in trades.json")
+    parser.add_argument(
+        "--strategy",
+        choices=["all", "iron_condor"],
+        default="iron_condor",
+        help="Filter trades by strategy (default: iron_condor per CLAUDE.md)",
+    )
     args = parser.parse_args()
 
     data = load_trades()
@@ -304,7 +353,14 @@ def main():
     paper_phase_start = data.get("stats", {}).get("paper_phase_start") or data.get(
         "metadata", {}
     ).get("paper_phase_start")
-    stats = calculate_stats(trades, paper_phase_start)
+
+    # Apply strategy filter (iron_condor by default per CLAUDE.md mandate)
+    strategy_filter = args.strategy if args.strategy != "all" else None
+    stats = calculate_stats(trades, paper_phase_start, strategy_filter)
+
+    if strategy_filter:
+        logger.info(f"[Filtered to {strategy_filter} trades only per CLAUDE.md]")
+        logger.info("")
 
     display_stats(stats)
 
