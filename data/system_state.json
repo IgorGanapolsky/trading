@@ -1,9 +1,9 @@
 {
-  "last_updated": "2026-01-27T15:23:02.585858+00:00",
+  "last_updated": "2026-01-27T15:40:23.515903+00:00",
   "sync_health": {
-    "last_successful_sync": "2026-01-27T15:23:02.585861+00:00",
+    "last_successful_sync": "2026-01-27T15:40:23.515907+00:00",
     "sync_source": "github_actions",
-    "sync_count_today": 4,
+    "sync_count_today": 5,
     "history": [
       {
         "timestamp": "2026-01-26T19:58:14.361928+00:00",
@@ -39,21 +39,26 @@
         "timestamp": "2026-01-27T15:23:02.585849+00:00",
         "equity": 29987.83,
         "success": true
+      },
+      {
+        "timestamp": "2026-01-27T15:40:23.515894+00:00",
+        "equity": 29990.83,
+        "success": true
       }
     ]
   },
   "portfolio": {
-    "equity": 29987.83,
+    "equity": 29990.83,
     "cash": 29992.83
   },
   "paper_account": {
-    "equity": 29987.83,
+    "equity": 29990.83,
     "cash": 29992.83,
     "buying_power": 58985.66,
-    "total_pl": -12.169999999998254,
-    "total_pl_pct": -0.04,
+    "total_pl": -9.169999999998254,
+    "total_pl_pct": -0.03,
     "positions_count": 3,
-    "daily_change": 4.98,
+    "daily_change": 7.98,
     "win_rate": 0,
     "win_rate_sample_size": 0,
     "starting_balance": 30000.0
@@ -62,25 +67,25 @@
     {
       "symbol": "SPY260227C00735000",
       "qty": 1.0,
-      "price": 0.38,
-      "value": 38.0,
-      "pnl": 4.0,
+      "price": 0.39,
+      "value": 39.0,
+      "pnl": 5.0,
       "type": "option"
     },
     {
       "symbol": "SPY260227P00655000",
       "qty": 1.0,
-      "price": 2.43,
-      "value": 243.0,
-      "pnl": -28.6667,
+      "price": 2.36,
+      "value": 236.0,
+      "pnl": -35.6667,
       "type": "option"
     },
     {
       "symbol": "SPY260227P00660000",
       "qty": -1.0,
-      "price": 2.86,
-      "value": -286.0,
-      "pnl": 20.0,
+      "price": 2.78,
+      "value": -278.0,
+      "pnl": 28.0,
       "type": "option"
     }
   ],
@@ -583,17 +588,17 @@
   },
   "risk": {
     "status": "WARNING - NEGATIVE P/L",
-    "total_pl": -12.169999999998254,
-    "unrealized_pl": -4.666699999999999
+    "total_pl": -9.169999999998254,
+    "unrealized_pl": -2.6666999999999987
   },
   "account": {
-    "current_equity": 29987.83,
-    "total_pl": -12.169999999998254,
-    "total_pl_pct": -0.04,
+    "current_equity": 29990.83,
+    "total_pl": -9.169999999998254,
+    "total_pl_pct": -0.03,
     "positions_count": 3
   },
   "meta": {
-    "last_updated": "2026-01-27T15:23:02.585878+00:00",
+    "last_updated": "2026-01-27T15:40:23.515922+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5
   },
