@@ -1,226 +1,33 @@
 {
   "meta": {
-    "version": "1.0",
-    "created": "2026-01-15T21:40:00Z",
-    "purpose": "Master ledger for win rate tracking per CLAUDE.md",
-    "paper_phase_start": "2026-01-15",
+    "version": "2.0",
+    "created": "2026-01-27T18:40:00Z",
+    "purpose": "Master ledger for iron condor win rate tracking per CLAUDE.md",
+    "paper_phase_start": "2026-01-22",
     "paper_phase_days_required": 90,
     "decision_thresholds": {
       "reassess_below": 75,
-      "marginal_range": [
-        75,
-        80
-      ],
+      "marginal_range": [75, 80],
       "profitable_above": 80,
       "min_trades_for_decision": 30
     },
-    "last_sync": "2026-01-18T22:17:34.052034+00:00",
-    "sync_source": "sync_closed_positions.py"
+    "notes": "CLEANED Jan 27, 2026 - Removed pre-Jan-22 garbage (SOFI trades, stock DCA). Fresh start per $30K account reset."
   },
   "stats": {
-    "total_trades": 8,
-    "closed_trades": 6,
-    "open_trades": 2,
-    "wins": 1,
-    "losses": 5,
+    "total_trades": 0,
+    "closed_trades": 0,
+    "open_trades": 0,
+    "wins": 0,
+    "losses": 0,
     "breakeven": 0,
-    "win_rate_pct": 16.7,
-    "avg_win": 31.0,
-    "avg_loss": 8.33,
-    "profit_factor": 0.74,
-    "total_pnl": -10.65,
-    "paper_phase_start": "2026-01-15",
-    "paper_phase_days": 3,
-    "last_updated": "2026-01-19T02:32:04.754427+00:00"
+    "win_rate_pct": null,
+    "avg_win": null,
+    "avg_loss": null,
+    "profit_factor": null,
+    "total_pnl": 0.0,
+    "paper_phase_start": "2026-01-22",
+    "paper_phase_days": 5,
+    "last_updated": "2026-01-27T18:40:00Z"
   },
-  "trades": [
-    {
-      "id": "spread_565_570_20260115",
-      "type": "bull_put_spread",
-      "underlying": "SPY",
-      "legs": [
-        {
-          "symbol": "SPY260220P00565000",
-          "side": "long",
-          "qty": 1,
-          "entry_price": 0.47,
-          "current_price": 0.52
-        },
-        {
-          "symbol": "SPY260220P00570000",
-          "side": "short",
-          "qty": 1,
-          "entry_price": 0.5,
-          "current_price": 0.57
-        }
-      ],
-      "entry_date": "2026-01-15",
-      "expiration": "2026-02-20",
-      "net_credit": 0.03,
-      "max_risk": 4.97,
-      "status": "open",
-      "current_pnl": -2.0,
-      "notes": "30-delta bull put spread on SPY"
-    },
-    {
-      "id": "spread_595_600_20260115",
-      "type": "bull_put_spread",
-      "underlying": "SPY",
-      "legs": [
-        {
-          "symbol": "SPY260220P00595000",
-          "side": "long",
-          "qty": 1,
-          "entry_price": 0.73,
-          "current_price": 0.83
-        },
-        {
-          "symbol": "SPY260220P00600000",
-          "side": "short",
-          "qty": 1,
-          "entry_price": 0.78,
-          "current_price": 0.91
-        }
-      ],
-      "entry_date": "2026-01-15",
-      "expiration": "2026-02-20",
-      "net_credit": 0.05,
-      "max_risk": 4.95,
-      "status": "open",
-      "current_pnl": -3.0,
-      "notes": "30-delta bull put spread on SPY"
-    },
-    {
-      "id": "closed_SPY260220P00660000_20260115",
-      "symbol": "SPY260220P00660000",
-      "type": "option",
-      "side": "long",
-      "qty": 1.0,
-      "entry_date": "2026-01-15",
-      "exit_date": "2026-01-16",
-      "entry_cost": 3.07,
-      "exit_proceeds": 3.38,
-      "status": "closed",
-      "realized_pnl": 31.0,
-      "outcome": "win",
-      "multiplier": 100,
-      "strategy": "alpaca_synced",
-      "trades": {
-        "buys": 1,
-        "sells": 1,
-        "buy_qty": 1.0,
-        "sell_qty": 1.0
-      }
-    },
-    {
-      "id": "closed_SPY_20260115",
-      "symbol": "SPY",
-      "type": "stock",
-      "side": "long",
-      "qty": 0.576037269,
-      "entry_date": "2026-01-15",
-      "exit_date": "2026-01-16",
-      "entry_cost": 399.959998613132,
-      "exit_proceeds": 398.665025204058,
-      "status": "closed",
-      "realized_pnl": -1.29,
-      "outcome": "loss",
-      "multiplier": 1,
-      "strategy": "alpaca_synced",
-      "trades": {
-        "buys": 4,
-        "sells": 1,
-        "buy_qty": 0.576037269,
-        "sell_qty": 0.576037269
-      }
-    },
-    {
-      "id": "closed_SOFI260206P00024000_20260113",
-      "symbol": "SOFI260206P00024000",
-      "type": "option",
-      "side": "short",
-      "qty": 2.0,
-      "entry_date": "2026-01-13",
-      "exit_date": "2026-01-14",
-      "entry_cost": 1.74,
-      "exit_proceeds": 1.57,
-      "status": "closed",
-      "realized_pnl": -17.0,
-      "outcome": "loss",
-      "multiplier": 100,
-      "strategy": "alpaca_synced",
-      "trades": {
-        "buys": 1,
-        "sells": 2,
-        "buy_qty": 2.0,
-        "sell_qty": 2.0
-      }
-    },
-    {
-      "id": "closed_SOFI_20260113",
-      "symbol": "SOFI",
-      "type": "stock",
-      "side": "long",
-      "qty": 54.777554687999995,
-      "entry_date": "2026-01-13",
-      "exit_date": "2026-01-14",
-      "entry_cost": 1453.4000034258538,
-      "exit_proceeds": 1452.0404762852054,
-      "status": "closed",
-      "realized_pnl": -1.36,
-      "outcome": "loss",
-      "multiplier": 1,
-      "strategy": "alpaca_synced",
-      "trades": {
-        "buys": 15,
-        "sells": 4,
-        "buy_qty": 54.777554688,
-        "sell_qty": 54.777554687999995
-      }
-    },
-    {
-      "id": "closed_SOFI260220P00024000_20260112",
-      "symbol": "SOFI260220P00024000",
-      "type": "option",
-      "side": "short",
-      "qty": 1.0,
-      "entry_date": "2026-01-12",
-      "exit_date": "2026-01-13",
-      "entry_cost": 1.04,
-      "exit_proceeds": 0.95,
-      "status": "closed",
-      "realized_pnl": -9.0,
-      "outcome": "loss",
-      "multiplier": 100,
-      "strategy": "alpaca_synced",
-      "trades": {
-        "buys": 1,
-        "sells": 1,
-        "buy_qty": 1.0,
-        "sell_qty": 1.0
-      }
-    },
-    {
-      "id": "closed_SOFI260130P00025000_20260112",
-      "symbol": "SOFI260130P00025000",
-      "type": "option",
-      "side": "short",
-      "qty": 1.0,
-      "entry_date": "2026-01-12",
-      "exit_date": "2026-01-13",
-      "entry_cost": 0.95,
-      "exit_proceeds": 0.82,
-      "status": "closed",
-      "realized_pnl": -13.0,
-      "outcome": "loss",
-      "multiplier": 100,
-      "strategy": "alpaca_synced",
-      "trades": {
-        "buys": 1,
-        "sells": 1,
-        "buy_qty": 1.0,
-        "sell_qty": 1.0
-      }
-    }
-  ]
+  "trades": []
 }

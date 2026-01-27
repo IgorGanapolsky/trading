@@ -8,11 +8,18 @@ CEO Directive (Jan 7, 2026):
 This script FINALLY uses the PositionManager class that was written but NEVER CALLED.
 It evaluates all open positions against exit conditions and executes exits.
 
+FIX Jan 27, 2026 (LL-TBD): Made IRON-CONDOR-AWARE
+- Previous bug: Script evaluated each option leg individually, causing partial closes
+- Symptoms: 3-leg positions instead of 4-leg iron condors
+- Fix: Detect multi-leg iron condor structures, skip individual leg management
+- Iron condors must be managed as a UNIT, not as separate legs
+
 Exit Conditions (from position_manager.py):
-- Take-profit: 15% gain
-- Stop-loss: 8% loss
+- Take-profit: 15% gain (for STOCK positions only)
+- Stop-loss: 8% loss (for STOCK positions only)
 - Time-decay: 30 days max hold
 - ATR-based dynamic stop
+- IRON CONDORS: 50% max profit OR 200% stop-loss per CLAUDE.md
 
 Usage:
     python3 scripts/manage_positions.py
@@ -22,7 +29,9 @@ Usage:
 import json
 import logging
 import os
+import re
 import sys
+from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
@@ -34,6 +43,99 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+
+def is_option_symbol(symbol: str) -> bool:
+    """Check if symbol is an option (vs stock).
+
+    Option format: SPY260227P00655000 (ticker + date + P/C + strike)
+    Stock format: SPY, AAPL, etc.
+    """
+    if not symbol:
+        return False
+    # Options have format: TICKER + YYMMDD + P/C + 8-digit strike
+    # Example: SPY260227P00655000
+    return len(symbol) > 10 and bool(re.match(r"[A-Z]+\d{6}[PC]\d{8}", symbol))
+
+
+def parse_option_symbol(symbol: str) -> dict | None:
+    """Parse option symbol into components.
+
+    Example: SPY260227P00655000 -> {
+        'underlying': 'SPY',
+        'expiry': '260227',
+        'type': 'P',
+        'strike': 655.00
+    }
+    """
+    match = re.match(r"([A-Z]+)(\d{6})([PC])(\d{8})", symbol)
+    if not match:
+        return None
+    return {
+        "underlying": match.group(1),
+        "expiry": match.group(2),
+        "type": match.group(3),  # P=put, C=call
+        "strike": int(match.group(4)) / 1000,  # Convert to dollars
+    }
+
+
+def identify_iron_condor_legs(positions: list) -> dict:
+    """Group option positions by underlying/expiry to identify iron condors.
+
+    An iron condor has 4 legs on the same underlying and expiry:
+    - Long put (lower strike, qty > 0)
+    - Short put (higher put strike, qty < 0)
+    - Short call (lower call strike, qty < 0)
+    - Long call (higher call strike, qty > 0)
+
+    Returns: dict mapping (underlying, expiry) -> list of leg symbols
+    """
+    # Group options by underlying + expiry
+    grouped = defaultdict(list)
+
+    for pos in positions:
+        symbol = pos.symbol if hasattr(pos, "symbol") else pos.get("symbol")
+        if not is_option_symbol(symbol):
+            continue
+
+        parsed = parse_option_symbol(symbol)
+        if not parsed:
+            continue
+
+        qty = float(pos.qty if hasattr(pos, "qty") else pos.get("qty", 0))
+        key = (parsed["underlying"], parsed["expiry"])
+        grouped[key].append({
+            "symbol": symbol,
+            "type": parsed["type"],
+            "strike": parsed["strike"],
+            "qty": qty,
+        })
+
+    # Identify valid iron condors (must have 4 legs with correct structure)
+    iron_condors = {}
+    for key, legs in grouped.items():
+        # Need exactly 4 legs
+        if len(legs) < 4:
+            # Could be partial iron condor - still protect from individual management
+            if len(legs) >= 2:
+                logger.warning(
+                    f"⚠️ Partial multi-leg structure detected: {key[0]} exp {key[1]} "
+                    f"has {len(legs)} legs (expected 4 for iron condor)"
+                )
+                iron_condors[key] = [leg["symbol"] for leg in legs]
+            continue
+
+        puts = [l for l in legs if l["type"] == "P"]
+        calls = [l for l in legs if l["type"] == "C"]
+
+        # Iron condor: 2 puts, 2 calls
+        if len(puts) == 2 and len(calls) == 2:
+            iron_condors[key] = [leg["symbol"] for leg in legs]
+            logger.info(
+                f"✅ Iron condor detected: {key[0]} exp {key[1]} with {len(legs)} legs"
+            )
+
+    return iron_condors
 
 
 def main(dry_run: bool = False):
@@ -89,11 +191,30 @@ def main(dry_run: bool = False):
     logger.info(f"Mode: {'DRY RUN' if dry_run else 'LIVE EXECUTION'}")
     logger.info(f"Time: {datetime.now().isoformat()}")
     logger.info("=" * 70)
-    logger.info(f"Evaluating {len(positions)} positions")
+    logger.info(f"Total positions: {len(positions)}")
+
+    # FIX Jan 27, 2026: Identify iron condor legs to exclude from individual management
+    # Iron condors must be managed as a UNIT, not as separate legs
+    iron_condors = identify_iron_condor_legs(positions)
+    iron_condor_symbols = set()
+    for legs in iron_condors.values():
+        iron_condor_symbols.update(legs)
+
+    if iron_condor_symbols:
+        logger.info(f"🔒 Iron condor legs PROTECTED from individual exit: {len(iron_condor_symbols)}")
+        for key, legs in iron_condors.items():
+            logger.info(f"   {key[0]} exp {key[1]}: {', '.join(legs)}")
+        logger.info("   These must be managed as a unit via manage_iron_condor_positions.py")
 
     # Convert Alpaca positions to dict format for PositionManager
+    # EXCLUDE iron condor legs - they are managed separately
     position_dicts = []
+    skipped_count = 0
     for pos in positions:
+        if pos.symbol in iron_condor_symbols:
+            logger.info(f"   ⏭️ Skipping {pos.symbol} (part of iron condor)")
+            skipped_count += 1
+            continue
         position_dicts.append(
             {
                 "symbol": pos.symbol,
@@ -106,7 +227,14 @@ def main(dry_run: bool = False):
             }
         )
 
-    # Evaluate all positions
+    logger.info(f"Evaluating {len(position_dicts)} non-iron-condor positions (skipped {skipped_count})")
+
+    if not position_dicts:
+        logger.info("No non-iron-condor positions to evaluate")
+        logger.info("Iron condors should be managed via scripts/manage_iron_condor_positions.py")
+        return
+
+    # Evaluate non-iron-condor positions only
     exits = position_manager.manage_all_positions(position_dicts)
 
     if not exits:
