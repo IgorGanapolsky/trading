@@ -239,21 +239,25 @@ def check_position_completeness():
 
         # Check each expiry group for complete IC
         for expiry, legs in by_expiry.items():
-            long_puts = [l for l in legs if 'P' in l["symbol"] and l["qty"] > 0]
-            short_puts = [l for l in legs if 'P' in l["symbol"] and l["qty"] < 0]
-            long_calls = [l for l in legs if 'C' in l["symbol"] and l["qty"] > 0]
-            short_calls = [l for l in legs if 'C' in l["symbol"] and l["qty"] < 0]
+            long_puts = [leg for leg in legs if 'P' in leg["symbol"] and leg["qty"] > 0]
+            short_puts = [leg for leg in legs if 'P' in leg["symbol"] and leg["qty"] < 0]
+            long_calls = [leg for leg in legs if 'C' in leg["symbol"] and leg["qty"] > 0]
+            short_calls = [leg for leg in legs if 'C' in leg["symbol"] and leg["qty"] < 0]
 
-            has_all_legs = len(long_puts) >= 1 and len(short_puts) >= 1 and \
-                          len(long_calls) >= 1 and len(short_calls) >= 1
+            has_all_legs = (len(long_puts) >= 1 and len(short_puts) >= 1 and
+                           len(long_calls) >= 1 and len(short_calls) >= 1)
 
             if not has_all_legs:
                 results["status"] = "BROKEN"
                 missing = []
-                if not long_puts: missing.append("long put")
-                if not short_puts: missing.append("short put")
-                if not long_calls: missing.append("long call")
-                if not short_calls: missing.append("SHORT CALL")  # Most critical
+                if not long_puts:
+                    missing.append("long put")
+                if not short_puts:
+                    missing.append("short put")
+                if not long_calls:
+                    missing.append("long call")
+                if not short_calls:
+                    missing.append("SHORT CALL")  # Most critical
                 results["details"].append(f"✗ Expiry {expiry}: INCOMPLETE IC - missing {', '.join(missing)}")
                 results["details"].append(f"  Current legs: {len(legs)}/4")
             else:
@@ -279,7 +283,7 @@ def check_feedback_freshness():
 
     try:
         import json
-        from datetime import datetime, timedelta
+        from datetime import datetime
         from pathlib import Path
 
         stats_file = Path("data/feedback/stats.json")
@@ -349,7 +353,6 @@ def check_win_rate_validity():
 
         state = json.loads(state_file.read_text())
         paper = state.get("paper_account", {})
-        trade_history = state.get("trade_history", [])
 
         win_rate = paper.get("win_rate", 0)
         sample_size = paper.get("win_rate_sample_size", 0)
