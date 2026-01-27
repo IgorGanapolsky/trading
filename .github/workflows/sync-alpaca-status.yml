@@ -140,8 +140,48 @@ jobs:
               filled_orders = [o for o in all_orders if str(o.status) == 'filled' and str(o.filled_at).startswith(today_str)]
               total_trades_today = len(filled_orders)
               print(f"Filled orders today: {total_trades_today}")
+
+              # LL-FIX: Calculate win rate from paired trades
+              # For options: match buy_to_open with sell_to_close
+              # Win = sell_price > buy_price for long, opposite for short
+              wins = 0
+              losses = 0
+
+              # Group trades by symbol to find pairs
+              from collections import defaultdict
+              symbol_trades = defaultdict(list)
+              for o in all_orders:
+                  if o.filled_at and o.filled_avg_price:
+                      symbol_trades[o.symbol].append({
+                          'side': str(o.side),
+                          'price': float(o.filled_avg_price),
+                          'qty': float(o.filled_qty),
+                          'filled_at': str(o.filled_at)
+                      })
+
+              # Calculate P/L for completed round trips
+              for symbol, trades in symbol_trades.items():
+                  buys = [t for t in trades if 'BUY' in t['side'].upper()]
+                  sells = [t for t in trades if 'SELL' in t['side'].upper()]
+
+                  # Match buys to sells (simple FIFO)
+                  for i, buy in enumerate(buys):
+                      if i < len(sells):
+                          sell = sells[i]
+                          pnl = (sell['price'] - buy['price']) * buy['qty'] * 100  # Options multiplier
+                          if pnl > 0:
+                              wins += 1
+                          elif pnl < 0:
+                              losses += 1
+
+              total_closed = wins + losses
+              win_rate = round((wins / total_closed * 100), 1) if total_closed > 0 else 0
+              print(f"📊 Win rate: {win_rate}% ({wins}W/{losses}L from {total_closed} closed trades)")
+
           except Exception as e:
               print(f"Could not fetch orders: {e}")
+              win_rate = existing_state.get("paper_account", {}).get("win_rate", 0)
+              total_closed = existing_state.get("paper_account", {}).get("win_rate_sample_size", 0)
 
           # Update system_state.json with UTC timestamp
           state_file = Path("data/system_state.json")
@@ -187,10 +227,9 @@ jobs:
                   "total_pl_pct": round(total_pl_pct, 2),
                   "positions_count": len(positions),
                   "daily_change": round(today_pl, 2),
-                  # FIX: Add win_rate fields expected by Dialogflow webhook
-                  # Will be updated by trade completion logic when trades close
-                  "win_rate": existing_state.get("paper_account", {}).get("win_rate", 0),
-                  "win_rate_sample_size": existing_state.get("paper_account", {}).get("win_rate_sample_size", 0),
+                  # FIX: Calculate win_rate from actual trade pairs (LL-FIX Jan 27, 2026)
+                  "win_rate": win_rate,
+                  "win_rate_sample_size": total_closed,
                   "starting_balance": 30000.0  # Per CLAUDE.md - $30K paper account (Jan 22, 2026)
               },
               "positions": position_list,

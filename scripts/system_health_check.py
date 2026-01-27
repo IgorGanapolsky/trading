@@ -197,6 +197,182 @@ def check_ml_pipeline():
     return results
 
 
+def check_position_completeness():
+    """Verify iron condor positions have all 4 legs.
+
+    Added Jan 27, 2026: Caught incomplete IC with only 3 legs.
+    A proper iron condor MUST have:
+    - Long put (lower strike)
+    - Short put (higher strike)
+    - Short call (lower strike)
+    - Long call (higher strike)
+    """
+    results = {"name": "Position Completeness (Iron Condor)", "status": "UNKNOWN", "details": []}
+
+    try:
+        import json
+        from pathlib import Path
+
+        state_file = Path("data/system_state.json")
+        if not state_file.exists():
+            results["status"] = "BROKEN"
+            results["details"].append("✗ system_state.json not found")
+            return results
+
+        state = json.loads(state_file.read_text())
+        positions = state.get("positions", [])
+
+        if not positions:
+            results["status"] = "OK"
+            results["details"].append("✓ No open positions")
+            return results
+
+        # Group by expiration
+        from collections import defaultdict
+        by_expiry = defaultdict(list)
+        for p in positions:
+            symbol = p.get("symbol", "")
+            if len(symbol) > 10:  # Options have long symbols
+                # Extract expiry from symbol (e.g., SPY260227C00735000)
+                expiry = symbol[3:9]  # YYMMDD
+                by_expiry[expiry].append(p)
+
+        # Check each expiry group for complete IC
+        for expiry, legs in by_expiry.items():
+            long_puts = [l for l in legs if 'P' in l["symbol"] and l["qty"] > 0]
+            short_puts = [l for l in legs if 'P' in l["symbol"] and l["qty"] < 0]
+            long_calls = [l for l in legs if 'C' in l["symbol"] and l["qty"] > 0]
+            short_calls = [l for l in legs if 'C' in l["symbol"] and l["qty"] < 0]
+
+            has_all_legs = len(long_puts) >= 1 and len(short_puts) >= 1 and \
+                          len(long_calls) >= 1 and len(short_calls) >= 1
+
+            if not has_all_legs:
+                results["status"] = "BROKEN"
+                missing = []
+                if not long_puts: missing.append("long put")
+                if not short_puts: missing.append("short put")
+                if not long_calls: missing.append("long call")
+                if not short_calls: missing.append("SHORT CALL")  # Most critical
+                results["details"].append(f"✗ Expiry {expiry}: INCOMPLETE IC - missing {', '.join(missing)}")
+                results["details"].append(f"  Current legs: {len(legs)}/4")
+            else:
+                results["details"].append(f"✓ Expiry {expiry}: Complete 4-leg IC")
+
+        if results["status"] != "BROKEN":
+            results["status"] = "OK"
+
+    except Exception as e:
+        results["status"] = "BROKEN"
+        results["details"].append(f"✗ Error: {e}")
+
+    return results
+
+
+def check_feedback_freshness():
+    """Verify RLHF feedback system is current.
+
+    Added Jan 27, 2026: stats.json was 4 days stale without detection.
+    Feedback should be updated within 24 hours during active sessions.
+    """
+    results = {"name": "RLHF Feedback Freshness", "status": "UNKNOWN", "details": []}
+
+    try:
+        import json
+        from datetime import datetime, timedelta
+        from pathlib import Path
+
+        stats_file = Path("data/feedback/stats.json")
+        if not stats_file.exists():
+            results["status"] = "BROKEN"
+            results["details"].append("✗ stats.json not found")
+            return results
+
+        stats = json.loads(stats_file.read_text())
+        last_updated = stats.get("last_updated", "")
+
+        if not last_updated:
+            results["status"] = "BROKEN"
+            results["details"].append("✗ No last_updated timestamp")
+            return results
+
+        # Parse timestamp
+        try:
+            last_dt = datetime.strptime(last_updated, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            last_dt = datetime.strptime(last_updated[:19], "%Y-%m-%d %H:%M:%S")
+
+        age = datetime.now() - last_dt
+        age_hours = age.total_seconds() / 3600
+
+        if age_hours > 48:
+            results["status"] = "BROKEN"
+            results["details"].append(f"✗ Feedback {age.days} days stale (updated: {last_updated})")
+        elif age_hours > 24:
+            results["status"] = "OK"
+            results["details"].append(f"⚠️ Feedback {age_hours:.1f}h old (updated: {last_updated})")
+        else:
+            results["status"] = "OK"
+            results["details"].append(f"✓ Feedback current ({age_hours:.1f}h old)")
+
+        # Check stats
+        total = stats.get("total", 0)
+        positive = stats.get("positive", 0)
+        negative = stats.get("negative", 0)
+        sat_rate = stats.get("satisfaction_rate", 0)
+        results["details"].append(f"  Stats: {total} total, {positive}👍/{negative}👎, {sat_rate:.1f}% satisfaction")
+
+    except Exception as e:
+        results["status"] = "BROKEN"
+        results["details"].append(f"✗ Error: {e}")
+
+    return results
+
+
+def check_win_rate_validity():
+    """Verify win rate is being calculated when trades exist.
+
+    Added Jan 27, 2026: Win rate showed 0% despite 61 trades.
+    If trades exist, win_rate_sample_size should be > 0.
+    """
+    results = {"name": "Win Rate Tracking", "status": "UNKNOWN", "details": []}
+
+    try:
+        import json
+        from pathlib import Path
+
+        state_file = Path("data/system_state.json")
+        if not state_file.exists():
+            results["status"] = "BROKEN"
+            results["details"].append("✗ system_state.json not found")
+            return results
+
+        state = json.loads(state_file.read_text())
+        paper = state.get("paper_account", {})
+        trade_history = state.get("trade_history", [])
+
+        win_rate = paper.get("win_rate", 0)
+        sample_size = paper.get("win_rate_sample_size", 0)
+        trades_loaded = state.get("trades_loaded", 0)
+
+        if trades_loaded > 10 and sample_size == 0:
+            results["status"] = "BROKEN"
+            results["details"].append(f"✗ {trades_loaded} trades exist but win_rate_sample_size=0")
+            results["details"].append("  Win rate calculation not running!")
+        elif sample_size > 0:
+            results["status"] = "OK"
+            results["details"].append(f"✓ Win rate: {win_rate}% from {sample_size} closed trades")
+        else:
+            results["status"] = "OK"
+            results["details"].append(f"✓ No completed trade pairs yet ({trades_loaded} orders)")
+
+    except Exception as e:
+        results["status"] = "BROKEN"
+        results["details"].append(f"✗ Error: {e}")
+
+    return results
+
+
 def check_blog_deployment():
     """Verify blog lessons have dates and are current."""
     results = {"name": "Blog Deployment", "status": "UNKNOWN", "details": []}
@@ -277,6 +453,9 @@ def main():
     checks = [
         check_vector_db,  # CRITICAL: Must run first - RAG depends on this
         check_data_integrity,  # Validate data before other checks
+        check_position_completeness,  # Jan 27: Caught incomplete IC
+        check_feedback_freshness,  # Jan 27: Caught stale stats.json
+        check_win_rate_validity,  # Jan 27: Caught 0% win rate bug
         check_rag_system,
         check_rl_system,
         check_ml_pipeline,
