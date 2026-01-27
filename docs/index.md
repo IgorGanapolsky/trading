@@ -17,9 +17,9 @@ This is the unfiltered story of building an autonomous AI trading system—every
 
 | Metric | Value |
 |--------|-------|
-| Paper Account | $4,207.46 |
+| Paper Account | $29,992.83 |
 | Strategy | Iron Condors on SPY |
-| Open Positions | 4 |
+| Open Positions | 3 |
 | Status | Weekend - Markets Closed |
 
 **What's happening:** Fresh start with $30K. Validating our iron condor strategy in paper trading before scaling. Ralph Mode runs 24/7, automatically fixing issues and publishing what it learns.
