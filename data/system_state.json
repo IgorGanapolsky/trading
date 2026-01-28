@@ -678,9 +678,11 @@
     "positions_count": 3
   },
   "meta": {
-    "last_updated": "2026-01-27T20:40:48.601342+00:00",
+    "last_updated": "2026-01-27T23:53:42.898227",
     "trade_sync": "alpaca_api",
-    "sync_frequency_minutes": 5
+    "sync_frequency_minutes": 5,
+    "last_sync": "2026-01-27T23:53:42.898237",
+    "sync_mode": "skipped_no_keys"
   },
   "paper_trading": {
     "start_date": "2026-01-22",
