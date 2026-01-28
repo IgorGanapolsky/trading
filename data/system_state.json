@@ -1,15 +1,10 @@
 {
-  "last_updated": "2026-01-27T20:40:48.601323+00:00",
+  "last_updated": "2026-01-28T14:14:21.339142+00:00",
   "sync_health": {
-    "last_successful_sync": "2026-01-27T20:40:48.601325+00:00",
+    "last_successful_sync": "2026-01-28T14:14:21.339144+00:00",
     "sync_source": "github_actions",
-    "sync_count_today": 21,
+    "sync_count_today": 1,
     "history": [
-      {
-        "timestamp": "2026-01-26T19:58:14.361928+00:00",
-        "equity": 29986.2,
-        "success": true
-      },
       {
         "timestamp": "2026-01-26T20:09:08.472723+00:00",
         "equity": 29986.2,
@@ -124,48 +119,53 @@
         "timestamp": "2026-01-27T20:40:48.601316+00:00",
         "equity": 29994.83,
         "success": true
+      },
+      {
+        "timestamp": "2026-01-28T14:14:21.339133+00:00",
+        "equity": 29990.79,
+        "success": true
       }
     ]
   },
   "portfolio": {
-    "equity": 29994.83,
-    "cash": 29992.83
+    "equity": 29990.79,
+    "cash": 29992.79
   },
   "paper_account": {
-    "equity": 29994.83,
-    "cash": 29992.83,
-    "buying_power": 58985.66,
-    "total_pl": -5.169999999998254,
-    "total_pl_pct": -0.02,
+    "equity": 29990.79,
+    "cash": 29992.79,
+    "buying_power": 58985.58,
+    "total_pl": -9.209999999999127,
+    "total_pl_pct": -0.03,
     "positions_count": 3,
-    "daily_change": 11.98,
-    "win_rate": 0,
-    "win_rate_sample_size": 0,
+    "daily_change": -6.0,
+    "win_rate": 26.7,
+    "win_rate_sample_size": 15,
     "starting_balance": 30000.0
   },
   "positions": [
     {
       "symbol": "SPY260227C00735000",
       "qty": 1.0,
-      "price": 0.44,
-      "value": 44.0,
-      "pnl": 10.0,
+      "price": 0.4,
+      "value": 40.0,
+      "pnl": 6.0,
       "type": "option"
     },
     {
       "symbol": "SPY260227P00655000",
       "qty": 1.0,
-      "price": 2.46,
-      "value": 246.0,
-      "pnl": -25.6667,
+      "price": 2.51,
+      "value": 251.0,
+      "pnl": -20.6667,
       "type": "option"
     },
     {
       "symbol": "SPY260227P00660000",
       "qty": -1.0,
-      "price": 2.88,
-      "value": -288.0,
-      "pnl": 18.0,
+      "price": 2.93,
+      "value": -293.0,
+      "pnl": 13.0,
       "type": "option"
     }
   ],
@@ -664,33 +664,29 @@
     "last_trade_date": "2026-01-28",
     "today_trades": 0,
     "total_trades_today": 0,
-    "last_trade_symbol": "SYNCED"
+    "last_trade_symbol": "SPY260227C00735000"
   },
   "risk": {
     "status": "WARNING - NEGATIVE P/L",
-    "total_pl": -5.169999999998254,
-    "unrealized_pl": 2.3333000000000013
+    "total_pl": -9.209999999999127,
+    "unrealized_pl": -1.6666999999999987
   },
   "account": {
-    "current_equity": 29994.83,
-    "total_pl": -5.169999999998254,
-    "total_pl_pct": -0.02,
+    "current_equity": 29990.79,
+    "total_pl": -9.209999999999127,
+    "total_pl_pct": -0.03,
     "positions_count": 3
   },
   "meta": {
-    "last_updated": "2026-01-28T05:57:32.138977+00:00",
+    "last_updated": "2026-01-28T14:14:21.339158+00:00",
     "trade_sync": "alpaca_api",
-    "sync_frequency_minutes": 5,
-    "last_sync": "2026-01-28T00:38:48.615334",
-    "sync_mode": "skipped_no_keys"
+    "sync_frequency_minutes": 5
   },
   "paper_trading": {
     "start_date": "2026-01-22",
     "target_duration_days": 90,
     "target_win_rate": 0.8,
-    "current_day": 6,
+    "current_day": 7,
     "notes": "Paper phase per CLAUDE.md - validate 80%+ win rate before scaling"
-  },
-  "paper_trading_start_date": "2026-01-22",
-  "paper_trading_day": 7
+  }
 }
