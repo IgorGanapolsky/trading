@@ -388,7 +388,7 @@ class SemanticCache:
                 return
 
             with open(self.cache_file, "rb") as f:
-                cache_data = pickle.load(f)
+                cache_data = pickle.load(f)  # noqa: S301 - trusted local cache file
 
             loaded_count = 0
             for entry_data in cache_data.get("entries", []):

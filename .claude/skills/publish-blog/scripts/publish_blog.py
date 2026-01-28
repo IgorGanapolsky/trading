@@ -314,7 +314,6 @@ def main():
     else:
         # Auto-generate from recent context
         commits = get_recent_commits(3)
-        branch = get_current_branch()
 
         if commits:
             # Use most recent commit as title inspiration

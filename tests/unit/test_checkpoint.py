@@ -76,7 +76,7 @@ class TestPipelineCheckpointer:
 
     def test_creates_database(self, temp_db):
         """Should create database and table on init."""
-        cp = PipelineCheckpointer(db_path=temp_db)
+        _cp = PipelineCheckpointer(db_path=temp_db)  # noqa: F841 - side effect test
         assert temp_db.exists()
 
         # Verify table exists

@@ -142,7 +142,7 @@ class LagLlamaPredictor:
         if not self._initialized:
             raise RuntimeError("Model not initialized")
 
-        current_price = prices[-1]
+        _current_price = prices[-1]  # noqa: F841 - may be used in future
 
         if self._fallback_mode:
             return self._statistical_forecast(prices, ticker, horizon_days)

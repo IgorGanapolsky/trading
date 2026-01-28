@@ -43,11 +43,16 @@ def mock_trade_gateway_rag():
     where the RAG knowledge directory may not be properly set up.
     Applied automatically to all tests.
     """
-    with patch("src.risk.trade_gateway.LessonsLearnedRAG") as mock_rag_class:
-        mock_rag_instance = MagicMock()
-        mock_rag_instance.query.return_value = []
-        mock_rag_class.return_value = mock_rag_instance
-        yield mock_rag_instance
+    try:
+        with patch("src.risk.trade_gateway.LessonsLearnedRAG") as mock_rag_class:
+            mock_rag_instance = MagicMock()
+            mock_rag_instance.query.return_value = []
+            mock_rag_class.return_value = mock_rag_instance
+            yield mock_rag_instance
+    except (AttributeError, ModuleNotFoundError):
+        # Module not importable in this test context (e.g., workflow tests)
+        # Skip the mock gracefully
+        yield None
 
 
 @pytest.fixture(scope="function")
