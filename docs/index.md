@@ -17,7 +17,7 @@ This is the unfiltered story of building an autonomous AI trading system—every
 
 | Metric | Value |
 |--------|-------|
-| Paper Account | $29,992.83 |
+| Paper Account | $29,994.83 |
 | Strategy | Iron Condors on SPY |
 | Open Positions | 3 |
 | Status | Weekend - Markets Closed |
