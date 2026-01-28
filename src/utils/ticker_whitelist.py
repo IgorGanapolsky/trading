@@ -3,26 +3,28 @@ TICKER WHITELIST - CRITICAL SAFETY GATE
 
 Per CLAUDE.md and Trading System Directive v2.0:
 - Permitted Tickers: SPY ONLY (whitelist enforced)
-- Red Line: ❌ Never trade non-whitelisted tickers
+- Red Line: Never trade non-whitelisted tickers
 
 This module MUST be imported by ALL trading scripts before execution.
 Any attempt to trade non-SPY tickers will be BLOCKED.
 
 Created: Jan 21, 2026
 Reason: SOFI position violated SPY-only rule, blocked trading for 2 days
+
+CANONICAL SOURCE: src/core/trading_constants.py
+All ticker definitions consolidated there per Jan 28, 2026 cleanup.
 """
 
 import logging
 
-logger = logging.getLogger(__name__)
+from src.core.trading_constants import ALLOWED_TICKERS
 
-# WHITELIST - SPY ONLY
-# Do NOT add other tickers without CEO approval
-ALLOWED_TICKERS = frozenset({"SPY"})
+logger = logging.getLogger(__name__)
 
 # Options on allowed tickers are permitted
 # Format: SPY + date + P/C + strike (e.g., SPY260220P00653000)
-ALLOWED_UNDERLYING = frozenset({"SPY"})
+# Use ALLOWED_TICKERS from canonical source
+ALLOWED_UNDERLYING = frozenset(ALLOWED_TICKERS)
 
 
 class TickerWhitelistViolation(Exception):

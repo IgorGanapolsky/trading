@@ -690,5 +690,7 @@
     "target_win_rate": 0.8,
     "current_day": 6,
     "notes": "Paper phase per CLAUDE.md - validate 80%+ win rate before scaling"
-  }
+  },
+  "paper_trading_start_date": "2026-01-22",
+  "paper_trading_day": 7
 }

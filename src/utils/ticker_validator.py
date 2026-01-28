@@ -7,16 +7,17 @@ Root cause: SOFI position opened today violating SPY ONLY rule, causing -$150 lo
 Per CLAUDE.md:
 - Primary strategy: IRON CONDORS on SPY ONLY
 - NO individual stocks. The $100K success was SPY. The $5K failure was SOFI.
+
+CANONICAL SOURCE: src/core/trading_constants.py
+All ticker definitions consolidated there per Jan 28, 2026 cleanup.
 """
 
 import logging
 from typing import NoReturn
 
-logger = logging.getLogger(__name__)
+from src.core.trading_constants import ALLOWED_TICKERS
 
-# WHITELIST: Only these tickers are allowed for trading
-# Per CLAUDE.md "Ticker Selection (Jan 19, 2026 - Simplified)"
-ALLOWED_TICKERS = frozenset({"SPY"})
+logger = logging.getLogger(__name__)
 
 
 class TickerViolationError(Exception):

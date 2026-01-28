@@ -10,9 +10,14 @@ This validator MUST be called before any trade. It:
 2. Validates against SPY-ONLY mandate
 3. Checks position balance requirements
 4. Verifies risk limits
+
+CANONICAL SOURCE: src/core/trading_constants.py
+All ticker and position limit definitions consolidated there per Jan 28, 2026 cleanup.
 """
 
 import logging
+
+from src.core.trading_constants import ALLOWED_TICKERS, MAX_POSITION_PCT
 
 logger = logging.getLogger(__name__)
 
@@ -32,18 +37,12 @@ class PreTradeValidator:
         validator.validate(symbol="SPY", strategy="iron_condor", quantity=1)
     """
 
-    # From LL-203: These are the ONLY allowed tickers
-    ALLOWED_TICKERS = {"SPY"}  # Removed IWM per CLAUDE.md - SPY ONLY
-
-    # From CLAUDE.md: Maximum position size
-    MAX_POSITION_PCT = 0.05  # 5% max per trade
-
     # From LL-277: Required win rate for strategy
     MIN_WIN_RATE = 0.80  # 80% minimum
 
     def __init__(self, account_value: float = 5000.0):
         self.account_value = account_value
-        self.max_risk = account_value * self.MAX_POSITION_PCT
+        self.max_risk = account_value * MAX_POSITION_PCT
 
     def validate(
         self,
@@ -64,7 +63,7 @@ class PreTradeValidator:
 
         # Check 1: SPY-ONLY mandate (from CLAUDE.md, LL-203, LL-247)
         base_symbol = symbol.split("2")[0] if "2" in symbol else symbol  # Extract base from options
-        if base_symbol not in self.ALLOWED_TICKERS:
+        if base_symbol not in ALLOWED_TICKERS:
             errors.append(
                 f"BLOCKED: {symbol} violates SPY-ONLY mandate. "
                 f"LL-247 documents SOFI disaster. LL-203 shows SPY works."

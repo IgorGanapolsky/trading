@@ -782,7 +782,7 @@ jobs:
           echo "📋 Position Limits: Max 4 (1 iron condor)"
           echo "📋 ========================================"
           echo ""
-          python3 scripts/close_excess_spreads.py || {
+          python3 scripts/close_positions.py --mode excess-only --ticker SPY || {
             echo "⚠️ Compliance check completed with warnings"
             echo "   May need manual review if positions couldn't be closed"
           }

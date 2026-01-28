@@ -36,14 +36,14 @@ jobs:
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
-        run: python scripts/close_all_positions.py
+        run: python scripts/close_positions.py --mode emergency-all
 
       - name: Fallback - Close Options Only
         if: failure()
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_30K_API_SECRET }}
-        run: python scripts/close_all_options.py
+        run: python scripts/close_positions.py --mode options-only
 
       - name: Sync State After Close
         if: success()
