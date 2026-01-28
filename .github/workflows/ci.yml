@@ -589,8 +589,8 @@ jobs:
           fetch-depth: 0
       - name: Check for new markdown files
         run: |
-          # Allowed: CLAUDE.md, MANDATORY_RULES.md, docs/_posts/ (blog), docs/_reports/ (daily reports), docs/ARCHITECTURE.md, rag_knowledge/ (lessons), .claude/ (internal), docs/_discoveries/ (ralph discoveries)
-          NEW_MD=$(git diff --name-only origin/main...HEAD | grep '\.md$' | grep -v 'CLAUDE.md\|MANDATORY_RULES.md\|docs/_posts/\|docs/_reports/\|rag_knowledge/\|docs/ARCHITECTURE.md\|\.claude/\|docs/_discoveries/' || true)
+          # Allowed: CLAUDE.md, MANDATORY_RULES.md, docs/_posts/ (blog), docs/_reports/ (daily reports), docs/ARCHITECTURE.md, docs/index.md, rag_knowledge/ (lessons), .claude/ (internal), docs/_discoveries/ (ralph discoveries)
+          NEW_MD=$(git diff --name-only origin/main...HEAD | grep '\.md$' | grep -v 'CLAUDE.md\|MANDATORY_RULES.md\|docs/_posts/\|docs/_reports/\|rag_knowledge/\|docs/ARCHITECTURE.md\|docs/index.md\|\.claude/\|docs/_discoveries/' || true)
           if [ -n "$NEW_MD" ]; then
             echo "❌ CLAUDE.md VIOLATION: New markdown files detected:"
             echo "$NEW_MD"

@@ -661,10 +661,10 @@
   ],
   "trades_loaded": 61,
   "trades": {
-    "last_trade_date": "2026-01-28",
+    "last_trade_date": "2026-01-27",
     "today_trades": 0,
     "total_trades_today": 0,
-    "last_trade_symbol": "SYNCED"
+    "last_trade_symbol": "SPY260227C00735000"
   },
   "risk": {
     "status": "WARNING - NEGATIVE P/L",
@@ -678,10 +678,10 @@
     "positions_count": 3
   },
   "meta": {
-    "last_updated": "2026-01-28T05:41:13.240406+00:00",
+    "last_updated": "2026-01-28T00:38:48.615324",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5,
-    "last_sync": "2026-01-27T23:53:42.898237",
+    "last_sync": "2026-01-28T00:38:48.615334",
     "sync_mode": "skipped_no_keys"
   },
   "paper_trading": {
