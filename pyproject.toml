@@ -124,6 +124,7 @@ exclude = [
     "data",
     "reports",
     "research",  # Experimental code, not production
+    ".claude/scripts/feedback",  # Internal RLHF tools, not production code
 ]
 
 [tool.ruff.lint]
