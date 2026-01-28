@@ -70,28 +70,24 @@ if [ "$FEEDBACK_TYPE" != "neutral" ]; then
 }
 EOF
 
-    # NEW: Record to LanceDB semantic memory
-    if [ -f "$SEMANTIC_MEMORY" ] && command -v python3 &> /dev/null; then
-        echo ""
-        echo "=================================================="
-        if [ "$FEEDBACK_TYPE" = "positive" ]; then
-            echo "✅ THUMBS UP DETECTED - RECORD SUCCESS PATTERN"
+    # NEW: Record to LanceDB semantic memory AUTOMATICALLY
+    LANCE_VENV="$CLAUDE_PROJECT_DIR/.claude/scripts/feedback/venv/bin/python3"
+    if [ -f "$SEMANTIC_MEMORY" ]; then
+        # Use venv if available, fallback to system python
+        if [ -f "$LANCE_VENV" ]; then
+            PYTHON="$LANCE_VENV"
         else
-            echo "🚨 THUMBS DOWN DETECTED - MANDATORY RECORDING"
+            PYTHON="python3"
         fi
-        echo "=================================================="
-        echo ""
-        echo "Claude MUST record in LanceDB:"
-        echo ""
-        echo "   1. RECORD feedback:"
-        echo "      echo \"<context of what happened>\" | python3 $SEMANTIC_MEMORY --add-feedback --feedback-type $FEEDBACK_TYPE"
-        echo ""
-        echo "   2. RE-INDEX (happens automatically)"
-        echo ""
-        if [ "$FEEDBACK_TYPE" = "negative" ]; then
-            echo "   3. ASK what went wrong"
-            echo "   4. APOLOGIZE and explain prevention"
+
+        # Auto-record feedback with context from user message
+        CONTEXT="User said: ${USER_MESSAGE:0:200}"
+        echo "$CONTEXT" | "$PYTHON" "$SEMANTIC_MEMORY" --add-feedback --feedback-type "$FEEDBACK_TYPE" 2>/dev/null
+
+        if [ "$FEEDBACK_TYPE" = "positive" ]; then
+            echo "✅ Thumbs up recorded to LanceDB"
+        else
+            echo "🚨 Thumbs down recorded to LanceDB - Claude should ask what went wrong"
         fi
-        echo "=================================================="
     fi
 fi
