@@ -114,7 +114,8 @@
           {
             "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/capture_feedback.sh \"$CLAUDE_USER_PROMPT\"",
-            "timeout": 10
+            "timeout": 10,
+            "async": true
           }
         ]
       }
@@ -145,7 +146,8 @@
           {
             "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/process_pending_feedback.sh",
-            "timeout": 5
+            "timeout": 5,
+            "async": true
           },
           {
             "type": "command",
@@ -155,7 +157,8 @@
           {
             "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/backup_critical_state.sh",
-            "timeout": 5
+            "timeout": 5,
+            "async": true
           },
           {
             "type": "command",
@@ -175,7 +178,8 @@
           {
             "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/auto_blog_generator.sh",
-            "timeout": 3
+            "timeout": 3,
+            "async": true
           },
           {
             "type": "command",
@@ -191,7 +195,8 @@
           {
             "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/capture_session_learnings.sh",
-            "timeout": 5
+            "timeout": 5,
+            "async": true
           }
         ]
       }
