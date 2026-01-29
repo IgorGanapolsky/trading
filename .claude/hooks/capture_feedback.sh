@@ -15,7 +15,9 @@ DATE=$(date +%Y-%m-%d)
 TIME=$(date +%H:%M:%S)
 FEEDBACK_FILE="$FEEDBACK_DIR/feedback_$DATE.jsonl"
 
-USER_MESSAGE="${1:-}"
+# Read user prompt from stdin JSON (Claude Code UserPromptSubmit sends JSON with "prompt" field)
+STDIN_DATA=$(cat)
+USER_MESSAGE=$(echo "$STDIN_DATA" | python3 -c "import sys,json; print(json.load(sys.stdin).get('prompt',''))" 2>/dev/null || echo "$STDIN_DATA")
 
 # Check for pending correction (user correcting a negative feedback)
 PENDING_CORRECTION="$FEEDBACK_DIR/pending_correction.json"
@@ -129,6 +131,12 @@ EOF
   "last_updated": "$DATE $TIME"
 }
 EOF
+
+    # Update Thompson Sampling model (per-category bandits + feature weights)
+    TRAIN_SCRIPT="$CLAUDE_PROJECT_DIR/scripts/train_from_feedback.py"
+    if [ -f "$TRAIN_SCRIPT" ]; then
+        python3 "$TRAIN_SCRIPT" --feedback "$FEEDBACK_TYPE" --context "$RICH_CONTEXT" 2>/dev/null
+    fi
 
     # Record to LanceDB semantic memory with rich context
     LANCE_VENV="$CLAUDE_PROJECT_DIR/.claude/scripts/feedback/venv/bin/python3"
