@@ -125,6 +125,11 @@
         "hooks": [
           {
             "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/load_env_file.sh",
+            "timeout": 3
+          },
+          {
+            "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/github_account_switch.sh",
             "timeout": 3
           },
