@@ -1,13 +1,58 @@
 {
-  "alpha": 20.0,
-  "beta": 1.0,
+  "alpha": 12.75,
+  "beta": 3.0,
   "feature_weights": {
-    "ci": 0.3,
+    "ci": 0.69,
+    "rag": 0.4,
+    "fix": 0.26,
+    "pr": 0.46,
+    "trade": 0.1,
     "entry": 0.1,
-    "test": 1.8,
-    "pr": 0.1,
     "refactor": 0.1,
-    "rag": 0.1
+    "system_health": 0.2,
+    "test": 0.2
   },
-  "last_updated": "2026-01-28T14:42:05.099326"
+  "per_category": {
+    "test": {
+      "alpha": 3.0,
+      "beta": 1.0,
+      "count": 2
+    },
+    "ci": {
+      "alpha": 7.75,
+      "beta": 1.0,
+      "count": 9
+    },
+    "trade": {
+      "alpha": 2.0,
+      "beta": 1.0,
+      "count": 1
+    },
+    "pr": {
+      "alpha": 5.5,
+      "beta": 1.0,
+      "count": 6
+    },
+    "refactor": {
+      "alpha": 2.0,
+      "beta": 1.0,
+      "count": 1
+    },
+    "analysis": {
+      "alpha": 1.0,
+      "beta": 1.0,
+      "count": 0
+    },
+    "log_parsing": {
+      "alpha": 1.0,
+      "beta": 1.0,
+      "count": 0
+    },
+    "system_health": {
+      "alpha": 4.0,
+      "beta": 2.0,
+      "count": 4
+    }
+  },
+  "last_updated": "2026-01-29T10:14:24.456139"
 }

@@ -17,6 +17,26 @@ FEEDBACK_FILE="$FEEDBACK_DIR/feedback_$DATE.jsonl"
 
 USER_MESSAGE="${1:-}"
 
+# Check for pending correction (user correcting a negative feedback)
+PENDING_CORRECTION="$FEEDBACK_DIR/pending_correction.json"
+if [ -f "$PENDING_CORRECTION" ]; then
+    # Only use if <10 min old
+    PENDING_AGE=$(($(date +%s) - $(date -r "$PENDING_CORRECTION" +%s 2>/dev/null || echo "0")))
+    if [ "$PENDING_AGE" -lt 600 ] && [ -n "$USER_MESSAGE" ]; then
+        # Append correction to the last negative feedback entry
+        FEEDBACK_ID=$(jq -r '.feedback_id // ""' "$PENDING_CORRECTION" 2>/dev/null)
+        FEEDBACK_LOG_FILE="$CLAUDE_PROJECT_DIR/.claude/memory/feedback/feedback-log.jsonl"
+        if [ -n "$FEEDBACK_ID" ] && [ -f "$FEEDBACK_LOG_FILE" ]; then
+            # Append correction as a new line referencing the original
+            CORRECTION_ENTRY="{\"timestamp\": \"$DATE $TIME\", \"type\": \"correction\", \"references\": \"$FEEDBACK_ID\", \"correction\": \"${USER_MESSAGE:0:500}\"}"
+            echo "$CORRECTION_ENTRY" >> "$FEEDBACK_LOG_FILE"
+        fi
+        rm -f "$PENDING_CORRECTION"
+    elif [ "$PENDING_AGE" -ge 600 ]; then
+        rm -f "$PENDING_CORRECTION"
+    fi
+fi
+
 # Detect feedback type
 FEEDBACK_TYPE="neutral"
 FEEDBACK_SCORE=0
@@ -44,6 +64,15 @@ if [ "$FEEDBACK_TYPE" != "neutral" ]; then
         LAST_SUMMARY=$(jq -r '.last_summary // ""' "$SESSION_STATE" 2>/dev/null)
     fi
 
+    # For negative feedback, capture bad_response and write pending correction
+    BAD_RESPONSE=""
+    if [ "$FEEDBACK_TYPE" = "negative" ] && [ -f "$SESSION_STATE" ]; then
+        BAD_RESPONSE=$(jq -r '.last_response // ""' "$SESSION_STATE" 2>/dev/null)
+    fi
+
+    # Generate unique feedback ID
+    FEEDBACK_ENTRY_ID="fb_${DATE}_${TIME//:/}"
+
     # Build rich context
     RICH_CONTEXT="Action: ${LAST_ACTION}
 Tool: ${LAST_TOOL}
@@ -52,9 +81,19 @@ Summary: ${LAST_SUMMARY}
 User said: ${USER_MESSAGE:0:200}"
 
     # Log to legacy file with rich context
-    cat >> "$FEEDBACK_FILE" <<EOF
-{"timestamp": "$DATE $TIME", "type": "$FEEDBACK_TYPE", "score": $FEEDBACK_SCORE, "action": "$LAST_ACTION", "tool": "$LAST_TOOL", "files": "$LAST_FILES", "summary": "$LAST_SUMMARY", "user_message": "${USER_MESSAGE:0:200}"}
+    if [ "$FEEDBACK_TYPE" = "negative" ] && [ -n "$BAD_RESPONSE" ]; then
+        cat >> "$FEEDBACK_FILE" <<EOF
+{"timestamp": "$DATE $TIME", "id": "$FEEDBACK_ENTRY_ID", "type": "$FEEDBACK_TYPE", "score": $FEEDBACK_SCORE, "action": "$LAST_ACTION", "tool": "$LAST_TOOL", "files": "$LAST_FILES", "summary": "$LAST_SUMMARY", "user_message": "${USER_MESSAGE:0:200}", "bad_response": "${BAD_RESPONSE:0:500}"}
 EOF
+        # Write pending correction marker for next user message
+        cat > "$PENDING_CORRECTION" <<EOF
+{"feedback_id": "$FEEDBACK_ENTRY_ID", "timestamp": "$DATE $TIME"}
+EOF
+    else
+        cat >> "$FEEDBACK_FILE" <<EOF
+{"timestamp": "$DATE $TIME", "id": "$FEEDBACK_ENTRY_ID", "type": "$FEEDBACK_TYPE", "score": $FEEDBACK_SCORE, "action": "$LAST_ACTION", "tool": "$LAST_TOOL", "files": "$LAST_FILES", "summary": "$LAST_SUMMARY", "user_message": "${USER_MESSAGE:0:200}"}
+EOF
+    fi
 
     # Update legacy stats
     STATS_FILE="$FEEDBACK_DIR/stats.json"

@@ -402,6 +402,10 @@ def load_feedback_patterns() -> List[Dict[str, Any]]:
                     doc_text += f"Context: {entry.get('context', entry.get('message', ''))}\n"
                     doc_text += f"Tags: {', '.join(entry.get('tags', []))}\n"
                     doc_text += f"Action: {entry.get('actionType', 'unknown')}"
+                    if entry.get("bad_response"):
+                        doc_text += f"\nBad Response: {entry['bad_response'][:300]}"
+                    if entry.get("correction"):
+                        doc_text += f"\nCorrection: {entry['correction'][:300]}"
 
                     patterns.append({
                         "id": entry.get("id", f"fb_{len(patterns)}"),
@@ -601,6 +605,22 @@ def hybrid_search(
                 bm25_score = bm25_scores.get(r.get("id"), 0)
 
                 combined_score = (VECTOR_WEIGHT * vector_score) + (BM25_WEIGHT * bm25_score)
+
+                # Recency boost: +0.15 for <7 days, +0.05 for 7-30 days
+                entry_date = r.get("date") or r.get("timestamp", "")
+                if entry_date:
+                    try:
+                        if "T" in str(entry_date):
+                            entry_ts = datetime.fromisoformat(str(entry_date))
+                        else:
+                            entry_ts = datetime.strptime(str(entry_date), "%Y-%m-%d")
+                        age_days = (datetime.now() - entry_ts).total_seconds() / 86400
+                        if age_days < 7:
+                            combined_score += 0.15
+                        elif age_days <= 30:
+                            combined_score += 0.05
+                    except (ValueError, TypeError):
+                        pass
 
                 results.append({
                     "id": r.get("id", "unknown"),
@@ -832,11 +852,30 @@ def main():
     parser.add_argument("-n", "--results", type=int, default=5, help="Number of results")
     parser.add_argument("--threshold", type=float, default=SIMILARITY_THRESHOLD, help="Similarity threshold")
     parser.add_argument("--no-bm25", action="store_true", help="Disable BM25 hybrid search")
+    parser.add_argument("--feedback-only", action="store_true", help="Search only negative feedback entries")
 
     args = parser.parse_args()
 
     if args.index:
         index_all(args.model)
+    elif args.query and args.feedback_only:
+        # Feedback-only mode: search only feedback table, filter to negative
+        results = hybrid_search(
+            args.query,
+            n_results=args.results * 2,  # Over-fetch to filter
+            threshold=args.threshold,
+            table_name=FEEDBACK_TABLE,
+            use_bm25=not args.no_bm25,
+        )
+        # Filter to negative-reward entries only
+        negative_results = [r for r in results if r.get("metadata", {}).get("reward", 0) <= 0]
+        negative_results = negative_results[:args.results]
+        print(f"\nFound {len(negative_results)} relevant negative feedback entries:\n")
+        for i, r in enumerate(negative_results, 1):
+            print(f"{i}. {r['title']}")
+            print(f"   Score: {r['combined_score']:.3f}")
+            print(f"   Preview: {r['text'][:100]}...")
+            print()
     elif args.query:
         results = hybrid_search(
             args.query,

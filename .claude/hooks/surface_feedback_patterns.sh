@@ -48,7 +48,8 @@ if os.path.exists(model_path):
             'total_samples': total_samples,
             'negative_features': sorted(negative_features, key=lambda x: x[1])[:5],
             'positive_features': sorted(positive_features, key=lambda x: x[1], reverse=True)[:5],
-            'last_updated': model.get('last_updated', 'unknown')
+            'last_updated': model.get('last_updated', 'unknown'),
+            'per_category': model.get('per_category', {})
         }
     except Exception as e:
         result['error'] = str(e)
@@ -111,6 +112,28 @@ else:
     print('No feedback stats')
 " 2>/dev/null)
 
+    # Get per-category posteriors
+    PER_CAT=$(echo "$OUTPUT" | python3 -c "
+import sys, json
+data = json.load(sys.stdin)
+per_cat = data.get('per_category', {})
+lines = []
+for cat, vals in sorted(per_cat.items()):
+    if isinstance(vals, dict):
+        a = vals.get('alpha', 1.0)
+        b = vals.get('beta', 1.0)
+        count = vals.get('count', 0)
+        if count >= 5:
+            posterior = a / (a + b)
+            lines.append(f'  {cat}: {posterior:.2f} ({count} samples)')
+        else:
+            lines.append(f'  {cat}: (insufficient data, {count} samples)')
+if lines:
+    print('\n'.join(lines))
+else:
+    print('  No per-category data yet')
+" 2>/dev/null)
+
     echo "═══════════════════════════════════════════════════════════"
     echo "📊 RLHF FEEDBACK MODEL (Thompson Sampling)"
     echo "═══════════════════════════════════════════════════════════"
@@ -119,5 +142,8 @@ else:
     echo ""
     echo "✅ POSITIVE patterns (keep doing): $POS_FEATURES"
     echo "⚠️  NEGATIVE patterns (avoid): $NEG_FEATURES"
+    echo ""
+    echo "PER-CATEGORY RELIABILITY:"
+    echo "$PER_CAT"
     echo "═══════════════════════════════════════════════════════════"
 fi
