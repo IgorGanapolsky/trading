@@ -135,19 +135,19 @@ class TestCrisisMonitor:
         loss_conditions = [c for c in conditions if c.condition_type == "EXCESS_UNREALIZED_LOSS"]
         assert len(loss_conditions) > 0
 
-    def test_single_position_crisis(self):
-        """Test that single position losing 50%+ triggers crisis."""
+    def test_stop_loss_breach(self):
+        """Test that loss exceeding 200% of credit triggers stop-loss breach."""
         from src.safety.crisis_monitor import check_crisis_conditions
 
+        # Loss of $2500 on $1000 credit = 250% > 200% threshold
         positions = [
-            {"symbol": "SPY260220P00658000", "qty": 4, "unrealized_pl": -600, "cost_basis": 1000},
+            {"symbol": "SPY260220P00658000", "qty": 4, "unrealized_pl": -2500, "cost_basis": 1000},
         ]
 
         conditions = check_crisis_conditions(positions, account_equity=10000)
 
-        # Should detect single position crisis (60% loss > 50% threshold)
-        single_conditions = [c for c in conditions if c.condition_type == "SINGLE_POSITION_CRISIS"]
-        assert len(single_conditions) > 0
+        stop_loss_conditions = [c for c in conditions if c.condition_type == "STOP_LOSS_BREACH"]
+        assert len(stop_loss_conditions) > 0
 
     def test_no_crisis_when_normal(self):
         """Test that normal conditions don't trigger crisis."""

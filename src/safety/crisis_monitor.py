@@ -34,6 +34,7 @@ try:
     from src.core.trading_constants import (
         CRISIS_LOSS_PCT,
         CRISIS_POSITION_COUNT,
+        IRON_CONDOR_STOP_LOSS_MULTIPLIER,
         MAX_POSITIONS,
     )
 except ImportError:
@@ -41,6 +42,7 @@ except ImportError:
     CRISIS_LOSS_PCT = 0.25
     CRISIS_POSITION_COUNT = 4
     MAX_POSITIONS = 4
+    IRON_CONDOR_STOP_LOSS_MULTIPLIER = 2.0
 
 # File paths
 TRADING_HALTED_FILE = Path("data/TRADING_HALTED")
@@ -117,19 +119,21 @@ def check_crisis_conditions(
             )
         )
 
-    # Condition 3: Single position losing > 50%
+    # Condition 3: Iron condor stop-loss breach (200% of credit per CLAUDE.md)
+    # For short options, cost_basis represents credit received.
+    # Loss exceeding 2x credit = stop-loss breach.
     for pos in positions:
         cost_basis = float(pos.get("cost_basis", 0))
         unrealized_pl = float(pos.get("unrealized_pl", 0))
         if cost_basis > 0 and unrealized_pl < 0:
             loss_ratio = abs(unrealized_pl) / cost_basis
-            if loss_ratio > 0.50:
+            if loss_ratio > IRON_CONDOR_STOP_LOSS_MULTIPLIER:
                 conditions.append(
                     CrisisCondition(
-                        condition_type="SINGLE_POSITION_CRISIS",
+                        condition_type="STOP_LOSS_BREACH",
                         current_value=loss_ratio,
-                        threshold=0.50,
-                        details=f"{pos.get('symbol')}: Lost {loss_ratio * 100:.0f}% (${abs(unrealized_pl):.2f})",
+                        threshold=IRON_CONDOR_STOP_LOSS_MULTIPLIER,
+                        details=f"{pos.get('symbol')}: Lost {loss_ratio * 100:.0f}% of credit (${abs(unrealized_pl):.2f})",
                     )
                 )
 
@@ -232,6 +236,8 @@ def monitor_and_halt_if_needed(
     """
     Main entry point: Check conditions and trigger halt if needed.
 
+    Also auto-clears stale halts when positions are closed.
+
     Args:
         positions: List of current positions
         account_equity: Current account equity
@@ -239,6 +245,12 @@ def monitor_and_halt_if_needed(
     Returns:
         (was_halted, conditions)
     """
+    # Auto-clear: if halted but no open positions, the crisis resolved itself
+    option_positions = [p for p in positions if len(p.get("symbol", "")) > 10]
+    if TRADING_HALTED_FILE.exists() and len(option_positions) == 0:
+        logger.info("✅ No open positions — auto-clearing stale TRADING_HALTED")
+        clear_crisis_mode(reason="Auto-clear: no open positions remain")
+
     conditions = check_crisis_conditions(positions, account_equity)
 
     if conditions:
