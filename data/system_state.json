@@ -1,15 +1,10 @@
 {
-  "last_updated": "2026-01-30T15:07:12.410298+00:00",
+  "last_updated": "2026-01-30T15:23:26.279739+00:00",
   "sync_health": {
-    "last_successful_sync": "2026-01-30T15:07:12.410301+00:00",
+    "last_successful_sync": "2026-01-30T15:23:26.279741+00:00",
     "sync_source": "github_actions",
-    "sync_count_today": 3,
+    "sync_count_today": 4,
     "history": [
-      {
-        "timestamp": "2026-01-29T14:20:08.216039+00:00",
-        "equity": 29964.42,
-        "success": true
-      },
       {
         "timestamp": "2026-01-29T14:47:42.040611+00:00",
         "equity": 29959.42,
@@ -124,6 +119,11 @@
         "timestamp": "2026-01-30T15:07:12.410290+00:00",
         "equity": 29969.42,
         "success": true
+      },
+      {
+        "timestamp": "2026-01-30T15:23:26.279730+00:00",
+        "equity": 29969.42,
+        "success": true
       }
     ]
   },
@@ -155,25 +155,25 @@
     {
       "symbol": "SPY260227C00735000",
       "qty": 1.0,
-      "price": 0.22,
-      "value": 22.0,
-      "pnl": -15.0,
+      "price": 0.23,
+      "value": 23.0,
+      "pnl": -14.0,
       "type": "option"
     },
     {
       "symbol": "SPY260227P00655000",
       "qty": 1.0,
-      "price": 2.75,
-      "value": 275.0,
-      "pnl": 33.0,
+      "price": 2.72,
+      "value": 272.0,
+      "pnl": 30.0,
       "type": "option"
     },
     {
       "symbol": "SPY260227P00660000",
       "qty": -1.0,
-      "price": 3.23,
-      "value": -323.0,
-      "pnl": -42.0,
+      "price": 3.21,
+      "value": -321.0,
+      "pnl": -40.0,
       "type": "option"
     }
   ],
@@ -718,7 +718,7 @@
     "positions_count": 4
   },
   "meta": {
-    "last_updated": "2026-01-30T15:07:12.410316+00:00",
+    "last_updated": "2026-01-30T15:23:26.279757+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5
   },
