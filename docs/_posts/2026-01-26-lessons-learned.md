@@ -1,16 +1,16 @@
 ---
 layout: post
-title: "Day 85: What We Learned - January 21, 2026"
-date: 2026-01-21
-day_number: 85
-lessons_count: 10
-critical_count: 6
+title: "Day 90: What We Learned - January 26, 2026"
+date: 2026-01-26
+day_number: 90
+lessons_count: 8
+critical_count: 2
 excerpt: "Today was a wake-up call. Two critical issues surfaced that could have derailed our entire trading operation. Here's what went wrong and how we're fix..."
 ---
 
-# Day 85 of 90 | Wednesday, January 21, 2026
+# Day 90 of 90 | Monday, January 26, 2026
 
-**5 days remaining** in our journey to build a profitable AI trading system.
+**0 days remaining** in our journey to build a profitable AI trading system.
 
 Today was a wake-up call. Two critical issues surfaced that could have derailed our entire trading operation. Here's what went wrong and how we're fixing it.
 
@@ -20,76 +20,42 @@ Today was a wake-up call. Two critical issues surfaced that could have derailed 
 
 *These are the moments that test us. Critical issues that demanded immediate attention.*
 
-### SOFI Position Blocked All Trading - Buying Power Crisis
+### Paper Trading Blocked by Overly Strict VIX Threshold
 
-1. SOFI260213P00032000 (short put) was open with -$685 market value
+Paper trading phase went 5 days (Jan 22-26) with ZERO trades executed. The system was "working as designed" but the design prevented any trading during the validation phase.
 
-**Key takeaway:** 1. Triggered `close-non-spy-positions.yml` workflow
+### CI Scripts Failing + Orphan Positions Blocking Trades
 
-### Strategy Violation Crisis - Multiple Rogue Workflows
-
-On Jan 21, 2026, the trading system LOST $70.13 due to executing trades that VIOLATE CLAUDE.md strategy mandate. The system bought SPY SHARES and SOFI OPTIONS when it should ONLY execute iron condors 
-
-**Key takeaway:** Portfolio: $5,028.
-
-### Position Imbalance Crisis - Orphan Long Puts
-
-Portfolio lost $329.42 (-6.59%) due to position imbalance:
-
-**Key takeaway:** The orphan longs are decaying and losing money without corresponding short premium to offset.
-
-### Partial Iron Condor Auto-Close
-
-Iron condors were being placed with only PUT legs filling. CALL legs were failing silently, leaving dangerous directional positions:
-
-### CTO Failure - Stale Data Led to Misinformation
-
-CTO (Claude) gave CEO incorrect P/L information multiple times:
-
-**Key takeaway:** Claimed $0.
-
-### Position Limit - Count Contracts Not Symbols
-
-The position limit check was counting UNIQUE SYMBOLS instead of TOTAL CONTRACTS:
-
-**Key takeaway:** 3. **Log details**: Show exact positions when limit reached
+After fixing VIX threshold (LL-316), iron condor trades were STILL blocked because:
+1. 3 orphan option positions from Jan 22 crisis were blocking new trades
+2. The `manage_iron_condor_positions.py` sc
 
 
 ## Important Discoveries
 
 *Not emergencies, but insights that will shape how we trade going forward.*
 
-### Iron Condor Optimization Research - 86% Win Rate Strategy
+### CTO Violated Directive 3 - Asked CEO to Do Manual Work
 
-LL-277: Iron Condor Optimization Research - 86% Win Rate Strategy
+CLAUDE.md Directive #3: **"Never tell CEO to do manual work - If I can do it, I MUST do it myself."**
 
-Date: January 21, 2026
-Category: strategy, research, optimization
-Severity: HIGH
+### Crisis Prevention Systems Audit - Jan 26, 2026
 
- Source
-- Options Trading IQ: Iron Condor Success
+Audit of all crisis prevention systems implemented after the Jan 20-22, 2026 position accumulation crisis. All major safeguards are in place and functioning.
 
-### CALL Leg Pricing Fix - Aggressive Fallbacks
+### RAG Hooks Audit - SessionEnd Hook Ineffective (FIXED)
 
-Iron condors were placing PUT legs successfully but CALL legs were failing:
-
-### RAG Testing Evaluation - Retrieval Accuracy and Grounding
-
-LL-268: RAG Testing Evaluation - Retrieval Accuracy and Grounding
-
-ID: LL-268
-Date: 2026-01-21
-Severity: HIGH
-Category: Testing
-
- Summary
-Evaluated Medium article "RAG Testing — Validating Retrieval
+Audit of RAG hooks against official Claude Code documentation revealed that `capture_session_learnings.sh` is configured as a **SessionEnd** hook, which cannot inject context to Claude. This means les
 
 
 ## Quick Wins & Refinements
 
-- **Day 2 Crisis - Position Imbalance and Missing CALL Legs** - Two consecutive days of trading crises:...
+- **PR & Branch Hygiene Session - Jan 26, 2026** - LL-316: PR & Branch Hygiene Session - Jan 26, 2026
+
+ Summary
+Completed PR management and branch clea...
+- **CTO Session - Wrong Repo Confusion & RAG Query Protocol** - 1. CEO asked "How much money did we make today?"...
+- **Execution Readiness Checklist - Jan 26, 2026** - CEO Directive: "Execute" - Stop researching, start trading....
 
 
 ---
@@ -98,10 +64,10 @@ Evaluated Medium article "RAG Testing — Validating Retrieval
 
 | What | Count |
 |------|-------|
-| Lessons Learned | **10** |
-| Critical Issues | 6 |
+| Lessons Learned | **8** |
+| Critical Issues | 2 |
 | High Priority | 3 |
-| Improvements | 1 |
+| Improvements | 3 |
 
 ---
 
@@ -153,4 +119,4 @@ Want to follow along? Check out the [full project on GitHub](https://github.com/
 
 ---
 
-*Day 85/90 complete. 5 to go.*
+*Day 90/90 complete. 0 to go.*

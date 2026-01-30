@@ -1,16 +1,16 @@
 ---
 layout: post
-title: "Day 85: What We Learned - January 21, 2026"
-date: 2026-01-21
-day_number: 85
-lessons_count: 10
-critical_count: 6
+title: "Day 87: What We Learned - January 23, 2026"
+date: 2026-01-23
+day_number: 87
+lessons_count: 6
+critical_count: 2
 excerpt: "Today was a wake-up call. Two critical issues surfaced that could have derailed our entire trading operation. Here's what went wrong and how we're fix..."
 ---
 
-# Day 85 of 90 | Wednesday, January 21, 2026
+# Day 87 of 90 | Friday, January 23, 2026
 
-**5 days remaining** in our journey to build a profitable AI trading system.
+**3 days remaining** in our journey to build a profitable AI trading system.
 
 Today was a wake-up call. Two critical issues surfaced that could have derailed our entire trading operation. Here's what went wrong and how we're fixing it.
 
@@ -20,76 +20,52 @@ Today was a wake-up call. Two critical issues surfaced that could have derailed 
 
 *These are the moments that test us. Critical issues that demanded immediate attention.*
 
-### SOFI Position Blocked All Trading - Buying Power Crisis
+### Invalid Option Strikes Causing CALL Legs to Fail
 
-1. SOFI260213P00032000 (short put) was open with -$685 market value
+LL-298: Invalid Option Strikes Causing CALL Legs to Fail
 
-**Key takeaway:** 1. Triggered `close-non-spy-positions.yml` workflow
+Date: January 23, 2026
+Severity: CRITICAL
+Impact: 4 consecutive days of losses (~$70 total)
 
-### Strategy Violation Crisis - Multiple Rogue Workflows
+ Summary
+Iron condor CALL legs were not executin
 
-On Jan 21, 2026, the trading system LOST $70.13 due to executing trades that VIOLATE CLAUDE.md strategy mandate. The system bought SPY SHARES and SOFI OPTIONS when it should ONLY execute iron condors 
+### Ll 298 Share Churning Loss
 
-**Key takeaway:** Portfolio: $5,028.
+---
+id: LL-298
+title: $22.61 Loss from SPY Share Churning - Crisis Workflow Failure
+date: 2026-01-23
+severity: CRITICAL
+category: trading
+---
 
-### Position Imbalance Crisis - Orphan Long Puts
-
-Portfolio lost $329.42 (-6.59%) due to position imbalance:
-
-**Key takeaway:** The orphan longs are decaying and losing money without corresponding short premium to offset.
-
-### Partial Iron Condor Auto-Close
-
-Iron condors were being placed with only PUT legs filling. CALL legs were failing silently, leaving dangerous directional positions:
-
-### CTO Failure - Stale Data Led to Misinformation
-
-CTO (Claude) gave CEO incorrect P/L information multiple times:
-
-**Key takeaway:** Claimed $0.
-
-### Position Limit - Count Contracts Not Symbols
-
-The position limit check was counting UNIQUE SYMBOLS instead of TOTAL CONTRACTS:
-
-**Key takeaway:** 3. **Log details**: Show exact positions when limit reached
+ Incident
+Lost $22.61 on January 23, 2026 from 49 SPY sha
 
 
 ## Important Discoveries
 
 *Not emergencies, but insights that will shape how we trade going forward.*
 
-### Iron Condor Optimization Research - 86% Win Rate Strategy
+### Iron Condor Position Management System Implementation
 
-LL-277: Iron Condor Optimization Research - 86% Win Rate Strategy
-
-Date: January 21, 2026
-Category: strategy, research, optimization
-Severity: HIGH
-
- Source
-- Options Trading IQ: Iron Condor Success
-
-### CALL Leg Pricing Fix - Aggressive Fallbacks
-
-Iron condors were placing PUT legs successfully but CALL legs were failing:
-
-### RAG Testing Evaluation - Retrieval Accuracy and Grounding
-
-LL-268: RAG Testing Evaluation - Retrieval Accuracy and Grounding
-
-ID: LL-268
-Date: 2026-01-21
-Severity: HIGH
-Category: Testing
-
- Summary
-Evaluated Medium article "RAG Testing — Validating Retrieval
+Created dedicated iron condor position management system with proper exit rules based on LL-268/LL-277 research. This addresses a critical gap where the existing `manage_positions.py` used equity-base
 
 
 ## Quick Wins & Refinements
 
-- **Day 2 Crisis - Position Imbalance and Missing CALL Legs** - Two consecutive days of trading crises:...
+- **RLHF Feedback Training Pipeline Completion** - LL-301: RLHF Feedback Training Pipeline Completion
+
+ID: LL-301
+Date: 2026-01-23
+Severity: IMPROVEMEN...
+- **Dialogflow RAG Query Fix - Irrelevant Lessons Returned** - **Status**: FIXED...
+- **ML/RAG Integration Analysis and Implementation** - LL-302: ML/RAG Integration Analysis and Implementation
+
+ID: LL-302
+Date: 2026-01-23 (Updated: 2026-0...
 
 
 ---
@@ -98,10 +74,10 @@ Evaluated Medium article "RAG Testing — Validating Retrieval
 
 | What | Count |
 |------|-------|
-| Lessons Learned | **10** |
-| Critical Issues | 6 |
-| High Priority | 3 |
-| Improvements | 1 |
+| Lessons Learned | **6** |
+| Critical Issues | 2 |
+| High Priority | 1 |
+| Improvements | 3 |
 
 ---
 
@@ -153,4 +129,4 @@ Want to follow along? Check out the [full project on GitHub](https://github.com/
 
 ---
 
-*Day 85/90 complete. 5 to go.*
+*Day 87/90 complete. 3 to go.*
