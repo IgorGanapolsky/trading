@@ -1,47 +1,36 @@
 ---
 layout: post
-title: "Day 94: What We Learned - January 30, 2026"
-date: 2026-01-30
-day_number: 94
-lessons_count: 4
-critical_count: 1
-excerpt: "Every mistake is a lesson in disguise. Today we uncovered a critical flaw in our system - the kind that separates amateur traders from professionals w..."
+title: "Day 95: What We Learned - January 31, 2026"
+date: 2026-01-31
+day_number: 95
+lessons_count: 3
+critical_count: 0
+excerpt: "Markets are closed, but the learning never stops. While other traders take the weekend off, we're refining our edge...."
 ---
 
-# Day 94 of 90 | Friday, January 30, 2026
+# Day 95 of 90 | Saturday, January 31, 2026
 
 **0 days remaining** in our journey to build a profitable AI trading system.
 
-Every mistake is a lesson in disguise. Today we uncovered a critical flaw in our system - the kind that separates amateur traders from professionals who survive long-term.
+Markets are closed, but the learning never stops. While other traders take the weekend off, we're refining our edge.
 
 ---
-
-## The Hard Lessons
-
-*These are the moments that test us. Critical issues that demanded immediate attention.*
-
-### CTO Failed Phil Town Rule 1 - Lost 86% of Account
-
-The CTO (Claude) failed to protect capital. Starting balance of $30,000 reduced to $4,099.71 - an 86% loss in 8 days of paper trading.
-
-**Key takeaway:** Don't lose money.
-
 
 ## Important Discoveries
 
 *Not emergencies, but insights that will shape how we trade going forward.*
 
-### Portfolio sync failed - blind trading risk
+### VIX-Based Iron Condor Entry Rules
 
-Cannot verify account state. Error: API Error
+Research-backed entry rules for iron condors based on VIX levels and IV rank.
 
-### Portfolio sync failed - blind trading risk
+### XSP vs SPY - Section 1256 Tax Optimization
 
-Cannot verify account state. Error: API Error
+XSP (Mini-SPX) options qualify for Section 1256 tax treatment (60/40), potentially saving 25%+ on taxes vs SPY options.
 
-### Portfolio sync failed - blind trading risk
+### Iron Condor Management - 71,417 Trade Study
 
-Cannot verify account state. Error: API Error
+Analysis of 71,417 iron condor trades on SPY (2007-2017) reveals optimal management strategies.
 
 
 ---
@@ -50,8 +39,8 @@ Cannot verify account state. Error: API Error
 
 | What | Count |
 |------|-------|
-| Lessons Learned | **4** |
-| Critical Issues | 1 |
+| Lessons Learned | **3** |
+| Critical Issues | 0 |
 | High Priority | 3 |
 | Improvements | 0 |
 
@@ -105,4 +94,4 @@ Want to follow along? Check out the [full project on GitHub](https://github.com/
 
 ---
 
-*Day 94/90 complete. 0 to go.*
+*Day 95/90 complete. 0 to go.*
