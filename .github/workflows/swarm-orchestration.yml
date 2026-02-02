@@ -1,0 +1,214 @@
+name: Swarm Orchestration
+
+on:
+  # Scheduled triggers (Eastern Time - GitHub uses UTC)
+  schedule:
+    # 9:25 AM ET = 14:25 UTC (EST) / 13:25 UTC (EDT)
+    - cron: '25 14 * * 1-5'  # Pre-market analysis (Mon-Fri)
+    # 9:35 AM ET = 14:35 UTC (EST) / 13:35 UTC (EDT)
+    - cron: '35 14 * * 1-5'  # Trading execution (Mon-Fri)
+    # 3:45 PM ET = 20:45 UTC (EST) / 19:45 UTC (EDT)
+    - cron: '45 20 * * 1-5'  # EOD review (Mon-Fri)
+    # 8:00 PM ET = 01:00 UTC (next day, EST) / 00:00 UTC (EDT)
+    - cron: '0 1 * * 2-6'    # Daily cleanup (Tue-Sat, for Mon-Fri nights)
+    # Sunday 8:00 AM ET = 13:00 UTC (EST) / 12:00 UTC (EDT)
+    - cron: '0 13 * * 0'     # Weekend research (Sunday)
+
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Swarm mode to execute'
+        required: true
+        type: choice
+        options:
+          - analysis
+          - trade
+          - eod_review
+          - cleanup
+          - research
+      force:
+        description: 'Force execution even outside schedule'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  detect-mode:
+    runs-on: ubuntu-latest
+    outputs:
+      mode: ${{ steps.detect.outputs.mode }}
+      should_run: ${{ steps.detect.outputs.should_run }}
+    steps:
+      - name: Detect swarm mode from schedule
+        id: detect
+        run: |
+          # Manual trigger
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "mode=${{ github.event.inputs.mode }}" >> $GITHUB_OUTPUT
+            echo "should_run=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Scheduled trigger - detect mode from cron
+          HOUR=$(date -u +%H)
+          MINUTE=$(date -u +%M)
+          DOW=$(date -u +%u)  # 1=Mon, 7=Sun
+
+          echo "Current UTC time: ${HOUR}:${MINUTE}, DOW: ${DOW}"
+
+          # Determine mode based on schedule
+          if [ "$DOW" -eq 7 ]; then
+            # Sunday = research
+            echo "mode=research" >> $GITHUB_OUTPUT
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          elif [ "$HOUR" -eq 14 ] && [ "$MINUTE" -eq 25 ]; then
+            echo "mode=analysis" >> $GITHUB_OUTPUT
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          elif [ "$HOUR" -eq 14 ] && [ "$MINUTE" -eq 35 ]; then
+            echo "mode=trade" >> $GITHUB_OUTPUT
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          elif [ "$HOUR" -eq 20 ] && [ "$MINUTE" -eq 45 ]; then
+            echo "mode=eod_review" >> $GITHUB_OUTPUT
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          elif [ "$HOUR" -eq 1 ] && [ "$MINUTE" -eq 0 ]; then
+            echo "mode=cleanup" >> $GITHUB_OUTPUT
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          else
+            echo "mode=unknown" >> $GITHUB_OUTPUT
+            echo "should_run=false" >> $GITHUB_OUTPUT
+          fi
+
+  run-swarm:
+    needs: detect-mode
+    if: needs.detect-mode.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    env:
+      ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+      ALPACA_PAPER_TRADING_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_SECRET_KEY }}
+      ALPACA_API_BASE_URL: https://paper-api.alpaca.markets
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -q alpaca-py requests pytz
+
+      - name: Run swarm orchestration
+        id: swarm
+        run: |
+          MODE="${{ needs.detect-mode.outputs.mode }}"
+          echo "Running swarm mode: $MODE"
+
+          # Create output directory
+          mkdir -p data/analysis
+
+          # Run the swarm
+          python3 .claude/scripts/orchestration/swarm_runner.py \
+            --mode "$MODE" \
+            --output "data/swarm_result_${MODE}_$(date +%Y%m%d_%H%M%S).json" \
+            | tee swarm_output.json
+
+          # Extract decision for trading mode
+          if [ "$MODE" = "analysis" ]; then
+            DECISION=$(jq -r '.decision // "hold"' swarm_output.json)
+            CONSENSUS=$(jq -r '.consensus // 0' swarm_output.json)
+            echo "decision=$DECISION" >> $GITHUB_OUTPUT
+            echo "consensus=$CONSENSUS" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload swarm results
+        uses: actions/upload-artifact@v4
+        with:
+          name: swarm-results-${{ needs.detect-mode.outputs.mode }}
+          path: |
+            data/analysis/
+            swarm_output.json
+          retention-days: 30
+
+      - name: Commit analysis results
+        if: needs.detect-mode.outputs.mode == 'analysis'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if [ -f "data/analysis/pre_market_$(date +%Y-%m-%d).json" ]; then
+            git add data/analysis/
+            git commit -m "chore(swarm): Pre-market analysis $(date +%Y-%m-%d)" || true
+            git push || true
+          fi
+
+      - name: Summary
+        run: |
+          MODE="${{ needs.detect-mode.outputs.mode }}"
+          echo "## Swarm Orchestration Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Mode:** $MODE" >> $GITHUB_STEP_SUMMARY
+          echo "**Time:** $(TZ=America/New_York date '+%Y-%m-%d %H:%M:%S ET')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f swarm_output.json ]; then
+            echo "### Results" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            cat swarm_output.json >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+  notify-on-trade-signal:
+    needs: [detect-mode, run-swarm]
+    if: |
+      needs.detect-mode.outputs.mode == 'analysis' &&
+      needs.run-swarm.outputs.decision == 'trade'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create GitHub Issue for Trade Signal
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const consensus = '${{ needs.run-swarm.outputs.consensus }}';
+            const date = new Date().toISOString().split('T')[0];
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[TRADE SIGNAL] Pre-market analysis aligned - ${date}`,
+              body: `## Trade Signal Detected
+
+            The pre-market analysis swarm has generated a **TRADE** signal.
+
+            **Consensus Score:** ${consensus}
+            **Date:** ${date}
+
+            ### Next Steps
+            1. Review the analysis results in the workflow artifacts
+            2. Execute iron condor setup if appropriate
+            3. Ensure Phil Town Rule #1 compliance
+
+            ### Pre-Trade Checklist
+            - [ ] SPY only
+            - [ ] Position size <= 5% ($5,000)
+            - [ ] Iron condor structure
+            - [ ] 15-20 delta short strikes
+            - [ ] 30-45 DTE
+            - [ ] Stop-loss defined (200% of credit)
+
+            *Generated by swarm-orchestration workflow*`,
+              labels: ['trade-signal', 'automated']
+            });
+
+  notify-failure:
+    needs: [detect-mode, run-swarm]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify on failure
+        run: |
+          echo "::error::Swarm orchestration failed for mode: ${{ needs.detect-mode.outputs.mode }}"

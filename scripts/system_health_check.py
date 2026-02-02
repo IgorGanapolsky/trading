@@ -23,7 +23,11 @@ def check_vector_db():
     Updated Jan 7, 2026: ChromaDB is now OPTIONAL (removed per CEO directive).
     Simple keyword search on markdown files is sufficient.
     """
-    results = {"name": "Vector Database (ChromaDB - OPTIONAL)", "status": "UNKNOWN", "details": []}
+    results = {
+        "name": "Vector Database (ChromaDB - OPTIONAL)",
+        "status": "UNKNOWN",
+        "details": [],
+    }
 
     try:
         import chromadb
@@ -46,11 +50,15 @@ def check_vector_db():
             collections = client.list_collections()
             if collections:
                 col_name = (
-                    collections[0] if isinstance(collections[0], str) else collections[0].name
+                    collections[0]
+                    if isinstance(collections[0], str)
+                    else collections[0].name
                 )
                 col = client.get_collection(col_name)
                 doc_count = col.count()
-                results["details"].append(f"✓ Vector DB has {doc_count} documents in '{col_name}'")
+                results["details"].append(
+                    f"✓ Vector DB has {doc_count} documents in '{col_name}'"
+                )
 
                 if doc_count == 0:
                     results["details"].append(
@@ -75,7 +83,9 @@ def check_vector_db():
 
     except ImportError:
         results["status"] = "SKIPPED"
-        results["details"].append("ℹ️ chromadb not installed (OPTIONAL - removed Jan 7, 2026)")
+        results["details"].append(
+            "ℹ️ chromadb not installed (OPTIONAL - removed Jan 7, 2026)"
+        )
     except Exception as e:
         results["status"] = "BROKEN"
         results["details"].append(f"✗ Error: {e}")
@@ -91,7 +101,9 @@ def check_rag_system():
         from src.rag.lessons_learned_rag import LessonsLearnedRAG
 
         rag = LessonsLearnedRAG()
-        results["details"].append(f"✓ LessonsLearnedRAG loaded with {len(rag.lessons)} lessons")
+        results["details"].append(
+            f"✓ LessonsLearnedRAG loaded with {len(rag.lessons)} lessons"
+        )
 
         # Test query() method
         if hasattr(rag, "query"):
@@ -114,13 +126,17 @@ def check_rag_system():
             if search_results and len(search_results) > 0:
                 first = search_results[0]
                 if isinstance(first, tuple) and len(first) == 2:
-                    results["details"].append("✓ search() returns correct (lesson, score) format")
+                    results["details"].append(
+                        "✓ search() returns correct (lesson, score) format"
+                    )
                 else:
                     results["details"].append("✗ search() returns wrong format")
                     results["status"] = "BROKEN"
                     return results
         else:
-            results["details"].append("✗ search() method missing - gates.py will crash!")
+            results["details"].append(
+                "✗ search() method missing - gates.py will crash!"
+            )
             results["status"] = "BROKEN"
             return results
 
@@ -184,7 +200,9 @@ def check_ml_pipeline():
         if GENAI_AVAILABLE:
             results["details"].append("✓ Gemini API available")
         else:
-            results["details"].append("⚠️ Gemini API not available (missing google.genai)")
+            results["details"].append(
+                "⚠️ Gemini API not available (missing google.genai)"
+            )
 
         # Verify class can be instantiated (graceful degradation)
         results["details"].append("✓ GeminiDeepResearch class available")
@@ -207,7 +225,11 @@ def check_position_completeness():
     - Short call (lower strike)
     - Long call (higher strike)
     """
-    results = {"name": "Position Completeness (Iron Condor)", "status": "UNKNOWN", "details": []}
+    results = {
+        "name": "Position Completeness (Iron Condor)",
+        "status": "UNKNOWN",
+        "details": [],
+    }
 
     try:
         import json
@@ -241,9 +263,15 @@ def check_position_completeness():
         # Check each expiry group for complete IC
         for expiry, legs in by_expiry.items():
             long_puts = [leg for leg in legs if "P" in leg["symbol"] and leg["qty"] > 0]
-            short_puts = [leg for leg in legs if "P" in leg["symbol"] and leg["qty"] < 0]
-            long_calls = [leg for leg in legs if "C" in leg["symbol"] and leg["qty"] > 0]
-            short_calls = [leg for leg in legs if "C" in leg["symbol"] and leg["qty"] < 0]
+            short_puts = [
+                leg for leg in legs if "P" in leg["symbol"] and leg["qty"] < 0
+            ]
+            long_calls = [
+                leg for leg in legs if "C" in leg["symbol"] and leg["qty"] > 0
+            ]
+            short_calls = [
+                leg for leg in legs if "C" in leg["symbol"] and leg["qty"] < 0
+            ]
 
             has_all_legs = (
                 len(long_puts) >= 1
@@ -307,21 +335,35 @@ def check_feedback_freshness():
             results["details"].append("✗ No last_updated timestamp")
             return results
 
-        # Parse timestamp
+        # Parse timestamp (handle both space and 'T' separator)
         try:
-            last_dt = datetime.strptime(last_updated, "%Y-%m-%d %H:%M:%S")
+            # Try ISO format with T separator first
+            last_dt = datetime.fromisoformat(last_updated.replace("Z", "+00:00"))
+            # Convert to naive datetime for comparison
+            if last_dt.tzinfo:
+                last_dt = last_dt.replace(tzinfo=None)
         except ValueError:
-            last_dt = datetime.strptime(last_updated[:19], "%Y-%m-%d %H:%M:%S")
+            # Fallback to space-separated format
+            try:
+                last_dt = datetime.strptime(last_updated, "%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                last_dt = datetime.strptime(
+                    last_updated[:19].replace("T", " "), "%Y-%m-%d %H:%M:%S"
+                )
 
         age = datetime.now() - last_dt
         age_hours = age.total_seconds() / 3600
 
         if age_hours > 48:
             results["status"] = "BROKEN"
-            results["details"].append(f"✗ Feedback {age.days} days stale (updated: {last_updated})")
+            results["details"].append(
+                f"✗ Feedback {age.days} days stale (updated: {last_updated})"
+            )
         elif age_hours > 24:
             results["status"] = "OK"
-            results["details"].append(f"⚠️ Feedback {age_hours:.1f}h old (updated: {last_updated})")
+            results["details"].append(
+                f"⚠️ Feedback {age_hours:.1f}h old (updated: {last_updated})"
+            )
         else:
             results["status"] = "OK"
             results["details"].append(f"✓ Feedback current ({age_hours:.1f}h old)")
@@ -382,15 +424,23 @@ def check_win_rate_validity():
 
         if closed_trades > 0 and win_rate is not None:
             results["status"] = "OK"
-            results["details"].append(f"✓ Win rate: {win_rate}% from {closed_trades} closed trades")
+            results["details"].append(
+                f"✓ Win rate: {win_rate}% from {closed_trades} closed trades"
+            )
         elif total_trades > 0:
             results["status"] = "OK"
-            results["details"].append(f"✓ {total_trades} trades tracked, {closed_trades} closed")
+            results["details"].append(
+                f"✓ {total_trades} trades tracked, {closed_trades} closed"
+            )
             results["details"].append(f"  (Alpaca has {alpaca_fills} raw fills)")
         else:
             results["status"] = "OK"
-            results["details"].append(f"✓ No trades in ledger yet ({alpaca_fills} Alpaca fills)")
-            results["details"].append("  Add trades via: scripts/calculate_win_rate.py add_trade()")
+            results["details"].append(
+                f"✓ No trades in ledger yet ({alpaca_fills} Alpaca fills)"
+            )
+            results["details"].append(
+                "  Add trades via: scripts/calculate_win_rate.py add_trade()"
+            )
 
     except Exception as e:
         results["status"] = "BROKEN"
@@ -425,7 +475,9 @@ def check_blog_deployment():
                 missing_dates += 1
 
         if missing_dates > 0:
-            results["details"].append(f"✗ {missing_dates}/10 sampled lessons missing date field")
+            results["details"].append(
+                f"✗ {missing_dates}/10 sampled lessons missing date field"
+            )
             results["status"] = "BROKEN"
         else:
             results["details"].append("✓ All sampled lessons have date field")
@@ -453,7 +505,9 @@ def check_data_integrity():
 
         if validation.is_valid:
             results["status"] = "OK"
-            results["details"].append("✓ system_state.json passes all validation checks")
+            results["details"].append(
+                "✓ system_state.json passes all validation checks"
+            )
         else:
             results["status"] = "BROKEN"
             for error in validation.errors:

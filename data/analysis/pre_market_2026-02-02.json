@@ -1,0 +1,187 @@
+{
+  "consensus": 0.435,
+  "decision": "hold",
+  "signals": [
+    {
+      "agent_type": "regime",
+      "task_id": "task-regime-20260202150839",
+      "status": "completed",
+      "result": {
+        "signal": 0.5,
+        "confidence": 0.814,
+        "data": {
+          "regime": "earnings_compression",
+          "is_favorable_for_ic": false,
+          "recommendation": "CAUTION: Elevated IV before earnings. Wait for post-earnings IV crush.",
+          "features": {
+            "vix_level": 18.0,
+            "vix_percentile": 0.2,
+            "spy_20d_return": 0.0,
+            "spy_5d_return": 0.0,
+            "spy_atr_pct": 1.0,
+            "put_call_ratio": 1.0
+          }
+        }
+      },
+      "started_at": "2026-02-02T20:08:39.908999+00:00",
+      "completed_at": "2026-02-02T20:08:39.981454+00:00"
+    },
+    {
+      "agent_type": "sentiment",
+      "task_id": "task-sentiment-20260202150839",
+      "status": "completed",
+      "result": {
+        "signal": 0.6,
+        "confidence": 0.7,
+        "data": {
+          "source": "market_sentiment",
+          "vix": 18.5,
+          "put_call_ratio": 0.95,
+          "fear_greed_index": 52
+        }
+      },
+      "started_at": "2026-02-02T20:08:39.981890+00:00",
+      "completed_at": "2026-02-02T20:08:39.981894+00:00"
+    },
+    {
+      "agent_type": "technicals",
+      "task_id": "task-technicals-20260202150839",
+      "status": "completed",
+      "result": {
+        "signal": 0.55,
+        "confidence": 0.8,
+        "data": {
+          "rsi": 48,
+          "macd_signal": "neutral",
+          "bollinger_position": 0.5,
+          "trend": "sideways",
+          "fibonacci_sr": {
+            "levels": [
+              {
+                "ratio": "0%",
+                "price": 539.71,
+                "type": "support",
+                "strength": 1.0
+              },
+              {
+                "ratio": "23.6%",
+                "price": 552.68,
+                "type": "support",
+                "strength": 1.0
+              },
+              {
+                "ratio": "38.2%",
+                "price": 560.71,
+                "type": "support",
+                "strength": 1.0
+              },
+              {
+                "ratio": "50%",
+                "price": 567.2,
+                "type": "support",
+                "strength": 1.0
+              },
+              {
+                "ratio": "61.8%",
+                "price": 573.69,
+                "type": "support",
+                "strength": 1.0
+              },
+              {
+                "ratio": "78.6%",
+                "price": 582.93,
+                "type": "support",
+                "strength": 1.0
+              }
+            ],
+            "optimal_put_zone": [
+              560.71,
+              567.2
+            ],
+            "optimal_call_zone": [
+              609.65,
+              628.68
+            ],
+            "current_price": 582.93
+          }
+        }
+      },
+      "started_at": "2026-02-02T20:08:39.981994+00:00",
+      "completed_at": "2026-02-02T20:08:40.336948+00:00"
+    },
+    {
+      "agent_type": "risk",
+      "task_id": "task-risk-20260202150839",
+      "status": "completed",
+      "result": {
+        "signal": 0.7,
+        "confidence": 0.9,
+        "data": {
+          "account_equity": 100519.23,
+          "max_position_size": 5025.9615,
+          "current_exposure": 0,
+          "phil_town_compliant": true
+        }
+      },
+      "started_at": "2026-02-02T20:08:40.099964+00:00",
+      "completed_at": "2026-02-02T20:08:40.100200+00:00"
+    },
+    {
+      "agent_type": "options-chain",
+      "task_id": "task-options-chain-20260202150839",
+      "status": "completed",
+      "result": {
+        "signal": 0.0,
+        "confidence": 0.75,
+        "data": {
+          "ticker": "SPY",
+          "iv_rank": 35,
+          "recommended_strikes": {
+            "put_short": 580,
+            "put_long": 575,
+            "call_short": 610,
+            "call_long": 615
+          },
+          "expected_credit": 1.5,
+          "max_loss": 3.5,
+          "strike_validation": {
+            "put_valid": false,
+            "put_quality": 0.0,
+            "put_warning": "Strike $580 is 0.5% from 78.6% S/R at $582.93",
+            "call_valid": false,
+            "call_quality": 0.0,
+            "call_warning": "Strike $610 is 0.1% from 127.2% S/R at $609.65",
+            "overall_quality": 0.0
+          }
+        }
+      },
+      "started_at": "2026-02-02T20:08:40.100398+00:00",
+      "completed_at": "2026-02-02T20:08:40.345242+00:00"
+    },
+    {
+      "agent_type": "news",
+      "task_id": "task-news-20260202150839",
+      "status": "completed",
+      "result": {
+        "signal": 0.0,
+        "confidence": 0.85,
+        "data": {
+          "risk_score": 1.0,
+          "recommendation": "AVOID",
+          "reason": "High-impact events today could cause volatility beyond iron condor strikes",
+          "intel_summary": {
+            "fed_speakers": "**No, there are no Federal Reserve speakers or FOMC events scheduled for today.**[1][2]\n\nSearch resu",
+            "economic_data": "**ISM Manufacturing PMI** is scheduled for release today, providing insights into manufacturing sect",
+            "spy_earnings": "**No, there are no search results indicating any S&P 500 companies reporting earnings on February 2,",
+            "options_flow": "**No, search results do not indicate unusual options activity specifically on SPY today.**[1][2][3]["
+          }
+        }
+      },
+      "started_at": "2026-02-02T20:08:40.108021+00:00",
+      "completed_at": "2026-02-02T20:08:56.888081+00:00"
+    }
+  ],
+  "timestamp": "2026-02-02T20:08:56.889600+00:00",
+  "mode": "analysis",
+  "duration_seconds": 16.981921
+}
