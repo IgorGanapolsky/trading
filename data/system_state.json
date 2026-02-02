@@ -128,21 +128,23 @@
     ]
   },
   "portfolio": {
-    "equity": 29959.42,
-    "cash": 30034.42
+    "equity": 101116.55,
+    "cash": 92657.15,
+    "buying_power": 123685.7,
+    "account_number": "PA3C5AG0CECQ"
   },
   "paper_account": {
-    "equity": 29959.42,
-    "cash": 3267.71,
-    "buying_power": 0.0,
-    "total_pl": 0.0,
-    "total_pl_pct": 0.0,
-    "positions_count": 4,
+    "equity": 100519.23,
+    "cash": 92657.15,
+    "buying_power": 123546.77,
+    "total_pl": 70519.23,
+    "total_pl_pct": 235.0641,
+    "positions_count": 9,
     "daily_change": -17.0,
     "win_rate": 0.0,
     "win_rate_sample_size": 0,
     "starting_balance": 30000.0,
-    "current_equity": 4099.71
+    "current_equity": 100930.62
   },
   "positions": [
     {
@@ -713,17 +715,19 @@
     "unrealized_pl": -13.0
   },
   "account": {
-    "current_equity": 29959.42,
-    "total_pl": -40.580000000001746,
-    "total_pl_pct": -0.14,
-    "positions_count": 4
+    "current_equity": 100519.23,
+    "total_pl": 70519.23,
+    "total_pl_pct": 235.0641,
+    "positions_count": 9,
+    "cash": 92657.15,
+    "buying_power": 123425.38
   },
   "meta": {
-    "last_updated": "2026-02-01T17:12:49.719984",
+    "last_updated": "2026-02-02T09:35:11.390767",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5,
-    "last_sync": "2026-02-01T17:12:49.719987",
-    "sync_mode": "skipped_no_keys"
+    "last_sync": "2026-02-02T09:35:11.390780",
+    "sync_mode": "paper_account"
   },
   "paper_trading": {
     "start_date": "2026-01-30",
@@ -733,11 +737,116 @@
     "notes": "RESET Jan 30, 2026 - Fresh 90-day validation. Goal: $6K/month by age 50."
   },
   "trailing_stops": {
-    "last_set": "2026-01-31T10:45:28.457569",
+    "last_set": "2026-02-02T14:54:27.167945",
     "stops_active": 1,
     "positions_skipped": 0,
     "value_protected": 500.0,
     "default_trail_pct": 0.1,
     "options_trail_pct": 0.2
+  },
+  "performance": {
+    "open_positions": [
+      {
+        "symbol": "AAPL260220P00430000",
+        "quantity": -1.0,
+        "entry_price": 16725.0,
+        "current_price": 17185.0,
+        "market_value": -17185.0,
+        "unrealized_pl": -460.0,
+        "unrealized_pl_pct": 0.027503736920777278,
+        "side": "long"
+      },
+      {
+        "symbol": "CCI",
+        "quantity": 0.038314176,
+        "entry_price": 86.65200055457281,
+        "current_price": 86.49999415359996,
+        "market_value": 3.314176,
+        "unrealized_pl": -0.005824,
+        "unrealized_pl_pct": -0.0017542168674698796,
+        "side": "long"
+      },
+      {
+        "symbol": "DLR",
+        "quantity": 0.084324282,
+        "entry_price": 157.48725853366886,
+        "current_price": 163.4500012700968,
+        "market_value": 13.782804,
+        "unrealized_pl": 0.502804,
+        "unrealized_pl_pct": 0.03786174698795181,
+        "side": "long"
+      },
+      {
+        "symbol": "EQIX",
+        "quantity": 0.008450138,
+        "entry_price": 785.7858652722596,
+        "current_price": 808.0099993633241,
+        "market_value": 6.827796,
+        "unrealized_pl": 0.187797,
+        "unrealized_pl_pct": 0.028282684982332072,
+        "side": "long"
+      },
+      {
+        "symbol": "SPY",
+        "quantity": 36.477144543,
+        "entry_price": 685.1478107486906,
+        "current_price": 687.7499999877114,
+        "market_value": 25087.156159,
+        "unrealized_pl": 94.920433,
+        "unrealized_pl_pct": 0.003797996867533227,
+        "side": "long"
+      },
+      {
+        "symbol": "SPY260220C00720000",
+        "quantity": -1.0,
+        "entry_price": 92.0,
+        "current_price": 42.0,
+        "market_value": -42.0,
+        "unrealized_pl": 50.0,
+        "unrealized_pl_pct": -0.5434782608695652,
+        "side": "long"
+      },
+      {
+        "symbol": "SPY260220C00725000",
+        "quantity": 1.0,
+        "entry_price": 54.0,
+        "current_price": 18.0,
+        "market_value": 18.0,
+        "unrealized_pl": -36.0,
+        "unrealized_pl_pct": -0.6666666666666666,
+        "side": "long"
+      },
+      {
+        "symbol": "SPY260220P00655000",
+        "quantity": 1.0,
+        "entry_price": 230.0,
+        "current_price": 201.0,
+        "market_value": 201.0,
+        "unrealized_pl": -29.0,
+        "unrealized_pl_pct": -0.12608695652173912,
+        "side": "long"
+      },
+      {
+        "symbol": "SPY260220P00660000",
+        "quantity": -1.0,
+        "entry_price": 273.0,
+        "current_price": 241.0,
+        "market_value": -241.0,
+        "unrealized_pl": 32.0,
+        "unrealized_pl_pct": -0.11721611721611722,
+        "side": "long"
+      }
+    ]
+  },
+  "live_account": {
+    "current_equity": 169.97,
+    "equity": 169.97,
+    "cash": 0.0,
+    "buying_power": 0.0,
+    "positions_count": 0,
+    "starting_balance": 20.0,
+    "total_pl": 149.97,
+    "total_pl_pct": 749.85,
+    "synced_at": "2026-02-01T20:52:59.261147"
   }
 }

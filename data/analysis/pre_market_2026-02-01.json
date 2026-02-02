@@ -1,0 +1,100 @@
+{
+  "consensus": 0.61,
+  "decision": "hold",
+  "signals": [
+    {
+      "agent_type": "sentiment",
+      "task_id": "task-sentiment-20260201204617",
+      "status": "completed",
+      "result": {
+        "signal": 0.6,
+        "confidence": 0.7,
+        "data": {
+          "source": "market_sentiment",
+          "vix": 18.5,
+          "put_call_ratio": 0.95,
+          "fear_greed_index": 52
+        }
+      },
+      "started_at": "2026-02-02T01:46:17.889012+00:00",
+      "completed_at": "2026-02-02T01:46:17.889020+00:00"
+    },
+    {
+      "agent_type": "technicals",
+      "task_id": "task-technicals-20260201204617",
+      "status": "completed",
+      "result": {
+        "signal": 0.55,
+        "confidence": 0.8,
+        "data": {
+          "rsi": 48,
+          "macd_signal": "neutral",
+          "bollinger_position": 0.5,
+          "trend": "sideways"
+        }
+      },
+      "started_at": "2026-02-02T01:46:17.890592+00:00",
+      "completed_at": "2026-02-02T01:46:17.890604+00:00"
+    },
+    {
+      "agent_type": "risk",
+      "task_id": "task-risk-20260201204617",
+      "status": "completed",
+      "result": {
+        "signal": 0.7,
+        "confidence": 0.9,
+        "data": {
+          "account_equity": 29959.42,
+          "max_position_size": 1497.971,
+          "current_exposure": 0,
+          "phil_town_compliant": true
+        }
+      },
+      "started_at": "2026-02-02T01:46:17.891248+00:00",
+      "completed_at": "2026-02-02T01:46:17.891753+00:00"
+    },
+    {
+      "agent_type": "options-chain",
+      "task_id": "task-options-chain-20260201204617",
+      "status": "completed",
+      "result": {
+        "signal": 0.65,
+        "confidence": 0.75,
+        "data": {
+          "ticker": "SPY",
+          "iv_rank": 35,
+          "recommended_strikes": {
+            "put_short": 580,
+            "put_long": 575,
+            "call_short": 610,
+            "call_long": 615
+          },
+          "expected_credit": 1.5,
+          "max_loss": 3.5
+        }
+      },
+      "started_at": "2026-02-02T01:46:17.891921+00:00",
+      "completed_at": "2026-02-02T01:46:17.891924+00:00"
+    },
+    {
+      "agent_type": "news",
+      "task_id": "task-news-20260201204617",
+      "status": "completed",
+      "result": {
+        "signal": 0.5,
+        "confidence": 0.6,
+        "data": {
+          "breaking_news": [],
+          "earnings_today": [],
+          "macro_events": [],
+          "risk_level": "normal"
+        }
+      },
+      "started_at": "2026-02-02T01:46:17.892031+00:00",
+      "completed_at": "2026-02-02T01:46:17.892033+00:00"
+    }
+  ],
+  "timestamp": "2026-02-02T01:46:17.892347+00:00",
+  "mode": "analysis",
+  "duration_seconds": 0.005128
+}

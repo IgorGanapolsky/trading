@@ -13,6 +13,7 @@ These tests ensure the gateway properly rejects risky trades.
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from src.risk.trade_gateway import RejectionReason, TradeGateway, TradeRequest
 
 
@@ -54,6 +55,17 @@ def mock_rule_one_validator():
         mock_validator.validate.return_value = mock_result
         mock_validator_class.return_value = mock_validator
         yield mock_validator
+
+
+@pytest.fixture(autouse=True)
+def mock_drawdown():
+    """Mock _get_drawdown to return 0% drawdown for test trades.
+
+    This allows tests to pass circuit breaker check without complex state mocking.
+    Tests focus on specific gateway features, not drawdown calculation.
+    """
+    with patch.object(TradeGateway, "_get_drawdown", return_value=0.0):
+        yield
 
 
 class MockExecutor:
@@ -343,7 +355,9 @@ class TestEarningsBlackoutEnforcement:
             from datetime import datetime as real_datetime
 
             mock_dt.strptime = real_datetime.strptime
-            mock_dt.now.return_value = real_datetime(2026, 2, 5)  # During F blackout (Feb 3-11)
+            mock_dt.now.return_value = real_datetime(
+                2026, 2, 5
+            )  # During F blackout (Feb 3-11)
 
             request = TradeRequest(
                 symbol="F",
@@ -435,7 +449,9 @@ class TestEarningsPositionMonitor:
         """Test that SOFI option position triggers earnings alert."""
         gateway = TradeGateway(executor=None, paper=True)
         gateway.executor = MockExecutor(
-            positions=[{"symbol": "SOFI260206P00024000", "qty": -2, "unrealized_pl": 23.00}]
+            positions=[
+                {"symbol": "SOFI260206P00024000", "qty": -2, "unrealized_pl": 23.00}
+            ]
         )
 
         alerts = gateway.check_positions_for_earnings()
@@ -452,11 +468,15 @@ class TestEarningsPositionMonitor:
         """Test that profitable position in blackout gets close recommendation."""
         gateway = TradeGateway(executor=None, paper=True)
         # Simulate position already in blackout with profit
-        action = gateway._get_earnings_action(days_to_blackout=0, unrealized_pl=100, symbol="SOFI")
+        action = gateway._get_earnings_action(
+            days_to_blackout=0, unrealized_pl=100, symbol="SOFI"
+        )
         assert "CLOSE_AT_PROFIT" in action
 
     def test_action_recommends_monitor_on_loss(self):
         """Test that losing position in blackout gets monitor recommendation."""
         gateway = TradeGateway(executor=None, paper=True)
-        action = gateway._get_earnings_action(days_to_blackout=0, unrealized_pl=-50, symbol="SOFI")
+        action = gateway._get_earnings_action(
+            days_to_blackout=0, unrealized_pl=-50, symbol="SOFI"
+        )
         assert "MONITOR_CLOSELY" in action

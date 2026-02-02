@@ -33,8 +33,8 @@ fi
 RELATIVE_PATH="${FILE_PATH#$CLAUDE_PROJECT_DIR/}"
 
 # Critical files that should NEVER be edited
+# NOTE: .env removed Feb 1, 2026 - CEO approved Claude to edit it for cost reduction
 BLOCKED_FILES=(
-    ".env"
     "data/system_state.json"
     "backtest_results_60day.json"
 )

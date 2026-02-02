@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+        Trading System Autonomous Scheduler
+
+        This launchd plist runs the scheduler daemon for automated trading operations.
+
+        Install:
+            cp com.trading.autonomous.plist ~/Library/LaunchAgents/
+            launchctl load ~/Library/LaunchAgents/com.trading.autonomous.plist
+
+        Uninstall:
+            launchctl unload ~/Library/LaunchAgents/com.trading.autonomous.plist
+            rm ~/Library/LaunchAgents/com.trading.autonomous.plist
+
+        Check status:
+            launchctl list | grep com.trading.autonomous
+
+        View logs:
+            tail -f /tmp/trading_scheduler.log
+    -->
+
+    <key>Label</key>
+    <string>com.trading.autonomous</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>REPLACE_WITH_PROJECT_PATH/.claude/scripts/orchestration/scheduler.py</string>
+        <string>--daemon</string>
+        <string>--interval</string>
+        <string>30</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>REPLACE_WITH_PROJECT_PATH</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>TZ</key>
+        <string>America/New_York</string>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/trading_scheduler.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/tmp/trading_scheduler_error.log</string>
+
+    <key>ThrottleInterval</key>
+    <integer>60</integer>
+
+    <!-- Only run during reasonable hours (5 AM - 10 PM) -->
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict>
+            <key>Hour</key>
+            <integer>5</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+    </array>
+
+</dict>
+</plist>

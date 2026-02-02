@@ -54,6 +54,19 @@
         "GOOGLE_CLOUD_LOCATION": "us-central1",
         "GOOGLE_APPLICATION_CREDENTIALS": "${GOOGLE_APPLICATION_CREDENTIALS}"
       }
+    },
+    "trunk": {
+      "url": "https://mcp.trunk.io/mcp",
+      "type": "http",
+      "description": "Trunk CI Autopilot MCP Server - Merge Queue, Flaky Tests detection, CI auto-fixing"
+    },
+    "perplexity": {
+      "command": "npx",
+      "args": ["-y", "@perplexity-ai/mcp-server"],
+      "description": "Perplexity MCP Server - Real-time web search and market intelligence for trading decisions",
+      "env": {
+        "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}"
+      }
     }
   }
 }

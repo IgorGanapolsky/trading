@@ -1,6 +1,15 @@
 {
   "heartbeats": [
     {
+      "timestamp": "2026-02-02T09:35:29.403286",
+      "workflow": "trading_session",
+      "status": "success",
+      "details": {
+        "tickers_processed": 2,
+        "session_type": "market_hours"
+      }
+    },
+    {
       "timestamp": "2026-01-30T09:35:12.786302",
       "workflow": "trading_session",
       "status": "success",
@@ -86,9 +95,9 @@
       "total_runs": 7
     },
     "trading_session": {
-      "last_heartbeat": "2026-01-30T09:35:12.786302",
+      "last_heartbeat": "2026-02-02T09:35:29.403286",
       "last_status": "success",
-      "total_runs": 4
+      "total_runs": 5
     }
   }
 }
