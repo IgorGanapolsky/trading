@@ -21,7 +21,7 @@ praw==7.8.1
 # feedparser==6.0.12           # REMOVED: Never imported (Jan 2026)
 
 # YouTube Monitoring
-youtube-transcript-api==1.2.3
+youtube-transcript-api==1.2.4
 
 # Configuration
 python-dotenv==1.2.1
