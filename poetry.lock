@@ -6773,19 +6773,20 @@ files = [
 
 [[package]]
 name = "xai-sdk"
-version = "1.5.0"
+version = "1.6.1"
 description = "The official Python SDK for the xAI API"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
 markers = "extra == \"xai\""
 files = [
-    {file = "xai_sdk-1.5.0-py3-none-any.whl", hash = "sha256:4dc56bec2d67811c67030a50b42c4a1bc60f43947d4baaa840acf0aef246e816"},
-    {file = "xai_sdk-1.5.0.tar.gz", hash = "sha256:f88529d844f962fbb24464351a5962cc21a7d080e088bf656709ca7856270c8c"},
+    {file = "xai_sdk-1.6.1-py3-none-any.whl", hash = "sha256:f478dee9bd8839b8d341bd075277d0432aff5cd7120a4284547d25c6c9e7ab3b"},
+    {file = "xai_sdk-1.6.1.tar.gz", hash = "sha256:b55528df188f8c8448484021d735f75b0e7d71719ddeb432c5f187ac67e3c983"},
 ]
 
 [package.dependencies]
 aiohttp = ">=3.8.6,<4"
+googleapis-common-protos = ">=1.65.0,<2"
 grpcio = ">=1.72.1,<2"
 opentelemetry-sdk = ">=1.36.0,<2"
 packaging = ">=25.0,<26"
