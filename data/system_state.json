@@ -1,15 +1,10 @@
 {
-  "last_updated": "2026-02-04T19:47:29.067938+00:00",
+  "last_updated": "2026-02-04T20:13:11.751827+00:00",
   "sync_health": {
-    "last_successful_sync": "2026-02-04T19:47:29.067941+00:00",
+    "last_successful_sync": "2026-02-04T20:13:11.751829+00:00",
     "sync_source": "github_actions",
-    "sync_count_today": 4,
+    "sync_count_today": 5,
     "history": [
-      {
-        "timestamp": "2026-01-29T16:30:51.080060+00:00",
-        "equity": 29959.42,
-        "success": true
-      },
       {
         "timestamp": "2026-01-29T16:59:30.700942+00:00",
         "equity": 29960.42,
@@ -124,6 +119,11 @@
         "timestamp": "2026-02-04T19:47:29.067927+00:00",
         "equity": 101418.35,
         "success": true
+      },
+      {
+        "timestamp": "2026-02-04T20:13:11.751818+00:00",
+        "equity": 101418.35,
+        "success": true
       }
     ]
   },
@@ -147,33 +147,33 @@
     {
       "symbol": "SPY260220C00720000",
       "qty": -1.0,
-      "price": 0.16,
-      "value": -16.0,
-      "pnl": 76.0,
+      "price": 0.14,
+      "value": -14.0,
+      "pnl": 78.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220C00725000",
       "qty": 1.0,
-      "price": 0.07,
-      "value": 7.0,
-      "pnl": -47.0,
+      "price": 0.06,
+      "value": 6.0,
+      "pnl": -48.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00655000",
       "qty": 1.0,
-      "price": 2.18,
-      "value": 218.0,
-      "pnl": -12.0,
+      "price": 2.21,
+      "value": 221.0,
+      "pnl": -9.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00660000",
       "qty": -1.0,
-      "price": 2.71,
-      "value": -271.0,
-      "pnl": 2.0,
+      "price": 2.75,
+      "value": -275.0,
+      "pnl": -2.0,
       "type": "option"
     }
   ],
@@ -958,7 +958,7 @@
     "positions_count": 4
   },
   "meta": {
-    "last_updated": "2026-02-04T19:47:29.067954+00:00",
+    "last_updated": "2026-02-04T20:13:11.751843+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5
   },
