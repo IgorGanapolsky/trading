@@ -670,6 +670,13 @@ class AlpacaTrader:
 
         symbol = symbol.upper().strip()
 
+        # MANDATORY: Ticker whitelist check (SPY ONLY)
+        from src.safety.mandatory_trade_gate import validate_ticker
+
+        ticker_valid, ticker_error = validate_ticker(symbol)
+        if not ticker_valid:
+            raise OrderExecutionError(f"STOP-LOSS BLOCKED: {ticker_error}")
+
         try:
             logger.info(f"Setting stop-loss: {symbol} qty={qty} at ${stop_price:.2f}")
 
@@ -731,6 +738,13 @@ class AlpacaTrader:
             raise ValueError(f"Limit price must be positive. Got {limit_price}")
 
         symbol = symbol.upper().strip()
+
+        # MANDATORY: Ticker whitelist check (SPY ONLY)
+        from src.safety.mandatory_trade_gate import validate_ticker
+
+        ticker_valid, ticker_error = validate_ticker(symbol)
+        if not ticker_valid:
+            raise OrderExecutionError(f"TAKE-PROFIT BLOCKED: {ticker_error}")
 
         try:
             logger.info(f"Setting take-profit: {symbol} qty={qty} at ${limit_price:.2f}")

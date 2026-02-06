@@ -239,6 +239,13 @@ RECOMMENDATION: [EXECUTE/DELAY/CANCEL]"""
         if qty <= 0:
             raise ValueError("qty must be positive when submitting option orders.")
 
+        # MANDATORY: Ticker whitelist check (SPY ONLY)
+        from src.safety.mandatory_trade_gate import validate_ticker
+
+        ticker_valid, ticker_error = validate_ticker(option_symbol)
+        if not ticker_valid:
+            raise ValueError(f"OPTION ORDER BLOCKED: {ticker_error}")
+
         payload_meta = metadata.copy() if metadata else {}
         payload_meta["option_symbol"] = option_symbol
         payload_meta["side"] = side
@@ -332,6 +339,13 @@ RECOMMENDATION: [EXECUTE/DELAY/CANCEL]"""
         Returns:
             Execution result
         """
+        # MANDATORY: Ticker whitelist check (SPY ONLY)
+        from src.safety.mandatory_trade_gate import validate_ticker
+
+        ticker_valid, ticker_error = validate_ticker(symbol)
+        if not ticker_valid:
+            return {"status": "BLOCKED", "error": f"TICKER NOT ALLOWED: {ticker_error}"}
+
         try:
             if action == "BUY":
                 req = MarketOrderRequest(

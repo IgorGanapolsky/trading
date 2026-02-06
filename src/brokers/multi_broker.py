@@ -60,6 +60,7 @@ class MultiBroker:
         if self._alpaca_client is None:
             try:
                 from alpaca.trading.client import TradingClient
+
                 from src.utils.alpaca_client import get_alpaca_credentials
 
                 api_key, secret_key = get_alpaca_credentials()
@@ -116,6 +117,13 @@ class MultiBroker:
         Returns:
             OrderResult with order info
         """
+        # MANDATORY: Ticker whitelist check (SPY ONLY)
+        from src.safety.mandatory_trade_gate import validate_ticker
+
+        ticker_valid, ticker_error = validate_ticker(symbol)
+        if not ticker_valid:
+            raise ValueError(f"ORDER BLOCKED: {ticker_error}")
+
         from alpaca.trading.enums import OrderSide, TimeInForce
         from alpaca.trading.requests import LimitOrderRequest, MarketOrderRequest
 
@@ -154,6 +162,7 @@ class MultiBroker:
         """Get quote from Alpaca."""
         from alpaca.data.historical import StockHistoricalDataClient
         from alpaca.data.requests import StockLatestQuoteRequest
+
         from src.utils.alpaca_client import get_alpaca_credentials
 
         api_key, secret_key = get_alpaca_credentials()
