@@ -18,6 +18,8 @@ import logging
 import os
 import sys
 
+from src.safety.mandatory_trade_gate import safe_close_position, safe_submit_order
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -88,7 +90,7 @@ def close_all_sofi_positions(dry_run: bool = True):
 
             try:
                 # Close the position
-                order = client.close_position(symbol)
+                order = safe_close_position(client, symbol)
                 logger.info(f"  ✅ Close order submitted: {order.id}")
             except Exception as e:
                 logger.error(f"  ❌ Failed to close {symbol}: {e}")
@@ -108,7 +110,7 @@ def close_all_sofi_positions(dry_run: bool = True):
                         side=side,
                         time_in_force=TimeInForce.DAY,
                     )
-                    order = client.submit_order(order_data)
+                    order = safe_submit_order(client, order_data)
                     logger.info(f"  ✅ Alternative close order submitted: {order.id}")
                 except Exception as e2:
                     logger.error(f"  ❌ Alternative close also failed: {e2}")

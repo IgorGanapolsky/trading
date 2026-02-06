@@ -27,6 +27,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from src.safety.mandatory_trade_gate import safe_close_position
+
 logger = logging.getLogger(__name__)
 
 # Import from single source of truth
@@ -242,7 +244,7 @@ def execute_auto_close(
         if not dry_run:
             try:
                 # Try to close position
-                order = trading_client.close_position(rec.symbol)
+                order = safe_close_position(trading_client, rec.symbol)
                 result["status"] = "submitted"
                 result["order_id"] = order.id if hasattr(order, "id") else str(order)
                 logger.info(f"✅ Close order submitted for {rec.symbol}")

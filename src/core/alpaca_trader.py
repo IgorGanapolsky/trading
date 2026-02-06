@@ -61,6 +61,7 @@ except ImportError:
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 from src.core.config import load_config
+from src.safety.mandatory_trade_gate import safe_close_position, safe_submit_order, validate_ticker
 from src.utils.retry_decorator import retry_with_backoff
 
 # Configure logging
@@ -495,7 +496,7 @@ class AlpacaTrader:
                     time_in_force=tif,
                     limit_price=limit_price,
                 )
-                order = self.trading_client.submit_order(req)
+                order = safe_submit_order(self.trading_client, req)
 
             if not use_limit_order:
                 # Use market order
@@ -510,7 +511,7 @@ class AlpacaTrader:
                     time_in_force=tif,
                 )
 
-                order = self.trading_client.submit_order(req)
+                order = safe_submit_order(self.trading_client, req)
 
             # Wait for order to fill (with timeout)
             timeout = self.config.LIMIT_ORDER_TIMEOUT_SECONDS
@@ -545,7 +546,7 @@ class AlpacaTrader:
                         side=OrderSide.BUY if side == "buy" else OrderSide.SELL,
                         time_in_force=tif,
                     )
-                    order = self.trading_client.submit_order(req)
+                    order = safe_submit_order(self.trading_client, req)
                     fallback_to_market = True
 
                     # Wait for market order to fill (should be quick)
@@ -569,7 +570,7 @@ class AlpacaTrader:
                             side=OrderSide.BUY if side == "buy" else OrderSide.SELL,
                             time_in_force=tif,
                         )
-                        order = self.trading_client.submit_order(req)
+                        order = safe_submit_order(self.trading_client, req)
                         logger.info(f"Retried market order: {order.id}")
 
                         # Wait for retry to fill
@@ -671,8 +672,6 @@ class AlpacaTrader:
         symbol = symbol.upper().strip()
 
         # MANDATORY: Ticker whitelist check (SPY ONLY)
-        from src.safety.mandatory_trade_gate import validate_ticker
-
         ticker_valid, ticker_error = validate_ticker(symbol)
         if not ticker_valid:
             raise OrderExecutionError(f"STOP-LOSS BLOCKED: {ticker_error}")
@@ -688,7 +687,7 @@ class AlpacaTrader:
                 stop_price=stop_price,
             )
 
-            order = self.trading_client.submit_order(req)
+            order = safe_submit_order(self.trading_client, req)
 
             order_info = {
                 "id": str(order.id),
@@ -740,8 +739,6 @@ class AlpacaTrader:
         symbol = symbol.upper().strip()
 
         # MANDATORY: Ticker whitelist check (SPY ONLY)
-        from src.safety.mandatory_trade_gate import validate_ticker
-
         ticker_valid, ticker_error = validate_ticker(symbol)
         if not ticker_valid:
             raise OrderExecutionError(f"TAKE-PROFIT BLOCKED: {ticker_error}")
@@ -757,7 +754,7 @@ class AlpacaTrader:
                 limit_price=limit_price,
             )
 
-            order = self.trading_client.submit_order(req)
+            order = safe_submit_order(self.trading_client, req)
 
             order_info = {
                 "id": str(order.id),
@@ -1130,7 +1127,7 @@ class AlpacaTrader:
         try:
             logger.info(f"Closing position for {symbol}")
 
-            order = self.trading_client.close_position(symbol)
+            order = safe_close_position(self.trading_client, symbol)
 
             order_info = {
                 "id": str(order.id),
@@ -1171,6 +1168,12 @@ class AlpacaTrader:
 
             positions = self.trading_client.get_all_positions()
             symbols = [pos.symbol for pos in positions]
+
+            # Validate each symbol before closing
+            for symbol in symbols:
+                ticker_valid, ticker_error = validate_ticker(symbol)
+                if not ticker_valid:
+                    raise OrderExecutionError(f"CLOSE BLOCKED for {symbol}: {ticker_error}")
 
             # Close all positions
             self.trading_client.close_all_positions(cancel_orders=True)

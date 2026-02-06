@@ -23,7 +23,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from alpaca.trading.enums import OrderSide, TimeInForce
 from alpaca.trading.requests import MarketOrderRequest
+
 from src.core.alpaca_trader import AlpacaTrader
+from src.safety.mandatory_trade_gate import safe_submit_order
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -76,7 +78,7 @@ def close_position(trader, position) -> bool:
             side=side,
             time_in_force=TimeInForce.DAY,
         )
-        order = trader.trading_client.submit_order(order_req)
+        order = safe_submit_order(trader.trading_client, order_req)
 
         if order:
             logger.info(f"  ✅ Order submitted: {order.id}")

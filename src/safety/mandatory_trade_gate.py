@@ -595,6 +595,67 @@ def validate_trade_mandatory(
     )
 
 
+def safe_submit_order(client, order_request):
+    """Wrapper that enforces validate_ticker() before ANY order submission.
+
+    All scripts MUST use this instead of client.submit_order() directly.
+    This is the single gateway for all order submissions outside the core
+    execution methods (which have their own validation).
+
+    Args:
+        client: Alpaca TradingClient instance
+        order_request: Alpaca order request object
+
+    Returns:
+        Order result from client.submit_order()
+
+    Raises:
+        ValueError: If ticker validation fails
+    """
+    # Extract symbol from the order request
+    symbol = getattr(order_request, "symbol", None)
+
+    # For MLEG orders, check the legs
+    legs = getattr(order_request, "legs", None)
+    if legs:
+        for leg in legs:
+            leg_symbol = getattr(leg, "symbol", "")
+            ticker_valid, ticker_error = validate_ticker(leg_symbol)
+            if not ticker_valid:
+                logger.warning(f"ORDER BLOCKED (leg): {ticker_error}")
+                raise ValueError(f"ORDER BLOCKED (leg): {ticker_error}")
+    elif symbol:
+        ticker_valid, ticker_error = validate_ticker(symbol)
+        if not ticker_valid:
+            logger.warning(f"ORDER BLOCKED: {ticker_error}")
+            raise ValueError(f"ORDER BLOCKED: {ticker_error}")
+
+    return client.submit_order(order_request)
+
+
+def safe_close_position(client, symbol, **kwargs):
+    """Wrapper that enforces validate_ticker() before closing positions.
+
+    All scripts MUST use this instead of client.close_position() directly.
+
+    Args:
+        client: Alpaca TradingClient instance
+        symbol: Symbol to close position for
+        **kwargs: Additional args passed to close_position (e.g. close_options)
+
+    Returns:
+        Result from client.close_position()
+
+    Raises:
+        ValueError: If ticker validation fails
+    """
+    ticker_valid, ticker_error = validate_ticker(symbol)
+    if not ticker_valid:
+        logger.warning(f"CLOSE BLOCKED: {ticker_error}")
+        raise ValueError(f"CLOSE BLOCKED: {ticker_error}")
+    return client.close_position(symbol, **kwargs)
+
+
 def record_trade_loss(loss_amount: float):
     """Record a trade loss for daily tracking. Thread-safe."""
     # SECURITY FIX (Jan 19, 2026): Use lock to prevent race condition

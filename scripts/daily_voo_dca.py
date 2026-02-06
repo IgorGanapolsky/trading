@@ -26,6 +26,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+from src.safety.mandatory_trade_gate import safe_submit_order  # noqa: E402
 from src.utils.alpaca_client import get_account_info, get_brokerage_client
 
 Path("logs").mkdir(exist_ok=True)
@@ -50,6 +51,7 @@ def get_voo_price(client) -> float:
     try:
         from alpaca.data.historical import StockHistoricalDataClient
         from alpaca.data.requests import StockLatestQuoteRequest
+
         from src.utils.alpaca_client import get_brokerage_credentials
 
         api_key, secret_key = get_brokerage_credentials()
@@ -123,7 +125,7 @@ def buy_fractional_voo(client, amount: float, dry_run: bool = False) -> dict:
             time_in_force=TimeInForce.DAY,
         )
 
-        order = client.submit_order(order_request)
+        order = safe_submit_order(client, order_request)
 
         logger.info(f"ORDER SUBMITTED: {order.id}")
         logger.info(f"  Symbol: {SYMBOL}")

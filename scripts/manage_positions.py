@@ -38,6 +38,8 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from src.safety.mandatory_trade_gate import safe_submit_order
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
@@ -291,7 +293,7 @@ def main(dry_run: bool = False):
                     time_in_force=TimeInForce.DAY,
                 )
 
-            result = client.submit_order(order)
+            result = safe_submit_order(client, order)
             logger.info(f"    Action: EXIT ORDER SUBMITTED - Order ID: {result.id}")
             executed_count += 1
 

@@ -13,6 +13,8 @@ import os
 import sys
 from datetime import datetime
 
+from src.safety.mandatory_trade_gate import safe_submit_order
+
 
 def main():
     """Close excess positions to restore compliance."""
@@ -127,13 +129,14 @@ def main():
         # Close short leg (buy to close)
         print(f"\nClosing short leg: {spread['short_symbol']}")
         try:
-            order = client.submit_order(
+            order = safe_submit_order(
+                client,
                 MarketOrderRequest(
                     symbol=spread["short_symbol"],
                     qty=1,
                     side=OrderSide.BUY,  # Buy to close short
                     time_in_force=TimeInForce.DAY,
-                )
+                ),
             )
             print(f"  ✅ Order submitted: {order.id}")
             orders_submitted.append(order.id)
@@ -143,13 +146,14 @@ def main():
         # Close long leg (sell to close)
         print(f"Closing long leg: {spread['long_symbol']}")
         try:
-            order = client.submit_order(
+            order = safe_submit_order(
+                client,
                 MarketOrderRequest(
                     symbol=spread["long_symbol"],
                     qty=1,
                     side=OrderSide.SELL,  # Sell to close long
                     time_in_force=TimeInForce.DAY,
-                )
+                ),
             )
             print(f"  ✅ Order submitted: {order.id}")
             orders_submitted.append(order.id)

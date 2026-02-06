@@ -8,7 +8,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.safety.mandatory_trade_gate import validate_ticker
+from src.safety.mandatory_trade_gate import (
+    safe_close_position,
+    safe_submit_order,
+    validate_ticker,
+)
 
 # -------------------------------------------------------------------
 # Direct validate_ticker tests (sanity)
@@ -139,3 +143,127 @@ class TestAlpacaTraderValidation:
         trader = AlpacaTrader(paper=True)
         with pytest.raises(OrderExecutionError, match="TAKE-PROFIT BLOCKED"):
             trader.set_take_profit("AAPL", 1.0, 480.0)
+
+
+# -------------------------------------------------------------------
+# safe_submit_order wrapper
+# -------------------------------------------------------------------
+
+
+class TestSafeSubmitOrder:
+    def test_blocks_non_spy_symbol(self):
+        """safe_submit_order rejects non-SPY order requests."""
+        mock_client = MagicMock()
+        mock_request = MagicMock()
+        mock_request.symbol = "AAPL"
+        mock_request.legs = None
+
+        with pytest.raises(ValueError, match="ORDER BLOCKED"):
+            safe_submit_order(mock_client, mock_request)
+
+        mock_client.submit_order.assert_not_called()
+
+    def test_allows_spy_symbol(self):
+        """safe_submit_order allows SPY and delegates to client."""
+        mock_client = MagicMock()
+        mock_request = MagicMock()
+        mock_request.symbol = "SPY"
+        mock_request.legs = None
+
+        safe_submit_order(mock_client, mock_request)
+        mock_client.submit_order.assert_called_once_with(mock_request)
+
+    def test_blocks_non_spy_option(self):
+        """safe_submit_order rejects SOFI option symbols."""
+        mock_client = MagicMock()
+        mock_request = MagicMock()
+        mock_request.symbol = "SOFI260206P00024000"
+        mock_request.legs = None
+
+        with pytest.raises(ValueError, match="ORDER BLOCKED"):
+            safe_submit_order(mock_client, mock_request)
+
+    def test_allows_spy_option(self):
+        """safe_submit_order allows SPY option symbols."""
+        mock_client = MagicMock()
+        mock_request = MagicMock()
+        mock_request.symbol = "SPY260220P00660000"
+        mock_request.legs = None
+
+        safe_submit_order(mock_client, mock_request)
+        mock_client.submit_order.assert_called_once()
+
+    def test_blocks_non_spy_mleg_leg(self):
+        """safe_submit_order rejects MLEG orders with non-SPY legs."""
+        mock_client = MagicMock()
+        mock_request = MagicMock()
+        mock_request.symbol = None
+
+        leg1 = MagicMock()
+        leg1.symbol = "SPY260220P00660000"
+        leg2 = MagicMock()
+        leg2.symbol = "AAPL260220P00200000"
+        mock_request.legs = [leg1, leg2]
+
+        with pytest.raises(ValueError, match="ORDER BLOCKED \\(leg\\)"):
+            safe_submit_order(mock_client, mock_request)
+
+    def test_allows_spy_mleg(self):
+        """safe_submit_order allows MLEG orders with all SPY legs."""
+        mock_client = MagicMock()
+        mock_request = MagicMock()
+        mock_request.symbol = None
+
+        leg1 = MagicMock()
+        leg1.symbol = "SPY260220P00660000"
+        leg2 = MagicMock()
+        leg2.symbol = "SPY260220C00670000"
+        mock_request.legs = [leg1, leg2]
+
+        safe_submit_order(mock_client, mock_request)
+        mock_client.submit_order.assert_called_once()
+
+
+# -------------------------------------------------------------------
+# safe_close_position wrapper
+# -------------------------------------------------------------------
+
+
+class TestSafeClosePosition:
+    def test_blocks_non_spy(self):
+        """safe_close_position rejects non-SPY symbols."""
+        mock_client = MagicMock()
+
+        with pytest.raises(ValueError, match="CLOSE BLOCKED"):
+            safe_close_position(mock_client, "AAPL")
+
+        mock_client.close_position.assert_not_called()
+
+    def test_allows_spy(self):
+        """safe_close_position allows SPY and delegates to client."""
+        mock_client = MagicMock()
+
+        safe_close_position(mock_client, "SPY")
+        mock_client.close_position.assert_called_once_with("SPY")
+
+    def test_blocks_sofi_option(self):
+        """safe_close_position rejects non-SPY option symbols."""
+        mock_client = MagicMock()
+
+        with pytest.raises(ValueError, match="CLOSE BLOCKED"):
+            safe_close_position(mock_client, "SOFI260206P00024000")
+
+    def test_allows_spy_option(self):
+        """safe_close_position allows SPY option symbols."""
+        mock_client = MagicMock()
+
+        safe_close_position(mock_client, "SPY260220P00660000")
+        mock_client.close_position.assert_called_once()
+
+    def test_passes_kwargs(self):
+        """safe_close_position passes through kwargs like close_options."""
+        mock_client = MagicMock()
+        mock_opts = MagicMock()
+
+        safe_close_position(mock_client, "SPY", close_options=mock_opts)
+        mock_client.close_position.assert_called_once_with("SPY", close_options=mock_opts)

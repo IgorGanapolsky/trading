@@ -8,6 +8,8 @@ from alpaca.trading.client import TradingClient
 from alpaca.trading.enums import OrderSide, TimeInForce
 from alpaca.trading.requests import MarketOrderRequest
 
+from src.safety.mandatory_trade_gate import safe_submit_order
+
 # Use unified credentials (prioritizes $5K paper account per CLAUDE.md)
 try:
     from src.utils.alpaca_client import get_alpaca_credentials
@@ -56,7 +58,7 @@ order = MarketOrderRequest(
     side=OrderSide.SELL,
     time_in_force=TimeInForce.DAY,
 )
-result = client.submit_order(order)
+result = safe_submit_order(client, order)
 print("Order submitted: " + str(result.id))
 print("Status: " + str(result.status))
 print("Spread should now be balanced (1 long / 1 short)")

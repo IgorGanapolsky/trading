@@ -17,6 +17,8 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+from src.safety.mandatory_trade_gate import safe_submit_order
+
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -117,7 +119,7 @@ def main():
                         side=OrderSide.SELL,
                         time_in_force=TimeInForce.DAY,
                     )
-                    result = client.submit_order(order)
+                    result = safe_submit_order(client, order)
                     logger.info("  ✅ SOLD %s: Order %s submitted", symbol, result.id)
                     liquidated.append(
                         {

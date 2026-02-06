@@ -34,7 +34,9 @@ from typing import Optional
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
+
 from src.rag.lessons_learned_rag import LessonsLearnedRAG
+from src.safety.mandatory_trade_gate import safe_submit_order
 from src.safety.trade_lock import TradeLockTimeout, acquire_trade_lock
 from src.utils.error_monitoring import init_sentry
 
@@ -100,6 +102,7 @@ class IronCondorStrategy:
         try:
             from alpaca.data.historical import StockHistoricalDataClient
             from alpaca.data.requests import StockLatestQuoteRequest
+
             from src.utils.alpaca_client import get_alpaca_credentials
 
             api_key, secret = get_alpaca_credentials()
@@ -329,6 +332,7 @@ class IronCondorStrategy:
             logger.info("=" * 60)
             try:
                 from alpaca.trading.client import TradingClient
+
                 from src.utils.alpaca_client import get_alpaca_credentials
 
                 api_key, secret = get_alpaca_credentials()
@@ -483,6 +487,7 @@ class IronCondorStrategy:
                 from alpaca.trading.client import TradingClient
                 from alpaca.trading.enums import OrderClass, OrderSide
                 from alpaca.trading.requests import OptionLegRequest
+
                 from src.utils.alpaca_client import get_alpaca_credentials
 
                 api_key, secret = get_alpaca_credentials()
@@ -549,7 +554,7 @@ class IronCondorStrategy:
                         )
 
                         logger.info("🚀 Submitting MLeg iron condor order...")
-                        order = client.submit_order(order_req)
+                        order = safe_submit_order(client, order_req)
 
                         order_ids.append(
                             {

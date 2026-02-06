@@ -22,6 +22,7 @@ from alpaca.data.requests import (
     OptionSnapshotRequest,
 )
 from alpaca.trading.client import TradingClient
+from src.safety.mandatory_trade_gate import safe_submit_order
 
 # Configure logging
 logging.basicConfig(
@@ -251,7 +252,7 @@ class AlpacaOptionsClient:
                 )
 
             # Submit order
-            order = self.trading_client.submit_order(req)
+            order = safe_submit_order(self.trading_client, req)
 
             # Build result
             order_info = {

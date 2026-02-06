@@ -31,6 +31,8 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+from src.safety.mandatory_trade_gate import safe_submit_order  # noqa: E402
+
 # Ensure directories exist BEFORE configuring logging
 Path("logs").mkdir(exist_ok=True)
 Path("data").mkdir(exist_ok=True)
@@ -493,7 +495,7 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
             time_in_force=TimeInForce.GTC,  # Options require GTC, not DAY
         )
 
-        order = trading_client.submit_order(order_request)
+        order = safe_submit_order(trading_client, order_request)
 
         # Calculate stop loss per backtest recommendation (50% of premium)
         # If we collect $1.00 premium, close position if cost to buy back exceeds $1.50

@@ -31,6 +31,8 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from src.safety.mandatory_trade_gate import safe_submit_order
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
@@ -165,7 +167,7 @@ def main(dry_run: bool = False, trail_pct: float | None = None):
                     time_in_force=TimeInForce.GTC,
                     limit_price=stop_price,
                 )
-                result = client.submit_order(order_request)
+                result = safe_submit_order(client, order_request)
                 logger.info(f"    Status: LIMIT STOP SET - Order ID: {result.id}")
                 stops_set += 1
                 total_protected_value += market_value
@@ -178,7 +180,7 @@ def main(dry_run: bool = False, trail_pct: float | None = None):
                     time_in_force=TimeInForce.GTC,
                     trail_percent=trailing_pct * 100,
                 )
-                result = client.submit_order(order_request)
+                result = safe_submit_order(client, order_request)
                 logger.info(f"    Status: TRAILING STOP SET - Order ID: {result.id}")
                 stops_set += 1
                 total_protected_value += market_value

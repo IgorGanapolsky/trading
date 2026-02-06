@@ -20,6 +20,8 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from src.safety.mandatory_trade_gate import safe_submit_order
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -32,6 +34,7 @@ def get_trading_client():
     """Get Alpaca trading client."""
     try:
         from alpaca.trading.client import TradingClient
+
         from src.utils.alpaca_client import get_alpaca_credentials
 
         api_key, secret_key = get_alpaca_credentials()
@@ -181,7 +184,7 @@ def place_protective_orders(client, dry_run: bool = False, max_loss_pct: float =
                         time_in_force=TimeInForce.GTC,  # Good til cancelled
                         limit_price=max_close_price,
                     )
-                    order = client.submit_order(order_request)
+                    order = safe_submit_order(client, order_request)
                     logger.info(
                         f"   ✅ PROTECTIVE ORDER PLACED: BUY {abs(qty)} @ ${max_close_price}"
                     )

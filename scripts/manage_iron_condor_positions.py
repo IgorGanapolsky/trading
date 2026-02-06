@@ -27,6 +27,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from src.safety.mandatory_trade_gate import safe_submit_order
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
@@ -215,7 +217,7 @@ def close_iron_condor(client, ic: dict, reason: str, dry_run: bool = False) -> b
             order_class=OrderClass.MLEG,
             legs=option_legs,
         )
-        result = client.submit_order(order_req)
+        result = safe_submit_order(client, order_req)
         logger.info(f"    ✅ MLeg close order submitted: {result.id}")
         logger.info(f"       Status: {result.status}")
         return True

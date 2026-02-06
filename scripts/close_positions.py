@@ -35,6 +35,11 @@ from alpaca.trading.client import TradingClient
 from alpaca.trading.enums import OrderSide, TimeInForce
 from alpaca.trading.requests import ClosePositionRequest, MarketOrderRequest
 
+from src.safety.mandatory_trade_gate import (  # noqa: E402
+    safe_close_position,
+    safe_submit_order,
+)
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -128,7 +133,7 @@ def close_position_safely(client: TradingClient, position, dry_run: bool = False
 
     try:
         # Use close_position API which handles direction automatically
-        result = client.close_position(symbol)
+        result = safe_close_position(client, symbol)
         order_id = result.id if hasattr(result, "id") else "N/A"
         logger.info(f"  SUCCESS - Order ID: {order_id}")
         return True
@@ -144,7 +149,7 @@ def close_position_safely(client: TradingClient, position, dry_run: bool = False
                 side=side,
                 time_in_force=TimeInForce.DAY,
             )
-            order = client.submit_order(order_req)
+            order = safe_submit_order(client, order_req)
             logger.info(f"  SUCCESS (manual) - Order ID: {order.id}")
             return True
         except Exception as e2:
@@ -410,7 +415,7 @@ def mode_shorts_first(client: TradingClient, ticker: Optional[str], dry_run: boo
                 logger.info("  Trying partial close (1 contract)...")
                 try:
                     close_req = ClosePositionRequest(qty="1")
-                    result = client.close_position(pos.symbol, close_options=close_req)
+                    result = safe_close_position(client, pos.symbol, close_options=close_req)
                     order_id = result.id if hasattr(result, "id") else result
                     logger.info(f"  Closed 1 contract! Order ID: {order_id}")
                 except Exception as e2:

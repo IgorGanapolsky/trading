@@ -28,6 +28,8 @@ from typing import Optional
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
+
+from src.safety.mandatory_trade_gate import safe_submit_order
 from src.utils.error_monitoring import init_sentry
 
 load_dotenv()
@@ -109,7 +111,7 @@ def buy_stock(client, symbol: str, dollars: float) -> Optional[dict]:
             side=OrderSide.BUY,
             time_in_force=TimeInForce.DAY,
         )
-        order = client.submit_order(request)
+        order = safe_submit_order(client, request)
         logger.info(f"BUY ORDER SUBMITTED: ${dollars:.2f} of {symbol}")
         return {
             "id": str(order.id),
@@ -135,7 +137,7 @@ def sell_stock(client, symbol: str, qty: float) -> Optional[dict]:
             side=OrderSide.SELL,
             time_in_force=TimeInForce.DAY,
         )
-        order = client.submit_order(request)
+        order = safe_submit_order(client, request)
         logger.info(f"SELL ORDER SUBMITTED: {qty} shares of {symbol}")
         return {
             "id": str(order.id),
@@ -379,7 +381,7 @@ def set_stop_losses(client):
                         limit_price=limit_price,
                         time_in_force=TimeInForce.GTC,
                     )
-                    order = client.submit_order(order_request)
+                    order = safe_submit_order(client, order_request)
                     logger.info(f"  ✅ Stop-loss order placed: {order.id}")
                     stops_set.append(
                         {

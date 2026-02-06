@@ -21,6 +21,8 @@ from alpaca.trading.client import TradingClient
 from alpaca.trading.enums import OrderSide, TimeInForce
 from alpaca.trading.requests import MarketOrderRequest
 
+from src.safety.mandatory_trade_gate import safe_submit_order
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -205,13 +207,14 @@ def close_iron_condor(client, ic_data: dict, reason: str, expiry: str, pnl: floa
         qty = abs(pos["qty"])
 
         try:
-            order = client.submit_order(
+            order = safe_submit_order(
+                client,
                 MarketOrderRequest(
                     symbol=pos["symbol"],
                     qty=qty,
                     side=side,
                     time_in_force=TimeInForce.DAY,
-                )
+                ),
             )
             logger.info(f"  Closed {pos['symbol']}: {side.value} {qty} - {order.status}")
         except Exception as e:

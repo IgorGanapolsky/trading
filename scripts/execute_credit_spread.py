@@ -33,6 +33,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.rag.lessons_learned_rag import LessonsLearnedRAG
+from src.safety.mandatory_trade_gate import safe_submit_order  # noqa: E402
 
 Path("logs").mkdir(exist_ok=True)
 Path("data").mkdir(exist_ok=True)
@@ -428,7 +429,7 @@ def execute_bull_put_spread(
 
     # Check for strategy-specific failures
     strategy_lessons = rag.search("credit spread bull put spread failures losses", top_k=3)
-    for lesson, score in strategy_lessons:
+    for lesson, _score in strategy_lessons:
         if lesson.severity == "CRITICAL":
             logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
             logger.error(f"Prevention: {lesson.prevention}")
@@ -440,7 +441,7 @@ def execute_bull_put_spread(
 
     # Check for ticker-specific failures
     ticker_lessons = rag.search(f"{symbol} trading failures options losses", top_k=3)
-    for lesson, score in ticker_lessons:
+    for lesson, _score in ticker_lessons:
         if lesson.severity == "CRITICAL":
             logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
             logger.error(f"Prevention: {lesson.prevention}")
@@ -535,7 +536,7 @@ def execute_bull_put_spread(
             time_in_force=TimeInForce.GTC,
         )
 
-        short_result = trading_client.submit_order(short_order)
+        short_result = safe_submit_order(trading_client, short_order)
         logger.info(f"   ✅ Short leg submitted: {short_result.id}")
         logger.info(f"   Status: {short_result.status}")
 
@@ -568,7 +569,7 @@ def execute_bull_put_spread(
             time_in_force=TimeInForce.GTC,
         )
 
-        long_result = trading_client.submit_order(long_order)
+        long_result = safe_submit_order(trading_client, long_order)
         logger.info(f"   ✅ Long leg submitted: {long_result.id}")
         logger.info(f"   Status: {long_result.status}")
 

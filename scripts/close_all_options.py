@@ -14,6 +14,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+from src.safety.mandatory_trade_gate import safe_close_position  # noqa: E402
 from src.utils.alpaca_client import get_alpaca_client
 
 
@@ -64,7 +65,7 @@ def close_all_options():
     for pos in option_positions:
         print(f"\nClosing {pos.symbol}...")
         try:
-            result = client.close_position(pos.symbol)
+            result = safe_close_position(client, pos.symbol)
             print(f"   Close initiated: Order {result.id if hasattr(result, 'id') else result}")
             success_count += 1
         except Exception as e:
