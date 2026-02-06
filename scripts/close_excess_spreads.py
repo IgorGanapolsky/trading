@@ -23,7 +23,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from alpaca.trading.enums import OrderSide, TimeInForce
 from alpaca.trading.requests import MarketOrderRequest
-
 from src.core.alpaca_trader import AlpacaTrader
 from src.safety.mandatory_trade_gate import safe_submit_order
 

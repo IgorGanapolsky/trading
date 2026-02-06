@@ -28,7 +28,6 @@ from typing import Optional
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
-
 from src.safety.mandatory_trade_gate import safe_submit_order
 from src.utils.error_monitoring import init_sentry
 

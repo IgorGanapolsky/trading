@@ -34,7 +34,6 @@ def get_trading_client():
     """Get Alpaca trading client."""
     try:
         from alpaca.trading.client import TradingClient
-
         from src.utils.alpaca_client import get_alpaca_credentials
 
         api_key, secret_key = get_alpaca_credentials()

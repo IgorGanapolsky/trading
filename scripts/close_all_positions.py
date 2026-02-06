@@ -19,7 +19,6 @@ if not api_key or not api_secret:
     sys.exit(1)
 
 from alpaca.trading.client import TradingClient
-
 from src.safety.mandatory_trade_gate import safe_close_position  # noqa: E402
 
 print("=" * 60)

@@ -19,6 +19,7 @@ runtimes:
 lint:
   disabled:
     - black # CI uses ruff format, not black
+    - isort # CI uses ruff I001 for import sorting — isort conflicts
   enabled:
     - actionlint@1.7.8
     - bandit@1.8.6

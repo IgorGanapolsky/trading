@@ -29,7 +29,6 @@ from zoneinfo import ZoneInfo
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
-
 from src.safety.mandatory_trade_gate import safe_submit_order
 
 load_dotenv()
@@ -48,7 +47,6 @@ IC_ENTRIES_FILE = Path(__file__).parent.parent / "data" / "ic_entries.json"
 def get_trading_client():
     """Get Alpaca trading client."""
     from alpaca.trading.client import TradingClient
-
     from src.utils.alpaca_client import get_alpaca_credentials
 
     api_key, secret = get_alpaca_credentials()
