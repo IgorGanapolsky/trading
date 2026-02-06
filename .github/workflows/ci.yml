@@ -580,6 +580,75 @@ jobs:
           echo "Run: python3 scripts/validate_github_pages_links.py"
           exit 1
 
+  # Enforce safe_submit_order/safe_close_position wrappers (PR #3313)
+  # Blocks any PR that introduces raw client.submit_order() or client.close_position()
+  # calls outside the mandatory_trade_gate.py wrapper.
+  enforce-safe-wrappers:
+    name: Enforce Safe Order Wrappers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for unprotected submit_order calls
+        run: |
+          echo "Scanning for raw submit_order/close_position calls..."
+
+          # Find .submit_order( calls that are NOT safe_submit_order
+          # Exclude: the wrapper itself, tests, comments, docstrings
+          VIOLATIONS=$(grep -rn '\.submit_order(' scripts/ src/ --include='*.py' \
+            | grep -v 'safe_submit_order' \
+            | grep -v 'def submit_order' \
+            | grep -v '^\s*#' \
+            | grep -v 'test_' \
+            | grep -v '__pycache__' \
+            | grep -v 'mandatory_trade_gate.py' \
+            | grep -v 'docstring\|>>>\|example\|Example' \
+            | grep -v '^\s*"""' \
+            | grep -v 'alpaca_executor.py' \
+            | grep -v 'multi_broker.py' \
+            | grep -v 'execution_agent.py' \
+            | grep -v 'api_circuit_breaker.py' \
+            || true)
+
+          if [ -n "$VIOLATIONS" ]; then
+            echo "❌ UNPROTECTED ORDER CALLS DETECTED:"
+            echo "$VIOLATIONS"
+            echo ""
+            echo "All order submissions MUST use safe_submit_order() from"
+            echo "src.safety.mandatory_trade_gate to enforce ticker validation."
+            echo ""
+            echo "Fix: Replace client.submit_order(req) with safe_submit_order(client, req)"
+            echo "Import: from src.safety.mandatory_trade_gate import safe_submit_order"
+            exit 1
+          fi
+
+          # Find .close_position( calls that are NOT safe_close_position
+          CLOSE_VIOLATIONS=$(grep -rn '\.close_position(' scripts/ src/ --include='*.py' \
+            | grep -v 'safe_close_position' \
+            | grep -v 'def close_position' \
+            | grep -v '^\s*#' \
+            | grep -v 'test_' \
+            | grep -v '__pycache__' \
+            | grep -v 'mandatory_trade_gate.py' \
+            | grep -v 'docstring\|>>>\|example\|Example' \
+            | grep -v '^\s*"""' \
+            | grep -v 'close_all_positions' \
+            || true)
+
+          if [ -n "$CLOSE_VIOLATIONS" ]; then
+            echo "❌ UNPROTECTED CLOSE_POSITION CALLS DETECTED:"
+            echo "$CLOSE_VIOLATIONS"
+            echo ""
+            echo "All position closes MUST use safe_close_position() from"
+            echo "src.safety.mandatory_trade_gate to enforce ticker validation."
+            echo ""
+            echo "Fix: Replace client.close_position(sym) with safe_close_position(client, sym)"
+            echo "Import: from src.safety.mandatory_trade_gate import safe_close_position"
+            exit 1
+          fi
+
+          echo "✅ All order submissions use safe wrappers"
+
   # Enforce CLAUDE.md: No new markdown files (except allowed paths)
   check-no-new-markdown:
     runs-on: ubuntu-latest
