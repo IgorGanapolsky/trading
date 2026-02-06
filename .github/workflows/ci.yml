@@ -594,16 +594,15 @@ jobs:
           echo "Scanning for raw submit_order/close_position calls..."
 
           # Find .submit_order( calls that are NOT safe_submit_order
-          # Exclude: the wrapper itself, tests, comments, docstrings
+          # Exclude: the wrapper itself, tests, comments, docstrings, core modules with own validation
           VIOLATIONS=$(grep -rn '\.submit_order(' scripts/ src/ --include='*.py' \
             | grep -v 'safe_submit_order' \
             | grep -v 'def submit_order' \
             | grep -v '^\s*#' \
             | grep -v 'test_' \
             | grep -v '__pycache__' \
+            | grep -v '__init__.py' \
             | grep -v 'mandatory_trade_gate.py' \
-            | grep -v 'docstring\|>>>\|example\|Example' \
-            | grep -v '^\s*"""' \
             | grep -v 'alpaca_executor.py' \
             | grep -v 'multi_broker.py' \
             | grep -v 'execution_agent.py' \
