@@ -425,6 +425,63 @@ layout: null
         text-decoration: underline;
       }
 
+      /* Portfolio Status Bar */
+      .portfolio-bar {
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        padding: 16px 24px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+
+      .portfolio-bar.loading {
+        opacity: 0.5;
+      }
+
+      .portfolio-bar.error {
+        display: none;
+      }
+
+      .port-stat {
+        text-align: center;
+        min-width: 100px;
+      }
+
+      .port-stat-value {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+
+      .port-stat-value.positive {
+        color: var(--accent-green);
+      }
+
+      .port-stat-value.negative {
+        color: var(--accent-red);
+      }
+
+      .port-stat-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .port-badge {
+        font-size: 0.7rem;
+        padding: 2px 8px;
+        border-radius: 10px;
+        background: rgba(63, 185, 80, 0.15);
+        color: var(--accent-green);
+        font-weight: 600;
+      }
+
       /* Chat Section */
       .chat-section {
         background: var(--bg-secondary);
@@ -643,6 +700,32 @@ layout: null
         </div>
       </div>
 
+      <div class="portfolio-bar loading" id="portfolioBar">
+        <div class="port-stat">
+          <div class="port-stat-value" id="portEquity">--</div>
+          <div class="port-stat-label">Equity</div>
+        </div>
+        <div class="port-stat">
+          <div class="port-stat-value" id="portDailyPL">--</div>
+          <div class="port-stat-label">Daily P&amp;L</div>
+        </div>
+        <div class="port-stat">
+          <div class="port-stat-value" id="portPositions">--</div>
+          <div class="port-stat-label">Positions</div>
+        </div>
+        <div class="port-stat">
+          <div class="port-stat-value" id="portDTE">--</div>
+          <div class="port-stat-label">Nearest DTE</div>
+        </div>
+        <div class="port-stat">
+          <div class="port-stat-value" id="portWinRate">--</div>
+          <div class="port-stat-label">Win Rate</div>
+        </div>
+        <div>
+          <span class="port-badge" id="portBadge">PAPER</span>
+        </div>
+      </div>
+
       <div class="chat-section">
         <div class="panel-header">
           <span class="panel-icon">&#128172;</span>
@@ -667,6 +750,19 @@ layout: null
             <button id="chatSendBtn">Send</button>
           </div>
           <div class="chat-examples">
+            <span
+              class="example-chip"
+              data-question="Should I close my iron condor?"
+              >Close iron condor?</span
+            >
+            <span class="example-chip" data-question="What's my current P/L?"
+              >Current P/L</span
+            >
+            <span
+              class="example-chip"
+              data-question="Am I hitting any exit rules?"
+              >Exit rules check</span
+            >
             <span
               class="example-chip"
               data-question="What's the optimal exit strategy for iron condors?"
@@ -1063,6 +1159,84 @@ Tags: ${lesson.tags.join(", ")}`;
         document.getElementById("lessonModal").classList.remove("active");
       }
 
+      // Portfolio status bar - fetch live data from GitHub
+      const GITHUB_RAW_URL =
+        "https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/system_state.json";
+
+      function parseOccSymbol(symbol) {
+        const match = symbol.match(
+          /^([A-Z]+)(\d{2})(\d{2})(\d{2})([CP])(\d{8})$/,
+        );
+        if (!match) return null;
+        const [, ticker, yy, mm, dd, type, strikeRaw] = match;
+        return {
+          ticker,
+          expiry: `20${yy}-${mm}-${dd}`,
+          type: type === "C" ? "call" : "put",
+          strike: parseInt(strikeRaw, 10) / 1000,
+        };
+      }
+
+      async function loadPortfolioStatus() {
+        const bar = document.getElementById("portfolioBar");
+        try {
+          const res = await fetch(GITHUB_RAW_URL);
+          if (!res.ok) throw new Error("fetch failed");
+          const data = await res.json();
+
+          const port = data.portfolio || {};
+          const paper = data.paper_account || {};
+          const positions = data.positions || [];
+
+          // Equity
+          document.getElementById("portEquity").textContent =
+            "$" +
+            (port.equity || 0).toLocaleString(undefined, {
+              maximumFractionDigits: 0,
+            });
+
+          // Daily P&L
+          const dailyPL = paper.daily_change || 0;
+          const plEl = document.getElementById("portDailyPL");
+          plEl.textContent =
+            (dailyPL >= 0 ? "+$" : "-$") + Math.abs(dailyPL).toLocaleString();
+          plEl.className =
+            "port-stat-value " + (dailyPL >= 0 ? "positive" : "negative");
+
+          // Positions count
+          document.getElementById("portPositions").textContent =
+            positions.length;
+
+          // Nearest DTE
+          const now = new Date();
+          let minDte = Infinity;
+          for (const pos of positions) {
+            const parsed = parseOccSymbol(pos.symbol);
+            if (!parsed) continue;
+            const expiryDate = new Date(parsed.expiry + "T16:00:00Z");
+            const dte = Math.ceil((expiryDate - now) / 86400000);
+            if (dte < minDte) minDte = dte;
+          }
+          const dteEl = document.getElementById("portDTE");
+          dteEl.textContent = minDte === Infinity ? "--" : minDte + "d";
+          if (minDte <= 7 && minDte !== Infinity) {
+            dteEl.className = "port-stat-value negative";
+          }
+
+          // Win rate
+          const wr = paper.win_rate;
+          const wrEl = document.getElementById("portWinRate");
+          wrEl.textContent = wr != null ? wr + "%" : "--";
+          wrEl.className =
+            "port-stat-value " +
+            (wr >= 80 ? "positive" : wr != null ? "negative" : "");
+
+          bar.classList.remove("loading");
+        } catch {
+          bar.classList.add("error");
+        }
+      }
+
       // Chat functionality with conversation memory
       const WORKER_URL = "https://trading-rag-chat.iganapolsky.workers.dev";
       let conversationHistory = [];
@@ -1190,9 +1364,10 @@ Tags: ${lesson.tags.join(", ")}`;
           );
       }
 
-      // Initialize chat on load
+      // Initialize chat and portfolio on load
       document.addEventListener("DOMContentLoaded", () => {
         setupChatListeners();
+        loadPortfolioStatus();
       });
     </script>
   </body>

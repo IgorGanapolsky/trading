@@ -34,6 +34,7 @@ from typing import Optional
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
+
 from src.rag.lessons_learned_rag import LessonsLearnedRAG
 from src.safety.trade_lock import TradeLockTimeout, acquire_trade_lock
 from src.utils.error_monitoring import init_sentry
@@ -41,7 +42,9 @@ from src.utils.error_monitoring import init_sentry
 load_dotenv()
 init_sentry()
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -88,7 +91,7 @@ class IronCondorStrategy:
             "take_profit_pct": 0.50,  # Close at 50% profit
             "stop_loss_pct": 2.0,  # Close at 200% loss
             "exit_dte": 7,  # Exit at 7 DTE per LL-268 research (80%+ win rate)
-            "max_positions": 1,  # Per CLAUDE.md: "1 iron condor at a time"
+            "max_positions": 2,  # Per CLAUDE.md: "2 iron condors at a time" (5% max each = 10% total)
             "position_size_pct": 0.05,  # 5% of portfolio per position - CLAUDE.md MANDATE
         }
 
@@ -100,6 +103,7 @@ class IronCondorStrategy:
         try:
             from alpaca.data.historical import StockHistoricalDataClient
             from alpaca.data.requests import StockLatestQuoteRequest
+
             from src.utils.alpaca_client import get_alpaca_credentials
 
             api_key, secret = get_alpaca_credentials()
@@ -151,7 +155,9 @@ class IronCondorStrategy:
 
         return long_put, short_put, short_call, long_call
 
-    def calculate_premiums(self, legs: tuple[float, float, float, float], dte: int) -> dict:
+    def calculate_premiums(
+        self, legs: tuple[float, float, float, float], dte: int
+    ) -> dict:
         """
         Estimate premiums for iron condor legs.
 
@@ -185,7 +191,9 @@ class IronCondorStrategy:
 
         # Calculate strikes
         long_put, short_put, short_call, long_call = self.calculate_strikes(price)
-        logger.info(f"Strikes: LP={long_put} SP={short_put} SC={short_call} LC={long_call}")
+        logger.info(
+            f"Strikes: LP={long_put} SP={short_put} SC={short_call} LC={long_call}"
+        )
 
         # Calculate expiry - MUST be a Friday (options expire on Fridays)
         target_date = datetime.now() + timedelta(days=self.config["target_dte"])
@@ -248,7 +256,9 @@ class IronCondorStrategy:
             logger.info("=" * 50)
             logger.info("VIX MEAN REVERSION SIGNAL (LL-296)")
             logger.info("=" * 50)
-            logger.info(f"Signal: {signal.signal} (confidence: {signal.confidence:.2f})")
+            logger.info(
+                f"Signal: {signal.signal} (confidence: {signal.confidence:.2f})"
+            )
             logger.info(f"Current VIX: {signal.current_vix:.2f}")
             logger.info(f"3-day MA: {signal.vix_3day_ma:.2f}")
             logger.info(f"Recent High: {signal.recent_high:.2f}")
@@ -271,7 +281,9 @@ class IronCondorStrategy:
             logger.info("NEUTRAL signal - running legacy VIX check")
 
         except Exception as e:
-            logger.warning(f"VIX Mean Reversion Signal failed: {e} - using legacy check")
+            logger.warning(
+                f"VIX Mean Reversion Signal failed: {e} - using legacy check"
+            )
 
         # Legacy VIX check (fallback)
         try:
@@ -284,9 +296,7 @@ class IronCondorStrategy:
 
             # Check VIX is in optimal range (15-25 per LL-269)
             if current_vix < RiskThresholds.VIX_OPTIMAL_MIN:
-                reason = (
-                    f"VIX {current_vix:.2f} < {RiskThresholds.VIX_OPTIMAL_MIN} (premiums too thin)"
-                )
+                reason = f"VIX {current_vix:.2f} < {RiskThresholds.VIX_OPTIMAL_MIN} (premiums too thin)"
                 logger.warning(f"BLOCKED: {reason}")
                 return False, reason
 
@@ -329,6 +339,7 @@ class IronCondorStrategy:
             logger.info("=" * 60)
             try:
                 from alpaca.trading.client import TradingClient
+
                 from src.utils.alpaca_client import get_alpaca_credentials
 
                 api_key, secret = get_alpaca_credentials()
@@ -346,23 +357,31 @@ class IronCondorStrategy:
                     ]
 
                     # Count TOTAL CONTRACTS
-                    total_contracts = sum(abs(int(float(p.qty))) for p in spy_option_positions)
+                    total_contracts = sum(
+                        abs(int(float(p.qty))) for p in spy_option_positions
+                    )
                     unique_symbols = len(spy_option_positions)
 
                     logger.info(
                         f"Current SPY OPTION positions: {unique_symbols} symbols, {total_contracts} contracts"
                     )
 
-                    # STRICT CHECK: If ANY option positions exist, SKIP
-                    # This prevents accumulation from race conditions
-                    if total_contracts > 0:
+                    # Check iron condor count against max_positions config
+                    # 1 iron condor = 4 legs (long put, short put, short call, long call)
+                    max_ic = self.config.get("max_positions", 2)
+                    max_contracts = max_ic * 4
+                    current_ic_count = total_contracts // 4
+
+                    if total_contracts >= max_contracts:
                         logger.warning("=" * 60)
                         logger.warning("POSITION LIMIT BLOCKING NEW TRADE")
                         logger.warning("=" * 60)
                         logger.warning(
-                            f"REASON: Already have {total_contracts} contracts (max allowed: 0 for new entry)"
+                            f"REASON: Already have {current_ic_count} iron condor(s) ({total_contracts} contracts, max: {max_ic} ICs / {max_contracts} contracts)"
                         )
-                        logger.warning("ACTION: Manage existing positions before opening new ones")
+                        logger.warning(
+                            "ACTION: Manage existing positions before opening new ones"
+                        )
                         logger.warning("POSITIONS:")
 
                         # Log position details for debugging
@@ -377,14 +396,17 @@ class IronCondorStrategy:
                             "timestamp": datetime.now().isoformat(),
                             "strategy": "iron_condor",
                             "underlying": ic.underlying,
-                            "status": "SKIPPED_POSITION_EXISTS",
-                            "reason": f"Already have {total_contracts} option contracts - cannot open new position",
+                            "status": "SKIPPED_POSITION_LIMIT",
+                            "reason": f"Already have {current_ic_count}/{max_ic} iron condors ({total_contracts} contracts)",
                             "existing_positions": [
-                                {"symbol": p.symbol, "qty": p.qty} for p in spy_option_positions
+                                {"symbol": p.symbol, "qty": p.qty}
+                                for p in spy_option_positions
                             ],
                         }
                     else:
-                        logger.info("No existing option positions - OK to proceed")
+                        logger.info(
+                            f"Position check OK: {current_ic_count}/{max_ic} iron condors - room for new entry"
+                        )
             except Exception as pos_err:
                 # CRITICAL: If we can't verify positions, BLOCK the trade
                 # This prevents placing duplicate trades when Alpaca API fails
@@ -418,7 +440,9 @@ class IronCondorStrategy:
                 continue
             # Only block on lessons specifically about iron condor execution
             if lesson.severity == "CRITICAL" and "iron condor" in lesson.title.lower():
-                logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
+                logger.error(
+                    f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})"
+                )
                 logger.error(f"Prevention: {lesson.prevention}")
                 return {
                     "timestamp": datetime.now().isoformat(),
@@ -429,15 +453,22 @@ class IronCondorStrategy:
                 }
 
         # Check for ticker-specific failures
-        ticker_lessons = rag.search(f"{ic.underlying} trading failures options losses", top_k=3)
+        ticker_lessons = rag.search(
+            f"{ic.underlying} trading failures options losses", top_k=3
+        )
         for lesson, score in ticker_lessons:
             # Skip lessons that have been resolved or fixed
             if lesson.severity == "RESOLVED" or "resolved" in lesson.snippet.lower():
                 logger.info(f"Skipping resolved lesson: {lesson.id}")
                 continue
             # Only block on unresolved CRITICAL lessons about this ticker's execution
-            if lesson.severity == "CRITICAL" and ic.underlying.lower() in lesson.title.lower():
-                logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
+            if (
+                lesson.severity == "CRITICAL"
+                and ic.underlying.lower() in lesson.title.lower()
+            ):
+                logger.error(
+                    f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})"
+                )
                 logger.error(f"Prevention: {lesson.prevention}")
                 return {
                     "timestamp": datetime.now().isoformat(),
@@ -477,6 +508,7 @@ class IronCondorStrategy:
                 from alpaca.trading.client import TradingClient
                 from alpaca.trading.enums import OrderClass, OrderSide
                 from alpaca.trading.requests import OptionLegRequest
+
                 from src.utils.alpaca_client import get_alpaca_credentials
 
                 api_key, secret = get_alpaca_credentials()
@@ -486,7 +518,9 @@ class IronCondorStrategy:
                     f"Credentials check: api_key={'SET' if api_key else 'NONE'}, secret={'SET' if secret else 'NONE'}"
                 )
                 if api_key:
-                    logger.info(f"  api_key length: {len(api_key)}, starts with: {api_key[:4]}...")
+                    logger.info(
+                        f"  api_key length: {len(api_key)}, starts with: {api_key[:4]}..."
+                    )
 
                 if api_key and secret:
                     client = TradingClient(api_key, secret, paper=True)
@@ -503,8 +537,12 @@ class IronCondorStrategy:
                     short_call_sym = build_occ(ic.short_call, "C")
                     long_call_sym = build_occ(ic.long_call, "C")
 
-                    logger.info(f"Option symbols: LP={long_put_sym}, SP={short_put_sym}")
-                    logger.info(f"                SC={short_call_sym}, LC={long_call_sym}")
+                    logger.info(
+                        f"Option symbols: LP={long_put_sym}, SP={short_put_sym}"
+                    )
+                    logger.info(
+                        f"                SC={short_call_sym}, LC={long_call_sym}"
+                    )
 
                     # FIX Jan 26, 2026: Use MLeg (multi-leg) orders to ensure all 4 legs
                     # fill together or not at all. This prevents partial fills that cause losses.
@@ -513,10 +551,18 @@ class IronCondorStrategy:
 
                     # Build OptionLegRequest for each leg of the iron condor
                     option_legs = [
-                        OptionLegRequest(symbol=long_put_sym, side=OrderSide.BUY, ratio_qty=1),
-                        OptionLegRequest(symbol=short_put_sym, side=OrderSide.SELL, ratio_qty=1),
-                        OptionLegRequest(symbol=short_call_sym, side=OrderSide.SELL, ratio_qty=1),
-                        OptionLegRequest(symbol=long_call_sym, side=OrderSide.BUY, ratio_qty=1),
+                        OptionLegRequest(
+                            symbol=long_put_sym, side=OrderSide.BUY, ratio_qty=1
+                        ),
+                        OptionLegRequest(
+                            symbol=short_put_sym, side=OrderSide.SELL, ratio_qty=1
+                        ),
+                        OptionLegRequest(
+                            symbol=short_call_sym, side=OrderSide.SELL, ratio_qty=1
+                        ),
+                        OptionLegRequest(
+                            symbol=long_call_sym, side=OrderSide.BUY, ratio_qty=1
+                        ),
                     ]
 
                     logger.info("📋 Building MLeg (multi-leg) iron condor order...")
@@ -658,8 +704,12 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Iron Condor Trader")
-    parser.add_argument("--live", action="store_true", help="Execute LIVE trades on Alpaca")
-    parser.add_argument("--dry-run", action="store_true", help="Dry run (simulate only)")
+    parser.add_argument(
+        "--live", action="store_true", help="Execute LIVE trades on Alpaca"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Dry run (simulate only)"
+    )
     parser.add_argument(
         "--symbol", type=str, default="SPY", help="Underlying symbol (default: SPY)"
     )
@@ -702,7 +752,9 @@ def main():
                 logger.warning("=" * 60)
                 logger.warning("DAILY TRADE LIMIT REACHED - BLOCKING NEW TRADES")
                 logger.warning("=" * 60)
-                logger.warning(f"Trades today: {len(today_trades)} (max: {MAX_TRADES_PER_DAY})")
+                logger.warning(
+                    f"Trades today: {len(today_trades)} (max: {MAX_TRADES_PER_DAY})"
+                )
                 logger.warning("Reason: Prevent churning and bid/ask spread losses")
                 logger.warning("=" * 60)
                 return {
@@ -754,7 +806,9 @@ def main():
         with acquire_trade_lock(timeout=10):
             trade = strategy.execute(ic, live=live_mode)
     except TradeLockTimeout:
-        logger.warning("⚠️ Could not acquire trade lock - another trade may be in progress")
+        logger.warning(
+            "⚠️ Could not acquire trade lock - another trade may be in progress"
+        )
         return {"success": False, "reason": "trade_lock_timeout"}
 
     logger.info("IRON CONDOR TRADER - COMPLETE")

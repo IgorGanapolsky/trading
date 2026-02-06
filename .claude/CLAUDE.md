@@ -43,9 +43,8 @@ CTO: Claude | CEO: Igor Ganapolsky
 
 2. **Compounding** (The Wealth Engine)
    - Reinvest 100% of profits during growth phase
-   - Target: 8% monthly return (conservative iron condor avg)
-   - $100K → $250K (Year 1) → $600K (Year 2)
-   - DO NOT WITHDRAW until $600K target reached
+   - Returns depend on actual win rate and trade frequency — query RAG for real data
+   - DO NOT WITHDRAW until North Star reached
 
 3. **Tax Optimization** (Keep What You Earn) - UPDATED Jan 23, 2026
    - **CRITICAL**: SPY options are EQUITY options - taxed as 100% short-term capital gains
@@ -64,24 +63,9 @@ CTO: Claude | CEO: Igor Ganapolsky
    - Phase 3 ($300K-$600K): 5-6 iron condors, diversify expirations
    - Phase 4 ($600K+): Financial independence reached - withdraw $6K/month
 
-### Path to $6K/Month (Financial Independence) - UPDATED Jan 30, 2026
+### Path to North Star
 
-| Phase | Capital  | Monthly Income | After Tax  | Timeline    |
-| ----- | -------- | -------------- | ---------- | ----------- |
-| Now   | $100,000 | ~$1,600        | ~$1,100    | Jan 2026    |
-| +12mo | $250,000 | ~$4,000        | ~$2,800    | Jan 2027    |
-| +18mo | $400,000 | ~$6,400        | ~$4,500    | Jul 2027    |
-| +24mo | $600,000 | ~$9,600        | **$6,700** | Jan 2028 🎯 |
-
-### Why This Works (Phil Town Math)
-
-- Conservative 8% monthly = 150% annual (iron condor territory)
-- 86% win rate provides margin of safety
-- Compounding turns $100K → $600K in **2 years** (not 3!)
-- At $600K with 15% annual (Phil Town conservative): $90K/year = $7.5K/month
-- **FINANCIAL INDEPENDENCE = work optional by age 48**
-
-**Note**: $100K starting capital = FASTER PATH TO GOAL (2 years instead of 3)!
+**No fabricated projections.** Actual returns tracked in `data/system_state.json`. Query RAG for real performance data before making any scaling decisions. The system proves itself with data, not spreadsheets.
 
 ## MANDATORY Pre-Trade Checklist
 

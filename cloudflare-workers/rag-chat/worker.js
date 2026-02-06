@@ -84,6 +84,159 @@ STRATEGY SUMMARY:
 - Monthly target: 3-4 trades x $150-250 avg
 `;
 
+const GITHUB_RAW_URL =
+  "https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/system_state.json";
+
+/**
+ * Fetch live portfolio data from GitHub raw (public repo, no auth).
+ * Returns parsed JSON or null on failure.
+ */
+async function fetchLiveData() {
+  try {
+    const res = await fetch(GITHUB_RAW_URL, {
+      headers: { "User-Agent": "rag-chat-worker" },
+      cf: { cacheTtl: 300 },
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Decode OCC option symbol like SPY260220C00720000 into human-readable parts.
+ */
+function parseOccSymbol(symbol) {
+  const match = symbol.match(/^([A-Z]+)(\d{2})(\d{2})(\d{2})([CP])(\d{8})$/);
+  if (!match) return null;
+  const [, ticker, yy, mm, dd, type, strikeRaw] = match;
+  return {
+    ticker,
+    expiry: `20${yy}-${mm}-${dd}`,
+    type: type === "C" ? "call" : "put",
+    strike: parseInt(strikeRaw, 10) / 1000,
+  };
+}
+
+/**
+ * Build a dynamic system prompt with live position data + lesson context.
+ */
+function buildSystemPrompt(liveData) {
+  if (!liveData) return LESSONS_CONTEXT;
+
+  const now = new Date();
+  const lines = [];
+
+  lines.push(
+    "You are a trading knowledge assistant for Igor's AI Trading System. You have access to LIVE portfolio data below AND curated lessons. Use both to give actionable, position-specific advice.\n",
+  );
+
+  // Portfolio overview
+  const port = liveData.portfolio || {};
+  const paper = liveData.paper_account || {};
+  const risk = liveData.risk || {};
+  lines.push("=== LIVE PORTFOLIO STATUS ===");
+  lines.push(`Equity: $${(port.equity || 0).toLocaleString()}`);
+  lines.push(`Cash: $${(port.cash || 0).toLocaleString()}`);
+  lines.push(`Daily Change: $${paper.daily_change || 0}`);
+  lines.push(`Unrealized P/L: $${risk.unrealized_pl || 0}`);
+  lines.push(`Total P/L: $${(risk.total_pl || 0).toLocaleString()}`);
+  lines.push(
+    `Win Rate: ${paper.win_rate || "N/A"}% (${paper.win_rate_sample_size || 0} trades)`,
+  );
+  lines.push("");
+
+  // Paper trading progress
+  const pt = liveData.paper_trading || {};
+  if (pt.start_date) {
+    const startDate = new Date(pt.start_date);
+    const dayNum = Math.floor((now - startDate) / 86400000);
+    lines.push("=== PAPER TRADING PROGRESS ===");
+    lines.push(
+      `Day ${dayNum} of ${pt.target_duration_days || 90} (target: ${(pt.target_win_rate || 0.8) * 100}% win rate)`,
+    );
+    lines.push("");
+  }
+
+  // Positions with decoded symbols and iron condor detection
+  const positions = liveData.positions || [];
+  if (positions.length > 0) {
+    lines.push("=== OPEN POSITIONS ===");
+
+    // Group by expiry to detect iron condors
+    const byExpiry = {};
+    for (const pos of positions) {
+      const parsed = parseOccSymbol(pos.symbol);
+      if (!parsed) continue;
+      if (!byExpiry[parsed.expiry]) byExpiry[parsed.expiry] = [];
+      byExpiry[parsed.expiry].push({ ...pos, parsed });
+    }
+
+    for (const [expiry, legs] of Object.entries(byExpiry)) {
+      const expiryDate = new Date(expiry + "T16:00:00Z");
+      const dte = Math.max(0, Math.ceil((expiryDate - now) / 86400000));
+
+      // Check if this is an iron condor (4 legs: short put, long put, short call, long call)
+      const puts = legs.filter((l) => l.parsed.type === "put");
+      const calls = legs.filter((l) => l.parsed.type === "call");
+      const isIronCondor = puts.length === 2 && calls.length === 2;
+
+      if (isIronCondor) {
+        const shortPut = puts.find((l) => l.qty < 0);
+        const longPut = puts.find((l) => l.qty > 0);
+        const shortCall = calls.find((l) => l.qty < 0);
+        const longCall = calls.find((l) => l.qty > 0);
+
+        const netPnl = legs.reduce((sum, l) => sum + (l.pnl || 0), 0);
+        const netValue = legs.reduce((sum, l) => sum + (l.value || 0), 0);
+
+        lines.push(
+          `IRON CONDOR - ${legs[0].parsed.ticker} exp ${expiry} (${dte} DTE)`,
+        );
+        if (shortPut && longPut) {
+          lines.push(
+            `  Put spread: -${shortPut.parsed.strike}/${longPut.parsed.strike} (P/L: $${shortPut.pnl + longPut.pnl})`,
+          );
+        }
+        if (shortCall && longCall) {
+          lines.push(
+            `  Call spread: -${shortCall.parsed.strike}/${longCall.parsed.strike} (P/L: $${shortCall.pnl + longCall.pnl})`,
+          );
+        }
+        lines.push(`  Net P/L: $${netPnl} | Net value: $${netValue}`);
+
+        // Exit rule triggers
+        const triggers = [];
+        if (dte <= 7) triggers.push("7 DTE EXIT RULE TRIGGERED (LL-268)");
+        if (dte <= 14) triggers.push("Approaching 7 DTE - monitor closely");
+        if (triggers.length > 0) {
+          lines.push(`  EXIT ALERTS: ${triggers.join("; ")}`);
+        }
+      } else {
+        for (const leg of legs) {
+          const dir = leg.qty > 0 ? "long" : "short";
+          lines.push(
+            `${leg.parsed.ticker} ${expiry} ${leg.parsed.strike} ${leg.parsed.type} (${dir}) | P/L: $${leg.pnl} | ${dte} DTE`,
+          );
+        }
+      }
+      lines.push("");
+    }
+  }
+
+  // Append lesson context
+  lines.push("=== TRADING LESSONS ===");
+  lines.push(
+    LESSONS_CONTEXT.replace(
+      /^You are a trading knowledge assistant.*?\n\n/,
+      "",
+    ),
+  );
+
+  return lines.join("\n");
+}
+
 export default {
   async fetch(request, env) {
     // Handle CORS preflight
@@ -127,6 +280,10 @@ export default {
       // Add current message
       messages.push({ role: "user", content: message });
 
+      // Fetch live portfolio data (graceful fallback to static lessons)
+      const liveData = await fetchLiveData();
+      const systemPrompt = buildSystemPrompt(liveData);
+
       const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
@@ -137,7 +294,7 @@ export default {
         body: JSON.stringify({
           model: "claude-3-5-haiku-20241022",
           max_tokens: 1024,
-          system: LESSONS_CONTEXT,
+          system: systemPrompt,
           messages: messages,
         }),
       });
