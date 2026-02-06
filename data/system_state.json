@@ -1,15 +1,10 @@
 {
-  "last_updated": "2026-02-05T20:46:23.708375+00:00",
+  "last_updated": "2026-02-06T14:21:05.803099+00:00",
   "sync_health": {
-    "last_successful_sync": "2026-02-05T20:46:23.708378+00:00",
+    "last_successful_sync": "2026-02-06T14:21:05.803102+00:00",
     "sync_source": "github_actions",
-    "sync_count_today": 17,
+    "sync_count_today": 1,
     "history": [
-      {
-        "timestamp": "2026-02-03T20:47:39.375490+00:00",
-        "equity": 101645.61,
-        "success": true
-      },
       {
         "timestamp": "2026-02-04T18:49:26.581543+00:00",
         "equity": 101407.35,
@@ -124,6 +119,11 @@
         "timestamp": "2026-02-05T20:46:23.708365+00:00",
         "equity": 101379.21,
         "success": true
+      },
+      {
+        "timestamp": "2026-02-06T14:21:05.803090+00:00",
+        "equity": 101379.21,
+        "success": true
       }
     ]
   },
@@ -138,7 +138,7 @@
     "total_pl": 71379.21,
     "total_pl_pct": 237.93,
     "positions_count": 4,
-    "daily_change": -53.0,
+    "daily_change": 3.0,
     "win_rate": 35.7,
     "win_rate_sample_size": 28,
     "starting_balance": 30000.0
@@ -163,17 +163,17 @@
     {
       "symbol": "SPY260220P00655000",
       "qty": 1.0,
-      "price": 4.21,
-      "value": 421.0,
-      "pnl": 191.0,
+      "price": 4.09,
+      "value": 409.0,
+      "pnl": 179.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00660000",
       "qty": -1.0,
-      "price": 5.18,
-      "value": -518.0,
-      "pnl": -245.0,
+      "price": 5.06,
+      "value": -506.0,
+      "pnl": -233.0,
       "type": "option"
     }
   ],
@@ -941,7 +941,7 @@
   ],
   "trades_loaded": 95,
   "trades": {
-    "last_trade_date": "2026-02-05",
+    "last_trade_date": "2026-02-06",
     "today_trades": 0,
     "total_trades_today": 0,
     "last_trade_symbol": "SPY260220C00720000"
@@ -958,7 +958,7 @@
     "positions_count": 4
   },
   "meta": {
-    "last_updated": "2026-02-05T20:46:23.708394+00:00",
+    "last_updated": "2026-02-06T14:21:05.803118+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5
   },
@@ -966,7 +966,7 @@
     "start_date": "2026-01-30",
     "target_duration_days": 90,
     "target_win_rate": 0.8,
-    "current_day": 7,
+    "current_day": 8,
     "notes": "Paper phase per CLAUDE.md - validate 80%+ win rate before scaling"
   }
 }
