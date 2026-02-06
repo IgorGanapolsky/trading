@@ -33,6 +33,14 @@
 - 80-85%: on track, maintain discipline
 - 85%+: profitable, consider scaling after 90 days
 
+## Projection Rules (MANDATORY)
+
+- NO return projections until 30+ completed iron condor trades exist
+- NO extrapolating daily/weekly returns to monthly/yearly timeframes
+- NO attributing P/L to iron condors without decomposing by order source
+- All P/L claims MUST use `validate_pl_report()` from `src/utils/pl_validator.py`
+- If asked "how much did we make" — show decomposed report, not a single number
+
 ## Phil Town Alignment
 
 Iron condors align with Rule #1:

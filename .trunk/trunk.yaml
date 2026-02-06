@@ -33,6 +33,10 @@ lint:
     - shfmt@3.6.0
     - trufflehog@3.90.13
     - yamllint@1.37.1
+  ignore:
+    - linters: [bandit]
+      paths:
+        - tests/**
 actions:
   disabled:
     - trunk-announce
