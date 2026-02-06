@@ -1,0 +1,33 @@
+{
+  "last_check": "2026-02-06T18:50:25Z",
+  "components": {
+    "lancedb": {
+      "healthy": false,
+      "message": "No .lance files found — will auto-reindex on next async session start",
+      "checked_at": "2026-02-06T18:50:25Z"
+    },
+    "chromadb": {
+      "healthy": true,
+      "message": "Healthy",
+      "checked_at": "2026-02-06T18:50:25Z"
+    },
+    "feedback_log": {
+      "healthy": true,
+      "message": "Healthy (55 entries)",
+      "checked_at": "2026-02-06T18:50:25Z"
+    },
+    "thompson_model": {
+      "healthy": true,
+      "message": "55 entries, updated 2026-02-06T13:35:57",
+      "checked_at": "2026-02-06T18:50:25Z"
+    },
+    "memory_metadata": {
+      "healthy": true,
+      "message": "6 lessons tracked, 4 protected (CRITICAL)",
+      "checked_at": "2026-02-06T18:50:25Z"
+    }
+  },
+  "overall_health": "degraded",
+  "degraded_reason": "LanceDB empty — auto-reindex configured in session-start-async.sh",
+  "auto_healed": []
+}

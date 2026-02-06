@@ -10,6 +10,7 @@
 8. **Verify before claiming** - say "I believe this is done, verifying now..." not "Done!"
 9. **Query RAG first** - check Vertex AI RAG lessons BEFORE starting any task
 10. **Learn from mistakes** - record errors in RAG and improve continuously
+11. **Compound engineering** - every fix must follow Fix → Test → Prevent → Memory → Verify (see `compound-engineering.md`)
 
 ## Learning & RAG Protocol
 
