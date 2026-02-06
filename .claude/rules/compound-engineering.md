@@ -47,6 +47,23 @@ Evidence of success — not just "done":
 ruff check src/ && pytest tests/ -x --tb=short && python scripts/system_health_check.py
 ```
 
+## Mandatory Completion Gate
+
+Before claiming ANY task is done, verify ALL 5 steps are addressed:
+
+```
+[ ] 1. FIX — code change committed
+[ ] 2. TEST — pytest passes, new tests cover the fix
+[ ] 3. PREVENT — CI check, hook, or guard added that blocks recurrence
+[ ] 4. MEMORY — lesson recorded if severity >= 4
+[ ] 5. VERIFY — CI green, evidence shown, state confirmed
+```
+
+**If step 3 (Prevention) is missing, the task is NOT complete.**
+Prevention means: if someone writes new code that reintroduces this bug,
+something automated (CI, hook, or runtime guard) will catch it BEFORE
+it reaches production. A fix without prevention is a fix that will recur.
+
 ## Anti-Patterns
 
 - Claiming "fixed" without verification evidence
@@ -54,6 +71,7 @@ ruff check src/ && pytest tests/ -x --tb=short && python scripts/system_health_c
 - Fix without prevention (will recur)
 - Fix without memory (won't learn)
 - Over-engineering the prevention (simple > complex)
+- **Shipping the fix and adding prevention as an afterthought when the CEO asks** (Feb 6, 2026 lesson)
 
 ## Trading-Specific Applications
 
