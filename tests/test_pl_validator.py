@@ -264,9 +264,7 @@ class TestValidatePLReport:
                 "status": "filled",
             },
         ]
-        report = validate_pl_report(
-            orders, current_equity=101440.13, starting_equity=100000.0
-        )
+        report = validate_pl_report(orders, current_equity=101440.13, starting_equity=100000.0)
 
         assert report.total_pl == pytest.approx(1440.13)
         assert len(report.compliant_orders) == 1
@@ -313,9 +311,7 @@ class TestValidatePLReport:
                     },
                 ]
             )
-        report = validate_pl_report(
-            orders, current_equity=101000.0, starting_equity=100000.0
-        )
+        report = validate_pl_report(orders, current_equity=101000.0, starting_equity=100000.0)
         assert report.completed_iron_condors == 2
         assert report.can_project is False
 
@@ -330,9 +326,7 @@ class TestValidatePLReport:
                 "status": "filled",
             },
         ]
-        report = validate_pl_report(
-            orders, current_equity=100100.0, starting_equity=100000.0
-        )
+        report = validate_pl_report(orders, current_equity=100100.0, starting_equity=100000.0)
         assert len(report.violating_orders) == 0
         assert report.violations_summary == ""
 
@@ -347,9 +341,7 @@ class TestValidatePLReport:
                 "status": "canceled",
             },
         ]
-        report = validate_pl_report(
-            orders, current_equity=100000.0, starting_equity=100000.0
-        )
+        report = validate_pl_report(orders, current_equity=100000.0, starting_equity=100000.0)
         assert len(report.violating_orders) == 0
         assert len(report.compliant_orders) == 0
 
@@ -366,9 +358,7 @@ class TestFormatPLReport:
                 "status": "filled",
             },
         ]
-        report = validate_pl_report(
-            orders, current_equity=101440.0, starting_equity=100000.0
-        )
+        report = validate_pl_report(orders, current_equity=101440.0, starting_equity=100000.0)
         formatted = format_pl_report(report)
         assert "Projection BLOCKED" in formatted
         assert "0/30" in formatted
@@ -384,9 +374,7 @@ class TestFormatPLReport:
                 "status": "filled",
             },
         ]
-        report = validate_pl_report(
-            orders, current_equity=100000.0, starting_equity=100000.0
-        )
+        report = validate_pl_report(orders, current_equity=100000.0, starting_equity=100000.0)
         formatted = format_pl_report(report)
         assert "Rule Violations" in formatted
         assert "SOFI" in formatted

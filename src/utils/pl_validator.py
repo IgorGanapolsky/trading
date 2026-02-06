@@ -78,11 +78,7 @@ def classify_order(order) -> OrderClassification:
         if isinstance(order, dict)
         else float(order.filled_avg_price or 0)
     )
-    created = (
-        order.get("created_at", "")
-        if isinstance(order, dict)
-        else str(order.created_at)
-    )
+    created = order.get("created_at", "") if isinstance(order, dict) else str(order.created_at)
 
     classification = OrderClassification(
         symbol=symbol,
@@ -127,17 +123,13 @@ def count_completed_iron_condors(orders: list) -> int:
     spy_option_groups: dict[str, list] = {}
 
     for order in orders:
-        symbol = (
-            order.get("symbol", "") if isinstance(order, dict) else str(order.symbol)
-        )
+        symbol = order.get("symbol", "") if isinstance(order, dict) else str(order.symbol)
         created = (
             order.get("created_at", "")[:16]
             if isinstance(order, dict)
             else str(order.created_at)[:16]
         )
-        status = (
-            order.get("status", "") if isinstance(order, dict) else str(order.status)
-        )
+        status = order.get("status", "") if isinstance(order, dict) else str(order.status)
 
         if not is_spy_option(symbol):
             continue
@@ -180,9 +172,7 @@ def validate_pl_report(
     )
 
     for order in orders:
-        status = (
-            order.get("status", "") if isinstance(order, dict) else str(order.status)
-        )
+        status = order.get("status", "") if isinstance(order, dict) else str(order.status)
         if "filled" not in str(status).lower():
             continue
 
@@ -203,8 +193,7 @@ def validate_pl_report(
             reason = v.violation_reason
             violation_types[reason] = violation_types.get(reason, 0) + 1
         lines = [
-            f"  - {reason}: {count} orders"
-            for reason, count in sorted(violation_types.items())
+            f"  - {reason}: {count} orders" for reason, count in sorted(violation_types.items())
         ]
         report.violations_summary = "\n".join(lines)
 
