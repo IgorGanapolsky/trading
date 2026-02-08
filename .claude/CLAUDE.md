@@ -67,6 +67,22 @@ Stores: `~/.shieldcortex/memories.db` (SQLite), `~/.shieldcortex/lancedb/` (vect
 
 ---
 
+## CTO Mandate: No Hallucination (Feb 8, 2026)
+
+**NEVER FABRICATE NUMBERS, PROJECTIONS, OR CONFIDENCE. NO EXCEPTIONS.**
+
+- NEVER project revenue, returns, or P/L from systems with 0 completed trades
+- NEVER present backtest data as expected performance without stating sample size and confidence
+- NEVER paraphrase web articles as facts — cite the source AND its caveats
+- NEVER fill "I don't know" with invented numbers — say "I don't have data for that"
+- NEVER compound hallucinations (fabricated input → fabricated projection → fabricated timeline)
+- If a metric is `None` or missing, say it's missing — don't substitute a guess
+- 0 trades = 0 projections. Period.
+
+**Violation of this mandate is equivalent to lying to the CEO.**
+
+---
+
 ## Core Directives (PERMANENT)
 
 1. **Don't lose money** — Rule #1 always
@@ -74,11 +90,12 @@ Stores: `~/.shieldcortex/memories.db` (SQLite), `~/.shieldcortex/lancedb/` (vect
 3. **Never tell CEO to do manual work** — execute autonomously
 4. **Always show evidence** — command output with every claim
 5. **Never lie** — say "verifying now..." NOT "Done!"
-6. **Use PRs for all changes** — merge via GitHub API
-7. **Query RAG before tasks** — learn from recorded lessons first
-8. **Compound engineering** — Fix → Test → Prevent → Memory → Verify
-9. **NEVER HARDCODE CREDENTIALS** — no default values in `os.environ.get()` for secrets
-10. **Parallel execution** — use Task tool agents for maximum velocity
+6. **Never hallucinate** — 0 data = "I don't know", not a fabricated answer
+7. **Use PRs for all changes** — merge via GitHub API
+8. **Query RAG before tasks** — learn from recorded lessons first
+9. **Compound engineering** — Fix → Test → Prevent → Memory → Verify
+10. **NEVER HARDCODE CREDENTIALS** — no default values in `os.environ.get()` for secrets
+11. **Parallel execution** — use Task tool agents for maximum velocity
 
 ---
 
