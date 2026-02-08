@@ -3,11 +3,19 @@
   "title": "The Wheel Strategy Explained",
   "url": "https://www.youtube.com/watch?v=Hfq4K1nP4v4",
   "upload_date": "curated",
-  "ingested_at": "2026-02-01T13:25:15.876131",
+  "ingested_at": "2026-02-08T13:25:57.029776",
   "channel": "Phil Town - Rule #1 Investing",
   "stocks_mentioned": [],
-  "strategies": ["Cash-Secured Puts", "Covered Calls", "Wheel Strategy"],
-  "key_concepts": ["4 Ms", "Margin of Safety", "Options Strategy"],
+  "strategies": [
+    "Cash-Secured Puts",
+    "Covered Calls",
+    "Wheel Strategy"
+  ],
+  "key_concepts": [
+    "4 Ms",
+    "Margin of Safety",
+    "Options Strategy"
+  ],
   "sentiment": "neutral",
   "actionable_items": []
 }

@@ -3,11 +3,14 @@
   "title": "The Payback Time Strategy",
   "url": "https://www.youtube.com/watch?v=P6dqZMjZxHA",
   "upload_date": "curated",
-  "ingested_at": "2026-02-01T13:26:25.827511",
+  "ingested_at": "2026-02-08T13:27:10.325777",
   "channel": "Phil Town - Rule #1 Investing",
   "stocks_mentioned": [],
   "strategies": [],
-  "key_concepts": ["Rule #1", "Options Strategy"],
+  "key_concepts": [
+    "Rule #1",
+    "Options Strategy"
+  ],
   "sentiment": "neutral",
   "actionable_items": []
 }

@@ -3,11 +3,15 @@
   "title": "Building a Watchlist - Stock Analysis Process",
   "url": "https://www.youtube.com/watch?v=k2z7K4PLkQg",
   "upload_date": "curated",
-  "ingested_at": "2026-02-01T13:26:41.030947",
+  "ingested_at": "2026-02-08T13:27:26.282610",
   "channel": "Phil Town - Rule #1 Investing",
   "stocks_mentioned": [],
   "strategies": [],
-  "key_concepts": ["4 Ms", "Moat", "Margin of Safety"],
+  "key_concepts": [
+    "4 Ms",
+    "Moat",
+    "Margin of Safety"
+  ],
   "sentiment": "neutral",
   "actionable_items": []
 }

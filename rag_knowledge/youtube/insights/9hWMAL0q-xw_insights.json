@@ -3,11 +3,16 @@
   "title": "How to Read Financial Statements",
   "url": "https://www.youtube.com/watch?v=9hWMAL0q-xw",
   "upload_date": "curated",
-  "ingested_at": "2026-02-01T13:25:40.311298",
+  "ingested_at": "2026-02-08T13:26:22.616467",
   "channel": "Phil Town - Rule #1 Investing",
   "stocks_mentioned": [],
-  "strategies": ["Value Investing"],
-  "key_concepts": ["Big Five Numbers", "Value Investing"],
+  "strategies": [
+    "Value Investing"
+  ],
+  "key_concepts": [
+    "Big Five Numbers",
+    "Value Investing"
+  ],
   "sentiment": "neutral",
   "actionable_items": []
 }

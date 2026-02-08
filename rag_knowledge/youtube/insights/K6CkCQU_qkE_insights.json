@@ -3,10 +3,12 @@
   "title": "The 4 Ms of Investing - Rule #1 Investing",
   "url": "https://www.youtube.com/watch?v=K6CkCQU_qkE",
   "upload_date": "curated",
-  "ingested_at": "2026-02-01T13:24:45.441827",
+  "ingested_at": "2026-02-08T13:25:25.181947",
   "channel": "Phil Town - Rule #1 Investing",
   "stocks_mentioned": [],
-  "strategies": ["Value Investing"],
+  "strategies": [
+    "Value Investing"
+  ],
   "key_concepts": [
     "4 Ms",
     "Moat",

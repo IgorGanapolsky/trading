@@ -4,18 +4,15 @@
 **URL**: https://www.youtube.com/watch?v=A9kZ_fVwLLo
 **Upload Date**: curated
 **Channel**: Phil Town - Rule #1 Investing
-**Ingested**: 2026-02-01T13:25:00.725864
+**Ingested**: 2026-02-08T13:25:41.078814
 
 ## Key Concepts
-
 4 Ms, Margin of Safety, Intrinsic Value, Value Investing
 
 ## Strategies
-
 Value Investing
 
 ## Sentiment
-
 Neutral
 
 ## Transcript

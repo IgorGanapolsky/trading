@@ -4,18 +4,15 @@
 **URL**: https://www.youtube.com/watch?v=k2z7K4PLkQg
 **Upload Date**: curated
 **Channel**: Phil Town - Rule #1 Investing
-**Ingested**: 2026-02-01T13:26:41.030727
+**Ingested**: 2026-02-08T13:27:26.282391
 
 ## Key Concepts
-
 4 Ms, Moat, Margin of Safety
 
 ## Strategies
-
 None identified
 
 ## Sentiment
-
 Neutral
 
 ## Transcript
