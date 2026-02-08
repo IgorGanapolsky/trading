@@ -1435,12 +1435,14 @@ async def webhook(
             user_query = "critical lessons learned"
             logger.warning(f"No query found in request, using default: {user_query}")
 
-        logger.info(f"Processing query: {user_query}")
+        # Sanitize user input for safe logging (prevent log injection)
+        safe_query = user_query.replace("\n", " ").replace("\r", " ")[:200]
+        logger.info(f"Processing query: {safe_query}")
 
         # Determine query type and route accordingly
         # Check readiness queries FIRST (highest priority)
         if is_readiness_query(user_query):
-            logger.info(f"Detected READINESS query: {user_query}")
+            logger.info(f"Detected READINESS query: {safe_query}")
             # Parse context from query (tomorrow? paper? live?)
             context = parse_readiness_context(user_query)
             logger.info(f"Readiness context: {context}")
@@ -1460,7 +1462,7 @@ async def webhook(
             # E.g., "How much money did we make today and why?"
             # 1. Answer the P/L question directly (conversational)
             # 2. Query RAG for the "why" explanation
-            logger.info(f"Detected COMPOUND P/L + ANALYTICAL query: {user_query}")
+            logger.info(f"Detected COMPOUND P/L + ANALYTICAL query: {safe_query}")
 
             # Part 1: Get direct P/L answer
             portfolio = get_current_portfolio_status()
@@ -1542,7 +1544,7 @@ async def webhook(
 
         elif is_trade_query(user_query):
             # Query trade history from local JSON files
-            logger.info(f"Detected TRADE query: {user_query}")
+            logger.info(f"Detected TRADE query: {safe_query}")
             trades = query_trades(user_query, limit=10)
 
             if trades:
@@ -1551,7 +1553,7 @@ async def webhook(
             elif is_analytical_query(user_query):
                 # FIX Jan 13, 2026: Analytical questions (WHY, explain, etc.)
                 # should go to RAG for semantic understanding, not portfolio status
-                logger.info(f"Detected ANALYTICAL trade query: {user_query} - routing to RAG")
+                logger.info(f"Detected ANALYTICAL trade query: {safe_query} - routing to RAG")
                 results, source = query_rag_hybrid(user_query, top_k=5)
 
                 # Get portfolio context to include in response
@@ -1592,7 +1594,7 @@ async def webhook(
             elif is_direct_pl_query(user_query):
                 # FIX Jan 13, 2026: Direct P/L questions get conversational answers
                 # Not a full portfolio dump - just answer the question directly
-                logger.info(f"Detected DIRECT P/L query: {user_query}")
+                logger.info(f"Detected DIRECT P/L query: {safe_query}")
                 portfolio = get_current_portfolio_status()
                 if portfolio:
                     paper = portfolio.get("paper", {})
