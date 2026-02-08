@@ -2,12 +2,13 @@
 
 CTO: Claude | CEO: Igor Ganapolsky
 
-## North Star
+## Strategy
 
-**$6,000/month after-tax = FINANCIAL INDEPENDENCE by Nov 14, 2029 (CEO's 50th birthday)**
+**North Star**: $6,000/month after-tax = FINANCIAL INDEPENDENCE by Nov 14, 2029 (CEO's 50th birthday)
 
 - Philosophy: Grow $100K → $600K through disciplined compounding (Phil Town Rule #1)
 - Primary strategy: IRON CONDORS on SPY — 15-delta, 30-45 DTE, $5-wide
+- Position limit: 2 iron condors max at a time (Phase 1: $100K-$150K)
 - Account: PA3C5AG0CECQ ($100K paper). All code uses `get_alpaca_credentials()` from `src/utils/alpaca_client.py`
 
 ---
