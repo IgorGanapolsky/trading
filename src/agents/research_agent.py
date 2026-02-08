@@ -551,7 +551,7 @@ async def run_gpu_backtest() -> dict[str, Any]:
 
         # Run Monte Carlo VaR on best params
         print("Running Monte Carlo VaR simulation...")
-        var_95, var_99 = engine.monte_carlo_var(best_params, n_simulations=1000)
+        var_95, var_99 = engine.monte_carlo_var(best_params, n_scenarios=1000)
 
         return {
             "status": "completed",

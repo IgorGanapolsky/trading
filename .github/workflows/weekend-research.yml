@@ -36,7 +36,8 @@ jobs:
       - name: Check API keys
         run: |
           if [ -z "$PERPLEXITY_API_KEY" ]; then
-            echo "::warning::PERPLEXITY_API_KEY not configured - Perplexity research will be skipped"
+            echo "::error::PERPLEXITY_API_KEY not configured - research cannot proceed"
+            exit 1
           else
             echo "✅ Perplexity API key configured"
           fi

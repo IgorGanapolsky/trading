@@ -539,7 +539,7 @@ def get_transcript_via_ytdlp(video_id: str) -> Optional[str]:
                 f"https://www.youtube.com/watch?v={video_id}",
             ]
 
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+            subprocess.run(cmd, capture_output=True, text=True, timeout=60)
 
             # Find the subtitle file
             import glob

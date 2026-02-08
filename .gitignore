@@ -121,3 +121,8 @@ data/chroma_db/
 .claude/memory/model_cache/
 .claude/memory/chroma_db/
 .claude/scripts/feedback/venv/
+
+# CCPM local workspace (project management)
+.claude/epics/
+.claude/prds/
+.claude/context/
