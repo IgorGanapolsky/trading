@@ -137,7 +137,7 @@ AFTER task  → Record outcomes + mistakes
 
 - **GitHub**: PAT for IgorGanapolsky account (full repo access)
 - **Alpaca**: Paper + Live accounts (API keys in secrets)
-- **Vertex AI**: RAG database queries/updates
+- **Local LanceDB**: RAG database queries/updates
 - **gh CLI**: With Copilot integration
 
 ---

@@ -148,12 +148,15 @@ def query_rag_for_operational_failures() -> list[dict]:
         List of relevant lessons from semantic search
     """
     try:
-        from src.rag.lessons_search import LessonsSearch
+        from src.rag.lessons_learned_rag import LessonsLearnedRAG
 
-        search = LessonsSearch()
-        # FIX Jan 16, 2026: Use count() instead of get_stats() which doesn't exist
-        lesson_count = search.count()
-        logger.info(f"RAG Stats: {lesson_count} lessons loaded")
+        rag = LessonsLearnedRAG()
+        lesson_count = len(rag.lessons)
+        logger.info(
+            "RAG Stats: %s lessons loaded (source=%s)",
+            lesson_count,
+            rag.last_source or "unknown",
+        )
 
         # Key queries for operational failures
         queries = [
@@ -166,19 +169,17 @@ def query_rag_for_operational_failures() -> list[dict]:
 
         all_results = []
         for query in queries:
-            # FIX Jan 16, 2026: Use search() not query(), and correct field names
-            # LessonResult has: id, title, severity, snippet, prevention, file, score
-            results = search.search(query, top_k=3)
+            results = rag.query(query, top_k=3)
             all_results.extend(
                 [
                     {
-                        "lesson_file": r.file,  # FIX: was r.lesson_file
-                        "section_title": r.title,  # FIX: was r.section_title
-                        "score": score,  # FIX: score is returned separately in tuple
-                        "content_preview": r.snippet[:300],  # FIX: was r.content
+                        "lesson_file": r.get("file", "unknown"),
+                        "section_title": r.get("title", r.get("id", "unknown")),
+                        "score": r.get("score", 0.0),
+                        "content_preview": (r.get("snippet") or r.get("content") or "")[:300],
                     }
-                    for r, score in results  # FIX: search() returns (LessonResult, score) tuples
-                    if score > 0.3
+                    for r in results
+                    if (r.get("score", 0.0) or 0.0) > 0.3
                 ]
             )
 

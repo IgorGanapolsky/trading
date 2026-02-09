@@ -26,7 +26,7 @@ Trigger continuous learning during market-closed hours.
 2. **RAG Vectorization** (local LanceDB - free)
    - Semantic chunking
    - BAAI/bge-small-en-v1.5 embeddings
-   - No Vertex AI costs
+   - No cloud RAG costs
 
 3. **Trade Analysis**
    - Review last 30 days of trades
@@ -40,7 +40,7 @@ Trigger continuous learning during market-closed hours.
 ## Cost Controls
 
 - **Budget**: $50/month GCP max
-- **Strategy**: Local LanceDB instead of Vertex AI
+- **Strategy**: Local LanceDB instead of cloud RAG
 - **Frequency**: Once per weekend (Sunday only)
 - **No API calls**: Uses free YouTube API quota
 

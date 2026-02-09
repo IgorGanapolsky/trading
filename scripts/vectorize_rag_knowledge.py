@@ -204,7 +204,36 @@ def index_all(rebuild: bool = False) -> dict:
 
 
 def query_rag(query: str, n_results: int = 5, filter_options: bool = False) -> list[dict]:
-    """Query the Phil Town knowledge base using keyword search."""
+    """Query the Phil Town knowledge base using LanceDB-first search."""
+    try:
+        from src.rag.lessons_learned_rag import LessonsLearnedRAG
+
+        rag = LessonsLearnedRAG()
+        results = rag.query(query, top_k=n_results)
+
+        formatted = []
+        for lesson in results:
+            # Filter options content if requested
+            content = lesson.get("snippet") or lesson.get("content") or ""
+            if filter_options:
+                content_lower = content.lower()
+                if not any(term in content_lower for term in ["put", "call", "option", "premium"]):
+                    continue
+
+            formatted.append(
+                {
+                    "content": (content[:500] + "...") if len(content) > 500 else content,
+                    "source": lesson.get("id", "unknown"),
+                    "type": "lesson_learned",
+                    "concepts": [],
+                    "relevance": lesson.get("score", 0.0),
+                }
+            )
+
+        return formatted[:n_results]
+    except Exception as exc:
+        logger.warning("LanceDB query failed (%s) - falling back to keyword search", exc)
+
     try:
         from src.rag.lessons_search import LessonsSearch
 
@@ -213,11 +242,11 @@ def query_rag(query: str, n_results: int = 5, filter_options: bool = False) -> l
 
         formatted = []
         for lesson, score in results:
-            # Filter options content if requested
-            if filter_options:
-                content_lower = lesson.snippet.lower()
-                if not any(term in content_lower for term in ["put", "call", "option", "premium"]):
-                    continue
+            content_lower = lesson.snippet.lower()
+            if filter_options and not any(
+                term in content_lower for term in ["put", "call", "option", "premium"]
+            ):
+                continue
 
             formatted.append(
                 {
@@ -234,7 +263,7 @@ def query_rag(query: str, n_results: int = 5, filter_options: bool = False) -> l
             )
 
         return formatted[:n_results]
-    except ImportError:
+    except Exception:
         logger.warning("LessonsSearch not available - using basic file search")
         return []
 

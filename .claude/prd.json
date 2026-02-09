@@ -61,7 +61,7 @@
       "id": "T006",
       "category": "learning",
       "title": "Query RAG for pending lessons",
-      "description": "Check Vertex AI RAG for any unimplemented lessons",
+      "description": "Check local LanceDB RAG for any unimplemented lessons",
       "passes": true,
       "priority": 6,
       "acceptance_criteria": "RAG lessons reviewed"

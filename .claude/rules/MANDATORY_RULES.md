@@ -8,13 +8,13 @@
 6. **Trust hooks** - they provide context each session
 7. **Safe cleanup** - run `python3 scripts/pre_cleanup_check.py <path>` before deleting code
 8. **Verify before claiming** - say "I believe this is done, verifying now..." not "Done!"
-9. **Query RAG first** - check Vertex AI RAG lessons BEFORE starting any task
+9. **Query RAG first** - check local LanceDB lessons BEFORE starting any task
 10. **Learn from mistakes** - record errors in RAG and improve continuously
 11. **Compound engineering** - every fix must follow Fix → Test → Prevent → Memory → Verify (see `compound-engineering.md`)
 
 ## Learning & RAG Protocol
 
-- Record every trade and lesson in Vertex AI RAG
+- Record every trade and lesson in local RAG (JSONL + LanceDB)
 - Be your own coach - continuously improve
 - When you make a mistake, record it in RAG
 

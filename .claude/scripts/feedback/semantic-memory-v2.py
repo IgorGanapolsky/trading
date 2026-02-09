@@ -10,7 +10,7 @@ IMPROVEMENTS OVER v1:
 5. Active RLHF feedback loop (auto-reindex on feedback)
 6. OpenTelemetry observability (latency, success rates)
 7. Query metrics logging (precision/recall tracking)
-8. Vertex AI bidirectional sync support
+8. Local-only memory sync hooks
 
 Architecture (Dec 2025 Best Practices):
 ┌─────────────────────────────────────────────────────────┐
@@ -34,7 +34,6 @@ Usage:
   python semantic-memory-v2.py --context            # Get session context
   python semantic-memory-v2.py --add-feedback       # Add RLHF feedback (stdin)
   python semantic-memory-v2.py --metrics            # Show query metrics
-  python semantic-memory-v2.py --sync               # Sync to Vertex AI
 """
 
 import os
@@ -397,7 +396,7 @@ def parse_lessons(content: str) -> List[Dict[str, Any]]:
             ("verification", ["verif", "check", "confirm"]),
             ("git", ["commit", "push", "branch", "pr"]),
             ("memory", ["memory", "forget", "remember"]),
-            ("rag", ["rag", "vertex", "lancedb", "chromadb"]),
+            ("rag", ["rag", "lancedb", "chromadb"]),
         ]
         for tag, keywords in tag_patterns:
             if any(kw in lesson_content.lower() for kw in keywords):
