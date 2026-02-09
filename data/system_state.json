@@ -1,15 +1,10 @@
 {
-  "last_updated": "2026-02-08T15:06:59.795638+00:00",
+  "last_updated": "2026-02-09T14:28:34.843790+00:00",
   "sync_health": {
-    "last_successful_sync": "2026-02-08T15:06:59.795640+00:00",
+    "last_successful_sync": "2026-02-09T14:28:34.843793+00:00",
     "sync_source": "github_actions",
     "sync_count_today": 1,
     "history": [
-      {
-        "timestamp": "2026-02-05T19:56:58.437119+00:00",
-        "equity": 101390.21,
-        "success": true
-      },
       {
         "timestamp": "2026-02-05T20:12:57.174397+00:00",
         "equity": 101397.21,
@@ -124,6 +119,11 @@
         "timestamp": "2026-02-08T15:06:59.795629+00:00",
         "equity": 101439.99,
         "success": true
+      },
+      {
+        "timestamp": "2026-02-09T14:28:34.843781+00:00",
+        "equity": 101439.99,
+        "success": true
       }
     ]
   },
@@ -135,13 +135,13 @@
     "equity": 101439.99,
     "cash": 101439.99,
     "buying_power": 405759.96,
-    "total_pl": 71439.99,
-    "total_pl_pct": 238.13,
+    "total_pl": 1439.9900000000052,
+    "total_pl_pct": 1.44,
     "positions_count": 0,
     "daily_change": 0.0,
     "win_rate": 37.5,
     "win_rate_sample_size": 32,
-    "starting_balance": 30000.0
+    "starting_balance": 100000.0
   },
   "positions": [],
   "trade_history": [
@@ -908,24 +908,24 @@
   ],
   "trades_loaded": 95,
   "trades": {
-    "last_trade_date": "2026-02-08",
+    "last_trade_date": "2026-02-09",
     "today_trades": 0,
     "total_trades_today": 0,
-    "last_trade_symbol": "SYNCED"
+    "last_trade_symbol": "none"
   },
   "risk": {
     "status": "MONITORING",
-    "total_pl": 71439.99,
+    "total_pl": 1439.9900000000052,
     "unrealized_pl": 0
   },
   "account": {
     "current_equity": 101439.99,
-    "total_pl": 71439.99,
-    "total_pl_pct": 238.13,
+    "total_pl": 1439.9900000000052,
+    "total_pl_pct": 1.44,
     "positions_count": 0
   },
   "meta": {
-    "last_updated": "2026-02-08T21:11:26.751157+00:00",
+    "last_updated": "2026-02-09T14:28:34.843806+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5
   },
@@ -933,15 +933,7 @@
     "start_date": "2026-01-30",
     "target_duration_days": 90,
     "target_win_rate": 0.8,
-    "current_day": 10,
+    "current_day": 11,
     "notes": "Paper phase per CLAUDE.md - validate 80%+ win rate before scaling"
-  },
-  "trailing_stops": {
-    "last_set": "2026-02-06T15:38:57.602249",
-    "stops_active": 1,
-    "positions_skipped": 0,
-    "value_protected": 500.0,
-    "default_trail_pct": 0.1,
-    "options_trail_pct": 0.2
   }
 }
