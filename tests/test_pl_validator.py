@@ -2,8 +2,8 @@
 Tests for P/L Validator.
 
 Ensures that:
-1. Non-SPY trades are flagged as violations
-2. SPY iron condor legs are classified correctly
+1. Non-allowed trades (non-SPY/SPX/XSP) are flagged as violations
+2. SPY/SPX/XSP iron condor legs are classified correctly
 3. Projections are blocked with insufficient data
 4. P/L decomposition separates compliant from violating orders
 """
@@ -46,6 +46,18 @@ class TestIsSpyOption:
     def test_spy_call(self):
         assert is_spy_option("SPY260313C00725000") is True
 
+    def test_spx_put(self):
+        assert is_spy_option("SPX260220P00660000") is True
+
+    def test_spx_call(self):
+        assert is_spy_option("SPX260313C00725000") is True
+
+    def test_xsp_put(self):
+        assert is_spy_option("XSP260220P00066000") is True
+
+    def test_xsp_call(self):
+        assert is_spy_option("XSP260313C00072500") is True
+
     def test_aapl_option(self):
         assert is_spy_option("AAPL260220P00430000") is False
 
@@ -70,6 +82,32 @@ class TestClassifyOrder:
         assert result.is_iron_condor_leg is True
         assert result.violation_reason == ""
 
+    def test_spx_option_is_compliant(self):
+        order = {
+            "symbol": "SPX260220P00660000",
+            "side": "buy",
+            "qty": "1",
+            "filled_avg_price": "16.20",
+            "created_at": "2026-02-06T18:48:00Z",
+        }
+        result = classify_order(order)
+        assert result.is_spy_option is True
+        assert result.is_iron_condor_leg is True
+        assert result.violation_reason == ""
+
+    def test_xsp_option_is_compliant(self):
+        order = {
+            "symbol": "XSP260220P00066000",
+            "side": "sell",
+            "qty": "1",
+            "filled_avg_price": "1.26",
+            "created_at": "2026-02-06T18:48:00Z",
+        }
+        result = classify_order(order)
+        assert result.is_spy_option is True
+        assert result.is_iron_condor_leg is True
+        assert result.violation_reason == ""
+
     def test_aapl_option_is_violation(self):
         order = {
             "symbol": "AAPL260220P00430000",
@@ -80,7 +118,7 @@ class TestClassifyOrder:
         }
         result = classify_order(order)
         assert result.is_spy_option is False
-        assert result.violation_reason == "Non-SPY option (AAPL)"
+        assert result.violation_reason == "Non-allowed option (AAPL)"
 
     def test_spy_stock_is_violation(self):
         order = {
@@ -102,7 +140,7 @@ class TestClassifyOrder:
             "created_at": "2025-12-10T00:00:00Z",
         }
         result = classify_order(order)
-        assert result.violation_reason == "Non-SPY instrument: BTC/USD"
+        assert result.violation_reason == "Non-allowed instrument: BTC/USD"
 
     def test_reit_is_violation(self):
         order = {
@@ -113,7 +151,7 @@ class TestClassifyOrder:
             "created_at": "2026-02-03T14:00:00Z",
         }
         result = classify_order(order)
-        assert result.violation_reason == "Non-SPY instrument: DLR"
+        assert result.violation_reason == "Non-allowed instrument: DLR"
 
     def test_sofi_option_is_violation(self):
         order = {
@@ -124,7 +162,7 @@ class TestClassifyOrder:
             "created_at": "2026-01-07T15:53:00Z",
         }
         result = classify_order(order)
-        assert result.violation_reason == "Non-SPY option (SOFI)"
+        assert result.violation_reason == "Non-allowed option (SOFI)"
 
 
 class TestCountCompletedIronCondors:

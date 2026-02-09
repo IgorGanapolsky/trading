@@ -41,17 +41,17 @@ class TestRuleOneTraderConfig:
     def test_watchlist_has_whitelisted_tickers(self):
         """Watchlist should contain only whitelisted ETFs per LL-236.
 
-        Updated Jan 19, 2026: Strategy pivoted to SPY/IWM ONLY based on
-        $100K account success (LL-216, LL-220). LL-236 enforces strict
+        Updated Feb 8, 2026: Strategy expanded to SPY/SPX/XSP based on
+        $100K account success and Section 1256 tax advantages. LL-236 enforces strict
         whitelist - no individual stocks allowed until strategy proven.
         """
         from scripts.rule_one_trader import CONFIG
 
-        # Per CLAUDE.md: "CREDIT SPREADS on SPY/IWM ONLY"
+        # Per CLAUDE.md: "CREDIT SPREADS on SPY/SPX/XSP"
         # LL-236: Removed non-whitelisted tickers from workflows
         assert len(CONFIG["watchlist"]) >= 1
-        # SPY and IWM are the ONLY approved tickers for credit spreads
-        whitelisted_etfs = ["SPY", "IWM"]
+        # SPY, SPX, XSP are the ONLY approved tickers for credit spreads
+        whitelisted_etfs = ["SPY", "SPX", "XSP"]
         assert all(s in whitelisted_etfs for s in CONFIG["watchlist"])
 
     def test_north_star_target_is_100(self):

@@ -87,7 +87,7 @@ def validate_ticker(symbol: str, raise_on_violation: bool = True) -> bool:
         error_msg = (
             f"BLOCKED: {symbol} (underlying: {underlying}) is NOT in whitelist. "
             f"Allowed: {ALLOWED_UNDERLYING}. "
-            f"Per CLAUDE.md: SPY ONLY - No individual stocks."
+            f"Per CLAUDE.md: SPY/SPX/XSP ONLY - No individual stocks."
         )
         logger.error(error_msg)
 

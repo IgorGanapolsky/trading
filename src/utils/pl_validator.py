@@ -60,8 +60,8 @@ def extract_base_ticker(option_symbol: str) -> str:
 
 
 def is_spy_option(symbol: str) -> bool:
-    """Check if a symbol is a SPY option."""
-    return bool(re.match(r"^SPY\d{6}[PC]\d{8}$", symbol))
+    """Check if a symbol is a SPY/SPX/XSP option."""
+    return bool(re.match(r"^(SPY|SPX|SPXW?|XSP)\d{6}[PC]\d{8}$", symbol))
 
 
 def classify_order(order) -> OrderClassification:
@@ -94,20 +94,20 @@ def classify_order(order) -> OrderClassification:
         classification.is_iron_condor_leg = True
         return classification
 
-    # Check if it's SPY stock
-    if symbol == "SPY":
-        classification.violation_reason = "SPY stock trade (not an iron condor option)"
+    # Check if it's an allowed underlying stock (not option)
+    if symbol in ALLOWED_TICKERS:
+        classification.violation_reason = f"{symbol} stock trade (not an iron condor option)"
         return classification
 
-    # Check if it's a non-SPY option
+    # Check if it's a non-allowed option
     base = extract_base_ticker(symbol)
     if base != symbol and base not in ALLOWED_TICKERS:
-        classification.violation_reason = f"Non-SPY option ({base})"
+        classification.violation_reason = f"Non-allowed option ({base})"
         return classification
 
-    # Non-SPY stock/crypto/ETF
+    # Non-allowed stock/crypto/ETF
     if symbol not in ALLOWED_TICKERS:
-        classification.violation_reason = f"Non-SPY instrument: {symbol}"
+        classification.violation_reason = f"Non-allowed instrument: {symbol}"
         return classification
 
     return classification

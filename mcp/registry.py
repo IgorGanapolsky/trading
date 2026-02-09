@@ -79,13 +79,9 @@ def load_registry(path: os.PathLike | None = None) -> MCPRegistry:
         endpoint = entry.get("endpoint")
 
         if module is None and transport is None:
-            raise ValueError(
-                f"MCP server '{server_id}' is missing both 'module' and 'transport'."
-            )
+            raise ValueError(f"MCP server '{server_id}' is missing both 'module' and 'transport'.")
         if transport == "http" and not endpoint:
-            raise ValueError(
-                f"MCP server '{server_id}' declares HTTP transport but no endpoint."
-            )
+            raise ValueError(f"MCP server '{server_id}' declares HTTP transport but no endpoint.")
 
         servers[server_id] = MCPServer(
             id=server_id,
