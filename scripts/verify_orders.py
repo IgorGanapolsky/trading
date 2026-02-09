@@ -53,7 +53,10 @@ except ImportError as e:
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv()
+try:
+    load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env", override=False)
+except (AssertionError, Exception):
+    pass  # In CI, env vars are set via workflow secrets
 
 # Configuration
 from src.utils.alpaca_client import get_alpaca_credentials

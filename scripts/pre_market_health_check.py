@@ -21,7 +21,12 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from dotenv import load_dotenv
 
-load_dotenv()
+try:
+    load_dotenv(
+        dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"), override=False
+    )
+except (AssertionError, Exception):
+    pass  # In CI, env vars are set via workflow secrets
 
 import logging
 import signal

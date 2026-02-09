@@ -31,7 +31,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
 
-load_dotenv()
+# Guard against AssertionError in CI/GitHub Actions where stdin is not a TTY
+try:
+    load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env", override=False)
+except (AssertionError, Exception):
+    pass  # In CI, env vars are set via workflow secrets
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)

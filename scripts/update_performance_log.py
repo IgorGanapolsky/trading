@@ -17,7 +17,12 @@ from alpaca.trading.requests import GetOrdersRequest
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv()
+try:
+    load_dotenv(
+        dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"), override=False
+    )
+except (AssertionError, Exception):
+    pass  # In CI, env vars are set via workflow secrets
 
 # Setup paths
 DATA_DIR = Path(__file__).parent.parent / "data"

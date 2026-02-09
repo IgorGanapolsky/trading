@@ -31,7 +31,10 @@ from src.rag.lessons_learned_rag import LessonsLearnedRAG
 from src.safety.mandatory_trade_gate import safe_submit_order
 from src.utils.error_monitoring import init_sentry
 
-load_dotenv()
+try:
+    load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env", override=False)
+except (AssertionError, Exception):
+    pass  # In CI, env vars are set via workflow secrets
 init_sentry()
 
 # Setup logging
