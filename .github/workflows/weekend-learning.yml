@@ -187,20 +187,29 @@ jobs:
           echo "✅ YouTube analysis complete. Insights stored in rag_knowledge/youtube/insights/"
 
       # === PHASE 2: VECTORIZATION ===
-      - name: "Phase 2: Vectorize into RAG"
+      - name: "Phase 2: Vectorize into RAG (keyword + LanceDB semantic)"
         run: |
           echo "🔄 Vectorizing all content..."
 
+          # Keyword index (fast, always works)
           if [ "${{ github.event.inputs.full_rebuild }}" == "true" ]; then
-            echo "Full rebuild requested..."
+            echo "Full keyword rebuild requested..."
             python3 scripts/vectorize_rag_knowledge.py --rebuild
           else
             python3 scripts/vectorize_rag_knowledge.py --update
           fi
 
           echo ""
-          echo "📊 RAG Statistics:"
+          echo "📊 Keyword RAG Statistics:"
           python3 scripts/vectorize_rag_knowledge.py --stats
+
+          # LanceDB semantic index (requires sentence-transformers)
+          echo ""
+          echo "🧠 Building LanceDB semantic index..."
+          python3 -m src.memory.document_aware_rag --reindex --force || {
+            echo "⚠️ LanceDB reindex failed (sentence-transformers may not be installed)"
+            echo "Keyword search will remain active as fallback"
+          }
 
       # === PHASE 3: TRADE HISTORY ANALYSIS ===
       - name: "Phase 3: Analyze trade history"

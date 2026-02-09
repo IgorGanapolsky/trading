@@ -52,7 +52,15 @@ sys.path.insert(0, str(project_root))
 
 from src.rag.lessons_learned_rag import LessonsLearnedRAG  # noqa: E402
 
-# Import Vertex AI RAG for cloud-based semantic search (primary)
+# Import LanceDB for local semantic search (primary — free, ~85% accuracy)
+try:
+    from src.memory.document_aware_rag import get_document_aware_rag
+
+    LANCEDB_RAG_AVAILABLE = True
+except ImportError:
+    LANCEDB_RAG_AVAILABLE = False
+
+# Import Vertex AI RAG for cloud-based semantic search (secondary — $200/mo)
 try:
     from src.rag.vertex_rag import get_vertex_rag
 
@@ -101,27 +109,36 @@ else:
         return decorator
 
 
-# Initialize RAG systems
-# Primary: Vertex AI RAG (cloud semantic search) - for accurate answers to CEO
-# Fallback: Local keyword RAG - when Vertex AI unavailable
+# Initialize RAG systems — priority order:
+# 1. LanceDB (local semantic search — free, ~85% accuracy)
+# 2. Vertex AI RAG (cloud semantic search — $200/mo, ~90% accuracy)
+# 3. Local keyword RAG (fallback — $0, ~60% accuracy)
+lancedb_rag = None
 vertex_rag = None
-vertex_rag_init_error = None  # Track initialization error for diagnostics
+vertex_rag_init_error = None
 
+# 1. Try LanceDB first (free local semantic search)
+if LANCEDB_RAG_AVAILABLE:
+    try:
+        lancedb_rag = get_document_aware_rag()
+        lancedb_rag.ensure_index()
+        logger.info("✅ LanceDB RAG initialized (primary - local semantic search)")
+    except Exception as e:
+        logger.warning(f"LanceDB RAG init failed: {e}")
+        lancedb_rag = None
+
+# 2. Try Vertex AI as secondary
 if VERTEX_RAG_AVAILABLE:
     try:
         vertex_rag = get_vertex_rag()
         if vertex_rag.is_initialized:
-            logger.info("✅ Vertex AI RAG initialized (primary - semantic search)")
+            logger.info("✅ Vertex AI RAG initialized (secondary - cloud semantic search)")
         else:
             vertex_rag_init_error = (
                 "Vertex AI RAG not initialized - check GCP credentials/permissions"
             )
             logger.warning(vertex_rag_init_error)
             vertex_rag = None
-    except ImportError as e:
-        vertex_rag_init_error = f"Vertex AI RAG import failed: {e}"
-        logger.warning(vertex_rag_init_error)
-        vertex_rag = None
     except Exception as e:
         vertex_rag_init_error = f"Vertex AI RAG init failed: {e}"
         logger.warning(vertex_rag_init_error)
@@ -129,39 +146,58 @@ if VERTEX_RAG_AVAILABLE:
 else:
     vertex_rag_init_error = "VERTEX_RAG_AVAILABLE=False - vertexai package import failed"
 
-# Local RAG as fallback
+# 3. Local keyword RAG as final fallback
 local_rag = LessonsLearnedRAG()
-logger.info(f"Local RAG initialized with {len(local_rag.lessons)} lessons (fallback)")
-
-# Trade history is now loaded from local JSON files
-# ChromaDB was removed Jan 8, 2026 per CLAUDE.md directive
-logger.info("Trade history loaded from local JSON files (ChromaDB removed)")
+logger.info(f"Local RAG initialized with {len(local_rag.lessons)} lessons (keyword fallback)")
 
 
 def query_rag_hybrid(query: str, top_k: int = 5) -> tuple[list, str]:
     """
-    Query RAG using Vertex AI first (semantic), fall back to local (keyword).
+    Query RAG: LanceDB first (local semantic), then Vertex AI, then keyword fallback.
 
     Returns:
         Tuple of (results_list, source_name)
-        - For Vertex AI: [{text: str}]
-        - For Local: [{id, severity, score, snippet, content}]
     """
-    # Try Vertex AI RAG first (semantic search - better for natural language)
+    # 1. Try LanceDB first (free local semantic search)
+    if lancedb_rag is not None:
+        try:
+            results = lancedb_rag.search(query, limit=top_k)
+            if results:
+                # Convert SearchResult objects to dicts for compatibility
+                formatted = [
+                    {
+                        "id": r.document_id,
+                        "title": r.title,
+                        "severity": (r.metadata.get("severity") or "low").upper(),
+                        "score": r.score,
+                        "snippet": r.content[:500],
+                        "content": r.content,
+                        "file": r.metadata.get("source", ""),
+                        "section": r.section_title,
+                    }
+                    for r in results
+                ]
+                logger.info(f"LanceDB RAG returned {len(formatted)} results")
+                return formatted, "lancedb"
+            logger.info("LanceDB returned no results, trying next source")
+        except Exception as e:
+            logger.warning(f"LanceDB query failed: {e}")
+
+    # 2. Try Vertex AI (cloud semantic search)
     if vertex_rag is not None:
         try:
             results = vertex_rag.query(query, similarity_top_k=top_k)
             if results:
                 logger.info(f"Vertex AI RAG returned {len(results)} results")
                 return results, "vertex_ai"
-            logger.info("Vertex AI RAG returned no results, trying local")
+            logger.info("Vertex AI RAG returned no results, trying keyword")
         except Exception as e:
             logger.warning(f"Vertex AI RAG query failed: {e}")
 
-    # Fallback to local keyword-based RAG
+    # 3. Fallback to keyword-based RAG
     results = local_rag.query(query, top_k=top_k)
-    logger.info(f"Local RAG returned {len(results)} results")
-    return results, "local"
+    logger.info(f"Local keyword RAG returned {len(results)} results")
+    return results, "keyword"
 
 
 def format_rag_response(results: list, query: str, source: str) -> str:

@@ -3,7 +3,7 @@
 Phil Town RAG Knowledge Indexing Pipeline
 
 Indexes Phil Town content (YouTube, Blog, Lessons) for keyword-based search.
-For cloud-based semantic search, use Vertex AI RAG via CI workflows.
+For semantic search, use LanceDB indexing via scripts/reindex_rag.py.
 
 Usage:
     python3 scripts/vectorize_rag_knowledge.py --rebuild   # Full rebuild of local index
@@ -33,6 +33,8 @@ CONTENT_SOURCES = {
     "youtube_insights": RAG_KNOWLEDGE / "youtube" / "insights",
     "blogs": RAG_KNOWLEDGE / "blogs" / "phil_town",
     "podcasts": RAG_KNOWLEDGE / "podcasts" / "phil_town",
+    "trainings": RAG_KNOWLEDGE / "trainings",
+    "newsletters": RAG_KNOWLEDGE / "newsletters",
     "lessons_learned": RAG_KNOWLEDGE / "lessons_learned",
     "books": RAG_KNOWLEDGE / "books",
 }
@@ -96,6 +98,10 @@ def extract_phil_town_metadata(text: str, filepath: Path) -> dict:
         content_type = "blog"
     elif "podcast" in str(filepath):
         content_type = "podcast"
+    elif "training" in str(filepath):
+        content_type = "training"
+    elif "newsletter" in str(filepath):
+        content_type = "newsletter"
     elif "lessons" in str(filepath):
         content_type = "lesson_learned"
     elif "book" in str(filepath):

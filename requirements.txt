@@ -69,6 +69,7 @@ jsonpointer==3.0.0
 jsonschema==4.25.1
 jsonschema-specifications==2025.9.1
 kiwisolver==1.4.9
+lancedb>=0.20.0
 langchain==1.2.9
 langchain-anthropic==1.3.1
 langchain-classic==1.0.1
@@ -143,6 +144,7 @@ rpds-py==0.30.0
 rsa==4.9.1
 schedule==1.2.2
 scikit-learn==1.8.0
+sentence-transformers>=3.4.0
 scipy==1.16.3
 sgmllib3k==1.0.0
 six==1.17.0

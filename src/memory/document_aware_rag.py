@@ -71,7 +71,6 @@ CATEGORY_PATTERNS = {
     ],
     "data_pipeline": [
         "rag",
-        "vertex",
         "lancedb",
         "embedding",
         "vector",
@@ -190,10 +189,12 @@ class DocumentAwareRAG:
             self.lancedb_path.mkdir(parents=True, exist_ok=True)
             self._db = lancedb.connect(str(self.lancedb_path))
 
-            # Force offline mode to prevent network timeouts in tests
+            # Optional offline mode to prevent network timeouts in tests
             # Model should be pre-downloaded from HuggingFace
-            os.environ["HF_HUB_OFFLINE"] = "1"
-            os.environ["TRANSFORMERS_OFFLINE"] = "1"
+            offline = os.getenv("LANCEDB_OFFLINE", "").lower() in {"1", "true", "yes"}
+            if offline:
+                os.environ["HF_HUB_OFFLINE"] = "1"
+                os.environ["TRANSFORMERS_OFFLINE"] = "1"
 
             # Initialize embedding model
             self._model = (
@@ -503,8 +504,13 @@ class DocumentAwareRAG:
             title_match = re.search(r"^#\s+(.+?)(?:\n|$)", content, re.MULTILINE)
             title = title_match.group(1).strip() if title_match else filepath.stem
 
-            # Generate document ID
-            doc_id = filepath.stem
+            # Generate document ID (stable across folders)
+            try:
+                project_root = Path(__file__).parent.parent.parent
+                rel_path = filepath.relative_to(project_root)
+                doc_id = str(rel_path).replace("/", "__")
+            except ValueError:
+                doc_id = filepath.stem
 
             # Extract metadata
             metadata = self._extract_metadata(content, filepath)
@@ -589,9 +595,9 @@ class DocumentAwareRAG:
         if sources:
             source_dirs = [Path(s) for s in sources]
         else:
-            # Default sources
+            # Default sources: full rag_knowledge + blog posts
             if RAG_KNOWLEDGE_DIR.exists():
-                source_dirs.append(RAG_KNOWLEDGE_DIR / "lessons_learned")
+                source_dirs.append(RAG_KNOWLEDGE_DIR)
             if BLOG_POSTS_DIR.exists():
                 source_dirs.append(BLOG_POSTS_DIR)
 
@@ -604,7 +610,7 @@ class DocumentAwareRAG:
                 logger.warning(f"Source directory not found: {source_dir}")
                 continue
 
-            for filepath in source_dir.glob("*.md"):
+            for filepath in source_dir.rglob("*.md"):
                 doc = self.parse_document(filepath)
                 if not doc:
                     continue
@@ -681,6 +687,39 @@ class DocumentAwareRAG:
         stats_file.write_text(json.dumps(stats, indent=2))
 
         return stats
+
+    def ensure_index(self, sources: Optional[list[str]] = None) -> dict:
+        """
+        Ensure LanceDB index exists; build it if missing.
+
+        Args:
+            sources: Optional list of source directories
+
+        Returns:
+            dict with status or reindex stats
+        """
+        if not self._init_lancedb():
+            return {"error": "Failed to initialize LanceDB"}
+
+        tables_response = self._db.list_tables()
+        existing_tables = (
+            tables_response.tables if hasattr(tables_response, "tables") else list(tables_response)
+        )
+
+        if "document_aware_rag" not in existing_tables:
+            logger.info("Document-aware RAG index missing; building now.")
+            return self.reindex(force=False, sources=sources)
+
+        # If table exists but is empty, rebuild
+        try:
+            table = self._db.open_table("document_aware_rag")
+            if hasattr(table, "count_rows") and table.count_rows() == 0:
+                logger.info("Document-aware RAG index empty; rebuilding.")
+                return self.reindex(force=True, sources=sources)
+        except Exception as e:
+            logger.warning(f"Unable to verify index row count: {e}")
+
+        return {"status": "ok", "message": "index exists"}
 
     def reindex_with_flattening(
         self, sources: Optional[list[str]] = None, backup: bool = True

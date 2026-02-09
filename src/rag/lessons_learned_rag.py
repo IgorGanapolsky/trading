@@ -1,14 +1,23 @@
-"""Lightweight RAG for lessons learned using keyword search.
+"""Lessons learned RAG with LanceDB-first retrieval and keyword fallback.
 
-Updated Jan 7, 2026: Simplified to use keyword search only (CEO directive).
-For cloud-based semantic search, use Vertex AI RAG via CI workflows.
+Updated Feb 9, 2026: LanceDB-first semantic retrieval with keyword fallback.
 """
 
 import logging
+import os
 from pathlib import Path
 from typing import Optional
 
 logger = logging.getLogger(__name__)
+
+# Optional LanceDB semantic search
+try:
+    from src.memory.document_aware_rag import get_document_aware_rag
+
+    LANCEDB_RAG_AVAILABLE = True
+except ImportError:
+    LANCEDB_RAG_AVAILABLE = False
+    logger.warning("DocumentAwareRAG not available")
 
 # Use the simplified LessonsSearch
 try:
@@ -21,11 +30,34 @@ except ImportError:
 
 
 class LessonsLearnedRAG:
-    """RAG for lessons learned using keyword search."""
+    """RAG for lessons learned with LanceDB-first retrieval."""
 
     def __init__(self, knowledge_dir: Optional[str] = None):
         self.knowledge_dir = Path(knowledge_dir or "rag_knowledge/lessons_learned")
         self.lessons = []
+        self.last_source = "none"
+
+        # LanceDB-first retrieval (semantic)
+        self.lancedb_rag = None
+        self.lancedb_enabled = os.getenv("LANCEDB_RAG", "true").lower() in {
+            "1",
+            "true",
+            "yes",
+        }
+        self.lancedb_auto_index = os.getenv("LANCEDB_AUTO_INDEX", "true").lower() in {
+            "1",
+            "true",
+            "yes",
+        }
+        if self.lancedb_enabled and LANCEDB_RAG_AVAILABLE:
+            try:
+                self.lancedb_rag = get_document_aware_rag()
+                if self.lancedb_auto_index:
+                    self.lancedb_rag.ensure_index()
+                logger.info("✅ LanceDB RAG initialized (primary)")
+            except Exception as e:
+                logger.warning(f"LanceDB RAG init failed: {e}")
+                self.lancedb_rag = None
 
         # Use LessonsSearch for keyword-based search
         if LESSONS_SEARCH_AVAILABLE:
@@ -90,8 +122,55 @@ class LessonsLearnedRAG:
             return re.findall(r"`([^`]+)`", tags_line)
         return []
 
+    def _query_lancedb(self, query: str, top_k: int = 5) -> list[dict]:
+        if self.lancedb_rag is None:
+            return []
+
+        results = self.lancedb_rag.search(query, limit=max(top_k * 2, 5))
+        formatted = []
+        for r in results:
+            source = r.metadata.get("source", "") if r.metadata else ""
+            if "rag_knowledge/lessons_learned" not in source:
+                continue
+
+            lesson_id = r.metadata.get("lesson_id") or r.document_id
+            severity = (r.metadata.get("severity") or "LOW").upper()
+            content = r.content or ""
+            snippet = content[:500]
+
+            formatted.append(
+                {
+                    "id": lesson_id,
+                    "severity": severity,
+                    "score": r.score,
+                    "snippet": snippet,
+                    "content": content,
+                    "file": source,
+                    "title": r.title,
+                    "prevention": "",
+                }
+            )
+
+            if len(formatted) >= top_k:
+                break
+
+        return formatted
+
     def query(self, query: str, top_k: int = 5, severity_filter: Optional[str] = None) -> list:
-        """Search lessons using keyword matching."""
+        """Search lessons using LanceDB first, then keyword matching."""
+        if self.lancedb_rag is not None:
+            try:
+                results = self._query_lancedb(query, top_k=top_k)
+                if results:
+                    if severity_filter:
+                        results = [
+                            r for r in results if r.get("severity") == severity_filter
+                        ][:top_k]
+                    self.last_source = "lancedb"
+                    return results
+            except Exception as e:
+                logger.warning(f"LanceDB query failed: {e} - using keyword fallback")
+
         # Use LessonsSearch if available
         if self.search_engine is not None:
             try:
@@ -99,6 +178,7 @@ class LessonsLearnedRAG:
                     query, top_k=top_k, severity_filter=severity_filter
                 )
                 # Convert results to expected format
+                self.last_source = "keyword"
                 return [
                     {
                         "id": lesson.id,
@@ -169,6 +249,7 @@ class LessonsLearnedRAG:
 
         # Sort by score descending
         results.sort(key=lambda x: x["score"], reverse=True)
+        self.last_source = "keyword"
         return results[:top_k]
 
     def search(self, query: str, top_k: int = 5) -> list:
