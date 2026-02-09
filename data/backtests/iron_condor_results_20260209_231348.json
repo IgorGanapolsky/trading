@@ -1,0 +1,20 @@
+[
+  {
+    "status": "profit_target",
+    "pnl": 85.5863148006538,
+    "entry_date": "2026-01-09",
+    "exit_date": "2026-01-26",
+    "dte_at_entry": 30,
+    "dte_at_exit": 13,
+    "short_put_strike": 674,
+    "long_put_strike": 669.0,
+    "short_call_strike": 714,
+    "long_call_strike": 719.0,
+    "credit_received": 121.05329285440698,
+    "underlying_at_entry": 690.63,
+    "underlying_at_exit": 692.73,
+    "put_side_pnl": 45.85570172554192,
+    "call_side_pnl": 39.730613075111876,
+    "exit_reason": "profit_target"
+  }
+]
