@@ -76,7 +76,7 @@ flowchart LR
     subgraph Today["Today's Pipeline"]
         DATA["Market Data<br/>(Alpaca)"] --> GATES["Gate Pipeline"]
         GATES --> CLAUDE["Claude Opus 4.5<br/>(Risk Decision)"]
-        GATES --> RAG["Vertex AI RAG<br/>(Past Lessons)"]
+        GATES --> RAG["LanceDB RAG<br/>(Past Lessons)"]
         CLAUDE --> EXEC["Trade Execution"]
         RAG --> CLAUDE
     end
@@ -88,8 +88,8 @@ flowchart LR
 |-----------|------------|------|
 | **Decision Engine** | Claude Opus 4.5 | Final trade approval, risk assessment |
 | **Cost-Optimized LLM** | OpenRouter (DeepSeek/Kimi) | Sentiment analysis, market research |
-| **Knowledge Base** | Vertex AI RAG | Query 200+ lessons learned |
-| **Retrieval** | Gemini 2.0 Flash | Semantic search over trade history |
+| **Knowledge Base** | LanceDB RAG | Query lessons learned |
+| **Retrieval** | LanceDB | Semantic search over trade history |
 | **Broker** | Alpaca API | Paper trading execution |
 | **Data** | FRED API | Treasury yields, macro indicators |
 

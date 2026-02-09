@@ -55,7 +55,7 @@ try:
 except ImportError:
     logger.warning("Checkpointing not available - pipeline will not be resumable")
 
-# Observability: Vertex AI RAG + Local logs (Jan 9, 2026)
+# Observability: LanceDB + Local logs (Jan 9, 2026)
 
 
 def _trace_gate(gate_name: str, ticker: str, metadata: dict, result: Any) -> None:
@@ -63,7 +63,7 @@ def _trace_gate(gate_name: str, ticker: str, metadata: dict, result: Any) -> Non
     Trace gate execution for observability.
 
     Note: LangSmith tracing removed Jan 2026. This is now a no-op stub
-    that can be connected to Vertex AI RAG or local logging if needed.
+    that can be connected to LanceDB or local logging if needed.
     """
     # Logging only - no external tracing
     logger.debug(

@@ -1,30 +1,30 @@
 """
-Dialogflow CX Webhook for Trading AI RAG System.
+Dialogflow CX Webhook for Trading RAG System.
 
-This webhook receives queries from Vertex AI Dialogue Agent and returns
-full, untruncated lessons learned AND trade history from our RAG knowledge base.
+This webhook receives queries from Dialogflow and returns full, untruncated
+lessons learned AND trade history from our RAG knowledge base.
 
 Deployed to Cloud Run at: https://trading-dialogflow-webhook-cqlewkvzdq-uc.a.run.app
 
 Version History:
 - v2.9.0 Jan 10, 2026: Security - SSL verification, rate limiting, webhook auth
-- v3.0.0 Jan 12, 2026: Vertex AI RAG integration - semantic search with fallback
+- v3.0.0 Jan 12, 2026: LanceDB RAG integration - semantic search with fallback
 - v3.1.0 Jan 13, 2026: Fix analytical queries - WHY questions route to RAG not status
 - v3.2.0 Jan 13, 2026: Add CI status check to readiness assessment (CEO directive)
 - v3.3.0 Jan 13, 2026: Fix direct P/L queries - conversational "How much money" answers
 - v3.4.0 Jan 14, 2026: Fix stale P/L data - use GitHub API instead of raw URL (bypass CDN cache)
 - v3.5.0 Jan 15, 2026: Query Alpaca API DIRECTLY for real-time P/L (fixes stale data issue)
 - v3.5.1 Jan 16, 2026: Force redeployment to ensure Alpaca credentials are loaded
-- v3.5.2 Jan 16, 2026: Fix Vertex AI RAG
-- v3.7.0 Jan 16, 2026: Fix trades_loaded=0 - check system_state.json for trade_history - requires roles/aiplatform.user on service account
-- v3.9.0 Jan 16, 2026: Fix trade data source priority - query_trades() now checks system_state.json FIRST (Alpaca source of truth), trades_*.json as fallback
+- v3.5.2 Jan 16, 2026: Fix LanceDB RAG init
+- v3.7.0 Jan 16, 2026: Fix trades_loaded=0 - check system_state.json for trade_history
+- v3.9.0 Jan 16, 2026: Fix trade data source priority - system_state.json FIRST (Alpaca source of truth)
 
 Architecture (v3.0.0):
-- Primary: Vertex AI RAG (cloud semantic search with text-embedding-004)
-- Fallback: Local keyword-based RAG (when GCP credentials unavailable)
+- Primary: LanceDB local semantic search
+- Fallback: Keyword-based search
 
 CEO Directive: "I want to be able to speak to Dialogflow about my trades
-and get accurate information" - This requires semantic search (Vertex AI).
+and get accurate information" - requires semantic search.
 """
 
 import logging
@@ -51,22 +51,6 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.rag.lessons_learned_rag import LessonsLearnedRAG  # noqa: E402
-
-# Import LanceDB for local semantic search (primary — free, ~85% accuracy)
-try:
-    from src.memory.document_aware_rag import get_document_aware_rag
-
-    LANCEDB_RAG_AVAILABLE = True
-except ImportError:
-    LANCEDB_RAG_AVAILABLE = False
-
-# Import Vertex AI RAG for cloud-based semantic search (secondary — $200/mo)
-try:
-    from src.rag.vertex_rag import get_vertex_rag
-
-    VERTEX_RAG_AVAILABLE = True
-except ImportError:
-    VERTEX_RAG_AVAILABLE = False
 
 # Configure logging
 logging.basicConfig(
@@ -109,120 +93,49 @@ else:
         return decorator
 
 
-# Initialize RAG systems — priority order:
-# 1. LanceDB (local semantic search — free, ~85% accuracy)
-# 2. Vertex AI RAG (cloud semantic search — $200/mo, ~90% accuracy)
-# 3. Local keyword RAG (fallback — $0, ~60% accuracy)
-lancedb_rag = None
-vertex_rag = None
-vertex_rag_init_error = None
-
-# 1. Try LanceDB first (free local semantic search)
-if LANCEDB_RAG_AVAILABLE:
-    try:
-        lancedb_rag = get_document_aware_rag()
-        lancedb_rag.ensure_index()
-        logger.info("✅ LanceDB RAG initialized (primary - local semantic search)")
-    except Exception as e:
-        logger.warning(f"LanceDB RAG init failed: {e}")
-        lancedb_rag = None
-
-# 2. Try Vertex AI as secondary
-if VERTEX_RAG_AVAILABLE:
-    try:
-        vertex_rag = get_vertex_rag()
-        if vertex_rag.is_initialized:
-            logger.info("✅ Vertex AI RAG initialized (secondary - cloud semantic search)")
-        else:
-            vertex_rag_init_error = (
-                "Vertex AI RAG not initialized - check GCP credentials/permissions"
-            )
-            logger.warning(vertex_rag_init_error)
-            vertex_rag = None
-    except Exception as e:
-        vertex_rag_init_error = f"Vertex AI RAG init failed: {e}"
-        logger.warning(vertex_rag_init_error)
-        vertex_rag = None
-else:
-    vertex_rag_init_error = "VERTEX_RAG_AVAILABLE=False - vertexai package import failed"
-
-# 3. Local keyword RAG as final fallback
+# Initialize RAG system (LanceDB-first via LessonsLearnedRAG)
 local_rag = LessonsLearnedRAG()
-logger.info(f"Local RAG initialized with {len(local_rag.lessons)} lessons (keyword fallback)")
+logger.info(
+    f"RAG initialized with {len(local_rag.lessons)} lessons "
+    f"(LanceDB-first, keyword fallback)"
+)
 
 
 def query_rag_hybrid(query: str, top_k: int = 5) -> tuple[list, str]:
     """
-    Query RAG: LanceDB first (local semantic), then Vertex AI, then keyword fallback.
+    Query RAG using LanceDB-first retrieval with keyword fallback.
 
     Returns:
         Tuple of (results_list, source_name)
     """
-    # 1. Try LanceDB first (free local semantic search)
-    if lancedb_rag is not None:
-        try:
-            results = lancedb_rag.search(query, limit=top_k)
-            if results:
-                # Convert SearchResult objects to dicts for compatibility
-                formatted = [
-                    {
-                        "id": r.document_id,
-                        "title": r.title,
-                        "severity": (r.metadata.get("severity") or "low").upper(),
-                        "score": r.score,
-                        "snippet": r.content[:500],
-                        "content": r.content,
-                        "file": r.metadata.get("source", ""),
-                        "section": r.section_title,
-                    }
-                    for r in results
-                ]
-                logger.info(f"LanceDB RAG returned {len(formatted)} results")
-                return formatted, "lancedb"
-            logger.info("LanceDB returned no results, trying next source")
-        except Exception as e:
-            logger.warning(f"LanceDB query failed: {e}")
-
-    # 2. Try Vertex AI (cloud semantic search)
-    if vertex_rag is not None:
-        try:
-            results = vertex_rag.query(query, similarity_top_k=top_k)
-            if results:
-                logger.info(f"Vertex AI RAG returned {len(results)} results")
-                return results, "vertex_ai"
-            logger.info("Vertex AI RAG returned no results, trying keyword")
-        except Exception as e:
-            logger.warning(f"Vertex AI RAG query failed: {e}")
-
-    # 3. Fallback to keyword-based RAG
     results = local_rag.query(query, top_k=top_k)
-    logger.info(f"Local keyword RAG returned {len(results)} results")
-    return results, "keyword"
+    source = local_rag.last_source or "keyword"
+    logger.info(f"RAG returned {len(results)} results (source={source})")
+    return results, source
 
 
 def format_rag_response(results: list, query: str, source: str) -> str:
-    """Format RAG results into response text, handling both Vertex AI and local formats."""
+    """Format RAG results into response text."""
     if not results:
-        return f"No lessons found matching '{query}'. Try searching for: trading, risk, CI, RAG, verification, or operational."
+        return (
+            f"No lessons found matching '{query}'. "
+            "Try searching for: trading, risk, CI, RAG, verification, or operational."
+        )
 
     response_parts = []
+    header = (
+        "Based on our semantic index (LanceDB):\n"
+        if source == "lancedb"
+        else "Based on our keyword index:\n"
+    )
+    response_parts.append(header)
 
-    if source == "vertex_ai":
-        # Vertex AI returns [{text: str}] - Gemini-generated response
-        response_parts.append("Based on our trading knowledge base (Vertex AI RAG):\n")
-        for i, result in enumerate(results, 1):
-            text = result.get("text", "")
-            if text:
-                response_parts.append(f"\n{text}\n")
-    else:
-        # Local RAG returns [{id, severity, score, snippet, content}]
-        response_parts.append("Based on our lessons learned (local search):\n")
-        for lesson in results:
-            lesson_id = lesson.get("id", "unknown")
-            severity = lesson.get("severity", "UNKNOWN")
-            content = lesson.get("content", lesson.get("snippet", ""))
-            response_parts.append(f"\n**{lesson_id}** ({severity}): {content}\n")
-            response_parts.append("-" * 50)
+    for lesson in results:
+        lesson_id = lesson.get("id", "unknown")
+        severity = lesson.get("severity", "UNKNOWN")
+        content = lesson.get("content", lesson.get("snippet", ""))
+        response_parts.append(f"\n**{lesson_id}** ({severity}): {content}\n")
+        response_parts.append("-" * 50)
 
     return "\n".join(response_parts)
 
@@ -1540,23 +1453,12 @@ async def webhook(
             rag_explanation = ""
             if results:
                 # Extract key insights from RAG results
-                # FIX Jan 22, 2026: Handle correct field names for each RAG source
-                # - Vertex AI: {text: str}
-                # - Local: {id, severity, content, snippet}
                 insights = []
                 for r in results[:3]:
-                    if source == "vertex_ai":
-                        # Vertex AI returns Gemini-generated text
-                        text = r.get("text", "")
-                        if text:
-                            # Take first 200 chars of Vertex AI response
-                            insights.append(f"- {text[:200]}...")
-                    else:
-                        # Local RAG returns structured lessons
-                        lesson_id = r.get("id", "Insight")
-                        content = r.get("content", r.get("snippet", ""))[:150]
-                        if content:
-                            insights.append(f"- **{lesson_id}**: {content}")
+                    lesson_id = r.get("id", "Insight")
+                    content = r.get("content", r.get("snippet", ""))[:150]
+                    if content:
+                        insights.append(f"- **{lesson_id}**: {content}")
 
                 if insights:
                     rag_explanation = "\n**Analysis from lessons learned:**\n" + "\n".join(insights)
@@ -1737,14 +1639,14 @@ Please check directly:
 Or ask me about **lessons learned** instead (e.g., "What lessons did we learn about risk management?")"""
                     logger.warning("Trade query but no portfolio data available")
         else:
-            # Query RAG system for relevant lessons (Vertex AI first, then local)
+            # Query RAG system for relevant lessons (LanceDB-first)
             results, source = query_rag_hybrid(user_query, top_k=5)
 
             if not results:
                 # Try broader search
                 results, source = query_rag_hybrid("trading operational failure", top_k=3)
 
-            # Format response based on source (Vertex AI or local)
+            # Format response based on source
             response_text = format_rag_response(results, user_query, source)
 
         logger.info(f"Returning response with {len(response_text)} chars")
@@ -1770,42 +1672,30 @@ async def health():
     trade_count = len(query_trades("all", limit=1000))
     return {
         "status": "healthy",
-        "vertex_ai_rag_enabled": vertex_rag is not None,
-        "vertex_ai_init_error": vertex_rag_init_error,
         "local_lessons_loaded": len(local_rag.lessons),
         "critical_lessons": len(local_rag.get_critical_lessons()),
         "trades_loaded": trade_count,
         "trade_history_source": "system_state.json (Alpaca)",
-        "rag_mode": "vertex_ai_primary" if vertex_rag else "local_only",
+        "rag_mode": "lancedb_first",
+        "rag_last_source": local_rag.last_source,
     }
 
 
 @app.get("/diagnostics")
 async def diagnostics():
-    """Detailed diagnostic information for debugging Vertex AI RAG issues."""
+    """Detailed diagnostic information for RAG status."""
     import os
 
     return {
-        "vertex_ai": {
-            "enabled": vertex_rag is not None,
-            "init_error": vertex_rag_init_error,
-            "package_available": VERTEX_RAG_AVAILABLE,
-            "env_vars": {
-                "GOOGLE_CLOUD_PROJECT": os.getenv("GOOGLE_CLOUD_PROJECT", "NOT SET"),
-                "VERTEX_AI_LOCATION": os.getenv("VERTEX_AI_LOCATION", "NOT SET"),
-                "GCP_PROJECT_ID": os.getenv("GCP_PROJECT_ID", "NOT SET"),
-                "GOOGLE_APPLICATION_CREDENTIALS": (
-                    "SET" if os.getenv("GOOGLE_APPLICATION_CREDENTIALS") else "NOT SET"
-                ),
-            },
-        },
         "local_rag": {
             "lessons_loaded": len(local_rag.lessons) if local_rag else 0,
             "critical_lessons": (len(local_rag.get_critical_lessons()) if local_rag else 0),
+            "last_source": local_rag.last_source,
         },
         "system": {
             "python_path": os.getenv("PYTHONPATH", "NOT SET"),
             "working_dir": os.getcwd(),
+            "lancedb_offline": os.getenv("LANCEDB_OFFLINE", "NOT SET"),
         },
     }
 
@@ -1817,12 +1707,11 @@ async def root():
     return {
         "service": "Trading AI RAG Webhook",
         "version": "3.9.0",  # Fix trade data source priority - system_state.json first
-        "vertex_ai_rag_enabled": vertex_rag is not None,
-        "vertex_ai_init_error": vertex_rag_init_error,
         "local_lessons_loaded": len(local_rag.lessons),
         "trades_loaded": trade_count,
         "trade_history_source": "system_state.json (Alpaca)",
-        "rag_mode": "vertex_ai_primary" if vertex_rag else "local_only",
+        "rag_mode": "lancedb_first",
+        "rag_last_source": local_rag.last_source,
         "endpoints": {
             "/webhook": "POST - Dialogflow CX webhook (lessons + trades + readiness)",
             "/health": "GET - Health check",
@@ -1839,29 +1728,21 @@ async def test_rag(query: str = "critical lessons"):
     """Test endpoint to verify lessons RAG is working."""
     results, source = query_rag_hybrid(query, top_k=3)
 
-    if source == "vertex_ai":
-        # Vertex AI returns [{text: str}]
-        formatted_results = [
-            {"text_preview": r.get("text", "")[:500], "source": "vertex_ai"} for r in results
-        ]
-    else:
-        # Local RAG returns [{id, severity, score, snippet, content}]
-        formatted_results = [
-            {
-                "id": r["id"],
-                "severity": r["severity"],
-                "score": r["score"],
-                "content_length": len(r.get("content", "")),
-                "preview": r.get("snippet", "")[:200],
-            }
-            for r in results
-        ]
+    formatted_results = [
+        {
+            "id": r.get("id", ""),
+            "severity": r.get("severity", ""),
+            "score": r.get("score", 0),
+            "content_length": len(r.get("content", "")),
+            "preview": r.get("snippet", "")[:200],
+        }
+        for r in results
+    ]
 
     return {
         "query": query,
         "query_type": "lessons",
         "rag_source": source,
-        "vertex_ai_available": vertex_rag is not None,
         "results_count": len(results),
         "results": formatted_results,
     }

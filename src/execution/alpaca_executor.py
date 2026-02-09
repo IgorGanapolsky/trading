@@ -5,7 +5,7 @@ Dec 3, 2025 Enhancement:
 - ATR-based stop-loss calculation wired to order placement
 - Automatic stop-loss on every new position
 
-Jan 9, 2026: Observability via Vertex AI RAG + Local JSON (LangSmith removed)
+Jan 9, 2026: Observability via LanceDB + Local JSON (LangSmith removed)
 Jan 13, 2026: Auto-reflection on failures (Reflexion pattern - arXiv 2303.11366)
 """
 
@@ -22,7 +22,7 @@ from src.core.alpaca_trader import AlpacaTrader
 
 logger = logging.getLogger(__name__)
 
-# Observability: Vertex AI RAG + Local JSON (LangSmith removed Jan 9, 2026)
+# Observability: LanceDB + Local JSON (LangSmith removed Jan 9, 2026)
 
 # Default stop-loss configuration
 DEFAULT_STOP_LOSS_PCT = 0.05  # 5% default if ATR unavailable
@@ -66,7 +66,7 @@ class AlpacaExecutor:
             self.broker = None
 
     def _record_trade_for_tracking(self, order: dict[str, Any], strategy: str) -> None:
-        """Record trade to Vertex AI RAG, RLHF storage, and local JSON."""
+        """Record trade to system_state.json, RLHF storage, and local JSON."""
         # Use unified trade sync (Jan 2026 - fixes operational gap)
         try:
             from src.observability.trade_sync import sync_trade
@@ -93,7 +93,7 @@ class AlpacaExecutor:
 
             logger.info(
                 f"Trade sync: {symbol} {side} | "
-                f"RAG={results.get('rag', False)}, JSON={results.get('local_json', False)}"
+                f"SystemState={results.get('system_state', False)}"
             )
 
             # Store to RLHF trajectory storage for ML learning (Jan 6 2026 fix)

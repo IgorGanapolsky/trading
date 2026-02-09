@@ -1,13 +1,12 @@
 """
-Trade Sync - Sync trades to Vertex AI RAG and system_state.json.
+Trade Sync - Sync trades to system_state.json.
 
 ARCHITECTURE FIX Jan 17, 2026:
 - BEFORE: Wrote to data/trades_{date}.json (caused Cloud Run mismatch)
 - AFTER: Writes to data/system_state.json -> trade_history (single source of truth)
 
 This module ensures EVERY trade is recorded to:
-1. Vertex AI RAG - for Dialogflow queries and cloud backup
-2. system_state.json - single source of truth, synced with Alpaca workflow
+1. system_state.json - single source of truth, synced with Alpaca workflow
 
 Data Flow (CANONICAL):
 ┌─────────────────┐    ┌──────────────────────┐    ┌─────────────────┐
@@ -18,13 +17,6 @@ Data Flow (CANONICAL):
 │ Local Trades    │───>│   trade_sync.py      │─────────────┘
 │ (manual/test)   │    │   (this module)      │
 └─────────────────┘    └──────────────────────┘
-                                │
-                                v
-                       ┌──────────────────────┐
-                       │   Vertex AI RAG      │
-                       └──────────────────────┘
-
-Observability: Vertex AI RAG + system_state.json (Jan 17, 2026)
 """
 
 import json
@@ -32,8 +24,6 @@ import logging
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
-
-from src.rag.vertex_rag import get_vertex_rag
 
 logger = logging.getLogger(__name__)
 
@@ -46,11 +36,10 @@ SYSTEM_STATE_FILE = DATA_DIR / "system_state.json"
 
 class TradeSync:
     """
-    Trade sync to Vertex AI RAG and system_state.json.
+    Trade sync to system_state.json.
 
     ARCHITECTURE (Jan 17, 2026):
     - Writes to system_state.json -> trade_history (single source of truth)
-    - Also syncs to Vertex AI RAG for semantic search
     - DEPRECATED: No longer writes to trades_{date}.json files
     """
 
@@ -74,10 +63,7 @@ class TradeSync:
 
         Returns dict with success status for each system.
         """
-        results = {
-            "vertex_rag": False,
-            "system_state": False,
-        }
+        results = {"system_state": False}
 
         trade_data = {
             "id": order_id or f"local-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
@@ -94,42 +80,15 @@ class TradeSync:
             "source": "trade_sync.py",  # Track origin for debugging
         }
 
-        # 1. Sync to Vertex AI RAG (for Dialogflow queries)
-        results["vertex_rag"] = self._sync_to_vertex_rag(trade_data)
-
-        # 2. Save to system_state.json -> trade_history (SINGLE SOURCE OF TRUTH)
+        # Save to system_state.json -> trade_history (SINGLE SOURCE OF TRUTH)
         results["system_state"] = self._sync_to_system_state(trade_data)
 
         logger.info(
             f"Trade sync complete: {symbol} {side} | "
-            f"VertexRAG={results['vertex_rag']}, SystemState={results['system_state']}"
+            f"SystemState={results['system_state']}"
         )
 
         return results
-
-    def _sync_to_vertex_rag(self, trade_data: dict[str, Any]) -> bool:
-        """Sync trade to Vertex AI RAG for Dialogflow queries."""
-        try:
-            vertex_rag = get_vertex_rag()
-            if not vertex_rag.is_initialized:
-                logger.debug("Vertex AI RAG not initialized - skipping")
-                return False
-
-            return vertex_rag.add_trade(
-                symbol=trade_data["symbol"],
-                side=trade_data["side"],
-                qty=float(trade_data["qty"]),
-                price=float(trade_data["price"]),
-                strategy=trade_data["strategy"],
-                pnl=trade_data.get("pnl"),
-                pnl_pct=trade_data.get("pnl_pct"),
-                timestamp=trade_data["filled_at"],
-                metadata=trade_data.get("metadata"),
-            )
-
-        except Exception as e:
-            logger.error(f"Failed to sync trade to Vertex AI RAG: {e}")
-            return False
 
     def _sync_to_system_state(self, trade_data: dict[str, Any]) -> bool:
         """

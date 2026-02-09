@@ -99,7 +99,7 @@ if INTROSPECTION_AVAILABLE:
         importlib.util.find_spec("src.core.uncertainty_tracker") is not None
     )
 
-# Observability: Vertex AI RAG + Local logs (Jan 9, 2026)
+# Observability: LanceDB + Local logs (Jan 9, 2026)
 
 # Go ADK Multi-Agent Trading Orchestrator (Dec 2025)
 # Provides Gemini-powered research/signal/risk/execution agents

@@ -88,11 +88,7 @@ class TestDialogflowWebhookIntegration:
 
     @pytest.fixture
     def mock_rag(self):
-        """Mock RAG systems to avoid ChromaDB/Vertex AI dependency.
-
-        The dialogflow_webhook module uses local_rag (LessonsLearnedRAG) and vertex_rag.
-        We mock local_rag since that's the fallback used in CI (no GCP credentials).
-        """
+        """Mock RAG system to avoid heavy dependencies in CI."""
         with patch("src.agents.dialogflow_webhook.local_rag") as mock:
             mock.lessons = [{"id": "ll_001", "severity": "CRITICAL"}]
             mock.query.return_value = [
@@ -105,6 +101,7 @@ class TestDialogflowWebhookIntegration:
                 }
             ]
             mock.get_critical_lessons.return_value = [{"id": "ll_001"}]
+            mock.last_source = "lancedb"
             yield mock
 
     def test_webhook_extracts_text_field(self, mock_rag):

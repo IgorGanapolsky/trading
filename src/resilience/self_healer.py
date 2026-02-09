@@ -5,7 +5,7 @@ Automatically detects and fixes common issues in the trading system.
 
 Health Checks:
 1. Data integrity (JSON files, system state)
-2. API connectivity (Alpaca, Vertex AI)
+2. API connectivity (Alpaca, LanceDB)
 3. Position compliance (CLAUDE.md rules)
 4. Stale data detection
 5. Configuration drift

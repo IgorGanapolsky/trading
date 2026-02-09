@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Ingest Backtest Results to Vertex AI RAG
+Ingest Backtest Results to Local RAG
 
-Reads backtest lessons and ingests them into the RAG database
-for future trade decision support.
+Reads backtest lessons and prepares them for LanceDB indexing
+via local markdown output.
 
 Usage:
     python scripts/backtest/ingest_backtest_to_rag.py --lessons-dir data/backtests
@@ -15,15 +15,6 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-
-try:
-    from google.cloud import aiplatform
-
-    HAS_VERTEX = True
-except ImportError:
-    HAS_VERTEX = False
-    print("⚠️ google-cloud-aiplatform not installed. RAG ingestion disabled.")
-
 
 def find_lesson_files(lessons_dir: Path) -> list[Path]:
     """Find all lesson JSON files in directory."""
@@ -61,44 +52,6 @@ def format_lesson_for_rag(lesson: dict) -> str:
     return header + content
 
 
-def ingest_to_vertex_rag(
-    lessons: list[dict], project_id: str, location: str, corpus_name: str
-) -> int:
-    """
-    Ingest lessons to Vertex AI RAG corpus.
-
-    Returns number of successfully ingested lessons.
-    """
-    if not HAS_VERTEX:
-        print("⚠️ Vertex AI SDK not available")
-        return 0
-
-    try:
-        aiplatform.init(project=project_id, location=location)
-    except Exception as e:
-        print(f"❌ Failed to initialize Vertex AI: {e}")
-        return 0
-
-    ingested = 0
-
-    for lesson in lessons:
-        try:
-            # Format the lesson content (call validates lesson structure)
-            _ = format_lesson_for_rag(lesson)
-            lesson_id = lesson.get("id", f"lesson_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
-
-            # In production, this would use the RAG API
-            # For now, we'll save to a staging file for manual ingestion
-            print(f"  📝 Prepared lesson: {lesson_id}")
-            ingested += 1
-
-        except Exception as e:
-            print(f"  ❌ Failed to process lesson: {e}")
-            continue
-
-    return ingested
-
-
 def save_for_manual_ingestion(lessons: list[dict], output_dir: Path) -> Path:
     """
     Save lessons in format ready for manual RAG ingestion.
@@ -130,14 +83,6 @@ def main():
         help="Directory with lesson files",
     )
     parser.add_argument(
-        "--project",
-        type=str,
-        default=os.environ.get("GOOGLE_CLOUD_PROJECT"),
-        help="GCP project ID",
-    )
-    parser.add_argument("--location", type=str, default="us-central1", help="GCP location")
-    parser.add_argument("--corpus", type=str, default="trading-lessons", help="RAG corpus name")
-    parser.add_argument(
         "--output",
         type=str,
         default="data/rag_staging",
@@ -166,14 +111,7 @@ def main():
 
     print(f"\n📊 Total lessons to process: {len(all_lessons)}")
 
-    # Try direct RAG ingestion
-    ingested = 0
-    if args.project and HAS_VERTEX:
-        print("\n🚀 Attempting Vertex AI RAG ingestion...")
-        ingested = ingest_to_vertex_rag(all_lessons, args.project, args.location, args.corpus)
-        print(f"✅ Ingested {ingested} lessons to RAG")
-
-    # Always save for manual ingestion as backup
+    # Save for local ingestion
     output_path = save_for_manual_ingestion(all_lessons, Path(args.output))
     print(f"\n📁 Manual ingestion file saved to: {output_path}")
 
@@ -183,7 +121,7 @@ def main():
     print("=" * 50)
     print(f"Lesson files processed: {len(lesson_files)}")
     print(f"Total lessons: {len(all_lessons)}")
-    print(f"Direct RAG ingestion: {ingested}")
+    print("Direct RAG ingestion: skipped (local only)")
     print(f"Manual ingestion file: {output_path}")
     print("=" * 50)
 

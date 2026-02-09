@@ -1,5 +1,5 @@
-# Dockerfile for Dialogflow Webhook with Vertex AI RAG
-# FIXED Jan 13, 2026: Now includes Vertex AI for semantic search
+# Dockerfile for Dialogflow Webhook with LanceDB RAG
+# Includes LanceDB for local semantic search
 FROM python:3.11-slim
 
 # Cache bust to force fresh build on deploy
@@ -7,26 +7,28 @@ ARG CACHE_BUST=1
 
 WORKDIR /app
 
-# Install webhook dependencies INCLUDING Vertex AI for semantic search
+# Install webhook dependencies INCLUDING LanceDB for semantic search
 # Build time ~3-4 min but enables real RAG answers
 RUN pip install --no-cache-dir \
     fastapi==0.128.0 \
     uvicorn==0.40.0 \
     requests==2.32.5 \
-    google-cloud-aiplatform>=1.72.0 \
-    vertexai>=1.72.0
+    lancedb>=0.4.0 \
+    sentence-transformers==3.4.1 \
+    pyarrow>=14.0.0 \
+    rank_bm25==0.2.2
 
 # Create required package structure
-RUN mkdir -p src/agents src/rag rag_knowledge/lessons_learned data
+RUN mkdir -p src/agents src/rag src/memory rag_knowledge/lessons_learned data
 
 # Create empty __init__.py files for Python packages
-RUN touch src/__init__.py src/agents/__init__.py src/rag/__init__.py
+RUN touch src/__init__.py src/agents/__init__.py src/rag/__init__.py src/memory/__init__.py
 
-# Copy RAG files INCLUDING vertex_rag.py for semantic search
+# Copy RAG files for semantic search
 COPY src/agents/dialogflow_webhook.py src/agents/
 COPY src/rag/lessons_learned_rag.py src/rag/
 COPY src/rag/lessons_search.py src/rag/
-COPY src/rag/vertex_rag.py src/rag/
+COPY src/memory/document_aware_rag.py src/memory/
 COPY rag_knowledge/lessons_learned/ rag_knowledge/lessons_learned/
 
 # Copy system state for portfolio data (fallback to GitHub raw if stale)

@@ -181,8 +181,8 @@ ALPACA_BREAKER = CircuitBreaker(
     recovery_timeout=60.0,
 )
 
-VERTEX_RAG_BREAKER = CircuitBreaker(
-    name="vertex_rag",
+LANCEDB_RAG_BREAKER = CircuitBreaker(
+    name="lancedb_rag",
     failure_threshold=3,
     recovery_timeout=120.0,
 )

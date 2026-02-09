@@ -1,6 +1,6 @@
 """
 Central logging configuration.
-Observability: Vertex AI RAG + Local logs (Jan 9, 2026)
+Observability: LanceDB + Local logs (Jan 9, 2026)
 """
 
 import logging

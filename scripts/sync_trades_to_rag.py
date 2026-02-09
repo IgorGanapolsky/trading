@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
-"""Sync today's trades to Vertex AI RAG for Dialogflow queries.
-
-CEO Directive (Jan 6, 2026): "We are supposed to be recording every single
-trade and every single lesson about each trade in our vertex rag database"
+"""Sync today's trades to local records for Dialogflow queries.
 
 This script runs post-trade to ensure:
-1. All trades are recorded in Vertex AI RAG corpus
-2. Lessons can be queried via Dialogflow
-3. Local JSON backup is maintained (ChromaDB deprecated Jan 7, 2026)
+1. Trades are recorded in system_state.json (source of truth)
+2. Master ledger is updated for win-rate tracking
+3. Local JSON backup is maintained
 
 Usage:
     python3 scripts/sync_trades_to_rag.py
@@ -72,88 +69,6 @@ def load_todays_trades(date_str: str | None = None) -> list[dict]:
         logger.warning(f"No trades found. Checked: {[str(f) for f in trade_files]}")
 
     return all_trades
-
-
-def sync_to_vertex_rag(trades: list[dict]) -> bool:
-    """Sync trades to Vertex AI RAG corpus."""
-    try:
-        from src.rag.vertex_rag import VertexRAG
-
-        rag = VertexRAG()
-        if not rag._initialized:
-            logger.warning("Vertex AI RAG not initialized - check credentials")
-            return False
-
-        synced = 0
-        for trade in trades:
-            try:
-                # Handle nested options trade format from execute_options_trade.py
-                result = trade.get("result", {})
-                if result and result.get("status"):
-                    # Options trade format
-                    symbol = trade.get("symbol", "UNKNOWN")
-                    strategy = trade.get("strategy", "cash_secured_put")
-                    timestamp_val = trade.get("timestamp", datetime.now().isoformat())
-                    premium = result.get("premium", 0)
-                    strike = result.get("strike", 0)
-
-                    # Use add_trade() with options data
-                    success = rag.add_trade(
-                        symbol=symbol,
-                        side="sell",  # CSPs are sell orders
-                        qty=1,  # 1 contract
-                        price=premium,  # Premium as price
-                        strategy=strategy,
-                        pnl=premium,  # Premium collected is immediate P/L
-                        pnl_pct=0.0,  # No percentage for options yet
-                        timestamp=timestamp_val,
-                        metadata={
-                            "type": "options",
-                            "strike": strike,
-                            "expiry": result.get("expiry", "unknown"),
-                        },
-                    )
-                else:
-                    # Standard equity trade format - use add_trade() correctly
-                    symbol = trade.get("symbol", "UNKNOWN")
-                    side = trade.get("side", "buy")
-                    qty = trade.get("qty", 0)
-                    price = trade.get("price", 0)
-                    notional = trade.get("notional", 0)
-                    if price == 0 and qty and notional:
-                        price = notional / qty
-                    strategy = trade.get("strategy", "unknown")
-                    timestamp_val = (
-                        trade.get("timestamp") or trade.get("time") or datetime.now().isoformat()
-                    )
-                    pnl = trade.get("pnl")
-                    pnl_pct = trade.get("pnl_pct")
-
-                    success = rag.add_trade(
-                        symbol=symbol,
-                        side=side,
-                        qty=float(qty),
-                        price=float(price),
-                        strategy=strategy,
-                        pnl=float(pnl) if pnl else None,
-                        pnl_pct=float(pnl_pct) if pnl_pct else None,
-                        timestamp=timestamp_val,
-                    )
-
-                if success:
-                    synced += 1
-            except Exception as e:
-                logger.error(f"Failed to sync trade: {e}")
-
-        logger.info(f"✅ Synced {synced}/{len(trades)} trades to Vertex AI RAG")
-        return synced > 0
-
-    except ImportError:
-        logger.warning("Vertex AI RAG not available - skipping cloud sync")
-        return False
-    except Exception as e:
-        logger.error(f"Vertex AI sync failed: {e}")
-        return False
 
 
 def sync_to_master_ledger(trades: list[dict]) -> bool:
@@ -340,12 +255,12 @@ def main():
     """Main entry point for RAG sync."""
     import argparse
 
-    parser = argparse.ArgumentParser(description="Sync trades to RAG databases")
+    parser = argparse.ArgumentParser(description="Sync trades to local records")
     parser.add_argument("--date", help="Date to sync (YYYY-MM-DD), defaults to today")
     args = parser.parse_args()
 
     logger.info("=" * 60)
-    logger.info("POST-TRADE RAG SYNC")
+    logger.info("POST-TRADE SYNC")
     logger.info("=" * 60)
 
     # Load trades
@@ -354,16 +269,15 @@ def main():
         logger.info("No trades to sync")
         return 0
 
-    # Sync to Vertex AI RAG (cloud), master ledger (win rate), and local JSON backup
-    vertex_ok = sync_to_vertex_rag(trades)
+    # Sync to master ledger (win rate) and local JSON backup
     ledger_ok = sync_to_master_ledger(trades)
     local_ok = sync_to_local_json(trades)
 
-    if vertex_ok or ledger_ok or local_ok:
-        logger.info("✅ RAG sync completed successfully")
+    if ledger_ok or local_ok:
+        logger.info("✅ Trade sync completed successfully")
         return 0
     else:
-        logger.warning("⚠️ RAG sync failed - check logs")
+        logger.warning("⚠️ Trade sync failed - check logs")
         return 1
 
 

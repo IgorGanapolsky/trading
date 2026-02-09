@@ -1,4 +1,4 @@
-"""Observability module - Trade sync to Vertex AI RAG + Local JSON."""
+"""Observability module - Trade sync to system_state.json."""
 
 from src.observability.trade_sync import (
     TradeSync,

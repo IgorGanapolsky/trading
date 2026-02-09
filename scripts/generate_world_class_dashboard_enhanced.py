@@ -1223,13 +1223,13 @@ def generate_world_class_dashboard() -> str:
                     f"| **Recent Training** | {', '.join([f'{s}' for s, _ in recent_symbols])} |\n"
                 )
 
-            # Add Vertex AI console link
-            dashboard += "| **Vertex AI Console** | [View Jobs →](https://console.cloud.google.com/vertex-ai/training/custom-jobs?project=email-outreach-ai-460404) |\n"
+            # RAG storage summary
+            dashboard += "| **RAG Storage** | LanceDB (local) |\n"
         except Exception as e:
             dashboard += f"| **Status** | ⚠️ Unable to load training status ({str(e)[:50]}) |\n"
     else:
         dashboard += "| **Status** | ⚠️ No training data available |\n"
-        dashboard += "| **Vertex AI Console** | [View Jobs →](https://console.cloud.google.com/vertex-ai/training/custom-jobs?project=email-outreach-ai-460404) |\n"
+        dashboard += "| **RAG Storage** | LanceDB (local) |\n"
 
     dashboard += """
 ### LangSmith Monitoring
@@ -1430,13 +1430,9 @@ def generate_world_class_dashboard() -> str:
     dashboard += r"""- **[All Projects](https://smith.langchain.com/o/default/projects)** - View all LangSmith projects
 
 
-### Vertex AI Cloud RL
-- **[Vertex AI Console](https://console.cloud.google.com/vertex-ai?project=email-outreach-ai-460404)** - Main Vertex AI dashboard
-- **[Training Jobs](https://console.cloud.google.com/vertex-ai/training/custom-jobs?project=email-outreach-ai-460404)** - View RL training jobs
-- **[Models](https://console.cloud.google.com/vertex-ai/models?project=email-outreach-ai-460404)** - Trained models
-- **[Experiments](https://console.cloud.google.com/vertex-ai/experiments?project=email-outreach-ai-460404)** - Training experiments
-
-**Project**: `email-outreach-ai-460404` | **Location**: `us-central1`
+### RAG Storage
+- **LanceDB (local)** - Semantic index for lessons and knowledge
+- **Index path**: `.claude/memory/lancedb/`
 
 ---
 

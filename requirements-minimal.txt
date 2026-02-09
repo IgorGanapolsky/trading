@@ -42,7 +42,7 @@ vaderSentiment==3.3.2      # Sentiment scoring for macro/analyst agent
 # langchain-core - not used, removed Jan 2026
 # langchain-anthropic - not used, removed Jan 2026
 # langchain-community - not used, removed Jan 2026
-# sentence-transformers - not used (RAG uses Vertex AI), removed Jan 2026
+# sentence-transformers - not used (RAG uses LanceDB), removed Jan 2026
 
 # Testing (for CI)
 pytest>=7.0.0,<8.0.0
@@ -60,5 +60,5 @@ uvicorn==0.40.0                 # ASGI server for MCP
 # python-crontab==3.0.0          # Never imported - using schedule instead
 
 # RAG Vector Databases (Updated Jan 8, 2026)
-# chromadb>=1.0.0              # REMOVED: Using Vertex AI RAG + local JSON (Jan 2026)
+# chromadb>=1.0.0              # REMOVED: Using LanceDB + local JSON (Jan 2026)
 # lancedb>=0.26.0              # REMOVED: Never imported (Jan 2026)

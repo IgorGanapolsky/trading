@@ -824,7 +824,6 @@ class MCPSecurityValidator:
         "rss": {"fetch_feed", "list_feeds", "get_articles"},
         "youtube-transcript": {"get_transcript", "search_videos"},
         "pal": {"challenge", "debug", "chat"},
-        "vertex-ai": {"query", "search", "generate"},
         # Internal servers from registry
         "trade-agent": {
             "place_equity_order",
@@ -846,7 +845,6 @@ class MCPSecurityValidator:
         "slack": "medium",  # Messaging
         "rss": "medium",  # External content ingestion
         "youtube-transcript": "medium",  # External content
-        "vertex-ai": "medium",  # Cloud AI
         "mcp-trader": "low",  # Analysis only
         "options-order-flow": "low",  # Read-only
         "trading-ui": "low",  # Internal UI

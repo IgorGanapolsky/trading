@@ -336,7 +336,7 @@ class ActionableTaskEngine:
             context={"ticker": ticker, "strategy": strategy},
             success_criteria=[
                 {
-                    "description": "Trade logged to Vertex AI RAG",
+                    "description": "Trade logged to system_state.json",
                     "check_function": "rag_logged",
                     "expected_outcome": True,
                 }
