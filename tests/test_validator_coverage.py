@@ -28,10 +28,18 @@ class TestValidateTicker:
     def test_non_spy_blocked(self):
         valid, error = validate_ticker("AAPL")
         assert valid is False
-        assert "SPY ONLY" in error
+        assert "SPY/SPX/XSP ONLY" in error
 
     def test_spy_option_allowed(self):
         valid, error = validate_ticker("SPY260220P00660000")
+        assert valid is True
+
+    def test_spx_option_allowed(self):
+        valid, error = validate_ticker("SPX260220P00660000")
+        assert valid is True
+
+    def test_xsp_option_allowed(self):
+        valid, error = validate_ticker("XSP260220P00066000")
         assert valid is True
 
     def test_sofi_option_blocked(self):

@@ -13,8 +13,9 @@ from typing import Any, TypeVar
 from pydantic import BaseModel, Field, field_validator
 
 # Allowlist of tradeable symbols - UPDATED Jan 19, 2026 (LL-244)
-# Per CLAUDE.md: "SPY ONLY - best liquidity, tightest spreads"
-ALLOWED_SYMBOLS = frozenset({"SPY"})  # SPY ONLY per CLAUDE.md Jan 19, 2026
+# Per CLAUDE.md: SPY/SPX/XSP for index options
+# SPY = equity option, SPX/XSP = index options with Section 1256 tax treatment
+ALLOWED_SYMBOLS = frozenset({"SPY", "SPX", "XSP"})  # SPY/SPX/XSP per CLAUDE.md Feb 8, 2026
 
 # Maximum values to prevent resource exhaustion
 MAX_LOOKBACK_DAYS = 365

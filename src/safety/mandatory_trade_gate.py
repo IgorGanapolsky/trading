@@ -60,7 +60,7 @@ def validate_ticker(symbol: str) -> tuple[bool, str]:
     underlying = _extract_underlying(symbol)
 
     if underlying not in ALLOWED_TICKERS:
-        return False, f"{underlying} not allowed. SPY ONLY per CLAUDE.md."
+        return False, f"{underlying} not allowed. SPY/SPX/XSP ONLY per CLAUDE.md."
     return True, ""
 
 

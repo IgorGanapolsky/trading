@@ -48,7 +48,7 @@ class TradeExecutionEvals:
     def __init__(self, account_value: Decimal = Decimal("30000")):
         self.account_value = account_value
         self.max_position_pct = Decimal("0.05")  # 5% max per trade
-        self.allowed_tickers = ["SPY"]
+        self.allowed_tickers = ["SPY", "SPX", "XSP"]
         self.allowed_strategies = ["iron_condor"]
         self.min_dte = 30
         self.max_dte = 45
@@ -57,12 +57,12 @@ class TradeExecutionEvals:
         self.required_stop_loss_multiplier = 2.0
 
     def eval_ticker(self, proposal: TradeProposal) -> EvalResult:
-        """EVAL-001: Ticker must be SPY only."""
+        """EVAL-001: Ticker must be SPY, SPX, or XSP."""
         passed = proposal.ticker in self.allowed_tickers
         return EvalResult(
             passed=passed,
             rule="EVAL-001",
-            message=f"Ticker {proposal.ticker} {'allowed' if passed else 'NOT allowed. SPY ONLY.'}",
+            message=f"Ticker {proposal.ticker} {'allowed' if passed else 'NOT allowed. SPY/SPX/XSP ONLY.'}",
         )
 
     def eval_strategy(self, proposal: TradeProposal) -> EvalResult:

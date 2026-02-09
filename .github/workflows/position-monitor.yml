@@ -1,0 +1,34 @@
+name: Position Monitor
+
+on:
+  schedule:
+    # Every 30 minutes during market hours (9:30 AM - 4:00 PM ET = 14:30 - 21:00 UTC), Mon-Fri
+    - cron: '0,30 14-20 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt 2>/dev/null || pip install alpaca-trade-api requests
+
+      - name: Run position monitor
+        env:
+          ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+        run: |
+          python3 -c "
+          from src.risk.options_risk_monitor import OptionsRiskMonitor
+          monitor = OptionsRiskMonitor()
+          results = monitor.run_risk_check()
+          print(f'Position monitor results: {results}')
+          " || echo '::warning::Position monitor failed - check logs'

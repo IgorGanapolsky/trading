@@ -116,9 +116,9 @@ class TestInputValidation:
             )
 
     def test_allowed_symbols_match_claude_md(self):
-        """Verify allowed symbols match CLAUDE.md - UPDATED Jan 19, 2026: SPY ONLY."""
-        # Per CLAUDE.md Jan 19, 2026: "SPY ONLY - best liquidity, tightest spreads"
-        expected = frozenset({"SPY"})
+        """Verify allowed symbols match CLAUDE.md - UPDATED Feb 8, 2026: SPY/SPX/XSP."""
+        # Per CLAUDE.md: SPY (equity), SPX (Section 1256), XSP (mini-SPX)
+        expected = frozenset({"SPY", "SPX", "XSP"})
         assert expected == ALLOWED_SYMBOLS
 
     def test_max_order_amount_matches_5_percent_rule(self):

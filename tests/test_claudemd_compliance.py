@@ -137,7 +137,10 @@ class TestClaudeMdCompliance:
 
             assert underlying in [
                 "SPY",
+                "SPX",
+                "XSP",
                 "IWM",
+                "SPXW",
             ], f"Non-whitelisted ticker in positions: {symbol} (underlying: {underlying})"
 
     @pytest.mark.xfail(

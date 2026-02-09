@@ -12,12 +12,15 @@ Created: Jan 19, 2026 (Adversarial audit finding - 4 duplicate definitions)
 # =============================================================================
 # TICKER WHITELIST - SINGLE SOURCE OF TRUTH
 # =============================================================================
-# Per CLAUDE.md Jan 19, 2026: "SPY ONLY - best liquidity, tightest spreads"
+# Per CLAUDE.md: SPY/SPX/XSP for index options
+# SPY = Standard equity ETF option (100% short-term capital gains)
+# SPX/XSP = Index options with Section 1256 tax treatment (60/40 split)
 # This is the ONLY place ticker whitelist should be defined.
 # All modules MUST import from here to avoid maintenance issues.
 # UPDATED Jan 19, 2026 (LL-244): IWM removed per adversarial audit
+# UPDATED Feb 8, 2026: Added SPX and XSP for Section 1256 tax treatment
 # =============================================================================
-ALLOWED_TICKERS: set[str] = {"SPY"}  # SPY ONLY per CLAUDE.md Jan 19, 2026
+ALLOWED_TICKERS: set[str] = {"SPY", "SPX", "XSP"}  # SPY/SPX/XSP per CLAUDE.md Feb 8, 2026
 
 # =============================================================================
 # POSITION LIMITS - Phil Town Rule #1 (SINGLE SOURCE OF TRUTH)
