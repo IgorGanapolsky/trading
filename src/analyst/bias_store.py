@@ -36,7 +36,7 @@ class BiasSnapshot:
 class BiasProvider:
     """Provides market bias signals."""
 
-    def __init__(self, bias_store: "BiasStore" = None, freshness: timedelta = None):
+    def __init__(self, bias_store: BiasStore = None, freshness: timedelta = None):
         # Accept bias_store and freshness for compatibility with TradingOrchestrator
         # CEO FIX Jan 15, 2026: Orchestrator passes these args
         # RE-APPLIED Jan 16, 2026: Was accidentally reverted
