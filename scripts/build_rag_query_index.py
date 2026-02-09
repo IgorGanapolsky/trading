@@ -115,7 +115,7 @@ def build_index() -> list[dict]:
 
     # Sort by date desc if available; fallback keeps stable ordering
     lessons.sort(
-        key=lambda l: l.get("_date_sort") or "",
+        key=lambda lesson: lesson.get("_date_sort") or "",
         reverse=True,
     )
 
