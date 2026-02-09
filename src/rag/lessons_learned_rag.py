@@ -34,6 +34,7 @@ class LessonsLearnedRAG:
 
     def __init__(self, knowledge_dir: Optional[str] = None):
         self.knowledge_dir = Path(knowledge_dir or "rag_knowledge/lessons_learned")
+        self._custom_dir = knowledge_dir is not None
         self.lessons = []
         self.last_source = "none"
 
@@ -44,6 +45,9 @@ class LessonsLearnedRAG:
             "true",
             "yes",
         }
+        if self._custom_dir:
+            # Custom knowledge dirs are not indexed in LanceDB; force local search.
+            self.lancedb_enabled = False
         self.lancedb_required = os.getenv("LANCEDB_REQUIRED", "true").lower() in {
             "1",
             "true",

@@ -565,9 +565,9 @@ def generate_world_class_dashboard() -> str:
                     continue
 
                 # Format quantity (could be shares or notional)
-                if isinstance(qty, int | float) and qty < 1:
+                if isinstance(qty, (int, float)) and qty < 1:
                     qty_display = f"{qty:.6f}"
-                elif isinstance(qty, int | float):
+                elif isinstance(qty, (int, float)):
                     qty_display = f"${qty:,.2f}" if trade.get("notional") else f"{qty}"
                 else:
                     qty_display = str(qty)
@@ -575,7 +575,7 @@ def generate_world_class_dashboard() -> str:
             price = trade.get("filled_avg_price", trade.get("price", trade.get("credit", 0)))
 
             # Format price
-            if isinstance(price, int | float) and price > 0:
+            if isinstance(price, (int, float)) and price > 0:
                 price_display = f"${price:,.2f}"
             else:
                 price_display = "Market"

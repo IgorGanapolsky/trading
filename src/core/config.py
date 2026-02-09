@@ -5,6 +5,8 @@ Uses pydantic-settings to parse environment variables and enforce basic ranges.
 
 from __future__ import annotations
 
+from typing import Optional
+
 from pydantic import Field, field_validator
 
 try:  # pragma: no cover - test sandboxes may lack the nested provider module
@@ -109,7 +111,7 @@ class AppConfig(BaseSettings):
         le=500.0,
         description="Monthly LLM API budget in USD",
     )
-    FORCE_LLM_MODEL: str | None = Field(
+    FORCE_LLM_MODEL: Optional[str] = Field(
         default=None,
         description="Force all agents to use this model (for testing/debugging)",
     )
