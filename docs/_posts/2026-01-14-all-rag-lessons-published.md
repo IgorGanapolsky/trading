@@ -55,9 +55,9 @@ Trading system ran for 74 days with zero trades executed. Complex 5-gate pipelin
 
 **Severity**: CRITICAL | **Impact**: Trust violation
 
-CTO claimed theta decay income and profits while actual P/L was -$24.19. RAG webhook showed stale data (Last Trade: Jan 6) but CTO did not verify.
+CTO claimed theta decay income and profits while actual P/L was -$24.19. RAG Webhook showed stale data (Last Trade: Jan 6) but CTO did not verify.
 
-**Prevention**: ALWAYS query RAG webhook before making financial claims. Say "I don't know, let me verify" when uncertain.
+**Prevention**: ALWAYS query RAG Webhook before making financial claims. Say "I don't know, let me verify" when uncertain.
 
 ---
 
@@ -85,7 +85,7 @@ Dashboard stopped updating for 3 days without visible error. `continue-on-error:
 
 ---
 
-### 7. Dialogflow Webhook Used Wrong Key (Jan 12, 2026)
+### 7. RAG Webhook Used Wrong Key (Jan 12, 2026)
 
 Webhook looked for `paper_account.current_equity` but system_state.json has `paper_account.equity`. Showed $0 instead of $5000.
 
@@ -108,7 +108,7 @@ Full codebase audit revealed:
 - 83% of source modules have NO tests (93/112)
 - 22 bare exception handlers
 - 5 duplicate trader scripts
-- 3 duplicate Dialogflow workflows
+- 3 duplicate RAG Webhook workflows
 - Critical files like orchestrator/main.py (2852 LOC) have ZERO tests
 
 ---

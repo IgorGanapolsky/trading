@@ -38,7 +38,7 @@ flowchart TB
     end
 
     subgraph OUTPUT["Output Layer"]
-        WEBHOOK["Dialogflow Webhook<br/>(Cloud Run)"]
+        WEBHOOK["RAG Webhook<br/>(Cloud Run)"]
         BLOG["GitHub Pages Blog"]
         DEVTO["Dev.to Articles"]
     end
@@ -357,7 +357,7 @@ flowchart LR
 | Service          | Provider                 | Purpose                       |
 | ---------------- | ------------------------ | ----------------------------- |
 | **RAG Corpus**   | LanceDB (local)          | Vector search, embeddings     |
-| **Webhook**      | Google Cloud Run         | Dialogflow integration        |
+| **Webhook**      | Google Cloud Run         | RAG Webhook integration        |
 | **CI/CD**        | GitHub Actions           | Automated testing, deployment |
 | **Blog Hosting** | GitHub Pages             | Static site hosting           |
 | **Broker**       | Alpaca                   | Paper/Live trading            |

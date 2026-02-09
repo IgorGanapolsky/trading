@@ -46,7 +46,7 @@ If you violate any protocol in this file: stop, acknowledge, fix completely, rec
 
 | Workflow | Schedule | Purpose |
 |---|---|---|
-| `weekend-learning.yml` | Sunday 8am ET | Phil Town YouTube, blogs, Bogleheads, vectorize to RAG |
+| `weekend-learning.yml` | Sunday 8am ET | Phil Town YouTube, blogs, vectorize to RAG |
 | `weekend-research.yml` | Saturday 1am ET | GPU backtest + Perplexity deep research on iron condors |
 | `phil-town-ingestion.yml` | Sat+Sun 8am ET | Phil Town transcripts + blog articles to RAG |
 

@@ -1,4 +1,4 @@
-# Cloud Build configuration for Dialogflow Webhook
+# Cloud Build configuration for RAG Webhook
 # Forces --no-cache to prevent stale image deployments
 
 steps:
@@ -8,9 +8,9 @@ steps:
       - "build"
       - "--no-cache"
       - "-t"
-      - "us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/trading-dialogflow-webhook:$SHORT_SHA"
+      - "us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/trading-rag-webhook:$SHORT_SHA"
       - "-t"
-      - "us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/trading-dialogflow-webhook:latest"
+      - "us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/trading-rag-webhook:latest"
       - "-f"
       - "Dockerfile"
       - "."
@@ -20,7 +20,7 @@ steps:
     args:
       - "push"
       - "--all-tags"
-      - "us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/trading-dialogflow-webhook"
+      - "us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/trading-rag-webhook"
 
   # Deploy to Cloud Run
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
@@ -28,9 +28,9 @@ steps:
     args:
       - "run"
       - "deploy"
-      - "trading-dialogflow-webhook"
+      - "trading-rag-webhook"
       - "--image"
-      - "us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/trading-dialogflow-webhook:$SHORT_SHA"
+      - "us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/trading-rag-webhook:$SHORT_SHA"
       - "--region"
       - "us-central1"
       - "--platform"
@@ -48,8 +48,8 @@ steps:
       - "60s"
 
 images:
-  - "us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/trading-dialogflow-webhook:$SHORT_SHA"
-  - "us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/trading-dialogflow-webhook:latest"
+  - "us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/trading-rag-webhook:$SHORT_SHA"
+  - "us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/trading-rag-webhook:latest"
 
 options:
   logging: CLOUD_LOGGING_ONLY

@@ -20,14 +20,14 @@
 **Cross-System Verification:**
 - Alpaca (source): $X,XXX.XX
 - system_state.json: ✅/❌
-- Dialogflow: ✅/❌
+- RAG Webhook: ✅/❌
 - GitHub Pages: ✅/❌
 ```
 
 ### Data Sources
 
 1. Query Alpaca API directly (or use cached system_state.json)
-2. Query Dialogflow webhook: `curl https://trading-dialogflow-webhook-cqlewkvzdq-uc.a.run.app/test-readiness`
+2. Query RAG Webhook: `curl https://trading-RAG Webhook-webhook-cqlewkvzdq-uc.a.run.app/test-readiness`
 3. Verify GitHub Pages index.md matches
 
 ### P/L Reason Guidelines

@@ -128,6 +128,7 @@ jobs:
 
           git add rag_knowledge/lessons_learned/
           git add docs/_posts/
+          git add data/rag/lessons_query.json
 
           if git diff --staged --quiet; then
             echo "No changes to commit"

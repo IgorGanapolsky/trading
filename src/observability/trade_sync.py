@@ -94,7 +94,7 @@ class TradeSync:
         Save trade to system_state.json -> trade_history.
 
         This is the SINGLE SOURCE OF TRUTH for trade data.
-        The Dialogflow webhook reads from this file (locally or via GitHub API).
+        The RAG Webhook reads from this file (locally or via GitHub API).
         """
         try:
             # Load existing state

@@ -8,6 +8,7 @@ import json
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
+import sqlite3
 from typing import Iterable
 
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -15,6 +16,15 @@ FEEDBACK_LOG = PROJECT_ROOT / ".claude" / "memory" / "feedback" / "feedback-log.
 DATA_FEEDBACK_DIR = PROJECT_ROOT / "data" / "feedback"
 STATS_PATH = DATA_FEEDBACK_DIR / "stats.json"
 METRICS_PATH = DATA_FEEDBACK_DIR / "metrics.json"
+MEMALIGN_DIR = PROJECT_ROOT / ".claude" / "memory" / "memalign"
+MEMALIGN_EPISODES = MEMALIGN_DIR / "episodes.jsonl"
+MEMALIGN_PRINCIPLES = MEMALIGN_DIR / "principles.jsonl"
+CORTEX_LEDGER = PROJECT_ROOT / ".claude" / "memory" / "feedback" / "cortex_ledger.jsonl"
+PENDING_CORTEX_PATHS = [
+    PROJECT_ROOT / ".claude" / "memory" / "feedback" / "pending_cortex_sync.jsonl",
+    PROJECT_ROOT / ".claude" / "memory" / "pending_cortex_sync.jsonl",
+]
+SHIELDCORTEX_DB = Path.home() / ".shieldcortex" / "memories.db"
 
 
 CATEGORY_RULES = {
@@ -51,6 +61,43 @@ def _iter_jsonl(path: Path) -> Iterable[dict]:
                 continue
     except OSError:
         return
+
+
+def _count_jsonl(path: Path) -> int:
+    if not path.exists():
+        return 0
+    try:
+        return sum(1 for line in path.read_text(encoding="utf-8").splitlines() if line.strip())
+    except OSError:
+        return 0
+
+
+def _count_pending_cortex() -> int:
+    for path in PENDING_CORTEX_PATHS:
+        if path.exists():
+            return _count_jsonl(path)
+    return 0
+
+
+def _shieldcortex_stats() -> dict:
+    if not SHIELDCORTEX_DB.exists():
+        return {"available": False}
+
+    stats = {"available": True, "path": str(SHIELDCORTEX_DB)}
+    try:
+        conn = sqlite3.connect(str(SHIELDCORTEX_DB))
+        cur = conn.cursor()
+        cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tables = [row[0] for row in cur.fetchall()]
+        stats["tables"] = tables
+        for table in ("memories", "events", "entities", "memory_links", "quarantine"):
+            if table in tables:
+                cur.execute(f"SELECT COUNT(*) FROM {table}")
+                stats[f"{table}_count"] = cur.fetchone()[0]
+        conn.close()
+    except Exception as exc:
+        stats["error"] = str(exc)
+    return stats
 
 
 def _normalize_signal(entry: dict) -> str | None:
@@ -131,6 +178,11 @@ def compute_metrics() -> dict:
         for category in entry.get("_categories", []):
             category_counts[category] = category_counts.get(category, 0) + 1
 
+    memalign_episodes = _count_jsonl(MEMALIGN_EPISODES)
+    memalign_principles = _count_jsonl(MEMALIGN_PRINCIPLES)
+    cortex_ledger_entries = _count_jsonl(CORTEX_LEDGER)
+    pending_cortex_sync = _count_pending_cortex()
+
     metrics = {
         "positive": positive,
         "negative": negative,
@@ -143,6 +195,16 @@ def compute_metrics() -> dict:
         "last_7d_positive": last_7d_positive,
         "last_7d_satisfaction_rate": round(last_7d_rate, 2),
         "category_counts": dict(sorted(category_counts.items())),
+        "rlhf_pipeline": {
+            "feedback_log_entries": total,
+            "memalign_episodes": memalign_episodes,
+            "memalign_principles": memalign_principles,
+            "cortex_ledger_entries": cortex_ledger_entries,
+            "pending_cortex_sync": pending_cortex_sync,
+            "memalign_sync_rate": round((memalign_episodes / total), 2) if total else None,
+            "cortex_sync_rate": round((cortex_ledger_entries / total), 2) if total else None,
+        },
+        "shieldcortex": _shieldcortex_stats(),
     }
 
     return metrics

@@ -968,5 +968,13 @@
     "target_win_rate": 0.8,
     "current_day": 11,
     "notes": "Paper phase per CLAUDE.md - validate 80%+ win rate before scaling"
+  },
+  "trailing_stops": {
+    "last_set": "2026-02-09T14:06:47.759560",
+    "stops_active": 1,
+    "positions_skipped": 0,
+    "value_protected": 500.0,
+    "default_trail_pct": 0.1,
+    "options_trail_pct": 0.2
   }
 }

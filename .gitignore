@@ -120,6 +120,8 @@ data/chroma_db/
 .claude/memory/lancedb/
 .claude/memory/model_cache/
 .claude/memory/chroma_db/
+.claude/memory/memalign/
+.claude/memory/lessons-learned.memory.md
 .claude/scripts/feedback/venv/
 
 # CCPM local workspace (project management)

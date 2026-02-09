@@ -39,6 +39,7 @@ jobs:
           git config --local user.name "GitHub Action"
 
           git add docs/_posts/
+          git add data/rag/lessons_query.json
 
           if git diff --staged --quiet; then
             echo "Blog already up to date"

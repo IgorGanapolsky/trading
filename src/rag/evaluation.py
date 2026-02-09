@@ -144,9 +144,9 @@ DEFAULT_TEST_QUERIES = [
         description="LL-268 covers delta selection (15-20 delta)",
     ),
     EvaluationQuery(
-        query="Dialogflow RAG query",
-        expected_lesson_ids=["LL-300_Dialogflow_RAG_Query_Fix_Jan23"],
-        description="Should find Dialogflow RAG fix lesson",
+        query="RAG Webhook RAG query",
+        expected_lesson_ids=["LL-300_RAG_Webhook_RAG_Query_Fix_Jan23"],
+        description="Should find RAG Webhook RAG fix lesson",
     ),
     EvaluationQuery(
         query="iron condor entry signals",

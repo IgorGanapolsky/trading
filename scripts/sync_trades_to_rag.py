@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sync today's trades to local records for Dialogflow queries.
+"""Sync today's trades to local records for RAG Webhook queries.
 
 This script runs post-trade to ensure:
 1. Trades are recorded in system_state.json (source of truth)

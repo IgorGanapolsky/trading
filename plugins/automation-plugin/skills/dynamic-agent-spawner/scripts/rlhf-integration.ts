@@ -6,8 +6,8 @@
  * - Cortex: Human-readable audit trail for oversight
  */
 
-import { MemAlign, type Feedback } from "./memalign.js";
-import { CortexWriter, type CortexEntry } from "./cortex-writer.js";
+import { MemAlign, type Feedback } from "./memalign.ts";
+import { CortexWriter, type CortexEntry } from "./cortex-writer.ts";
 import { readFileSync, existsSync, writeFileSync } from "fs";
 import { join } from "path";
 
@@ -22,23 +22,34 @@ interface RLHFEvent {
 class RLHFIntegration {
   private memAlign: MemAlign;
   private cortex: CortexWriter;
+  private pendingFeedbackFiles: string[];
   private pendingFeedbackFile: string;
 
   constructor() {
     this.memAlign = new MemAlign();
     this.cortex = new CortexWriter();
-    this.pendingFeedbackFile = join(
-      process.cwd(),
-      ".claude",
-      "memory",
-      "pending_cortex_sync.jsonl",
-    );
+    const memoryRoot = join(process.cwd(), ".claude", "memory");
+    this.pendingFeedbackFiles = [
+      join(memoryRoot, "feedback", "pending_cortex_sync.jsonl"),
+      join(memoryRoot, "pending_cortex_sync.jsonl"),
+    ];
+    this.pendingFeedbackFile = this.resolvePendingFile();
+  }
+
+  private resolvePendingFile(): string {
+    for (const candidate of this.pendingFeedbackFiles) {
+      if (existsSync(candidate)) {
+        return candidate;
+      }
+    }
+    return this.pendingFeedbackFiles[0];
   }
 
   /**
    * Process pending RLHF feedback and sync to BOTH MemAlign + Cortex
    */
   async syncPendingFeedback(): Promise<void> {
+    this.pendingFeedbackFile = this.resolvePendingFile();
     if (!existsSync(this.pendingFeedbackFile)) {
       console.log("ℹ️  No pending feedback to sync");
       return;

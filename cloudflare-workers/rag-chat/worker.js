@@ -4,8 +4,7 @@
  * Supports conversation history for follow-up questions
  */
 
-const RAG_SEARCH_URL =
-  "https://trading-dialogflow-webhook-cqlewkvzdq-uc.a.run.app/rag-search";
+const DEFAULT_RAG_SEARCH_URL = "";
 const LESSONS_INDEX_URL =
   "https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/rag/lessons_query.json";
 const LESSONS_INDEX_FALLBACK_URL =
@@ -146,9 +145,11 @@ function keywordSearch(lessons, query, topK) {
     .map((item) => item.lesson);
 }
 
-async function fetchRagSearch(query, topK) {
+async function fetchRagSearch(query, topK, env) {
+  const ragSearchUrl = (env && env.RAG_SEARCH_URL) || DEFAULT_RAG_SEARCH_URL;
+  if (!ragSearchUrl) return null;
   try {
-    const res = await fetch(RAG_SEARCH_URL, {
+    const res = await fetch(ragSearchUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query, top_k: topK }),
@@ -160,8 +161,8 @@ async function fetchRagSearch(query, topK) {
   }
 }
 
-async function getLessonsForQuery(query, topK) {
-  const rag = await fetchRagSearch(query, topK);
+async function getLessonsForQuery(query, topK, env) {
+  const rag = await fetchRagSearch(query, topK, env);
   if (rag && Array.isArray(rag.results) && rag.results.length > 0) {
     return {
       results: rag.results.map(normalizeLesson),
@@ -293,15 +294,6 @@ function buildSystemPrompt(liveData, lessons, source) {
     }
   }
 
-  // Append lesson context
-  lines.push("=== TRADING LESSONS ===");
-  lines.push(
-    LESSONS_CONTEXT.replace(
-      /^You are a trading knowledge assistant.*?\n\n/,
-      "",
-    ),
-  );
-
   return lines.join("\n");
 }
 
@@ -339,7 +331,7 @@ export default {
         }
 
         const topK = Number(payload.top_k || 5);
-        const { results, source } = await getLessonsForQuery(query, topK);
+        const { results, source } = await getLessonsForQuery(query, topK, env);
 
         return new Response(JSON.stringify({ results, source }), {
           headers: {
@@ -379,7 +371,11 @@ export default {
 
       // Fetch live portfolio data + lessons (LanceDB-first with fallback)
       const liveData = await fetchLiveData();
-      const { results: lessons, source } = await getLessonsForQuery(message, 8);
+      const { results: lessons, source } = await getLessonsForQuery(
+        message,
+        8,
+        env,
+      );
       const systemPrompt = buildSystemPrompt(liveData, lessons, source);
 
       const response = await fetch("https://api.anthropic.com/v1/messages", {

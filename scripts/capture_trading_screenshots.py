@@ -9,7 +9,7 @@ This script captures screenshots of:
 
 Screenshots are saved to data/screenshots/ with timestamps for:
 - Cowork analysis (Claude Desktop)
-- DialogFlow webhook analysis
+- RAG Webhook analysis
 - Historical tracking
 
 Usage:
@@ -541,7 +541,7 @@ async def main():
     print("1. Install Claude Desktop with Claude Max subscription")
     print(f"2. Point Cowork to: {capturer.output_dir.absolute()}")
     print("3. Ask Claude: 'Analyze my latest trading screenshots'")
-    print("\n💡 To query via DialogFlow:")
+    print("\n💡 To query via RAG Webhook:")
     print("1. Screenshots are saved with timestamps")
     print("2. Ask: 'What's in my latest dashboard screenshot?'")
     print("3. Or: 'Compare today's vs yesterday's portfolio'")

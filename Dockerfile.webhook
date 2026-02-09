@@ -1,4 +1,4 @@
-# Dockerfile for Dialogflow Webhook with LanceDB RAG
+# Dockerfile for RAG Webhook with LanceDB RAG
 # Includes LanceDB for local semantic search
 FROM python:3.11-slim
 
@@ -25,7 +25,7 @@ RUN mkdir -p src/agents src/rag src/memory rag_knowledge/lessons_learned data
 RUN touch src/__init__.py src/agents/__init__.py src/rag/__init__.py src/memory/__init__.py
 
 # Copy RAG files for semantic search
-COPY src/agents/dialogflow_webhook.py src/agents/
+COPY src/agents/rag_webhook.py src/agents/
 COPY src/rag/lessons_learned_rag.py src/rag/
 COPY src/rag/lessons_search.py src/rag/
 COPY src/memory/document_aware_rag.py src/memory/
@@ -38,4 +38,4 @@ COPY data/system_state.json data/
 EXPOSE 8080
 
 # Run webhook
-CMD ["python", "-m", "uvicorn", "src.agents.dialogflow_webhook:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["python", "-m", "uvicorn", "src.agents.rag_webhook:app", "--host", "0.0.0.0", "--port", "8080"]

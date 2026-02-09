@@ -1,0 +1,20 @@
+{
+  "version": "2025-09-15",
+  "high_risk_domains": ["finance"],
+  "requirements": {
+    "ai_disclosure": {
+      "required": true,
+      "surfaces": [
+        "docs/rag-query.html",
+        "src/agents/rag_webhook.py"
+      ]
+    },
+    "human_review": {
+      "required": true,
+      "reference": "src/orchestration/agentic_guardrails.py"
+    }
+  },
+  "ci_guardrails": [
+    "scripts/check_anthropic_compliance.py"
+  ]
+}

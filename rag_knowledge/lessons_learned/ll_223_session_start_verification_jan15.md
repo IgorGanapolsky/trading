@@ -7,7 +7,7 @@
 
 ## CEO Directive
 
-"Every time I start a session, report exactly how much money we made today or lost today (with brief reasons). Report what is showing on the progress dashboard and GitHub - is it matching what Alpaca shows? Alpaca is the single source of truth. Query Dialogflow and verify it matches Alpaca."
+"Every time I start a session, report exactly how much money we made today or lost today (with brief reasons). Report what is showing on the progress dashboard and GitHub - is it matching what Alpaca shows? Alpaca is the single source of truth. Query RAG Webhook and verify it matches Alpaca."
 
 ## Solution Implemented
 
@@ -16,7 +16,7 @@ Created `scripts/session_start_verification.py` that:
 1. **Fetches Alpaca API** (source of truth) - equity, P/L, positions
 2. **Reads local cache** (system_state.json) - for comparison
 3. **Fetches GitHub Pages** dashboard - for comparison
-4. **Queries Dialogflow** - for AI assistant verification
+4. **Queries RAG Webhook** - for AI assistant verification
 5. **Reports discrepancies** - flags any mismatches
 
 ## Standard Session Start Procedure

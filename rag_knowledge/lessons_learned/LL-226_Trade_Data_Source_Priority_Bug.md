@@ -7,7 +7,7 @@
 
 ## Summary
 
-The Dialogflow webhook was showing `trades_loaded=0` despite having 38 trades in `system_state.json`. Root cause: incorrect data source priority order.
+The RAG Webhook was showing `trades_loaded=0` despite having 38 trades in `system_state.json`. Root cause: incorrect data source priority order.
 
 ## The Bug
 
@@ -17,7 +17,7 @@ The Dialogflow webhook was showing `trades_loaded=0` despite having 38 trades in
 | ----------------------- | ------------------------------------------ | ----------------------------------------------- |
 | `sync-system-state.yml` | `data/system_state.json` → `trade_history` | Alpaca API ✓                                    |
 | `trade_sync.py`         | `data/trades_{date}.json`                  | Local code calls                                |
-| `dialogflow_webhook.py` | Reads from                                 | `trades_*.json` FIRST, then `system_state.json` |
+| `rag_webhook.py` | Reads from                                 | `trades_*.json` FIRST, then `system_state.json` |
 
 ### The Problem
 
@@ -89,7 +89,7 @@ if not trades:
 
 ## Related Files
 
-- `src/agents/dialogflow_webhook.py` - Fixed
+- `src/agents/rag_webhook.py` - Fixed
 - `src/observability/trade_sync.py` - Legacy, consider deprecating
 - `.github/workflows/sync-system-state.yml` - Source of truth sync
 - `data/system_state.json` - Authoritative trade data
@@ -99,7 +99,7 @@ if not trades:
 After deployment, check:
 
 ```bash
-curl https://trading-dialogflow-webhook-cqlewkvzdq-uc.a.run.app/health
+curl https://your-rag-webhook-url/health
 # Should show: "trade_history_source": "system_state.json (Alpaca)"
 # Should show: "trades_loaded": 38 (or current count)
 ```

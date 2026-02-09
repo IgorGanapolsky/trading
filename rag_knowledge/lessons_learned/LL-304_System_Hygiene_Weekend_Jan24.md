@@ -19,7 +19,7 @@ Established weekend system hygiene protocol for maintaining code quality and rep
 
 - `mandatory_trade_gate.py`: Moved threading import to file top
 - `execution_agent.py`: Moved docstring before **future** import
-- `dialogflow_webhook.py`: Added noqa for intentional E402 (sys.path manipulation)
+- `rag_webhook.py`: Added noqa for intentional E402 (sys.path manipulation)
 
 ## Branch Status
 

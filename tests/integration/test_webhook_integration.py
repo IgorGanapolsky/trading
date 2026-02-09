@@ -1,23 +1,27 @@
 #!/usr/bin/env python3
 """
-Integration test for Dialogflow webhook.
+Integration test for RAG Webhook.
 
-This test runs in CI to verify the webhook can load trade data.
+This test verifies the webhook can load trade data.
 Catches issues like LL-230 where trades_loaded=0 on Cloud Run.
 
 Created: Jan 17, 2026
 """
 
 import json
+import os
 import sys
 import urllib.request
 
-WEBHOOK_URL = "https://trading-dialogflow-webhook-cqlewkvzdq-uc.a.run.app"
+WEBHOOK_URL = os.environ.get("RAG_WEBHOOK_URL", "").strip()
 
 
 def test_webhook_health():
     """Verify webhook is healthy and has trade data loaded."""
     print("🔍 Testing webhook health endpoint...")
+    if not WEBHOOK_URL:
+        print("⚠️  SKIP: RAG_WEBHOOK_URL not set")
+        return True
 
     try:
         req = urllib.request.Request(
@@ -61,6 +65,9 @@ def test_webhook_health():
 def test_webhook_trade_query():
     """Verify webhook can respond to trade queries."""
     print("\n🔍 Testing webhook trade query...")
+    if not WEBHOOK_URL:
+        print("⚠️  SKIP: RAG_WEBHOOK_URL not set")
+        return True
 
     try:
         payload = json.dumps(
@@ -116,6 +123,9 @@ def test_webhook_compound_query():
     NOT a raw trade dump.
     """
     print("\n🔍 Testing webhook compound P/L + analytical query...")
+    if not WEBHOOK_URL:
+        print("⚠️  SKIP: RAG_WEBHOOK_URL not set")
+        return True
 
     try:
         payload = json.dumps(

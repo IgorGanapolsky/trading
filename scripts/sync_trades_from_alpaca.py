@@ -3,11 +3,11 @@
 Sync Trades FROM Alpaca - Create local trade files from broker activity.
 
 Created: Jan 15, 2026
-Purpose: Fix dashboard showing 0 trades when Dialogflow shows 9 trades.
+Purpose: Fix dashboard showing 0 trades when RAG Webhook shows 9 trades.
 
 ROOT CAUSE: Trading scripts execute on Alpaca but don't create local trade files.
 The dashboard reads from local files which don't exist for today.
-Dialogflow queries Alpaca directly and shows accurate data.
+RAG Webhook queries Alpaca directly and shows accurate data.
 
 SOLUTION: This script fetches today's fills from Alpaca and creates
 data/trades_{date}.json so the dashboard shows accurate trade counts.
@@ -59,7 +59,7 @@ def fetch_todays_fills(date_str: str | None = None) -> list[dict]:
     """
     Fetch today's fill activities from Alpaca API.
 
-    This is the same approach used by Dialogflow webhook (which shows accurate data).
+    This is the same approach used by RAG Webhook (which shows accurate data).
 
     Args:
         date_str: Date in YYYY-MM-DD format, defaults to today (US Eastern)

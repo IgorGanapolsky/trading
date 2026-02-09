@@ -1568,7 +1568,7 @@ jobs:
           fi
 
       # FIX Jan 15, 2026: Sync trades FROM Alpaca before dashboard generation
-      # ROOT CAUSE: Dashboard showed 0 trades while Dialogflow showed 9 trades
+      # ROOT CAUSE: Dashboard showed 0 trades while RAG Webhook showed 9 trades
       # because trading scripts don't create local trade files.
       # SOLUTION: Fetch fills from Alpaca API and create trades_{date}.json
       - name: Sync Trades from Alpaca (Pre-Dashboard)
@@ -1582,7 +1582,7 @@ jobs:
           echo "🔄 SYNC TRADES FROM ALPACA (Pre-Dashboard)"
           echo "🔄 ========================================"
           echo ""
-          echo "FIX Jan 15: Dashboard was showing 0 trades while Dialogflow showed 9"
+          echo "FIX Jan 15: Dashboard was showing 0 trades while RAG Webhook showed 9"
           echo "This sync fetches fills from Alpaca and creates local trade files"
           echo ""
           python3 scripts/sync_trades_from_alpaca.py || {

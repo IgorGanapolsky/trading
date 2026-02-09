@@ -1,4 +1,4 @@
-# LL-300: Dialogflow RAG Query Fix - Irrelevant Lessons Returned
+# LL-300: RAG Webhook RAG Query Fix - Irrelevant Lessons Returned
 
 **ID**: LL-300
 **Date**: 2026-01-23
@@ -8,7 +8,7 @@
 
 ## What Happened
 
-Dialogflow returned irrelevant failure lessons (LL-272, LL-282, LL-223) when user asked "How much money did we make today and why?" on a day with no trades.
+RAG Webhook returned irrelevant failure lessons (LL-272, LL-282, LL-223) when user asked "How much money did we make today and why?" on a day with no trades.
 
 ## Root Cause
 
@@ -19,7 +19,7 @@ Dialogflow returned irrelevant failure lessons (LL-272, LL-282, LL-223) when use
 
 ## The Fix
 
-In `src/agents/dialogflow_webhook.py`:
+In `src/agents/rag_webhook.py`:
 
 ```python
 # When no trades, use relevant query instead of user query
@@ -41,7 +41,7 @@ RAG semantic search matches tokens, not intent. When user asks about P/L:
 
 1. Always consider context when routing RAG queries
 2. No-trade days need different query strategy than trade days
-3. Test Dialogflow with various edge cases (no trades, market closed, etc.)
+3. Test RAG Webhook with various edge cases (no trades, market closed, etc.)
 
 ## Related
 
@@ -50,4 +50,4 @@ RAG semantic search matches tokens, not intent. When user asks about P/L:
 
 ## Tags
 
-dialogflow, rag, webhook, bug-fix, query-routing
+rag-webhook, rag, webhook, bug-fix, query-routing

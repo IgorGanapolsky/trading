@@ -53,16 +53,6 @@
       }
     },
     {
-      "id": "bogleheads-learner",
-      "display_name": "Bogleheads Forum Learner",
-      "module": "mcp.servers.bogleheads_server",
-      "tools": {
-        "monitor_bogleheads_forum": "monitor_bogleheads_forum",
-        "get_bogleheads_signal": "get_bogleheads_signal",
-        "analyze_bogleheads_regime": "analyze_bogleheads_regime"
-      }
-    },
-    {
       "id": "alpaca",
       "display_name": "Alpaca Direct (AlpacaTrader)",
       "module": "mcp.servers.alpaca",

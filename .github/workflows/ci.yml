@@ -21,6 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -39,6 +41,12 @@ jobs:
 
       - name: Run Ruff formatter check
         run: ruff format --check .
+
+      - name: Lint blog posts (Discover compliance)
+        run: python3 scripts/lint_blog_posts.py --changed --strict
+
+      - name: Anthropic compliance guardrail
+        run: python3 scripts/check_anthropic_compliance.py
 
   # Added Dec 12, 2025: Workflow validation to prevent dependency issues (LL-021)
   workflow-validation:
@@ -104,6 +112,7 @@ jobs:
           name: coverage-report
           path: coverage.xml
         if: always()
+        continue-on-error: true
 
   smoke:
     name: Smoke Test

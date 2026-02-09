@@ -19,7 +19,7 @@ Multiple workflows calling legacy RAG APIs:
    - `pre_session_rag_check.py`
    - `record_account_to_rag.py`
    - `sync_trades_to_rag.py`
-4. Dialogflow webhook (Cloud Run) - Every voice query uses legacy RAG
+4. RAG Webhook (Cloud Run) - Every voice query uses legacy RAG
 
 ## Cloud RAG Cost Breakdown (Estimated)
 

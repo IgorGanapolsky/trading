@@ -8,5 +8,4 @@ __all__ = [
     "openrouter",
     "gmail",
     "slack",
-    "bogleheads_server",
 ]

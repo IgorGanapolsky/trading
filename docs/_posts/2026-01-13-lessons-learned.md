@@ -106,9 +106,9 @@ _Not emergencies, but insights that will shape how we trade going forward._
 
 Removed 14 placeholder tests that only contained `assert True`. These provided false coverage metrics and violated the "Never lie" directive.
 
-### Dialogflow Webhook Missing legacy RAG - Only Local Keyword...
+### RAG Webhook Missing legacy RAG - Only Local Keyword...
 
-Dialogflow webhook was falling back to local keyword search instead of using legacy RAG semantic search. CEO saw "Based on our lessons learned (local search):" instead of synthesized answers from Gemin
+RAG Webhook was falling back to local keyword search instead of using legacy RAG semantic search. CEO saw "Based on our lessons learned (local search):" instead of synthesized answers from Gemin
 
 ### Comprehensive CEO Review - Technical Debt Audit & Critica...
 
