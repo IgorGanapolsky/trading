@@ -944,7 +944,7 @@
     "last_trade_date": "2026-02-09",
     "today_trades": 0,
     "total_trades_today": 0,
-    "last_trade_symbol": "SPY260313C00725000"
+    "last_trade_symbol": "SYNCED"
   },
   "risk": {
     "status": "MONITORING",
@@ -958,7 +958,7 @@
     "positions_count": 4
   },
   "meta": {
-    "last_updated": "2026-02-09T15:16:46.625836+00:00",
+    "last_updated": "2026-02-09T15:55:07.020353+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5
   },
