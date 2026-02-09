@@ -180,8 +180,7 @@ class TestSyncTrade:
 
             # At minimum, system_state should succeed
             assert results["system_state"] is True
-            # Results should include vertex_rag (may be False if not configured)
-            assert "vertex_rag" in results
+            # Vertex AI removed Feb 2026 — only system_state result expected
 
     def test_sync_trade_with_metadata(self):
         """Should sync trade with custom metadata."""

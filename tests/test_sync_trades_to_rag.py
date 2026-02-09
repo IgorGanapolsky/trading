@@ -153,22 +153,7 @@ class TestFormatTradeDocument:
         assert "Trade Record: XYZ" in doc
         assert "unknown" in doc.lower()
 
-
-class TestSyncFunctions:
-    """Tests for sync functions (mocked)."""
-
-    def test_sync_to_vertex_rag_not_available(self):
-        """Test Vertex AI sync handles import error gracefully."""
-        # When VertexRAG import fails, function should return False
-        from scripts.sync_trades_to_rag import sync_to_vertex_rag
-
-        # Patch the import inside the function by patching sys.modules
-        with patch.dict("sys.modules", {"src.rag.vertex_rag": None}):
-            result = sync_to_vertex_rag([{"symbol": "SPY"}])
-            # In sandbox/CI, this will return False (not available)
-            assert result in [True, False]
-
-    # Note: sync_to_chromadb test removed - ChromaDB removed Jan 7, 2026
+    # Note: Vertex AI sync tests removed - Vertex AI removed Feb 9, 2026
 
 
 if __name__ == "__main__":

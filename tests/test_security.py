@@ -640,7 +640,6 @@ class TestMCPSecurityValidator:
             ("playwright", "navigate"),
             ("rss", "fetch_feed"),
             ("pal", "challenge"),
-            ("vertex-ai", "query"),
             ("trade-agent", "place_equity_order"),
         ],
     )
