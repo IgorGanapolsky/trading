@@ -136,12 +136,13 @@
     "cash": 101439.99,
     "buying_power": 405759.96,
     "total_pl": 1439.9900000000052,
-    "total_pl_pct": 1.44,
+    "total_pl_pct": 1.4399900000000052,
     "positions_count": 0,
     "daily_change": 0.0,
     "win_rate": 37.5,
     "win_rate_sample_size": 32,
-    "starting_balance": 100000.0
+    "starting_balance": 100000.0,
+    "current_equity": 101439.99
   },
   "positions": [],
   "trade_history": [
@@ -921,13 +922,17 @@
   "account": {
     "current_equity": 101439.99,
     "total_pl": 1439.9900000000052,
-    "total_pl_pct": 1.44,
-    "positions_count": 0
+    "total_pl_pct": 1.4399900000000052,
+    "positions_count": 0,
+    "cash": 101439.99,
+    "buying_power": 405759.96
   },
   "meta": {
-    "last_updated": "2026-02-09T14:28:34.843806+00:00",
+    "last_updated": "2026-02-09T14:43:50.941793",
     "trade_sync": "alpaca_api",
-    "sync_frequency_minutes": 5
+    "sync_frequency_minutes": 5,
+    "last_sync": "2026-02-09T14:43:50.941072",
+    "sync_mode": "paper"
   },
   "paper_trading": {
     "start_date": "2026-01-30",
@@ -935,5 +940,16 @@
     "target_win_rate": 0.8,
     "current_day": 11,
     "notes": "Paper phase per CLAUDE.md - validate 80%+ win rate before scaling"
+  },
+  "performance": {
+    "open_positions": []
+  },
+  "live_account": {
+    "current_equity": 20.0,
+    "equity": 20.0,
+    "starting_balance": 20.0,
+    "total_pl": 0.0,
+    "total_pl_pct": 0.0,
+    "note": "LIVE account not synced - building capital via deposits"
   }
 }
