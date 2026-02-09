@@ -92,8 +92,7 @@ class AlpacaExecutor:
             )
 
             logger.info(
-                f"Trade sync: {symbol} {side} | "
-                f"SystemState={results.get('system_state', False)}"
+                f"Trade sync: {symbol} {side} | SystemState={results.get('system_state', False)}"
             )
 
             # Store to RLHF trajectory storage for ML learning (Jan 6 2026 fix)

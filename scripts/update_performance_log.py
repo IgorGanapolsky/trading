@@ -18,9 +18,7 @@ from dotenv import load_dotenv
 
 # Load environment variables
 try:
-    load_dotenv(
-        dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"), override=False
-    )
+    load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"), override=False)
 except (AssertionError, Exception):
     pass  # In CI, env vars are set via workflow secrets
 

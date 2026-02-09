@@ -96,8 +96,7 @@ else:
 # Initialize RAG system (LanceDB-first via LessonsLearnedRAG)
 local_rag = LessonsLearnedRAG()
 logger.info(
-    f"RAG initialized with {len(local_rag.lessons)} lessons "
-    f"(LanceDB-first, keyword fallback)"
+    f"RAG initialized with {len(local_rag.lessons)} lessons (LanceDB-first, keyword fallback)"
 )
 
 

@@ -83,10 +83,7 @@ class TradeSync:
         # Save to system_state.json -> trade_history (SINGLE SOURCE OF TRUTH)
         results["system_state"] = self._sync_to_system_state(trade_data)
 
-        logger.info(
-            f"Trade sync complete: {symbol} {side} | "
-            f"SystemState={results['system_state']}"
-        )
+        logger.info(f"Trade sync complete: {symbol} {side} | SystemState={results['system_state']}")
 
         return results
 

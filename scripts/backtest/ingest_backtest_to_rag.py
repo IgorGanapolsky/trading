@@ -16,6 +16,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+
 def find_lesson_files(lessons_dir: Path) -> list[Path]:
     """Find all lesson JSON files in directory."""
     if not lessons_dir.exists():

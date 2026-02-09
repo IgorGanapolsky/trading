@@ -163,9 +163,9 @@ class LessonsLearnedRAG:
                 results = self._query_lancedb(query, top_k=top_k)
                 if results:
                     if severity_filter:
-                        results = [
-                            r for r in results if r.get("severity") == severity_filter
-                        ][:top_k]
+                        results = [r for r in results if r.get("severity") == severity_filter][
+                            :top_k
+                        ]
                     self.last_source = "lancedb"
                     return results
             except Exception as e:
