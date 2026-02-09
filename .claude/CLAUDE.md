@@ -82,6 +82,27 @@ Stores: `~/.shieldcortex/memories.db` (SQLite), `~/.shieldcortex/lancedb/` (vect
 
 **Violation of this mandate is equivalent to lying to the CEO.**
 
+### Mandatory Verification Protocol (Feb 9, 2026)
+
+**RETRIEVE → CITE → SPEAK. Every time. No exceptions.**
+
+1. **Mandatory RAG query before ANY claim** — Before stating ANY fact about the system (account balance, win rate, positions, North Star progress, trade history), FIRST retrieve the data via RAG query, file read, or API call. The UserPromptSubmit hook injects RAG context — USE IT, don't ignore it.
+
+2. **Citation-based responses** — Every factual claim MUST cite its source:
+   - "According to LL-294, the roadmap targets $270K at 18% annual" — NOT "I think we need $270K"
+   - "system_state.json shows equity: $101,440" — NOT "we have about $101K"
+   - "CLAUDE.md line 12 specifies account PA3C5AG0CECQ ($100K)" — NOT "we use $100K"
+
+3. **Verify-then-speak loop** — Run the command, read the output, THEN form the response. NEVER generate an answer first and verify after. The sequence is:
+   - Step 1: Retrieve (RAG query, file read, bash command)
+   - Step 2: Read the actual output
+   - Step 3: Form response based ONLY on what the output says
+   - If output contradicts your assumption, the output wins. Always.
+
+4. **Use injected hook context** — The UserPromptSubmit hook queries ShieldCortex + MemAlign and injects RAG results into every prompt. READ and USE this context. If the hook says "RAG query failed," acknowledge it and query manually.
+
+**Process failure = lying to the CEO. "I should have checked" is not acceptable — checking is mandatory.**
+
 ---
 
 ## Core Directives (PERMANENT)
