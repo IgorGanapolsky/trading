@@ -80,7 +80,7 @@ class LessonsLearnedRAG:
                     self.lancedb_rag = None
 
         # Use LessonsSearch for keyword-based search
-        if LESSONS_SEARCH_AVAILABLE:
+        if LESSONS_SEARCH_AVAILABLE and not self._custom_dir:
             try:
                 self.search_engine = get_lessons_search()
                 logger.info(
@@ -93,6 +93,10 @@ class LessonsLearnedRAG:
                 logger.warning(
                     f"LessonsSearch initialization failed: {e} - using direct file search"
                 )
+        elif self._custom_dir:
+            logger.info(
+                "Custom knowledge dir provided; skipping LessonsSearch and using direct file search."
+            )
 
         # Fallback to direct file-based search
         self.search_engine = None

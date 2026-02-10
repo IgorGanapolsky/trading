@@ -1731,16 +1731,17 @@ Or ask me about **lessons learned** instead (e.g., "What lessons did we learn ab
 @app.get("/health")
 async def health():
     """Health check endpoint."""
+    rag = get_local_rag()
     # Count trades from local JSON files
     trade_count = len(query_trades("all", limit=1000))
     return {
         "status": "healthy",
-        "local_lessons_loaded": len(local_rag.lessons),
-        "critical_lessons": len(local_rag.get_critical_lessons()),
+        "local_lessons_loaded": len(rag.lessons),
+        "critical_lessons": len(rag.get_critical_lessons()),
         "trades_loaded": trade_count,
         "trade_history_source": "system_state.json (Alpaca)",
         "rag_mode": "lancedb_first",
-        "rag_last_source": local_rag.last_source,
+        "rag_last_source": rag.last_source,
     }
 
 
@@ -1749,11 +1750,12 @@ async def diagnostics():
     """Detailed diagnostic information for RAG status."""
     import os
 
+    rag = get_local_rag()
     return {
         "local_rag": {
-            "lessons_loaded": len(local_rag.lessons) if local_rag else 0,
-            "critical_lessons": (len(local_rag.get_critical_lessons()) if local_rag else 0),
-            "last_source": local_rag.last_source,
+            "lessons_loaded": len(rag.lessons),
+            "critical_lessons": len(rag.get_critical_lessons()),
+            "last_source": rag.last_source,
         },
         "system": {
             "python_path": os.getenv("PYTHONPATH", "NOT SET"),
@@ -1766,15 +1768,16 @@ async def diagnostics():
 @app.get("/")
 async def root():
     """Root endpoint with info."""
+    rag = get_local_rag()
     trade_count = len(query_trades("all", limit=1000))
     return {
         "service": "Trading AI RAG Webhook",
         "version": "3.9.0",  # Fix trade data source priority - system_state.json first
-        "local_lessons_loaded": len(local_rag.lessons),
+        "local_lessons_loaded": len(rag.lessons),
         "trades_loaded": trade_count,
         "trade_history_source": "system_state.json (Alpaca)",
         "rag_mode": "lancedb_first",
-        "rag_last_source": local_rag.last_source,
+        "rag_last_source": rag.last_source,
         "endpoints": {
             "/webhook": "POST - RAG Webhook (lessons + trades + readiness)",
             "/rag-search": "POST - RAG search (LanceDB-first, JSON response)",
