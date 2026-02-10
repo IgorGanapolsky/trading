@@ -191,6 +191,7 @@ async def rag_search(request: Request):
                 "severity": r.get("severity", "MEDIUM"),
                 "summary": content[:300],
                 "content": content[:2000],
+                "context_score": r.get("context_score"),
                 "file": r.get("file"),
             }
         )

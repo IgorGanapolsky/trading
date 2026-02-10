@@ -264,7 +264,7 @@ class LessonsLearnedRAG:
                             :top_k
                         ]
                     self.last_source = "lancedb"
-                    return results
+                    return self._reposition_results(query, results, top_k)
             except Exception as e:
                 logger.warning(f"LanceDB query failed: {e} - using keyword fallback")
 
@@ -276,7 +276,7 @@ class LessonsLearnedRAG:
                 )
                 # Convert results to expected format
                 self.last_source = "keyword"
-                return [
+                formatted = [
                     {
                         "id": lesson.id,
                         "severity": lesson.severity,
@@ -289,6 +289,7 @@ class LessonsLearnedRAG:
                     }
                     for lesson, score in results
                 ]
+                return self._reposition_results(query, formatted, top_k)
             except Exception as e:
                 logger.warning(f"LessonsSearch failed: {e} - using direct file search")
 
@@ -347,7 +348,19 @@ class LessonsLearnedRAG:
         # Sort by score descending
         results.sort(key=lambda x: x["score"], reverse=True)
         self.last_source = "keyword"
-        return results[:top_k]
+        return self._reposition_results(query, results, top_k)
+
+    def _reposition_results(self, query: str, results: list[dict], top_k: int) -> list[dict]:
+        """Re-rank lessons to keep the most relevant context close and diverse."""
+        if not results:
+            return []
+        try:
+            from src.rag.context_repositioning import reposition_lessons
+
+            return reposition_lessons(query, results, top_k)
+        except Exception as exc:  # pragma: no cover - non-critical enhancement
+            logger.debug(f"Context repositioning skipped: {exc}")
+            return results[:top_k]
 
     def search(self, query: str, top_k: int = 5) -> list:
         """
