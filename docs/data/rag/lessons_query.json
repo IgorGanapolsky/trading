@@ -2744,6 +2744,17 @@
     "file": "rag_knowledge/lessons_learned/ll_proactive_scan_20260209.md"
   },
   {
+    "id": "ll_proactive_scan_20260210",
+    "title": "Ralph Proactive Scan Findings",
+    "date": "",
+    "category": "lessons_learned",
+    "severity": "",
+    "summary": "**Date:** 2026-02-10 **Type:** Automated Proactive Scan ## Issues Found - Security issues: 122 - Dead code detected: true ## Action Required Review the workflow run summary for details and prioritize fixes.",
+    "tags": [],
+    "content": "# Ralph Proactive Scan Findings\n\n**Date:** 2026-02-10\n**Type:** Automated Proactive Scan\n\n## Issues Found\n\n- Security issues: 122\n- Dead code detected: true\n\n## Action Required\n\nReview the workflow run summary for details and prioritize fixes.",
+    "file": "rag_knowledge/lessons_learned/ll_proactive_scan_20260210.md"
+  },
+  {
     "id": "ll_skipped_prevention_step_feb06",
     "title": "LL: Skipped Prevention Step in Compound Engineering",
     "date": "2026-02-06",

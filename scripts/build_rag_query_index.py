@@ -10,6 +10,7 @@ import json
 import os
 import re
 from datetime import datetime, timezone
+from html import escape
 from pathlib import Path
 
 RAG_ROOT = Path("rag_knowledge")
@@ -17,7 +18,7 @@ OUTPUT_PATHS = [
     Path("data/rag/lessons_query.json"),
     Path("docs/data/rag/lessons_query.json"),
 ]
-LESSONS_PAGE_PATH = Path("docs/lessons/index.md")
+LESSONS_PAGE_PATH = Path("docs/lessons/index.html")
 
 DATE_PATTERNS = [
     (re.compile(r"\*\*Date\*\*:\s*(.+)$", re.IGNORECASE | re.MULTILINE), "%B %d, %Y"),
@@ -150,11 +151,20 @@ def _build_lessons_page(lessons: list[dict]) -> str:
             if source
             else ""
         )
-        title_link = f"[{title}]({url})" if url else title
-        rows.append(f"| {title_link} | {severity} | {date} | {category} |")
+        title_html = escape(title)
+        severity_html = escape(severity)
+        date_html = escape(date)
+        category_html = escape(category)
+        if url:
+            title_cell = f'<a href="{url}">{title_html}</a>'
+        else:
+            title_cell = title_html
+        rows.append(
+            f"<tr><td>{title_cell}</td><td>{severity_html}</td><td>{date_html}</td><td>{category_html}</td></tr>"
+        )
 
     if not rows:
-        rows.append("| No lessons available | -- | -- | -- |")
+        rows.append("<tr><td>No lessons available</td><td>--</td><td>--</td><td>--</td></tr>")
 
     item_list = []
     for idx, lesson in enumerate(items, 1):
@@ -191,23 +201,22 @@ def _build_lessons_page(lessons: list[dict]) -> str:
         'description: "Structured index of lessons learned from the autonomous AI trading system."',
         "---",
         "",
-        "# Lessons Learned Index",
-        "",
-        "A structured, crawlable index of lessons learned from the AI trading system.",
-        "This page is auto-generated to keep semantic signals consistent and up to date.",
-        "",
-        f"**Last updated:** {updated}",
-        "",
-        "**Canonical JSON index:**",
-        "- `/trading/data/rag/lessons_query.json` (GitHub Pages cache)\n"
-        "- `https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/rag/lessons_query.json`",
-        "",
-        "## Latest Lessons",
-        "",
-        "| Lesson | Severity | Date | Category |",
-        "| --- | --- | --- | --- |",
+        "<h1>Lessons Learned Index</h1>",
+        "<p>A structured, crawlable index of lessons learned from the AI trading system.</p>",
+        "<p>This page is auto-generated to keep semantic signals consistent and up to date.</p>",
+        f"<p><strong>Last updated:</strong> {escape(updated)}</p>",
+        "<p><strong>Canonical JSON index:</strong></p>",
+        "<ul>",
+        "<li><code>/trading/data/rag/lessons_query.json</code> (GitHub Pages cache)</li>",
+        '<li><a href=\"https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/rag/lessons_query.json\">raw GitHub JSON index</a></li>',
+        "</ul>",
+        "<h2>Latest Lessons</h2>",
+        "<table>",
+        "<thead><tr><th>Lesson</th><th>Severity</th><th>Date</th><th>Category</th></tr></thead>",
+        "<tbody>",
         *rows,
-        "",
+        "</tbody>",
+        "</table>",
         "<script type=\"application/ld+json\">",
         json.dumps(schema, indent=2),
         "</script>",
