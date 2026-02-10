@@ -13,10 +13,12 @@ Fallback: Uses NumPy on CPU if CUDA unavailable (Mac Metal, no GPU, etc.)
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
+import os
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -39,6 +41,11 @@ PROJECT_DIR = Path(__file__).parent.parent.parent
 DATA_DIR = PROJECT_DIR / "data"
 BACKTEST_DIR = DATA_DIR / "gpu_backtests"
 BACKTEST_DIR.mkdir(parents=True, exist_ok=True)
+CACHE_VERSION = 1
+CACHE_DIR = BACKTEST_DIR / "cache"
+PRICE_CACHE_DIR = BACKTEST_DIR / "price_cache"
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
+PRICE_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 
 @dataclass
@@ -85,6 +92,28 @@ class BacktestResult:
             "execution_time_ms": self.execution_time_ms,
         }
 
+    @classmethod
+    def from_dict(cls, data: dict) -> "BacktestResult":
+        params_data = data.get("params", {})
+        params = IronCondorParams(
+            delta=params_data.get("delta", 0.15),
+            dte=params_data.get("dte", 30),
+            width=params_data.get("width", 5),
+            exit_profit_pct=params_data.get("exit_profit_pct", 0.5),
+            stop_loss_pct=params_data.get("stop_loss_pct", 2.0),
+        )
+        return cls(
+            params=params,
+            win_rate=data.get("win_rate", 0.0),
+            total_trades=data.get("total_trades", 0),
+            avg_profit=data.get("avg_profit", 0.0),
+            avg_loss=data.get("avg_loss", 0.0),
+            profit_factor=data.get("profit_factor", 0.0),
+            max_drawdown=data.get("max_drawdown", 0.0),
+            sharpe_ratio=data.get("sharpe_ratio", 0.0),
+            execution_time_ms=data.get("execution_time_ms", 0.0),
+        )
+
 
 @dataclass
 class GridSearchResult:
@@ -98,8 +127,8 @@ class GridSearchResult:
     all_results: list[BacktestResult] = field(default_factory=list)
     gpu_accelerated: bool = False
 
-    def to_dict(self) -> dict:
-        return {
+    def to_dict(self, include_all: bool = False) -> dict:
+        data = {
             "total_combinations": self.total_combinations,
             "execution_time_ms": self.execution_time_ms,
             "gpu_accelerated": self.gpu_accelerated,
@@ -117,6 +146,31 @@ class GridSearchResult:
                 for r in sorted(self.all_results, key=lambda x: x.sharpe_ratio, reverse=True)[:10]
             ],
         }
+        if include_all:
+            data["all_results"] = [r.to_dict() for r in self.all_results]
+        return data
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "GridSearchResult":
+        params_data = data.get("best_params", {})
+        best_params = IronCondorParams(
+            delta=params_data.get("delta", 0.15),
+            dte=params_data.get("dte", 30),
+            width=params_data.get("width", 5),
+            exit_profit_pct=params_data.get("exit_profit_pct", 0.5),
+            stop_loss_pct=params_data.get("stop_loss_pct", 2.0),
+        )
+        results_data = data.get("all_results") or data.get("top_10_results", [])
+        all_results = [BacktestResult.from_dict(r) for r in results_data]
+        return cls(
+            total_combinations=data.get("total_combinations", len(all_results)),
+            execution_time_ms=data.get("execution_time_ms", 0.0),
+            best_params=best_params,
+            best_sharpe=data.get("best_sharpe", 0.0),
+            best_win_rate=data.get("best_win_rate", 0.0),
+            all_results=all_results,
+            gpu_accelerated=data.get("gpu_accelerated", False),
+        )
 
 
 # =============================================================================
@@ -290,31 +344,191 @@ class GPUBacktestEngine:
     def __init__(self, use_gpu: bool = True):
         self.use_gpu = use_gpu and CUDA_AVAILABLE
         self.price_data: np.ndarray | None = None
+        self.price_meta: dict[str, Any] | None = None
         self.results_cache: dict[str, GridSearchResult] = {}
+        self.cache_enabled = os.getenv("GPU_BACKTEST_CACHE", "true").lower() in {
+            "1",
+            "true",
+            "yes",
+        }
+        self.price_cache_ttl_days = int(os.getenv("GPU_BACKTEST_PRICE_CACHE_TTL_DAYS", "7"))
+        self.grid_cache_ttl_days = int(os.getenv("GPU_BACKTEST_GRID_CACHE_TTL_DAYS", "7"))
 
-    def load_price_data(self, ticker: str = "SPY", years: int = 5) -> None:
+    def _price_cache_paths(self, ticker: str, years: int) -> tuple[Path, Path]:
+        safe_ticker = ticker.upper()
+        base = f"{safe_ticker}_{years}y"
+        return (
+            PRICE_CACHE_DIR / f"{base}.npz",
+            PRICE_CACHE_DIR / f"{base}.json",
+        )
+
+    def _load_cached_prices(self, ticker: str, years: int) -> bool:
+        if not self.cache_enabled:
+            return False
+
+        data_path, meta_path = self._price_cache_paths(ticker, years)
+        if not data_path.exists() or not meta_path.exists():
+            return False
+
+        try:
+            meta = json.loads(meta_path.read_text())
+            downloaded_at = datetime.fromisoformat(meta["downloaded_at"])
+            if datetime.now(timezone.utc) - downloaded_at > timedelta(
+                days=self.price_cache_ttl_days
+            ):
+                return False
+
+            payload = np.load(data_path)
+            prices = payload["prices"].astype(np.float32)
+            if prices.size < 2:
+                return False
+
+            self.price_data = prices
+            self.price_meta = meta
+            print(f"Loaded cached {ticker} data ({len(prices)} rows)")
+            return True
+        except Exception as e:
+            print(f"Price cache load failed: {e}")
+            return False
+
+    def _save_price_cache(self, ticker: str, years: int, prices: np.ndarray, meta: dict) -> None:
+        if not self.cache_enabled:
+            return
+
+        data_path, meta_path = self._price_cache_paths(ticker, years)
+        np.savez_compressed(data_path, prices=prices.astype(np.float32))
+        meta_path.write_text(json.dumps(meta, indent=2))
+
+    def load_price_data(
+        self,
+        ticker: str = "SPY",
+        years: int = 5,
+        use_cache: bool | None = None,
+    ) -> None:
         """Load historical price data for backtesting."""
+        cache_allowed = self.cache_enabled if use_cache is None else use_cache
+        if cache_allowed and self._load_cached_prices(ticker, years):
+            return
+
         try:
             import yfinance as yf
 
-            end = datetime.now()
-            start = datetime(end.year - years, end.month, end.day)
+            end = datetime.now(timezone.utc)
+            try:
+                start = end.replace(year=end.year - years)
+            except ValueError:
+                start = end.replace(month=2, day=28, year=end.year - years)
 
-            data = yf.download(ticker, start=start, end=end, progress=False)
-            self.price_data = data["Close"].values.astype(np.float32)
-            print(f"Loaded {len(self.price_data)} days of {ticker} data")
+            data = yf.download(ticker, start=start.date(), end=end.date(), progress=False)
+            closes = data["Close"].dropna()
+            if closes.empty:
+                raise ValueError("No price data returned")
+
+            prices = closes.values.astype(np.float32)
+            self.price_data = prices
+            self.price_meta = {
+                "ticker": ticker.upper(),
+                "years": years,
+                "start": start.isoformat(),
+                "end": end.isoformat(),
+                "rows": int(len(prices)),
+                "last_price_date": closes.index.max().isoformat(),
+                "downloaded_at": end.isoformat(),
+                "source": "yfinance",
+            }
+            self._save_price_cache(ticker, years, prices, self.price_meta)
+            print(f"Loaded {len(prices)} days of {ticker} data")
         except Exception as e:
             # Generate synthetic data for testing
             print(f"Could not load real data: {e}")
             print("Using synthetic price data")
             np.random.seed(42)
             returns = np.random.normal(0.0005, 0.01, 252 * years)
-            self.price_data = np.cumprod(1 + returns).astype(np.float32) * 400
+            prices = np.cumprod(1 + returns).astype(np.float32) * 400
+            self.price_data = prices
+            self.price_meta = {
+                "ticker": ticker.upper(),
+                "years": years,
+                "rows": int(len(prices)),
+                "downloaded_at": datetime.now(timezone.utc).isoformat(),
+                "source": "synthetic",
+            }
+
+    def _grid_cache_key(self, grid: dict[str, list], n_trades_per_sim: int) -> str:
+        normalized_grid = {k: sorted(grid[k]) for k in sorted(grid)}
+        price_meta = self.price_meta or {}
+        cache_fingerprint = {
+            "grid": normalized_grid,
+            "n_trades_per_sim": n_trades_per_sim,
+            "price_meta": {
+                "ticker": price_meta.get("ticker"),
+                "years": price_meta.get("years"),
+                "rows": price_meta.get("rows"),
+                "last_price_date": price_meta.get("last_price_date"),
+            },
+            "cache_version": CACHE_VERSION,
+        }
+        payload = json.dumps(cache_fingerprint, sort_keys=True).encode("utf-8")
+        return hashlib.sha256(payload).hexdigest()[:16]
+
+    def _load_cached_grid_search(self, cache_key: str) -> GridSearchResult | None:
+        if not self.cache_enabled:
+            return None
+
+        if cache_key in self.results_cache:
+            return self.results_cache[cache_key]
+
+        cache_path = CACHE_DIR / f"grid_search_{cache_key}.json"
+        if not cache_path.exists():
+            return None
+
+        try:
+            payload = json.loads(cache_path.read_text())
+            if payload.get("cache_version") != CACHE_VERSION:
+                return None
+
+            created_at = datetime.fromisoformat(payload["created_at"])
+            if datetime.now(timezone.utc) - created_at > timedelta(days=self.grid_cache_ttl_days):
+                return None
+
+            result_data = payload.get("result")
+            if not result_data:
+                return None
+
+            grid_result = GridSearchResult.from_dict(result_data)
+            self.results_cache[cache_key] = grid_result
+            print(f"Loaded cached grid search ({cache_key})")
+            return grid_result
+        except Exception as e:
+            print(f"Grid cache load failed: {e}")
+            return None
+
+    def _save_grid_cache(
+        self,
+        cache_key: str,
+        grid: dict[str, list],
+        n_trades_per_sim: int,
+        result: GridSearchResult,
+    ) -> None:
+        if not self.cache_enabled:
+            return
+
+        cache_path = CACHE_DIR / f"grid_search_{cache_key}.json"
+        payload = {
+            "cache_version": CACHE_VERSION,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "grid": grid,
+            "n_trades_per_sim": n_trades_per_sim,
+            "price_meta": self.price_meta,
+            "result": result.to_dict(include_all=True),
+        }
+        cache_path.write_text(json.dumps(payload, indent=2))
 
     def grid_search(
         self,
         param_grid: dict[str, list] | None = None,
         n_trades_per_sim: int = 252,
+        use_cache: bool | None = None,
     ) -> GridSearchResult:
         """
         Run parameter grid search across all combinations.
@@ -325,6 +539,14 @@ class GPUBacktestEngine:
             self.load_price_data()
 
         grid = param_grid or self.DEFAULT_GRID
+        cache_allowed = self.cache_enabled if use_cache is None else use_cache
+        cache_key = None
+        if cache_allowed:
+            cache_key = self._grid_cache_key(grid, n_trades_per_sim)
+            cached_result = self._load_cached_grid_search(cache_key)
+            if cached_result is not None:
+                return cached_result
+
         start_time = datetime.now(timezone.utc)
 
         # Generate all parameter combinations
@@ -418,6 +640,9 @@ class GPUBacktestEngine:
             gpu_accelerated=self.use_gpu,
         )
 
+        if cache_allowed and cache_key:
+            self._save_grid_cache(cache_key, grid, n_trades_per_sim, grid_result)
+
         # Save results
         self._save_results(grid_result)
 
@@ -476,12 +701,13 @@ class GPUBacktestEngine:
         self,
         params: IronCondorParams,
         n_scenarios: int = 10000,
-        confidence: float = 0.95,
+        confidence: float | list[float] = 0.95,
     ) -> dict[str, float]:
         """
         Monte Carlo Value at Risk simulation.
 
         GPU-accelerated when available.
+        Supports multiple confidence levels when a list is provided.
         """
         if self.price_data is None:
             self.load_price_data()
@@ -501,22 +727,34 @@ class GPUBacktestEngine:
             -credit * params.stop_loss_pct,  # Loss
         )
 
-        # Calculate VaR
-        var_percentile = (1 - confidence) * 100
-        var = np.percentile(outcomes, var_percentile)
+        confidences = (
+            [float(c) for c in confidence]
+            if isinstance(confidence, (list, tuple, set))
+            else [float(confidence)]
+        )
+        confidences = [c for c in confidences if 0 < c < 1]
+        if not confidences:
+            confidences = [0.95]
+
+        # Calculate VaR for each confidence level
+        var_results = {}
+        for level in confidences:
+            percentile = (1 - level) * 100
+            var_results[f"var_{int(round(level * 100))}"] = np.percentile(outcomes, percentile)
         expected_return = np.mean(outcomes)
         worst_case = np.min(outcomes)
 
         execution_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
 
         return {
-            f"var_{int(confidence * 100)}": var,
+            **var_results,
             "expected_return": expected_return,
             "worst_case": worst_case,
             "best_case": np.max(outcomes),
             "std_dev": np.std(outcomes),
             "scenarios": n_scenarios,
             "execution_time_ms": execution_time,
+            "confidence_levels": confidences,
         }
 
     def _save_results(self, result: GridSearchResult) -> Path:
@@ -539,7 +777,7 @@ async def run_gpu_backtest() -> dict[str, Any]:
     grid_result = engine.grid_search()
 
     # Run Monte Carlo on best params
-    var_result = engine.monte_carlo_var(grid_result.best_params)
+    var_result = engine.monte_carlo_var(grid_result.best_params, confidence=[0.95, 0.99])
 
     return {
         "grid_search": grid_result.to_dict(),
@@ -589,4 +827,6 @@ if __name__ == "__main__":
     print(f"Best Sharpe: {result['grid_search']['best_sharpe']:.3f}")
     print(f"Best Win Rate: {result['grid_search']['best_win_rate']:.1%}")
     print(f"VaR (95%): ${result['monte_carlo_var']['var_95']:.2f}")
+    if "var_99" in result["monte_carlo_var"]:
+        print(f"VaR (99%): ${result['monte_carlo_var']['var_99']:.2f}")
     print(f"Expected Return: ${result['monte_carlo_var']['expected_return']:.2f}")

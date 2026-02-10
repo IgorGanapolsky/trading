@@ -19,10 +19,11 @@ from __future__ import annotations
 
 import asyncio
 import csv
+import hashlib
 import json
 import os
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -174,6 +175,55 @@ class PerplexityResearchAgent:
         self.base_url = "https://api.perplexity.ai/chat/completions"
         self.model = "sonar-pro"  # Deep research model
         self.results: list[BacktestResult] = []
+        self.cache_file = RESEARCH_DIR / "perplexity_cache.json"
+        self.cache_ttl_days = int(os.getenv("PERPLEXITY_CACHE_TTL_DAYS", "14"))
+
+    def _load_cache(self) -> dict[str, Any]:
+        if not self.cache_file.exists():
+            return {}
+        try:
+            return json.loads(self.cache_file.read_text())
+        except json.JSONDecodeError:
+            return {}
+
+    def _save_cache(self, cache: dict[str, Any]) -> None:
+        self.cache_file.write_text(json.dumps(cache, indent=2))
+
+    def _cache_key(self, query: str) -> str:
+        payload = f"{self.model}:{query}".encode("utf-8")
+        return hashlib.sha256(payload).hexdigest()
+
+    def _get_cached_response(self, query: str) -> dict[str, Any] | None:
+        cache = self._load_cache()
+        key = self._cache_key(query)
+        entry = cache.get(key)
+        if not entry:
+            return None
+
+        try:
+            timestamp = datetime.fromisoformat(entry["timestamp"])
+        except (KeyError, ValueError):
+            return None
+
+        if datetime.now(timezone.utc) - timestamp > timedelta(days=self.cache_ttl_days):
+            return None
+
+        response = entry.get("response")
+        if not response:
+            return None
+        response = dict(response)
+        response["cached"] = True
+        response["cache_timestamp"] = entry["timestamp"]
+        return response
+
+    def _store_cache(self, query: str, response: dict[str, Any]) -> None:
+        cache = self._load_cache()
+        key = self._cache_key(query)
+        cache[key] = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "response": response,
+        }
+        self._save_cache(cache)
 
     async def research(self, query: str, extract_metrics: bool = True) -> dict[str, Any]:
         """
@@ -181,6 +231,12 @@ class PerplexityResearchAgent:
 
         Returns structured research results with metrics extraction.
         """
+        cached = self._get_cached_response(query)
+        if cached:
+            if extract_metrics and "metrics" not in cached:
+                cached["metrics"] = self._extract_metrics(cached.get("answer", ""))
+            return cached
+
         if not self.api_key:
             return {"error": "PERPLEXITY_API_KEY not configured", "results": None}
 
@@ -236,6 +292,7 @@ If exact numbers aren't available, provide reasonable estimates with confidence 
                 if extract_metrics:
                     result["metrics"] = self._extract_metrics(answer)
 
+                self._store_cache(query, result)
                 return result
 
         except httpx.HTTPError as e:
@@ -553,7 +610,7 @@ async def run_gpu_backtest() -> dict[str, Any]:
 
         # Run Monte Carlo VaR on best params
         print("Running Monte Carlo VaR simulation...")
-        var_95, var_99 = engine.monte_carlo_var(best_params, n_scenarios=1000)
+        var_result = engine.monte_carlo_var(best_params, n_scenarios=1000, confidence=[0.95, 0.99])
 
         return {
             "status": "completed",
@@ -568,8 +625,8 @@ async def run_gpu_backtest() -> dict[str, Any]:
             },
             "best_win_rate": grid_result.best_win_rate * 100,  # Convert to percentage
             "best_sharpe": grid_result.best_sharpe,
-            "var_95": var_95,
-            "var_99": var_99,
+            "var_95": var_result.get("var_95"),
+            "var_99": var_result.get("var_99"),
             "execution_time_ms": grid_result.execution_time_ms,
         }
 

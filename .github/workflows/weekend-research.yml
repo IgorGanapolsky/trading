@@ -25,6 +25,16 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
 
+      - name: Restore GPU backtest cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            data/gpu_backtests/cache
+            data/gpu_backtests/price_cache
+          key: gpu-backtest-${{ runner.os }}-${{ hashFiles('src/compute/gpu_backtest.py') }}
+          restore-keys: |
+            gpu-backtest-${{ runner.os }}-
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
