@@ -5,6 +5,10 @@ name: Diagnose Alpaca Connection
 on:
   workflow_dispatch:
 
+env:
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
 jobs:
   diagnose:
     name: Test Alpaca API Connection

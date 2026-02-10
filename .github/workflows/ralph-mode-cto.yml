@@ -20,6 +20,8 @@ on:
 env:
   PYTHON_VERSION: "3.11"
 
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 # Prevent concurrent runs to avoid race conditions
 concurrency:
   group: ralph-mode-${{ github.ref }}

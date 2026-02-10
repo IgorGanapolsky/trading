@@ -11,6 +11,10 @@ permissions:
   contents: read
   actions: read
 
+env:
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
 jobs:
   guardian:
     runs-on: ubuntu-latest

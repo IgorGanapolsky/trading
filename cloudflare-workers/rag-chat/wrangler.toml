@@ -8,3 +8,4 @@ compatibility_date = "2024-01-01"
 [vars]
 # RAG search endpoint for LanceDB-first retrieval (set to Cloud Run URL + /rag-search)
 RAG_SEARCH_URL = ""
+RAG_WEBHOOK_URL = ""

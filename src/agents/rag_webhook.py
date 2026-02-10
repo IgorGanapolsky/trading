@@ -107,11 +107,19 @@ else:
         return decorator
 
 
-# Initialize RAG system (LanceDB-first via LessonsLearnedRAG)
-local_rag = LessonsLearnedRAG()
-logger.info(
-    f"RAG initialized with {len(local_rag.lessons)} lessons (LanceDB-first, keyword fallback)"
-)
+local_rag: Optional[LessonsLearnedRAG] = None
+
+
+def get_local_rag() -> LessonsLearnedRAG:
+    """Lazy-init RAG to avoid import-time side effects in CI/tests."""
+    global local_rag
+    if local_rag is None:
+        local_rag = LessonsLearnedRAG()
+        logger.info(
+            "RAG initialized with %s lessons (LanceDB-first, keyword fallback)",
+            len(local_rag.lessons),
+        )
+    return local_rag
 
 
 def query_rag_hybrid(query: str, top_k: int = 5) -> tuple[list, str]:
@@ -121,8 +129,9 @@ def query_rag_hybrid(query: str, top_k: int = 5) -> tuple[list, str]:
     Returns:
         Tuple of (results_list, source_name)
     """
-    results = local_rag.query(query, top_k=top_k)
-    source = local_rag.last_source or "keyword"
+    rag = get_local_rag()
+    results = rag.query(query, top_k=top_k)
+    source = rag.last_source or "keyword"
     logger.info(f"RAG returned {len(results)} results (source={source})")
     return results, source
 

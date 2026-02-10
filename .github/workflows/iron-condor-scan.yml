@@ -12,6 +12,10 @@ on:
         default: "false"
         type: boolean
 
+env:
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
 jobs:
   scan-and-execute:
     runs-on: ubuntu-latest

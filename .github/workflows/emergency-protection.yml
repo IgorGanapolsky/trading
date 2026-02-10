@@ -14,6 +14,10 @@ on:
         default: "0.50"
         type: string
 
+env:
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
 jobs:
   protect-positions:
     runs-on: ubuntu-latest

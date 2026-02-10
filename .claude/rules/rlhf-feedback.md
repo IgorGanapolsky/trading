@@ -35,6 +35,17 @@ User Prompt   → semantic_rag_context.sh → Contextual memory
 | MemAlign rules    | `.claude/memory/memalign/principles.jsonl`          | Distilled principles               |
 | ShieldCortex DB   | `~/.shieldcortex/memories.db`                       | Persistent dual-memory store       |
 
+## Success Metrics
+
+Computed by `scripts/rlhf_metrics.py` (writes `data/feedback/metrics.json` + `data/feedback/stats.json`).
+
+Targets:
+- Satisfaction rate >= 70%
+- Last 7d satisfaction rate >= 60%
+- MemAlign sync rate >= 0.90
+- ShieldCortex sync rate >= 0.90
+- Pending ShieldCortex sync entries == 0
+
 ## Thompson Sampling
 
 - Beta-Bernoulli model per task category

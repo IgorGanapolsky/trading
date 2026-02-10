@@ -15,6 +15,8 @@ env:
   DEVTO_URL: https://dev.to/igorganapolsky
   VERIFICATION_TIMEOUT: 30000
 
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 jobs:
   verify-pages:
     runs-on: ubuntu-latest

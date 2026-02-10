@@ -32,6 +32,10 @@ permissions:
   contents: read
   issues: write
 
+env:
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
 jobs:
   notify:
     runs-on: ubuntu-latest

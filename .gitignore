@@ -56,6 +56,7 @@ core.*
 api_keys.txt
 .github/local-secrets.env
 .secrets
+!scripts/validate_env_keys.py
 # Block test files in root (but allow in tests/ directory)
 /test_*.py
 /*_test.py

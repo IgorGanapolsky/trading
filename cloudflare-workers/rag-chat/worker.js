@@ -5,6 +5,7 @@
  */
 
 const DEFAULT_RAG_SEARCH_URL = "";
+const DEFAULT_RAG_WEBHOOK_URL = "";
 const LESSONS_INDEX_URL =
   "https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/rag/lessons_query.json";
 const LESSONS_INDEX_FALLBACK_URL =
@@ -145,8 +146,20 @@ function keywordSearch(lessons, query, topK) {
     .map((item) => item.lesson);
 }
 
+function resolveRagSearchUrl(env) {
+  const raw =
+    (env && (env.RAG_SEARCH_URL || env.RAG_WEBHOOK_URL)) ||
+    DEFAULT_RAG_SEARCH_URL ||
+    DEFAULT_RAG_WEBHOOK_URL;
+  if (!raw) return "";
+  if (raw.includes("/rag-search")) {
+    return raw;
+  }
+  return `${raw.replace(/\\/$/, "")}/rag-search`;
+}
+
 async function fetchRagSearch(query, topK, env) {
-  const ragSearchUrl = (env && env.RAG_SEARCH_URL) || DEFAULT_RAG_SEARCH_URL;
+  const ragSearchUrl = resolveRagSearchUrl(env);
   if (!ragSearchUrl) return null;
   try {
     const res = await fetch(ragSearchUrl, {

@@ -31,6 +31,10 @@ concurrency:
   group: daily-voo-dca
   cancel-in-progress: false
 
+env:
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
 jobs:
   buy-voo:
     runs-on: ubuntu-22.04

@@ -26,6 +26,14 @@ PENDING_CORTEX_PATHS = [
 ]
 SHIELDCORTEX_DB = Path.home() / ".shieldcortex" / "memories.db"
 
+SUCCESS_TARGETS = {
+    "satisfaction_rate": 70.0,
+    "last_7d_satisfaction_rate": 60.0,
+    "memalign_sync_rate": 0.9,
+    "cortex_sync_rate": 0.9,
+    "pending_cortex_sync_max": 0,
+}
+
 
 CATEGORY_RULES = {
     "testing": r"test|pytest|unittest|coverage",
@@ -98,6 +106,12 @@ def _shieldcortex_stats() -> dict:
     except Exception as exc:
         stats["error"] = str(exc)
     return stats
+
+
+def _evaluate_target(value: float | int | None, target: float | int) -> str:
+    if value is None:
+        return "no_data"
+    return "pass" if value >= target else "fail"
 
 
 def _normalize_signal(entry: dict) -> str | None:
@@ -205,6 +219,46 @@ def compute_metrics() -> dict:
             "cortex_sync_rate": round((cortex_ledger_entries / total), 2) if total else None,
         },
         "shieldcortex": _shieldcortex_stats(),
+    }
+
+    pipeline = metrics["rlhf_pipeline"]
+    metrics["success_targets"] = {
+        "satisfaction_rate": {
+            "target": SUCCESS_TARGETS["satisfaction_rate"],
+            "value": metrics["satisfaction_rate"],
+            "status": _evaluate_target(
+                metrics["satisfaction_rate"], SUCCESS_TARGETS["satisfaction_rate"]
+            ),
+        },
+        "last_7d_satisfaction_rate": {
+            "target": SUCCESS_TARGETS["last_7d_satisfaction_rate"],
+            "value": metrics["last_7d_satisfaction_rate"],
+            "status": _evaluate_target(
+                metrics["last_7d_satisfaction_rate"],
+                SUCCESS_TARGETS["last_7d_satisfaction_rate"],
+            ),
+        },
+        "memalign_sync_rate": {
+            "target": SUCCESS_TARGETS["memalign_sync_rate"],
+            "value": pipeline["memalign_sync_rate"],
+            "status": _evaluate_target(
+                pipeline["memalign_sync_rate"], SUCCESS_TARGETS["memalign_sync_rate"]
+            ),
+        },
+        "cortex_sync_rate": {
+            "target": SUCCESS_TARGETS["cortex_sync_rate"],
+            "value": pipeline["cortex_sync_rate"],
+            "status": _evaluate_target(
+                pipeline["cortex_sync_rate"], SUCCESS_TARGETS["cortex_sync_rate"]
+            ),
+        },
+        "pending_cortex_sync": {
+            "target": SUCCESS_TARGETS["pending_cortex_sync_max"],
+            "value": pipeline["pending_cortex_sync"],
+            "status": "pass"
+            if pipeline["pending_cortex_sync"] <= SUCCESS_TARGETS["pending_cortex_sync_max"]
+            else "fail",
+        },
     }
 
     return metrics

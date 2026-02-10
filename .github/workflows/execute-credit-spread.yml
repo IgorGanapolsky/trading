@@ -40,6 +40,8 @@ env:
   ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
   ALPACA_BASE_URL: "https://paper-api.alpaca.markets"
 
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 jobs:
   execute-spread:
     runs-on: ubuntu-latest

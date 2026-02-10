@@ -871,7 +871,18 @@ layout: null
       ).toString();
       const LESSONS_FALLBACK_URL =
         "https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/rag/lessons_query.json";
-      const DIRECT_RAG_URL = window.RAG_WEBHOOK_URL || "";
+      const queryParams = new URLSearchParams(window.location.search);
+      const urlFromParam = queryParams.get("rag_url");
+      let storedUrl = "";
+      try {
+        if (urlFromParam) {
+          localStorage.setItem("rag_webhook_url", urlFromParam);
+        }
+        storedUrl = localStorage.getItem("rag_webhook_url") || "";
+      } catch {
+        storedUrl = "";
+      }
+      const DIRECT_RAG_URL = window.RAG_WEBHOOK_URL || storedUrl || "";
       const WORKER_URL = "https://trading-rag-chat.iganapolsky.workers.dev";
 
       // Initialize

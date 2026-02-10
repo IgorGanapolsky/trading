@@ -12,6 +12,8 @@ permissions:
 env:
   PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
 
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 jobs:
   research:
     name: Run GPU Backtest + Perplexity Research

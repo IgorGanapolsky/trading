@@ -17,6 +17,10 @@ on:
       - "rag_knowledge/**/*.md"
   workflow_dispatch:
 
+env:
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
 jobs:
   validate-markdown:
     name: Markdown Validation

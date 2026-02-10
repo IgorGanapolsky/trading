@@ -6,6 +6,10 @@ on:
     - cron: '0,30 14-20 * * 1-5'
   workflow_dispatch:
 
+env:
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
 jobs:
   monitor:
     runs-on: ubuntu-latest

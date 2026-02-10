@@ -24,6 +24,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import re
 import shutil
 from dataclasses import dataclass, field
@@ -38,6 +39,7 @@ LANCEDB_PATH = Path(__file__).parent.parent.parent / ".claude" / "memory" / "lan
 RAG_KNOWLEDGE_DIR = Path(__file__).parent.parent.parent / "rag_knowledge"
 BLOG_POSTS_DIR = Path(__file__).parent.parent.parent / "docs" / "_posts"
 EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
+FTS_COLUMNS = ["text", "doc_title", "section_title", "lesson_id"]
 
 # Category mapping for automatic classification
 CATEGORY_PATTERNS = {
@@ -172,6 +174,11 @@ class DocumentAwareRAG:
     ):
         self.lancedb_path = lancedb_path or LANCEDB_PATH
         self.embedding_model = embedding_model
+        self._hybrid_enabled = os.getenv("LANCEDB_HYBRID", "true").lower() in {
+            "1",
+            "true",
+            "yes",
+        }
         self._db = None
         self._table = None
         self._model = None
@@ -194,6 +201,18 @@ class DocumentAwareRAG:
             # Optional offline mode to prevent network timeouts in tests
             # Model should be pre-downloaded from HuggingFace
             offline = os.getenv("LANCEDB_OFFLINE", "").lower() in {"1", "true", "yes"}
+            if not offline and os.getenv("CI", "").lower() in {"1", "true", "yes"}:
+                offline = True
+            if not offline:
+                cache_dir = Path(
+                    os.getenv(
+                        "HUGGINGFACE_HUB_CACHE",
+                        Path.home() / ".cache" / "huggingface" / "hub",
+                    )
+                )
+                cached_model = cache_dir / "models--BAAI--bge-small-en-v1.5"
+                if cached_model.exists():
+                    offline = True
             if offline:
                 os.environ["HF_HUB_OFFLINE"] = "1"
                 os.environ["TRANSFORMERS_OFFLINE"] = "1"
@@ -672,9 +691,12 @@ class DocumentAwareRAG:
                 table = self._db.open_table("document_aware_rag")
                 table.add(documents)
             else:
-                self._table = self._db.create_table(
+                table = self._db.create_table(
                     "document_aware_rag", data=documents, schema=RAGSection
                 )
+                self._table = table
+
+            self._ensure_fts_index(table)
 
             logger.info(
                 f"Indexed {stats['files_processed']} files, {stats['sections_created']} sections"
@@ -689,6 +711,33 @@ class DocumentAwareRAG:
         stats_file.write_text(json.dumps(stats, indent=2))
 
         return stats
+
+    def _ensure_fts_index(self, table) -> None:
+        """Ensure full-text index exists for hybrid retrieval."""
+        if not self._hybrid_enabled:
+            return
+
+        try:
+            table.create_fts_index(FTS_COLUMNS, replace=False)
+            logger.info("✅ FTS index ensured for hybrid retrieval")
+        except Exception as e:
+            msg = str(e).lower()
+            if "already exists" in msg or "exists" in msg:
+                logger.debug("FTS index already exists")
+                return
+            if "field_names must be a string" in msg:
+                try:
+                    table.create_fts_index("text", replace=False)
+                    logger.info("✅ FTS index ensured for hybrid retrieval (text-only fallback)")
+                    return
+                except Exception as fallback_error:
+                    fallback_msg = str(fallback_error).lower()
+                    if "already exists" in fallback_msg or "exists" in fallback_msg:
+                        logger.debug("FTS index already exists (text-only fallback)")
+                        return
+                    logger.warning(f"FTS index fallback failed: {fallback_error}")
+                    return
+            logger.warning(f"FTS index creation failed: {e}")
 
     def ensure_index(self, sources: Optional[list[str]] = None) -> dict:
         """
@@ -718,6 +767,7 @@ class DocumentAwareRAG:
             if hasattr(table, "count_rows") and table.count_rows() == 0:
                 logger.info("Document-aware RAG index empty; rebuilding.")
                 return self.reindex(force=True, sources=sources)
+            self._ensure_fts_index(table)
         except Exception as e:
             logger.warning(f"Unable to verify index row count: {e}")
 
@@ -837,18 +887,40 @@ class DocumentAwareRAG:
         if section_type_filter:
             filters.append(f"section_type = '{section_type_filter}'")
 
+        def build_search(query_type: str):
+            search_builder = table.search(
+                query,
+                query_type=query_type,
+                fts_columns=FTS_COLUMNS if query_type == "hybrid" else None,
+            ).limit(limit * 2)
+
+            if query_type == "hybrid":
+                try:
+                    from lancedb.rerankers import RRFReranker
+
+                    search_builder = search_builder.rerank(RRFReranker())
+                except Exception as e:
+                    logger.warning(f"Hybrid rerank failed: {e}")
+
+            if filters:
+                filter_str = " AND ".join(filters)
+                search_builder = search_builder.where(filter_str)
+
+            return search_builder
+
         # Perform semantic search with optional filters
-        search_query = table.search(query).limit(limit * 2)  # Get extra for filtering
-
-        if filters:
-            filter_str = " AND ".join(filters)
-            search_query = search_query.where(filter_str)
-
         try:
+            query_type = "hybrid" if self._hybrid_enabled else "vector"
+            search_query = build_search(query_type)
             raw_results = search_query.to_list()
         except Exception as e:
-            logger.error(f"Search failed: {e}")
-            return []
+            logger.warning(f"{query_type} search failed: {e} - falling back to vector")
+            try:
+                search_query = build_search("vector")
+                raw_results = search_query.to_list()
+            except Exception as fallback_error:
+                logger.error(f"Vector search failed: {fallback_error}")
+                return []
 
         # Post-process results
         results = []
@@ -862,8 +934,40 @@ class DocumentAwareRAG:
                     continue
 
             # Calculate relevance score (lower distance = higher relevance)
-            distance = r.get("_distance", 1.0)
-            base_score = max(0, 1 - distance)
+            relevance_score = r.get("_relevance_score")
+            distance = r.get("_distance")
+            fts_score = r.get("_score")
+
+            raw_confidence = None
+            if relevance_score is not None:
+                try:
+                    raw_confidence = float(relevance_score)
+                except (TypeError, ValueError):
+                    raw_confidence = None
+            elif distance is not None:
+                try:
+                    dist_val = max(0.0, float(distance))
+                    raw_confidence = 1.0 / (1.0 + dist_val)
+                except (TypeError, ValueError):
+                    raw_confidence = None
+            elif fts_score is not None:
+                try:
+                    fts_val = float(fts_score)
+                    raw_confidence = fts_val / (fts_val + 1.0)
+                except (TypeError, ValueError):
+                    raw_confidence = None
+
+            if raw_confidence is None:
+                raw_confidence = 0.0
+
+            if relevance_score is not None:
+                base_score = min(1.0, raw_confidence * 30)
+            elif distance is not None or fts_score is not None:
+                base_score = raw_confidence
+            else:
+                base_score = 0.0
+
+            raw_score = raw_confidence
 
             # Boost for severity
             if r.get("severity") == "critical":
@@ -898,6 +1002,10 @@ class DocumentAwareRAG:
                     "section_type": r.get("section_type"),
                     "date": r.get("date"),
                     "source": r.get("source"),
+                    "raw_score": raw_score,
+                    "relevance_score": relevance_score,
+                    "distance": distance,
+                    "fts_score": fts_score,
                 },
             )
 
