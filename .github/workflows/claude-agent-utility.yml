@@ -35,7 +35,7 @@ on:
           - verify-alpaca-account
           - verify-brokerage-account
           - verify-all-accounts
-          - query-dialogflow
+          - query-rag-webhook
           - execute-paper-trade
           - custom-command
         default: "run-tests"
@@ -58,6 +58,8 @@ on:
 env:
   PYTHON_VERSION: "3.11"
 
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 jobs:
   execute-task:
     name: Execute ${{ github.event.inputs.task || 'execute-paper-trade' }}
@@ -185,9 +187,9 @@ jobs:
         if: github.event.inputs.task == 'deploy-webhook'
         run: |
           echo "Triggering webhook deployment..."
-          echo "::notice::Use the dedicated deploy-dialogflow-webhook workflow for full deployment"
+          echo "::notice::Use the dedicated deploy-rag-webhook workflow for full deployment"
           # This is a placeholder - actual deployment uses dedicated workflow
-          python3 -c "from src.agents.dialogflow_webhook import app; print(f'Webhook app version: {app.version}')"
+          python3 -c "from src.agents.rag_webhook import app; print(f'Webhook app version: {app.version}')"
 
       - name: Task - Set Trailing Stops
         if: github.event.inputs.task == 'set-trailing-stops'
@@ -401,32 +403,32 @@ jobs:
           print(f'  Live:  \${live_daily:,.2f}')
           "
 
-      - name: Task - Query Dialogflow
-        if: github.event.inputs.task == 'query-dialogflow'
+      - name: Task - Query RAG Webhook
+        if: github.event.inputs.task == 'query-rag-webhook'
         env:
           PAPER_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
           PAPER_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
           LIVE_API_KEY: ${{ secrets.ALPACA_BROKERAGE_TRADING_API_KEY }}
           LIVE_SECRET_KEY: ${{ secrets.ALPACA_BROKERAGE_TRADING_API_SECRET }}
-          GCP_PROJECT_ID: igor-trading-2025-v2
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          RAG_WEBHOOK_URL: ${{ vars.RAG_WEBHOOK_URL }}
+          RAG_WEBHOOK_URL_SECRET: ${{ secrets.RAG_WEBHOOK_URL }}
         run: |
           echo "=================================================="
-          echo "🤖 QUERYING DIALOGFLOW & CROSS-VERIFYING ALPACA"
+          echo "🤖 QUERYING RAG WEBHOOK & CROSS-VERIFYING ALPACA"
           echo "=================================================="
 
-          # Set up GCP credentials
-          echo "$GCP_SA_KEY" > /tmp/gcp-sa-key.json
-          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-sa-key.json
+          if [ -z "$RAG_WEBHOOK_URL" ] && [ -z "$RAG_WEBHOOK_URL_SECRET" ]; then
+            echo "::warning::RAG_WEBHOOK_URL not set; skipping RAG Webhook query"
+            exit 0
+          fi
+          export RAG_WEBHOOK_URL="${RAG_WEBHOOK_URL:-$RAG_WEBHOOK_URL_SECRET}"
 
-          pip install alpaca-py google-cloud-dialogflow-cx
+          pip install alpaca-py
           python3 << 'PYTHON_SCRIPT'
-          import os
           import json
+          import os
+          import urllib.request
           from alpaca.trading.client import TradingClient
-
-          # Set credentials path for Python
-          os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '/tmp/gcp-sa-key.json'
 
           # ========== STEP 1: Get Alpaca Data (Source of Truth) ==========
           print("=" * 50)
@@ -447,97 +449,56 @@ jobs:
           paper_acct = paper_client.get_account()
           live_acct = live_client.get_account()
 
-          alpaca_paper_equity = float(paper_acct.equity)
           alpaca_paper_daily = float(paper_acct.equity) - float(paper_acct.last_equity)
-          alpaca_live_equity = float(live_acct.equity)
           alpaca_live_daily = float(live_acct.equity) - float(live_acct.last_equity)
 
-          print(f"Paper Equity: ${alpaca_paper_equity:,.2f}")
           print(f"Paper Today P/L: ${alpaca_paper_daily:,.2f}")
-          print(f"Live Equity: ${alpaca_live_equity:,.2f}")
           print(f"Live Today P/L: ${alpaca_live_daily:,.2f}")
 
-          # ========== STEP 2: Query Dialogflow ==========
+          # ========== STEP 2: Query RAG Webhook ==========
           print()
           print("=" * 50)
-          print("🤖 STEP 2: DIALOGFLOW RESPONSE")
+          print("🤖 STEP 2: RAG WEBHOOK RESPONSE")
           print("=" * 50)
 
-          try:
-              from google.cloud import dialogflowcx_v3 as dialogflow
-              from google.protobuf.json_format import MessageToDict
+          payload = json.dumps({
+              "text": "How much money did we make today and why?",
+              "sessionInfo": {"session": "gha-verify"}
+          }).encode("utf-8")
+          req = urllib.request.Request(
+              f"{os.environ['RAG_WEBHOOK_URL']}/webhook",
+              data=payload,
+              headers={"Content-Type": "application/json"},
+          )
 
-              project_id = os.environ.get('GCP_PROJECT_ID', 'igor-trading-2025-v2')
-              location = 'global'
-              agent_id = None  # Will be discovered
+          with urllib.request.urlopen(req, timeout=30) as response:
+              data = json.loads(response.read().decode("utf-8"))
 
-              # Discover agent
-              agents_client = dialogflow.AgentsClient()
-              parent = f"projects/{project_id}/locations/{location}"
+          messages = data.get("fulfillmentResponse", {}).get("messages", [])
+          rag_text = messages[0].get("text", {}).get("text", [""])[0] if messages else "No response"
+          print(f"RAG Webhook says: {rag_text[:500]}...")
 
-              try:
-                  agents = list(agents_client.list_agents(parent=parent))
-                  for agent in agents:
-                      if 'Trading' in agent.display_name:
-                          agent_id = agent.name.split('/')[-1]
-                          print(f"Found agent: {agent.display_name} ({agent_id})")
-                          break
-              except Exception as e:
-                  print(f"Could not list agents: {e}")
+          # ========== STEP 3: Cross-Verification ==========
+          print()
+          print("=" * 50)
+          print("✅ STEP 3: CROSS-VERIFICATION")
+          print("=" * 50)
 
-              if agent_id:
-                  # Query the agent
-                  session_client = dialogflow.SessionsClient()
-                  session_path = f"projects/{project_id}/locations/{location}/agents/{agent_id}/sessions/claude-verify"
+          total_alpaca = alpaca_paper_daily + alpaca_live_daily
+          print(f"Alpaca Combined P/L: ${total_alpaca:,.2f}")
 
-                  text_input = dialogflow.TextInput(text="How much money did we make today?")
-                  query_input = dialogflow.QueryInput(text=text_input, language_code="en")
+          # Basic numeric sanity check
+          import re
+          numbers = re.findall(r"\\$?[\\d,]+\\.?\\d*", rag_text)
+          print(f"Numbers in RAG response: {numbers}")
 
-                  response = session_client.detect_intent(
-                      request={"session": session_path, "query_input": query_input}
-                  )
-
-                  dialogflow_response = response.query_result.response_messages[0].text.text[0] if response.query_result.response_messages else "No response"
-                  print(f"Dialogflow says: {dialogflow_response}")
-
-                  # ========== STEP 3: Cross-Verification ==========
-                  print()
-                  print("=" * 50)
-                  print("✅ STEP 3: CROSS-VERIFICATION")
-                  print("=" * 50)
-
-                  # Try to extract numbers from Dialogflow response
-                  import re
-                  df_numbers = re.findall(r'\$?[\d,]+\.?\d*', dialogflow_response)
-                  print(f"Numbers in Dialogflow response: {df_numbers}")
-
-                  total_alpaca = alpaca_paper_daily + alpaca_live_daily
-                  print(f"Alpaca Combined P/L: ${total_alpaca:,.2f}")
-
-                  if any(str(round(total_alpaca, 2)).replace('.', '') in n.replace(',', '').replace('$', '').replace('.', '') for n in df_numbers):
-                      print("✅ MATCH: Dialogflow data matches Alpaca!")
-                  else:
-                      print("⚠️  MISMATCH: Dialogflow may have stale data")
-                      print(f"   Alpaca says: ${total_alpaca:,.2f}")
-                      print(f"   Dialogflow extracted: {df_numbers}")
-              else:
-                  print("⚠️  No TradingAgent found in Dialogflow")
-
-          except ImportError:
-              print("⚠️  google-cloud-dialogflow-cx not available")
-              print("   Skipping Dialogflow verification")
-          except Exception as e:
-              print(f"⚠️  Dialogflow query failed: {e}")
-              print("   Alpaca data is still the source of truth")
-
-          # ========== SUMMARY ==========
           print()
           print("=" * 50)
           print("📊 FINAL SUMMARY (Alpaca = Source of Truth)")
           print("=" * 50)
           print(f"Paper Today P/L: ${alpaca_paper_daily:,.2f}")
           print(f"Live Today P/L: ${alpaca_live_daily:,.2f}")
-          print(f"Combined Today P/L: ${alpaca_paper_daily + alpaca_live_daily:,.2f}")
+          print(f"Combined Today P/L: ${total_alpaca:,.2f}")
           PYTHON_SCRIPT
 
       - name: Task - Execute Paper Trade

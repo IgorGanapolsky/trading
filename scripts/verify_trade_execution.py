@@ -22,6 +22,11 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
+# Ensure repo root is on sys.path for src imports when running as a script
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 # Try to import Alpaca - graceful fallback if not available
 try:
     from alpaca.trading.client import TradingClient
@@ -106,9 +111,12 @@ def check_alpaca_orders(date_str: str) -> dict:
 
         api_key, api_secret = get_alpaca_credentials()
     except ImportError:
-        # Fallback: use $5K account credentials directly
-        api_key = os.getenv("ALPACA_PAPER_TRADING_5K_API_KEY")
-        api_secret = os.getenv("ALPACA_PAPER_TRADING_5K_API_SECRET")
+        # Fallback: use workflow-provided credentials, then deprecated 5K account
+        api_key = os.getenv("ALPACA_PAPER_TRADING_API_KEY") or os.getenv("ALPACA_API_KEY")
+        api_secret = os.getenv("ALPACA_PAPER_TRADING_API_SECRET") or os.getenv("ALPACA_SECRET_KEY")
+        if not api_key or not api_secret:
+            api_key = os.getenv("ALPACA_PAPER_TRADING_5K_API_KEY")
+            api_secret = os.getenv("ALPACA_PAPER_TRADING_5K_API_SECRET")
 
     if not api_key or not api_secret:
         result["error"] = "Alpaca credentials not set"

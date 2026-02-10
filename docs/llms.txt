@@ -15,13 +15,13 @@ source: https://github.com/IgorGanapolsky/trading
 description: |
   We are building an open-source, self-healing AI trading system that:
   - Trades iron condors on SPY using Claude AI
-  - Learns from every mistake via RAG (122+ lessons documented)
+  - Learns from every mistake via RAG (248+ lessons documented)
   - Publishes daily blog posts about discoveries
   - Uses autonomous CTO mode (Ralph) for 24/7 improvement
   - Follows Phil Town's Rule #1: Don't lose money
 
 # KEY METRICS
-capital: $5,000 paper trading
+capital: $100,000 paper trading
 goal: $100/day after-tax profit
 win_rate_target: 80%
 strategy: Iron Condors on SPY (15-20 delta, 30-45 DTE)
@@ -40,8 +40,16 @@ content:
 
   - path: /rag_knowledge/lessons_learned/
     type: knowledge_base
-    description: 122+ structured lessons from trading failures and successes
+    description: 248+ structured lessons from trading failures and successes
     format: markdown
+  - path: /data/rag/lessons_query.json
+    type: json_index
+    description: Canonical JSON index of lessons for RAG and retrieval
+    format: json
+  - path: /lessons/
+    type: index
+    description: Crawlable lessons index (server-rendered)
+    format: html
 
 # TOPICS
 topics:
@@ -72,5 +80,5 @@ contact:
   devto: https://dev.to/igorganapolsky
 
 # UPDATES
-last_updated: 2026-01-22
+last_updated: 2026-02-10
 update_frequency: Daily (via Ralph autonomous CTO mode)

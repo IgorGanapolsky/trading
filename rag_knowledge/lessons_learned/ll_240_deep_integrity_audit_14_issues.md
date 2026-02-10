@@ -33,7 +33,7 @@ Found 14 issues across 4 severity levels. 4 critical issues require immediate ac
 - No Slack/email/SMS notifications
 - **Action**: Create notification workflow
 
-### 4. Dialogflow trades_loaded: 0
+### 4. RAG Webhook trades_loaded: 0
 
 - Can't answer CEO trade queries
 - **Action**: Run sync-alpaca-status.yml

@@ -12,6 +12,10 @@ on:
 permissions:
   contents: write
 
+env:
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
 jobs:
   sync-blog:
     runs-on: ubuntu-latest
@@ -39,6 +43,9 @@ jobs:
           git config --local user.name "GitHub Action"
 
           git add docs/_posts/
+          git add data/rag/lessons_query.json
+          git add docs/data/rag/lessons_query.json || true
+          git add docs/lessons/index.md || true
 
           if git diff --staged --quiet; then
             echo "Blog already up to date"

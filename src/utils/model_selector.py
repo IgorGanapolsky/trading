@@ -532,7 +532,6 @@ class ModelSelector:
             "SignalAgent": "signal_generation",
             "ResearchAgent": "market_research",
             "MetaAgent": "portfolio_analysis",
-            "BogleHeadsAgent": "market_research",
             "GammaExposureAgent": "options_analysis",
             # High complexity - use Opus when budget allows
             "RiskAgent": "risk_assessment",

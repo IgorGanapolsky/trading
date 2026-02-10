@@ -16,6 +16,10 @@ on:
 permissions:
   contents: write
 
+env:
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
 jobs:
   record-lesson:
     if: ${{ github.event.workflow_run.conclusion == 'failure' }}
@@ -128,6 +132,9 @@ jobs:
 
           git add rag_knowledge/lessons_learned/
           git add docs/_posts/
+          git add data/rag/lessons_query.json
+          git add docs/data/rag/lessons_query.json || true
+          git add docs/lessons/index.md || true
 
           if git diff --staged --quiet; then
             echo "No changes to commit"

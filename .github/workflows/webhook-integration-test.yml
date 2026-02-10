@@ -3,17 +3,24 @@ name: Webhook Integration Test
 on:
   # Run after webhook deployment
   workflow_run:
-    workflows: ["Deploy Dialogflow Webhook"]
+    workflows: ["Deploy RAG Webhook"]
     types: [completed]
   # DISABLED Jan 23, 2026 - Cost reduction ($200/month GCP bill)
   # schedule:
   #   - cron: '0 15,18,21 * * 1-5'  # 3x during market hours
   workflow_dispatch:
 
+env:
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
 jobs:
   integration-test:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name != 'workflow_run' }}
+    env:
+      RAG_WEBHOOK_URL: ${{ vars.RAG_WEBHOOK_URL }}
+      RAG_WEBHOOK_URL_SECRET: ${{ secrets.RAG_WEBHOOK_URL }}
 
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +31,13 @@ jobs:
           python-version: "3.11"
 
       - name: Run Webhook Integration Tests
-        run: python tests/integration/test_webhook_integration.py
+        run: |
+          if [ -z "$RAG_WEBHOOK_URL" ] && [ -z "$RAG_WEBHOOK_URL_SECRET" ]; then
+            echo "::warning::RAG_WEBHOOK_URL not set; skipping integration tests"
+            exit 0
+          fi
+          export RAG_WEBHOOK_URL="${RAG_WEBHOOK_URL:-$RAG_WEBHOOK_URL_SECRET}"
+          python tests/integration/test_webhook_integration.py
 
       - name: Alert on Failure
         if: failure()

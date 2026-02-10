@@ -135,6 +135,9 @@ def reset_environment():
     import os
 
     original_env = os.environ.copy()
+    # Avoid hard failures in minimal CI where LanceDB isn't installed.
+    os.environ.setdefault("LANCEDB_REQUIRED", "false")
+    os.environ.setdefault("LANCEDB_RAG", "false")
 
     yield
 

@@ -100,7 +100,7 @@ Type: Automated Proactive Scan
  Issues Found
 
 - Sec...
-- **Dialogflow Compound Query Routing Fix** - LL-274: Dialogflow Compound Query Routing Fix
+- **RAG Webhook Compound Query Routing Fix** - LL-274: RAG Webhook Compound Query Routing Fix
 
  Date
 

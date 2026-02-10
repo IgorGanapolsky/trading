@@ -30,8 +30,10 @@ echo "📥 Found $ENTRY_COUNT pending feedback entries"
 echo "🔄 Syncing to MemAlign dual-memory system..."
 echo ""
 
-# Run RLHF integration
-if npx ts-node plugins/automation-plugin/skills/dynamic-agent-spawner/scripts/rlhf-integration.ts sync; then
+# Run RLHF integration (transpile-only to avoid local @types/node dependency)
+if TS_NODE_TRANSPILE_ONLY=1 \
+	TS_NODE_COMPILER_OPTIONS='{"module":"NodeNext","moduleResolution":"NodeNext","allowImportingTsExtensions":true}' \
+	npx ts-node --transpile-only plugins/automation-plugin/skills/dynamic-agent-spawner/scripts/rlhf-integration.ts sync; then
 	echo ""
 	echo "✅ Hybrid memory sync complete"
 	echo "   - MemAlign: Semantic principles + episodic memories updated"

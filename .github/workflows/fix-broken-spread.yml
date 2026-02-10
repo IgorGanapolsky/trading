@@ -3,6 +3,10 @@ name: Fix Broken 653 Spread
 on:
   workflow_dispatch:
 
+env:
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
 jobs:
   fix-spread:
     runs-on: ubuntu-latest

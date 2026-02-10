@@ -77,6 +77,17 @@ layout: null
         font-size: 1.1rem;
       }
 
+      .ai-disclosure {
+        margin: 16px auto 0;
+        max-width: 760px;
+        padding: 10px 14px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        border-radius: 8px;
+      }
+
       .stats-bar {
         display: flex;
         justify-content: center;
@@ -630,6 +641,11 @@ layout: null
         <p class="subtitle">
           Search 300+ lessons from building an autonomous AI trading system
         </p>
+        <div class="ai-disclosure">
+          AI Disclosure: This interface uses AI to search and summarize internal
+          lessons. Not financial advice. Human review required for any trading
+          decisions.
+        </div>
         <div class="stats-bar">
           <div class="stat">
             <div class="stat-value" id="totalLessons">320+</div>
@@ -855,6 +871,19 @@ layout: null
       ).toString();
       const LESSONS_FALLBACK_URL =
         "https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/rag/lessons_query.json";
+      const queryParams = new URLSearchParams(window.location.search);
+      const urlFromParam = queryParams.get("rag_url");
+      let storedUrl = "";
+      try {
+        if (urlFromParam) {
+          localStorage.setItem("rag_webhook_url", urlFromParam);
+        }
+        storedUrl = localStorage.getItem("rag_webhook_url") || "";
+      } catch {
+        storedUrl = "";
+      }
+      const DIRECT_RAG_URL = window.RAG_WEBHOOK_URL || storedUrl || "";
+      const WORKER_URL = "https://trading-rag-chat.iganapolsky.workers.dev";
 
       // Initialize
       document.addEventListener("DOMContentLoaded", () => {
@@ -917,22 +946,37 @@ layout: null
       }
 
       async function searchRemote(query) {
-        try {
-          const res = await fetch(WORKER_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ mode: "search", query, top_k: 10 }),
+        const sources = [];
+        if (DIRECT_RAG_URL) {
+          sources.push({
+            url: DIRECT_RAG_URL,
+            body: { query, top_k: 10 },
           });
-          if (!res.ok) return null;
-          const data = await res.json();
-          if (!Array.isArray(data.results)) return null;
-          return {
-            results: data.results.map((lesson) => normalizeLesson(lesson)),
-            source: data.source || "unknown",
-          };
-        } catch {
-          return null;
         }
+        sources.push({
+          url: WORKER_URL,
+          body: { mode: "search", query, top_k: 10 },
+        });
+
+        for (const source of sources) {
+          try {
+            const res = await fetch(source.url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(source.body),
+            });
+            if (!res.ok) continue;
+            const data = await res.json();
+            if (!Array.isArray(data.results)) continue;
+            return {
+              results: data.results.map((lesson) => normalizeLesson(lesson)),
+              source: data.source || "unknown",
+            };
+          } catch {
+            // Try next source
+          }
+        }
+        return null;
       }
 
       function renderRecentLessons() {
@@ -1187,7 +1231,6 @@ Tags: ${lesson.tags.join(", ")}`;
       }
 
       // Chat functionality with conversation memory
-      const WORKER_URL = "https://trading-rag-chat.iganapolsky.workers.dev";
       let conversationHistory = [];
 
       function setupChatListeners() {

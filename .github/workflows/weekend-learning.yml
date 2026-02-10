@@ -18,6 +18,10 @@ permissions:
   contents: write
   pull-requests: write
 
+env:
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
 jobs:
   # === SELF-HEALING: Cleanup stale branches BEFORE learning ===
   cleanup-stale-branches:
@@ -84,11 +88,9 @@ jobs:
       # API keys needed for content ingestion
       YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
       GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-      # COST-OPTIMIZED: Use local LanceDB instead of Vertex AI
-      # Saves ~$150/month by avoiding Vertex AI RAG calls
+      # COST-OPTIMIZED: Use local LanceDB only (no cloud RAG calls)
       USE_LOCAL_RAG: "true"
       GCP_PROJECT_ID: "igor-trading-2025-v2"
-      VERTEX_LOCATION: "us-central1"
 
     steps:
       - name: Checkout repository
@@ -126,7 +128,7 @@ jobs:
           fi
 
           echo "📊 Budget: \$${BUDGET_LIMIT}/month"
-          echo "🎯 Strategy: Local LanceDB (no Vertex AI costs)"
+          echo "🎯 Strategy: Local LanceDB (no cloud RAG costs)"
           echo "✅ Cost check passed - proceeding with local-only mode"
           rm -f /tmp/gcp-key.json
 

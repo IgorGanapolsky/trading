@@ -64,9 +64,10 @@ class TestWikiFreshness:
     def test_wiki_generator_runs(self):
         """Ensure wiki generator runs without errors."""
         import subprocess
+        import sys
 
         result = subprocess.run(
-            ["python", "scripts/generate_wiki_home.py"],
+            [sys.executable, "scripts/generate_wiki_home.py"],
             capture_output=True,
             text=True,
             timeout=60,

@@ -24,6 +24,8 @@ env:
   FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
   PAPER_TRADING: "true"
 
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 jobs:
   generate-blog-post:
     # DISABLED: Dev.to auto-publishing disabled per CEO directive (Feb 1, 2026)
@@ -164,6 +166,9 @@ jobs:
 
           # Add all changed files
           git add data/performance_log.json || true
+          git add data/rag/lessons_query.json || true
+          git add docs/data/rag/lessons_query.json || true
+          git add docs/lessons/index.md || true
           git add docs/_reports/ || true
           git add docs/_posts/ || true
           git add docs/index.md || true

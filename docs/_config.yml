@@ -36,6 +36,7 @@ plugins:
 header_pages:
   - index.md
   - rag-query.html
+  - lessons/index.html
   - reports.md
   - discoveries.md
   - tech-stack.md

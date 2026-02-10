@@ -65,7 +65,7 @@ New $30K paper account established. Need optimized iron condor parameters for:
 
 ## Quick Wins & Refinements
 
-- **Dialogflow Compound Query Routing Fix** - LL-274: Dialogflow Compound Query Routing Fix
+- **RAG Webhook Compound Query Routing Fix** - LL-274: RAG Webhook Compound Query Routing Fix
 
  Date
 2026-01-22

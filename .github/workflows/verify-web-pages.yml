@@ -15,6 +15,8 @@ env:
   DEVTO_URL: https://dev.to/igorganapolsky
   VERIFICATION_TIMEOUT: 30000
 
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 jobs:
   verify-pages:
     runs-on: ubuntu-latest
@@ -115,7 +117,7 @@ jobs:
           echo "| GitHub Pages | ${{ steps.github-pages.outputs.github_pages_status || 'skipped' }} | $GITHUB_PAGES_URL |" >> $GITHUB_STEP_SUMMARY
           echo "| Dev.to | ${{ steps.devto.outputs.devto_status || 'skipped' }} | $DEVTO_URL |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Note:** Alpaca & Dialogflow require OAuth - use API verification instead" >> $GITHUB_STEP_SUMMARY
+          echo "**Note:** Alpaca & RAG Webhook require OAuth - use API verification instead" >> $GITHUB_STEP_SUMMARY
 
   verify-alpaca-api:
     runs-on: ubuntu-latest
@@ -168,17 +170,23 @@ jobs:
               exit(1)
           EOF
 
-      - name: Verify Dialogflow Webhook
+      - name: Verify RAG Webhook
         env:
-          WEBHOOK_URL: https://trading-webhook-667608976880.us-central1.run.app
+          WEBHOOK_URL: ${{ vars.RAG_WEBHOOK_URL }}
+          WEBHOOK_URL_SECRET: ${{ secrets.RAG_WEBHOOK_URL }}
         run: |
-          echo "=== Verifying Dialogflow Webhook ==="
+          echo "=== Verifying RAG Webhook ==="
+          WEBHOOK_URL="${WEBHOOK_URL:-$WEBHOOK_URL_SECRET}"
+          if [ -z "$WEBHOOK_URL" ]; then
+            echo "::warning::RAG_WEBHOOK_URL not set; skipping webhook verification"
+            exit 0
+          fi
 
           # Health check endpoint
           RESP=$(curl -s -o /dev/null -w "%{http_code}" "$WEBHOOK_URL/")
 
           if [ "$RESP" = "200" ] || [ "$RESP" = "404" ]; then
-            echo "✅ Dialogflow webhook is responding (HTTP $RESP)"
+            echo "✅ RAG Webhook is responding (HTTP $RESP)"
           else
-            echo "⚠️ Dialogflow webhook returned HTTP $RESP"
+            echo "⚠️ RAG Webhook returned HTTP $RESP"
           fi

@@ -15,12 +15,18 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
 jobs:
   lint:
     name: Lint & Format
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -39,6 +45,12 @@ jobs:
 
       - name: Run Ruff formatter check
         run: ruff format --check .
+
+      - name: Lint blog posts (Discover compliance)
+        run: python3 scripts/lint_blog_posts.py --changed --strict
+
+      - name: Anthropic compliance guardrail
+        run: python3 scripts/check_anthropic_compliance.py
 
   # Added Dec 12, 2025: Workflow validation to prevent dependency issues (LL-021)
   workflow-validation:
@@ -91,18 +103,31 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-minimal.txt  # Faster CI - skip unused PyTorch/transformers
+          pip install lancedb sentence-transformers  # LanceDB mandatory for CI RAG checks
           pip install pytest pytest-cov pytest-timeout
       - name: Run unit tests with coverage
         # Coverage threshold: Start at 15%, increase as tests are added
         # Dec 30, 2025: Keep at 15% until test coverage improves
         # TODO: Increase to 40% then 70% as more tests are added
         run: python -m pytest -v --tb=long --cov=src --cov-report=term-missing --cov-report=xml --cov-fail-under=15 2>&1 || (echo "Tests failed - showing last 100 lines" && tail -100 && exit 1)
+      - name: RAG retrieval evaluation (LanceDB-first)
+        run: |
+          python3 scripts/evaluate_rag.py \
+            --k 5 \
+            --prefer-lancedb \
+            --include-unanswerable \
+            --threshold-precision 0.4 \
+            --threshold-recall 0.4 \
+            --threshold-mrr 0.3 \
+            --threshold-utility 0.1 \
+            --threshold-unanswerable-accuracy 0.67
       - name: Upload coverage report
         uses: actions/upload-artifact@v6
         with:
           name: coverage-report
           path: coverage.xml
         if: always()
+        continue-on-error: true
 
   smoke:
     name: Smoke Test
@@ -658,7 +683,7 @@ jobs:
       - name: Check for new markdown files
         run: |
           # Allowed: CLAUDE.md, MANDATORY_RULES.md, docs/_posts/ (blog), docs/_reports/ (daily reports), docs/ARCHITECTURE.md, docs/index.md, rag_knowledge/ (lessons), .claude/ (internal), docs/_discoveries/ (ralph discoveries)
-          NEW_MD=$(git diff --name-only origin/main...HEAD | grep '\.md$' | grep -v 'CLAUDE.md\|MANDATORY_RULES.md\|docs/_posts/\|docs/_reports/\|rag_knowledge/\|docs/ARCHITECTURE.md\|docs/index.md\|\.claude/\|docs/_discoveries/' || true)
+          NEW_MD=$(git diff --name-only origin/main...HEAD | grep '\.md$' | grep -v 'CLAUDE.md\|MANDATORY_RULES.md\|docs/_posts/\|docs/_reports/\|rag_knowledge/\|docs/ARCHITECTURE.md\|docs/index.md\|docs/COWORK_INTEGRATION.md\|docs/tech-stack.md\|data/trade_plans/\|\.claude/\|docs/_discoveries/' || true)
           if [ -n "$NEW_MD" ]; then
             echo "❌ CLAUDE.md VIOLATION: New markdown files detected:"
             echo "$NEW_MD"

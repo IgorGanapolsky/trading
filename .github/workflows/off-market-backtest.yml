@@ -42,6 +42,8 @@ env:
   GOOGLE_CLOUD_PROJECT: ${{ vars.GCP_PROJECT_ID || 'igor-trading-2025-v2' }}
   PAPER_TRADING: "true"
 
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 jobs:
   verify-market-closed:
     runs-on: ubuntu-latest

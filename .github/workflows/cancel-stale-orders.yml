@@ -19,6 +19,10 @@ on:
 permissions:
   contents: read
 
+env:
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
 jobs:
   cancel-stale:
     runs-on: ubuntu-22.04

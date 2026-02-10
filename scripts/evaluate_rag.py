@@ -15,6 +15,7 @@ Created: January 28, 2026
 import argparse
 import json
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -42,6 +43,12 @@ def print_report(report: EvaluationReport, verbose: bool = False) -> None:
     print(f"Mean Precision@{report.k}: {report.mean_precision_at_k:.4f}")
     print(f"Mean Recall@{report.k}:    {report.mean_recall_at_k:.4f}")
     print(f"Mean Reciprocal Rank:      {report.mrr:.4f}")
+    print(f"Mean Utility@{report.k}:   {report.mean_utility_at_k:.4f}")
+
+    if report.unanswerable_accuracy is not None:
+        print("\n--- UNANSWERABLE METRICS ---")
+        print(f"Unanswerable Accuracy:     {report.unanswerable_accuracy:.4f}")
+        print(f"Unanswerable False Pos Rate: {report.unanswerable_false_positive_rate:.4f}")
 
     # Interpret metrics
     print("\n--- INTERPRETATION ---")
@@ -150,6 +157,34 @@ Examples:
         default=0.3,
         help="Minimum acceptable MRR (default: 0.3)",
     )
+    parser.add_argument(
+        "--prefer-lancedb",
+        action="store_true",
+        help="Prefer LanceDB retrieval for evaluation",
+    )
+    parser.add_argument(
+        "--include-unanswerable",
+        action="store_true",
+        help="Evaluate unanswerable/rejection accuracy",
+    )
+    parser.add_argument(
+        "--unanswerable-threshold",
+        type=float,
+        default=0.04,
+        help="Score threshold below which a query is treated as unanswerable",
+    )
+    parser.add_argument(
+        "--threshold-unanswerable-accuracy",
+        type=float,
+        default=0.67,
+        help="Minimum acceptable unanswerable accuracy (default: 0.67)",
+    )
+    parser.add_argument(
+        "--threshold-utility",
+        type=float,
+        default=0.1,
+        help="Minimum acceptable utility@k (default: 0.1)",
+    )
 
     args = parser.parse_args()
 
@@ -163,13 +198,26 @@ Examples:
         )
 
     # Run evaluation
-    evaluator = get_evaluator()
+    prefer_lancedb = args.prefer_lancedb or os.getenv("CI", "").lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+    include_unanswerable = args.include_unanswerable or os.getenv(
+        "RAG_EVAL_UNANSWERABLE", ""
+    ).lower() in {"1", "true", "yes"}
+
+    evaluator = get_evaluator(prefer_lancedb=prefer_lancedb)
 
     if not args.json:
         print(f"Evaluating RAG with {len(DEFAULT_TEST_QUERIES)} test queries...")
         print(f"Loaded {evaluator._get_search_engine().count()} lessons")
 
-    report = evaluator.evaluate_all(k=args.k)
+    report = evaluator.evaluate_all(
+        k=args.k,
+        include_unanswerable=include_unanswerable,
+        unanswerable_threshold=args.unanswerable_threshold,
+    )
 
     # Output results
     if args.json:
@@ -205,6 +253,23 @@ Examples:
         if not args.json:
             print(f"\n[FAIL] MRR ({report.mrr:.4f}) below threshold ({args.threshold_mrr})")
         exit_code = 1
+
+    if report.mean_utility_at_k < args.threshold_utility:
+        if not args.json:
+            print(
+                f"\n[FAIL] Utility@{report.k} ({report.mean_utility_at_k:.4f}) "
+                f"below threshold ({args.threshold_utility})"
+            )
+        exit_code = 1
+
+    if include_unanswerable and report.unanswerable_accuracy is not None:
+        if report.unanswerable_accuracy < args.threshold_unanswerable_accuracy:
+            if not args.json:
+                print(
+                    f"\n[FAIL] Unanswerable accuracy ({report.unanswerable_accuracy:.4f}) "
+                    f"below threshold ({args.threshold_unanswerable_accuracy})"
+                )
+            exit_code = 1
 
     if exit_code == 0 and not args.json:
         print("\n[SUCCESS] All metrics meet thresholds")

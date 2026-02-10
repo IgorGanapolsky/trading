@@ -29,7 +29,7 @@ During Ralph Mode iteration 18, executed comprehensive PR management and system 
 
 Deleted stale branches:
 
-- claude/fix-dialogflow-rag-query-8VWfA
+- claude/fix-rag-webhook-rag-query-8VWfA
 - claude/investigate-gcp-charges-8VWfA
 - claude/rl-staleness-improvements-8VWfA
 - claude/tax-strategy-planning-Fc73z

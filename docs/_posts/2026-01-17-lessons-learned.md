@@ -27,7 +27,7 @@ LL-230: Webhook Trade Data Source Mismatch (Jan 17, 2026)
 Severity: HIGH
 
 Summary
-The Dialogflow webhook was showing trades*loaded=0 on Cloud Run because it looked for local trades*.json files fir
+The RAG Webhook was showing trades*loaded=0 on Cloud Run because it looked for local trades*.json files fir
 
 ---
 

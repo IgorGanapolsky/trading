@@ -9,7 +9,7 @@ Alpaca API → sync-system-state.yml → system_state.json
                                            ↑
                   trade_sync.py ───────────┘
                                            ↓
-              Dialogflow Webhook ← GitHub API fetch
+              RAG Webhook ← GitHub API fetch
 ```
 
 ## Key Facts

@@ -40,7 +40,7 @@ c35fd4e docs: Humanize blog content with real stories and links (#2924)
 fa603fb chore: Sync dashboard data [auto] (#2923)
 d667634 chore(ralph): Update workflow health dashboard
 a72ee34 fix: Document RL stub and add data staleness warnings (#2907)
-f645435 fix: Dialogflow returns relevant lessons instead of random failures (#2905)
+f645435 fix: RAG Webhook returns relevant lessons instead of random failures (#2905)
 65fe94e fix: Use correct Alpaca secret names in IC workflow (#2904)
 
 ## New Features

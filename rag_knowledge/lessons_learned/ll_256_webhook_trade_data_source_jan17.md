@@ -4,7 +4,7 @@
 
 ## Summary
 
-The Dialogflow webhook was showing `trades_loaded=0` on Cloud Run because it looked for local `trades_*.json` files first, but on Cloud Run these files don't exist. The actual Alpaca trade data was being synced to `system_state.json -> trade_history` by the GitHub Actions workflow.
+The RAG Webhook was showing `trades_loaded=0` on Cloud Run because it looked for local `trades_*.json` files first, but on Cloud Run these files don't exist. The actual Alpaca trade data was being synced to `system_state.json -> trade_history` by the GitHub Actions workflow.
 
 ## Root Cause
 
@@ -14,13 +14,13 @@ The Dialogflow webhook was showing `trades_loaded=0` on Cloud Run because it loo
 | -------------------------------- | ----------------------------------------- | --------------------------- |
 | `sync-system-state.yml` workflow | `data/system_state.json -> trade_history` | GitHub Actions              |
 | `trade_sync.py`                  | `data/trades_{date}.json`                 | Local/CI                    |
-| `dialogflow_webhook.py` (BROKEN) | Reads `trades_*.json` first               | Cloud Run (no local files!) |
+| `rag_webhook.py` (BROKEN) | Reads `trades_*.json` first               | Cloud Run (no local files!) |
 
 The webhook tried to read `trades_*.json` first, which ONLY exists locally. On Cloud Run, it fell back to GitHub API, but by then the logic was already confused.
 
 ## Fix Applied
 
-Changed `query_trades()` in `dialogflow_webhook.py` v3.9.0 to:
+Changed `query_trades()` in `rag_webhook.py` v3.9.0 to:
 
 1. Check `system_state.json` FIRST (the Alpaca source of truth synced via workflow)
 2. Fall back to `trades_*.json` only for legacy/local development

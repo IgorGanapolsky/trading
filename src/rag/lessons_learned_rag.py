@@ -34,6 +34,7 @@ class LessonsLearnedRAG:
 
     def __init__(self, knowledge_dir: Optional[str] = None):
         self.knowledge_dir = Path(knowledge_dir or "rag_knowledge/lessons_learned")
+        self._custom_dir = knowledge_dir is not None
         self.lessons = []
         self.last_source = "none"
 
@@ -44,6 +45,9 @@ class LessonsLearnedRAG:
             "true",
             "yes",
         }
+        if self._custom_dir:
+            # Custom knowledge dirs are not indexed in LanceDB; force local search.
+            self.lancedb_enabled = False
         self.lancedb_required = os.getenv("LANCEDB_REQUIRED", "true").lower() in {
             "1",
             "true",
@@ -76,7 +80,7 @@ class LessonsLearnedRAG:
                     self.lancedb_rag = None
 
         # Use LessonsSearch for keyword-based search
-        if LESSONS_SEARCH_AVAILABLE:
+        if LESSONS_SEARCH_AVAILABLE and not self._custom_dir:
             try:
                 self.search_engine = get_lessons_search()
                 logger.info(
@@ -89,6 +93,10 @@ class LessonsLearnedRAG:
                 logger.warning(
                     f"LessonsSearch initialization failed: {e} - using direct file search"
                 )
+        elif self._custom_dir:
+            logger.info(
+                "Custom knowledge dir provided; skipping LessonsSearch and using direct file search."
+            )
 
         # Fallback to direct file-based search
         self.search_engine = None
@@ -142,7 +150,52 @@ class LessonsLearnedRAG:
         if self.lancedb_rag is None:
             return []
 
-        results = self.lancedb_rag.search(query, limit=max(top_k * 2, 5))
+        expansions = {
+            "exit": ["time exit", "7 dte", "profit target"],
+            "position sizing": ["position limit", "position accumulation", "accumulation"],
+            "close position": ["close_position", "closing position", "close positions"],
+            "delta selection": ["delta", "15 delta", "20 delta"],
+            "api bug": ["alpaca", "close_position"],
+        }
+        expanded_terms = []
+        lowered_query = query.lower()
+        for key, terms in expansions.items():
+            if key in lowered_query:
+                expanded_terms.extend(terms)
+
+        expanded_query = query
+        if expanded_terms:
+            expanded_query = f"{query} {' '.join(expanded_terms)}"
+
+        candidate_limit = max(top_k * 8, 40)
+        results = self.lancedb_rag.search(expanded_query, limit=candidate_limit)
+
+        query_terms = [
+            t
+            for t in expanded_query.lower().split()
+            if len(t) > 2
+            and t
+            not in {
+                "the",
+                "and",
+                "for",
+                "with",
+                "from",
+                "that",
+                "this",
+                "into",
+                "over",
+                "your",
+                "you",
+                "our",
+                "are",
+                "was",
+                "were",
+                "why",
+                "how",
+            }
+        ]
+
         formatted = []
         for r in results:
             source = r.metadata.get("source", "") if r.metadata else ""
@@ -153,24 +206,52 @@ class LessonsLearnedRAG:
             severity = (r.metadata.get("severity") or "LOW").upper()
             content = r.content or ""
             snippet = content[:500]
+            raw_score = None
+            if r.metadata:
+                raw_score = r.metadata.get("raw_score")
+
+            title = r.title or ""
+            content_lower = content.lower()
+            title_lower = title.lower()
+            lesson_id_lower = str(lesson_id).lower()
+            boost = 0.0
+            for term in query_terms:
+                if term in title_lower:
+                    boost += 0.1
+                if term in content_lower:
+                    boost += 0.05
+                if term in lesson_id_lower:
+                    boost += 0.08
+
+            combined_score = (r.score or 0.0) + boost
 
             formatted.append(
                 {
                     "id": lesson_id,
                     "severity": severity,
-                    "score": r.score,
+                    "score": combined_score,
+                    "raw_score": raw_score if raw_score is not None else r.score,
                     "snippet": snippet,
                     "content": content,
                     "file": source,
-                    "title": r.title,
+                    "title": title,
                     "prevention": "",
                 }
             )
 
-            if len(formatted) >= top_k:
-                break
+        if not formatted:
+            return []
 
-        return formatted
+        # Deduplicate by lesson_id, keeping the highest score
+        deduped = {}
+        for item in formatted:
+            key = str(item["id"]).lower()
+            existing = deduped.get(key)
+            if existing is None or item["score"] > existing["score"]:
+                deduped[key] = item
+
+        ranked = sorted(deduped.values(), key=lambda x: x["score"], reverse=True)
+        return ranked[:top_k]
 
     def query(self, query: str, top_k: int = 5, severity_filter: Optional[str] = None) -> list:
         """Search lessons using LanceDB first, then keyword matching."""
@@ -183,7 +264,7 @@ class LessonsLearnedRAG:
                             :top_k
                         ]
                     self.last_source = "lancedb"
-                    return results
+                    return self._reposition_results(query, results, top_k)
             except Exception as e:
                 logger.warning(f"LanceDB query failed: {e} - using keyword fallback")
 
@@ -195,7 +276,7 @@ class LessonsLearnedRAG:
                 )
                 # Convert results to expected format
                 self.last_source = "keyword"
-                return [
+                formatted = [
                     {
                         "id": lesson.id,
                         "severity": lesson.severity,
@@ -208,6 +289,7 @@ class LessonsLearnedRAG:
                     }
                     for lesson, score in results
                 ]
+                return self._reposition_results(query, formatted, top_k)
             except Exception as e:
                 logger.warning(f"LessonsSearch failed: {e} - using direct file search")
 
@@ -266,7 +348,19 @@ class LessonsLearnedRAG:
         # Sort by score descending
         results.sort(key=lambda x: x["score"], reverse=True)
         self.last_source = "keyword"
-        return results[:top_k]
+        return self._reposition_results(query, results, top_k)
+
+    def _reposition_results(self, query: str, results: list[dict], top_k: int) -> list[dict]:
+        """Re-rank lessons to keep the most relevant context close and diverse."""
+        if not results:
+            return []
+        try:
+            from src.rag.context_repositioning import reposition_lessons
+
+            return reposition_lessons(query, results, top_k)
+        except Exception as exc:  # pragma: no cover - non-critical enhancement
+            logger.debug(f"Context repositioning skipped: {exc}")
+            return results[:top_k]
 
     def search(self, query: str, top_k: int = 5) -> list:
         """

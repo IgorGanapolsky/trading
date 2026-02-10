@@ -35,6 +35,8 @@ article_*.html
 
 # Cache directories (API responses, health logs, etc.) - ignore recursively
 data/cache/
+data/gpu_backtests/cache/
+data/gpu_backtests/price_cache/
 **/*.jsonl
 
 # Historical data (can be regenerated, but some may be useful to track)
@@ -56,6 +58,7 @@ core.*
 api_keys.txt
 .github/local-secrets.env
 .secrets
+!scripts/validate_env_keys.py
 # Block test files in root (but allow in tests/ directory)
 /test_*.py
 /*_test.py
@@ -120,6 +123,8 @@ data/chroma_db/
 .claude/memory/lancedb/
 .claude/memory/model_cache/
 .claude/memory/chroma_db/
+.claude/memory/memalign/
+.claude/memory/lessons-learned.memory.md
 .claude/scripts/feedback/venv/
 
 # CCPM local workspace (project management)

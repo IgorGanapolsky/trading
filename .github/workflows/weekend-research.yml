@@ -12,6 +12,8 @@ permissions:
 env:
   PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
 
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 jobs:
   research:
     name: Run GPU Backtest + Perplexity Research
@@ -22,6 +24,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GH_PAT }}
+
+      - name: Restore GPU backtest cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            data/gpu_backtests/cache
+            data/gpu_backtests/price_cache
+          key: gpu-backtest-${{ runner.os }}-${{ hashFiles('src/compute/gpu_backtest.py') }}
+          restore-keys: |
+            gpu-backtest-${{ runner.os }}-
 
       - name: Set up Python
         uses: actions/setup-python@v5

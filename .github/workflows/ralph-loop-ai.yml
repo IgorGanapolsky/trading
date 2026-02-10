@@ -43,6 +43,8 @@ on:
 env:
   PYTHON_VERSION: "3.11"
 
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 # COST CONTROL: Only one Ralph loop at a time
 concurrency:
   group: ralph-loop
@@ -219,15 +221,21 @@ jobs:
           pip install -q -r requirements.txt || true
 
       - name: Query RAG for lessons
-        env:
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         continue-on-error: true
         run: |
-          echo "=== Querying RAG for recent lessons ==="
-          # If we have a RAG query script, run it
-          if [ -f scripts/query_vertex_rag.py ]; then
-            python scripts/query_vertex_rag.py --query "recent CI failures and fixes" --limit 3 || true
-          fi
+          echo "=== Querying local LanceDB RAG for recent lessons ==="
+          python3 - << 'PY'
+          import sys
+          sys.path.insert(0, ".")
+          from src.rag.lessons_learned_rag import LessonsLearnedRAG
+
+          rag = LessonsLearnedRAG()
+          results = rag.query("recent CI failures and fixes", top_k=3)
+          print(f"source={rag.last_source}")
+          for r in results:
+              snippet = (r.get("snippet") or r.get("content") or "")[:140].replace("\\n", " ")
+              print(f"- {r.get('id')}: {snippet}")
+          PY
 
       - name: Record iteration in prd.json
         run: |

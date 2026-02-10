@@ -81,7 +81,7 @@ class HealthChecker:
         self.status["last_check"] = datetime.now().isoformat()
         self.status["auto_healed"] = []
 
-        # Check each component (Jan 2026: Vertex AI removed - project uses ChromaDB + LanceDB only)
+        # Check each component (Jan 2026: cloud RAG removed - project uses ChromaDB + LanceDB only)
         checks = [
             ("lancedb", self.check_lancedb),
             ("chromadb", self.check_chromadb),
@@ -256,7 +256,7 @@ class HealthChecker:
 
         For full healing with retries, use --heal flag or run scheduled.
         """
-        # Jan 2026: Vertex AI removed - project uses ChromaDB + LanceDB only
+        # Jan 2026: cloud RAG removed - project uses ChromaDB + LanceDB only
         heal_functions = {
             "lancedb": self.heal_lancedb,
             "chromadb": self.heal_chromadb,
@@ -281,7 +281,7 @@ class HealthChecker:
         """Full healing with exponential backoff (use --heal flag)."""
         print(f"   🔧 Attempting to heal {component}...")
 
-        # Jan 2026: Vertex AI removed - project uses ChromaDB + LanceDB only
+        # Jan 2026: cloud RAG removed - project uses ChromaDB + LanceDB only
         heal_functions = {
             "lancedb": self.heal_lancedb,
             "chromadb": self.heal_chromadb,

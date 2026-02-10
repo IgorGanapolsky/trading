@@ -6,8 +6,11 @@
 User Feedback → capture_feedback.sh → feedback-log.jsonl
                                      → Thompson Sampling model
                                      → Session mistake tracking
+                                     → MemAlign (episodes + principles)
+                                     → ShieldCortex sync queue
 Next Prompt   → inject_recent_mistakes.sh → Context injection
 Session Start → session-start.sh → RAG + Thompson state
+Session Start → session-start-memalign.sh → MemAlign + ShieldCortex sync
 User Prompt   → semantic_rag_context.sh → Contextual memory
 ```
 
@@ -28,6 +31,20 @@ User Prompt   → semantic_rag_context.sh → Contextual memory
 | LanceDB           | `.claude/memory/feedback/lancedb/`                  | Vector search for similar failures |
 | Meta-policy rules | `.claude/memory/feedback/meta_policy_rules.json`    | Consolidated rules from patterns   |
 | Pending cortex    | `.claude/memory/feedback/pending_cortex_sync.jsonl` | Unsynced entries                   |
+| MemAlign episodes | `.claude/memory/memalign/episodes.jsonl`            | Full feedback history              |
+| MemAlign rules    | `.claude/memory/memalign/principles.jsonl`          | Distilled principles               |
+| ShieldCortex DB   | `~/.shieldcortex/memories.db`                       | Persistent dual-memory store       |
+
+## Success Metrics
+
+Computed by `scripts/rlhf_metrics.py` (writes `data/feedback/metrics.json` + `data/feedback/stats.json`).
+
+Targets:
+- Satisfaction rate >= 70%
+- Last 7d satisfaction rate >= 60%
+- MemAlign sync rate >= 0.90
+- ShieldCortex sync rate >= 0.90
+- Pending ShieldCortex sync entries == 0
 
 ## Thompson Sampling
 

@@ -850,7 +850,6 @@ class MCPSecurityValidator:
         "mcp-trader": "low",  # Analysis only
         "options-order-flow": "low",  # Read-only
         "trading-ui": "low",  # Internal UI
-        "bogleheads-learner": "low",  # Forum reading
     }
 
     # URL whitelist for playwright browser automation (L3 defense)
@@ -871,8 +870,6 @@ class MCPSecurityValidator:
         r"^https://igorganapolsky\.github\.io/",
         # Dev.to posts
         r"^https://dev\.to/igorganapolsky",
-        # Dialogflow console (read-only verification)
-        r"^https://dialogflow\.cloud\.google\.com/",
     ]
 
     # Blocked URL patterns (known malicious or risky)

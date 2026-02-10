@@ -444,6 +444,7 @@ def sync_lessons_to_blog(publish_devto: bool = True):
     created = 0
     skipped = 0
     devto_published = 0
+    created_files: list[Path] = []
 
     for date_str, lessons in sorted(lessons_by_date.items()):
         # Generate filename
@@ -465,6 +466,7 @@ def sync_lessons_to_blog(publish_devto: bool = True):
         filepath.write_text(post_content)
         print(f"  CREATE {filename} ({len(lessons)} lessons)")
         created += 1
+        created_files.append(filepath)
 
         # Publish to Dev.to for new posts
         if publish_devto:
@@ -475,6 +477,45 @@ def sync_lessons_to_blog(publish_devto: bool = True):
     print("\n" + "=" * 70)
     print(f"SYNC COMPLETE: {created} created, {skipped} skipped, {devto_published} to Dev.to")
     print("=" * 70)
+
+    # Lint newly created posts (warn-only by default)
+    if created_files:
+        try:
+            import subprocess
+            import sys
+
+            lint_args = [sys.executable, "scripts/lint_blog_posts.py", "--paths"]
+            lint_args.extend([str(p) for p in created_files])
+            if os.getenv("BLOG_LINT_STRICT", "").lower() in {"1", "true", "yes"}:
+                lint_args.append("--strict")
+            else:
+                lint_args.append("--warn-only")
+
+            result = subprocess.run(lint_args, check=False, text=True)
+            if result.returncode != 0:
+                print("WARNING: Blog linting reported issues.")
+        except Exception as exc:
+            print(f"WARNING: Blog linting failed: {exc}")
+
+    # Refresh RAG query index for the UI/worker after syncing lessons.
+    try:
+        import subprocess
+        import sys
+
+        result = subprocess.run(
+            [sys.executable, "scripts/build_rag_query_index.py"],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0:
+            print("Updated data/rag/lessons_query.json")
+        else:
+            print("WARNING: Failed to update lessons_query.json")
+            print(result.stdout.strip())
+            print(result.stderr.strip())
+    except Exception as exc:
+        print(f"WARNING: Unable to update lessons_query.json: {exc}")
 
     return created, skipped
 

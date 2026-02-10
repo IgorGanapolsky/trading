@@ -27,6 +27,10 @@ concurrency:
   group: phil-town-ingestion
   cancel-in-progress: true
 
+env:
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
 jobs:
   ingest-phil-town:
     runs-on: ubuntu-latest

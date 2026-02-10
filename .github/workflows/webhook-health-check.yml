@@ -3,17 +3,24 @@ name: Webhook Health Check
 on:
   # Run after webhook deployment
   workflow_run:
-    workflows: ["Deploy Dialogflow Webhook"]
+    workflows: ["Deploy RAG Webhook"]
     types: [completed]
   # DISABLED Jan 23, 2026 - Cost reduction ($200/month GCP bill)
   # schedule:
   #   - cron: '0 15 * * 1-5'  # 10 AM ET on trading days
   workflow_dispatch:
 
+env:
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
 jobs:
   health-check:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name != 'workflow_run' }}
+    env:
+      RAG_WEBHOOK_URL: ${{ vars.RAG_WEBHOOK_URL }}
+      RAG_WEBHOOK_URL_SECRET: ${{ secrets.RAG_WEBHOOK_URL }}
 
     steps:
       - name: Check Webhook Health
@@ -21,7 +28,13 @@ jobs:
         run: |
           echo "🔍 Checking webhook health..."
 
-          HEALTH_URL="https://trading-dialogflow-webhook-cqlewkvzdq-uc.a.run.app/health"
+          BASE_URL="${RAG_WEBHOOK_URL:-$RAG_WEBHOOK_URL_SECRET}"
+          if [ -z "$BASE_URL" ]; then
+            echo "::warning::RAG_WEBHOOK_URL not set; skipping health check"
+            exit 0
+          fi
+
+          HEALTH_URL="$BASE_URL/health"
           RESPONSE=$(curl -s "$HEALTH_URL")
 
           echo "Response: $RESPONSE"
@@ -78,7 +91,13 @@ jobs:
         run: |
           echo "🔍 Testing trade query endpoint..."
 
-          TEST_URL="https://trading-dialogflow-webhook-cqlewkvzdq-uc.a.run.app/test-trades"
+          BASE_URL="${RAG_WEBHOOK_URL:-$RAG_WEBHOOK_URL_SECRET}"
+          if [ -z "$BASE_URL" ]; then
+            echo "::warning::RAG_WEBHOOK_URL not set; skipping trade query test"
+            exit 0
+          fi
+
+          TEST_URL="$BASE_URL/test-trades"
           RESPONSE=$(curl -s "$TEST_URL")
 
           RESULTS_COUNT=$(echo "$RESPONSE" | jq -r '.results_count')
@@ -95,7 +114,13 @@ jobs:
         run: |
           echo "🔍 Testing RAG query endpoint..."
 
-          TEST_URL="https://trading-dialogflow-webhook-cqlewkvzdq-uc.a.run.app/test"
+          BASE_URL="${RAG_WEBHOOK_URL:-$RAG_WEBHOOK_URL_SECRET}"
+          if [ -z "$BASE_URL" ]; then
+            echo "::warning::RAG_WEBHOOK_URL not set; skipping RAG query test"
+            exit 0
+          fi
+
+          TEST_URL="$BASE_URL/test"
           RESPONSE=$(curl -s "$TEST_URL")
 
           RAG_SOURCE=$(echo "$RESPONSE" | jq -r '.rag_source')

@@ -1,12 +1,12 @@
-# LL-157: Dialogflow Analytical Query Routing Fix
+# LL-157: RAG Webhook Analytical Query Routing Fix
 
 **Date:** 2026-01-13
 **Severity:** HIGH
-**Category:** Dialogflow, Query Routing, User Experience
+**Category:** RAG Webhook, Query Routing, User Experience
 
 ## Problem
 
-When users asked analytical questions like "Why did we not make money yesterday in paper trades?", the Dialogflow webhook was returning generic portfolio status instead of actually analyzing and answering the WHY question.
+When users asked analytical questions like "Why did we not make money yesterday in paper trades?", the RAG Webhook was returning generic portfolio status instead of actually analyzing and answering the WHY question.
 
 **Root Cause:** The `is_trade_query()` function detected keywords like "money", "trades", "paper" and routed these to the trade handler, which showed portfolio status when no trades were found - ignoring the analytical nature of the question.
 
@@ -35,11 +35,11 @@ Updated webhook routing logic:
 
 ## Code Reference
 
-`src/agents/dialogflow_webhook.py:307` - `is_analytical_query()` function
-`src/agents/dialogflow_webhook.py:933-1005` - Routing logic for analytical queries
+`src/agents/rag_webhook.py:307` - `is_analytical_query()` function
+`src/agents/rag_webhook.py:933-1005` - Routing logic for analytical queries
 
 ## Tests Added
 
-`tests/test_dialogflow_webhook.py:1072` - `TestAnalyticalQueryDetection` class
+`tests/test_rag_webhook.py:1072` - `TestAnalyticalQueryDetection` class
 
 - 5 test methods covering WHY, explain, in-detail, negative cases, case insensitivity

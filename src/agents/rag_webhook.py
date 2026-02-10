@@ -1,10 +1,8 @@
 """
-Dialogflow CX Webhook for Trading RAG System.
+RAG Webhook for Trading RAG System.
 
-This webhook receives queries from Dialogflow and returns full, untruncated
-lessons learned AND trade history from our RAG knowledge base.
-
-Deployed to Cloud Run at: https://trading-dialogflow-webhook-cqlewkvzdq-uc.a.run.app
+This webhook serves RAG search and trade history queries for internal clients.
+Returns full, untruncated lessons learned AND trade history from our RAG knowledge base.
 
 Version History:
 - v2.9.0 Jan 10, 2026: Security - SSL verification, rate limiting, webhook auth
@@ -23,8 +21,8 @@ Architecture (v3.0.0):
 - Primary: LanceDB local semantic search
 - Fallback: Keyword-based search
 
-CEO Directive: "I want to be able to speak to Dialogflow about my trades
-and get accurate information" - requires semantic search.
+CEO Directive: "I want to be able to ask about my trades and get accurate information"
+requires semantic search.
 """
 
 from __future__ import annotations
@@ -37,6 +35,7 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI, Header, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 # Rate limiting (optional - graceful degradation if not installed)
@@ -62,14 +61,26 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# AI disclosure required for high-risk (finance) domain usage.
+AI_DISCLOSURE_TEXT = "AI Disclosure: This interface uses AI to search and summarize internal lessons. Not financial advice. Human review required for any trading decisions."
+
 # Webhook authentication token (set in Cloud Run environment)
-WEBHOOK_AUTH_TOKEN = os.environ.get("DIALOGFLOW_WEBHOOK_TOKEN", "")
+WEBHOOK_AUTH_TOKEN = os.environ.get("RAG_WEBHOOK_TOKEN", "")
 
 # Initialize FastAPI app
 app = FastAPI(
     title="Trading AI RAG Webhook",
-    description="Dialogflow CX webhook for lessons AND trade history queries",
+    description="RAG Webhook for lessons AND trade history queries",
     version="3.9.0",  # Fix trade data source priority - system_state.json first
+)
+
+# Allow browser clients (GitHub Pages / local dev) to call /rag-search directly.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Initialize rate limiter if available
@@ -96,11 +107,19 @@ else:
         return decorator
 
 
-# Initialize RAG system (LanceDB-first via LessonsLearnedRAG)
-local_rag = LessonsLearnedRAG()
-logger.info(
-    f"RAG initialized with {len(local_rag.lessons)} lessons (LanceDB-first, keyword fallback)"
-)
+local_rag: Optional[LessonsLearnedRAG] = None
+
+
+def get_local_rag() -> LessonsLearnedRAG:
+    """Lazy-init RAG to avoid import-time side effects in CI/tests."""
+    global local_rag
+    if local_rag is None:
+        local_rag = LessonsLearnedRAG()
+        logger.info(
+            "RAG initialized with %s lessons (LanceDB-first, keyword fallback)",
+            len(local_rag.lessons),
+        )
+    return local_rag
 
 
 def query_rag_hybrid(query: str, top_k: int = 5) -> tuple[list, str]:
@@ -110,8 +129,9 @@ def query_rag_hybrid(query: str, top_k: int = 5) -> tuple[list, str]:
     Returns:
         Tuple of (results_list, source_name)
     """
-    results = local_rag.query(query, top_k=top_k)
-    source = local_rag.last_source or "keyword"
+    rag = get_local_rag()
+    results = rag.query(query, top_k=top_k)
+    source = rag.last_source or "keyword"
     logger.info(f"RAG returned {len(results)} results (source={source})")
     return results, source
 
@@ -171,6 +191,7 @@ async def rag_search(request: Request):
                 "severity": r.get("severity", "MEDIUM"),
                 "summary": content[:300],
                 "content": content[:2000],
+                "context_score": r.get("context_score"),
                 "file": r.get("file"),
             }
         )
@@ -178,6 +199,7 @@ async def rag_search(request: Request):
     return {
         "query": query,
         "source": source,
+        "ai_disclosure": AI_DISCLOSURE_TEXT,
         "results": trimmed,
     }
 
@@ -186,7 +208,7 @@ def query_alpaca_api_direct() -> Optional[dict]:
     """
     Query Alpaca API directly for REAL-TIME portfolio data.
 
-    FIX Jan 15, 2026: Dialogflow was showing stale data from cached files.
+    FIX Jan 15, 2026: RAG Webhook was showing stale data from cached files.
     This function queries Alpaca directly for accurate, real-time data.
 
     Returns:
@@ -1334,15 +1356,15 @@ def format_trades_response(trades: list, query: str) -> str:
     return "\n".join(response_parts)
 
 
-def create_dialogflow_response(text: str) -> dict:
+def create_webhook_response(text: str) -> dict:
     """
-    Create a Dialogflow CX webhook response.
+    Create a webhook response payload.
 
-    IMPORTANT: We set the FULL text here. Dialogflow should not truncate
+    IMPORTANT: We set the FULL text here. Clients should not truncate
     this response. If truncation occurs, check:
     1. Cloud Run timeout (should be 60s)
-    2. Dialogflow webhook timeout (should be 30s)
-    3. Agent response settings in Dialogflow CX console
+    2. Client timeout (should be 30s)
+    3. Client response settings
     """
     return {"fulfillmentResponse": {"messages": [{"text": {"text": [text]}}]}}
 
@@ -1351,7 +1373,7 @@ def verify_webhook_auth(authorization: Optional[str] = Header(None)) -> bool:
     """
     Verify webhook authentication token.
 
-    Security: Validates bearer token if DIALOGFLOW_WEBHOOK_TOKEN is set.
+    Security: Validates bearer token if RAG_WEBHOOK_TOKEN is set.
     If no token is configured, allows requests (for backward compatibility).
     """
     if not WEBHOOK_AUTH_TOKEN:
@@ -1377,11 +1399,11 @@ async def webhook(
     authorization: Optional[str] = Header(None),
 ) -> JSONResponse:
     """
-    Handle Dialogflow CX webhook requests.
+    Handle RAG Webhook requests.
 
     Security:
     - Rate limited to 100 requests/minute per IP (if slowapi installed)
-    - Authenticated via bearer token (if DIALOGFLOW_WEBHOOK_TOKEN configured)
+    - Authenticated via bearer token (if RAG_WEBHOOK_TOKEN configured)
 
     Request format:
     {
@@ -1693,15 +1715,15 @@ Or ask me about **lessons learned** instead (e.g., "What lessons did we learn ab
 
         logger.info(f"Returning response with {len(response_text)} chars")
 
-        # Create Dialogflow response
-        response = create_dialogflow_response(response_text)
+        # Create RAG Webhook response
+        response = create_webhook_response(response_text)
 
         return JSONResponse(content=response)
 
     except Exception as e:
         # Security: Log full error but don't expose internals to client
         logger.error(f"Webhook error: {e}", exc_info=True)
-        error_response = create_dialogflow_response(
+        error_response = create_webhook_response(
             "An error occurred processing your request. Please try again."
         )
         return JSONResponse(content=error_response, status_code=200)
@@ -1710,16 +1732,17 @@ Or ask me about **lessons learned** instead (e.g., "What lessons did we learn ab
 @app.get("/health")
 async def health():
     """Health check endpoint."""
+    rag = get_local_rag()
     # Count trades from local JSON files
     trade_count = len(query_trades("all", limit=1000))
     return {
         "status": "healthy",
-        "local_lessons_loaded": len(local_rag.lessons),
-        "critical_lessons": len(local_rag.get_critical_lessons()),
+        "local_lessons_loaded": len(rag.lessons),
+        "critical_lessons": len(rag.get_critical_lessons()),
         "trades_loaded": trade_count,
         "trade_history_source": "system_state.json (Alpaca)",
         "rag_mode": "lancedb_first",
-        "rag_last_source": local_rag.last_source,
+        "rag_last_source": rag.last_source,
     }
 
 
@@ -1728,11 +1751,12 @@ async def diagnostics():
     """Detailed diagnostic information for RAG status."""
     import os
 
+    rag = get_local_rag()
     return {
         "local_rag": {
-            "lessons_loaded": len(local_rag.lessons) if local_rag else 0,
-            "critical_lessons": (len(local_rag.get_critical_lessons()) if local_rag else 0),
-            "last_source": local_rag.last_source,
+            "lessons_loaded": len(rag.lessons),
+            "critical_lessons": len(rag.get_critical_lessons()),
+            "last_source": rag.last_source,
         },
         "system": {
             "python_path": os.getenv("PYTHONPATH", "NOT SET"),
@@ -1745,17 +1769,18 @@ async def diagnostics():
 @app.get("/")
 async def root():
     """Root endpoint with info."""
+    rag = get_local_rag()
     trade_count = len(query_trades("all", limit=1000))
     return {
         "service": "Trading AI RAG Webhook",
         "version": "3.9.0",  # Fix trade data source priority - system_state.json first
-        "local_lessons_loaded": len(local_rag.lessons),
+        "local_lessons_loaded": len(rag.lessons),
         "trades_loaded": trade_count,
         "trade_history_source": "system_state.json (Alpaca)",
         "rag_mode": "lancedb_first",
-        "rag_last_source": local_rag.last_source,
+        "rag_last_source": rag.last_source,
         "endpoints": {
-            "/webhook": "POST - Dialogflow CX webhook (lessons + trades + readiness)",
+            "/webhook": "POST - RAG Webhook (lessons + trades + readiness)",
             "/rag-search": "POST - RAG search (LanceDB-first, JSON response)",
             "/health": "GET - Health check",
             "/diagnostics": "GET - Detailed diagnostic info for debugging",

@@ -15,9 +15,9 @@
     },
     {
       "id": "LL-300",
-      "topic": "Dialogflow RAG Query Fix",
+      "topic": "RAG Webhook RAG Query Fix",
       "key_finding": "Context-aware query routing for no-trade days",
-      "verified": "Implemented at dialogflow_webhook.py:1489-1493"
+      "verified": "Implemented at rag_webhook.py:1489-1493"
     },
     {
       "id": "LL-309",

@@ -11,6 +11,10 @@ on:
 permissions:
   contents: read
 
+env:
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
 jobs:
   check-earnings:
     name: Check Positions for Earnings Risk

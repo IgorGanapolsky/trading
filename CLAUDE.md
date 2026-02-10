@@ -46,7 +46,7 @@ If you violate any protocol in this file: stop, acknowledge, fix completely, rec
 
 | Workflow | Schedule | Purpose |
 |---|---|---|
-| `weekend-learning.yml` | Sunday 8am ET | Phil Town YouTube, blogs, Bogleheads, vectorize to RAG |
+| `weekend-learning.yml` | Sunday 8am ET | Phil Town YouTube, blogs, vectorize to RAG |
 | `weekend-research.yml` | Saturday 1am ET | GPU backtest + Perplexity deep research on iron condors |
 | `phil-town-ingestion.yml` | Sat+Sun 8am ET | Phil Town transcripts + blog articles to RAG |
 
@@ -61,9 +61,10 @@ All findings stored in: `rag_knowledge/`, `data/vector_db/`, `data/system_state.
 Hooks auto-run — no manual invocation needed:
 - **SessionStart**: Load Thompson Sampling model + past patterns from ShieldCortex
 - **UserPromptSubmit**: Detect feedback, update model, query MemAlign for relevant past failures
-- **Memory Query**: `rlhf-memory-query.sh` queries ShieldCortex (SQLite) + MemAlign (LanceDB) on every prompt — MANDATORY context injection
+- **Memory Query**: `rlhf-memory-query.sh` queries ShieldCortex (SQLite) + MemAlign (JSONL) + LanceDB semantic memory on every prompt — MANDATORY context injection
 
-Stores: `~/.shieldcortex/memories.db` (SQLite), `~/.shieldcortex/lancedb/` (vectors), `~/.claude/memory/thompson_model.json`
+Stores: `~/.shieldcortex/memories.db` (SQLite), `~/.shieldcortex/lancedb/` (vectors), `.claude/memory/memalign/*.jsonl`, `~/.claude/memory/thompson_model.json`
+Metrics: `scripts/rlhf_metrics.py` writes `data/feedback/metrics.json` + `data/feedback/stats.json`
 
 ---
 
@@ -134,6 +135,7 @@ pytest tests/ -q --tb=no                    # run tests
 ruff check src/                              # lint
 python scripts/validate_env_keys.py          # validate API keys
 python scripts/system_health_check.py        # health check
+python scripts/rlhf_metrics.py               # RLHF success metrics
 .claude/scripts/pre-work-check.sh            # pre-work validation
 ```
 
@@ -146,6 +148,13 @@ python scripts/system_health_check.py        # health check
 3. `python scripts/validate_env_keys.py` — keys valid
 4. Dry run trading logic if applicable
 5. CI green on PR
+
+---
+
+## Response Reporting Requirements
+
+- If a trade was only planned, explicitly say it was **not executed**.
+- If tests were not run locally, explicitly say so.
 
 ---
 

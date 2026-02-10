@@ -13,6 +13,8 @@ on:
 env:
   DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
 
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 permissions:
   contents: write
 

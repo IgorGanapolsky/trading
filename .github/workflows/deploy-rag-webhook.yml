@@ -1,22 +1,24 @@
-name: Deploy Dialogflow Webhook
+name: Deploy RAG Webhook
 
 on:
   push:
     branches:
       - main
     paths:
-      - "src/agents/dialogflow_webhook.py"
+      - "src/agents/rag_webhook.py"
       - "src/rag/**"
       - "rag_knowledge/lessons_learned/**"
       - "Dockerfile.webhook"
-      - ".github/workflows/deploy-dialogflow-webhook.yml"
+      - ".github/workflows/deploy-rag-webhook.yml"
   workflow_dispatch: # Manual trigger
 
 env:
   PROJECT_ID: igor-trading-2025-v2
   REGION: us-central1
-  SERVICE_NAME: trading-dialogflow-webhook
+  SERVICE_NAME: trading-rag-webhook
 
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -74,10 +76,10 @@ jobs:
             --min-instances 0 \
             --max-instances 3 \
             --timeout 60s \
-            --set-env-vars "ALPACA_PAPER_TRADING_API_KEY=${{ secrets.ALPACA_PAPER_TRADING_API_KEY }},ALPACA_PAPER_TRADING_API_SECRET=${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}"
+            --set-env-vars "ALPACA_PAPER_TRADING_API_KEY=${{ secrets.ALPACA_PAPER_TRADING_API_KEY }},ALPACA_PAPER_TRADING_API_SECRET=${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }},RAG_WEBHOOK_TOKEN=${{ secrets.RAG_WEBHOOK_TOKEN }}"
 
       - name: Get service URL
         run: |
           URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --region ${{ env.REGION }} --format='value(status.url)')
           echo "🚀 Webhook deployed to: $URL"
-          echo "📝 Configure this URL in Dialogflow CX: $URL/webhook"
+          echo "📝 Configure this URL in clients as RAG_WEBHOOK_URL: $URL"

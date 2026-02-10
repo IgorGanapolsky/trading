@@ -1,8 +1,8 @@
 """
-Tests for Dialogflow CX webhook.
+Tests for RAG Webhook.
 
 Ensures the webhook correctly:
-1. Handles Dialogflow CX request format
+1. Handles RAG Webhook request format
 2. Queries RAG system for lessons
 3. Returns properly formatted responses
 4. Handles errors gracefully
@@ -22,22 +22,22 @@ except (ImportError, SyntaxError, TypeError) as e:
     )
 
 
-class TestDialogflowWebhookFormat:
-    """Test Dialogflow response format."""
+class TestRAGWebhookFormat:
+    """Test RAG Webhook response format."""
 
-    def test_create_dialogflow_response_format(self):
-        """Verify response matches Dialogflow CX webhook format."""
+    def test_create_webhook_response_format(self):
+        """Verify response matches RAG Webhook format."""
         # Import the function
         import sys
         from pathlib import Path
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import create_dialogflow_response
+        from src.agents.rag_webhook import create_webhook_response
 
-        response = create_dialogflow_response("Test message")
+        response = create_webhook_response("Test message")
 
-        # Verify structure matches Dialogflow CX format
+        # Verify structure matches RAG Webhook format
         assert "fulfillmentResponse" in response
         assert "messages" in response["fulfillmentResponse"]
         assert len(response["fulfillmentResponse"]["messages"]) == 1
@@ -51,7 +51,7 @@ class TestDialogflowWebhookFormat:
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import format_lessons_response
+        from src.agents.rag_webhook import format_lessons_response
 
         result = format_lessons_response([], "test query")
 
@@ -66,7 +66,7 @@ class TestDialogflowWebhookFormat:
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import format_lessons_response
+        from src.agents.rag_webhook import format_lessons_response
 
         mock_lessons = [
             {
@@ -83,13 +83,13 @@ class TestDialogflowWebhookFormat:
         assert "Test lesson content" in result
 
 
-class TestDialogflowWebhookIntegration:
+class TestRAGWebhookIntegration:
     """Integration tests for webhook endpoints."""
 
     @pytest.fixture
     def mock_rag(self):
         """Mock RAG system to avoid heavy dependencies in CI."""
-        with patch("src.agents.dialogflow_webhook.local_rag") as mock:
+        with patch("src.agents.rag_webhook.local_rag") as mock:
             mock.lessons = [{"id": "ll_001", "severity": "CRITICAL"}]
             mock.query.return_value = [
                 {
@@ -108,7 +108,7 @@ class TestDialogflowWebhookIntegration:
         """Verify webhook extracts query from 'text' field."""
         from fastapi.testclient import TestClient
 
-        from src.agents.dialogflow_webhook import app
+        from src.agents.rag_webhook import app
 
         client = TestClient(app)
 
@@ -130,7 +130,7 @@ class TestDialogflowWebhookIntegration:
         """Verify webhook extracts query from 'transcript' field."""
         from fastapi.testclient import TestClient
 
-        from src.agents.dialogflow_webhook import app
+        from src.agents.rag_webhook import app
 
         client = TestClient(app)
 
@@ -149,7 +149,7 @@ class TestDialogflowWebhookIntegration:
         """Verify webhook handles request with no query gracefully."""
         from fastapi.testclient import TestClient
 
-        from src.agents.dialogflow_webhook import app
+        from src.agents.rag_webhook import app
 
         client = TestClient(app)
 
@@ -164,7 +164,7 @@ class TestDialogflowWebhookIntegration:
         """Verify health endpoint returns correct status."""
         from fastapi.testclient import TestClient
 
-        from src.agents.dialogflow_webhook import app
+        from src.agents.rag_webhook import app
 
         client = TestClient(app)
 
@@ -180,7 +180,7 @@ class TestDialogflowWebhookIntegration:
         """Verify root endpoint returns service info."""
         from fastapi.testclient import TestClient
 
-        from src.agents.dialogflow_webhook import app
+        from src.agents.rag_webhook import app
 
         client = TestClient(app)
 
@@ -195,7 +195,7 @@ class TestDialogflowWebhookIntegration:
         """Verify test endpoint queries RAG."""
         from fastapi.testclient import TestClient
 
-        from src.agents.dialogflow_webhook import app
+        from src.agents.rag_webhook import app
 
         client = TestClient(app)
 
@@ -207,7 +207,7 @@ class TestDialogflowWebhookIntegration:
         assert "results_count" in data
 
 
-class TestDialogflowWebhookEdgeCases:
+class TestRAGWebhookEdgeCases:
     """Edge case tests for full coverage."""
 
     def test_format_lesson_full(self):
@@ -217,7 +217,7 @@ class TestDialogflowWebhookEdgeCases:
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import format_lesson_full
+        from src.agents.rag_webhook import format_lesson_full
 
         lesson = {
             "content": "# Test Lesson Title\n\nThis is the content.",
@@ -237,7 +237,7 @@ class TestDialogflowWebhookEdgeCases:
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import format_lesson_full
+        from src.agents.rag_webhook import format_lesson_full
 
         lesson = {
             "content": "Just content without a title header.",
@@ -252,7 +252,7 @@ class TestDialogflowWebhookEdgeCases:
     @pytest.fixture
     def mock_rag_empty(self):
         """Mock RAG that returns empty results."""
-        with patch("src.agents.dialogflow_webhook.local_rag") as mock:
+        with patch("src.agents.rag_webhook.local_rag") as mock:
             mock.lessons = []
             mock.query.return_value = []
             mock.get_critical_lessons.return_value = []
@@ -262,10 +262,10 @@ class TestDialogflowWebhookEdgeCases:
         """Test extracting query from sessionInfo.parameters."""
         from fastapi.testclient import TestClient
 
-        from src.agents.dialogflow_webhook import app
+        from src.agents.rag_webhook import app
 
         # Set up mock to return results on second call
-        with patch("src.agents.dialogflow_webhook.local_rag") as mock:
+        with patch("src.agents.rag_webhook.local_rag") as mock:
             mock.lessons = []
             mock.query.return_value = [{"id": "ll_001", "severity": "INFO", "content": "Test"}]
 
@@ -282,13 +282,13 @@ class TestDialogflowWebhookEdgeCases:
 
     def test_webhook_fulfillment_tag(self):
         """Test extracting query from fulfillmentInfo.tag."""
-        with patch("src.agents.dialogflow_webhook.local_rag") as mock:
+        with patch("src.agents.rag_webhook.local_rag") as mock:
             mock.lessons = []
             mock.query.return_value = [{"id": "ll_001", "severity": "INFO", "content": "Test"}]
 
             from fastapi.testclient import TestClient
 
-            from src.agents.dialogflow_webhook import app
+            from src.agents.rag_webhook import app
 
             client = TestClient(app)
 
@@ -303,7 +303,7 @@ class TestDialogflowWebhookEdgeCases:
 
     def test_webhook_fallback_search(self):
         """Test fallback to broader search when no results."""
-        with patch("src.agents.dialogflow_webhook.local_rag") as mock:
+        with patch("src.agents.rag_webhook.local_rag") as mock:
             mock.lessons = []
             # First call returns empty, second call returns results
             mock.query.side_effect = [
@@ -313,7 +313,7 @@ class TestDialogflowWebhookEdgeCases:
 
             from fastapi.testclient import TestClient
 
-            from src.agents.dialogflow_webhook import app
+            from src.agents.rag_webhook import app
 
             client = TestClient(app)
 
@@ -328,12 +328,12 @@ class TestDialogflowWebhookEdgeCases:
 
     def test_webhook_error_handling(self):
         """Test error handling returns proper response."""
-        with patch("src.agents.dialogflow_webhook.local_rag") as mock:
+        with patch("src.agents.rag_webhook.local_rag") as mock:
             mock.query.side_effect = Exception("Database error")
 
             from fastapi.testclient import TestClient
 
-            from src.agents.dialogflow_webhook import app
+            from src.agents.rag_webhook import app
 
             client = TestClient(app)
 
@@ -342,7 +342,7 @@ class TestDialogflowWebhookEdgeCases:
                 json={"text": "test query"},
             )
 
-            # Should return 200 with error message (Dialogflow expects 200)
+            # Should return 200 with error message (RAG Webhook expects 200)
             assert response.status_code == 200
             data = response.json()
             # Security fix (Jan 10, 2026): Error message no longer exposes exception details
@@ -362,7 +362,7 @@ class TestTradeQueryDetection:
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import is_trade_query
+        from src.agents.rag_webhook import is_trade_query
 
         # These should ALL be detected as trade queries
         trade_queries = [
@@ -387,7 +387,7 @@ class TestTradeQueryDetection:
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import is_trade_query
+        from src.agents.rag_webhook import is_trade_query
 
         # These should NOT be detected as trade queries
         # Note: avoid words that contain trade keywords (e.g., "learn" contains "earn")
@@ -408,7 +408,7 @@ class TestTradeQueryDetection:
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import is_trade_query
+        from src.agents.rag_webhook import is_trade_query
 
         assert is_trade_query("MONEY")
         assert is_trade_query("Money")
@@ -424,15 +424,13 @@ class TestTradeQueryFallbackBehavior:
 
         # Note: mock_state removed - using mock_portfolio return value instead
 
-        with patch("src.agents.dialogflow_webhook.local_rag") as mock_rag:
+        with patch("src.agents.rag_webhook.local_rag") as mock_rag:
             mock_rag.lessons = []
             mock_rag.query.return_value = [
                 {"id": "ll_001", "severity": "INFO", "content": "Test lesson"}
             ]
 
-            with patch(
-                "src.agents.dialogflow_webhook.get_current_portfolio_status"
-            ) as mock_portfolio:
+            with patch("src.agents.rag_webhook.get_current_portfolio_status") as mock_portfolio:
                 mock_portfolio.return_value = {
                     "live": {
                         "equity": 100,
@@ -454,7 +452,7 @@ class TestTradeQueryFallbackBehavior:
 
                 from fastapi.testclient import TestClient
 
-                from src.agents.dialogflow_webhook import app
+                from src.agents.rag_webhook import app
 
                 client = TestClient(app)
 
@@ -476,20 +474,18 @@ class TestTradeQueryFallbackBehavior:
         """Verify P/L queries return trade history or portfolio status, not raw lessons."""
         from unittest.mock import patch
 
-        with patch("src.agents.dialogflow_webhook.local_rag") as mock_rag:
+        with patch("src.agents.rag_webhook.local_rag") as mock_rag:
             mock_rag.lessons = []
             mock_rag.query.return_value = [
                 {"id": "ll_001", "severity": "INFO", "content": "Test lesson"}
             ]
 
-            with patch(
-                "src.agents.dialogflow_webhook.get_current_portfolio_status"
-            ) as mock_portfolio:
+            with patch("src.agents.rag_webhook.get_current_portfolio_status") as mock_portfolio:
                 mock_portfolio.return_value = {}  # No portfolio data
 
                 from fastapi.testclient import TestClient
 
-                from src.agents.dialogflow_webhook import app
+                from src.agents.rag_webhook import app
 
                 client = TestClient(app)
 
@@ -526,7 +522,7 @@ class TestPortfolioStatusFunction:
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import get_current_portfolio_status
+        from src.agents.rag_webhook import get_current_portfolio_status
 
         result = get_current_portfolio_status()
 
@@ -547,7 +543,7 @@ class TestPortfolioStatusFunction:
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import get_current_portfolio_status
+        from src.agents.rag_webhook import get_current_portfolio_status
 
         result = get_current_portfolio_status()
 
@@ -565,7 +561,7 @@ class TestPortfolioStatusFunction:
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import get_current_portfolio_status
+        from src.agents.rag_webhook import get_current_portfolio_status
 
         result = get_current_portfolio_status()
 
@@ -615,7 +611,7 @@ class TestPortfolioStatusFunction:
                 mock_urlopen.return_value = mock_response
 
                 # Re-import to get fresh function
-                from src.agents.dialogflow_webhook import get_current_portfolio_status
+                from src.agents.rag_webhook import get_current_portfolio_status
 
                 _ = get_current_portfolio_status()  # Call function, result not needed for this test
 
@@ -645,7 +641,7 @@ class TestPortfolioStatusFunction:
         # Patch urllib.request.urlopen to raise exception
         with patch("pathlib.Path.exists", return_value=False):
             with patch("urllib.request.urlopen", side_effect=Exception("Network error")):
-                from src.agents.dialogflow_webhook import get_current_portfolio_status
+                from src.agents.rag_webhook import get_current_portfolio_status
 
                 result = get_current_portfolio_status()
 
@@ -663,7 +659,7 @@ class TestReadinessQueryDetection:
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import is_readiness_query
+        from src.agents.rag_webhook import is_readiness_query
 
         readiness_queries = [
             "How ready are we for today's trade?",
@@ -682,7 +678,7 @@ class TestReadinessQueryDetection:
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import is_readiness_query
+        from src.agents.rag_webhook import is_readiness_query
 
         assert is_readiness_query("Are we prepared to trade?")
         assert is_readiness_query("preparation status")
@@ -694,7 +690,7 @@ class TestReadinessQueryDetection:
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import is_readiness_query
+        from src.agents.rag_webhook import is_readiness_query
 
         assert is_readiness_query("pre-trade checklist")
         assert is_readiness_query("status check")
@@ -707,7 +703,7 @@ class TestReadinessQueryDetection:
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import is_readiness_query
+        from src.agents.rag_webhook import is_readiness_query
 
         assert is_readiness_query("READY")
         assert is_readiness_query("Ready")
@@ -720,7 +716,7 @@ class TestReadinessQueryDetection:
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import is_readiness_query
+        from src.agents.rag_webhook import is_readiness_query
 
         non_readiness_queries = [
             "What's my portfolio?",
@@ -743,7 +739,7 @@ class TestReadinessAssessment:
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import assess_trading_readiness
+        from src.agents.rag_webhook import assess_trading_readiness
 
         result = assess_trading_readiness()
 
@@ -765,7 +761,7 @@ class TestReadinessAssessment:
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import assess_trading_readiness
+        from src.agents.rag_webhook import assess_trading_readiness
 
         result = assess_trading_readiness()
 
@@ -779,7 +775,7 @@ class TestReadinessAssessment:
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import assess_trading_readiness
+        from src.agents.rag_webhook import assess_trading_readiness
 
         result = assess_trading_readiness()
 
@@ -800,7 +796,7 @@ class TestReadinessAssessment:
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import assess_trading_readiness
+        from src.agents.rag_webhook import assess_trading_readiness
 
         result = assess_trading_readiness()
 
@@ -816,7 +812,7 @@ class TestReadinessAssessment:
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import assess_trading_readiness
+        from src.agents.rag_webhook import assess_trading_readiness
 
         result = assess_trading_readiness()
 
@@ -835,7 +831,7 @@ class TestFormatReadinessResponse:
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import format_readiness_response
+        from src.agents.rag_webhook import format_readiness_response
 
         assessment = {
             "status": "READY",
@@ -862,7 +858,7 @@ class TestFormatReadinessResponse:
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import format_readiness_response
+        from src.agents.rag_webhook import format_readiness_response
 
         assessment = {
             "status": "NOT_READY",
@@ -889,7 +885,7 @@ class TestFormatReadinessResponse:
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import format_readiness_response
+        from src.agents.rag_webhook import format_readiness_response
 
         assessment = {
             "status": "CAUTION",
@@ -916,7 +912,7 @@ class TestFormatReadinessResponse:
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import format_readiness_response
+        from src.agents.rag_webhook import format_readiness_response
 
         assessment = {
             "status": "READY",
@@ -943,7 +939,7 @@ class TestReadinessWebhookIntegration:
     @pytest.fixture
     def mock_rag(self):
         """Mock RAG system."""
-        with patch("src.agents.dialogflow_webhook.local_rag") as mock:
+        with patch("src.agents.rag_webhook.local_rag") as mock:
             mock.lessons = []
             mock.query.return_value = []
             mock.get_critical_lessons.return_value = []
@@ -953,7 +949,7 @@ class TestReadinessWebhookIntegration:
         """Verify readiness queries are routed correctly."""
         from fastapi.testclient import TestClient
 
-        from src.agents.dialogflow_webhook import app
+        from src.agents.rag_webhook import app
 
         client = TestClient(app)
 
@@ -975,7 +971,7 @@ class TestReadinessWebhookIntegration:
         """Verify readiness query takes priority over trade query."""
         from fastapi.testclient import TestClient
 
-        from src.agents.dialogflow_webhook import app
+        from src.agents.rag_webhook import app
 
         client = TestClient(app)
 
@@ -996,7 +992,7 @@ class TestReadinessWebhookIntegration:
         """Verify /test-readiness endpoint works."""
         from fastapi.testclient import TestClient
 
-        from src.agents.dialogflow_webhook import app
+        from src.agents.rag_webhook import app
 
         client = TestClient(app)
 
@@ -1011,17 +1007,17 @@ class TestReadinessWebhookIntegration:
         assert "status" in data["assessment"]
 
 
-class TestDialogflowWebhookSmokeTests:
+class TestRAGWebhookSmokeTests:
     """Smoke tests for webhook reliability."""
 
     def test_webhook_module_imports(self):
         """Verify webhook module imports without errors."""
         try:
-            from src.agents import dialogflow_webhook
+            from src.agents import rag_webhook
 
-            assert hasattr(dialogflow_webhook, "app")
-            assert hasattr(dialogflow_webhook, "webhook")
-            assert hasattr(dialogflow_webhook, "create_dialogflow_response")
+            assert hasattr(rag_webhook, "app")
+            assert hasattr(rag_webhook, "webhook")
+            assert hasattr(rag_webhook, "create_webhook_response")
         except ImportError as e:
             pytest.skip(f"Webhook dependencies not available: {e}")
 
@@ -1032,12 +1028,12 @@ class TestDialogflowWebhookSmokeTests:
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
-        from src.agents.dialogflow_webhook import create_dialogflow_response
+        from src.agents.rag_webhook import create_webhook_response
 
         # Create a long message (1000+ chars)
         long_message = "A" * 2000
 
-        response = create_dialogflow_response(long_message)
+        response = create_webhook_response(long_message)
 
         # Verify full message is in response
         assert len(response["fulfillmentResponse"]["messages"][0]["text"]["text"][0]) == 2000
@@ -1046,7 +1042,7 @@ class TestDialogflowWebhookSmokeTests:
         """Verify webhook doesn't contain hardcoded broker references."""
         from pathlib import Path
 
-        webhook_path = Path(__file__).parent.parent / "src" / "agents" / "dialogflow_webhook.py"
+        webhook_path = Path(__file__).parent.parent / "src" / "agents" / "rag_webhook.py"
         content = webhook_path.read_text()
 
         # These should NOT appear in hardcoded responses
@@ -1070,7 +1066,7 @@ class TestTradeQueryWordBoundary:
 
     def test_lessons_learned_not_trade_query(self):
         """lessons learned should NOT be a trade query."""
-        from src.agents.dialogflow_webhook import is_trade_query
+        from src.agents.rag_webhook import is_trade_query
 
         assert is_trade_query("What lessons did we learn?") is False
         assert is_trade_query("Tell me about lessons learned") is False
@@ -1078,14 +1074,14 @@ class TestTradeQueryWordBoundary:
 
     def test_actual_earn_is_trade_query(self):
         """Actual 'earn' word should be a trade query."""
-        from src.agents.dialogflow_webhook import is_trade_query
+        from src.agents.rag_webhook import is_trade_query
 
         assert is_trade_query("What did I earn today?") is True
         assert is_trade_query("How much did we earn?") is True
 
     def test_other_false_positives_prevented(self):
         """Other potential false positives should be prevented."""
-        from src.agents.dialogflow_webhook import is_trade_query
+        from src.agents.rag_webhook import is_trade_query
 
         # "made" in "automated" - should NOT match
         assert is_trade_query("How is the automated system?") is False
@@ -1108,7 +1104,7 @@ class TestAnalyticalQueryDetection:
 
     def test_why_questions_are_analytical(self):
         """WHY questions should be detected as analytical."""
-        from src.agents.dialogflow_webhook import is_analytical_query
+        from src.agents.rag_webhook import is_analytical_query
 
         analytical_queries = [
             "Why did we not make money yesterday?",
@@ -1122,7 +1118,7 @@ class TestAnalyticalQueryDetection:
 
     def test_explain_questions_are_analytical(self):
         """EXPLAIN/HOW COME questions should be analytical."""
-        from src.agents.dialogflow_webhook import is_analytical_query
+        from src.agents.rag_webhook import is_analytical_query
 
         analytical_queries = [
             "Explain what went wrong with our trades",
@@ -1136,14 +1132,14 @@ class TestAnalyticalQueryDetection:
 
     def test_in_detail_is_analytical(self):
         """Requests for detailed analysis should be analytical."""
-        from src.agents.dialogflow_webhook import is_analytical_query
+        from src.agents.rag_webhook import is_analytical_query
 
         assert is_analytical_query("Tell me in detail why we lost money")
         assert is_analytical_query("Please explain in detail the trade results")
 
     def test_simple_status_queries_not_analytical(self):
         """Simple status queries should NOT be analytical."""
-        from src.agents.dialogflow_webhook import is_analytical_query
+        from src.agents.rag_webhook import is_analytical_query
 
         non_analytical_queries = [
             "Show me my trades",
@@ -1158,7 +1154,7 @@ class TestAnalyticalQueryDetection:
 
     def test_analytical_query_case_insensitive(self):
         """Analytical detection should be case insensitive."""
-        from src.agents.dialogflow_webhook import is_analytical_query
+        from src.agents.rag_webhook import is_analytical_query
 
         assert is_analytical_query("WHY did we lose money?")
         assert is_analytical_query("EXPLAIN the trade failure")
@@ -1175,7 +1171,7 @@ class TestDirectPLQueryDetection:
 
     def test_direct_pl_queries_detected(self):
         """Test that direct P/L questions are detected correctly."""
-        from src.agents.dialogflow_webhook import is_direct_pl_query
+        from src.agents.rag_webhook import is_direct_pl_query
 
         direct_pl_queries = [
             "How much money we made today?",
@@ -1193,7 +1189,7 @@ class TestDirectPLQueryDetection:
 
     def test_non_direct_pl_queries(self):
         """Non-direct P/L questions should not match."""
-        from src.agents.dialogflow_webhook import is_direct_pl_query
+        from src.agents.rag_webhook import is_direct_pl_query
 
         non_direct_queries = [
             "What lessons did we learn?",
@@ -1207,7 +1203,7 @@ class TestDirectPLQueryDetection:
 
     def test_direct_pl_case_insensitive(self):
         """Direct P/L detection should be case insensitive."""
-        from src.agents.dialogflow_webhook import is_direct_pl_query
+        from src.agents.rag_webhook import is_direct_pl_query
 
         assert is_direct_pl_query("HOW MUCH MONEY we made?")
         assert is_direct_pl_query("Did We Make Money?")

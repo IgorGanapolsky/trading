@@ -12,7 +12,7 @@
 
 - **Lessons Learned**: 50+ lessons in `rag_knowledge/lessons_learned/`
 - **Strategy Docs**: Options research in `rag_knowledge/options_strategy/`
-- **Query Path**: Dialogflow → `query_rag_hybrid()` → legacy RAG or local fallback
+- **Query Path**: RAG Webhook → `query_rag_hybrid()` → legacy RAG or local fallback
 - **Cost Optimization**: legacy RAG queries limited to pre-trade and webhook only (Jan 23, 2026)
 
 ### ML Feedback Model

@@ -8,7 +8,7 @@ Implements allowlist-based security for trading operations.
 from __future__ import annotations
 
 import re
-from typing import Any, TypeVar
+from typing import Any, Optional, TypeVar
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -76,7 +76,7 @@ class OrderRequest(BaseModel):
     symbol: str = Field(..., min_length=1, max_length=10)
     amount_usd: float = Field(..., gt=0, le=MAX_ORDER_AMOUNT_USD)
     side: str = Field(default="buy")
-    tier: str | None = Field(default=None)
+    tier: Optional[str] = Field(default=None)
     paper: bool = Field(default=True)
 
     @field_validator("symbol")

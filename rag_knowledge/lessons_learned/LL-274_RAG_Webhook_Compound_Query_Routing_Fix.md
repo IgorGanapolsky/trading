@@ -1,4 +1,4 @@
-# LL-274: Dialogflow Compound Query Routing Fix
+# LL-274: RAG Webhook Compound Query Routing Fix
 
 ## Date
 
@@ -10,7 +10,7 @@ HIGH
 
 ## Summary
 
-Fixed Dialogflow webhook to properly handle compound queries like "How much money did we make today and why?" which were returning raw trade dumps instead of analytical responses.
+Fixed RAG Webhook to properly handle compound queries like "How much money did we make today and why?" which were returning raw trade dumps instead of analytical responses.
 
 ## Root Cause
 
@@ -30,7 +30,7 @@ Query routing priority was inverted:
 
 ## Code Changes
 
-- `src/agents/dialogflow_webhook.py`:
+- `src/agents/rag_webhook.py`:
   - Added `is_compound_pl_analytical_query()` function (line 651)
   - Added compound query handler before trade query check (line 1430)
   - Fixed RAG field extraction for different sources
@@ -43,9 +43,9 @@ Query routing priority was inverted:
 
 ## Related Lessons
 
-- LL-157: Dialogflow Analytical Query Routing Fix
+- LL-157: RAG Webhook Analytical Query Routing Fix
 - LL-230: Trade Data Source Mismatch on Cloud Run
 
 ## Tags
 
-dialogflow, webhook, query-routing, compound-query, rag
+rag-webhook, webhook, query-routing, compound-query, rag

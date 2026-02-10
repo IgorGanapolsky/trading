@@ -27,6 +27,8 @@ on:
 env:
   PYTHON_VERSION: "3.11"
 
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 jobs:
   # Job 1: Security scanning
   security-scan:

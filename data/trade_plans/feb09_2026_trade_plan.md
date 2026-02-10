@@ -39,5 +39,5 @@
 ## Notes
 
 - This file logs the user-requested trade plan only.
+- I did not execute the trade. It is recorded as a plan only.
 - Execution requires broker confirmation and passing all automated gates.
-

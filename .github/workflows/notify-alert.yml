@@ -27,6 +27,10 @@ on:
       GH_PAT:
         required: true
 
+env:
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
 jobs:
   create-alert:
     runs-on: ubuntu-latest
