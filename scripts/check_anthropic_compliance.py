@@ -4,6 +4,7 @@ CI guardrail: verify Anthropic usage policy compliance anchors are present.
 
 This is intentionally lightweight and dependency-free.
 """
+
 from __future__ import annotations
 
 import json

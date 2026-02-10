@@ -48,9 +48,7 @@ def print_report(report: EvaluationReport, verbose: bool = False) -> None:
     if report.unanswerable_accuracy is not None:
         print("\n--- UNANSWERABLE METRICS ---")
         print(f"Unanswerable Accuracy:     {report.unanswerable_accuracy:.4f}")
-        print(
-            f"Unanswerable False Pos Rate: {report.unanswerable_false_positive_rate:.4f}"
-        )
+        print(f"Unanswerable False Pos Rate: {report.unanswerable_false_positive_rate:.4f}")
 
     # Interpret metrics
     print("\n--- INTERPRETATION ---")

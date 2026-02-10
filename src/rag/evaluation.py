@@ -40,9 +40,7 @@ class EvaluationQuery:
         self.expected_lesson_ids = [
             lid.replace(".md", "").lower() for lid in self.expected_lesson_ids
         ]
-        self.avoid_lesson_ids = [
-            lid.replace(".md", "").lower() for lid in self.avoid_lesson_ids
-        ]
+        self.avoid_lesson_ids = [lid.replace(".md", "").lower() for lid in self.avoid_lesson_ids]
 
 
 @dataclass
@@ -307,7 +305,9 @@ class RAGEvaluator:
                         {
                             "id": str(lesson_id).replace(".md", "").lower(),
                             "score": float(item.get("score", 0.0) or 0.0),
-                            "raw_score": float(item.get("raw_score", item.get("score", 0.0)) or 0.0),
+                            "raw_score": float(
+                                item.get("raw_score", item.get("score", 0.0)) or 0.0
+                            ),
                         }
                     )
                 return results
@@ -334,7 +334,9 @@ class RAGEvaluator:
                             {
                                 "id": str(lesson_id).replace(".md", "").lower(),
                                 "score": float(item.get("score", 0.0) or 0.0),
-                                "raw_score": float(item.get("raw_score", item.get("score", 0.0)) or 0.0),
+                                "raw_score": float(
+                                    item.get("raw_score", item.get("score", 0.0)) or 0.0
+                                ),
                             }
                         )
                 if results:
@@ -636,9 +638,7 @@ class RAGEvaluator:
             mrr=mrr,
             mean_utility_at_k=mean_utility,
             unanswerable_accuracy=unanswerable_metrics.get("accuracy"),
-            unanswerable_false_positive_rate=unanswerable_metrics.get(
-                "false_positive_rate"
-            ),
+            unanswerable_false_positive_rate=unanswerable_metrics.get("false_positive_rate"),
             unanswerable_results=unanswerable_metrics.get("results", []),
             query_results=query_results,
             failed_queries=failed_queries,

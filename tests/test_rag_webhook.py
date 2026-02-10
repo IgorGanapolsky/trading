@@ -430,9 +430,7 @@ class TestTradeQueryFallbackBehavior:
                 {"id": "ll_001", "severity": "INFO", "content": "Test lesson"}
             ]
 
-            with patch(
-                "src.agents.rag_webhook.get_current_portfolio_status"
-            ) as mock_portfolio:
+            with patch("src.agents.rag_webhook.get_current_portfolio_status") as mock_portfolio:
                 mock_portfolio.return_value = {
                     "live": {
                         "equity": 100,
@@ -482,9 +480,7 @@ class TestTradeQueryFallbackBehavior:
                 {"id": "ll_001", "severity": "INFO", "content": "Test lesson"}
             ]
 
-            with patch(
-                "src.agents.rag_webhook.get_current_portfolio_status"
-            ) as mock_portfolio:
+            with patch("src.agents.rag_webhook.get_current_portfolio_status") as mock_portfolio:
                 mock_portfolio.return_value = {}  # No portfolio data
 
                 from fastapi.testclient import TestClient
