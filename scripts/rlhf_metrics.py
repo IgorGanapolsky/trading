@@ -6,9 +6,9 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sqlite3
 from datetime import datetime, timedelta
 from pathlib import Path
-import sqlite3
 from typing import Iterable
 
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -98,9 +98,16 @@ def _shieldcortex_stats() -> dict:
         cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
         tables = [row[0] for row in cur.fetchall()]
         stats["tables"] = tables
-        for table in ("memories", "events", "entities", "memory_links", "quarantine"):
+        table_queries = {
+            "memories": "SELECT COUNT(*) FROM memories",
+            "events": "SELECT COUNT(*) FROM events",
+            "entities": "SELECT COUNT(*) FROM entities",
+            "memory_links": "SELECT COUNT(*) FROM memory_links",
+            "quarantine": "SELECT COUNT(*) FROM quarantine",
+        }
+        for table, query in table_queries.items():
             if table in tables:
-                cur.execute(f"SELECT COUNT(*) FROM {table}")
+                cur.execute(query)
                 stats[f"{table}_count"] = cur.fetchone()[0]
         conn.close()
     except Exception as exc:

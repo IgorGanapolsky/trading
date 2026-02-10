@@ -7,9 +7,7 @@ This is intentionally lightweight and dependency-free.
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = PROJECT_ROOT / "config" / "compliance" / "anthropic_usage_policy.json"

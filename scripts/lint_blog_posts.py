@@ -21,7 +21,6 @@ import argparse
 import os
 import re
 import subprocess
-import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
