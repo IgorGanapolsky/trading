@@ -146,11 +146,7 @@ def _build_lessons_page(lessons: list[dict]) -> str:
         date = lesson.get("date") or ""
         category = lesson.get("category") or ""
         source = lesson.get("file") or ""
-        url = (
-            f"https://github.com/IgorGanapolsky/trading/blob/main/{source}"
-            if source
-            else ""
-        )
+        url = f"https://github.com/IgorGanapolsky/trading/blob/main/{source}" if source else ""
         title_html = escape(title)
         severity_html = escape(severity)
         date_html = escape(date)
@@ -208,7 +204,7 @@ def _build_lessons_page(lessons: list[dict]) -> str:
         "<p><strong>Canonical JSON index:</strong></p>",
         "<ul>",
         "<li><code>/trading/data/rag/lessons_query.json</code> (GitHub Pages cache)</li>",
-        '<li><a href=\"https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/rag/lessons_query.json\">raw GitHub JSON index</a></li>',
+        '<li><a href="https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/rag/lessons_query.json">raw GitHub JSON index</a></li>',
         "</ul>",
         "<h2>Latest Lessons</h2>",
         "<table>",
@@ -217,7 +213,7 @@ def _build_lessons_page(lessons: list[dict]) -> str:
         *rows,
         "</tbody>",
         "</table>",
-        "<script type=\"application/ld+json\">",
+        '<script type="application/ld+json">',
         json.dumps(schema, indent=2),
         "</script>",
         "",

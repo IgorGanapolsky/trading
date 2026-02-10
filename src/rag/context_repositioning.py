@@ -104,11 +104,7 @@ class _Candidate:
 
 
 def _tokenize(text: str) -> list[str]:
-    return [
-        t
-        for t in re.findall(r"[a-z0-9]+", text.lower())
-        if len(t) > 2 and t not in _STOPWORDS
-    ]
+    return [t for t in re.findall(r"[a-z0-9]+", text.lower()) if len(t) > 2 and t not in _STOPWORDS]
 
 
 def _parse_date(value: str | None) -> datetime | None:
@@ -141,7 +137,9 @@ def _extract_date(lesson: dict) -> datetime | None:
     # Parse from id or file name (e.g. jan31, 20260106)
     fallback = str(lesson.get("id") or lesson.get("file") or "")
     if fallback:
-        match = re.search(r"(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)(\d{1,2})", fallback.lower())
+        match = re.search(
+            r"(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)(\d{1,2})", fallback.lower()
+        )
         if match:
             month = _MONTHS[match.group(1)]
             day = int(match.group(2))
