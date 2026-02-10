@@ -1,15 +1,10 @@
 {
-  "last_updated": "2026-02-10T14:34:09.935322+00:00",
+  "last_updated": "2026-02-10T15:21:54.132960+00:00",
   "sync_health": {
-    "last_successful_sync": "2026-02-10T14:34:09.935325+00:00",
+    "last_successful_sync": "2026-02-10T15:21:54.132963+00:00",
     "sync_source": "github_actions",
-    "sync_count_today": 1,
+    "sync_count_today": 2,
     "history": [
-      {
-        "timestamp": "2026-02-06T17:59:20.756744+00:00",
-        "equity": 101438.21,
-        "success": true
-      },
       {
         "timestamp": "2026-02-06T18:23:53.765356+00:00",
         "equity": 101439.21,
@@ -124,6 +119,11 @@
         "timestamp": "2026-02-10T14:34:09.935312+00:00",
         "equity": 101425.56,
         "success": true
+      },
+      {
+        "timestamp": "2026-02-10T15:21:54.132952+00:00",
+        "equity": 101425.56,
+        "success": true
       }
     ]
   },
@@ -132,49 +132,48 @@
     "cash": 101613.56
   },
   "paper_account": {
-    "equity": 101427.56,
+    "equity": 101425.56,
     "cash": 101613.56,
     "buying_power": 201227.12,
-    "total_pl": 1427.5599999999977,
-    "total_pl_pct": 1.4275599999999977,
+    "total_pl": 1425.5599999999977,
+    "total_pl_pct": 1.43,
     "positions_count": 4,
     "daily_change": 2.0,
     "win_rate": 37.5,
     "win_rate_sample_size": 32,
-    "starting_balance": 100000.0,
-    "current_equity": 101427.56
+    "starting_balance": 100000.0
   },
   "positions": [
     {
       "symbol": "SPY260313C00725000",
       "qty": -2.0,
-      "price": 1.16,
-      "value": -232.0,
-      "pnl": -48.0,
+      "price": 1.27,
+      "value": -254.0,
+      "pnl": -70.0,
       "type": "option"
     },
     {
       "symbol": "SPY260313C00730000",
       "qty": 2.0,
-      "price": 0.67,
-      "value": 134.0,
-      "pnl": 20.0,
+      "price": 0.74,
+      "value": 148.0,
+      "pnl": 34.0,
       "type": "option"
     },
     {
       "symbol": "SPY260313P00650000",
       "qty": 2.0,
-      "price": 2.61,
-      "value": 522.0,
-      "pnl": -162.0,
+      "price": 2.53,
+      "value": 506.0,
+      "pnl": -178.0,
       "type": "option"
     },
     {
       "symbol": "SPY260313P00655000",
       "qty": -2.0,
-      "price": 3.06,
-      "value": -612.0,
-      "pnl": 176.0,
+      "price": 2.94,
+      "value": -588.0,
+      "pnl": 200.0,
       "type": "option"
     }
   ],
@@ -953,19 +952,15 @@
     "unrealized_pl": -14.0
   },
   "account": {
-    "current_equity": 101427.56,
-    "total_pl": 1427.5599999999977,
-    "total_pl_pct": 1.4275599999999977,
-    "positions_count": 4,
-    "cash": 101613.56,
-    "buying_power": 201227.12
+    "current_equity": 101425.56,
+    "total_pl": 1425.5599999999977,
+    "total_pl_pct": 1.43,
+    "positions_count": 4
   },
   "meta": {
-    "last_updated": "2026-02-10T14:47:20.591640",
+    "last_updated": "2026-02-10T15:21:54.132976+00:00",
     "trade_sync": "alpaca_api",
-    "sync_frequency_minutes": 5,
-    "last_sync": "2026-02-10T14:47:20.591186",
-    "sync_mode": "paper"
+    "sync_frequency_minutes": 5
   },
   "paper_trading": {
     "start_date": "2026-01-30",
@@ -973,57 +968,5 @@
     "target_win_rate": 0.8,
     "current_day": 12,
     "notes": "Paper phase per CLAUDE.md - validate 80%+ win rate before scaling"
-  },
-  "performance": {
-    "open_positions": [
-      {
-        "symbol": "SPY260313C00725000",
-        "quantity": -2.0,
-        "entry_price": 92.0,
-        "current_price": 111.0,
-        "market_value": -222.0,
-        "unrealized_pl": -38.0,
-        "unrealized_pl_pct": 0.20652173913043478,
-        "side": "long"
-      },
-      {
-        "symbol": "SPY260313C00730000",
-        "quantity": 2.0,
-        "entry_price": 57.0,
-        "current_price": 64.0,
-        "market_value": 128.0,
-        "unrealized_pl": 14.0,
-        "unrealized_pl_pct": 0.12280701754385964,
-        "side": "long"
-      },
-      {
-        "symbol": "SPY260313P00650000",
-        "quantity": 2.0,
-        "entry_price": 342.0,
-        "current_price": 279.0,
-        "market_value": 558.0,
-        "unrealized_pl": -126.0,
-        "unrealized_pl_pct": -0.18421052631578946,
-        "side": "long"
-      },
-      {
-        "symbol": "SPY260313P00655000",
-        "quantity": -2.0,
-        "entry_price": 394.0,
-        "current_price": 325.0,
-        "market_value": -650.0,
-        "unrealized_pl": 138.0,
-        "unrealized_pl_pct": -0.1751269035532995,
-        "side": "long"
-      }
-    ]
-  },
-  "live_account": {
-    "current_equity": 20.0,
-    "equity": 20.0,
-    "starting_balance": 20.0,
-    "total_pl": 0.0,
-    "total_pl_pct": 0.0,
-    "note": "LIVE account not synced - building capital via deposits"
   }
 }
