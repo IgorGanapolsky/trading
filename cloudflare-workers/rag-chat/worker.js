@@ -155,7 +155,7 @@ function resolveRagSearchUrl(env) {
   if (raw.includes("/rag-search")) {
     return raw;
   }
-  return `${raw.replace(/\\/$/, "")}/rag-search`;
+  return `${raw.replace(/\/$/, "")}/rag-search`;
 }
 
 async function fetchRagSearch(query, topK, env) {
@@ -310,6 +310,13 @@ function buildSystemPrompt(liveData, lessons, source) {
   return lines.join("\n");
 }
 
+function buildFallbackReply(query, lessons, source) {
+  const header =
+    "AI chat is temporarily unavailable. Here are the most relevant lessons I can find:";
+  const context = buildLessonsContext(lessons, source);
+  return [header, "", `Query: ${query}`, "", context].join("\n");
+}
+
 export default {
   async fetch(request, env) {
     // Handle CORS preflight
@@ -391,35 +398,46 @@ export default {
       );
       const systemPrompt = buildSystemPrompt(liveData, lessons, source);
 
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": env.ANTHROPIC_API_KEY,
-          "anthropic-version": "2023-06-01",
-        },
-        body: JSON.stringify({
-          model: "claude-3-5-haiku-20241022",
-          max_tokens: 1024,
-          system: systemPrompt,
-          messages: messages,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.text();
-        console.error("Claude API error:", error);
-        return new Response(JSON.stringify({ error: "API error" }), {
-          status: 500,
+      let reply = null;
+      try {
+        const response = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
+            "x-api-key": env.ANTHROPIC_API_KEY,
+            "anthropic-version": "2023-06-01",
           },
+          body: JSON.stringify({
+            model: "claude-3-5-haiku-20241022",
+            max_tokens: 1024,
+            system: systemPrompt,
+            messages: messages,
+          }),
         });
+
+        if (!response.ok) {
+          const error = await response.text();
+          console.error("Claude API error:", error);
+        } else {
+          const data = await response.json();
+          reply = data.content[0]?.text || "No response";
+        }
+      } catch (error) {
+        console.error("Claude API fetch failed:", error);
       }
 
-      const data = await response.json();
-      const reply = data.content[0]?.text || "No response";
+      if (!reply) {
+        const fallbackReply = buildFallbackReply(message, lessons, source);
+        return new Response(
+          JSON.stringify({ reply: fallbackReply, fallback: true }),
+          {
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
+        );
+      }
 
       return new Response(JSON.stringify({ reply }), {
         headers: {
