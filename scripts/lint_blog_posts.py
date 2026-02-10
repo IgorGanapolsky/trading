@@ -205,7 +205,7 @@ def _filter_posts(paths: list[Path]) -> list[Path]:
         parts = path.parts
         for i, part in enumerate(parts):
             if part == "docs" and i + 1 < len(parts) and parts[i + 1].startswith("_"):
-                allowed.append(path)
+                allowed.append(path if path.is_absolute() else REPO_ROOT / path)
                 break
     return allowed
 
@@ -243,6 +243,7 @@ def main() -> int:
     total_warnings = 0
 
     for path in sorted(set(files)):
+        path = path if path.is_absolute() else REPO_ROOT / path
         issues = lint_file(path)
         if not issues:
             continue
