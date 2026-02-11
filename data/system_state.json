@@ -1,15 +1,10 @@
 {
-  "last_updated": "2026-02-11T18:37:39.741250+00:00",
+  "last_updated": "2026-02-11T19:06:34.983787+00:00",
   "sync_health": {
-    "last_successful_sync": "2026-02-11T18:37:39.741252+00:00",
+    "last_successful_sync": "2026-02-11T19:06:34.983789+00:00",
     "sync_source": "github_actions",
-    "sync_count_today": 10,
+    "sync_count_today": 11,
     "history": [
-      {
-        "timestamp": "2026-02-09T20:48:08.563981+00:00",
-        "equity": 101427.83,
-        "success": true
-      },
       {
         "timestamp": "2026-02-10T14:34:09.935312+00:00",
         "equity": 101425.56,
@@ -124,6 +119,11 @@
         "timestamp": "2026-02-11T18:37:39.741241+00:00",
         "equity": 101457.56,
         "success": true
+      },
+      {
+        "timestamp": "2026-02-11T19:06:34.983779+00:00",
+        "equity": 101457.56,
+        "success": true
       }
     ]
   },
@@ -147,33 +147,33 @@
     {
       "symbol": "SPY260313C00725000",
       "qty": -2.0,
-      "price": 0.74,
-      "value": -148.0,
-      "pnl": 36.0,
+      "price": 0.72,
+      "value": -144.0,
+      "pnl": 40.0,
       "type": "option"
     },
     {
       "symbol": "SPY260313C00730000",
       "qty": 2.0,
-      "price": 0.42,
-      "value": 84.0,
-      "pnl": -30.0,
+      "price": 0.41,
+      "value": 82.0,
+      "pnl": -32.0,
       "type": "option"
     },
     {
       "symbol": "SPY260313P00650000",
       "qty": 2.0,
-      "price": 2.82,
-      "value": 564.0,
-      "pnl": -120.0,
+      "price": 2.77,
+      "value": 554.0,
+      "pnl": -130.0,
       "type": "option"
     },
     {
       "symbol": "SPY260313P00655000",
       "qty": -2.0,
-      "price": 3.28,
-      "value": -656.0,
-      "pnl": 132.0,
+      "price": 3.24,
+      "value": -648.0,
+      "pnl": 140.0,
       "type": "option"
     }
   ],
@@ -958,7 +958,7 @@
     "positions_count": 4
   },
   "meta": {
-    "last_updated": "2026-02-11T18:37:39.741268+00:00",
+    "last_updated": "2026-02-11T19:06:34.983806+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5
   },
