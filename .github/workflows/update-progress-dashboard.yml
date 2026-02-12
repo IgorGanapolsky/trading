@@ -44,21 +44,22 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install requests
+        run: pip install requests alpaca-py python-dotenv
 
       - name: Sync Alpaca data first
+        if: ${{ github.event_name != 'push' }}
         env:
           ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
           ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          ALPACA_BROKERAGE_TRADING_API_KEY: ${{ secrets.ALPACA_BROKERAGE_TRADING_API_KEY }}
+          ALPACA_BROKERAGE_TRADING_API_SECRET: ${{ secrets.ALPACA_BROKERAGE_TRADING_API_SECRET }}
+          REQUIRE_ALPACA_KEYS: "true"
         run: |
           echo "📊 Syncing latest Alpaca data..."
-          # Use the correct sync script name
-          python3 scripts/sync_alpaca_state.py || {
-            echo "⚠️ sync_alpaca_state.py failed, trying sync_trades_from_alpaca.py..."
-            python3 scripts/sync_trades_from_alpaca.py || echo "⚠️ Trade sync failed - dashboard may show stale data"
-          }
+          python3 scripts/sync_alpaca_state.py
 
       - name: Sync closed positions for win rate
+        if: ${{ github.event_name != 'push' }}
         run: |
           echo "📊 Syncing closed positions for win rate calculation..."
           python3 scripts/sync_closed_positions.py || echo "⚠️ Closed positions sync failed - win rate may be stale"

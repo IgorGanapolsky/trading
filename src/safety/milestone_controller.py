@@ -14,11 +14,22 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
+try:
+    from src.core.trading_constants import (
+        NORTH_STAR_TARGET_CAPITAL,
+        NORTH_STAR_TARGET_DATE,
+        NORTH_STAR_TARGET_WIN_RATE_PCT,
+    )
+except Exception:
+    NORTH_STAR_TARGET_DATE = date(2029, 11, 14)
+    NORTH_STAR_TARGET_CAPITAL = 600_000.0
+    NORTH_STAR_TARGET_WIN_RATE_PCT = 80.0
+
 DEFAULT_STATE_PATH = Path("data/system_state.json")
 DEFAULT_TRADES_PATH = Path("data/trades.json")
-DEFAULT_TARGET_DATE = date(2029, 11, 14)
-DEFAULT_TARGET_CAPITAL = 600_000.0
-DEFAULT_TARGET_WIN_RATE_PCT = 80.0
+DEFAULT_TARGET_DATE = NORTH_STAR_TARGET_DATE
+DEFAULT_TARGET_CAPITAL = NORTH_STAR_TARGET_CAPITAL
+DEFAULT_TARGET_WIN_RATE_PCT = NORTH_STAR_TARGET_WIN_RATE_PCT
 DEFAULT_ROLLING_WINDOW = int(os.getenv("MILESTONE_ROLLING_WINDOW", "50"))
 DEFAULT_PRIMARY_FAMILY = os.getenv("PRIMARY_STRATEGY_FAMILY", "options_income")
 
@@ -169,7 +180,9 @@ def _metrics_for_family(
         paper = state.get("paper_account", {}) if isinstance(state, dict) else {}
         paper_samples = _as_int(paper.get("win_rate_sample_size"), 0)
         paper_win_rate = _as_float(paper.get("win_rate"), 0.0)
+        paper_total_pl = _as_float(paper.get("total_pl"), 0.0)
         if paper_samples > 0:
+            expectancy_estimate = round(paper_total_pl / paper_samples, 4)
             metrics.update(
                 {
                     "samples": paper_samples,
@@ -178,8 +191,8 @@ def _metrics_for_family(
                         0, paper_samples - round((paper_win_rate / 100.0) * paper_samples)
                     ),
                     "win_rate_pct": round(paper_win_rate, 2),
-                    "expectancy": None,
-                    "evidence_source": "paper_account",
+                    "expectancy": expectancy_estimate,
+                    "evidence_source": "paper_account_estimate",
                 }
             )
 

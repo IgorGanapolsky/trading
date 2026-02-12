@@ -1058,9 +1058,10 @@ def main() -> None:
         from pathlib import Path
 
         from src.analytics.profit_target_tracker import ProfitTargetTracker
+        from src.core.trading_constants import NORTH_STAR_DAILY_AFTER_TAX
 
         logger.info("Generating profit target report...")
-        tracker = ProfitTargetTracker(target_daily_profit=100.0)
+        tracker = ProfitTargetTracker(target_daily_profit=NORTH_STAR_DAILY_AFTER_TAX)
         plan = tracker.generate_plan()
 
         # Persist report
@@ -1081,14 +1082,17 @@ def main() -> None:
         report_path.write_text(json.dumps(report_data, indent=2))
         logger.info(f"Profit target report saved to {report_path}")
 
-        # Log $100/day progress
+        # Log daily target progress
         progress_pct = (
             (plan.current_daily_profit / plan.target_daily_profit * 100)
             if plan.target_daily_profit > 0
             else 0
         )
         logger.info(
-            f"$100/day Progress: {progress_pct:.1f}% (current: ${plan.current_daily_profit:.2f}/day)"
+            "Daily target progress: %.1f%% (current: $%.2f/day, target: $%.2f/day)",
+            progress_pct,
+            plan.current_daily_profit,
+            plan.target_daily_profit,
         )
 
         # If avg_return is positive and we have a recommended budget, log it

@@ -58,7 +58,7 @@ CONFIG = {
     "target_dte": 30,  # 30 days to expiration for puts
     "min_dte": 21,
     "max_dte": 45,
-    "north_star_target": 100.0,  # $100/day goal
+    "north_star_target": 200.0,  # $200/day (~$6K/month after-tax) goal
 }
 
 

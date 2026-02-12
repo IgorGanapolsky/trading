@@ -758,7 +758,7 @@ def generate_world_class_dashboard() -> str:
     if profit_target_data:
         current_profit = profit_target_data.get("current_daily_profit", 0.0)
         projected_profit = profit_target_data.get("projected_daily_profit", 0.0)
-        target_profit = profit_target_data.get("target_daily_profit", 100.0)
+        target_profit = profit_target_data.get("target_daily_profit", 200.0)
         target_gap = profit_target_data.get("target_gap", 0.0)
         current_budget = profit_target_data.get("current_daily_budget", 0.0)
         recommended_budget = profit_target_data.get("recommended_daily_budget")
