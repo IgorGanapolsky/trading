@@ -22,7 +22,9 @@ description: |
 
 # KEY METRICS
 capital: $100,000 paper trading
-goal: $100/day after-tax profit
+goal: $6,000/month after-tax by Nov 14, 2029
+daily_equivalent_after_tax: $200/day
+target_capital: $600,000
 win_rate_target: 80%
 strategy: Iron Condors on SPY (15-20 delta, 30-45 DTE)
 
@@ -80,5 +82,5 @@ contact:
   devto: https://dev.to/igorganapolsky
 
 # UPDATES
-last_updated: 2026-02-10
+last_updated: 2026-02-12
 update_frequency: Daily (via Ralph autonomous CTO mode)

@@ -10,21 +10,21 @@ Twitter: @igorganapolsky
 GitHub: github.com/IgorGanapolsky
 
 /* SITE */
-Last updated: 2026-01-22
+Last updated: 2026-02-12
 Language: English
 Technology: Jekyll, GitHub Pages, Python, Claude AI
 
 /* THE STORY */
 We're on a 90-day journey to build an AI trading system that:
-- Makes $100/day after-tax profit
+- Reaches $6,000/month after-tax by November 14, 2029 (~$200/day)
 - Never loses money (Phil Town Rule #1)
 - Learns from every mistake
 - Documents everything publicly
 - Uses autonomous CTO mode 24/7
 
 Started: October 2025
-Current Capital: ~$5,000 (paper trading)
-Lessons Learned: 122+
+Current Capital: ~$100,000 (paper trading)
+Lessons Learned: 300+
 Blog Posts: 17+
 Strategy: Iron Condors on SPY
 

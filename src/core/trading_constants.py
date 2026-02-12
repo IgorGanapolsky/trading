@@ -9,6 +9,8 @@ to avoid maintenance issues with duplicated definitions.
 Created: Jan 19, 2026 (Adversarial audit finding - 4 duplicate definitions)
 """
 
+from datetime import date
+
 # =============================================================================
 # TICKER WHITELIST - SINGLE SOURCE OF TRUTH
 # =============================================================================
@@ -43,6 +45,17 @@ IRON_CONDOR_STOP_LOSS_MULTIPLIER: float = 2.0
 # =============================================================================
 MIN_DTE: int = 30  # Minimum days to expiration per CLAUDE.md
 MAX_DTE: int = 45  # Maximum days to expiration per CLAUDE.md
+
+# =============================================================================
+# NORTH STAR TARGETS - SINGLE SOURCE OF TRUTH
+# =============================================================================
+# Financial independence target by CEO's 50th birthday.
+NORTH_STAR_TARGET_DATE: date = date(2029, 11, 14)
+NORTH_STAR_TARGET_CAPITAL: float = 600_000.0
+NORTH_STAR_MONTHLY_AFTER_TAX: float = 6_000.0
+NORTH_STAR_DAILY_AFTER_TAX: float = 200.0
+NORTH_STAR_TARGET_WIN_RATE_PCT: float = 80.0
+NORTH_STAR_PAPER_VALIDATION_DAYS: int = 90
 
 # =============================================================================
 # FORBIDDEN STRATEGIES
