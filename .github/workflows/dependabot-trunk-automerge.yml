@@ -72,25 +72,26 @@ jobs:
           elapsed=0
 
           while true; do
-            checks_json="$(gh pr checks "$PR_URL" --json state,conclusion --jq '.' || echo '[]')"
+            checks_json="$(gh pr checks "$PR_URL" --required --json state,conclusion --jq '.' || echo '[]')"
 
             if jq -e 'length == 0' <<<"$checks_json" >/dev/null; then
-              echo "No checks reported yet."
+              echo "No required checks configured."
+              break
             elif jq -e 'any(.[]; .state == "COMPLETED" and (.conclusion == "FAILURE" or .conclusion == "CANCELLED" or .conclusion == "TIMED_OUT" or .conclusion == "ACTION_REQUIRED" or .conclusion == "STARTUP_FAILURE"))' <<<"$checks_json" >/dev/null; then
-              echo "A check failed. Skipping merge."
+              echo "A required check failed. Skipping merge."
               exit 1
             elif jq -e 'all(.[]; .state == "COMPLETED" and (.conclusion == "SUCCESS" or .conclusion == "SKIPPED" or .conclusion == "NEUTRAL"))' <<<"$checks_json" >/dev/null; then
-              echo "All checks completed successfully."
+              echo "All required checks completed successfully."
               break
             else
-              echo "Checks are still running."
+              echo "Required checks are still running."
             fi
 
             sleep "$interval_seconds"
             elapsed=$((elapsed + interval_seconds))
 
             if [ "$elapsed" -ge "$timeout_seconds" ]; then
-              echo "Timed out waiting for checks to complete."
+              echo "Timed out waiting for required checks to complete."
               exit 1
             fi
           done
