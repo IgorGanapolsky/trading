@@ -87,7 +87,7 @@ Upgraded to $100K paper account for more realistic position sizing. Target: prov
 - **[GitHub Repository](https://github.com/IgorGanapolsky/trading)** - Full source code, issues, and PRs
 - **[GitHub Actions](https://github.com/IgorGanapolsky/trading/actions)** - Watch Ralph work in real-time
 
-Every trade gets recorded. Every bug gets documented. Every lesson goes into our [RAG knowledge base](/trading/rag-query.html) (300+ lessons searchable).
+Every trade gets recorded. Every bug gets documented. Every lesson goes into our [RAG knowledge base](/trading/rag-query/) (300+ lessons searchable).
 
 ---
 
