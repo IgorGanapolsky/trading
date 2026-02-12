@@ -660,12 +660,99 @@ layout: null
             <div class="stat-label">Paper Account</div>
           </div>
         </div>
-      </header>
+	      </header>
 
-      <div class="search-section">
-        <div class="search-wrapper">
-          <input
-            type="text"
+	      <div class="portfolio-bar loading" id="portfolioBar">
+	        <div class="port-stat">
+	          <div class="port-stat-value" id="portEquity">--</div>
+	          <div class="port-stat-label">Equity</div>
+	        </div>
+	        <div class="port-stat">
+	          <div class="port-stat-value" id="portDailyPL">--</div>
+	          <div class="port-stat-label">Daily P&amp;L</div>
+	        </div>
+	        <div class="port-stat">
+	          <div class="port-stat-value" id="portPositions">--</div>
+	          <div class="port-stat-label">Positions</div>
+	        </div>
+	        <div class="port-stat">
+	          <div class="port-stat-value" id="portDTE">--</div>
+	          <div class="port-stat-label">Nearest DTE</div>
+	        </div>
+	        <div class="port-stat">
+	          <div class="port-stat-value" id="portWinRate">--</div>
+	          <div class="port-stat-label">Win Rate</div>
+	        </div>
+	        <div>
+	          <span class="port-badge" id="portBadge">PAPER</span>
+	        </div>
+	      </div>
+
+	      <div class="chat-section">
+	        <div class="panel-header">
+	          <span class="panel-icon">&#128172;</span>
+	          <span>Ask the Knowledge Base</span>
+	        </div>
+	        <div class="chat-container">
+	          <div class="chat-messages" id="chatMessages">
+	            <div class="chat-message assistant">
+	              <div class="message-content">
+	                Hi! I'm your trading knowledge assistant. Ask me about iron
+	                condors, VIX entry rules, position management, or any lesson
+	                from the knowledge base.
+	              </div>
+	            </div>
+	          </div>
+	          <div class="chat-input-wrapper">
+	            <input
+	              type="text"
+	              id="chatInput"
+	              placeholder="Ask a question... (e.g., 'When should I close an iron condor?')"
+	            />
+	            <button id="chatSendBtn">Send</button>
+	          </div>
+	          <div class="chat-examples">
+	            <span
+	              class="example-chip"
+	              data-question="Should I close my iron condor?"
+	              >Close iron condor?</span
+	            >
+	            <span class="example-chip" data-question="What's my current P/L?"
+	              >Current P/L</span
+	            >
+	            <span
+	              class="example-chip"
+	              data-question="Am I hitting any exit rules?"
+	              >Exit rules check</span
+	            >
+	            <span
+	              class="example-chip"
+	              data-question="What's the optimal exit strategy for iron condors?"
+	              >Exit strategy</span
+	            >
+	            <span
+	              class="example-chip"
+	              data-question="When should I enter based on VIX?"
+	              >VIX entry rules</span
+	            >
+	            <span
+	              class="example-chip"
+	              data-question="What's the North Star goal?"
+	              >North Star</span
+	            >
+	            <span
+	              class="example-chip"
+	              data-question="What went wrong in the January 2026 crisis?"
+	              >Jan 2026 crisis</span
+	            >
+	          </div>
+	        </div>
+	      </div>
+
+	      <div class="search-section">
+	        <div class="search-wrapper">
+	          <input
+	            type="text"
             id="searchInput"
             placeholder="Search lessons... (e.g., 'iron condor', 'VIX', 'Rule 1', 'tax')"
           />
@@ -713,100 +800,13 @@ layout: null
           <div class="panel-content" id="recentLessons">
             <!-- Populated by JavaScript -->
           </div>
-        </div>
-      </div>
+	        </div>
+	      </div>
 
-      <div class="portfolio-bar loading" id="portfolioBar">
-        <div class="port-stat">
-          <div class="port-stat-value" id="portEquity">--</div>
-          <div class="port-stat-label">Equity</div>
-        </div>
-        <div class="port-stat">
-          <div class="port-stat-value" id="portDailyPL">--</div>
-          <div class="port-stat-label">Daily P&amp;L</div>
-        </div>
-        <div class="port-stat">
-          <div class="port-stat-value" id="portPositions">--</div>
-          <div class="port-stat-label">Positions</div>
-        </div>
-        <div class="port-stat">
-          <div class="port-stat-value" id="portDTE">--</div>
-          <div class="port-stat-label">Nearest DTE</div>
-        </div>
-        <div class="port-stat">
-          <div class="port-stat-value" id="portWinRate">--</div>
-          <div class="port-stat-label">Win Rate</div>
-        </div>
-        <div>
-          <span class="port-badge" id="portBadge">PAPER</span>
-        </div>
-      </div>
-
-      <div class="chat-section">
-        <div class="panel-header">
-          <span class="panel-icon">&#128172;</span>
-          <span>Ask the Knowledge Base</span>
-        </div>
-        <div class="chat-container">
-          <div class="chat-messages" id="chatMessages">
-            <div class="chat-message assistant">
-              <div class="message-content">
-                Hi! I'm your trading knowledge assistant. Ask me about iron
-                condors, VIX entry rules, position management, or any lesson
-                from the knowledge base.
-              </div>
-            </div>
-          </div>
-          <div class="chat-input-wrapper">
-            <input
-              type="text"
-              id="chatInput"
-              placeholder="Ask a question... (e.g., 'When should I close an iron condor?')"
-            />
-            <button id="chatSendBtn">Send</button>
-          </div>
-          <div class="chat-examples">
-            <span
-              class="example-chip"
-              data-question="Should I close my iron condor?"
-              >Close iron condor?</span
-            >
-            <span class="example-chip" data-question="What's my current P/L?"
-              >Current P/L</span
-            >
-            <span
-              class="example-chip"
-              data-question="Am I hitting any exit rules?"
-              >Exit rules check</span
-            >
-            <span
-              class="example-chip"
-              data-question="What's the optimal exit strategy for iron condors?"
-              >Exit strategy</span
-            >
-            <span
-              class="example-chip"
-              data-question="When should I enter based on VIX?"
-              >VIX entry rules</span
-            >
-            <span
-              class="example-chip"
-              data-question="What's the North Star goal?"
-              >North Star</span
-            >
-            <span
-              class="example-chip"
-              data-question="What went wrong in the January 2026 crisis?"
-              >Jan 2026 crisis</span
-            >
-          </div>
-        </div>
-      </div>
-
-      <div class="local-query-section">
-        <h3>Query RAG Locally (Full Semantic Search)</h3>
-        <p style="color: var(--text-secondary); margin-bottom: 15px">
-          For full LanceDB semantic search with embeddings, run these commands
+	      <div class="local-query-section">
+	        <h3>Query RAG Locally (Full Semantic Search)</h3>
+	        <p style="color: var(--text-secondary); margin-bottom: 15px">
+	          For full LanceDB semantic search with embeddings, run these commands
           locally:
         </p>
         <div class="code-block">
