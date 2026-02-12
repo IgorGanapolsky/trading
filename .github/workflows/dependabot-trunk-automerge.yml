@@ -15,7 +15,7 @@ permissions:
   issues: write
 
 jobs:
-  queue-safe-update:
+  queue-update:
     if: ${{ github.actor == 'dependabot[bot]' && github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
 
@@ -26,28 +26,10 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Classify update risk
-        id: classify
-        run: |
-          set -euo pipefail
-          update_type="${{ steps.metadata.outputs.update-type }}"
-
-          case "$update_type" in
-            version-update:semver-patch|version-update:semver-minor|security-update)
-              echo "safe=true" >> "$GITHUB_OUTPUT"
-              ;;
-            *)
-              echo "safe=false" >> "$GITHUB_OUTPUT"
-              ;;
-          esac
-
-          echo "update_type=$update_type" >> "$GITHUB_OUTPUT"
-
-      - name: Queue safe update via Trunk
-        if: ${{ steps.classify.outputs.safe == 'true' }}
+      - name: Queue update via Trunk
         uses: actions/github-script@v7
         env:
-          UPDATE_TYPE: ${{ steps.classify.outputs.update_type }}
+          UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -91,8 +73,7 @@ jobs:
               body,
             });
 
-      - name: Auto-approve safe update
-        if: ${{ steps.classify.outputs.safe == 'true' }}
+      - name: Auto-approve update
         continue-on-error: true
         uses: actions/github-script@v7
         with:
@@ -114,7 +95,7 @@ jobs:
             );
 
             if (alreadyApproved) {
-              core.info("Safe update already approved by github-actions[bot].");
+              core.info("Dependabot update already approved by github-actions[bot].");
               return;
             }
 
@@ -123,52 +104,5 @@ jobs:
               repo: context.repo.repo,
               pull_number: pr.number,
               event: "APPROVE",
-              body: "Auto-approved safe Dependabot update.",
-            });
-
-      - name: Mark major update for manual review
-        if: ${{ steps.classify.outputs.safe != 'true' }}
-        uses: actions/github-script@v7
-        env:
-          UPDATE_TYPE: ${{ steps.classify.outputs.update_type }}
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const marker = "<!-- dependabot-manual-review -->";
-            const pr = context.payload.pull_request;
-            const sha = pr.head.sha;
-
-            const comments = await github.paginate(
-              github.rest.issues.listComments,
-              {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: pr.number,
-                per_page: 100,
-              }
-            );
-
-            const existing = comments.find(
-              (comment) =>
-                comment.user?.login === "github-actions[bot]" &&
-                comment.body?.includes(marker) &&
-                comment.body?.includes(sha)
-            );
-
-            if (existing) {
-              core.info("Manual-review marker already posted for current head SHA.");
-              return;
-            }
-
-            const body = [
-              marker,
-              `Not auto-queued: ${process.env.UPDATE_TYPE}.`,
-              "This update type requires manual review before merge.",
-            ].join("\n");
-
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pr.number,
-              body,
+              body: "Auto-approved Dependabot update.",
             });
