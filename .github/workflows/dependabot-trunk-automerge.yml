@@ -10,12 +10,12 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
-  issues: write
+  checks: read
 
 jobs:
-  queue-update:
+  auto-merge:
     if: ${{ github.actor == 'dependabot[bot]' && github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
 
@@ -26,62 +26,9 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Normalize metadata outputs
-        id: metadata_outputs
-        run: |
-          update_type="${{ steps.metadata.outputs['update-type'] }}"
-          echo "update_type=${update_type}" >> "$GITHUB_OUTPUT"
-
-      - name: Queue update via Trunk
-        uses: actions/github-script@v7
-        env:
-          UPDATE_TYPE: ${{ steps.metadata_outputs.outputs.update_type }}
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const marker = "<!-- dependabot-trunk-automerge -->";
-            const pr = context.payload.pull_request;
-            const sha = pr.head.sha;
-
-            const comments = await github.paginate(
-              github.rest.issues.listComments,
-              {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: pr.number,
-                per_page: 100,
-              }
-            );
-
-            const existing = comments.find(
-              (comment) =>
-                comment.user?.login === "github-actions[bot]" &&
-                comment.body?.includes(marker) &&
-                comment.body?.includes(sha)
-            );
-
-            if (existing) {
-              core.info("Trunk automerge command already posted for current head SHA.");
-              return;
-            }
-
-            const body = [
-              marker,
-              "/trunk merge",
-              "",
-              `Queued automatically for ${process.env.UPDATE_TYPE} (${sha.slice(0, 7)}).`,
-            ].join("\n");
-
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pr.number,
-              body,
-            });
-
       - name: Auto-approve update
         continue-on-error: true
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -112,3 +59,45 @@ jobs:
               event: "APPROVE",
               body: "Auto-approved Dependabot update.",
             });
+
+      - name: Wait for checks and merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          set -euo pipefail
+
+          timeout_seconds=1800
+          interval_seconds=20
+          elapsed=0
+
+          while true; do
+            checks_json="$(gh pr checks "$PR_URL" --json state,conclusion --jq '.' || echo '[]')"
+
+            if jq -e 'length == 0' <<<"$checks_json" >/dev/null; then
+              echo "No checks reported yet."
+            elif jq -e 'any(.[]; .state == "COMPLETED" and (.conclusion == "FAILURE" or .conclusion == "CANCELLED" or .conclusion == "TIMED_OUT" or .conclusion == "ACTION_REQUIRED" or .conclusion == "STARTUP_FAILURE"))' <<<"$checks_json" >/dev/null; then
+              echo "A check failed. Skipping merge."
+              exit 1
+            elif jq -e 'all(.[]; .state == "COMPLETED" and (.conclusion == "SUCCESS" or .conclusion == "SKIPPED" or .conclusion == "NEUTRAL"))' <<<"$checks_json" >/dev/null; then
+              echo "All checks completed successfully."
+              break
+            else
+              echo "Checks are still running."
+            fi
+
+            sleep "$interval_seconds"
+            elapsed=$((elapsed + interval_seconds))
+
+            if [ "$elapsed" -ge "$timeout_seconds" ]; then
+              echo "Timed out waiting for checks to complete."
+              exit 1
+            fi
+          done
+
+          if gh pr merge --auto --squash "$PR_URL"; then
+            echo "Auto-merge enabled."
+          else
+            echo "Auto-merge unavailable; merging directly."
+            gh pr merge --squash --delete-branch "$PR_URL"
+          fi
