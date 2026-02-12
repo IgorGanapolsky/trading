@@ -12,7 +12,7 @@
 **Autonomous AI trading system** with scheduled self-healing ("Ralph Loop") workflows, continuous learning, and a defined-risk SPY options strategy.
 
 > **🎯 North Star**: $6,000/month after-tax by Nov 14, 2029  
-> **📊 Current status**: see `data/system_state.json` and `Progress-Dashboard.md` (auto-synced)  
+> **📊 Current status**: [System State JSON](https://github.com/IgorGanapolsky/trading/blob/main/data/system_state.json) | [Progress Dashboard](https://github.com/IgorGanapolsky/trading/wiki/Progress-Dashboard) | [GitHub Pages](https://igorganapolsky.github.io/trading/) | [RAG Query](https://igorganapolsky.github.io/trading/rag-query/)  
 > **🔄 Ralph Loop**: scheduled around the clock; only runs fixes when unhealthy (cost-controlled)
 
 ## ✨ What Makes This Special
@@ -46,8 +46,10 @@ Most trading bots fail because they:
 
 Performance metrics change frequently and are auto-synced.
 
-- Source of truth: `data/system_state.json`
-- Human-readable dashboard: `Progress-Dashboard.md` (also published to GitHub Pages)
+- Source of truth: [data/system_state.json](https://github.com/IgorGanapolsky/trading/blob/main/data/system_state.json)
+- Human-readable dashboard: [Progress Dashboard](https://github.com/IgorGanapolsky/trading/wiki/Progress-Dashboard)
+- Public site: [GitHub Pages](https://igorganapolsky.github.io/trading/)
+- Query lessons: [RAG Query UI](https://igorganapolsky.github.io/trading/rag-query/)
 
 ---
 
