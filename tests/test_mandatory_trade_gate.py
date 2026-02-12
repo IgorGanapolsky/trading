@@ -147,6 +147,29 @@ class TestValidateTradeMandatory:
         # SELL should not be blocked by stacking rule
         assert "stacking" not in result.reason.lower()
 
+    def test_north_star_guard_blocks_new_positions(self):
+        """Test that north_star_guard can block BUY risk-on orders."""
+        from src.safety.mandatory_trade_gate import validate_trade_mandatory
+
+        result = validate_trade_mandatory(
+            symbol="SPY",
+            amount=50.0,
+            side="BUY",
+            strategy="iron_condor",
+            context={
+                "equity": 5000.0,
+                "north_star_guard": {
+                    "enabled": True,
+                    "mode": "capital_preservation",
+                    "max_position_pct": 0.01,
+                    "block_new_positions": True,
+                    "block_reason": "Guard blocked for test",
+                },
+            },
+        )
+        assert result.approved is False
+        assert "guard blocked" in result.reason.lower()
+
 
 class TestMLFeedbackModel:
     """Test ML feedback model integration (LL-302)."""

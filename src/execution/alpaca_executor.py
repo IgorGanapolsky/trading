@@ -344,6 +344,16 @@ class AlpacaExecutor:
             except Exception as e:
                 logger.warning(f"Could not get account context for gate: {e}")
 
+            # Inject North Star guard context for dynamic risk sizing/blocking.
+            try:
+                from src.safety.north_star_guard import get_guard_context
+
+                guard_context = get_guard_context()
+                if guard_context:
+                    account_context["north_star_guard"] = guard_context
+            except Exception as e:
+                logger.warning(f"Could not load North Star guard context: {e}")
+
             gate_result = validate_trade_mandatory(
                 symbol=symbol,
                 amount=amount,

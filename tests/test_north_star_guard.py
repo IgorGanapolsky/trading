@@ -1,0 +1,58 @@
+"""Tests for North Star guard dynamic risk constraints."""
+
+from src.safety.north_star_guard import get_guard_context
+
+
+def test_guard_validation_mode_with_low_sample(tmp_path):
+    state = tmp_path / "system_state.json"
+    state.write_text(
+        """
+{
+  "paper_account": {"equity": 100000, "win_rate": 50, "win_rate_sample_size": 10},
+  "paper_trading": {"current_day": 20, "target_duration_days": 90}
+}
+""".strip(),
+        encoding="utf-8",
+    )
+
+    guard = get_guard_context(state)
+    assert guard["enabled"] is True
+    assert guard["mode"] == "validation"
+    assert guard["block_new_positions"] is False
+    assert guard["max_position_pct"] <= 0.025
+
+
+def test_guard_capital_preservation_blocks_new_positions(tmp_path):
+    state = tmp_path / "system_state.json"
+    state.write_text(
+        """
+{
+  "paper_account": {"equity": 101000, "win_rate": 37.5, "win_rate_sample_size": 32},
+  "paper_trading": {"current_day": 40, "target_duration_days": 90}
+}
+""".strip(),
+        encoding="utf-8",
+    )
+
+    guard = get_guard_context(state)
+    assert guard["mode"] == "capital_preservation"
+    assert guard["block_new_positions"] is True
+    assert guard["max_position_pct"] <= 0.01
+
+
+def test_guard_scale_ready_when_validation_passes(tmp_path):
+    state = tmp_path / "system_state.json"
+    state.write_text(
+        """
+{
+  "paper_account": {"equity": 450000, "win_rate": 82.0, "win_rate_sample_size": 45},
+  "paper_trading": {"current_day": 95, "target_duration_days": 90}
+}
+""".strip(),
+        encoding="utf-8",
+    )
+
+    guard = get_guard_context(state)
+    assert guard["mode"] == "scale_ready"
+    assert guard["block_new_positions"] is False
+    assert guard["max_position_pct"] == 0.05

@@ -157,18 +157,23 @@ def _reset_daily_tracker_if_needed():
         _daily_loss_tracker["date"] = today
 
 
-def _check_position_size(symbol: str, amount: float, equity: float) -> tuple[bool, str]:
+def _check_position_size(
+    symbol: str,
+    amount: float,
+    equity: float,
+    max_position_pct: float = MAX_POSITION_PCT,
+) -> tuple[bool, str]:
     """Check if position size is within limits."""
     if equity <= 0:
         return False, "Cannot calculate position size with zero equity"
 
     position_pct = amount / equity
-    max_amount = equity * MAX_POSITION_PCT
+    max_amount = equity * max_position_pct
 
-    if position_pct > MAX_POSITION_PCT:
+    if position_pct > max_position_pct:
         return False, (
             f"Position ${amount:.2f} ({position_pct:.1%}) exceeds "
-            f"max {MAX_POSITION_PCT:.0%} (${max_amount:.2f})"
+            f"max {max_position_pct:.0%} (${max_amount:.2f})"
         )
 
     return True, f"Position size OK: ${amount:.2f} ({position_pct:.1%})"
@@ -463,6 +468,35 @@ def validate_trade_mandatory(
     checks_performed.append(f"equity_check: PASS (${equity:.2f})")
 
     # =========================================================================
+    # CHECK 2.2: North Star guard (dynamic risk profile)
+    # Applies stricter sizing or blocks new risk when paper metrics are weak.
+    # =========================================================================
+    effective_max_position_pct = MAX_POSITION_PCT
+    north_star_guard = context.get("north_star_guard", {}) if context else {}
+    if isinstance(north_star_guard, dict) and north_star_guard.get("enabled"):
+        guard_mode = str(north_star_guard.get("mode", "unknown"))
+        guard_limit = north_star_guard.get("max_position_pct")
+        if isinstance(guard_limit, (int, float)) and guard_limit > 0:
+            effective_max_position_pct = min(float(guard_limit), MAX_POSITION_PCT)
+
+        checks_performed.append(
+            f"north_star_guard: mode={guard_mode} max_position={effective_max_position_pct:.1%}"
+        )
+
+        if side == "BUY" and north_star_guard.get("block_new_positions"):
+            reason = str(
+                north_star_guard.get("block_reason")
+                or "North Star guard blocked new position openings."
+            )
+            return GateResult(
+                approved=False,
+                reason=reason,
+                checks_performed=checks_performed + ["north_star_guard: BLOCKED"],
+            )
+    else:
+        checks_performed.append("north_star_guard: SKIP")
+
+    # =========================================================================
     # CHECK 2.5: Position COUNT limit (Jan 19, 2026 - LL-246, Jan 22, 2026 - LL-281)
     # Per CLAUDE.md: "Position limit: 1 iron condor at a time" = 4 legs max
     # This prevents accumulating unlimited positions (root cause of 8 contract crisis)
@@ -506,7 +540,12 @@ def validate_trade_mandatory(
     # =========================================================================
     # CHECK 3: Position size limit
     # =========================================================================
-    position_ok, position_msg = _check_position_size(symbol, amount, equity)
+    position_ok, position_msg = _check_position_size(
+        symbol,
+        amount,
+        equity,
+        max_position_pct=effective_max_position_pct,
+    )
 
     if not position_ok:
         return GateResult(
