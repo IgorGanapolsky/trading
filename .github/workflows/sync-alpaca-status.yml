@@ -4,14 +4,12 @@ name: Sync Alpaca Status
 # - Every 15 minutes during peak hours (10 AM - 3 PM ET = 15-20 UTC)
 # - Every 30 minutes during market open/close (9:30-10 AM, 3-4 PM ET)
 # - Once daily on weekends to maintain freshness
-# FIX (Jan 16, 2026): Increased frequency to reduce staleness
-# FIX (Jan 22, 2026): Consolidated from 3 separate sync workflows (hourly-state-sync, sync-system-state)
 on:
   schedule:
     - cron: "*/15 15-19 * * 1-5" # Every 15 min, 10 AM - 3 PM ET (peak hours)
     - cron: "30,0 14,20 * * 1-5" # Every 30 min at market open (9:30 AM) and close (4 PM)
     - cron: "0 15 * * 0,6" # Once daily on weekends at 10 AM ET
-  workflow_dispatch: # Manual trigger
+  workflow_dispatch:
     inputs:
       force_sync:
         description: "Force sync even if no changes"
@@ -22,6 +20,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: sync-alpaca-status
+  cancel-in-progress: false
+
 env:
   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
   SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -30,11 +32,14 @@ jobs:
   sync:
     name: Sync Paper Account Status
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 8
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT || github.token }}
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -42,269 +47,38 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install alpaca-py
-
-      - name: Sync Alpaca Status
-        env:
-          # CRITICAL: Use 30K secrets (5K secrets appear to be empty/invalid)
-          # The 30K secrets point to the $30K paper account (Jan 22, 2026 reset)
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
         run: |
-          python3 << 'EOF'
-          import os
-          import json
-          from datetime import datetime, timezone
-          from pathlib import Path
-          from alpaca.trading.client import TradingClient
+          pip install -q -r requirements-minimal.txt || pip install -q alpaca-py requests python-dotenv
 
-          api_key = os.environ['ALPACA_API_KEY']
-          secret_key = os.environ['ALPACA_SECRET_KEY']
-
-          print("=" * 60)
-          print("ALPACA PAPER ACCOUNT SYNC")
-          print(f"Timestamp: {datetime.now(timezone.utc).isoformat()}")
-          print("=" * 60)
-
-          client = TradingClient(api_key, secret_key, paper=True)
-
-          # Get account
-          account = client.get_account()
-          equity = float(account.equity)
-          cash = float(account.cash)
-          buying_power = float(account.buying_power)
-          last_equity = float(account.last_equity)
-          today_pl = equity - last_equity
-
-          print(f"\nAccount Status:")
-          print(f"  Equity: ${equity:,.2f}")
-          print(f"  Cash: ${cash:,.2f}")
-          print(f"  Buying Power: ${buying_power:,.2f}")
-          print(f"  Today P/L: ${today_pl:,.2f}")
-
-          # Get positions
-          positions = client.get_all_positions()
-          print(f"\nPositions ({len(positions)}):")
-
-          position_list = []
-          total_unrealized = 0
-          for pos in positions:
-              unrealized = float(pos.unrealized_pl)
-              total_unrealized += unrealized
-              print(f"  {pos.symbol}: qty={pos.qty}, P/L=${unrealized:,.2f}")
-              position_list.append({
-                  "symbol": pos.symbol,
-                  "qty": float(pos.qty),
-                  "price": float(pos.current_price),
-                  "value": float(pos.market_value),
-                  "pnl": unrealized,
-                  "type": "option" if len(pos.symbol) > 10 else "stock"
-              })
-
-          # Calculate total P/L from initial $100K (PA3C5AG0CECQ - Jan 30, 2026)
-          initial_equity = 100000.0
-          total_pl = equity - initial_equity
-          total_pl_pct = (total_pl / initial_equity) * 100
-
-          print(f"\nTotal Unrealized P/L: ${total_unrealized:,.2f}")
-          print(f"Total P/L (from $100K): ${total_pl:,.2f} ({total_pl_pct:.2f}%)")
-
-          # LL-237 FIX: Sync trade_history to prevent knowledge loss
-          # Fetch ALL closed orders, not just today's
-          today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-          total_trades_today = 0
-          trade_history = []
-          try:
-              from alpaca.trading.requests import GetOrdersRequest
-              from alpaca.trading.enums import QueryOrderStatus
-
-              # Fetch all closed orders (up to 100)
-              all_orders_request = GetOrdersRequest(
-                  status=QueryOrderStatus.CLOSED,
-                  limit=100
-              )
-              all_orders = client.get_orders(filter=all_orders_request)
-
-              # Build trade_history from filled orders
-              trade_history = [
-                  {
-                      "id": str(o.id),
-                      "symbol": o.symbol,
-                      "side": str(o.side),
-                      "qty": str(o.filled_qty),
-                      "price": str(o.filled_avg_price) if o.filled_avg_price else "0",
-                      "filled_at": str(o.filled_at) if o.filled_at else None,
-                  }
-                  for o in all_orders
-                  if o.filled_at
-              ]
-              print(f"📜 Trade history: {len(trade_history)} closed orders")
-
-              # Count today's orders specifically
-              filled_orders = [o for o in all_orders if str(o.status) == 'filled' and str(o.filled_at).startswith(today_str)]
-              total_trades_today = len(filled_orders)
-              print(f"Filled orders today: {total_trades_today}")
-
-              # LL-FIX: Calculate win rate from paired trades
-              # For options: match buy_to_open with sell_to_close
-              # Win = sell_price > buy_price for long, opposite for short
-              wins = 0
-              losses = 0
-
-              # Group trades by symbol to find pairs
-              from collections import defaultdict
-              symbol_trades = defaultdict(list)
-              for o in all_orders:
-                  if o.filled_at and o.filled_avg_price:
-                      symbol_trades[o.symbol].append({
-                          'side': str(o.side),
-                          'price': float(o.filled_avg_price),
-                          'qty': float(o.filled_qty),
-                          'filled_at': str(o.filled_at)
-                      })
-
-              # Calculate P/L for completed round trips
-              for symbol, trades in symbol_trades.items():
-                  buys = [t for t in trades if 'BUY' in t['side'].upper()]
-                  sells = [t for t in trades if 'SELL' in t['side'].upper()]
-
-                  # Match buys to sells (simple FIFO)
-                  for i, buy in enumerate(buys):
-                      if i < len(sells):
-                          sell = sells[i]
-                          pnl = (sell['price'] - buy['price']) * buy['qty'] * 100  # Options multiplier
-                          if pnl > 0:
-                              wins += 1
-                          elif pnl < 0:
-                              losses += 1
-
-              total_closed = wins + losses
-              win_rate = round((wins / total_closed * 100), 1) if total_closed > 0 else 0
-              print(f"📊 Win rate: {win_rate}% ({wins}W/{losses}L from {total_closed} closed trades)")
-
-          except Exception as e:
-              print(f"Could not fetch orders: {e}")
-              win_rate = existing_state.get("paper_account", {}).get("win_rate", 0)
-              total_closed = existing_state.get("paper_account", {}).get("win_rate_sample_size", 0)
-
-          # Update system_state.json with UTC timestamp
-          state_file = Path("data/system_state.json")
-
-          # Load existing state to preserve sync_health history
-          existing_state = {}
-          if state_file.exists():
-              try:
-                  existing_state = json.loads(state_file.read_text())
-              except:
-                  pass
-
-          # Track sync health metrics (use UTC for consistency)
-          sync_history = existing_state.get("sync_health", {}).get("history", [])
-          sync_history.append({
-              "timestamp": datetime.now(timezone.utc).isoformat(),
-              "equity": equity,
-              "success": True
-          })
-          # Keep last 24 syncs (covers ~6 hours at 15-min intervals)
-          sync_history = sync_history[-24:]
-
-          # LL-237: Preserve existing trade_history if we couldn't fetch new data
-          final_trade_history = trade_history if trade_history else existing_state.get("trade_history", [])
-
-          state = {
-              "last_updated": datetime.now(timezone.utc).isoformat(),
-              "sync_health": {
-                  "last_successful_sync": datetime.now(timezone.utc).isoformat(),
-                  "sync_source": "github_actions",
-                  "sync_count_today": len([s for s in sync_history if s["timestamp"].startswith(today_str)]),
-                  "history": sync_history
-              },
-              "portfolio": {
-                  "equity": equity,
-                  "cash": cash
-              },
-              "paper_account": {
-                  "equity": equity,
-                  "cash": cash,
-                  "buying_power": buying_power,
-                  "total_pl": total_pl,
-                  "total_pl_pct": round(total_pl_pct, 2),
-                  "positions_count": len(positions),
-                  "daily_change": round(today_pl, 2),
-                  # FIX: Calculate win_rate from actual trade pairs (LL-FIX Jan 27, 2026)
-                  "win_rate": win_rate,
-                  "win_rate_sample_size": total_closed,
-                  "starting_balance": 100000.0  # Per CLAUDE.md - $100K paper account PA3C5AG0CECQ
-              },
-              "positions": position_list,
-              # LL-237 FIX: Add trade_history to prevent knowledge loss
-              "trade_history": final_trade_history,
-              "trades_loaded": len(final_trade_history),
-              "trades": {
-                  "last_trade_date": today_str,
-                  "today_trades": total_trades_today,  # FIX: was "synced" string
-                  "total_trades_today": total_trades_today,
-                  "last_trade_symbol": positions[0].symbol if positions else "none"
-              },
-              "risk": {
-                  "status": "MONITORING" if total_pl >= 0 else "WARNING - NEGATIVE P/L",
-                  "total_pl": total_pl,
-                  "unrealized_pl": total_unrealized
-              },
-              "account": {
-                  "current_equity": equity,
-                  "total_pl": total_pl,
-                  "total_pl_pct": round(total_pl_pct, 2),
-                  "positions_count": len(positions)
-              },
-              "meta": {
-                  "last_updated": datetime.now(timezone.utc).isoformat(),
-                  "trade_sync": "alpaca_api",
-                  "sync_frequency_minutes": 5
-              },
-              # LL-312 Gap 1: Preserve paper_trading tracking across syncs
-              "paper_trading": {
-                  "start_date": existing_state.get("paper_trading", {}).get("start_date", "2026-01-22"),
-                  "target_duration_days": 90,
-                  "target_win_rate": 0.80,
-                  "current_day": max(1, (datetime.now(timezone.utc).date() - datetime.strptime(existing_state.get("paper_trading", {}).get("start_date", "2026-01-22"), "%Y-%m-%d").date()).days + 1),
-                  "notes": "Paper phase per CLAUDE.md - validate 80%+ win rate before scaling"
-              }
-          }
-
-          state_file.write_text(json.dumps(state, indent=2))
-          print(f"\n✅ Updated {state_file}")
-          print("=" * 60)
-          EOF
-
-      - name: Commit and Create PR
+      - name: Sync Alpaca state
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+          ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          ALPACA_BROKERAGE_TRADING_API_KEY: ${{ secrets.ALPACA_BROKERAGE_TRADING_API_KEY }}
+          ALPACA_BROKERAGE_TRADING_API_SECRET: ${{ secrets.ALPACA_BROKERAGE_TRADING_API_SECRET }}
+          REQUIRE_ALPACA_KEYS: "true"
         run: |
-          # Check if there are changes
+          python3 scripts/sync_alpaca_state.py
+          python3 scripts/sync_closed_positions.py || echo "⚠️ Closed positions sync failed - win rate may be stale"
+
+      - name: Commit synced state
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+
           git add data/system_state.json
           if git diff --staged --quiet; then
-            echo "No changes to commit"
+            echo "No state changes to commit"
             exit 0
           fi
 
-          # Configure git
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: Sync Alpaca state [auto]"
 
-          # Create unique branch
-          BRANCH="auto/sync-alpaca-$(date +%Y%m%d-%H%M%S)"
-          git checkout -b "$BRANCH"
-          git commit -m "chore: Sync Alpaca paper account status [auto]"
-          git push -u origin "$BRANCH"
+          if [ -n "${{ secrets.GH_PAT }}" ]; then
+            git remote set-url origin "https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git"
+          fi
 
-          # Create and merge PR using gh CLI
-          PR_URL=$(gh pr create --title "chore: Sync Alpaca status [auto]" --body "Automated sync of paper account data (every 5 min)" --head "$BRANCH" --base main)
-          echo "Created PR: $PR_URL"
-
-          # Auto-merge
-          gh pr merge "$BRANCH" --squash --delete-branch --admin || echo "Auto-merge may require manual approval"
-          echo "Sync complete"
+          git push origin HEAD:main || echo "Push to main skipped (protected branch or no permission)"
 
       - name: Notify on Failure
         if: failure()

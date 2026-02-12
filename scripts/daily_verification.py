@@ -142,8 +142,15 @@ def print_report(report: DailyReport):
 
     # North Star check
     print("\n🎯 NORTH STAR CHECK:")
-    days_elapsed = 50  # From the hook data
-    target_daily = 1.0  # $1/day target
+    days_elapsed = 0
+    try:
+        with open("data/system_state.json") as f:
+            state = json.load(f)
+        days_elapsed = int(state.get("paper_trading", {}).get("current_day", 0))
+    except Exception:
+        pass
+    days_elapsed = max(1, days_elapsed)
+    target_daily = 200.0  # $6K/month after-tax ~= $200/day
     expected_profit = days_elapsed * target_daily
     print(f"   Target:  ${expected_profit:,.2f} (${target_daily}/day × {days_elapsed} days)")
     print(f"   Actual:  ${report.total_pnl:,.2f}")
