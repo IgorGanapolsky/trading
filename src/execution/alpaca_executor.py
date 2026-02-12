@@ -354,6 +354,16 @@ class AlpacaExecutor:
             except Exception as e:
                 logger.warning(f"Could not load North Star guard context: {e}")
 
+            # Inject milestone controller context for family-level auto-pause enforcement.
+            try:
+                from src.safety.milestone_controller import get_milestone_context
+
+                milestone_context = get_milestone_context(strategy=strategy)
+                if milestone_context:
+                    account_context["milestone_controller"] = milestone_context
+            except Exception as e:
+                logger.warning(f"Could not load milestone controller context: {e}")
+
             gate_result = validate_trade_mandatory(
                 symbol=symbol,
                 amount=amount,

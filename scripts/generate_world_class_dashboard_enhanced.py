@@ -169,6 +169,40 @@ def calculate_basic_metrics():
     days_remaining = total_days - current_day
     progress_pct_challenge = (current_day / total_days * 100) if total_days > 0 else 0.0
 
+    milestone_state = (
+        system_state.get("strategy_milestones", {}) if isinstance(system_state, dict) else {}
+    )
+    north_star_state = system_state.get("north_star", {}) if isinstance(system_state, dict) else {}
+    north_star_probability = {
+        "score": north_star_state.get("probability_score"),
+        "label": north_star_state.get("probability_label"),
+        "required_cagr": north_star_state.get("required_cagr"),
+        "estimated_cagr_from_expectancy": north_star_state.get("estimated_cagr_from_expectancy"),
+    }
+    if north_star_probability.get("score") is None:
+        try:
+            from src.safety.milestone_controller import compute_milestone_snapshot
+
+            snapshot = compute_milestone_snapshot(
+                state=system_state,
+                state_path=DATA_DIR / "system_state.json",
+                trades_path=DATA_DIR / "trades.json",
+            )
+            milestone_state = {
+                "enabled": snapshot.get("enabled", True),
+                "primary_family": snapshot.get("primary_family", "options_income"),
+                "paused_families": snapshot.get("paused_families", []),
+            }
+            probability = snapshot.get("north_star_probability", {})
+            north_star_probability = {
+                "score": probability.get("score"),
+                "label": probability.get("label"),
+                "required_cagr": probability.get("required_cagr"),
+                "estimated_cagr_from_expectancy": probability.get("estimated_cagr_from_expectancy"),
+            }
+        except Exception:
+            pass
+
     return {
         "days_elapsed": days_elapsed,
         "current_day": current_day,
@@ -211,6 +245,14 @@ def calculate_basic_metrics():
         # Today's paper P/L - read from system_state.json
         "today_paper_pl": paper_todays_pl,
         "today_paper_pl_pct": paper_todays_pl_pct,
+        # Milestone controller + North Star probability
+        "milestone_enabled": bool(milestone_state.get("enabled", False)),
+        "milestone_primary_family": milestone_state.get("primary_family", "options_income"),
+        "milestone_paused_families": milestone_state.get("paused_families", []),
+        "north_star_probability_score": north_star_probability.get("score"),
+        "north_star_probability_label": north_star_probability.get("label"),
+        "north_star_required_cagr": north_star_probability.get("required_cagr"),
+        "north_star_estimated_cagr": north_star_probability.get("estimated_cagr_from_expectancy"),
     }
 
 
@@ -529,6 +571,25 @@ def generate_world_class_dashboard() -> str:
     )
 
     status_emoji = "✅" if basic_metrics["total_pl"] > 0 else "⚠️"
+    north_star_score = basic_metrics.get("north_star_probability_score")
+    north_star_label = str(basic_metrics.get("north_star_probability_label") or "unknown").upper()
+    if isinstance(north_star_score, (int, float)):
+        north_star_probability_display = f"{north_star_score:.1f}/100 ({north_star_label})"
+        if north_star_score >= 70:
+            north_star_probability_status = "✅"
+        elif north_star_score >= 50:
+            north_star_probability_status = "⚠️"
+        else:
+            north_star_probability_status = "🚨"
+    else:
+        north_star_probability_display = "N/A"
+        north_star_probability_status = "⚠️"
+
+    paused_families = basic_metrics.get("milestone_paused_families", [])
+    if isinstance(paused_families, list) and paused_families:
+        paused_families_display = ", ".join(str(item) for item in paused_families)
+    else:
+        paused_families_display = "none"
 
     # Get today's date string for display
     today_display = date.today().strftime("%Y-%m-%d (%A)")
@@ -678,12 +739,14 @@ def generate_world_class_dashboard() -> str:
 | **Average Daily Profit** | ${basic_metrics["avg_daily_profit"]:.2f}/day | $200.00/day (after-tax) | {display_progress_pct:.2f}% |
 | **Total P/L** | ${basic_metrics["total_pl"]:+,.2f} ({basic_metrics["total_pl_pct"]:+.2f}%) | TBD | {status_emoji} |
 | **Win Rate** | {f"{basic_metrics['win_rate']:.1f}%" if basic_metrics.get("closed_trades", 0) > 0 else f"N/A (need {basic_metrics.get('trades_needed_for_stats', 30)} closed trades)"} | >80% | {"✅" if basic_metrics["win_rate"] >= 80 else "⚠️" if basic_metrics.get("closed_trades", 0) > 0 else "📊"} |
+| **North Star Probability (Daily)** | {north_star_probability_display} | >=70/100 | {north_star_probability_status} |
 
 **Progress Bar**: `{north_star_bar}` ({display_progress_pct:.2f}%)
 
 **Assessment**: {"✅ **ON TRACK**" if basic_metrics["total_pl"] > 0 and basic_metrics["win_rate"] >= 80 else "⚠️ **R&D PHASE** - Learning, not earning yet"}
 
 > ℹ️ **Note**: ⚠️ warning icons indicate metrics that haven't reached targets yet. This is **expected** during R&D phase while building capital. ✅ indicates target met.
+> 🛡️ **Milestone Controller**: {"ENABLED" if basic_metrics.get("milestone_enabled") else "DISABLED"} | Primary family: `{basic_metrics.get("milestone_primary_family", "options_income")}` | Paused families: {paused_families_display}
 
 ---
 

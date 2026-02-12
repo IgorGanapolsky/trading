@@ -170,6 +170,29 @@ class TestValidateTradeMandatory:
         assert result.approved is False
         assert "guard blocked" in result.reason.lower()
 
+    def test_milestone_controller_blocks_paused_strategy_family(self):
+        """Test that milestone controller blocks BUY for paused strategy families."""
+        from src.safety.mandatory_trade_gate import validate_trade_mandatory
+
+        result = validate_trade_mandatory(
+            symbol="SPY",
+            amount=50.0,
+            side="BUY",
+            strategy="iron_condor",
+            context={
+                "equity": 5000.0,
+                "milestone_controller": {
+                    "enabled": True,
+                    "strategy_family": "options_income",
+                    "family_status": "paused",
+                    "pause_buy_for_family": True,
+                    "block_reason": "Milestone controller blocked options_income for test",
+                },
+            },
+        )
+        assert result.approved is False
+        assert "milestone controller blocked" in result.reason.lower()
+
 
 class TestMLFeedbackModel:
     """Test ML feedback model integration (LL-302)."""

@@ -497,6 +497,29 @@ def validate_trade_mandatory(
         checks_performed.append("north_star_guard: SKIP")
 
     # =========================================================================
+    # CHECK 2.3: Milestone controller (strategy-family auto-pause)
+    # Blocks new BUY entries for paused families until rolling metrics recover.
+    # =========================================================================
+    milestone_ctx = context.get("milestone_controller", {}) if context else {}
+    if isinstance(milestone_ctx, dict) and milestone_ctx.get("enabled"):
+        family = str(milestone_ctx.get("strategy_family", "unknown"))
+        family_status = str(milestone_ctx.get("family_status", "unknown"))
+        checks_performed.append(f"milestone_controller: family={family} status={family_status}")
+
+        if side == "BUY" and milestone_ctx.get("pause_buy_for_family"):
+            reason = str(
+                milestone_ctx.get("block_reason")
+                or f"Milestone controller blocked BUY entries for strategy family '{family}'."
+            )
+            return GateResult(
+                approved=False,
+                reason=reason,
+                checks_performed=checks_performed + ["milestone_controller: BLOCKED"],
+            )
+    else:
+        checks_performed.append("milestone_controller: SKIP")
+
+    # =========================================================================
     # CHECK 2.5: Position COUNT limit (Jan 19, 2026 - LL-246, Jan 22, 2026 - LL-281)
     # Per CLAUDE.md: "Position limit: 1 iron condor at a time" = 4 legs max
     # This prevents accumulating unlimited positions (root cause of 8 contract crisis)

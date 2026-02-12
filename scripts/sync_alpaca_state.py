@@ -289,6 +289,22 @@ def update_system_state(alpaca_data: dict | None) -> None:
                     "note": "LIVE account not synced - building capital via deposits",
                 }
 
+    # Compute and persist milestone controller + North Star probability snapshot.
+    try:
+        from src.safety.milestone_controller import (
+            apply_snapshot_to_state,
+            compute_milestone_snapshot,
+        )
+
+        snapshot = compute_milestone_snapshot(
+            state=state,
+            state_path=SYSTEM_STATE_FILE,
+            trades_path=PROJECT_ROOT / "data" / "trades.json",
+        )
+        apply_snapshot_to_state(state, snapshot)
+    except Exception as e:
+        logger.warning(f"Could not update milestone snapshot in system_state: {e}")
+
     # Write atomically
     SYSTEM_STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
     temp_file = SYSTEM_STATE_FILE.with_suffix(".tmp")
