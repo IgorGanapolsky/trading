@@ -1,24 +1,27 @@
 # 🤖 Ralph Mode - AI Trading System
 
-[![Tests](https://img.shields.io/badge/tests-875_passing-brightgreen.svg)](#)
-[![Lessons](https://img.shields.io/badge/lessons_learned-122+-blue.svg)](#)
-[![Self-Healing](https://img.shields.io/badge/CI-self--healing-purple.svg)](#)
+[![CI](https://github.com/IgorGanapolsky/trading/actions/workflows/ci.yml/badge.svg)](https://github.com/IgorGanapolsky/trading/actions/workflows/ci.yml)
+[![Ralph Loop](https://github.com/IgorGanapolsky/trading/actions/workflows/ralph-loop-ai.yml/badge.svg)](https://github.com/IgorGanapolsky/trading/actions/workflows/ralph-loop-ai.yml)
+[![Self-Healing Monitor](https://github.com/IgorGanapolsky/trading/actions/workflows/self-healing-monitor.yml/badge.svg)](https://github.com/IgorGanapolsky/trading/actions/workflows/self-healing-monitor.yml)
+[![Lessons](https://img.shields.io/badge/lessons_learned-growing-blue.svg)](https://igorganapolsky.github.io/trading/lessons/)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](requirements.txt)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Dev.to](https://img.shields.io/badge/blog-dev.to-black.svg)](https://dev.to/igorganapolsky)
 [![GitHub Pages](https://img.shields.io/badge/docs-GitHub_Pages-blue.svg)](https://igorganapolsky.github.io/trading/)
 
-**Fully autonomous AI trading system** using the [Ralph Wiggum iterative coding technique](https://github.com/Th0rgal/opencode-ralph-wiggum). Features **self-healing CI**, **automated bug fixes**, and **iron condor options strategy** on SPY.
+**Autonomous AI trading system** with scheduled self-healing ("Ralph Loop") workflows, continuous learning, and a defined-risk SPY options strategy.
 
-> **🎯 North Star**: $100/day after tax | **📊 Current**: $5,066 paper account | **🔄 Ralph Mode**: Active 24/7
+> **🎯 North Star**: $6,000/month after-tax by Nov 14, 2029  
+> **📊 Current status**: see `data/system_state.json` and `Progress-Dashboard.md` (auto-synced)  
+> **🔄 Ralph Loop**: scheduled around the clock; only runs fixes when unhealthy (cost-controlled)
 
 ## ✨ What Makes This Special
 
-- **🔄 Self-Healing CI** - Ralph Mode runs 24/7, automatically finding and fixing bugs
-- **🤖 AI-Powered Fixes** - Uses Claude API to analyze failures and generate fixes
-- **📚 122+ Lessons Learned** - Every failure documented for continuous learning
+- **🔄 Self-Healing CI** - Scheduled workflows detect issues, auto-fix what they can, and keep CI green
+- **🤖 AI-Powered Fixes** - Uses Claude API in Ralph Loop to propose and apply fixes when needed
+- **📚 Lessons Learned (growing)** - Failures and fixes are documented for continuous learning
 - **📝 Auto-Published Blog** - Discoveries automatically posted to Dev.to and GitHub Pages
-- **🎯 Iron Condor Strategy** - Defined-risk options trading on SPY only
+- **🎯 SPY Options Strategy** - Defined-risk options trading focused on SPY during paper validation
 
 ---
 
@@ -39,30 +42,21 @@ Most trading bots fail because they:
 
 ---
 
-## Current Performance (Day 72/90 - Jan 8, 2026)
+## Current Performance
 
-| Account     | Equity    | P/L   | Status                    |
-| ----------- | --------- | ----- | ------------------------- |
-| Live        | $30.00    | $0.00 | Accumulating $25/day      |
-| Paper (R&D) | $5,000.00 | $0.00 | FRESH START (reset Jan 7) |
+Performance metrics change frequently and are auto-synced.
 
-| Metric        | Value | Target    |
-| ------------- | ----- | --------- |
-| Win Rate      | N/A   | 55%+      |
-| Positions     | 0     | -         |
-| Backtest Pass | 19/13 | Scenarios |
-
-**Honest Assessment**: Live trading started Jan 3, 2026 with fresh $20 deposit. Accumulating $25/day for defined-risk options spreads ($500 minimum for CSPs). Paper account was RESET to $5,000 on Jan 7, 2026 by CEO to match realistic 6-month capital milestone. Previous $100K+ paper results were unrealistic for actual capital trajectory.
+- Source of truth: `data/system_state.json`
+- Human-readable dashboard: `Progress-Dashboard.md` (also published to GitHub Pages)
 
 ---
 
-## Strategy: Cash-Secured Puts
+## Strategy: SPY Iron Condors (Defined Risk)
 
 ```
-Strategy: Sell 15-20 delta puts, 30-45 DTE
-Target:   2% monthly premium (24% annual)
-Stocks:   SPY, QQQ, AMD, NVDA
-Risk:     Willing to own shares if assigned
+Strategy: SPY iron condors (defined risk), 30-45 DTE, ~$5-wide spreads
+Focus:    Paper validation first; risk management is non-negotiable
+Source:   See CLAUDE.md for the canonical rules and guardrails
 ```
 
 ### Why It Works
@@ -99,8 +93,8 @@ cp .env.example .env
 # Paper trading
 python3 scripts/autonomous_trader.py
 
-# Check positions
-python3 scripts/check_positions.py
+# Sync latest broker state into data/system_state.json (requires Alpaca keys)
+python3 scripts/sync_alpaca_state.py
 
 # Daily verification
 python3 scripts/daily_verification.py
@@ -117,7 +111,7 @@ python3 scripts/daily_verification.py
 │  1. Thompson Sampler - Select best strategy                 │
 │  2. Trade Memory - Query similar past trades                │
 │  3. Risk Manager - Position sizing, stops                   │
-│  4. Options Strategy - Cash-secured puts                    │
+│  4. Options Strategy - Defined-risk spreads                 │
 │  5. Daily Verification - Honest reporting                   │
 └─────────────────────────────────────────────────────────────┘
                               │
@@ -132,7 +126,7 @@ python3 scripts/daily_verification.py
 | Component              | Purpose            | Location                           |
 | ---------------------- | ------------------ | ---------------------------------- |
 | **Orchestrator**       | Main trading logic | `src/orchestrator/main.py`         |
-| **Thompson Sampler**   | Strategy selection | `src/learning/thompson_sampler.py` |
+| **Thompson Sampler**   | Strategy selection | `src/ml/trade_confidence.py`       |
 | **Trade Memory**       | SQLite journal     | `src/learning/trade_memory.py`     |
 | **Risk Manager**       | Position sizing    | `src/risk/`                        |
 | **Daily Verification** | Honest reporting   | `scripts/daily_verification.py`    |
@@ -148,7 +142,7 @@ python3 scripts/daily_verification.py
 - Update based on win/loss outcomes
 - Proven optimal for <100 decisions
 
-### Trade Memory (replaces RAG)
+### Trade Memory (complements RAG)
 
 - SQLite database of past trades
 - Query BEFORE each new trade
@@ -177,7 +171,7 @@ python3 scripts/daily_verification.py
 | **GitHub Pages Blog** | [igorganapolsky.github.io/trading](https://igorganapolsky.github.io/trading/) | Daily trading reports, lessons learned |
 | **Dev.to**            | [@igorganapolsky](https://dev.to/igorganapolsky)                              | AI trading insights, tutorials         |
 | **Daily Reports**     | [/reports/](https://igorganapolsky.github.io/trading/reports/)                | Transparent P/L tracking               |
-| **Lessons Learned**   | [/lessons/](https://igorganapolsky.github.io/trading/lessons/)                | 101+ documented lessons                |
+| **Lessons Learned**   | [/lessons/](https://igorganapolsky.github.io/trading/lessons/)                | Continuously growing lessons           |
 
 ---
 
