@@ -107,6 +107,7 @@ def get_guard_context(state_path: Path = DEFAULT_STATE_PATH) -> dict[str, Any]:
     paper_account = state.get("paper_account", {}) if isinstance(state, dict) else {}
     paper_trading = state.get("paper_trading", {}) if isinstance(state, dict) else {}
     portfolio = state.get("portfolio", {}) if isinstance(state, dict) else {}
+    weekly_gate = state.get("north_star_weekly_gate", {}) if isinstance(state, dict) else {}
 
     equity = _as_float(paper_account.get("equity"), 0.0)
     if equity <= 0:
@@ -157,12 +158,34 @@ def get_guard_context(state_path: Path = DEFAULT_STATE_PATH) -> dict[str, Any]:
             f"Required CAGR to target is {req_cagr * 100:.1f}%/yr; keeping risk-on size conservative."
         )
 
+    # Weekly operating gate can further cap risk-on size or pause new entries.
+    if isinstance(weekly_gate, dict):
+        weekly_mode = str(weekly_gate.get("mode", "unknown"))
+        weekly_limit = _as_float(weekly_gate.get("recommended_max_position_pct"), 0.0)
+        if weekly_limit > 0:
+            max_position_pct = min(max_position_pct, weekly_limit)
+            reasons.append(
+                f"Weekly gate ({weekly_mode}) caps max position size at {weekly_limit * 100:.1f}%."
+            )
+
+        if weekly_gate.get("block_new_positions"):
+            block_new_positions = True
+            weekly_reason = str(weekly_gate.get("reason") or "").strip()
+            if weekly_reason:
+                reasons.append(f"Weekly gate block: {weekly_reason}")
+
     block_reason = ""
     if block_new_positions:
-        block_reason = (
-            "North Star guard: new position openings blocked in capital preservation mode "
-            f"(win_rate={win_rate:.1f}%, sample_size={sample_size})."
-        )
+        if isinstance(weekly_gate, dict) and weekly_gate.get("block_new_positions"):
+            block_reason = (
+                "North Star guard: weekly operating gate blocked new position openings "
+                f"({weekly_gate.get('mode', 'unknown')})."
+            )
+        else:
+            block_reason = (
+                "North Star guard: new position openings blocked in capital preservation mode "
+                f"(win_rate={win_rate:.1f}%, sample_size={sample_size})."
+            )
 
     return {
         "enabled": True,
@@ -178,5 +201,8 @@ def get_guard_context(state_path: Path = DEFAULT_STATE_PATH) -> dict[str, Any]:
         "required_cagr_to_target_capital": round(req_cagr, 4),
         "target_capital": DEFAULT_TARGET_CAPITAL,
         "target_date": DEFAULT_TARGET_DATE.isoformat(),
+        "weekly_gate_mode": weekly_gate.get("mode")
+        if isinstance(weekly_gate, dict)
+        else "unavailable",
         "reasons": reasons,
     }
