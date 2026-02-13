@@ -625,9 +625,14 @@ class TestPortfolioStatusFunction:
                     if hasattr(request_obj, "full_url")
                     else request_obj.get_full_url()
                 )
-                assert "github.com" in url or "githubusercontent" in url, (
-                    f"Expected GitHub URL, got: {url}"
-                )
+                from urllib.parse import urlparse
+
+                hostname = (urlparse(url).hostname or "").lower()
+                assert (
+                    hostname == "github.com"
+                    or hostname.endswith(".github.com")
+                    or hostname == "raw.githubusercontent.com"
+                ), f"Expected GitHub URL, got: {url}"
 
     def test_get_current_portfolio_status_returns_empty_on_all_failures(self):
         """Test that empty dict is returned when both local and GitHub fail."""

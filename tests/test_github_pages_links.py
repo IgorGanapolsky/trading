@@ -116,12 +116,19 @@ class TestRegressionPrevention:
 
     def test_url_configured_in_config(self):
         """Ensure _config.yml has correct URL."""
+        import re
+        from urllib.parse import urlparse
+
         docs_dir = Path(__file__).parent.parent / "docs"
         config_file = docs_dir / "_config.yml"
 
         content = config_file.read_text()
 
-        assert "igorganapolsky.github.io" in content, (
+        match = re.search(r'^\s*url:\s*"?([^"\n]+)"?\s*$', content, flags=re.MULTILINE)
+        assert match, "_config.yml should define a url entry"
+
+        host = urlparse(match.group(1).strip()).hostname
+        assert host == "igorganapolsky.github.io", (
             "_config.yml should have correct GitHub Pages URL"
         )
 

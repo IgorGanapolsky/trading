@@ -17,6 +17,8 @@ from pathlib import Path
 from typing import Optional
 from urllib.parse import urljoin
 
+from bs4 import BeautifulSoup
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -139,9 +141,11 @@ def discover_all_articles() -> list[dict]:
 
 def parse_article_content(html: str) -> Optional[str]:
     """Extract main article content from HTML."""
-    # Remove scripts and styles
-    html = re.sub(r"<script[^>]*>.*?</script>", "", html, flags=re.DOTALL | re.IGNORECASE)
-    html = re.sub(r"<style[^>]*>.*?</style>", "", html, flags=re.DOTALL | re.IGNORECASE)
+    # Remove scripts/styles with a real HTML parser to avoid regex-based filtering bypasses.
+    soup = BeautifulSoup(html, "html.parser")
+    for tag in soup(["script", "style"]):
+        tag.decompose()
+    html = str(soup)
 
     # Try to find article content
     content_patterns = [

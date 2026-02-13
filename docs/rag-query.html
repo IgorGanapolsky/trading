@@ -871,19 +871,46 @@ layout: null
       ).toString();
       const LESSONS_FALLBACK_URL =
         "https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/rag/lessons_query.json";
+      const WORKER_URL = "https://trading-rag-chat.iganapolsky.workers.dev";
+      const ALLOWED_RAG_HOSTS = new Set([
+        new URL(WORKER_URL).hostname,
+        "localhost",
+        "127.0.0.1",
+      ]);
+
+      function sanitizeRagWebhookUrl(candidate) {
+        if (!candidate) return "";
+        try {
+          const parsed = new URL(candidate, window.location.origin);
+          const isLocalhost =
+            parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
+          const protocolAllowed =
+            parsed.protocol === "https:" ||
+            (isLocalhost && parsed.protocol === "http:");
+          if (!protocolAllowed) return "";
+          if (!ALLOWED_RAG_HOSTS.has(parsed.hostname)) return "";
+          return parsed.toString();
+        } catch {
+          return "";
+        }
+      }
+
       const queryParams = new URLSearchParams(window.location.search);
-      const urlFromParam = queryParams.get("rag_url");
+      const urlFromParam = sanitizeRagWebhookUrl(queryParams.get("rag_url"));
       let storedUrl = "";
       try {
         if (urlFromParam) {
           localStorage.setItem("rag_webhook_url", urlFromParam);
         }
-        storedUrl = localStorage.getItem("rag_webhook_url") || "";
+        storedUrl = sanitizeRagWebhookUrl(
+          localStorage.getItem("rag_webhook_url") || "",
+        );
       } catch {
         storedUrl = "";
       }
-      const DIRECT_RAG_URL = window.RAG_WEBHOOK_URL || storedUrl || "";
-      const WORKER_URL = "https://trading-rag-chat.iganapolsky.workers.dev";
+      const DIRECT_RAG_URL = sanitizeRagWebhookUrl(
+        window.RAG_WEBHOOK_URL || storedUrl || "",
+      );
 
       // Initialize
       document.addEventListener("DOMContentLoaded", () => {

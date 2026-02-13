@@ -76,12 +76,8 @@ def check_alpaca_api() -> bool:
 
     print("🔍 Alpaca API Configuration:")
     print(f"   Mode: {'PAPER' if paper_mode else 'LIVE'}")
-    print(
-        f"   API Key: {api_key[:8] if len(api_key) >= 8 else 'MISSING'}...{api_key[-4:] if len(api_key) >= 4 else ''}"
-    )
-    print(
-        f"   Secret: {secret_key[:8] if len(secret_key) >= 8 else 'MISSING'}...{secret_key[-4:] if len(secret_key) >= 4 else ''}"
-    )
+    print(f"   API Key configured: {'yes' if api_key else 'no'}")
+    print(f"   Secret configured: {'yes' if secret_key else 'no'}")
     print()
 
     # Self-healing: Retry up to 3 times with exponential backoff

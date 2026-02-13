@@ -542,7 +542,7 @@ def check_ci_status() -> dict:
 
     except Exception as e:
         logger.warning(f"CI status check failed: {e}")
-        result["error"] = str(e)
+        result["error"] = "CI status temporarily unavailable"
 
     return result
 
@@ -846,7 +846,8 @@ def assess_trading_readiness(
             checks.append("System state loaded (GitHub API)")
             score += 10
         except Exception as e:
-            warnings.append(f"System state not found (local or GitHub API): {str(e)[:30]}")
+            logger.debug(f"System state fallback read failed: {e}")
+            warnings.append("System state not found (local or GitHub API)")
 
     # Check state freshness
     if state:
@@ -967,7 +968,7 @@ def assess_trading_readiness(
     max_score += 20
     ci_status = check_ci_status()
     if ci_status["error"]:
-        warnings.append(f"Could not verify CI status: {ci_status['error'][:50]}")
+        warnings.append("Could not verify CI status")
         score += 10  # Partial credit - we tried
     elif ci_status["is_passing"]:
         if ci_status["running_workflows"]:
@@ -1369,6 +1370,13 @@ def create_webhook_response(text: str) -> dict:
     return {"fulfillmentResponse": {"messages": [{"text": {"text": [text]}}]}}
 
 
+def sanitize_public_response_text(text: str) -> str:
+    """Prevent exception stack traces from being returned to API clients."""
+    if "Traceback (most recent call last)" in text or 'File "' in text:
+        return "An internal error occurred processing your request. Please try again."
+    return text
+
+
 def verify_webhook_auth(authorization: Optional[str] = Header(None)) -> bool:
     """
     Verify webhook authentication token.
@@ -1716,7 +1724,7 @@ Or ask me about **lessons learned** instead (e.g., "What lessons did we learn ab
         logger.info(f"Returning response with {len(response_text)} chars")
 
         # Create RAG Webhook response
-        response = create_webhook_response(response_text)
+        response = create_webhook_response(sanitize_public_response_text(response_text))
 
         return JSONResponse(content=response)
 
@@ -1863,22 +1871,32 @@ async def test_readiness(
         is_paper = context["is_paper"]
         is_live = context["is_live"]
 
-    assessment = assess_trading_readiness(
-        is_future=is_future,
-        is_paper=is_paper,
-        is_live=is_live,
-    )
-    return {
-        "query_type": "readiness",
-        "query": query,
-        "context": {
-            "is_future": is_future,
-            "is_paper": is_paper,
-            "is_live": is_live,
-        },
-        "assessment": assessment,
-        "formatted_response": format_readiness_response(assessment),
-    }
+    try:
+        assessment = assess_trading_readiness(
+            is_future=is_future,
+            is_paper=is_paper,
+            is_live=is_live,
+        )
+        return {
+            "query_type": "readiness",
+            "query": query,
+            "context": {
+                "is_future": is_future,
+                "is_paper": is_paper,
+                "is_live": is_live,
+            },
+            "assessment": assessment,
+            "formatted_response": sanitize_public_response_text(
+                format_readiness_response(assessment)
+            ),
+        }
+    except Exception as e:
+        logger.error(f"test-readiness endpoint failed: {e}", exc_info=True)
+        return {
+            "query_type": "readiness",
+            "query": query,
+            "error": "Readiness assessment is temporarily unavailable.",
+        }
 
 
 if __name__ == "__main__":

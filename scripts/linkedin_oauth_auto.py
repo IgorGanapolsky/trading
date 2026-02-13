@@ -270,7 +270,7 @@ def main():
         print("❌ Failed to get authorization code")
         return 1
 
-    print(f"✅ Got authorization code: {auth_code[:20]}...")
+    print("✅ Got authorization code")
 
     # Exchange for token
     token_data = exchange_code_for_token(auth_code)

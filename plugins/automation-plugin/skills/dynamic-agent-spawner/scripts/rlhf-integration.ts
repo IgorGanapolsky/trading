@@ -8,7 +8,13 @@
 
 import { MemAlign, type Feedback } from "./memalign.ts";
 import { CortexWriter, type CortexEntry } from "./cortex-writer.ts";
-import { readFileSync, existsSync, writeFileSync } from "fs";
+import {
+  closeSync,
+  existsSync,
+  ftruncateSync,
+  openSync,
+  readFileSync,
+} from "fs";
 import { join } from "path";
 
 interface RLHFEvent {
@@ -50,18 +56,26 @@ class RLHFIntegration {
    */
   async syncPendingFeedback(): Promise<void> {
     this.pendingFeedbackFile = this.resolvePendingFile();
-    if (!existsSync(this.pendingFeedbackFile)) {
-      console.log("ℹ️  No pending feedback to sync");
-      return;
+    let pendingFileFd: number;
+    try {
+      pendingFileFd = openSync(this.pendingFeedbackFile, "r+");
+    } catch (error) {
+      const err = error as NodeJS.ErrnoException;
+      if (err.code === "ENOENT") {
+        console.log("ℹ️  No pending feedback to sync");
+        return;
+      }
+      throw error;
     }
 
-    const content = readFileSync(this.pendingFeedbackFile, "utf-8");
+    const content = readFileSync(pendingFileFd, "utf-8");
     const lines = content
       .trim()
       .split("\n")
       .filter((l) => l.length > 0);
 
     if (lines.length === 0) {
+      closeSync(pendingFileFd);
       console.log("ℹ️  No pending feedback to sync");
       return;
     }
@@ -79,8 +93,9 @@ class RLHFIntegration {
       }
     }
 
-    // Clear pending file after successful sync
-    writeFileSync(this.pendingFeedbackFile, "");
+    // Clear pending file after successful sync using the same descriptor.
+    ftruncateSync(pendingFileFd, 0);
+    closeSync(pendingFileFd);
     console.log("✅ Hybrid memory sync complete");
     console.log(
       "   - MemAlign: Semantic principles + episodic memories updated",
