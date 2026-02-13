@@ -54,11 +54,11 @@ class TestRuleOneTraderConfig:
         whitelisted_etfs = ["SPY", "SPX", "XSP"]
         assert all(s in whitelisted_etfs for s in CONFIG["watchlist"])
 
-    def test_north_star_target_is_100(self):
-        """North Star daily target should be $100."""
+    def test_north_star_target_is_200(self):
+        """North Star daily target should be $200."""
         from scripts.rule_one_trader import CONFIG
 
-        assert CONFIG["north_star_target"] == 100.0
+        assert CONFIG["north_star_target"] == 200.0
 
 
 class TestGetTradingClient:
