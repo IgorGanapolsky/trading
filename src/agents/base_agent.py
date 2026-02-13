@@ -8,6 +8,7 @@ for intelligent model selection based on task complexity and budget.
 from __future__ import annotations
 
 import logging
+import os
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any
@@ -54,15 +55,35 @@ class BaseAgent(ABC):
 
         # BATS Framework: Select model based on agent name if not explicitly provided
         # This ensures budget-aware model selection while maintaining backward compatibility
+        model_selector = get_model_selector()
         if model is None:
-            model_selector = get_model_selector()
             self.model = model_selector.get_model_for_agent(name)
             logger.info(f"{name}: Auto-selected model {self.model} via BATS framework")
         else:
             self.model = model
             logger.info(f"{name}: Using explicitly provided model {self.model}")
 
-        self.client = Anthropic(api_key=get_anthropic_api_key())
+        # Route to correct provider based on model selection
+        self._provider = model_selector.get_model_provider(self.model)
+
+        if self._provider == "openrouter":
+            try:
+                from openai import OpenAI
+
+                self._openrouter_client = OpenAI(
+                    api_key=os.getenv("OPENROUTER_API_KEY", ""),
+                    base_url="https://openrouter.ai/api/v1",
+                )
+                self.client = None  # Not using Anthropic for this agent
+                logger.info(f"{name}: Using OpenRouter provider for model {self.model}")
+            except ImportError:
+                logger.warning(f"{name}: openai package unavailable, falling back to Anthropic")
+                self._provider = "anthropic"
+                self._openrouter_client = None
+                self.client = Anthropic(api_key=get_anthropic_api_key())
+        else:
+            self._openrouter_client = None
+            self.client = Anthropic(api_key=get_anthropic_api_key())
         self.memory: list[dict[str, Any]] = []  # Legacy memory (backward compatibility)
         self.decision_log: list[dict[str, Any]] = []
         self.use_context_engine = use_context_engine
@@ -86,6 +107,8 @@ class BaseAgent(ABC):
         """
         Use LLM reasoning to make decisions.
 
+        Routes to OpenRouter or Anthropic based on model provider selection.
+
         Args:
             prompt: The reasoning prompt
             tools: Optional tool definitions for tool use
@@ -93,6 +116,12 @@ class BaseAgent(ABC):
         Returns:
             LLM response with reasoning
         """
+        if self._provider == "openrouter" and self._openrouter_client is not None:
+            return self._reason_with_openrouter(prompt, tools)
+        return self._reason_with_anthropic(prompt, tools)
+
+    def _reason_with_anthropic(self, prompt: str, tools: list[dict] | None = None) -> dict[str, Any]:
+        """Reason using Anthropic API (Claude models)."""
         try:
             messages = [{"role": "user", "content": prompt}]
 
@@ -137,7 +166,85 @@ class BaseAgent(ABC):
             return result
 
         except Exception as e:
-            logger.error(f"{self.name} LLM reasoning error: {e}")
+            logger.error(f"{self.name} LLM reasoning error (Anthropic): {e}")
+            return {
+                "reasoning": f"Error: {str(e)}",
+                "decision": "NO_ACTION",
+                "confidence": 0.0,
+                "tool_calls": [],
+                "token_usage": {"input": 0, "output": 0},
+            }
+
+    def _reason_with_openrouter(self, prompt: str, tools: list[dict] | None = None) -> dict[str, Any]:
+        """Reason using OpenRouter API (DeepSeek, Mistral, Kimi K2)."""
+        try:
+            messages = [{"role": "user", "content": prompt}]
+
+            kwargs: dict[str, Any] = {
+                "model": self.model,
+                "max_tokens": 4096,
+                "messages": messages,
+            }
+            if tools:
+                # Convert Anthropic tool format to OpenAI format if needed
+                openai_tools = []
+                for tool in tools:
+                    if "function" in tool:
+                        openai_tools.append(tool)
+                    elif "name" in tool and "input_schema" in tool:
+                        openai_tools.append({
+                            "type": "function",
+                            "function": {
+                                "name": tool["name"],
+                                "description": tool.get("description", ""),
+                                "parameters": tool["input_schema"],
+                            },
+                        })
+                if openai_tools:
+                    kwargs["tools"] = openai_tools
+
+            response = self._openrouter_client.chat.completions.create(**kwargs)
+
+            # Record token usage
+            input_tokens = response.usage.prompt_tokens if response.usage else 0
+            output_tokens = response.usage.completion_tokens if response.usage else 0
+
+            if input_tokens or output_tokens:
+                alerts = record_llm_usage(
+                    agent_name=self.name,
+                    input_tokens=input_tokens,
+                    output_tokens=output_tokens,
+                    model=self.model,
+                )
+                if alerts:
+                    logger.warning(f"{self.name} token alerts: {alerts}")
+
+            # Extract text content
+            text = ""
+            tool_calls = []
+            if response.choices:
+                choice = response.choices[0]
+                text = choice.message.content or ""
+                if choice.message.tool_calls:
+                    for tc in choice.message.tool_calls:
+                        tool_calls.append({
+                            "name": tc.function.name,
+                            "input": tc.function.arguments,
+                        })
+
+            return {
+                "reasoning": text,
+                "decision": "",
+                "confidence": 0.0,
+                "tool_calls": tool_calls,
+                "token_usage": {
+                    "input": input_tokens,
+                    "output": output_tokens,
+                },
+            }
+
+        except Exception as e:
+            logger.error(f"{self.name} LLM reasoning error (OpenRouter): {e}")
             return {
                 "reasoning": f"Error: {str(e)}",
                 "decision": "NO_ACTION",
