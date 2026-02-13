@@ -56,3 +56,26 @@ def test_guard_scale_ready_when_validation_passes(tmp_path):
     assert guard["mode"] == "scale_ready"
     assert guard["block_new_positions"] is False
     assert guard["max_position_pct"] == 0.05
+
+
+def test_guard_applies_weekly_gate_position_cap(tmp_path):
+    state = tmp_path / "system_state.json"
+    state.write_text(
+        """
+{
+  "paper_account": {"equity": 200000, "win_rate": 85.0, "win_rate_sample_size": 60},
+  "paper_trading": {"current_day": 120, "target_duration_days": 90},
+  "north_star_weekly_gate": {
+    "mode": "cautious",
+    "recommended_max_position_pct": 0.0125,
+    "block_new_positions": false
+  }
+}
+""".strip(),
+        encoding="utf-8",
+    )
+
+    guard = get_guard_context(state)
+    assert guard["block_new_positions"] is False
+    assert guard["max_position_pct"] <= 0.0125
+    assert guard["weekly_gate_mode"] == "cautious"

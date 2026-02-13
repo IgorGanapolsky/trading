@@ -66,7 +66,7 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
 
-          git add data/system_state.json
+          git add data/system_state.json data/north_star_weekly_history.json
           if git diff --staged --quiet; then
             echo "No state changes to commit"
             exit 0

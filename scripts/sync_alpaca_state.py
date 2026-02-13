@@ -417,6 +417,18 @@ def update_system_state(alpaca_data: dict | None) -> None:
     except Exception as e:
         logger.warning(f"Could not update milestone snapshot in system_state: {e}")
 
+    # Compute weekly operating gate + contribution plan for North Star execution.
+    try:
+        from src.safety.north_star_operating_plan import apply_operating_plan_to_state
+
+        apply_operating_plan_to_state(
+            state,
+            trades_path=PROJECT_ROOT / "data" / "trades.json",
+            weekly_history_path=PROJECT_ROOT / "data" / "north_star_weekly_history.json",
+        )
+    except Exception as e:
+        logger.warning(f"Could not update North Star operating plan in system_state: {e}")
+
     # Write atomically
     SYSTEM_STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
     temp_file = SYSTEM_STATE_FILE.with_suffix(".tmp")
