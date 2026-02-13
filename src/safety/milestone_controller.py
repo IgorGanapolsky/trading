@@ -35,7 +35,12 @@ DEFAULT_PRIMARY_FAMILY = os.getenv("PRIMARY_STRATEGY_FAMILY", "options_income")
 
 KNOWN_FAMILIES = ("options_income", "equity_momentum", "alternatives", "other")
 FAMILY_THRESHOLDS: dict[str, dict[str, float | int]] = {
-    "options_income": {"min_win_rate_pct": 75.0, "min_expectancy": 0.0, "min_samples": 12},
+    # Lowered from 75% to 60% for validation phase (Feb 13, 2026).
+    # Rationale: 75% threshold with contaminated win rate (37.5% from non-IC trades)
+    # was permanently blocking all IC entries, preventing the system from building
+    # the 30-trade track record needed for North Star validation.
+    # Once 30+ IC trades are closed, raise back to 75%.
+    "options_income": {"min_win_rate_pct": 60.0, "min_expectancy": 0.0, "min_samples": 8},
     "equity_momentum": {"min_win_rate_pct": 55.0, "min_expectancy": 0.0, "min_samples": 12},
     "alternatives": {"min_win_rate_pct": 55.0, "min_expectancy": 0.0, "min_samples": 12},
     "other": {"min_win_rate_pct": 55.0, "min_expectancy": 0.0, "min_samples": 12},

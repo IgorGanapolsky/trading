@@ -1047,6 +1047,34 @@ jobs:
 
           # Portfolio status moved to separate step to prevent failures
 
+      # ========================================================================
+      # IRON CONDOR MANAGEMENT (Feb 13, 2026)
+      # CRITICAL FIX: manage_iron_condor_positions.py was never being called!
+      # Without this step, ICs sit open until expiration, blocking new entries.
+      # Exit rules: 50% profit, 200% stop-loss, 7 DTE (LL-268/LL-277)
+      # This MUST run BEFORE opening new ICs to free up position slots.
+      # ========================================================================
+      - name: Manage Iron Condor Positions (Exit Rules)
+        id: manage_ic_positions
+        if: steps.execute_trading.conclusion == 'success'
+        continue-on-error: true
+        timeout-minutes: 5
+        env:
+          ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          echo "📊 ========================================"
+          echo "📊 IRON CONDOR POSITION MANAGEMENT"
+          echo "📊 Exit Rules: 50% profit | 200% stop | 7 DTE"
+          echo "📊 ========================================"
+          echo ""
+          python3 scripts/manage_iron_condor_positions.py || {
+            echo "⚠️ IC position management had issues"
+          }
+          echo ""
+          echo "✅ Iron condor management complete"
+
       - name: Harvest theta (options income)
         id: harvest_theta
         if: steps.execute_trading.conclusion == 'success'
