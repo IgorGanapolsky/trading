@@ -179,9 +179,7 @@ class TestBaseAgentProviderWiring:
     @patch("src.agents.base_agent.Anthropic")
     @patch("src.agents.base_agent.get_context_engine")
     @patch("src.agents.base_agent.get_anthropic_api_key", return_value="test-key")
-    def test_notification_agent_uses_openrouter(
-        self, mock_api_key, mock_context, mock_anthropic
-    ):
+    def test_notification_agent_uses_openrouter(self, mock_api_key, mock_context, mock_anthropic):
         """NotificationAgent (SIMPLE task) should use OpenRouter provider."""
         _ensure_openai_mock()
         mock_context.return_value = MagicMock()
@@ -205,9 +203,7 @@ class TestBaseAgentProviderWiring:
     @patch("src.agents.base_agent.Anthropic")
     @patch("src.agents.base_agent.get_context_engine")
     @patch("src.agents.base_agent.get_anthropic_api_key", return_value="test-key")
-    def test_agent_falls_back_to_anthropic(
-        self, mock_api_key, mock_context, mock_anthropic
-    ):
+    def test_agent_falls_back_to_anthropic(self, mock_api_key, mock_context, mock_anthropic):
         """Without OPENROUTER_API_KEY, agents should use Anthropic."""
         os.environ.pop("OPENROUTER_API_KEY", None)
         mock_context.return_value = MagicMock()
@@ -227,9 +223,7 @@ class TestBaseAgentProviderWiring:
     @patch("src.agents.base_agent.Anthropic")
     @patch("src.agents.base_agent.get_context_engine")
     @patch("src.agents.base_agent.get_anthropic_api_key", return_value="test-key")
-    def test_execution_agent_always_anthropic(
-        self, mock_api_key, mock_context, mock_anthropic
-    ):
+    def test_execution_agent_always_anthropic(self, mock_api_key, mock_context, mock_anthropic):
         """ExecutionAgent (CRITICAL) must always use Anthropic Opus."""
         mock_context.return_value = MagicMock()
         mock_anthropic.return_value = MagicMock()

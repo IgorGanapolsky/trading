@@ -120,7 +120,9 @@ class BaseAgent(ABC):
             return self._reason_with_openrouter(prompt, tools)
         return self._reason_with_anthropic(prompt, tools)
 
-    def _reason_with_anthropic(self, prompt: str, tools: list[dict] | None = None) -> dict[str, Any]:
+    def _reason_with_anthropic(
+        self, prompt: str, tools: list[dict] | None = None
+    ) -> dict[str, Any]:
         """Reason using Anthropic API (Claude models)."""
         try:
             messages = [{"role": "user", "content": prompt}]
@@ -175,7 +177,9 @@ class BaseAgent(ABC):
                 "token_usage": {"input": 0, "output": 0},
             }
 
-    def _reason_with_openrouter(self, prompt: str, tools: list[dict] | None = None) -> dict[str, Any]:
+    def _reason_with_openrouter(
+        self, prompt: str, tools: list[dict] | None = None
+    ) -> dict[str, Any]:
         """Reason using OpenRouter API (DeepSeek, Mistral, Kimi K2)."""
         try:
             messages = [{"role": "user", "content": prompt}]
@@ -192,14 +196,16 @@ class BaseAgent(ABC):
                     if "function" in tool:
                         openai_tools.append(tool)
                     elif "name" in tool and "input_schema" in tool:
-                        openai_tools.append({
-                            "type": "function",
-                            "function": {
-                                "name": tool["name"],
-                                "description": tool.get("description", ""),
-                                "parameters": tool["input_schema"],
-                            },
-                        })
+                        openai_tools.append(
+                            {
+                                "type": "function",
+                                "function": {
+                                    "name": tool["name"],
+                                    "description": tool.get("description", ""),
+                                    "parameters": tool["input_schema"],
+                                },
+                            }
+                        )
                 if openai_tools:
                     kwargs["tools"] = openai_tools
 
@@ -227,10 +233,12 @@ class BaseAgent(ABC):
                 text = choice.message.content or ""
                 if choice.message.tool_calls:
                     for tc in choice.message.tool_calls:
-                        tool_calls.append({
-                            "name": tc.function.name,
-                            "input": tc.function.arguments,
-                        })
+                        tool_calls.append(
+                            {
+                                "name": tc.function.name,
+                                "input": tc.function.arguments,
+                            }
+                        )
 
             return {
                 "reasoning": text,
