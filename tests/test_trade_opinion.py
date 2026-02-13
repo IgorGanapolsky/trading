@@ -171,7 +171,9 @@ class TestPromptConstruction:
 
     def test_build_prompt_with_vix(self):
         """VIX data appears in prompt."""
-        prompt = _build_prompt(vix_current=18.5, thompson_stats=None, regime=None, recent_lessons=None)
+        prompt = _build_prompt(
+            vix_current=18.5, thompson_stats=None, regime=None, recent_lessons=None
+        )
         assert "18.50" in prompt
         assert "VIX" in prompt
 
@@ -209,7 +211,12 @@ class TestPromptConstruction:
         """All context fields appear when provided."""
         prompt = _build_prompt(
             vix_current=22.0,
-            thompson_stats={"wins": 5, "losses": 1, "posterior_mean": 0.75, "recommendation": "ENTER"},
+            thompson_stats={
+                "wins": 5,
+                "losses": 1,
+                "posterior_mean": 0.75,
+                "recommendation": "ENTER",
+            },
             regime="TRENDING_UP",
             recent_lessons=["Avoid FOMC weeks"],
         )
@@ -348,15 +355,17 @@ class TestGetTradeOpinionSuccess:
         """Successful LLM call returns TradeOpinion."""
         _ensure_openai_mock()
 
-        valid_response = json.dumps({
-            "should_trade": True,
-            "confidence": 0.82,
-            "regime": "calm",
-            "suggested_short_delta": 0.15,
-            "suggested_dte": 35,
-            "reasoning": "VIX at 18, no catalysts.",
-            "risk_flags": [],
-        })
+        valid_response = json.dumps(
+            {
+                "should_trade": True,
+                "confidence": 0.82,
+                "regime": "calm",
+                "suggested_short_delta": 0.15,
+                "suggested_dte": 35,
+                "reasoning": "VIX at 18, no catalysts.",
+                "risk_flags": [],
+            }
+        )
 
         with patch("src.llm.trade_opinion.get_model_selector") as mock_sel:
             mock_selector = MagicMock()
@@ -384,7 +393,9 @@ class TestGetTradeOpinionSuccess:
 
                 # Verify usage was logged
                 mock_selector.log_usage.assert_called_once_with(
-                    "deepseek/deepseek-r1", 500, 200,
+                    "deepseek/deepseek-r1",
+                    500,
+                    200,
                 )
 
     @patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-key"})
@@ -392,15 +403,17 @@ class TestGetTradeOpinionSuccess:
         """LLM advises to skip with risk flags."""
         _ensure_openai_mock()
 
-        skip_response = json.dumps({
-            "should_trade": False,
-            "confidence": 0.91,
-            "regime": "volatile",
-            "suggested_short_delta": 0.10,
-            "suggested_dte": 45,
-            "reasoning": "FOMC meeting tomorrow.",
-            "risk_flags": ["FOMC", "earnings"],
-        })
+        skip_response = json.dumps(
+            {
+                "should_trade": False,
+                "confidence": 0.91,
+                "regime": "volatile",
+                "suggested_short_delta": 0.10,
+                "suggested_dte": 45,
+                "reasoning": "FOMC meeting tomorrow.",
+                "risk_flags": ["FOMC", "earnings"],
+            }
+        )
 
         with patch("src.llm.trade_opinion.get_model_selector") as mock_sel:
             mock_selector = MagicMock()

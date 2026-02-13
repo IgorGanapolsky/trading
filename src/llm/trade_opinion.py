@@ -41,11 +41,15 @@ class TradeOpinion(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0, description="Confidence in recommendation")
     regime: str = Field(description="Detected market regime (calm/trending/volatile/spike)")
     suggested_short_delta: float = Field(
-        ge=0.05, le=0.30, default=0.15,
+        ge=0.05,
+        le=0.30,
+        default=0.15,
         description="Suggested short strike delta (0.10-0.20 typical)",
     )
     suggested_dte: int = Field(
-        ge=14, le=60, default=35,
+        ge=14,
+        le=60,
+        default=35,
         description="Suggested days to expiration",
     )
     reasoning: str = Field(description="Brief reasoning for the decision")

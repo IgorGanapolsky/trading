@@ -761,7 +761,9 @@ def main():
         # Gather context for the research agent
         tc_model = get_trade_confidence_model()
         thompson_stats = tc_model.get_trade_confidence(
-            strategy="iron_condor", ticker=args.symbol, regime=None,
+            strategy="iron_condor",
+            ticker=args.symbol,
+            regime=None,
         )
 
         # Get recent RAG lessons

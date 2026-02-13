@@ -409,7 +409,12 @@ class ModelSelector:
         if enforce_budget and not self.can_afford_model(tier):
             original_tier = tier
             # Downgrade chain: R1 → KIMI → MISTRAL → DEEPSEEK → HAIKU
-            downgrade_chain = [ModelTier.KIMI, ModelTier.MISTRAL, ModelTier.DEEPSEEK, ModelTier.HAIKU]
+            downgrade_chain = [
+                ModelTier.KIMI,
+                ModelTier.MISTRAL,
+                ModelTier.DEEPSEEK,
+                ModelTier.HAIKU,
+            ]
             for fallback_tier in downgrade_chain:
                 if self.can_afford_model(fallback_tier):
                     tier = fallback_tier
