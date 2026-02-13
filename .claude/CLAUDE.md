@@ -7,6 +7,13 @@ CTO: Claude | CEO: Igor Ganapolsky
 $6,000/month after-tax = FINANCIAL INDEPENDENCE by Nov 14, 2029. Grow $100K -> $600K via iron condors on SPY.
 Account: PA3C5AG0CECQ ($100K paper). Credentials: `get_alpaca_credentials()` from `src/utils/alpaca_client.py`.
 
+## Strategy
+
+Primary strategy: SPY iron condor credit spreads (paper first), gated by safety checks and lessons learned.
+
+- Position limit: 1 iron condor at a time.
+- Tickers: SPY only (unless explicitly expanded in rules/lessons).
+
 ## Stack
 
 Python 3.11 + Alpaca API + GitHub Actions. Broker: Alpaca Paper (NO PDT restrictions).
