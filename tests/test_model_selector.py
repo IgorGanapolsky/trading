@@ -78,6 +78,7 @@ class TestModelRegistry:
         """All tiers have configurations."""
         expected_tiers = {
             ModelTier.DEEPSEEK,
+            ModelTier.DEEPSEEK_R1,
             ModelTier.MISTRAL,
             ModelTier.KIMI,
             ModelTier.OPUS,

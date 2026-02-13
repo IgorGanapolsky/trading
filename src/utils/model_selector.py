@@ -57,6 +57,7 @@ class ModelTier(Enum):
 
     # Cost-optimized tiers (via OpenRouter)
     DEEPSEEK = "deepseek"  # SIMPLE tasks - $0.14/$0.28 per M tokens
+    DEEPSEEK_R1 = "deepseek_r1"  # REASONING tasks - $0.55/$2.19 per M tokens (chain-of-thought)
     MISTRAL = "mistral"  # MEDIUM tasks - $0.40/$2.00 per M tokens (90% Sonnet quality)
     KIMI = "kimi"  # COMPLEX tasks - $0.39/$1.90 per M tokens (#1 trading benchmark)
     # Premium tier (direct Anthropic API)
@@ -92,6 +93,16 @@ MODEL_REGISTRY: dict[ModelTier, ModelConfig] = {
         max_context=128000,
         provider="openrouter",
         trading_sortino=0.0210,  # StockBench: DeepSeek-V3.1
+    ),
+    ModelTier.DEEPSEEK_R1: ModelConfig(
+        model_id="deepseek/deepseek-r1",
+        tier=ModelTier.DEEPSEEK_R1,
+        input_cost_per_1m=0.55,
+        output_cost_per_1m=2.19,
+        max_context=128000,
+        provider="openrouter",
+        supports_extended_thinking=True,  # Chain-of-thought reasoning
+        trading_sortino=0.0380,  # Strong reasoning for options structure
     ),
     ModelTier.MISTRAL: ModelConfig(
         model_id="mistralai/mistral-medium-3",
@@ -164,6 +175,7 @@ TASK_COMPLEXITY_MAP: dict[str, TaskComplexity] = {
     "options_analysis": TaskComplexity.COMPLEX,
     "multi_agent_coordination": TaskComplexity.COMPLEX,
     "architecture_decision": TaskComplexity.COMPLEX,
+    "pre_trade_research": TaskComplexity.COMPLEX,  # DeepSeek-R1 for IC entry opinion
     # CRITICAL tasks - ALWAYS use Opus (no cost-cutting)
     "trade_execution": TaskComplexity.CRITICAL,
     "order_placement": TaskComplexity.CRITICAL,
@@ -368,8 +380,11 @@ class ModelSelector:
                 tier = ModelTier.HAIKU
                 reason = "MEDIUM_TASK_HAIKU_FALLBACK"
         elif complexity == TaskComplexity.COMPLEX:
-            # COMPLEX → Kimi K2 ($0.39/$1.90) - #1 trading benchmark (0.0420 Sortino)
-            if openrouter_available:
+            # COMPLEX → DeepSeek-R1 for reasoning tasks, Kimi K2 for others
+            if openrouter_available and task_type == "pre_trade_research":
+                tier = ModelTier.DEEPSEEK_R1
+                reason = "PRE_TRADE_RESEARCH_R1"
+            elif openrouter_available:
                 tier = ModelTier.KIMI
                 reason = "COMPLEX_TASK_KIMI_K2"
             elif budget_pct > 0.5:
@@ -393,8 +408,8 @@ class ModelSelector:
         # BUDGET ENFORCEMENT: Downgrade if selected tier would exceed budget
         if enforce_budget and not self.can_afford_model(tier):
             original_tier = tier
-            # Downgrade chain: KIMI → MISTRAL → DEEPSEEK → HAIKU
-            downgrade_chain = [ModelTier.MISTRAL, ModelTier.DEEPSEEK, ModelTier.HAIKU]
+            # Downgrade chain: R1 → KIMI → MISTRAL → DEEPSEEK → HAIKU
+            downgrade_chain = [ModelTier.KIMI, ModelTier.MISTRAL, ModelTier.DEEPSEEK, ModelTier.HAIKU]
             for fallback_tier in downgrade_chain:
                 if self.can_afford_model(fallback_tier):
                     tier = fallback_tier

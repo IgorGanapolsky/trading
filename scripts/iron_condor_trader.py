@@ -751,6 +751,66 @@ def main():
         logger.info("Skipping trade - conditions not met")
         return {"success": False, "reason": reason}
 
+    # LLM PRE-TRADE RESEARCH AGENT (Feb 2026)
+    # DeepSeek-R1 analyzes market conditions and advises on IC entry.
+    # Advisory only — hard risk limits are never overridden.
+    try:
+        from src.llm.trade_opinion import get_trade_opinion
+        from src.ml.trade_confidence import get_trade_confidence_model
+
+        # Gather context for the research agent
+        tc_model = get_trade_confidence_model()
+        thompson_stats = tc_model.get_trade_confidence(
+            strategy="iron_condor", ticker=args.symbol, regime=None,
+        )
+
+        # Get recent RAG lessons
+        rag_lessons = []
+        try:
+            rag = LessonsLearnedRAG()
+            results = rag.search("iron condor loss failure", top_k=3)
+            for lesson, _score in results:
+                rag_lessons.append(lesson.snippet[:200])
+        except Exception:
+            pass
+
+        opinion = get_trade_opinion(
+            vix_current=None,  # VIX already checked above
+            thompson_stats=thompson_stats,
+            regime=None,
+            recent_lessons=rag_lessons,
+        )
+
+        if opinion is not None:
+            logger.info("=" * 60)
+            logger.info("LLM PRE-TRADE OPINION (DeepSeek-R1)")
+            logger.info("=" * 60)
+            logger.info(f"Should trade: {opinion.should_trade}")
+            logger.info(f"Confidence: {opinion.confidence:.2f}")
+            logger.info(f"Regime: {opinion.regime}")
+            logger.info(f"Suggested delta: {opinion.suggested_short_delta}")
+            logger.info(f"Suggested DTE: {opinion.suggested_dte}")
+            logger.info(f"Reasoning: {opinion.reasoning}")
+            if opinion.risk_flags:
+                logger.warning(f"Risk flags: {opinion.risk_flags}")
+            logger.info("=" * 60)
+
+            # Block trade if R1 says NO with high confidence
+            if not opinion.should_trade and opinion.confidence >= 0.7:
+                logger.warning(
+                    f"BLOCKED by LLM research agent: {opinion.reasoning} "
+                    f"(confidence: {opinion.confidence:.0%})"
+                )
+                return {
+                    "success": False,
+                    "reason": f"LLM advisory: {opinion.reasoning}",
+                    "opinion": opinion.model_dump(),
+                }
+        else:
+            logger.info("LLM pre-trade opinion: unavailable (proceeding with existing logic)")
+    except Exception as e:
+        logger.warning(f"LLM pre-trade research failed: {e} (proceeding with existing logic)")
+
     # Find trade
     ic = strategy.find_trade()
     if not ic:

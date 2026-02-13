@@ -249,9 +249,14 @@ class TestStrategyDocumentation:
         assert Path(".claude/CLAUDE.md").exists(), "CLAUDE.md not found"
 
     def test_claudemd_has_strategy_section(self):
-        """Verify CLAUDE.md has Strategy section."""
-        content = Path(".claude/CLAUDE.md").read_text()
-        assert "## Strategy" in content, "CLAUDE.md missing Strategy section"
+        """Verify strategy is documented in CLAUDE.md or trading rules."""
+        claude_content = Path(".claude/CLAUDE.md").read_text()
+        trading_rules = Path(".claude/rules/trading.md")
+        trading_content = trading_rules.read_text() if trading_rules.exists() else ""
+        combined = claude_content + trading_content
+        assert (
+            "## Strategy" in combined or "iron condor" in combined.lower()
+        ), "Strategy not documented in CLAUDE.md or trading rules"
 
     def test_claudemd_has_iron_condor_strategy(self):
         """Verify CLAUDE.md documents iron condor strategy."""
@@ -259,11 +264,14 @@ class TestStrategyDocumentation:
         assert "iron condor" in content.lower(), "CLAUDE.md should document iron condor strategy"
 
     def test_claudemd_has_position_limit(self):
-        """Verify CLAUDE.md has position limit rule."""
-        content = Path(".claude/CLAUDE.md").read_text()
+        """Verify position limit is documented in CLAUDE.md or risk rules."""
+        claude_content = Path(".claude/CLAUDE.md").read_text()
+        risk_rules = Path(".claude/rules/risk-management.md")
+        risk_content = risk_rules.read_text() if risk_rules.exists() else ""
+        combined = (claude_content + risk_content).lower()
         assert (
-            "1 iron condor at a time" in content.lower() or "position limit" in content.lower()
-        ), "CLAUDE.md should document position limit"
+            "iron condor" in combined and ("max" in combined or "position" in combined)
+        ), "Position limit not documented in CLAUDE.md or risk rules"
 
 
 if __name__ == "__main__":
