@@ -1,0 +1,5 @@
+# RLHF pipeline data (local only)
+memory/feedback/
+scripts/feedback/venv/
+scripts/feedback/venv312/
+hooks/.claude/
