@@ -3,6 +3,11 @@ name: CI
 on:
   push:
     branches: [main]
+    # Avoid cancelling long CI runs due to frequent automated data-sync commits.
+    # CI will still run for any commit that changes code or other non-ignored paths.
+    paths-ignore:
+      - "data/**"
+      - "docs/index.md"
   pull_request:
     branches: [main]
   workflow_dispatch:
