@@ -73,7 +73,9 @@ class ProfitTargetTracker:
         self.target_daily_profit = float(
             target_daily_profit if target_daily_profit is not None else NORTH_STAR_DAILY_AFTER_TAX
         )
-        self.state_path = state_path or Path(os.getenv("SYSTEM_STATE_PATH", "data/system_state.json"))
+        self.state_path = state_path or Path(
+            os.getenv("SYSTEM_STATE_PATH", "data/system_state.json")
+        )
 
     def _load_state(self) -> dict[str, Any]:
         return _load_json(self.state_path)
@@ -126,7 +128,9 @@ class ProfitTargetTracker:
         if avg_return_pct > 0:
             recommended_daily_budget = self.target_daily_profit / (avg_return_pct / 100.0)
             scaling_factor = (
-                recommended_daily_budget / current_daily_budget if current_daily_budget > 0 else None
+                recommended_daily_budget / current_daily_budget
+                if current_daily_budget > 0
+                else None
             )
 
         actions: list[str] = []
@@ -147,7 +151,9 @@ class ProfitTargetTracker:
                     f"({scaling_factor:.2f}x current)."
                 )
         else:
-            actions.append("Projected daily profit meets target; hold sizing discipline and compound.")
+            actions.append(
+                "Projected daily profit meets target; hold sizing discipline and compound."
+            )
 
         recommended_allocations: dict[str, float] = {}
         if recommended_daily_budget is not None and recommended_daily_budget > 0:

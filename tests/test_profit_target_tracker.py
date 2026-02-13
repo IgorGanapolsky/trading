@@ -56,4 +56,3 @@ def test_profit_target_tracker_blocks_scaling_when_edge_non_positive(tmp_path):
     assert plan.avg_return_pct <= 0
     assert plan.recommended_daily_budget is None
     assert any("Do not scale budget yet" in action for action in plan.actions)
-
