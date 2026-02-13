@@ -88,8 +88,8 @@ MODEL_REGISTRY: dict[ModelTier, ModelConfig] = {
     ModelTier.DEEPSEEK: ModelConfig(
         model_id="deepseek/deepseek-chat",
         tier=ModelTier.DEEPSEEK,
-        input_cost_per_1m=0.14,
-        output_cost_per_1m=0.28,
+        input_cost_per_1m=0.30,  # OpenRouter live price Feb 2026
+        output_cost_per_1m=1.20,
         max_context=128000,
         provider="openrouter",
         trading_sortino=0.0210,  # StockBench: DeepSeek-V3.1
@@ -97,8 +97,8 @@ MODEL_REGISTRY: dict[ModelTier, ModelConfig] = {
     ModelTier.DEEPSEEK_R1: ModelConfig(
         model_id="deepseek/deepseek-r1",
         tier=ModelTier.DEEPSEEK_R1,
-        input_cost_per_1m=0.55,
-        output_cost_per_1m=2.19,
+        input_cost_per_1m=0.70,  # OpenRouter live price Feb 2026
+        output_cost_per_1m=2.50,
         max_context=128000,
         provider="openrouter",
         supports_extended_thinking=True,  # Chain-of-thought reasoning

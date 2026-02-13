@@ -1,0 +1,38 @@
+name: OpenRouter Price Monitor
+
+on:
+  schedule:
+    # Run daily at 6am ET (11:00 UTC) — check before market open
+    - cron: '0 11 * * *'
+  workflow_dispatch:  # Manual trigger
+
+permissions:
+  issues: write
+
+jobs:
+  check-prices:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Check OpenRouter pricing
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/openrouter_price_monitor.py
+
+      - name: Commit updated baseline
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet data/openrouter_pricing_baseline.json 2>/dev/null; then
+            echo "No pricing changes to commit"
+          else
+            git add data/openrouter_pricing_baseline.json
+            git commit -m "chore: update OpenRouter pricing baseline [auto]"
+            git push
+          fi

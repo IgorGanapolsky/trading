@@ -1,0 +1,32 @@
+{
+  "moonshotai/kimi-k2-0905": {
+    "name": "Kimi K2",
+    "input_cost_per_1m": 0.39,
+    "output_cost_per_1m": 1.9,
+    "fetched_at": "2026-02-13T15:51:47.616519"
+  },
+  "mistralai/mistral-medium-3": {
+    "name": "Mistral Medium 3",
+    "input_cost_per_1m": 0.4,
+    "output_cost_per_1m": 2.0,
+    "fetched_at": "2026-02-13T15:51:47.616554"
+  },
+  "qwen/qwen3-235b-a22b": {
+    "name": "Qwen3 235B",
+    "input_cost_per_1m": 0.3,
+    "output_cost_per_1m": 1.2,
+    "fetched_at": "2026-02-13T15:51:47.616572"
+  },
+  "deepseek/deepseek-r1": {
+    "name": "DeepSeek-R1 (reasoning)",
+    "input_cost_per_1m": 0.7,
+    "output_cost_per_1m": 2.5,
+    "fetched_at": "2026-02-13T15:51:47.616588"
+  },
+  "deepseek/deepseek-chat": {
+    "name": "DeepSeek V3 (chat)",
+    "input_cost_per_1m": 0.3,
+    "output_cost_per_1m": 1.2,
+    "fetched_at": "2026-02-13T15:51:47.616600"
+  }
+}
