@@ -92,9 +92,7 @@ def _position_summary(state: dict[str, Any]) -> tuple[int, int]:
     return structures, legs
 
 
-def _north_star_gate(
-    win_rate: float, target_win_rate: float, sample_size: int, day: int, target_days: int
-) -> tuple[str, str]:
+def _north_star_gate(win_rate: float, target_win_rate: float, sample_size: int, day: int, target_days: int) -> tuple[str, str]:
     if sample_size >= 30 and day >= target_days and win_rate >= target_win_rate:
         return "PASS", "ON_TRACK_TO_SCALE"
     if sample_size >= 30 and win_rate < target_win_rate:

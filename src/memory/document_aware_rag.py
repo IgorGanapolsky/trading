@@ -235,6 +235,35 @@ class DocumentAwareRAG:
             logger.error(f"Failed to initialize LanceDB: {e}")
             return False
 
+    def _get_table_names(self) -> list[str]:
+        """Return table names for the current LanceDB connection.
+
+        LanceDB has changed its API surface across versions:
+        - 0.25.x: connection.table_names()
+        - 0.3+  : connection.list_tables() (may return a response object)
+        """
+        if not self._db:
+            return []
+
+        # LanceDB <=0.25.x
+        if hasattr(self._db, "table_names"):
+            try:
+                return list(self._db.table_names())
+            except Exception:
+                return []
+
+        # LanceDB 0.3+
+        if hasattr(self._db, "list_tables"):
+            try:
+                tables_response = self._db.list_tables()
+                if hasattr(tables_response, "tables"):
+                    return list(tables_response.tables)
+                return list(tables_response)
+            except Exception:
+                return []
+
+        return []
+
     def flatten_for_embedding(self, content: str, metadata: dict) -> str:
         """
         Flatten structured metadata into natural language for better embeddings.
@@ -600,11 +629,7 @@ class DocumentAwareRAG:
             account: Optional[str] = None
 
         # Drop existing table if force rebuild
-        # list_tables() returns a response object with 'tables' attribute
-        tables_response = self._db.list_tables()
-        existing_tables = (
-            tables_response.tables if hasattr(tables_response, "tables") else list(tables_response)
-        )
+        existing_tables = self._get_table_names()
         if force and "document_aware_rag" in existing_tables:
             logger.info("Force rebuild: dropping existing table")
             self._db.drop_table("document_aware_rag")
@@ -752,10 +777,7 @@ class DocumentAwareRAG:
         if not self._init_lancedb():
             return {"error": "Failed to initialize LanceDB"}
 
-        tables_response = self._db.list_tables()
-        existing_tables = (
-            tables_response.tables if hasattr(tables_response, "tables") else list(tables_response)
-        )
+        existing_tables = self._get_table_names()
 
         if "document_aware_rag" not in existing_tables:
             logger.info("Document-aware RAG index missing; building now.")
@@ -802,12 +824,7 @@ class DocumentAwareRAG:
 
             try:
                 # Check if there's an existing table to backup
-                tables_response = self._db.list_tables()
-                existing_tables = (
-                    tables_response.tables
-                    if hasattr(tables_response, "tables")
-                    else list(tables_response)
-                )
+                existing_tables = self._get_table_names()
 
                 if "document_aware_rag" in existing_tables:
                     backup_dir.mkdir(parents=True, exist_ok=True)
@@ -868,10 +885,7 @@ class DocumentAwareRAG:
         if not self._init_lancedb():
             return []
 
-        tables_response = self._db.list_tables()
-        existing_tables = (
-            tables_response.tables if hasattr(tables_response, "tables") else list(tables_response)
-        )
+        existing_tables = self._get_table_names()
         if "document_aware_rag" not in existing_tables:
             logger.error("Document-aware RAG table not found. Run reindex first.")
             return []

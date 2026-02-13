@@ -10,18 +10,20 @@ IMPROVEMENTS OVER v1:
 5. Active RLHF feedback loop (auto-reindex on feedback)
 6. OpenTelemetry observability (latency, success rates)
 7. Query metrics logging (precision/recall tracking)
-8. Local-only memory sync hooks
+8. LanceDB native FTS index (Feb 2026 upgrade)
 
-Architecture (Dec 2025 Best Practices):
+Architecture (Feb 2026 Best Practices):
 ┌─────────────────────────────────────────────────────────┐
 │  HYBRID SEARCH ENGINE                                   │
-│  ┌────────────────┐  ┌────────────────┐                │
-│  │ BM25 (Keywords)│ + │ Vector (Semantic)│ = Fusion    │
-│  └────────────────┘  └────────────────┘                │
+│  ┌──────────────────┐  ┌──────────────────┐            │
+│  │ LanceDB Native   │ + │ Vector (Semantic) │ = Fusion │
+│  │ FTS (BM25/Tantivy│   │ (SentenceTransf.) │          │
+│  └──────────────────┘  └──────────────────┘            │
 └─────────────────────────────────────────────────────────┘
                          │
               ┌──────────┴──────────┐
               │  LanceDB Storage    │
+              │  + FTS Index        │
               │  + Similarity Filter │
               │  + LRU Cache        │
               └─────────────────────┘
@@ -93,6 +95,11 @@ VECTOR_WEIGHT = 0.7         # Weight for vector similarity
 # Table names
 LESSONS_TABLE = "lessons_learned"
 FEEDBACK_TABLE = "rlhf_feedback"
+
+# Cache whether a given table supports native FTS search (Tantivy).
+# Values are set opportunistically based on runtime behavior.
+_fts_supported: Dict[str, bool] = {}
+_fts_index_attempted: set[str] = set()
 
 
 def get_table_names(db) -> List[str]:
@@ -396,7 +403,7 @@ def parse_lessons(content: str) -> List[Dict[str, Any]]:
             ("verification", ["verif", "check", "confirm"]),
             ("git", ["commit", "push", "branch", "pr"]),
             ("memory", ["memory", "forget", "remember"]),
-            ("rag", ["rag", "lancedb", "chromadb"]),
+            ("rag", ["rag", "vertex", "lancedb", "chromadb"]),
         ]
         for tag, keywords in tag_patterns:
             if any(kw in lesson_content.lower() for kw in keywords):
@@ -426,18 +433,48 @@ def load_feedback_patterns() -> List[Dict[str, Any]]:
             if line.strip():
                 try:
                     entry = json.loads(line)
-                    doc_text = f"Feedback: {entry.get('feedback', 'unknown')}\n"
-                    doc_text += f"Context: {entry.get('context', entry.get('message', ''))}\n"
-                    doc_text += f"Tags: {', '.join(entry.get('tags', []))}\n"
+                    feedback_val = str(entry.get("feedback", "unknown"))
+                    context_val = str(entry.get("context") or entry.get("message") or "")
+
+                    tags_raw = entry.get("tags", [])
+                    if isinstance(tags_raw, str):
+                        tags_list = [t.strip() for t in tags_raw.split(",") if t.strip()]
+                    elif isinstance(tags_raw, list):
+                        tags_list = [str(t).strip() for t in tags_raw if str(t).strip()]
+                    else:
+                        tags_list = []
+
+                    user_message = str(entry.get("user_message") or "")
+                    assistant_response = str(
+                        entry.get("assistant_response")
+                        or entry.get("claude_response")
+                        or ""
+                    )
+
+                    doc_text = f"Feedback: {feedback_val}\n"
+                    doc_text += f"Context: {context_val}\n"
+                    if user_message:
+                        doc_text += f"User Message: {user_message[:500]}\n"
+                    if assistant_response:
+                        doc_text += f"Assistant Response: {assistant_response[:500]}\n"
+                    doc_text += f"Tags: {', '.join(tags_list)}\n"
                     doc_text += f"Action: {entry.get('actionType', 'unknown')}"
+
+                    fb_lower = feedback_val.lower()
+                    if fb_lower in ("negative", "down", "thumbsdown"):
+                        default_reward = -1
+                    elif fb_lower in ("positive", "up", "thumbsup"):
+                        default_reward = 1
+                    else:
+                        default_reward = 0
 
                     patterns.append({
                         "id": entry.get("id", f"fb_{len(patterns)}"),
                         "type": "feedback",
-                        "feedback_type": entry.get("feedback", "unknown"),
-                        "reward": entry.get("reward", -1 if entry.get("feedback") == "negative" else 1),
-                        "context": entry.get("context", entry.get("message", ""))[:200],
-                        "tags": ",".join(entry.get("tags", [])),
+                        "feedback_type": feedback_val,
+                        "reward": entry.get("reward", default_reward),
+                        "context": context_val[:200],
+                        "tags": ",".join(tags_list),
                         "full_text": doc_text,
                         "timestamp": entry.get("timestamp", datetime.now().isoformat()),
                     })
@@ -475,7 +512,11 @@ def index_all(model_key: str = DEFAULT_MODEL):
         if table_exists(db, LESSONS_TABLE):
             db.drop_table(LESSONS_TABLE)
 
-        db.create_table(LESSONS_TABLE, lessons)
+        lessons_table = db.create_table(LESSONS_TABLE, lessons)
+        try:
+            lessons_table.create_fts_index("full_text")
+        except Exception:
+            pass
         print(f"   Indexed {len(lessons)} lessons")
     else:
         print("   No lessons found")
@@ -496,7 +537,11 @@ def index_all(model_key: str = DEFAULT_MODEL):
         if table_exists(db, FEEDBACK_TABLE):
             db.drop_table(FEEDBACK_TABLE)
 
-        db.create_table(FEEDBACK_TABLE, feedback)
+        feedback_table = db.create_table(FEEDBACK_TABLE, feedback)
+        try:
+            feedback_table.create_fts_index("full_text")
+        except Exception:
+            pass
         print(f"   Indexed {len(feedback)} feedback entries")
     else:
         print("   No feedback found (this is why RLHF isn't learning!)")
@@ -509,7 +554,7 @@ def index_all(model_key: str = DEFAULT_MODEL):
         "model": EMBEDDING_MODELS.get(model_key, model_key),
         "db_type": "lancedb",
         "version": "2.0",
-        "features": ["similarity_threshold", "lru_cache", "bm25_hybrid", "metrics"],
+        "features": ["similarity_threshold", "lru_cache", "bm25_hybrid", "native_fts", "metrics"],
     }
     with open(INDEX_STATE_FILE, 'w') as f:
         json.dump(state, f, indent=2)
@@ -524,8 +569,16 @@ def index_all(model_key: str = DEFAULT_MODEL):
     print(f"   Total documents: {len(lessons) + len(feedback)}")
 
 
-def add_feedback(feedback_type: str, context: str, tags: List[str] = None, reward: int = None):
-    """Add feedback entry and trigger re-indexing"""
+def add_feedback(
+    feedback_type: str,
+    context: str,
+    tags: Optional[List[str]] = None,
+    reward: Optional[float] = None,
+    source: str = "hook",
+    signal: Optional[str] = None,
+    reindex: bool = True,
+) -> Dict[str, Any]:
+    """Add feedback entry and optionally trigger re-indexing."""
     FEEDBACK_LOG.parent.mkdir(parents=True, exist_ok=True)
 
     # Determine reward based on feedback type
@@ -539,6 +592,8 @@ def add_feedback(feedback_type: str, context: str, tags: List[str] = None, rewar
         "context": context,
         "tags": tags or [],
         "reward": reward,
+        "source": source,
+        "signal": signal,
     }
 
     with open(FEEDBACK_LOG, 'a') as f:
@@ -552,26 +607,80 @@ def add_feedback(feedback_type: str, context: str, tags: List[str] = None, rewar
 
     print(f"Feedback recorded: {feedback_type} (reward={reward})")
 
-    # Trigger re-indexing of feedback table only
-    print("Re-indexing feedback table...")
-    db = get_lance_db()
-    model = get_embedding_model()
+    if reindex:
+        # Trigger re-indexing of feedback table only
+        print("Re-indexing feedback table...")
+        db = get_lance_db()
+        model = get_embedding_model()
 
-    feedback = load_feedback_patterns()
-    if feedback:
-        texts = [f["full_text"] for f in feedback]
-        embeddings = model.encode(texts, show_progress_bar=False)
+        feedback = load_feedback_patterns()
+        if feedback:
+            texts = [f["full_text"] for f in feedback]
+            embeddings = model.encode(texts, show_progress_bar=False)
 
-        for i, fb in enumerate(feedback):
-            fb["vector"] = embeddings[i].tolist()
+            for i, fb in enumerate(feedback):
+                fb["vector"] = embeddings[i].tolist()
 
-        if table_exists(db, FEEDBACK_TABLE):
-            db.drop_table(FEEDBACK_TABLE)
+            if table_exists(db, FEEDBACK_TABLE):
+                db.drop_table(FEEDBACK_TABLE)
 
-        db.create_table(FEEDBACK_TABLE, feedback)
-        print(f"Re-indexed {len(feedback)} feedback entries")
+            feedback_table = db.create_table(FEEDBACK_TABLE, feedback)
+            try:
+                feedback_table.create_fts_index("full_text")
+            except Exception:
+                pass
+            print(f"Re-indexed {len(feedback)} feedback entries")
 
     return entry
+
+
+def _ensure_fts_index(table, tbl_name: str) -> bool:
+    """Create FTS index on table if not present (Feb 2026: LanceDB native FTS).
+
+    LanceDB 1.0+ supports native Tantivy-based full-text search indexes.
+    This is faster and more accurate than our custom BM25 for exact-match
+    patterns like 'asked permission before commit'.
+    """
+    try:
+        if _fts_supported.get(tbl_name) is False:
+            return False
+
+        # Only attempt index creation once per process per table to avoid rebuild costs.
+        if tbl_name not in _fts_index_attempted:
+            _fts_index_attempted.add(tbl_name)
+            try:
+                table.create_fts_index("full_text")
+            except Exception:
+                # Index may already exist (fine) or FTS may be unsupported (we'll
+                # discover that on first query).
+                pass
+
+        return True
+    except Exception:
+        return False
+
+
+def _native_fts_search(table, tbl_name: str, query_text: str, n_results: int) -> Dict[str, float]:
+    """Try LanceDB native FTS search, return {id: score} dict."""
+    if _fts_supported.get(tbl_name) is False:
+        return {}
+    try:
+        fts_results = table.search(query_text, query_type="fts").limit(n_results * 2).to_list()
+        if not fts_results:
+            _fts_supported[tbl_name] = True
+            return {}
+
+        scores = {}
+        # FTS results have _score (higher = better)
+        max_score = max(r.get("_score", 0) for r in fts_results) or 1
+        for r in fts_results:
+            doc_id = r.get("id", "unknown")
+            scores[doc_id] = r.get("_score", 0) / max_score
+        _fts_supported[tbl_name] = True
+        return scores
+    except Exception:
+        _fts_supported[tbl_name] = False
+        return {}
 
 
 def hybrid_search(
@@ -581,7 +690,13 @@ def hybrid_search(
     table_name: str = None,
     use_bm25: bool = True,
 ) -> List[Dict[str, Any]]:
-    """Hybrid search combining BM25 + vector similarity"""
+    """Hybrid search combining BM25/FTS + vector similarity.
+
+    Feb 2026 upgrade: Tries LanceDB native FTS index first (Tantivy-based),
+    falls back to custom BM25 if native FTS is unavailable. Native FTS is
+    better for exact-match patterns (e.g., 'asked permission before commit')
+    that pure semantic search misses.
+    """
     start_time = time.time()
 
     db = get_lance_db()
@@ -591,6 +706,7 @@ def hybrid_search(
     query_vector = get_embedding_with_cache(query_text, model)
 
     results = []
+    search_method = "none"
     tables_to_search = [table_name] if table_name else [LESSONS_TABLE, FEEDBACK_TABLE]
 
     for tbl_name in tables_to_search:
@@ -599,23 +715,32 @@ def hybrid_search(
                 continue
 
             table = db.open_table(tbl_name)
-            all_docs = table.to_pandas()
 
             # Vector search
             vector_results = table.search(query_vector).limit(n_results * 2).to_list()
 
-            # BM25 search (if enabled)
-            bm25_scores = {}
-            if use_bm25 and len(all_docs) > 0:
-                bm25 = BM25()
-                bm25.fit(all_docs["full_text"].tolist())
-                bm25_results = bm25.search(query_text, top_k=n_results * 2)
+            # Hybrid: try native FTS first, fall back to custom BM25
+            fts_scores = {}
+            if use_bm25:
+                # Try LanceDB native FTS (Feb 2026 upgrade)
+                _ensure_fts_index(table, tbl_name)
+                fts_scores = _native_fts_search(table, tbl_name, query_text, n_results)
+                if _fts_supported.get(tbl_name) is not False:
+                    search_method = "native_fts"
 
-                # Normalize BM25 scores
-                max_bm25 = max(s for _, s in bm25_results) if bm25_results else 1
-                for idx, score in bm25_results:
-                    doc_id = all_docs.iloc[idx]["id"]
-                    bm25_scores[doc_id] = score / max_bm25 if max_bm25 > 0 else 0
+                # Fallback: custom BM25 only when native FTS is unavailable.
+                if _fts_supported.get(tbl_name) is False:
+                    search_method = "custom_bm25"
+                    all_docs = table.to_pandas()
+                    if len(all_docs) > 0:
+                        bm25 = BM25()
+                        bm25.fit(all_docs["full_text"].tolist())
+                        bm25_results = bm25.search(query_text, top_k=n_results * 2)
+
+                        max_bm25 = max(s for _, s in bm25_results) if bm25_results else 1
+                        for idx, score in bm25_results:
+                            doc_id = all_docs.iloc[idx]["id"]
+                            fts_scores[doc_id] = score / max_bm25 if max_bm25 > 0 else 0
 
             for r in vector_results:
                 distance = r.get("_distance", 1.0)
@@ -626,7 +751,7 @@ def hybrid_search(
 
                 # Combine scores (lower distance = higher score)
                 vector_score = 1 - (distance / threshold)  # Normalize to 0-1
-                bm25_score = bm25_scores.get(r.get("id"), 0)
+                bm25_score = fts_scores.get(r.get("id"), 0)
 
                 combined_score = (VECTOR_WEIGHT * vector_score) + (BM25_WEIGHT * bm25_score)
 
@@ -661,6 +786,7 @@ def hybrid_search(
         "latency_ms": latency_ms,
         "threshold": threshold,
         "use_bm25": use_bm25,
+        "search_method": search_method,
         "cache_hit": _embedding_cache.hits > 0,
     })
 
@@ -856,6 +982,11 @@ def main():
     parser.add_argument("--add-feedback", action="store_true", help="Add feedback from stdin")
     parser.add_argument("--feedback-type", type=str, choices=["positive", "negative"], default="negative")
     parser.add_argument("--feedback-context", type=str, help="Feedback context")
+    parser.add_argument("--tags", type=str, help="Comma-separated feedback tags (add-feedback only)")
+    parser.add_argument("--reward", type=float, help="Override reward value (add-feedback only)")
+    parser.add_argument("--source", type=str, default="hook", help="Feedback source label (add-feedback only)")
+    parser.add_argument("--signal", type=str, help="Feedback signal label (add-feedback only)")
+    parser.add_argument("--no-reindex", action="store_true", help="Skip LanceDB reindex on add-feedback")
     parser.add_argument("--model", type=str, choices=list(EMBEDDING_MODELS.keys()), default=DEFAULT_MODEL)
     parser.add_argument("-n", "--results", type=int, default=5, help="Number of results")
     parser.add_argument("--threshold", type=float, default=SIMILARITY_THRESHOLD, help="Similarity threshold")
@@ -890,7 +1021,18 @@ def main():
             # Read from stdin
             context = sys.stdin.read().strip()
         if context:
-            add_feedback(args.feedback_type, context)
+            tags = None
+            if args.tags:
+                tags = [t.strip() for t in args.tags.split(",") if t.strip()]
+            add_feedback(
+                args.feedback_type,
+                context,
+                tags=tags,
+                reward=args.reward,
+                source=args.source,
+                signal=args.signal,
+                reindex=not args.no_reindex,
+            )
         else:
             print("Error: No feedback context provided")
             sys.exit(1)

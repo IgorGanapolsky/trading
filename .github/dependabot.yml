@@ -1,5 +1,6 @@
 version: 2
 updates:
+  # Enable version updates for pip (Python)
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
@@ -14,24 +15,10 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
+    # Group security updates together
     groups:
       security-updates:
         patterns:
           - "*"
         update-types:
           - "security"
-
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "daily"
-      time: "09:10"
-    open-pull-requests-limit: 20
-    reviewers:
-      - "IgorGanapolsky"
-    labels:
-      - "dependencies"
-      - "security"
-    commit-message:
-      prefix: "chore"
-      include: "scope"
