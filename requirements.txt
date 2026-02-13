@@ -5,7 +5,7 @@
 # Python Version Requirement: >=3.9,<3.14
 # Note: Python 3.14+ has limited wheel availability; use 3.12 for best compatibility
 aiohappyeyeballs==2.6.1
-aiohttp==3.13.2
+aiohttp==3.13.3
 aiosignal==1.4.0
 alpaca-py==0.43.2
 alpha-vantage==2.3.1
@@ -115,7 +115,7 @@ ormsgpack==1.12.0
 packaging==25.0
 pandas==2.3.3
 peewee==3.18.3
-pillow==11.1.0
+pillow==12.1.1
 platformdirs==4.5.1
 praw==7.8.1
 prawcore==2.4.0
