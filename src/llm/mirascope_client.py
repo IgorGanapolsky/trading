@@ -19,12 +19,12 @@ Feb 2026 - Integrated with BATS model selection framework.
 from __future__ import annotations
 
 import logging
-import os
 from collections.abc import AsyncIterator, Iterator
 from enum import Enum
 from typing import Any, TypeVar
 
 from pydantic import BaseModel, Field
+from src.utils.llm_gateway import resolve_openai_compatible_config
 from src.utils.model_selector import ModelSelector, get_model_selector
 from src.utils.self_healing import get_anthropic_api_key
 from src.utils.token_monitor import record_llm_usage
@@ -186,15 +186,19 @@ class MirascopeTradingClient:
                 from openai import OpenAI
 
                 if self.provider == LLMProvider.OPENROUTER:
-                    api_key = os.getenv("OPENROUTER_API_KEY", "")
-                    base_url = "https://openrouter.ai/api/v1"
+                    cfg = resolve_openai_compatible_config(
+                        default_api_key_env="OPENROUTER_API_KEY",
+                        default_base_url="https://openrouter.ai/api/v1",
+                    )
                 else:
-                    api_key = os.getenv("OPENAI_API_KEY", "")
-                    base_url = None
+                    cfg = resolve_openai_compatible_config(
+                        default_api_key_env="OPENAI_API_KEY",
+                        default_base_url=None,
+                    )
 
                 self._openai_client = OpenAI(
-                    api_key=api_key,
-                    base_url=base_url,
+                    api_key=cfg.api_key,
+                    base_url=cfg.base_url,
                 )
             except ImportError:
                 raise ImportError("openai package not installed. Run: pip install openai")
@@ -366,12 +370,17 @@ class MirascopeTradingClient:
             from openai import AsyncOpenAI
 
             if self.provider == LLMProvider.OPENROUTER:
-                client = AsyncOpenAI(
-                    api_key=os.getenv("OPENROUTER_API_KEY", ""),
-                    base_url="https://openrouter.ai/api/v1",
+                cfg = resolve_openai_compatible_config(
+                    default_api_key_env="OPENROUTER_API_KEY",
+                    default_base_url="https://openrouter.ai/api/v1",
                 )
             else:
-                client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY", ""))
+                cfg = resolve_openai_compatible_config(
+                    default_api_key_env="OPENAI_API_KEY",
+                    default_base_url=None,
+                )
+
+            client = AsyncOpenAI(api_key=cfg.api_key, base_url=cfg.base_url)
 
             if "claude" in model.lower():
                 model = (

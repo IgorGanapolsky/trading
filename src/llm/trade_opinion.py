@@ -20,10 +20,10 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 from typing import Any
 
 from pydantic import BaseModel, Field
+from src.utils.llm_gateway import resolve_openai_compatible_config
 from src.utils.model_selector import get_model_selector
 
 logger = logging.getLogger(__name__)
@@ -80,10 +80,12 @@ def get_trade_opinion(
 
     Returns None if the LLM call fails (trade proceeds with existing logic).
     """
-    # Check if OpenRouter is available
-    api_key = os.getenv("OPENROUTER_API_KEY", "")
-    if not api_key:
-        logger.info("Trade opinion: OPENROUTER_API_KEY not set, skipping LLM advisory")
+    cfg = resolve_openai_compatible_config(
+        default_api_key_env="OPENROUTER_API_KEY",
+        default_base_url="https://openrouter.ai/api/v1",
+    )
+    if not cfg.api_key:
+        logger.info("Trade opinion: missing OpenAI-compatible API key, skipping LLM advisory")
         return None
 
     # Select model via BATS framework
@@ -102,8 +104,8 @@ def get_trade_opinion(
         from openai import OpenAI
 
         client = OpenAI(
-            api_key=api_key,
-            base_url="https://openrouter.ai/api/v1",
+            api_key=cfg.api_key,
+            base_url=cfg.base_url,
         )
 
         response = client.chat.completions.create(

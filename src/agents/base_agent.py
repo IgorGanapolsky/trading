@@ -8,7 +8,6 @@ for intelligent model selection based on task complexity and budget.
 from __future__ import annotations
 
 import logging
-import os
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any
@@ -19,6 +18,7 @@ from src.orchestration.context_engine import (
     MemoryTimescale,
     get_context_engine,
 )
+from src.utils.llm_gateway import resolve_openai_compatible_config
 from src.utils.model_selector import get_model_selector
 from src.utils.self_healing import get_anthropic_api_key, with_retry
 from src.utils.token_monitor import record_llm_usage
@@ -70,9 +70,13 @@ class BaseAgent(ABC):
             try:
                 from openai import OpenAI
 
+                cfg = resolve_openai_compatible_config(
+                    default_api_key_env="OPENROUTER_API_KEY",
+                    default_base_url="https://openrouter.ai/api/v1",
+                )
                 self._openrouter_client = OpenAI(
-                    api_key=os.getenv("OPENROUTER_API_KEY", ""),
-                    base_url="https://openrouter.ai/api/v1",
+                    api_key=cfg.api_key,
+                    base_url=cfg.base_url,
                 )
                 self.client = None  # Not using Anthropic for this agent
                 logger.info(f"{name}: Using OpenRouter provider for model {self.model}")

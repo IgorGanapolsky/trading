@@ -356,7 +356,11 @@ class ModelSelector:
         budget_pct = budget_remaining / self.daily_budget if self.daily_budget > 0 else 0
 
         # Check if OpenRouter is available (required for cost-optimized models)
-        openrouter_available = bool(os.getenv("OPENROUTER_API_KEY"))
+        openrouter_available = bool(
+            os.getenv("OPENROUTER_API_KEY")
+            or os.getenv("LLM_GATEWAY_API_KEY")
+            or os.getenv("TETRATE_API_KEY")
+        )
 
         # Determine tier based on complexity and budget
         # January 2026 evidence-based routing (StockBench, TradingAgents framework)
