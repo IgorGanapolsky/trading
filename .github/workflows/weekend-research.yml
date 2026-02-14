@@ -43,7 +43,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install httpx numba numpy yfinance pandas
+          pip install httpx numba numpy yfinance pandas anthropic
 
       - name: Check API keys
         run: |
