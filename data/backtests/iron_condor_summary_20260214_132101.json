@@ -1,0 +1,36 @@
+{
+  "total_trades": 5,
+  "wins": 5,
+  "losses": 0,
+  "win_rate": 1.0,
+  "total_pnl": 416.9710426584012,
+  "avg_pnl": 83.39420853168023,
+  "avg_win": 83.39420853168023,
+  "avg_loss": 0,
+  "max_win": 89.69942564573464,
+  "max_loss": 73.13822502526062,
+  "profit_factor": Infinity,
+  "sharpe_ratio": 14.896495321674195,
+  "exit_reasons": {
+    "profit_target": 5,
+    "stop_loss": 0,
+    "time_exit": 0,
+    "expired": 0
+  },
+  "config": {
+    "underlying_symbol": "SPY",
+    "short_delta": 0.16,
+    "wing_width": 5.0,
+    "dte_min": 30,
+    "dte_max": 45,
+    "profit_target_pct": 0.5,
+    "stop_loss_pct": 2.0,
+    "max_dte": 7,
+    "risk_free_rate": 0.05,
+    "max_position_pct": 0.05,
+    "account_size": 100000.0
+  },
+  "start_date": "2025-12-15",
+  "end_date": "2026-02-13",
+  "timestamp": "2026-02-14T13:21:01.503568"
+}
