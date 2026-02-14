@@ -210,17 +210,22 @@ def _compute_ic_win_rate_from_history(state: dict[str, Any]) -> dict[str, Any]:
         # Net cash flow: SELL = credit (+), BUY = debit (-)
         net = 0.0
         for leg in legs:
+            # trade_history stores option premiums as per-share price strings.
+            # Convert to dollars with contract multiplier (100) and quantity.
             price = _as_float(leg.get("price"), 0.0)
-            side = str(leg.get("side", ""))
+            qty = _as_float(leg.get("qty", leg.get("quantity", 1.0)), 1.0)
+            cash = price * qty * 100.0
+
+            side = str(leg.get("side", "")).upper()
             if "SELL" in side:
-                net += price
+                net += cash
             elif "BUY" in side:
-                net -= price
+                net -= cash
 
         total_pnl += net
         if net > 0:
             wins += 1
-        else:
+        elif net < 0:
             losses += 1
 
     samples = wins + losses
