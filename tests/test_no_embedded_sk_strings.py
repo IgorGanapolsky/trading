@@ -64,7 +64,5 @@ def test_no_embedded_sk_api_keys() -> None:
             offenders.append(str(file_path))
 
     assert offenders == [], (
-        "Potential embedded API key(s) detected (pattern: sk-<...>):\n"
-        + "\n".join(offenders)
+        "Potential embedded API key(s) detected (pattern: sk-<...>):\n" + "\n".join(offenders)
     )
-
