@@ -153,12 +153,12 @@ def _collect_changed_files() -> list[Path]:
         except Exception:
             continue
 
-    # If running in CI for PRs, use base ref diff
+    # If running in CI for PRs, use base ref diff (only added/modified, not deleted)
     base_ref = (os.environ.get("GITHUB_BASE_REF") or "").strip()
     if base_ref:
         try:
             result = subprocess.run(
-                ["git", "diff", "--name-only", f"origin/{base_ref}...HEAD"],
+                ["git", "diff", "--name-only", "--diff-filter=ACMR", f"origin/{base_ref}...HEAD"],
                 check=False,
                 capture_output=True,
                 text=True,
