@@ -50,7 +50,7 @@ layout: default
 
       {%- if page.tags and page.tags.size > 0 -%}
         {%- assign primary_tag = page.tags[0] -%}
-        {%- assign related = candidates | where_exp: "p", "p.tags and p.tags contains primary_tag" -%}
+        {%- assign related = candidates | where_exp: "p", "p.tags contains primary_tag" -%}
       {%- endif -%}
 
       {%- if related.size == 0 -%}
