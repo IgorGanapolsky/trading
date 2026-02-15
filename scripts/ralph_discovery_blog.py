@@ -24,6 +24,10 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import requests
+
+# Allow `python scripts/...` execution where sys.path[0] == scripts/.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from src.content.blog_seo import (
     canonical_url_for_post,
     render_frontmatter,

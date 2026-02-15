@@ -12,8 +12,12 @@ from __future__ import annotations
 
 import os
 import re
+import sys
 from datetime import datetime
 from pathlib import Path
+
+# Allow `python scripts/...` execution where sys.path[0] == scripts/.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.content.blog_seo import (
     canonical_url_for_post,
