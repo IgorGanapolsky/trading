@@ -15,6 +15,12 @@ import re
 from datetime import datetime
 from pathlib import Path
 
+from src.content.blog_seo import (
+    canonical_url_for_post,
+    render_frontmatter,
+    truncate_meta_description,
+)
+
 try:
     import requests
 except ImportError:
@@ -227,6 +233,7 @@ def generate_daily_summary_post(date_str: str, lessons: list[dict]) -> str:
 
     # Get engaging intro
     intro = get_engaging_intro(day_num, day_of_week, lessons)
+    description = truncate_meta_description(intro, max_chars=160)
 
     # Build the story of today's lessons
     lessons_md = ""
@@ -269,18 +276,42 @@ def generate_daily_summary_post(date_str: str, lessons: list[dict]) -> str:
             lessons_md += f"- **{title}** - {extract_key_insight(lesson)[:100]}...\n"
         lessons_md += "\n"
 
-    # Build the post
-    post = f"""---
-layout: post
-title: "Day {day_num}: What We Learned - {formatted_date}"
-date: {date_str}
-day_number: {day_num}
-lessons_count: {len(lessons)}
-critical_count: {critical}
-excerpt: "{intro[:150]}..."
----
+    questions = [
+        {
+            "question": f"What did we learn on Day {day_num}?",
+            "answer": f"{len(lessons)} lessons captured ({critical} critical, {high} high). {description}",
+        },
+        {
+            "question": "How does this system remember lessons learned?",
+            "answer": "We store each lesson in a RAG index and retrieve similar past incidents before future trades and engineering changes.",
+        },
+        {
+            "question": "Where can I browse the full code and history?",
+            "answer": "The full repository and daily updates are published publicly on GitHub and GitHub Pages.",
+        },
+    ]
 
-# Day {day_num} of 90 | {day_of_week}, {formatted_date}
+    frontmatter = render_frontmatter(
+        {
+            "layout": "post",
+            "title": f"Day {day_num}: What We Learned - {formatted_date}",
+            "description": description,
+            "date": date_str,
+            "last_modified_at": date_str,
+            "image": "/assets/og-image.png",
+            "tags": ["lessons-learned", "ai-trading", "rag", "building-in-public"],
+            "day_number": day_num,
+            "lessons_count": len(lessons),
+            "critical_count": critical,
+            "excerpt": truncate_meta_description(intro, max_chars=150),
+        },
+        questions=questions,
+    )
+
+    # Build the post
+    post = (
+        frontmatter
+        + f"""# Day {day_num} of 90 | {day_of_week}, {formatted_date}
 
 **{days_remaining} days remaining** in our journey to build a profitable AI trading system.
 
@@ -317,8 +348,23 @@ Want to follow along? Check out the [full project on GitHub](https://github.com/
 
 ---
 
+## FAQ
+
+### What did we learn today?
+
+{len(lessons)} lessons captured ({critical} critical, {high} high). {description}
+
+### How do you keep these lessons from getting lost?
+
+We index every lesson into a RAG corpus and query it before new trades and major engineering changes.
+
+### Where is the canonical version of this post?
+
+This post's canonical URL is {canonical_url_for_post(date_str, "lessons-learned")}.
+
 *Day {day_num}/90 complete. {days_remaining} to go.*
 """
+    )
     return post
 
 
@@ -390,6 +436,7 @@ Follow our journey: [AI Trading Journey on GitHub](https://github.com/IgorGanapo
             "published": True,
             "series": "AI Trading Journey",
             "tags": ["ai", "trading", "machinelearning", "automation"],
+            "canonical_url": canonical_url_for_post(date_str, "lessons-learned"),
         }
     }
 

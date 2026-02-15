@@ -19,6 +19,11 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import requests
+from src.content.blog_seo import (
+    canonical_url_for_post_file,
+    render_frontmatter,
+    truncate_meta_description,
+)
 
 ET = ZoneInfo("America/New_York")
 REPO_URL = "https://github.com/IgorGanapolsky/trading"
@@ -68,7 +73,13 @@ def get_recent_commits() -> list[str]:
 
 
 def generate_engaging_content(
-    signal: str, intensity: float, context: str, stats: dict, model: dict, equity: float
+    title: str,
+    signal: str,
+    intensity: float,
+    context: str,
+    stats: dict,
+    model: dict,
+    equity: float,
 ) -> str:
     """Generate engaging blog content with real stories and technical depth."""
 
@@ -324,15 +335,46 @@ Real-time learning, not just logged-and-forgotten."""
     # Build the post
     mermaid = generate_mermaid_diagram(signal, stats, model)
 
-    return f"""---
-layout: post
-title: "{generate_engaging_title(signal, context)}"
-date: {datetime.now(ET).strftime("%Y-%m-%d %H:%M:%S")}
-categories: [rlhf, trading, building-in-public]
-tags: [{signal}, rlhf, ai-trading, fintech]
----
+    now = datetime.now(ET)
+    timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
+    date_str = now.strftime("%Y-%m-%d")
 
-{story}
+    description = truncate_meta_description(
+        f"{title} - RLHF update from our autonomous AI trading system. Context: {context}",
+        max_chars=160,
+    )
+    questions = [
+        {
+            "question": "What triggered this RLHF update?",
+            "answer": truncate_meta_description(context, max_chars=200),
+        },
+        {
+            "question": "How does RLHF change the system?",
+            "answer": "Feedback updates the Thompson Sampling model and stores lessons in RAG so future sessions can avoid repeating mistakes.",
+        },
+        {
+            "question": "What is the current model success rate?",
+            "answer": f"{win_rate:.1f}% after {total} feedback signals.",
+        },
+    ]
+
+    frontmatter = render_frontmatter(
+        {
+            "layout": "post",
+            "title": title,
+            "description": description,
+            "date": timestamp,
+            "last_modified_at": date_str,
+            "image": "/assets/og-image.png",
+            "categories": ["rlhf", "trading", "building-in-public"],
+            "tags": [signal, "rlhf", "ai-trading", "fintech"],
+        },
+        questions=questions,
+    )
+
+    return (
+        frontmatter
+        + f"""{story}
 
 ## The Architecture
 
@@ -357,7 +399,22 @@ Every thumbs up/down makes the system smarter. After {total} feedback signals, i
 **Building in public**. Every mistake is a lesson. Every success is reinforced.
 
 [Source Code]({REPO_URL}) | [Live Dashboard](https://igorganapolsky.github.io/trading/)
+
+## FAQ
+
+### What triggered this RLHF update?
+
+{truncate_meta_description(context, max_chars=240)}
+
+### How does RLHF change the system?
+
+Feedback updates the Thompson Sampling model and stores lessons in RAG so future sessions can avoid repeating mistakes.
+
+### What is the current model success rate?
+
+{win_rate:.1f}% after {total} feedback signals.
 """
+    )
 
 
 def generate_engaging_title(signal: str, context: str) -> str:
@@ -426,8 +483,8 @@ def generate_post(signal: str, intensity: float, context: str) -> dict:
     model = get_model_stats()
     equity = get_equity()
 
-    content = generate_engaging_content(signal, intensity, context, stats, model, equity)
     title = generate_engaging_title(signal, context)
+    content = generate_engaging_content(title, signal, intensity, context, stats, model, equity)
 
     return {
         "title": title,
@@ -458,7 +515,7 @@ def save_to_github_pages(post: dict) -> str | None:
     return str(filepath)
 
 
-def publish_to_devto(post: dict) -> dict | None:
+def publish_to_devto(post: dict, *, canonical_url: str) -> dict | None:
     """Publish to Dev.to with duplicate detection."""
     api_key = os.environ.get("DEVTO_API_KEY") or os.environ.get("DEV_TO_API_KEY")
     if not api_key:
@@ -500,6 +557,7 @@ def publish_to_devto(post: dict) -> dict | None:
             "published": True,
             "tags": post["tags"][:4],
             "series": "AI Trading RLHF",
+            "canonical_url": canonical_url,
         }
     }
 
@@ -522,11 +580,11 @@ def publish_to_devto(post: dict) -> dict | None:
         return None
 
 
-def post_to_linkedin_direct(post: dict, devto_url: str = None) -> bool:
+def post_to_linkedin_direct(post: dict, link_url: str) -> bool:
     """Post directly to LinkedIn using browser automation - ACTUALLY POSTS."""
     import subprocess
 
-    link = devto_url or "https://igorganapolsky.github.io/trading/"
+    link = link_url
     emoji = "✅" if post["signal"] == "positive" else "📚"
 
     content = f"""{emoji} {post["title"]}
@@ -561,7 +619,7 @@ def post_to_linkedin_direct(post: dict, devto_url: str = None) -> bool:
         return False
 
 
-def post_to_twitter_api(post: dict, devto_url: str = None) -> bool:
+def post_to_twitter_api(post: dict, link_url: str) -> bool:
     """Post to X.com using Twitter API v2."""
     import subprocess
 
@@ -576,7 +634,7 @@ def post_to_twitter_api(post: dict, devto_url: str = None) -> bool:
                 "--title",
                 post["title"],
                 "--url",
-                devto_url or "https://igorganapolsky.github.io/trading/",
+                link_url,
             ],
             capture_output=True,
             text=True,
@@ -593,14 +651,14 @@ def post_to_twitter_api(post: dict, devto_url: str = None) -> bool:
         return False
 
 
-def queue_for_linkedin_backup(post: dict, devto_url: str = None) -> bool:
+def queue_for_linkedin_backup(post: dict, link_url: str) -> bool:
     """BACKUP: Queue for LinkedIn if direct posting fails."""
     queue_file = Path(__file__).parent.parent.parent / "docs" / "linkedin_post_queue.json"
 
     if not queue_file.exists():
         return False
 
-    link = devto_url or "https://igorganapolsky.github.io/trading/"
+    link = link_url
     emoji = "✅" if post["signal"] == "positive" else "📚"
 
     content = f"""{emoji} {post["title"]}
@@ -662,16 +720,23 @@ def main():
         return 0
 
     gh_path = save_to_github_pages(post)
-    devto_result = publish_to_devto(post)
+    if not gh_path:
+        print("❌ Could not save GitHub Pages post")
+        return 1
+
+    canonical_url = canonical_url_for_post_file(gh_path)
+    devto_result = publish_to_devto(post, canonical_url=canonical_url)
     devto_url = devto_result.get("url") if devto_result else None
 
     # Post directly to LinkedIn (browser automation)
     print("\n📤 Posting to LinkedIn...")
-    linkedin_ok = post_to_linkedin_direct(post, devto_url)
+    linkedin_ok = post_to_linkedin_direct(post, canonical_url)
+    if not linkedin_ok:
+        queue_for_linkedin_backup(post, canonical_url)
 
     # Post to X.com (API)
     print("\n📤 Posting to X.com...")
-    twitter_ok = post_to_twitter_api(post, devto_url)
+    twitter_ok = post_to_twitter_api(post, canonical_url)
 
     # Count successful platforms
     platforms = []

@@ -31,10 +31,35 @@ layout: default
 
   {%- if site.posts.size > 1 -%}
   <nav class="related-posts">
-    <h3>Related Lessons</h3>
+    {%- assign items = site.posts -%}
+    {%- assign related_label = "Related Posts" -%}
+    {%- if page.collection == "reports" -%}
+      {%- assign items = site.reports -%}
+      {%- assign related_label = "Related Reports" -%}
+    {%- elsif page.collection == "discoveries" -%}
+      {%- assign items = site.discoveries -%}
+      {%- assign related_label = "Related Discoveries" -%}
+    {%- else -%}
+      {%- assign related_label = "Related Lessons" -%}
+    {%- endif -%}
+
+    <h3>{{ related_label }}</h3>
     <ul>
-      {%- assign related = site.posts | where_exp: "post", "post.url !=
-      page.url" | slice: 0, 3 -%} {%- for post in related -%}
+      {%- assign candidates = items | where_exp: "p", "p.url != page.url" -%}
+      {%- assign related = candidates -%}
+
+      {%- if page.tags and page.tags.size > 0 -%}
+        {%- assign primary_tag = page.tags[0] -%}
+        {%- assign related = candidates | where_exp: "p", "p.tags and p.tags contains primary_tag" -%}
+      {%- endif -%}
+
+      {%- if related.size == 0 -%}
+        {%- assign related = candidates -%}
+      {%- endif -%}
+
+      {%- assign related = related | slice: 0, 3 -%}
+
+      {%- for post in related -%}
       <li>
         <a href="{{ post.url | relative_url }}">{{ post.title }}</a>
         <small>{{ post.date | date: "%Y-%m-%d" }}</small>
@@ -55,7 +80,8 @@ layout: default
     "@id": "{{ page.url | absolute_url }}#article",
     "headline": {{ page.title | jsonify }},
     "name": {{ page.title | jsonify }},
-    "description": {{ page.excerpt | strip_html | truncate: 160 | jsonify }},
+    "description": {{ page.description | default: page.excerpt | strip_html | truncate: 160 | jsonify }},
+    "image": {{ page.image | default: site.defaults_og.image | absolute_url | jsonify }},
     "datePublished": "{{ page.date | date_to_xmlschema }}",
     "dateModified": "{{ page.last_modified_at | default: page.date | date_to_xmlschema }}",
     "wordCount": {{ content | number_of_words }},
@@ -93,7 +119,7 @@ layout: default
       "name": "AI Trading Journey"
     },
     "keywords": {{ page.tags | default: site.keywords | jsonify }},
-    "articleSection": "{{ page.categories | default: 'Trading Lessons' | jsonify }}",
+    "articleSection": {{ page.categories | default: 'Trading Lessons' | jsonify }},
     "inLanguage": "en-US",
     "copyrightYear": "{{ page.date | date: '%Y' }}",
     "copyrightHolder": {

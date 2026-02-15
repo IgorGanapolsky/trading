@@ -24,6 +24,11 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import requests
+from src.content.blog_seo import (
+    canonical_url_for_post,
+    render_frontmatter,
+    truncate_meta_description,
+)
 
 # Use Eastern Time for all blog dates (CEO timezone)
 ET = ZoneInfo("America/New_York")
@@ -393,17 +398,49 @@ def generate_blog_post(discoveries: list[dict], commits: list[dict]) -> dict:
     for d in discoveries:
         all_tags.update(d.get("tags", []))
 
-    # Build the post content with 2026 engagement features
-    content = f"""---
-layout: post
-title: "{title}"
-date: {timestamp}
-categories: [engineering, lessons-learned, ai-trading]
-tags: [{", ".join(list(all_tags)[:4]) or "self-healing, ci-cd, automation"}]
-mermaid: true
----
+    canonical = canonical_url_for_post(date, "ralph-discovery")
+    description = truncate_meta_description(
+        (
+            f"Autonomous self-healing update for {now_et.strftime('%B %d, %Y')}: "
+            f"{len(sorted_discoveries)} discoveries and {len(commits)} commits. "
+            f"Top highlight: {title}."
+        ),
+        max_chars=160,
+    )
+    tag_list = (
+        list(all_tags)[:4] if all_tags else ["ralph", "self-healing", "automation", "ai-trading"]
+    )
+    questions = [
+        {
+            "question": "What did Ralph fix today?",
+            "answer": f"{len(sorted_discoveries)} discoveries and {len(commits)} commits. Top highlight: {title}.",
+        },
+        {
+            "question": "How does the self-healing pipeline work?",
+            "answer": "Ralph monitors CI, runs tests, generates fixes, verifies them, and publishes a post with code snippets and metrics.",
+        },
+        {"question": "Where is the canonical version of this post?", "answer": f"{canonical}"},
+    ]
 
-**{day_of_week}, {now_et.strftime("%B %d, %Y")}** (Eastern Time)
+    frontmatter = render_frontmatter(
+        {
+            "layout": "post",
+            "title": title,
+            "description": description,
+            "date": timestamp,
+            "last_modified_at": date,
+            "image": "/assets/og-image.png",
+            "categories": ["engineering", "lessons-learned", "ai-trading"],
+            "tags": tag_list,
+            "mermaid": True,
+        },
+        questions=questions,
+    )
+
+    # Build the post content with 2026 engagement features
+    content = (
+        frontmatter
+        + f"""**{day_of_week}, {now_et.strftime("%B %d, %Y")}** (Eastern Time)
 
 > Building an autonomous AI trading system means things break. Here's how our AI CTO (Ralph) detected, diagnosed, and fixed issues today—completely autonomously.
 
@@ -416,6 +453,7 @@ mermaid: true
 ---
 
 """
+    )
 
     # Add discoveries with enhanced narrative style
     for i, discovery in enumerate(sorted_discoveries, 1):
@@ -514,6 +552,18 @@ From commit `{significant_commit["sha"]}`:
 
 ---
 
+## FAQ
+
+### What did Ralph fix today?
+
+{len(sorted_discoveries)} discoveries and {len(commits)} commits. Top highlight: {title}.
+
+### Where is the canonical version of this post?
+
+{canonical}
+
+---
+
 ## 🤖 About Ralph Mode
 
 Ralph is our AI CTO that autonomously maintains this trading system. It:
@@ -574,6 +624,7 @@ def publish_to_devto(post: dict) -> dict | None:
             "published": True,
             "tags": post["tags"][:4],  # Dev.to allows max 4 tags
             "series": "Ralph Mode: AI Self-Healing Systems",
+            "canonical_url": canonical_url_for_post(post["date"], "ralph-discovery"),
         }
     }
 

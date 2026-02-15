@@ -25,6 +25,12 @@ try:
 except ImportError:
     requests = None
 
+from src.content.blog_seo import (
+    canonical_url_for_collection_item,
+    render_frontmatter,
+    truncate_meta_description,
+)
+
 # WordPress AI Guidelines compliance (Feb 2026)
 try:
     from ai_disclosure import (
@@ -157,6 +163,19 @@ def generate_blog_post(
 
     emoji, title_prefix, tags = determine_category(discovery, details)
     intro = generate_engaging_intro(discovery, emoji)
+    title = f"{emoji} {title_prefix}: {discovery[:60]}"
+    description = truncate_meta_description(f"{intro} Discovery: {discovery}", max_chars=160)
+    questions = [
+        {"question": "What did Ralph discover?", "answer": discovery[:240]},
+        {
+            "question": "How did the autonomous loop validate the change?",
+            "answer": "Ralph detected an issue, generated a fix, ran tests, and only then committed and published the discovery post.",
+        },
+        {
+            "question": "What did this iteration cost?",
+            "answer": f"${cost_usd:.3f} across {iterations} iteration(s).",
+        },
+    ]
 
     # Build files changed section
     files_section = ""
@@ -188,16 +207,24 @@ def generate_blog_post(
 | **Timestamp** | {today.strftime("%Y-%m-%d %H:%M UTC")} |
 """
 
-    # Main blog post
-    post = f"""---
-layout: post
-title: "{emoji} {title_prefix}: {discovery[:60]}"
-date: {post_date}
-category: ralph-discoveries
-tags: {tags}
----
+    frontmatter = render_frontmatter(
+        {
+            "layout": "post",
+            "title": title,
+            "description": description,
+            "date": post_date,
+            "last_modified_at": post_date,
+            "image": "/assets/og-image.png",
+            "category": "ralph-discoveries",
+            "tags": tags,
+        },
+        questions=questions,
+    )
 
-# {emoji} {title_prefix}: {discovery}
+    # Main blog post
+    post = (
+        frontmatter
+        + f"""# {emoji} {title_prefix}: {discovery}
 
 *{formatted_date}*
 
@@ -252,6 +279,20 @@ Key features:
 - **Auto-commits**: Changes are committed and pushed automatically
 - **Self-documentation**: Every fix generates a blog post (like this one!)
 
+## FAQ
+
+### What did Ralph discover?
+
+**Discovery:** {discovery}
+
+### How did the autonomous loop validate the change?
+
+Ralph detected an issue, generated a fix, ran tests, and only then committed and published the discovery post.
+
+### What did this iteration cost?
+
+${cost_usd:.3f} across {iterations} iteration(s).
+
 ---
 
 ## Try It Yourself
@@ -272,6 +313,7 @@ python scripts/ralph_loop.py --task fix_tests --max-iterations 5 --max-cost 2.00
 
 *Follow our journey at [github.com/IgorGanapolsky/trading](https://github.com/IgorGanapolsky/trading)*
 """
+    )
 
     # Add WordPress AI Guidelines compliant disclosure
     post = add_disclosure_to_post(post, content_type="ralph")
@@ -296,7 +338,9 @@ def save_to_github_pages(content: str, discovery: str) -> Path:
     return filepath
 
 
-def post_to_devto(content: str, discovery: str, tags: list[str]) -> str | None:
+def post_to_devto(
+    content: str, discovery: str, tags: list[str], *, canonical_url: str | None
+) -> str | None:
     """Post to Dev.to via API."""
     api_key = os.getenv("DEVTO_API_KEY")
     if not api_key:
@@ -334,7 +378,7 @@ def post_to_devto(content: str, discovery: str, tags: list[str]) -> str | None:
             "published": True,
             "tags": final_tags,
             "series": "Ralph Discoveries - AI-Powered Bug Fixes",
-            "canonical_url": None,  # Let Dev.to generate
+            "canonical_url": canonical_url,
         }
     }
 
@@ -468,7 +512,8 @@ def main():
         warnings=verification["warnings"],
     )
 
-    devto_url = post_to_devto(content, args.discovery, [])
+    canonical_url = canonical_url_for_collection_item("discoveries", filepath.stem)
+    devto_url = post_to_devto(content, args.discovery, [], canonical_url=canonical_url)
 
     # Output summary
     print("\n" + "=" * 70)

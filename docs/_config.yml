@@ -21,7 +21,7 @@ social:
 
 # Open Graph defaults
 defaults_og:
-  image: /trading/assets/og-image.png
+  image: /assets/og-image.png
   type: website
 
 # Build settings

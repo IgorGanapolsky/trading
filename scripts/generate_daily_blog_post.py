@@ -27,6 +27,8 @@ except ImportError:
 # Add project root to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from src.content.blog_seo import render_frontmatter, truncate_meta_description
+
 # WordPress AI Guidelines compliance (Feb 2026)
 try:
     from ai_disclosure import (
@@ -398,20 +400,58 @@ def generate_blog_post(perf: dict, trades: list, day_num: int) -> str:
     else:
         treasury_section = "*Treasury data temporarily unavailable*"
 
-    # Generate the blog post
-    post = f"""---
-layout: post
-title: "Daily Report: {formatted_date} | ${daily_pl:+,.2f}"
-date: {report_date}
-daily_pl: {daily_pl:.2f}
-total_pl: {total_pl:.2f}
-equity: {equity:.2f}
-day_number: {day_num}
----
+    title = f"Daily Report: {formatted_date} | ${daily_pl:+,.2f}"
+    description = truncate_meta_description(
+        (
+            f"Daily AI trading report for {formatted_date}: P/L {daily_pl:+,.2f} "
+            f"({daily_pl_pct:+.2f}%), equity ${equity:,.0f}, trades {len(trades)}. "
+            "Includes risk metrics and next steps."
+        ),
+        max_chars=160,
+    )
+    questions = [
+        {
+            "question": "What was today's P/L?",
+            "answer": f"${daily_pl:+,.2f} ({daily_pl_pct:+.2f}%).",
+        },
+        {"question": "What is the current portfolio value?", "answer": f"${equity:,.2f}."},
+        {
+            "question": "Were any trades executed today?",
+            "answer": "Yes, trades were executed today."
+            if trades
+            else "No trades were executed today.",
+        },
+        {
+            "question": "What risk controls are active?",
+            "answer": "Defined-risk options strategy, position sizing caps, volatility-adjusted stops, and circuit breakers.",
+        },
+    ]
 
-# {performance_text}: {day_of_week}, {formatted_date}
+    frontmatter = render_frontmatter(
+        {
+            "layout": "post",
+            "title": title,
+            "description": description,
+            "date": report_date,
+            "last_modified_at": report_date,
+            "image": "/assets/og-image.png",
+            "tags": ["daily-report", "ai-trading", "risk-management", "options"],
+            "daily_pl": round(daily_pl, 2),
+            "total_pl": round(total_pl, 2),
+            "equity": round(equity, 2),
+            "day_number": day_num,
+        },
+        questions=questions,
+    )
+
+    # Generate the blog post
+    post = (
+        frontmatter
+        + f"""# {performance_text}: {day_of_week}, {formatted_date}
 
 **Day {day_num}/90** of our AI Trading R&D Phase
+
+**TL;DR:** Daily P/L **${daily_pl:+,.2f}** ({daily_pl_pct:+.2f}%), portfolio **${equity:,.2f}**, trades: **{len(trades)}**.
 
 ---
 
@@ -473,8 +513,25 @@ Day {day_num + 1} focus:
 
 ---
 
+## FAQ
+
+### What was today's P/L?
+
+${daily_pl:+,.2f} ({daily_pl_pct:+.2f}%).
+
+### What is the current portfolio value?
+
+${equity:,.2f}.
+
+### Where is the canonical version of this report?
+
+This post's canonical URL is https://igorganapolsky.github.io/trading/reports/{report_date}-daily-report/
+
+---
+
 *[View Source](https://github.com/IgorGanapolsky/trading)*
 """
+    )
 
     # Add WordPress AI Guidelines compliant disclosure
     post = add_disclosure_to_post(post, content_type="daily")
