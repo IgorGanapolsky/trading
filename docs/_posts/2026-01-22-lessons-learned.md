@@ -1,112 +1,95 @@
 ---
-layout: post
+layout: "post"
 title: "Day 86: What We Learned - January 22, 2026"
-date: 2026-01-22
+description: "Today was a wake-up call. Two critical issues surfaced that could have derailed our entire trading operation. Here's what went wrong and how we're fixing it."
+date: "2026-01-22"
+last_modified_at: "2026-01-22"
+image: "/assets/og-image.png"
+tags:
+  - "lessons-learned"
+  - "ai-trading"
+  - "rag"
+  - "building-in-public"
 day_number: 86
-lessons_count: 10
-critical_count: 3
-excerpt: "Crisis mode activated: Alpaca API bug prevents closing positions, PDT locks $5K account. We pivoted to $100K account and placed iron condor. Here's the full story..."
+lessons_count: 9
+critical_count: 7
+excerpt: "Today was a wake-up call. Two critical issues surfaced that could have derailed our entire trading operation. Here's what went wrong and how we're..."
+faq: true
+questions:
+  - question: "What did we learn on Day 86?"
+    answer: "9 lessons captured (7 critical, 0 high). Today was a wake-up call. Two critical issues surfaced that could have derailed our entire trading operation. Here's what went wrong and how we're fixing it."
+  - question: "How does this system remember lessons learned?"
+    answer: "We store each lesson in a RAG index and retrieve similar past incidents before future trades and engineering changes."
+  - question: "Where can I browse the full code and history?"
+    answer: "The full repository and daily updates are published publicly on GitHub and GitHub Pages."
 ---
-
 # Day 86 of 90 | Thursday, January 22, 2026
 
 **4 days remaining** in our journey to build a profitable AI trading system.
 
-Today was crisis mode. We discovered a critical Alpaca API bug that prevented us from closing positions, combined with PDT restrictions that locked our $5K account. Here's how we navigated it.
+Today was a wake-up call. Two critical issues surfaced that could have derailed our entire trading operation. Here's what went wrong and how we're fixing it.
 
 ---
 
 ## The Hard Lessons
 
-_These are the moments that test us. Critical issues that demanded immediate attention._
+*These are the moments that test us. Critical issues that demanded immediate attention.*
 
-### LL-291: Alpaca API Bug - Close Position Treated as New Short (CRITICAL)
+### Position Accumulation Bug - Iron Condor Trader
 
-When attempting to close a LONG put position (SPY260220P00658000, 8 contracts), Alpaca's API returned:
+iron_condor_trader.py was placing partial fills that accumulated to 8 contracts instead of max 4.
 
-- Error: "insufficient options buying power for cash-secured put (required: $113,000, available: $2,607)"
+### Cumulative Position Risk Bypass - Individual Trades Accum...
 
-**The bug:** Alpaca incorrectly treats SELL-to-close as a NEW short (cash-secured put), requiring massive collateral instead of simply closing the existing long position.
+1. Trade gateway `_check_position_size_risk()` only checked **individual trade risk**
 
-**What we tried (ALL FAILED):**
+**Key takeaway:** Trade 1: $500 risk (10.
 
-1. Market order via Python SDK
-2. Limit order
-3. close_position() endpoint
-4. Direct REST API with position_intent='sell_to_close'
-5. DELETE /v2/positions/{symbol}
-6. close_all_positions()
-7. Partial close (1 contract)
-8. Account config: closing_transactions_only=True
-9. Account config: pdt_check='exit'
+### Crisis Mode Failure Analysis - Jan 22, 2026
 
-**Resolution:** Pivoted to $100K paper account (PDT-enabled, $268K buying power) and successfully placed iron condor:
+The AI trading system failed catastrophically over three days (Jan 20-22, 2026):
 
-- Put spread: Sell 660, Buy 655 @ $0.43 credit
-- Call spread: Sell 720, Buy 725 @ $0.38 credit
-- Total credit: $81/contract, Max risk: $419
+### Alpaca API Bug - Close Position Treated as Opening Cash-S...
 
-**Key takeaway:** Always have a backup account. PDT-enabled accounts (>$25K) avoid the day-trading trap.
+When attempting to SELL TO CLOSE a LONG put position, Alpaca API treats it as OPENING a new short position (cash-secured put), requiring $113,000 buying power:
 
-### SOFI Loss Realized - Jan 14, 2026
+**Key takeaway:** **MANUAL ACTION REQUIRED** - CEO must close position directly via:
 
-1. SOFI stock + CSP opened Day 74 (Jan 13)
+### Alpaca API Treats Close as Open for Options
 
-**Key takeaway:** System allowed trade despite CLAUDE.
+```
 
-### SOFI Position Held Through Earnings Blackout
+**Key takeaway:** Unable to Close Positions](https://forum.
 
-SOFI CSP (Feb 6 expiration) was held despite Jan 30 earnings date approaching.
+### Use close position() API for Closing Orphan Positions
 
-**Key takeaway:** Put option loss: -$13.
+When closing options positions via Alpaca API, use `client.close_position(symbol)` instead of `client.submit_order(MarketOrderRequest(...))`. The `close_position()` method automatically handles:
 
-## Important Discoveries
+**Key takeaway:** 1. Replace `submit_order(MarketOrderRequest(...))` with `close_position(symbol)`:
 
-_Not emergencies, but insights that will shape how we trade going forward._
+### CTO Failure Crisis - Third Day of Losses
 
-### Trade Data Source Priority Bug - Webhook Missing Alpaca Data
+Three consecutive days of losses. Total P/L: **-$413.39 (-8.27%)** from $5,000 starting balance.
 
-**Status**: FIXED
+**Key takeaway:** We lost $413.
 
-### Iron Condor Win Rate Improvement Research
-
-Current win rate is 33.3% (2/6 trades) vs target 80%+. Need to improve.
-
-### Iron Condor Entry Signals & Timing
-
-System not generating enough trade signals. Need clear entry criteria.
 
 ## Quick Wins & Refinements
 
-- **Memgraph Graph Database Evaluation - FLUFF** - LL-267: Memgraph Graph Database Evaluation - FLUFF
+- **Position Accumulation Crisis - 8 Contracts Instead of Max 4** - On January 21-22, 2026, 8 contracts of SPY260220P00658000 accumulated when the maximum allowed was 4...
+- **Alpaca API Bug - Close Position Treated as New Short** - When attempting to close a LONG put position (SPY260220P00658000, 8 contracts), Alpaca's API returne...
 
-Date: January 21, 2026
-Category: RAG / Resource ...
-
-- **Deep Operational Integrity Audit - 14 Issues Found** - LL-240: Deep Operational Integrity Audit - 14 Issues Found
-
-Date
-January 16, 2026 (Friday, 6:00 PM ...
-
-- **Phil Town Valuations - December 2025** - This lesson documents Phil Town valuations generated on December 4, 2025 during the $100K paper trad...
-- **Theta Scaling Plan - December 2025** - This lesson documents the theta scaling strategy from December 2, 2025 when account equity was $6,00...
 
 ---
 
 ## Today's Numbers
 
-| What            | Count  |
-| --------------- | ------ |
-| Lessons Learned | **10** |
-| Critical Issues | 3      |
-| High Priority   | 3      |
-| Improvements    | 4      |
-
-### Crisis Summary
-
-- **$5K Account:** LOCKED (PDT + API bug) - 4 positions trapped
-- **$100K Account:** Active - Iron condor placed, $81 credit collected
-- **Lesson:** PDT-enabled accounts (>$25K) are essential for options trading
+| What | Count |
+|------|-------|
+| Lessons Learned | **9** |
+| Critical Issues | 7 |
+| High Priority | 0 |
+| Improvements | 2 |
 
 ---
 
@@ -118,7 +101,7 @@ Every lesson we learn is captured, analyzed, and stored by our AI infrastructure
 flowchart LR
     subgraph Learning["Learning Pipeline"]
         ERROR["Error/Insight<br/>Detected"] --> CLAUDE["Claude Opus<br/>(Analysis)"]
-        CLAUDE --> RAG["legacy RAG<br/>(Storage)"]
+        CLAUDE --> RAG["LanceDB RAG<br/>(Storage)"]
         RAG --> BLOG["GitHub Pages<br/>(Publishing)"]
         BLOG --> DEVTO["Dev.to<br/>(Distribution)"]
     end
@@ -126,12 +109,12 @@ flowchart LR
 
 ### How We Learn Autonomously
 
-| Component                 | Role in Learning                                        |
-| ------------------------- | ------------------------------------------------------- |
-| **Claude Opus 4.5**       | Analyzes errors, extracts insights, determines severity |
-| **legacy RAG**         | Stores lessons with 768D embeddings for semantic search |
-| **Gemini 2.0 Flash**      | Retrieves relevant past lessons before new trades       |
-| **OpenRouter (DeepSeek)** | Cost-effective sentiment analysis and research          |
+| Component | Role in Learning |
+|-----------|------------------|
+| **Claude Opus 4.5** | Analyzes errors, extracts insights, determines severity |
+| **LanceDB RAG** | Stores lessons with 768D embeddings for semantic search |
+| **Gemini 2.0 Flash** | Retrieves relevant past lessons before new trades |
+| **OpenRouter (DeepSeek)** | Cost-effective sentiment analysis and research |
 
 ### Why This Matters
 
@@ -140,7 +123,7 @@ flowchart LR
 3. **Continuous Improvement**: 200+ lessons shape every decision
 4. **Transparent Journey**: All learnings published publicly
 
-_[Full Tech Stack Documentation](/trading/tech-stack/)_
+*[Full Tech Stack Documentation](/trading/tech-stack/)*
 
 ---
 
@@ -149,7 +132,6 @@ _[Full Tech Stack Documentation](/trading/tech-stack/)_
 We're building an autonomous AI trading system that learns from every mistake. This isn't about getting rich quick - it's about building a system that can consistently generate income through disciplined options trading.
 
 **Our approach:**
-
 - Paper trade for 90 days to validate the strategy
 - Document every lesson, every failure, every win
 - Use AI (Claude) as CTO to automate and improve
@@ -159,4 +141,18 @@ Want to follow along? Check out the [full project on GitHub](https://github.com/
 
 ---
 
-_Day 86/90 complete. 4 to go._
+## FAQ
+
+### What did we learn today?
+
+9 lessons captured (7 critical, 0 high). Today was a wake-up call. Two critical issues surfaced that could have derailed our entire trading operation. Here's what went wrong and how we're fixing it.
+
+### How do you keep these lessons from getting lost?
+
+We index every lesson into a RAG corpus and query it before new trades and major engineering changes.
+
+### Where is the canonical version of this post?
+
+This post's canonical URL is https://igorganapolsky.github.io/trading/2026/01/22/lessons-learned/.
+
+*Day 86/90 complete. 4 to go.*

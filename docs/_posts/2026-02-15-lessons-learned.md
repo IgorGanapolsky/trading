@@ -1,31 +1,31 @@
 ---
 layout: "post"
-title: "Day 85: What We Learned - January 21, 2026"
+title: "Day 110: What We Learned - February 15, 2026"
 description: "Today was a wake-up call. Two critical issues surfaced that could have derailed our entire trading operation. Here's what went wrong and how we're fixing it."
-date: "2026-01-21"
-last_modified_at: "2026-01-21"
+date: "2026-02-15"
+last_modified_at: "2026-02-15"
 image: "/assets/og-image.png"
 tags:
   - "lessons-learned"
   - "ai-trading"
   - "rag"
   - "building-in-public"
-day_number: 85
-lessons_count: 9
-critical_count: 6
+day_number: 110
+lessons_count: 29
+critical_count: 8
 excerpt: "Today was a wake-up call. Two critical issues surfaced that could have derailed our entire trading operation. Here's what went wrong and how we're..."
 faq: true
 questions:
-  - question: "What did we learn on Day 85?"
-    answer: "9 lessons captured (6 critical, 2 high). Today was a wake-up call. Two critical issues surfaced that could have derailed our entire trading operation. Here's what went wrong and how we're fixing it."
+  - question: "What did we learn on Day 110?"
+    answer: "29 lessons captured (8 critical, 10 high). Today was a wake-up call. Two critical issues surfaced that could have derailed our entire trading operation. Here's what went wrong and how we're fixing it."
   - question: "How does this system remember lessons learned?"
     answer: "We store each lesson in a RAG index and retrieve similar past incidents before future trades and engineering changes."
   - question: "Where can I browse the full code and history?"
     answer: "The full repository and daily updates are published publicly on GitHub and GitHub Pages."
 ---
-# Day 85 of 90 | Wednesday, January 21, 2026
+# Day 110 of 90 | Sunday, February 15, 2026
 
-**5 days remaining** in our journey to build a profitable AI trading system.
+**0 days remaining** in our journey to build a profitable AI trading system.
 
 Today was a wake-up call. Two critical issues surfaced that could have derailed our entire trading operation. Here's what went wrong and how we're fixing it.
 
@@ -35,58 +35,78 @@ Today was a wake-up call. Two critical issues surfaced that could have derailed 
 
 *These are the moments that test us. Critical issues that demanded immediate attention.*
 
-### Strategy Violation Crisis - Multiple Rogue Workflows
+### Skipped Prevention Step in Compound Engineering
 
-On Jan 21, 2026, the trading system LOST $70.13 due to executing trades that VIOLATE CLAUDE.md strategy mandate. The system bought SPY SHARES and SOFI OPTIONS when it should ONLY execute iron condors 
+PR
 
-**Key takeaway:** Portfolio: $5,028.
+### SOFI Position Held Through Earnings Blackout
 
-### CTO Failure - Stale Data Led to Misinformation
+SOFI CSP (Feb 6 expiration) was held despite Jan 30 earnings date approaching.
 
-CTO (Claude) gave CEO incorrect P/L information multiple times:
+**Key takeaway:** Put option loss: -$13.
 
-**Key takeaway:** Claimed $0.
+### The Four Pillars of Wealth Building
 
-### Position Imbalance Crisis - Orphan Long Puts
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    FINANCIAL INDEPENDENCE                    │
+│                       $6K/month after tax                    │
+├─
 
-Portfolio lost $329.42 (-6.59%) due to position imbalance:
+**Key takeaway:** Result after 7 years: **~$215,000** (2.
 
-**Key takeaway:** The orphan longs are decaying and losing money without corresponding short premium to offset.
+### CTO Lied About Secret Upload Success
 
-### SOFI Position Blocked All Trading - Buying Power Crisis
+CTO claimed "Success! Uploaded secret ANTHROPIC_API_KEY" when the actual key was empty. The wrangler command succeeded technically, but uploaded an empty string because the .env file didn't contain th
 
-1. SOFI260213P00032000 (short put) was open with -$685 market value
+### CTO Violated Phil Town Rule 1 - Closed Positions Without ...
 
-**Key takeaway:** 1. Triggered `close-non-spy-positions.yml` workflow
+1. CEO asked about daily P/L
 
-### Position Limit - Count Contracts Not Symbols
+### Cloud RAG Cost Explosion - $98/mo vs $20/mo Budget
 
-The position limit check was counting UNIQUE SYMBOLS instead of TOTAL CONTRACTS:
+Cloud RAG bill hit $98.70/month when budget was $20/month - 5x over budget.
 
-**Key takeaway:** 3. **Log details**: Show exact positions when limit reached
+**Key takeaway:** Disabled all automated legacy RAG calls in GitHub Actions:
 
-### Partial Iron Condor Auto-Close
+### SOFI Loss Realized - Jan 14, 2026
 
-Iron condors were being placed with only PUT legs filling. CALL legs were failing silently, leaving dangerous directional positions:
+1. SOFI stock + CSP opened Day 74 (Jan 13)
+
+**Key takeaway:** System allowed trade despite CLAUDE.
+
+### Claude Hallucinated Super Bowl Date
+
+Claude wrote "It's Super Bowl weekend" on the homepage (docs/index.md) on February 1, 2026. Super Bowl LX is actually February 8, 2026 - one week later.
 
 
 ## Important Discoveries
 
 *Not emergencies, but insights that will shape how we trade going forward.*
 
-### CALL Leg Pricing Fix - Aggressive Fallbacks
+### CI Verification Honesty Protocol
 
-Iron condors were placing PUT legs successfully but CALL legs were failing:
+- Lesson: Honesty > Speed. Always verify before claiming.
 
-### Iron Condor Optimization Research - 86% Win Rate Strategy
+### Trade Data Source Priority Bug - Webhook Missing Alpaca Data
 
-- [Options Trading IQ: Iron Condor Success Rate](https://optionstradingiq.com/iron-condor-success-rate/)
-- [Project Finance: Iron Condor Management (71,417 trades)](https://www.projectfinance.com/iron
+**Status**: FIXED
+
+### Iron Condor Win Rate Improvement Research
+
+Current win rate is 33.3% (2/6 trades) vs target 80%+. Need to improve.
 
 
 ## Quick Wins & Refinements
 
-- **Day 2 Crisis - Position Imbalance and Missing CALL Legs** - Two consecutive days of trading crises:...
+- **Phil Town Valuations - December 2025** - This lesson documents Phil Town valuations generated on December 4, 2025 during the $100K paper trad...
+- **SPX Tax Advantage Over SPY** - SPY options = equity options = 100% short-term capital gains tax....
+- **Theta Scaling Plan - December 2025** - This lesson documents the theta scaling strategy from December 2, 2025 when account equity was $6,00...
+- **Deep Operational Integrity Audit - 14 Issues Found** - LL-240: Deep Operational Integrity Audit - 14 Issues Found
+
+ Date
+
+January 16, 2026 (Friday, 6:00 PM...
 
 
 ---
@@ -95,10 +115,10 @@ Iron condors were placing PUT legs successfully but CALL legs were failing:
 
 | What | Count |
 |------|-------|
-| Lessons Learned | **9** |
-| Critical Issues | 6 |
-| High Priority | 2 |
-| Improvements | 1 |
+| Lessons Learned | **29** |
+| Critical Issues | 8 |
+| High Priority | 10 |
+| Improvements | 11 |
 
 ---
 
@@ -154,7 +174,7 @@ Want to follow along? Check out the [full project on GitHub](https://github.com/
 
 ### What did we learn today?
 
-9 lessons captured (6 critical, 2 high). Today was a wake-up call. Two critical issues surfaced that could have derailed our entire trading operation. Here's what went wrong and how we're fixing it.
+29 lessons captured (8 critical, 10 high). Today was a wake-up call. Two critical issues surfaced that could have derailed our entire trading operation. Here's what went wrong and how we're fixing it.
 
 ### How do you keep these lessons from getting lost?
 
@@ -162,6 +182,6 @@ We index every lesson into a RAG corpus and query it before new trades and major
 
 ### Where is the canonical version of this post?
 
-This post's canonical URL is https://igorganapolsky.github.io/trading/2026/01/21/lessons-learned/.
+This post's canonical URL is https://igorganapolsky.github.io/trading/2026/02/15/lessons-learned/.
 
-*Day 85/90 complete. 5 to go.*
+*Day 110/90 complete. 0 to go.*

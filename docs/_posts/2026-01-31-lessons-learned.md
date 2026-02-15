@@ -1,13 +1,28 @@
 ---
-layout: post
+layout: "post"
 title: "Day 95: What We Learned - January 31, 2026"
-date: 2026-01-31
+description: "Markets are closed, but the learning never stops. While other traders take the weekend off, we're refining our edge."
+date: "2026-01-31"
+last_modified_at: "2026-01-31"
+image: "/assets/og-image.png"
+tags:
+  - "lessons-learned"
+  - "ai-trading"
+  - "rag"
+  - "building-in-public"
 day_number: 95
-lessons_count: 5
+lessons_count: 3
 critical_count: 0
-excerpt: "Markets are closed, but the learning never stops. While other traders take the weekend off, we're refining our edge...."
+excerpt: "Markets are closed, but the learning never stops. While other traders take the weekend off, we're refining our edge."
+faq: true
+questions:
+  - question: "What did we learn on Day 95?"
+    answer: "3 lessons captured (0 critical, 3 high). Markets are closed, but the learning never stops. While other traders take the weekend off, we're refining our edge."
+  - question: "How does this system remember lessons learned?"
+    answer: "We store each lesson in a RAG index and retrieve similar past incidents before future trades and engineering changes."
+  - question: "Where can I browse the full code and history?"
+    answer: "The full repository and daily updates are published publicly on GitHub and GitHub Pages."
 ---
-
 # Day 95 of 90 | Saturday, January 31, 2026
 
 **0 days remaining** in our journey to build a profitable AI trading system.
@@ -20,17 +35,17 @@ Markets are closed, but the learning never stops. While other traders take the w
 
 *Not emergencies, but insights that will shape how we trade going forward.*
 
+### Iron Condor Management - 71,417 Trade Study
+
+Analysis of 71,417 iron condor trades on SPY (2007-2017) reveals optimal management strategies.
+
 ### VIX-Based Iron Condor Entry Rules
 
 Research-backed entry rules for iron condors based on VIX levels and IV rank.
 
-### Portfolio sync failed - blind trading risk
+### XSP vs SPY - Section 1256 Tax Optimization
 
-Cannot verify account state. Error: API Error
-
-### Portfolio sync failed - blind trading risk
-
-Cannot verify account state. Error: API Error
+XSP (Mini-SPX) options qualify for Section 1256 tax treatment (60/40), potentially saving 25%+ on taxes vs SPY options.
 
 
 ---
@@ -39,9 +54,9 @@ Cannot verify account state. Error: API Error
 
 | What | Count |
 |------|-------|
-| Lessons Learned | **5** |
+| Lessons Learned | **3** |
 | Critical Issues | 0 |
-| High Priority | 5 |
+| High Priority | 3 |
 | Improvements | 0 |
 
 ---
@@ -54,7 +69,7 @@ Every lesson we learn is captured, analyzed, and stored by our AI infrastructure
 flowchart LR
     subgraph Learning["Learning Pipeline"]
         ERROR["Error/Insight<br/>Detected"] --> CLAUDE["Claude Opus<br/>(Analysis)"]
-        CLAUDE --> RAG["legacy RAG<br/>(Storage)"]
+        CLAUDE --> RAG["LanceDB RAG<br/>(Storage)"]
         RAG --> BLOG["GitHub Pages<br/>(Publishing)"]
         BLOG --> DEVTO["Dev.to<br/>(Distribution)"]
     end
@@ -65,7 +80,7 @@ flowchart LR
 | Component | Role in Learning |
 |-----------|------------------|
 | **Claude Opus 4.5** | Analyzes errors, extracts insights, determines severity |
-| **legacy RAG** | Stores lessons with 768D embeddings for semantic search |
+| **LanceDB RAG** | Stores lessons with 768D embeddings for semantic search |
 | **Gemini 2.0 Flash** | Retrieves relevant past lessons before new trades |
 | **OpenRouter (DeepSeek)** | Cost-effective sentiment analysis and research |
 
@@ -93,5 +108,19 @@ We're building an autonomous AI trading system that learns from every mistake. T
 Want to follow along? Check out the [full project on GitHub](https://github.com/IgorGanapolsky/trading).
 
 ---
+
+## FAQ
+
+### What did we learn today?
+
+3 lessons captured (0 critical, 3 high). Markets are closed, but the learning never stops. While other traders take the weekend off, we're refining our edge.
+
+### How do you keep these lessons from getting lost?
+
+We index every lesson into a RAG corpus and query it before new trades and major engineering changes.
+
+### Where is the canonical version of this post?
+
+This post's canonical URL is https://igorganapolsky.github.io/trading/2026/01/31/lessons-learned/.
 
 *Day 95/90 complete. 0 to go.*

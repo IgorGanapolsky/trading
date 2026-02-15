@@ -160,24 +160,6 @@
     "file": "rag_knowledge/lessons_learned/LL-306_CTO_Ignores_Surfaced_RAG_Lessons_Jan25.md"
   },
   {
-    "id": "LL-306_RAG_Learning_Synthesis_Jan25",
-    "title": "LL-306: RAG Learning Synthesis - Iron Condor Adjustments",
-    "date": "January 25, 2026",
-    "category": "Strategy / RAG Learning",
-    "severity": "HIGH",
-    "summary": "## Context During Ralph Mode iteration 21, queried RAG and synthesized key learnings from recent lessons. ## Key Learnings from RAG ### From LL-299: Iron Condor Adjustment Strategies | Trigger | Action | | --------------------------- | --------------------------- | | Short strike at 25-30 delta | Consider adjustment | | Untested side < 15 delta | Must roll closer | | < 7 DTE | NO adjustments - jus",
-    "tags": [
-      "rag",
-      "learning",
-      "synthesis",
-      "iron-condor",
-      "adjustment",
-      "lint"
-    ],
-    "content": "# LL-306: RAG Learning Synthesis - Iron Condor Adjustments\n\n**Date**: January 25, 2026\n**Category**: Strategy / RAG Learning\n**Severity**: HIGH\n\n## Context\n\nDuring Ralph Mode iteration 21, queried RAG and synthesized key learnings from recent lessons.\n\n## Key Learnings from RAG\n\n### From LL-299: Iron Condor Adjustment Strategies\n\n**Critical insight**: When tested, roll the UNTESTED side closer (not the tested side).\n\n| Trigger                     | Action                      |\n| --------------------------- | --------------------------- |\n| Short strike at 25-30 delta | Consider adjustment         |\n| Untested side < 15 delta    | Must roll closer            |\n| < 7 DTE                     | NO adjustments - just close |\n| Both sides threatened       | Close position immediately  |\n\n**Example adjustment**:\n\n- SPY rallies \u2192 call side tested\n- Roll put spread UP (closer to current price)\n- Collect additional credit to lower cost basis\n\n### From LL-305: CI Lint Best Practices\n\n**Key insight**: Run `ruff check .` on entire repo, not just `src/`.\n\nAvoid ambiguous variable names:\n\n- \u274c `l` (looks like `1` or `|`)\n- \u274c `O` (looks like `0`)\n- \u274c `I` (looks like `l` or `1`)\n- \u2705 `line`, `output`, `index`\n\n## Applied Learnings\n\n1. **Verified lint on entire repo** - per LL-305 guidance\n2. **Updated LL-302** - ML model now \u03b1=11.0, posterior=0.917\n3. **Understood adjustment rules** - will apply when first iron condor is tested\n\n## ML Model Update\n\nAfter this session:\n\n- Posterior: 0.917 (exceeds 0.90 target)\n- test pattern: +0.90 (strongest signal)\n- rag pattern: +0.10 (new feature)\n\n## Tags\n\n`rag`, `learning`, `synthesis`, `iron-condor`, `adjustment`, `lint`",
-    "file": "rag_knowledge/lessons_learned/LL-306_RAG_Learning_Synthesis_Jan25.md"
-  },
-  {
     "id": "LL-302_RLHF_Thompson_Sampling_Model_Jan24",
     "title": "LL-302: RLHF Thompson Sampling Model for CTO Improvement",
     "date": "January 24, 2026",
@@ -973,61 +955,6 @@
     "file": "rag_knowledge/lessons_learned/ll_002_theta_scaling_plan_dec2025.md"
   },
   {
-    "id": "backtests/backtest_delta_20260208",
-    "title": "Backtest Research: DELTA",
-    "date": "2026-02-08",
-    "category": "backtests",
-    "severity": "",
-    "summary": "### Key Insights from Related Data - A hypothetical manual backtest of SPY iron condors (unspecified deltas, assumed ~**20-delta** range based on typical setups with market crash drawdown) over ~3 years (2022\u20132024) showed: | Metric | Value | - win_rate: None - avg_profit: None - max_drawdown: None - profit_factor: None - sample_size: 34",
-    "tags": [],
-    "content": "# Backtest Research: DELTA\n\n**Query**: Historical backtest of SPY iron condors: compare 10-delta vs 15-delta vs 20-delta short strikes. What win rate and profit factor does each achieve over the past 5 years?\n\n**Findings**: No direct backtests comparing **10-delta**, **15-delta**, and **20-delta short strikes** for SPY iron condors over the past 5 years (approximately 2021\u20132025) appear in available sources, limiting precise quantitative results.\n\n### Key Insights from Related Data\n- A hypothetical manual backtest of SPY iron condors (unspecified deltas, assumed ~**20-delta** range based on typical setups with market crash drawdown) over ~3 years (2022\u20132024) showed:\n  | Metric              | Value                  |\n\n**Optimal Value**: N/A\n\n**Metrics**:\n- win_rate: None\n- avg_profit: None\n- max_drawdown: None\n- profit_factor: None\n- sample_size: 34\n\n**Confidence**: 75%\n\n**Sources**: https://www.jenova.ai/en/resources/ai-options-backtesting-agent, https://www.daystoexpiry.com/blog/options-backtesting-guide, https://massive.com/blog/build-an-iron-condor-screener-with-massive/\n\n**Date**: 2026-02-08",
-    "file": "rag_knowledge/backtests/backtest_delta_20260208.md"
-  },
-  {
-    "id": "backtests/backtest_dte_20260208",
-    "title": "Backtest Research: DTE",
-    "date": "2026-02-08",
-    "category": "backtests",
-    "severity": "",
-    "summary": "- win_rate: 68.0 - avg_profit: None - max_drawdown: None - profit_factor: None - sample_size: 0",
-    "tags": [],
-    "content": "# Backtest Research: DTE\n\n**Query**: SPY iron condor backtest: compare 30 DTE vs 45 DTE vs 60 DTE expiration. Which DTE has the best risk-adjusted returns and win rate?\n\n**Findings**: **No direct backtests comparing 30 DTE, 45 DTE, and 60 DTE iron condors on SPY are available in the provided results, limiting precise quantitative comparison.** Available data from related SPX/SPY iron condor studies (primarily shorter DTE or single-DTE benchmarks) suggest **45 DTE (managed at 21 DTE) offers superior risk-adjusted returns and win rate** among the queried durations, based on a 10-year analysis showing normalized returns of 2% (vs. strangles at 15%), a ~68% win rate in combined p\n\n**Optimal Value**: 30 DTE\n\n**Metrics**:\n- win_rate: 68.0\n- avg_profit: None\n- max_drawdown: None\n- profit_factor: None\n- sample_size: 0\n\n**Confidence**: 80%\n\n**Sources**: https://optionalpha.com/videos/new-1dte-options-trading-strategy-part-2, https://www.tastylive.com/shows/market-measures/episodes/2025-0-dte-in-depth-analysis-why-iron-condors-doubled-long-term-average-returns-01-12-2026, https://greekslab.com/blog/spx-vs-spy-vs-qqq-choosing-the-best-underlying-for-0-dte-trading\n\n**Date**: 2026-02-08",
-    "file": "rag_knowledge/backtests/backtest_dte_20260208.md"
-  },
-  {
-    "id": "backtests/backtest_event_20260208",
-    "title": "Backtest Research: EVENT",
-    "date": "2026-02-08",
-    "category": "backtests",
-    "severity": "",
-    "summary": "A tastylive analysis of multi-year data on **0DTE iron condors** (typically $20 wide, 20 delta wings on SPX/SPY) reveals: - **Win rates drop** sharply on FOMC days versus non-event periods, where results show 100% winners in some datasets with strong - win_rate: 72.0 - avg_profit: None - max_drawdown: None - profit_factor: 1.8 - sample_size: 200",
-    "tags": [],
-    "content": "# Backtest Research: EVENT\n\n**Query**: Iron condor performance around FOMC meetings: should you avoid trading 3 days before Fed announcements? Historical win rate comparison.\n\n**Findings**: **Historical data on 0DTE iron condors around FOMC meetings shows significantly lower win rates and larger losses compared to regular days, suggesting traders should avoid entering positions close to Fed announcements, including 3 days prior.** [1]\n\nA tastylive analysis of multi-year data on **0DTE iron condors** (typically $20 wide, 20 delta wings on SPX/SPY) reveals:\n- **Win rates drop** sharply on FOMC days versus non-event periods, where results show 100% winners in some datasets with strong\n\n**Optimal Value**: N/A\n\n**Metrics**:\n- win_rate: 72.0\n- avg_profit: None\n- max_drawdown: None\n- profit_factor: 1.8\n- sample_size: 200\n\n**Confidence**: 85%\n\n**Sources**: https://www.youtube.com/watch?v=Jz51hDwku3c, https://www.moomoo.com/us/learn/detail-long-iron-condor-66283-230171030, https://www.interactivebrokers.com/campus/glossary-terms/iron-condor-2/\n\n**Date**: 2026-02-08",
-    "file": "rag_knowledge/backtests/backtest_event_20260208.md"
-  },
-  {
-    "id": "backtests/backtest_exit_20260208",
-    "title": "Backtest Research: EXIT",
-    "date": "2026-02-08",
-    "category": "backtests",
-    "severity": "",
-    "summary": "### Key Backtest Metrics and Rationale No search results provide direct head-to-head backtests on SPY iron condors comparing these exact exit strategies with full quantitative metrics. However, synthesizing trader consensus and a - win_rate: None - avg_profit: None - max_drawdown: None - profit_factor: None - sample_size: None",
-    "tags": [],
-    "content": "# Backtest Research: EXIT\n\n**Query**: Iron condor exit strategy backtest: close at 50% profit vs 75% profit vs hold to expiration. Which exit strategy maximizes risk-adjusted returns?\n\n**Findings**: **Closing iron condor trades at 50% of maximum profit maximizes risk-adjusted returns compared to 75% profit or holding to expiration, based on common trading practices that prioritize higher win rates and reduced gamma risk over maximizing per-trade profit.**[3][1][7]\n\n### Key Backtest Metrics and Rationale\nNo search results provide direct head-to-head backtests on SPY iron condors comparing these exact exit strategies with full quantitative metrics. However, synthesizing trader consensus and a\n\n**Optimal Value**: 50% of max profit\n\n**Metrics**:\n- win_rate: None\n- avg_profit: None\n- max_drawdown: None\n- profit_factor: None\n- sample_size: None\n\n**Confidence**: 70%\n\n**Sources**: https://www.youtube.com/watch?v=IPDJ4nDiDCo, https://www.wallstreetzen.com/blog/reverse-iron-condor/, https://www.tradestation.com/insights/2025/10/28/iron-condor-strategy-for-trading-neutral-markets-tradestation/\n\n**Date**: 2026-02-08",
-    "file": "rag_knowledge/backtests/backtest_exit_20260208.md"
-  },
-  {
-    "id": "backtests/backtest_vix_20260208",
-    "title": "Backtest Research: VIX",
-    "date": "2026-02-08",
-    "category": "backtests",
-    "severity": "",
-    "summary": "Iron condors, as short volatility strategies, collect premium best when implied volatility (IV, proxied by VIX) is **moderate**, enabling sufficient credit without excessive breakout risk[2][5][6]. Specific win rate data by VIX bucket is limited, but sources converge on these regimes: | VIX Regime | Performance - win_rate: None - avg_profit: None - max_drawdown: None - profit_factor: None - sample",
-    "tags": [],
-    "content": "# Backtest Research: VIX\n\n**Query**: Iron condor performance by VIX level: VIX under 15 vs 15-20 vs 20-25 vs above 25. Which VIX regime has the best iron condor win rate?\n\n**Findings**: **Moderate VIX levels of 15-25 show the best conditions for iron condor win rates and overall performance, outperforming low (<15) and very high (>25) regimes based on available data.**\n\nIron condors, as short volatility strategies, collect premium best when implied volatility (IV, proxied by VIX) is **moderate**, enabling sufficient credit without excessive breakout risk[2][5][6]. Specific win rate data by VIX bucket is limited, but sources converge on these regimes:\n\n| VIX Regime | Performance\n\n**Optimal Value**: VIX 15-20\n\n**Metrics**:\n- win_rate: None\n- avg_profit: None\n- max_drawdown: None\n- profit_factor: None\n- sample_size: 0\n\n**Confidence**: 75%\n\n**Sources**: https://www.strike.money/options/reverse-iron-condor, https://tradefundrr.com/iron-condor-options-strategy/, https://www.tradestation.com/learn/options-education-center/navigating-market-chaos-options-strategies-for-volatility-spikes/\n\n**Date**: 2026-02-08",
-    "file": "rag_knowledge/backtests/backtest_vix_20260208.md"
-  },
-  {
     "id": "blogs/phil_town/phil_town_blog_posts",
     "title": "Phil Town Blog Posts and Articles - Rule #1 Investing",
     "date": "",
@@ -1083,17 +1010,6 @@
     "file": "rag_knowledge/lessons_learned/LL-195.md"
   },
   {
-    "id": "LL-268_RAG_Testing_Evaluation_Jan21",
-    "title": "LL-268: RAG Testing Evaluation - Retrieval Accuracy and Grounding",
-    "date": "2026-01-21",
-    "category": "Testing",
-    "severity": "HIGH",
-    "summary": "Evaluated Medium article \"RAG Testing \u2014 Validating Retrieval Accuracy, Grounding, and Context Leakage\" by Gunashekar R (Jan 2026). **Verdict: VALUABLE** \u2014 addresses critical gap in our RAG testing.",
-    "tags": [],
-    "content": "# LL-268: RAG Testing Evaluation - Retrieval Accuracy and Grounding\n\n**ID**: LL-268\n**Date**: 2026-01-21\n**Severity**: HIGH\n**Category**: Testing\n\n## Summary\n\nEvaluated Medium article \"RAG Testing \u2014 Validating Retrieval Accuracy, Grounding, and Context Leakage\" by Gunashekar R (Jan 2026). **Verdict: VALUABLE** \u2014 addresses critical gap in our RAG testing.\n\n## Key Findings\n\n### What We're Missing\n\n| Testing Area           | Current State                                  | Risk                                |\n| ---------------------- | ---------------------------------------------- | ----------------------------------- |\n| Retrieval Accuracy     | \u274c No Precision@k, Recall@k, MRR, nDCG metrics | RAG could return irrelevant lessons |\n| Grounding/Faithfulness | \u274c No checks                                   | Generated advice may hallucinate    |\n| Context Leakage        | \u274c No tests                                    | Sensitive data could be exposed     |\n| Regression Testing     | \u274c No golden set                               | RAG degradation goes undetected     |\n\n### What We Already Have (No Changes Needed)\n\n- legacy RAG with text-embedding-004 (768-dim)\n- Hybrid search (semantic + keyword)\n- TF-IDF local fallback\n- Basic smoke tests for imports\n\n## Decision\n\n**IMPLEMENT** basic RAG evaluation tests:\n\n1. Add RAGAS framework to requirements.txt\n2. Create golden test set (10-20 query-answer pairs)\n3. Weekly CI evaluation job\n\n## Implementation Priority\n\n**Medium** \u2014 Important for reliability but not blocking trading operations.\n\n## Key Metrics to Track\n\n- Precision@5: Are retrieved docs relevant?\n- Faithfulness: Is output grounded in context?\n- Hallucination Rate: Track unsupported claims\n\n## Sources\n\n- [RAG Evaluation 2026 Metrics](https://labelyourdata.com/articles/llm-fine-tuning/rag-evaluation)\n- [RAGAS Framework](https://arxiv.org/abs/2309.15217)\n- [Evidently AI RAG Guide](https://www.evidentlyai.com/llm-guide/rag-evaluation)\n\n## Tags\n\nrag, testing, evaluation, retrieval, grounding, legacy-rag, valuable",
-    "file": "rag_knowledge/lessons_learned/LL-268_RAG_Testing_Evaluation_Jan21.md"
-  },
-  {
     "id": "LL-272_SOFI_Position_Blocked_Trading_Jan21",
     "title": "LL-272: SOFI Position Blocked All Trading - Buying Power Crisis",
     "date": "2026-01-21",
@@ -1138,17 +1054,6 @@
     "file": "rag_knowledge/lessons_learned/LL-291_Alpaca_Close_Position_Bug_Jan22.md"
   },
   {
-    "id": "LL-291_CTO_Three_Day_Crisis_Jan22",
-    "title": "LL-291: CTO Three-Day Crisis - Position Accumulation and PDT Lock",
-    "date": "2026-01-22",
-    "category": "System Failure, Risk Management, CTO Accountability",
-    "severity": "CRITICAL",
-    "summary": "## Executive Summary The AI trading system accumulated 8 option contracts when the maximum should have been 4, resulting in a -$1,480 loss on a single position. When attempts were made to close the positions, PDT (Pattern Day Trading) restrictions blocked all close orders. The CEO lost trust in the CTO (Claude) after three days of crisis mode. ## Timeline of Failure ### Day 1-2 (Jan 20-21, 2026) -",
-    "tags": [],
-    "content": "# LL-291: CTO Three-Day Crisis - Position Accumulation and PDT Lock\n\n**Date**: 2026-01-22\n**Severity**: CRITICAL\n**Category**: System Failure, Risk Management, CTO Accountability\n**Status**: UNRESOLVED - Positions still stuck\n\n## Executive Summary\n\nThe AI trading system accumulated 8 option contracts when the maximum should have been 4, resulting in a -$1,480 loss on a single position. When attempts were made to close the positions, PDT (Pattern Day Trading) restrictions blocked all close orders. The CEO lost trust in the CTO (Claude) after three days of crisis mode.\n\n## Timeline of Failure\n\n### Day 1-2 (Jan 20-21, 2026)\n\n- Iron condor trader placed multiple partial fills\n- Position limit check was counting **unique symbols** instead of **total contracts**\n- System accumulated: 8 long $658 puts, 4 long $570 puts, 4 short $565 puts, 2 short $653 puts\n- This is NOT a proper iron condor structure\n\n### Day 3 (Jan 22, 2026)\n\n- Loss on SPY260220P00658000 reached -$1,480\n- CTO attempted multiple fixes:\n  1. Fixed position limit to count contracts (PR #2658)\n  2. Disabled daily-trading workflow\n  3. Tried close_position() API - failed with margin error\n  4. Tried market sell orders - failed with margin error\n  5. Tried close-shorts-first strategy - failed with PDT\n  6. All methods blocked by PDT or Alpaca API bugs\n\n## Root Causes\n\n### 1. Position Limit Bug (LL-280)\n\n```python\n# WRONG - counted unique symbols (4)\nposition_count = len(spy_option_positions)\n\n# CORRECT - count total contracts (8+4+4+2 = 18)\ntotal_contracts = sum(abs(int(float(p.qty))) for p in spy_option_positions)\n```\n\n### 2. Race Condition in Workflow\n\n- Multiple GitHub Actions runs could pass position check simultaneously\n- Position check happened AFTER RAG queries (slow), allowing races\n- Fix: Move position check to VERY START of execute()\n\n### 3. Alpaca API Bug\n\n- `close_position()` for LONG puts treated as opening SHORT puts\n- Required $56,500-$113,000 margin for a CLOSE operation\n- This is fundamentally incorrect behavior from Alpaca\n\n### 4. PDT Restriction\n\n- Account has $4,207 (under $25,000 PDT threshold)\n- 3 day trades already used in 5-day rolling period\n- ALL close attempts blocked, even single contracts\n\n## Financial Impact\n\n| Metric                | Value                       |\n| --------------------- | --------------------------- |\n| Account Equity        | $4,207.46                   |\n| Total P/L             | -$792.54 (-15.85%)          |\n| Largest Loss Position | SPY260220P00658000: -$1,480 |\n| Contracts Stuck       | 18 total                    |\n\n## What the CTO Should Have Done\n\n1. **BEFORE deploying iron condor trader**: Tested position limits with unit tests\n2. **BEFORE live trading**: Paper tested with simulated partial fills\n3. **After first partial fill**: Immediately detected incomplete condor structure\n4. **After position accumulation**: Closed positions SAME DAY before PDT restriction hit\n5. **Throughout crisis**: Provided honest assessments instead of optimistic claims\n\n## What the CTO Actually Did Wrong\n\n1. Deployed position limit code that counted symbols instead of contracts\n2. Did not catch the accumulation for 2+ days\n3. Made multiple \"fix\" attempts that all failed\n4. Did not account for PDT restrictions in recovery plan\n5. Kept trying API approaches when PDT was the real blocker\n6. Lost CEO's trust through repeated failures\n\n## Prevention Measures\n\n### Immediate (Implemented)\n\n- [x] Position check moved to START of execute() function\n- [x] Position check now blocks if ANY contracts exist (not just 4+)\n- [x] Daily trading workflow DISABLED\n- [x] LL-290 lesson recorded\n\n### Required Before Re-enabling Trading\n\n- [ ] PDT restriction clears (wait for day trades to roll off)\n- [ ] Close ALL existing positions\n- [ ] Add unit test: `test_position_limit_counts_contracts_not_symbols`\n- [ ] Add unit test: `test_position_check_blocks_race_conditions`\n- [ ] Add integration test: `test_partial_fill_handling`\n- [ ] CEO approval to re-enable\n\n### Long-term\n\n- [ ] Implement position monitoring alerts (Slack/email when positions exist)\n- [ ] Add PDT tracking to system_state.json\n- [ ] Create \"recovery mode\" that prioritizes closing over opening\n- [ ] Consider upgrading to $25K+ account to remove PDT restrictions\n\n## Lessons for Future CTOs\n\n1. **Test edge cases** - Partial fills, race conditions, API failures\n2. **Count correctly** - Contracts, not symbols\n3. **Know broker restrictions** - PDT limits, margin requirements\n4. **Act fast** - Close bad positions same day, not days later\n5. **Be honest** - Don't promise fixes you can't deliver\n6. **Earn trust** - Through actions, not words\n\n## Current Status\n\n**UNRESOLVED** - Positions remain stuck due to PDT restriction.\n\nNext action: Wait for PDT counter to roll (tomorrow or day after), then close positions.\n\n## CEO Feedback\n\n> \"I don't trust you. Our system has been in crisis mode for three days.\"\n\nThis feedback is deserved. The CTO failed to prevent, detect, and recover from a preventable failure.\n\n---\n\n_This lesson must be queried before ANY trading operations resume._",
-    "file": "rag_knowledge/lessons_learned/LL-291_CTO_Three_Day_Crisis_Jan22.md"
-  },
-  {
     "id": "LL-300_RAG_Webhook_RAG_Query_Fix_Jan23",
     "title": "LL-300: RAG Webhook RAG Query Fix - Irrelevant Lessons Returned",
     "date": "2026-01-23",
@@ -1158,17 +1063,6 @@
     "tags": [],
     "content": "# LL-300: RAG Webhook RAG Query Fix - Irrelevant Lessons Returned\n\n**ID**: LL-300\n**Date**: 2026-01-23\n**Severity**: MEDIUM\n**Category**: Integration Bug\n**Status**: FIXED\n\n## What Happened\n\nRAG Webhook returned irrelevant failure lessons (LL-272, LL-282, LL-223) when user asked \"How much money did we make today and why?\" on a day with no trades.\n\n## Root Cause\n\n1. On no-trade days, `query_rag_hybrid()` used user's raw query\n2. Query \"How much money did we make today\" matched keywords in failure lessons\n3. RAG semantic search found \"money\", \"make\", \"today\" in failure case studies\n4. Returned random failure lessons instead of relevant trading context\n\n## The Fix\n\nIn `src/agents/rag_webhook.py`:\n\n```python\n# When no trades, use relevant query instead of user query\nif trades_today == 0:\n    rag_query = \"trading signals market conditions iron condor entry criteria\"\nelse:\n    rag_query = user_query\nresults, source = query_rag_hybrid(rag_query, top_k=3)\n```\n\n## Key Insight\n\nRAG semantic search matches tokens, not intent. When user asks about P/L:\n\n- If trades exist \u2192 use their query to find relevant context\n- If no trades \u2192 query for \"why no trades\" context (signals, market conditions)\n\n## Prevention\n\n1. Always consider context when routing RAG queries\n2. No-trade days need different query strategy than trade days\n3. Test RAG Webhook with various edge cases (no trades, market closed, etc.)\n\n## Related\n\n- LL-226: Trade Data Source Priority Bug\n- LL-273: CTO Failure - Stale Data Led to Misinformation\n\n## Tags\n\nrag-webhook, rag, webhook, bug-fix, query-routing",
     "file": "rag_knowledge/lessons_learned/LL-300_RAG_Webhook_RAG_Query_Fix_Jan23.md"
-  },
-  {
-    "id": "LL-301_RLHF_Training_Pipeline_Complete_Jan23",
-    "title": "LL-301: RLHF Feedback Training Pipeline Completion",
-    "date": "2026-01-23",
-    "category": "ML Infrastructure",
-    "severity": "IMPROVEMENT",
-    "summary": "## What Was Missing The RLHF feedback capture pipeline was incomplete: - `capture_feedback.sh` hook detected thumbs up/down - Hook called `scripts/train_from_feedback.py` which DID NOT EXIST - Feedback model `models/ml/feedback_model.json` existed but wasn't being updated ## The Fix Created `scripts/train_from_feedback.py` with: 1. **Thompson Sampling** (Beta-Bernoulli conjugate prior) - Positive ",
-    "tags": [],
-    "content": "# LL-301: RLHF Feedback Training Pipeline Completion\n\n**ID**: LL-301\n**Date**: 2026-01-23\n**Severity**: IMPROVEMENT\n**Category**: ML Infrastructure\n**Status**: COMPLETED\n\n## What Was Missing\n\nThe RLHF feedback capture pipeline was incomplete:\n\n- `capture_feedback.sh` hook detected thumbs up/down\n- Hook called `scripts/train_from_feedback.py` which DID NOT EXIST\n- Feedback model `models/ml/feedback_model.json` existed but wasn't being updated\n\n## The Fix\n\nCreated `scripts/train_from_feedback.py` with:\n\n1. **Thompson Sampling** (Beta-Bernoulli conjugate prior)\n   - Positive feedback: \u03b1 += 1\n   - Negative feedback: \u03b2 += 1\n   - Posterior = \u03b1 / (\u03b1 + \u03b2)\n\n2. **Feature Extraction**\n   - Extracts keywords from context (test, ci, trade, rag, pr, etc.)\n   - Updates feature_weights with \u00b10.1 per feedback\n\n3. **Full Test Coverage**\n   - 10 tests in `tests/test_train_from_feedback.py`\n\n## ML Pipeline Now Complete\n\n```\nUser feedback (thumbs up/down)\n    \u2193\ncapture_feedback.sh (hook)\n    \u2193\ntrain_from_feedback.py\n    \u2193\nfeedback_model.json (\u03b1/\u03b2, feature_weights)\n    \u2193\nsurface_feedback_patterns.sh (session start display)\n```\n\n## Current Model State\n\n- \u03b1=4.0, \u03b2=1.0 (Posterior: 0.80)\n- Positive patterns: test(+0.20), ci(+0.10), entry(+0.10)\n- 114 thumbs up, 77 thumbs down (59.69% satisfaction)\n\n## Future Improvement\n\nConsider integrating feedback model into trade gate:\n\n- Query feedback model before trades\n- Adjust confidence based on feature weights\n- Warn when patterns match negative features\n\n## Tags\n\nml, rlhf, thompson-sampling, feedback, infrastructure",
-    "file": "rag_knowledge/lessons_learned/LL-301_RLHF_Training_Pipeline_Complete_Jan23.md"
   },
   {
     "id": "LL-302_ML_RAG_Integration_Analysis_Jan23",
@@ -1224,347 +1118,6 @@
     "tags": [],
     "content": "# LL-316: PR & Branch Hygiene Session - Jan 26, 2026\n\n## Summary\n\nCompleted PR management and branch cleanup session. Fixed $30K equity calculation in sync workflow.\n\n## Actions Taken\n\n### PRs Processed\n\n- **PR #3029**: fix: Correct sync workflow to use $30K initial equity \u2705 MERGED\n- **PR #3027**: fix: Correct initial equity to $30K \u274c CLOSED (superseded by #3029)\n- **PR #3026**: fix: Correct P/L calculation \u274c CLOSED (redundant)\n- **PR #3023**: chore: Update feedback model \u274c CLOSED (redundant)\n\n### Branches Cleaned\n\n- Deleted: `claude/add-code-tasks-feature-eg36B`\n- Deleted: `claude/review-cc-relay-Crs3V`\n- Auto-deleted on merge: `claude/fix-30k-equity-ad3OE`\n- Result: Only `main` branch remains\n\n### Code Fix Applied\n\n```python\n# sync-alpaca-status.yml line 99-100\n# BEFORE: initial_equity = 5000.0\n# AFTER:  initial_equity = 30000.0\n\n# Added paper_trading preservation (LL-312 Gap 1)\n```\n\n## Known Issues\n\n- Sync Alpaca Status workflow still failing after fix\n- Detect Contract Accumulation workflow failing\n- Root cause unknown - requires GitHub Actions log viewer access\n\n## Metrics\n\n| Metric     | Before | After |\n| ---------- | ------ | ----- |\n| Open PRs   | 3      | 0     |\n| Branches   | 4      | 1     |\n| CI Passing | 6/10   | TBD   |\n\n## Tags\n\n#hygiene #branch-cleanup #pr-management #ci-fix",
     "file": "rag_knowledge/lessons_learned/LL-316_PR_Hygiene_Session_Jan26.md"
-  },
-  {
-    "id": "auto_sync_failed_feb01",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-02-01",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260201_202953\n**Date**: 2026-02-01\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\n\nCannot verify account state. Error: API Error\n\n## Context\n\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\n\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\n\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_feb01.md"
-  },
-  {
-    "id": "auto_sync_failed_feb02",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-02-02",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260202_082745\n**Date**: 2026-02-02\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\n\nCannot verify account state. Error: API Error\n\n## Context\n\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\n\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\n\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_feb02.md"
-  },
-  {
-    "id": "auto_sync_failed_feb02_2",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-02-02",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260202_144440\n**Date**: 2026-02-02\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\n\nCannot verify account state. Error: API Error\n\n## Context\n\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\n\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\n\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_feb02_2.md"
-  },
-  {
-    "id": "auto_sync_failed_feb02_3",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-02-02",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260202_144709\n**Date**: 2026-02-02\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\n\nCannot verify account state. Error: API Error\n\n## Context\n\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\n\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\n\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_feb02_3.md"
-  },
-  {
-    "id": "auto_sync_failed_feb03",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-02-03",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260203_123508\n**Date**: 2026-02-03\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\n\nCannot verify account state. Error: API Error\n\n## Context\n\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\n\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\n\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_feb03.md"
-  },
-  {
-    "id": "auto_sync_failed_feb03_2",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-02-03",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260203_123723\n**Date**: 2026-02-03\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\n\nCannot verify account state. Error: API Error\n\n## Context\n\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\n\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\n\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_feb03_2.md"
-  },
-  {
-    "id": "auto_sync_failed_feb04",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-02-04",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260204_150849\n**Date**: 2026-02-04\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\n\nCannot verify account state. Error: API Error\n\n## Context\n\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\n\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\n\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_feb04.md"
-  },
-  {
-    "id": "auto_sync_failed_feb05",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-02-05",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260205_101219\n**Date**: 2026-02-05\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\n\nCannot verify account state. Error: API Error\n\n## Context\n\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\n\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\n\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_feb05.md"
-  },
-  {
-    "id": "auto_sync_failed_feb05_2",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-02-05",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260205_105751\n**Date**: 2026-02-05\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\nCannot verify account state. Error: API Error\n\n## Context\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_feb05_2.md"
-  },
-  {
-    "id": "auto_sync_failed_feb05_3",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-02-05",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260205_110303\n**Date**: 2026-02-05\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\nCannot verify account state. Error: API Error\n\n## Context\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_feb05_3.md"
-  },
-  {
-    "id": "auto_sync_failed_feb06",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-02-06",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260206_120439\n**Date**: 2026-02-06\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\nCannot verify account state. Error: API Error\n\n## Context\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_feb06.md"
-  },
-  {
-    "id": "auto_sync_failed_feb06_2",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-02-06",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260206_120657\n**Date**: 2026-02-06\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\nCannot verify account state. Error: API Error\n\n## Context\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_feb06_2.md"
-  },
-  {
-    "id": "auto_sync_failed_feb06_3",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-02-06",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260206_151048\n**Date**: 2026-02-06\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\nCannot verify account state. Error: API Error\n\n## Context\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_feb06_3.md"
-  },
-  {
-    "id": "auto_sync_failed_feb08",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-02-08",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260208_153027\n**Date**: 2026-02-08\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\nCannot verify account state. Error: API Error\n\n## Context\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_feb08.md"
-  },
-  {
-    "id": "auto_sync_failed_feb09",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-02-09",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260209_090959\n**Date**: 2026-02-09\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\nCannot verify account state. Error: API Error\n\n## Context\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_feb09.md"
-  },
-  {
-    "id": "auto_sync_failed_feb09_2",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-02-09",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260209_091441\n**Date**: 2026-02-09\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\nCannot verify account state. Error: API Error\n\n## Context\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_feb09_2.md"
-  },
-  {
-    "id": "auto_sync_failed_feb09_3",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-02-09",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260209_101857\n**Date**: 2026-02-09\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\nCannot verify account state. Error: API Error\n\n## Context\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_feb09_3.md"
-  },
-  {
-    "id": "auto_sync_failed_feb10",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-02-10",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260210_092400\n**Date**: 2026-02-10\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\nCannot verify account state. Error: API Error\n\n## Context\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_feb10.md"
-  },
-  {
-    "id": "auto_sync_failed_feb12",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-02-12",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260212_120510\n**Date**: 2026-02-12\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\nCannot verify account state. Error: API Error\n\n## Context\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_feb12.md"
-  },
-  {
-    "id": "auto_sync_failed_feb12_2",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-02-12",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260212_132356\n**Date**: 2026-02-12\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\nCannot verify account state. Error: API Error\n\n## Context\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_feb12_2.md"
-  },
-  {
-    "id": "auto_sync_failed_feb12_3",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-02-12",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260212_132813\n**Date**: 2026-02-12\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\nCannot verify account state. Error: API Error\n\n## Context\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_feb12_3.md"
-  },
-  {
-    "id": "auto_sync_failed_feb13",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-02-13",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260213_104312\n**Date**: 2026-02-13\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\nCannot verify account state. Error: API Error\n\n## Context\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_feb13.md"
-  },
-  {
-    "id": "auto_sync_failed_jan28",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-01-28",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260128_013038\n**Date**: 2026-01-28\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\n\nCannot verify account state. Error: API Error\n\n## Context\n\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\n\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\n\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_jan28.md"
-  },
-  {
-    "id": "auto_sync_failed_jan29",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-01-29",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260129_091315\n**Date**: 2026-01-29\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\n\nCannot verify account state. Error: API Error\n\n## Context\n\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\n\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\n\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_jan29.md"
-  },
-  {
-    "id": "auto_sync_failed_jan29_2",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-01-29",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260129_091700\n**Date**: 2026-01-29\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\n\nCannot verify account state. Error: API Error\n\n## Context\n\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\n\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\n\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_jan29_2.md"
-  },
-  {
-    "id": "auto_sync_failed_jan29_3",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-01-29",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260129_101020\n**Date**: 2026-01-29\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\n\nCannot verify account state. Error: API Error\n\n## Context\n\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\n\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\n\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_jan29_3.md"
-  },
-  {
-    "id": "auto_sync_failed_jan30",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-01-30",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260130_153251\n**Date**: 2026-01-30\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\n\nCannot verify account state. Error: API Error\n\n## Context\n\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\n\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\n\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_jan30.md"
-  },
-  {
-    "id": "auto_sync_failed_jan30_2",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-01-30",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260130_153400\n**Date**: 2026-01-30\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\n\nCannot verify account state. Error: API Error\n\n## Context\n\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\n\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\n\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_jan30_2.md"
-  },
-  {
-    "id": "auto_sync_failed_jan30_3",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-01-30",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260130_153424\n**Date**: 2026-01-30\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\n\nCannot verify account state. Error: API Error\n\n## Context\n\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\n\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\n\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_jan30_3.md"
-  },
-  {
-    "id": "auto_sync_failed_jan31",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-01-31",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260131_104025\n**Date**: 2026-01-31\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\n\nCannot verify account state. Error: API Error\n\n## Context\n\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\n\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\n\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_jan31.md"
-  },
-  {
-    "id": "auto_sync_failed_jan31_2",
-    "title": "Portfolio sync failed - blind trading risk",
-    "date": "2026-01-31",
-    "category": "lessons_learned",
-    "severity": "HIGH",
-    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
-    "tags": [],
-    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260131_104236\n**Date**: 2026-01-31\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\n\nCannot verify account state. Error: API Error\n\n## Context\n\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\n\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\n\nfailure, sync_failed, auto-generated, reflexion",
-    "file": "rag_knowledge/lessons_learned/auto_sync_failed_jan31_2.md"
   },
   {
     "id": "automated_position_management_feb08",
@@ -2634,202 +2187,15 @@
     "file": "rag_knowledge/lessons_learned/ll_325_cto_violated_rule1_closed_positions_feb04.md"
   },
   {
-    "id": "ll_proactive_scan_20260128",
+    "id": "ll_proactive_scan_20260215",
     "title": "Ralph Proactive Scan Findings",
     "date": "",
     "category": "lessons_learned",
     "severity": "",
-    "summary": "**Date:** 2026-01-28 **Type:** Automated Proactive Scan ## Issues Found - Security issues: 100 - Dead code detected: true ## Action Required Review the workflow run summary for details and prioritize fixes.",
+    "summary": "**Date:** 2026-02-15 **Type:** Automated Proactive Scan ## Issues Found - Security issues: 127 - Dead code detected: true ## Action Required Review the workflow run summary for details and prioritize fixes.",
     "tags": [],
-    "content": "# Ralph Proactive Scan Findings\n\n**Date:** 2026-01-28\n**Type:** Automated Proactive Scan\n\n## Issues Found\n\n- Security issues: 100\n- Dead code detected: true\n\n## Action Required\n\nReview the workflow run summary for details and prioritize fixes.",
-    "file": "rag_knowledge/lessons_learned/ll_proactive_scan_20260128.md"
-  },
-  {
-    "id": "ll_proactive_scan_20260129",
-    "title": "Ralph Proactive Scan Findings",
-    "date": "",
-    "category": "lessons_learned",
-    "severity": "",
-    "summary": "**Date:** 2026-01-29 **Type:** Automated Proactive Scan ## Issues Found - Security issues: 103 - Dead code detected: true ## Action Required Review the workflow run summary for details and prioritize fixes.",
-    "tags": [],
-    "content": "# Ralph Proactive Scan Findings\n\n**Date:** 2026-01-29\n**Type:** Automated Proactive Scan\n\n## Issues Found\n\n- Security issues: 103\n- Dead code detected: true\n\n## Action Required\n\nReview the workflow run summary for details and prioritize fixes.",
-    "file": "rag_knowledge/lessons_learned/ll_proactive_scan_20260129.md"
-  },
-  {
-    "id": "ll_proactive_scan_20260130",
-    "title": "Ralph Proactive Scan Findings",
-    "date": "",
-    "category": "lessons_learned",
-    "severity": "",
-    "summary": "**Date:** 2026-01-30 **Type:** Automated Proactive Scan ## Issues Found - Security issues: 103 - Dead code detected: true ## Action Required Review the workflow run summary for details and prioritize fixes.",
-    "tags": [],
-    "content": "# Ralph Proactive Scan Findings\n\n**Date:** 2026-01-30\n**Type:** Automated Proactive Scan\n\n## Issues Found\n\n- Security issues: 103\n- Dead code detected: true\n\n## Action Required\n\nReview the workflow run summary for details and prioritize fixes.",
-    "file": "rag_knowledge/lessons_learned/ll_proactive_scan_20260130.md"
-  },
-  {
-    "id": "ll_proactive_scan_20260131",
-    "title": "Ralph Proactive Scan Findings",
-    "date": "",
-    "category": "lessons_learned",
-    "severity": "",
-    "summary": "**Date:** 2026-01-31 **Type:** Automated Proactive Scan ## Issues Found - Security issues: 104 - Dead code detected: true ## Action Required Review the workflow run summary for details and prioritize fixes.",
-    "tags": [],
-    "content": "# Ralph Proactive Scan Findings\n\n**Date:** 2026-01-31\n**Type:** Automated Proactive Scan\n\n## Issues Found\n\n- Security issues: 104\n- Dead code detected: true\n\n## Action Required\n\nReview the workflow run summary for details and prioritize fixes.",
-    "file": "rag_knowledge/lessons_learned/ll_proactive_scan_20260131.md"
-  },
-  {
-    "id": "ll_proactive_scan_20260201",
-    "title": "Ralph Proactive Scan Findings",
-    "date": "",
-    "category": "lessons_learned",
-    "severity": "",
-    "summary": "**Date:** 2026-02-01 **Type:** Automated Proactive Scan ## Issues Found - Security issues: 104 - Dead code detected: true ## Action Required Review the workflow run summary for details and prioritize fixes.",
-    "tags": [],
-    "content": "# Ralph Proactive Scan Findings\n\n**Date:** 2026-02-01\n**Type:** Automated Proactive Scan\n\n## Issues Found\n\n- Security issues: 104\n- Dead code detected: true\n\n## Action Required\n\nReview the workflow run summary for details and prioritize fixes.",
-    "file": "rag_knowledge/lessons_learned/ll_proactive_scan_20260201.md"
-  },
-  {
-    "id": "ll_proactive_scan_20260202",
-    "title": "Ralph Proactive Scan Findings",
-    "date": "",
-    "category": "lessons_learned",
-    "severity": "",
-    "summary": "**Date:** 2026-02-02 **Type:** Automated Proactive Scan ## Issues Found - Security issues: 104 - Dead code detected: true ## Action Required Review the workflow run summary for details and prioritize fixes.",
-    "tags": [],
-    "content": "# Ralph Proactive Scan Findings\n\n**Date:** 2026-02-02\n**Type:** Automated Proactive Scan\n\n## Issues Found\n\n- Security issues: 104\n- Dead code detected: true\n\n## Action Required\n\nReview the workflow run summary for details and prioritize fixes.",
-    "file": "rag_knowledge/lessons_learned/ll_proactive_scan_20260202.md"
-  },
-  {
-    "id": "ll_proactive_scan_20260203",
-    "title": "Ralph Proactive Scan Findings",
-    "date": "",
-    "category": "lessons_learned",
-    "severity": "",
-    "summary": "**Date:** 2026-02-03 **Type:** Automated Proactive Scan ## Issues Found - Security issues: 106 - Dead code detected: true ## Action Required Review the workflow run summary for details and prioritize fixes.",
-    "tags": [],
-    "content": "# Ralph Proactive Scan Findings\n\n**Date:** 2026-02-03\n**Type:** Automated Proactive Scan\n\n## Issues Found\n\n- Security issues: 106\n- Dead code detected: true\n\n## Action Required\n\nReview the workflow run summary for details and prioritize fixes.",
-    "file": "rag_knowledge/lessons_learned/ll_proactive_scan_20260203.md"
-  },
-  {
-    "id": "ll_proactive_scan_20260204",
-    "title": "Ralph Proactive Scan Findings",
-    "date": "",
-    "category": "lessons_learned",
-    "severity": "",
-    "summary": "**Date:** 2026-02-04 **Type:** Automated Proactive Scan ## Issues Found - Security issues: 107 - Dead code detected: true ## Action Required Review the workflow run summary for details and prioritize fixes.",
-    "tags": [],
-    "content": "# Ralph Proactive Scan Findings\n\n**Date:** 2026-02-04\n**Type:** Automated Proactive Scan\n\n## Issues Found\n\n- Security issues: 107\n- Dead code detected: true\n\n## Action Required\n\nReview the workflow run summary for details and prioritize fixes.",
-    "file": "rag_knowledge/lessons_learned/ll_proactive_scan_20260204.md"
-  },
-  {
-    "id": "ll_proactive_scan_20260205",
-    "title": "Ralph Proactive Scan Findings",
-    "date": "",
-    "category": "lessons_learned",
-    "severity": "",
-    "summary": "**Date:** 2026-02-05 **Type:** Automated Proactive Scan ## Issues Found - Security issues: 127 - Dead code detected: true ## Action Required Review the workflow run summary for details and prioritize fixes.",
-    "tags": [],
-    "content": "# Ralph Proactive Scan Findings\n\n**Date:** 2026-02-05\n**Type:** Automated Proactive Scan\n\n## Issues Found\n\n- Security issues: 127\n- Dead code detected: true\n\n## Action Required\n\nReview the workflow run summary for details and prioritize fixes.",
-    "file": "rag_knowledge/lessons_learned/ll_proactive_scan_20260205.md"
-  },
-  {
-    "id": "ll_proactive_scan_20260206",
-    "title": "Ralph Proactive Scan Findings",
-    "date": "",
-    "category": "lessons_learned",
-    "severity": "",
-    "summary": "**Date:** 2026-02-06 **Type:** Automated Proactive Scan ## Issues Found - Security issues: 127 - Dead code detected: true ## Action Required Review the workflow run summary for details and prioritize fixes.",
-    "tags": [],
-    "content": "# Ralph Proactive Scan Findings\n\n**Date:** 2026-02-06\n**Type:** Automated Proactive Scan\n\n## Issues Found\n\n- Security issues: 127\n- Dead code detected: true\n\n## Action Required\n\nReview the workflow run summary for details and prioritize fixes.",
-    "file": "rag_knowledge/lessons_learned/ll_proactive_scan_20260206.md"
-  },
-  {
-    "id": "ll_proactive_scan_20260207",
-    "title": "Ralph Proactive Scan Findings",
-    "date": "",
-    "category": "lessons_learned",
-    "severity": "",
-    "summary": "**Date:** 2026-02-07 **Type:** Automated Proactive Scan ## Issues Found - Security issues: 121 - Dead code detected: true ## Action Required Review the workflow run summary for details and prioritize fixes.",
-    "tags": [],
-    "content": "# Ralph Proactive Scan Findings\n\n**Date:** 2026-02-07\n**Type:** Automated Proactive Scan\n\n## Issues Found\n\n- Security issues: 121\n- Dead code detected: true\n\n## Action Required\n\nReview the workflow run summary for details and prioritize fixes.",
-    "file": "rag_knowledge/lessons_learned/ll_proactive_scan_20260207.md"
-  },
-  {
-    "id": "ll_proactive_scan_20260208",
-    "title": "Ralph Proactive Scan Findings",
-    "date": "",
-    "category": "lessons_learned",
-    "severity": "",
-    "summary": "**Date:** 2026-02-08 **Type:** Automated Proactive Scan ## Issues Found - Security issues: 121 - Dead code detected: true ## Action Required Review the workflow run summary for details and prioritize fixes.",
-    "tags": [],
-    "content": "# Ralph Proactive Scan Findings\n\n**Date:** 2026-02-08\n**Type:** Automated Proactive Scan\n\n## Issues Found\n\n- Security issues: 121\n- Dead code detected: true\n\n## Action Required\n\nReview the workflow run summary for details and prioritize fixes.",
-    "file": "rag_knowledge/lessons_learned/ll_proactive_scan_20260208.md"
-  },
-  {
-    "id": "ll_proactive_scan_20260209",
-    "title": "Ralph Proactive Scan Findings",
-    "date": "",
-    "category": "lessons_learned",
-    "severity": "",
-    "summary": "**Date:** 2026-02-09 **Type:** Automated Proactive Scan ## Issues Found - Security issues: 125 - Dead code detected: true ## Action Required Review the workflow run summary for details and prioritize fixes.",
-    "tags": [],
-    "content": "# Ralph Proactive Scan Findings\n\n**Date:** 2026-02-09\n**Type:** Automated Proactive Scan\n\n## Issues Found\n\n- Security issues: 125\n- Dead code detected: true\n\n## Action Required\n\nReview the workflow run summary for details and prioritize fixes.",
-    "file": "rag_knowledge/lessons_learned/ll_proactive_scan_20260209.md"
-  },
-  {
-    "id": "ll_proactive_scan_20260210",
-    "title": "Ralph Proactive Scan Findings",
-    "date": "",
-    "category": "lessons_learned",
-    "severity": "",
-    "summary": "**Date:** 2026-02-10 **Type:** Automated Proactive Scan ## Issues Found - Security issues: 122 - Dead code detected: true ## Action Required Review the workflow run summary for details and prioritize fixes.",
-    "tags": [],
-    "content": "# Ralph Proactive Scan Findings\n\n**Date:** 2026-02-10\n**Type:** Automated Proactive Scan\n\n## Issues Found\n\n- Security issues: 122\n- Dead code detected: true\n\n## Action Required\n\nReview the workflow run summary for details and prioritize fixes.",
-    "file": "rag_knowledge/lessons_learned/ll_proactive_scan_20260210.md"
-  },
-  {
-    "id": "ll_proactive_scan_20260211",
-    "title": "Ralph Proactive Scan Findings",
-    "date": "",
-    "category": "lessons_learned",
-    "severity": "",
-    "summary": "**Date:** 2026-02-11 **Type:** Automated Proactive Scan ## Issues Found - Security issues: 132 - Dead code detected: true ## Action Required Review the workflow run summary for details and prioritize fixes.",
-    "tags": [],
-    "content": "# Ralph Proactive Scan Findings\n\n**Date:** 2026-02-11\n**Type:** Automated Proactive Scan\n\n## Issues Found\n\n- Security issues: 132\n- Dead code detected: true\n\n## Action Required\n\nReview the workflow run summary for details and prioritize fixes.",
-    "file": "rag_knowledge/lessons_learned/ll_proactive_scan_20260211.md"
-  },
-  {
-    "id": "ll_proactive_scan_20260212",
-    "title": "Ralph Proactive Scan Findings",
-    "date": "",
-    "category": "lessons_learned",
-    "severity": "",
-    "summary": "**Date:** 2026-02-12 **Type:** Automated Proactive Scan ## Issues Found - Security issues: 132 - Dead code detected: true ## Action Required Review the workflow run summary for details and prioritize fixes.",
-    "tags": [],
-    "content": "# Ralph Proactive Scan Findings\n\n**Date:** 2026-02-12\n**Type:** Automated Proactive Scan\n\n## Issues Found\n\n- Security issues: 132\n- Dead code detected: true\n\n## Action Required\n\nReview the workflow run summary for details and prioritize fixes.",
-    "file": "rag_knowledge/lessons_learned/ll_proactive_scan_20260212.md"
-  },
-  {
-    "id": "ll_proactive_scan_20260213",
-    "title": "Ralph Proactive Scan Findings",
-    "date": "",
-    "category": "lessons_learned",
-    "severity": "",
-    "summary": "**Date:** 2026-02-13 **Type:** Automated Proactive Scan ## Issues Found - Security issues: 134 - Dead code detected: true ## Action Required Review the workflow run summary for details and prioritize fixes.",
-    "tags": [],
-    "content": "# Ralph Proactive Scan Findings\n\n**Date:** 2026-02-13\n**Type:** Automated Proactive Scan\n\n## Issues Found\n\n- Security issues: 134\n- Dead code detected: true\n\n## Action Required\n\nReview the workflow run summary for details and prioritize fixes.",
-    "file": "rag_knowledge/lessons_learned/ll_proactive_scan_20260213.md"
-  },
-  {
-    "id": "ll_proactive_scan_20260214",
-    "title": "Ralph Proactive Scan Findings",
-    "date": "",
-    "category": "lessons_learned",
-    "severity": "",
-    "summary": "**Date:** 2026-02-14 **Type:** Automated Proactive Scan ## Issues Found - Security issues: 139 - Dead code detected: true ## Action Required Review the workflow run summary for details and prioritize fixes.",
-    "tags": [],
-    "content": "# Ralph Proactive Scan Findings\n\n**Date:** 2026-02-14\n**Type:** Automated Proactive Scan\n\n## Issues Found\n\n- Security issues: 139\n- Dead code detected: true\n\n## Action Required\n\nReview the workflow run summary for details and prioritize fixes.",
-    "file": "rag_knowledge/lessons_learned/ll_proactive_scan_20260214.md"
+    "content": "# Ralph Proactive Scan Findings\n\n**Date:** 2026-02-15\n**Type:** Automated Proactive Scan\n\n## Issues Found\n\n- Security issues: 127\n- Dead code detected: true\n\n## Action Required\n\nReview the workflow run summary for details and prioritize fixes.",
+    "file": "rag_knowledge/lessons_learned/ll_proactive_scan_20260215.md"
   },
   {
     "id": "ll_skipped_prevention_step_feb06",
@@ -2977,7 +2343,7 @@
     "severity": "",
     "summary": "## Key Concepts 4 Ms, Moat, Options Strategy, Value Investing ## Strategies None identified ## Sentiment Neutral ## Transcript A moat is a sustainable competitive advantage that protects a company's profits from competitors. Warren Buffett coined this term because a moat around a castle protects it from invaders. There are five types of moats. Brand moat - companies like Apple and Coca-Cola have s",
     "tags": [],
-    "content": "# What is a Moat in Investing?\n\n**Video ID**: 8pPnLzZmKKY\n**URL**: https://www.youtube.com/watch?v=8pPnLzZmKKY\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-14T18:43:03.405130\n\n## Key Concepts\n4 Ms, Moat, Options Strategy, Value Investing\n\n## Strategies\nNone identified\n\n## Sentiment\nNeutral\n\n## Transcript\n\nA moat is a sustainable competitive advantage that protects a company's profits\nfrom competitors. Warren Buffett coined this term because a moat around a castle protects it from\ninvaders. There are five types of moats. Brand moat - companies like Apple and Coca-Cola have such\nstrong brands that customers pay premium prices. Secret moat - patents and trade secrets like\npharmaceutical companies. Toll bridge moat - companies you must use, like railroads or utilities.\nSwitching cost moat - it's too expensive or difficult to switch, like enterprise software. Low-cost\nmoat - companies that can produce cheaper than anyone else, like Costco or Walmart. Wide moats last\ndecades, narrow moats might last 5-10 years. When analyzing a company, ask: what stops competitors\nfrom taking their customers? If there's no clear answer, there's no moat. No moat means no investment.",
+    "content": "# What is a Moat in Investing?\n\n**Video ID**: 8pPnLzZmKKY\n**URL**: https://www.youtube.com/watch?v=8pPnLzZmKKY\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-15T13:26:52.217285\n\n## Key Concepts\n4 Ms, Moat, Options Strategy, Value Investing\n\n## Strategies\nNone identified\n\n## Sentiment\nNeutral\n\n## Transcript\n\nA moat is a sustainable competitive advantage that protects a company's profits\nfrom competitors. Warren Buffett coined this term because a moat around a castle protects it from\ninvaders. There are five types of moats. Brand moat - companies like Apple and Coca-Cola have such\nstrong brands that customers pay premium prices. Secret moat - patents and trade secrets like\npharmaceutical companies. Toll bridge moat - companies you must use, like railroads or utilities.\nSwitching cost moat - it's too expensive or difficult to switch, like enterprise software. Low-cost\nmoat - companies that can produce cheaper than anyone else, like Costco or Walmart. Wide moats last\ndecades, narrow moats might last 5-10 years. When analyzing a company, ask: what stops competitors\nfrom taking their customers? If there's no clear answer, there's no moat. No moat means no investment.",
     "file": "rag_knowledge/youtube/transcripts/8pPnLzZmKKY_What_is_a_Moat_in_Investing.md"
   },
   {
@@ -2988,7 +2354,7 @@
     "severity": "",
     "summary": "## Key Concepts Big Five Numbers, Value Investing ## Strategies Value Investing ## Sentiment Neutral ## Transcript Understanding financial statements is essential for value investing. There are three main statements. The Income Statement shows revenue, expenses, and profit over time. Look for consistent revenue growth and expanding profit margins. The Balance Sheet shows assets, liabilities, and e",
     "tags": [],
-    "content": "# How to Read Financial Statements\n\n**Video ID**: 9hWMAL0q-xw\n**URL**: https://www.youtube.com/watch?v=9hWMAL0q-xw\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-14T18:43:54.806665\n\n## Key Concepts\nBig Five Numbers, Value Investing\n\n## Strategies\nValue Investing\n\n## Sentiment\nNeutral\n\n## Transcript\n\nUnderstanding financial statements is essential for value investing. There\nare three main statements. The Income Statement shows revenue, expenses, and profit over time. Look\nfor consistent revenue growth and expanding profit margins. The Balance Sheet shows assets,\nliabilities, and equity at a point in time. Strong companies have more assets than liabilities and\ngrowing equity. The Cash Flow Statement shows actual cash moving in and out. This is the most\nimportant - earnings can be manipulated but cash flow is real. Look at operating cash flow, not just\nnet income. The Big Five Numbers I use are: ROIC - Return on Invested Capital, should be above 10%.\nEquity growth rate. EPS growth rate. Sales growth rate. And free cash flow growth rate. All five\nshould show consistent growth of 10% or more over 10 years. Red flags include declining margins,\nrising debt, and cash flow that doesn't match earnings. Practice reading 10-K annual reports.",
+    "content": "# How to Read Financial Statements\n\n**Video ID**: 9hWMAL0q-xw\n**URL**: https://www.youtube.com/watch?v=9hWMAL0q-xw\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-15T13:27:45.521958\n\n## Key Concepts\nBig Five Numbers, Value Investing\n\n## Strategies\nValue Investing\n\n## Sentiment\nNeutral\n\n## Transcript\n\nUnderstanding financial statements is essential for value investing. There\nare three main statements. The Income Statement shows revenue, expenses, and profit over time. Look\nfor consistent revenue growth and expanding profit margins. The Balance Sheet shows assets,\nliabilities, and equity at a point in time. Strong companies have more assets than liabilities and\ngrowing equity. The Cash Flow Statement shows actual cash moving in and out. This is the most\nimportant - earnings can be manipulated but cash flow is real. Look at operating cash flow, not just\nnet income. The Big Five Numbers I use are: ROIC - Return on Invested Capital, should be above 10%.\nEquity growth rate. EPS growth rate. Sales growth rate. And free cash flow growth rate. All five\nshould show consistent growth of 10% or more over 10 years. Red flags include declining margins,\nrising debt, and cash flow that doesn't match earnings. Practice reading 10-K annual reports.",
     "file": "rag_knowledge/youtube/transcripts/9hWMAL0q-xw_How_to_Read_Financial_Statements.md"
   },
   {
@@ -2999,7 +2365,7 @@
     "severity": "",
     "summary": "## Key Concepts 4 Ms, Margin of Safety, Intrinsic Value, Value Investing ## Strategies Value Investing ## Sentiment Neutral ## Transcript Margin of safety is the most important concept in value investing. Benjamin Graham invented it, Warren Buffett perfected it. Here's how it works: Every company has an intrinsic value - what it's truly worth based on future cash flows. The market price fluctuates",
     "tags": [],
-    "content": "# Margin of Safety Explained\n\n**Video ID**: A9kZ_fVwLLo\n**URL**: https://www.youtube.com/watch?v=A9kZ_fVwLLo\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-14T18:43:11.471944\n\n## Key Concepts\n4 Ms, Margin of Safety, Intrinsic Value, Value Investing\n\n## Strategies\nValue Investing\n\n## Sentiment\nNeutral\n\n## Transcript\n\nMargin of safety is the most important concept in value investing. Benjamin\nGraham invented it, Warren Buffett perfected it. Here's how it works: Every company has an intrinsic\nvalue - what it's truly worth based on future cash flows. The market price fluctuates around this\nvalue based on emotions - fear and greed. Margin of safety means buying when the market price is\nsignificantly below intrinsic value. I recommend at least 50% margin of safety. So if a company is\nworth $100, wait to buy at $50 or less. This protects you from three things: errors in your analysis,\nunexpected bad news, and market volatility. To calculate margin of safety, first determine the sticker\nprice using growth rates and PE ratios, then divide by 2. Never skip this step. Even the best companies\ncan be bad investments at the wrong price. As Buffett says: Price is what you pay, value is what you get.",
+    "content": "# Margin of Safety Explained\n\n**Video ID**: A9kZ_fVwLLo\n**URL**: https://www.youtube.com/watch?v=A9kZ_fVwLLo\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-15T13:27:00.648489\n\n## Key Concepts\n4 Ms, Margin of Safety, Intrinsic Value, Value Investing\n\n## Strategies\nValue Investing\n\n## Sentiment\nNeutral\n\n## Transcript\n\nMargin of safety is the most important concept in value investing. Benjamin\nGraham invented it, Warren Buffett perfected it. Here's how it works: Every company has an intrinsic\nvalue - what it's truly worth based on future cash flows. The market price fluctuates around this\nvalue based on emotions - fear and greed. Margin of safety means buying when the market price is\nsignificantly below intrinsic value. I recommend at least 50% margin of safety. So if a company is\nworth $100, wait to buy at $50 or less. This protects you from three things: errors in your analysis,\nunexpected bad news, and market volatility. To calculate margin of safety, first determine the sticker\nprice using growth rates and PE ratios, then divide by 2. Never skip this step. Even the best companies\ncan be bad investments at the wrong price. As Buffett says: Price is what you pay, value is what you get.",
     "file": "rag_knowledge/youtube/transcripts/A9kZ_fVwLLo_Margin_of_Safety_Explained.md"
   },
   {
@@ -3010,7 +2376,7 @@
     "severity": "",
     "summary": "## Key Concepts 4 Ms, Moat, Big Five Numbers, Rule #1, Wonderful Company ## Strategies None identified ## Sentiment Neutral ## Transcript ROIC is the most important number in Rule #1 investing. Return on Invested Capital shows how efficiently a company turns investment into profit. The formula is: operating income divided by invested capital. Invested capital is equity plus debt minus cash. A grea",
     "tags": [],
-    "content": "# Understanding ROIC - Return on Invested Capital\n\n**Video ID**: B9xVBqxTHKI\n**URL**: https://www.youtube.com/watch?v=B9xVBqxTHKI\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-14T18:44:35.779115\n\n## Key Concepts\n4 Ms, Moat, Big Five Numbers, Rule #1, Wonderful Company\n\n## Strategies\nNone identified\n\n## Sentiment\nNeutral\n\n## Transcript\n\nROIC is the most important number in Rule #1 investing. Return on Invested\nCapital shows how efficiently a company turns investment into profit. The formula is: operating income\ndivided by invested capital. Invested capital is equity plus debt minus cash. A great company has ROIC\nabove 10% consistently. Above 15% is excellent. Above 20% is world-class. Why does ROIC matter?\nBecause it shows the company's competitive advantage in numbers. High ROIC means the moat is working.\nLow ROIC means competition is eating into profits. Compare ROIC to cost of capital. If ROIC exceeds\ncost of capital, the company creates value. If it doesn't, it destroys value. Look for ROIC trends.\nRising ROIC suggests strengthening moat. Falling ROIC is a warning sign. Companies like Apple and\nCostco maintain high ROIC for decades. That's what you want to own.",
+    "content": "# Understanding ROIC - Return on Invested Capital\n\n**Video ID**: B9xVBqxTHKI\n**URL**: https://www.youtube.com/watch?v=B9xVBqxTHKI\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-15T13:28:27.751708\n\n## Key Concepts\n4 Ms, Moat, Big Five Numbers, Rule #1, Wonderful Company\n\n## Strategies\nNone identified\n\n## Sentiment\nNeutral\n\n## Transcript\n\nROIC is the most important number in Rule #1 investing. Return on Invested\nCapital shows how efficiently a company turns investment into profit. The formula is: operating income\ndivided by invested capital. Invested capital is equity plus debt minus cash. A great company has ROIC\nabove 10% consistently. Above 15% is excellent. Above 20% is world-class. Why does ROIC matter?\nBecause it shows the company's competitive advantage in numbers. High ROIC means the moat is working.\nLow ROIC means competition is eating into profits. Compare ROIC to cost of capital. If ROIC exceeds\ncost of capital, the company creates value. If it doesn't, it destroys value. Look for ROIC trends.\nRising ROIC suggests strengthening moat. Falling ROIC is a warning sign. Companies like Apple and\nCostco maintain high ROIC for decades. That's what you want to own.",
     "file": "rag_knowledge/youtube/transcripts/B9xVBqxTHKI_Understanding_ROIC_-_Return_on_Invested_Capital.md"
   },
   {
@@ -3021,7 +2387,7 @@
     "severity": "",
     "summary": "## Key Concepts 4 Ms, Moat, Margin of Safety, Rule #1, Intrinsic Value ## Strategies Value Investing ## Sentiment Neutral ## Transcript Knowing when to sell is as important as knowing when to buy. There are three reasons to sell a Rule #1 stock. First, the story changes. If the business fundamentals deteriorate, the moat narrows, or management makes poor decisions, it's time to exit. Second, the p",
     "tags": [],
-    "content": "# When to Sell a Stock - Exit Strategy\n\n**Video ID**: E7t8qPKGMxs\n**URL**: https://www.youtube.com/watch?v=E7t8qPKGMxs\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-14T18:44:27.637119\n\n## Key Concepts\n4 Ms, Moat, Margin of Safety, Rule #1, Intrinsic Value\n\n## Strategies\nValue Investing\n\n## Sentiment\nNeutral\n\n## Transcript\n\nKnowing when to sell is as important as knowing when to buy. There are three\nreasons to sell a Rule #1 stock. First, the story changes. If the business fundamentals deteriorate,\nthe moat narrows, or management makes poor decisions, it's time to exit. Second, the price exceeds\nintrinsic value. When Mr Market gets too optimistic and pushes the price well above sticker price,\ntake profits. Third, you find a better opportunity with higher expected returns. Don't sell just\nbecause the price drops - that might be a buying opportunity. Don't sell because of market fear.\nReview your thesis: are the 4 Ms still intact? If yes, volatility is your friend, not your enemy.\nBuffett's favorite holding period is forever, but that assumes the business stays wonderful. When it\ndoesn't, be willing to move on. The goal is compounding returns, and sometimes that means reallocating\ncapital to better opportunities.",
+    "content": "# When to Sell a Stock - Exit Strategy\n\n**Video ID**: E7t8qPKGMxs\n**URL**: https://www.youtube.com/watch?v=E7t8qPKGMxs\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-15T13:28:19.329684\n\n## Key Concepts\n4 Ms, Moat, Margin of Safety, Rule #1, Intrinsic Value\n\n## Strategies\nValue Investing\n\n## Sentiment\nNeutral\n\n## Transcript\n\nKnowing when to sell is as important as knowing when to buy. There are three\nreasons to sell a Rule #1 stock. First, the story changes. If the business fundamentals deteriorate,\nthe moat narrows, or management makes poor decisions, it's time to exit. Second, the price exceeds\nintrinsic value. When Mr Market gets too optimistic and pushes the price well above sticker price,\ntake profits. Third, you find a better opportunity with higher expected returns. Don't sell just\nbecause the price drops - that might be a buying opportunity. Don't sell because of market fear.\nReview your thesis: are the 4 Ms still intact? If yes, volatility is your friend, not your enemy.\nBuffett's favorite holding period is forever, but that assumes the business stays wonderful. When it\ndoesn't, be willing to move on. The goal is compounding returns, and sometimes that means reallocating\ncapital to better opportunities.",
     "file": "rag_knowledge/youtube/transcripts/E7t8qPKGMxs_When_to_Sell_a_Stock_-_Exit_Strategy.md"
   },
   {
@@ -3032,7 +2398,7 @@
     "severity": "",
     "summary": "## Key Concepts 4 Ms, Margin of Safety, Rule #1, Wonderful Company, Options Strategy, Intrinsic Value, Value Investing ## Strategies Value Investing ## Sentiment Neutral ## Transcript Value investing and growth investing aren't opposites - they're two sides of the same coin. Value investors look for companies trading below intrinsic value. Growth investors look for companies with high growth poten",
     "tags": [],
-    "content": "# Value Investing vs Growth Investing\n\n**Video ID**: HcZRD3YUKZM\n**URL**: https://www.youtube.com/watch?v=HcZRD3YUKZM\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-14T18:43:35.767974\n\n## Key Concepts\n4 Ms, Margin of Safety, Rule #1, Wonderful Company, Options Strategy, Intrinsic Value, Value Investing\n\n## Strategies\nValue Investing\n\n## Sentiment\nNeutral\n\n## Transcript\n\nValue investing and growth investing aren't opposites - they're two sides of\nthe same coin. Value investors look for companies trading below intrinsic value. Growth investors look\nfor companies with high growth potential. The best investments combine both: wonderful companies with\ngrowth potential trading at value prices. Warren Buffett evolved from pure value to growth at a\nreasonable price, which he calls GARP. The key difference is in how you calculate intrinsic value.\nPure value focuses on current assets and earnings. Growth adjusts for future earnings potential.\nI prefer growth at value prices - companies growing earnings 15%+ annually, but available at a\nmargin of safety. The danger of pure growth investing is overpaying. The danger of pure value is\nmissing great companies. Rule #1 investing finds the middle ground: wonderful businesses with growth,\nbought at attractive prices. This is how Buffett became the world's greatest investor.",
+    "content": "# Value Investing vs Growth Investing\n\n**Video ID**: HcZRD3YUKZM\n**URL**: https://www.youtube.com/watch?v=HcZRD3YUKZM\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-15T13:27:26.244963\n\n## Key Concepts\n4 Ms, Margin of Safety, Rule #1, Wonderful Company, Options Strategy, Intrinsic Value, Value Investing\n\n## Strategies\nValue Investing\n\n## Sentiment\nNeutral\n\n## Transcript\n\nValue investing and growth investing aren't opposites - they're two sides of\nthe same coin. Value investors look for companies trading below intrinsic value. Growth investors look\nfor companies with high growth potential. The best investments combine both: wonderful companies with\ngrowth potential trading at value prices. Warren Buffett evolved from pure value to growth at a\nreasonable price, which he calls GARP. The key difference is in how you calculate intrinsic value.\nPure value focuses on current assets and earnings. Growth adjusts for future earnings potential.\nI prefer growth at value prices - companies growing earnings 15%+ annually, but available at a\nmargin of safety. The danger of pure growth investing is overpaying. The danger of pure value is\nmissing great companies. Rule #1 investing finds the middle ground: wonderful businesses with growth,\nbought at attractive prices. This is how Buffett became the world's greatest investor.",
     "file": "rag_knowledge/youtube/transcripts/HcZRD3YUKZM_Value_Investing_vs_Growth_Investing.md"
   },
   {
@@ -3043,7 +2409,7 @@
     "severity": "",
     "summary": "## Key Concepts 4 Ms, Margin of Safety, Options Strategy ## Strategies Cash-Secured Puts, Covered Calls, Wheel Strategy ## Sentiment Neutral ## Transcript The wheel strategy combines cash secured puts and covered calls for consistent income. Step 1: Sell cash secured puts on a stock you want to own. Collect premium. Step 2: If assigned, you now own the shares at a discount. Step 3: Sell covered ca",
     "tags": [],
-    "content": "# The Wheel Strategy Explained\n\n**Video ID**: Hfq4K1nP4v4\n**URL**: https://www.youtube.com/watch?v=Hfq4K1nP4v4\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-14T18:43:27.691193\n\n## Key Concepts\n4 Ms, Margin of Safety, Options Strategy\n\n## Strategies\nCash-Secured Puts, Covered Calls, Wheel Strategy\n\n## Sentiment\nNeutral\n\n## Transcript\n\nThe wheel strategy combines cash secured puts and covered calls for consistent\nincome. Step 1: Sell cash secured puts on a stock you want to own. Collect premium. Step 2: If\nassigned, you now own the shares at a discount. Step 3: Sell covered calls on your shares. Collect\nmore premium. Step 4: If your shares get called away, you've sold at a profit. Go back to step 1.\nThis creates a wheel of income generation. The beauty is every outcome is profitable when done on\nwonderful companies. You either get paid to wait, buy at a discount, or sell at a profit. The key is\nselecting the right stocks - companies with strong fundamentals that you'd be happy to own long-term.\nI use the 4 Ms to filter stocks for the wheel. Aim for monthly income of 2-4% on the capital employed.\nThis compounds to significant annual returns while managing risk through stock selection.",
+    "content": "# The Wheel Strategy Explained\n\n**Video ID**: Hfq4K1nP4v4\n**URL**: https://www.youtube.com/watch?v=Hfq4K1nP4v4\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-15T13:27:17.563510\n\n## Key Concepts\n4 Ms, Margin of Safety, Options Strategy\n\n## Strategies\nCash-Secured Puts, Covered Calls, Wheel Strategy\n\n## Sentiment\nNeutral\n\n## Transcript\n\nThe wheel strategy combines cash secured puts and covered calls for consistent\nincome. Step 1: Sell cash secured puts on a stock you want to own. Collect premium. Step 2: If\nassigned, you now own the shares at a discount. Step 3: Sell covered calls on your shares. Collect\nmore premium. Step 4: If your shares get called away, you've sold at a profit. Go back to step 1.\nThis creates a wheel of income generation. The beauty is every outcome is profitable when done on\nwonderful companies. You either get paid to wait, buy at a discount, or sell at a profit. The key is\nselecting the right stocks - companies with strong fundamentals that you'd be happy to own long-term.\nI use the 4 Ms to filter stocks for the wheel. Aim for monthly income of 2-4% on the capital employed.\nThis compounds to significant annual returns while managing risk through stock selection.",
     "file": "rag_knowledge/youtube/transcripts/Hfq4K1nP4v4_The_Wheel_Strategy_Explained.md"
   },
   {
@@ -3054,7 +2420,7 @@
     "severity": "",
     "summary": "## Key Concepts 4 Ms, Moat, Margin of Safety, Rule #1, Intrinsic Value ## Strategies Value Investing ## Sentiment Neutral ## Transcript The 4 Ms are the foundation of Rule #1 investing. First M is Meaning - invest only in businesses you understand. You should be able to explain what the company does in one sentence. Second M is Moat - the company must have a durable competitive advantage. Look for",
     "tags": [],
-    "content": "# The 4 Ms of Investing - Rule #1 Investing\n\n**Video ID**: K6CkCQU_qkE\n**URL**: https://www.youtube.com/watch?v=K6CkCQU_qkE\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-14T18:42:55.194829\n\n## Key Concepts\n4 Ms, Moat, Margin of Safety, Rule #1, Intrinsic Value\n\n## Strategies\nValue Investing\n\n## Sentiment\nNeutral\n\n## Transcript\n\nThe 4 Ms are the foundation of Rule #1 investing. First M is Meaning - invest\nonly in businesses you understand. You should be able to explain what the company does in one sentence.\nSecond M is Moat - the company must have a durable competitive advantage. Look for brand moats, secret\nmoats like patents, toll bridge moats like utilities, switching cost moats, and low-cost moats. Third M\nis Management - the people running the company must be honest and talented. Check if they own stock,\nif they're buying more, and read their letters to shareholders. Fourth M is Margin of Safety - always\nbuy at a price significantly below the company's true value. I recommend a 50% margin of safety for\nindividual investors. Calculate the sticker price using the Rule of 72 and growth rates, then cut it\nin half for your buy price. This protects you from errors in your analysis.",
+    "content": "# The 4 Ms of Investing - Rule #1 Investing\n\n**Video ID**: K6CkCQU_qkE\n**URL**: https://www.youtube.com/watch?v=K6CkCQU_qkE\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-15T13:26:43.840699\n\n## Key Concepts\n4 Ms, Moat, Margin of Safety, Rule #1, Intrinsic Value\n\n## Strategies\nValue Investing\n\n## Sentiment\nNeutral\n\n## Transcript\n\nThe 4 Ms are the foundation of Rule #1 investing. First M is Meaning - invest\nonly in businesses you understand. You should be able to explain what the company does in one sentence.\nSecond M is Moat - the company must have a durable competitive advantage. Look for brand moats, secret\nmoats like patents, toll bridge moats like utilities, switching cost moats, and low-cost moats. Third M\nis Management - the people running the company must be honest and talented. Check if they own stock,\nif they're buying more, and read their letters to shareholders. Fourth M is Margin of Safety - always\nbuy at a price significantly below the company's true value. I recommend a 50% margin of safety for\nindividual investors. Calculate the sticker price using the Rule of 72 and growth rates, then cut it\nin half for your buy price. This protects you from errors in your analysis.",
     "file": "rag_knowledge/youtube/transcripts/K6CkCQU_qkE_The_4_Ms_of_Investing_-_Rule_1_Investing.md"
   },
   {
@@ -3065,7 +2431,7 @@
     "severity": "",
     "summary": "## Key Concepts Rule #1, Options Strategy ## Strategies None identified ## Sentiment Neutral ## Transcript Payback time tells you how long it takes to recover your investment from a company's free cash flow. It's a simple but powerful metric. Take the market cap and divide by free cash flow. A company with $100 billion market cap and $10 billion free cash flow has a 10-year payback. I look for pay",
     "tags": [],
-    "content": "# The Payback Time Strategy\n\n**Video ID**: P6dqZMjZxHA\n**URL**: https://www.youtube.com/watch?v=P6dqZMjZxHA\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-14T18:44:43.852288\n\n## Key Concepts\nRule #1, Options Strategy\n\n## Strategies\nNone identified\n\n## Sentiment\nNeutral\n\n## Transcript\n\nPayback time tells you how long it takes to recover your investment from a\ncompany's free cash flow. It's a simple but powerful metric. Take the market cap and divide by free\ncash flow. A company with $100 billion market cap and $10 billion free cash flow has a 10-year\npayback. I look for payback times under 8 years for wonderful companies. Under 5 years is a bargain.\nWhy use payback time? Because it incorporates both price and earnings power. A cheap stock with weak\ncash flow might have long payback. An expensive stock with massive cash flow might have short payback.\nThis helps you compare apples to oranges across industries. During market crashes, payback times shrink\ndramatically. That's when Rule #1 investors get excited. The 2008 crisis created 3-year payback on\ncompanies like Apple. That's generational opportunity. Track payback times on your watchlist and wait\nfor them to get short enough.",
+    "content": "# The Payback Time Strategy\n\n**Video ID**: P6dqZMjZxHA\n**URL**: https://www.youtube.com/watch?v=P6dqZMjZxHA\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-15T13:28:36.218739\n\n## Key Concepts\nRule #1, Options Strategy\n\n## Strategies\nNone identified\n\n## Sentiment\nNeutral\n\n## Transcript\n\nPayback time tells you how long it takes to recover your investment from a\ncompany's free cash flow. It's a simple but powerful metric. Take the market cap and divide by free\ncash flow. A company with $100 billion market cap and $10 billion free cash flow has a 10-year\npayback. I look for payback times under 8 years for wonderful companies. Under 5 years is a bargain.\nWhy use payback time? Because it incorporates both price and earnings power. A cheap stock with weak\ncash flow might have long payback. An expensive stock with massive cash flow might have short payback.\nThis helps you compare apples to oranges across industries. During market crashes, payback times shrink\ndramatically. That's when Rule #1 investors get excited. The 2008 crisis created 3-year payback on\ncompanies like Apple. That's generational opportunity. Track payback times on your watchlist and wait\nfor them to get short enough.",
     "file": "rag_knowledge/youtube/transcripts/P6dqZMjZxHA_The_Payback_Time_Strategy.md"
   },
   {
@@ -3076,7 +2442,7 @@
     "severity": "",
     "summary": "## Key Concepts Value Investing ## Strategies None identified ## Sentiment Neutral ## Transcript Warren Buffett says to stay within your circle of competence. This means only investing in businesses you truly understand. If you can't explain how the company makes money in one sentence, it's outside your circle. Your circle might be small - that's okay. It's better to have a small circle and stay i",
     "tags": [],
-    "content": "# Circle of Competence - Stay in Your Lane\n\n**Video ID**: QmVKxH2PdCI\n**URL**: https://www.youtube.com/watch?v=QmVKxH2PdCI\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-14T18:44:11.115856\n\n## Key Concepts\nValue Investing\n\n## Strategies\nNone identified\n\n## Sentiment\nNeutral\n\n## Transcript\n\nWarren Buffett says to stay within your circle of competence. This means only\ninvesting in businesses you truly understand. If you can't explain how the company makes money in one\nsentence, it's outside your circle. Your circle might be small - that's okay. It's better to have a\nsmall circle and stay inside it than a big circle you don't really understand. To expand your circle,\nstudy industries you use every day. If you work in healthcare, you understand those businesses better\nthan most. If you love technology, study tech companies deeply. Read annual reports, understand the\ncompetitive landscape, know the key metrics. The goal is not to invest in everything - it's to be\nright when you do invest. Charlie Munger says knowing where the edge of your competence is might be\nmore valuable than the competence itself. Don't fake it. Be honest about what you don't know.",
+    "content": "# Circle of Competence - Stay in Your Lane\n\n**Video ID**: QmVKxH2PdCI\n**URL**: https://www.youtube.com/watch?v=QmVKxH2PdCI\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-15T13:28:02.537633\n\n## Key Concepts\nValue Investing\n\n## Strategies\nNone identified\n\n## Sentiment\nNeutral\n\n## Transcript\n\nWarren Buffett says to stay within your circle of competence. This means only\ninvesting in businesses you truly understand. If you can't explain how the company makes money in one\nsentence, it's outside your circle. Your circle might be small - that's okay. It's better to have a\nsmall circle and stay inside it than a big circle you don't really understand. To expand your circle,\nstudy industries you use every day. If you work in healthcare, you understand those businesses better\nthan most. If you love technology, study tech companies deeply. Read annual reports, understand the\ncompetitive landscape, know the key metrics. The goal is not to invest in everything - it's to be\nright when you do invest. Charlie Munger says knowing where the edge of your competence is might be\nmore valuable than the competence itself. Don't fake it. Be honest about what you don't know.",
     "file": "rag_knowledge/youtube/transcripts/QmVKxH2PdCI_Circle_of_Competence_-_Stay_in_Your_Lane.md"
   },
   {
@@ -3087,7 +2453,7 @@
     "severity": "",
     "summary": "## Key Concepts 4 Ms, Moat, Margin of Safety, Big Five Numbers, Rule #1, Wonderful Company, Intrinsic Value, Value Investing ## Strategies Value Investing ## Sentiment Neutral ## Transcript Phil Town here. Today I want to talk about how to invest in stocks for beginners. The most important thing is to understand Rule #1: Don't lose money. Warren Buffett said this is the most important rule of inve",
     "tags": [],
-    "content": "# How to Invest in Stocks for Beginners 2024\n\n**Video ID**: Rm69dKSsTrA\n**URL**: https://www.youtube.com/watch?v=Rm69dKSsTrA\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-14T18:42:38.902571\n\n## Key Concepts\n4 Ms, Moat, Margin of Safety, Big Five Numbers, Rule #1, Wonderful Company, Intrinsic Value, Value Investing\n\n## Strategies\nValue Investing\n\n## Sentiment\nNeutral\n\n## Transcript\n\nPhil Town here. Today I want to talk about how to invest in stocks for beginners.\nThe most important thing is to understand Rule #1: Don't lose money. Warren Buffett said this is the most\nimportant rule of investing. The second rule is: Don't forget rule #1. What this means is we need to find\nwonderful companies at attractive prices with a margin of safety. A wonderful company has four things:\nMeaning - you understand the business. Moat - it has a competitive advantage. Management - good people\nrunning it. And Margin of Safety - you can buy it at a discount to its true value. Start by looking at\ncompanies you understand, that you use every day. Then analyze their financials - look at the Big Five\nnumbers: ROIC, Equity growth, EPS growth, Sales growth, and Cash flow growth. All should be above 10%\nfor at least 10 years. This is value investing at its core.",
+    "content": "# How to Invest in Stocks for Beginners 2024\n\n**Video ID**: Rm69dKSsTrA\n**URL**: https://www.youtube.com/watch?v=Rm69dKSsTrA\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-15T13:26:26.964197\n\n## Key Concepts\n4 Ms, Moat, Margin of Safety, Big Five Numbers, Rule #1, Wonderful Company, Intrinsic Value, Value Investing\n\n## Strategies\nValue Investing\n\n## Sentiment\nNeutral\n\n## Transcript\n\nPhil Town here. Today I want to talk about how to invest in stocks for beginners.\nThe most important thing is to understand Rule #1: Don't lose money. Warren Buffett said this is the most\nimportant rule of investing. The second rule is: Don't forget rule #1. What this means is we need to find\nwonderful companies at attractive prices with a margin of safety. A wonderful company has four things:\nMeaning - you understand the business. Moat - it has a competitive advantage. Management - good people\nrunning it. And Margin of Safety - you can buy it at a discount to its true value. Start by looking at\ncompanies you understand, that you use every day. Then analyze their financials - look at the Big Five\nnumbers: ROIC, Equity growth, EPS growth, Sales growth, and Cash flow growth. All should be above 10%\nfor at least 10 years. This is value investing at its core.",
     "file": "rag_knowledge/youtube/transcripts/Rm69dKSsTrA_How_to_Invest_in_Stocks_for_Beginners_2024.md"
   },
   {
@@ -3098,7 +2464,7 @@
     "severity": "",
     "summary": "## Key Concepts 4 Ms, Margin of Safety, Rule #1, Options Strategy, Value Investing ## Strategies Cash-Secured Puts, Value Investing ## Sentiment Neutral ## Transcript Cash secured puts are an amazing strategy for Rule #1 investors. Here's how it works: You sell a put option on a stock you want to own, and you get paid a premium upfront. If the stock stays above your strike price, you keep the prem",
     "tags": [],
-    "content": "# Cash Secured Puts Strategy\n\n**Video ID**: WRF86rX2wXs\n**URL**: https://www.youtube.com/watch?v=WRF86rX2wXs\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-14T18:43:19.513533\n\n## Key Concepts\n4 Ms, Margin of Safety, Rule #1, Options Strategy, Value Investing\n\n## Strategies\nCash-Secured Puts, Value Investing\n\n## Sentiment\nNeutral\n\n## Transcript\n\nCash secured puts are an amazing strategy for Rule #1 investors. Here's how it\nworks: You sell a put option on a stock you want to own, and you get paid a premium upfront. If the\nstock stays above your strike price, you keep the premium - free money. If the stock falls below your\nstrike price, you buy the shares at a discount to the current price, plus you keep the premium. This\nis a win-win situation when done on wonderful companies. The key is to only sell puts on companies\nyou actually want to own at that price. Choose a strike price that gives you a good margin of safety.\nI typically sell puts 30-45 days out, at a strike price 10-20% below current price. This generates\nconsistent income while waiting to buy companies on your watchlist. Warren Buffett has used this\nstrategy to acquire Coca-Cola shares. Just make sure you have the cash to buy if assigned.",
+    "content": "# Cash Secured Puts Strategy\n\n**Video ID**: WRF86rX2wXs\n**URL**: https://www.youtube.com/watch?v=WRF86rX2wXs\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-15T13:27:09.095732\n\n## Key Concepts\n4 Ms, Margin of Safety, Rule #1, Options Strategy, Value Investing\n\n## Strategies\nCash-Secured Puts, Value Investing\n\n## Sentiment\nNeutral\n\n## Transcript\n\nCash secured puts are an amazing strategy for Rule #1 investors. Here's how it\nworks: You sell a put option on a stock you want to own, and you get paid a premium upfront. If the\nstock stays above your strike price, you keep the premium - free money. If the stock falls below your\nstrike price, you buy the shares at a discount to the current price, plus you keep the premium. This\nis a win-win situation when done on wonderful companies. The key is to only sell puts on companies\nyou actually want to own at that price. Choose a strike price that gives you a good margin of safety.\nI typically sell puts 30-45 days out, at a strike price 10-20% below current price. This generates\nconsistent income while waiting to buy companies on your watchlist. Warren Buffett has used this\nstrategy to acquire Coca-Cola shares. Just make sure you have the cash to buy if assigned.",
     "file": "rag_knowledge/youtube/transcripts/WRF86rX2wXs_Cash_Secured_Puts_Strategy.md"
   },
   {
@@ -3109,7 +2475,7 @@
     "severity": "",
     "summary": "## Key Concepts 4 Ms, Margin of Safety, Intrinsic Value ## Strategies Value Investing ## Sentiment Neutral ## Transcript The sticker price is the true value of a company based on future cash flows. Here's how I calculate it. First, get the current EPS - earnings per share. Then determine the growth rate - use the lower of analyst estimates or historical growth. Apply the Rule of 72 to project EPS ",
     "tags": [],
-    "content": "# How to Calculate Sticker Price - Intrinsic Value\n\n**Video ID**: XyYjVrMbMpI\n**URL**: https://www.youtube.com/watch?v=XyYjVrMbMpI\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-14T18:44:02.945689\n\n## Key Concepts\n4 Ms, Margin of Safety, Intrinsic Value\n\n## Strategies\nValue Investing\n\n## Sentiment\nNeutral\n\n## Transcript\n\nThe sticker price is the true value of a company based on future cash flows.\nHere's how I calculate it. First, get the current EPS - earnings per share. Then determine the growth\nrate - use the lower of analyst estimates or historical growth. Apply the Rule of 72 to project EPS\n10 years out. Take that future EPS and multiply by twice the growth rate to get future PE ratio.\nMultiply future EPS by future PE to get future price. Then discount back to today using a 15% minimum\nacceptable rate of return. That gives you the sticker price. For example: $5 EPS growing 12% becomes\n$15.50 in 10 years. Future PE of 24 means future price of $372. Discounted at 15% gives sticker price\nof $92. Buy at half that for margin of safety - so $46. This systematic approach removes emotion from\ninvesting and ensures you never overpay for even the best companies.",
+    "content": "# How to Calculate Sticker Price - Intrinsic Value\n\n**Video ID**: XyYjVrMbMpI\n**URL**: https://www.youtube.com/watch?v=XyYjVrMbMpI\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-15T13:27:54.145705\n\n## Key Concepts\n4 Ms, Margin of Safety, Intrinsic Value\n\n## Strategies\nValue Investing\n\n## Sentiment\nNeutral\n\n## Transcript\n\nThe sticker price is the true value of a company based on future cash flows.\nHere's how I calculate it. First, get the current EPS - earnings per share. Then determine the growth\nrate - use the lower of analyst estimates or historical growth. Apply the Rule of 72 to project EPS\n10 years out. Take that future EPS and multiply by twice the growth rate to get future PE ratio.\nMultiply future EPS by future PE to get future price. Then discount back to today using a 15% minimum\nacceptable rate of return. That gives you the sticker price. For example: $5 EPS growing 12% becomes\n$15.50 in 10 years. Future PE of 24 means future price of $372. Discounted at 15% gives sticker price\nof $92. Buy at half that for margin of safety - so $46. This systematic approach removes emotion from\ninvesting and ensures you never overpay for even the best companies.",
     "file": "rag_knowledge/youtube/transcripts/XyYjVrMbMpI_How_to_Calculate_Sticker_Price_-_Intrinsic_Value.md"
   },
   {
@@ -3120,7 +2486,7 @@
     "severity": "",
     "summary": "## Key Concepts Margin of Safety, Rule #1 ## Strategies None identified ## Sentiment Neutral ## Transcript Market crashes are the best thing that can happen to a Rule #1 investor. While everyone panics, we see opportunity. In 2008, wonderful companies dropped 50% or more. Apple, Amazon, Berkshire - all on sale. This is when you deploy capital aggressively. But preparation is key. Have cash ready. ",
     "tags": [],
-    "content": "# Market Crashes - Opportunity of a Lifetime\n\n**Video ID**: Yp7_oQEGfNc\n**URL**: https://www.youtube.com/watch?v=Yp7_oQEGfNc\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-14T18:45:08.370975\n\n## Key Concepts\nMargin of Safety, Rule #1\n\n## Strategies\nNone identified\n\n## Sentiment\nNeutral\n\n## Transcript\n\nMarket crashes are the best thing that can happen to a Rule #1 investor. While\neveryone panics, we see opportunity. In 2008, wonderful companies dropped 50% or more. Apple, Amazon,\nBerkshire - all on sale. This is when you deploy capital aggressively. But preparation is key. Have\ncash ready. Keep your watchlist updated with sticker prices. When the crash comes, you know exactly\nwhat to buy and at what price. The hardest part is psychological. Your portfolio is down, news is\nterrifying, everyone is selling. That's exactly when you buy. Remember: price is what you pay, value\nis what you get. The value of great companies doesn't drop just because prices do. If anything, it\nincreases as weak competitors fail. Buffett made his best investments during panics. Be greedy when\nothers are fearful. The next crash is coming - the question is whether you'll be ready to act.",
+    "content": "# Market Crashes - Opportunity of a Lifetime\n\n**Video ID**: Yp7_oQEGfNc\n**URL**: https://www.youtube.com/watch?v=Yp7_oQEGfNc\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-15T13:29:01.639091\n\n## Key Concepts\nMargin of Safety, Rule #1\n\n## Strategies\nNone identified\n\n## Sentiment\nNeutral\n\n## Transcript\n\nMarket crashes are the best thing that can happen to a Rule #1 investor. While\neveryone panics, we see opportunity. In 2008, wonderful companies dropped 50% or more. Apple, Amazon,\nBerkshire - all on sale. This is when you deploy capital aggressively. But preparation is key. Have\ncash ready. Keep your watchlist updated with sticker prices. When the crash comes, you know exactly\nwhat to buy and at what price. The hardest part is psychological. Your portfolio is down, news is\nterrifying, everyone is selling. That's exactly when you buy. Remember: price is what you pay, value\nis what you get. The value of great companies doesn't drop just because prices do. If anything, it\nincreases as weak competitors fail. Buffett made his best investments during panics. Be greedy when\nothers are fearful. The next crash is coming - the question is whether you'll be ready to act.",
     "file": "rag_knowledge/youtube/transcripts/Yp7_oQEGfNc_Market_Crashes_-_Opportunity_of_a_Lifetime.md"
   },
   {
@@ -3131,7 +2497,7 @@
     "severity": "",
     "summary": "## Key Concepts 4 Ms, Moat, Margin of Safety, Rule #1, Options Strategy, Value Investing ## Strategies Value Investing ## Sentiment Neutral ## Transcript Rule #1 of investing is simple: Don't lose money. Rule #2: Don't forget Rule #1. Warren Buffett says these are the only rules that matter. What does this mean practically? It means protecting your capital is more important than making gains. If y",
     "tags": [],
-    "content": "# Rule #1: Don't Lose Money\n\n**Video ID**: Z5chrxMuBoo\n**URL**: https://www.youtube.com/watch?v=Z5chrxMuBoo\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-14T18:43:46.682009\n\n## Key Concepts\n4 Ms, Moat, Margin of Safety, Rule #1, Options Strategy, Value Investing\n\n## Strategies\nValue Investing\n\n## Sentiment\nNeutral\n\n## Transcript\n\nRule #1 of investing is simple: Don't lose money. Rule #2: Don't forget\nRule #1. Warren Buffett says these are the only rules that matter. What does this mean practically?\nIt means protecting your capital is more important than making gains. If you lose 50%, you need 100%\ngains just to break even. That's why margin of safety is so critical. It means only investing in\ncompanies you understand with durable competitive advantages. It means never overpaying, no matter\nhow good the company. It means being patient - waiting for the right opportunities instead of\nforcing trades. It means cutting losses quickly when you're wrong. Most investors focus on making\nmoney. The best investors focus on not losing money - the gains take care of themselves. This\nmindset shift is what separates amateur investors from professionals. Start with Rule #1 and you'll\navoid the mistakes that destroy most portfolios.",
+    "content": "# Rule #1: Don't Lose Money\n\n**Video ID**: Z5chrxMuBoo\n**URL**: https://www.youtube.com/watch?v=Z5chrxMuBoo\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-15T13:27:37.046478\n\n## Key Concepts\n4 Ms, Moat, Margin of Safety, Rule #1, Options Strategy, Value Investing\n\n## Strategies\nValue Investing\n\n## Sentiment\nNeutral\n\n## Transcript\n\nRule #1 of investing is simple: Don't lose money. Rule #2: Don't forget\nRule #1. Warren Buffett says these are the only rules that matter. What does this mean practically?\nIt means protecting your capital is more important than making gains. If you lose 50%, you need 100%\ngains just to break even. That's why margin of safety is so critical. It means only investing in\ncompanies you understand with durable competitive advantages. It means never overpaying, no matter\nhow good the company. It means being patient - waiting for the right opportunities instead of\nforcing trades. It means cutting losses quickly when you're wrong. Most investors focus on making\nmoney. The best investors focus on not losing money - the gains take care of themselves. This\nmindset shift is what separates amateur investors from professionals. Start with Rule #1 and you'll\navoid the mistakes that destroy most portfolios.",
     "file": "rag_knowledge/youtube/transcripts/Z5chrxMuBoo_Rule_1_Dont_Lose_Money.md"
   },
   {
@@ -3142,7 +2508,7 @@
     "severity": "",
     "summary": "## Key Concepts Margin of Safety, Intrinsic Value, Value Investing ## Strategies Value Investing ## Sentiment Neutral ## Transcript Owner earnings is Warren Buffett's preferred measure of company profitability. It's different from net income because it shows what owners actually receive. The formula is: net income plus depreciation and amortization minus capital expenditures needed to maintain com",
     "tags": [],
-    "content": "# Owner Earnings Explained - Buffett's Secret Metric\n\n**Video ID**: dVKjsPQbZNo\n**URL**: https://www.youtube.com/watch?v=dVKjsPQbZNo\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-14T18:44:19.515995\n\n## Key Concepts\nMargin of Safety, Intrinsic Value, Value Investing\n\n## Strategies\nValue Investing\n\n## Sentiment\nNeutral\n\n## Transcript\n\nOwner earnings is Warren Buffett's preferred measure of company profitability.\nIt's different from net income because it shows what owners actually receive. The formula is: net\nincome plus depreciation and amortization minus capital expenditures needed to maintain competitive\nposition. This tells you the real cash available to shareholders. Why is this better than net income?\nBecause net income includes non-cash charges and doesn't account for required reinvestment. A company\nmight show profits but need to spend all of it on equipment. Owner earnings reveals this. Look for\ncompanies where owner earnings grow consistently over time. If owner earnings are significantly lower\nthan net income, the company requires heavy capital investment. If owner earnings exceed net income,\nthe business generates more cash than reported. This is the true measure of value for calculating\nintrinsic value. Use owner earnings in your sticker price calculations.",
+    "content": "# Owner Earnings Explained - Buffett's Secret Metric\n\n**Video ID**: dVKjsPQbZNo\n**URL**: https://www.youtube.com/watch?v=dVKjsPQbZNo\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-15T13:28:10.974918\n\n## Key Concepts\nMargin of Safety, Intrinsic Value, Value Investing\n\n## Strategies\nValue Investing\n\n## Sentiment\nNeutral\n\n## Transcript\n\nOwner earnings is Warren Buffett's preferred measure of company profitability.\nIt's different from net income because it shows what owners actually receive. The formula is: net\nincome plus depreciation and amortization minus capital expenditures needed to maintain competitive\nposition. This tells you the real cash available to shareholders. Why is this better than net income?\nBecause net income includes non-cash charges and doesn't account for required reinvestment. A company\nmight show profits but need to spend all of it on equipment. Owner earnings reveals this. Look for\ncompanies where owner earnings grow consistently over time. If owner earnings are significantly lower\nthan net income, the company requires heavy capital investment. If owner earnings exceed net income,\nthe business generates more cash than reported. This is the true measure of value for calculating\nintrinsic value. Use owner earnings in your sticker price calculations.",
     "file": "rag_knowledge/youtube/transcripts/dVKjsPQbZNo_Owner_Earnings_Explained_-_Buffetts_Secret_Metric.md"
   },
   {
@@ -3153,7 +2519,7 @@
     "severity": "",
     "summary": "## Key Concepts 4 Ms, Moat, Margin of Safety, Options Strategy, Intrinsic Value, Value Investing ## Strategies Value Investing ## Sentiment Neutral ## Transcript Warren Buffett is the greatest investor of all time. His strategy is simple: buy wonderful companies at fair prices and hold them forever. Buffett looks for businesses with durable competitive advantages - what he calls moats. A moat prot",
     "tags": [],
-    "content": "# Warren Buffett: How to Invest for Beginners\n\n**Video ID**: gWIi6WLczZA\n**URL**: https://www.youtube.com/watch?v=gWIi6WLczZA\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-14T18:42:47.023578\n\n## Key Concepts\n4 Ms, Moat, Margin of Safety, Options Strategy, Intrinsic Value, Value Investing\n\n## Strategies\nValue Investing\n\n## Sentiment\nNeutral\n\n## Transcript\n\nWarren Buffett is the greatest investor of all time. His strategy is simple:\nbuy wonderful companies at fair prices and hold them forever. Buffett looks for businesses with durable\ncompetitive advantages - what he calls moats. A moat protects a company from competition like a moat\nprotects a castle. Types of moats include brand loyalty like Coca-Cola, network effects like Visa,\nswitching costs like Microsoft, and low-cost production like Costco. Buffett also emphasizes margin\nof safety - buying at a discount to intrinsic value. He calculates intrinsic value using owner earnings\nand growth rates. For beginners, Buffett recommends index funds if you don't have time to research\nindividual stocks. But if you do your homework, concentrated positions in wonderful companies can\ngenerate superior returns. The key is patience - Buffett's favorite holding period is forever.",
+    "content": "# Warren Buffett: How to Invest for Beginners\n\n**Video ID**: gWIi6WLczZA\n**URL**: https://www.youtube.com/watch?v=gWIi6WLczZA\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-15T13:26:35.418667\n\n## Key Concepts\n4 Ms, Moat, Margin of Safety, Options Strategy, Intrinsic Value, Value Investing\n\n## Strategies\nValue Investing\n\n## Sentiment\nNeutral\n\n## Transcript\n\nWarren Buffett is the greatest investor of all time. His strategy is simple:\nbuy wonderful companies at fair prices and hold them forever. Buffett looks for businesses with durable\ncompetitive advantages - what he calls moats. A moat protects a company from competition like a moat\nprotects a castle. Types of moats include brand loyalty like Coca-Cola, network effects like Visa,\nswitching costs like Microsoft, and low-cost production like Costco. Buffett also emphasizes margin\nof safety - buying at a discount to intrinsic value. He calculates intrinsic value using owner earnings\nand growth rates. For beginners, Buffett recommends index funds if you don't have time to research\nindividual stocks. But if you do your homework, concentrated positions in wonderful companies can\ngenerate superior returns. The key is patience - Buffett's favorite holding period is forever.",
     "file": "rag_knowledge/youtube/transcripts/gWIi6WLczZA_Warren_Buffett_How_to_Invest_for_Beginners.md"
   },
   {
@@ -3164,7 +2530,7 @@
     "severity": "",
     "summary": "## Key Concepts Rule #1 ## Strategies None identified ## Sentiment Neutral ## Transcript Debt can destroy even great businesses. When analyzing a company, I look at debt-to-equity ratio. Under 0.5 is comfortable. Over 1.0 is a warning sign. Over 2.0 is dangerous. Also check interest coverage ratio - can earnings cover interest payments 5 times or more? Why does debt matter? In good times, leverage",
     "tags": [],
-    "content": "# Debt and the Balance Sheet\n\n**Video ID**: iRvKG9yFNBo\n**URL**: https://www.youtube.com/watch?v=iRvKG9yFNBo\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-14T18:45:16.738549\n\n## Key Concepts\nRule #1\n\n## Strategies\nNone identified\n\n## Sentiment\nNeutral\n\n## Transcript\n\nDebt can destroy even great businesses. When analyzing a company, I look at\ndebt-to-equity ratio. Under 0.5 is comfortable. Over 1.0 is a warning sign. Over 2.0 is dangerous.\nAlso check interest coverage ratio - can earnings cover interest payments 5 times or more? Why does\ndebt matter? In good times, leverage amplifies returns. But in downturns, debt kills. Companies with\nheavy debt can't weather recessions. They cut dividends, sell assets, or go bankrupt. Compare to\ncompanies like Apple or Berkshire with net cash positions. They thrive during crises, buying distressed\nassets cheap. Look at debt maturity schedule. If lots of debt comes due during a recession, trouble\nfollows. Also check if debt is fixed or variable rate. Rising rates can crush variable-rate borrowers.\nThe best Rule #1 companies have fortress balance sheets. They might use some debt for strategic\nadvantage, but they never bet the company on leverage.",
+    "content": "# Debt and the Balance Sheet\n\n**Video ID**: iRvKG9yFNBo\n**URL**: https://www.youtube.com/watch?v=iRvKG9yFNBo\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-15T13:29:09.996914\n\n## Key Concepts\nRule #1\n\n## Strategies\nNone identified\n\n## Sentiment\nNeutral\n\n## Transcript\n\nDebt can destroy even great businesses. When analyzing a company, I look at\ndebt-to-equity ratio. Under 0.5 is comfortable. Over 1.0 is a warning sign. Over 2.0 is dangerous.\nAlso check interest coverage ratio - can earnings cover interest payments 5 times or more? Why does\ndebt matter? In good times, leverage amplifies returns. But in downturns, debt kills. Companies with\nheavy debt can't weather recessions. They cut dividends, sell assets, or go bankrupt. Compare to\ncompanies like Apple or Berkshire with net cash positions. They thrive during crises, buying distressed\nassets cheap. Look at debt maturity schedule. If lots of debt comes due during a recession, trouble\nfollows. Also check if debt is fixed or variable rate. Rising rates can crush variable-rate borrowers.\nThe best Rule #1 companies have fortress balance sheets. They might use some debt for strategic\nadvantage, but they never bet the company on leverage.",
     "file": "rag_knowledge/youtube/transcripts/iRvKG9yFNBo_Debt_and_the_Balance_Sheet.md"
   },
   {
@@ -3175,7 +2541,7 @@
     "severity": "",
     "summary": "## Key Concepts 4 Ms, Moat, Margin of Safety ## Strategies None identified ## Sentiment Neutral ## Transcript Every great investment starts with a watchlist. I keep a list of 10-20 wonderful companies I'd love to own at the right price. How do I build it? Start with companies you understand and use. Apply the 4 Ms filter rigorously. Meaning - can you explain it simply? Moat - what protects their p",
     "tags": [],
-    "content": "# Building a Watchlist - Stock Analysis Process\n\n**Video ID**: k2z7K4PLkQg\n**URL**: https://www.youtube.com/watch?v=k2z7K4PLkQg\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-14T18:45:00.243996\n\n## Key Concepts\n4 Ms, Moat, Margin of Safety\n\n## Strategies\nNone identified\n\n## Sentiment\nNeutral\n\n## Transcript\n\nEvery great investment starts with a watchlist. I keep a list of 10-20\nwonderful companies I'd love to own at the right price. How do I build it? Start with companies you\nunderstand and use. Apply the 4 Ms filter rigorously. Meaning - can you explain it simply? Moat - what\nprotects their profits? Management - do they own stock and act like owners? Then calculate the sticker\nprice for each. Track the current price versus sticker price weekly. When price drops to half of\nsticker price or below, that's your buy signal. Keep notes on each company: why you like it, what\nrisks you see, key metrics to monitor. Update your watchlist quarterly. Companies fall off when\nfundamentals deteriorate. New companies get added when you complete analysis. The watchlist creates\npatience. Instead of forcing investments, you wait for Mr Market to offer discounts on businesses\nyou've already vetted.",
+    "content": "# Building a Watchlist - Stock Analysis Process\n\n**Video ID**: k2z7K4PLkQg\n**URL**: https://www.youtube.com/watch?v=k2z7K4PLkQg\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-15T13:28:53.192102\n\n## Key Concepts\n4 Ms, Moat, Margin of Safety\n\n## Strategies\nNone identified\n\n## Sentiment\nNeutral\n\n## Transcript\n\nEvery great investment starts with a watchlist. I keep a list of 10-20\nwonderful companies I'd love to own at the right price. How do I build it? Start with companies you\nunderstand and use. Apply the 4 Ms filter rigorously. Meaning - can you explain it simply? Moat - what\nprotects their profits? Management - do they own stock and act like owners? Then calculate the sticker\nprice for each. Track the current price versus sticker price weekly. When price drops to half of\nsticker price or below, that's your buy signal. Keep notes on each company: why you like it, what\nrisks you see, key metrics to monitor. Update your watchlist quarterly. Companies fall off when\nfundamentals deteriorate. New companies get added when you complete analysis. The watchlist creates\npatience. Instead of forcing investments, you wait for Mr Market to offer discounts on businesses\nyou've already vetted.",
     "file": "rag_knowledge/youtube/transcripts/k2z7K4PLkQg_Building_a_Watchlist_-_Stock_Analysis_Process.md"
   },
   {
@@ -3186,7 +2552,7 @@
     "severity": "",
     "summary": "## Key Concepts Margin of Safety, Options Strategy ## Strategies Cash-Secured Puts, Covered Calls ## Sentiment Neutral ## Transcript Covered calls are perfect for generating income on stocks you own. Here's how it works: you own 100 shares and sell someone the right to buy them at a higher price. You get paid premium upfront. If the stock stays below the strike, you keep the shares and the premium",
     "tags": [],
-    "content": "# Covered Calls for Income - Options Strategy\n\n**Video ID**: oLaGH5LVhJ8\n**URL**: https://www.youtube.com/watch?v=oLaGH5LVhJ8\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-14T18:44:52.000080\n\n## Key Concepts\nMargin of Safety, Options Strategy\n\n## Strategies\nCash-Secured Puts, Covered Calls\n\n## Sentiment\nNeutral\n\n## Transcript\n\nCovered calls are perfect for generating income on stocks you own. Here's how\nit works: you own 100 shares and sell someone the right to buy them at a higher price. You get paid\npremium upfront. If the stock stays below the strike, you keep the shares and the premium. If it goes\nabove, your shares get called away but you sold at a profit. The key is choosing the right strike\nprice. I sell calls 10-15% above current price, 30-45 days out. This gives decent premium while leaving\nroom for gains. Only sell covered calls on stocks you're willing to sell at that price. On wonderful\ncompanies, I use this during periods of overvaluation. If a stock hits sticker price, selling covered\ncalls generates income while you wait for it to drop. Combine with cash secured puts in the wheel\nstrategy for continuous income generation. Just remember: you're capping upside in exchange for\ncertain income.",
+    "content": "# Covered Calls for Income - Options Strategy\n\n**Video ID**: oLaGH5LVhJ8\n**URL**: https://www.youtube.com/watch?v=oLaGH5LVhJ8\n**Upload Date**: curated\n**Channel**: Phil Town - Rule #1 Investing\n**Ingested**: 2026-02-15T13:28:44.643689\n\n## Key Concepts\nMargin of Safety, Options Strategy\n\n## Strategies\nCash-Secured Puts, Covered Calls\n\n## Sentiment\nNeutral\n\n## Transcript\n\nCovered calls are perfect for generating income on stocks you own. Here's how\nit works: you own 100 shares and sell someone the right to buy them at a higher price. You get paid\npremium upfront. If the stock stays below the strike, you keep the shares and the premium. If it goes\nabove, your shares get called away but you sold at a profit. The key is choosing the right strike\nprice. I sell calls 10-15% above current price, 30-45 days out. This gives decent premium while leaving\nroom for gains. Only sell covered calls on stocks you're willing to sell at that price. On wonderful\ncompanies, I use this during periods of overvaluation. If a stock hits sticker price, selling covered\ncalls generates income while you wait for it to drop. Combine with cash secured puts in the wheel\nstrategy for continuous income generation. Just remember: you're capping upside in exchange for\ncertain income.",
     "file": "rag_knowledge/youtube/transcripts/oLaGH5LVhJ8_Covered_Calls_for_Income_-_Options_Strategy.md"
   }
 ]
