@@ -34,7 +34,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install alpaca-py python-dotenv
+        run: pip install alpaca-py python-dotenv pytz
 
       - name: Check positions first
         id: positions

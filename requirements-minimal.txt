@@ -32,7 +32,7 @@ holidays==0.90
 
 # Utilities
 python-dateutil==2.9.0.post0
-# pytz==2023.3                 # REMOVED: Never imported (Jan 2026)
+pytz>=2023.3                   # Required by alpaca-py internally (re-added Feb 2026)
 # loguru==0.7.3                # REMOVED: Never imported (Jan 2026)
 anthropic>=0.73.0,<1.0.0  # Aligned with pyproject.toml
 vaderSentiment==3.3.2      # Sentiment scoring for macro/analyst agent

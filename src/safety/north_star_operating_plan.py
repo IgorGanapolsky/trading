@@ -8,6 +8,7 @@ This module keeps the North Star execution loop practical:
 from __future__ import annotations
 
 import json
+import re
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -19,6 +20,8 @@ DEFAULT_WEEKLY_HISTORY_PATH = Path("data/north_star_weekly_history.json")
 DEFAULT_LOOKBACK_DAYS = 7
 DEFAULT_WEEKLY_MIN_SAMPLES = 5
 DEFAULT_HISTORY_WEEKS = 104
+
+_SPY_OPTION_RE = re.compile(r"^SPY(\d{6})[CP]\d{8}$")
 
 
 def _as_float(value: Any, default: float = 0.0) -> float:
@@ -156,6 +159,97 @@ def _required_cagr_without_contrib(current_equity: float, years_remaining: float
     return (NORTH_STAR_TARGET_CAPITAL / current_equity) ** (1.0 / years_remaining) - 1.0
 
 
+def _compute_ic_win_rate_from_history(state: dict[str, Any]) -> dict[str, Any]:
+    """Compute win rate from complete SPY iron condor round-trips in trade_history.
+
+    Groups individual legs by expiry date (encoded in the symbol, e.g. "260313").
+    An iron condor round-trip has >= 8 legs (4 open + 4 close). For each complete
+    round-trip, net cash flow = sum(SELL prices) - sum(BUY prices). Positive = win.
+
+    Expiry groups with still-open positions are excluded — only fully settled ICs count.
+    """
+    trade_history = state.get("trade_history", []) if isinstance(state, dict) else []
+    if not isinstance(trade_history, list):
+        trade_history = []
+
+    # Identify expiry dates that still have open positions (not settled yet)
+    open_expiries: set[str] = set()
+    for pos in state.get("positions", []):
+        if not isinstance(pos, dict):
+            continue
+        m = _SPY_OPTION_RE.match(str(pos.get("symbol", "")))
+        if m:
+            open_expiries.add(m.group(1))
+
+    # Group legs by expiry date extracted from symbol
+    expiry_groups: dict[str, list[dict[str, Any]]] = {}
+    for t in trade_history:
+        if not isinstance(t, dict):
+            continue
+        symbol = str(t.get("symbol", ""))
+        m = _SPY_OPTION_RE.match(symbol)
+        if not m:
+            continue
+        expiry_key = m.group(1)  # e.g. "260220"
+        expiry_groups.setdefault(expiry_key, []).append(t)
+
+    wins = 0
+    losses = 0
+    total_pnl = 0.0
+
+    for expiry_key, legs in expiry_groups.items():
+        # Skip if this expiry still has open positions (IC not fully settled)
+        if expiry_key in open_expiries:
+            continue
+
+        # A complete IC round-trip needs >= 8 legs (4 open + 4 close).
+        # Groups with fewer legs are partial — skip them.
+        if len(legs) < 8:
+            continue
+
+        # Net cash flow: SELL = credit (+), BUY = debit (-)
+        net = 0.0
+        for leg in legs:
+            # trade_history stores option premiums as per-share price strings.
+            # Convert to dollars with contract multiplier (100) and quantity.
+            price = _as_float(leg.get("price"), 0.0)
+            qty = _as_float(leg.get("qty", leg.get("quantity", 1.0)), 1.0)
+            cash = price * qty * 100.0
+
+            side = str(leg.get("side", "")).upper()
+            if "SELL" in side:
+                net += cash
+            elif "BUY" in side:
+                net -= cash
+
+        total_pnl += net
+        if net > 0:
+            wins += 1
+        elif net < 0:
+            losses += 1
+
+    samples = wins + losses
+    if samples == 0:
+        return {
+            "samples": 0,
+            "wins": 0,
+            "win_rate_pct": 0.0,
+            "expectancy": 0.0,
+            "evidence_source": "no_completed_ic_trades",
+        }
+
+    win_rate_pct = round((wins / samples) * 100.0, 2)
+    expectancy = round(total_pnl / samples, 4)
+
+    return {
+        "samples": samples,
+        "wins": wins,
+        "win_rate_pct": win_rate_pct,
+        "expectancy": expectancy,
+        "evidence_source": "trade_history_ic_only",
+    }
+
+
 def compute_weekly_gate(
     state: dict[str, Any],
     *,
@@ -177,16 +271,15 @@ def compute_weekly_gate(
         expectancy = round(total_pnl / samples, 4)
         evidence_source = "trades.json"
     else:
-        paper = state.get("paper_account", {}) if isinstance(state, dict) else {}
-        paper_samples = _as_int(paper.get("win_rate_sample_size"), 0)
-        paper_win_rate = _as_float(paper.get("win_rate"), 0.0)
-        paper_total_pl = _as_float(paper.get("total_pl"), 0.0)
-
-        samples = paper_samples
-        wins = round((paper_win_rate / 100.0) * paper_samples) if paper_samples > 0 else 0
-        win_rate_pct = round(paper_win_rate, 2) if paper_samples > 0 else 0.0
-        expectancy = round(paper_total_pl / paper_samples, 4) if paper_samples > 0 else 0.0
-        evidence_source = "paper_account_fallback"
+        # Fallback: compute IC-only win rate from trade_history in system_state.
+        # The blended paper_account.win_rate includes non-IC trades (REITs, stocks,
+        # individual puts) which pollute the iron condor strategy signal.
+        ic_stats = _compute_ic_win_rate_from_history(state)
+        samples = ic_stats["samples"]
+        wins = ic_stats["wins"]
+        win_rate_pct = ic_stats["win_rate_pct"]
+        expectancy = ic_stats["expectancy"]
+        evidence_source = ic_stats["evidence_source"]
 
     mode = "validation"
     recommended_max = 0.02
@@ -203,7 +296,10 @@ def compute_weekly_gate(
     elif samples >= DEFAULT_WEEKLY_MIN_SAMPLES and win_rate_pct < 65.0:
         mode = "defensive"
         recommended_max = 0.01
-        block_new_positions = win_rate_pct < 55.0 and samples >= 8
+        # Only block if BOTH win rate is poor AND expectancy is non-positive.
+        # A strategy with positive expectancy is net profitable even with
+        # sub-55% win rate (common for iron condors with favorable risk/reward).
+        block_new_positions = win_rate_pct < 55.0 and samples >= 8 and expectancy <= 0
         reason = f"Weekly win rate {win_rate_pct:.1f}% is below 65% safety threshold."
     elif samples >= 12 and win_rate_pct >= 80.0 and expectancy > 0:
         mode = "expansion_candidate"
