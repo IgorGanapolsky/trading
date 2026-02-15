@@ -1,7 +1,5 @@
 source "https://rubygems.org"
 
-gem "jekyll", "~> 4.3"
-gem "minima", "~> 2.5"
-gem "jekyll-feed"
-gem "jekyll-seo-tag"
-gem "jekyll-sitemap"
+# Keep GitHub Pages' own dependency set so the built-in `pages-build-deployment`
+# workflow can build the site without Gem version conflicts.
+gem "github-pages", group: :jekyll_plugins
