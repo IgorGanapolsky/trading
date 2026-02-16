@@ -26,46 +26,39 @@ _STUB_MODULES = [
     "src.data.iv_data_provider",
 ]
 
-_saved = {}
-for _mod_name in _STUB_MODULES:
-    if _mod_name not in sys.modules:
-        stub = ModuleType(_mod_name)
-        # Give dotenv a load_dotenv callable
-        if _mod_name == "dotenv":
-            stub.load_dotenv = lambda *a, **kw: None  # type: ignore[attr-defined]
-        # error_monitoring needs init_sentry
-        if _mod_name == "src.utils.error_monitoring":
-            stub.init_sentry = lambda *a, **kw: None  # type: ignore[attr-defined]
-        # safety modules
-        if _mod_name == "src.safety.trade_lock":
-            stub.TradeLockTimeout = type("TradeLockTimeout", (Exception,), {})  # type: ignore[attr-defined]
-            stub.acquire_trade_lock = MagicMock()  # type: ignore[attr-defined]
-        if _mod_name == "src.safety.mandatory_trade_gate":
-            stub.safe_submit_order = MagicMock()  # type: ignore[attr-defined]
-            stub.GateResult = type(
-                "GateResult", (), {"__init__": lambda self, **kw: self.__dict__.update(kw)}
-            )  # type: ignore[attr-defined]
-        # RAG
-        if _mod_name == "src.rag.lessons_learned_rag":
-            _rag_cls = MagicMock()
-            _rag_cls.return_value.search.return_value = []
-            stub.LessonsLearnedRAG = _rag_cls  # type: ignore[attr-defined]
-        # trading_thresholds
-        if _mod_name == "src.constants.trading_thresholds":
-
-            class _RT:
-                VIX_OPTIMAL_MIN = 15.0
-                VIX_OPTIMAL_MAX = 25.0
-                VIX_HALT_THRESHOLD = 35.0
-
-            stub.RiskThresholds = _RT  # type: ignore[attr-defined]
-        sys.modules[_mod_name] = stub
-        _saved[_mod_name] = stub
-
 # Ensure project root is on path
 sys.path.insert(0, str(Path(__file__).parent.parent))
+_STUB_OVERRIDES: dict[str, ModuleType] = {}
+for _mod_name in _STUB_MODULES:
+    stub = ModuleType(_mod_name)
+    if _mod_name == "dotenv":
+        stub.load_dotenv = lambda *a, **kw: None  # type: ignore[attr-defined]
+    if _mod_name == "src.utils.error_monitoring":
+        stub.init_sentry = lambda *a, **kw: None  # type: ignore[attr-defined]
+    if _mod_name == "src.safety.trade_lock":
+        stub.TradeLockTimeout = type("TradeLockTimeout", (Exception,), {})  # type: ignore[attr-defined]
+        stub.acquire_trade_lock = MagicMock()  # type: ignore[attr-defined]
+    if _mod_name == "src.safety.mandatory_trade_gate":
+        stub.safe_submit_order = MagicMock()  # type: ignore[attr-defined]
+        stub.GateResult = type(
+            "GateResult", (), {"__init__": lambda self, **kw: self.__dict__.update(kw)}
+        )  # type: ignore[attr-defined]
+    if _mod_name == "src.rag.lessons_learned_rag":
+        _rag_cls = MagicMock()
+        _rag_cls.return_value.search.return_value = []
+        stub.LessonsLearnedRAG = _rag_cls  # type: ignore[attr-defined]
+    if _mod_name == "src.constants.trading_thresholds":
 
-from scripts.iron_condor_trader import IronCondorLegs, IronCondorStrategy
+        class _RT:
+            VIX_OPTIMAL_MIN = 15.0
+            VIX_OPTIMAL_MAX = 25.0
+            VIX_HALT_THRESHOLD = 35.0
+
+        stub.RiskThresholds = _RT  # type: ignore[attr-defined]
+    _STUB_OVERRIDES[_mod_name] = stub
+
+with patch.dict(sys.modules, _STUB_OVERRIDES):
+    from scripts.iron_condor_trader import IronCondorLegs, IronCondorStrategy
 
 # Alias used in tests (the spec says IronCondorTrader)
 IronCondorTrader = IronCondorStrategy
