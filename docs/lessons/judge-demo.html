@@ -129,18 +129,18 @@
     </section>
 
     <section class="grid">
-      <article class="card span4"><div class="k">Checklist Progress</div><div class="v">8/10</div></article>
-      <article class="card span4"><div class="k">System Status</div><div class="v">n/a / n/a</div></article>
-      <article class="card span4"><div class="k">Smoke Latency / Cost</div><div class="v">1626 ms / $0.00004500</div></article>
+      <article class="card span4"><div class="k">Checklist Progress</div><div class="v" id="checklist-progress">Loading...</div></article>
+      <article class="card span4"><div class="k">System Status</div><div class="v" id="system-status">Loading...</div></article>
+      <article class="card span4"><div class="k">Smoke Latency / Cost</div><div class="v" id="smoke-latency-cost">Loading...</div></article>
 
       <article class="card span6">
         <div class="k">Execution Quality Daily</div>
         <table class="table">
-          <tr><td>Runs</td><td>1</td></tr>
-          <tr><td>Success Rate</td><td>0.0%</td></tr>
-          <tr><td>Actionable Rate</td><td>0.0%</td></tr>
-          <tr><td>P95 Latency</td><td>1626.0 ms</td></tr>
-          <tr><td>Generated</td><td>2026-02-16T20:08:36Z</td></tr>
+          <tr><td>Runs</td><td id="eq-runs">Loading...</td></tr>
+          <tr><td>Success Rate</td><td id="eq-success">Loading...</td></tr>
+          <tr><td>Actionable Rate</td><td id="eq-actionable">Loading...</td></tr>
+          <tr><td>P95 Latency</td><td id="eq-latency">Loading...</td></tr>
+          <tr><td>Generated</td><td id="eq-generated">Loading...</td></tr>
         </table>
       </article>
 
@@ -163,22 +163,17 @@
       <article class="card span6">
         <div class="k">How Much Money Made (Paper) + Why</div>
         <table class="table">
-          <tr><td>Starting balance</td><td>$100,000.00</td></tr>
-          <tr><td>Current equity</td><td>$101,441.56</td></tr>
-          <tr><td>Net P/L</td><td>$1,441.56 (1.44%)</td></tr>
-          <tr><td>Why (current drivers)</td><td>Win rate 100.0% over 1 samples, strategy gate status: LOW</td></tr>
+          <tr><td>Starting balance</td><td id="start-balance">Loading...</td></tr>
+          <tr><td>Current equity</td><td id="current-equity">Loading...</td></tr>
+          <tr><td>Net P/L</td><td id="net-pl">Loading...</td></tr>
+          <tr><td>Open positions</td><td id="open-positions">Loading...</td></tr>
+          <tr><td>Data source</td><td>Alpaca API via <a href="https://github.com/IgorGanapolsky/trading/blob/main/data/system_state.json" style="color:#9ed0ff">system_state.json</a> (CI-synced)</td></tr>
         </table>
       </article>
 
       <article class="card span8">
         <div class="k">Readiness Metrics</div>
-        <table class="table"><tr><td>Win Rate</td><td>100.00%</td><td><span class="chip pass">PASS</span></td></tr>
-<tr><td>Max Drawdown (sync history)</td><td>0.03%</td><td><span class="chip pass">PASS</span></td></tr>
-<tr><td>Execution Quality (valid trade records)</td><td>97.89%</td><td><span class="chip pass">PASS</span></td></tr>
-<tr><td>Gateway Latency</td><td>897 ms</td><td><span class="chip pass">PASS</span></td></tr>
-<tr><td>Gateway Cost (smoke call)</td><td>$0.000045</td><td><span class="chip pass">PASS</span></td></tr>
-<tr><td>Weekly Qualified Setups</td><td>0/3</td><td><span class="chip warn">WARN</span></td></tr>
-<tr><td>Weekly Closed Trades</td><td>1/1</td><td><span class="chip pass">PASS</span></td></tr></table>
+        <table class="table" id="readiness-table"><tr><td colspan="3" style="color:var(--muted)">Loading live data from system_state.json...</td></tr></table>
       </article>
 
       <article class="card span4 links">
@@ -198,5 +193,116 @@
       </article>
     </section>
   </div>
+
+<script>
+(async function() {
+  const BASE = 'https://raw.githubusercontent.com/IgorGanapolsky/trading/main';
+  const el = (id) => document.getElementById(id);
+  const usd = (n) => '$' + n.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  const chip = (cls, txt) => '<span class="chip ' + cls + '">' + txt + '</span>';
+
+  async function fetchJSON(path) {
+    try {
+      const r = await fetch(BASE + path + '?t=' + Date.now());
+      if (!r.ok) return null;
+      return await r.json();
+    } catch(e) { return null; }
+  }
+
+  // Fetch ALL canonical data sources in parallel
+  const [state, eqDaily, checklist] = await Promise.all([
+    fetchJSON('/data/system_state.json'),
+    fetchJSON('/artifacts/tars/execution_quality_daily.json'),
+    fetchJSON('/artifacts/tars/judge_demo_checklist.md').then(() => null), // MD not JSON
+  ]);
+
+  // --- Portfolio metrics from system_state.json (CI-synced from Alpaca API) ---
+  if (state) {
+    const pa = state.paper_account || {};
+    const equity = pa.equity || pa.current_equity || state.portfolio?.equity || 0;
+    const starting = pa.starting_balance || 100000;
+    const pl = pa.total_pl != null ? pa.total_pl : (equity - starting);
+    const plPct = starting > 0 ? ((pl / starting) * 100).toFixed(2) : '0.00';
+    const positions = state.positions || [];
+    const optionLegs = positions.filter(p => p.symbol && p.symbol.length > 10).length;
+    const icCount = Math.floor(optionLegs / 4);
+    const lastSync = state.last_updated || 'unknown';
+
+    el('start-balance').textContent = usd(starting);
+    el('current-equity').textContent = usd(equity);
+    el('net-pl').textContent = usd(pl) + ' (' + plPct + '%)';
+    el('open-positions').textContent = icCount + ' iron condor(s), ' + optionLegs + ' option legs';
+    el('system-status').textContent = icCount + ' IC / ' + positions.length + ' pos';
+
+    // Position details for readiness table
+    const posRows = positions.map(p => {
+      const pnlColor = (p.pnl || 0) >= 0 ? 'var(--pass)' : 'var(--accent)';
+      return '<tr><td>' + p.symbol + '</td><td style="color:' + pnlColor + '">' + usd(p.pnl || 0) + '</td><td>' + p.qty + ' qty</td></tr>';
+    }).join('');
+
+    // Readiness metrics - all computed from real data
+    const winRate = pa.win_rate != null ? pa.win_rate : 0;
+    const sampleSize = pa.win_rate_sample_size || 0;
+    const maxDrawdown = computeMaxDrawdown(state.sync_health?.history || []);
+    const wrChip = sampleSize < 30
+      ? chip('unknown', sampleSize + '/30 NEEDED')
+      : (winRate >= 80 ? chip('pass', 'PASS') : chip('warn', 'WARN'));
+
+    el('readiness-table').innerHTML =
+      '<tr><td>Win Rate</td><td>' + winRate.toFixed(1) + '% (' + sampleSize + ' sample' + (sampleSize !== 1 ? 's' : '') + ')</td><td>' + wrChip + '</td></tr>' +
+      '<tr><td>Max Drawdown</td><td>' + maxDrawdown.toFixed(2) + '%</td><td>' + (maxDrawdown < 5 ? chip('pass', 'PASS') : chip('warn', 'WARN')) + '</td></tr>' +
+      '<tr><td>Open Positions</td><td>' + icCount + ' IC / ' + optionLegs + ' legs</td><td>' + (icCount <= 5 ? chip('pass', 'PASS') : chip('warn', 'OVER LIMIT')) + '</td></tr>' +
+      '<tr><td>Account P/L</td><td>' + usd(pl) + ' (' + plPct + '%)</td><td>' + (pl >= 0 ? chip('pass', 'POSITIVE') : chip('warn', 'NEGATIVE')) + '</td></tr>' +
+      '<tr><td>Last Sync</td><td>' + lastSync + '</td><td>' + chip('pass', 'LIVE') + '</td></tr>' +
+      (posRows ? '<tr><td colspan="3" style="font-size:0.75rem;color:var(--muted);padding-top:12px">OPEN POSITIONS</td></tr>' + posRows : '');
+  } else {
+    el('system-status').textContent = 'Failed to load';
+    el('system-status').style.color = 'var(--accent)';
+  }
+
+  // --- Execution Quality from execution_quality_daily.json (CI-generated) ---
+  if (eqDaily) {
+    el('eq-runs').textContent = eqDaily.run_count || 0;
+    el('eq-success').textContent = ((eqDaily.success_rate || 0) * 100).toFixed(0) + '%';
+    el('eq-actionable').textContent = ((eqDaily.actionable_rate || 0) * 100).toFixed(0) + '%';
+    el('eq-latency').textContent = (eqDaily.p95_latency_ms || 0).toFixed(0) + ' ms';
+    el('eq-generated').textContent = eqDaily.generated_at_utc || eqDaily.date_utc || 'unknown';
+    el('smoke-latency-cost').textContent = (eqDaily.avg_latency_ms || 0).toFixed(0) + ' ms / ' + usd(eqDaily.total_estimated_cost_usd || 0);
+  } else {
+    el('eq-runs').textContent = 'Fetch failed';
+  }
+
+  // --- Checklist from judge_demo_checklist.md (count checked items) ---
+  try {
+    const r = await fetch(BASE + '/artifacts/tars/judge_demo_checklist.md?t=' + Date.now());
+    if (r.ok) {
+      const md = await r.text();
+      const checked = (md.match(/\[x\]/gi) || []).length;
+      const total = (md.match(/\[[ x]\]/gi) || []).length;
+      el('checklist-progress').textContent = checked + '/' + total;
+    } else {
+      el('checklist-progress').textContent = 'Fetch failed';
+    }
+  } catch(e) {
+    el('checklist-progress').textContent = 'Fetch failed';
+  }
+
+  // --- Helper: compute max drawdown from sync history ---
+  function computeMaxDrawdown(history) {
+    if (!history || history.length < 2) return 0;
+    let peak = 0;
+    let maxDD = 0;
+    for (const entry of history) {
+      const eq = entry.equity || 0;
+      if (eq > peak) peak = eq;
+      if (peak > 0) {
+        const dd = ((peak - eq) / peak) * 100;
+        if (dd > maxDD) maxDD = dd;
+      }
+    }
+    return maxDD;
+  }
+})();
+</script>
 </body>
 </html>

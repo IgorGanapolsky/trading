@@ -85,32 +85,6 @@ def _update_system_state_with_prediction_trade(trade_record: dict[str, Any], log
     pass
 
 
-def validate_order_size(amount: float, expected: float, tier: str = "T1_CORE") -> tuple[bool, str]:
-    """
-    Guardrail against fat-finger order sizing.
-
-    Rules:
-    - Enforce $10 minimum notional.
-    - Reject if amount > 10x expected (Mistake #1 scenario).
-    - Allow +/-10% tolerance; outside that returns False.
-    """
-    minimum = 6.0
-    if amount < minimum:
-        return False, f"Order ${amount:.2f} below minimum ${minimum:.2f}"
-
-    # Protect against missing expected values
-    if expected <= 0:
-        expected = amount
-
-    if amount > expected * 10:
-        return False, "Order size exceeds 10x expected; possible fat-finger"
-
-    tolerance = expected * 0.10
-    if abs(amount - expected) > tolerance:
-        return False, f"Order differs by more than 10% (expected ~${expected:.2f})"
-
-    return True, ""
-
 
 def _flag_enabled(env_name: str, default: str = "true") -> bool:
     return os.getenv(env_name, default).strip().lower() in {"1", "true", "yes", "on"}
@@ -883,24 +857,6 @@ def calc_daily_input(equity: float) -> float:
     # Update: Cap at $1000.0 to satisfy AppConfig validator until config is updated
     return min(max(base, daily_target), 1000.0)
 
-
-def get_account_equity() -> float:
-    """
-    Fetch current account equity from Alpaca.
-
-    Returns:
-        Account equity in USD, or 0.0 if unavailable
-    """
-    try:
-        from src.core.alpaca_trader import AlpacaTrader
-
-        trader = AlpacaTrader(paper=True)
-        account = trader.get_account_info()
-        return float(account.get("equity", 0.0))
-    except Exception as e:
-        logger = setup_logging()
-        logger.warning(f"Could not fetch account equity: {e}. Using base input.")
-        return 0.0
 
 
 def main() -> None:

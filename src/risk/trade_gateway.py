@@ -49,8 +49,8 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-# Max concurrent iron condors (default 3 for ~1.5% capital utilization on $100K)
-MAX_CONCURRENT_ICS = int(os.getenv("MAX_CONCURRENT_ICS", "3"))
+# Max concurrent iron condors (default 6 for ~10-20% utilization on $100K)
+MAX_CONCURRENT_ICS = int(os.getenv("MAX_CONCURRENT_ICS", "6"))
 
 # Observability: LanceDB + Local logs (Jan 9, 2026)
 
@@ -69,7 +69,7 @@ class RejectionReason(Enum):
     MARKET_CLOSED = "Market is closed"
     RISK_SCORE_TOO_HIGH = "Trade risk score exceeds threshold"
     CAPITAL_INEFFICIENT = "Strategy not viable for current capital level"
-    IV_RANK_TOO_LOW = "IV Rank too low for premium selling (<20)"
+    IV_RANK_TOO_LOW = "IV Rank too low for premium selling (<30)"
     ILLIQUID_OPTION = "Option is illiquid (bid-ask spread > 5%)"
     RAG_LESSON_CRITICAL = "CRITICAL lesson learned blocks this trade"
     PORTFOLIO_NEGATIVE_PL = "Portfolio P/L is negative - Rule #1: Don't lose money"
@@ -190,7 +190,9 @@ class TradeGateway:
         "strangle_short",
         # REMOVED: "naked_put" - NO NAKED PUTS per CLAUDE.md (Jan 14, 2026)
     }
-    MIN_IV_RANK_FOR_CREDIT = 20  # Minimum IV Rank for premium selling
+    MIN_IV_RANK_FOR_CREDIT = int(
+        os.getenv("MIN_IV_RANK_FOR_CREDIT", "30")
+    )  # IC-specific gate: richer premium required
 
     # ============================================================
     # TICKER WHITELIST - CRITICAL ENFORCEMENT (Jan 19, 2026)
@@ -216,6 +218,9 @@ class TradeGateway:
 
     # Liquidity check - options with wide spreads destroy alpha on fill
     MAX_BID_ASK_SPREAD_PCT = 0.05  # 5% maximum bid-ask spread
+    MAX_CONCURRENT_ICS = MAX_CONCURRENT_ICS
+    MAX_OPTION_LEGS_OPEN = MAX_CONCURRENT_ICS * 4
+    MAX_CUMULATIVE_RISK_PCT = float(os.getenv("MAX_CUMULATIVE_RISK_PCT", "0.20"))
 
     # Earnings blackout calendar (Jan 2026)
     # UPDATED Jan 15, 2026: Block trades 7 days before through 1 day after earnings
@@ -403,10 +408,21 @@ class TradeGateway:
             # Try to extract strike from symbol or use limit price as proxy
             strike = request.limit_price or 25  # Default assumption
             max_loss = strike * 100 * (request.quantity or 1)
-        elif request.strategy_type in ["bull_put_spread", "credit_spread"]:
+        elif request.strategy_type in ["bull_put_spread", "credit_spread", "bear_call_spread"]:
             # Max loss = spread width * 100 * quantity
             # Typically $5 wide spreads = $500 max loss
             max_loss = 500 * (request.quantity or 1)
+        elif request.strategy_type == "iron_condor":
+            # Dynamic IC profile: widen wings for larger accounts.
+            inferred_width = request.spread_width
+            if inferred_width is None:
+                inferred_width = 10.0 if account_equity >= 100_000 else 5.0
+            inferred_credit = request.premium_received if request.premium_received is not None else (
+                2.0 if inferred_width >= 10 else 1.2
+            )
+            max_loss = max(0.0, (inferred_width * 100) - (inferred_credit * 100)) * (
+                request.quantity or 1
+            )
         else:
             # Conservative default for unknown option strategies
             max_loss = 500 * (request.quantity or 1)
@@ -460,8 +476,9 @@ class TradeGateway:
             # Default $5 spread, $0.50 premium = $450 max loss per contract
             return 450.0 * contracts
         elif request.strategy_type == "iron_condor":
-            # Default $5 wings, $1.00 total premium = $400 max loss per contract
-            return 400.0 * contracts
+            default_wing = float(os.getenv("DEFAULT_IC_WING_WIDTH", "10"))
+            default_credit = float(os.getenv("DEFAULT_IC_TOTAL_CREDIT", "2.0"))
+            return max(0.0, (default_wing * 100 - default_credit * 100) * contracts)
         elif request.strategy_type in ["cash_secured_put", "naked_put"]:
             # For CSP/naked put: max_loss = strike * 100 (full assignment risk)
             # Use limit_price as strike proxy
@@ -513,14 +530,11 @@ class TradeGateway:
         total_risk = existing_risk + new_risk
         total_risk_pct = total_risk / account_equity if account_equity > 0 else 1.0
 
-        # CLAUDE.md says 5% max - but we allow up to 10% cumulative to account for volatility
-        MAX_CUMULATIVE_RISK_PCT = 0.10
-
-        if total_risk_pct > MAX_CUMULATIVE_RISK_PCT:
+        if total_risk_pct > self.MAX_CUMULATIVE_RISK_PCT:
             return (
                 True,
                 f"Cumulative risk ${total_risk:.0f} ({total_risk_pct * 100:.1f}%) exceeds "
-                f"{MAX_CUMULATIVE_RISK_PCT * 100:.0f}% limit. Existing: ${existing_risk:.0f}, "
+                f"{self.MAX_CUMULATIVE_RISK_PCT * 100:.0f}% limit. Existing: ${existing_risk:.0f}, "
                 f"New: ${new_risk:.0f}",
             )
 
@@ -530,10 +544,8 @@ class TradeGateway:
         """
         Enforce concurrent iron condor limit.
 
-        Updated Feb 2026: Increased from 1 to MAX_CONCURRENT_ICS (default 3)
-        to improve capital utilization. With $100K account:
-        - 1 IC = 0.5% deployed (was)
-        - 3 ICs = 1.5% deployed, different expiry cycles (now)
+        Strategy profile target: 5-10 concurrent defined-risk ICs on $100K.
+        Default is 6 and can be tuned via MAX_CONCURRENT_ICS env.
         """
         option_positions = [p for p in positions if len(p.get("symbol", "")) > 10]
 
@@ -558,10 +570,10 @@ class TradeGateway:
                 if short_count >= 2 and long_count >= 2:
                     ic_count += 1
 
-        if ic_count >= MAX_CONCURRENT_ICS:
+        if ic_count >= self.MAX_CONCURRENT_ICS:
             return (
                 True,
-                f"Already have {ic_count} iron condor(s) (max {MAX_CONCURRENT_ICS}). "
+                f"Already have {ic_count} iron condor(s) (max {self.MAX_CONCURRENT_ICS}). "
                 f"Per position management rules: spread across expiry cycles.",
             )
 
@@ -684,13 +696,13 @@ class TradeGateway:
                     },
                 )
 
-            # Check 3: Too many option positions (max per concurrent IC limit)
-            max_option_positions = MAX_CONCURRENT_ICS * 4
+            # Check 3: Too many option positions for configured IC concurrency.
+            max_option_positions = self.MAX_OPTION_LEGS_OPEN
             option_positions = [p for p in positions if len(p.get("symbol", "")) > 10]
             if len(option_positions) > max_option_positions:
                 logger.error(
                     f"🚨 CIRCUIT BREAKER: {len(option_positions)} option positions "
-                    f"exceeds max {max_option_positions} ({MAX_CONCURRENT_ICS} iron condors). "
+                    f"exceeds max {max_option_positions} ({self.MAX_CONCURRENT_ICS} iron condors). "
                     f"NO NEW POSITIONS."
                 )
                 return GatewayDecision(
@@ -702,7 +714,7 @@ class TradeGateway:
                         "circuit_breaker": "TOO_MANY_POSITIONS",
                         "option_positions": len(option_positions),
                         "max_allowed": max_option_positions,
-                        "action": f"Close excess positions (limit: {MAX_CONCURRENT_ICS} ICs)",
+                        "action": f"Close excess positions (limit: {self.MAX_CONCURRENT_ICS} ICs)",
                     },
                 )
 
@@ -902,17 +914,17 @@ class TradeGateway:
             }
 
         # ============================================================
-        # CHECK 0.8: MAX IRON CONDORS (CLAUDE.md: 1 at a time)
+        # CHECK 0.8: MAX IRON CONDORS (opening trades only)
         # ============================================================
-        if request.strategy_type == "iron_condor" or request.is_option:
+        if (request.strategy_type == "iron_condor" or request.is_option) and is_position_opening:
             has_existing_condor, condor_reason = self._check_iron_condor_limit(positions)
-            if has_existing_condor and request.side.lower() in ["buy", "sell"]:
+            if has_existing_condor:
                 rejection_reasons.append(RejectionReason.MAX_IRON_CONDORS_EXCEEDED)
                 logger.warning(f"🛑 IRON CONDOR LIMIT: {condor_reason}")
                 risk_score += 0.5
                 metadata["iron_condor_limit"] = {
                     "reason": condor_reason,
-                    "action": "Close existing iron condor before opening new one",
+                    "action": "Reduce open iron condors before opening a new one",
                 }
 
         # ============================================================
@@ -947,10 +959,16 @@ class TradeGateway:
             risk_score += 0.3
 
         # ============================================================
-        # CHECK 2.5: Duplicate Short Position Prevention (Jan 13, 2026)
-        # Max 1 CSP per underlying symbol - prevents doubling down
+        # CHECK 2.5: Duplicate short prevention for single-leg short strategies.
+        # Do NOT apply this to iron condors/defined-risk spreads because those
+        # are intentionally multi-position structures across expiries.
         # ============================================================
-        if request.is_option and request.side.lower() == "sell":
+        single_leg_short_strategies = {"cash_secured_put", "naked_put", "covered_call"}
+        if (
+            request.is_option
+            and request.side.lower() == "sell"
+            and request.strategy_type in single_leg_short_strategies
+        ):
             # Extract underlying from option symbol (e.g., SOFI260206P00024000 -> SOFI)
             underlying = request.symbol[:4].rstrip("0123456789")
             if not underlying:
@@ -969,12 +987,12 @@ class TradeGateway:
                 rejection_reasons.append(RejectionReason.MAX_ALLOCATION_EXCEEDED)
                 logger.warning(
                     f"🛑 REJECTED: Already have {existing_short_count} short position(s) on {underlying}. "
-                    f"Max 1 CSP per symbol per CLAUDE.md directive!"
+                    "Max 1 single-leg short per underlying."
                 )
                 metadata["duplicate_short_blocked"] = {
                     "underlying": underlying,
                     "existing_short_count": existing_short_count,
-                    "rule": "Max 1 CSP per symbol",
+                    "rule": "Max 1 single-leg short per underlying",
                 }
                 risk_score += 0.5
 

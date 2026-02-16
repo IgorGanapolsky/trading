@@ -120,49 +120,6 @@ def _get_account_context() -> dict | None:
     return None
 
 
-def capture_workflow_failure(reason: str, context: dict | None = None):
-    """Capture workflow failure in Sentry."""
-    if not _sentry_initialized:
-        return
-
-    try:
-        import sentry_sdk
-
-        with sentry_sdk.push_scope() as scope:
-            scope.set_tag("failure_type", "workflow")
-            scope.set_level("error")
-
-            if context:
-                for key, value in context.items():
-                    scope.set_context(key, value)
-
-            sentry_sdk.capture_message(f"Workflow failure: {reason}")
-
-    except Exception as e:
-        logger.debug(f"Failed to capture workflow failure in Sentry: {e}")
-
-
-def capture_api_failure(api_name: str, error: Exception, context: dict | None = None):
-    """Capture API failure in Sentry."""
-    if not _sentry_initialized:
-        return
-
-    try:
-        import sentry_sdk
-
-        with sentry_sdk.push_scope() as scope:
-            scope.set_tag("failure_type", "api")
-            scope.set_tag("api", api_name)
-            scope.set_level("error")
-
-            if context:
-                for key, value in context.items():
-                    scope.set_context(key, value)
-
-            sentry_sdk.capture_exception(error)
-
-    except Exception as e:
-        logger.debug(f"Failed to capture API failure in Sentry: {e}")
 
 
 def capture_data_source_failure(source: str, symbol: str, error: str):
@@ -324,42 +281,3 @@ def send_slack_alert(
         return False
 
 
-def capture_critical_error(error: Exception | str, context: dict | None = None):
-    """
-    Capture a critical error in both Sentry and Slack.
-
-    Use this for errors that need immediate attention.
-
-    Args:
-        error: The error/exception or error message
-        context: Additional context
-    """
-    error_msg = str(error) if isinstance(error, Exception) else error
-
-    # Send to Sentry
-    if _sentry_initialized:
-        try:
-            import sentry_sdk
-
-            with sentry_sdk.push_scope() as scope:
-                scope.set_tag("severity", "critical")
-                scope.set_level("fatal")
-
-                if context:
-                    for key, value in context.items():
-                        scope.set_context(key, {"value": value})
-
-                if isinstance(error, Exception):
-                    sentry_sdk.capture_exception(error)
-                else:
-                    sentry_sdk.capture_message(error_msg, level="fatal")
-
-        except Exception as e:
-            logger.debug(f"Failed to capture critical error in Sentry: {e}")
-
-    # Also send to Slack for immediate visibility
-    send_slack_alert(
-        message=f"CRITICAL: {error_msg}",
-        level="error",
-        context=context,
-    )

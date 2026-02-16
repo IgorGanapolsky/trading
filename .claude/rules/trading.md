@@ -3,8 +3,9 @@
 ## Strategy: Iron Condors on SPY
 
 - Sell 15-20 delta put spread (bull put) + 15-20 delta call spread (bear call)
-- $5-wide wings, 30-45 DTE
-- Collect premium from BOTH sides
+- $10-wide wings, 30-45 DTE ($100K account supports wider wings for more premium)
+- Collect $150-250 per IC per side with $10-wide strikes
+- 5 concurrent ICs across different expiry cycles (weekly/monthly)
 - 15-delta = 86% win rate (LL-220), risk/reward ~1.5:1
 
 ## Pre-Trade Checklist (MANDATORY)

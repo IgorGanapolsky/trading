@@ -794,6 +794,81 @@ class Gate1Momentum:
         self.failure_manager = failure_manager
         self.telemetry = telemetry
 
+    @staticmethod
+    def _ic_mode_enabled() -> bool:
+        return os.getenv("ENABLE_THETA_AUTOMATION", "true").lower() in {"1", "true", "yes"}
+
+    @staticmethod
+    def _evaluate_ic_entry_criteria(ticker: str) -> tuple[bool, str, dict[str, Any]]:
+        """IC-specific gate to avoid directional momentum false rejects."""
+        try:
+            from src.data.iv_data_provider import IVDataProvider
+            from src.utils import yfinance_wrapper as yf
+        except Exception as e:
+            return True, f"IC gate fallback (imports unavailable: {e})", {"ic_gate_fallback": True}
+
+        try:
+            vix = float(yf.get_vix())
+        except Exception:
+            vix = 18.0
+
+        min_vix = float(os.getenv("IC_MIN_VIX", "12"))
+        max_vix = float(os.getenv("IC_MAX_VIX", "35"))
+        if vix < min_vix:
+            return False, f"VIX {vix:.1f} < {min_vix:.1f} (premium too thin)", {"vix": vix}
+        if vix > max_vix:
+            return False, f"VIX {vix:.1f} > {max_vix:.1f} (tail-risk regime)", {"vix": vix}
+
+        iv_rank = None
+        try:
+            metrics = IVDataProvider().get_current_iv(ticker)
+            if metrics:
+                iv_rank = float(metrics.iv_rank)
+        except Exception:
+            iv_rank = None
+
+        min_iv_rank = float(os.getenv("MIN_IV_RANK_FOR_CREDIT", "30"))
+        if iv_rank is not None and iv_rank < min_iv_rank:
+            return (
+                False,
+                f"IV Rank {iv_rank:.1f} < {min_iv_rank:.1f} (premium not rich enough)",
+                {"vix": vix, "iv_rank": iv_rank},
+            )
+
+        min_dte = int(os.getenv("IC_MIN_DTE", "21"))
+        max_dte = int(os.getenv("IC_MAX_DTE", "45"))
+        target_dte = int(os.getenv("IC_TARGET_DTE", "35"))
+        if target_dte < min_dte or target_dte > max_dte:
+            return (
+                False,
+                f"Configured target DTE {target_dte} outside range {min_dte}-{max_dte}",
+                {"vix": vix, "iv_rank": iv_rank, "target_dte": target_dte},
+            )
+
+        details = {
+            "ic_gate": True,
+            "vix": vix,
+            "iv_rank": iv_rank,
+            "target_dte": target_dte,
+            "dte_min": min_dte,
+            "dte_max": max_dte,
+        }
+        iv_text = "n/a" if iv_rank is None else f"{iv_rank:.1f}"
+        reason = f"IC gate pass (VIX={vix:.1f}, IVR={iv_text}, DTE={target_dte})"
+        return True, reason, details
+
+    @staticmethod
+    def _synthetic_signal(strength: float, indicators: dict[str, Any]):
+        return type(
+            "SyntheticMomentumSignal",
+            (),
+            {
+                "is_buy": True,
+                "strength": strength,
+                "indicators": indicators,
+            },
+        )()
+
     def evaluate(self, ticker: str, ctx: TradeContext) -> GateResult:
         """
         Analyze momentum indicators for the ticker.
@@ -801,6 +876,48 @@ class Gate1Momentum:
         Returns:
             GateResult with momentum signal data if PASS
         """
+        if self._ic_mode_enabled():
+            passed, reason, indicators = self._evaluate_ic_entry_criteria(ticker)
+            if not passed:
+                logger.info("Gate 1-IC (%s): REJECTED - %s", ticker, reason)
+                self.telemetry.gate_reject(
+                    "momentum_ic",
+                    ticker,
+                    {
+                        "strength": 0.0,
+                        "indicators": indicators,
+                    },
+                )
+                return GateResult(
+                    gate_name="momentum",
+                    status=GateStatus.REJECT,
+                    ticker=ticker,
+                    confidence=0.0,
+                    reason=reason,
+                    data={"indicators": indicators},
+                )
+
+            signal = self._synthetic_signal(0.7, indicators)
+            ctx.momentum_signal = signal
+            ctx.momentum_strength = signal.strength
+            logger.info("Gate 1-IC (%s): PASSED - %s", ticker, reason)
+            self.telemetry.gate_pass(
+                "momentum_ic",
+                ticker,
+                {
+                    "strength": signal.strength,
+                    "indicators": indicators,
+                },
+            )
+            return GateResult(
+                gate_name="momentum",
+                status=GateStatus.PASS,
+                ticker=ticker,
+                confidence=signal.strength,
+                reason=reason,
+                data={"indicators": indicators},
+            )
+
         outcome = self.failure_manager.run(
             gate="momentum",
             ticker=ticker,

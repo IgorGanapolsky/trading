@@ -11,7 +11,8 @@ Account: PA3C5AG0CECQ ($100K paper). Credentials: `get_alpaca_credentials()` fro
 
 Primary strategy: SPY iron condor credit spreads (paper first), gated by safety checks and lessons learned.
 
-- Position limit: 1 iron condor at a time.
+- Position limit: 5 concurrent iron condors across different expiry cycles.
+- $10-wide wings for more premium collection ($150-250 per IC).
 - Tickers: SPY only (unless explicitly expanded in rules/lessons).
 
 ## Stack

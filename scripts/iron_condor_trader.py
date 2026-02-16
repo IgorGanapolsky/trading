@@ -316,13 +316,51 @@ class IronCondorStrategy:
             logger.warning(f"VIX check failed: {e} - proceeding with caution")
             return True, "VIX check failed, proceeding with caution"
 
-    def execute(self, ic: IronCondorLegs, live: bool = False) -> dict:
+    def _build_decision_trace(self, ic: IronCondorLegs, entry_reason: str) -> dict:
+        """Build a decision trace capturing market context at entry time."""
+        trace: dict = {
+            "captured_at": datetime.now().isoformat(),
+            "entry_reason": entry_reason,
+            "market_context": {},
+            "signals_checked": [],
+            "strike_selection": {
+                "method": "15_delta_5pct_otm",
+                "short_put": ic.short_put,
+                "short_call": ic.short_call,
+                "wing_width": ic.long_call - ic.short_call,
+            },
+            "precedent_query": f"{ic.underlying} iron_condor {ic.dte}DTE",
+        }
+        try:
+            from src.signals.vix_mean_reversion_signal import VIXMeanReversionSignal
+
+            sig = VIXMeanReversionSignal()
+            signal = sig.calculate_signal()
+            trace["market_context"]["vix"] = signal.current_vix
+            trace["market_context"]["vix_3day_ma"] = signal.vix_3day_ma
+            trace["signals_checked"].append("vix_mean_reversion")
+        except Exception:
+            pass
+        try:
+            from src.data.iv_data_provider import IVDataProvider
+
+            iv = IVDataProvider()
+            iv_data = iv.get_iv_rank(ic.underlying)
+            if iv_data:
+                trace["market_context"]["iv_rank"] = iv_data.get("iv_rank")
+                trace["signals_checked"].append("iv_rank")
+        except Exception:
+            pass
+        return trace
+
+    def execute(self, ic: IronCondorLegs, live: bool = False, entry_reason: str = "") -> dict:
         """
         Execute the iron condor trade.
 
         Args:
             ic: Iron condor legs to execute
             live: If True, execute on Alpaca. If False, simulate only.
+            entry_reason: Why this trade was entered (for decision trace).
         """
         # POSITION CHECK FIRST - Prevent race conditions from parallel workflow runs
         # FIX Jan 22, 2026: Move position check to VERY START before any other logic
@@ -611,6 +649,7 @@ class IronCondorStrategy:
             "max_risk": ic.max_risk,
             "status": status,
             "order_ids": order_ids,
+            "decision_trace": self._build_decision_trace(ic, entry_reason),
         }
 
         # Only record successful trades (not failures)

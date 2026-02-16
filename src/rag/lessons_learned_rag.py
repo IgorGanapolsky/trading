@@ -48,13 +48,14 @@ class LessonsLearnedRAG:
         if self._custom_dir:
             # Custom knowledge dirs are not indexed in LanceDB; force local search.
             self.lancedb_enabled = False
-        self.lancedb_required = os.getenv("LANCEDB_REQUIRED", "true").lower() in {
+        self.lancedb_required = os.getenv("LANCEDB_REQUIRED", "false").lower() in {
             "1",
             "true",
             "yes",
         }
-        if os.getenv("CI", "").lower() in {"1", "true", "yes"}:
-            self.lancedb_required = True
+        # NOTE: Previously forced lancedb_required=True in CI, which crashed
+        # the entire TradingOrchestrator when LanceDB wasn't installed (Feb 10-13 outage).
+        # Trading must never be blocked by a search index failure.
         self.lancedb_auto_index = os.getenv("LANCEDB_AUTO_INDEX", "true").lower() in {
             "1",
             "true",

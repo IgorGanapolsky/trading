@@ -42,6 +42,7 @@ for _mod_name in _STUB_MODULES:
             stub.acquire_trade_lock = MagicMock()  # type: ignore[attr-defined]
         if _mod_name == "src.safety.mandatory_trade_gate":
             stub.safe_submit_order = MagicMock()  # type: ignore[attr-defined]
+            stub.GateResult = type("GateResult", (), {"__init__": lambda self, **kw: self.__dict__.update(kw)})  # type: ignore[attr-defined]
         # RAG
         if _mod_name == "src.rag.lessons_learned_rag":
             _rag_cls = MagicMock()
