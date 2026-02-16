@@ -53,7 +53,11 @@ def _write_json(path: Path, data: dict[str, Any]) -> None:
 
 
 def _has_answer_block_or_structured_qa(text: str) -> bool:
-    return bool(ANSWER_BLOCK_PATTERN.search(text) or QUESTIONS_PATTERN.search(text) or FAQ_PATTERN.search(text))
+    return bool(
+        ANSWER_BLOCK_PATTERN.search(text)
+        or QUESTIONS_PATTERN.search(text)
+        or FAQ_PATTERN.search(text)
+    )
 
 
 def _has_evidence_link(text: str) -> bool:
@@ -112,26 +116,52 @@ def collect_discoverability_metrics(
     checks: list[CheckResult] = []
 
     if llms_path.exists() and llms_path.stat().st_size > 0:
-        checks.append(CheckResult("llms_manifest", "pass", "docs/llms.txt present and non-empty", critical=True))
+        checks.append(
+            CheckResult(
+                "llms_manifest", "pass", "docs/llms.txt present and non-empty", critical=True
+            )
+        )
     else:
-        checks.append(CheckResult("llms_manifest", "fail", "docs/llms.txt missing or empty", critical=True))
+        checks.append(
+            CheckResult("llms_manifest", "fail", "docs/llms.txt missing or empty", critical=True)
+        )
 
     if llms_full_path.exists() and llms_full_path.stat().st_size > 0:
         checks.append(
-            CheckResult("llms_full_manifest", "pass", "docs/llms-full.txt present and non-empty", critical=True)
+            CheckResult(
+                "llms_full_manifest",
+                "pass",
+                "docs/llms-full.txt present and non-empty",
+                critical=True,
+            )
         )
     else:
         checks.append(
-            CheckResult("llms_full_manifest", "fail", "docs/llms-full.txt missing or empty", critical=True)
+            CheckResult(
+                "llms_full_manifest", "fail", "docs/llms-full.txt missing or empty", critical=True
+            )
         )
 
     if "Sitemap:" in robots_text:
-        checks.append(CheckResult("robots_sitemap", "pass", "robots.txt declares Sitemap", critical=True))
+        checks.append(
+            CheckResult("robots_sitemap", "pass", "robots.txt declares Sitemap", critical=True)
+        )
     else:
-        checks.append(CheckResult("robots_sitemap", "fail", "robots.txt missing Sitemap declaration", critical=True))
+        checks.append(
+            CheckResult(
+                "robots_sitemap", "fail", "robots.txt missing Sitemap declaration", critical=True
+            )
+        )
 
     if snapshot_age_days is None:
-        checks.append(CheckResult("dashboard_snapshot_freshness", "fail", "No dashboard snapshot report found", critical=True))
+        checks.append(
+            CheckResult(
+                "dashboard_snapshot_freshness",
+                "fail",
+                "No dashboard snapshot report found",
+                critical=True,
+            )
+        )
     elif snapshot_age_days <= max_snapshot_age_days:
         checks.append(
             CheckResult(
@@ -200,7 +230,9 @@ def collect_discoverability_metrics(
             "overall_status": (
                 "fail"
                 if critical_failed
-                else "warn" if (warnings or noncritical_failed) else "pass"
+                else "warn"
+                if (warnings or noncritical_failed)
+                else "pass"
             ),
         },
     }
@@ -228,7 +260,9 @@ def _render_markdown_report(metrics: dict[str, Any]) -> str:
 
     lines.append("")
     lines.append("## Recommendation")
-    lines.append("- Keep one canonical page per topic; use llms manifests as index pointers, not alternate content pages.")
+    lines.append(
+        "- Keep one canonical page per topic; use llms manifests as index pointers, not alternate content pages."
+    )
     return "\n".join(lines) + "\n"
 
 

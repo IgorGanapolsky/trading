@@ -16,7 +16,10 @@ def _write(path: Path, content: str) -> None:
 def test_collect_metrics_happy_path(tmp_path: Path) -> None:
     _write(tmp_path / "docs" / "llms.txt", "# llms")
     _write(tmp_path / "docs" / "llms-full.txt", "# llms-full")
-    _write(tmp_path / "docs" / "robots.txt", "User-agent: *\nSitemap: https://example.com/sitemap.xml\n")
+    _write(
+        tmp_path / "docs" / "robots.txt",
+        "User-agent: *\nSitemap: https://example.com/sitemap.xml\n",
+    )
 
     _write(
         tmp_path / "docs" / "_posts" / "2026-02-16-post-a.md",

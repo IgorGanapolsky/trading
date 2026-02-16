@@ -22,7 +22,12 @@ def test_generate_snapshot_contains_answer_block_and_evidence(tmp_path: Path) ->
     _write_json(
         state_path,
         {
-            "live_account": {"equity": 20.0, "total_pl": 0.0, "total_pl_pct": 0.0, "synced_at": "2026-02-16T17:00:00Z"},
+            "live_account": {
+                "equity": 20.0,
+                "total_pl": 0.0,
+                "total_pl_pct": 0.0,
+                "synced_at": "2026-02-16T17:00:00Z",
+            },
             "paper_account": {
                 "equity": 101500.0,
                 "total_pl": 1500.0,
@@ -32,7 +37,11 @@ def test_generate_snapshot_contains_answer_block_and_evidence(tmp_path: Path) ->
                 "win_rate_sample_size": 31,
                 "positions_count": 3,
             },
-            "north_star": {"probability_score": 41.5, "probability_label": "watch", "target_date": "2029-11-14"},
+            "north_star": {
+                "probability_score": 41.5,
+                "probability_label": "watch",
+                "target_date": "2029-11-14",
+            },
             "risk": {
                 "weekly_cadence_kpi_passed": True,
                 "weekly_gate_mode": "normal",

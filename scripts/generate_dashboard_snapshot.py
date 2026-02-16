@@ -82,15 +82,21 @@ def _build_report_content(state: dict, snapshot_date: date) -> str:
         if isinstance(north_star.get("probability_label"), str)
         else "unknown"
     )
-    target_date = north_star.get("target_date") if isinstance(north_star.get("target_date"), str) else ""
+    target_date = (
+        north_star.get("target_date") if isinstance(north_star.get("target_date"), str) else ""
+    )
 
     cadence_passed = risk.get("weekly_cadence_kpi_passed")
     cadence_text = (
         "PASS"
         if cadence_passed is True
-        else "FAIL" if cadence_passed is False else "unknown (insufficient data)"
+        else "FAIL"
+        if cadence_passed is False
+        else "unknown (insufficient data)"
     )
-    gate_mode = risk.get("weekly_gate_mode") if isinstance(risk.get("weekly_gate_mode"), str) else "normal"
+    gate_mode = (
+        risk.get("weekly_gate_mode") if isinstance(risk.get("weekly_gate_mode"), str) else "normal"
+    )
     recommended_max_pos = _safe_float(risk.get("weekly_gate_recommended_max_position_pct"))
 
     snapshot_day = snapshot_date.isoformat()
@@ -204,7 +210,9 @@ def generate_snapshot_report(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Generate daily dashboard snapshot markdown report")
+    parser = argparse.ArgumentParser(
+        description="Generate daily dashboard snapshot markdown report"
+    )
     parser.add_argument("--state", default="data/system_state.json")
     parser.add_argument("--dashboard", default="wiki/Progress-Dashboard.md")
     parser.add_argument("--out-dir", default="docs/_reports")
