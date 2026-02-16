@@ -32,14 +32,11 @@ plugins:
   - jekyll-seo-tag
   - jekyll-sitemap
 
-# Navigation - explicitly set header pages (excludes 404)
+# Navigation - clean 3-item nav
 header_pages:
-  - index.md
-  - rag-query.html
-  - lessons/index.html
-  - reports.md
-  - discoveries.md
+  - blog.md
   - tech-stack.md
+  - about.md
 
 # Collections
 collections:

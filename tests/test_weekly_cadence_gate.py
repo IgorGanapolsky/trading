@@ -18,6 +18,13 @@ def test_evaluate_weekly_cadence_extracts_kpi_and_diagnostic():
             "no_trade_diagnostic": {
                 "summary": "Likely blocked by liquidity.",
                 "blocked_categories": ["liquidity"],
+                "gate_status": {
+                    "ai_credit_stress": {
+                        "status": "watch",
+                        "severity_score": 42.0,
+                        "source": "fred_public",
+                    }
+                },
                 "top_rejection_reasons": [{"reason": "Vol=0.1x (low)", "count": 2}],
             },
         }
@@ -29,6 +36,8 @@ def test_evaluate_weekly_cadence_extracts_kpi_and_diagnostic():
     assert result["qualified_setups_observed"] == 1
     assert result["min_qualified_setups_per_week"] == 3
     assert result["blocked_categories"] == ["liquidity"]
+    assert result["ai_credit_stress_status"] == "watch"
+    assert result["ai_credit_stress_score"] == 42.0
     assert result["top_rejection_reasons"][0]["count"] == 2
 
 

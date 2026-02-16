@@ -1,0 +1,30 @@
+{
+  "signal": "ai_credit_stress",
+  "status": "unknown",
+  "severity_score": 0.0,
+  "blocked": false,
+  "watch": false,
+  "reasons": [
+    "No credit spread data available."
+  ],
+  "latest_data_date": null,
+  "stale_days": null,
+  "metrics": {
+    "high_yield_oas": {
+      "series_id": "BAMLH0A0HYM2",
+      "latest_value": null,
+      "latest_date": null,
+      "lookback_change": null,
+      "point_count": 0
+    },
+    "baa_minus_10y": {
+      "series_id": "BAA10Y",
+      "latest_value": null,
+      "latest_date": null,
+      "lookback_change": null,
+      "point_count": 0
+    }
+  },
+  "source": "fred_public",
+  "updated_at": "2026-02-16T17:01:26.476864+00:00"
+}

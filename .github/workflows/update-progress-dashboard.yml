@@ -65,6 +65,16 @@ jobs:
           python3 scripts/sync_closed_positions.py || echo "⚠️ Closed positions sync failed - win rate may be stale"
           echo "✅ Closed positions synced"
 
+      - name: Update AI credit stress signal
+        run: |
+          echo "📉 Refreshing AI credit stress regime signal..."
+          python3 scripts/update_ai_credit_stress_signal.py \
+            --out data/market_signals/ai_credit_stress_signal.json \
+            --state data/system_state.json \
+            --sync-state \
+            --max-stale-days 7
+          echo "✅ AI credit stress signal updated"
+
       - name: Update North Star operating plan
         run: |
           echo "🎯 Updating weekly gate + contribution plan..."
@@ -138,7 +148,7 @@ jobs:
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          git add data/system_state.json data/north_star_weekly_history.json data/trades.json wiki/ docs/index.md 2>/dev/null || true
+          git add data/system_state.json data/north_star_weekly_history.json data/trades.json data/market_signals/ai_credit_stress_signal.json wiki/ docs/index.md 2>/dev/null || true
           if ! git diff --staged --quiet; then
             git commit -m "chore: Sync dashboard data [auto]"
             if [ -n "${{ secrets.GH_PAT }}" ]; then

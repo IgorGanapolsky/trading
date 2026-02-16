@@ -2,7 +2,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LABEL="com.joeyrahme.trading.devloop"
+LABEL="${LABEL:-com.joeyrahme.trading.devloop}"
 PLIST_PATH="$HOME/Library/LaunchAgents/$LABEL.plist"
 LOG_DIR="$REPO_ROOT/artifacts/devloop"
 OUT_LOG="$LOG_DIR/launchd.out.log"
@@ -14,6 +14,8 @@ RUN_RAG_VALUE="${RUN_RAG:-0}"
 NO_SLEEP_VALUE="${NO_SLEEP:-0}"
 SYNC_GDOC_EVERY_VALUE="${SYNC_GDOC_EVERY:-2}"
 RENDER_DEMO_EVERY_VALUE="${RENDER_DEMO_EVERY:-2}"
+MANUAL_TASK_FILE_VALUE="${MANUAL_TASK_FILE:-manual_layer1_tasks.md}"
+MIRROR_MANUAL_TASK_FILE_VALUE="${MIRROR_MANUAL_TASK_FILE:-config/manual_layer1_tasks.md}"
 INTERVAL_SECONDS_VALUE="${INTERVAL_SECONDS:-300}"
 FULL_EVERY_VALUE="${FULL_EVERY:-6}"
 
@@ -58,6 +60,10 @@ install_agent() {
     <string>$SYNC_GDOC_EVERY_VALUE</string>
     <key>RENDER_DEMO_EVERY</key>
     <string>$RENDER_DEMO_EVERY_VALUE</string>
+    <key>MANUAL_TASK_FILE</key>
+    <string>$MANUAL_TASK_FILE_VALUE</string>
+    <key>MIRROR_MANUAL_TASK_FILE</key>
+    <string>$MIRROR_MANUAL_TASK_FILE_VALUE</string>
     <key>PATH</key>
     <string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
   </dict>
@@ -114,6 +120,8 @@ Env overrides for install/restart:
   NO_SLEEP=1           Run cycles back-to-back (no pause)
   RENDER_DEMO_EVERY=3  Rebuild judge demo every N cycles
   SYNC_GDOC_EVERY=3    Sync Google Doc every N cycles
+  MANUAL_TASK_FILE=... Layer-1 task file to use
+  MIRROR_MANUAL_TASK_FILE=... Mirror Layer-1 task file
   INTERVAL_SECONDS=60  Loop interval
   FULL_EVERY=3         Run full profile every N cycles
   ENV_FILE=.env.devloop Env file sourced before loop startup

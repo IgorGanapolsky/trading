@@ -119,6 +119,19 @@ def test_weekly_gate_adds_cadence_kpi_and_no_trade_diagnostic(tmp_path):
 
     workflow_state_dir = tmp_path / "workflow_state"
     workflow_state_dir.mkdir(parents=True, exist_ok=True)
+    market_signals_dir = tmp_path / "market_signals"
+    market_signals_dir.mkdir(parents=True, exist_ok=True)
+    _write_json(
+        market_signals_dir / "ai_credit_stress_signal.json",
+        {
+            "signal": "ai_credit_stress",
+            "status": "blocked",
+            "severity_score": 72.5,
+            "latest_data_date": "2026-02-16",
+            "source": "fred_public",
+            "reasons": ["HY OAS elevated: 4.60"],
+        },
+    )
     _write_json(
         workflow_state_dir / "swarm_integrated_pipeline_state.json",
         {
@@ -167,7 +180,11 @@ def test_weekly_gate_adds_cadence_kpi_and_no_trade_diagnostic(tmp_path):
     gate_status = diagnostic.get("gate_status", {})
     assert gate_status.get("liquidity", {}).get("status") == "blocked"
     assert gate_status.get("dte", {}).get("status") == "blocked"
+    assert gate_status.get("ai_credit_stress", {}).get("status") == "blocked"
     assert "liquidity" in diagnostic.get("blocked_categories", [])
+    assert "ai_credit_stress" in diagnostic.get("blocked_categories", [])
+    assert gate.get("scale_blocked_by_ai_credit_stress") is True
+    assert gate.get("recommended_max_position_pct", 1) <= 0.01
 
 
 def test_expansion_mode_requires_thirty_closed_trades_for_scaling(tmp_path):
@@ -199,3 +216,48 @@ def test_expansion_mode_requires_thirty_closed_trades_for_scaling(tmp_path):
     assert gate["scaling_sample_gate"]["passed"] is False
     assert gate["scaling_sample_gate"]["closed_trades_observed"] == 12
     assert gate["scaling_sample_gate"]["min_closed_trades_for_scaling"] == 30
+
+
+def test_ai_credit_stress_watch_caps_expansion_to_cautious(tmp_path):
+    trades_path = tmp_path / "trades.json"
+    history_path = tmp_path / "weekly_history.json"
+    today = date(2026, 2, 20)
+    trades = []
+    for idx in range(12):
+        exit_day = today - timedelta(days=idx)
+        trades.append(
+            {
+                "status": "closed",
+                "strategy": "iron_condor",
+                "realized_pnl": 40.0,
+                "outcome": "win",
+                "exit_date": exit_day.isoformat(),
+            }
+        )
+    _write_json(trades_path, {"stats": {"closed_trades": 40}, "trades": trades})
+
+    market_signals_dir = tmp_path / "market_signals"
+    market_signals_dir.mkdir(parents=True, exist_ok=True)
+    _write_json(
+        market_signals_dir / "ai_credit_stress_signal.json",
+        {
+            "signal": "ai_credit_stress",
+            "status": "watch",
+            "severity_score": 45.0,
+            "latest_data_date": "2026-02-20",
+            "source": "fred_public",
+            "reasons": ["HY OAS watch: 4.10"],
+        },
+    )
+
+    gate, _history = compute_weekly_gate(
+        {"paper_account": {"win_rate": 95.0, "win_rate_sample_size": 40, "total_pl": 480.0}},
+        trades_path=trades_path,
+        weekly_history_path=history_path,
+        today=today,
+    )
+
+    assert gate["mode"] == "cautious"
+    assert gate["recommended_max_position_pct"] <= 0.015
+    assert gate["ai_credit_stress"]["status"] == "watch"
+    assert gate["scale_blocked_by_ai_credit_stress"] is False

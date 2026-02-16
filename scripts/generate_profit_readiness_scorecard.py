@@ -162,6 +162,10 @@ def main() -> int:
     no_trade_diagnostic = (
         weekly_gate.get("no_trade_diagnostic", {}) if isinstance(weekly_gate, dict) else {}
     )
+    gate_status = (
+        no_trade_diagnostic.get("gate_status", {}) if isinstance(no_trade_diagnostic, dict) else {}
+    )
+    ai_credit_stress = gate_status.get("ai_credit_stress", {}) if isinstance(gate_status, dict) else {}
     win_rate = paper.get("win_rate")
     sample_size = paper.get("win_rate_sample_size")
 
@@ -286,6 +290,26 @@ def main() -> int:
                 note="north_star_weekly_gate.cadence_kpi",
             ),
         ]
+    )
+    ai_status_raw = str(ai_credit_stress.get("status") or "unknown").strip().lower()
+    ai_score = ai_credit_stress.get("severity_score")
+    ai_status = "UNKNOWN"
+    if ai_status_raw == "pass":
+        ai_status = "PASS"
+    elif ai_status_raw in {"watch", "blocked"}:
+        ai_status = "WARN"
+
+    ai_value = ai_status_raw
+    if isinstance(ai_score, (int, float)):
+        ai_value = f"{ai_status_raw} (score={float(ai_score):.1f})"
+
+    metrics.append(
+        Metric(
+            name="AI Credit Stress Gate",
+            value=ai_value,
+            status=ai_status,
+            note="north_star_weekly_gate.no_trade_diagnostic.gate_status.ai_credit_stress",
+        )
     )
 
     delta_7d = None

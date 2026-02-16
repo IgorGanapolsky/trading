@@ -27,6 +27,10 @@ DEFAULT_MIN_CLOSED_TRADES_FOR_SCALING = 30
 DEFAULT_MIN_LIQUIDITY_VOLUME_RATIO = 0.20
 DEFAULT_MAX_TARGET_DTE = 45
 DEFAULT_MIN_TARGET_DTE = 21
+DEFAULT_AI_CREDIT_STRESS_PATH = Path("market_signals/ai_credit_stress_signal.json")
+DEFAULT_AI_CREDIT_WATCH_SCORE = 30.0
+DEFAULT_AI_CREDIT_BLOCK_SCORE = 60.0
+DEFAULT_AI_CREDIT_HARD_BLOCK_SCORE = 80.0
 
 _SPY_OPTION_RE = re.compile(r"^SPY(\d{6})[CP]\d{8}$")
 
@@ -183,6 +187,17 @@ def _categorize_reason(reason: str) -> set[str]:
         token in text for token in ("liquid", "volume", "vol=", "spread", "bid/ask", "illiquid")
     ):
         categories.add("liquidity")
+    if any(
+        token in text
+        for token in (
+            "credit spread",
+            "credit-stress",
+            "ai credit",
+            "high yield oas",
+            "baa10y",
+        )
+    ):
+        categories.add("ai_credit_stress")
     return categories
 
 
@@ -195,9 +210,32 @@ def _safe_nested_dict(payload: dict[str, Any], *keys: str) -> dict[str, Any]:
     return cur if isinstance(cur, dict) else {}
 
 
+def _normalize_ai_credit_stress_status(signal: dict[str, Any]) -> str:
+    raw_status = str(signal.get("status") or "").strip().lower()
+    score = _as_float(signal.get("severity_score"), 0.0)
+    if raw_status in {"blocked", "high", "stress", "critical"} or score >= DEFAULT_AI_CREDIT_BLOCK_SCORE:
+        return "blocked"
+    if raw_status in {"watch", "warning", "elevated"} or score >= DEFAULT_AI_CREDIT_WATCH_SCORE:
+        return "watch"
+    if raw_status in {"pass", "ok", "normal", "low"}:
+        return "pass"
+    return "unknown"
+
+
+def _load_ai_credit_stress_signal(data_dir: Path, state: dict[str, Any]) -> dict[str, Any]:
+    file_payload = _load_json_dict(data_dir / DEFAULT_AI_CREDIT_STRESS_PATH)
+    if file_payload:
+        return file_payload
+    state_payload = _safe_nested_dict(state, "market_signals").get("ai_credit_stress")
+    if isinstance(state_payload, dict):
+        return state_payload
+    return {}
+
+
 def _compute_no_trade_diagnostic(
     *,
     data_dir: Path,
+    state: dict[str, Any],
     recent_decisions: list[dict[str, Any]],
     closed_trades_recent: int,
     qualified_setups_recent: int,
@@ -312,6 +350,24 @@ def _compute_no_trade_diagnostic(
             "low_liquidity_events": low_liquidity_events,
             "threshold_min_volume_ratio": DEFAULT_MIN_LIQUIDITY_VOLUME_RATIO,
         },
+    }
+
+    ai_credit_stress_signal = _load_ai_credit_stress_signal(data_dir, state)
+    ai_status = _normalize_ai_credit_stress_status(ai_credit_stress_signal)
+    ai_reasons = ai_credit_stress_signal.get("reasons", [])
+    ai_reason_text = ""
+    if isinstance(ai_reasons, list) and ai_reasons:
+        ai_reason_text = str(ai_reasons[0])
+    if not ai_reason_text:
+        ai_reason_text = str(ai_credit_stress_signal.get("note") or "No AI credit stress evidence")
+    ai_score = ai_credit_stress_signal.get("severity_score")
+    gate_status["ai_credit_stress"] = {
+        "status": ai_status,
+        "signal_status": str(ai_credit_stress_signal.get("status") or "unknown"),
+        "severity_score": _as_float(ai_score, 0.0) if ai_score is not None else None,
+        "signal_date": ai_credit_stress_signal.get("latest_data_date"),
+        "source": ai_credit_stress_signal.get("source", "none"),
+        "detail": ai_reason_text,
     }
 
     blocked_categories = [
@@ -630,10 +686,30 @@ def compute_weekly_gate(
 
     no_trade_diagnostic = _compute_no_trade_diagnostic(
         data_dir=data_dir,
+        state=state,
         recent_decisions=recent_decisions,
         closed_trades_recent=samples,
         qualified_setups_recent=qualified_setups,
     )
+
+    ai_credit_gate = _safe_nested_dict(no_trade_diagnostic, "gate_status", "ai_credit_stress")
+    ai_credit_status = str(ai_credit_gate.get("status") or "unknown").lower()
+    ai_credit_score = _as_float(ai_credit_gate.get("severity_score"), 0.0)
+    if ai_credit_status == "blocked":
+        mode = "defensive"
+        recommended_max = min(recommended_max, 0.01)
+        block_new_positions = (
+            block_new_positions or ai_credit_score >= DEFAULT_AI_CREDIT_HARD_BLOCK_SCORE
+        )
+        reason = (
+            f"{reason} AI credit stress blocked: "
+            f"score={ai_credit_score:.1f}."
+        )
+    elif ai_credit_status == "watch":
+        if mode == "expansion_candidate":
+            mode = "cautious"
+        recommended_max = min(recommended_max, 0.015)
+        reason = f"{reason} AI credit stress elevated; hold cautious sizing."
 
     weekly_history = _load_json_list(weekly_history_path)
     week_start = today - timedelta(days=today.weekday())
@@ -745,6 +821,8 @@ def compute_weekly_gate(
         "evidence_source": evidence_source,
         "cadence_kpi": cadence_kpi,
         "scale_blocked_by_cadence": not cadence_kpi["passed"],
+        "ai_credit_stress": ai_credit_gate,
+        "scale_blocked_by_ai_credit_stress": ai_credit_status == "blocked",
         "scaling_sample_gate": scaling_sample_gate,
         "no_trade_diagnostic": no_trade_diagnostic,
         "updated_at": datetime.now(timezone.utc).isoformat(),
@@ -881,4 +959,10 @@ def apply_operating_plan_to_state(
     state["risk"]["weekly_scaling_sample_gate_passed"] = bool(
         _safe_nested_dict(weekly_gate, "scaling_sample_gate").get("passed")
     )
+    state["risk"]["weekly_ai_credit_stress_status"] = str(
+        _safe_nested_dict(weekly_gate, "ai_credit_stress").get("status") or "unknown"
+    )
+    state["risk"]["weekly_ai_credit_stress_score"] = _safe_nested_dict(
+        weekly_gate, "ai_credit_stress"
+    ).get("severity_score")
     return state, weekly_history

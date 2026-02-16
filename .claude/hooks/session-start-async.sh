@@ -78,7 +78,14 @@ cat >"${HEALTH_FILE}" <<EOF
 }
 EOF
 
-# --- Task 5: Ralph Mode Status ---
+# --- Task 5: Memory Consolidation ---
+# No external deps — runs with stdlib python3
+CONSOLIDATE="${PROJECT_ROOT}/scripts/consolidate_memory.py"
+if [[ -f ${CONSOLIDATE} ]]; then
+	python3 "${CONSOLIDATE}" 2>/dev/null || true
+fi
+
+# --- Task 6: Ralph Mode Status ---
 RALPH_SCRIPT="${PROJECT_ROOT}/.claude/scripts/ralph-loop.sh"
 RALPH_STATE="${PROJECT_ROOT}/.claude/ralph/state.json"
 

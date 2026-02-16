@@ -35,6 +35,16 @@ logger = logging.getLogger(__name__)
 
 
 # Compliance thresholds - FIXED Jan 19 2026: Aligned with CLAUDE.md 5% mandate
+# Patterns that indicate potential compliance issues in source code
+DANGEROUS_CODE_PATTERNS = [
+    (r"(?:skip|bypass|disable).*circuit.*breaker", "Circuit breaker bypass in code"),
+    (r"disable.*risk", "Risk management disabled"),
+    (r"(?:force|manual).*trade.*(?:execut|overrid)", "Forced trade execution"),
+    (r"ignore.*limit", "Limit ignored"),
+]
+
+
+# Compliance thresholds - FIXED Jan 19 2026: Aligned with CLAUDE.md 5% mandate
 THRESHOLDS = {
     "max_kelly_fraction": 0.05,  # 5% max per position - CLAUDE.md MANDATE
     "max_position_concentration": 0.05,  # 5% max in single position - CLAUDE.md MANDATE
@@ -284,19 +294,11 @@ class ComplianceAuditor:
         if not src_dir.exists():
             return violations
 
-        # Patterns that indicate potential issues
-        dangerous_patterns = [
-            (r"skip.*circuit.*breaker", "Circuit breaker bypass in code"),
-            (r"disable.*risk", "Risk management disabled"),
-            (r"force.*trade", "Forced trade execution"),
-            (r"ignore.*limit", "Limit ignored"),
-        ]
-
         for py_file in src_dir.rglob("*.py"):
             self.files_scanned += 1
             try:
                 content = py_file.read_text()
-                for pattern, description in dangerous_patterns:
+                for pattern, description in DANGEROUS_CODE_PATTERNS:
                     matches = re.finditer(pattern, content, re.IGNORECASE)
                     for match in matches:
                         # Find line number

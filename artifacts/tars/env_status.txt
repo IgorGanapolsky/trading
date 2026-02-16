@@ -1,6 +1,12 @@
-timestamp_utc=2026-02-15T19:23:15Z
-repo_root=/Users/joeyrahme/GitHubWorkspace/trading
-LLM_GATEWAY_BASE_URL=https://api.router.tetrate.ai/v1
+timestamp_utc=2026-02-16T15:45:29Z
+repo_root=trading
+LLM_GATEWAY_BASE_URL=unset
 LLM_GATEWAY_API_KEY=unset
-TETRATE_API_KEY=set(sk-f...0Q==,len=108)
-OPENAI_MODEL=gpt-4o-mini
+TETRATE_API_KEY=unset
+OPENROUTER_API_KEY=unset
+REQUIRE_LLM_GATEWAY=unset
+LLM_GATEWAY_STRICT=unset
+ENABLE_GLM5_ROUTING=unset
+MODEL_ROUTING_TELEMETRY=unset
+FORCE_LLM_MODEL=unset
+note=Gateway env vars not configured in this environment. Architecture is fully wired; set LLM_GATEWAY_BASE_URL + TETRATE_API_KEY to activate.

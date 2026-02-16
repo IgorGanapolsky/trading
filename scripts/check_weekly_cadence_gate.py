@@ -46,6 +46,11 @@ def evaluate_weekly_cadence(state: dict[str, Any]) -> dict[str, Any]:
     top_reasons = diagnostic.get("top_rejection_reasons", [])
     if not isinstance(top_reasons, list):
         top_reasons = []
+    gate_status = diagnostic.get("gate_status", {})
+    ai_credit_stress = gate_status.get("ai_credit_stress", {}) if isinstance(gate_status, dict) else {}
+    ai_credit_status = str(ai_credit_stress.get("status") or "unknown").lower()
+    ai_credit_score = ai_credit_stress.get("severity_score")
+    ai_credit_source = str(ai_credit_stress.get("source") or "none")
 
     return {
         "passed": passed,
@@ -58,6 +63,9 @@ def evaluate_weekly_cadence(state: dict[str, Any]) -> dict[str, Any]:
         "blocked_categories": [str(item) for item in blocked_categories],
         "diagnostic_summary": str(diagnostic.get("summary") or ""),
         "top_rejection_reasons": top_reasons[:5],
+        "ai_credit_stress_status": ai_credit_status,
+        "ai_credit_stress_score": ai_credit_score,
+        "ai_credit_stress_source": ai_credit_source,
     }
 
 
@@ -83,6 +91,11 @@ def markdown_report(result: dict[str, Any]) -> str:
         lines.append(f"- Blocked Categories: `{', '.join(result['blocked_categories'])}`")
     else:
         lines.append("- Blocked Categories: none")
+    ai_line = f"- AI Credit Stress: `{result['ai_credit_stress_status']}`"
+    if isinstance(result.get("ai_credit_stress_score"), (int, float)):
+        ai_line += f" (score={float(result['ai_credit_stress_score']):.1f})"
+    ai_line += f" source={result.get('ai_credit_stress_source', 'none')}"
+    lines.append(ai_line)
     lines.append("")
     lines.append("## Top Rejection Reasons")
     if result["top_rejection_reasons"]:
@@ -165,7 +178,8 @@ def main() -> int:
             "Weekly cadence KPI missed: "
             f"setups {result['qualified_setups_observed']}/{result['min_qualified_setups_per_week']}, "
             f"closed trades {result['closed_trades_observed']}/{result['min_closed_trades_per_week']}. "
-            f"Blocked categories: {', '.join(result['blocked_categories']) or 'none'}."
+            f"Blocked categories: {', '.join(result['blocked_categories']) or 'none'}. "
+            f"AI credit stress={result.get('ai_credit_stress_status', 'unknown')}."
         )
         if should_fail:
             print(f"::error::{message}")
