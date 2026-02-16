@@ -19,9 +19,9 @@
     "sync_source": "sync_closed_positions.py"
   },
   "stats": {
-    "total_trades": 1,
+    "total_trades": 2,
     "closed_trades": 1,
-    "open_trades": 0,
+    "open_trades": 1,
     "wins": 1,
     "losses": 0,
     "breakeven": 0,
@@ -78,6 +78,36 @@
           "c8d42c17-0a38-4bce-a14e-916a8a3dc038"
         ]
       }
+    },
+    {
+      "id": "IC_SPY_2026_03_13_P650_655_C725_730",
+      "symbol": "SPY",
+      "type": "option",
+      "strategy": "iron_condor",
+      "status": "open",
+      "entry_date": "2026-02-09",
+      "exit_date": null,
+      "entry_time": "2026-02-09T00:00:00+00:00",
+      "exit_time": null,
+      "entry_credit": 118.0,
+      "exit_debit": null,
+      "realized_pnl": null,
+      "outcome": null,
+      "signature": "SPY_2026-03-13_P650-655_C725-730",
+      "legs": {
+        "underlying": "SPY",
+        "expiry": "2026-03-13",
+        "put_strikes": [
+          650.0,
+          655.0
+        ],
+        "call_strikes": [
+          725.0,
+          730.0
+        ]
+      },
+      "contracts": 2,
+      "source": "alpaca_sync"
     }
   ]
 }

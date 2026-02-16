@@ -29,7 +29,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install alpaca-py
+          pip install -r requirements-minimal.txt
 
       - name: Run Iron Condor Guardian
         env:
