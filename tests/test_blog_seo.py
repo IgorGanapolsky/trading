@@ -68,6 +68,19 @@ def test_render_frontmatter_with_questions() -> None:
     assert 'answer: "A test."' in fm
 
 
+def test_render_frontmatter_adds_author_defaults() -> None:
+    fm = render_frontmatter(
+        {
+            "layout": "post",
+            "title": "Defaults Test",
+            "date": "2026-02-16",
+        }
+    )
+    assert 'author: "Igor Ganapolsky"' in fm
+    assert "author_title:" in fm
+    assert 'last_modified_at: "2026-02-16"' in fm
+
+
 def test_render_frontmatter_rejects_invalid_question() -> None:
     with pytest.raises(ValueError):
         render_frontmatter({"title": "x"}, questions=[{"question": "Q", "answer": ""}])

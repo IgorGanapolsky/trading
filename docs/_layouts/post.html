@@ -2,6 +2,10 @@
 layout: default
 ---
 
+{%- assign author_name = page.author | default: site.social.name | default: site.author -%}
+{%- assign author_title = page.author_title | default: page.author_role | default: site.author_title | default: "AI Systems Engineer" -%}
+{%- assign canonical_page_url = page.canonical_url | default: page.url | absolute_url -%}
+
 <article
   class="post h-entry"
   itemscope
@@ -19,10 +23,23 @@ layout: default
       >
         {{ page.date | date: "%b %-d, %Y" }}
       </time>
-      {%- if page.author -%}
+      <span class="post-separator">•</span>
+      <time
+        class="dt-updated"
+        datetime="{{ page.last_modified_at | default: page.date | date_to_xmlschema }}"
+        itemprop="dateModified"
+      >
+        Updated {{ page.last_modified_at | default: page.date | date: "%b %-d, %Y" }}
+      </time>
+      {%- if author_name -%}
+      <span class="post-separator">•</span>
       <span itemprop="author" itemscope itemtype="http://schema.org/Person">
-        <span itemprop="name">{{ page.author }}</span>
+        <span itemprop="name">{{ author_name }}</span>
       </span>
+      {%- endif -%}
+      {%- if author_title -%}
+      <span class="post-separator">•</span>
+      <span class="post-author-title">{{ author_title }}</span>
       {%- endif -%}
     </p>
   </header>
@@ -77,7 +94,7 @@ layout: default
   {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
-    "@id": "{{ page.url | absolute_url }}#article",
+    "@id": "{{ canonical_page_url }}#article",
     "headline": {{ page.title | jsonify }},
     "name": {{ page.title | jsonify }},
     "description": {{ page.description | default: page.excerpt | strip_html | truncate: 160 | jsonify }},
@@ -88,8 +105,8 @@ layout: default
     "author": {
       "@type": "Person",
       "@id": "https://igorganapolsky.github.io/trading/#person",
-      "name": "Igor Ganapolsky",
-      "jobTitle": "Senior Mobile Engineer",
+      "name": {{ author_name | jsonify }},
+      "jobTitle": {{ author_title | jsonify }},
       "url": "https://igorganapolsky.github.io/trading/",
       "sameAs": [
         "https://github.com/IgorGanapolsky",
@@ -111,7 +128,7 @@ layout: default
     },
     "mainEntityOfPage": {
       "@type": "WebPage",
-      "@id": "{{ page.url | absolute_url }}"
+      "@id": "{{ canonical_page_url }}"
     },
     "isPartOf": {
       "@type": "WebSite",

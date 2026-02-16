@@ -56,6 +56,7 @@ SENSATIONAL_PATTERNS = [
 
 IMAGE_KEYS = {"image", "image_url", "image_path", "cover_image", "hero_image"}
 DESC_KEYS = {"description", "summary", "excerpt"}
+AUTHOR_TITLE_KEYS = {"author_title", "author_role", "author_credentials"}
 ANSWER_BLOCK_PATTERN = re.compile(r"^##\s+Answer Block\b", re.IGNORECASE | re.MULTILINE)
 QUESTIONS_FRONTMATTER_PATTERN = re.compile(r"^questions:\s*$", re.IGNORECASE | re.MULTILINE)
 FAQ_FRONTMATTER_PATTERN = re.compile(r"^faq:\s*true\s*$", re.IGNORECASE | re.MULTILINE)
@@ -63,6 +64,10 @@ EVIDENCE_LINK_PATTERNS = [
     re.compile(r"https://github\.com/IgorGanapolsky/trading/(?:blob|tree|commit)/"),
     re.compile(r"https://github\.com/IgorGanapolsky/trading/?"),
 ]
+CANONICAL_URL_PATTERN = re.compile(
+    r"^https://igorganapolsky\.github\.io/trading(?:/|$)", re.IGNORECASE
+)
+MARKDOWN_IMAGE_PATTERN = re.compile(r"!\[(?P<alt>[^\]]*)\]\((?P<url>[^)]+)\)")
 
 
 def _read_text(path: Path) -> str:
@@ -107,6 +112,16 @@ def _word_count(text: str) -> int:
     return len(re.findall(r"\b\w+\b", text))
 
 
+def _image_alt_issues(body: str) -> list[tuple[str, str]]:
+    issues: list[tuple[str, str]] = []
+    for match in MARKDOWN_IMAGE_PATTERN.finditer(body):
+        alt = (match.group("alt") or "").strip()
+        url = (match.group("url") or "").strip()
+        if not alt:
+            issues.append(("error", f"image missing alt text: {url}"))
+    return issues
+
+
 def lint_file(path: Path) -> list[tuple[str, str]]:
     issues: list[tuple[str, str]] = []
     text = _read_text(path)
@@ -141,6 +156,21 @@ def lint_file(path: Path) -> list[tuple[str, str]]:
     if not any(key in meta and meta[key] for key in IMAGE_KEYS):
         issues.append(("warn", "missing hero image in front matter"))
 
+    canonical_url = (meta.get("canonical_url") or "").strip()
+    if not canonical_url:
+        issues.append(("error", "missing canonical_url in front matter"))
+    elif not CANONICAL_URL_PATTERN.search(canonical_url):
+        issues.append(("warn", "canonical_url should use https://igorganapolsky.github.io/trading/..."))
+
+    if not (meta.get("author") or "").strip():
+        issues.append(("error", "missing author in front matter"))
+
+    if not any((meta.get(key) or "").strip() for key in AUTHOR_TITLE_KEYS):
+        issues.append(("error", "missing author_title/author_role in front matter"))
+
+    if not (meta.get("last_modified_at") or "").strip():
+        issues.append(("error", "missing last_modified_at in front matter"))
+
     if _word_count(body) < 200:
         issues.append(("warn", "content very short (<200 words)"))
 
@@ -154,6 +184,8 @@ def lint_file(path: Path) -> list[tuple[str, str]]:
     has_evidence_link = any(pattern.search(body) for pattern in EVIDENCE_LINK_PATTERNS)
     if not has_evidence_link:
         issues.append(("error", "missing evidence link to repository or commit"))
+
+    issues.extend(_image_alt_issues(body))
 
     return issues
 

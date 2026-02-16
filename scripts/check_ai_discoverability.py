@@ -21,8 +21,13 @@ ANSWER_BLOCK_PATTERN = re.compile(r"^##\s+Answer Block\b", re.IGNORECASE | re.MU
 QUESTIONS_PATTERN = re.compile(r"^questions:\s*$", re.IGNORECASE | re.MULTILINE)
 FAQ_PATTERN = re.compile(r"^faq:\s*true\s*$", re.IGNORECASE | re.MULTILINE)
 EVIDENCE_LINK_PATTERN = re.compile(
-    r"https://github\.com/IgorGanapolsky/trading(?:/|$)", re.IGNORECASE
+    r"https://github\.com/IgorGanapolsky/trading(?:/|\b)", re.IGNORECASE
 )
+CANONICAL_URL_PATTERN = re.compile(
+    r"^https://igorganapolsky\.github\.io/trading(?:/|$)", re.IGNORECASE
+)
+MARKDOWN_IMAGE_PATTERN = re.compile(r"!\[(?P<alt>[^\]]*)\]\((?P<url>[^)]+)\)")
+AUTHOR_TITLE_KEYS = ("author_title", "author_role", "author_credentials")
 
 
 @dataclass(frozen=True)
@@ -64,6 +69,38 @@ def _has_evidence_link(text: str) -> bool:
     return bool(EVIDENCE_LINK_PATTERN.search(text))
 
 
+def _extract_frontmatter(text: str) -> dict[str, str]:
+    if not text.startswith("---"):
+        return {}
+    match = re.match(r"^---\n(.*?)\n---\n", text, re.DOTALL)
+    if not match:
+        return {}
+
+    meta: dict[str, str] = {}
+    for line in match.group(1).splitlines():
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        meta[key.strip().lower()] = value.strip().strip('"').strip("'")
+    return meta
+
+
+def _has_metadata_pack(meta: dict[str, str]) -> bool:
+    canonical = (meta.get("canonical_url") or "").strip()
+    has_author = bool((meta.get("author") or "").strip())
+    has_author_title = any((meta.get(key) or "").strip() for key in AUTHOR_TITLE_KEYS)
+    has_last_modified = bool((meta.get("last_modified_at") or "").strip())
+    has_canonical = bool(canonical and CANONICAL_URL_PATTERN.search(canonical))
+    return has_author and has_author_title and has_last_modified and has_canonical
+
+
+def _images_have_alt_text(text: str) -> bool:
+    for match in MARKDOWN_IMAGE_PATTERN.finditer(text):
+        if not (match.group("alt") or "").strip():
+            return False
+    return True
+
+
 def _recent_post_paths(posts_dir: Path, limit: int) -> list[Path]:
     posts = sorted(posts_dir.glob("*.md"), reverse=True)
     return posts[:limit]
@@ -100,15 +137,24 @@ def collect_discoverability_metrics(
     post_paths = _recent_post_paths(posts_dir, recent_posts)
     answer_count = 0
     evidence_count = 0
+    metadata_pack_count = 0
+    image_alt_count = 0
     for path in post_paths:
         text = _read_text(path)
+        meta = _extract_frontmatter(text)
         if _has_answer_block_or_structured_qa(text):
             answer_count += 1
         if _has_evidence_link(text):
             evidence_count += 1
+        if _has_metadata_pack(meta):
+            metadata_pack_count += 1
+        if _images_have_alt_text(text):
+            image_alt_count += 1
 
     answer_ratio = (answer_count / len(post_paths)) if post_paths else 0.0
     evidence_ratio = (evidence_count / len(post_paths)) if post_paths else 0.0
+    metadata_pack_ratio = (metadata_pack_count / len(post_paths)) if post_paths else 0.0
+    image_alt_ratio = (image_alt_count / len(post_paths)) if post_paths else 0.0
 
     snapshot_age_days = _latest_snapshot_age_days(reports_dir, today)
     robots_text = _read_text(robots_path) if robots_path.exists() else ""
@@ -211,6 +257,39 @@ def collect_discoverability_metrics(
         )
     )
 
+    if metadata_pack_ratio >= 0.9:
+        metadata_status = "pass"
+    elif metadata_pack_ratio >= 0.7:
+        metadata_status = "warn"
+    else:
+        metadata_status = "fail"
+    checks.append(
+        CheckResult(
+            "recent_posts_metadata_pack_ratio",
+            metadata_status,
+            (
+                f"{metadata_pack_count}/{len(post_paths)} recent posts include canonical_url, "
+                "author, author_title/role, and last_modified_at"
+            ),
+            critical=False,
+        )
+    )
+
+    if image_alt_ratio >= 0.95:
+        image_alt_status = "pass"
+    elif image_alt_ratio >= 0.8:
+        image_alt_status = "warn"
+    else:
+        image_alt_status = "fail"
+    checks.append(
+        CheckResult(
+            "recent_posts_image_alt_ratio",
+            image_alt_status,
+            f"{image_alt_count}/{len(post_paths)} recent posts have alt text on markdown images",
+            critical=False,
+        )
+    )
+
     critical_failed = sum(1 for c in checks if c.critical and c.status == "fail")
     warnings = sum(1 for c in checks if c.status == "warn")
     noncritical_failed = sum(1 for c in checks if (not c.critical) and c.status == "fail")
@@ -221,6 +300,8 @@ def collect_discoverability_metrics(
         "recent_posts_window": len(post_paths),
         "answer_block_ratio": round(answer_ratio, 4),
         "evidence_link_ratio": round(evidence_ratio, 4),
+        "metadata_pack_ratio": round(metadata_pack_ratio, 4),
+        "image_alt_ratio": round(image_alt_ratio, 4),
         "latest_dashboard_snapshot_age_days": snapshot_age_days,
         "checks": [c.__dict__ for c in checks],
         "summary": {
@@ -248,6 +329,8 @@ def _render_markdown_report(metrics: dict[str, Any]) -> str:
         f"- Recent posts window: {metrics.get('recent_posts_window', 0)}",
         f"- Answer Block ratio: {metrics.get('answer_block_ratio', 0):.2f}",
         f"- Evidence link ratio: {metrics.get('evidence_link_ratio', 0):.2f}",
+        f"- Metadata pack ratio: {metrics.get('metadata_pack_ratio', 0):.2f}",
+        f"- Image alt ratio: {metrics.get('image_alt_ratio', 0):.2f}",
         f"- Latest dashboard snapshot age (days): {metrics.get('latest_dashboard_snapshot_age_days')}",
         f"- Overall status: **{summary.get('overall_status', 'unknown').upper()}**",
         "",
@@ -287,6 +370,8 @@ def _sync_state(state_path: Path, metrics: dict[str, Any]) -> None:
         "overall_status": metrics.get("summary", {}).get("overall_status"),
         "answer_block_ratio": metrics.get("answer_block_ratio"),
         "evidence_link_ratio": metrics.get("evidence_link_ratio"),
+        "metadata_pack_ratio": metrics.get("metadata_pack_ratio"),
+        "image_alt_ratio": metrics.get("image_alt_ratio"),
         "latest_dashboard_snapshot_age_days": metrics.get("latest_dashboard_snapshot_age_days"),
         "critical_failed": metrics.get("summary", {}).get("critical_failed"),
         "warnings": metrics.get("summary", {}).get("warnings"),

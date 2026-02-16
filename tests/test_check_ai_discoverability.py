@@ -27,6 +27,10 @@ def test_collect_metrics_happy_path(tmp_path: Path) -> None:
 title: "A"
 description: "d"
 image: "/assets/og-image.png"
+author: "Igor Ganapolsky"
+author_title: "Senior Mobile Engineer"
+last_modified_at: "2026-02-16"
+canonical_url: "https://igorganapolsky.github.io/trading/2026/02/16/post-a/"
 faq: true
 questions:
   - question: "q"
@@ -43,12 +47,17 @@ questions:
 title: "B"
 description: "d"
 image: "/assets/og-image.png"
+author: "Igor Ganapolsky"
+author_title: "Senior Mobile Engineer"
+last_modified_at: "2026-02-15"
+canonical_url: "https://igorganapolsky.github.io/trading/2026/02/15/post-b/"
 ---
 
 ## Answer Block
 test
 ## Evidence
 - https://github.com/IgorGanapolsky/trading
+![Pipeline diagram](https://igorganapolsky.github.io/trading/assets/trading_pipeline.png)
 """,
     )
     _write(
@@ -66,6 +75,8 @@ test
     assert metrics["summary"]["critical_failed"] == 0
     assert metrics["answer_block_ratio"] == 1.0
     assert metrics["evidence_link_ratio"] == 1.0
+    assert metrics["metadata_pack_ratio"] == 1.0
+    assert metrics["image_alt_ratio"] == 1.0
     assert metrics["latest_dashboard_snapshot_age_days"] == 0
 
 

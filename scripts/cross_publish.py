@@ -19,6 +19,8 @@ from pathlib import Path
 
 import requests
 import yaml
+from src.content.blog_seo import canonical_url_for_post_file
+from src.content.linkedin_posts import build_answer_first_linkedin_post
 
 
 def parse_frontmatter(content: str) -> tuple[dict, str]:
@@ -83,7 +85,15 @@ def publish_to_devto(title: str, body: str, tags: list[str], canonical_url: str)
         return None
 
 
-def publish_to_linkedin(title: str, body: str, canonical_url: str) -> bool:
+def publish_to_linkedin(
+    title: str,
+    body: str,
+    canonical_url: str,
+    *,
+    tags: list[str] | None = None,
+    question_cluster: str | None = None,
+    result_summary: str | None = None,
+) -> bool:
     """Publish post to LinkedIn."""
     raw_token = os.environ.get("LINKEDIN_ACCESS_TOKEN") or ""
     token = re.sub(r"\s+", "", raw_token)  # Remove ALL whitespace including internal newlines
@@ -111,12 +121,14 @@ def publish_to_linkedin(title: str, body: str, canonical_url: str) -> bool:
         print(f"  LinkedIn user lookup error: {e}")
         return False
 
-    # Build concise post text (LinkedIn max ~3000 chars)
-    # Use first 2 paragraphs of body + link
-    paragraphs = [p.strip() for p in body.split("\n\n") if p.strip() and not p.startswith("```")]
-    excerpt = "\n\n".join(paragraphs[:3])[:1500]
-
-    text = f"{title}\n\n{excerpt}\n\nRead more: {canonical_url}\n\n#AITrading #BuildingInPublic #FinTech #MachineLearning"
+    text = build_answer_first_linkedin_post(
+        title=title,
+        body_markdown=body,
+        canonical_url=canonical_url,
+        tags=tags,
+        question_cluster=question_cluster,
+        result_summary=result_summary,
+    )
 
     payload = {
         "author": user_urn,
@@ -166,6 +178,16 @@ def main():
     parser.add_argument("file", help="Path to markdown post file")
     parser.add_argument("--dry-run", action="store_true", help="Preview only, don't publish")
     parser.add_argument("--platform", choices=["devto", "linkedin", "all"], default="all")
+    parser.add_argument(
+        "--question-cluster",
+        default="",
+        help="Primary query cluster this post answers (used for LinkedIn formatting).",
+    )
+    parser.add_argument(
+        "--result-summary",
+        default="",
+        help="Optional explicit result line for LinkedIn post formatting.",
+    )
     args = parser.parse_args()
 
     filepath = Path(args.file)
@@ -180,8 +202,11 @@ def main():
     tags = fm.get("tags", fm.get("categories", ["ai", "trading"]))
     canonical_url = fm.get("canonical_url", "")
     if not canonical_url:
-        slug = filepath.stem.split("-", 3)[-1] if "-" in filepath.stem else filepath.stem
-        canonical_url = f"https://igorganapolsky.github.io/trading/{slug}/"
+        try:
+            canonical_url = canonical_url_for_post_file(filepath)
+        except ValueError:
+            slug = filepath.stem.split("-", 3)[-1] if "-" in filepath.stem else filepath.stem
+            canonical_url = f"https://igorganapolsky.github.io/trading/{slug}/"
 
     print(f"Title: {title}")
     print(f"Tags: {tags}")
@@ -191,7 +216,19 @@ def main():
 
     if args.dry_run:
         print("--- DRY RUN (not publishing) ---")
-        print(body[:500])
+        if args.platform in ("linkedin", "all"):
+            linkedin_preview = build_answer_first_linkedin_post(
+                title=title,
+                body_markdown=body,
+                canonical_url=canonical_url,
+                tags=tags if isinstance(tags, list) else None,
+                question_cluster=args.question_cluster or fm.get("question_cluster"),
+                result_summary=args.result_summary or fm.get("result_summary"),
+            )
+            print("\nLinkedIn preview:\n")
+            print(linkedin_preview)
+        else:
+            print(body[:500])
         return 0
 
     results = {}
@@ -202,7 +239,14 @@ def main():
 
     if args.platform in ("linkedin", "all"):
         print("Publishing to LinkedIn...")
-        results["linkedin"] = publish_to_linkedin(title, body, canonical_url)
+        results["linkedin"] = publish_to_linkedin(
+            title,
+            body,
+            canonical_url,
+            tags=tags if isinstance(tags, list) else None,
+            question_cluster=args.question_cluster or fm.get("question_cluster"),
+            result_summary=args.result_summary or fm.get("result_summary"),
+        )
 
     print()
     success = sum(1 for v in results.values() if v)

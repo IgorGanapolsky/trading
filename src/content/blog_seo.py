@@ -16,6 +16,8 @@ from pathlib import Path
 from typing import Any
 
 SITE_BASE = "https://igorganapolsky.github.io/trading"
+DEFAULT_AUTHOR = "Igor Ganapolsky"
+DEFAULT_AUTHOR_TITLE = "Senior Mobile Engineer • AI Trading Systems Builder"
 
 _DATE_YYYY_MM_DD = re.compile(r"^(?P<y>\d{4})-(?P<m>\d{2})-(?P<d>\d{2})")
 
@@ -87,9 +89,21 @@ def render_frontmatter(
     Uses JSON string encoding for safety (YAML is a superset of JSON), which
     prevents accidental YAML syntax breaks from quotes/colons/newlines.
     """
+    normalized_meta = dict(meta)
+    if "author" not in normalized_meta or not str(normalized_meta.get("author") or "").strip():
+        normalized_meta["author"] = DEFAULT_AUTHOR
+    if "author_title" not in normalized_meta or not str(
+        normalized_meta.get("author_title") or ""
+    ).strip():
+        normalized_meta["author_title"] = DEFAULT_AUTHOR_TITLE
+    if "last_modified_at" not in normalized_meta:
+        date_value = str(normalized_meta.get("date") or "").strip()
+        if date_value:
+            normalized_meta["last_modified_at"] = date_value[:10]
+
     lines: list[str] = ["---"]
 
-    for key, value in meta.items():
+    for key, value in normalized_meta.items():
         if value is None:
             continue
 

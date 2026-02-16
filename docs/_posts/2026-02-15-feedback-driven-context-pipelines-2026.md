@@ -1,9 +1,11 @@
 ---
 layout: post
-title: "Feedback-Driven Context Pipelines: How AI Agents Actually Learn in 2026"
+title: "Feedback-Driven Context Pipelines: How AI Agents Learn in 2026"
 date: 2026-02-15
 last_modified_at: "2026-02-15"
 author: Igor Ganapolsky
+author_title: "Senior Mobile Engineer • AI Trading Systems Builder"
+image: "/assets/feedback_pipeline.png"
 categories: [ai, trading, architecture]
 tags:
   - "ai-agents"
@@ -16,6 +18,8 @@ tags:
 description: "Most AI agents don't learn between sessions. Here's how we built a feedback-driven context pipeline with Thompson Sampling, LanceDB, and TARS — and how it compares to Mem0, OpenAI Agents SDK, and the 2026 state of the art."
 excerpt: "Your AI agent forgets everything between sessions. Here's how to fix that with structured feedback capture, Thompson Sampling, and semantic memory injection."
 canonical_url: https://igorganapolsky.github.io/trading/feedback-driven-context-pipelines-2026/
+question_cluster: "How AI agents learn across sessions using feedback-driven context pipelines"
+result_summary: "Added a four-stage learning loop (signal capture, Thompson scoring, multi-store memory, context injection) so sessions adapt behavior without model fine-tuning."
 faq: true
 questions:
   - question: "What is a feedback-driven context pipeline?"
@@ -25,6 +29,10 @@ questions:
   - question: "What is the difference between RLHF and context injection?"
     answer: "True RLHF updates model weights through gradient descent. Context injection achieves similar behavioral changes by prepending past lessons into the prompt — no fine-tuning required, works with any foundation model."
 ---
+
+## Answer Block
+
+Feedback-driven context pipelines improve agent reliability by carrying forward real mistakes and fixes between sessions. Instead of retraining model weights, the system injects relevant prior failures into prompts, so execution improves immediately and remains auditable.
 
 ## The Problem: AI Agents Have Amnesia
 
@@ -116,3 +124,7 @@ The agent's weights don't change. But its behavior does.
 ---
 
 *This post is part of our [AI Trading Journey](https://igorganapolsky.github.io/trading/) — building a system that learns from every mistake on the path to financial independence.*
+
+## Evidence
+
+- https://github.com/IgorGanapolsky/trading/tree/main/src

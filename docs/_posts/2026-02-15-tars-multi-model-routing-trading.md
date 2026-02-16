@@ -1,9 +1,11 @@
 ---
 layout: post
-title: "Why We Route Trading AI Through TARS: Multi-Model Architecture for SPY Options"
+title: "Why We Route Trading AI Through Tars for SPY Options"
 date: 2026-02-15
 last_modified_at: "2026-02-15"
 author: Igor Ganapolsky
+author_title: "Senior Mobile Engineer • AI Trading Systems Builder"
+image: "/assets/llm_gateway_architecture.png"
 categories: [ai, trading, architecture]
 tags:
   - "tetrate"
@@ -16,6 +18,8 @@ tags:
 description: "How we use Tetrate Agent Router Service (TARS) to route trading AI calls across 5 models with budget-aware selection, automatic fallback, and a safety guarantee that trade execution always uses the best model."
 excerpt: "Not every AI task needs the most expensive model. Here's how TARS routes our trading decisions across DeepSeek, Mistral, Kimi K2, and Claude Opus — spending $25/month instead of $500."
 canonical_url: https://igorganapolsky.github.io/trading/tars-multi-model-routing-trading/
+question_cluster: "How to route AI trading workloads across models without sacrificing execution quality"
+result_summary: "Projected monthly LLM cost drops from $500+ to about $25 by routing non-critical tasks to cheaper models while keeping execution decisions on the strongest model."
 faq: true
 questions:
   - question: "What is TARS (Tetrate Agent Router Service)?"
@@ -25,6 +29,10 @@ questions:
   - question: "What is the BATS framework for model selection?"
     answer: "Budget-Aware Test-time Scaling — a framework that selects the cheapest model capable of handling a task's complexity, with automatic downgrade when daily budget is exceeded and a safety guarantee that critical tasks always use the best available model."
 ---
+
+## Answer Block
+
+Multi-model routing through TARS improves system economics and resilience: cheap models handle low-risk tasks, high-capability models handle trade-critical decisions, and gateway-level fallback plus telemetry keeps failures observable without rewriting strategy code.
 
 ## The Cost Problem
 
@@ -124,3 +132,7 @@ That's it. The gateway resolves automatically in `llm_gateway.py`. Every OpenAI-
 ---
 
 *Built for the [Tetrate AI Buildathon](https://tetrate.ai/buildathon/apply). This post is part of our [AI Trading Journey](https://igorganapolsky.github.io/trading/).*
+
+## Evidence
+
+- https://github.com/IgorGanapolsky/trading/blob/main/src/utils/llm_gateway.py

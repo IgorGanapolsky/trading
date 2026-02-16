@@ -4,6 +4,8 @@ title: "Building an AI Trading System for the Tetrate Buildathon"
 date: 2026-02-15
 last_modified_at: "2026-02-15"
 author: Igor Ganapolsky
+author_title: "Senior Mobile Engineer • AI Trading Systems Builder"
+image: "/assets/llm_gateway_architecture.png"
 categories: [ai, trading, buildathon]
 tags:
   - "tetrate"
@@ -16,6 +18,8 @@ tags:
 description: "How we're enhancing an autonomous AI trading system with Tetrate's TARS gateway — multi-model routing, budget-aware selection, feedback-driven learning, and 84 self-healing workflows."
 excerpt: "We entered the Tetrate AI Buildathon with an existing AI trading system. Here's how TARS transforms our multi-model routing, and what we're building for the competition."
 canonical_url: https://igorganapolsky.github.io/trading/tetrate-buildathon-ai-trading-system/
+question_cluster: "How Tetrate TARS improves autonomous trading system reliability and discoverability"
+result_summary: "Integrated TARS gateway routing with budget/fallback controls and shipped 4 technical posts plus architecture diagrams in one buildathon day."
 faq: true
 questions:
   - question: "What is the Tetrate AI Buildathon?"
@@ -23,6 +27,10 @@ questions:
   - question: "How does TARS help an AI trading system?"
     answer: "TARS provides a single gateway to route LLM calls across multiple providers with automatic fallback, per-token budgets, traffic splitting for A/B testing models, and centralized telemetry — all through an OpenAI-compatible API."
 ---
+
+## Answer Block
+
+TARS improves this trading stack by centralizing multi-model routing, fallback, budget control, and telemetry behind one OpenAI-compatible gateway. That reduces routing fragility, makes model experiments safer, and improves publish quality by keeping architecture/docs outputs consistent across agents.
 
 ## The Buildathon
 
