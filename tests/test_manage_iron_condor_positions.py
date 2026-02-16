@@ -92,11 +92,11 @@ class TestExitConditions:
         assert should_exit is True
         assert reason == "DTE_EXIT"
 
-    def test_exit_at_50_percent_profit(self):
-        """Should exit when profit >= 50% of credit."""
+    def test_exit_at_profit_target(self):
+        """Should exit when profit >= configured target (75% of credit)."""
         ic = {
             "expiry": datetime.now() + timedelta(days=30),  # Not near expiry
-            "total_pl": 120,  # 60% profit
+            "total_pl": 160,  # 80% profit
             "credit_received": 200,
         }
         should_exit, reason, _ = check_exit_conditions(ic)

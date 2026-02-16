@@ -137,8 +137,6 @@ def build_index() -> list[dict]:
     )
 
     for path in sorted(RAG_ROOT.rglob("*.md")):
-        if path.stem.startswith("tars_"):
-            continue
         text = path.read_text(encoding="utf-8", errors="ignore")
         frontmatter = _parse_frontmatter(text)
         rel_path = path.relative_to(RAG_ROOT)

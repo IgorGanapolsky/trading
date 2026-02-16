@@ -183,9 +183,10 @@ class TestShouldClosePosition:
         assert "stop-loss triggered" in reason.lower()
 
     def test_position_just_below_max_loss_no_close(self, monitor, credit_spread_position):
-        """Position just below 2x credit should not trigger close."""
-        # Just below stop-loss: spread costs $1.79 (loss = $1.19 < $1.20)
-        credit_spread_position.current_price = 1.79
+        """Position just below configured stop-loss should not trigger close."""
+        # Stop-loss is 1x credit by default: max loss = $0.60
+        # Just below stop-loss: spread costs $1.19 (loss = $0.59 < $0.60)
+        credit_spread_position.current_price = 1.19
         monitor.add_position(credit_spread_position)
         should_close, reason = monitor.should_close_position("SPY240119P00480000")
 
@@ -287,7 +288,7 @@ class TestCheckRisk:
         """Position near stop-loss should have 'warning' status."""
         position_data = {
             "entry_price": 0.60,
-            "current_price": 1.60,  # Loss = $1.00, near 2x credit ($1.20)
+            "current_price": 1.10,  # Loss = $0.50, near 1x credit ($0.60)
             "position_type": "credit_spread",
             "credit_received": 0.60,
         }
@@ -423,16 +424,16 @@ class TestRealWorldScenario:
         should_close, _ = monitor.should_close_position("SPY240215P00475000")
         assert should_close is False  # Loss $40, under $120 max
 
-        # Day 7: Market crashes, approaching stop-loss
-        monitor.update_position_price("SPY240215P00475000", 1.70)
+        # Day 7: Market dips further, approaching stop-loss
+        monitor.update_position_price("SPY240215P00475000", 1.10)
         risk = monitor.check_risk("SPY240215P00475000")
         assert risk["status"] == "warning"  # 75%+ of max loss
 
         # Day 8: Stop-loss triggered
-        monitor.update_position_price("SPY240215P00475000", 1.80)
+        monitor.update_position_price("SPY240215P00475000", 1.20)
         should_close, reason = monitor.should_close_position("SPY240215P00475000")
         assert should_close is True
-        assert "2x credit stop-loss triggered" in reason
+        assert "stop-loss triggered" in reason.lower()
 
     def test_iwm_credit_spread_scenario(self):
         """Test IWM credit spread (secondary ticker per CLAUDE.md)."""

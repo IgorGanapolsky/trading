@@ -1109,6 +1109,28 @@
     "file": "rag_knowledge/lessons_learned/LL-353_PR_Merge_CI_Hygiene_Feb16.md"
   },
   {
+    "id": "auto_sync_failed_feb16",
+    "title": "Portfolio sync failed - blind trading risk",
+    "date": "2026-02-16",
+    "category": "lessons_learned",
+    "severity": "HIGH",
+    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
+    "tags": [],
+    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260216_171717\n**Date**: 2026-02-16\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\nCannot verify account state. Error: API Error\n\n## Context\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\nfailure, sync_failed, auto-generated, reflexion",
+    "file": "rag_knowledge/lessons_learned/auto_sync_failed_feb16.md"
+  },
+  {
+    "id": "auto_sync_failed_feb16_2",
+    "title": "Portfolio sync failed - blind trading risk",
+    "date": "2026-02-16",
+    "category": "lessons_learned",
+    "severity": "HIGH",
+    "summary": "## Problem Cannot verify account state. Error: API Error ## Context - Symbol: None - Strategy: None - Error: API Error ## Prevention BLOCK all trading until sync restored. Never trade without knowing current positions/equity. ## Tags failure, sync_failed, auto-generated, reflexion",
+    "tags": [],
+    "content": "# Portfolio sync failed - blind trading risk\n\n**ID**: auto_sync_failed_20260216_172031\n**Date**: 2026-02-16\n**Severity**: HIGH\n**Type**: Auto-generated (Reflexion pattern)\n\n## Problem\nCannot verify account state. Error: API Error\n\n## Context\n- Symbol: None\n- Strategy: None\n- Error: API Error\n\n## Prevention\nBLOCK all trading until sync restored. Never trade without knowing current positions/equity.\n\n## Tags\nfailure, sync_failed, auto-generated, reflexion",
+    "file": "rag_knowledge/lessons_learned/auto_sync_failed_feb16_2.md"
+  },
+  {
     "id": "automated_position_management_feb08",
     "title": "Automated Position Management Requirements (Feb 8, 2026)",
     "date": "",
