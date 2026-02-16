@@ -24,6 +24,8 @@ DATE_PATTERNS = [
     (re.compile(r"\*\*Date\*\*:\s*(.+)$", re.IGNORECASE | re.MULTILINE), "%B %d, %Y"),
     (re.compile(r"\bDate\b:\s*(\d{4}-\d{2}-\d{2})", re.IGNORECASE), "%Y-%m-%d"),
 ]
+FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n", re.DOTALL)
+TRUTHY = {"1", "true", "yes", "on"}
 
 
 def _extract_field(pattern: re.Pattern, text: str) -> str:
@@ -34,6 +36,22 @@ def _extract_field(pattern: re.Pattern, text: str) -> str:
 def _extract_title(text: str, fallback: str) -> str:
     match = re.search(r"^#\s+(.+)$", text, re.MULTILINE)
     return match.group(1).strip() if match else fallback
+
+
+def _parse_frontmatter(text: str) -> dict[str, str]:
+    """Parse simple YAML frontmatter key/value pairs from markdown text."""
+    match = FRONTMATTER_RE.match(text)
+    if not match:
+        return {}
+
+    parsed: dict[str, str] = {}
+    for raw_line in match.group(1).splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        parsed[key.strip().lower()] = value.strip().strip('"').strip("'")
+    return parsed
 
 
 def _extract_tags(text: str) -> list[str]:
@@ -65,7 +83,24 @@ def _extract_summary(text: str) -> str:
     return cleaned[:400]
 
 
-def _parse_date(text: str) -> tuple[str, datetime | None]:
+def _parse_date_value(raw: str) -> datetime | None:
+    for fmt in ("%Y-%m-%d", "%B %d, %Y"):
+        try:
+            return datetime.strptime(raw, fmt)
+        except ValueError:
+            pass
+    try:
+        # Support ISO timestamps from frontmatter dates like 2026-02-16T13:46:26Z
+        return datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def _parse_date(text: str, frontmatter_date: str = "") -> tuple[str, datetime | None]:
+    if frontmatter_date:
+        parsed = _parse_date_value(frontmatter_date)
+        return frontmatter_date, parsed
+
     for pattern, fmt in DATE_PATTERNS:
         raw = _extract_field(pattern, text)
         if raw:
@@ -77,15 +112,33 @@ def _parse_date(text: str) -> tuple[str, datetime | None]:
     return "", None
 
 
+def _is_noise_artifact_lesson(path: Path, title: str, frontmatter: dict[str, str], text: str) -> bool:
+    source = (frontmatter.get("source") or "").lower()
+    stem = path.stem.lower()
+    title_norm = title.lower()
+
+    if source == "tars_artifact_ingest":
+        return True
+    if stem.startswith("tars_"):
+        return True
+    if title_norm.startswith("tars artifact ingest"):
+        return True
+    return "Normalized TARS artifact ingested for RAG retrieval." in text
+
+
 def build_index() -> list[dict]:
     lessons = []
     if not RAG_ROOT.exists():
         return lessons
+    include_artifact_ingest = (
+        os.getenv("INCLUDE_ARTIFACT_INGEST_LESSONS", "").strip().lower() in TRUTHY
+    )
 
     for path in sorted(RAG_ROOT.rglob("*.md")):
         if path.stem.startswith("tars_"):
             continue
         text = path.read_text(encoding="utf-8", errors="ignore")
+        frontmatter = _parse_frontmatter(text)
         rel_path = path.relative_to(RAG_ROOT)
         category = rel_path.parts[0] if rel_path.parts else "general"
         source_path = f"rag_knowledge/{rel_path.as_posix()}"
@@ -95,17 +148,24 @@ def build_index() -> list[dict]:
         else:
             item_id = rel_path.with_suffix("").as_posix()
 
-        title = _extract_title(text, item_id)
-        date_raw, date_obj = _parse_date(text)
+        title = frontmatter.get("title") or _extract_title(text, item_id)
+        if not include_artifact_ingest and _is_noise_artifact_lesson(path, title, frontmatter, text):
+            continue
+
+        date_raw, date_obj = _parse_date(text, frontmatter.get("date", ""))
         category_label = _extract_field(
             re.compile(r"\*\*Category\*\*:\s*(.+)$", re.IGNORECASE | re.MULTILINE),
             text,
         )
+        category_label = frontmatter.get("category") or category_label
         severity = _extract_field(
             re.compile(r"\*\*Severity\*\*:\s*(.+)$", re.IGNORECASE | re.MULTILINE),
             text,
         )
+        severity = frontmatter.get("severity") or severity
         summary = _extract_summary(text)
+        if not summary:
+            summary = frontmatter.get("description", "")
         tags = _extract_tags(text)
 
         lessons.append(
