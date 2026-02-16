@@ -28,10 +28,8 @@ def read_json(path: Path) -> dict:
 def parse_kv(path: Path) -> dict[str, str]:
     out: dict[str, str] = {}
     for line in read_text(path).splitlines():
-        if "=" not in line:
-            continue
-        k, v = line.split("=", 1)
-        out[k.strip()] = v.strip()
+        for m in re.finditer(r"([A-Za-z0-9_]+)=(\S+)", line):
+            out[m.group(1)] = m.group(2)
     return out
 
 
@@ -53,6 +51,23 @@ def parse_scorecard_metrics(path: Path) -> list[tuple[str, str, str]]:
         if m:
             rows.append((m.group(1), m.group(2), m.group(3)))
     return rows
+
+
+def derive_loop_status(loop_status: dict[str, str]) -> tuple[str, str]:
+    cycle = loop_status.get("cycle")
+    profile = loop_status.get("profile")
+
+    iteration = loop_status.get("iteration")
+    if not cycle and iteration:
+        cycle = f"iteration {iteration}"
+
+    if not profile:
+        ruff_exit = loop_status.get("ruff_exit")
+        pytest_exit = loop_status.get("pytest_exit")
+        if ruff_exit is not None and pytest_exit is not None:
+            profile = "healthy" if ruff_exit == "0" and pytest_exit == "0" else "degraded"
+
+    return cycle or "unknown", profile or "unknown"
 
 
 def status_chip(status: str) -> str:
@@ -84,8 +99,7 @@ def main() -> int:
 
     done, total = checklist_progress(checklist)
     metrics = parse_scorecard_metrics(scorecard)
-    loop_cycle = loop_status.get("cycle", "n/a")
-    loop_profile = loop_status.get("profile", "n/a")
+    loop_cycle, loop_profile = derive_loop_status(loop_status)
     latency = smoke.get("latency_ms", "n/a")
     est_cost = smoke.get("estimated_total_cost_usd", "n/a")
 
