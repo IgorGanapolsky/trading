@@ -84,7 +84,9 @@ def main() -> int:
     lines.append(
         'description: "How the layered TDD loop, Tetrate gateway checks, and RAG learning system work together."'
     )
-    lines.append('summary: "Simple-to-technical walkthrough of the continuous build-test-learn engine."')
+    lines.append(
+        'summary: "Simple-to-technical walkthrough of the continuous build-test-learn engine."'
+    )
     lines.append('hero_image: "/assets/img/agent-loop-diagram.png"')
     lines.append("---")
     lines.append("")
