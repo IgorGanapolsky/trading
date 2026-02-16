@@ -116,6 +116,8 @@ jobs:
           head -50 wiki/Progress-Dashboard.md
 
       - name: Generate static dashboard snapshot report
+        env:
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           echo "🧾 Generating crawlable dashboard snapshot..."
           python3 scripts/generate_dashboard_snapshot.py \
