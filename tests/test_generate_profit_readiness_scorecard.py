@@ -41,7 +41,16 @@ def test_scorecard_includes_expectancy_metrics_from_trades(tmp_path: Path) -> No
 
     out = repo / "artifacts/devloop/profit_readiness_scorecard.md"
     subprocess.run(
-        [sys.executable, str(SCRIPT), "--repo-root", str(repo), "--artifact-dir", str(repo / "artifacts/devloop"), "--out", str(out)],
+        [
+            sys.executable,
+            str(SCRIPT),
+            "--repo-root",
+            str(repo),
+            "--artifact-dir",
+            str(repo / "artifacts/devloop"),
+            "--out",
+            str(out),
+        ],
         check=True,
     )
     text = out.read_text(encoding="utf-8")
@@ -80,7 +89,16 @@ def test_scorecard_expectancy_fallback_from_system_state(tmp_path: Path) -> None
 
     out = repo / "artifacts/devloop/profit_readiness_scorecard.md"
     subprocess.run(
-        [sys.executable, str(SCRIPT), "--repo-root", str(repo), "--artifact-dir", str(repo / "artifacts/devloop"), "--out", str(out)],
+        [
+            sys.executable,
+            str(SCRIPT),
+            "--repo-root",
+            str(repo),
+            "--artifact-dir",
+            str(repo / "artifacts/devloop"),
+            "--out",
+            str(out),
+        ],
         check=True,
     )
     text = out.read_text(encoding="utf-8")

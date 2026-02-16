@@ -211,7 +211,9 @@ def expectancy_metrics_fallback_from_system_state(
     system_state: dict,
 ) -> dict[str, float | int | str | None]:
     """Fallback expectancy metrics from system_state strategy milestones."""
-    milestones = system_state.get("strategy_milestones", {}) if isinstance(system_state, dict) else {}
+    milestones = (
+        system_state.get("strategy_milestones", {}) if isinstance(system_state, dict) else {}
+    )
     families = milestones.get("strategy_families", {}) if isinstance(milestones, dict) else {}
     options_income = families.get("options_income", {}) if isinstance(families, dict) else {}
     metrics = options_income.get("metrics", {}) if isinstance(options_income, dict) else {}
@@ -233,8 +235,12 @@ def expectancy_metrics_fallback_from_system_state(
         }
 
     # Fallback can only estimate averages partially when only aggregate pnl is available.
-    avg_winner = (total_pnl / wins) if (total_pnl is not None and wins > 0 and losses == 0) else None
-    avg_loser = (abs(total_pnl) / losses) if (total_pnl is not None and losses > 0 and wins == 0) else None
+    avg_winner = (
+        (total_pnl / wins) if (total_pnl is not None and wins > 0 and losses == 0) else None
+    )
+    avg_loser = (
+        (abs(total_pnl) / losses) if (total_pnl is not None and losses > 0 and wins == 0) else None
+    )
     if wins > 0 and losses == 0:
         profit_factor = float("inf")
     elif losses > 0 and wins == 0:
