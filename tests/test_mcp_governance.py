@@ -20,7 +20,9 @@ try:
     )
     from mcp.governance.input_validation import ALLOWED_SYMBOLS, MAX_ORDER_AMOUNT_USD
 except ImportError:
-    pytest.skip("mcp.governance not available (pip mcp package shadows local)", allow_module_level=True)
+    pytest.skip(
+        "mcp.governance not available (pip mcp package shadows local)", allow_module_level=True
+    )
 
 
 class TestInputValidation:
