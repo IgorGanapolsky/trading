@@ -71,6 +71,16 @@ jobs:
           python3 scripts/update_north_star_operating_plan.py
           echo "✅ North Star operating plan updated"
 
+      - name: Weekly cadence KPI + no-trade diagnostic
+        run: |
+          echo "📈 Checking cadence KPI and no-trade diagnostic..."
+          python3 scripts/check_weekly_cadence_gate.py \
+            --state data/system_state.json \
+            --out artifacts/devloop/weekly_cadence_kpi.md \
+            --emit-github-warning \
+            --fail-on none
+          echo "✅ Cadence diagnostic generated"
+
       - name: Generate Progress Dashboard
         run: |
           echo "📊 Generating enhanced progress dashboard..."

@@ -99,6 +99,14 @@ def metric_deficit(metric: dict) -> float:
         if value is None:
             return 100.0
         return 0.0
+    if name == "Weekly Qualified Setups":
+        if value is None:
+            return 100.0
+        return max(0.0, ((3.0 - value) / 3.0) * 100.0)
+    if name == "Weekly Closed Trades":
+        if value is None:
+            return 100.0
+        return max(0.0, ((1.0 - value) / 1.0) * 100.0)
     return 0.0 if status == "PASS" else 25.0
 
 
@@ -127,6 +135,14 @@ def task_bank(metric_name: str) -> list[str]:
         ],
         "Gateway Cost (smoke call)": [
             "Implement prompt/token budget regression check and artifact that tracks cost trend by cycle.",
+        ],
+        "Weekly Qualified Setups": [
+            "Run no-trade weekly diagnostics and relax/adjust entry filters in paper mode to achieve at least 3 qualified setups per week.",
+            "Add setup-cadence telemetry artifact (daily setup count and gate reached) and fail cadence check when <3/week.",
+        ],
+        "Weekly Closed Trades": [
+            "Add weekly execution conversion checks from qualified setups to closed trades and alert if fewer than 1 close/week.",
+            "Review strategy cadence and blocked-gate categories; propose either defined-risk strategy expansion or North Star assumption revision when repeated misses persist.",
         ],
     }
     return mapping.get(

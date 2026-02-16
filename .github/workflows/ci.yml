@@ -94,6 +94,29 @@ jobs:
         run: |
           python scripts/validate_ticker_whitelist.py
 
+  north-star-cadence-alert:
+    name: North Star Cadence KPI Alert
+    runs-on: ubuntu-latest
+    needs: workflow-validation
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Refresh weekly gate snapshot
+        run: |
+          python3 scripts/update_north_star_operating_plan.py
+
+      - name: Alert on cadence KPI miss
+        run: |
+          python3 scripts/check_weekly_cadence_gate.py \
+            --state data/system_state.json \
+            --emit-github-warning \
+            --fail-on none
+
   tests:
     name: Run All Tests
     runs-on: ubuntu-latest

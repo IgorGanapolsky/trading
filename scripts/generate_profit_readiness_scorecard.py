@@ -155,6 +155,13 @@ def main() -> int:
     performance_log = safe_read_json(repo_root / "data/performance_log.json")
 
     paper = system_state.get("paper_account", {}) if isinstance(system_state, dict) else {}
+    weekly_gate = (
+        system_state.get("north_star_weekly_gate", {}) if isinstance(system_state, dict) else {}
+    )
+    cadence_kpi = weekly_gate.get("cadence_kpi", {}) if isinstance(weekly_gate, dict) else {}
+    no_trade_diagnostic = (
+        weekly_gate.get("no_trade_diagnostic", {}) if isinstance(weekly_gate, dict) else {}
+    )
     win_rate = paper.get("win_rate")
     sample_size = paper.get("win_rate_sample_size")
 
@@ -246,6 +253,40 @@ def main() -> int:
             note="set TARS_INPUT_COST_PER_1M and TARS_OUTPUT_COST_PER_1M for estimate",
         ),
     ]
+    setups_observed = cadence_kpi.get("qualified_setups_observed")
+    setups_min = cadence_kpi.get("min_qualified_setups_per_week")
+    trades_observed = cadence_kpi.get("closed_trades_observed")
+    trades_min = cadence_kpi.get("min_closed_trades_per_week")
+    setups_status = "UNKNOWN"
+    if isinstance(setups_observed, int) and isinstance(setups_min, int):
+        setups_status = "PASS" if setups_observed >= setups_min else "WARN"
+    trades_status = "UNKNOWN"
+    if isinstance(trades_observed, int) and isinstance(trades_min, int):
+        trades_status = "PASS" if trades_observed >= trades_min else "WARN"
+    metrics.extend(
+        [
+            Metric(
+                name="Weekly Qualified Setups",
+                value=(
+                    f"{int(setups_observed)}/{int(setups_min)}"
+                    if isinstance(setups_observed, int) and isinstance(setups_min, int)
+                    else "N/A"
+                ),
+                status=setups_status,
+                note="north_star_weekly_gate.cadence_kpi",
+            ),
+            Metric(
+                name="Weekly Closed Trades",
+                value=(
+                    f"{int(trades_observed)}/{int(trades_min)}"
+                    if isinstance(trades_observed, int) and isinstance(trades_min, int)
+                    else "N/A"
+                ),
+                status=trades_status,
+                note="north_star_weekly_gate.cadence_kpi",
+            ),
+        ]
+    )
 
     delta_7d = None
     delta_7d_pct = None
@@ -302,6 +343,19 @@ def main() -> int:
     lines.append("- PASS means metric is within current readiness threshold.")
     lines.append("- WARN means metric needs improvement before scaling risk.")
     lines.append("- UNKNOWN means data is not yet captured for this metric.")
+    lines.append("")
+    lines.append("## Weekly Cadence & No-Trade Diagnostic")
+    cadence_summary = str(cadence_kpi.get("summary") or "Cadence KPI not available.")
+    lines.append(f"- Cadence Summary: {cadence_summary}")
+    blocked_categories = no_trade_diagnostic.get("blocked_categories", [])
+    if isinstance(blocked_categories, list) and blocked_categories:
+        lines.append(f"- Blocked Gate Categories: {', '.join(str(x) for x in blocked_categories)}")
+    else:
+        lines.append("- Blocked Gate Categories: none")
+    diagnostic_summary = str(
+        no_trade_diagnostic.get("summary") or "No weekly diagnostic available."
+    )
+    lines.append(f"- Diagnostic Summary: {diagnostic_summary}")
     lines.append("")
 
     out.write_text("\n".join(lines) + "\n", encoding="utf-8")
