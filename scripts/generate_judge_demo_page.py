@@ -118,6 +118,7 @@ def main() -> int:
     paper_win_rate = float(paper.get("win_rate", 0.0) or 0.0)
     paper_win_samples = int(paper.get("win_rate_sample_size", 0) or 0)
     north_star_prob = north_star.get("probability_label", "unknown")
+    repo_blob = "https://github.com/IgorGanapolsky/trading/blob/main"
 
     metric_rows = (
         "\n".join(
@@ -308,12 +309,15 @@ def main() -> int:
         <div class="k">Evidence Files</div>
         <ul>
           <li><a href="/trading/lessons/ops-status.html">ops_status.html</a></li>
-          <li><a href="../../artifacts/tars/submission_summary.md">submission_summary.md</a></li>
-          <li><a href="../../artifacts/tars/judge_demo_checklist.md">judge_demo_checklist.md</a></li>
-          <li><a href="../../artifacts/tars/trade_opinion_smoke.json">trade_opinion_smoke.json</a></li>
-          <li><a href="../../artifacts/tars/execution_quality_daily.json">execution_quality_daily.json</a></li>
-          <li><a href="../../artifacts/devloop/profit_readiness_scorecard.md">profit_readiness_scorecard.md</a></li>
-          <li><a href="../../docs/_reports/hackathon-system-explainer.md">system explainer</a></li>
+          <li><a href="{repo_blob}/artifacts/tars/submission_summary.md">submission_summary.md</a></li>
+          <li><a href="{repo_blob}/artifacts/tars/judge_demo_checklist.md">judge_demo_checklist.md</a></li>
+          <li><a href="{repo_blob}/artifacts/tars/smoke_response.json">smoke_response.json</a></li>
+          <li><a href="{repo_blob}/artifacts/tars/smoke_metrics.txt">smoke_metrics.txt</a></li>
+          <li><a href="{repo_blob}/artifacts/tars/env_status.txt">env_status.txt</a></li>
+          <li><a href="{repo_blob}/artifacts/tars/resilience_report.txt">resilience_report.txt</a></li>
+          <li><a href="{repo_blob}/artifacts/tars/retrieval_report.txt">retrieval_report.txt</a></li>
+          <li><a href="{repo_blob}/artifacts/devloop/profit_readiness_scorecard.md">profit_readiness_scorecard.md</a></li>
+          <li><a href="{repo_blob}/docs/_reports/hackathon-system-explainer.md">system explainer</a></li>
         </ul>
       </article>
     </section>
