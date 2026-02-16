@@ -156,6 +156,15 @@ class TradeContext:
     rag_context: dict[str, Any] = field(default_factory=dict)
     order_size: float = 0.0
     session_profile: dict[str, Any] = field(default_factory=dict)
+    upstream_results: list[Any] = field(default_factory=list)
+
+    @property
+    def pipeline_confidence(self) -> float:
+        """Aggregate confidence from all upstream gate results that passed."""
+        passed = [r for r in self.upstream_results if r.passed and r.confidence > 0]
+        if not passed:
+            return 0.0
+        return sum(r.confidence for r in passed) / len(passed)
 
 
 class RAGPreTradeQuery:
@@ -1154,6 +1163,17 @@ class Gate3Sentiment:
     ) -> GateResult:
         """Evaluate using cached bias score."""
         score = bias.score
+
+        # Inter-gate data sharing: adjust bias score with upstream signals
+        if ctx.debate_outcome and hasattr(ctx.debate_outcome, "winner"):
+            if ctx.debate_outcome.winner == "BEAR" and ctx.debate_outcome.confidence > 0.5:
+                score -= 0.2 * ctx.debate_outcome.confidence
+            elif ctx.debate_outcome.winner == "BULL" and ctx.debate_outcome.confidence > 0.5:
+                score += 0.1 * ctx.debate_outcome.confidence
+
+        if ctx.momentum_strength < 0.3 and score > 0:
+            score *= 0.8
+
         ctx.sentiment_score = score
 
         if score < threshold:
@@ -1218,6 +1238,33 @@ class Gate3Sentiment:
             sentiment_score = llm_score * (1 - weight) + playwright_score * weight
         else:
             sentiment_score = llm_score
+
+        # Inter-gate data sharing: incorporate upstream signals (agentic workflow improvement)
+        # If debate concluded bearish with high confidence, dampen positive sentiment
+        # If momentum is weak, require stronger sentiment to pass
+        if ctx.debate_outcome and hasattr(ctx.debate_outcome, "winner"):
+            if ctx.debate_outcome.winner == "BEAR" and ctx.debate_outcome.confidence > 0.5:
+                dampening = 0.2 * ctx.debate_outcome.confidence
+                sentiment_score -= dampening
+                logger.info(
+                    "Gate 3 (%s): Sentiment dampened by %.2f (bear debate, conf=%.2f)",
+                    ticker, dampening, ctx.debate_outcome.confidence,
+                )
+            elif ctx.debate_outcome.winner == "BULL" and ctx.debate_outcome.confidence > 0.5:
+                boost = 0.1 * ctx.debate_outcome.confidence
+                sentiment_score += boost
+                logger.info(
+                    "Gate 3 (%s): Sentiment boosted by %.2f (bull debate, conf=%.2f)",
+                    ticker, boost, ctx.debate_outcome.confidence,
+                )
+
+        if ctx.momentum_strength < 0.3 and sentiment_score > 0:
+            # Weak momentum + positive sentiment = reduce confidence
+            sentiment_score *= 0.8
+            logger.info(
+                "Gate 3 (%s): Sentiment reduced 20%% (weak momentum=%.2f)",
+                ticker, ctx.momentum_strength,
+            )
 
         ctx.sentiment_score = sentiment_score
         self.budget_controller.log_spend(llm_result.get("cost", 0.0))
@@ -1419,21 +1466,26 @@ class Gate4Risk:
                 reason="Position size calculated as 0",
             )
 
-        logger.info("Gate 4 (%s): PASSED (size=$%.2f)", ticker, order_size)
+        logger.info(
+            "Gate 4 (%s): PASSED (size=$%.2f, pipeline_confidence=%.2f)",
+            ticker, order_size, ctx.pipeline_confidence,
+        )
         self.telemetry.gate_pass(
             "risk",
             ticker,
             {
                 "order_size": order_size,
                 "account_equity": self.executor.account_equity,
+                "pipeline_confidence": ctx.pipeline_confidence,
             },
         )
+        ctx.order_size = order_size
         return GateResult(
             gate_name="risk",
             status=GateStatus.PASS,
             ticker=ticker,
-            confidence=ctx.rl_decision.get("confidence", 0.0),
-            data={"order_size": order_size},
+            confidence=ctx.pipeline_confidence if ctx.pipeline_confidence > 0 else ctx.rl_decision.get("confidence", 0.0),
+            data={"order_size": order_size, "pipeline_confidence": ctx.pipeline_confidence},
         )
 
 
@@ -1519,6 +1571,7 @@ class TradingGatePipeline:
         # Gate 0: Psychology (with latency tracking)
         result = _timed_gate_execution(self.gate0.evaluate, ticker)
         results.append(result)
+        ctx.upstream_results = list(results)
         _trace_gate(
             "psychology",
             ticker,
@@ -1531,6 +1584,7 @@ class TradingGatePipeline:
         # Gate 1: Momentum (with latency tracking)
         result = _timed_gate_execution(self.gate1.evaluate, ticker, ctx)
         results.append(result)
+        ctx.upstream_results = list(results)
         _trace_gate(
             "momentum",
             ticker,
@@ -1548,6 +1602,7 @@ class TradingGatePipeline:
         # Gate 1.5: Debate (with latency tracking)
         result = _timed_gate_execution(self.gate15.evaluate, ticker, ctx)
         results.append(result)
+        ctx.upstream_results = list(results)
         _trace_gate(
             "debate",
             ticker,
@@ -1560,6 +1615,7 @@ class TradingGatePipeline:
         # Gate 2: RL Filter (with latency tracking)
         result = _timed_gate_execution(self.gate2.evaluate, ticker, ctx, rl_threshold)
         results.append(result)
+        ctx.upstream_results = list(results)
         _trace_gate(
             "rl_filter",
             ticker,
@@ -1576,6 +1632,7 @@ class TradingGatePipeline:
         # Gate 3: Sentiment (with latency tracking)
         result = _timed_gate_execution(self.gate3.evaluate, ticker, ctx, session_profile)
         results.append(result)
+        ctx.upstream_results = list(results)
         _trace_gate(
             "sentiment",
             ticker,
@@ -1593,6 +1650,7 @@ class TradingGatePipeline:
         # Gate 3.5: Introspection (with latency tracking)
         result = _timed_gate_execution(self.gate35.evaluate, ticker, ctx)
         results.append(result)
+        ctx.upstream_results = list(results)
         _trace_gate(
             "introspection",
             ticker,
@@ -1605,6 +1663,7 @@ class TradingGatePipeline:
         # Gate 4: Risk (with latency tracking)
         result = _timed_gate_execution(self.gate4.evaluate, ticker, ctx, allocation_cap)
         results.append(result)
+        ctx.upstream_results = list(results)
         _trace_gate(
             "risk",
             ticker,
