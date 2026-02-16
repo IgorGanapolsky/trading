@@ -5,12 +5,10 @@ on:
     paths:
       - "TRIGGER_TRADE.md" # Push trigger for immediate trading
   schedule:
-    # Run every weekday at 9:35 AM Eastern
-    # AUTOMATIC DST HANDLING: Runs at both times to cover EST/EDT transitions
-    # EST (Nov-Mar): UTC-5 -> 9:35 AM ET = 14:35 UTC
-    # EDT (Mar-Nov): UTC-4 -> 9:35 AM ET = 13:35 UTC
-    # Run: python3 scripts/get_utc_time.py 9 35 1-5
-    - cron: "35 13,14 * * 1-5" # 9:35 AM Eastern (covers both EST and EDT)
+    # Intraday attempt cadence: every hour at :35 during market window.
+    # This increases opportunity capture while safety gates still control risk.
+    # Includes both EST/EDT windows; pre/post-market invocations auto-noop via market checks.
+    - cron: "35 13-21 * * 1-5"
   workflow_dispatch:
     inputs:
       force_trade:
@@ -602,6 +600,7 @@ jobs:
         id: check_execution
         env:
           FORCE_TRADE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.force_trade || 'false' }}
+          MAX_TRADES_PER_DAY: "3"
         run: |
           echo "🔍 Checking last execution date..."
           python3 scripts/check_duplicate_execution.py
