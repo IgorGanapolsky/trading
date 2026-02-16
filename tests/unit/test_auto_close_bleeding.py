@@ -21,7 +21,9 @@ try:
         get_pdt_safe_close_qty,
     )
 except ImportError:
-    pytest.skip("auto_close_bleeding imports unavailable in this environment", allow_module_level=True)
+    pytest.skip(
+        "auto_close_bleeding imports unavailable in this environment", allow_module_level=True
+    )
 
 
 class TestPositionCloseRecommendation:
