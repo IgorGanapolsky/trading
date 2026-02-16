@@ -18,7 +18,10 @@ from src.orchestration.context_engine import (
     MemoryTimescale,
     get_context_engine,
 )
-from src.utils.llm_gateway import resolve_openai_compatible_config
+from src.utils.llm_gateway import (
+    OPENROUTER_BASE_URL,
+    resolve_openrouter_primary_and_fallback_configs,
+)
 from src.utils.model_selector import get_model_selector
 from src.utils.self_healing import get_anthropic_api_key, with_retry
 from src.utils.token_monitor import record_llm_usage
@@ -66,17 +69,24 @@ class BaseAgent(ABC):
         # Route to correct provider based on model selection
         self._provider = model_selector.get_model_provider(self.model)
 
+        # OpenRouter is an OpenAI-compatible provider. If a gateway (e.g. TARS) is configured
+        # via `LLM_GATEWAY_BASE_URL`, we'll route through it and optionally retry via
+        # OpenRouter direct when the gateway is unavailable.
+        self._openrouter_primary_base_url = None
+        self._openrouter_fallback_cfg = None
+        self._openrouter_fallback_client = None
+
         if self._provider == "openrouter":
             try:
                 from openai import OpenAI
 
-                cfg = resolve_openai_compatible_config(
-                    default_api_key_env="OPENROUTER_API_KEY",
-                    default_base_url="https://openrouter.ai/api/v1",
-                )
+                primary_cfg, fallback_cfg = resolve_openrouter_primary_and_fallback_configs()
+                self._openrouter_primary_base_url = primary_cfg.base_url or OPENROUTER_BASE_URL
+                self._openrouter_fallback_cfg = fallback_cfg
+
                 self._openrouter_client = OpenAI(
-                    api_key=cfg.api_key,
-                    base_url=cfg.base_url,
+                    api_key=primary_cfg.api_key,
+                    base_url=self._openrouter_primary_base_url,
                 )
                 self.client = None  # Not using Anthropic for this agent
                 logger.info(f"{name}: Using OpenRouter provider for model {self.model}")
@@ -186,10 +196,17 @@ class BaseAgent(ABC):
     ) -> dict[str, Any]:
         """Reason using OpenRouter API (DeepSeek, Mistral, Kimi K2)."""
         try:
+            from src.utils.model_selector import to_tars_model_id
+
             messages = [{"role": "user", "content": prompt}]
 
+            using_gateway = bool(self._openrouter_primary_base_url) and (
+                self._openrouter_primary_base_url.rstrip("/") != OPENROUTER_BASE_URL.rstrip("/")
+            )
+            model_for_call = to_tars_model_id(self.model) if using_gateway else self.model
+
             kwargs: dict[str, Any] = {
-                "model": self.model,
+                "model": model_for_call,
                 "max_tokens": 4096,
                 "messages": messages,
             }
@@ -213,7 +230,31 @@ class BaseAgent(ABC):
                 if openai_tools:
                     kwargs["tools"] = openai_tools
 
-            response = self._openrouter_client.chat.completions.create(**kwargs)
+            try:
+                response = self._openrouter_client.chat.completions.create(**kwargs)
+            except Exception as gateway_exc:
+                # If we're using a gateway (TARS) and it's down, retry via OpenRouter direct
+                # if OPENROUTER_API_KEY is configured.
+                if self._openrouter_fallback_cfg:
+                    logger.warning(
+                        "%s: gateway call failed (%s). Retrying via OpenRouter direct.",
+                        self.name,
+                        gateway_exc,
+                    )
+                    if self._openrouter_fallback_client is None:
+                        from openai import OpenAI
+
+                        self._openrouter_fallback_client = OpenAI(
+                            api_key=self._openrouter_fallback_cfg.api_key,
+                            base_url=self._openrouter_fallback_cfg.base_url,
+                        )
+                    fallback_kwargs = dict(kwargs)
+                    fallback_kwargs["model"] = self.model  # canonical OpenRouter ID
+                    response = self._openrouter_fallback_client.chat.completions.create(
+                        **fallback_kwargs
+                    )
+                else:
+                    raise
 
             # Record token usage
             input_tokens = response.usage.prompt_tokens if response.usage else 0

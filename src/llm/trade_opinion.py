@@ -23,7 +23,10 @@ import logging
 from typing import Any
 
 from pydantic import BaseModel, Field
-from src.utils.llm_gateway import resolve_openai_compatible_config
+from src.utils.llm_gateway import (
+    OPENROUTER_BASE_URL,
+    resolve_openrouter_primary_and_fallback_configs,
+)
 from src.utils.model_selector import get_model_selector
 
 logger = logging.getLogger(__name__)
@@ -80,11 +83,8 @@ def get_trade_opinion(
 
     Returns None if the LLM call fails (trade proceeds with existing logic).
     """
-    cfg = resolve_openai_compatible_config(
-        default_api_key_env="OPENROUTER_API_KEY",
-        default_base_url="https://openrouter.ai/api/v1",
-    )
-    if not cfg.api_key:
+    primary_cfg, fallback_cfg = resolve_openrouter_primary_and_fallback_configs()
+    if not primary_cfg.api_key:
         logger.info("Trade opinion: missing OpenAI-compatible API key, skipping LLM advisory")
         return None
 
@@ -102,21 +102,46 @@ def get_trade_opinion(
 
     try:
         from openai import OpenAI
+        from src.utils.model_selector import to_tars_model_id
 
-        client = OpenAI(
-            api_key=cfg.api_key,
-            base_url=cfg.base_url,
+        client = OpenAI(api_key=primary_cfg.api_key, base_url=primary_cfg.base_url)
+        using_gateway = bool(primary_cfg.base_url) and (
+            primary_cfg.base_url.rstrip("/") != OPENROUTER_BASE_URL.rstrip("/")
         )
+        model_for_call = to_tars_model_id(model_id) if using_gateway else model_id
 
-        response = client.chat.completions.create(
-            model=model_id,
-            messages=[
-                {"role": "system", "content": _system_prompt()},
-                {"role": "user", "content": prompt},
-            ],
-            max_tokens=2048,
-            response_format={"type": "json_object"},
-        )
+        try:
+            response = client.chat.completions.create(
+                model=model_for_call,
+                messages=[
+                    {"role": "system", "content": _system_prompt()},
+                    {"role": "user", "content": prompt},
+                ],
+                max_tokens=2048,
+                response_format={"type": "json_object"},
+            )
+        except Exception as gateway_exc:
+            # If we're routing through a gateway (TARS) and it fails, retry via
+            # OpenRouter direct (if OPENROUTER_API_KEY is present).
+            if fallback_cfg:
+                logger.warning(
+                    "Trade opinion: gateway call failed (%s). Retrying via OpenRouter direct.",
+                    gateway_exc,
+                )
+                fallback_client = OpenAI(
+                    api_key=fallback_cfg.api_key, base_url=fallback_cfg.base_url
+                )
+                response = fallback_client.chat.completions.create(
+                    model=model_id,
+                    messages=[
+                        {"role": "system", "content": _system_prompt()},
+                        {"role": "user", "content": prompt},
+                    ],
+                    max_tokens=2048,
+                    response_format={"type": "json_object"},
+                )
+            else:
+                raise
 
         # Log usage for budget tracking
         if response.usage:

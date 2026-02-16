@@ -24,7 +24,11 @@ from enum import Enum
 from typing import Any, TypeVar
 
 from pydantic import BaseModel, Field
-from src.utils.llm_gateway import resolve_openai_compatible_config
+from src.utils.llm_gateway import (
+    OPENROUTER_BASE_URL,
+    resolve_openai_compatible_config,
+    resolve_openrouter_primary_and_fallback_configs,
+)
 from src.utils.model_selector import ModelSelector, get_model_selector
 from src.utils.self_healing import get_anthropic_api_key
 from src.utils.token_monitor import record_llm_usage
@@ -163,6 +167,9 @@ class MirascopeTradingClient:
         # Initialize clients lazily
         self._anthropic_client: Any = None
         self._openai_client: Any = None
+        self._openrouter_primary_base_url: str | None = None
+        self._openrouter_fallback_cfg: Any = None
+        self._openrouter_fallback_client: Any = None
 
         logger.info(f"MirascopeTradingClient initialized with provider: {provider.value}")
 
@@ -186,10 +193,10 @@ class MirascopeTradingClient:
                 from openai import OpenAI
 
                 if self.provider == LLMProvider.OPENROUTER:
-                    cfg = resolve_openai_compatible_config(
-                        default_api_key_env="OPENROUTER_API_KEY",
-                        default_base_url="https://openrouter.ai/api/v1",
-                    )
+                    primary_cfg, fallback_cfg = resolve_openrouter_primary_and_fallback_configs()
+                    self._openrouter_primary_base_url = primary_cfg.base_url or OPENROUTER_BASE_URL
+                    self._openrouter_fallback_cfg = fallback_cfg
+                    cfg = primary_cfg
                 else:
                     cfg = resolve_openai_compatible_config(
                         default_api_key_env="OPENAI_API_KEY",
@@ -203,6 +210,48 @@ class MirascopeTradingClient:
             except ImportError:
                 raise ImportError("openai package not installed. Run: pip install openai")
         return self._openai_client
+
+    def _openai_chat_completions_create(self, **kwargs: Any) -> Any:
+        """
+        Wrapper around OpenAI-compatible `chat.completions.create` with optional
+        gateway (TARS) model-id translation and OpenRouter-direct retry.
+        """
+        if self.provider != LLMProvider.OPENROUTER:
+            return self.openai_client.chat.completions.create(**kwargs)
+
+        from src.utils.model_selector import to_tars_model_id
+
+        # Ensure openai_client is initialized and primary/fallback are populated.
+        _ = self.openai_client
+
+        model = str(kwargs.get("model") or "")
+        using_gateway = bool(self._openrouter_primary_base_url) and (
+            self._openrouter_primary_base_url.rstrip("/") != OPENROUTER_BASE_URL.rstrip("/")
+        )
+        if using_gateway:
+            kwargs = dict(kwargs)
+            kwargs["model"] = to_tars_model_id(model)
+
+        try:
+            return self.openai_client.chat.completions.create(**kwargs)
+        except Exception as gateway_exc:
+            if not self._openrouter_fallback_cfg:
+                raise
+
+            logger.warning(
+                "OpenRouter gateway call failed (%s). Retrying via OpenRouter direct.",
+                gateway_exc,
+            )
+            if self._openrouter_fallback_client is None:
+                from openai import OpenAI
+
+                self._openrouter_fallback_client = OpenAI(
+                    api_key=self._openrouter_fallback_cfg.api_key,
+                    base_url=self._openrouter_fallback_cfg.base_url,
+                )
+            fallback_kwargs = dict(kwargs)
+            fallback_kwargs["model"] = model  # canonical OpenRouter ID
+            return self._openrouter_fallback_client.chat.completions.create(**fallback_kwargs)
 
     def switch_provider(self, provider: LLMProvider) -> None:
         """
@@ -290,7 +339,7 @@ class MirascopeTradingClient:
             else:
                 model = "gpt-4o"  # Fallback
 
-        stream = self.openai_client.chat.completions.create(
+        stream = self._openai_chat_completions_create(
             model=model,
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -370,11 +419,10 @@ class MirascopeTradingClient:
             from openai import AsyncOpenAI
 
             if self.provider == LLMProvider.OPENROUTER:
-                cfg = resolve_openai_compatible_config(
-                    default_api_key_env="OPENROUTER_API_KEY",
-                    default_base_url="https://openrouter.ai/api/v1",
-                )
+                primary_cfg, fallback_cfg = resolve_openrouter_primary_and_fallback_configs()
+                cfg = primary_cfg
             else:
+                fallback_cfg = None
                 cfg = resolve_openai_compatible_config(
                     default_api_key_env="OPENAI_API_KEY",
                     default_base_url=None,
@@ -389,16 +437,44 @@ class MirascopeTradingClient:
                     else "gpt-4o"
                 )
 
-            total_output = 0
-            stream = await client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": prompt},
-                ],
-                max_tokens=2048,
-                stream=True,
+            from src.utils.model_selector import to_tars_model_id
+
+            using_gateway = bool(cfg.base_url) and (
+                str(cfg.base_url).rstrip("/") != OPENROUTER_BASE_URL.rstrip("/")
             )
+            model_for_call = to_tars_model_id(model) if using_gateway else model
+
+            total_output = 0
+            try:
+                stream = await client.chat.completions.create(
+                    model=model_for_call,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": prompt},
+                    ],
+                    max_tokens=2048,
+                    stream=True,
+                )
+            except Exception as gateway_exc:
+                if fallback_cfg:
+                    logger.warning(
+                        "OpenRouter gateway async call failed (%s). Retrying via OpenRouter direct.",
+                        gateway_exc,
+                    )
+                    fallback_client = AsyncOpenAI(
+                        api_key=fallback_cfg.api_key, base_url=fallback_cfg.base_url
+                    )
+                    stream = await fallback_client.chat.completions.create(
+                        model=model,
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": prompt},
+                        ],
+                        max_tokens=2048,
+                        stream=True,
+                    )
+                else:
+                    raise
 
             async for chunk in stream:
                 if chunk.choices and chunk.choices[0].delta.content:
@@ -487,7 +563,7 @@ class MirascopeTradingClient:
                 "anthropic/claude-3-opus" if self.provider == LLMProvider.OPENROUTER else "gpt-4o"
             )
 
-        response = self.openai_client.chat.completions.create(
+        response = self._openai_chat_completions_create(
             model=model,
             messages=[{"role": "user", "content": prompt}],
             tools=tools,
@@ -599,7 +675,7 @@ Only output valid JSON, no additional text."""
                 "anthropic/claude-3-opus" if self.provider == LLMProvider.OPENROUTER else "gpt-4o"
             )
 
-        response = self.openai_client.chat.completions.create(
+        response = self._openai_chat_completions_create(
             model=model,
             messages=[
                 {"role": "system", "content": system_prompt},

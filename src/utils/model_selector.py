@@ -82,25 +82,29 @@ class ModelConfig:
 
 
 # Model ID mappings: OpenRouter IDs → TARS gateway IDs
-# When LLM_GATEWAY_BASE_URL is set (TARS), use TARS-native model IDs
+# Used by the OpenAI-compatible call path when the base_url points at a gateway
+# (e.g., TARS). We keep canonical model IDs in selection and only translate at
+# the transport layer so we can retry via OpenRouter direct if the gateway fails.
 _TARS_MODEL_MAP: dict[str, str] = {
     "deepseek/deepseek-chat": "deepinfra/deepseek-ai/DeepSeek-V3.1",
     "deepseek/deepseek-r1": "deepinfra/deepseek-ai/DeepSeek-R1-0528",
-    "mistralai/mistral-medium-3": "deepinfra/mistralai/Mistral-Small-3.2-24B-Instruct-2506",
+    # Keep Medium as Medium. If your gateway requires a different model ID, update
+    # this mapping (and keep the OpenRouter key as the canonical ID).
+    "mistralai/mistral-medium-3": "mistralai/mistral-medium-3",
     "moonshotai/kimi-k2-0905": "deepinfra/moonshotai/Kimi-K2-Instruct-0905",
-    "claude-opus-4-5-20251101": "claude-opus-4-6",
-    "claude-3-5-haiku-20241022": "claude-3-5-haiku-20241022",
-    "claude-sonnet-4-5-20250929": "claude-sonnet-4-5",
 }
 
+_TARS_MODEL_MAP_REVERSE: dict[str, str] = {v: k for k, v in _TARS_MODEL_MAP.items()}
 
-def _resolve_model_id(openrouter_id: str) -> str:
-    """Resolve model ID based on whether TARS gateway is active."""
-    from src.utils.llm_gateway import get_llm_gateway_base_url
 
-    if get_llm_gateway_base_url():
-        return _TARS_MODEL_MAP.get(openrouter_id, openrouter_id)
-    return openrouter_id
+def to_tars_model_id(model_id: str) -> str:
+    """Translate a canonical model ID to a gateway-specific ID (if configured)."""
+    return _TARS_MODEL_MAP.get(model_id, model_id)
+
+
+def from_tars_model_id(model_id: str) -> str:
+    """Translate a gateway-specific model ID back to the canonical ID."""
+    return _TARS_MODEL_MAP_REVERSE.get(model_id, model_id)
 
 
 # January 2026 Model Registry (evidence-based selection)
@@ -365,13 +369,13 @@ class ModelSelector:
         if complexity == TaskComplexity.CRITICAL:
             selected = MODEL_REGISTRY[ModelTier.OPUS]
             self._log_selection(task_type, complexity, selected, "CRITICAL_OVERRIDE")
-            return _resolve_model_id(selected.model_id)
+            return selected.model_id
 
         # Honor explicit tier override
         if force_tier:
             selected = MODEL_REGISTRY[force_tier]
             self._log_selection(task_type, complexity, selected, "FORCE_TIER")
-            return _resolve_model_id(selected.model_id)
+            return selected.model_id
 
         # Budget-aware selection
         budget_remaining = self.daily_budget - self.daily_spend
@@ -475,7 +479,7 @@ class ModelSelector:
 
         selected = MODEL_REGISTRY[tier]
         self._log_selection(task_type, complexity, selected, reason)
-        return _resolve_model_id(selected.model_id)
+        return selected.model_id
 
     def log_usage(
         self,
@@ -489,12 +493,7 @@ class ModelSelector:
         Call this after each API call to track spending.
         """
         # Find model config
-        config = None
-        for model_config in MODEL_REGISTRY.values():
-            if model_config.model_id == model_id:
-                config = model_config
-                break
-
+        config = self.get_model_config(model_id)
         if config is None:
             logger.warning(f"Unknown model {model_id}, using Sonnet pricing")
             config = MODEL_REGISTRY[ModelTier.SONNET]

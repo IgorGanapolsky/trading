@@ -21,6 +21,8 @@ const SYSTEM_PREFIX = [
 
 const GITHUB_RAW_URL =
   "https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/system_state.json";
+const GITHUB_COMMITS_API_URL =
+  "https://api.github.com/repos/IgorGanapolsky/trading/commits";
 
 /**
  * Fetch live portfolio data from GitHub raw (public repo, no auth).
@@ -34,6 +36,50 @@ async function fetchLiveData() {
     });
     if (!res.ok) return null;
     return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+async function fetchSystemStateAtCommit(sha) {
+  if (!sha) return null;
+  const url = `https://raw.githubusercontent.com/IgorGanapolsky/trading/${sha}/data/system_state.json`;
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": "rag-chat-worker" },
+      cf: { cacheTtl: 60 },
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+async function fetchSystemStateCommitAtOrBefore(untilIso) {
+  if (!untilIso) return null;
+  try {
+    const url = new URL(GITHUB_COMMITS_API_URL);
+    url.searchParams.set("path", "data/system_state.json");
+    url.searchParams.set("per_page", "1");
+    url.searchParams.set("until", untilIso);
+
+    const res = await fetch(url.toString(), {
+      headers: { "User-Agent": "rag-chat-worker" },
+      cf: { cacheTtl: 60 },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const first = Array.isArray(data) ? data[0] : null;
+    if (!first) return null;
+
+    const sha = first.sha;
+    const commitDate =
+      (first.commit &&
+        first.commit.author &&
+        first.commit.author.date) ||
+      null;
+    return { sha, commitDate };
   } catch {
     return null;
   }
@@ -65,6 +111,25 @@ function formatCurrency(value) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+}
+
+function extractEquity(state) {
+  if (!state) return 0;
+  const portfolio = state.portfolio || {};
+  const paper = state.paper_account || {};
+  return asNumber(portfolio.equity ?? paper.equity, 0);
+}
+
+function extractAsOf(state) {
+  if (!state) return null;
+  const meta = state.meta || {};
+  return (
+    meta.last_updated ||
+    meta.last_sync ||
+    state.last_updated ||
+    state.last_sync ||
+    null
+  );
 }
 
 function parseTimestamp(value) {
@@ -145,6 +210,113 @@ function computeNorthStarSnapshot(liveData) {
 function isNorthStarQuestion(message) {
   const q = String(message || "").toLowerCase();
   return /north star|rule\s*#?\s*1|80%|win rate|on track|off track|reach/.test(q);
+}
+
+function getPnlTimeframe(message) {
+  const q = String(message || "").toLowerCase();
+  const asksMoney =
+    /\b(p\/?l|pnl|profit|loss|make|made|earn|earned|earnings)\b/.test(q) ||
+    /how much money/.test(q);
+  if (!asksMoney) return null;
+
+  if (/\btoday\b/.test(q)) return "today";
+  if (/\bthis week\b/.test(q)) return "this_week";
+  if (/\blast week\b/.test(q)) return "last_week";
+  return null;
+}
+
+async function buildDeterministicPnlReply(message, liveData) {
+  const timeframe = getPnlTimeframe(message);
+  if (!timeframe) return null;
+
+  if (!liveData) {
+    return [
+      "P/L unavailable: live portfolio data could not be fetched.",
+      "Action: retry when `data/system_state.json` is reachable and fresh.",
+    ].join("\n");
+  }
+
+  const equityNow = extractEquity(liveData);
+  const asOfNowRaw = extractAsOf(liveData);
+  const asOfNow = parseTimestamp(asOfNowRaw) || new Date();
+
+  if (timeframe === "today") {
+    const paper = liveData.paper_account || {};
+    const dailyChange = asNumber(paper.daily_change, 0);
+    return [
+      `Today P/L (daily change): ${dailyChange >= 0 ? "+" : "-"}$${formatCurrency(Math.abs(dailyChange))}`,
+      `Equity: $${formatCurrency(equityNow)}`,
+      `Data as of: ${asOfNow.toISOString()}`,
+    ].join("\n");
+  }
+
+  let start = null;
+  let label = "";
+  if (timeframe === "this_week") {
+    // Week boundary uses UTC Monday 00:00 for determinism (no timezone ambiguity).
+    const day = asOfNow.getUTCDay(); // 0=Sun..6=Sat
+    const daysSinceMonday = (day + 6) % 7;
+    start = new Date(
+      Date.UTC(
+        asOfNow.getUTCFullYear(),
+        asOfNow.getUTCMonth(),
+        asOfNow.getUTCDate() - daysSinceMonday,
+        0,
+        0,
+        0,
+      ),
+    );
+    label = `This week (since ${start.toISOString().slice(0, 10)} UTC)`;
+  } else if (timeframe === "last_week") {
+    // Interpret "last week" as the last 7 days ending at the latest snapshot.
+    start = new Date(asOfNow.getTime() - 7 * 24 * 60 * 60 * 1000);
+    label = "Last 7 days";
+  }
+
+  if (!start) return null;
+
+  const commitMeta = await fetchSystemStateCommitAtOrBefore(start.toISOString());
+  if (!commitMeta || !commitMeta.sha) {
+    return [
+      `${label} P/L unavailable: could not find a historical snapshot.`,
+      `Current equity: $${formatCurrency(equityNow)} (as of ${asOfNow.toISOString()})`,
+    ].join("\n");
+  }
+
+  const startState = await fetchSystemStateAtCommit(commitMeta.sha);
+  if (!startState) {
+    return [
+      `${label} P/L unavailable: could not load historical snapshot.`,
+      `Current equity: $${formatCurrency(equityNow)} (as of ${asOfNow.toISOString()})`,
+    ].join("\n");
+  }
+
+  const equityStart = extractEquity(startState);
+  const asOfStartRaw = extractAsOf(startState);
+  const asOfStart = parseTimestamp(asOfStartRaw);
+
+  const pnl = equityNow - equityStart;
+  const pct = equityStart > 0 ? (pnl / equityStart) * 100 : 0;
+
+  const lines = [];
+  lines.push(
+    `${label} P/L: ${pnl >= 0 ? "+" : "-"}$${formatCurrency(Math.abs(pnl))} (${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%)`,
+  );
+  lines.push(
+    `Equity: $${formatCurrency(equityNow)} (start: $${formatCurrency(equityStart)})`,
+  );
+  if (asOfStart) lines.push(`Start snapshot as of: ${asOfStart.toISOString()}`);
+  lines.push(`End snapshot as of: ${asOfNow.toISOString()}`);
+  if (commitMeta.commitDate) {
+    lines.push(
+      `Baseline source: data/system_state.json @ ${String(commitMeta.sha).slice(0, 7)} (${commitMeta.commitDate})`,
+    );
+  } else {
+    lines.push(
+      `Baseline source: data/system_state.json @ ${String(commitMeta.sha).slice(0, 7)}`,
+    );
+  }
+  return lines.join("\n");
 }
 
 function buildNorthStarDeterministicReply(liveData) {
@@ -628,13 +800,8 @@ export default {
       // Add current message
       messages.push({ role: "user", content: message });
 
-      // Fetch live portfolio data + lessons (LanceDB-first with fallback)
+      // Fetch live portfolio data.
       const liveData = await fetchLiveData();
-      const { results: lessons, source } = await getLessonsForQuery(
-        message,
-        8,
-        env,
-      );
 
       if (isNorthStarQuestion(message)) {
         const deterministicReply = buildNorthStarDeterministicReply(liveData);
@@ -645,6 +812,27 @@ export default {
           },
         });
       }
+
+      // Deterministic P/L answers (avoid hallucinated performance numbers).
+      const pnlReply = await buildDeterministicPnlReply(message, liveData);
+      if (pnlReply) {
+        return new Response(
+          JSON.stringify({ reply: pnlReply, deterministic: true }),
+          {
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
+        );
+      }
+
+      // Lessons for RAG context (LanceDB-first with fallback).
+      const { results: lessons, source } = await getLessonsForQuery(
+        message,
+        8,
+        env,
+      );
 
       const systemPrompt = buildSystemPrompt(liveData, lessons, source);
 

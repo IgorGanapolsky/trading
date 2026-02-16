@@ -22,6 +22,9 @@ class OpenAICompatibleConfig:
     base_url: str | None
 
 
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+
+
 def _get_env(name: str) -> str:
     return (os.getenv(name) or "").strip()
 
@@ -52,3 +55,35 @@ def resolve_openai_compatible_config(
     base_url = get_llm_gateway_base_url() or default_base_url
     api_key = get_llm_gateway_api_key() or _get_env(default_api_key_env)
     return OpenAICompatibleConfig(api_key=api_key, base_url=base_url)
+
+
+def resolve_openrouter_primary_and_fallback_configs(
+    *,
+    openrouter_base_url: str = OPENROUTER_BASE_URL,
+) -> tuple[OpenAICompatibleConfig, OpenAICompatibleConfig | None]:
+    """
+    Resolve OpenRouter config for OpenAI-compatible clients with an optional fallback.
+
+    Primary:
+    - Uses gateway overrides if present (LLM_GATEWAY_BASE_URL + LLM_GATEWAY_API_KEY/TETRATE_API_KEY),
+      otherwise uses direct OpenRouter config.
+
+    Fallback:
+    - If a gateway base_url is configured AND OPENROUTER_API_KEY is set, returns a direct OpenRouter
+      config so callers can retry when the gateway is unavailable.
+    """
+    primary = resolve_openai_compatible_config(
+        default_api_key_env="OPENROUTER_API_KEY",
+        default_base_url=openrouter_base_url,
+    )
+
+    gateway_base_url = get_llm_gateway_base_url()
+    openrouter_api_key = _get_env("OPENROUTER_API_KEY")
+    using_gateway = bool(gateway_base_url) and (gateway_base_url != openrouter_base_url)
+
+    fallback = (
+        OpenAICompatibleConfig(api_key=openrouter_api_key, base_url=openrouter_base_url)
+        if using_gateway and openrouter_api_key
+        else None
+    )
+    return primary, fallback

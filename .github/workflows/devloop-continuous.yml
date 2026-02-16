@@ -1,0 +1,44 @@
+name: Devloop Continuous
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 * * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  devloop:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run one continuous devloop cycle
+        env:
+          MAX_CYCLES: "1"
+          INTERVAL_SECONDS: "1"
+          FULL_EVERY: "1"
+          RUN_TARS: "0"
+        run: |
+          ./scripts/continuous_devloop.sh once
+
+      - name: Commit artifact updates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add artifacts/devloop/tasks.md artifacts/devloop/profit_readiness_scorecard.md artifacts/devloop/kpi_page.md artifacts/devloop/status.txt || true
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: continuous devloop artifact refresh"
+            git push
+          fi
+
