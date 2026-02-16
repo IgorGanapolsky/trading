@@ -1,3 +1,10 @@
+---
+title: "Google Doc Sync Setup"
+description: "Setup guide for syncing the hackathon system explainer to Google Docs from the devloop."
+summary: "Configure service account credentials, document permissions, env vars, and validation steps for automated sync."
+hero_image: "/assets/img/agent-loop-diagram.png"
+---
+
 # Google Doc Sync Setup
 
 This enables automatic updates of the system explainer into your Google Doc on each loop cycle.
