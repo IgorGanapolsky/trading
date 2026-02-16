@@ -29,6 +29,7 @@ def main():
         "yes",
         "force",
     }
+    max_trades_per_day = int(os.getenv("MAX_TRADES_PER_DAY", "2") or "2")
 
     if os.path.exists(state_path):
         try:
@@ -50,10 +51,19 @@ def main():
                     # BUGFIX Jan 14, 2026: Also check total_trades_today > 0
                     # The sync workflow sets last_trade_date even when no trades executed
                     # This caused false-positive duplicate detection blocking ALL trades
-                    total_trades_today = data.get("trades", {}).get("total_trades_today", 0)
-                    if last_dt.date() == today and total_trades_today > 0:
+                    total_trades_today = int(data.get("trades", {}).get("total_trades_today", 0) or 0)
+                    if last_dt.date() == today and total_trades_today >= max_trades_per_day:
                         skip = True
-                        reason = f"Trading already executed today ({total_trades_today} trades at {last_dt.isoformat()})"
+                        reason = (
+                            "Trading already reached today's limit "
+                            f"({total_trades_today}/{max_trades_per_day} trades, last at {last_dt.isoformat()})"
+                        )
+                    elif last_dt.date() == today and total_trades_today > 0:
+                        remaining = max(0, max_trades_per_day - total_trades_today)
+                        reason = (
+                            f"Trading already executed today ({total_trades_today}/{max_trades_per_day}). "
+                            f"Continuing because remaining trade slots={remaining}."
+                        )
                     elif last_dt.date() == today and total_trades_today == 0:
                         reason = "Date sync'd today but no trades executed yet - proceeding"
                     else:
@@ -83,6 +93,7 @@ def main():
         try:
             with open(output_path, "a", encoding="utf-8") as fh:
                 fh.write(f"skip={'true' if skip else 'false'}\n")
+                fh.write(f"max_trades_per_day={max_trades_per_day}\n")
                 if reason:
                     # Escape newlines and special characters for GitHub Actions
                     safe_reason = reason.replace("\n", " ").replace("\r", "")
