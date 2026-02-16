@@ -56,6 +56,13 @@ SENSATIONAL_PATTERNS = [
 
 IMAGE_KEYS = {"image", "image_url", "image_path", "cover_image", "hero_image"}
 DESC_KEYS = {"description", "summary", "excerpt"}
+ANSWER_BLOCK_PATTERN = re.compile(r"^##\s+Answer Block\b", re.IGNORECASE | re.MULTILINE)
+QUESTIONS_FRONTMATTER_PATTERN = re.compile(r"^questions:\s*$", re.IGNORECASE | re.MULTILINE)
+FAQ_FRONTMATTER_PATTERN = re.compile(r"^faq:\s*true\s*$", re.IGNORECASE | re.MULTILINE)
+EVIDENCE_LINK_PATTERNS = [
+    re.compile(r"https://github\.com/IgorGanapolsky/trading/(?:blob|tree|commit)/"),
+    re.compile(r"https://github\.com/IgorGanapolsky/trading/?"),
+]
 
 
 def _read_text(path: Path) -> str:
@@ -136,6 +143,17 @@ def lint_file(path: Path) -> list[tuple[str, str]]:
 
     if _word_count(body) < 200:
         issues.append(("warn", "content very short (<200 words)"))
+
+    has_answer_block = bool(ANSWER_BLOCK_PATTERN.search(body))
+    has_structured_questions = bool(QUESTIONS_FRONTMATTER_PATTERN.search(text)) or bool(
+        FAQ_FRONTMATTER_PATTERN.search(text)
+    )
+    if not has_answer_block and not has_structured_questions:
+        issues.append(("error", "missing Answer Block or structured Q&A (faq/questions)"))
+
+    has_evidence_link = any(pattern.search(body) for pattern in EVIDENCE_LINK_PATTERNS)
+    if not has_evidence_link:
+        issues.append(("error", "missing evidence link to repository or commit"))
 
     return issues
 

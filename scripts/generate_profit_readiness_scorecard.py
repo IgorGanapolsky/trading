@@ -134,6 +134,131 @@ def estimate_gateway_cost(prompt_tokens: int, completion_tokens: int) -> float |
     return round(cost, 8) if cost > 0 else None
 
 
+def _as_float(value) -> float | None:
+    try:
+        return float(value)
+    except Exception:
+        return None
+
+
+def expectancy_metrics_from_trades_json(repo_root: Path) -> dict[str, float | int | str | None]:
+    """Read expectancy metrics from data/trades.json when available."""
+    payload = safe_read_json(repo_root / "data/trades.json")
+    trades = payload.get("trades", []) if isinstance(payload, dict) else []
+    if not isinstance(trades, list) or not trades:
+        return {
+            "sample_size": 0,
+            "wins": 0,
+            "losses": 0,
+            "avg_winner": None,
+            "avg_loser": None,
+            "profit_factor": None,
+            "source": "data/trades.json (missing_or_empty)",
+        }
+
+    win_pnls: list[float] = []
+    loss_pnls: list[float] = []
+    for row in trades:
+        if not isinstance(row, dict):
+            continue
+        outcome = str(row.get("outcome", "")).strip().lower()
+        pnl = _as_float(row.get("realized_pnl"))
+
+        if pnl is None:
+            continue
+        if pnl > 0 or outcome == "win":
+            win_pnls.append(pnl if pnl > 0 else abs(pnl))
+        elif pnl < 0 or outcome == "loss":
+            loss_pnls.append(abs(pnl))
+
+    wins = len(win_pnls)
+    losses = len(loss_pnls)
+    sample = wins + losses
+    if sample == 0:
+        return {
+            "sample_size": 0,
+            "wins": 0,
+            "losses": 0,
+            "avg_winner": None,
+            "avg_loser": None,
+            "profit_factor": None,
+            "source": "data/trades.json (no_closed_pnl)",
+        }
+
+    gross_win = sum(win_pnls)
+    gross_loss = sum(loss_pnls)
+    avg_winner = (gross_win / wins) if wins > 0 else None
+    avg_loser = (gross_loss / losses) if losses > 0 else None
+    if gross_loss > 0:
+        profit_factor = gross_win / gross_loss
+    elif gross_win > 0:
+        profit_factor = float("inf")
+    else:
+        profit_factor = None
+
+    return {
+        "sample_size": sample,
+        "wins": wins,
+        "losses": losses,
+        "avg_winner": avg_winner,
+        "avg_loser": avg_loser,
+        "profit_factor": profit_factor,
+        "source": "data/trades.json",
+    }
+
+
+def expectancy_metrics_fallback_from_system_state(
+    system_state: dict,
+) -> dict[str, float | int | str | None]:
+    """Fallback expectancy metrics from system_state strategy milestones."""
+    milestones = (
+        system_state.get("strategy_milestones", {}) if isinstance(system_state, dict) else {}
+    )
+    families = milestones.get("strategy_families", {}) if isinstance(milestones, dict) else {}
+    options_income = families.get("options_income", {}) if isinstance(families, dict) else {}
+    metrics = options_income.get("metrics", {}) if isinstance(options_income, dict) else {}
+
+    wins = int(metrics.get("wins", 0) or 0)
+    losses = int(metrics.get("losses", 0) or 0)
+    sample = int(metrics.get("samples", wins + losses) or (wins + losses))
+    total_pnl = _as_float(metrics.get("total_pnl"))
+
+    if sample <= 0:
+        return {
+            "sample_size": 0,
+            "wins": 0,
+            "losses": 0,
+            "avg_winner": None,
+            "avg_loser": None,
+            "profit_factor": None,
+            "source": "system_state.strategy_milestones (missing)",
+        }
+
+    # Fallback can only estimate averages partially when only aggregate pnl is available.
+    avg_winner = (
+        (total_pnl / wins) if (total_pnl is not None and wins > 0 and losses == 0) else None
+    )
+    avg_loser = (
+        (abs(total_pnl) / losses) if (total_pnl is not None and losses > 0 and wins == 0) else None
+    )
+    if wins > 0 and losses == 0:
+        profit_factor = float("inf")
+    elif losses > 0 and wins == 0:
+        profit_factor = 0.0
+    else:
+        profit_factor = None
+
+    return {
+        "sample_size": sample,
+        "wins": wins,
+        "losses": losses,
+        "avg_winner": avg_winner,
+        "avg_loser": avg_loser,
+        "profit_factor": profit_factor,
+        "source": "system_state.strategy_milestones",
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Generate profit readiness scorecard.")
     parser.add_argument("--repo-root", default=".", help="Repository root")
@@ -259,6 +384,51 @@ def main() -> int:
             note="set TARS_INPUT_COST_PER_1M and TARS_OUTPUT_COST_PER_1M for estimate",
         ),
     ]
+
+    expectancy = expectancy_metrics_from_trades_json(repo_root)
+    if int(expectancy.get("sample_size", 0) or 0) == 0:
+        expectancy = expectancy_metrics_fallback_from_system_state(system_state)
+
+    pf = expectancy.get("profit_factor")
+    avg_winner = expectancy.get("avg_winner")
+    avg_loser = expectancy.get("avg_loser")
+    exp_sample = int(expectancy.get("sample_size", 0) or 0)
+    exp_wins = int(expectancy.get("wins", 0) or 0)
+    exp_losses = int(expectancy.get("losses", 0) or 0)
+    exp_source = str(expectancy.get("source", "unknown"))
+
+    if pf is None:
+        pf_value = "N/A"
+        pf_status = "UNKNOWN"
+    elif pf == float("inf"):
+        pf_value = "Inf"
+        pf_status = "PASS"
+    else:
+        pf_value = f"{float(pf):.2f}"
+        pf_status = status_by_threshold(float(pf), good_min=1.5)
+
+    metrics.extend(
+        [
+            Metric(
+                name="Profit Factor",
+                value=pf_value,
+                status=pf_status,
+                note=f"wins={exp_wins} losses={exp_losses} sample={exp_sample} source={exp_source}",
+            ),
+            Metric(
+                name="Average Winner",
+                value=f"${float(avg_winner):.2f}" if avg_winner is not None else "N/A",
+                status="PASS" if avg_winner is not None else "UNKNOWN",
+                note=f"source={exp_source}",
+            ),
+            Metric(
+                name="Average Loser",
+                value=f"${float(avg_loser):.2f}" if avg_loser is not None else "N/A",
+                status="PASS" if avg_loser is not None else "UNKNOWN",
+                note=f"source={exp_source}",
+            ),
+        ]
+    )
     setups_observed = cadence_kpi.get("qualified_setups_observed")
     setups_min = cadence_kpi.get("min_qualified_setups_per_week")
     trades_observed = cadence_kpi.get("closed_trades_observed")

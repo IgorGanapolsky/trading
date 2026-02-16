@@ -146,6 +146,20 @@ def main() -> int:
       border-radius: 16px;
       padding: 22px;
     }}
+    .nav {{
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }}
+    .nav a {{
+      color: #d1e8ff;
+      text-decoration: none;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 0.76rem;
+    }}
     h1 {{ margin: 0 0 6px; font-size: clamp(1.3rem, 2.2vw, 1.8rem); }}
     p {{ margin: 0; color: var(--muted); line-height: 1.45; font-size: 0.92rem; }}
     .grid {{
@@ -221,6 +235,12 @@ def main() -> int:
       <h1>Judge Demo Evidence Hub</h1>
       <p>This page translates complex AI product behavior into clear proof.
       Audience mode: simple enough for non-technical viewers, concrete enough for technical judges.</p>
+      <div class="nav">
+        <a href="/trading/lessons/ops-status.html">Ops Status</a>
+        <a href="/trading/lessons/">Lessons Index</a>
+        <a href="https://github.com/IgorGanapolsky/trading/wiki">Project Wiki</a>
+        <a href="https://github.com/IgorGanapolsky/trading/wiki/Development-Engine-and-Evidence">Wiki: Dev Evidence</a>
+      </div>
     </section>
 
     <section class="grid">
@@ -273,6 +293,7 @@ def main() -> int:
       <article class="card span4 links">
         <div class="k">Evidence Files</div>
         <ul>
+          <li><a href="/trading/lessons/ops-status.html">ops_status.html</a></li>
           <li><a href="../../artifacts/tars/submission_summary.md">submission_summary.md</a></li>
           <li><a href="../../artifacts/tars/judge_demo_checklist.md">judge_demo_checklist.md</a></li>
           <li><a href="../../artifacts/tars/trade_opinion_smoke.json">trade_opinion_smoke.json</a></li>

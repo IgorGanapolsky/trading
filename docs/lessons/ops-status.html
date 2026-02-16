@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trading Ops Status</title>
+  <style>
+    :root {
+      --bg: #081625;
+      --panel: #112a43;
+      --panel2: #1a3a5c;
+      --line: #315b86;
+      --text: #edf6ff;
+      --muted: #b9d0e9;
+      --accent: #ff9e55;
+      --pass: #5cd38f;
+      --warn: #f4c542;
+      --unk: #8fa3b8;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: radial-gradient(circle at 15% 0%, #244a75 0, var(--bg) 55%); color: var(--text); font-family: "Avenir Next", "Segoe UI", sans-serif; }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 18px 14px 28px; }
+    .hero { border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(140deg, var(--panel), var(--panel2)); padding: 16px; }
+    .title { margin: 0; font-size: 1.6rem; }
+    .sub { margin-top: 6px; color: var(--muted); font-size: 0.9rem; }
+    .nav { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .nav a { color: #d2eaff; text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; font-size: 0.8rem; }
+    .grid { display: grid; grid-template-columns: repeat(12,1fr); gap: 10px; margin-top: 10px; }
+    .card { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 10px; }
+    .span3 { grid-column: span 3; } .span4 { grid-column: span 4; } .span6 { grid-column: span 6; } .span8 { grid-column: span 8; } .span12 { grid-column: span 12; }
+    .k { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; }
+    .v { font-size: 1.05rem; font-weight: 700; margin-top: 3px; }
+    .table { width: 100%; border-collapse: collapse; }
+    .table td { font-size: 0.84rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 7px 6px; }
+    .chip { border-radius: 999px; padding: 3px 8px; font-size: 0.7rem; font-weight: 700; }
+    .pass { background: var(--pass); color: #06331d; } .warn { background: var(--warn); color: #3a2b00; } .unknown { background: var(--unk); color: #102330; }
+    .runtime { margin: 0; white-space: pre-wrap; font-size: 0.78rem; color: #d8e9fb; line-height: 1.35; }
+    .flow { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; margin-top: 8px; }
+    .node { border: 1px solid var(--line); border-radius: 9px; background: rgba(255,255,255,0.03); min-height: 50px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.76rem; padding: 6px; }
+    .arr { color: var(--accent); text-align: center; font-weight: 800; }
+    @media (max-width: 900px) { .span3,.span4,.span6,.span8 { grid-column: span 12; } .flow { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1 class="title">Trading Ops + Evidence Status</h1>
+      <p class="sub">Public progress center: current stats, proof pipeline, and links judges can verify quickly.</p>
+      <div class="nav">
+        <a href="/trading/lessons/judge-demo.html">Judge Demo</a>
+        <a href="/trading/lessons/">Lessons Index</a>
+        <a href="https://github.com/IgorGanapolsky/trading/wiki">Project Wiki</a>
+        <a href="https://github.com/IgorGanapolsky/trading/wiki/Development-Engine-and-Evidence">Wiki: Dev Evidence</a>
+      </div>
+    </section>
+    <section class="grid">
+      <article class="card span3"><div class="k">Loop Cycle / Profile</div><div class="v">n/a / n/a</div></article>
+      <article class="card span3"><div class="k">Gateway Latency</div><div class="v">997 ms</div></article>
+      <article class="card span3"><div class="k">Gateway Cost</div><div class="v">$0.00004500</div></article>
+      <article class="card span3"><div class="k">Paper P/L</div><div class="v">$1,441.56 (1.44%)</div></article>
+
+      <article class="card span8">
+        <div class="k">Readiness Metrics</div>
+        <table class="table"><tr><td>Win Rate</td><td>100.00%</td><td><span class="chip pass">PASS</span></td></tr>
+<tr><td>Max Drawdown (sync history)</td><td>0.03%</td><td><span class="chip pass">PASS</span></td></tr>
+<tr><td>Execution Quality (valid trade records)</td><td>97.89%</td><td><span class="chip pass">PASS</span></td></tr>
+<tr><td>Gateway Latency</td><td>1056 ms</td><td><span class="chip pass">PASS</span></td></tr>
+<tr><td>Gateway Cost (smoke call)</td><td>$0.000045</td><td><span class="chip pass">PASS</span></td></tr>
+<tr><td>Profit Factor</td><td>Inf</td><td><span class="chip pass">PASS</span></td></tr>
+<tr><td>Average Winner</td><td>$41.00</td><td><span class="chip pass">PASS</span></td></tr>
+<tr><td>Average Loser</td><td>N/A</td><td><span class="chip unknown">UNKNOWN</span></td></tr>
+<tr><td>Weekly Qualified Setups</td><td>0/3</td><td><span class="chip warn">WARN</span></td></tr>
+<tr><td>Weekly Closed Trades</td><td>1/1</td><td><span class="chip pass">PASS</span></td></tr>
+<tr><td>AI Credit Stress Gate</td><td>unknown</td><td><span class="chip unknown">UNKNOWN</span></td></tr></table>
+      </article>
+      <article class="card span4">
+        <div class="k">Current Equity</div>
+        <div class="v">$101,441.56</div>
+        <div class="k" style="margin-top:8px">Evidence Files</div>
+        <table class="table">
+          <tr><td><a href="../../artifacts/tars/smoke_metrics.txt">smoke_metrics.txt</a></td></tr>
+          <tr><td><a href="../../artifacts/tars/smoke_response.json">smoke_response.json</a></td></tr>
+          <tr><td><a href="../../artifacts/tars/resilience_report.txt">resilience_report.txt</a></td></tr>
+          <tr><td><a href="../../artifacts/devloop/profit_readiness_scorecard.md">profit_readiness_scorecard.md</a></td></tr>
+          <tr><td><a href="../../docs/_reports/hackathon-system-explainer.md">system explainer</a></td></tr>
+        </table>
+      </article>
+
+      <article class="card span6">
+        <div class="k">Tetrate Evidence Pipeline</div>
+        <div class="flow">
+          <div class="node">1. Routed Call</div><div class="arr">-></div><div class="node">2. Smoke Metrics</div><div class="arr">-></div><div class="node">3. Resilience Check</div>
+        </div>
+        <div class="flow">
+          <div class="node">4. RAG Ingest</div><div class="arr">-></div><div class="node">5. Scorecard</div><div class="arr">-></div><div class="node">6. Judge Proof</div>
+        </div>
+      </article>
+
+      <article class="card span6">
+        <div class="k">Active Runtime Report</div>
+        <pre class='runtime'># Live Task Runtime Report
+
+- Generated (UTC): `2026-02-16T17:32:09Z`
+- Open Layer-1 tasks: `1`
+
+## Active Tasks (with elapsed time)
+- `ACTIVE` Add a promotion gate artifact that blocks strategy promotion when win rate/run-rate thresholds are below target. (elapsed: 3h 12m)
+
+## Current Task In Progress
+- Task: Add a promotion gate artifact that blocks strategy promotion when win rate/run-rate thresholds are below target.
+- Started (UTC): `2026-02-16T14:19:15Z`
+- Elapsed: `3h 12m`
+
+## Runtime Phases
+- Last analyze: cycle=5 profile=profit duration=35s
+- Last TARS: cycle=4 duration=1m 29s
+- Last RAG: cycle=36 duration=25s
+
+## Newly Added Tasks This Run
+- None
+
+## Sources
+- `manual_layer1_tasks.md`
+- `artifacts/devloop/continuous.log`
+
+</pre>
+      </article>
+    </section>
+  </div>
+</body>
+</html>

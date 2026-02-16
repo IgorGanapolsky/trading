@@ -115,6 +115,27 @@ jobs:
           # Show preview
           head -50 wiki/Progress-Dashboard.md
 
+      - name: Generate static dashboard snapshot report
+        run: |
+          echo "🧾 Generating crawlable dashboard snapshot..."
+          python3 scripts/generate_dashboard_snapshot.py \
+            --state data/system_state.json \
+            --dashboard wiki/Progress-Dashboard.md \
+            --out-dir docs/_reports
+          echo "✅ Dashboard snapshot generated"
+
+      - name: Check AI discoverability KPIs
+        run: |
+          echo "🔎 Evaluating AI discoverability KPIs..."
+          python3 scripts/check_ai_discoverability.py \
+            --repo-root . \
+            --report artifacts/devloop/ai_discoverability_report.md \
+            --json-out artifacts/devloop/ai_discoverability_report.json \
+            --state data/system_state.json \
+            --sync-state \
+            --fail-on none
+          echo "✅ AI discoverability report generated"
+
       - name: Update GitHub Pages index
         run: |
           echo "📊 Updating docs/index.md..."
@@ -163,7 +184,7 @@ jobs:
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          git add data/system_state.json data/north_star_weekly_history.json data/trades.json data/market_signals/ai_credit_stress_signal.json artifacts/devloop/box_workspace_manifest.json wiki/ docs/index.md 2>/dev/null || true
+          git add data/system_state.json data/north_star_weekly_history.json data/trades.json data/market_signals/ai_credit_stress_signal.json artifacts/devloop/box_workspace_manifest.json artifacts/devloop/ai_discoverability_report.md artifacts/devloop/ai_discoverability_report.json wiki/ docs/index.md docs/_reports/*-dashboard-snapshot.md 2>/dev/null || true
           if ! git diff --staged --quiet; then
             git commit -m "chore: Sync dashboard data [auto]"
             if [ -n "${{ secrets.GH_PAT }}" ]; then
