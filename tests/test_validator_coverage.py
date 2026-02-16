@@ -15,9 +15,7 @@ try:
         validate_ticker,
     )
 except ImportError:
-    pytest.skip(
-        "mandatory_trade_gate imports unavailable in this environment", allow_module_level=True
-    )
+    pytest.skip("mandatory_trade_gate imports unavailable in this environment", allow_module_level=True)
 
 # -------------------------------------------------------------------
 # Direct validate_ticker tests (sanity)

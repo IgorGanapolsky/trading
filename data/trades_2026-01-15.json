@@ -1,0 +1,47 @@
+[
+  {
+    "date": "2026-01-15T18:28:44.081876+00:00",
+    "symbol": "SPY",
+    "side": "BUY",
+    "qty": "100",
+    "price": "694.818",
+    "status": "FILLED",
+    "order_id": "3dcce366-4e18-406a-bcbe-7c88fb4bc5bc"
+  },
+  {
+    "date": "2026-01-15T18:08:10.417703+00:00",
+    "symbol": "SPY",
+    "side": "BUY",
+    "qty": "100",
+    "price": "694.658",
+    "status": "FILLED",
+    "order_id": "f5f0bb41-292b-4859-b12a-e055170f8f4f"
+  },
+  {
+    "date": "2026-01-15T18:03:51.094603+00:00",
+    "symbol": "SPY",
+    "side": "BUY",
+    "qty": "100",
+    "price": "694.428",
+    "status": "FILLED",
+    "order_id": "8ed8f7be-7447-41d0-91af-df65b5248fd6"
+  },
+  {
+    "date": "2026-01-15T17:17:13.219785+00:00",
+    "symbol": "SPY260220P00660000",
+    "side": "BUY",
+    "qty": "1",
+    "price": "3.07",
+    "status": "FILLED",
+    "order_id": "9c7bb488-2254-4271-a7ef-0a31cb18e798"
+  },
+  {
+    "date": "2026-01-15T15:51:56.155858+00:00",
+    "symbol": "SPY",
+    "side": "BUY",
+    "qty": "100",
+    "price": "693.418",
+    "status": "FILLED",
+    "order_id": "ab8f60fc-77f5-478c-b46a-56c17eec707a"
+  }
+]

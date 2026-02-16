@@ -16,17 +16,11 @@ import pytest
 np = pytest.importorskip("numpy")
 pytest.importorskip("yfinance", reason="yfinance required for VIX signal tests")
 
-try:
-    from src.signals.vix_mean_reversion_signal import (
-        VIXMeanReversionSignal,
-        VIXSignal,
-        get_vix_entry_signal,
-    )
-except ImportError:
-    pytest.skip(
-        "vix_mean_reversion_signal unavailable during full suite collection",
-        allow_module_level=True,
-    )
+from src.signals.vix_mean_reversion_signal import (
+    VIXMeanReversionSignal,
+    VIXSignal,
+    get_vix_entry_signal,
+)
 
 
 class TestVIXMeanReversionSignal:

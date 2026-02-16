@@ -1,0 +1,35 @@
+[
+  {
+    "id": "trade_UNK_2026-01-13T15:19:39.785646",
+    "trade": {
+      "date": "2026-01-13",
+      "timestamp": "2026-01-13T15:19:39.785646",
+      "paper_equity": 4975.81,
+      "paper_pnl": -24.19,
+      "paper_pnl_pct": -0.48,
+      "positions": [
+        {
+          "symbol": "SOFI",
+          "qty": 3.778911564,
+          "price": 26.44,
+          "value": 99.9,
+          "pnl": -0.09
+        },
+        {
+          "symbol": "SOFI260206P00024000",
+          "qty": -1,
+          "price": 0.8,
+          "value": -80.0,
+          "pnl": -2.0,
+          "type": "short_put",
+          "strike": 24.0,
+          "expiration": "2026-02-06"
+        }
+      ],
+      "orders_today": 5,
+      "strategy": "phil_town_csp",
+      "notes": "First trades after 74 days of zero execution"
+    },
+    "synced_at": "2026-01-13T18:26:30.887699"
+  }
+]
