@@ -164,15 +164,15 @@
         <div class="k">How Much Money Made (Paper) + Why</div>
         <table class="table">
           <tr><td>Starting balance</td><td>$100,000.00</td></tr>
-          <tr><td>Current equity</td><td>$101,441.56</td></tr>
-          <tr><td>Net P/L</td><td>$1,441.56 (1.44%)</td></tr>
-          <tr><td>Why (current drivers)</td><td>Win rate 100.0% over 1 samples, strategy gate status: LOW</td></tr>
+          <tr><td>Current equity</td><td id="current-equity">$101,441.56</td></tr>
+          <tr><td>Net P/L</td><td id="net-pl">$1,441.56 (1.44%)</td></tr>
+          <tr><td>Why (current drivers)</td><td id="why-drivers">Win rate 100.0% over 1 closed trade(s), 1 open</td></tr>
         </table>
       </article>
 
       <article class="card span8">
         <div class="k">Readiness Metrics</div>
-        <table class="table"><tr><td>Win Rate</td><td>100.00%</td><td><span class="chip pass">PASS</span></td></tr>
+        <table class="table"><tr><td>Win Rate</td><td id="win-rate-val">100.00%</td><td><span id="win-rate-chip" class="chip pass">PASS</span></td></tr>
 <tr><td>Max Drawdown (sync history)</td><td>0.03%</td><td><span class="chip pass">PASS</span></td></tr>
 <tr><td>Execution Quality (valid trade records)</td><td>97.89%</td><td><span class="chip pass">PASS</span></td></tr>
 <tr><td>Gateway Latency</td><td>897 ms</td><td><span class="chip pass">PASS</span></td></tr>
@@ -198,5 +198,43 @@
       </article>
     </section>
   </div>
+
+<script>
+(async function() {
+  const BASE = 'https://raw.githubusercontent.com/IgorGanapolsky/trading/main';
+  async function fetchJSON(path) {
+    try {
+      const r = await fetch(BASE + path + '?t=' + Date.now());
+      return r.ok ? await r.json() : null;
+    } catch(e) { return null; }
+  }
+  const [state, trades] = await Promise.all([
+    fetchJSON('/data/system_state.json'),
+    fetchJSON('/data/trades.json'),
+  ]);
+  const el = (id) => document.getElementById(id);
+  if (state) {
+    const equity = state.portfolio?.equity || state.equity || 101441.56;
+    const starting = 100000;
+    const pl = equity - starting;
+    const pct = ((pl / starting) * 100).toFixed(2);
+    if (el('current-equity')) el('current-equity').textContent = '$' + equity.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+    if (el('net-pl')) el('net-pl').textContent = '$' + pl.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' (' + pct + '%)';
+  }
+  if (trades && trades.stats) {
+    const s = trades.stats;
+    const wr = s.win_rate_pct != null ? s.win_rate_pct : 0;
+    const closed = s.closed_trades || 0;
+    const open = s.open_trades || 0;
+    if (el('why-drivers')) el('why-drivers').textContent = 'Win rate ' + wr.toFixed(1) + '% over ' + closed + ' closed trade(s), ' + open + ' open';
+    if (el('win-rate-val')) el('win-rate-val').textContent = wr.toFixed(1) + '%';
+    if (el('win-rate-chip')) {
+      if (closed < 5) { el('win-rate-chip').className = 'chip unknown'; el('win-rate-chip').textContent = closed + '/30 TRADES'; }
+      else if (wr >= 80) { el('win-rate-chip').className = 'chip pass'; el('win-rate-chip').textContent = 'PASS'; }
+      else { el('win-rate-chip').className = 'chip warn'; el('win-rate-chip').textContent = 'WARN'; }
+    }
+  }
+})();
+</script>
 </body>
 </html>
