@@ -47,6 +47,19 @@ class TradeMemory:
         """Add a pattern to memory."""
         self.patterns.append(pattern)
 
+    def add_trade(self, trade: dict) -> None:
+        """Add a trade record dict to memory (convenience wrapper)."""
+        pattern = TradePattern(
+            symbol=trade.get("symbol", ""),
+            entry_price=0.0,
+            exit_price=0.0,
+            pnl=trade.get("pnl", 0.0),
+            duration_days=0,
+            pattern_features=trade,
+            timestamp=datetime.now(),
+        )
+        self.add_pattern(pattern)
+
     def get_similar_patterns(self, features: dict, limit: int = 5) -> list[TradePattern]:
         """Find similar historical patterns."""
         # Stub - return empty list

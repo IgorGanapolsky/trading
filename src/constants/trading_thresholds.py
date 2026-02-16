@@ -93,7 +93,7 @@ class PositionSizing:
     MIN_CASH_RESERVE_PCT = 0.20  # Keep 20% in cash
 
     # Daily loss limit
-    MAX_DAILY_LOSS_PCT = 0.02  # 2% max daily drawdown
+    MAX_DAILY_LOSS_PCT = 0.05  # 5% max daily drawdown (aligned with core/trading_constants.py)
 
     # Delta thresholds for CSPs (Phil Town approach = conservative)
     TARGET_CSP_DELTA = 0.20  # 20% chance of assignment
@@ -125,14 +125,14 @@ class RiskThresholds:
     # CRITICAL FIX Jan 26, 2026 (LL-316):
     # VIX_OPTIMAL_MIN=15 blocked ALL trades for 5 days during paper validation!
     # Lowered to 12 to allow paper trading validation. Live trading may want 15.
-    VIX_OPTIMAL_MIN = 12  # Allow paper trading even with thin premiums
+    VIX_OPTIMAL_MIN = 10  # ICs work at VIX 10+ with $10-wide wings on $100K
     VIX_OPTIMAL_MAX = 25  # Use caution when VIX > 25 (high volatility)
 
-    # Entry recommendation by VIX zone (LL-321)
+    # Entry recommendation by VIX zone — CEO directive: enable trades, don't block
     VIX_ENTRY_ZONES = {
-        "low": {"min": 0, "max": 15, "action": "AVOID", "position_pct": 0.0},
-        "low_medium": {"min": 15, "max": 20, "action": "CAUTION", "position_pct": 0.5},
-        "optimal": {"min": 20, "max": 25, "action": "ENTER", "position_pct": 1.0},
+        "low": {"min": 0, "max": 10, "action": "CAUTION", "position_pct": 0.5},
+        "low_medium": {"min": 10, "max": 15, "action": "ENTER", "position_pct": 0.75},
+        "optimal": {"min": 15, "max": 25, "action": "ENTER", "position_pct": 1.0},
         "high": {"min": 25, "max": 30, "action": "CAUTION", "position_pct": 0.75},
         "extreme": {"min": 30, "max": 100, "action": "AVOID", "position_pct": 0.0},
     }

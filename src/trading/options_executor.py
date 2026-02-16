@@ -158,9 +158,9 @@ class OptionsExecutor:
 
     # Strategy-specific parameters
     COVERED_CALL_TARGET_DELTA = 0.30  # Sell 30-delta calls
-    IRON_CONDOR_TARGET_DELTA = 0.20  # Sell 20-delta wings
+    IRON_CONDOR_TARGET_DELTA = 0.15  # 15-delta target per CLAUDE.md (85% win rate)
     CREDIT_SPREAD_TARGET_DELTA = 0.30  # Sell 30-delta spreads (default)
-    SPREAD_WIDTH = 3.0  # Default $3 width per CLAUDE.md (Jan 16 fix)
+    SPREAD_WIDTH = 10.0  # $10-wide wings per CLAUDE.md ($150-250 per IC)
 
     @staticmethod
     def get_optimal_delta_for_iv(iv_rank: float) -> float:
