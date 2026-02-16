@@ -160,7 +160,9 @@ def lint_file(path: Path) -> list[tuple[str, str]]:
     if not canonical_url:
         issues.append(("error", "missing canonical_url in front matter"))
     elif not CANONICAL_URL_PATTERN.search(canonical_url):
-        issues.append(("warn", "canonical_url should use https://igorganapolsky.github.io/trading/..."))
+        issues.append(
+            ("warn", "canonical_url should use https://igorganapolsky.github.io/trading/...")
+        )
 
     if not (meta.get("author") or "").strip():
         issues.append(("error", "missing author in front matter"))

@@ -25,7 +25,10 @@ Coverage rose from 62% to 94% across recent posts.
     assert "Problem:" in post
     assert "Method:" in post
     assert "Result:" in post
-    assert "Evidence: https://igorganapolsky.github.io/trading/2026/02/16/discoverability-upgrade/" in post
+    assert (
+        "Evidence: https://igorganapolsky.github.io/trading/2026/02/16/discoverability-upgrade/"
+        in post
+    )
     assert "#aidiscovery" in post.lower()
 
 

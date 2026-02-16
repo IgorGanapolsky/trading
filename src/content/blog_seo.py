@@ -92,9 +92,10 @@ def render_frontmatter(
     normalized_meta = dict(meta)
     if "author" not in normalized_meta or not str(normalized_meta.get("author") or "").strip():
         normalized_meta["author"] = DEFAULT_AUTHOR
-    if "author_title" not in normalized_meta or not str(
-        normalized_meta.get("author_title") or ""
-    ).strip():
+    if (
+        "author_title" not in normalized_meta
+        or not str(normalized_meta.get("author_title") or "").strip()
+    ):
         normalized_meta["author_title"] = DEFAULT_AUTHOR_TITLE
     if "last_modified_at" not in normalized_meta:
         date_value = str(normalized_meta.get("date") or "").strip()
