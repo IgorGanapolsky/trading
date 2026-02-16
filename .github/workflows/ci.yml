@@ -54,6 +54,14 @@ jobs:
       - name: Lint blog posts (Discover compliance)
         run: python3 scripts/lint_blog_posts.py --changed --strict
 
+      - name: AI discoverability gate (critical)
+        run: |
+          python3 scripts/check_ai_discoverability.py \
+            --repo-root . \
+            --report artifacts/devloop/ai_discoverability_report.md \
+            --json-out artifacts/devloop/ai_discoverability_report.json \
+            --fail-on critical
+
       - name: Anthropic compliance guardrail
         run: python3 scripts/check_anthropic_compliance.py
 
