@@ -49,6 +49,9 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+# Max concurrent iron condors (default 3 for ~1.5% capital utilization on $100K)
+MAX_CONCURRENT_ICS = int(os.getenv("MAX_CONCURRENT_ICS", "3"))
+
 # Observability: LanceDB + Local logs (Jan 9, 2026)
 
 
@@ -80,7 +83,7 @@ class RejectionReason(Enum):
     PRE_TRADE_CHECKLIST_FAILED = "Pre-trade checklist failed - CLAUDE.md rules violated"
     DTE_OUT_OF_RANGE = "DTE must be 30-45 days per CLAUDE.md"
     CUMULATIVE_RISK_TOO_HIGH = "Cumulative position risk exceeds 5% limit"
-    MAX_IRON_CONDORS_EXCEEDED = "Max 1 iron condor at a time per CLAUDE.md"
+    MAX_IRON_CONDORS_EXCEEDED = f"Max {MAX_CONCURRENT_ICS} iron condors at a time"
 
 
 @dataclass
@@ -525,47 +528,42 @@ class TradeGateway:
 
     def _check_iron_condor_limit(self, positions: list) -> tuple[bool, str]:
         """
-        Enforce '1 iron condor at a time' rule per CLAUDE.md.
+        Enforce concurrent iron condor limit.
 
-        LL-280 (Jan 22, 2026): System was placing multiple iron condors,
-        violating the position limit rule.
-
-        Returns:
-            (has_existing_condor, reason_message)
+        Updated Feb 2026: Increased from 1 to MAX_CONCURRENT_ICS (default 3)
+        to improve capital utilization. With $100K account:
+        - 1 IC = 0.5% deployed (was)
+        - 3 ICs = 1.5% deployed, different expiry cycles (now)
         """
-        # Count iron condor structures
-        # An iron condor has: 2 short options + 2 long options at different strikes
-        # Group by expiration to detect condors
-
         option_positions = [p for p in positions if len(p.get("symbol", "")) > 10]
 
         if len(option_positions) < 4:
-            return False, ""  # Not enough positions for a condor
+            return False, ""
 
-        # Group by expiration date
         by_expiry = {}
         for pos in option_positions:
             symbol = pos.get("symbol", "")
-            # Extract expiry: SPY260220P00658000 -> 260220
             if len(symbol) > 15:
-                expiry = symbol[3:9]  # YYMMDD
+                expiry = symbol[3:9]
                 if expiry not in by_expiry:
                     by_expiry[expiry] = []
                 by_expiry[expiry].append(pos)
 
-        # Check if any expiry has 4+ option legs (potential iron condor)
+        # Count distinct iron condor structures
+        ic_count = 0
         for expiry, legs in by_expiry.items():
             if len(legs) >= 4:
                 short_count = sum(1 for p in legs if float(p.get("qty", 0)) < 0)
                 long_count = sum(1 for p in legs if float(p.get("qty", 0)) > 0)
-
                 if short_count >= 2 and long_count >= 2:
-                    return (
-                        True,
-                        f"Already have iron condor structure (exp {expiry}): "
-                        f"{short_count} short, {long_count} long legs. "
-                        f"Per CLAUDE.md: Max 1 iron condor at a time.",
-                    )
+                    ic_count += 1
+
+        if ic_count >= MAX_CONCURRENT_ICS:
+            return (
+                True,
+                f"Already have {ic_count} iron condor(s) (max {MAX_CONCURRENT_ICS}). "
+                f"Per position management rules: spread across expiry cycles.",
+            )
 
         return False, ""
 
@@ -686,12 +684,14 @@ class TradeGateway:
                     },
                 )
 
-            # Check 3: Too many option positions (max 4 = 1 iron condor)
+            # Check 3: Too many option positions (max per concurrent IC limit)
+            max_option_positions = MAX_CONCURRENT_ICS * 4
             option_positions = [p for p in positions if len(p.get("symbol", "")) > 10]
-            if len(option_positions) > 4:
+            if len(option_positions) > max_option_positions:
                 logger.error(
                     f"🚨 CIRCUIT BREAKER: {len(option_positions)} option positions "
-                    f"exceeds max 4 (1 iron condor). NO NEW POSITIONS."
+                    f"exceeds max {max_option_positions} ({MAX_CONCURRENT_ICS} iron condors). "
+                    f"NO NEW POSITIONS."
                 )
                 return GatewayDecision(
                     approved=False,
@@ -701,8 +701,8 @@ class TradeGateway:
                     metadata={
                         "circuit_breaker": "TOO_MANY_POSITIONS",
                         "option_positions": len(option_positions),
-                        "max_allowed": 4,
-                        "action": "Close excess positions before opening new ones",
+                        "max_allowed": max_option_positions,
+                        "action": f"Close excess positions (limit: {MAX_CONCURRENT_ICS} ICs)",
                     },
                 )
 
