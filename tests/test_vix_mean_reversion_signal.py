@@ -12,8 +12,9 @@ from unittest.mock import patch
 
 import pytest
 
-# Skip entire module if numpy not available (sandbox limitation)
+# Skip entire module if numpy/yfinance not available (sandbox limitation)
 np = pytest.importorskip("numpy")
+pytest.importorskip("yfinance", reason="yfinance required for VIX signal tests")
 
 from src.signals.vix_mean_reversion_signal import (
     VIXMeanReversionSignal,
