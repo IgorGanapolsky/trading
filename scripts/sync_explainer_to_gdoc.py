@@ -109,9 +109,7 @@ def compose_doc_text(blocks: list[Block]) -> tuple[str, list[tuple[int, int, str
 
     for block in blocks:
         line = block.text
-        if block.kind == "bullet":
-            text = f"{line}\n"
-        elif block.kind == "numbered":
+        if block.kind in {"bullet", "numbered"}:
             text = f"{line}\n"
         elif block.kind == "code":
             text = f"{line}\n\n"
@@ -122,7 +120,6 @@ def compose_doc_text(blocks: list[Block]) -> tuple[str, list[tuple[int, int, str
 
         out.append(text)
         start = cursor
-        end = cursor + len(text) - 1
         cursor += len(text)
 
         if block.kind in {"h1", "h2", "h3", "code", "body", "bullet", "numbered"} and line:
