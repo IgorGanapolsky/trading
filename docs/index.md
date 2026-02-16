@@ -1,15 +1,13 @@
 ---
 layout: home
-title: Ralph Mode - Building an AI Trading System in Public
+title: Building an AI Trading System in Public
 ---
-
-# Building an AI Trading System in Public
 
 This is the unfiltered story of building an autonomous AI trading system—every bug, every breakthrough, every lesson learned.
 
 **The goal:** $6,000/month passive income through disciplined iron condor trading on SPY.
 
-**The method:** Claude Opus 4.5 as CTO, running 24/7 autonomous operations using the [Ralph Wiggum iterative coding technique](https://github.com/Th0rgal/opencode-ralph-wiggum).
+**The method:** Claude Opus 4.5 as CTO, running autonomous workflows for trading, risk, and system maintenance. Ralph Mode is one subsystem focused on iterative code repair and self-healing CI.
 
 ---
 
@@ -88,11 +86,11 @@ Upgraded to $100K paper account for more realistic position sizing. Target: prov
 ## Follow the Journey
 
 - **[GitHub Repository](https://github.com/IgorGanapolsky/trading)** - Full source code, issues, and PRs
-- **[GitHub Actions](https://github.com/IgorGanapolsky/trading/actions)** - Watch Ralph work in real-time
+- **[GitHub Actions](https://github.com/IgorGanapolsky/trading/actions)** - Watch autonomous workflows run in real-time
 - **[Judge Demo Evidence](/trading/lessons/judge-demo.html)** - Clean, visual summary of proof artifacts and system status
 
 Every trade gets recorded. Every bug gets documented. Every lesson goes into our [RAG knowledge base](/trading/rag-query/) (300+ lessons searchable).
 
 ---
 
-_Built by Igor Ganapolsky (CEO) & Ralph (AI CTO) - Powered by Claude Opus 4.5_
+_Built by Igor Ganapolsky (CEO) with Claude-powered autonomous agents, including Ralph Mode._

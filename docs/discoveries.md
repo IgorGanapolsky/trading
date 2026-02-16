@@ -1,20 +1,20 @@
 ---
 layout: page
-title: "Ralph Discoveries"
+title: "Autonomous Discoveries"
 permalink: /discoveries/
 ---
 
-# Ralph Discoveries
+# Autonomous Discoveries
 
 **Autonomous AI-driven bug fixes and improvements**
 
-Our AI CTO (Ralph) runs 24/7, automatically detecting and fixing issues in our codebase. Every significant discovery is documented here.
+Ralph Mode (our autonomous maintenance subsystem) runs 24/7 to detect and fix issues in the codebase. Significant discoveries are documented here.
 
 ---
 
-## What is Ralph?
+## What is Ralph Mode?
 
-Ralph is our implementation of the [Ralph Wiggum methodology](https://github.com/Th0rgal/opencode-ralph-wiggum) - an iterative AI coding approach where:
+Ralph Mode is our implementation of the [Ralph Wiggum methodology](https://github.com/Th0rgal/opencode-ralph-wiggum) - an iterative AI coding approach where:
 
 1. Claude API analyzes failing tests/lint
 2. Generates fixes automatically
@@ -45,7 +45,7 @@ Ralph is our implementation of the [Ralph Wiggum methodology](https://github.com
 </ul>
 
 {% if site.discoveries.size == 0 %}
-_No discoveries yet. Ralph is monitoring the system 24/7!_
+_No discoveries yet. Ralph Mode is monitoring the system 24/7._
 {% endif %}
 
 ---
@@ -88,7 +88,7 @@ _No discoveries yet. Ralph is monitoring the system 24/7!_
 ## Try It Yourself
 
 ```bash
-# Run Ralph on your project
+# Run Ralph Mode on your project
 pip install anthropic
 python scripts/ralph_loop.py --task fix_tests --max-iterations 5 --max-cost 2.00
 ```
