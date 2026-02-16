@@ -68,6 +68,8 @@ jobs:
             echo "No changes to wiki - already up to date"
           else
             git commit -m "Auto-update: $(date -u +%Y-%m-%d) - Equity: $(grep 'Account Equity' ../wiki_home.md | grep -oE '\$[0-9,]+' | head -1)"
+            # Pull with rebase to handle concurrent wiki updates (fixes stale ref error)
+            git pull --rebase origin master || true
             git push
             echo "✅ Wiki updated successfully"
           fi
