@@ -26,7 +26,7 @@ jobs:
           token: ${{ secrets.GH_PAT }}
 
       - name: Restore GPU backtest cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             data/gpu_backtests/cache
