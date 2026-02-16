@@ -18,4 +18,5 @@ __all__ = [
     "daggr_workflow",
     "teammate_swarm",
     "agentic_guardrails",
+    "agentic_cycle",
 ]
