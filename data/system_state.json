@@ -1,15 +1,10 @@
 {
-  "last_updated": "2026-02-16T14:23:05.956444+00:00",
+  "last_updated": "2026-02-16T14:40:06.237152+00:00",
   "sync_health": {
-    "last_successful_sync": "2026-02-16T14:23:05.956444+00:00",
+    "last_successful_sync": "2026-02-16T14:40:06.237152+00:00",
     "sync_source": "sync_alpaca_state.py",
-    "sync_count_today": 3,
+    "sync_count_today": 4,
     "history": [
-      {
-        "timestamp": "2026-02-13T16:48:15.690323+00:00",
-        "equity": 101449.56,
-        "success": true
-      },
       {
         "timestamp": "2026-02-13T17:14:17.098490+00:00",
         "equity": 101453.56,
@@ -124,9 +119,14 @@
         "timestamp": "2026-02-16T14:23:05.956444+00:00",
         "equity": 101441.56,
         "success": true
+      },
+      {
+        "timestamp": "2026-02-16T14:40:06.237152+00:00",
+        "equity": 101441.56,
+        "success": true
       }
     ],
-    "last_attempt": "2026-02-16T14:23:05.956444+00:00"
+    "last_attempt": "2026-02-16T14:40:06.237152+00:00"
   },
   "portfolio": {
     "equity": 101441.56,
@@ -964,13 +964,13 @@
     "buying_power": 201227.12
   },
   "meta": {
-    "last_updated": "2026-02-16T14:23:05.956444+00:00",
+    "last_updated": "2026-02-16T14:40:06.237152+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5,
-    "last_sync_attempt": "2026-02-16T14:23:05.956444+00:00",
+    "last_sync_attempt": "2026-02-16T14:40:06.237152+00:00",
     "alpaca_keys_present": true,
-    "last_sync": "2026-02-16T14:23:05.674191",
-    "sync_mode": "paper+live"
+    "last_sync": "2026-02-16T14:40:06.236741",
+    "sync_mode": "paper"
   },
   "paper_trading": {
     "start_date": "2026-01-30",
@@ -1036,7 +1036,7 @@
   },
   "strategy_milestones": {
     "enabled": true,
-    "generated_at": "2026-02-16T14:23:05.962533Z",
+    "generated_at": "2026-02-16T14:40:06.241131Z",
     "primary_family": "options_income",
     "rolling_window": 50,
     "paused_families": [
@@ -1130,7 +1130,7 @@
     "estimated_cagr_from_expectancy": 0.0073,
     "target_capital": 600000.0,
     "target_date": "2029-11-14",
-    "updated_at": "2026-02-16T14:23:05.962533Z"
+    "updated_at": "2026-02-16T14:40:06.241131Z"
   },
   "north_star_weekly_gate": {
     "enabled": true,
@@ -1144,7 +1144,7 @@
     "reason": "Insufficient recent weekly evidence; keep conservative sizing.",
     "positive_weeks_streak": 0,
     "evidence_source": "trade_history_ic_only",
-    "updated_at": "2026-02-16T14:23:06.166371+00:00"
+    "updated_at": "2026-02-16T14:40:06.244517+00:00"
   },
   "north_star_contributions": {
     "enabled": true,
@@ -1169,7 +1169,7 @@
     "estimated_live_contribution_this_month": 0.5,
     "contribution_estimate_confidence": "medium",
     "inference_note": "Live account has no open positions; live equity change is treated as estimated contribution.",
-    "updated_at": "2026-02-16T14:23:06.166424+00:00"
+    "updated_at": "2026-02-16T14:40:06.244559+00:00"
   },
   "ic_position_management": {
     "last_run": "2026-02-16T14:23:07.020498",
