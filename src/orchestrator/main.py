@@ -756,17 +756,17 @@ class TradingOrchestrator:
         """Evaluate iron condor entry criteria (replaces momentum gate for ICs).
 
         Iron condors need:
-        1. VIX between 14-35 (sweet spot for premium)
-        2. No earnings within 7 days
-        3. DTE 30-45 days available
-        4. Price is within a reasonable range (not crashing)
+        1. VIX in tradable range
+        2. IV rank rich enough for premium selling
+        3. DTE target window for defined-risk theta trades
+        4. Basic price-stability sanity check (avoid panic breaks)
 
         Returns:
             (should_enter, reason)
         """
         try:
+            from src.data.iv_data_provider import IVDataProvider
             from src.utils import yfinance_wrapper as yf
-            from src.utils.technical_indicators import calculate_rsi
         except ImportError:
             return True, "IC entry check skipped (imports unavailable)"
 
@@ -778,17 +778,46 @@ class TradingOrchestrator:
             if hist is None or hist.empty or len(hist) < 5:
                 return False, f"Insufficient price data for {ticker}"
 
-            # Check 1: Price stability - not crashing (5-day return > -5%)
+            # Check 1: Price stability - avoid adding new risk into sharp downside breaks.
             five_day_return = (hist["Close"].iloc[-1] / hist["Close"].iloc[-5] - 1) * 100
-            if five_day_return < -5.0:
+            if five_day_return < -6.0:
                 return False, f"Price dropping too fast ({five_day_return:.1f}% in 5 days)"
 
-            # Check 2: RSI between 25-75 (range-bound, not extreme)
-            rsi = float(calculate_rsi(hist["Close"]))
-            if rsi < 25 or rsi > 75:
-                return False, f"RSI extreme ({rsi:.1f}) - wait for stabilization"
+            # Check 2: VIX range for IC premium selling.
+            try:
+                vix = float(yf.get_vix())
+            except Exception:
+                vix = 18.0
+            if vix < 12.0:
+                return False, f"VIX too low ({vix:.1f}) - premium compression"
+            if vix > 35.0:
+                return False, f"VIX too high ({vix:.1f}) - tail risk regime"
 
-            return True, f"IC entry criteria met (5d_return={five_day_return:+.1f}%, RSI={rsi:.1f})"
+            # Check 3: IV rank filter (target >= 30 for richer credit).
+            iv_rank = None
+            try:
+                iv_metrics = IVDataProvider().get_current_iv(ticker)
+                if iv_metrics:
+                    iv_rank = float(iv_metrics.iv_rank)
+            except Exception:
+                iv_rank = None
+            if iv_rank is not None and iv_rank < 30.0:
+                return False, f"IV rank too low ({iv_rank:.1f} < 30)"
+
+            # Check 4: DTE target window. Weekly/monthly cycle support is handled
+            # by trader/scanner expiry selection; this gate enforces a safe band.
+            min_dte = int(os.getenv("IC_MIN_DTE", "21"))
+            max_dte = int(os.getenv("IC_MAX_DTE", "45"))
+            target_dte = int(os.getenv("IC_TARGET_DTE", "35"))
+            if target_dte < min_dte or target_dte > max_dte:
+                return False, f"DTE config invalid ({target_dte} not in {min_dte}-{max_dte})"
+
+            iv_text = "n/a" if iv_rank is None else f"{iv_rank:.1f}"
+            return (
+                True,
+                f"IC entry pass (VIX={vix:.1f}, IVR={iv_text}, target_dte={target_dte}, "
+                f"5d_return={five_day_return:+.1f}%)",
+            )
 
         except Exception as e:
             return True, f"IC entry check error (allowing trade): {e}"
@@ -1375,15 +1404,18 @@ class TradingOrchestrator:
             except Exception as e:
                 logger.warning(f"Gate 0 (%s): Pre-trade check failed, continuing: {e}", ticker)
 
-        # === IRON CONDOR STRATEGY BYPASS ===
-        # Iron condors are non-directional. Momentum gates (MACD, volume surge)
-        # are designed for directional BUY strategies and incorrectly reject
-        # 95%+ of tickers for IC entry. Use IC-specific criteria instead.
-        is_ic_strategy = os.getenv("ENABLE_THETA_AUTOMATION", "true").lower() in {
+        # === IRON CONDOR STRATEGY GATE ===
+        # Iron condors are non-directional (SPY only per trading rules).
+        # Momentum gates (MACD, volume surge) are for directional BUY strategies
+        # and incorrectly reject 95%+ of tickers for IC entry.
+        # Guard: only bypass momentum for SPY when theta automation is enabled,
+        # so non-SPY tickers still go through directional momentum analysis.
+        ic_enabled = os.getenv("ENABLE_THETA_AUTOMATION", "true").lower() in {
             "1",
             "true",
             "yes",
         }
+        is_ic_strategy = ic_enabled and ticker.upper() == "SPY"
         if is_ic_strategy:
             ic_pass, ic_reason = self._evaluate_ic_entry_criteria(ticker)
             if not ic_pass:

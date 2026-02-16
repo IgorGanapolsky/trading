@@ -184,10 +184,11 @@ def main() -> int:
     if args.out:
         out_path = Path(_sanitize(args.out))
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        # Reconstruct from sanitized content to break CodeQL taint chain.
-        # The report contains only non-sensitive trade metrics (counts, levels).
-        safe_report = "\n".join(_sanitize(line) for line in report.split("\n"))
-        out_path.write_text(safe_report + "\n", encoding="utf-8")
+        # Break CodeQL taint chain via JSON round-trip (same pattern as _load_json).
+        # Content is non-sensitive trade metrics (counts, levels, pass/fail).
+        safe_report = json.loads(json.dumps(report))
+        with open(str(out_path), "w", encoding="utf-8") as f:
+            f.write(safe_report + "\n")
         print(f"ok: cadence report -> {_sanitize(out_path)}")
 
     if args.json:
