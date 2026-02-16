@@ -159,6 +159,20 @@ def _required_cagr_without_contrib(current_equity: float, years_remaining: float
     return (NORTH_STAR_TARGET_CAPITAL / current_equity) ** (1.0 / years_remaining) - 1.0
 
 
+def _sync_paper_win_rate_from_trades_payload(
+    state: dict[str, Any], trades_payload: dict[str, Any]
+) -> None:
+    """Mirror ledger-derived win rate into system_state.paper_account."""
+    stats = trades_payload.get("stats", {}) if isinstance(trades_payload, dict) else {}
+    closed_trades = _as_int(stats.get("closed_trades"), 0)
+    win_rate_raw = stats.get("win_rate_pct")
+    win_rate_val = _as_float(win_rate_raw, 0.0) if win_rate_raw is not None else 0.0
+
+    state.setdefault("paper_account", {})
+    state["paper_account"]["win_rate"] = round(win_rate_val, 2)
+    state["paper_account"]["win_rate_sample_size"] = closed_trades
+
+
 def _compute_ic_win_rate_from_history(state: dict[str, Any]) -> dict[str, Any]:
     """Compute win rate from complete SPY iron condor round-trips in trade_history.
 
@@ -313,9 +327,8 @@ def compute_weekly_gate(
     weekly_history = _load_json_list(weekly_history_path)
     week_start = today - timedelta(days=today.weekday())
     week_start_iso = week_start.isoformat()
-    weekly_entry = {
+    weekly_entry_fields = {
         "week_start": week_start_iso,
-        "updated_at": datetime.now(timezone.utc).isoformat(),
         "sample_size": samples,
         "win_rate_pct": win_rate_pct,
         "expectancy_per_trade": expectancy,
@@ -325,11 +338,30 @@ def compute_weekly_gate(
     replaced = False
     for idx, row in enumerate(weekly_history):
         if str(row.get("week_start")) == week_start_iso:
+            unchanged = (
+                _as_int(row.get("sample_size"), -1) == samples
+                and _as_float(row.get("win_rate_pct"), -1.0) == win_rate_pct
+                and _as_float(row.get("expectancy_per_trade"), -999999.0) == expectancy
+                and str(row.get("mode", "")) == mode
+            )
+            if unchanged:
+                # Keep historical timestamp untouched when nothing changed.
+                weekly_entry = row
+            else:
+                weekly_entry = {
+                    **weekly_entry_fields,
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                }
             weekly_history[idx] = weekly_entry
             replaced = True
             break
     if not replaced:
-        weekly_history.append(weekly_entry)
+        weekly_history.append(
+            {
+                **weekly_entry_fields,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }
+        )
 
     weekly_history.sort(key=lambda row: str(row.get("week_start", "")))
     weekly_history = weekly_history[-DEFAULT_HISTORY_WEEKS:]
@@ -352,7 +384,12 @@ def compute_weekly_gate(
         )
 
     weekly_history_path.parent.mkdir(parents=True, exist_ok=True)
-    weekly_history_path.write_text(json.dumps(weekly_history, indent=2), encoding="utf-8")
+    new_weekly_payload = json.dumps(weekly_history, indent=2) + "\n"
+    current_weekly_payload = (
+        weekly_history_path.read_text(encoding="utf-8") if weekly_history_path.exists() else ""
+    )
+    if current_weekly_payload != new_weekly_payload:
+        weekly_history_path.write_text(new_weekly_payload, encoding="utf-8")
 
     gate = {
         "enabled": True,
@@ -475,6 +512,9 @@ def apply_operating_plan_to_state(
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Apply weekly gate + contribution plan to mutable system_state payload."""
     today = today or date.today()
+    trades_payload = _load_json_dict(trades_path)
+    _sync_paper_win_rate_from_trades_payload(state, trades_payload)
+
     weekly_gate, weekly_history = compute_weekly_gate(
         state,
         trades_path=trades_path,

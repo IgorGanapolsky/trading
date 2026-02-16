@@ -128,7 +128,7 @@ jobs:
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          git add data/system_state.json data/north_star_weekly_history.json wiki/ docs/index.md 2>/dev/null || true
+          git add data/system_state.json data/north_star_weekly_history.json data/trades.json wiki/ docs/index.md 2>/dev/null || true
           if ! git diff --staged --quiet; then
             git commit -m "chore: Sync dashboard data [auto]"
             if [ -n "${{ secrets.GH_PAT }}" ]; then

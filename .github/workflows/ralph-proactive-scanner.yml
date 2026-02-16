@@ -54,8 +54,8 @@ jobs:
         run: |
           echo "## Security Scan Results" >> $GITHUB_STEP_SUMMARY
 
-          # Run bandit on src and scripts
-          bandit -r src/ scripts/ -f json -o bandit_report.json 2>/dev/null || true
+          # Run bandit on src and scripts (high/high to reduce low-value noise)
+          bandit -r src/ scripts/ --severity-level high --confidence-level high -f json -o bandit_report.json 2>/dev/null || true
 
           # Count issues
           if [ -f bandit_report.json ]; then

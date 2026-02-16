@@ -52,6 +52,21 @@ def _now_utc_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _parse_filled_at(raw_value: str | None) -> datetime | None:
+    """Best-effort timestamp parser for Alpaca filled_at strings."""
+    if not raw_value:
+        return None
+    raw = str(raw_value).strip()
+    if not raw:
+        return None
+    if raw.endswith("Z"):
+        raw = raw[:-1] + "+00:00"
+    try:
+        return datetime.fromisoformat(raw)
+    except ValueError:
+        return None
+
+
 def sync_from_alpaca() -> dict | None:
     """
     Sync account state from Alpaca.
@@ -105,21 +120,43 @@ def sync_from_alpaca() -> dict | None:
             from alpaca.trading.enums import QueryOrderStatus
             from alpaca.trading.requests import GetOrdersRequest
 
-            orders = executor.client.get_orders(
-                filter=GetOrdersRequest(status=QueryOrderStatus.CLOSED, limit=100)
-            )
-            trade_history = [
-                {
-                    "id": str(o.id),
-                    "symbol": o.symbol,
-                    "side": str(o.side),
-                    "qty": str(o.filled_qty),
-                    "price": str(o.filled_avg_price) if o.filled_avg_price else "0",
-                    "filled_at": str(o.filled_at) if o.filled_at else None,
-                }
-                for o in orders
-                if o.filled_at
-            ]
+            try:
+                orders = executor.client.get_orders(
+                    filter=GetOrdersRequest(status=QueryOrderStatus.CLOSED, limit=200, nested=True)
+                )
+            except TypeError:
+                # Backward compatibility with older alpaca-py request schema.
+                orders = executor.client.get_orders(
+                    filter=GetOrdersRequest(status=QueryOrderStatus.CLOSED, limit=200)
+                )
+
+            trade_history = []
+            for o in orders:
+                if not o.filled_at:
+                    continue
+                raw_legs = getattr(o, "legs", None) or []
+                leg_symbols = []
+                for leg in raw_legs:
+                    if isinstance(leg, dict):
+                        leg_symbol = leg.get("symbol")
+                    else:
+                        leg_symbol = getattr(leg, "symbol", None)
+                    if leg_symbol:
+                        leg_symbols.append(str(leg_symbol))
+
+                trade_history.append(
+                    {
+                        "id": str(getattr(o, "id", "")),
+                        "symbol": getattr(o, "symbol", None),
+                        "side": str(getattr(o, "side", "")),
+                        "qty": str(getattr(o, "filled_qty", 0)),
+                        "price": str(getattr(o, "filled_avg_price", 0) or "0"),
+                        "filled_at": str(getattr(o, "filled_at", "")),
+                        "status": str(getattr(o, "status", "")),
+                        "order_class": str(getattr(o, "order_class", "")),
+                        "legs": leg_symbols,
+                    }
+                )
             logger.info(f"📜 Fetched {len(trade_history)} closed trades from PAPER history")
         except Exception as e:
             logger.warning(f"⚠️ Could not fetch PAPER trade history: {e}")
@@ -317,20 +354,37 @@ def update_system_state(alpaca_data: dict | None) -> None:
 
             # Keep a lightweight trade summary for existing dashboards.
             todays_fills = 0
+            last_trade_dt: datetime | None = None
+            last_trade_symbol: str | None = None
             for trade in state.get("trade_history", []):
                 filled_at = str(trade.get("filled_at") or "")
+                filled_dt = _parse_filled_at(filled_at)
                 if filled_at.startswith(today_str):
                     todays_fills += 1
+                if filled_dt and (last_trade_dt is None or filled_dt > last_trade_dt):
+                    last_trade_dt = filled_dt
+                    symbol = trade.get("symbol")
+                    if symbol not in (None, "", "None"):
+                        last_trade_symbol = str(symbol)
+
+            if last_trade_symbol is None and state.get("trade_history"):
+                # Fallback to newest non-null symbol if most recent fill had no symbol.
+                symbol_candidates = []
+                for trade in state.get("trade_history", []):
+                    symbol = trade.get("symbol")
+                    if symbol in (None, "", "None"):
+                        continue
+                    filled_dt = _parse_filled_at(str(trade.get("filled_at") or ""))
+                    if filled_dt:
+                        symbol_candidates.append((filled_dt, str(symbol)))
+                if symbol_candidates:
+                    last_trade_symbol = max(symbol_candidates, key=lambda pair: pair[0])[1]
 
             state["trades"] = {
-                "last_trade_date": today_str,
+                "last_trade_date": last_trade_dt.date().isoformat() if last_trade_dt else None,
                 "today_trades": todays_fills,
                 "total_trades_today": todays_fills,
-                "last_trade_symbol": (
-                    state.get("trade_history", [{}])[0].get("symbol")
-                    if state.get("trade_history")
-                    else "none"
-                ),
+                "last_trade_symbol": last_trade_symbol,
             }
 
         # ========== UPDATE LIVE (BROKERAGE) ACCOUNT ==========
@@ -428,6 +482,26 @@ def update_system_state(alpaca_data: dict | None) -> None:
         )
     except Exception as e:
         logger.warning(f"Could not update North Star operating plan in system_state: {e}")
+
+    # Win-rate fields in system_state MUST be derived from the paired-trade ledger (trades.json),
+    # not from raw Alpaca fills (which are not paired into outcomes).
+    try:
+        trades_payload = {}
+        trades_path = PROJECT_ROOT / "data" / "trades.json"
+        if trades_path.exists():
+            with open(trades_path) as handle:
+                trades_payload = json.load(handle) or {}
+
+        stats = trades_payload.get("stats", {}) if isinstance(trades_payload, dict) else {}
+        closed_trades = int(stats.get("closed_trades", 0) or 0)
+        win_rate_pct = stats.get("win_rate_pct")
+        win_rate_val = float(win_rate_pct) if win_rate_pct is not None else 0.0
+
+        state.setdefault("paper_account", {})
+        state["paper_account"]["win_rate"] = round(win_rate_val, 2)
+        state["paper_account"]["win_rate_sample_size"] = closed_trades
+    except Exception as e:
+        logger.warning(f"Could not refresh win rate metrics from trades.json: {e}")
 
     # Write atomically
     SYSTEM_STATE_FILE.parent.mkdir(parents=True, exist_ok=True)

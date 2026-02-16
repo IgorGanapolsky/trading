@@ -60,6 +60,7 @@ jobs:
         run: |
           python3 scripts/sync_alpaca_state.py
           python3 scripts/sync_closed_positions.py || echo "⚠️ Closed positions sync failed - win rate may be stale"
+          python3 scripts/update_north_star_operating_plan.py || echo "⚠️ North Star operating plan update failed"
 
       - name: Manage Iron Condor Exits (Intraday)
         continue-on-error: true
@@ -78,6 +79,7 @@ jobs:
 
           git add data/system_state.json
           git add -f data/north_star_weekly_history.json 2>/dev/null || true
+          git add data/trades.json 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "No state changes to commit"
             exit 0

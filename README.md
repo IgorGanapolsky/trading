@@ -14,7 +14,7 @@ Autonomous AI trading system with multi-model routing via [Tetrate Agent Router 
 >
 > **Account**: Alpaca Paper ($100K) | **Strategy**: SPY iron condors, 15-20 delta, 30-45 DTE
 >
-> **Status**: [System State](https://github.com/IgorGanapolsky/trading/blob/main/data/system_state.json) | [Dashboard](https://github.com/IgorGanapolsky/trading/wiki/Progress-Dashboard) | [GitHub Pages](https://igorganapolsky.github.io/trading/)
+> **Status**: [System State](https://github.com/IgorGanapolsky/trading/blob/main/data/system_state.json) | [Progress Dashboard](https://github.com/IgorGanapolsky/trading/wiki/Progress-Dashboard) | [GitHub Pages](https://igorganapolsky.github.io/trading/) | [RAG Query](https://igorganapolsky.github.io/trading/rag-query/)
 
 ---
 
