@@ -21,6 +21,33 @@ jobs:
         with:
           fetch-depth: 0 # Full history for git log comparison
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install gate dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff pytest pyyaml
+
+      - name: Agent handoff gate (autonomous)
+        run: |
+          python3 scripts/agent_handoff_gate.py \
+            --base-ref origin/main \
+            --mode quick \
+            --report-md artifacts/devloop/agent_handoff_gate.md \
+            --report-json artifacts/devloop/agent_handoff_gate.json
+
+      - name: Upload handoff gate report
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-handoff-gate
+          path: |
+            artifacts/devloop/agent_handoff_gate.md
+            artifacts/devloop/agent_handoff_gate.json
+
       - name: Create Pull Request
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
@@ -34,6 +61,7 @@ jobs:
             COMMIT_MSG=$(git log -1 --format=%s)
 
             # Create PR with dynamic title from commit message
+            GATE_SUMMARY=$(cat artifacts/devloop/agent_handoff_gate.md 2>/dev/null || echo "Gate report unavailable.")
             gh pr create \
               --title "$COMMIT_MSG" \
               --body "## Summary
@@ -44,7 +72,12 @@ jobs:
 
           ## Test Plan
           - [ ] CI passes
-          - [ ] Manual verification if needed" \
+          - [ ] Manual verification if needed
+
+          ## Agent Handoff Gate
+          \`\`\`markdown
+          $GATE_SUMMARY
+          \`\`\`" \
               --base main
             echo "PR created successfully"
           else

@@ -65,6 +65,43 @@ jobs:
       - name: Anthropic compliance guardrail
         run: python3 scripts/check_anthropic_compliance.py
 
+  agent-handoff-gate:
+    name: Agent Handoff Gate
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install gate dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff pytest pyyaml
+
+      - name: Run autonomous handoff gate
+        run: |
+          python3 scripts/agent_handoff_gate.py \
+            --base-ref "origin/${{ github.base_ref }}" \
+            --mode quick \
+            --report-md artifacts/devloop/agent_handoff_gate.md \
+            --report-json artifacts/devloop/agent_handoff_gate.json
+
+      - name: Upload gate artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-handoff-gate
+          path: |
+            artifacts/devloop/agent_handoff_gate.md
+            artifacts/devloop/agent_handoff_gate.json
+
   # Added Dec 12, 2025: Workflow validation to prevent dependency issues (LL-021)
   workflow-validation:
     name: Validate Workflows
