@@ -107,6 +107,8 @@ data/sentiment/news_*.json
 manual_run*.txt
 failed_log.txt
 reports/*.txt
+.omx/
+data/market_cache/
 data/audit_trail/
 data/sentiment/
 data/bronze/
