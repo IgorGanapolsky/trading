@@ -336,12 +336,22 @@ def main() -> int:
       </article>
 
       <article class="card span6">
-        <div class="k">Product Proof Flow</div>
-        <div class="flow" style="margin-top:10px">
-          <div class="node">1. Collect Signals</div><div class="arr">-></div><div class="node">2. Generate Decision</div><div class="arr">-></div><div class="node">3. Validate Output</div>
-        </div>
-        <div class="flow" style="margin-top:10px">
-          <div class="node">4. KPI + Scorecard</div><div class="arr">-></div><div class="node">5. Update Knowledge</div><div class="arr">-></div><div class="node">6. Improve Quality</div>
+        <div class="k">How Tetrate Is Used (Concrete Flow)</div>
+        <table class="table" style="margin-top:10px">
+          <tr><td>1. Input Assembly</td><td>System builds prompt context from market/account state and risk envelope.</td></tr>
+          <tr><td>2. Tetrate Route</td><td>Call is sent through Tetrate Agent Router Service (TARS) to select model/provider path.</td></tr>
+          <tr><td>3. Decision Output</td><td>Router response is parsed into structured trade intent/analysis payload.</td></tr>
+          <tr><td>4. Safety Gate</td><td>Ticker whitelist + position/risk constraints are enforced before execution.</td></tr>
+          <tr><td>5. Telemetry</td><td>Latency + cost are recorded from smoke checks for quality/cost tracking.</td></tr>
+          <tr><td>6. Judge Evidence</td><td>Artifacts are published so judges can verify behavior from raw files.</td></tr>
+        </table>
+        <div class="note">
+          Verify now:
+          <a href="{repo_blob}/artifacts/tars/smoke_metrics.txt">smoke_metrics.txt</a>,
+          <a href="{repo_blob}/artifacts/tars/smoke_response.json">smoke_response.json</a>,
+          <a href="{repo_blob}/artifacts/tars/resilience_report.txt">resilience_report.txt</a>,
+          <a href="/trading/lessons/ops-status.html">ops-status</a>,
+          <a href="https://router.tetrate.ai">router.tetrate.ai</a>.
         </div>
       </article>
 
