@@ -16,6 +16,8 @@ def test_evaluate_weekly_cadence_extracts_kpi_and_diagnostic():
                 "summary": "Cadence KPI miss.",
                 "qualified_setups_observed": 1,
                 "min_qualified_setups_per_week": 3,
+                "new_entries_observed": 1,
+                "min_new_entries_per_week": 2,
                 "closed_trades_observed": 1,
                 "min_closed_trades_per_week": 1,
             },
@@ -39,6 +41,8 @@ def test_evaluate_weekly_cadence_extracts_kpi_and_diagnostic():
     assert result["alert_level"] == "warning"
     assert result["qualified_setups_observed"] == 1
     assert result["min_qualified_setups_per_week"] == 3
+    assert result["new_entries_observed"] == 1
+    assert result["min_new_entries_per_week"] == 2
     assert result["blocked_categories"] == ["liquidity"]
     assert result["ai_credit_stress_status"] == "watch"
     assert result["ai_credit_stress_score"] == 42.0
@@ -53,6 +57,7 @@ def test_should_fail_respects_strict_and_threshold():
     assert _should_fail(result=result_ok, strict=False, fail_on="warning") is False
     assert _should_fail(result=result_warning, strict=False, fail_on="critical") is False
     assert _should_fail(result=result_critical, strict=False, fail_on="critical") is True
+    assert _should_fail(result=result_warning, strict=False, fail_on="none") is False
     assert _should_fail(result=result_warning, strict=True, fail_on="none") is True
 
 
@@ -62,6 +67,8 @@ def test_markdown_public_report_is_minimal_and_deterministic():
         "alert_level": "warning",
         "qualified_setups_observed": 1,
         "min_qualified_setups_per_week": 3,
+        "new_entries_observed": 0,
+        "min_new_entries_per_week": 2,
         "closed_trades_observed": 0,
         "min_closed_trades_per_week": 1,
         "blocked_categories": ["liquidity"],
@@ -72,6 +79,7 @@ def test_markdown_public_report_is_minimal_and_deterministic():
     text = markdown_public_report(result)
     assert "Weekly Cadence KPI Check" in text
     assert "Qualified Setups: `1/3`" in text
+    assert "New Entries: `0/2`" in text
     assert "Blocked Categories: `liquidity`" in text
     assert "do not include" not in text
     assert "ai_credit_stress_source" not in text

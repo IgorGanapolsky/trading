@@ -5,7 +5,7 @@ Iron Condor Scanner - Daily Entry Opportunity Detection
 Scans for optimal iron condor entry conditions on SPY and creates
 GitHub issue for CEO approval with auto-execute after 30 minutes.
 
-Entry Criteria (per CLAUDE.md):
+Entry Criteria (baseline):
 - SPY only (best liquidity, tightest spreads)
 - 30-45 DTE
 - Short strikes at 15-20 delta
@@ -42,15 +42,107 @@ except (AssertionError, Exception):
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-# Constants from CLAUDE.md
+# Baseline constants
 MAX_POSITIONS = 5
 POSITION_SIZE_PCT = 0.05  # 5% max risk per position
-TARGET_DELTA = 0.15  # 15-20 delta range
-MIN_DTE = 30
-MAX_DTE = 45
+BASE_TARGET_DELTA = 0.15  # 15 delta baseline
+BASE_MIN_DTE = 30
+BASE_MAX_DTE = 45
+ADAPTIVE_TARGET_DELTA = 0.18  # Slightly closer strikes when cadence is low
+ADAPTIVE_MIN_DTE = 21
+TARGET_DTE = 35
 WING_WIDTH = 10  # $10 wide spreads per CLAUDE.md
 
 IC_TRADE_LOG = Path(__file__).parent.parent / "data" / "ic_trade_log.json"
+SYSTEM_STATE_PATH = Path(__file__).parent.parent / "data" / "system_state.json"
+
+
+def _load_json_dict(path: Path) -> dict:
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        return payload if isinstance(payload, dict) else {}
+    except Exception:
+        return {}
+
+
+def load_scan_profile(state_path: Path = SYSTEM_STATE_PATH) -> dict:
+    """Resolve scanner thresholds from North Star cadence state.
+
+    Adaptive mode is enabled only when cadence throughput is low and
+    hard-risk blockers (risk caps or AI credit stress) are not active.
+    """
+    base = {
+        "mode": "baseline",
+        "target_delta": BASE_TARGET_DELTA,
+        "min_dte": BASE_MIN_DTE,
+        "max_dte": BASE_MAX_DTE,
+        "target_dte": TARGET_DTE,
+        "allow_vix_override": False,
+        "reason": "Cadence healthy or hard-risk blockers active; baseline scan profile.",
+    }
+    state = _load_json_dict(state_path)
+    if not state:
+        return base
+
+    weekly_gate = state.get("north_star_weekly_gate", {})
+    if not isinstance(weekly_gate, dict):
+        return base
+
+    cadence = weekly_gate.get("cadence_kpi", {})
+    if not isinstance(cadence, dict):
+        cadence = {}
+    enforcement = weekly_gate.get("cadence_enforcement", {})
+    if not isinstance(enforcement, dict):
+        enforcement = {}
+    diagnostic = weekly_gate.get("no_trade_diagnostic", {})
+    if not isinstance(diagnostic, dict):
+        diagnostic = {}
+
+    blocked_categories = diagnostic.get("blocked_categories", [])
+    if not isinstance(blocked_categories, list):
+        blocked_categories = []
+    blocked_set = {str(item) for item in blocked_categories}
+    hard_blockers = {"risk_caps", "ai_credit_stress"}
+
+    cadence_passed = bool(cadence.get("passed"))
+    setup_missed = not bool(cadence.get("meets_qualified_setups", True))
+    setups_observed = int(cadence.get("qualified_setups_observed", 0))
+    et_now = datetime.now(ZoneInfo("America/New_York"))
+    midweek_no_setups = et_now.weekday() >= 2 and setups_observed <= 0
+    adaptive_requested = bool(enforcement.get("adaptive_scan_required"))
+
+    if (
+        adaptive_requested or (not cadence_passed and setup_missed) or midweek_no_setups
+    ) and blocked_set.isdisjoint(hard_blockers):
+        adaptive_profile = enforcement.get("adaptive_scan_profile", {})
+        if not isinstance(adaptive_profile, dict):
+            adaptive_profile = {}
+        target_delta = float(adaptive_profile.get("target_delta", ADAPTIVE_TARGET_DELTA))
+        min_dte = int(adaptive_profile.get("min_dte", ADAPTIVE_MIN_DTE))
+        max_dte = int(adaptive_profile.get("max_dte", BASE_MAX_DTE))
+        allow_vix_override = bool(adaptive_profile.get("allow_vix_override", True))
+        reason = str(
+            adaptive_profile.get("reason")
+            or "Cadence miss with no hard-risk blocker; enabling adaptive scan profile."
+        )
+        if midweek_no_setups:
+            reason = (
+                f"{reason} Midweek no-setup fallback active (weekday={et_now.weekday()}, "
+                f"qualified_setups={setups_observed})."
+            )
+        return {
+            "mode": "adaptive",
+            "target_delta": target_delta,
+            "min_dte": min_dte,
+            "max_dte": max_dte,
+            "target_dte": TARGET_DTE,
+            "allow_vix_override": allow_vix_override,
+            "reason": reason,
+        }
+
+    return base
 
 
 def get_alpaca_clients():
@@ -117,13 +209,14 @@ def count_open_ic_positions(trading_client) -> int:
         return 0
 
 
-def find_expiration_date() -> str:
-    """Find optimal expiration date (30-45 DTE, must be Friday)."""
+def find_expiration_date(
+    *, min_dte: int = BASE_MIN_DTE, max_dte: int = BASE_MAX_DTE, target_dte: int = TARGET_DTE
+) -> str:
+    """Find optimal expiration date in a target DTE band, anchored to Friday."""
     et = ZoneInfo("America/New_York")
     today = datetime.now(et)
 
-    # Target 35 DTE (middle of range)
-    target_date = today + timedelta(days=35)
+    target_date = today + timedelta(days=target_dte)
 
     # Find next Friday
     days_until_friday = (4 - target_date.weekday()) % 7
@@ -133,11 +226,11 @@ def find_expiration_date() -> str:
     expiry = target_date + timedelta(days=days_until_friday)
     dte = (expiry - today).days
 
-    # Ensure within 30-45 DTE range
-    if dte < MIN_DTE:
+    # Ensure DTE stays inside configured bounds
+    if dte < min_dte:
         expiry += timedelta(days=7)
         dte = (expiry - today).days
-    elif dte > MAX_DTE:
+    elif dte > max_dte:
         expiry -= timedelta(days=7)
         dte = (expiry - today).days
 
@@ -146,18 +239,28 @@ def find_expiration_date() -> str:
     return expiry_str
 
 
-def calculate_strikes(spy_price: float) -> dict:
-    """Calculate iron condor strikes based on 15-20 delta targeting."""
-    # 15 delta is roughly 5% OTM for 30-45 DTE
+def _delta_to_otm_pct(target_delta: float) -> float:
+    # Approximation for selecting OTM distance: lower delta -> wider distance.
+    if target_delta <= 0.16:
+        return 0.05
+    if target_delta <= 0.18:
+        return 0.045
+    return 0.04
+
+
+def calculate_strikes(spy_price: float, *, target_delta: float = BASE_TARGET_DELTA) -> dict:
+    """Calculate iron condor strikes based on target delta approximation."""
     # Round to nearest $5 increment (SPY options)
 
     def round_to_5(x: float) -> float:
         return round(x / 5) * 5
 
-    short_put = round_to_5(spy_price * 0.95)  # ~5% below
+    otm_pct = _delta_to_otm_pct(target_delta)
+
+    short_put = round_to_5(spy_price * (1.0 - otm_pct))
     long_put = short_put - WING_WIDTH
 
-    short_call = round_to_5(spy_price * 1.05)  # ~5% above
+    short_call = round_to_5(spy_price * (1.0 + otm_pct))
     long_call = short_call + WING_WIDTH
 
     return {
@@ -310,11 +413,44 @@ This trade will **auto-execute at {(datetime.utcnow() + timedelta(minutes=30)).s
     return None
 
 
-def scan_for_opportunity(dry_run: bool = False) -> dict | None:
+def scan_for_opportunity(dry_run: bool = False, adaptive: bool | None = None) -> dict | None:
     """Main scanner function - find IC opportunity and alert."""
     logger.info("=" * 60)
     logger.info("IRON CONDOR SCANNER - Starting scan")
     logger.info("=" * 60)
+
+    if adaptive is None:
+        scan_profile = load_scan_profile()
+    elif adaptive:
+        scan_profile = {
+            "mode": "adaptive",
+            "target_delta": ADAPTIVE_TARGET_DELTA,
+            "min_dte": ADAPTIVE_MIN_DTE,
+            "max_dte": BASE_MAX_DTE,
+            "target_dte": TARGET_DTE,
+            "allow_vix_override": True,
+            "reason": "Forced adaptive scan mode.",
+        }
+    else:
+        scan_profile = {
+            "mode": "baseline",
+            "target_delta": BASE_TARGET_DELTA,
+            "min_dte": BASE_MIN_DTE,
+            "max_dte": BASE_MAX_DTE,
+            "target_dte": TARGET_DTE,
+            "allow_vix_override": False,
+            "reason": "Forced baseline scan mode.",
+        }
+
+    logger.info(
+        "Scan profile: %s | delta=%.2f | dte=%s-%s | vix_override=%s",
+        scan_profile["mode"],
+        float(scan_profile["target_delta"]),
+        int(scan_profile["min_dte"]),
+        int(scan_profile["max_dte"]),
+        bool(scan_profile["allow_vix_override"]),
+    )
+    logger.info("Scan profile reason: %s", scan_profile["reason"])
 
     # Get clients
     trading_client, stock_client, options_client = get_alpaca_clients()
@@ -334,15 +470,32 @@ def scan_for_opportunity(dry_run: bool = False) -> dict | None:
 
     # Check VIX conditions
     vix_ok, vix_status = check_vix_conditions()
+    vix_override_applied = False
     if not vix_ok:
-        logger.warning(f"VIX conditions unfavorable: {vix_status}")
-        return None
+        if scan_profile["allow_vix_override"]:
+            vix_override_applied = True
+            logger.warning("VIX conditions unfavorable, but override enabled: %s", vix_status)
+        else:
+            logger.warning(f"VIX conditions unfavorable: {vix_status}")
+            return None
 
     # Calculate opportunity
-    expiry = find_expiration_date()
+    expiry = find_expiration_date(
+        min_dte=int(scan_profile["min_dte"]),
+        max_dte=int(scan_profile["max_dte"]),
+        target_dte=int(scan_profile["target_dte"]),
+    )
     dte = (datetime.strptime(expiry, "%Y-%m-%d") - datetime.now()).days
-    strikes = calculate_strikes(spy_price)
+    strikes = calculate_strikes(spy_price, target_delta=float(scan_profile["target_delta"]))
     pricing = estimate_credit(strikes)
+    max_risk_allowed = equity * POSITION_SIZE_PCT
+    if pricing["max_risk"] > max_risk_allowed:
+        logger.warning(
+            "Rejected by risk cap: max risk %.2f exceeds allowed %.2f (5%% of equity).",
+            pricing["max_risk"],
+            max_risk_allowed,
+        )
+        return None
 
     opportunity = {
         "timestamp": datetime.utcnow().isoformat(),
@@ -353,7 +506,15 @@ def scan_for_opportunity(dry_run: bool = False) -> dict | None:
         "pricing": pricing,
         "equity": equity,
         "positions": open_positions,
-        "vix_status": vix_status,
+        "vix_status": (
+            f"{vix_status} (override for cadence recovery)" if vix_override_applied else vix_status
+        ),
+        "scan_profile": scan_profile,
+        "risk_guard": {
+            "max_risk_allowed": max_risk_allowed,
+            "max_risk_ok": pricing["max_risk"] <= max_risk_allowed,
+        },
+        "adaptive_applied": scan_profile["mode"] == "adaptive",
     }
 
     logger.info("=" * 60)
@@ -390,7 +551,25 @@ def scan_for_opportunity(dry_run: bool = False) -> dict | None:
 def main():
     parser = argparse.ArgumentParser(description="Iron Condor Scanner")
     parser.add_argument("--dry-run", action="store_true", help="Scan without creating alert")
+    parser.add_argument(
+        "--adaptive",
+        action="store_true",
+        help="Force adaptive scan profile (relaxed non-critical filters).",
+    )
+    parser.add_argument(
+        "--no-adaptive",
+        action="store_true",
+        help="Force baseline scan profile.",
+    )
     args = parser.parse_args()
+
+    adaptive: bool | None = None
+    if args.adaptive and args.no_adaptive:
+        parser.error("Use either --adaptive or --no-adaptive, not both.")
+    if args.adaptive:
+        adaptive = True
+    elif args.no_adaptive:
+        adaptive = False
 
     # Check market hours
     et = ZoneInfo("America/New_York")
@@ -404,7 +583,7 @@ def main():
         logger.info("Market closed - no scan")
         return
 
-    result = scan_for_opportunity(dry_run=args.dry_run)
+    result = scan_for_opportunity(dry_run=args.dry_run, adaptive=adaptive)
 
     if result:
         print(json.dumps(result, indent=2, default=str))

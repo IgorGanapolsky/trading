@@ -174,8 +174,14 @@ def test_weekly_gate_adds_cadence_kpi_and_no_trade_diagnostic(tmp_path):
     cadence = gate.get("cadence_kpi", {})
     assert cadence.get("enabled") is True
     assert cadence.get("qualified_setups_observed") == 2
+    assert cadence.get("new_entries_observed") == 0
+    assert cadence.get("min_new_entries_per_week") == 2
     assert cadence.get("closed_trades_observed") == 0
     assert cadence.get("passed") is False
+
+    enforcement = gate.get("cadence_enforcement", {})
+    assert enforcement.get("enabled") is True
+    assert enforcement.get("adaptive_scan_required") is False
 
     diagnostic = gate.get("no_trade_diagnostic", {})
     gate_status = diagnostic.get("gate_status", {})
