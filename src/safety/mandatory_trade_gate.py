@@ -20,6 +20,7 @@ import os
 import re
 import threading
 from dataclasses import dataclass, field
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -127,13 +128,17 @@ class TradeBlockedError(Exception):
 # LL-281 (Jan 22, 2026): Import from trading_constants.py to prevent scattered definitions
 try:
     from src.core.trading_constants import (
+        MAX_DAILY_FILLS,
         MAX_DAILY_LOSS_PCT,
+        MAX_DAILY_STRUCTURES,
         MAX_POSITION_PCT,
         MAX_POSITIONS,
     )
 except ImportError:
     MAX_POSITION_PCT = float(os.environ.get("MAX_POSITION_PCT", "0.05"))
     MAX_DAILY_LOSS_PCT = float(os.environ.get("MAX_DAILY_LOSS_PCT", "0.05"))
+    MAX_DAILY_STRUCTURES = int(os.environ.get("MAX_DAILY_STRUCTURES", "1"))
+    MAX_DAILY_FILLS = int(os.environ.get("MAX_DAILY_FILLS", "20"))
     MAX_POSITIONS = int(os.environ.get("MAX_POSITIONS", "4"))
     logger.warning("Using env-var position limits - trading_constants unavailable")
 
@@ -145,11 +150,101 @@ MIN_TRADE_AMOUNT = float(os.environ.get("MIN_TRADE_AMOUNT", "1.0"))
 _daily_loss_lock = threading.Lock()
 _daily_loss_tracker: dict[str, float] = {"total": 0.0, "date": ""}
 
+_SYSTEM_STATE_PATH = Path(__file__).parent.parent.parent / "data" / "system_state.json"
+
+
+def _today_et_str() -> str:
+    try:
+        from zoneinfo import ZoneInfo
+
+        return datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
+    except Exception:
+        return str(date.today())
+
+
+def _load_intraday_metrics_from_system_state() -> dict[str, float | int | str] | None:
+    """Return canonical intraday guardrail metrics from data/system_state.json."""
+    if not _SYSTEM_STATE_PATH.exists():
+        return None
+    try:
+        with _SYSTEM_STATE_PATH.open() as handle:
+            state = json.load(handle)
+        if not isinstance(state, dict):
+            return None
+    except Exception:
+        return None
+
+    trades = state.get("trades", {}) if isinstance(state.get("trades"), dict) else {}
+    paper = (
+        state.get("paper_account", {}) if isinstance(state.get("paper_account"), dict) else {}
+    )
+
+    metrics_date = str(trades.get("metrics_date") or "").strip()
+    if metrics_date != _today_et_str():
+        return None
+
+    try:
+        daily_pnl = float(paper.get("daily_change", 0.0) or 0.0)
+    except Exception:
+        daily_pnl = 0.0
+
+    def _as_int(v: Any) -> int:
+        try:
+            return int(v)
+        except Exception:
+            return 0
+
+    return {
+        "date": metrics_date,
+        "daily_pnl": daily_pnl,
+        "fills_today": _as_int(trades.get("fills_today", trades.get("today_trades", 0))),
+        "orders_today": _as_int(trades.get("orders_today", 0)),
+        "structures_today": _as_int(trades.get("structures_today", 0)),
+    }
+
+
+def _enforce_intraday_guardrails_from_state(
+    *,
+    equity: float,
+    is_opening: bool,
+    checks_performed: list[str],
+) -> tuple[bool, str]:
+    """Fail-closed intraday guardrails for new entries based on canonical state metrics."""
+    if not is_opening:
+        return True, ""
+
+    metrics = _load_intraday_metrics_from_system_state()
+    if metrics is None:
+        return False, "Daily verification metrics missing for today - refusing new entries"
+
+    daily_pnl = float(metrics.get("daily_pnl", 0.0) or 0.0)
+    fills_today = int(metrics.get("fills_today", 0) or 0)
+    structures_today = int(metrics.get("structures_today", 0) or 0)
+
+    checks_performed.append(
+        f"intraday_metrics: pnl={daily_pnl:+.2f} fills={fills_today} structures={structures_today}"
+    )
+
+    if equity > 0 and daily_pnl < -(equity * MAX_DAILY_LOSS_PCT):
+        return (
+            False,
+            f"Daily loss limit exceeded: {daily_pnl:+.2f} < -{MAX_DAILY_LOSS_PCT:.0%} of equity",
+        )
+
+    if structures_today >= MAX_DAILY_STRUCTURES:
+        return (
+            False,
+            f"Max structures guardrail hit: {structures_today}/{MAX_DAILY_STRUCTURES} today",
+        )
+
+    if fills_today >= MAX_DAILY_FILLS:
+        return False, f"Max fills guardrail hit: {fills_today}/{MAX_DAILY_FILLS} today"
+
+    return True, ""
+
 
 def _reset_daily_tracker_if_needed():
     """Reset daily loss tracker at start of new day. Thread-safe."""
-    from datetime import date
-
     # Lock is acquired by caller (_check_daily_loss_limit)
     today = str(date.today())
     if _daily_loss_tracker["date"] != today:
@@ -468,6 +563,32 @@ def validate_trade_mandatory(
     checks_performed.append(f"equity_check: PASS (${equity:.2f})")
 
     # =========================================================================
+    # CHECK 2.1: Intraday guardrails (hard daily loss + max fills + max structures)
+    # Block NEW entries if the canonical daily verification says we are bleeding or churning.
+    # NOTE: We try to avoid blocking closes/reductions.
+    # =========================================================================
+    current_positions = context.get("positions", []) if context else []
+    if not isinstance(current_positions, list):
+        current_positions = []
+    current_symbols = {str(p.get("symbol") or "") for p in current_positions if isinstance(p, dict)}
+    is_opening = True
+    if side == "SELL" and symbol in current_symbols:
+        is_opening = False
+
+    guard_ok, guard_reason = _enforce_intraday_guardrails_from_state(
+        equity=float(equity or 0.0),
+        is_opening=is_opening,
+        checks_performed=checks_performed,
+    )
+    if not guard_ok:
+        return GateResult(
+            approved=False,
+            reason=guard_reason,
+            checks_performed=checks_performed + ["intraday_guardrails: BLOCKED"],
+        )
+    checks_performed.append("intraday_guardrails: PASS")
+
+    # =========================================================================
     # CHECK 2.2: North Star guard (dynamic risk profile)
     # Applies stricter sizing or blocks new risk when paper metrics are weak.
     # =========================================================================
@@ -525,10 +646,9 @@ def validate_trade_mandatory(
     # This prevents accumulating unlimited positions (root cause of 8 contract crisis)
     # NOTE: MAX_POSITIONS imported from trading_constants.py (single source of truth)
     # =========================================================================
-    current_positions = context.get("positions", []) if context else []
     current_position_count = len(current_positions)
 
-    if side == "BUY" and current_position_count >= MAX_POSITIONS:
+    if is_opening and current_position_count >= MAX_POSITIONS:
         return GateResult(
             approved=False,
             reason=f"Position count {current_position_count} >= max {MAX_POSITIONS} (CLAUDE.md: 1 iron condor at a time)",
@@ -543,7 +663,7 @@ def validate_trade_mandatory(
     # Root cause of 8 long 658 puts disaster (-$1,472 loss)
     # If buying, block if we already hold this exact symbol
     # =========================================================================
-    if side == "BUY" and current_positions:
+    if is_opening and current_positions:
         existing_symbols = [p.get("symbol", "") for p in current_positions]
         if symbol in existing_symbols:
             # Find existing quantity
@@ -582,9 +702,9 @@ def validate_trade_mandatory(
     # =========================================================================
     # CHECK 4: Daily loss limit (for new positions)
     # =========================================================================
-    if side == "BUY":
-        # Assume worst case: lose 10% of position (stop loss)
-        potential_loss = amount * 0.10
+    if is_opening:
+        # For defined-risk structures, amount should already approximate max loss.
+        potential_loss = max(0.0, float(amount or 0.0))
         loss_ok, loss_msg = _check_daily_loss_limit(equity, potential_loss)
 
         if not loss_ok:
