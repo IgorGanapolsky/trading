@@ -8,16 +8,7 @@ This is the unfiltered story of building an autonomous AI trading system—every
 
 **The goal:** An accessible automated iron condor system anyone can enter with as little as $200.
 
-**The method:** A full autonomous stack where each layer has a strict role:
-
-- **Signal + market data layer**: Alpaca + macro/news inputs feed the orchestrator.
-- **Decision layer**: Claude Opus handles trade-critical reasoning; TARS/OpenRouter route non-critical tasks for cost control.
-- **Memory layer**: LanceDB RAG retrieves prior failures and lessons before trade and code decisions.
-- **Execution layer**: Orchestrator + trade gateway enforce SPY-only, sizing, entry/exit, and stop-loss policies before orders hit Alpaca.
-- **Risk layer**: Hard gates (position limits, drawdown controls, pre-trade smoke tests, mandatory checklists) block unsafe actions.
-- **Reliability layer**: Ralph Mode and CI workflows continuously test, repair, and document the system.
-
-Full architecture: **[Tech Stack](/trading/tech-stack/)**.
+**[View full system architecture →](/trading/tech-stack/)**
 
 ---
 
