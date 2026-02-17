@@ -75,8 +75,8 @@ class TestPricingCache:
 class TestPricingSource:
     """Test pricing API sources."""
 
-    @patch("requests.get")
-    def test_openrouter_source_fetches_pricing(self, mock_get):
+    @patch("scripts.fetch_model_pricing.requests")
+    def test_openrouter_source_fetches_pricing(self, mock_requests):
         """OpenRouter source should fetch pricing via API."""
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -88,7 +88,7 @@ class TestPricingSource:
                 }
             ]
         }
-        mock_get.return_value = mock_response
+        mock_requests.get.return_value = mock_response
 
         source = PricingSource.openrouter()
         pricing = source.fetch("gpt-4o-mini")
@@ -96,23 +96,23 @@ class TestPricingSource:
         assert pricing["input_cost_per_1m"] == 0.150
         assert pricing["output_cost_per_1m"] == 0.600
 
-    @patch("requests.get")
-    def test_openrouter_handles_api_errors(self, mock_get):
+    @patch("scripts.fetch_model_pricing.requests")
+    def test_openrouter_handles_api_errors(self, mock_requests):
         """OpenRouter source should handle API errors gracefully."""
-        mock_get.side_effect = Exception("Network error")
+        mock_requests.get.side_effect = Exception("Network error")
 
         source = PricingSource.openrouter()
         pricing = source.fetch("gpt-4o-mini")
 
         assert pricing is None
 
-    @patch("requests.get")
-    def test_openrouter_handles_model_not_found(self, mock_get):
+    @patch("scripts.fetch_model_pricing.requests")
+    def test_openrouter_handles_model_not_found(self, mock_requests):
         """OpenRouter source should return None for unknown models."""
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"data": []}
-        mock_get.return_value = mock_response
+        mock_requests.get.return_value = mock_response
 
         source = PricingSource.openrouter()
         pricing = source.fetch("unknown-model-xyz")
