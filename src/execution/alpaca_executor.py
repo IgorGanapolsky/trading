@@ -173,6 +173,8 @@ class AlpacaExecutor:
                         "buying_power": float(account.buying_power),
                         "cash": float(account.cash),
                         "portfolio_value": float(account.portfolio_value),
+                        # Needed for accurate daily P/L (used by sync_alpaca_state + dashboards).
+                        "last_equity": float(getattr(account, "last_equity", 0.0) or 0.0),
                     }
                 else:
                     raise RuntimeError("Trader has no get_account_info or get_account method!")

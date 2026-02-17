@@ -32,13 +32,23 @@ ALLOWED_TICKERS: set[str] = {"SPY", "SPX", "XSP", "QQQ", "IWM"}
 # scattered definitions and race conditions.
 # =============================================================================
 MAX_POSITION_PCT: float = 0.05  # 5% max per position per CLAUDE.md ($5K on $100K account)
-MAX_DAILY_LOSS_PCT: float = 0.05  # 5% max daily loss
+# Hard daily loss limit (intraday) to prevent churn spirals off North Star.
+# Align with src/constants/trading_thresholds.py and risk manager defaults.
+MAX_DAILY_LOSS_PCT: float = 0.02  # 2% max daily loss
 MAX_POSITIONS: int = 8  # 2 iron condors = 8 legs max (UPDATED Jan 30, 2026 for $100K account)
 MAX_CONTRACTS_PER_TRADE: int = 2  # Max contracts per single trade (scaled for $100K)
 CRISIS_LOSS_PCT: float = 0.25  # 25% unrealized loss triggers crisis mode
 CRISIS_POSITION_COUNT: int = 4  # More than 4 positions triggers crisis mode
 # Iron condor stop-loss: close if one side reaches 100% of credit received (positive EV)
 IRON_CONDOR_STOP_LOSS_MULTIPLIER: float = 1.0
+
+# =============================================================================
+# ANTI-CHURN GUARDRAILS (intraday) - SINGLE SOURCE OF TRUTH
+# =============================================================================
+# "Structures" = strategy-level structures (e.g., 1 iron condor entry record).
+# "Fills"      = per-execution fills (can be many due to partial fills/churn).
+MAX_DAILY_STRUCTURES: int = 1  # 1 structure/day during validation
+MAX_DAILY_FILLS: int = 20  # stop death-by-churn (partial fills included)
 
 # =============================================================================
 # OPTIONS PARAMETERS

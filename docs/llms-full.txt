@@ -15,11 +15,12 @@
 
 ## Operational Metrics
 - Workflows configured: 89
-- Blog posts indexed: 54
-- Reports indexed: 4
+- Blog posts indexed: 55
+- Reports indexed: 5
 - Lessons indexed: 168
 
 ## Blog Posts (Newest First)
+- [North Star Operating Strategy: Fast, Gated, Coherent](https://igorganapolsky.github.io/trading/2026/02/17/north-star-operating-strategy.html) - 2026-02-17
 - [Building an AI Trading System for the Tetrate Buildathon](https://igorganapolsky.github.io/trading/2026/02/15/tetrate-buildathon-ai-trading-system.html) - 2026-02-15
 - [Why We Route Trading AI Through TARS: Multi-Model Architecture for SPY Options](https://igorganapolsky.github.io/trading/2026/02/15/tars-multi-model-routing-trading.html) - 2026-02-15
 - [PaperBanana: How We Auto-Generate Architecture Diagrams with Gemini](https://igorganapolsky.github.io/trading/2026/02/15/paperbanana-automated-architecture-diagrams.html) - 2026-02-15
@@ -76,6 +77,7 @@
 - [The Silent 74 Days: How Our Trading System Reported Success While Doing Nothing](https://igorganapolsky.github.io/trading/2026/01/07/the-silent-74-days.html) - 2026-01-07
 
 ## Reports
+- [Social Positioning Copy (Canonical)](https://igorganapolsky.github.io/trading/reports/2026-02-17-social-positioning-copy/) - 2026-02-17
 - [Daily Dashboard Snapshot - 2026-02-17](https://igorganapolsky.github.io/trading/reports/2026-02-17-dashboard-snapshot/) - 2026-02-17
 - [Daily Dashboard Snapshot - 2026-02-16](https://igorganapolsky.github.io/trading/reports/2026-02-16-dashboard-snapshot/) - 2026-02-16
 - [Hackathon System Explainer](https://igorganapolsky.github.io/trading/reports/hackathon-system-explainer/) - undated

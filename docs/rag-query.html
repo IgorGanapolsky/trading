@@ -10,7 +10,7 @@ layout: null
     <title>RAG Knowledge Base Query - Trading System</title>
     <meta
       name="description"
-      content="Search and explore the RAG knowledge base containing 300+ lessons learned from AI trading system development"
+      content="Search and explore the RAG knowledge base of lessons learned from AI trading system development"
     />
     <style>
       :root {
@@ -209,6 +209,11 @@ layout: null
 
       @media (max-width: 900px) {
         .results-section {
+          grid-template-columns: 1fr;
+        }
+
+        .account-grid,
+        .proof-grid {
           grid-template-columns: 1fr;
         }
       }
@@ -544,6 +549,66 @@ layout: null
         border-bottom-left-radius: 4px;
       }
 
+      .chat-message.assistant .message-content.account-evidence {
+        max-width: 100%;
+      }
+
+      .account-summary {
+        margin-bottom: 10px;
+      }
+
+      .account-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 10px 0 12px;
+      }
+
+      .account-card {
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.02);
+        padding: 10px;
+      }
+
+      .account-card h4 {
+        font-size: 0.86rem;
+        margin: 0 0 8px;
+        color: var(--text-secondary);
+      }
+
+      .account-metric {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--accent-green);
+      }
+
+      .account-submetric {
+        margin-top: 4px;
+        font-size: 0.83rem;
+        color: var(--text-secondary);
+      }
+
+      .proof-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .proof-item a {
+        color: var(--accent-blue);
+        text-decoration: none;
+        font-size: 0.8rem;
+      }
+
+      .proof-item img {
+        width: 100%;
+        margin-top: 6px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+      }
+
       .chat-message.loading .message-content {
         color: var(--text-muted);
         font-style: italic;
@@ -599,6 +664,37 @@ layout: null
         flex-wrap: wrap;
       }
 
+      .chat-history-hint {
+        margin-top: 10px;
+        font-size: 0.82rem;
+        color: var(--text-secondary);
+      }
+
+      .chat-history-hint .hint-btn {
+        margin-left: 6px;
+        padding: 4px 10px;
+        font-size: 0.82rem;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 999px;
+        color: var(--text-primary);
+        cursor: pointer;
+        max-width: 100%;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        vertical-align: middle;
+      }
+
+      .chat-history-hint .hint-btn:hover {
+        background: var(--border-color);
+      }
+
+      .chat-history-hint .hint-meta {
+        color: var(--text-muted);
+        margin-left: 6px;
+      }
+
       .example-chip {
         padding: 6px 12px;
         font-size: 0.8rem;
@@ -638,8 +734,8 @@ layout: null
     <div class="container">
       <header>
         <h1>RAG Knowledge Base</h1>
-        <p class="subtitle">
-          Search 300+ lessons from building an autonomous AI trading system
+        <p class="subtitle" id="subtitleText">
+          Search lessons from building an autonomous AI trading system
         </p>
         <div class="ai-disclosure">
           AI Disclosure: This interface uses AI to search and summarize internal
@@ -648,16 +744,16 @@ layout: null
         </div>
         <div class="stats-bar">
           <div class="stat">
-            <div class="stat-value" id="totalLessons">177</div>
+            <div class="stat-value" id="totalLessons">--</div>
             <div class="stat-label">Lessons Learned</div>
           </div>
           <div class="stat">
-            <div class="stat-value">90</div>
+            <div class="stat-value" id="daysBuilding">--</div>
             <div class="stat-label">Days Building</div>
           </div>
           <div class="stat">
-            <div class="stat-value">$100K</div>
-            <div class="stat-label">Paper Account</div>
+            <div class="stat-value" id="paperAccountStat">--</div>
+            <div class="stat-label">Paper Equity</div>
           </div>
         </div>
 	      </header>
@@ -708,23 +804,31 @@ layout: null
 	              type="text"
 	              id="chatInput"
 	              placeholder="Ask a question... (e.g., 'When should I close an iron condor?')"
+                list="chatInputSuggestions"
 	            />
+              <datalist id="chatInputSuggestions"></datalist>
 	            <button id="chatSendBtn">Send</button>
 	          </div>
+            <div class="chat-history-hint" id="chatHistoryHint" style="display:none"></div>
 	          <div class="chat-examples">
 	            <span
 	              class="example-chip"
 	              data-question="Should I close my iron condor?"
 	              >Close iron condor?</span
 	            >
-	            <span class="example-chip" data-question="What's my current P/L?"
-	              >Current P/L</span
-	            >
-	            <span
-	              class="example-chip"
-	              data-question="Am I hitting any exit rules?"
-	              >Exit rules check</span
-	            >
+            <span class="example-chip" data-question="What's my current P/L?"
+              >Current P/L</span
+            >
+            <span
+              class="example-chip"
+              data-question="How much money did we make today and why?"
+              >Money today + why</span
+            >
+            <span
+              class="example-chip"
+              data-question="Am I hitting any exit rules?"
+              >Exit rules check</span
+            >
 	            <span
 	              class="example-chip"
 	              data-question="What's the optimal exit strategy for iron condors?"
@@ -735,11 +839,16 @@ layout: null
 	              data-question="When should I enter based on VIX?"
 	              >VIX entry rules</span
 	            >
-	            <span
-	              class="example-chip"
-	              data-question="What's the North Star goal?"
-	              >North Star</span
-	            >
+            <span
+              class="example-chip"
+              data-question="What's the North Star goal?"
+              >North Star</span
+            >
+            <span
+              class="example-chip"
+              data-question="Give me a working strategy to reach North Star fast with opportunistic brokerage trades."
+              >North Star strategy</span
+            >
 	            <span
 	              class="example-chip"
 	              data-question="What went wrong in the January 2026 crisis?"
@@ -865,13 +974,26 @@ layout: null
       let lessons = [];
       let lessonsLoaded = false;
       let currentResults = [];
-      const LESSONS_URL = new URL(
-        "./data/rag/lessons_query.json",
-        window.location.href,
-      ).toString();
+      let latestSystemState = null;
+      let latestSnapshotManifest = null;
+      let latestVerificationReports = null;
+      const LESSONS_URL = "{{ '/data/rag/lessons_query.json' | relative_url }}";
       const LESSONS_FALLBACK_URL =
         "https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/rag/lessons_query.json";
       const WORKER_URL = "https://trading-rag-chat.iganapolsky.workers.dev";
+      const PAPER_PROOF_IMAGE =
+        "/trading/assets/snapshots/alpaca_paper_latest.png";
+      const BROKERAGE_PROOF_IMAGE =
+        "/trading/assets/snapshots/alpaca_live_latest.png";
+      const SNAPSHOT_MANIFEST_URL = "{{ '/data/alpaca_snapshots.json' | relative_url }}";
+      const SNAPSHOT_MANIFEST_FALLBACK_URL =
+        "https://raw.githubusercontent.com/IgorGanapolsky/trading/main/docs/data/alpaca_snapshots.json";
+      const VERIFICATION_REPORTS_URL =
+        "{{ '/data/verification_reports.json' | relative_url }}";
+      const VERIFICATION_REPORTS_FALLBACK_URL =
+        "https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/verification_reports.json";
+      const GITHUB_RAW_URL =
+        "https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/system_state.json";
       const ALLOWED_RAG_HOSTS = new Set([
         new URL(WORKER_URL).hostname,
         "localhost",
@@ -912,6 +1034,166 @@ layout: null
         window.RAG_WEBHOOK_URL || storedUrl || "",
       );
 
+      function parseDateValue(raw) {
+        if (!raw) return null;
+        const parsed = new Date(raw);
+        if (!Number.isNaN(parsed.getTime())) return parsed;
+        return null;
+      }
+
+      function toFiniteNumber(value) {
+        const n = Number(value);
+        return Number.isFinite(n) ? n : null;
+      }
+
+      function formatCurrency(value, digits = 2) {
+        const n = toFiniteNumber(value);
+        if (n == null) return "--";
+        return (
+          "$" +
+          n.toLocaleString(undefined, {
+            minimumFractionDigits: digits,
+            maximumFractionDigits: digits,
+          })
+        );
+      }
+
+      function formatSignedCurrency(value, digits = 2) {
+        const n = toFiniteNumber(value);
+        if (n == null) return "--";
+        const abs = Math.abs(n).toLocaleString(undefined, {
+          minimumFractionDigits: digits,
+          maximumFractionDigits: digits,
+        });
+        return `${n >= 0 ? "+" : "-"}$${abs}`;
+      }
+
+      function formatSignedPercent(value, digits = 2) {
+        const n = toFiniteNumber(value);
+        if (n == null) return "--";
+        return `${n >= 0 ? "+" : ""}${n.toFixed(digits)}%`;
+      }
+
+      function parseCurrencyLike(value) {
+        if (value == null) return null;
+        if (typeof value === "number") return Number.isFinite(value) ? value : null;
+        const cleaned = String(value).replace(/[$,%\s]/g, "").replace(/,/g, "");
+        if (!cleaned) return null;
+        const parsed = Number(cleaned);
+        return Number.isFinite(parsed) ? parsed : null;
+      }
+
+      function firstFiniteNumber(...values) {
+        for (const value of values) {
+          const n = toFiniteNumber(value);
+          if (n != null) return n;
+        }
+        return null;
+      }
+
+      function extractExplainerDailyPL(explainer) {
+        if (!explainer) return null;
+        const match = String(explainer).match(/daily p\/l\s*([+-]?\$?[0-9,]+(?:\.[0-9]+)?)/i);
+        return match ? parseCurrencyLike(match[1]) : null;
+      }
+
+      function extractExplainerEquity(explainer) {
+        if (!explainer) return null;
+        const match = String(explainer).match(
+          /net liquidation value\s*([+-]?\$?[0-9,]+(?:\.[0-9]+)?)/i,
+        );
+        return match ? parseCurrencyLike(match[1]) : null;
+      }
+
+      function extractExplainerTotalPL(explainer) {
+        if (!explainer) return null;
+        const match = String(explainer).match(
+          /cumulative p\/l\s*([+-]?\$?[0-9,]+(?:\.[0-9]+)?)/i,
+        );
+        return match ? parseCurrencyLike(match[1]) : null;
+      }
+
+      function extractExplainerWhy(explainer) {
+        if (!explainer) return "";
+        const match = String(explainer).match(/indicating\s+([^;]+)[;.]?/i);
+        if (!match) return "";
+        const text = match[1].trim();
+        return text.endsWith(".") ? text : `${text}.`;
+      }
+
+      async function fetchSystemState(forceReload = false) {
+        if (!forceReload && latestSystemState) return latestSystemState;
+        const res = await fetch(GITHUB_RAW_URL, { cache: "no-store" });
+        if (!res.ok) throw new Error("fetch failed");
+        latestSystemState = await res.json();
+        return latestSystemState;
+      }
+
+      async function fetchSnapshotManifest(forceReload = false) {
+        if (!forceReload && latestSnapshotManifest) return latestSnapshotManifest;
+        const sources = [SNAPSHOT_MANIFEST_URL, SNAPSHOT_MANIFEST_FALLBACK_URL];
+        for (const source of sources) {
+          try {
+            const res = await fetch(source, { cache: "no-store" });
+            if (!res.ok) continue;
+            const data = await res.json();
+            if (data && typeof data === "object") {
+              latestSnapshotManifest = data;
+              return data;
+            }
+          } catch {
+            // try next source
+          }
+        }
+        throw new Error("snapshot manifest fetch failed");
+      }
+
+      async function fetchVerificationReports(forceReload = false) {
+        if (!forceReload && latestVerificationReports) return latestVerificationReports;
+        const sources = [VERIFICATION_REPORTS_URL, VERIFICATION_REPORTS_FALLBACK_URL];
+        for (const source of sources) {
+          try {
+            const res = await fetch(source, { cache: "no-store" });
+            if (!res.ok) continue;
+            const data = await res.json();
+            if (Array.isArray(data)) {
+              latestVerificationReports = data;
+              return data;
+            }
+          } catch {
+            // try next source
+          }
+        }
+        latestVerificationReports = null;
+        return null;
+      }
+
+      function updateLessonsStats() {
+        const totalEl = document.getElementById("totalLessons");
+        const subtitleEl = document.getElementById("subtitleText");
+        const daysEl = document.getElementById("daysBuilding");
+        const total = lessons.length;
+
+        if (totalEl) totalEl.textContent = total.toLocaleString();
+        if (subtitleEl) {
+          subtitleEl.textContent = `Search ${total.toLocaleString()} lessons from building an autonomous AI trading system`;
+        }
+
+        if (!daysEl) return;
+        const lessonDates = lessons
+          .map((lesson) => parseDateValue(lesson.date))
+          .filter(Boolean)
+          .map((dt) => dt.getTime());
+        if (lessonDates.length === 0) {
+          daysEl.textContent = "--";
+          return;
+        }
+
+        const earliest = Math.min(...lessonDates);
+        const days = Math.max(1, Math.ceil((Date.now() - earliest) / 86400000));
+        daysEl.textContent = days.toLocaleString();
+      }
+
       // Initialize
       document.addEventListener("DOMContentLoaded", () => {
         loadLessons();
@@ -928,7 +1210,7 @@ layout: null
             if (Array.isArray(data)) {
               lessons = data.map((lesson) => normalizeLesson(lesson));
               lessonsLoaded = true;
-              document.getElementById("totalLessons").textContent = lessons.length;
+              updateLessonsStats();
               renderRecentLessons();
               return;
             }
@@ -1180,10 +1462,6 @@ Tags: ${lesson.tags.join(", ")}`;
         document.getElementById("lessonModal").classList.remove("active");
       }
 
-      // Portfolio status bar - fetch live data from GitHub
-      const GITHUB_RAW_URL =
-        "https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/system_state.json";
-
       function parseOccSymbol(symbol) {
         const match = symbol.match(
           /^([A-Z]+)(\d{2})(\d{2})(\d{2})([CP])(\d{8})$/,
@@ -1201,23 +1479,64 @@ Tags: ${lesson.tags.join(", ")}`;
       async function loadPortfolioStatus() {
         const bar = document.getElementById("portfolioBar");
         try {
-          const res = await fetch(GITHUB_RAW_URL);
-          if (!res.ok) throw new Error("fetch failed");
-          const data = await res.json();
+          const [data, verificationReports] = await Promise.all([
+            fetchSystemState(true),
+            fetchVerificationReports(true).catch(() => null),
+          ]);
 
           const port = data.portfolio || {};
           const paper = data.paper_account || {};
           const positions = data.positions || [];
+          const account = data.account || {};
+          const paperTrading = data.paper_trading || {};
+          const equity =
+            Number(port.equity) ||
+            Number(paper.current_equity) ||
+            Number(account.current_equity) ||
+            0;
 
           // Equity
           document.getElementById("portEquity").textContent =
             "$" +
-            (port.equity || 0).toLocaleString(undefined, {
+            equity.toLocaleString(undefined, {
+              maximumFractionDigits: 0,
+            });
+          document.getElementById("paperAccountStat").textContent =
+            "$" +
+            equity.toLocaleString(undefined, {
               maximumFractionDigits: 0,
             });
 
           // Daily P&L
-          const dailyPL = paper.daily_change || 0;
+          const resolveReportDate = () => {
+            const fallback = new Date().toISOString().slice(0, 10);
+            const meta = data.meta || {};
+            const last = meta.last_updated || data.last_updated || "";
+            if (typeof last === "string" && last.length >= 10) {
+              const candidate = last.slice(0, 10);
+              if (/^\\d{4}-\\d{2}-\\d{2}$/.test(candidate)) return candidate;
+            }
+            return fallback;
+          };
+
+          const todayKey = resolveReportDate();
+          const reports = Array.isArray(verificationReports)
+            ? verificationReports
+            : [];
+          const todaysReport =
+            reports.find((r) => r && typeof r === "object" && r.date === todayKey) ||
+            (reports.length ? reports[reports.length - 1] : null);
+          const dailyPnlFromReport =
+            todaysReport && typeof todaysReport.daily_pnl === "number"
+              ? todaysReport.daily_pnl
+              : null;
+
+          const dailyPL =
+            Math.abs(Number(paper.daily_change) || 0) < 0.01 &&
+            dailyPnlFromReport != null &&
+            Math.abs(dailyPnlFromReport) >= 0.01
+              ? dailyPnlFromReport
+              : Number(paper.daily_change) || 0;
           const plEl = document.getElementById("portDailyPL");
           plEl.textContent =
             (dailyPL >= 0 ? "+$" : "-$") + Math.abs(dailyPL).toLocaleString();
@@ -1225,8 +1544,11 @@ Tags: ${lesson.tags.join(", ")}`;
             "port-stat-value " + (dailyPL >= 0 ? "positive" : "negative");
 
           // Positions count
-          document.getElementById("portPositions").textContent =
-            positions.length;
+          const positionCount =
+            Array.isArray(positions) && positions.length > 0
+              ? positions.length
+              : Number(paper.positions_count) || Number(account.positions_count) || 0;
+          document.getElementById("portPositions").textContent = positionCount;
 
           // Nearest DTE
           const now = new Date();
@@ -1239,9 +1561,34 @@ Tags: ${lesson.tags.join(", ")}`;
             if (dte < minDte) minDte = dte;
           }
           const dteEl = document.getElementById("portDTE");
-          dteEl.textContent = minDte === Infinity ? "--" : minDte + "d";
+          const fallbackDte = Number(paper.nearest_dte);
+          const resolvedDte =
+            minDte === Infinity && Number.isFinite(fallbackDte)
+              ? fallbackDte
+              : minDte;
+          dteEl.textContent = resolvedDte === Infinity ? "--" : resolvedDte + "d";
           if (minDte <= 7 && minDte !== Infinity) {
             dteEl.className = "port-stat-value negative";
+          }
+
+          // Days building - prefer paper trading current_day from system state.
+          const daysBuildingEl = document.getElementById("daysBuilding");
+          const currentDay = Number(paperTrading.current_day);
+          if (daysBuildingEl && Number.isFinite(currentDay) && currentDay > 0) {
+            daysBuildingEl.textContent = currentDay.toLocaleString();
+          } else if (
+            daysBuildingEl &&
+            typeof paperTrading.start_date === "string" &&
+            paperTrading.start_date
+          ) {
+            const startDate = parseDateValue(paperTrading.start_date);
+            if (startDate) {
+              const days = Math.max(
+                1,
+                Math.ceil((Date.now() - startDate.getTime()) / 86400000),
+              );
+              daysBuildingEl.textContent = days.toLocaleString();
+            }
           }
 
           // Win rate
@@ -1258,8 +1605,337 @@ Tags: ${lesson.tags.join(", ")}`;
         }
       }
 
+      function isAccountEvidenceQuery(message) {
+        const q = (message || "").toLowerCase();
+        if (!q) return false;
+        return (
+          /(how much money|money made|current p\/?l|paper account|brokerage account|live account)/i.test(
+            q,
+          ) ||
+          (/(equity|balance|p\/?l|profit|buying power|account|brokerage|paper)/i.test(
+            q,
+          ) &&
+            /(today|now|current|status|show|what)/i.test(q))
+        );
+      }
+
+      function isNorthStarStrategyQuery(message) {
+        const q = (message || "").toLowerCase();
+        if (/(working strategy|our strategy|what is our strategy|what is our working strategy)/i.test(q)) {
+          return true;
+        }
+        return (
+          /(north star|strategy|plan|approach|reach)/i.test(q) &&
+          /(fast|faster|asap|opportunistic|brokerage|paper|trade)/i.test(q)
+        );
+      }
+
+      function buildAccountEvidenceHtml(state, snapshotManifest, verificationReports) {
+        const paper = state.paper_account || {};
+        const live = state.live_account || {};
+        const portfolio = state.portfolio || {};
+        const latestSnapshots =
+          snapshotManifest && typeof snapshotManifest === "object"
+            ? snapshotManifest.latest || {}
+            : {};
+        const paperSnapshot = latestSnapshots.alpaca_paper || {};
+        const liveSnapshot = latestSnapshots.alpaca_live || {};
+
+        const paperEquity =
+          firstFiniteNumber(
+            paper.current_equity,
+            portfolio.equity,
+            paperSnapshot.dashboard_portfolio_value,
+            paperSnapshot.source_account_value,
+            extractExplainerEquity(paperSnapshot.technical_explainer),
+          ) ??
+          0;
+        const paperStart = toFiniteNumber(paper.starting_balance) ?? 100000;
+        const paperPL =
+          firstFiniteNumber(
+            paper.total_pl,
+            extractExplainerTotalPL(paperSnapshot.technical_explainer),
+            paperEquity - paperStart,
+          ) ?? 0;
+        const paperPLPct =
+          toFiniteNumber(paper.total_pl_pct) ??
+          (paperStart > 0 ? (paperPL / paperStart) * 100 : null);
+        const paperTodayPL =
+          firstFiniteNumber(
+            paper.daily_change,
+            paper.todays_pl,
+            paperSnapshot.dashboard_daily_change_value,
+            paperSnapshot.source_daily_change_value,
+            extractExplainerDailyPL(paperSnapshot.technical_explainer),
+          ) ?? 0;
+
+        const resolveReportDate = () => {
+          const fallback = new Date().toISOString().slice(0, 10);
+          const meta = state.meta || {};
+          const last = meta.last_updated || state.last_updated || "";
+          if (typeof last === "string" && last.length >= 10) {
+            const candidate = last.slice(0, 10);
+            if (/^\\d{4}-\\d{2}-\\d{2}$/.test(candidate)) return candidate;
+          }
+          return fallback;
+        };
+
+        const todayKey = resolveReportDate();
+        const reports = Array.isArray(verificationReports) ? verificationReports : [];
+        const todaysReport =
+          reports.find((r) => r && typeof r === "object" && r.date === todayKey) ||
+          (reports.length ? reports[reports.length - 1] : null);
+        const paperStructures =
+          toFiniteNumber(state?.trades?.structures_today) ??
+          (todaysReport && typeof todaysReport.structures === "number"
+            ? todaysReport.structures
+            : null);
+        const paperFills =
+          toFiniteNumber(state?.trades?.fills_today) ??
+          (todaysReport && typeof todaysReport.fills === "number"
+            ? todaysReport.fills
+            : null);
+        const paperOrders =
+          toFiniteNumber(state?.trades?.orders_today) ??
+          (todaysReport && typeof todaysReport.orders === "number"
+            ? todaysReport.orders
+            : null);
+        const paperDailyPnlFromReport =
+          todaysReport && typeof todaysReport.daily_pnl === "number"
+            ? todaysReport.daily_pnl
+            : null;
+        const paperTradedFromReport =
+          todaysReport && typeof todaysReport.traded === "boolean"
+            ? todaysReport.traded
+            : null;
+
+        // Prefer verification report daily_pnl when system_state daily_change is missing/flat.
+        const resolvedPaperTodayPL =
+          Math.abs(Number(paperTodayPL) || 0) < 0.01 &&
+          paperDailyPnlFromReport != null &&
+          Math.abs(paperDailyPnlFromReport) >= 0.01
+            ? paperDailyPnlFromReport
+            : paperTodayPL;
+
+        const brokerageEquity =
+          firstFiniteNumber(
+            live.current_equity,
+            live.equity,
+            liveSnapshot.dashboard_portfolio_value,
+            liveSnapshot.source_account_value,
+            extractExplainerEquity(liveSnapshot.technical_explainer),
+          ) ?? 0;
+        const brokerageStart = toFiniteNumber(live.starting_balance);
+        const brokeragePL =
+          firstFiniteNumber(
+            live.total_pl,
+            extractExplainerTotalPL(liveSnapshot.technical_explainer),
+            brokerageStart != null ? brokerageEquity - brokerageStart : null,
+          ) ?? 0;
+        const brokeragePLPct =
+          toFiniteNumber(live.total_pl_pct) ??
+          (brokerageStart && brokerageStart > 0 && brokeragePL != null
+            ? (brokeragePL / brokerageStart) * 100
+            : null);
+        const brokerageTodayPL =
+          firstFiniteNumber(
+            live.daily_change,
+            live.todays_pl,
+            liveSnapshot.dashboard_daily_change_value,
+            liveSnapshot.source_daily_change_value,
+            extractExplainerDailyPL(liveSnapshot.technical_explainer),
+          ) ?? 0;
+
+        const syncedAt =
+          state.last_updated ||
+          live.synced_at ||
+          paperSnapshot.captured_at_utc ||
+          liveSnapshot.captured_at_utc ||
+          "";
+        const syncLine = syncedAt
+          ? `<div class="account-submetric">Synced: ${escapeHtml(syncedAt)}</div>`
+          : "";
+        const paperWhy = extractExplainerWhy(paperSnapshot.technical_explainer);
+        const liveWhy = extractExplainerWhy(liveSnapshot.technical_explainer);
+        const whyLine =
+          paperWhy || liveWhy
+            ? `<div class="account-submetric"><strong>Why today:</strong> Paper: ${escapeHtml(paperWhy || "No explicit explanation available.")} Brokerage: ${escapeHtml(liveWhy || "No explicit explanation available.")}</div>`
+            : "";
+        const paperProof = paperSnapshot.url || PAPER_PROOF_IMAGE;
+        const brokerageProof = liveSnapshot.url || BROKERAGE_PROOF_IMAGE;
+
+        return `
+          <div class="account-summary">
+            <strong>Account status now:</strong> paper strategy remains the primary engine, and brokerage trades should only be taken opportunistically when the same RAG/risk gates pass.
+          </div>
+          <div class="account-grid">
+            <div class="account-card">
+              <h4>Paper Account (Primary)</h4>
+              <div class="account-metric">${formatCurrency(paperEquity)}</div>
+              <div class="account-submetric">Today: ${formatSignedCurrency(resolvedPaperTodayPL)}</div>
+              ${
+                paperStructures != null || paperFills != null || paperOrders != null
+                  ? `<div class="account-submetric">Today activity (paper): ${
+                      paperStructures != null
+                        ? `${escapeHtml(String(paperStructures))} structure(s)`
+                        : "n/a structures"
+                    }, ${escapeHtml(String(paperFills ?? 0))} fill(s)${
+                      paperOrders != null
+                        ? ` (${escapeHtml(String(paperOrders))} orders)`
+                        : ""
+                    }${
+                      paperTradedFromReport === false && (paperOrders || 0) > 0
+                        ? " (submitted but not filled)"
+                        : ""
+                    }</div>`
+                  : ""
+              }
+              <div class="account-submetric">Total P/L: ${formatSignedCurrency(paperPL)} (${formatSignedPercent(paperPLPct)})</div>
+            </div>
+            <div class="account-card">
+              <h4>Brokerage Account (Opportunistic)</h4>
+              <div class="account-metric">${formatCurrency(brokerageEquity)}</div>
+              <div class="account-submetric">Today: ${formatSignedCurrency(brokerageTodayPL)}</div>
+              <div class="account-submetric">Total P/L: ${formatSignedCurrency(brokeragePL)} (${formatSignedPercent(brokeragePLPct)})</div>
+            </div>
+          </div>
+          ${syncLine}
+          ${whyLine}
+          <div class="proof-grid">
+            <div class="proof-item">
+              <a href="${paperProof}" target="_blank" rel="noopener noreferrer">Paper Account Screenshot Evidence</a>
+              <img src="${paperProof}" alt="Paper trading account screenshot evidence">
+            </div>
+            <div class="proof-item">
+              <a href="${brokerageProof}" target="_blank" rel="noopener noreferrer">Brokerage Account Screenshot Evidence</a>
+              <img src="${brokerageProof}" alt="Brokerage account screenshot evidence">
+            </div>
+          </div>
+        `;
+      }
+
+      function buildNorthStarStrategyHtml() {
+        return `
+          <div class="account-summary">
+            <strong>Working strategy:</strong> maximize speed to North Star, not calendar-constrained.
+          </div>
+          <div class="account-grid">
+            <div class="account-card">
+              <h4>Primary Engine</h4>
+              <div class="account-submetric">Paper account strategy + RAG lessons remain the baseline system for signal quality and risk gating.</div>
+            </div>
+            <div class="account-card">
+              <h4>Opportunistic Execution</h4>
+              <div class="account-submetric">Brokerage trades are allowed only when paper-tested setup, policy gates, and RAG-derived rules are all green.</div>
+            </div>
+          </div>
+          <div class="account-submetric">Execution order: validate in paper -> confirm gates -> size conservatively in brokerage -> feed outcomes back into RAG.</div>
+        `;
+      }
+
+      async function buildLocalChatResponse(message) {
+        if (isAccountEvidenceQuery(message)) {
+          try {
+            const [state, snapshotManifest, verificationReports] = await Promise.all([
+              fetchSystemState(true),
+              fetchSnapshotManifest(true).catch(() => null),
+              fetchVerificationReports(true).catch(() => null),
+            ]);
+            return {
+              html: buildAccountEvidenceHtml(state, snapshotManifest, verificationReports),
+              plain:
+                "Provided today's paper and brokerage P/L with screenshot evidence and why-summary.",
+            };
+          } catch {
+            return {
+              html:
+                "I could not fetch latest account state right now. Please retry in a few seconds.",
+              plain: "Account state fetch failed.",
+            };
+          }
+        }
+
+        if (isNorthStarStrategyQuery(message)) {
+          return {
+            html: buildNorthStarStrategyHtml(),
+            plain:
+              "North Star strategy: fastest path, with opportunistic brokerage execution gated by paper strategy + RAG lessons.",
+          };
+        }
+
+        return null;
+      }
+
       // Chat functionality with conversation memory
       let conversationHistory = [];
+
+      const CHAT_HISTORY_STORAGE_KEY = "rag_query_question_history_v1";
+      const CHAT_HISTORY_MAX = 25;
+
+      function readChatQuestionHistory() {
+        try {
+          const raw = localStorage.getItem(CHAT_HISTORY_STORAGE_KEY);
+          const data = raw ? JSON.parse(raw) : [];
+          return Array.isArray(data) ? data.filter((v) => typeof v === "string") : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function writeChatQuestionHistory(items) {
+        try {
+          localStorage.setItem(
+            CHAT_HISTORY_STORAGE_KEY,
+            JSON.stringify(items.slice(0, CHAT_HISTORY_MAX))
+          );
+        } catch {
+          // ignore quota / blocked storage
+        }
+      }
+
+      function recordChatQuestion(question) {
+        const q = String(question || "").trim();
+        if (!q) return;
+        const history = readChatQuestionHistory();
+        const next = [q, ...history.filter((x) => x !== q)];
+        writeChatQuestionHistory(next);
+      }
+
+      function renderChatQuestionSuggestions() {
+        const list = document.getElementById("chatInputSuggestions");
+        const hint = document.getElementById("chatHistoryHint");
+        if (!list) return;
+
+        const history = readChatQuestionHistory();
+        list.innerHTML = "";
+        for (const q of history.slice(0, CHAT_HISTORY_MAX)) {
+          const opt = document.createElement("option");
+          opt.value = q;
+          list.appendChild(opt);
+        }
+
+        if (!hint) return;
+
+        if (history.length) {
+          const last = history[0];
+          hint.style.display = "block";
+          hint.innerHTML = `Last question: <button type="button" class="hint-btn" id="useLastQuestionBtn">${escapeHtml(
+            last.length > 90 ? last.slice(0, 90) + "..." : last
+          )}</button> <span class="hint-meta">(click to insert, or press ↑)</span>`;
+
+          // (Re)bind every render to keep it simple.
+          const btn = document.getElementById("useLastQuestionBtn");
+          btn?.addEventListener("click", () => {
+            const chatInput = document.getElementById("chatInput");
+            if (!chatInput) return;
+            chatInput.value = last;
+            chatInput.focus();
+          });
+        } else {
+          hint.style.display = "none";
+          hint.innerHTML = "";
+        }
+      }
 
       function setupChatListeners() {
         const chatInput = document.getElementById("chatInput");
@@ -1273,6 +1949,17 @@ Tags: ${lesson.tags.join(", ")}`;
           }
         });
 
+        // Quick recall: ArrowUp restores last asked question if input is empty.
+        chatInput.addEventListener("keydown", (e) => {
+          if (e.key !== "ArrowUp") return;
+          if (String(chatInput.value || "").trim().length) return;
+          const history = readChatQuestionHistory();
+          if (!history.length) return;
+          e.preventDefault();
+          chatInput.value = history[0];
+          chatInput.setSelectionRange(chatInput.value.length, chatInput.value.length);
+        });
+
         // Example chips
         document.querySelectorAll(".example-chip").forEach((chip) => {
           chip.addEventListener("click", () => {
@@ -1280,6 +1967,8 @@ Tags: ${lesson.tags.join(", ")}`;
             sendChatMessage();
           });
         });
+
+        renderChatQuestionSuggestions();
       }
 
       async function sendChatMessage() {
@@ -1289,6 +1978,9 @@ Tags: ${lesson.tags.join(", ")}`;
         const message = chatInput.value.trim();
 
         if (!message) return;
+
+        recordChatQuestion(message);
+        renderChatQuestionSuggestions();
 
         // Add user message to UI
         chatMessages.innerHTML += `
@@ -1309,6 +2001,27 @@ Tags: ${lesson.tags.join(", ")}`;
                 </div>
             `;
         chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        const localReply = await buildLocalChatResponse(message);
+        if (localReply) {
+          document.getElementById(loadingId)?.remove();
+          conversationHistory.push({ role: "user", content: message });
+          conversationHistory.push({
+            role: "assistant",
+            content: localReply.plain,
+          });
+          if (conversationHistory.length > 10) {
+            conversationHistory = conversationHistory.slice(-10);
+          }
+          chatMessages.innerHTML += `
+                    <div class="chat-message assistant">
+                        <div class="message-content account-evidence">${localReply.html}</div>
+                    </div>
+                `;
+          chatSendBtn.disabled = false;
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+          return;
+        }
 
         try {
           const response = await fetch(WORKER_URL, {

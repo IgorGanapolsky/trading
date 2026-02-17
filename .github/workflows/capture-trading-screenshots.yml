@@ -103,6 +103,7 @@ jobs:
         if: steps.precheck.outputs.capture_needed == 'true'
         run: |
           pip install playwright pillow
+          pip install openai==1.109.1
           playwright install chromium
 
       - name: Capture screenshots
@@ -122,10 +123,26 @@ jobs:
       - name: Regenerate pages with latest snapshots
         if: steps.precheck.outputs.capture_needed == 'true'
         run: |
+          echo "🧪 Refreshing Tetrate gateway evidence artifacts (fail-closed)..."
+          REQUIRE_LLM_GATEWAY=true bash scripts/tars_autopilot.sh full
+          echo "✅ Tetrate evidence artifacts refreshed"
+
+          python3 scripts/generate_profit_readiness_scorecard.py \
+            --repo-root . \
+            --artifact-dir artifacts/devloop \
+            --out artifacts/devloop/profit_readiness_scorecard.md || true
+          python3 scripts/generate_system_explainer.py \
+            --repo-root . \
+            --out docs/_reports/hackathon-system-explainer.md || true
+
           python3 scripts/generate_judge_demo_page.py --repo-root . --out docs/lessons/judge-demo.html
           python3 scripts/generate_ops_status_page.py --repo-root . --out docs/lessons/ops-status.html
           python3 scripts/generate_world_class_dashboard_enhanced.py || python3 scripts/generate_world_class_dashboard.py
           python3 scripts/update_docs_index.py || true
+        env:
+          LLM_GATEWAY_BASE_URL: ${{ secrets.LLM_GATEWAY_BASE_URL }}
+          LLM_GATEWAY_API_KEY: ${{ secrets.LLM_GATEWAY_API_KEY }}
+          TETRATE_API_KEY: ${{ secrets.TETRATE_API_KEY }}
 
       - name: Upload screenshots as artifacts
         if: steps.precheck.outputs.capture_needed == 'true'
@@ -143,7 +160,7 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add data/screenshots/ docs/assets/snapshots/ docs/data/alpaca_snapshots.json docs/lessons/judge-demo.html docs/lessons/ops-status.html wiki/Progress-Dashboard.md docs/index.md || true
+          git add data/screenshots/ docs/assets/snapshots/ docs/data/alpaca_snapshots.json docs/lessons/judge-demo.html docs/lessons/ops-status.html docs/_reports/hackathon-system-explainer.md artifacts/devloop/profit_readiness_scorecard.md artifacts/tars/ wiki/Progress-Dashboard.md docs/index.md || true
           if git diff-index --quiet HEAD; then
             echo "No changes to commit"
           else

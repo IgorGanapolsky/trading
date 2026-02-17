@@ -743,22 +743,40 @@ def main():
     # LL-297 FIX (Jan 23, 2026): Daily trade limit to prevent churning
     # ROOT CAUSE: 21 trades in one day caused $11.29 loss from bid/ask spreads
     # SOLUTION: Only 1 iron condor entry per day (4 legs max)
-    MAX_TRADES_PER_DAY = 4  # 1 iron condor = 4 legs
+    # NOTE: trades_{date}.json can include Alpaca fill-sync entries (strategy=alpaca_sync).
+    # We count *structures* (strategy-level iron condor entries) instead of raw rows.
+    try:
+        from src.core.trading_constants import MAX_DAILY_STRUCTURES as MAX_STRUCTURES_PER_DAY
+    except Exception:
+        MAX_STRUCTURES_PER_DAY = 1
     trades_file = Path(f"data/trades_{datetime.now().strftime('%Y-%m-%d')}.json")
     if trades_file.exists():
         try:
             with open(trades_file) as f:
                 today_trades = json.load(f)
-            if len(today_trades) >= MAX_TRADES_PER_DAY:
+            if not isinstance(today_trades, list):
+                today_trades = []
+            structures_today = len(
+                [
+                    t
+                    for t in today_trades
+                    if isinstance(t, dict)
+                    and t.get("strategy") == "iron_condor"
+                    and (t.get("order_ids") or isinstance(t.get("legs"), dict))
+                ]
+            )
+            if structures_today >= MAX_STRUCTURES_PER_DAY:
                 logger.warning("=" * 60)
                 logger.warning("DAILY TRADE LIMIT REACHED - BLOCKING NEW TRADES")
                 logger.warning("=" * 60)
-                logger.warning(f"Trades today: {len(today_trades)} (max: {MAX_TRADES_PER_DAY})")
+                logger.warning(
+                    f"Structures today: {structures_today} (max: {MAX_STRUCTURES_PER_DAY})"
+                )
                 logger.warning("Reason: Prevent churning and bid/ask spread losses")
                 logger.warning("=" * 60)
                 return {
                     "success": False,
-                    "reason": f"Daily limit reached: {len(today_trades)}/{MAX_TRADES_PER_DAY}",
+                    "reason": f"Daily structure limit reached: {structures_today}/{MAX_STRUCTURES_PER_DAY}",
                 }
         except Exception as e:
             logger.warning(f"Could not check daily trades: {e}")

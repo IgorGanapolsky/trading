@@ -45,7 +45,7 @@ jobs:
           git add docs/_posts/
           git add data/rag/lessons_query.json
           git add docs/data/rag/lessons_query.json || true
-          git add docs/lessons/index.md || true
+          git add docs/lessons/index.html || true
 
           if git diff --staged --quiet; then
             echo "Blog already up to date"

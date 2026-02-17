@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import time
 from pathlib import Path
 from typing import Any
@@ -26,6 +27,13 @@ USER_PROMPT = """Context:
 
 Produce one actionable trade opinion JSON object only.
 """
+
+# For hackathon evidence we prefer a known-working OpenAI-family model on the
+# gateway. This avoids "non-actionable" failures when the BATS selector picks a
+# model that isn't enabled on the current gateway profile.
+PREFERRED_GATEWAY_MODEL = (
+    os.environ.get("TARS_TRADE_OPINION_MODEL") or os.environ.get("OPENAI_MODEL") or "gpt-4o-mini"
+)
 
 
 def is_actionable(payload: dict[str, Any]) -> tuple[bool, str]:
@@ -115,7 +123,14 @@ def main() -> int:
     chosen_model = ""
 
     primary_client = OpenAI(api_key=primary_cfg.api_key, base_url=primary_cfg.base_url)
-    model_order = [gateway_model if using_gateway else canonical_model]
+    preferred = (
+        to_tars_model_id(PREFERRED_GATEWAY_MODEL) if using_gateway else PREFERRED_GATEWAY_MODEL
+    )
+    model_order = [preferred]
+    # Keep the selector-chosen model in the attempt set for evidence of routing logic,
+    # but don't let it block a valid gateway smoke.
+    if (gateway_model if using_gateway else canonical_model) not in model_order:
+        model_order.append(gateway_model if using_gateway else canonical_model)
     if using_gateway:
         model_order.extend(
             [

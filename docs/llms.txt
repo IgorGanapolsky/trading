@@ -15,11 +15,11 @@
 - Full markdown catalog: https://igorganapolsky.github.io/trading/llms-full.txt
 
 ## Content Snapshot
-- Blog posts published: 54
-- Reports published: 4
+- Blog posts published: 55
+- Reports published: 5
 - Lessons in RAG markdown: 168
 - Automation workflows: 89
-- Latest blog post date: 2026-02-15
+- Latest blog post date: 2026-02-17
 - Latest lesson date: 2026-02-16
 
 ## Tech Stack (How It Plays Together)
@@ -30,6 +30,7 @@
 - Reliability layer: GitHub Actions + Ralph Mode self-healing loops.
 
 ## Recent Posts
+- [North Star Operating Strategy: Fast, Gated, Coherent](https://igorganapolsky.github.io/trading/2026/02/17/north-star-operating-strategy.html) - 2026-02-17
 - [Building an AI Trading System for the Tetrate Buildathon](https://igorganapolsky.github.io/trading/2026/02/15/tetrate-buildathon-ai-trading-system.html) - 2026-02-15
 - [Why We Route Trading AI Through TARS: Multi-Model Architecture for SPY Options](https://igorganapolsky.github.io/trading/2026/02/15/tars-multi-model-routing-trading.html) - 2026-02-15
 - [PaperBanana: How We Auto-Generate Architecture Diagrams with Gemini](https://igorganapolsky.github.io/trading/2026/02/15/paperbanana-automated-architecture-diagrams.html) - 2026-02-15
@@ -41,7 +42,6 @@
 - [Building a Blog That Writes Itself (Meta, I Know)](https://igorganapolsky.github.io/trading/2026/02/03/rlhf-win.html) - 2026-02-03
 - [Building a Blog That Writes Itself (Meta, I Know)](https://igorganapolsky.github.io/trading/2026/02/03/rlhf-win-1524.html) - 2026-02-03
 - [Ralph Weekly Digest: Week of 2026-01-25](https://igorganapolsky.github.io/trading/2026/02/01/ralph-weekly-digest.html) - 2026-02-01
-- [🟠 HIGH LL-298: Invalid Option Strikes Caus (+2 more)](https://igorganapolsky.github.io/trading/2026/02/01/ralph-discovery.html) - 2026-02-01
 
 ## Machine-Readable Policy
 - This file is auto-generated; do not edit manually.

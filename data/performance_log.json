@@ -125,5 +125,11 @@
     "pl_pct": 0.0,
     "account_type": "paper",
     "note": "NEW $30K PAPER ACCOUNT - PA3PYE0C9MN - Fresh start, clean slate"
+  },
+  {
+    "date": "2026-02-17",
+    "timestamp": "2026-02-17T20:02:38.823029",
+    "equity": 101380.12,
+    "pl": 101360.12
   }
 ]

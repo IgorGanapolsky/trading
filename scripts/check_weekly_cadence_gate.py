@@ -126,6 +126,45 @@ def markdown_report(result: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def markdown_public_report(result: dict[str, Any]) -> str:
+    """Render a minimal public-safe cadence report."""
+    lines: list[str] = []
+    lines.append("# Weekly Cadence KPI Check")
+    lines.append("")
+    lines.append(f"- Passed: `{result.get('passed', False)}`")
+    lines.append(f"- Alert Level: `{result.get('alert_level', 'unknown')}`")
+    lines.append(
+        "- Qualified Setups: "
+        f"`{_to_int(result.get('qualified_setups_observed'), 0)}/"
+        f"{_to_int(result.get('min_qualified_setups_per_week'), 0)}`"
+    )
+    lines.append(
+        "- Closed Trades: "
+        f"`{_to_int(result.get('closed_trades_observed'), 0)}/"
+        f"{_to_int(result.get('min_closed_trades_per_week'), 0)}`"
+    )
+    blocked = result.get("blocked_categories", [])
+    allowed_categories = {
+        "liquidity",
+        "regime",
+        "cadence",
+        "credit",
+        "volatility",
+        "position_limit",
+        "none",
+    }
+    if isinstance(blocked, list) and blocked:
+        filtered = []
+        for item in blocked:
+            category = str(item).strip().lower()
+            filtered.append(category if category in allowed_categories else "other")
+        lines.append(f"- Blocked Categories: `{', '.join(filtered)}`")
+    else:
+        lines.append("- Blocked Categories: none")
+    lines.append("")
+    return "\n".join(lines)
+
+
 def _should_fail(*, result: dict[str, Any], strict: bool, fail_on: str) -> bool:
     if result.get("passed"):
         return False
@@ -184,17 +223,33 @@ def main() -> int:
     if args.out:
         out_path = Path(_sanitize(args.out))
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        # Break CodeQL taint chain via JSON round-trip (same pattern as _load_json).
-        # Content is non-sensitive trade metrics (counts, levels, pass/fail).
-        safe_report = json.dumps(json.loads(json.dumps(report)), indent=2)
+        # SECURITY: Do not persist state-derived cadence values to disk from this
+        # checker. Keep detailed metrics in stdout (ephemeral CI stream) and write
+        # only a static marker artifact.
+        safe_report = (
+            "# Weekly Cadence KPI Artifact\n\n"
+            "Detailed cadence metrics are emitted to stdout only.\n"
+            "This file is an execution marker for workflow evidence.\n"
+        )
         with open(str(out_path), "w", encoding="utf-8") as f:
-            f.write(safe_report + "\n")
+            f.write(safe_report)
         print(f"ok: cadence report -> {_sanitize(out_path)}")
 
     if args.json:
         safe_result = {
-            _sanitize(k): _sanitize(v) if not isinstance(v, list) else [_sanitize(i) for i in v]
-            for k, v in result.items()
+            "passed": bool(result.get("passed", False)),
+            "alert_level": _sanitize(result.get("alert_level", "unknown")),
+            "qualified_setups_observed": _to_int(result.get("qualified_setups_observed"), 0),
+            "min_qualified_setups_per_week": _to_int(
+                result.get("min_qualified_setups_per_week"), 0
+            ),
+            "closed_trades_observed": _to_int(result.get("closed_trades_observed"), 0),
+            "min_closed_trades_per_week": _to_int(result.get("min_closed_trades_per_week"), 0),
+            "blocked_categories": [
+                _sanitize(item) for item in (result.get("blocked_categories") or [])
+            ],
+            "ai_credit_stress_status": _sanitize(result.get("ai_credit_stress_status", "unknown")),
+            "ai_credit_stress_score": result.get("ai_credit_stress_score"),
         }
         print(json.dumps(safe_result, indent=2))
     else:

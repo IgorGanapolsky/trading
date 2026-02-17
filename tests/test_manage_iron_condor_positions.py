@@ -92,11 +92,11 @@ class TestExitConditions:
         assert should_exit is True
         assert reason == "DTE_EXIT"
 
-    def test_exit_at_75_percent_profit(self):
-        """Should exit when profit >= 75% of credit."""
+    def test_exit_at_50_percent_profit(self):
+        """Should exit when profit >= 50% of credit."""
         ic = {
             "expiry": datetime.now() + timedelta(days=30),  # Not near expiry
-            "total_pl": 160,  # 80% profit (above 75% target)
+            "total_pl": 110,  # 55% profit (above 50% target)
             "credit_received": 200,
         }
         should_exit, reason, _ = check_exit_conditions(ic)
@@ -127,6 +127,6 @@ class TestExitConditions:
 
     def test_config_values_aligned_with_strategy(self):
         """Verify config matches CLAUDE.md strategy."""
-        assert IC_EXIT_CONFIG["profit_target_pct"] == 0.75  # 75% profit
+        assert IC_EXIT_CONFIG["profit_target_pct"] == 0.50  # 50% profit per LL-268
         assert IC_EXIT_CONFIG["stop_loss_pct"] == 1.00  # 100% stop
         assert IC_EXIT_CONFIG["exit_dte"] == 7  # 7 DTE per LL-268

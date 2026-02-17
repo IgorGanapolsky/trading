@@ -168,7 +168,7 @@ jobs:
           git add data/performance_log.json || true
           git add data/rag/lessons_query.json || true
           git add docs/data/rag/lessons_query.json || true
-          git add docs/lessons/index.md || true
+          git add docs/lessons/index.html || true
           git add docs/_reports/ || true
           git add docs/_posts/ || true
           git add docs/index.md || true

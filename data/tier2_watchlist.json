@@ -1,0 +1,9 @@
+{
+  "meta": {
+    "last_updated": "2026-02-17",
+    "source": "repo-default",
+    "notes": "Required by daily-trading workflow validation. Tier-2 watchlist is optional for SPY iron condor, but this file must exist so trading runs don't fail."
+  },
+  "current_holdings": [],
+  "watchlist": []
+}

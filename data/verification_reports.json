@@ -1,0 +1,12 @@
+[
+  {
+    "date": "2026-02-17",
+    "traded": true,
+    "orders": 29,
+    "fills": 29,
+    "positions": 4,
+    "equity": 101380.12,
+    "daily_pnl": -57.44000000000233,
+    "total_pnl": 1380.1199999999953
+  }
+]

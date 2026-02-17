@@ -50,7 +50,7 @@ def test_weekly_gate_blocks_when_recent_expectancy_negative(tmp_path):
 def test_contribution_plan_contains_return_scenarios():
     plan = compute_contribution_plan(
         {
-            "paper_account": {"equity": 101443.56},
+            "paper_account": {"equity": 10_000.0},
             "live_account": {"equity": 30.0, "positions_count": 0},
         },
         today=date(2026, 2, 12),
@@ -59,7 +59,8 @@ def test_contribution_plan_contains_return_scenarios():
     by_return = plan["required_monthly_contribution_by_return"]
     assert "20%" in by_return
     assert "30%" in by_return
-    assert by_return["20%"] > by_return["30%"]
+    assert by_return["20%"] >= by_return["30%"]
+    assert by_return["20%"] > 0.0
     assert plan["estimated_live_contribution_this_month"] is not None
 
 

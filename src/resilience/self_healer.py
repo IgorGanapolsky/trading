@@ -302,18 +302,24 @@ class SelfHealer:
             )
 
         try:
+            # Import canonical constants
+            import sys
+
+            sys.path.insert(0, str(self.project_root))
+            from src.core.trading_constants import ALLOWED_TICKERS, MAX_POSITION_PCT, MAX_POSITIONS
+
             with open(state_file) as f:
                 data = json.load(f)
 
             positions = data.get("positions", [])
             equity = data.get("portfolio", {}).get("equity", 5000)
-            max_position_value = equity * 0.05  # 5% rule
+            max_position_value = equity * MAX_POSITION_PCT
 
             violations = []
 
-            # Check position count (max 4 per CLAUDE.md)
-            if len(positions) > 4:
-                violations.append(f"Position count {len(positions)} > 4 max")
+            # Check position count (max from canonical constants)
+            if len(positions) > MAX_POSITIONS:
+                violations.append(f"Position count {len(positions)} > {MAX_POSITIONS} max")
 
             # Check position values
             for pos in positions:
@@ -322,14 +328,14 @@ class SelfHealer:
 
                 if value > max_position_value:
                     violations.append(
-                        f"{symbol} value ${value:.2f} > ${max_position_value:.2f} (5% limit)"
+                        f"{symbol} value ${value:.2f} > ${max_position_value:.2f} ({MAX_POSITION_PCT * 100}% limit)"
                     )
 
-                # Check for non-SPY positions
+                # Check against canonical ticker whitelist
                 underlying = symbol[:3] if len(symbol) > 3 else symbol
-                if underlying not in {"SPY", "SPX", "XSP", "QQQ", "IWM"}:
+                if underlying not in ALLOWED_TICKERS:
                     violations.append(
-                        f"{symbol} not in allowed tickers (CLAUDE.md: liquid ETFs only)"
+                        f"{symbol} not in allowed tickers (canonical: {sorted(ALLOWED_TICKERS)})"
                     )
 
             if violations:

@@ -21,11 +21,25 @@ OUTPUT_PATHS = [
 LESSONS_PAGE_PATH = Path("docs/lessons/index.html")
 
 DATE_PATTERNS = [
-    (re.compile(r"\*\*Date\*\*:\s*(.+)$", re.IGNORECASE | re.MULTILINE), "%B %d, %Y"),
-    (re.compile(r"\bDate\b:\s*(\d{4}-\d{2}-\d{2})", re.IGNORECASE), "%Y-%m-%d"),
+    re.compile(r"\*\*Date(?:\*\*:|:\*\*)\s*(.+)$", re.IGNORECASE | re.MULTILINE),
+    re.compile(r"\bDate\b:\s*(\d{4}-\d{2}-\d{2})", re.IGNORECASE),
 ]
 FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 TRUTHY = {"1", "true", "yes", "on"}
+MONTH_MAP = {
+    "jan": 1,
+    "feb": 2,
+    "mar": 3,
+    "apr": 4,
+    "may": 5,
+    "jun": 6,
+    "jul": 7,
+    "aug": 8,
+    "sep": 9,
+    "oct": 10,
+    "nov": 11,
+    "dec": 12,
+}
 
 
 def _extract_field(pattern: re.Pattern, text: str) -> str:
@@ -96,20 +110,64 @@ def _parse_date_value(raw: str) -> datetime | None:
         return None
 
 
-def _parse_date(text: str, frontmatter_date: str = "") -> tuple[str, datetime | None]:
+def _infer_date_from_path(path: Path) -> datetime | None:
+    stem = path.stem.lower()
+
+    ymd_compact = re.search(r"(20\d{2})(\d{2})(\d{2})", stem)
+    if ymd_compact:
+        year, month, day = map(int, ymd_compact.groups())
+        try:
+            return datetime(year, month, day)
+        except ValueError:
+            pass
+
+    ymd_dashed = re.search(r"(20\d{2})[-_](\d{2})[-_](\d{2})", stem)
+    if ymd_dashed:
+        year, month, day = map(int, ymd_dashed.groups())
+        try:
+            return datetime(year, month, day)
+        except ValueError:
+            pass
+
+    month_day = re.search(r"(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)(\d{1,2})(?!\d)", stem)
+    if month_day:
+        month_txt, day_txt = month_day.groups()
+        day = int(day_txt)
+        month = MONTH_MAP[month_txt]
+        year_match = re.search(r"(20\d{2})", stem)
+        year = int(year_match.group(1)) if year_match else datetime.now(timezone.utc).year
+        try:
+            return datetime(year, month, day)
+        except ValueError:
+            pass
+
+    return None
+
+
+def _parse_date(
+    text: str, frontmatter_date: str = "", path: Path | None = None
+) -> tuple[str, datetime | None]:
+    fallback_raw = frontmatter_date or ""
     if frontmatter_date:
         parsed = _parse_date_value(frontmatter_date)
-        return frontmatter_date, parsed
+        if parsed:
+            return frontmatter_date, parsed
 
-    for pattern, fmt in DATE_PATTERNS:
+    for pattern in DATE_PATTERNS:
         raw = _extract_field(pattern, text)
         if raw:
-            try:
-                parsed = datetime.strptime(raw, fmt)
+            parsed = _parse_date_value(raw)
+            if parsed:
                 return raw, parsed
-            except ValueError:
-                return raw, None
-    return "", None
+            if not fallback_raw:
+                fallback_raw = raw
+
+    if path is not None:
+        inferred = _infer_date_from_path(path)
+        if inferred:
+            return inferred.strftime("%Y-%m-%d"), inferred
+
+    return fallback_raw, None
 
 
 def _is_noise_artifact_lesson(
@@ -156,7 +214,7 @@ def build_index() -> list[dict]:
         ):
             continue
 
-        date_raw, date_obj = _parse_date(text, frontmatter.get("date", ""))
+        date_raw, date_obj = _parse_date(text, frontmatter.get("date", ""), path=path)
         category_label = _extract_field(
             re.compile(r"\*\*Category\*\*:\s*(.+)$", re.IGNORECASE | re.MULTILINE),
             text,

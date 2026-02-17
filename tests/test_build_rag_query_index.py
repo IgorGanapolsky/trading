@@ -69,3 +69,51 @@ source: tars_artifact_ingest
     assert lessons[0]["id"] == "tars_20260216_smoke_metrics_deadbeef"
     assert lessons[0]["severity"] == "INFO"
     assert lessons[0]["date"] == "2026-02-16T16:27:33Z"
+
+
+def test_build_index_parses_bold_date_with_colon_inside_markup(tmp_path: Path, monkeypatch) -> None:
+    rag_root = tmp_path / "rag_knowledge"
+    monkeypatch.setattr(build_rag_query_index, "RAG_ROOT", rag_root)
+
+    _write(
+        rag_root / "lessons_learned" / "ll_999_markup_date.md",
+        """# LL-999: Markup Date Format
+
+**Date:** 2026-02-16
+**Severity:** HIGH
+""",
+    )
+
+    lessons = build_rag_query_index.build_index()
+    assert len(lessons) == 1
+    assert lessons[0]["id"] == "ll_999_markup_date"
+    assert lessons[0]["date"] == "2026-02-16"
+
+
+def test_build_index_falls_back_to_filename_date_when_metadata_missing(
+    tmp_path: Path, monkeypatch
+) -> None:
+    rag_root = tmp_path / "rag_knowledge"
+    monkeypatch.setattr(build_rag_query_index, "RAG_ROOT", rag_root)
+
+    _write(
+        rag_root / "lessons_learned" / "ll_proactive_scan_20260216.md",
+        """# Ralph Proactive Scan Findings
+
+No explicit date metadata in this lesson body.
+""",
+    )
+    _write(
+        rag_root / "lessons_learned" / "ll_proactive_scan_20260215.md",
+        """# Ralph Proactive Scan Findings
+
+No explicit date metadata in this lesson body.
+""",
+    )
+
+    lessons = build_rag_query_index.build_index()
+    assert [lesson["id"] for lesson in lessons[:2]] == [
+        "ll_proactive_scan_20260216",
+        "ll_proactive_scan_20260215",
+    ]
+    assert lessons[0]["date"] == "2026-02-16"

@@ -138,20 +138,20 @@ def generate_linkedin_text(signal: str, context: str, equity: float = 0.0) -> st
     import json
     from pathlib import Path
 
-    # Load equity from canonical source if not provided
-    if equity <= 0:
-        state_file = Path("data/system_state.json")
-        if state_file.exists():
-            with open(state_file) as f:
-                state = json.load(f)
-            equity = state.get("paper_account", {}).get("equity", 0.0)
-
-    starting = 100000.0
+    state = {}
     state_file = Path("data/system_state.json")
     if state_file.exists():
         with open(state_file) as f:
             state = json.load(f)
+
+    # Load equity from canonical source if not provided
+    if equity <= 0:
+        equity = state.get("paper_account", {}).get("equity", 0.0)
+
+    starting = 100000.0
+    if state:
         starting = state.get("paper_account", {}).get("starting_balance", 100000.0)
+    live_equity = state.get("live_account", {}).get("current_equity", 0.0)
 
     gain = equity - starting
     gain_pct = (gain / starting) * 100 if starting > 0 else 0
@@ -184,10 +184,11 @@ def generate_linkedin_text(signal: str, context: str, equity: float = 0.0) -> st
 
 {context[:200]}
 
-📊 Current Status:
-• Account: ${equity:,.2f} ({gain_pct:+.1f}% since Jan 30)
-• Strategy: Iron Condors on SPY
-• Goal: $6K/month passive income
+	📊 Current Status:
+	• Paper account: ${equity:,.2f} ({gain_pct:+.1f}% vs paper start)
+	• Brokerage account: ${live_equity:,.2f} (opportunistic deployment)
+	• Strategy: SPY iron condors (15-20 delta, $10-wide, up to 5 concurrent)
+	• North Star: $6K/month after-tax, reached as fast as safely possible
 
 🧠 How Our RLHF System Works:
 

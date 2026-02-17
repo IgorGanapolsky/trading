@@ -1,6 +1,10 @@
 """Tests for weekly cadence KPI checker."""
 
-from scripts.check_weekly_cadence_gate import _should_fail, evaluate_weekly_cadence
+from scripts.check_weekly_cadence_gate import (
+    _should_fail,
+    evaluate_weekly_cadence,
+    markdown_public_report,
+)
 
 
 def test_evaluate_weekly_cadence_extracts_kpi_and_diagnostic():
@@ -50,3 +54,24 @@ def test_should_fail_respects_strict_and_threshold():
     assert _should_fail(result=result_warning, strict=False, fail_on="critical") is False
     assert _should_fail(result=result_critical, strict=False, fail_on="critical") is True
     assert _should_fail(result=result_warning, strict=True, fail_on="none") is True
+
+
+def test_markdown_public_report_is_minimal_and_deterministic():
+    result = {
+        "passed": False,
+        "alert_level": "warning",
+        "qualified_setups_observed": 1,
+        "min_qualified_setups_per_week": 3,
+        "closed_trades_observed": 0,
+        "min_closed_trades_per_week": 1,
+        "blocked_categories": ["liquidity"],
+        "summary": "do not include this in public artifact",
+        "diagnostic_summary": "do not include this either",
+        "ai_credit_stress_source": "internal_only",
+    }
+    text = markdown_public_report(result)
+    assert "Weekly Cadence KPI Check" in text
+    assert "Qualified Setups: `1/3`" in text
+    assert "Blocked Categories: `liquidity`" in text
+    assert "do not include" not in text
+    assert "ai_credit_stress_source" not in text

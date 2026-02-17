@@ -44,7 +44,9 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install requests alpaca-py python-dotenv
+        run: |
+          pip install -r requirements-dashboard.txt
+          pip install openai==1.109.1
 
       - name: Sync Alpaca data first
         if: ${{ github.event_name != 'push' }}
@@ -117,9 +119,27 @@ jobs:
 
       - name: Generate Judge and Ops pages
         run: |
+          echo "🧪 Refreshing Tetrate gateway evidence artifacts (fail-closed)..."
+          REQUIRE_LLM_GATEWAY=true bash scripts/tars_autopilot.sh full
+          echo "✅ Tetrate evidence artifacts refreshed"
+
+          echo "📋 Regenerating profit readiness scorecard + system explainer..."
+          python3 scripts/generate_profit_readiness_scorecard.py \
+            --repo-root . \
+            --artifact-dir artifacts/devloop \
+            --out artifacts/devloop/profit_readiness_scorecard.md || true
+          python3 scripts/generate_system_explainer.py \
+            --repo-root . \
+            --out docs/_reports/hackathon-system-explainer.md || true
+          echo "✅ Scorecard + system explainer updated"
+
           echo "🧪 Generating judge evidence page..."
           python3 scripts/generate_judge_demo_page.py --repo-root . --out docs/lessons/judge-demo.html
           echo "✅ Judge page generated"
+        env:
+          LLM_GATEWAY_BASE_URL: ${{ secrets.LLM_GATEWAY_BASE_URL }}
+          LLM_GATEWAY_API_KEY: ${{ secrets.LLM_GATEWAY_API_KEY }}
+          TETRATE_API_KEY: ${{ secrets.TETRATE_API_KEY }}
 
       - name: Generate static dashboard snapshot report
         env:
@@ -192,7 +212,7 @@ jobs:
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          git add data/system_state.json data/north_star_weekly_history.json data/trades.json data/market_signals/ai_credit_stress_signal.json artifacts/devloop/box_workspace_manifest.json artifacts/devloop/ai_discoverability_report.md artifacts/devloop/ai_discoverability_report.json wiki/ docs/index.md docs/_reports/*-dashboard-snapshot.md docs/lessons/judge-demo.html 2>/dev/null || true
+          git add data/system_state.json data/north_star_weekly_history.json data/trades.json data/market_signals/ai_credit_stress_signal.json artifacts/devloop/box_workspace_manifest.json artifacts/devloop/ai_discoverability_report.md artifacts/devloop/ai_discoverability_report.json artifacts/devloop/profit_readiness_scorecard.md artifacts/tars/ docs/ docs/_reports/*-dashboard-snapshot.md docs/_reports/hackathon-system-explainer.md docs/lessons/judge-demo.html wiki/ docs/index.md 2>/dev/null || true
           if ! git diff --staged --quiet; then
             git commit -m "chore: Sync dashboard data [auto]"
             if [ -n "${{ secrets.GH_PAT }}" ]; then

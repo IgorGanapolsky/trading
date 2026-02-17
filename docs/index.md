@@ -8,6 +8,10 @@ This is the unfiltered story of building an autonomous AI trading system—every
 
 **The goal:** Reach $6K/month after-tax options income as fast as safely possible through disciplined, automated execution.
 
+**Strategy Profile:** Automated iron condor system (SPY-first; expandable to SPX/XSP/QQQ/IWM) with 15-20 delta short strikes, $10-wide wings, and up to 5 concurrent positions.
+
+**Capital Deployment Policy:** Alpaca paper account ($100K) is the primary validation engine. Alpaca brokerage account is traded opportunistically only when the same RAG + risk gates pass.
+
 **The method:** A full autonomous stack where each layer has a strict role:
 
 - **Signal + market data layer**: Alpaca + macro/news inputs feed the orchestrator.
@@ -24,17 +28,17 @@ Full architecture: **[Tech Stack](/trading/tech-stack/)**.
 ## Where We Are Today
 
 <!-- AUTO_STATUS_START -->
-_Last Sync: 2026-02-17 14:24 UTC (source: `data/system_state.json`)_
+_Last Sync: 2026-02-17 20:47 UTC (source: `data/system_state.json`)_
 
 | What | Status |
 | ---- | ------ |
-| Account Equity | $101,441.56 |
-| Daily P/L | +$0.00 |
+| Account Equity | $101,401.96 |
+| Daily P/L | -$35.60 |
 | Win Rate | 100.0% (1 trades; target 80.0%) |
 | Paper Phase | Day 14/90 |
 | North Star Gate | ACTIVE (VALIDATING) |
-| Open Positions | 1 structure(s), 4 option leg(s) |
-| Unrealized P/L | +$2.00 |
+| Open Positions | 0 structure(s), 0 option leg(s) |
+| Unrealized P/L | +$0.00 |
 
 **Execution Focus:** Do not scale risk until validation passes.
 <!-- AUTO_STATUS_END -->
@@ -54,9 +58,9 @@ Latest snapshots are refreshed by automation and published to GitHub Pages.
 | --- | --- |
 | ![Alpaca Paper Snapshot](/trading/assets/snapshots/alpaca_paper_latest.png) | ![PaperBanana Paper Diagram](/trading/assets/snapshots/paperbanana_paper_latest.svg) |
 
-Captured: `2026-02-17T14:25:30Z`
+Captured: `2026-02-17T20:16:23Z`
 
-Technical readout: Paper Account: net liquidation value $101,441.56; daily P/L +0.00 (+0.0 bps) indicating a flat premium-decay session; cumulative P/L +1,441.56 (+1.44%); low capital deployment at 0.8% utilization with cash $101,613.56; open position proxy 4; win-rate estimate 100.0% (n=1); North Star gate MEDIUM.
+Technical readout: Paper Account: net liquidation value $101,382.04; daily P/L -55.52 (+0.0 bps) indicating a negative drift session; cumulative P/L +1,382.04 (+1.38%); low capital deployment at 0.8% utilization with cash $100,542.04; open position proxy 2; win-rate estimate 100.0% (n=1); North Star gate MEDIUM.
 
 ### Brokerage (Live) Snapshot + PaperBanana Financial Diagram
 
@@ -64,14 +68,14 @@ Technical readout: Paper Account: net liquidation value $101,441.56; daily P/L +
 | --- | --- |
 | ![Alpaca Brokerage Snapshot](/trading/assets/snapshots/alpaca_live_latest.png) | ![PaperBanana Brokerage Diagram](/trading/assets/snapshots/paperbanana_live_latest.svg) |
 
-Captured: `2026-02-17T14:25:30Z`
+Captured: `2026-02-17T20:16:23Z`
 
-Technical readout: Brokerage Account: net liquidation value $207.02; daily P/L +0.00 (+0.0 bps) indicating a flat premium-decay session; cumulative P/L +187.02 (+935.10%); high capital deployment at 90.3% utilization with cash $40.00; open position proxy 0; win-rate estimate 0.0% (n=0); North Star gate MEDIUM.
+Technical readout: Brokerage Account: net liquidation value $207.90; daily P/L +0.00 (+0.0 bps) indicating a flat premium-decay session; cumulative P/L +187.90 (+939.50%); high capital deployment at 90.4% utilization with cash $40.00; open position proxy 0; win-rate estimate 0.0% (n=0); North Star gate MEDIUM.
 
 ### Progress Dashboard Snapshot
 ![Progress Dashboard Snapshot](/trading/assets/snapshots/progress_latest.png)
 
-Captured: `2026-02-17T14:25:30Z`
+Captured: `2026-02-17T20:16:23Z`
 
 Manifest: [`/trading/data/alpaca_snapshots.json`](/trading/data/alpaca_snapshots.json)
 <!-- AUTO_SNAPSHOT_END -->

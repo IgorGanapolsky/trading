@@ -10,9 +10,11 @@
 
 Autonomous AI trading system with multi-model routing via [Tetrate Agent Router Service (TARS)](https://router.tetrate.ai), self-healing CI, continuous learning from failures, and a defined-risk SPY iron condor strategy.
 
-> **North Star**: Validated autonomous iron condor system → consistent $500/month on $25K+ capital
+> **North Star**: $6K/month after-tax options income, as fast as safely possible (no fixed date).
 >
-> **Account**: Alpaca Paper ($100K) | **Strategy**: Liquid ETF iron condors (SPY/QQQ/IWM), 15-20 delta, 30-45 DTE | **Min Capital**: $10K (code-enforced)
+> **Accounts**: Alpaca Paper ($100K) validates strategy + Alpaca live brokerage opportunistically mirrors qualified setups behind strict risk gates.
+>
+> **Strategy**: SPY-first iron condors (15-20 delta, $10-wide wings, up to 5 concurrent positions). The risk layer uses an index/ETF whitelist that can expand (broker support permitting); current production trading targets SPY options.
 >
 > **Status**: [System State](https://github.com/IgorGanapolsky/trading/blob/main/data/system_state.json) | [Progress Dashboard](https://github.com/IgorGanapolsky/trading/wiki/Progress-Dashboard) | [GitHub Pages](https://igorganapolsky.github.io/trading/) | [Judge Demo Evidence](https://igorganapolsky.github.io/trading/lessons/judge-demo.html) | [RAG Query](https://igorganapolsky.github.io/trading/rag-query/)
 
@@ -85,13 +87,13 @@ Ralph is the self-healing loop that keeps the system operational:
 
 ---
 
-## Strategy: SPY Iron Condors
+## Strategy: SPY-First Iron Condors
 
 ```
 Sell 15-20 delta put spread + 15-20 delta call spread
-$5-wide wings, 30-45 DTE
+$10-wide wings, 30-45 DTE
 Exit: 50% profit OR 7 DTE | Stop: 200% of credit
-Max risk: $5,000 per position (5% of $100K)
+Max risk: $5,000 per position (5% of $100K), max 5 concurrent positions
 ```
 
 **Why iron condors**: Defined risk on both sides, ~85% probability of profit at 15-delta, theta decay works daily, profits in sideways markets. Phil Town Rule #1 (don't lose money) enforced at every level.
@@ -125,7 +127,7 @@ ruff check src/                          # Lint
 | **Position Limits** | Max 5% per position ($5,000) |
 | **Stop-Loss** | 200% of credit received, no exceptions |
 | **Exit** | 50% profit OR 7 DTE, whichever first |
-| **Max Positions** | 2 iron condors at a time (Phase 1) |
+| **Max Positions** | 5 concurrent iron condors |
 | **Paper First** | 90-day validation before live capital |
 
 ---

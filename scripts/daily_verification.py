@@ -11,7 +11,10 @@ No complexity. No lies. Just facts.
 """
 
 import json
-from datetime import datetime
+import ssl
+import urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import NamedTuple
 
 
@@ -19,12 +22,14 @@ class DailyReport(NamedTuple):
     date: str
     traded_today: bool
     orders_today: int
+    structures_today: int
     fills_today: int
     positions_count: int
     equity: float
     cash: float
     daily_pnl: float
     total_pnl: float
+    last_equity: float
     starting_equity: float = 100000.0
 
 
@@ -35,9 +40,113 @@ def get_alpaca_client():
     return _get_client(paper=True)
 
 
+def _today_et() -> tuple[str, datetime]:
+    """Return today's date string and start-of-day timestamp in America/New_York."""
+    try:
+        from zoneinfo import ZoneInfo
+
+        tz = ZoneInfo("America/New_York")
+        now = datetime.now(tz)
+        today = now.strftime("%Y-%m-%d")
+        start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        return today, start
+    except Exception:
+        # Fallback to UTC.
+        now = datetime.now(timezone.utc)
+        today = now.strftime("%Y-%m-%d")
+        start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        return today, start
+
+
+def _fetch_fills_count_for_date(date_str: str, paper: bool = True) -> int:
+    """Fetch fill count for a given date via Alpaca account activities endpoint."""
+    from src.utils.alpaca_client import get_alpaca_credentials
+
+    api_key, secret_key = get_alpaca_credentials()
+    if not api_key or not secret_key:
+        return 0
+
+    host = "paper-api.alpaca.markets" if paper else "api.alpaca.markets"
+    url = f"https://{host}/v2/account/activities/FILL?date={date_str}"
+    req = urllib.request.Request(
+        url,
+        headers={
+            "accept": "application/json",
+            "APCA-API-KEY-ID": api_key,
+            "APCA-API-SECRET-KEY": secret_key,
+        },
+    )
+    ssl_context = ssl.create_default_context()
+    with urllib.request.urlopen(req, timeout=15, context=ssl_context) as response:
+        payload = json.loads(response.read().decode("utf-8"))
+    if not isinstance(payload, list):
+        return 0
+    return len(payload)
+
+
+def _count_structures_from_trade_file(date_str: str) -> int:
+    """Count strategy structures (not Alpaca-synced fills) from data/trades_{date}.json."""
+    trades_path = Path("data") / f"trades_{date_str}.json"
+    if not trades_path.exists():
+        return 0
+    try:
+        payload = json.loads(trades_path.read_text(encoding="utf-8"))
+    except Exception:
+        return 0
+    if not isinstance(payload, list):
+        return 0
+
+    structures = 0
+    for item in payload:
+        if not isinstance(item, dict):
+            continue
+        if item.get("strategy") == "alpaca_sync":
+            continue
+        # Structure heuristics: order_ids present OR multi-leg dict recorded by strategy.
+        if item.get("order_ids") or (isinstance(item.get("legs"), dict) and item.get("underlying")):
+            structures += 1
+    return structures
+
+
+def _update_system_state_from_report(report: DailyReport) -> None:
+    """Mirror canonical intraday metrics into data/system_state.json to prevent UI mismatches."""
+    state_path = Path("data") / "system_state.json"
+    try:
+        state = json.loads(state_path.read_text(encoding="utf-8")) if state_path.exists() else {}
+        if not isinstance(state, dict):
+            state = {}
+    except Exception:
+        state = {}
+
+    state.setdefault("paper_account", {})
+    state.setdefault("trades", {})
+    state.setdefault("meta", {})
+
+    state["paper_account"]["equity"] = report.equity
+    state["paper_account"]["current_equity"] = report.equity
+    state["paper_account"]["cash"] = report.cash
+    state["paper_account"]["last_equity"] = report.last_equity
+    state["paper_account"]["daily_change"] = round(float(report.daily_pnl or 0.0), 2)
+
+    state["trades"]["metrics_date"] = report.date
+    state["trades"]["orders_today"] = int(report.orders_today)
+    state["trades"]["structures_today"] = int(report.structures_today)
+    state["trades"]["fills_today"] = int(report.fills_today)
+    # Backward-compat fields for older dashboards.
+    state["trades"]["today_trades"] = int(report.fills_today)
+    state["trades"]["total_trades_today"] = int(report.fills_today)
+
+    state["meta"]["last_daily_verification_at"] = datetime.now(timezone.utc).isoformat()
+
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = state_path.with_suffix(".tmp")
+    tmp_path.write_text(json.dumps(state, indent=2), encoding="utf-8")
+    tmp_path.replace(state_path)
+
+
 def verify_today() -> DailyReport:
     """Verify what actually happened today."""
-    today = datetime.now().strftime("%Y-%m-%d")
+    today, today_start = _today_et()
 
     client = get_alpaca_client()
     if not client:
@@ -47,12 +156,14 @@ def verify_today() -> DailyReport:
             date=today,
             traded_today=False,
             orders_today=0,
+            structures_today=0,
             fills_today=0,
             positions_count=0,
             equity=0,
             cash=0,
             daily_pnl=0,
             total_pnl=0,
+            last_equity=0,
         )
 
     # Get account info
@@ -61,52 +172,62 @@ def verify_today() -> DailyReport:
     cash = float(account.cash)
     starting = 100000.0  # Our starting capital
     total_pnl = equity - starting
+    try:
+        last_equity = float(account.last_equity)
+    except Exception:
+        last_equity = 0.0
 
     # Get today's orders
     from alpaca.trading.enums import QueryOrderStatus
     from alpaca.trading.requests import GetOrdersRequest
 
-    today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-
     try:
         orders_request = GetOrdersRequest(
             status=QueryOrderStatus.ALL,
             after=today_start,
+            nested=True,
         )
         orders = client.get_orders(filter=orders_request)
         orders_today = len(orders)
-        fills_today = len([o for o in orders if o.status.value == "filled"])
     except Exception as e:
         print(f"⚠️ Could not fetch orders: {e}")
         orders_today = 0
-        fills_today = 0
 
     # Get positions
     positions = client.get_all_positions()
     positions_count = len(positions)
 
-    # Calculate daily P/L (approximate - Alpaca doesn't give daily directly)
-    # We'll use last_equity from account if available
+    # Calculate daily P/L from Alpaca last_equity (canonical).
+    daily_pnl = equity - last_equity if last_equity else 0.0
+
+    # Fills are per-execution; fetch from Alpaca activities endpoint for accuracy.
     try:
-        last_equity = float(account.last_equity)
-        daily_pnl = equity - last_equity
-    except Exception:
-        daily_pnl = 0.0
+        fills_today = _fetch_fills_count_for_date(today, paper=True)
+    except Exception as e:
+        print(f"⚠️ Could not fetch fills from account activities: {e}")
+        fills_today = 0
+
+    # "Structures" are strategy-level entries recorded to the trades file.
+    structures_today = _count_structures_from_trade_file(today)
 
     traded_today = fills_today > 0
 
-    return DailyReport(
+    report = DailyReport(
         date=today,
         traded_today=traded_today,
         orders_today=orders_today,
+        structures_today=structures_today,
         fills_today=fills_today,
         positions_count=positions_count,
         equity=equity,
         cash=cash,
         daily_pnl=daily_pnl,
         total_pnl=total_pnl,
+        last_equity=last_equity,
         starting_equity=starting,
     )
+    _update_system_state_from_report(report)
+    return report
 
 
 def print_report(report: DailyReport):
@@ -117,7 +238,9 @@ def print_report(report: DailyReport):
 
     # Trade status - the most important thing
     if report.traded_today:
-        print(f"\n✅ TRADED TODAY: {report.fills_today} order(s) filled")
+        print(
+            f"\n✅ ACTIVITY TODAY: {report.structures_today} structure(s), {report.fills_today} fill(s)"
+        )
     else:
         print("\n❌ NO TRADES TODAY")
         if report.orders_today > 0:
@@ -179,9 +302,11 @@ def save_report(report: DailyReport):
             "date": report.date,
             "traded": report.traded_today,
             "orders": report.orders_today,
+            "structures": report.structures_today,
             "fills": report.fills_today,
             "positions": report.positions_count,
             "equity": report.equity,
+            "last_equity": report.last_equity,
             "daily_pnl": report.daily_pnl,
             "total_pnl": report.total_pnl,
         }
