@@ -4,7 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 METRIC_RE = re.compile(r"^- ([^:]+): (.+) \[([A-Z]+)\] \((.*)\)$")
@@ -119,7 +119,7 @@ def main() -> int:
     latency = tars_smoke.get("latency_ms", "n/a")
     cost = tars_smoke.get("estimated_total_cost_usd", "n/a").lstrip("$")
     metric_rows = _normalize_metric_rows(metrics, latency, cost, paper_win_rate, paper_samples)
-    generated_at = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     has_error = resilience.get("has_error_field", "false").lower() == "true"
     err_type = resilience.get("error_type", "none")

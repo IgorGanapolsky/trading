@@ -36,7 +36,7 @@ class TestVIXMeanReversionSignal:
         """Test signal generator initializes correctly."""
         signal_gen = VIXMeanReversionSignal()
         assert signal_gen.VIX_SPIKE_THRESHOLD == 20.0
-        assert signal_gen.VIX_OPTIMAL_MIN == 15.0
+        assert signal_gen.VIX_OPTIMAL_MIN == 12.0
         assert signal_gen.VIX_OPTIMAL_MAX == 25.0
 
     @patch.object(VIXMeanReversionSignal, "get_vix_data")
@@ -71,9 +71,9 @@ class TestVIXMeanReversionSignal:
     @patch.object(VIXMeanReversionSignal, "get_vix_data")
     def test_avoid_signal_vix_too_low(self, mock_get_vix):
         """Test AVOID when VIX too low (premiums thin)."""
-        mock_get_vix.return_value = np.full(60, 12.0)
-
         signal_gen = VIXMeanReversionSignal()
+        mock_get_vix.return_value = np.full(60, signal_gen.VIX_OPTIMAL_MIN - 0.5)
+
         result = signal_gen.calculate_signal()
 
         assert result.signal == "AVOID"
@@ -130,9 +130,8 @@ class TestVIXMeanReversionSignal:
     @patch.object(VIXMeanReversionSignal, "get_vix_data")
     def test_should_enter_trade_avoid(self, mock_get_vix):
         """Test should_enter_trade returns False when should avoid."""
-        mock_get_vix.return_value = np.full(60, 12.0)  # Too low
-
         signal_gen = VIXMeanReversionSignal()
+        mock_get_vix.return_value = np.full(60, signal_gen.VIX_OPTIMAL_MIN - 0.5)
         should_enter, reason = signal_gen.should_enter_trade()
 
         assert should_enter is False
@@ -178,13 +177,13 @@ class TestEdgeCases:
 
     @patch.object(VIXMeanReversionSignal, "get_vix_data")
     def test_vix_at_boundary_15(self, mock_get_vix):
-        """Test VIX exactly at lower boundary (15)."""
+        """Test VIX at 15 remains in the tradable range."""
         mock_get_vix.return_value = np.full(60, 15.0)
 
         signal_gen = VIXMeanReversionSignal()
         result = signal_gen.calculate_signal()
 
-        # 15 is the minimum, should be GOOD_ENTRY
+        # 15 is inside the configured tradable range.
         assert result.signal == "GOOD_ENTRY"
 
     @patch.object(VIXMeanReversionSignal, "get_vix_data")

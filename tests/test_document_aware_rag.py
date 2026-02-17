@@ -14,6 +14,19 @@ from pathlib import Path
 import pytest
 
 
+@pytest.fixture(scope="module")
+def rag_with_index():
+    """Return a RAG instance only when the document-aware table is available."""
+    from src.memory.document_aware_rag import get_document_aware_rag
+
+    rag = get_document_aware_rag()
+    if not rag._init_lancedb():
+        pytest.skip("LanceDB not available")
+    if "document_aware_rag" not in rag._get_table_names():
+        pytest.skip("Document-aware RAG table not found (run reindex)")
+    return rag
+
+
 class TestDocumentAwareRAG:
     """Test suite for document-aware RAG system."""
 
@@ -147,15 +160,9 @@ Always validate position limits before executing trades.
         assert metadata["account"] == "100k"
         assert metadata["market_condition"] == "high_volatility"
 
-    @pytest.mark.skipif(
-        not Path("/Users/ganapolsky_i/workspace/git/igor/trading/.claude/memory/lancedb").exists(),
-        reason="LanceDB not available",
-    )
-    def test_search_integration(self):
+    def test_search_integration(self, rag_with_index):
         """Integration test for search functionality."""
-        from src.memory.document_aware_rag import get_document_aware_rag
-
-        rag = get_document_aware_rag()
+        rag = rag_with_index
 
         result = rag.query_with_context("position stacking", limit=2)
 
@@ -164,15 +171,9 @@ Always validate position limits before executing trades.
         assert "results" in result
         assert result["result_count"] >= 0
 
-    @pytest.mark.skipif(
-        not Path("/Users/ganapolsky_i/workspace/git/igor/trading/.claude/memory/lancedb").exists(),
-        reason="LanceDB not available",
-    )
-    def test_complex_query(self):
+    def test_complex_query(self, rag_with_index):
         """Test complex query about position stacking in high VIX."""
-        from src.memory.document_aware_rag import get_document_aware_rag
-
-        rag = get_document_aware_rag()
+        rag = rag_with_index
 
         result = rag.query_with_context(
             "What went wrong with position stacking in high VIX environments?", limit=3
@@ -384,19 +385,13 @@ class TestVectorFlatteningBenchmark:
         assert "risk management" in flattened
         assert "CRITICAL" in flattened
 
-    @pytest.mark.skipif(
-        not Path("/Users/ganapolsky_i/workspace/git/igor/trading/.claude/memory/lancedb").exists(),
-        reason="LanceDB not available",
-    )
-    def test_benchmark_query_relevance(self):
+    def test_benchmark_query_relevance(self, rag_with_index):
         """
         Benchmark test: Measure if search results contain expected keywords.
 
         This is a basic relevance test - results should contain query-related content.
         """
-        from src.memory.document_aware_rag import get_document_aware_rag
-
-        rag = get_document_aware_rag()
+        rag = rag_with_index
 
         total_queries = 0
         relevant_results = 0

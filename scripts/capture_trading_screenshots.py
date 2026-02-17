@@ -30,7 +30,7 @@ import json
 import os
 import shutil
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -349,7 +349,7 @@ class TradingScreenshotCapture:
         }
 
     def publish_to_pages(self, screenshots: dict[str, Path | None]) -> Path:
-        captured_at_utc = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+        captured_at_utc = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         manifest = self._read_manifest(self.MANIFEST_PATH)
         latest: dict[str, Any] = (
             manifest.get("latest", {}) if isinstance(manifest.get("latest"), dict) else {}

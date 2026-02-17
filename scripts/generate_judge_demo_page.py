@@ -34,6 +34,39 @@ def parse_kv(path: Path) -> dict[str, str]:
     return out
 
 
+def parse_smoke_response(smoke_response: dict) -> dict[str, object]:
+    model = str(smoke_response.get("model", "unknown"))
+    usage = smoke_response.get("usage", {}) if isinstance(smoke_response, dict) else {}
+    prompt_tokens = int(usage.get("prompt_tokens", 0) or 0)
+    completion_tokens = int(usage.get("completion_tokens", 0) or 0)
+    total_tokens = int(usage.get("total_tokens", 0) or 0)
+
+    choices_payload = (
+        smoke_response.get("choices", "")
+        if isinstance(smoke_response, dict)
+        else ""
+    )
+    if not isinstance(choices_payload, str):
+        choices_payload = str(choices_payload)
+
+    router_check = False
+    json_block_match = re.search(r"\{[\s\S]*\}", choices_payload)
+    if json_block_match:
+        try:
+            payload = json.loads(json_block_match.group(0))
+            router_check = bool(payload.get("router_check"))
+        except Exception:
+            router_check = False
+
+    return {
+        "model": model,
+        "prompt_tokens": prompt_tokens,
+        "completion_tokens": completion_tokens,
+        "total_tokens": total_tokens,
+        "router_check": router_check,
+    }
+
+
 def checklist_progress(path: Path) -> tuple[int, int]:
     done = 0
     total = 0
@@ -143,13 +176,24 @@ def main() -> int:
         exec_runs = exec_daily.get("run_count")
         exec_p95 = exec_daily.get("p95_latency_ms")
         generated_at = exec_daily.get("generated_at_utc")
+        smoke_model = str(exec_daily.get("model", "unknown"))
+        prompt_tokens = int(exec_daily.get("prompt_tokens", 0) or 0)
+        completion_tokens = int(exec_daily.get("completion_tokens", 0) or 0)
+        total_tokens = int(exec_daily.get("total_tokens", 0) or 0)
+        router_check = bool(exec_daily.get("router_check", False))
     else:
+        smoke_meta = parse_smoke_response(smoke_response)
         has_smoke_result = bool(smoke_response.get("choices")) or bool(smoke_response.get("id"))
         exec_runs = 1 if has_smoke_result else 0
         exec_success = 100.0 if has_smoke_result else 0.0
         exec_actionable = 0.0
         exec_p95 = smoke.get("latency_ms", "n/a")
         generated_at = smoke.get("timestamp_utc", "n/a")
+        smoke_model = smoke_meta["model"]
+        prompt_tokens = smoke_meta["prompt_tokens"]
+        completion_tokens = smoke_meta["completion_tokens"]
+        total_tokens = smoke_meta["total_tokens"]
+        router_check = smoke_meta["router_check"]
 
     paper = system_state.get("paper_account", {}) if isinstance(system_state, dict) else {}
     north_star = system_state.get("north_star", {}) if isinstance(system_state, dict) else {}
@@ -170,6 +214,8 @@ def main() -> int:
         or '<tr><td colspan="3">No scorecard metrics found yet.</td></tr>'
     )
     snapshot_section = _snapshot_html(snapshot_manifest)
+    router_check_text = "PASS" if router_check else "UNKNOWN"
+    router_check_chip = status_chip("PASS" if router_check else "UNKNOWN")
 
     html = (  # noqa: S608 - static HTML template, not SQL
         f"""<!doctype html>
@@ -300,6 +346,20 @@ def main() -> int:
       color: var(--muted);
       line-height: 1.35;
     }}
+    .diagram {{
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.02);
+      padding: 10px;
+      overflow-x: auto;
+    }}
+    .legend {{
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.35;
+    }}
     @media (max-width: 920px) {{
       .span4, .span6, .span8 {{ grid-column: span 12; }}
       .flow {{ grid-template-columns: 1fr; }}
@@ -329,12 +389,18 @@ def main() -> int:
       <article class="card span6">
         <div class="k">Execution Quality Daily</div>
         <table class="table">
+          <tr><td>Gateway Router</td><td>Tetrate TARS</td></tr>
+          <tr><td>Routed Model</td><td>{smoke_model}</td></tr>
           <tr><td>Runs</td><td>{exec_runs}</td></tr>
           <tr><td>Success Rate</td><td>{exec_success}%</td></tr>
           <tr><td>Actionable Rate</td><td>{exec_actionable}%</td></tr>
           <tr><td>P95 Latency</td><td>{exec_p95} ms</td></tr>
+          <tr><td>Token Envelope</td><td>{prompt_tokens} prompt / {completion_tokens} completion / {total_tokens} total</td></tr>
+          <tr><td>Schema Gate (router_check)</td><td>{router_check_text} {router_check_chip}</td></tr>
+          <tr><td>Estimated Cost / Smoke Run</td><td>${est_cost}</td></tr>
           <tr><td>Generated</td><td>{generated_at}</td></tr>
         </table>
+        <p class="note">Interpretation: this card reports the Tetrate-routed inference path health, not trading profitability. Actionable rate reflects whether responses passed the downstream actionability parser.</p>
       </article>
 
       <article class="card span6">
@@ -347,6 +413,51 @@ def main() -> int:
           <tr><td>5. Telemetry</td><td>Latency + cost are recorded from smoke checks for quality/cost tracking.</td></tr>
           <tr><td>6. Judge Evidence</td><td>Artifacts are published so judges can verify behavior from raw files.</td></tr>
         </table>
+        <div class="k" style="margin-top:10px">Tetrate Request Flow Diagram</div>
+        <div class="diagram">
+          <svg viewBox="0 0 920 250" width="100%" role="img" aria-label="Tetrate request and validation flow diagram">
+            <defs>
+              <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L0,6 L9,3 z" fill="#ff8f42"></path>
+              </marker>
+            </defs>
+            <rect x="20" y="40" width="150" height="58" rx="8" fill="#173656" stroke="#2b4f78"></rect>
+            <text x="95" y="65" text-anchor="middle" fill="#eef6ff" font-size="13">Signal + Context</text>
+            <text x="95" y="82" text-anchor="middle" fill="#b7cbe4" font-size="11">orchestrator inputs</text>
+
+            <rect x="210" y="40" width="170" height="58" rx="8" fill="#173656" stroke="#2b4f78"></rect>
+            <text x="295" y="65" text-anchor="middle" fill="#eef6ff" font-size="13">Tetrate TARS</text>
+            <text x="295" y="82" text-anchor="middle" fill="#b7cbe4" font-size="11">policy + provider routing</text>
+
+            <rect x="420" y="40" width="180" height="58" rx="8" fill="#173656" stroke="#2b4f78"></rect>
+            <text x="510" y="65" text-anchor="middle" fill="#eef6ff" font-size="13">LLM Provider Call</text>
+            <text x="510" y="82" text-anchor="middle" fill="#b7cbe4" font-size="11">routed model response</text>
+
+            <rect x="640" y="40" width="130" height="58" rx="8" fill="#173656" stroke="#2b4f78"></rect>
+            <text x="705" y="65" text-anchor="middle" fill="#eef6ff" font-size="13">JSON Gate</text>
+            <text x="705" y="82" text-anchor="middle" fill="#b7cbe4" font-size="11">schema check</text>
+
+            <rect x="790" y="40" width="110" height="58" rx="8" fill="#173656" stroke="#2b4f78"></rect>
+            <text x="845" y="65" text-anchor="middle" fill="#eef6ff" font-size="13">Actionable</text>
+            <text x="845" y="82" text-anchor="middle" fill="#b7cbe4" font-size="11">pass/fail</text>
+
+            <rect x="640" y="155" width="260" height="58" rx="8" fill="#173656" stroke="#2b4f78"></rect>
+            <text x="770" y="178" text-anchor="middle" fill="#eef6ff" font-size="13">Artifacts + KPIs</text>
+            <text x="770" y="196" text-anchor="middle" fill="#b7cbe4" font-size="11">smoke_metrics, scorecard, readiness gates</text>
+
+            <line x1="170" y1="69" x2="210" y2="69" stroke="#ff8f42" stroke-width="2.2" marker-end="url(#arrow)"></line>
+            <line x1="380" y1="69" x2="420" y2="69" stroke="#ff8f42" stroke-width="2.2" marker-end="url(#arrow)"></line>
+            <line x1="600" y1="69" x2="640" y2="69" stroke="#ff8f42" stroke-width="2.2" marker-end="url(#arrow)"></line>
+            <line x1="770" y1="69" x2="790" y2="69" stroke="#ff8f42" stroke-width="2.2" marker-end="url(#arrow)"></line>
+            <line x1="845" y1="98" x2="845" y2="155" stroke="#ff8f42" stroke-width="2.2" marker-end="url(#arrow)"></line>
+
+            <path d="M510 98 C 510 130, 350 130, 350 155" stroke="#95a5a6" stroke-width="2" fill="none" stroke-dasharray="6 5" marker-end="url(#arrow)"></path>
+            <text x="355" y="178" fill="#b7cbe4" font-size="11">fallback route on provider error</text>
+          </svg>
+        </div>
+        <div class="legend">
+          Flow semantics: solid arrows are primary execution path; dashed arrow is Tetrate fallback route. Output is only considered usable after schema + actionability gates.
+        </div>
         <div class="note">
           Verify now:
           <a href="{repo_blob}/artifacts/tars/smoke_metrics.txt">smoke_metrics.txt</a>,
