@@ -189,7 +189,7 @@
       </article>
       <article class="card span4">
         <div class="k">Smoke Latency / Cost</div>
-        <div class="v">1054 ms / $0.00000000</div>
+        <div class="v">2282 ms / $0.00004500</div>
         <div class="stat-help">Single Tetrate-routed smoke call telemetry from <a href="https://github.com/IgorGanapolsky/trading/blob/main/artifacts/tars/smoke_metrics.txt">smoke_metrics.txt</a>: end-to-end response time and estimated token spend per run.</div>
       </article>
 
@@ -201,18 +201,18 @@
           <tr><td>Gateway Key Source</td><td><span class="mono">LLM_GATEWAY_API_KEY</span></td></tr>
           <tr><td>Routed Model</td><td>gpt-4o-mini-2024-07-18</td></tr>
           <tr><td>Service Tier</td><td>default</td></tr>
-          <tr><td>Request ID</td><td><span class="mono">chatcmpl-DAMHSBnnZXngYFbvLESdqB02WZtyt</span></td></tr>
+          <tr><td>Request ID</td><td><span class="mono">chatcmpl-DAMU0iKkYE8ygHZcHzXjiJOVRQiQc</span></td></tr>
           <tr><td>Runs</td><td>1</td></tr>
           <tr><td>Latest Smoke Probe</td><td>PASS <span class="chip pass">PASS</span></td></tr>
           <tr><td>Success Rate</td><td>0.0%</td></tr>
           <tr><td>Actionable Rate</td><td>0.0%</td></tr>
           <tr><td>P95 Latency</td><td>1626.0 ms</td></tr>
           <tr><td>Token Envelope</td><td>30 prompt / 20 completion / 50 total</td></tr>
-          <tr><td>Token Economics</td><td>$0.00000000 (0.000000 / 1K tokens)</td></tr>
+          <tr><td>Token Economics</td><td>$0.00004500 (0.000900 / 1K tokens)</td></tr>
           <tr><td>Schema Gate (router_check)</td><td>PASS <span class="chip pass">PASS</span></td></tr>
           <tr><td>Fallback Probe OK</td><td>0</td></tr>
-          <tr><td>Estimated Cost / Smoke Run</td><td>$0.00000000</td></tr>
-          <tr><td>Cost Basis</td><td><span class="mono">missing_cost_per_1m</span></td></tr>
+          <tr><td>Estimated Cost / Smoke Run</td><td>$0.00004500</td></tr>
+          <tr><td>Cost Basis</td><td><span class="mono">input_cost_per_1m=0.50,output_cost_per_1m=1.50</span></td></tr>
           <tr><td>Generated</td><td>2026-02-16T20:08:36Z</td></tr>
         </table>
         <p class="note">Interpretation: this card reports the Tetrate-routed inference path health, not trading profitability. Actionable rate reflects whether responses passed the downstream actionability parser.</p>
@@ -223,7 +223,7 @@
         <table class="table" style="margin-top:10px">
           <tr><td>Entry Contract</td><td>Orchestrator sends <span class="mono">POST /v1/chat/completions</span> request through TARS.</td></tr>
           <tr><td>Route Decision</td><td>TARS applies provider/model policy and returns normalized OpenAI-compatible response payload.</td></tr>
-          <tr><td>Runtime Proof</td><td>Observed model <span class="mono">gpt-4o-mini-2024-07-18</span>, tier <span class="mono">default</span>, request <span class="mono">chatcmpl-DAMHSBnnZXngYFbvLESdqB02WZtyt</span>.</td></tr>
+          <tr><td>Runtime Proof</td><td>Observed model <span class="mono">gpt-4o-mini-2024-07-18</span>, tier <span class="mono">default</span>, request <span class="mono">chatcmpl-DAMU0iKkYE8ygHZcHzXjiJOVRQiQc</span>.</td></tr>
           <tr><td>Schema Gate</td><td>Response must parse into structured trade intent; malformed payloads are rejected.</td></tr>
           <tr><td>Risk/Policy Gate</td><td>Whitelist, max positions, loss limits, and cadence controls can veto execution.</td></tr>
           <tr><td>Fallback Path</td><td>Fallback probes validate alternate provider path; status is tracked in daily quality artifacts.</td></tr>
@@ -306,7 +306,7 @@
         <table class="table"><tr><td>Win Rate</td><td>100.00%</td><td><span class="chip pass">PASS</span></td></tr>
 <tr><td>Max Drawdown (sync history)</td><td>0.20%</td><td><span class="chip pass">PASS</span></td></tr>
 <tr><td>Execution Quality (valid trade records)</td><td>97.89%</td><td><span class="chip pass">PASS</span></td></tr>
-<tr><td>Gateway Latency</td><td>1054 ms</td><td><span class="chip pass">PASS</span></td></tr>
+<tr><td>Gateway Latency</td><td>2282 ms</td><td><span class="chip pass">PASS</span></td></tr>
 <tr><td>Gateway Cost (smoke call)</td><td>$0.000045</td><td><span class="chip pass">PASS</span></td></tr>
 <tr><td>Profit Factor</td><td>Inf</td><td><span class="chip pass">PASS</span></td></tr>
 <tr><td>Average Winner</td><td>$41.00</td><td><span class="chip pass">PASS</span></td></tr>
@@ -337,7 +337,7 @@
         <div class="k">Most Important Screenshot (Tetrate Evidence)</div>
         <a href="/trading/lessons/ops-status.html">Open full evidence page</a>
         <a href="/trading/lessons/ops-status.html"><img class="snap" src="/trading/assets/snapshots/judge_tetrate_metrics_latest.png" alt="Tetrate metrics and evidence pipeline snapshot"></a>
-        <div class="k">Captured: 2026-02-17T20:16:23Z</div>
+        <div class="k">Captured: 2026-02-17T21:01:15Z</div>
       </article>
     
     </section>

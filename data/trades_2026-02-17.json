@@ -862,5 +862,53 @@
     "activity_type": "FILL",
     "timestamp": "2026-02-17T14:48:19.888931Z",
     "source": "alpaca_api_sync"
+  },
+  {
+    "symbol": "SPY260320P00640000",
+    "side": "sell",
+    "qty": 2.0,
+    "price": 4.04,
+    "notional": 8.08,
+    "strategy": "alpaca_sync",
+    "order_id": "92dc9416-7d2c-4d80-b2f7-5aa602d6c8aa",
+    "activity_type": "FILL",
+    "timestamp": "2026-02-17T20:47:17.914196Z",
+    "source": "alpaca_api_sync"
+  },
+  {
+    "symbol": "SPY260320C00730000",
+    "side": "sell",
+    "qty": 2.0,
+    "price": 0.26,
+    "notional": 0.52,
+    "strategy": "alpaca_sync",
+    "order_id": "3afca720-0629-4a2d-8aae-7c08cb5d8208",
+    "activity_type": "FILL",
+    "timestamp": "2026-02-17T20:47:17.80701Z",
+    "source": "alpaca_api_sync"
+  },
+  {
+    "symbol": "SPY260320P00650000",
+    "side": "buy",
+    "qty": 2.0,
+    "price": 5.14,
+    "notional": 10.28,
+    "strategy": "alpaca_sync",
+    "order_id": "140a3931-e49b-40a1-b591-8136c984d37b",
+    "activity_type": "FILL",
+    "timestamp": "2026-02-17T20:14:50.141722Z",
+    "source": "alpaca_api_sync"
+  },
+  {
+    "symbol": "SPY260320C00720000",
+    "side": "buy",
+    "qty": 2.0,
+    "price": 0.79,
+    "notional": 1.58,
+    "strategy": "alpaca_sync",
+    "order_id": "96b8be87-0bbb-4267-a8b9-f53338350dde",
+    "activity_type": "FILL",
+    "timestamp": "2026-02-17T20:14:50.032415Z",
+    "source": "alpaca_api_sync"
   }
 ]
