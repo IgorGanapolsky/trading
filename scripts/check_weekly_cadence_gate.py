@@ -220,15 +220,19 @@ def main() -> int:
     )
 
     report = _sanitize(markdown_report(result), multiline=True)
-    public_report = _sanitize(markdown_public_report(result), multiline=True)
     if args.out:
         out_path = Path(_sanitize(args.out))
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        # Persist only public-safe, schema-limited summary.
-        # Avoid writing free-text diagnostic payloads from state data.
-        safe_report = public_report
+        # SECURITY: Do not persist state-derived cadence values to disk from this
+        # checker. Keep detailed metrics in stdout (ephemeral CI stream) and write
+        # only a static marker artifact.
+        safe_report = (
+            "# Weekly Cadence KPI Artifact\n\n"
+            "Detailed cadence metrics are emitted to stdout only.\n"
+            "This file is an execution marker for workflow evidence.\n"
+        )
         with open(str(out_path), "w", encoding="utf-8") as f:
-            f.write(safe_report + "\n")
+            f.write(safe_report)
         print(f"ok: cadence report -> {_sanitize(out_path)}")
 
     if args.json:
