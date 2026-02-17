@@ -19,6 +19,7 @@ try:
         validate_request,
     )
     from mcp.governance.input_validation import ALLOWED_SYMBOLS, MAX_ORDER_AMOUNT_USD
+    from src.core.trading_constants import ALLOWED_TICKERS, MAX_POSITION_PCT
 except ImportError:
     pytest.skip(
         "mcp.governance not available (pip mcp package shadows local)", allow_module_level=True
@@ -74,7 +75,12 @@ class TestInputValidation:
         with pytest.raises(ValueError):
             validate_request(
                 OrderRequest,
-                {"symbol": "SPY", "amount_usd": 500.0, "side": "buy", "paper": True},
+                {
+                    "symbol": "SPY",
+                    "amount_usd": MAX_ORDER_AMOUNT_USD + 1.0,
+                    "side": "buy",
+                    "paper": True,
+                },
             )
 
     def test_order_request_live_trading_blocked(self):
@@ -121,16 +127,15 @@ class TestInputValidation:
                 },
             )
 
-    def test_allowed_symbols_match_claude_md(self):
-        """Verify allowed symbols match CLAUDE.md - UPDATED Feb 8, 2026: SPY/SPX/XSP."""
-        # Per CLAUDE.md: SPY (equity), SPX (Section 1256), XSP (mini-SPX)
-        expected = frozenset({"SPY", "SPX", "XSP"})
+    def test_allowed_symbols_match_canonical_constants(self):
+        """Governance allowlist stays aligned with canonical ticker constants."""
+        expected = frozenset(ALLOWED_TICKERS)
         assert expected == ALLOWED_SYMBOLS
 
     def test_max_order_amount_matches_5_percent_rule(self):
-        """Max order amount enforces 5% rule from CLAUDE.md."""
-        # 5% of $4,959 = $247.95, rounded to $248
-        assert MAX_ORDER_AMOUNT_USD == 248.0
+        """Max order amount enforces 5% sizing for $100K validation account."""
+        expected_max = MAX_POSITION_PCT * 100_000.0
+        assert expected_max == MAX_ORDER_AMOUNT_USD
 
 
 class TestOutputSanitization:
