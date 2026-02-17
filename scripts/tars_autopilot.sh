@@ -82,6 +82,13 @@ verify_env() {
 
 smoke_call() {
   require_env
+
+  # Fetch real-time pricing for cost calculation
+  if [[ -x "$REPO_ROOT/scripts/fetch_model_pricing.py" ]]; then
+    eval "$("$PYTHON_BIN" "$REPO_ROOT/scripts/fetch_model_pricing.py" "$OPENAI_MODEL" 2>/dev/null || echo 'TARS_INPUT_COST_PER_1M=0.150 TARS_OUTPUT_COST_PER_1M=0.600')"
+    echo "info: using pricing TARS_INPUT_COST_PER_1M=$TARS_INPUT_COST_PER_1M TARS_OUTPUT_COST_PER_1M=$TARS_OUTPUT_COST_PER_1M"
+  fi
+
   local out="$ARTIFACT_DIR/smoke_response.json"
   local metrics_out="$ARTIFACT_DIR/smoke_metrics.txt"
   local raw_out="$ARTIFACT_DIR/smoke_response.raw"
