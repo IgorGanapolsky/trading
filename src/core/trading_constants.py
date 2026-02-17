@@ -7,8 +7,10 @@ CRITICAL: All trading-related modules should import constants from HERE
 to avoid maintenance issues with duplicated definitions.
 
 Created: Jan 19, 2026 (Adversarial audit finding - 4 duplicate definitions)
+Updated: Feb 17, 2026 (P0 tech debt - consolidated 5 duplicate extract_underlying impls)
 """
 
+import re
 from datetime import date
 
 # =============================================================================
@@ -76,3 +78,43 @@ FORBIDDEN_STRATEGIES: set[str] = {
     "short_straddle",  # Undefined risk
     "short_strangle",  # Undefined risk without wings
 }
+
+# =============================================================================
+# OCC SYMBOL PARSING - SINGLE SOURCE OF TRUTH
+# =============================================================================
+# Consolidates 5 duplicate implementations (P0 tech debt audit Feb 17, 2026):
+#   - src/safety/mandatory_trade_gate.py::_extract_underlying
+#   - src/trading/options_executor.py::_extract_underlying_from_option
+#   - src/risk/pre_trade_checklist.py::PreTradeChecklist._extract_underlying
+#   - src/validators/rule_one_validator.py::RuleOneValidator._extract_underlying
+#   - src/risk/trade_gateway.py::TradeGateway._get_underlying_symbol
+# =============================================================================
+_OCC_PATTERN = re.compile(r"^([A-Z]{1,6})(\d{6})[PC](\d{8})$")
+
+
+def extract_underlying(symbol: str) -> str:
+    """Extract underlying ticker from an option symbol (OCC format).
+
+    OCC format: [UNDERLYING][YYMMDD][P/C][STRIKE*1000]
+    Examples:
+        SPY260115C00600000 -> SPY
+        SOFI260206P00024000 -> SOFI
+        SPY -> SPY
+
+    Args:
+        symbol: Stock ticker or OCC option symbol.
+
+    Returns:
+        Underlying ticker symbol in uppercase.
+    """
+    symbol = symbol.strip().upper()
+    if len(symbol) <= 6:
+        return symbol
+    match = _OCC_PATTERN.match(symbol)
+    if match:
+        return match.group(1)
+    if len(symbol) >= 15:
+        potential_underlying = symbol[:-15]
+        if potential_underlying and potential_underlying.isalpha():
+            return potential_underlying
+    return symbol
