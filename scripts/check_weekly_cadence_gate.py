@@ -126,6 +126,34 @@ def markdown_report(result: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def markdown_public_report(result: dict[str, Any]) -> str:
+    """Build a minimal report safe for artifact storage.
+
+    This intentionally excludes free-form summaries/source fields and keeps
+    only low-sensitivity operational counters and gate statuses.
+    """
+    lines: list[str] = []
+    lines.append("# Weekly Cadence KPI Check")
+    lines.append("")
+    lines.append(f"- Passed: `{bool(result.get('passed'))}`")
+    lines.append(f"- Alert Level: `{_sanitize(result.get('alert_level', 'unknown'))}`")
+    lines.append(
+        "- Qualified Setups: "
+        f"`{_to_int(result.get('qualified_setups_observed'), 0)}/"
+        f"{_to_int(result.get('min_qualified_setups_per_week'), 0)}`"
+    )
+    lines.append(
+        "- Closed Trades: "
+        f"`{_to_int(result.get('closed_trades_observed'), 0)}/"
+        f"{_to_int(result.get('min_closed_trades_per_week'), 0)}`"
+    )
+    blocked = result.get("blocked_categories", [])
+    blocked_text = ", ".join(_sanitize(item) for item in blocked) if isinstance(blocked, list) else ""
+    lines.append(f"- Blocked Categories: `{blocked_text or 'none'}`")
+    lines.append("")
+    return "\n".join(lines)
+
+
 def _should_fail(*, result: dict[str, Any], strict: bool, fail_on: str) -> bool:
     if result.get("passed"):
         return False
@@ -184,11 +212,8 @@ def main() -> int:
     if args.out:
         out_path = Path(_sanitize(args.out))
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        # Break CodeQL taint chain via JSON round-trip (same pattern as _load_json).
-        # Content is non-sensitive trade metrics (counts, levels, pass/fail).
-        safe_report = json.dumps(json.loads(json.dumps(report)), indent=2)
-        with open(str(out_path), "w", encoding="utf-8") as f:
-            f.write(safe_report + "\n")
+        public_report = _sanitize(markdown_public_report(result), multiline=True)
+        out_path.write_text(public_report + "\n", encoding="utf-8")
         print(f"ok: cadence report -> {_sanitize(out_path)}")
 
     if args.json:
