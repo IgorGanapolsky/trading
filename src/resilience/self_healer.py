@@ -304,6 +304,7 @@ class SelfHealer:
         try:
             # Import canonical constants
             import sys
+
             sys.path.insert(0, str(self.project_root))
             from src.core.trading_constants import ALLOWED_TICKERS, MAX_POSITION_PCT, MAX_POSITIONS
 
@@ -327,7 +328,7 @@ class SelfHealer:
 
                 if value > max_position_value:
                     violations.append(
-                        f"{symbol} value ${value:.2f} > ${max_position_value:.2f} ({MAX_POSITION_PCT*100}% limit)"
+                        f"{symbol} value ${value:.2f} > ${max_position_value:.2f} ({MAX_POSITION_PCT * 100}% limit)"
                     )
 
                 # Check against canonical ticker whitelist

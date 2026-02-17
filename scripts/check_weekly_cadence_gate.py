@@ -240,9 +240,7 @@ def main() -> int:
                 result.get("min_qualified_setups_per_week"), 0
             ),
             "closed_trades_observed": _to_int(result.get("closed_trades_observed"), 0),
-            "min_closed_trades_per_week": _to_int(
-                result.get("min_closed_trades_per_week"), 0
-            ),
+            "min_closed_trades_per_week": _to_int(result.get("min_closed_trades_per_week"), 0),
             "blocked_categories": [
                 _sanitize(item) for item in (result.get("blocked_categories") or [])
             ],

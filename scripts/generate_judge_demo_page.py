@@ -41,11 +41,7 @@ def parse_smoke_response(smoke_response: dict) -> dict[str, object]:
     completion_tokens = int(usage.get("completion_tokens", 0) or 0)
     total_tokens = int(usage.get("total_tokens", 0) or 0)
 
-    choices_payload = (
-        smoke_response.get("choices", "")
-        if isinstance(smoke_response, dict)
-        else ""
-    )
+    choices_payload = smoke_response.get("choices", "") if isinstance(smoke_response, dict) else ""
     if not isinstance(choices_payload, str):
         choices_payload = str(choices_payload)
 
