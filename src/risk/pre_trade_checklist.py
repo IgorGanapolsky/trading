@@ -18,8 +18,13 @@ from datetime import datetime
 # UPDATED Jan 19: Import from central config (single source of truth)
 try:
     from src.core.trading_constants import ALLOWED_TICKERS as _CENTRAL_ALLOWED_TICKERS
+    from src.core.trading_constants import extract_underlying as _extract_underlying_shared
 except ImportError:
     _CENTRAL_ALLOWED_TICKERS = {"SPY", "SPX", "XSP", "QQQ", "IWM"}
+
+    def _extract_underlying_shared(symbol: str) -> str:  # type: ignore[misc]
+        """Fallback - see trading_constants.extract_underlying."""
+        return symbol.strip().upper()[:6]
 
 
 class PreTradeChecklist:
@@ -128,13 +133,8 @@ class PreTradeChecklist:
     def _extract_underlying(self, symbol: str) -> str:
         """Extract underlying ticker from options symbol.
 
-        Options symbols follow OCC format: SPY260221P00555000
-        - First 1-6 chars: underlying symbol (left-padded with spaces for <6 chars)
-        - Next 6 digits: expiration date YYMMDD
-        - Next 1 char: C or P for call/put
-        - Last 8 digits: strike price * 1000
-
-        For standard symbols like SPY (3 chars), the underlying is the first 3.
+        Delegates to trading_constants.extract_underlying (single source of truth).
+        (P0 tech debt - consolidated 5 duplicate implementations Feb 17, 2026)
 
         Args:
             symbol: The option symbol (e.g., SPY260221P00555000) or underlying.
@@ -142,21 +142,7 @@ class PreTradeChecklist:
         Returns:
             The underlying ticker symbol in uppercase.
         """
-        symbol = symbol.upper().strip()
-
-        if len(symbol) > 10:  # Options symbol like SPY260221P00555000
-            # For SPY (3 char tickers), underlying is first 3 chars
-            if symbol[:3] in self.ALLOWED_TICKERS:
-                return symbol[:3]
-            # For 4+ char tickers, extract until we hit a digit
-            underlying = ""
-            for char in symbol:
-                if char.isdigit():
-                    break
-                underlying += char
-            return underlying.rstrip() if underlying else symbol[:4]
-
-        return symbol
+        return _extract_underlying_shared(symbol)
 
     def get_checklist_status(
         self,

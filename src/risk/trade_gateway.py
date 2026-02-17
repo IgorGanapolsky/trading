@@ -28,6 +28,14 @@ import json
 import logging
 import os
 from dataclasses import dataclass, field
+
+try:
+    from src.core.trading_constants import extract_underlying as _extract_underlying_shared
+except ImportError:
+
+    def _extract_underlying_shared(symbol: str) -> str:  # type: ignore[misc]
+        """Fallback - see trading_constants.extract_underlying."""
+        return symbol.strip().upper()[:6]
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
@@ -318,32 +326,12 @@ class TradeGateway:
             logger.warning(f"Failed to save gateway state: {e}")
 
     def _get_underlying_symbol(self, symbol: str) -> str:
-        """Extract underlying symbol from option symbol (OCC format)."""
-        # OCC format: SOFI260206P00024000 -> SOFI
-        # Format: [UNDERLYING][YYMMDD][P/C][STRIKE*1000]
-        # Strike is always 8 digits, P/C is 1 char, date is 6 digits
-        # So underlying = symbol[:-15] for standard options
+        """Extract underlying symbol from option symbol (OCC format).
 
-        import re
-
-        # Standard equity symbols pass through unchanged
-        if len(symbol) <= 6:
-            return symbol.upper()
-
-        # Try to match OCC option format
-        # Pattern: underlying (1-6 chars) + YYMMDD + P/C + 8 digit strike
-        match = re.match(r"^([A-Z]{1,6})(\d{6})[PC](\d{8})$", symbol.upper())
-        if match:
-            return match.group(1)
-
-        # Fallback: if it looks like it has a date embedded, try to extract
-        if len(symbol) >= 15:
-            # Last 15 chars are: YYMMDD (6) + P/C (1) + Strike (8)
-            potential_underlying = symbol[:-15]
-            if potential_underlying and potential_underlying.isalpha():
-                return potential_underlying.upper()
-
-        return symbol.upper()
+        Delegates to trading_constants.extract_underlying (single source of truth).
+        (P0 tech debt - consolidated 5 duplicate implementations Feb 17, 2026)
+        """
+        return _extract_underlying_shared(symbol)
 
     def _check_earnings_blackout(self, symbol: str) -> tuple[bool, str]:
         """

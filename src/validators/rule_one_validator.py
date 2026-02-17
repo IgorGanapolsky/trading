@@ -23,6 +23,15 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
+try:
+    from src.core.trading_constants import extract_underlying as _extract_underlying_shared
+except ImportError:
+
+    def _extract_underlying_shared(symbol: str) -> str:  # type: ignore[misc]
+        """Fallback - see trading_constants.extract_underlying."""
+        return symbol.strip().upper()[:6]
+
+
 logger = logging.getLogger(__name__)
 
 # Approved wonderful companies (Rule #1 compliant or capital-appropriate)
@@ -447,14 +456,12 @@ class RuleOneValidator:
         return min(score, 1.0)
 
     def _extract_underlying(self, symbol: str) -> str:
-        """Extract underlying ticker from option symbol."""
-        # Option symbols like SOFI260206P00024000 -> SOFI
-        if len(symbol) > 6 and any(c.isdigit() for c in symbol[4:]):
-            # Find where digits start
-            for i, c in enumerate(symbol):
-                if c.isdigit():
-                    return symbol[:i]
-        return symbol
+        """Extract underlying ticker from option symbol.
+
+        Delegates to trading_constants.extract_underlying (single source of truth).
+        (P0 tech debt - consolidated 5 duplicate implementations Feb 17, 2026)
+        """
+        return _extract_underlying_shared(symbol)
 
     def validate_for_credit_spread(
         self,

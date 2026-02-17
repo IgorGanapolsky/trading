@@ -21,7 +21,6 @@ Date: December 10, 2025
 from __future__ import annotations
 
 import logging
-import re
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from typing import Any, Literal
@@ -40,44 +39,19 @@ logger = logging.getLogger(__name__)
 # UPDATED Jan 19: Import from central config (single source of truth)
 # ============================================================
 try:
-    from src.core.trading_constants import ALLOWED_TICKERS
+    from src.core.trading_constants import ALLOWED_TICKERS, extract_underlying
 except ImportError:
     ALLOWED_TICKERS = {"SPY", "SPX", "XSP", "QQQ", "IWM"}  # Fallback
+
+    def extract_underlying(symbol: str) -> str:  # type: ignore[misc]
+        """Fallback - see trading_constants.extract_underlying."""
+        return symbol.strip().upper()[:6]
 TICKER_WHITELIST_ENABLED = True  # Toggle for paper testing
 
 
-def _extract_underlying_from_option(symbol: str) -> str:
-    """
-    Extract underlying symbol from option symbol (OCC format).
-
-    OCC format: [UNDERLYING][YYMMDD][P/C][STRIKE*1000]
-    Example: SOFI260206P00024000 -> SOFI
-    Example: SPY260115C00600000 -> SPY
-
-    Args:
-        symbol: Stock or option symbol
-
-    Returns:
-        Underlying ticker symbol in uppercase
-    """
-    # Standard equity symbols pass through unchanged
-    if len(symbol) <= 6:
-        return symbol.upper()
-
-    # Try to match OCC option format
-    # Pattern: underlying (1-6 chars) + YYMMDD + P/C + 8 digit strike
-    match = re.match(r"^([A-Z]{1,6})(\d{6})[PC](\d{8})$", symbol.upper())
-    if match:
-        return match.group(1)
-
-    # Fallback: if it looks like it has a date embedded, try to extract
-    if len(symbol) >= 15:
-        # Last 15 chars are: YYMMDD (6) + P/C (1) + Strike (8)
-        potential_underlying = symbol[:-15]
-        if potential_underlying and potential_underlying.isalpha():
-            return potential_underlying.upper()
-
-    return symbol.upper()
+# Backward-compat alias: delegates to trading_constants.extract_underlying
+# (P0 tech debt - consolidated 5 duplicate implementations Feb 17, 2026)
+_extract_underlying_from_option = extract_underlying
 
 
 def validate_ticker_for_options(underlying: str) -> tuple[bool, str]:
