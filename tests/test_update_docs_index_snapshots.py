@@ -29,6 +29,9 @@ def test_build_snapshot_block_uses_manifest_diagrams_and_explainers() -> None:
     assert "Progress Dashboard (Most Relevant)" in block
     assert "[Open full live dashboard](/trading/)" in block
     assert "/trading/assets/snapshots/progress_latest.png" in block
-    assert "Raw manifest: [`/trading/data/alpaca_snapshots.json`](/trading/data/alpaca_snapshots.json)" in block
+    assert (
+        "Raw manifest: [`/trading/data/alpaca_snapshots.json`](/trading/data/alpaca_snapshots.json)"
+        in block
+    )
     assert "paper summary" not in block
     assert "live summary" not in block

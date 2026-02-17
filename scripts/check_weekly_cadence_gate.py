@@ -148,7 +148,9 @@ def markdown_public_report(result: dict[str, Any]) -> str:
         f"{_to_int(result.get('min_closed_trades_per_week'), 0)}`"
     )
     blocked = result.get("blocked_categories", [])
-    blocked_text = ", ".join(_sanitize(item) for item in blocked) if isinstance(blocked, list) else ""
+    blocked_text = (
+        ", ".join(_sanitize(item) for item in blocked) if isinstance(blocked, list) else ""
+    )
     lines.append(f"- Blocked Categories: `{blocked_text or 'none'}`")
     lines.append("")
     return "\n".join(lines)

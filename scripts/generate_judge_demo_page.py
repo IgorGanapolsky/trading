@@ -83,16 +83,17 @@ def _snapshot_html(manifest: dict) -> str:
     if not isinstance(latest, dict):
         latest = {}
     progress = latest.get("progress", {}) if isinstance(latest.get("progress"), dict) else {}
-
-    progress_url = progress.get("url", "/trading/assets/snapshots/progress_latest.png")
     progress_time = progress.get("captured_at_utc", "unknown")
-    dashboard_url = "/trading/"
+
+    # Keep this focused for judges: one compact screenshot with Tetrate gateway evidence.
+    tetrate_snapshot_url = "/trading/assets/snapshots/judge_tetrate_metrics_latest.png"
+    dashboard_url = "/trading/lessons/ops-status.html"
 
     return f"""
       <article class="card span12">
-        <div class="k">Progress Dashboard (Most Relevant)</div>
-        <a href="{dashboard_url}">Open full live dashboard</a>
-        <a href="{dashboard_url}"><img class="snap" src="{progress_url}" alt="Progress dashboard snapshot"></a>
+        <div class="k">Most Important Screenshot (Tetrate Evidence)</div>
+        <a href="{dashboard_url}">Open full evidence page</a>
+        <a href="{dashboard_url}"><img class="snap" src="{tetrate_snapshot_url}" alt="Tetrate metrics and evidence pipeline snapshot"></a>
         <div class="k">Captured: {progress_time}</div>
       </article>
     """
