@@ -121,7 +121,7 @@ def main():
         print(f"💰 These positions are blocking ~${total_blocked:.2f} in buying power")
         print()
         print("ACTION REQUIRED:")
-        print("  1. Run: gh workflow run close-non-spy-positions.yml")
+        print("  1. Close non-SPY positions manually (close-non-spy-positions.yml was deleted)")
         print("  2. Or manually close via Alpaca dashboard")
         print()
         print("❌ WORKFLOW SHOULD FAIL - Non-SPY positions violate strategy")

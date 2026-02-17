@@ -135,7 +135,7 @@ jobs:
           print("✅ NEW PAPER ACCOUNT READY FOR TRADING!")
           print("=" * 60)
           print("\nNext steps:")
-          print("1. Trigger sync-system-state.yml to update local state")
+          print("1. Trigger sync-alpaca-status.yml to update local state")
           print("2. Trading workflow is still DISABLED (re-enable when ready)")
           print("3. Start with paper trading for 90 days per CLAUDE.md")
           EOF
@@ -149,6 +149,6 @@ jobs:
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: 'sync-system-state.yml',
+              workflow_id: 'sync-alpaca-status.yml',
               ref: 'main'
             });

@@ -97,7 +97,7 @@ jobs:
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: 'sync-system-state.yml',
+              workflow_id: 'sync-alpaca-status.yml',
               ref: 'main'
             });
-            console.log('Triggered sync-system-state.yml');
+            console.log('Triggered sync-alpaca-status.yml');
