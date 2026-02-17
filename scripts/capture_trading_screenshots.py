@@ -282,7 +282,7 @@ class TradingScreenshotCapture:
   </defs>
   <rect width="1280" height="720" fill="url(#bg)"/>
   <text x="56" y="76" fill="#F5F9FF" font-size="42" font-family="Avenir Next, Segoe UI, Arial">PaperBanana Diagram • {account_label}</text>
-  <text x="56" y="112" fill="#BFD4EA" font-size="20" font-family="Avenir Next, Segoe UI, Arial">Technical account decomposition from Alpaca sync</text>
+  <text x="56" y="112" fill="#BFD4EA" font-size="20" font-family="Avenir Next, Segoe UI, Arial">Metrics + dataflow decomposition from Alpaca sync</text>
 
   <rect x="52" y="150" width="1176" height="238" rx="18" fill="#102A42" stroke="#2C567E"/>
   <text x="82" y="198" fill="#F5F9FF" font-size="28" font-family="Avenir Next, Segoe UI, Arial">Net Liquidation Value</text>
@@ -298,10 +298,23 @@ class TradingScreenshotCapture:
   <text x="82" y="586" fill="#BFD4EA" font-size="22" font-family="Avenir Next, Segoe UI, Arial">North Star gate regime: {gate}</text>
 
   <rect x="656" y="418" width="572" height="238" rx="18" fill="#102A42" stroke="#2C567E"/>
-  <text x="686" y="466" fill="#F5F9FF" font-size="28" font-family="Avenir Next, Segoe UI, Arial">Interpretation</text>
-  <text x="686" y="510" fill="#BFD4EA" font-size="22" font-family="Avenir Next, Segoe UI, Arial">• {trend_msg}</text>
-  <text x="686" y="548" fill="#BFD4EA" font-size="22" font-family="Avenir Next, Segoe UI, Arial">• Positioning remains defined-risk; monitor cadence vs targets.</text>
-  <text x="686" y="586" fill="#BFD4EA" font-size="22" font-family="Avenir Next, Segoe UI, Arial">• Snapshot timestamp: {captured_at_utc}</text>
+  <text x="686" y="466" fill="#F5F9FF" font-size="28" font-family="Avenir Next, Segoe UI, Arial">PaperBanana Flow</text>
+
+  <rect x="686" y="488" width="122" height="56" rx="10" fill="#173955" stroke="#3A6A96"/>
+  <text x="747" y="523" text-anchor="middle" fill="#DCEBFA" font-size="16" font-family="Avenir Next, Segoe UI, Arial">Alpaca</text>
+  <rect x="838" y="488" width="122" height="56" rx="10" fill="#173955" stroke="#3A6A96"/>
+  <text x="899" y="523" text-anchor="middle" fill="#DCEBFA" font-size="16" font-family="Avenir Next, Segoe UI, Arial">State Sync</text>
+  <rect x="990" y="488" width="122" height="56" rx="10" fill="#173955" stroke="#3A6A96"/>
+  <text x="1051" y="523" text-anchor="middle" fill="#DCEBFA" font-size="16" font-family="Avenir Next, Segoe UI, Arial">Risk Gate</text>
+
+  <line x1="808" y1="516" x2="838" y2="516" stroke="#FF9E52" stroke-width="3"/>
+  <polygon points="836,510 848,516 836,522" fill="#FF9E52"/>
+  <line x1="960" y1="516" x2="990" y2="516" stroke="#FF9E52" stroke-width="3"/>
+  <polygon points="988,510 1000,516 988,522" fill="#FF9E52"/>
+
+  <rect x="762" y="566" width="359" height="72" rx="10" fill="#0E2539" stroke="#2C567E"/>
+  <text x="780" y="593" fill="#BFD4EA" font-size="20" font-family="Avenir Next, Segoe UI, Arial">{trend_msg}</text>
+  <text x="780" y="621" fill="#BFD4EA" font-size="18" font-family="Avenir Next, Segoe UI, Arial">Snapshot: {captured_at_utc}</text>
 </svg>
 """
 
