@@ -9,9 +9,7 @@ from __future__ import annotations
 
 import json
 import os
-import tempfile
 from datetime import datetime, timedelta
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -180,6 +178,7 @@ class TestModelPricingFetcher:
         cache = PricingCache(cache_dir=tmp_path)
         cached = cache.get("gpt-4o-mini")
         assert cached == api_pricing
+        assert pricing == api_pricing
 
 
 class TestShellIntegration:

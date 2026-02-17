@@ -19,12 +19,10 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-import os
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
