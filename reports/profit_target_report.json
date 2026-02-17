@@ -1,0 +1,14 @@
+{
+  "current_daily_profit": 0.0,
+  "projected_daily_profit": 61.78,
+  "target_daily_profit": 16.67,
+  "target_gap": -45.11,
+  "current_daily_budget": 1000.0,
+  "recommended_daily_budget": 161.89,
+  "scaling_factor": 0.16,
+  "avg_return_pct": 10.3,
+  "win_rate": 100.0,
+  "actions": [
+    "Projected daily profit meets target; hold sizing discipline and compound."
+  ]
+}
