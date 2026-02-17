@@ -225,6 +225,39 @@ function getPnlTimeframe(message) {
   return null;
 }
 
+function isAnalyticalFollowup(message) {
+  const q = String(message || "").toLowerCase();
+  return /\b(why|explain|reason|how come|what happened|analyze|analysis)\b/.test(q);
+}
+
+function buildDeterministicWhyContext(liveData, dailyChange) {
+  const lines = [];
+  const trades = (liveData && liveData.trades) || {};
+  const risk = (liveData && liveData.risk) || {};
+  const positions = Array.isArray(liveData && liveData.positions) ? liveData.positions : [];
+
+  const tradesToday = asNumber(trades.today_trades ?? trades.total_trades_today, 0);
+  const lastTradeDate = trades.last_trade_date || "unknown";
+  const unrealized = asNumber(risk.unrealized_pl, 0);
+
+  lines.push("");
+  lines.push("Why:");
+  if (tradesToday === 0) {
+    lines.push("- No fills were recorded today (`trades.today_trades = 0`).");
+  } else {
+    lines.push(`- ${tradesToday} fill(s) were recorded today.`);
+  }
+  lines.push(`- Open positions: ${positions.length}.`);
+  lines.push(`- Unrealized P/L: ${unrealized >= 0 ? "+" : "-"}$${formatCurrency(Math.abs(unrealized))}.`);
+  lines.push(`- Last recorded trade date: ${lastTradeDate}.`);
+
+  if (dailyChange === 0 && tradesToday === 0) {
+    lines.push("- Daily P/L is flat because no positions were opened/closed today.");
+  }
+
+  return lines.join("\n");
+}
+
 async function buildDeterministicPnlReply(message, liveData) {
   const timeframe = getPnlTimeframe(message);
   if (!timeframe) return null;
@@ -243,11 +276,15 @@ async function buildDeterministicPnlReply(message, liveData) {
   if (timeframe === "today") {
     const paper = liveData.paper_account || {};
     const dailyChange = asNumber(paper.daily_change, 0);
-    return [
+    const lines = [
       `Today P/L (daily change): ${dailyChange >= 0 ? "+" : "-"}$${formatCurrency(Math.abs(dailyChange))}`,
       `Equity: $${formatCurrency(equityNow)}`,
       `Data as of: ${asOfNow.toISOString()}`,
-    ].join("\n");
+    ];
+    if (isAnalyticalFollowup(message)) {
+      lines.push(buildDeterministicWhyContext(liveData, dailyChange));
+    }
+    return lines.join("\n");
   }
 
   let start = null;
