@@ -59,8 +59,8 @@
       <article class="card span3"><div class="k">Gateway Latency</div><div class="v">1626 ms</div></article>
       <article class="card span3"><div class="k">Gateway Cost</div><div class="v">$0.00004500</div></article>
       <article class="card span3"><div class="k">Paper P/L</div><div class="v">$1,498.24 (1.50%)</div></article>
-      <article class="card span6"><div class="k">Resilience Check</div><div class="v"><span class="chip warn">ERROR</span></div><div class="k">type=invalid_request_error</div><div class="k">message=The specified model is not enabled for this mode or does not exist</div></article>
-      <article class="card span6"><div class="k">Win Rate Context</div><div class="v">100.00%</div><div class="k">sample_size=1 (must reach 30 for projection quality)</div><div class="k">Generated: 2026-02-17T18:03:47Z</div></article>
+      <article class="card span6"><div class="k">Resilience Check</div><div class="v"><span class="chip pass">EXPECTED_PATH</span></div><div class="k">test=invalid_model_error_path</div><div class="k">type=invalid_request_error</div><div class="k">message=The specified model is not enabled for this mode or does not exist</div></article>
+      <article class="card span6"><div class="k">Win Rate Context</div><div class="v">100.00%</div><div class="k">sample_size=1 (must reach 30 for projection quality)</div><div class="k">Generated: 2026-02-17T18:09:38Z</div></article>
 
       <article class="card span8">
         <div class="k">Readiness Metrics</div>
@@ -97,7 +97,31 @@
 
       <article class="card span6">
         <div class="k">Active Runtime Report</div>
-        <p>No runtime report available yet.</p>
+        <pre class='runtime'># Live Task Runtime Report
+
+- Generated (UTC): `2026-02-17T18:09:38Z`
+- Open Layer-1 tasks: `2`
+
+## Active Tasks (with elapsed time)
+- `ACTIVE` Add expectancy metrics (profit factor, avg winner, avg loser) to `scripts/generate_profit_readiness_scorecard.py`. (elapsed: 47s)
+- `ACTIVE` Add a promotion gate artifact that blocks strategy promotion when win rate/run-rate thresholds are below target. (elapsed: 47s)
+
+## Current Task In Progress
+- Task: Add expectancy metrics (profit factor, avg winner, avg loser) to `scripts/generate_profit_readiness_scorecard.py`.
+- Started (UTC): `2026-02-17T18:08:51Z`
+- Elapsed: `47s`
+
+## Runtime Phases
+- No phase timing detected yet.
+
+## Newly Added Tasks This Run
+- None
+
+## Sources
+- `manual_layer1_tasks.md`
+- `artifacts/devloop/continuous.log`
+
+</pre>
       </article>
     </section>
   </div>

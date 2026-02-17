@@ -122,13 +122,20 @@ def main() -> int:
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     has_error = resilience.get("has_error_field", "false").lower() == "true"
+    resilience_test = resilience.get("test", "unknown")
     err_type = resilience.get("error_type", "none")
     err_msg = resilience.get("error_message", "none")
-    resilience_status = (
-        '<span class="chip warn">ERROR</span>'
-        if has_error
-        else '<span class="chip pass">PASS</span>'
+    expected_invalid_model_path = (
+        resilience_test == "invalid_model_error_path"
+        and has_error
+        and err_type == "invalid_request_error"
     )
+    if expected_invalid_model_path:
+        resilience_status = '<span class="chip pass">EXPECTED_PATH</span>'
+    elif has_error:
+        resilience_status = '<span class="chip warn">ERROR</span>'
+    else:
+        resilience_status = '<span class="chip pass">PASS</span>'
     repo_blob = "https://github.com/IgorGanapolsky/trading/blob/main"
 
     runtime_block = (
@@ -200,7 +207,7 @@ def main() -> int:
       <article class="card span3"><div class="k">Gateway Latency</div><div class="v">{latency} ms</div></article>
       <article class="card span3"><div class="k">Gateway Cost</div><div class="v">${cost}</div></article>
       <article class="card span3"><div class="k">Paper P/L</div><div class="v">${total_pl:,.2f} ({total_pl_pct:.2f}%)</div></article>
-      <article class="card span6"><div class="k">Resilience Check</div><div class="v">{resilience_status}</div><div class="k">type={err_type}</div><div class="k">message={err_msg}</div></article>
+      <article class="card span6"><div class="k">Resilience Check</div><div class="v">{resilience_status}</div><div class="k">test={resilience_test}</div><div class="k">type={err_type}</div><div class="k">message={err_msg}</div></article>
       <article class="card span6"><div class="k">Win Rate Context</div><div class="v">{paper_win_rate:.2f}%</div><div class="k">sample_size={paper_samples} (must reach 30 for projection quality)</div><div class="k">Generated: {generated_at}</div></article>
 
       <article class="card span8">

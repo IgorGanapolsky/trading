@@ -50,18 +50,34 @@ def parse_smoke_response(smoke_response: dict) -> dict[str, object]:
     completion_tokens = int(usage.get("completion_tokens", 0) or 0)
     total_tokens = int(usage.get("total_tokens", 0) or 0)
 
-    choices_payload = smoke_response.get("choices", "") if isinstance(smoke_response, dict) else ""
-    if not isinstance(choices_payload, str):
-        choices_payload = str(choices_payload)
+    candidates: list[str] = []
+    choices_payload = smoke_response.get("choices") if isinstance(smoke_response, dict) else None
+    if isinstance(choices_payload, list):
+        for choice in choices_payload:
+            if not isinstance(choice, dict):
+                continue
+            message = choice.get("message", {})
+            if isinstance(message, dict) and isinstance(message.get("content"), str):
+                candidates.append(message["content"])
+    elif isinstance(choices_payload, str):
+        candidates.append(choices_payload)
 
     router_check = False
-    json_block_match = re.search(r"\{[\s\S]*\}", choices_payload)
-    if json_block_match:
+    for content in candidates:
+        fenced_match = re.search(r"```(?:json)?\s*(\{[\s\S]*?\})\s*```", content, re.IGNORECASE)
+        json_candidate = fenced_match.group(1) if fenced_match else None
+        if not json_candidate:
+            block_match = re.search(r"\{[\s\S]*\}", content)
+            json_candidate = block_match.group(0) if block_match else None
+        if not json_candidate:
+            continue
         try:
-            payload = json.loads(json_block_match.group(0))
-            router_check = bool(payload.get("router_check"))
+            payload = json.loads(json_candidate)
+            if isinstance(payload, dict) and "router_check" in payload:
+                router_check = bool(payload.get("router_check"))
+                break
         except Exception:
-            router_check = False
+            continue
 
     return {
         "model": model,
@@ -206,6 +222,9 @@ def main() -> int:
     fallback_probe_ok_count = exec_daily.get("fallback_probe_ok_count", 0) if has_exec_daily else 0
     est_cost_value = as_float(est_cost, 0.0)
     cost_per_1k = (est_cost_value / total_tokens) * 1000.0 if total_tokens > 0 else 0.0
+    smoke_probe_ok = bool(smoke_response.get("id")) and not bool(smoke_response.get("error"))
+    smoke_probe_text = "PASS" if smoke_probe_ok else "WARN"
+    smoke_probe_chip = status_chip("PASS" if smoke_probe_ok else "WARN")
 
     paper = system_state.get("paper_account", {}) if isinstance(system_state, dict) else {}
     north_star = system_state.get("north_star", {}) if isinstance(system_state, dict) else {}
@@ -415,6 +434,7 @@ def main() -> int:
           <tr><td>Service Tier</td><td>{smoke_service_tier}</td></tr>
           <tr><td>Request ID</td><td><span class="mono">{smoke_request_id}</span></td></tr>
           <tr><td>Runs</td><td>{exec_runs}</td></tr>
+          <tr><td>Latest Smoke Probe</td><td>{smoke_probe_text} {smoke_probe_chip}</td></tr>
           <tr><td>Success Rate</td><td>{exec_success}%</td></tr>
           <tr><td>Actionable Rate</td><td>{exec_actionable}%</td></tr>
           <tr><td>P95 Latency</td><td>{exec_p95} ms</td></tr>
