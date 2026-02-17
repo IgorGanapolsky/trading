@@ -34,8 +34,17 @@ def parse_kv(path: Path) -> dict[str, str]:
     return out
 
 
+def as_float(value: object, default: float = 0.0) -> float:
+    try:
+        return float(value)  # type: ignore[arg-type]
+    except Exception:
+        return default
+
+
 def parse_smoke_response(smoke_response: dict) -> dict[str, object]:
     model = str(smoke_response.get("model", "unknown"))
+    service_tier = str(smoke_response.get("service_tier", "unknown"))
+    request_id = str(smoke_response.get("id", "n/a"))
     usage = smoke_response.get("usage", {}) if isinstance(smoke_response, dict) else {}
     prompt_tokens = int(usage.get("prompt_tokens", 0) or 0)
     completion_tokens = int(usage.get("completion_tokens", 0) or 0)
@@ -56,6 +65,8 @@ def parse_smoke_response(smoke_response: dict) -> dict[str, object]:
 
     return {
         "model": model,
+        "service_tier": service_tier,
+        "request_id": request_id,
         "prompt_tokens": prompt_tokens,
         "completion_tokens": completion_tokens,
         "total_tokens": total_tokens,
@@ -155,6 +166,14 @@ def main() -> int:
     loop_cycle, loop_profile = derive_loop_status(loop_status)
     latency = smoke.get("latency_ms", "n/a")
     est_cost = smoke.get("estimated_total_cost_usd", "n/a")
+    smoke_meta = parse_smoke_response(smoke_response)
+    smoke_model = str(smoke_meta["model"])
+    smoke_service_tier = str(smoke_meta["service_tier"])
+    smoke_request_id = str(smoke_meta["request_id"])
+    prompt_tokens = int(smoke_meta["prompt_tokens"])
+    completion_tokens = int(smoke_meta["completion_tokens"])
+    total_tokens = int(smoke_meta["total_tokens"])
+    router_check = bool(smoke_meta["router_check"])
 
     has_exec_daily = all(
         key in exec_daily
@@ -172,24 +191,21 @@ def main() -> int:
         exec_runs = exec_daily.get("run_count")
         exec_p95 = exec_daily.get("p95_latency_ms")
         generated_at = exec_daily.get("generated_at_utc")
-        smoke_model = str(exec_daily.get("model", "unknown"))
-        prompt_tokens = int(exec_daily.get("prompt_tokens", 0) or 0)
-        completion_tokens = int(exec_daily.get("completion_tokens", 0) or 0)
-        total_tokens = int(exec_daily.get("total_tokens", 0) or 0)
-        router_check = bool(exec_daily.get("router_check", False))
+        smoke_model = str(exec_daily.get("model") or smoke_model)
+        prompt_tokens = int(exec_daily.get("prompt_tokens") or prompt_tokens)
+        completion_tokens = int(exec_daily.get("completion_tokens") or completion_tokens)
+        total_tokens = int(exec_daily.get("total_tokens") or total_tokens)
+        router_check = bool(exec_daily.get("router_check", router_check))
     else:
-        smoke_meta = parse_smoke_response(smoke_response)
         has_smoke_result = bool(smoke_response.get("choices")) or bool(smoke_response.get("id"))
         exec_runs = 1 if has_smoke_result else 0
         exec_success = 100.0 if has_smoke_result else 0.0
         exec_actionable = 0.0
         exec_p95 = smoke.get("latency_ms", "n/a")
         generated_at = smoke.get("timestamp_utc", "n/a")
-        smoke_model = smoke_meta["model"]
-        prompt_tokens = smoke_meta["prompt_tokens"]
-        completion_tokens = smoke_meta["completion_tokens"]
-        total_tokens = smoke_meta["total_tokens"]
-        router_check = smoke_meta["router_check"]
+    fallback_probe_ok_count = exec_daily.get("fallback_probe_ok_count", 0) if has_exec_daily else 0
+    est_cost_value = as_float(est_cost, 0.0)
+    cost_per_1k = (est_cost_value / total_tokens) * 1000.0 if total_tokens > 0 else 0.0
 
     paper = system_state.get("paper_account", {}) if isinstance(system_state, dict) else {}
     north_star = system_state.get("north_star", {}) if isinstance(system_state, dict) else {}
@@ -336,6 +352,15 @@ def main() -> int:
       grid-template-columns: 1fr 1fr;
       gap: 10px;
     }}
+    .mono {{
+      font-family: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 0.78rem;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 1px 6px;
+      border-radius: 6px;
+      overflow-wrap: anywhere;
+    }}
     .note {{
       margin-top: 8px;
       font-size: 0.82rem;
@@ -387,12 +412,16 @@ def main() -> int:
         <table class="table">
           <tr><td>Gateway Router</td><td>Tetrate TARS</td></tr>
           <tr><td>Routed Model</td><td>{smoke_model}</td></tr>
+          <tr><td>Service Tier</td><td>{smoke_service_tier}</td></tr>
+          <tr><td>Request ID</td><td><span class="mono">{smoke_request_id}</span></td></tr>
           <tr><td>Runs</td><td>{exec_runs}</td></tr>
           <tr><td>Success Rate</td><td>{exec_success}%</td></tr>
           <tr><td>Actionable Rate</td><td>{exec_actionable}%</td></tr>
           <tr><td>P95 Latency</td><td>{exec_p95} ms</td></tr>
           <tr><td>Token Envelope</td><td>{prompt_tokens} prompt / {completion_tokens} completion / {total_tokens} total</td></tr>
+          <tr><td>Token Economics</td><td>${est_cost_value:.8f} ({cost_per_1k:.6f} / 1K tokens)</td></tr>
           <tr><td>Schema Gate (router_check)</td><td>{router_check_text} {router_check_chip}</td></tr>
+          <tr><td>Fallback Probe OK</td><td>{fallback_probe_ok_count}</td></tr>
           <tr><td>Estimated Cost / Smoke Run</td><td>${est_cost}</td></tr>
           <tr><td>Generated</td><td>{generated_at}</td></tr>
         </table>
@@ -402,12 +431,14 @@ def main() -> int:
       <article class="card span6">
         <div class="k">How Tetrate Is Used (Concrete Flow)</div>
         <table class="table" style="margin-top:10px">
-          <tr><td>1. Input Assembly</td><td>System builds prompt context from market/account state and risk envelope.</td></tr>
-          <tr><td>2. Tetrate Route</td><td>Call is sent through Tetrate Agent Router Service (TARS) to select model/provider path.</td></tr>
-          <tr><td>3. Decision Output</td><td>Router response is parsed into structured trade intent/analysis payload.</td></tr>
-          <tr><td>4. Safety Gate</td><td>Ticker whitelist + position/risk constraints are enforced before execution.</td></tr>
-          <tr><td>5. Telemetry</td><td>Latency + cost are recorded from smoke checks for quality/cost tracking.</td></tr>
-          <tr><td>6. Judge Evidence</td><td>Artifacts are published so judges can verify behavior from raw files.</td></tr>
+          <tr><td>Entry Contract</td><td>Orchestrator sends <span class="mono">POST /v1/chat/completions</span> request through TARS.</td></tr>
+          <tr><td>Route Decision</td><td>TARS applies provider/model policy and returns normalized OpenAI-compatible response payload.</td></tr>
+          <tr><td>Runtime Proof</td><td>Observed model <span class="mono">{smoke_model}</span>, tier <span class="mono">{smoke_service_tier}</span>, request <span class="mono">{smoke_request_id}</span>.</td></tr>
+          <tr><td>Schema Gate</td><td>Response must parse into structured trade intent; malformed payloads are rejected.</td></tr>
+          <tr><td>Risk/Policy Gate</td><td>Whitelist, max positions, loss limits, and cadence controls can veto execution.</td></tr>
+          <tr><td>Fallback Path</td><td>Fallback probes validate alternate provider path; status is tracked in daily quality artifacts.</td></tr>
+          <tr><td>Telemetry</td><td>Latency, token counts, and estimated costs are persisted for ongoing quality/cost monitoring.</td></tr>
+          <tr><td>Judge Evidence</td><td>Raw artifact files are published for independent verification of each stage.</td></tr>
         </table>
         <div class="k" style="margin-top:10px">Tetrate Request Flow Diagram</div>
         <div class="diagram">
@@ -426,8 +457,8 @@ def main() -> int:
             <text x="295" y="82" text-anchor="middle" fill="#b7cbe4" font-size="11">policy + provider routing</text>
 
             <rect x="420" y="40" width="180" height="58" rx="8" fill="#173656" stroke="#2b4f78"></rect>
-            <text x="510" y="65" text-anchor="middle" fill="#eef6ff" font-size="13">LLM Provider Call</text>
-            <text x="510" y="82" text-anchor="middle" fill="#b7cbe4" font-size="11">routed model response</text>
+            <text x="510" y="65" text-anchor="middle" fill="#eef6ff" font-size="13">Primary LLM Call</text>
+            <text x="510" y="82" text-anchor="middle" fill="#b7cbe4" font-size="11">{smoke_model}</text>
 
             <rect x="640" y="40" width="130" height="58" rx="8" fill="#173656" stroke="#2b4f78"></rect>
             <text x="705" y="65" text-anchor="middle" fill="#eef6ff" font-size="13">JSON Gate</text>
@@ -448,7 +479,7 @@ def main() -> int:
             <line x1="845" y1="98" x2="845" y2="155" stroke="#ff8f42" stroke-width="2.2" marker-end="url(#arrow)"></line>
 
             <path d="M510 98 C 510 130, 350 130, 350 155" stroke="#95a5a6" stroke-width="2" fill="none" stroke-dasharray="6 5" marker-end="url(#arrow)"></path>
-            <text x="355" y="178" fill="#b7cbe4" font-size="11">fallback route on provider error</text>
+            <text x="355" y="178" fill="#b7cbe4" font-size="11">fallback provider route on health or timeout failure</text>
           </svg>
         </div>
         <div class="legend">
