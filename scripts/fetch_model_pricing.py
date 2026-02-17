@@ -19,10 +19,12 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -152,7 +154,8 @@ class OpenRouterSource:
                     pricing_data = entry.get("pricing", {})
                     return {
                         "input_cost_per_1m": float(pricing_data.get("prompt", 0)) * 1_000_000,
-                        "output_cost_per_1m": float(pricing_data.get("completion", 0)) * 1_000_000,
+                        "output_cost_per_1m": float(pricing_data.get("completion", 0))
+                        * 1_000_000,
                     }
 
             logger.warning(f"Model {model} not found in OpenRouter API")
@@ -268,8 +271,12 @@ def main() -> int:
         description="Fetch real-time model pricing for TARS smoke tests"
     )
     parser.add_argument("model", help="Model name (e.g., gpt-4o-mini)")
-    parser.add_argument("--cache-dir", help="Cache directory", type=Path, default=None)
-    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    parser.add_argument(
+        "--cache-dir", help="Cache directory", type=Path, default=None
+    )
+    parser.add_argument(
+        "--debug", action="store_true", help="Enable debug logging"
+    )
     args = parser.parse_args()
 
     if args.debug:
