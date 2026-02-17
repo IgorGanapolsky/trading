@@ -22,6 +22,7 @@ DEFAULT_LOOKBACK_DAYS = 7
 DEFAULT_WEEKLY_MIN_SAMPLES = 5
 DEFAULT_HISTORY_WEEKS = 104
 DEFAULT_MIN_QUALIFIED_SETUPS_PER_WEEK = 3
+DEFAULT_MIN_NEW_ENTRIES_PER_WEEK = 2
 DEFAULT_MIN_CLOSED_TRADES_PER_WEEK = 1
 DEFAULT_MIN_CLOSED_TRADES_FOR_SCALING = 30
 DEFAULT_MIN_LIQUIDITY_VOLUME_RATIO = 0.20
@@ -608,6 +609,19 @@ def compute_weekly_gate(
         lookback_days=DEFAULT_LOOKBACK_DAYS,
     )
     qualified_setups = sum(1 for row in recent_decisions if row.get("qualified") is True)
+    entry_decisions = {
+        "APPROVED",
+        "ACCEPTED",
+        "EXECUTED",
+        "ORDER_SUBMITTED",
+        "TRADE_OPENED",
+        "FILLED",
+    }
+    new_entries = sum(
+        1
+        for row in recent_decisions
+        if str(row.get("decision", "")).strip().upper() in entry_decisions
+    )
 
     samples = len(recent_closed)
     wins = sum(1 for row in recent_closed if row.get("outcome") == "win")
@@ -666,26 +680,43 @@ def compute_weekly_gate(
     cadence_kpi = {
         "enabled": True,
         "min_qualified_setups_per_week": DEFAULT_MIN_QUALIFIED_SETUPS_PER_WEEK,
+        "min_new_entries_per_week": DEFAULT_MIN_NEW_ENTRIES_PER_WEEK,
         "min_closed_trades_per_week": DEFAULT_MIN_CLOSED_TRADES_PER_WEEK,
         "qualified_setups_observed": qualified_setups,
+        "new_entries_observed": new_entries,
         "closed_trades_observed": samples,
         "meets_qualified_setups": qualified_setups >= DEFAULT_MIN_QUALIFIED_SETUPS_PER_WEEK,
+        "meets_new_entries": new_entries >= DEFAULT_MIN_NEW_ENTRIES_PER_WEEK,
         "meets_closed_trades": samples >= DEFAULT_MIN_CLOSED_TRADES_PER_WEEK,
     }
     cadence_kpi["passed"] = bool(
-        cadence_kpi["meets_qualified_setups"] and cadence_kpi["meets_closed_trades"]
+        cadence_kpi["meets_qualified_setups"]
+        and cadence_kpi["meets_new_entries"]
+        and cadence_kpi["meets_closed_trades"]
     )
+    missing_dimensions: list[str] = []
+    if not cadence_kpi["meets_qualified_setups"]:
+        missing_dimensions.append("qualified_setups")
+    if not cadence_kpi["meets_new_entries"]:
+        missing_dimensions.append("new_entries")
+    if not cadence_kpi["meets_closed_trades"]:
+        missing_dimensions.append("closed_trades")
+
     if cadence_kpi["passed"]:
         cadence_kpi["alert_level"] = "ok"
         cadence_kpi["summary"] = "Cadence KPI met."
-    elif not cadence_kpi["meets_qualified_setups"] and not cadence_kpi["meets_closed_trades"]:
+    elif len(missing_dimensions) >= 2:
         cadence_kpi["alert_level"] = "critical"
         cadence_kpi["summary"] = (
-            "Cadence KPI miss: qualified setups and closed trades are both below weekly minimum."
+            "Cadence KPI miss: multiple weekly minimums are below threshold "
+            f"({', '.join(missing_dimensions)})."
         )
     else:
         cadence_kpi["alert_level"] = "warning"
-        cadence_kpi["summary"] = "Cadence KPI miss: one or more weekly minimums not met."
+        cadence_kpi["summary"] = (
+            "Cadence KPI miss: one weekly minimum is below threshold "
+            f"({', '.join(missing_dimensions)})."
+        )
 
     no_trade_diagnostic = _compute_no_trade_diagnostic(
         data_dir=data_dir,
@@ -711,6 +742,27 @@ def compute_weekly_gate(
         recommended_max = min(recommended_max, 0.015)
         reason = f"{reason} AI credit stress elevated; hold cautious sizing."
 
+    blocked_categories = set(no_trade_diagnostic.get("blocked_categories", []))
+    hard_blockers = {"risk_caps", "ai_credit_stress"}
+    adaptive_scan_required = bool(
+        not cadence_kpi["passed"]
+        and not cadence_kpi["meets_qualified_setups"]
+        and blocked_categories.isdisjoint(hard_blockers)
+    )
+    adaptive_scan_profile: dict[str, Any] = {}
+    if adaptive_scan_required:
+        adaptive_scan_profile = {
+            "mode": "cadence_recovery",
+            "target_delta": 0.18,
+            "min_dte": 21,
+            "max_dte": DEFAULT_MAX_TARGET_DTE,
+            "allow_vix_override": True,
+            "reason": (
+                "Cadence miss without hard risk blockers. Relax non-critical scan filters "
+                "to recover setup/entry throughput."
+            ),
+        }
+
     weekly_history = _load_json_list(weekly_history_path)
     week_start = today - timedelta(days=today.weekday())
     week_start_iso = week_start.isoformat()
@@ -721,6 +773,7 @@ def compute_weekly_gate(
         "expectancy_per_trade": expectancy,
         "mode": mode,
         "qualified_setups": qualified_setups,
+        "new_entries": new_entries,
         "cadence_passed": cadence_kpi["passed"],
     }
 
@@ -733,6 +786,7 @@ def compute_weekly_gate(
                 and _as_float(row.get("expectancy_per_trade"), -999999.0) == expectancy
                 and str(row.get("mode", "")) == mode
                 and _as_int(row.get("qualified_setups"), -1) == qualified_setups
+                and _as_int(row.get("new_entries"), -1) == new_entries
                 and bool(row.get("cadence_passed")) is cadence_kpi["passed"]
             )
             if unchanged:
@@ -795,7 +849,8 @@ def compute_weekly_gate(
             mode = "cautious"
         reason = (
             f"{reason} Cadence KPI miss: setups {qualified_setups}/"
-            f"{DEFAULT_MIN_QUALIFIED_SETUPS_PER_WEEK}, closed trades {samples}/"
+            f"{DEFAULT_MIN_QUALIFIED_SETUPS_PER_WEEK}, entries {new_entries}/"
+            f"{DEFAULT_MIN_NEW_ENTRIES_PER_WEEK}, closed trades {samples}/"
             f"{DEFAULT_MIN_CLOSED_TRADES_PER_WEEK}."
         )
 
@@ -820,6 +875,14 @@ def compute_weekly_gate(
         "positive_weeks_streak": positive_streak,
         "evidence_source": evidence_source,
         "cadence_kpi": cadence_kpi,
+        "cadence_enforcement": {
+            "enabled": True,
+            "min_qualified_setups_per_week": DEFAULT_MIN_QUALIFIED_SETUPS_PER_WEEK,
+            "min_new_entries_per_week": DEFAULT_MIN_NEW_ENTRIES_PER_WEEK,
+            "min_closed_trades_per_week": DEFAULT_MIN_CLOSED_TRADES_PER_WEEK,
+            "adaptive_scan_required": adaptive_scan_required,
+            "adaptive_scan_profile": adaptive_scan_profile,
+        },
         "scale_blocked_by_cadence": not cadence_kpi["passed"],
         "ai_credit_stress": ai_credit_gate,
         "scale_blocked_by_ai_credit_stress": ai_credit_status == "blocked",

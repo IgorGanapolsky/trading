@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 DEFAULT_STATE_PATH = Path("data/system_state.json")
-LEVEL_ORDER = {"ok": 0, "warning": 1, "critical": 2, "unknown": 1}
+LEVEL_ORDER = {"none": -1, "ok": 0, "warning": 1, "critical": 2, "unknown": 1}
 
 
 def _sanitize(value: object, *, multiline: bool = False) -> str:
@@ -75,6 +75,8 @@ def evaluate_weekly_cadence(state: dict[str, Any]) -> dict[str, Any]:
         "summary": str(cadence.get("summary") or "Cadence KPI missing from weekly gate."),
         "qualified_setups_observed": _to_int(cadence.get("qualified_setups_observed"), 0),
         "min_qualified_setups_per_week": _to_int(cadence.get("min_qualified_setups_per_week"), 0),
+        "new_entries_observed": _to_int(cadence.get("new_entries_observed"), 0),
+        "min_new_entries_per_week": _to_int(cadence.get("min_new_entries_per_week"), 0),
         "closed_trades_observed": _to_int(cadence.get("closed_trades_observed"), 0),
         "min_closed_trades_per_week": _to_int(cadence.get("min_closed_trades_per_week"), 0),
         "blocked_categories": [str(item) for item in blocked_categories],
@@ -96,6 +98,9 @@ def markdown_report(result: dict[str, Any]) -> str:
     lines.append(
         "- Qualified Setups: "
         f"`{result['qualified_setups_observed']}/{result['min_qualified_setups_per_week']}`"
+    )
+    lines.append(
+        f"- New Entries: `{result['new_entries_observed']}/{result['min_new_entries_per_week']}`"
     )
     lines.append(
         "- Closed Trades: "
@@ -143,6 +148,11 @@ def markdown_public_report(result: dict[str, Any]) -> str:
         f"{_to_int(result.get('min_qualified_setups_per_week'), 0)}`"
     )
     lines.append(
+        "- New Entries: "
+        f"`{_to_int(result.get('new_entries_observed'), 0)}/"
+        f"{_to_int(result.get('min_new_entries_per_week'), 0)}`"
+    )
+    lines.append(
         "- Closed Trades: "
         f"`{_to_int(result.get('closed_trades_observed'), 0)}/"
         f"{_to_int(result.get('min_closed_trades_per_week'), 0)}`"
@@ -161,6 +171,8 @@ def _should_fail(*, result: dict[str, Any], strict: bool, fail_on: str) -> bool:
         return False
     if strict:
         return True
+    if fail_on == "none":
+        return False
     threshold = LEVEL_ORDER.get(fail_on, LEVEL_ORDER["critical"])
     observed = LEVEL_ORDER.get(str(result.get("alert_level", "unknown")), LEVEL_ORDER["unknown"])
     return observed >= threshold
@@ -230,6 +242,8 @@ def main() -> int:
     if args.emit_github_warning and not result["passed"]:
         setups_obs = int(result.get("qualified_setups_observed", 0))
         setups_req = int(result.get("min_qualified_setups_per_week", 0))
+        entries_obs = int(result.get("new_entries_observed", 0))
+        entries_req = int(result.get("min_new_entries_per_week", 0))
         trades_obs = int(result.get("closed_trades_observed", 0))
         trades_req = int(result.get("min_closed_trades_per_week", 0))
         blocked = _sanitize(
@@ -239,6 +253,7 @@ def main() -> int:
         message = (
             f"Weekly cadence KPI missed: "
             f"setups {setups_obs}/{setups_req}, "
+            f"entries {entries_obs}/{entries_req}, "
             f"closed trades {trades_obs}/{trades_req}. "
             f"Blocked categories: {blocked}. "
             f"AI credit stress={credit_status}."
