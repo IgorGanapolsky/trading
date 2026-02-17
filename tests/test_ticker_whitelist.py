@@ -1,11 +1,12 @@
 """
 Tests for ticker whitelist enforcement.
 
-Critical safety gate to prevent non-SPY trades.
+Critical safety gate to prevent non-whitelisted trades.
 """
 
 import pytest
 
+from src.core.trading_constants import ALLOWED_TICKERS
 from src.utils.ticker_whitelist import (
     ALLOWED_UNDERLYING,
     TickerWhitelistViolation,
@@ -67,8 +68,12 @@ class TestIsTickerAllowed:
         assert is_ticker_allowed("AAPL") is False
         assert is_ticker_allowed("TSLA") is False
         assert is_ticker_allowed("NVDA") is False
-        assert is_ticker_allowed("QQQ") is False
-        assert is_ticker_allowed("IWM") is False
+
+    def test_liquid_etf_tickers_allowed(self):
+        assert is_ticker_allowed("QQQ") is True
+        assert is_ticker_allowed("IWM") is True
+        assert is_ticker_allowed("QQQ260313C00420000") is True
+        assert is_ticker_allowed("IWM260313P00200000") is True
 
 
 class TestValidateTicker:
@@ -104,8 +109,8 @@ class TestValidateTicker:
 class TestWhitelistConfiguration:
     """Test whitelist is correctly configured."""
 
-    def test_only_spy_in_whitelist(self):
-        assert frozenset({"SPY", "SPX", "XSP"}) == ALLOWED_UNDERLYING
+    def test_whitelist_matches_canonical_constants(self):
+        assert frozenset(ALLOWED_TICKERS) == ALLOWED_UNDERLYING
 
     def test_whitelist_is_immutable(self):
         # frozenset cannot be modified
