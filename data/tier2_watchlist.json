@@ -1,0 +1,13 @@
+{
+  "meta": {
+    "source": "repo baseline fallback",
+    "last_updated": "2026-02-17T00:00:00Z",
+    "generated_by": "manual baseline",
+    "notes": "Workflow auto-heals this file if removed."
+  },
+  "current_holdings": [],
+  "watchlist": [
+    "SPY",
+    "IWM"
+  ]
+}

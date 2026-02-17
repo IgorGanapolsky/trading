@@ -46,34 +46,16 @@ This section is auto-updated from `data/system_state.json` by `scripts/update_do
 ## Alpaca Account Snapshots (Auto)
 
 <!-- AUTO_SNAPSHOT_START -->
-Latest snapshots are refreshed by automation and published to GitHub Pages.
+Latest snapshot is refreshed by automation and published to GitHub Pages.
 
-### Paper ($100K) Snapshot + PaperBanana Financial Diagram
+### Progress Dashboard (Most Relevant)
+[Open full live dashboard](/trading/)
 
-| Alpaca Snapshot | PaperBanana Diagram |
-| --- | --- |
-| ![Alpaca Paper Snapshot](/trading/assets/snapshots/alpaca_paper_latest.png) | ![PaperBanana Paper Diagram](/trading/assets/snapshots/paperbanana_paper_latest.svg) |
-
-Captured: `2026-02-17T14:25:30Z`
-
-Technical readout: Paper Account: net liquidation value $101,441.56; daily P/L +0.00 (+0.0 bps) indicating a flat premium-decay session; cumulative P/L +1,441.56 (+1.44%); low capital deployment at 0.8% utilization with cash $101,613.56; open position proxy 4; win-rate estimate 100.0% (n=1); North Star gate MEDIUM.
-
-### Brokerage (Live) Snapshot + PaperBanana Financial Diagram
-
-| Alpaca Snapshot | PaperBanana Diagram |
-| --- | --- |
-| ![Alpaca Brokerage Snapshot](/trading/assets/snapshots/alpaca_live_latest.png) | ![PaperBanana Brokerage Diagram](/trading/assets/snapshots/paperbanana_live_latest.svg) |
+[![Progress Dashboard Snapshot](/trading/assets/snapshots/progress_latest.png)](/trading/)
 
 Captured: `2026-02-17T14:25:30Z`
 
-Technical readout: Brokerage Account: net liquidation value $207.02; daily P/L +0.00 (+0.0 bps) indicating a flat premium-decay session; cumulative P/L +187.02 (+935.10%); high capital deployment at 90.3% utilization with cash $40.00; open position proxy 0; win-rate estimate 0.0% (n=0); North Star gate MEDIUM.
-
-### Progress Dashboard Snapshot
-![Progress Dashboard Snapshot](/trading/assets/snapshots/progress_latest.png)
-
-Captured: `2026-02-17T14:25:30Z`
-
-Manifest: [`/trading/data/alpaca_snapshots.json`](/trading/data/alpaca_snapshots.json)
+Raw manifest: [`/trading/data/alpaca_snapshots.json`](/trading/data/alpaca_snapshots.json)
 <!-- AUTO_SNAPSHOT_END -->
 
 ---

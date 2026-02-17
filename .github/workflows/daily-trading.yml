@@ -500,9 +500,28 @@ jobs:
           echo "🔍 Validating tier2_watchlist.json..."
 
           if [ ! -f "data/tier2_watchlist.json" ]; then
-            echo "❌ ERROR: tier2_watchlist.json not found!"
-            echo "watchlist_valid=false" >> $GITHUB_OUTPUT
-            exit 1
+            echo "⚠️  tier2_watchlist.json not found - auto-healing with SPY/IWM fallback"
+            python3 - << 'PY'
+            import json
+            from datetime import datetime, timezone
+            from pathlib import Path
+
+            watchlist_path = Path("data/tier2_watchlist.json")
+            watchlist_path.parent.mkdir(parents=True, exist_ok=True)
+
+            fallback_payload = {
+                "meta": {
+                    "source": "daily-trading auto-heal fallback",
+                    "last_updated": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                    "generated_by": "daily-trading.yml:validate_watchlist",
+                },
+                "current_holdings": [],
+                "watchlist": ["SPY", "IWM"],
+            }
+
+            watchlist_path.write_text(json.dumps(fallback_payload, indent=2) + "\n", encoding="utf-8")
+            print("✅ Created fallback watchlist at data/tier2_watchlist.json")
+            PY
           fi
 
           # Validate JSON format

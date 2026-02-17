@@ -26,10 +26,9 @@ def test_build_snapshot_block_uses_manifest_diagrams_and_explainers() -> None:
     block = build_snapshot_block(manifest)
 
     assert "AUTO_SNAPSHOT_START" in block
-    assert "/trading/assets/snapshots/alpaca_paper_latest.png" in block
-    assert "/trading/assets/snapshots/paperbanana_paper_latest.svg" in block
-    assert "paper summary" in block
-    assert "/trading/assets/snapshots/alpaca_live_latest.png" in block
-    assert "/trading/assets/snapshots/paperbanana_live_latest.svg" in block
-    assert "live summary" in block
+    assert "Progress Dashboard (Most Relevant)" in block
+    assert "[Open full live dashboard](/trading/)" in block
     assert "/trading/assets/snapshots/progress_latest.png" in block
+    assert "Raw manifest: [`/trading/data/alpaca_snapshots.json`](/trading/data/alpaca_snapshots.json)" in block
+    assert "paper summary" not in block
+    assert "live summary" not in block

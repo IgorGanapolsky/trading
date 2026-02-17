@@ -185,60 +185,23 @@ def build_snapshot_block(manifest: dict[str, Any]) -> str:
     if not isinstance(latest, dict):
         latest = {}
 
-    paper = latest.get("alpaca_paper", {}) if isinstance(latest.get("alpaca_paper"), dict) else {}
-    live = latest.get("alpaca_live", {}) if isinstance(latest.get("alpaca_live"), dict) else {}
     progress = latest.get("progress", {}) if isinstance(latest.get("progress"), dict) else {}
-
-    paper_url = paper.get("url", "/trading/assets/snapshots/alpaca_paper_latest.png")
-    paper_diagram = paper.get(
-        "diagram_url", "/trading/assets/snapshots/paperbanana_paper_latest.svg"
-    )
-    live_url = live.get("url", "/trading/assets/snapshots/alpaca_live_latest.png")
-    live_diagram = live.get("diagram_url", "/trading/assets/snapshots/paperbanana_live_latest.svg")
     progress_url = progress.get("url", "/trading/assets/snapshots/progress_latest.png")
-    paper_time = paper.get("captured_at_utc", "pending")
-    live_time = live.get("captured_at_utc", "pending")
     progress_time = progress.get("captured_at_utc", "pending")
-    paper_explainer = paper.get(
-        "technical_explainer",
-        "Paper account technical explanation will populate after next autonomous capture.",
-    )
-    live_explainer = live.get(
-        "technical_explainer",
-        "Brokerage account technical explanation will populate after next autonomous capture.",
-    )
 
     return "\n".join(
         [
             SNAPSHOT_START,
-            "Latest snapshots are refreshed by automation and published to GitHub Pages.",
+            "Latest snapshot is refreshed by automation and published to GitHub Pages.",
             "",
-            "### Paper ($100K) Snapshot + PaperBanana Financial Diagram",
+            "### Progress Dashboard (Most Relevant)",
+            "[Open full live dashboard](/trading/)",
             "",
-            "| Alpaca Snapshot | PaperBanana Diagram |",
-            "| --- | --- |",
-            f"| ![Alpaca Paper Snapshot]({paper_url}) | ![PaperBanana Paper Diagram]({paper_diagram}) |",
-            "",
-            f"Captured: `{paper_time}`",
-            "",
-            f"Technical readout: {paper_explainer}",
-            "",
-            "### Brokerage (Live) Snapshot + PaperBanana Financial Diagram",
-            "",
-            "| Alpaca Snapshot | PaperBanana Diagram |",
-            "| --- | --- |",
-            f"| ![Alpaca Brokerage Snapshot]({live_url}) | ![PaperBanana Brokerage Diagram]({live_diagram}) |",
-            "",
-            f"Captured: `{live_time}`",
-            "",
-            f"Technical readout: {live_explainer}",
-            "",
-            "### Progress Dashboard Snapshot",
-            f"![Progress Dashboard Snapshot]({progress_url})",
+            f"[![Progress Dashboard Snapshot]({progress_url})](/trading/)",
             "",
             f"Captured: `{progress_time}`",
             "",
-            "Manifest: [`/trading/data/alpaca_snapshots.json`](/trading/data/alpaca_snapshots.json)",
+            "Raw manifest: [`/trading/data/alpaca_snapshots.json`](/trading/data/alpaca_snapshots.json)",
             SNAPSHOT_END,
         ]
     )
