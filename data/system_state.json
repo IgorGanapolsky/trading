@@ -143,7 +143,7 @@
     "win_rate": 100.0,
     "win_rate_sample_size": 1,
     "starting_balance": 100000.0,
-    "current_equity": 101441.56
+    "current_equity": 101443.56
   },
   "positions": [
     {
@@ -968,13 +968,13 @@
     "buying_power": 201227.12
   },
   "meta": {
-    "last_updated": "2026-02-17T14:24:48.652172+00:00",
+    "last_updated": "2026-02-17T09:35:03.967371",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5,
     "last_sync_attempt": "2026-02-17T14:24:48.652172+00:00",
     "alpaca_keys_present": true,
-    "last_sync": "2026-02-17T14:24:48.431444",
-    "sync_mode": "paper+live"
+    "last_sync": "2026-02-17T09:35:03.967384",
+    "sync_mode": "paper_account"
   },
   "paper_trading": {
     "start_date": "2026-01-30",
