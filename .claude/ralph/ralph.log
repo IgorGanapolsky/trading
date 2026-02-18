@@ -1,4 +1,0 @@
-[2026-02-17 15:38:22] [0;36mStarting Ralph session[0m
-[2026-02-17 15:38:22] Feature: Dynamic real-time model pricing for TARS smoke tests - fetch from API instead of hardcoded env vars
-[2026-02-17 15:38:22] Branch: ralph/dynamic-real-time-model-pricin
-[2026-02-17 15:38:22] Phase 1: Creating implementation plan...

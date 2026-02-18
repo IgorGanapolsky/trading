@@ -24,6 +24,9 @@ __pycache__/
 *.swo
 .DS_Store
 
+# OMX (oh-my-codex) local UI/state (never commit)
+.omx/
+
 # Data
 data/*.csv
 data/*.json
@@ -126,7 +129,13 @@ data/chroma_db/
 .claude/memory/chroma_db/
 .claude/memory/memalign/
 .claude/memory/lessons-learned.memory.md
+.claude/memory/*.json
 .claude/scripts/feedback/venv/
+
+# High-churn agent state (never commit)
+.claude/ralph/
+.claude/orchestrator_state.json
+.claude/reports/*.txt
 
 # CCPM local workspace (project management)
 .claude/epics/

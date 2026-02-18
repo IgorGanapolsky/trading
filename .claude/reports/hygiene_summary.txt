@@ -1,5 +1,0 @@
-Latest Hygiene Check: 2025-11-23 13:49:24
-Score: 100/100 - Excellent ✅
-Critical: 0 | Warnings: 0 | Stale: 0 | Unused: 0
-
-Full report: /Users/igorganapolsky/workspace/git/apps/trading/.claude/reports/hygiene_report_20251123_134503.txt

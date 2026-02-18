@@ -1,9 +1,0 @@
-{
-    "description": "Dynamic real-time model pricing for TARS smoke tests - fetch from API instead of hardcoded env vars",
-    "work_item": "",
-    "branch": "ralph/dynamic-real-time-model-pricin",
-    "started": "2026-02-17T15:38:22-05:00",
-    "status": "planning",
-    "sessions": 0,
-    "tasks_completed": 0
-}
