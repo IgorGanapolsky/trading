@@ -91,7 +91,8 @@ class TestPricingSource:
         mock_requests.get.return_value = mock_response
 
         source = PricingSource.openrouter()
-        pricing = source.fetch("gpt-4o-mini")
+        with patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-key"}):
+            pricing = source.fetch("gpt-4o-mini")
 
         assert pricing["input_cost_per_1m"] == 0.150
         assert pricing["output_cost_per_1m"] == 0.600
@@ -235,10 +236,21 @@ class TestEndToEnd:
         """Test running the script from command line."""
         import subprocess
 
+        # Keep this deterministic even on developer machines.
+        env = os.environ.copy()
+        env.pop("OPENROUTER_API_KEY", None)
+
         result = subprocess.run(
-            ["python3", "scripts/fetch_model_pricing.py", "gpt-4o-mini"],
+            [
+                "python3",
+                "scripts/fetch_model_pricing.py",
+                "gpt-4o-mini",
+                "--cache-dir",
+                str(tmp_path),
+            ],
             capture_output=True,
             text=True,
+            env=env,
             timeout=10,
         )
 

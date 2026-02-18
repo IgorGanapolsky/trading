@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -146,11 +147,20 @@ class OpenRouterSource:
                 logger.warning("requests module not available")
                 return None
 
+            # Keep default behavior deterministic/offline-safe unless explicitly
+            # enabled. Unit tests also assume we don't hit the network unless
+            # an API key is provided.
+            api_key = os.getenv("OPENROUTER_API_KEY")
+            if not api_key:
+                logger.debug("OPENROUTER_API_KEY not set; skipping OpenRouter fetch")
+                return None
+
             # Normalize model name for OpenRouter
             if "/" not in model:
                 model = f"openai/{model}"
 
-            response = requests.get(self.API_URL, timeout=10)
+            headers = {"Authorization": f"Bearer {api_key}"}
+            response = requests.get(self.API_URL, headers=headers, timeout=10)
             response.raise_for_status()
             data = response.json()
 
