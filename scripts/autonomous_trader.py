@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -35,6 +36,48 @@ except Exception as e:
     sys.exit(2)
 
 SYSTEM_STATE_PATH = Path(os.getenv("SYSTEM_STATE_PATH", "data/system_state.json"))
+
+def _refresh_risk_overlays(logger) -> None:
+    """Best-effort refresh of regime/risk overlays used by mandatory trade gate.
+
+    This keeps `data/system_state.json` current with:
+    - AI credit stress signal (FRED public CSV)
+    - North Star weekly gate (which consumes the credit stress signal)
+
+    Non-fatal: trading can proceed with last known overlays on failure.
+    """
+    project_root = Path(__file__).resolve().parent.parent
+    python = sys.executable or "python3"
+
+    credit_signal = project_root / "scripts" / "update_ai_credit_stress_signal.py"
+    north_star = project_root / "scripts" / "update_north_star_operating_plan.py"
+
+    try:
+        subprocess.run(
+            [
+                python,
+                str(credit_signal),
+                "--out",
+                "data/market_signals/ai_credit_stress_signal.json",
+                "--state",
+                "data/system_state.json",
+                "--sync-state",
+                "--max-stale-days",
+                "7",
+            ],
+            cwd=str(project_root),
+            check=True,
+            timeout=60,
+        )
+        subprocess.run(
+            [python, str(north_star)],
+            cwd=str(project_root),
+            check=True,
+            timeout=60,
+        )
+        logger.info("Risk overlays refreshed (ai_credit_stress + north_star_weekly_gate).")
+    except Exception as e:
+        logger.warning(f"Risk overlay refresh failed (non-fatal): {e}")
 
 
 def _refresh_account_data(logger) -> None:
@@ -878,6 +921,7 @@ def main() -> None:
     # This enables the system to scale towards $100/day profit goal
     # With $100k equity: $1000 daily investment → 10% return = $100 profit
     _refresh_account_data(logger)
+    _refresh_risk_overlays(logger)
 
     _apply_dynamic_daily_budget(logger)
 
