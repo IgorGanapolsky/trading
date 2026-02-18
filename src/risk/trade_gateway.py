@@ -36,6 +36,8 @@ except ImportError:
     def _extract_underlying_shared(symbol: str) -> str:  # type: ignore[misc]
         """Fallback - see trading_constants.extract_underlying."""
         return symbol.strip().upper()[:6]
+
+
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path

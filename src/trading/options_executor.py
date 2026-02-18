@@ -46,6 +46,8 @@ except ImportError:
     def extract_underlying(symbol: str) -> str:  # type: ignore[misc]
         """Fallback - see trading_constants.extract_underlying."""
         return symbol.strip().upper()[:6]
+
+
 TICKER_WHITELIST_ENABLED = True  # Toggle for paper testing
 
 
