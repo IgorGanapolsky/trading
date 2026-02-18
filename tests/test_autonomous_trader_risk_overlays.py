@@ -22,4 +22,3 @@ def test_refresh_risk_overlays_invokes_updater_scripts():
 
         assert any("update_ai_credit_stress_signal.py" in str(part) for part in first_cmd)
         assert any("update_north_star_operating_plan.py" in str(part) for part in second_cmd)
-

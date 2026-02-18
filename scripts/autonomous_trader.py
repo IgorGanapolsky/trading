@@ -37,6 +37,7 @@ except Exception as e:
 
 SYSTEM_STATE_PATH = Path(os.getenv("SYSTEM_STATE_PATH", "data/system_state.json"))
 
+
 def _refresh_risk_overlays(logger) -> None:
     """Best-effort refresh of regime/risk overlays used by mandatory trade gate.
 
