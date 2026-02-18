@@ -1121,6 +1121,119 @@ layout: null
         return text.endsWith(".") ? text : `${text}.`;
       }
 
+      function computeNorthStarStatus(state) {
+        const root = state && typeof state === "object" ? state : {};
+        const northStar =
+          root.north_star && typeof root.north_star === "object" ? root.north_star : {};
+        const weeklyGate =
+          root.north_star_weekly_gate && typeof root.north_star_weekly_gate === "object"
+            ? root.north_star_weekly_gate
+            : {};
+        const cadence =
+          weeklyGate.cadence_kpi && typeof weeklyGate.cadence_kpi === "object"
+            ? weeklyGate.cadence_kpi
+            : {};
+
+        const probabilityScore = toFiniteNumber(northStar.probability_score);
+        const probabilityLabel =
+          typeof northStar.probability_label === "string"
+            ? northStar.probability_label.toUpperCase()
+            : "UNKNOWN";
+        const gateMode =
+          typeof weeklyGate.mode === "string" ? weeklyGate.mode.toUpperCase() : "UNKNOWN";
+
+        const setupsObserved = toFiniteNumber(cadence.qualified_setups_observed) ?? 0;
+        const setupsMin = toFiniteNumber(cadence.min_qualified_setups_per_week) ?? 0;
+        const tradesObserved = toFiniteNumber(cadence.closed_trades_observed) ?? 0;
+        const tradesMin = toFiniteNumber(cadence.min_closed_trades_per_week) ?? 0;
+        const cadencePassed = cadence.passed === true;
+        const expectancy = toFiniteNumber(weeklyGate.expectancy_per_trade);
+        const cadenceBlocked = weeklyGate.scale_blocked_by_cadence === true || cadencePassed === false;
+        const aiStressBlocked = weeklyGate.scale_blocked_by_ai_credit_stress === true;
+        const newPositionsBlocked = weeklyGate.block_new_positions === true;
+
+        const failingReasons = [];
+        const actionItems = [];
+
+        if (cadenceBlocked) {
+          failingReasons.push(
+            `cadence ${Math.round(setupsObserved)}/${Math.round(setupsMin)} setups and ${Math.round(
+              tradesObserved,
+            )}/${Math.round(tradesMin)} closed trades`,
+          );
+          actionItems.push(
+            `Generate at least ${Math.round(setupsMin)} qualified setups/week (now ${Math.round(
+              setupsObserved,
+            )}) while preserving risk gates.`,
+          );
+        }
+
+        if (expectancy != null && expectancy <= 0) {
+          failingReasons.push(`weekly expectancy ${formatSignedCurrency(expectancy)} per trade`);
+          actionItems.push(
+            `Restore positive weekly expectancy above +$0.00/trade (now ${formatSignedCurrency(
+              expectancy,
+            )}).`,
+          );
+        }
+
+        if (newPositionsBlocked) {
+          failingReasons.push("new position openings are blocked by weekly gate policy");
+          actionItems.push("Do not open new positions until the weekly gate explicitly clears.");
+        }
+
+        if (aiStressBlocked) {
+          failingReasons.push("AI credit stress scaling block is active");
+          actionItems.push("Keep scale frozen until AI credit stress returns to PASS.");
+        }
+
+        if (probabilityScore != null && probabilityScore < 40) {
+          failingReasons.push(`north-star probability ${probabilityScore.toFixed(1)}% is below 40%`);
+        }
+
+        let verdict = "ON_TRACK";
+        if (failingReasons.length > 0) {
+          verdict = "OFF_TRACK";
+        } else if (
+          gateMode === "VALIDATION" ||
+          gateMode === "CAUTIOUS" ||
+          (probabilityScore != null && probabilityScore < 65)
+        ) {
+          verdict = "AT_RISK";
+        }
+
+        if (actionItems.length === 0) {
+          actionItems.push("Maintain cadence and keep expectancy positive before scaling risk.");
+        }
+
+        const headlineByVerdict = {
+          OFF_TRACK: "Scale and speed are blocked until failed gates are fixed.",
+          AT_RISK: "Gate posture is conservative; keep validating edge before scaling.",
+          ON_TRACK: "Gates are healthy; continue disciplined execution and evidence capture.",
+        };
+
+        const evidenceLine = [
+          `mode ${gateMode}`,
+          `cadence ${Math.round(setupsObserved)}/${Math.round(setupsMin)} setups, ${Math.round(
+            tradesObserved,
+          )}/${Math.round(tradesMin)} closed trades (${cadencePassed ? "PASS" : "FAIL"})`,
+          expectancy == null
+            ? "expectancy n/a"
+            : `expectancy ${formatSignedCurrency(expectancy)}/trade`,
+          probabilityScore == null
+            ? "probability n/a"
+            : `probability ${probabilityScore.toFixed(1)}% (${probabilityLabel})`,
+        ].join(" | ");
+
+        return {
+          verdict,
+          headline: headlineByVerdict[verdict] || headlineByVerdict.AT_RISK,
+          evidenceLine,
+          actionsLine: actionItems.slice(0, 3).join(" "),
+          failingReasons,
+        };
+      }
+
       async function fetchSystemState(forceReload = false) {
         if (!forceReload && latestSystemState) return latestSystemState;
         const res = await fetch(GITHUB_RAW_URL, { cache: "no-store" });
@@ -1634,6 +1747,7 @@ Tags: ${lesson.tags.join(", ")}`;
         const paper = state.paper_account || {};
         const live = state.live_account || {};
         const portfolio = state.portfolio || {};
+        const northStarStatus = computeNorthStarStatus(state);
         const latestSnapshots =
           snapshotManifest && typeof snapshotManifest === "object"
             ? snapshotManifest.latest || {}
@@ -1766,8 +1880,12 @@ Tags: ${lesson.tags.join(", ")}`;
 
         return `
           <div class="account-summary">
-            <strong>Account status now:</strong> paper strategy remains the primary engine, and brokerage trades should only be taken opportunistically when the same RAG/risk gates pass.
+            <strong>North Star status now: ${escapeHtml(northStarStatus.verdict)}.</strong> ${escapeHtml(
+          northStarStatus.headline,
+        )}
           </div>
+          <div class="account-submetric"><strong>Gate evidence:</strong> ${escapeHtml(northStarStatus.evidenceLine)}</div>
+          <div class="account-submetric"><strong>Priority actions:</strong> ${escapeHtml(northStarStatus.actionsLine)}</div>
           <div class="account-grid">
             <div class="account-card">
               <h4>Paper Account (Primary)</h4>
@@ -1814,22 +1932,26 @@ Tags: ${lesson.tags.join(", ")}`;
         `;
       }
 
-      function buildNorthStarStrategyHtml() {
+      function buildNorthStarStrategyHtml(state) {
+        const northStarStatus = computeNorthStarStatus(state);
         return `
           <div class="account-summary">
-            <strong>Working strategy:</strong> maximize speed to North Star, not calendar-constrained.
+            <strong>Working strategy now (${escapeHtml(northStarStatus.verdict)}):</strong> ${escapeHtml(
+          northStarStatus.headline,
+        )}
           </div>
+          <div class="account-submetric"><strong>Current gate evidence:</strong> ${escapeHtml(northStarStatus.evidenceLine)}</div>
           <div class="account-grid">
             <div class="account-card">
-              <h4>Primary Engine</h4>
-              <div class="account-submetric">Paper account strategy + RAG lessons remain the baseline system for signal quality and risk gating.</div>
+              <h4>Execution Plan</h4>
+              <div class="account-submetric">${escapeHtml(northStarStatus.actionsLine)}</div>
             </div>
             <div class="account-card">
-              <h4>Opportunistic Execution</h4>
-              <div class="account-submetric">Brokerage trades are allowed only when paper-tested setup, policy gates, and RAG-derived rules are all green.</div>
+              <h4>Capital Policy</h4>
+              <div class="account-submetric">Brokerage trades stay opportunistic and gated by the same cadence/expectancy/risk checks validated in paper.</div>
             </div>
           </div>
-          <div class="account-submetric">Execution order: validate in paper -> confirm gates -> size conservatively in brokerage -> feed outcomes back into RAG.</div>
+          <div class="account-submetric">Execution order: validate in paper -> clear weekly gates -> size conservatively in brokerage -> feed outcomes back into RAG.</div>
         `;
       }
 
@@ -1856,11 +1978,20 @@ Tags: ${lesson.tags.join(", ")}`;
         }
 
         if (isNorthStarStrategyQuery(message)) {
-          return {
-            html: buildNorthStarStrategyHtml(),
-            plain:
-              "North Star strategy: fastest path, with opportunistic brokerage execution gated by paper strategy + RAG lessons.",
-          };
+          try {
+            const state = await fetchSystemState(true);
+            const status = computeNorthStarStatus(state);
+            return {
+              html: buildNorthStarStrategyHtml(state),
+              plain: `North Star is ${status.verdict}: ${status.headline} Evidence: ${status.evidenceLine}`,
+            };
+          } catch {
+            return {
+              html:
+                "I could not fetch latest North Star gate state right now. Please retry in a few seconds.",
+              plain: "North Star state fetch failed.",
+            };
+          }
         }
 
         return null;

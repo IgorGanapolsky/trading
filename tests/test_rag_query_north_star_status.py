@@ -1,0 +1,20 @@
+from pathlib import Path
+
+
+RAG_QUERY_HTML = Path("docs/rag-query.html")
+
+
+def test_rag_query_replaces_static_account_status_copy() -> None:
+    html = RAG_QUERY_HTML.read_text(encoding="utf-8")
+
+    assert "function computeNorthStarStatus(state)" in html
+    assert "North Star status now:" in html
+    assert "Account status now:</strong> paper strategy remains the primary engine" not in html
+
+
+def test_north_star_strategy_response_uses_live_state() -> None:
+    html = RAG_QUERY_HTML.read_text(encoding="utf-8")
+
+    assert "function buildNorthStarStrategyHtml(state)" in html
+    assert "const state = await fetchSystemState(true);" in html
+    assert "North Star is ${status.verdict}" in html
