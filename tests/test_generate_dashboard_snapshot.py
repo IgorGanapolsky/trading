@@ -40,7 +40,7 @@ def test_generate_snapshot_contains_answer_block_and_evidence(tmp_path: Path) ->
             "north_star": {
                 "probability_score": 41.5,
                 "probability_label": "watch",
-                "target_date": "2029-11-14",
+                "target_date": None,
             },
             "risk": {
                 "weekly_cadence_kpi_passed": True,

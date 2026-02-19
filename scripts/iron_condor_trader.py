@@ -724,6 +724,12 @@ def main():
     # Default to LIVE mode as of Dec 29, 2025 to hit $100/day target
     live_mode = args.live or (not args.dry_run)
 
+    # Session telemetry for cadence KPI tracking
+    from src.orchestrator.telemetry import OrchestratorTelemetry
+
+    telemetry = OrchestratorTelemetry()
+    telemetry.start_ticker_decision(args.symbol)
+
     logger.info("IRON CONDOR TRADER - STARTING")
     logger.info(f"Mode: {'LIVE' if live_mode else 'SIMULATED'}")
     logger.info(f"Symbol: {args.symbol}")
@@ -738,6 +744,8 @@ def main():
             logger.warning(f.read())
         logger.warning("Remove data/trading_halt.txt to resume trading")
         logger.warning("=" * 60)
+        telemetry.update_ticker_decision(args.symbol, gate=1, status="REJECT", rejection_reason="Trading halted")
+        telemetry.save_session_decisions()
         return {"success": False, "reason": "Trading halted - manual halt in effect"}
 
     # LL-297 FIX (Jan 23, 2026): Daily trade limit to prevent churning
@@ -774,6 +782,8 @@ def main():
                 )
                 logger.warning("Reason: Prevent churning and bid/ask spread losses")
                 logger.warning("=" * 60)
+                telemetry.update_ticker_decision(args.symbol, gate=2, status="REJECT", rejection_reason=f"Daily limit: {structures_today}/{MAX_STRUCTURES_PER_DAY}")
+                telemetry.save_session_decisions()
                 return {
                     "success": False,
                     "reason": f"Daily structure limit reached: {structures_today}/{MAX_STRUCTURES_PER_DAY}",
@@ -808,6 +818,8 @@ def main():
 
     if not should_enter:
         logger.info("Skipping trade - conditions not met")
+        telemetry.update_ticker_decision(args.symbol, gate=3, status="REJECT", rejection_reason=reason)
+        telemetry.save_session_decisions()
         return {"success": False, "reason": reason}
 
     # LLM PRE-TRADE RESEARCH AGENT (Feb 2026)
@@ -862,6 +874,8 @@ def main():
                     f"BLOCKED by LLM research agent: {opinion.reasoning} "
                     f"(confidence: {opinion.confidence:.0%})"
                 )
+                telemetry.update_ticker_decision(args.symbol, gate=4, status="REJECT", rejection_reason=f"LLM: {opinion.reasoning[:100]}")
+                telemetry.save_session_decisions()
                 return {
                     "success": False,
                     "reason": f"LLM advisory: {opinion.reasoning}",
@@ -876,6 +890,8 @@ def main():
     ic = strategy.find_trade()
     if not ic:
         logger.error("Failed to find suitable iron condor")
+        telemetry.update_ticker_decision(args.symbol, gate=5, status="REJECT", rejection_reason="No suitable IC found")
+        telemetry.save_session_decisions()
         return {"success": False, "reason": "no_trade_found"}
 
     # Execute - LIVE by default now!
@@ -886,9 +902,16 @@ def main():
             trade = strategy.execute(ic, live=live_mode)
     except TradeLockTimeout:
         logger.warning("⚠️ Could not acquire trade lock - another trade may be in progress")
+        telemetry.update_ticker_decision(args.symbol, gate=6, status="REJECT", rejection_reason="Trade lock timeout")
+        telemetry.save_session_decisions()
         return {"success": False, "reason": "trade_lock_timeout"}
 
     logger.info("IRON CONDOR TRADER - COMPLETE")
+    telemetry.update_ticker_decision(
+        args.symbol, gate=7, status="EXECUTED",
+        order_details={"trade": str(trade)[:200]} if trade else None,
+    )
+    telemetry.save_session_decisions()
     return {"success": True, "trade": trade}
 
 

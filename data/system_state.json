@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-02-18T14:22:48.869055+00:00",
+  "last_updated": "2026-02-19T17:43:26.784880+00:00",
   "sync_health": {
     "last_successful_sync": "2026-02-18T14:22:48.869055+00:00",
     "sync_source": "sync_alpaca_state.py",
@@ -126,7 +126,7 @@
         "success": true
       }
     ],
-    "last_attempt": "2026-02-18T14:22:48.869055+00:00"
+    "last_attempt": "2026-02-19T17:43:26.784880+00:00"
   },
   "portfolio": {
     "equity": 101401.96,
@@ -134,8 +134,8 @@
   },
   "paper_account": {
     "equity": 101401.96,
-    "cash": 101401.96,
-    "buying_power": 202803.92,
+    "cash": 101930.84,
+    "buying_power": 197861.68,
     "total_pl": 1401.9600000000064,
     "total_pl_pct": 1.4019600000000065,
     "positions_count": 0,
@@ -143,7 +143,7 @@
     "win_rate": 100.0,
     "win_rate_sample_size": 1,
     "starting_balance": 100000.0,
-    "current_equity": 101401.96,
+    "current_equity": 101338.84,
     "last_equity": 101437.56
   },
   "positions": [],
@@ -921,8 +921,8 @@
     "total_pl": 1401.9600000000064,
     "unrealized_pl": 0,
     "weekly_gate_mode": "validation",
-    "weekly_gate_recommended_max_position_pct": 0.015,
-    "weekly_cadence_kpi_passed": false,
+    "weekly_gate_recommended_max_position_pct": 0.02,
+    "weekly_cadence_kpi_passed": true,
     "weekly_scaling_sample_gate_passed": false,
     "weekly_ai_credit_stress_status": "unknown",
     "weekly_ai_credit_stress_score": 0.0
@@ -936,13 +936,13 @@
     "buying_power": 202803.92
   },
   "meta": {
-    "last_updated": "2026-02-18T14:22:48.869055+00:00",
+    "last_updated": "2026-02-19T17:43:26.784880+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5,
-    "last_sync_attempt": "2026-02-18T14:22:48.869055+00:00",
-    "alpaca_keys_present": true,
-    "last_sync": "2026-02-18T14:22:48.800032",
-    "sync_mode": "paper+live",
+    "last_sync_attempt": "2026-02-19T17:43:26.784880+00:00",
+    "alpaca_keys_present": false,
+    "last_sync": "2026-02-19T17:43:26.784880+00:00",
+    "sync_mode": "skipped_no_keys",
     "last_daily_verification_at": "2026-02-18T14:02:02.553414+00:00"
   },
   "paper_trading": {
@@ -968,7 +968,7 @@
   },
   "strategy_milestones": {
     "enabled": true,
-    "generated_at": "2026-02-18T14:22:48.873658Z",
+    "generated_at": "2026-02-19T17:43:26.787668Z",
     "primary_family": "options_income",
     "rolling_window": 50,
     "paused_families": [
@@ -1058,11 +1058,13 @@
   "north_star": {
     "probability_score": 70.4,
     "probability_label": "medium",
-    "required_cagr": -0.3125,
+    "target_mode": "asap_monthly_income",
+    "monthly_after_tax_target": 6000.0,
+    "required_cagr": null,
     "estimated_cagr_from_expectancy": 0.0073,
-    "target_capital": 25000.0,
-    "target_date": "2029-11-14",
-    "updated_at": "2026-02-18T14:22:48.873658Z"
+    "target_capital": 300000.0,
+    "target_date": null,
+    "updated_at": "2026-02-19T19:45:00Z"
   },
   "north_star_weekly_gate": {
     "enabled": true,
@@ -1071,24 +1073,24 @@
     "sample_size": 2,
     "win_rate_pct": 50.0,
     "expectancy_per_trade": -94.5,
-    "recommended_max_position_pct": 0.015,
+    "recommended_max_position_pct": 0.02,
     "block_new_positions": false,
-    "reason": "Insufficient recent weekly evidence; keep conservative sizing. Cadence KPI miss: setups 0/3, closed trades 2/1.",
+    "reason": "Insufficient recent weekly evidence; keep conservative sizing.",
     "positive_weeks_streak": 0,
     "evidence_source": "trade_history_ic_only",
     "cadence_kpi": {
       "enabled": true,
       "min_qualified_setups_per_week": 3,
       "min_closed_trades_per_week": 1,
-      "qualified_setups_observed": 0,
+      "qualified_setups_observed": 4,
       "closed_trades_observed": 2,
-      "meets_qualified_setups": false,
+      "meets_qualified_setups": true,
       "meets_closed_trades": true,
-      "passed": false,
-      "alert_level": "warning",
-      "summary": "Cadence KPI miss: one or more weekly minimums not met."
+      "passed": true,
+      "alert_level": "ok",
+      "summary": "Cadence KPI met."
     },
-    "scale_blocked_by_cadence": true,
+    "scale_blocked_by_cadence": false,
     "ai_credit_stress": {
       "status": "unknown",
       "signal_status": "unknown",
@@ -1106,9 +1108,9 @@
     },
     "no_trade_diagnostic": {
       "lookback_days": 7,
-      "decision_records_observed": 0,
+      "decision_records_observed": 6,
       "closed_trades_observed": 2,
-      "qualified_setups_observed": 0,
+      "qualified_setups_observed": 4,
       "gate_status": {
         "regime": {
           "status": "pass",
@@ -1130,9 +1132,9 @@
           "detail": "requested=0 max=5000.0"
         },
         "liquidity": {
-          "status": "unknown",
-          "avg_volume_ratio": null,
-          "low_liquidity_events": 0,
+          "status": "blocked",
+          "avg_volume_ratio": 0.5284,
+          "low_liquidity_events": 1,
           "threshold_min_volume_ratio": 0.2
         },
         "ai_credit_stress": {
@@ -1144,22 +1146,36 @@
           "detail": "No credit spread data available."
         }
       },
-      "blocked_categories": [],
-      "gate_block_counts": {},
-      "top_rejection_reasons": [],
+      "blocked_categories": [
+        "liquidity"
+      ],
+      "gate_block_counts": {
+        "liquidity": 1,
+        "regime": 2
+      },
+      "top_rejection_reasons": [
+        {
+          "reason": "MACD=-0.59 (bearish); Vol=0.1x (low)",
+          "count": 1
+        },
+        {
+          "reason": "ADX=0.0 (weak trend)",
+          "count": 1
+        }
+      ],
       "summary": "Closed trades exist in lookback window; no-trade root cause not currently active.",
-      "updated_at": "2026-02-18T14:23:25.968056+00:00"
+      "updated_at": "2026-02-19T17:43:38.205172+00:00"
     },
-    "updated_at": "2026-02-18T14:23:25.968280+00:00"
+    "updated_at": "2026-02-19T17:43:38.205458+00:00"
   },
   "north_star_contributions": {
     "enabled": true,
     "month": "2026-02",
-    "months_remaining": 44,
-    "target_date": "2029-11-14",
-    "target_capital": 25000.0,
+    "months_remaining": null,
+    "target_date": null,
+    "target_capital": 300000.0,
     "current_equity": 101401.96,
-    "required_cagr_without_contributions": -0.3125,
+    "required_cagr_without_contributions": -0.3127,
     "required_monthly_contribution_by_return": {
       "20%": 0.0,
       "25%": 0.0,
@@ -1175,7 +1191,7 @@
     "estimated_live_contribution_this_month": 41.17,
     "contribution_estimate_confidence": "medium",
     "inference_note": "Live account has no open positions; live equity change is treated as estimated contribution.",
-    "updated_at": "2026-02-18T14:23:25.968329+00:00"
+    "updated_at": "2026-02-19T17:43:38.205492+00:00"
   },
   "ic_position_management": {
     "last_run": "2026-02-17T20:15:44.106821",
