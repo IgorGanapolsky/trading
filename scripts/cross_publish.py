@@ -16,9 +16,18 @@ import os
 import re
 import sys
 from pathlib import Path
+from urllib.parse import urlparse
 
 import requests
 import yaml
+from scripts.publish_twitter import (
+    generate_twitter_post,
+    missing_credential_names,
+    post_to_twitter,
+    resolve_credentials,
+)
+
+PAGES_SITE_BASE_URL = "https://igorganapolsky.github.io"
 
 
 def parse_frontmatter(content: str) -> tuple[dict, str]:
@@ -31,12 +40,73 @@ def parse_frontmatter(content: str) -> tuple[dict, str]:
     return fm, body
 
 
+def _site_base_from_canonical(canonical_url: str) -> str:
+    parsed = urlparse(canonical_url.strip())
+    if parsed.scheme and parsed.netloc:
+        return f"{parsed.scheme}://{parsed.netloc}"
+    return PAGES_SITE_BASE_URL
+
+
+def absolutize_site_relative_urls(body: str, canonical_url: str) -> str:
+    """Convert site-relative asset URLs to absolute URLs for external platforms."""
+    site_base = _site_base_from_canonical(canonical_url)
+    converted = re.sub(
+        r"\]\((/(?!/)[^)]+)\)",
+        lambda m: f"]({site_base}{m.group(1)})",
+        body,
+    )
+    converted = re.sub(
+        r'src="(/(?!/)[^"]+)"',
+        lambda m: f'src="{site_base}{m.group(1)}"',
+        converted,
+    )
+    return converted
+
+
+def _update_devto_article(
+    *,
+    api_key: str,
+    article_id: int,
+    title: str,
+    body: str,
+    tags: list[str],
+    canonical_url: str,
+) -> str | None:
+    payload = {
+        "article": {
+            "title": title,
+            "body_markdown": body,
+            "published": True,
+            "tags": [re.sub(r"[^a-z0-9]", "", t.lower())[:20] for t in tags[:4]],
+            "canonical_url": canonical_url,
+        }
+    }
+    try:
+        resp = requests.put(
+            f"https://dev.to/api/articles/{article_id}",
+            headers={"api-key": api_key, "Content-Type": "application/json"},
+            json=payload,
+            timeout=30,
+        )
+        if resp.status_code == 200:
+            url = resp.json().get("url", "")
+            print(f"  Dev.to updated: {url}")
+            return url
+        print(f"  Dev.to update failed: {resp.status_code} - {resp.text[:200]}")
+    except Exception as e:
+        print(f"  Dev.to update error: {e}")
+    return None
+
+
 def publish_to_devto(title: str, body: str, tags: list[str], canonical_url: str) -> str | None:
     """Publish article to Dev.to."""
     api_key = os.environ.get("DEVTO_API_KEY") or os.environ.get("DEV_TO_API_KEY")
     if not api_key:
         print("  DEVTO_API_KEY not set, skipping")
         return None
+
+    # Dev.to cannot resolve /trading/... site-relative links from markdown.
+    body = absolutize_site_relative_urls(body, canonical_url)
 
     # Check for duplicates
     try:
@@ -47,8 +117,20 @@ def publish_to_devto(title: str, body: str, tags: list[str], canonical_url: str)
         )
         if resp.status_code == 200:
             for article in resp.json()[:20]:
-                if article["title"] == title:
-                    url = article["url"]
+                if article.get("title") == title or str(article.get("canonical_url") or "").strip() == canonical_url:
+                    article_id = article.get("id")
+                    if isinstance(article_id, int):
+                        updated_url = _update_devto_article(
+                            api_key=api_key,
+                            article_id=article_id,
+                            title=title,
+                            body=body,
+                            tags=tags,
+                            canonical_url=canonical_url,
+                        )
+                        if updated_url:
+                            return updated_url
+                    url = article.get("url", "")
                     print(f"  Already exists on Dev.to: {url}")
                     return url
     except Exception:
@@ -75,6 +157,37 @@ def publish_to_devto(title: str, body: str, tags: list[str], canonical_url: str)
             url = resp.json().get("url", "")
             print(f"  Dev.to: {url}")
             return url
+        elif resp.status_code == 422 and "Canonical url has already been taken" in resp.text:
+            # Canonical URL uniqueness means this post is already published.
+            # Resolve existing URL so callers can treat this as success.
+            try:
+                existing = requests.get(
+                    "https://dev.to/api/articles/me",
+                    headers={"api-key": api_key},
+                    timeout=15,
+                )
+                if existing.status_code == 200:
+                    for article in existing.json()[:100]:
+                        if str(article.get("canonical_url") or "").strip() == canonical_url:
+                            article_id = article.get("id")
+                            if isinstance(article_id, int):
+                                updated_url = _update_devto_article(
+                                    api_key=api_key,
+                                    article_id=article_id,
+                                    title=title,
+                                    body=body,
+                                    tags=tags,
+                                    canonical_url=canonical_url,
+                                )
+                                if updated_url:
+                                    return updated_url
+                            url = str(article.get("url") or canonical_url)
+                            print(f"  Dev.to (already published): {url}")
+                            return url
+            except Exception:
+                pass
+            print(f"  Dev.to (already published): {canonical_url}")
+            return canonical_url
         else:
             print(f"  Dev.to failed: {resp.status_code} - {resp.text[:200]}")
             return None
@@ -159,6 +272,18 @@ def publish_to_linkedin(title: str, body: str, canonical_url: str) -> bool:
         return False
 
 
+def publish_to_x(title: str, canonical_url: str, *, dry_run: bool = False) -> bool:
+    """Publish concise post to X.com."""
+    creds = resolve_credentials()
+    missing = missing_credential_names(creds)
+    if missing:
+        print(f"  X skipped: missing credentials ({', '.join(missing)})")
+        return False
+
+    text = generate_twitter_post("positive", title, canonical_url)
+    return post_to_twitter(text, dry_run=dry_run)
+
+
 def submit_to_search_console(canonical_url: str) -> bool:
     """Submit URL to Google Search Console for indexing."""
     if not os.environ.get("GOOGLE_SEARCH_CONSOLE_KEY"):
@@ -198,7 +323,7 @@ def main():
     )
     parser.add_argument("file", help="Path to markdown post file")
     parser.add_argument("--dry-run", action="store_true", help="Preview only, don't publish")
-    parser.add_argument("--platform", choices=["devto", "linkedin", "all"], default="all")
+    parser.add_argument("--platform", choices=["devto", "linkedin", "x", "all"], default="all")
     parser.add_argument(
         "--skip-search-console", action="store_true", help="Skip Search Console submission"
     )
@@ -239,6 +364,10 @@ def main():
     if args.platform in ("linkedin", "all"):
         print("Publishing to LinkedIn...")
         results["linkedin"] = publish_to_linkedin(title, body, canonical_url)
+
+    if args.platform in ("x", "all"):
+        print("Publishing to X...")
+        results["x"] = publish_to_x(title, canonical_url, dry_run=args.dry_run)
 
     # Auto-submit to Search Console for indexing
     if not args.skip_search_console:

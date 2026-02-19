@@ -1,34 +1,41 @@
 name: Daily Revenue Blog Post
 
 on:
-  # Run at 5:00 PM ET (22:00 UTC) every weekday after market close
   schedule:
-    - cron: "0 22 * * 1-5"
-
-  # Manual trigger
+    # 5:15 PM ET / 22:15 UTC, every day
+    - cron: "15 22 * * *"
   workflow_dispatch:
     inputs:
       date:
-        description: "Report date (YYYY-MM-DD, leave empty for today)"
+        description: "Report date (YYYY-MM-DD, defaults to ET today)"
         required: false
         type: string
+      strict_publish:
+        description: "Fail workflow if enabled platforms fail to publish"
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: write
+  pull-requests: write
 
 env:
-  # Use paper trading keys for blog post data (PAPER_TRADING=true)
   ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
   ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
   DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
+  LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+  TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
+  TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
+  TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+  TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
   FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
   PAPER_TRADING: "true"
-
   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
   SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
 jobs:
-  generate-blog-post:
-    # Re-enabled to restore autonomous daily publishing cadence.
+  daily-blog:
     runs-on: ubuntu-latest
 
     steps:
@@ -37,133 +44,83 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Check if market day
-        id: market_check
+      - name: Set report date (ET)
+        id: report_date
+        shell: bash
         run: |
-          # Skip weekends
-          DAY_OF_WEEK=$(date +%u)
-          if [ "$DAY_OF_WEEK" -gt 5 ]; then
-            echo "Weekend - skipping"
-            echo "skip=true" >> $GITHUB_OUTPUT
-            exit 0
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.date }}" ]; then
+            REPORT_DATE="${{ inputs.date }}"
+          else
+            REPORT_DATE=$(TZ=America/New_York date +%Y-%m-%d)
           fi
-
-          # Skip major US holidays (add more as needed)
-          TODAY=$(date +%m-%d)
-          HOLIDAYS="01-01 01-20 02-17 04-18 05-26 06-19 07-04 09-01 11-27 12-25"
-          if echo "$HOLIDAYS" | grep -q "$TODAY"; then
-            echo "Holiday - skipping"
-            echo "skip=true" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          echo "skip=false" >> $GITHUB_OUTPUT
+          echo "report_date=$REPORT_DATE" >> "$GITHUB_OUTPUT"
+          echo "Using report date: $REPORT_DATE"
 
       - name: Set up Python
-        if: steps.market_check.outputs.skip != 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Install dependencies
-        if: steps.market_check.outputs.skip != 'true'
+        shell: bash
         run: |
-          pip install alpaca-py python-dotenv requests
+          set -euo pipefail
+          pip install --upgrade pip
+          pip install alpaca-py python-dotenv requests pyyaml tweepy
 
-      - name: Update performance log
-        if: steps.market_check.outputs.skip != 'true'
+      - name: Update performance log (best effort)
         continue-on-error: true
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          echo "Updating performance log from Alpaca..."
-          if python3 scripts/update_performance_log.py 2>&1; then
-            echo "✅ Performance log updated from Alpaca"
-          else
-            echo "⚠️ Alpaca sync failed - will use cached data"
-            python3 scripts/fallback_perf_entry.py || echo "Fallback also failed"
-          fi
+          python3 scripts/update_performance_log.py
 
-      - name: Sync RAG lessons to blog
-        if: steps.market_check.outputs.skip != 'true'
-        run: |
-          set -e
-          python3 scripts/sync_rag_to_blog.py
-
-      - name: Generate blog post
-        id: generate
-        if: steps.market_check.outputs.skip != 'true'
+      - name: Sync RAG lessons to blog (best effort)
+        continue-on-error: true
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          set -eo pipefail
+          python3 scripts/sync_rag_to_blog.py --no-devto
 
-          TODAY=$(date +%Y-%m-%d)
-          EXPECTED_FILE="docs/_reports/${TODAY}-daily-report.md"
-
-          echo "Generating blog post for $TODAY..."
-          python3 scripts/generate_daily_blog_post.py 2>&1 | tee /tmp/blog_output.txt || true
-
-          # Check if file was created with today's date or any recent date
-          if [ ! -f "$EXPECTED_FILE" ]; then
-            echo "::warning::Blog post for $TODAY not created - checking for recent posts..."
-
-            # Find most recent report file
-            LATEST_FILE=$(ls -t docs/_reports/*.md 2>/dev/null | head -1 || echo "")
-            if [ -n "$LATEST_FILE" ]; then
-              echo "Found recent file: $LATEST_FILE"
-              # If it's within 3 days, copy it as today's with updated date
-              # This ensures GitHub Pages always has fresh content
-            fi
-
-            # Create minimal blog post if nothing exists
-            if [ ! -f "$EXPECTED_FILE" ]; then
-              echo "Creating minimal blog post for $TODAY..."
-              python3 scripts/create_placeholder_blog.py "$EXPECTED_FILE" "$TODAY"
-              echo "Created placeholder blog post"
-            fi
-          fi
-
-          echo "✅ Blog post created: $EXPECTED_FILE"
-
-          # Check if Dev.to posting succeeded
-          if grep -q "Published to Dev.to:" /tmp/blog_output.txt; then
-            echo "devto_published=true" >> $GITHUB_OUTPUT
-            DEVTO_URL=$(grep "Published to Dev.to:" /tmp/blog_output.txt | cut -d' ' -f4)
-            echo "devto_url=$DEVTO_URL" >> $GITHUB_OUTPUT
-          else
-            echo "devto_published=false" >> $GITHUB_OUTPUT
-          fi
-
-          # Check for errors
-          if grep -q "Dev.to publish failed:" /tmp/blog_output.txt; then
-            echo "::warning::Dev.to publishing failed - check API key or rate limits"
-          fi
-
-      - name: Verify Dev.to publication
-        if: steps.market_check.outputs.skip != 'true'
+      - name: Generate daily report
+        id: generate
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          SKIP_DEVTO_AUTO_PUBLISH: "1"
+        shell: bash
         run: |
-          if [ "${{ steps.generate.outputs.devto_published }}" = "true" ]; then
-            echo "✅ Dev.to post published: ${{ steps.generate.outputs.devto_url }}"
-          else
-            if [ -n "$DEVTO_API_KEY" ]; then
-              echo "⚠️ Dev.to API key configured but post was NOT published"
-              echo "Check the generate step logs for errors"
-            else
-              echo "ℹ️ DEVTO_API_KEY not configured - skipped Dev.to publishing"
-            fi
+          set -euo pipefail
+          REPORT_DATE="${{ steps.report_date.outputs.report_date }}"
+          EXPECTED_FILE="docs/_reports/${REPORT_DATE}-daily-report.md"
+
+          python3 scripts/generate_daily_blog_post.py --date "$REPORT_DATE" 2>&1 | tee /tmp/blog_output.txt || true
+
+          if [ ! -f "$EXPECTED_FILE" ]; then
+            echo "::warning::Expected daily report not generated, creating placeholder"
+            python3 scripts/create_placeholder_blog.py "$EXPECTED_FILE" "$REPORT_DATE"
           fi
 
-      - name: Commit and create PR
-        if: steps.market_check.outputs.skip != 'true'
+          if [ ! -f "$EXPECTED_FILE" ]; then
+            echo "::error::Daily report missing after fallback: $EXPECTED_FILE"
+            exit 1
+          fi
+
+          echo "report_path=$EXPECTED_FILE" >> "$GITHUB_OUTPUT"
+          echo "Daily report ready: $EXPECTED_FILE"
+
+      - name: Commit and push content
+        id: push_content
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
         run: |
-          set -e
+          set -euo pipefail
+          REPORT_DATE="${{ steps.report_date.outputs.report_date }}"
+
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
-          # Add all changed files
           git add data/performance_log.json || true
           git add data/rag/lessons_query.json || true
           git add docs/data/rag/lessons_query.json || true
@@ -171,64 +128,101 @@ jobs:
           git add docs/_reports/ || true
           git add docs/_posts/ || true
           git add docs/index.md || true
+          git add data/analytics/ || true
 
-          # Check if there are changes to commit
           if git diff --staged --quiet; then
-            echo "::warning::No changes to commit - blog may already be up to date"
-            echo "This is normal if the workflow ran multiple times today"
-            exit 0  # Don't fail - just skip gracefully
+            echo "No publishable changes detected."
+            echo "push_mode=none" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
 
-          # Get today's date for commit message
-          TODAY=$(date +%Y-%m-%d)
-          BRANCH_NAME="auto/blog-post-${TODAY}"
+          git commit -m "feat(blog): Daily report + publication status for $REPORT_DATE"
 
-          # Delete existing branch if it exists (from failed previous run)
-          git push origin --delete "$BRANCH_NAME" 2>/dev/null || true
-          git branch -D "$BRANCH_NAME" 2>/dev/null || true
-
-          # Create branch and commit
-          git checkout -b "$BRANCH_NAME"
-          git commit -m "feat(blog): Daily revenue report for $TODAY"
-
-          # Push with retry for race conditions
-          for i in 1 2 3; do
-            if git push -u origin "$BRANCH_NAME" 2>/dev/null; then
-              break
-            fi
-            echo "Push attempt $i failed, retrying..."
-            sleep 3
-          done
-
-          # Create PR (check if one already exists)
-          EXISTING_PR=$(gh pr list --head "$BRANCH_NAME" --json number --jq '.[0].number' 2>/dev/null || echo "")
-          if [ -n "$EXISTING_PR" ]; then
-            echo "PR #$EXISTING_PR already exists for this branch"
-          else
-            gh pr create --title "feat(blog): Daily revenue report for $TODAY" --body "Auto-generated daily blog post" --head "$BRANCH_NAME" --base main 2>/dev/null || echo "PR creation skipped"
+          if git push origin HEAD:main; then
+            echo "push_mode=direct-main" >> "$GITHUB_OUTPUT"
+            echo "Direct push to main succeeded."
+            exit 0
           fi
 
-          # Try to auto-merge (will fail if not enabled, that's ok)
-          gh pr merge "$BRANCH_NAME" --auto --squash 2>/dev/null || echo "Auto-merge not enabled or already merged"
+          echo "Direct push blocked, falling back to PR flow."
+          BRANCH_NAME="auto/daily-blog-${REPORT_DATE}"
+          git checkout -B "$BRANCH_NAME"
+          git push -u origin "$BRANCH_NAME" --force
 
-          echo "✅ Blog post workflow completed"
+          PR_URL=$(gh pr create \
+            --title "feat(blog): Daily report + publication status for $REPORT_DATE" \
+            --body "Automated daily blog/report publication update." \
+            --head "$BRANCH_NAME" \
+            --base main \
+            --label automation 2>/dev/null || true)
 
-      - name: Summary
-        if: steps.market_check.outputs.skip != 'true'
+          if [ -n "$PR_URL" ]; then
+            echo "pr_url=$PR_URL" >> "$GITHUB_OUTPUT"
+            gh pr merge "$BRANCH_NAME" --auto --squash || true
+          fi
+          echo "push_mode=pr" >> "$GITHUB_OUTPUT"
+
+      - name: Publish to Dev.to + LinkedIn + X
+        id: publish
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        shell: bash
         run: |
-          echo "## Daily Blog Post Generated" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| GitHub Pages | ✅ Published to [/reports/](https://igorganapolsky.github.io/trading/reports/) |" >> $GITHUB_STEP_SUMMARY
-          echo "| Performance Log | ✅ Updated |" >> $GITHUB_STEP_SUMMARY
+          set -euo pipefail
+          REPORT_DATE="${{ steps.report_date.outputs.report_date }}"
+          REPORT_PATH="${{ steps.generate.outputs.report_path }}"
 
-          if [ "${{ steps.generate.outputs.devto_published }}" = "true" ]; then
-            echo "| Dev.to | ✅ [Published](${{ steps.generate.outputs.devto_url }}) |" >> $GITHUB_STEP_SUMMARY
-          else
-            if [ -n "$DEVTO_API_KEY" ]; then
-              echo "| Dev.to | ⚠️ API key set but publish failed |" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "| Dev.to | ⏭️ Skipped (no API key) |" >> $GITHUB_STEP_SUMMARY
-            fi
+          STRICT_FLAG="--strict"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.strict_publish }}" = "false" ]; then
+            STRICT_FLAG=""
           fi
+
+          python3 scripts/publish_daily_multiplatform.py \
+            --report "$REPORT_PATH" \
+            --date "$REPORT_DATE" \
+            $STRICT_FLAG
+
+      - name: Commit publication status artifacts
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          REPORT_DATE="${{ steps.report_date.outputs.report_date }}"
+          PUSH_MODE="${{ steps.push_content.outputs.push_mode }}"
+
+          git add "docs/_reports/${REPORT_DATE}-publication-status.md" || true
+          git add "data/analytics/${REPORT_DATE}-publication-status.json" || true
+          git add "data/analytics/publication-status-history.jsonl" || true
+
+          if git diff --staged --quiet; then
+            echo "No publication status artifact changes to commit."
+            exit 0
+          fi
+
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git commit -m "chore(blog): publication status for ${REPORT_DATE}"
+
+          if [ "$PUSH_MODE" = "direct-main" ]; then
+            git push origin HEAD:main
+          elif [ "$PUSH_MODE" = "pr" ]; then
+            git push
+          else
+            echo "No prior push mode; attempting main push."
+            git push origin HEAD:main || true
+          fi
+
+      - name: Final summary
+        if: always()
+        shell: bash
+        run: |
+          REPORT_DATE="${{ steps.report_date.outputs.report_date }}"
+          echo "## Daily Blog Publishing" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Date: \`$REPORT_DATE\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Report: \`${{ steps.generate.outputs.report_path }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Push mode: \`${{ steps.push_content.outputs.push_mode || 'unknown' }}\`" >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "${{ steps.push_content.outputs.pr_url }}" ]; then
+            echo "- PR fallback: ${{ steps.push_content.outputs.pr_url }}" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "- Publication status report: \`docs/_reports/${REPORT_DATE}-publication-status.md\`" >> "$GITHUB_STEP_SUMMARY"

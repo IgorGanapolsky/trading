@@ -20,9 +20,7 @@ def resolve_credentials(env: Mapping[str, str] | None = None) -> dict[str, str]:
     runtime_env = dict(env or os.environ)
     return {
         "api_key": runtime_env.get("TWITTER_API_KEY") or runtime_env.get("X_API_KEY") or "",
-        "api_secret": runtime_env.get("TWITTER_API_SECRET")
-        or runtime_env.get("X_API_SECRET")
-        or "",
+        "api_secret": runtime_env.get("TWITTER_API_SECRET") or runtime_env.get("X_API_SECRET") or "",
         "access_token": runtime_env.get("TWITTER_ACCESS_TOKEN")
         or runtime_env.get("X_ACCESS_TOKEN")
         or "",
