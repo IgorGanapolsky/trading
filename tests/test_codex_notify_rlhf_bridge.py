@@ -82,6 +82,7 @@ def test_process_payload_writes_state_and_runs_pipeline(tmp_path: Path) -> None:
     assert state["last_signal"] == "thumbs_up"
     assert state["last_pipeline_status"]["cortex_queue"] is True
     assert state["last_pipeline_status"]["distributed_bandit"] is True
+    assert state["last_pipeline_status"]["context_index"] is True
     assert state["last_thompson_report"]["feedback_type"] == "positive"
     assert state["last_thompson_report"]["event_key"] == result["event_key"]
     assert state["last_distributed_outcome"]["applied"] is True
@@ -96,6 +97,9 @@ def test_process_payload_writes_state_and_runs_pipeline(tmp_path: Path) -> None:
     assert row["event_key"] == result["event_key"]
     assert row["bandit"]["before"]["alpha"] >= 1.0
     assert row["bandit"]["after"]["beta"] >= 1.0
+
+    context_index = project / "data" / "context_engine" / "context_index.json"
+    assert context_index.exists()
 
 
 def test_process_payload_is_idempotent_per_event_key(tmp_path: Path) -> None:
