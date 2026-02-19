@@ -30,3 +30,20 @@ def test_rag_query_surface_has_explicit_as_of_timestamp_labels() -> None:
     assert "function parseTimestampDetails(raw)" in html
     assert "function updateAsOfText(id, prefix, details)" in html
     assert "function renderTimestampMetric(label, raw)" in html
+
+
+def test_rag_query_chat_has_local_fallback_for_no_results() -> None:
+    html = RAG_QUERY_HTML.read_text(encoding="utf-8")
+
+    assert "function findLocalLessonsForChat(query, maxResults = 5)" in html
+    assert "function buildLocalLessonFallbackReply(query, matches)" in html
+    assert "KEY LESSONS (local_fallback):" in html
+    assert "No lessons available for this query" in html
+
+
+def test_rag_query_last_question_hint_shows_timestamp_not_keyboard_copy() -> None:
+    html = RAG_QUERY_HTML.read_text(encoding="utf-8")
+
+    assert "function formatChatHistoryTimestamp(raw)" in html
+    assert 'class="hint-time"' in html
+    assert "(click to insert, or press ↑)" not in html

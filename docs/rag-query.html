@@ -702,7 +702,7 @@ layout: null
         background: var(--border-color);
       }
 
-      .chat-history-hint .hint-meta {
+      .chat-history-hint .hint-time {
         color: var(--text-muted);
         margin-left: 6px;
       }
@@ -2141,11 +2141,38 @@ Tags: ${lesson.tags.join(", ")}`;
       const CHAT_HISTORY_STORAGE_KEY = "rag_query_question_history_v1";
       const CHAT_HISTORY_MAX = 25;
 
+      function normalizeChatHistoryEntry(value) {
+        if (typeof value === "string") {
+          const question = value.trim();
+          if (!question) return null;
+          return { question, askedAtUtc: "" };
+        }
+        if (!value || typeof value !== "object") return null;
+        const question = String(value.question || value.q || "").trim();
+        if (!question) return null;
+        const parsedTimestamp = parseTimestampDetails(
+          value.askedAtUtc || value.asked_at_utc || value.timestamp || ""
+        );
+        return {
+          question,
+          askedAtUtc: parsedTimestamp?.utcIso || "",
+        };
+      }
+
       function readChatQuestionHistory() {
         try {
           const raw = localStorage.getItem(CHAT_HISTORY_STORAGE_KEY);
           const data = raw ? JSON.parse(raw) : [];
-          return Array.isArray(data) ? data.filter((v) => typeof v === "string") : [];
+          if (!Array.isArray(data)) return [];
+          const seen = new Set();
+          const history = [];
+          for (const item of data) {
+            const normalized = normalizeChatHistoryEntry(item);
+            if (!normalized || seen.has(normalized.question)) continue;
+            seen.add(normalized.question);
+            history.push(normalized);
+          }
+          return history;
         } catch {
           return [];
         }
@@ -2166,8 +2193,19 @@ Tags: ${lesson.tags.join(", ")}`;
         const q = String(question || "").trim();
         if (!q) return;
         const history = readChatQuestionHistory();
-        const next = [q, ...history.filter((x) => x !== q)];
+        const next = [
+          { question: q, askedAtUtc: new Date().toISOString() },
+          ...history.filter((x) => x.question !== q),
+        ];
         writeChatQuestionHistory(next);
+      }
+
+      function formatChatHistoryTimestamp(raw) {
+        const parsed = parseTimestampDetails(raw);
+        if (!parsed || !parsed.shortLabel) return "time unavailable";
+        return parsed.utcIso
+          ? `${parsed.fullLabel} (UTC ${parsed.utcIso})`
+          : parsed.shortLabel;
       }
 
       function renderChatQuestionSuggestions() {
@@ -2177,20 +2215,21 @@ Tags: ${lesson.tags.join(", ")}`;
 
         const history = readChatQuestionHistory();
         list.innerHTML = "";
-        for (const q of history.slice(0, CHAT_HISTORY_MAX)) {
+        for (const item of history.slice(0, CHAT_HISTORY_MAX)) {
           const opt = document.createElement("option");
-          opt.value = q;
+          opt.value = item.question;
           list.appendChild(opt);
         }
 
         if (!hint) return;
 
         if (history.length) {
-          const last = history[0];
+          const last = history[0].question;
+          const askedAt = formatChatHistoryTimestamp(history[0].askedAtUtc);
           hint.style.display = "block";
           hint.innerHTML = `Last question: <button type="button" class="hint-btn" id="useLastQuestionBtn">${escapeHtml(
             last.length > 90 ? last.slice(0, 90) + "..." : last
-          )}</button> <span class="hint-meta">(click to insert, or press ↑)</span>`;
+          )}</button> <span class="hint-time">Asked: ${escapeHtml(askedAt)}</span>`;
 
           // (Re)bind every render to keep it simple.
           const btn = document.getElementById("useLastQuestionBtn");
@@ -2225,7 +2264,7 @@ Tags: ${lesson.tags.join(", ")}`;
           const history = readChatQuestionHistory();
           if (!history.length) return;
           e.preventDefault();
-          chatInput.value = history[0];
+          chatInput.value = history[0].question;
           chatInput.setSelectionRange(chatInput.value.length, chatInput.value.length);
         });
 
@@ -2238,6 +2277,133 @@ Tags: ${lesson.tags.join(", ")}`;
         });
 
         renderChatQuestionSuggestions();
+      }
+
+      function normalizeToken(token) {
+        let t = String(token || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        if (!t) return "";
+        if (t.endsWith("ing") && t.length > 5) t = t.slice(0, -3);
+        else if (t.endsWith("ed") && t.length > 4) t = t.slice(0, -2);
+        else if (t.endsWith("es") && t.length > 4) t = t.slice(0, -2);
+        else if (t.endsWith("s") && t.length > 3) t = t.slice(0, -1);
+        return t;
+      }
+
+      function tokenizeQueryForFallback(query) {
+        const STOP_WORDS = new Set([
+          "a",
+          "an",
+          "and",
+          "are",
+          "as",
+          "at",
+          "be",
+          "by",
+          "for",
+          "from",
+          "how",
+          "i",
+          "in",
+          "is",
+          "it",
+          "my",
+          "of",
+          "on",
+          "or",
+          "should",
+          "that",
+          "the",
+          "to",
+          "we",
+          "what",
+          "when",
+          "with",
+        ]);
+        const SYNONYM_MAP = {
+          exit: ["close", "management", "profit", "stop", "dte"],
+          close: ["exit", "management", "profit", "stop", "dte"],
+          condor: ["iron", "spread", "credit", "dte"],
+          iron: ["condor", "spread", "credit"],
+          strategy: ["rule", "playbook", "approach"],
+          optimal: ["best", "recommended"],
+        };
+
+        const seeds = String(query || "")
+          .split(/\s+/)
+          .map((w) => normalizeToken(w))
+          .filter(Boolean)
+          .filter((w) => !STOP_WORDS.has(w));
+
+        const expanded = new Set(seeds);
+        for (const seed of seeds) {
+          const aliases = SYNONYM_MAP[seed] || [];
+          for (const alias of aliases) expanded.add(normalizeToken(alias));
+        }
+        return Array.from(expanded);
+      }
+
+      function scoreLessonForTokens(lesson, tokens) {
+        if (!lesson || !tokens.length) return 0;
+        const title = String(lesson.title || "").toLowerCase();
+        const tags = Array.isArray(lesson.tags)
+          ? lesson.tags.join(" ").toLowerCase()
+          : "";
+        const summary = String(lesson.summary || "").toLowerCase();
+        const content = String(lesson.content || "").toLowerCase();
+        const category = String(lesson.category || "").toLowerCase();
+        let score = 0;
+
+        for (const token of tokens) {
+          if (!token) continue;
+          if (title.includes(token)) score += 8;
+          if (tags.includes(token)) score += 5;
+          if (category.includes(token)) score += 3;
+          if (summary.includes(token)) score += 2;
+          if (content.includes(token)) score += 1;
+        }
+
+        return score;
+      }
+
+      function findLocalLessonsForChat(query, maxResults = 5) {
+        if (!lessonsLoaded || !Array.isArray(lessons) || lessons.length === 0) {
+          return [];
+        }
+        const tokens = tokenizeQueryForFallback(query);
+        if (!tokens.length) return [];
+
+        return lessons
+          .map((lesson) => ({
+            lesson,
+            score: scoreLessonForTokens(lesson, tokens),
+          }))
+          .filter((entry) => entry.score > 0)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, maxResults)
+          .map((entry) => entry.lesson);
+      }
+
+      function buildLocalLessonFallbackReply(query, matches) {
+        const lines = [
+          "AI chat is temporarily unavailable. Here are the most relevant lessons from local index:",
+          "",
+          `Query: ${query}`,
+          "",
+          "KEY LESSONS (local_fallback):",
+        ];
+
+        for (const lesson of matches) {
+          const when =
+            lesson.timestampDetails?.shortLabel ||
+            lesson.dateDetails?.shortLabel ||
+            lesson.date ||
+            "date n/a";
+          lines.push(
+            `- ${lesson.id}: ${lesson.title} [${when}]`,
+          );
+        }
+
+        return lines.join("\n");
       }
 
       async function sendChatMessage() {
@@ -2292,6 +2458,8 @@ Tags: ${lesson.tags.join(", ")}`;
           return;
         }
 
+        const localFallbackMatches = findLocalLessonsForChat(message, 5);
+
         try {
           const response = await fetch(WORKER_URL, {
             method: "POST",
@@ -2308,19 +2476,35 @@ Tags: ${lesson.tags.join(", ")}`;
           document.getElementById(loadingId)?.remove();
 
           if (data.error) {
+            const fallbackText = localFallbackMatches.length
+              ? buildLocalLessonFallbackReply(message, localFallbackMatches)
+              : `Error: ${String(data.error || "unknown error")}`;
             chatMessages.innerHTML += `
                         <div class="chat-message assistant">
                             <div class="message-content" style="color: var(--accent-red);">
-                                Error: ${escapeHtml(data.error)}
+                                ${formatResponse(fallbackText)}
                             </div>
                         </div>
                     `;
           } else {
+            let replyText = String(data.reply || "");
+            const workerNoResults =
+              /No lessons available for this query/i.test(replyText) ||
+              /KEY LESSONS \(keyword_index\):\s*-\s*No lessons available for this query\./i.test(
+                replyText,
+              );
+            if (workerNoResults && localFallbackMatches.length) {
+              replyText = buildLocalLessonFallbackReply(
+                message,
+                localFallbackMatches,
+              );
+            }
+
             // Add to conversation history for context
             conversationHistory.push({ role: "user", content: message });
             conversationHistory.push({
               role: "assistant",
-              content: data.reply,
+              content: replyText,
             });
 
             // Keep only last 10 messages
@@ -2330,16 +2514,19 @@ Tags: ${lesson.tags.join(", ")}`;
 
             chatMessages.innerHTML += `
                         <div class="chat-message assistant">
-                            <div class="message-content">${formatResponse(data.reply)}</div>
+                            <div class="message-content">${formatResponse(replyText)}</div>
                         </div>
                     `;
           }
         } catch (error) {
           document.getElementById(loadingId)?.remove();
+          const fallbackText = localFallbackMatches.length
+            ? buildLocalLessonFallbackReply(message, localFallbackMatches)
+            : "Chat service unavailable. Please try again.";
           chatMessages.innerHTML += `
                     <div class="chat-message assistant">
                         <div class="message-content" style="color: var(--accent-yellow);">
-                            Chat service unavailable. Please try again.
+                            ${formatResponse(fallbackText)}
                         </div>
                     </div>
                 `;
