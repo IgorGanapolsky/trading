@@ -77,6 +77,12 @@ layout: null
         font-size: 1.1rem;
       }
 
+      .subtitle-meta {
+        margin-top: 8px;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
       .ai-disclosure {
         margin: 16px auto 0;
         max-width: 760px;
@@ -737,6 +743,8 @@ layout: null
         <p class="subtitle" id="subtitleText">
           Search lessons from building an autonomous AI trading system
         </p>
+        <p class="subtitle-meta" id="ragAsOfText">Knowledge base as of: --</p>
+        <p class="subtitle-meta" id="systemAsOfText">System sync as of: --</p>
         <div class="ai-disclosure">
           AI Disclosure: This interface uses AI to search and summarize internal
           lessons. Not financial advice. Human review required for any trading
@@ -1036,9 +1044,81 @@ layout: null
 
       function parseDateValue(raw) {
         if (!raw) return null;
-        const parsed = new Date(raw);
+        const value = String(raw).trim();
+        if (!value) return null;
+        // Parse YYYY-MM-DD as local day to avoid timezone day-shift in UI labels.
+        if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+          const parsedDateOnly = new Date(`${value}T00:00:00`);
+          if (!Number.isNaN(parsedDateOnly.getTime())) return parsedDateOnly;
+        }
+        const parsed = new Date(value);
         if (!Number.isNaN(parsed.getTime())) return parsed;
         return null;
+      }
+
+      function parseTimestampDetails(raw) {
+        const text = String(raw || "").trim();
+        if (!text) return null;
+        const explicitTime = /(?:T|\s)\d{1,2}:\d{2}/.test(text);
+        const parsed = parseDateValue(text);
+        if (!parsed) {
+          return {
+            raw: text,
+            explicitTime,
+            epochMs: null,
+            shortLabel: text,
+            fullLabel: text,
+            utcIso: "",
+          };
+        }
+
+        const dateLabel = parsed.toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+        });
+        const timeLabel = parsed.toLocaleString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZoneName: "short",
+        });
+
+        return {
+          raw: text,
+          explicitTime,
+          epochMs: parsed.getTime(),
+          shortLabel: explicitTime ? timeLabel : dateLabel,
+          fullLabel: timeLabel,
+          utcIso: explicitTime ? parsed.toISOString() : "",
+        };
+      }
+
+      function updateAsOfText(id, prefix, details) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (!details || !details.shortLabel) {
+          el.textContent = `${prefix}: --`;
+          return;
+        }
+        if (details.utcIso) {
+          el.textContent = `${prefix}: ${details.fullLabel} (UTC ${details.utcIso})`;
+          return;
+        }
+        el.textContent = `${prefix}: ${details.shortLabel}`;
+      }
+
+      function renderTimestampMetric(label, raw) {
+        const details = parseTimestampDetails(raw);
+        if (!details) return "";
+        if (details.utcIso) {
+          return `<strong>${escapeHtml(label)}:</strong> ${escapeHtml(details.fullLabel)} (UTC ${escapeHtml(
+            details.utcIso,
+          )})`;
+        }
+        return `<strong>${escapeHtml(label)}:</strong> ${escapeHtml(details.shortLabel)}`;
       }
 
       function toFiniteNumber(value) {
@@ -1294,17 +1374,23 @@ layout: null
 
         if (!daysEl) return;
         const lessonDates = lessons
-          .map((lesson) => parseDateValue(lesson.date))
-          .filter(Boolean)
-          .map((dt) => dt.getTime());
+          .map((lesson) => lesson.dateEpochMs)
+          .filter((n) => Number.isFinite(n));
         if (lessonDates.length === 0) {
           daysEl.textContent = "--";
+          updateAsOfText("ragAsOfText", "Knowledge base as of", null);
           return;
         }
 
         const earliest = Math.min(...lessonDates);
         const days = Math.max(1, Math.ceil((Date.now() - earliest) / 86400000));
         daysEl.textContent = days.toLocaleString();
+
+        const asOfLessons = lessons
+          .map((lesson) => lesson.timestampDetails || lesson.dateDetails)
+          .filter((entry) => entry && Number.isFinite(entry.epochMs));
+        asOfLessons.sort((a, b) => (b.epochMs || 0) - (a.epochMs || 0));
+        updateAsOfText("ragAsOfText", "Knowledge base as of", asOfLessons[0] || null);
       }
 
       // Initialize
@@ -1363,6 +1449,28 @@ layout: null
           category: raw.category || "Lesson",
           tags: Array.isArray(raw.tags) ? raw.tags : [],
           date: raw.date || raw.created_at || "",
+          timestampRaw:
+            raw.timestamp_utc ||
+            raw.event_timestamp_utc ||
+            raw.source_mtime_utc ||
+            raw.indexed_at_utc ||
+            raw.updated_at ||
+            raw.created_at ||
+            raw.date ||
+            "",
+          dateDetails: parseTimestampDetails(raw.date || raw.created_at || ""),
+          timestampDetails: parseTimestampDetails(
+            raw.timestamp_utc ||
+              raw.event_timestamp_utc ||
+              raw.source_mtime_utc ||
+              raw.indexed_at_utc ||
+              raw.updated_at ||
+              raw.created_at ||
+              raw.date ||
+              "",
+          ),
+          dateEpochMs:
+            parseDateValue(raw.date || raw.created_at || "")?.getTime() ?? null,
           severity: raw.severity || "MEDIUM",
           file: raw.file || raw.source || "",
         };
@@ -1432,7 +1540,9 @@ layout: null
                     <div class="lesson-summary">${lesson.summary}</div>
                     <div class="lesson-meta">
                         <span class="lesson-tag ${severityClass}">${lesson.severity || lesson.category}</span>
-                        <span class="lesson-tag">${lesson.date}</span>
+                        <span class="lesson-tag">${escapeHtml(
+                          lesson.timestampDetails?.shortLabel || lesson.dateDetails?.shortLabel || lesson.date || "Date unavailable",
+                        )}</span>
                     </div>
                 </div>
             `;
@@ -1556,7 +1666,9 @@ layout: null
         document.getElementById("modalTitle").textContent =
           `${lesson.id}: ${lesson.title}`;
         document.getElementById("modalContent").textContent =
-          `Date: ${lesson.date}
+          `Date: ${lesson.dateDetails?.shortLabel || lesson.date}
+Timestamp: ${lesson.timestampDetails?.fullLabel || "n/a"}
+Timestamp (UTC): ${lesson.timestampDetails?.utcIso || "n/a"}
 Category: ${lesson.category}
 Severity: ${lesson.severity || "N/A"}
 
@@ -1712,9 +1824,17 @@ Tags: ${lesson.tags.join(", ")}`;
             "port-stat-value " +
             (wr >= 80 ? "positive" : wr != null ? "negative" : "");
 
+          const systemAsOfRaw = data.last_updated || data?.meta?.last_updated || "";
+          updateAsOfText(
+            "systemAsOfText",
+            "System sync as of",
+            parseTimestampDetails(systemAsOfRaw),
+          );
+
           bar.classList.remove("loading");
         } catch {
           bar.classList.add("error");
+          updateAsOfText("systemAsOfText", "System sync as of", null);
         }
       }
 
@@ -1867,7 +1987,7 @@ Tags: ${lesson.tags.join(", ")}`;
           liveSnapshot.captured_at_utc ||
           "";
         const syncLine = syncedAt
-          ? `<div class="account-submetric">Synced: ${escapeHtml(syncedAt)}</div>`
+          ? `<div class="account-submetric">${renderTimestampMetric("Synced", syncedAt)}</div>`
           : "";
         const paperWhy = extractExplainerWhy(paperSnapshot.technical_explainer);
         const liveWhy = extractExplainerWhy(liveSnapshot.technical_explainer);

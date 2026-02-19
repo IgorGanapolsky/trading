@@ -18,3 +18,13 @@ def test_north_star_strategy_response_uses_live_state() -> None:
     assert "function buildNorthStarStrategyHtml(state)" in html
     assert "const state = await fetchSystemState(true);" in html
     assert "North Star is ${status.verdict}" in html
+
+
+def test_rag_query_surface_has_explicit_as_of_timestamp_labels() -> None:
+    html = RAG_QUERY_HTML.read_text(encoding="utf-8")
+
+    assert 'id="ragAsOfText"' in html
+    assert 'id="systemAsOfText"' in html
+    assert "function parseTimestampDetails(raw)" in html
+    assert "function updateAsOfText(id, prefix, details)" in html
+    assert "function renderTimestampMetric(label, raw)" in html
