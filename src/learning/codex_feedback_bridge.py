@@ -27,6 +27,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
+from src.learning.distributed_feedback import aggregate_feedback
 EXPLICIT_NEGATIVE_RE = re.compile(
     r"thumbs\s*down|👎|bad response|wrong answer|incorrect|not what i asked",
     re.IGNORECASE,
@@ -549,12 +550,13 @@ def _queue_cortex_pending(paths: BridgePaths, signal: FeedbackSignal, context: s
 def _run_feedback_pipeline(
     paths: BridgePaths,
     payload: dict[str, Any],
+    event_key: str,
     signal: FeedbackSignal,
     context: str,
     user_message: str,
     assistant_message: str,
     runner: Runner,
-) -> dict[str, bool]:
+) -> tuple[dict[str, bool], dict[str, Any] | None]:
     py = _python_bin(paths)
     tags_csv = ",".join(signal.tags)
     result = {
@@ -562,7 +564,9 @@ def _run_feedback_pipeline(
         "train": False,
         "cortex_queue": False,
         "memalign_record": False,
+        "distributed_bandit": False,
     }
+    distributed_outcome: dict[str, Any] | None = None
 
     if paths.semantic_memory_py.exists():
         semantic_cmd = [
@@ -594,6 +598,26 @@ def _run_feedback_pipeline(
         if runner(train_cmd, timeout=60) == 0:
             result["train"] = True
 
+    try:
+        distributed_outcome = aggregate_feedback(
+            project_root=paths.project_root,
+            event_key=event_key,
+            feedback_type=signal.feedback_type,
+            context=context,
+        )
+        if distributed_outcome.get("applied") or distributed_outcome.get("skipped_reason") in {
+            "non_zero_rank",
+            "duplicate_event",
+        }:
+            result["distributed_bandit"] = True
+    except Exception:
+        distributed_outcome = {
+            "event_key": event_key,
+            "feedback_type": signal.feedback_type,
+            "applied": False,
+            "skipped_reason": "distributed_update_error",
+        }
+
     result["cortex_queue"] = _queue_cortex_pending(paths, signal, context)
 
     if paths.memalign_record_ts.exists():
@@ -623,7 +647,7 @@ def _run_feedback_pipeline(
         if runner(memalign_cmd, env=env, timeout=90) == 0:
             result["memalign_record"] = True
 
-    return result
+    return result, distributed_outcome
 
 
 def process_payload(
@@ -651,9 +675,10 @@ def process_payload(
         return {"status": "ignored", "reason": "duplicate", "event_key": event_key}
 
     model_before = _read_bandit_snapshot(paths)
-    pipeline_status = _run_feedback_pipeline(
+    pipeline_status, distributed_outcome = _run_feedback_pipeline(
         paths,
         payload,
+        event_key,
         signal,
         context,
         user_message,
@@ -685,6 +710,7 @@ def process_payload(
             "recent_event_keys": recent_keys,
             "last_pipeline_status": pipeline_status,
             "last_thompson_report": thompson_report,
+            "last_distributed_outcome": distributed_outcome,
         }
     )
     _write_state(paths.state_file, state)
@@ -697,6 +723,7 @@ def process_payload(
         "paths": {"project_root": str(paths.project_root)},
         "pipeline_status": pipeline_status,
         "thompson_report": thompson_report,
+        "distributed_outcome": distributed_outcome,
     }
 
 
