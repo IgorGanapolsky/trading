@@ -28,6 +28,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from src.learning.distributed_feedback import aggregate_feedback
+from src.memory.context_bundle_engine import ContextBundleEngine
 
 
 EXPLICIT_NEGATIVE_RE = re.compile(
@@ -567,6 +568,7 @@ def _run_feedback_pipeline(
         "cortex_queue": False,
         "memalign_record": False,
         "distributed_bandit": False,
+        "context_index": False,
     }
     distributed_outcome: dict[str, Any] | None = None
 
@@ -619,6 +621,14 @@ def _run_feedback_pipeline(
             "applied": False,
             "skipped_reason": "distributed_update_error",
         }
+
+    try:
+        auto_reindex = os.environ.get("CONTEXT_ENGINE_AUTO_REINDEX", "1").strip().lower()
+        if auto_reindex not in {"0", "false", "no", "off"}:
+            ContextBundleEngine(project_root=paths.project_root).build_index(top_per_source=500)
+            result["context_index"] = True
+    except Exception:
+        result["context_index"] = False
 
     result["cortex_queue"] = _queue_cortex_pending(paths, signal, context)
 
