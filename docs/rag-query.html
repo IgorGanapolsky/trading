@@ -517,6 +517,12 @@ layout: null
         padding: 20px;
       }
 
+      .chat-asof {
+        padding: 10px 20px 0;
+        color: var(--text-muted);
+        font-size: 0.82rem;
+      }
+
       .chat-messages {
         max-height: 400px;
         overflow-y: auto;
@@ -797,6 +803,10 @@ layout: null
 	          <span class="panel-icon">&#128172;</span>
 	          <span>Ask the Knowledge Base</span>
 	        </div>
+          <div class="chat-asof">
+            <div id="ragAsOfTextChat">Knowledge base as of: --</div>
+            <div id="systemAsOfTextChat">System sync as of: --</div>
+          </div>
 	        <div class="chat-container">
 	          <div class="chat-messages" id="chatMessages">
 	            <div class="chat-message assistant">
@@ -1379,6 +1389,7 @@ layout: null
         if (lessonDates.length === 0) {
           daysEl.textContent = "--";
           updateAsOfText("ragAsOfText", "Knowledge base as of", null);
+          updateAsOfText("ragAsOfTextChat", "Knowledge base as of", null);
           return;
         }
 
@@ -1391,6 +1402,7 @@ layout: null
           .filter((entry) => entry && Number.isFinite(entry.epochMs));
         asOfLessons.sort((a, b) => (b.epochMs || 0) - (a.epochMs || 0));
         updateAsOfText("ragAsOfText", "Knowledge base as of", asOfLessons[0] || null);
+        updateAsOfText("ragAsOfTextChat", "Knowledge base as of", asOfLessons[0] || null);
       }
 
       // Initialize
@@ -1830,11 +1842,17 @@ Tags: ${lesson.tags.join(", ")}`;
             "System sync as of",
             parseTimestampDetails(systemAsOfRaw),
           );
+          updateAsOfText(
+            "systemAsOfTextChat",
+            "System sync as of",
+            parseTimestampDetails(systemAsOfRaw),
+          );
 
           bar.classList.remove("loading");
         } catch {
           bar.classList.add("error");
           updateAsOfText("systemAsOfText", "System sync as of", null);
+          updateAsOfText("systemAsOfTextChat", "System sync as of", null);
         }
       }
 

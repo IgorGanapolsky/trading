@@ -25,6 +25,8 @@ def test_rag_query_surface_has_explicit_as_of_timestamp_labels() -> None:
 
     assert 'id="ragAsOfText"' in html
     assert 'id="systemAsOfText"' in html
+    assert 'id="ragAsOfTextChat"' in html
+    assert 'id="systemAsOfTextChat"' in html
     assert "function parseTimestampDetails(raw)" in html
     assert "function updateAsOfText(id, prefix, details)" in html
     assert "function renderTimestampMetric(label, raw)" in html
