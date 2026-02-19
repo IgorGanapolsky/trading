@@ -12,7 +12,6 @@ Intent:
 from __future__ import annotations
 
 import os
-from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -21,11 +20,13 @@ try:
         NORTH_STAR_MONTHLY_AFTER_TAX,
         NORTH_STAR_PAPER_VALIDATION_DAYS,
         NORTH_STAR_TARGET_CAPITAL,
+        NORTH_STAR_TARGET_DATE,
         NORTH_STAR_TARGET_WIN_RATE_PCT,
     )
 except Exception:
     NORTH_STAR_MONTHLY_AFTER_TAX = 6_000.0
     NORTH_STAR_TARGET_CAPITAL = 300_000.0
+    NORTH_STAR_TARGET_DATE = None
     NORTH_STAR_TARGET_WIN_RATE_PCT = 80.0
     NORTH_STAR_PAPER_VALIDATION_DAYS = 90
 
@@ -33,9 +34,11 @@ DEFAULT_STATE_PATH = Path("data/system_state.json")
 DEFAULT_TARGET_MODE = "asap_monthly_income"
 DEFAULT_MONTHLY_AFTER_TAX_TARGET = NORTH_STAR_MONTHLY_AFTER_TAX
 DEFAULT_TARGET_CAPITAL = NORTH_STAR_TARGET_CAPITAL
+DEFAULT_TARGET_DATE = NORTH_STAR_TARGET_DATE
 DEFAULT_TARGET_WIN_RATE = NORTH_STAR_TARGET_WIN_RATE_PCT
 DEFAULT_MIN_SAMPLE_SIZE = 30
 DEFAULT_PAPER_DAYS = NORTH_STAR_PAPER_VALIDATION_DAYS
+DEFAULT_LIVE_MIN_CLOSED_TRADES = 30
 
 
 def _truthy(value: str) -> bool:
@@ -78,11 +81,35 @@ def _resolve_current_day(paper_trading: dict[str, Any]) -> int:
     if not start_raw:
         return 0
 
-    try:
-        start = datetime.fromisoformat(str(start_raw)).date()
-        return max(0, (date.today() - start).days)
-    except Exception:
-        return 0
+
+def _resolve_live_trading_readiness(
+    paper_account: dict[str, Any],
+    weekly_gate: dict[str, Any],
+) -> tuple[bool, str]:
+    sample_size = _as_int(paper_account.get("win_rate_sample_size"), 0)
+    total_pl = _as_float(paper_account.get("total_pl"), 0.0)
+    expectancy_estimate = (total_pl / sample_size) if sample_size > 0 else None
+
+    scaling_gate = weekly_gate.get("scaling_sample_gate", {}) if isinstance(weekly_gate, dict) else {}
+    scaled_samples = _as_int(scaling_gate.get("closed_trades_observed"), 0)
+    observed_closed_trades = max(sample_size, scaled_samples)
+
+    if observed_closed_trades < DEFAULT_LIVE_MIN_CLOSED_TRADES:
+        return (
+            False,
+            f"Live trading locked: {observed_closed_trades}/{DEFAULT_LIVE_MIN_CLOSED_TRADES} closed trades.",
+        )
+
+    if expectancy_estimate is None:
+        return False, "Live trading locked: expectancy unavailable."
+
+    if expectancy_estimate <= 0:
+        return (
+            False,
+            f"Live trading locked: expectancy ${expectancy_estimate:.2f}/trade is non-positive.",
+        )
+
+    return True, "Live trading unlocked: >=30 closed trades and positive expectancy."
 
 
 def get_guard_context(state_path: Path = DEFAULT_STATE_PATH) -> dict[str, Any]:
@@ -171,6 +198,11 @@ def get_guard_context(state_path: Path = DEFAULT_STATE_PATH) -> dict[str, Any]:
             max_position_pct = min(max_position_pct, 0.02)
             reasons.append("Weekly expectancy is non-positive; keep risk-on size conservative.")
 
+    live_trading_allowed, live_trading_reason = _resolve_live_trading_readiness(
+        paper_account if isinstance(paper_account, dict) else {},
+        weekly_gate if isinstance(weekly_gate, dict) else {},
+    )
+
     block_reason = ""
     if block_new_positions:
         if isinstance(weekly_gate, dict) and weekly_gate.get("block_new_positions"):
@@ -199,7 +231,13 @@ def get_guard_context(state_path: Path = DEFAULT_STATE_PATH) -> dict[str, Any]:
         "north_star_target_mode": DEFAULT_TARGET_MODE,
         "north_star_monthly_after_tax_target": round(DEFAULT_MONTHLY_AFTER_TAX_TARGET, 2),
         "target_capital": DEFAULT_TARGET_CAPITAL,
-        "target_date": None,
+        "target_date": DEFAULT_TARGET_DATE.isoformat() if DEFAULT_TARGET_DATE else None,
+        "live_trading_allowed": live_trading_allowed,
+        "live_trading_reason": live_trading_reason,
+        "live_trading_requirements": {
+            "min_closed_trades": DEFAULT_LIVE_MIN_CLOSED_TRADES,
+            "expectancy_must_be_positive": True,
+        },
         "weekly_gate_mode": weekly_gate.get("mode")
         if isinstance(weekly_gate, dict)
         else "unavailable",

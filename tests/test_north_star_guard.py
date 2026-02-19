@@ -23,6 +23,7 @@ def test_guard_validation_mode_with_low_sample(tmp_path):
     assert guard["target_date"] is None
     assert guard["north_star_target_mode"] == "asap_monthly_income"
     assert guard["north_star_monthly_after_tax_target"] == 6000.0
+    assert guard["live_trading_allowed"] is False
 
 
 def test_guard_capital_preservation_blocks_new_positions(tmp_path):
@@ -59,6 +60,7 @@ def test_guard_scale_ready_when_validation_passes(tmp_path):
     assert guard["mode"] == "scale_ready"
     assert guard["block_new_positions"] is False
     assert guard["max_position_pct"] == 0.05
+    assert guard["live_trading_allowed"] is False
 
 
 def test_guard_applies_weekly_gate_position_cap(tmp_path):
@@ -82,3 +84,28 @@ def test_guard_applies_weekly_gate_position_cap(tmp_path):
     assert guard["block_new_positions"] is False
     assert guard["max_position_pct"] <= 0.0125
     assert guard["weekly_gate_mode"] == "cautious"
+
+
+def test_guard_unlocks_live_trading_with_30_trades_and_positive_expectancy(tmp_path):
+    state = tmp_path / "system_state.json"
+    state.write_text(
+        """
+{
+  "paper_account": {
+    "equity": 200000,
+    "win_rate": 82.0,
+    "win_rate_sample_size": 35,
+    "total_pl": 700.0
+  },
+  "paper_trading": {"current_day": 120, "target_duration_days": 90},
+  "north_star_weekly_gate": {
+    "scaling_sample_gate": {"closed_trades_observed": 35}
+  }
+}
+""".strip(),
+        encoding="utf-8",
+    )
+
+    guard = get_guard_context(state)
+    assert guard["live_trading_allowed"] is True
+    assert "unlocked" in guard["live_trading_reason"].lower()

@@ -19,6 +19,7 @@ try:
         validate_request,
     )
     from mcp.governance.input_validation import ALLOWED_SYMBOLS, MAX_ORDER_AMOUNT_USD
+    from mcp.governance import input_validation as input_validation_mod
     from src.core.trading_constants import ALLOWED_TICKERS, MAX_POSITION_PCT
 except ImportError:
     pytest.skip(
@@ -85,11 +86,24 @@ class TestInputValidation:
 
     def test_order_request_live_trading_blocked(self):
         """Live trading is blocked during paper phase."""
-        with pytest.raises(ValueError, match="Paper trading required"):
+        with pytest.raises(ValueError, match="Live trading locked"):
             validate_request(
                 OrderRequest,
                 {"symbol": "SPY", "amount_usd": 100.0, "side": "buy", "paper": False},
             )
+
+    def test_order_request_live_trading_allowed_with_evidence_gate(self, monkeypatch):
+        """Live trading is allowed only after evidence threshold passes."""
+        monkeypatch.setattr(
+            input_validation_mod,
+            "_live_trading_unlocked",
+            lambda: (True, "evidence threshold satisfied"),
+        )
+        request = validate_request(
+            OrderRequest,
+            {"symbol": "SPY", "amount_usd": 100.0, "side": "buy", "paper": False},
+        )
+        assert request.paper is False
 
     def test_order_request_invalid_side_rejected(self):
         """Invalid order side is rejected."""

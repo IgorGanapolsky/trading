@@ -21,7 +21,7 @@ def test_weekly_gate_blocks_when_recent_expectancy_negative(tmp_path):
     today = date(2026, 2, 12)
     trades = []
     for idx in range(8):
-        exit_day = today - timedelta(days=idx)
+        exit_day = today - timedelta(days=idx % 7)
         trades.append(
             {
                 "status": "closed",
@@ -43,6 +43,7 @@ def test_weekly_gate_blocks_when_recent_expectancy_negative(tmp_path):
     assert gate["mode"] == "defensive"
     assert gate["block_new_positions"] is True
     assert gate["recommended_max_position_pct"] <= 0.01
+    assert gate["expectancy_signal_status"] == "reliable"
     assert len(history) == 1
     assert history_path.exists()
 
@@ -177,6 +178,7 @@ def test_weekly_gate_adds_cadence_kpi_and_no_trade_diagnostic(tmp_path):
     assert cadence.get("enabled") is True
     assert cadence.get("qualified_setups_observed") == 2
     assert cadence.get("closed_trades_observed") == 0
+    assert cadence.get("min_closed_trades_per_week") == 0
     assert cadence.get("passed") is False
 
     diagnostic = gate.get("no_trade_diagnostic", {})
@@ -196,7 +198,7 @@ def test_expansion_mode_requires_thirty_closed_trades_for_scaling(tmp_path):
     today = date(2026, 2, 20)
     trades = []
     for idx in range(12):
-        exit_day = today - timedelta(days=idx)
+        exit_day = today - timedelta(days=idx % 7)
         trades.append(
             {
                 "status": "closed",
@@ -221,13 +223,43 @@ def test_expansion_mode_requires_thirty_closed_trades_for_scaling(tmp_path):
     assert gate["scaling_sample_gate"]["min_closed_trades_for_scaling"] == 30
 
 
+def test_weekly_gate_treats_tiny_sample_expectancy_as_provisional(tmp_path):
+    trades_path = tmp_path / "trades.json"
+    history_path = tmp_path / "weekly_history.json"
+    today = date(2026, 2, 20)
+    trades = []
+    for idx in range(2):
+        exit_day = today - timedelta(days=idx)
+        trades.append(
+            {
+                "status": "closed",
+                "strategy": "iron_condor",
+                "realized_pnl": 100.0 if idx == 0 else -100.0,
+                "outcome": "win" if idx == 0 else "loss",
+                "exit_date": exit_day.isoformat(),
+            }
+        )
+    _write_json(trades_path, {"stats": {"closed_trades": 2}, "trades": trades})
+
+    gate, _history = compute_weekly_gate(
+        {"paper_account": {"win_rate": 50.0, "win_rate_sample_size": 2, "total_pl": 0.0}},
+        trades_path=trades_path,
+        weekly_history_path=history_path,
+        today=today,
+    )
+
+    assert gate["mode"] == "validation"
+    assert gate["expectancy_signal_status"] == "insufficient_samples"
+    assert gate["expectancy_signal_reliable"] is False
+
+
 def test_ai_credit_stress_watch_caps_expansion_to_cautious(tmp_path):
     trades_path = tmp_path / "trades.json"
     history_path = tmp_path / "weekly_history.json"
     today = date(2026, 2, 20)
     trades = []
     for idx in range(12):
-        exit_day = today - timedelta(days=idx)
+        exit_day = today - timedelta(days=idx % 7)
         trades.append(
             {
                 "status": "closed",

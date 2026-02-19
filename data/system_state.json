@@ -925,7 +925,10 @@
     "weekly_cadence_kpi_passed": true,
     "weekly_scaling_sample_gate_passed": false,
     "weekly_ai_credit_stress_status": "unknown",
-    "weekly_ai_credit_stress_score": 0.0
+    "weekly_ai_credit_stress_score": 0.0,
+    "weekly_usd_macro_status": "unknown",
+    "weekly_usd_macro_score": 0.0,
+    "weekly_usd_macro_multiplier": 1.0
   },
   "account": {
     "current_equity": 101401.96,
@@ -968,7 +971,7 @@
   },
   "strategy_milestones": {
     "enabled": true,
-    "generated_at": "2026-02-19T17:43:26.787668Z",
+    "generated_at": "2026-02-19T20:10:38.623183Z",
     "primary_family": "options_income",
     "rolling_window": 50,
     "paused_families": [
@@ -980,11 +983,11 @@
       "options_income": {
         "status": "validation",
         "paused": false,
-        "reason": "options_income validation mode (1/8 closed trades).",
+        "reason": "options_income validation mode (1/12 closed trades).",
         "thresholds": {
           "min_win_rate_pct": 60.0,
           "min_expectancy": 0.0,
-          "min_samples": 8
+          "min_samples": 12
         },
         "metrics": {
           "samples": 1,
@@ -1056,15 +1059,17 @@
     }
   },
   "north_star": {
-    "probability_score": 70.4,
-    "probability_label": "medium",
+    "probability_score": 29.0,
+    "probability_label": "critical",
     "target_mode": "asap_monthly_income",
     "monthly_after_tax_target": 6000.0,
     "required_cagr": null,
-    "estimated_cagr_from_expectancy": 0.0073,
+    "estimated_cagr_from_expectancy": 0.0,
     "target_capital": 300000.0,
     "target_date": null,
-    "updated_at": "2026-02-19T19:45:00Z"
+    "updated_at": "2026-02-19T20:10:38.623183Z",
+    "estimated_monthly_after_tax_from_expectancy": 0.0,
+    "monthly_target_progress_pct": 0.0
   },
   "north_star_weekly_gate": {
     "enabled": true,
@@ -1075,13 +1080,16 @@
     "expectancy_per_trade": -94.5,
     "recommended_max_position_pct": 0.02,
     "block_new_positions": false,
-    "reason": "Insufficient recent weekly evidence; keep conservative sizing.",
+    "reason": "Insufficient recent weekly evidence; keep conservative sizing. Expectancy is provisional until 8 closed trades are observed.",
     "positive_weeks_streak": 0,
     "evidence_source": "trade_history_ic_only",
+    "expectancy_signal_samples_required": 8,
+    "expectancy_signal_reliable": false,
+    "expectancy_signal_status": "insufficient_samples",
     "cadence_kpi": {
       "enabled": true,
       "min_qualified_setups_per_week": 3,
-      "min_closed_trades_per_week": 1,
+      "min_closed_trades_per_week": 0,
       "qualified_setups_observed": 4,
       "closed_trades_observed": 2,
       "meets_qualified_setups": true,
@@ -1100,6 +1108,16 @@
       "detail": "No credit spread data available."
     },
     "scale_blocked_by_ai_credit_stress": false,
+    "usd_macro_sentiment": {
+      "status": "unknown",
+      "signal_status": "unknown",
+      "bearish_score": 0.0,
+      "position_size_multiplier": 1.0,
+      "signal_date": null,
+      "source": "fred_public",
+      "detail": "No USD macro data available."
+    },
+    "scale_multiplier_from_usd_macro": 1.0,
     "scaling_sample_gate": {
       "enabled": true,
       "min_closed_trades_for_scaling": 30,
@@ -1135,7 +1153,7 @@
           "status": "blocked",
           "avg_volume_ratio": 0.5284,
           "low_liquidity_events": 1,
-          "threshold_min_volume_ratio": 0.2
+          "threshold_min_volume_ratio": 0.18
         },
         "ai_credit_stress": {
           "status": "unknown",
@@ -1144,6 +1162,15 @@
           "signal_date": null,
           "source": "fred_public",
           "detail": "No credit spread data available."
+        },
+        "usd_macro": {
+          "status": "unknown",
+          "signal_status": "unknown",
+          "bearish_score": 0.0,
+          "position_size_multiplier": 1.0,
+          "signal_date": null,
+          "source": "fred_public",
+          "detail": "No USD macro data available."
         }
       },
       "blocked_categories": [
@@ -1164,34 +1191,39 @@
         }
       ],
       "summary": "Closed trades exist in lookback window; no-trade root cause not currently active.",
-      "updated_at": "2026-02-19T17:43:38.205172+00:00"
+      "updated_at": "2026-02-19T20:10:27.092254+00:00"
     },
-    "updated_at": "2026-02-19T17:43:38.205458+00:00"
+    "updated_at": "2026-02-19T20:10:27.092662+00:00"
   },
   "north_star_contributions": {
     "enabled": true,
+    "target_mode": "asap_monthly_income",
     "month": "2026-02",
-    "months_remaining": null,
     "target_date": null,
+    "months_remaining": null,
     "target_capital": 300000.0,
+    "monthly_after_tax_target": 6000.0,
+    "daily_after_tax_target": 200.0,
     "current_equity": 101401.96,
-    "required_cagr_without_contributions": -0.3127,
-    "required_monthly_contribution_by_return": {
-      "20%": 0.0,
-      "25%": 0.0,
-      "30%": 0.0,
-      "35%": 0.0
-    },
-    "assumed_return": 0.3,
-    "required_monthly_contribution_at_assumed_return": 0.0,
+    "required_cagr_without_contributions": null,
+    "required_monthly_contribution_by_return": {},
+    "assumed_return": null,
+    "required_monthly_contribution_at_assumed_return": null,
     "month_start_equity": 101429.56,
     "equity_change_this_month": -27.6,
+    "monthly_target_progress_pct": 0.0,
+    "remaining_to_monthly_target": 6027.6,
+    "days_elapsed_this_month": 19,
+    "days_remaining_this_month": 9,
+    "required_daily_after_tax_from_now": 669.73,
+    "projected_month_end_after_tax_pnl": -40.67,
+    "projected_gap_to_monthly_target": 6040.67,
     "live_month_start_equity": 166.98,
     "live_equity_change_this_month": 41.17,
     "estimated_live_contribution_this_month": 41.17,
     "contribution_estimate_confidence": "medium",
     "inference_note": "Live account has no open positions; live equity change is treated as estimated contribution.",
-    "updated_at": "2026-02-19T17:43:38.205492+00:00"
+    "updated_at": "2026-02-19T20:10:27.092687+00:00"
   },
   "ic_position_management": {
     "last_run": "2026-02-17T20:15:44.106821",

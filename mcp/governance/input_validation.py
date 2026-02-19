@@ -7,7 +7,9 @@ Implements allowlist-based security for trading operations.
 
 from __future__ import annotations
 
+import json
 import re
+from pathlib import Path
 from typing import Any, Optional, TypeVar
 
 from pydantic import BaseModel, Field, field_validator
@@ -21,9 +23,58 @@ ALLOWED_SYMBOLS = frozenset({"SPY", "SPX", "XSP", "QQQ", "IWM"})  # liquid ETFs 
 MAX_LOOKBACK_DAYS = 365
 MAX_ORDER_AMOUNT_USD = 5000.0  # 5% of $100K account
 MAX_POSITION_RISK = 5000.0
+MIN_CLOSED_TRADES_FOR_LIVE = 30
+SYSTEM_STATE_PATH = Path(__file__).resolve().parents[2] / "data" / "system_state.json"
 
 
 T = TypeVar("T", bound=BaseModel)
+
+
+def _as_float(value: Any, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _as_int(value: Any, default: int = 0) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _load_system_state(path: Path = SYSTEM_STATE_PATH) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+        return payload if isinstance(payload, dict) else {}
+    except Exception:
+        return {}
+
+
+def _live_trading_unlocked() -> tuple[bool, str]:
+    """Allow live orders only after sufficient closed-trade evidence."""
+    state = _load_system_state()
+    paper_account = state.get("paper_account", {}) if isinstance(state, dict) else {}
+    weekly_gate = state.get("north_star_weekly_gate", {}) if isinstance(state, dict) else {}
+    scaling_gate = weekly_gate.get("scaling_sample_gate", {}) if isinstance(weekly_gate, dict) else {}
+
+    paper_samples = _as_int(paper_account.get("win_rate_sample_size"), 0)
+    scaling_samples = _as_int(scaling_gate.get("closed_trades_observed"), 0)
+    closed_trades = max(paper_samples, scaling_samples)
+
+    if closed_trades < MIN_CLOSED_TRADES_FOR_LIVE:
+        return False, f"{closed_trades}/{MIN_CLOSED_TRADES_FOR_LIVE} closed trades"
+
+    total_pl = _as_float(paper_account.get("total_pl"), 0.0)
+    expectancy = total_pl / paper_samples if paper_samples > 0 else 0.0
+    if expectancy <= 0:
+        return False, f"expectancy {expectancy:.2f}/trade is non-positive"
+
+    return True, "evidence threshold satisfied"
 
 
 class StockAnalysisRequest(BaseModel):
@@ -100,11 +151,13 @@ class OrderRequest(BaseModel):
     @field_validator("paper")
     @classmethod
     def enforce_paper_trading(cls, v: bool) -> bool:
-        # Safety: Always enforce paper trading until validated
+        # Safety: keep live disabled until evidence threshold is met.
         if not v:
-            raise ValueError(
-                "Live trading disabled. Paper trading required during validation phase."
-            )
+            unlocked, reason = _live_trading_unlocked()
+            if not unlocked:
+                raise ValueError(
+                    f"Live trading locked. Continue paper trading until validation passes ({reason})."
+                )
         return v
 
 

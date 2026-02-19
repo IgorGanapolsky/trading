@@ -18,11 +18,13 @@ try:
     from src.core.trading_constants import (
         NORTH_STAR_MONTHLY_AFTER_TAX,
         NORTH_STAR_TARGET_CAPITAL,
+        NORTH_STAR_TARGET_DATE,
         NORTH_STAR_TARGET_WIN_RATE_PCT,
     )
 except Exception:
     NORTH_STAR_MONTHLY_AFTER_TAX = 6_000.0
     NORTH_STAR_TARGET_CAPITAL = 300_000.0
+    NORTH_STAR_TARGET_DATE = None
     NORTH_STAR_TARGET_WIN_RATE_PCT = 80.0
 
 DEFAULT_STATE_PATH = Path("data/system_state.json")
@@ -30,7 +32,9 @@ DEFAULT_TRADES_PATH = Path("data/trades.json")
 DEFAULT_TARGET_MODE = "asap_monthly_income"
 DEFAULT_MONTHLY_AFTER_TAX_TARGET = NORTH_STAR_MONTHLY_AFTER_TAX
 DEFAULT_TARGET_CAPITAL = NORTH_STAR_TARGET_CAPITAL
+DEFAULT_TARGET_DATE = NORTH_STAR_TARGET_DATE
 DEFAULT_TARGET_WIN_RATE_PCT = NORTH_STAR_TARGET_WIN_RATE_PCT
+DEFAULT_EXPECTANCY_SIGNAL_MIN_SAMPLES = 30
 DEFAULT_ROLLING_WINDOW = int(os.getenv("MILESTONE_ROLLING_WINDOW", "50"))
 DEFAULT_PRIMARY_FAMILY = os.getenv("PRIMARY_STRATEGY_FAMILY", "options_income")
 
@@ -41,7 +45,7 @@ FAMILY_THRESHOLDS: dict[str, dict[str, float | int]] = {
     # was permanently blocking all IC entries, preventing the system from building
     # the 30-trade track record needed for North Star validation.
     # Once 30+ IC trades are closed, raise back to 75%.
-    "options_income": {"min_win_rate_pct": 60.0, "min_expectancy": 0.0, "min_samples": 8},
+    "options_income": {"min_win_rate_pct": 60.0, "min_expectancy": 0.0, "min_samples": 12},
     "equity_momentum": {"min_win_rate_pct": 55.0, "min_expectancy": 0.0, "min_samples": 12},
     "alternatives": {"min_win_rate_pct": 55.0, "min_expectancy": 0.0, "min_samples": 12},
     "other": {"min_win_rate_pct": 55.0, "min_expectancy": 0.0, "min_samples": 12},
@@ -306,9 +310,19 @@ def _north_star_probability(
         else 0
     )
 
-    estimated_cagr = _estimate_annual_edge_from_expectancy(expectancy, samples, paper_day, equity)
+    expectancy_signal_reliable = samples >= DEFAULT_EXPECTANCY_SIGNAL_MIN_SAMPLES
+    effective_expectancy = expectancy if expectancy_signal_reliable else None
+
+    estimated_cagr = _estimate_annual_edge_from_expectancy(
+        effective_expectancy,
+        samples,
+        paper_day,
+        equity,
+    )
     estimated_monthly_after_tax = _estimate_monthly_after_tax_from_expectancy(
-        expectancy, samples, paper_day
+        effective_expectancy,
+        samples,
+        paper_day,
     )
     monthly_progress_ratio = (
         estimated_monthly_after_tax / DEFAULT_MONTHLY_AFTER_TAX_TARGET
@@ -319,12 +333,15 @@ def _north_star_probability(
 
     if win_rate is None:
         win_score = 25.0
+    elif not expectancy_signal_reliable:
+        # Avoid overreacting to tiny sample sets; keep win-score neutral.
+        win_score = 40.0
     else:
         win_score = max(
             0.0, min(100.0, (_as_float(win_rate) / DEFAULT_TARGET_WIN_RATE_PCT) * 100.0)
         )
 
-    expectancy_val = _as_float(expectancy, 0.0) if expectancy is not None else None
+    expectancy_val = _as_float(effective_expectancy, 0.0) if effective_expectancy is not None else None
     if expectancy_val is None:
         edge_score = 20.0
     elif expectancy_val <= 0:
@@ -372,7 +389,9 @@ def _north_star_probability(
         else None,
         "samples": samples,
         "target_capital": DEFAULT_TARGET_CAPITAL,
-        "target_date": None,
+        "target_date": DEFAULT_TARGET_DATE.isoformat() if DEFAULT_TARGET_DATE else None,
+        "expectancy_signal_status": "reliable" if expectancy_signal_reliable else "insufficient_samples",
+        "expectancy_signal_samples_required": DEFAULT_EXPECTANCY_SIGNAL_MIN_SAMPLES,
     }
 
 

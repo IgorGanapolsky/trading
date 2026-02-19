@@ -19,17 +19,19 @@ from src.core.trading_constants import (
     NORTH_STAR_DAILY_AFTER_TAX,
     NORTH_STAR_MONTHLY_AFTER_TAX,
     NORTH_STAR_TARGET_CAPITAL,
+    NORTH_STAR_TARGET_DATE,
 )
 
 DEFAULT_TRADES_PATH = Path("data/trades.json")
 DEFAULT_WEEKLY_HISTORY_PATH = Path("data/north_star_weekly_history.json")
 DEFAULT_LOOKBACK_DAYS = 7
-DEFAULT_WEEKLY_MIN_SAMPLES = 5
+DEFAULT_WEEKLY_MIN_SAMPLES = 8
 DEFAULT_HISTORY_WEEKS = 104
 DEFAULT_MIN_QUALIFIED_SETUPS_PER_WEEK = 3
-DEFAULT_MIN_CLOSED_TRADES_PER_WEEK = 1
+DEFAULT_MIN_CLOSED_TRADES_PER_WEEK = 0
 DEFAULT_MIN_CLOSED_TRADES_FOR_SCALING = 30
-DEFAULT_MIN_LIQUIDITY_VOLUME_RATIO = 0.20
+DEFAULT_MIN_EXPECTANCY_SIGNAL_SAMPLES = 8
+DEFAULT_MIN_LIQUIDITY_VOLUME_RATIO = 0.18
 DEFAULT_MAX_TARGET_DTE = 45
 DEFAULT_MIN_TARGET_DTE = 21
 DEFAULT_AI_CREDIT_STRESS_PATH = Path("market_signals/ai_credit_stress_signal.json")
@@ -680,15 +682,16 @@ def compute_weekly_gate(
     recommended_max = 0.02
     block_new_positions = False
     reason = "Insufficient recent weekly evidence; keep conservative sizing."
+    expectancy_signal_reliable = samples >= DEFAULT_MIN_EXPECTANCY_SIGNAL_SAMPLES
 
-    if samples >= DEFAULT_WEEKLY_MIN_SAMPLES and expectancy <= 0:
+    if expectancy_signal_reliable and expectancy <= 0:
         mode = "defensive"
         recommended_max = 0.01
         block_new_positions = True
         reason = (
             f"Weekly expectancy ${expectancy:.2f}/trade over {samples} samples is non-positive."
         )
-    elif samples >= DEFAULT_WEEKLY_MIN_SAMPLES and win_rate_pct < 65.0:
+    elif expectancy_signal_reliable and win_rate_pct < 65.0:
         mode = "defensive"
         recommended_max = 0.01
         # Only block if BOTH win rate is poor AND expectancy is non-positive.
@@ -704,6 +707,12 @@ def compute_weekly_gate(
         mode = "cautious"
         recommended_max = 0.015
         reason = "Weekly edge mixed; stay cautious while collecting more evidence."
+
+    if not expectancy_signal_reliable:
+        reason = (
+            f"{reason} Expectancy is provisional until "
+            f"{DEFAULT_MIN_EXPECTANCY_SIGNAL_SAMPLES} closed trades are observed."
+        )
 
     cadence_kpi = {
         "enabled": True,
@@ -881,6 +890,11 @@ def compute_weekly_gate(
         "reason": reason,
         "positive_weeks_streak": positive_streak,
         "evidence_source": evidence_source,
+        "expectancy_signal_samples_required": DEFAULT_MIN_EXPECTANCY_SIGNAL_SAMPLES,
+        "expectancy_signal_reliable": expectancy_signal_reliable,
+        "expectancy_signal_status": (
+            "reliable" if expectancy_signal_reliable else "insufficient_samples"
+        ),
         "cadence_kpi": cadence_kpi,
         "scale_blocked_by_cadence": not cadence_kpi["passed"],
         "ai_credit_stress": ai_credit_gate,
@@ -955,7 +969,7 @@ def compute_contribution_plan(
         "enabled": True,
         "target_mode": "asap_monthly_income",
         "month": month_key,
-        "target_date": None,
+        "target_date": NORTH_STAR_TARGET_DATE.isoformat() if NORTH_STAR_TARGET_DATE else None,
         "months_remaining": None,
         "target_capital": NORTH_STAR_TARGET_CAPITAL,
         "monthly_after_tax_target": round(monthly_target, 2),

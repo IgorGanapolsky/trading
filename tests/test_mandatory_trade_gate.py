@@ -209,6 +209,54 @@ class TestValidateTradeMandatory:
         assert result.approved is False
         assert "guard blocked" in result.reason.lower()
 
+    def test_live_execution_blocked_until_evidence_threshold_met(self):
+        """Live entries are blocked when North Star live gate is not unlocked."""
+        from src.safety.mandatory_trade_gate import validate_trade_mandatory
+
+        result = validate_trade_mandatory(
+            symbol="SPY",
+            amount=50.0,
+            side="BUY",
+            strategy="iron_condor",
+            context={
+                "equity": 5000.0,
+                "execution_mode": "live",
+                "north_star_guard": {
+                    "enabled": True,
+                    "mode": "validation",
+                    "max_position_pct": 0.01,
+                    "block_new_positions": False,
+                    "live_trading_allowed": False,
+                    "live_trading_reason": "Live trading locked for test.",
+                },
+            },
+        )
+        assert result.approved is False
+        assert "locked" in result.reason.lower()
+
+    def test_live_execution_allowed_after_evidence_threshold_met(self):
+        """Live entries pass this gate once live trading is unlocked."""
+        from src.safety.mandatory_trade_gate import validate_trade_mandatory
+
+        result = validate_trade_mandatory(
+            symbol="SPY",
+            amount=50.0,
+            side="BUY",
+            strategy="iron_condor",
+            context={
+                "equity": 5000.0,
+                "execution_mode": "live",
+                "north_star_guard": {
+                    "enabled": True,
+                    "mode": "scale_ready",
+                    "max_position_pct": 0.05,
+                    "block_new_positions": False,
+                    "live_trading_allowed": True,
+                },
+            },
+        )
+        assert result.approved is True
+
     def test_milestone_controller_blocks_paused_strategy_family(self):
         """Test that milestone controller blocks BUY for paused strategy families."""
         from src.safety.mandatory_trade_gate import validate_trade_mandatory

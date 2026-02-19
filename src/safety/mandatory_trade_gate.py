@@ -139,6 +139,29 @@ def _today_et_str() -> str:
         return datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
 
+def _infer_execution_mode_from_client(client: Any) -> str:
+    """Best-effort detect whether TradingClient points to paper or live endpoint."""
+    explicit_paper = getattr(client, "paper", None)
+    if isinstance(explicit_paper, bool):
+        return "paper" if explicit_paper else "live"
+
+    for attr in ("_paper",):
+        marker = getattr(client, attr, None)
+        if isinstance(marker, bool):
+            return "paper" if marker else "live"
+
+    for attr in ("_base_url", "base_url", "_api_url"):
+        raw = getattr(client, attr, None)
+        if raw is None:
+            continue
+        text = str(raw).lower()
+        if "paper-api.alpaca.markets" in text:
+            return "paper"
+        if "api.alpaca.markets" in text and "paper-api" not in text:
+            return "live"
+    return "paper"
+
+
 def _count_structures_today_from_trade_file(date_str: str) -> int:
     # Unit tests should not depend on local repo trade files.
     if os.environ.get("PYTEST_CURRENT_TEST"):
@@ -621,6 +644,21 @@ def validate_trade_mandatory(
                 reason=reason,
                 checks_performed=checks_performed + ["north_star_guard: BLOCKED"],
             )
+
+        execution_mode = str(context.get("execution_mode", "paper")).strip().lower()
+        if is_opening and execution_mode == "live":
+            live_allowed = bool(north_star_guard.get("live_trading_allowed"))
+            if not live_allowed:
+                reason = str(
+                    north_star_guard.get("live_trading_reason")
+                    or "Live trading locked until paper evidence thresholds are met."
+                )
+                return GateResult(
+                    approved=False,
+                    reason=reason,
+                    checks_performed=checks_performed + ["north_star_live_gate: BLOCKED"],
+                )
+            checks_performed.append("north_star_live_gate: PASS")
     else:
         checks_performed.append("north_star_guard: SKIP")
 
@@ -1068,6 +1106,7 @@ def safe_submit_order(client, order_request):
                 # Best-effort account context so that direct script submissions
                 # still benefit from the same dynamic guardrails as AlpacaExecutor.
                 account_context: dict[str, Any] = {"equity": float(equity)}
+                account_context["execution_mode"] = _infer_execution_mode_from_client(client)
 
                 # Include current positions for stacking + count checks (best-effort).
                 try:

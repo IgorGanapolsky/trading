@@ -4,7 +4,8 @@ CTO: Claude | CEO: Igor Ganapolsky
 
 ## North Star
 
-$6,000/month after-tax = FINANCIAL INDEPENDENCE by Nov 14, 2029. Grow $100K -> $600K via iron condors on SPY.
+$6,000/month after-tax as soon as possible (no fixed target date).
+Working capital benchmark: ~$300K base (2% monthly net target).
 Account: PA3C5AG0CECQ ($100K paper). Credentials: `get_alpaca_credentials()` from `src/utils/alpaca_client.py`.
 
 ## Strategy
