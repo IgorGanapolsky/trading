@@ -346,6 +346,19 @@ class OptionsRiskMonitor:
                     profit_exits.append({"symbol": symbol, "reason": reason})
                 else:
                     stop_loss_exits.append({"symbol": symbol, "reason": reason})
+                    # Record for behavioral guard cooling period
+                    try:
+                        from src.safety.behavioral_guard import BehavioralGuard
+
+                        pos = self.positions.get(symbol)
+                        exp_str = ""
+                        if isinstance(pos, OptionsPosition) and pos.expiration_date:
+                            exp_str = pos.expiration_date.isoformat()
+                        BehavioralGuard.record_stop_loss_exit(
+                            expiry=exp_str, symbol=symbol
+                        )
+                    except ImportError:
+                        pass
 
         # Delta rebalancing: flag if net delta is too high (>60 or <-60)
         rebalance_needed = abs(total_delta) > 60
