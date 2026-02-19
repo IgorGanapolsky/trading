@@ -110,6 +110,18 @@ def _parse_date_value(raw: str) -> datetime | None:
         return None
 
 
+def _has_explicit_time(raw: str) -> bool:
+    return bool(re.search(r"(?:T|\s)\d{1,2}:\d{2}", raw))
+
+
+def _to_utc_iso(dt: datetime) -> str:
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    else:
+        dt = dt.astimezone(timezone.utc)
+    return dt.isoformat().replace("+00:00", "Z")
+
+
 def _infer_date_from_path(path: Path) -> datetime | None:
     stem = path.stem.lower()
 
@@ -190,6 +202,7 @@ def build_index() -> list[dict]:
     lessons = []
     if not RAG_ROOT.exists():
         return lessons
+    indexed_at_utc = _to_utc_iso(datetime.now(timezone.utc))
     include_artifact_ingest = (
         os.getenv("INCLUDE_ARTIFACT_INGEST_LESSONS", "").strip().lower() in TRUTHY
     )
@@ -202,6 +215,7 @@ def build_index() -> list[dict]:
         rel_path = path.relative_to(RAG_ROOT)
         category = rel_path.parts[0] if rel_path.parts else "general"
         source_path = f"rag_knowledge/{rel_path.as_posix()}"
+        source_mtime_utc = _to_utc_iso(datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc))
 
         if category == "lessons_learned":
             item_id = path.stem
@@ -215,6 +229,13 @@ def build_index() -> list[dict]:
             continue
 
         date_raw, date_obj = _parse_date(text, frontmatter.get("date", ""), path=path)
+        event_timestamp_utc = ""
+        if date_obj and date_raw and _has_explicit_time(date_raw):
+            event_timestamp_utc = _to_utc_iso(date_obj)
+        else:
+            # Date-only lessons do not include an intrinsic time; use source file mtime
+            # so the UI can still present an unambiguous freshness timestamp.
+            event_timestamp_utc = source_mtime_utc
         category_label = _extract_field(
             re.compile(r"\*\*Category\*\*:\s*(.+)$", re.IGNORECASE | re.MULTILINE),
             text,
@@ -241,6 +262,9 @@ def build_index() -> list[dict]:
                 "tags": tags,
                 "content": text.strip(),
                 "file": source_path,
+                "event_timestamp_utc": event_timestamp_utc,
+                "source_mtime_utc": source_mtime_utc,
+                "indexed_at_utc": indexed_at_utc,
                 "_date_sort": date_obj.isoformat() if date_obj else "",
             }
         )

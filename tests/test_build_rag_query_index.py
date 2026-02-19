@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from scripts import build_rag_query_index
@@ -69,6 +70,9 @@ source: tars_artifact_ingest
     assert lessons[0]["id"] == "tars_20260216_smoke_metrics_deadbeef"
     assert lessons[0]["severity"] == "INFO"
     assert lessons[0]["date"] == "2026-02-16T16:27:33Z"
+    assert lessons[0]["event_timestamp_utc"] == "2026-02-16T16:27:33Z"
+    assert re.match(r"^20\d{2}-\d{2}-\d{2}T", lessons[0]["source_mtime_utc"])
+    assert re.match(r"^20\d{2}-\d{2}-\d{2}T", lessons[0]["indexed_at_utc"])
 
 
 def test_build_index_parses_bold_date_with_colon_inside_markup(tmp_path: Path, monkeypatch) -> None:
@@ -88,6 +92,9 @@ def test_build_index_parses_bold_date_with_colon_inside_markup(tmp_path: Path, m
     assert len(lessons) == 1
     assert lessons[0]["id"] == "ll_999_markup_date"
     assert lessons[0]["date"] == "2026-02-16"
+    assert re.match(r"^20\d{2}-\d{2}-\d{2}T", lessons[0]["event_timestamp_utc"])
+    assert re.match(r"^20\d{2}-\d{2}-\d{2}T", lessons[0]["source_mtime_utc"])
+    assert re.match(r"^20\d{2}-\d{2}-\d{2}T", lessons[0]["indexed_at_utc"])
 
 
 def test_build_index_falls_back_to_filename_date_when_metadata_missing(
