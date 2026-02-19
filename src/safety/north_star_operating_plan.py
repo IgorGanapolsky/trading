@@ -31,6 +31,11 @@ DEFAULT_AI_CREDIT_STRESS_PATH = Path("market_signals/ai_credit_stress_signal.jso
 DEFAULT_AI_CREDIT_WATCH_SCORE = 30.0
 DEFAULT_AI_CREDIT_BLOCK_SCORE = 60.0
 DEFAULT_AI_CREDIT_HARD_BLOCK_SCORE = 80.0
+DEFAULT_USD_MACRO_SENTIMENT_PATH = Path("market_signals/usd_macro_sentiment_signal.json")
+DEFAULT_USD_MACRO_WATCH_SCORE = 30.0
+DEFAULT_USD_MACRO_BLOCK_SCORE = 60.0
+DEFAULT_USD_MACRO_WATCH_MULTIPLIER = 0.95
+DEFAULT_USD_MACRO_BLOCK_MULTIPLIER = 0.90
 
 _SPY_OPTION_RE = re.compile(r"^SPY(\d{6})[CP]\d{8}$")
 
@@ -198,6 +203,18 @@ def _categorize_reason(reason: str) -> set[str]:
         )
     ):
         categories.add("ai_credit_stress")
+    if any(
+        token in text
+        for token in (
+            "usd",
+            "dollar",
+            "dxy",
+            "dtwex",
+            "fx regime",
+            "macro sentiment",
+        )
+    ):
+        categories.add("usd_macro")
     return categories
 
 
@@ -225,11 +242,33 @@ def _normalize_ai_credit_stress_status(signal: dict[str, Any]) -> str:
     return "unknown"
 
 
+def _normalize_usd_macro_status(signal: dict[str, Any]) -> str:
+    raw_status = str(signal.get("status") or "").strip().lower()
+    score = _as_float(signal.get("bearish_score"), 0.0)
+    if raw_status in {"blocked", "high", "stress", "critical"} or score >= DEFAULT_USD_MACRO_BLOCK_SCORE:
+        return "blocked"
+    if raw_status in {"watch", "warning", "elevated"} or score >= DEFAULT_USD_MACRO_WATCH_SCORE:
+        return "watch"
+    if raw_status in {"pass", "ok", "normal", "low"}:
+        return "pass"
+    return "unknown"
+
+
 def _load_ai_credit_stress_signal(data_dir: Path, state: dict[str, Any]) -> dict[str, Any]:
     file_payload = _load_json_dict(data_dir / DEFAULT_AI_CREDIT_STRESS_PATH)
     if file_payload:
         return file_payload
     state_payload = _safe_nested_dict(state, "market_signals").get("ai_credit_stress")
+    if isinstance(state_payload, dict):
+        return state_payload
+    return {}
+
+
+def _load_usd_macro_sentiment_signal(data_dir: Path, state: dict[str, Any]) -> dict[str, Any]:
+    file_payload = _load_json_dict(data_dir / DEFAULT_USD_MACRO_SENTIMENT_PATH)
+    if file_payload:
+        return file_payload
+    state_payload = _safe_nested_dict(state, "market_signals").get("usd_macro_sentiment")
     if isinstance(state_payload, dict):
         return state_payload
     return {}
@@ -371,6 +410,33 @@ def _compute_no_trade_diagnostic(
         "signal_date": ai_credit_stress_signal.get("latest_data_date"),
         "source": ai_credit_stress_signal.get("source", "none"),
         "detail": ai_reason_text,
+    }
+
+    usd_macro_signal = _load_usd_macro_sentiment_signal(data_dir, state)
+    usd_status = _normalize_usd_macro_status(usd_macro_signal)
+    usd_score = usd_macro_signal.get("bearish_score")
+    usd_multiplier = _as_float(usd_macro_signal.get("position_size_multiplier"), 0.0)
+    if usd_multiplier <= 0:
+        if usd_status == "blocked":
+            usd_multiplier = DEFAULT_USD_MACRO_BLOCK_MULTIPLIER
+        elif usd_status == "watch":
+            usd_multiplier = DEFAULT_USD_MACRO_WATCH_MULTIPLIER
+        else:
+            usd_multiplier = 1.0
+    usd_reasons = usd_macro_signal.get("reasons", [])
+    usd_reason_text = ""
+    if isinstance(usd_reasons, list) and usd_reasons:
+        usd_reason_text = str(usd_reasons[0])
+    if not usd_reason_text:
+        usd_reason_text = str(usd_macro_signal.get("note") or "No USD macro sentiment evidence")
+    gate_status["usd_macro"] = {
+        "status": usd_status,
+        "signal_status": str(usd_macro_signal.get("status") or "unknown"),
+        "bearish_score": _as_float(usd_score, 0.0) if usd_score is not None else None,
+        "position_size_multiplier": round(min(1.0, max(0.1, usd_multiplier)), 4),
+        "signal_date": usd_macro_signal.get("latest_data_date"),
+        "source": usd_macro_signal.get("source", "none"),
+        "detail": usd_reason_text,
     }
 
     blocked_categories = [
@@ -711,6 +777,26 @@ def compute_weekly_gate(
         recommended_max = min(recommended_max, 0.015)
         reason = f"{reason} AI credit stress elevated; hold cautious sizing."
 
+    usd_macro_gate = _safe_nested_dict(no_trade_diagnostic, "gate_status", "usd_macro")
+    usd_macro_status = str(usd_macro_gate.get("status") or "unknown").lower()
+    usd_macro_multiplier = _as_float(usd_macro_gate.get("position_size_multiplier"), 1.0)
+    if usd_macro_multiplier <= 0:
+        usd_macro_multiplier = 1.0
+    usd_macro_multiplier = min(1.0, max(0.1, usd_macro_multiplier))
+    if usd_macro_status in {"watch", "blocked"} and usd_macro_multiplier < 1.0:
+        adjusted_limit = round(recommended_max * usd_macro_multiplier, 4)
+        recommended_max = min(recommended_max, adjusted_limit)
+        if mode == "expansion_candidate":
+            mode = "cautious"
+        score_text = usd_macro_gate.get("bearish_score")
+        score_suffix = (
+            f" score={_as_float(score_text, 0.0):.1f}" if isinstance(score_text, (int, float)) else ""
+        )
+        reason = (
+            f"{reason} USD macro sentiment {usd_macro_status}; "
+            f"applied size multiplier {usd_macro_multiplier:.2f}.{score_suffix}"
+        )
+
     weekly_history = _load_json_list(weekly_history_path)
     week_start = today - timedelta(days=today.weekday())
     week_start_iso = week_start.isoformat()
@@ -823,6 +909,8 @@ def compute_weekly_gate(
         "scale_blocked_by_cadence": not cadence_kpi["passed"],
         "ai_credit_stress": ai_credit_gate,
         "scale_blocked_by_ai_credit_stress": ai_credit_status == "blocked",
+        "usd_macro_sentiment": usd_macro_gate,
+        "scale_multiplier_from_usd_macro": round(usd_macro_multiplier, 4),
         "scaling_sample_gate": scaling_sample_gate,
         "no_trade_diagnostic": no_trade_diagnostic,
         "updated_at": datetime.now(timezone.utc).isoformat(),
@@ -965,4 +1053,13 @@ def apply_operating_plan_to_state(
     state["risk"]["weekly_ai_credit_stress_score"] = _safe_nested_dict(
         weekly_gate, "ai_credit_stress"
     ).get("severity_score")
+    state["risk"]["weekly_usd_macro_status"] = str(
+        _safe_nested_dict(weekly_gate, "usd_macro_sentiment").get("status") or "unknown"
+    )
+    state["risk"]["weekly_usd_macro_score"] = _safe_nested_dict(
+        weekly_gate, "usd_macro_sentiment"
+    ).get("bearish_score")
+    state["risk"]["weekly_usd_macro_multiplier"] = _safe_nested_dict(
+        weekly_gate, "usd_macro_sentiment"
+    ).get("position_size_multiplier")
     return state, weekly_history

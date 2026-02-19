@@ -1,0 +1,37 @@
+{
+  "signal": "usd_macro_sentiment",
+  "status": "unknown",
+  "bearish_score": 0.0,
+  "position_size_multiplier": 1.0,
+  "blocked": false,
+  "watch": false,
+  "reasons": [
+    "No USD macro data available."
+  ],
+  "latest_data_date": null,
+  "stale_days": null,
+  "metrics": {
+    "broad_usd_index": {
+      "series_id": "DTWEXBGS",
+      "latest_value": null,
+      "latest_date": null,
+      "ma_20": null,
+      "ma_50": null,
+      "pct_change_5d": null,
+      "pct_change_20d": null,
+      "point_count": 0
+    },
+    "usd_per_euro": {
+      "series_id": "DEXUSEU",
+      "latest_value": null,
+      "latest_date": null,
+      "ma_20": null,
+      "ma_50": null,
+      "pct_change_5d": null,
+      "pct_change_20d": null,
+      "point_count": 0
+    }
+  },
+  "source": "fred_public",
+  "updated_at": "2026-02-19T00:00:00+00:00"
+}

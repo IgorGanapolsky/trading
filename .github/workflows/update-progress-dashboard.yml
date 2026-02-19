@@ -77,6 +77,16 @@ jobs:
             --max-stale-days 7
           echo "✅ AI credit stress signal updated"
 
+      - name: Update USD macro sentiment signal
+        run: |
+          echo "💵 Refreshing USD macro sentiment signal..."
+          python3 scripts/update_usd_macro_sentiment_signal.py \
+            --out data/market_signals/usd_macro_sentiment_signal.json \
+            --state data/system_state.json \
+            --sync-state \
+            --max-stale-days 7
+          echo "✅ USD macro sentiment signal updated"
+
       - name: Update North Star operating plan
         run: |
           echo "🎯 Updating weekly gate + contribution plan..."
@@ -212,7 +222,7 @@ jobs:
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          git add data/system_state.json data/north_star_weekly_history.json data/trades.json data/market_signals/ai_credit_stress_signal.json artifacts/devloop/box_workspace_manifest.json artifacts/devloop/ai_discoverability_report.md artifacts/devloop/ai_discoverability_report.json artifacts/devloop/profit_readiness_scorecard.md artifacts/tars/ docs/ docs/_reports/*-dashboard-snapshot.md docs/_reports/hackathon-system-explainer.md docs/lessons/judge-demo.html wiki/ docs/index.md 2>/dev/null || true
+          git add data/system_state.json data/north_star_weekly_history.json data/trades.json data/market_signals/ai_credit_stress_signal.json data/market_signals/usd_macro_sentiment_signal.json artifacts/devloop/box_workspace_manifest.json artifacts/devloop/ai_discoverability_report.md artifacts/devloop/ai_discoverability_report.json artifacts/devloop/profit_readiness_scorecard.md artifacts/tars/ docs/ docs/_reports/*-dashboard-snapshot.md docs/_reports/hackathon-system-explainer.md docs/lessons/judge-demo.html wiki/ docs/index.md 2>/dev/null || true
           if ! git diff --staged --quiet; then
             git commit -m "chore: Sync dashboard data [auto]"
             if [ -n "${{ secrets.GH_PAT }}" ]; then

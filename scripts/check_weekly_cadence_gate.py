@@ -65,9 +65,14 @@ def evaluate_weekly_cadence(state: dict[str, Any]) -> dict[str, Any]:
     ai_credit_stress = (
         gate_status.get("ai_credit_stress", {}) if isinstance(gate_status, dict) else {}
     )
+    usd_macro = gate_status.get("usd_macro", {}) if isinstance(gate_status, dict) else {}
     ai_credit_status = str(ai_credit_stress.get("status") or "unknown").lower()
     ai_credit_score = ai_credit_stress.get("severity_score")
     ai_credit_source = str(ai_credit_stress.get("source") or "none")
+    usd_macro_status = str(usd_macro.get("status") or "unknown").lower()
+    usd_macro_score = usd_macro.get("bearish_score")
+    usd_macro_multiplier = usd_macro.get("position_size_multiplier")
+    usd_macro_source = str(usd_macro.get("source") or "none")
 
     return {
         "passed": passed,
@@ -83,6 +88,10 @@ def evaluate_weekly_cadence(state: dict[str, Any]) -> dict[str, Any]:
         "ai_credit_stress_status": ai_credit_status,
         "ai_credit_stress_score": ai_credit_score,
         "ai_credit_stress_source": ai_credit_source,
+        "usd_macro_status": usd_macro_status,
+        "usd_macro_score": usd_macro_score,
+        "usd_macro_multiplier": usd_macro_multiplier,
+        "usd_macro_source": usd_macro_source,
     }
 
 
@@ -113,6 +122,13 @@ def markdown_report(result: dict[str, Any]) -> str:
         ai_line += f" (score={float(result['ai_credit_stress_score']):.1f})"
     ai_line += f" source={result.get('ai_credit_stress_source', 'none')}"
     lines.append(ai_line)
+    usd_line = f"- USD Macro: `{result.get('usd_macro_status', 'unknown')}`"
+    if isinstance(result.get("usd_macro_score"), (int, float)):
+        usd_line += f" (bearish_score={float(result['usd_macro_score']):.1f})"
+    if isinstance(result.get("usd_macro_multiplier"), (int, float)):
+        usd_line += f" size_multiplier={float(result['usd_macro_multiplier']):.2f}"
+    usd_line += f" source={result.get('usd_macro_source', 'none')}"
+    lines.append(usd_line)
     lines.append("")
     lines.append("## Top Rejection Reasons")
     if result["top_rejection_reasons"]:
@@ -250,6 +266,9 @@ def main() -> int:
             ],
             "ai_credit_stress_status": _sanitize(result.get("ai_credit_stress_status", "unknown")),
             "ai_credit_stress_score": result.get("ai_credit_stress_score"),
+            "usd_macro_status": _sanitize(result.get("usd_macro_status", "unknown")),
+            "usd_macro_score": result.get("usd_macro_score"),
+            "usd_macro_multiplier": result.get("usd_macro_multiplier"),
         }
         print(json.dumps(safe_result, indent=2))
     else:

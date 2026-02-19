@@ -262,3 +262,84 @@ def test_ai_credit_stress_watch_caps_expansion_to_cautious(tmp_path):
     assert gate["recommended_max_position_pct"] <= 0.015
     assert gate["ai_credit_stress"]["status"] == "watch"
     assert gate["scale_blocked_by_ai_credit_stress"] is False
+
+
+def test_usd_macro_watch_applies_soft_size_multiplier(tmp_path):
+    trades_path = tmp_path / "trades.json"
+    history_path = tmp_path / "weekly_history.json"
+    today = date(2026, 2, 20)
+    trades = []
+    for idx in range(12):
+        exit_day = today - timedelta(days=idx)
+        trades.append(
+            {
+                "status": "closed",
+                "strategy": "iron_condor",
+                "realized_pnl": 40.0,
+                "outcome": "win",
+                "exit_date": exit_day.isoformat(),
+            }
+        )
+    _write_json(trades_path, {"stats": {"closed_trades": 40}, "trades": trades})
+
+    market_signals_dir = tmp_path / "market_signals"
+    market_signals_dir.mkdir(parents=True, exist_ok=True)
+    _write_json(
+        market_signals_dir / "usd_macro_sentiment_signal.json",
+        {
+            "signal": "usd_macro_sentiment",
+            "status": "watch",
+            "bearish_score": 45.0,
+            "position_size_multiplier": 0.95,
+            "latest_data_date": "2026-02-20",
+            "source": "fred_public",
+            "reasons": ["Broad USD index below 50D average"],
+        },
+    )
+
+    gate, _history = compute_weekly_gate(
+        {"paper_account": {"win_rate": 95.0, "win_rate_sample_size": 40, "total_pl": 480.0}},
+        trades_path=trades_path,
+        weekly_history_path=history_path,
+        today=today,
+    )
+
+    assert gate["usd_macro_sentiment"]["status"] == "watch"
+    assert gate["scale_multiplier_from_usd_macro"] == 0.95
+    assert gate["recommended_max_position_pct"] <= 0.019
+
+
+def test_apply_operating_plan_sets_usd_macro_risk_fields(tmp_path):
+    state = {
+        "paper_account": {"equity": 100000.0, "win_rate": 75.0, "win_rate_sample_size": 40},
+        "live_account": {"equity": 20.0, "positions_count": 0},
+        "risk": {},
+    }
+    trades_path = tmp_path / "trades.json"
+    history_path = tmp_path / "weekly_history.json"
+    market_signals_dir = tmp_path / "market_signals"
+    market_signals_dir.mkdir(parents=True, exist_ok=True)
+    _write_json(
+        market_signals_dir / "usd_macro_sentiment_signal.json",
+        {
+            "signal": "usd_macro_sentiment",
+            "status": "watch",
+            "bearish_score": 33.0,
+            "position_size_multiplier": 0.95,
+            "latest_data_date": "2026-02-20",
+            "source": "fred_public",
+            "reasons": ["USD softening"],
+        },
+    )
+    _write_json(trades_path, {"trades": []})
+
+    updated, _history = apply_operating_plan_to_state(
+        state,
+        trades_path=trades_path,
+        weekly_history_path=history_path,
+        today=date(2026, 2, 20),
+    )
+
+    assert updated["risk"]["weekly_usd_macro_status"] == "watch"
+    assert updated["risk"]["weekly_usd_macro_score"] == 33.0
+    assert updated["risk"]["weekly_usd_macro_multiplier"] == 0.95

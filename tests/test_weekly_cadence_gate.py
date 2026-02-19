@@ -27,6 +27,12 @@ def test_evaluate_weekly_cadence_extracts_kpi_and_diagnostic():
                         "status": "watch",
                         "severity_score": 42.0,
                         "source": "fred_public",
+                    },
+                    "usd_macro": {
+                        "status": "watch",
+                        "bearish_score": 37.0,
+                        "position_size_multiplier": 0.95,
+                        "source": "fred_public",
                     }
                 },
                 "top_rejection_reasons": [{"reason": "Vol=0.1x (low)", "count": 2}],
@@ -42,6 +48,9 @@ def test_evaluate_weekly_cadence_extracts_kpi_and_diagnostic():
     assert result["blocked_categories"] == ["liquidity"]
     assert result["ai_credit_stress_status"] == "watch"
     assert result["ai_credit_stress_score"] == 42.0
+    assert result["usd_macro_status"] == "watch"
+    assert result["usd_macro_score"] == 37.0
+    assert result["usd_macro_multiplier"] == 0.95
     assert result["top_rejection_reasons"][0]["count"] == 2
 
 

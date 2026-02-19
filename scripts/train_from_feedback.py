@@ -34,6 +34,7 @@ DEFAULT_CATEGORIES = {
     "pr": {"alpha": 1.0, "beta": 1.0, "count": 0},
     "refactor": {"alpha": 1.0, "beta": 1.0, "count": 0},
     "analysis": {"alpha": 1.0, "beta": 1.0, "count": 0},
+    "macro_usd": {"alpha": 1.0, "beta": 1.0, "count": 0},
     "log_parsing": {"alpha": 1.0, "beta": 1.0, "count": 0},
     "system_health": {"alpha": 1.0, "beta": 1.0, "count": 0},
 }
@@ -95,6 +96,8 @@ def extract_features(context: str) -> list[str]:
         features.append("refactor")
     if re.search(r"analys|research|backtest", context_lower):
         features.append("analysis")
+    if re.search(r"\busd\b|dxy|dollar|fx|macro", context_lower):
+        features.append("macro_usd")
     if re.search(r"log|parse|output", context_lower):
         features.append("log_parsing")
     if re.search(r"health|system|check|monitor", context_lower):
