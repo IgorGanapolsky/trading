@@ -86,10 +86,19 @@ def test_process_payload_writes_state_and_runs_pipeline(tmp_path: Path) -> None:
     state = json.loads(state_file.read_text(encoding="utf-8"))
     assert state["last_signal"] == "thumbs_up"
     assert state["last_pipeline_status"]["cortex_queue"] is True
+    assert state["last_thompson_report"]["feedback_type"] == "positive"
+    assert state["last_thompson_report"]["event_key"] == result["event_key"]
 
     pending = memory_feedback / "pending_cortex_sync.jsonl"
     assert pending.exists()
     assert pending.read_text(encoding="utf-8").strip()
+
+    thompson_log = memory_feedback / "thompson_feedback_log.jsonl"
+    assert thompson_log.exists()
+    row = json.loads(thompson_log.read_text(encoding="utf-8").strip().splitlines()[-1])
+    assert row["event_key"] == result["event_key"]
+    assert row["bandit"]["before"]["alpha"] >= 1.0
+    assert row["bandit"]["after"]["beta"] >= 1.0
 
 
 def test_process_payload_is_idempotent_per_event_key(tmp_path: Path) -> None:
@@ -120,3 +129,51 @@ def test_process_payload_is_idempotent_per_event_key(tmp_path: Path) -> None:
     signal = detect_feedback_signal("thumbs down")
     assert signal is not None
     assert second["event_key"] == build_event_key(payload, "thumbs down", signal)
+
+    thompson_log = project / ".claude" / "memory" / "feedback" / "thompson_feedback_log.jsonl"
+    assert thompson_log.exists()
+    assert len([line for line in thompson_log.read_text(encoding="utf-8").splitlines() if line]) == 1
+
+
+def test_thompson_report_reflects_model_delta(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    scripts_feedback = project / ".claude" / "scripts" / "feedback"
+    memory_feedback = project / ".claude" / "memory" / "feedback"
+    model_file = project / "models" / "ml" / "feedback_model.json"
+    scripts_feedback.mkdir(parents=True)
+    memory_feedback.mkdir(parents=True)
+    model_file.parent.mkdir(parents=True)
+
+    for rel in (
+        scripts_feedback / "semantic-memory-v2.py",
+        scripts_feedback / "train_from_feedback.py",
+    ):
+        rel.write_text("# placeholder\n", encoding="utf-8")
+
+    model_file.write_text(
+        json.dumps({"alpha": 10.0, "beta": 4.0, "feature_weights": {}, "per_category": {}}),
+        encoding="utf-8",
+    )
+
+    def fake_runner(command: list[str], **_: object) -> int:
+        if "train_from_feedback.py" in " ".join(command):
+            model_file.write_text(
+                json.dumps({"alpha": 11.0, "beta": 4.0, "feature_weights": {}, "per_category": {}}),
+                encoding="utf-8",
+            )
+        return 0
+
+    payload = {
+        "cwd": str(project),
+        "session_id": "s2",
+        "turn_id": "t-positive",
+        "input-messages": ["thumbs up, that worked"],
+        "last-assistant-message": "patched publishing pipeline",
+    }
+    result = process_payload(payload, runner=fake_runner)
+
+    report = result["thompson_report"]
+    assert report["bandit"]["before"]["alpha"] == 10.0
+    assert report["bandit"]["after"]["alpha"] == 11.0
+    assert report["bandit"]["delta_alpha"] == 1.0
+    assert report["feedback_type"] == "positive"

@@ -16,7 +16,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
+import random
 import re
 import subprocess
 import sys
@@ -62,6 +64,9 @@ class BridgePaths:
     feedback_dir: Path
     state_file: Path
     pending_cortex_queue: Path
+    thompson_report_log: Path
+    stats_file: Path
+    model_file: Path
     semantic_memory_py: Path
     train_script_py: Path
     cortex_sync_py: Path
@@ -231,6 +236,9 @@ def resolve_paths(payload: dict[str, Any], cwd: Path | None = None) -> BridgePat
         feedback_dir=feedback_dir,
         state_file=feedback_dir / "codex_notify_state.json",
         pending_cortex_queue=feedback_dir / "pending_cortex_sync.jsonl",
+        thompson_report_log=feedback_dir / "thompson_feedback_log.jsonl",
+        stats_file=project_root / "data" / "feedback" / "stats.json",
+        model_file=project_root / "models" / "ml" / "feedback_model.json",
         semantic_memory_py=scripts_dir / "semantic-memory-v2.py",
         train_script_py=scripts_dir / "train_from_feedback.py",
         cortex_sync_py=scripts_dir / "cortex_sync.py",
@@ -266,6 +274,163 @@ def _read_state(path: Path) -> dict[str, Any]:
 def _write_state(path: Path, state: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
+
+
+def _load_json_dict(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return raw if isinstance(raw, dict) else {}
+
+
+def _safe_float(value: Any, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _beta_summary(alpha: float, beta: float) -> dict[str, float]:
+    alpha = max(alpha, 1e-6)
+    beta = max(beta, 1e-6)
+    total = alpha + beta
+    mean = alpha / total
+    variance = (alpha * beta) / ((total * total) * (total + 1.0))
+    std_dev = math.sqrt(max(variance, 0.0))
+    ci_delta = 1.96 * std_dev
+    return {
+        "alpha": round(alpha, 6),
+        "beta": round(beta, 6),
+        "mean": round(mean, 6),
+        "ci95_low": round(max(0.0, mean - ci_delta), 6),
+        "ci95_high": round(min(1.0, mean + ci_delta), 6),
+    }
+
+
+def _extract_context_features(context: str) -> list[str]:
+    rules = {
+        "test": r"test|pytest|unittest",
+        "ci": r"ci|workflow|action",
+        "fix": r"bug|fix|error|issue",
+        "trade": r"trade|order|position",
+        "entry": r"entry|exit|close",
+        "rag": r"rag|lesson|learn",
+        "pr": r"pr|merge|branch",
+        "refactor": r"refactor|clean|improve",
+        "analysis": r"analys|research|backtest",
+        "log_parsing": r"log|parse|output",
+        "system_health": r"health|system|check|monitor",
+    }
+    text = context.lower()
+    features: list[str] = []
+    for feature, pattern in rules.items():
+        if re.search(pattern, text):
+            features.append(feature)
+    return features
+
+
+def _read_bandit_snapshot(paths: BridgePaths) -> dict[str, Any]:
+    model = _load_json_dict(paths.model_file)
+    stats = _load_json_dict(paths.stats_file)
+
+    alpha = _safe_float(model.get("alpha"))
+    beta = _safe_float(model.get("beta"))
+    if alpha <= 0.0 or beta <= 0.0:
+        positive = int(_safe_float(stats.get("positive"), 0.0))
+        negative = int(_safe_float(stats.get("negative"), 0.0))
+        alpha = float(positive + 1)
+        beta = float(negative + 1)
+
+    return {
+        "summary": _beta_summary(alpha, beta),
+        "feature_weights": model.get("feature_weights")
+        if isinstance(model.get("feature_weights"), dict)
+        else {},
+        "per_category": model.get("per_category") if isinstance(model.get("per_category"), dict) else {},
+    }
+
+
+def _sample_beta(alpha: float, beta: float, seed_key: str) -> float:
+    rng = random.Random(int(hashlib.sha256(seed_key.encode("utf-8")).hexdigest()[:16], 16))
+    return rng.betavariate(max(alpha, 1e-6), max(beta, 1e-6))
+
+
+def _append_jsonl(path: Path, entry: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(entry, ensure_ascii=True) + "\n")
+
+
+def _build_thompson_report(
+    *,
+    paths: BridgePaths,
+    event_key: str,
+    signal: FeedbackSignal,
+    context: str,
+    user_message: str,
+    assistant_message: str,
+    pipeline_status: dict[str, bool],
+    model_before: dict[str, Any],
+    model_after: dict[str, Any],
+) -> dict[str, Any]:
+    before = model_before["summary"]
+    after = model_after["summary"]
+    delta_alpha = round(after["alpha"] - before["alpha"], 6)
+    delta_beta = round(after["beta"] - before["beta"], 6)
+    delta_mean = round(after["mean"] - before["mean"], 6)
+    before_draw = round(_sample_beta(before["alpha"], before["beta"], event_key + ":before"), 6)
+    after_draw = round(_sample_beta(after["alpha"], after["beta"], event_key + ":after"), 6)
+    features = _extract_context_features(context)
+    per_category = model_after.get("per_category", {})
+    category_bandits: list[dict[str, Any]] = []
+    for feature in features:
+        raw = per_category.get(feature)
+        if isinstance(raw, dict):
+            cat_alpha = _safe_float(raw.get("alpha"), 1.0)
+            cat_beta = _safe_float(raw.get("beta"), 1.0)
+            category_bandits.append(
+                {
+                    "feature": feature,
+                    **_beta_summary(cat_alpha, cat_beta),
+                    "count": int(_safe_float(raw.get("count"), 0.0)),
+                }
+            )
+
+    return {
+        "event_key": event_key,
+        "timestamp": _safe_now_iso(),
+        "signal": signal.signal,
+        "feedback_type": signal.feedback_type,
+        "reward": signal.reward,
+        "source": signal.source,
+        "intensity": signal.intensity,
+        "bandit": {
+            "before": before,
+            "after": after,
+            "delta_alpha": delta_alpha,
+            "delta_beta": delta_beta,
+            "delta_mean": delta_mean,
+            "thompson_draw_before": before_draw,
+            "thompson_draw_after": after_draw,
+            "exploration_pressure": round(after["ci95_high"] - after["ci95_low"], 6),
+        },
+        "feature_weights": model_after.get("feature_weights", {}),
+        "context_features": features,
+        "category_bandits": category_bandits,
+        "context_preview": _sanitize_one_line(context, limit=300),
+        "user_message_preview": _sanitize_one_line(user_message, limit=300),
+        "assistant_message_preview": _sanitize_one_line(assistant_message, limit=300),
+        "context_sha256": hashlib.sha256(context.encode("utf-8")).hexdigest()[:20],
+        "pipeline_status": pipeline_status,
+        "artifacts": {
+            "thompson_log": str(paths.thompson_report_log),
+            "model_file": str(paths.model_file),
+            "stats_file": str(paths.stats_file),
+        },
+    }
 
 
 def build_event_key(
@@ -357,8 +522,7 @@ def _append_feedback_jsonl_fallback(
         "user_message": _sanitize_one_line(user_message),
         "assistant_response": _sanitize_one_line(assistant_message),
     }
-    with feedback_log.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(entry, ensure_ascii=True) + "\n")
+    _append_jsonl(feedback_log, entry)
 
 
 def _queue_cortex_pending(paths: BridgePaths, signal: FeedbackSignal, context: str) -> bool:
@@ -377,8 +541,7 @@ def _queue_cortex_pending(paths: BridgePaths, signal: FeedbackSignal, context: s
             "source": signal.source,
             "synced": False,
         }
-        with queue_file.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(entry, ensure_ascii=True) + "\n")
+        _append_jsonl(queue_file, entry)
         return True
     except OSError:
         return False
@@ -488,6 +651,7 @@ def process_payload(
     if event_key in recent_keys:
         return {"status": "ignored", "reason": "duplicate", "event_key": event_key}
 
+    model_before = _read_bandit_snapshot(paths)
     pipeline_status = _run_feedback_pipeline(
         paths,
         payload,
@@ -497,6 +661,19 @@ def process_payload(
         assistant_message,
         runner,
     )
+    model_after = _read_bandit_snapshot(paths)
+    thompson_report = _build_thompson_report(
+        paths=paths,
+        event_key=event_key,
+        signal=signal,
+        context=context,
+        user_message=user_message,
+        assistant_message=assistant_message,
+        pipeline_status=pipeline_status,
+        model_before=model_before,
+        model_after=model_after,
+    )
+    _append_jsonl(paths.thompson_report_log, thompson_report)
 
     recent_keys.append(event_key)
     recent_keys = recent_keys[-500:]
@@ -508,6 +685,7 @@ def process_payload(
             "last_updated": _safe_now_iso(),
             "recent_event_keys": recent_keys,
             "last_pipeline_status": pipeline_status,
+            "last_thompson_report": thompson_report,
         }
     )
     _write_state(paths.state_file, state)
@@ -519,6 +697,7 @@ def process_payload(
         "feedback_type": signal.feedback_type,
         "paths": {"project_root": str(paths.project_root)},
         "pipeline_status": pipeline_status,
+        "thompson_report": thompson_report,
     }
 
 

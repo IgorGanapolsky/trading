@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - .claude/memory/feedback/feedback-log.jsonl
+      - data/feedback/stats.json
   workflow_dispatch:
     inputs:
       signal:
@@ -48,13 +49,26 @@ jobs:
         if: ${{ github.event_name == 'push' }}
         id: feedback
         run: |
-          # Get the last feedback entry
-          LAST_ENTRY=$(tail -1 .claude/memory/feedback/feedback-log.jsonl 2>/dev/null || echo '{}')
-          SIGNAL=$(echo "$LAST_ENTRY" | jq -r '.signal // "positive"')
+          # Resolve most recent feedback entry from tracked or local feedback logs.
+          LAST_ENTRY='{}'
+          if [ -f ".claude/memory/feedback/feedback-log.jsonl" ]; then
+            LAST_ENTRY=$(tail -1 .claude/memory/feedback/feedback-log.jsonl 2>/dev/null || echo '{}')
+          elif [ -f "data/feedback/feedback-log.jsonl" ]; then
+            LAST_ENTRY=$(tail -1 data/feedback/feedback-log.jsonl 2>/dev/null || echo '{}')
+          fi
+
+          RAW_SIGNAL=$(echo "$LAST_ENTRY" | jq -r '.signal // .feedback // "positive"')
+          case "$RAW_SIGNAL" in
+            thumbs_up|positive) SIGNAL="positive" ;;
+            thumbs_down|negative) SIGNAL="negative" ;;
+            *) SIGNAL="positive" ;;
+          esac
           INTENSITY=$(echo "$LAST_ENTRY" | jq -r '.intensity // 0.5')
+          FEEDBACK_CONTEXT=$(echo "$LAST_ENTRY" | jq -r '.context // empty')
 
           # Get recent commit messages as context
-          CONTEXT=$(git log --oneline -5 --format='%s' | head -3 | tr '\n' '; ')
+          COMMIT_CONTEXT=$(git log --oneline -5 --format='%s' | head -3 | tr '\n' '; ')
+          CONTEXT=${FEEDBACK_CONTEXT:-$COMMIT_CONTEXT}
 
           echo "signal=$SIGNAL" >> "$GITHUB_OUTPUT"
           echo "intensity=$INTENSITY" >> "$GITHUB_OUTPUT"
@@ -71,6 +85,14 @@ jobs:
       - name: Publish blog post
         env:
           DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
+          TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
+          TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
+          TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+          TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
         run: |
           # Determine which input source to use
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then

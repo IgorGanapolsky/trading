@@ -454,7 +454,8 @@ def post_to_twitter_api(post: dict, link_url: str) -> bool:
         if result.returncode == 0:
             return True
         else:
-            print(f"⚠️ X.com posting failed: {result.stderr[:200]}")
+            detail = (result.stderr or result.stdout or "").strip()
+            print(f"⚠️ X.com posting failed: {detail[:300]}")
             return False
     except Exception as e:
         print(f"⚠️ X.com error: {e}")

@@ -6,30 +6,58 @@ Posts to X.com using Twitter API v2 with OAuth 1.0a.
 Reliable, fast, no browser automation needed.
 """
 
+from __future__ import annotations
+
 import os
 import subprocess  # nosec B404
 import sys
-
-try:
-    import tweepy
-except ImportError:
-    print("📦 Installing tweepy...")
-    subprocess.run(  # nosec B603 B607
-        ["pip3", "install", "--break-system-packages", "tweepy"],
-        check=True,
-    )
-    import tweepy
-
-# API credentials from environment (NOT hardcoded)
-API_KEY = os.environ.get("TWITTER_API_KEY")
-API_SECRET = os.environ.get("TWITTER_API_SECRET")
-ACCESS_TOKEN = os.environ.get("TWITTER_ACCESS_TOKEN")
-ACCESS_TOKEN_SECRET = os.environ.get("TWITTER_ACCESS_TOKEN_SECRET")
+from typing import Mapping
 
 POST_MAX_LENGTH = 280  # X.com character limit
 
 
-def post_to_twitter(text: str, dry_run: bool = False) -> bool:
+def resolve_credentials(env: Mapping[str, str] | None = None) -> dict[str, str]:
+    runtime_env = dict(env or os.environ)
+    return {
+        "api_key": runtime_env.get("TWITTER_API_KEY") or runtime_env.get("X_API_KEY") or "",
+        "api_secret": runtime_env.get("TWITTER_API_SECRET") or runtime_env.get("X_API_SECRET") or "",
+        "access_token": runtime_env.get("TWITTER_ACCESS_TOKEN")
+        or runtime_env.get("X_ACCESS_TOKEN")
+        or "",
+        "access_token_secret": runtime_env.get("TWITTER_ACCESS_TOKEN_SECRET")
+        or runtime_env.get("X_ACCESS_TOKEN_SECRET")
+        or "",
+    }
+
+
+def missing_credential_names(credentials: Mapping[str, str]) -> list[str]:
+    required = [
+        ("api_key", "TWITTER_API_KEY/X_API_KEY"),
+        ("api_secret", "TWITTER_API_SECRET/X_API_SECRET"),
+        ("access_token", "TWITTER_ACCESS_TOKEN/X_ACCESS_TOKEN"),
+        ("access_token_secret", "TWITTER_ACCESS_TOKEN_SECRET/X_ACCESS_TOKEN_SECRET"),
+    ]
+    return [label for field, label in required if not credentials.get(field)]
+
+
+def _import_tweepy():
+    try:
+        import tweepy
+    except ImportError:
+        print("📦 Installing tweepy...")
+        subprocess.run(  # nosec B603 B607
+            ["pip3", "install", "--break-system-packages", "tweepy"],
+            check=True,
+        )
+        import tweepy
+    return tweepy
+
+
+def post_to_twitter(
+    text: str,
+    dry_run: bool = False,
+    env: Mapping[str, str] | None = None,
+) -> bool:
     """Post to X.com using Twitter API v2."""
     if len(text) > POST_MAX_LENGTH:
         print(f"⚠️  Text too long ({len(text)} chars), truncating to {POST_MAX_LENGTH}")
@@ -40,22 +68,23 @@ def post_to_twitter(text: str, dry_run: bool = False) -> bool:
         print(f"\n{text}\n")
         return True
 
-    # Check credentials
-    if not all([API_KEY, API_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET]):
-        print("❌ Missing Twitter API credentials in environment")
-        print("   Required: TWITTER_API_KEY, TWITTER_API_SECRET,")
-        print("             TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_TOKEN_SECRET")
+    credentials = resolve_credentials(env)
+    missing = missing_credential_names(credentials)
+    if missing:
+        print("❌ Missing X/Twitter API credentials in environment")
+        print(f"   Missing: {', '.join(missing)}")
         return False
 
     print("📡 Posting to X.com via API...")
 
+    tweepy = _import_tweepy()
     try:
         # Authenticate with Twitter API v2
         client = tweepy.Client(
-            consumer_key=API_KEY,
-            consumer_secret=API_SECRET,
-            access_token=ACCESS_TOKEN,
-            access_token_secret=ACCESS_TOKEN_SECRET,
+            consumer_key=credentials["api_key"],
+            consumer_secret=credentials["api_secret"],
+            access_token=credentials["access_token"],
+            access_token_secret=credentials["access_token_secret"],
         )
 
         # Post tweet
