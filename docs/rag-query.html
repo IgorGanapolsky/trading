@@ -619,6 +619,49 @@ layout: null
         margin-top: 6px;
         border-radius: 8px;
         border: 1px solid var(--border-color);
+        cursor: zoom-in;
+      }
+
+      .proof-item img:focus {
+        outline: 2px solid var(--accent-blue);
+        outline-offset: 2px;
+      }
+
+      .evidence-lightbox {
+        z-index: 1100;
+      }
+
+      .evidence-lightbox .evidence-lightbox-content {
+        position: relative;
+        width: min(1100px, 96vw);
+        max-height: 92vh;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        padding: 18px;
+      }
+
+      .evidence-lightbox .evidence-lightbox-close {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        z-index: 1;
+      }
+
+      .evidence-lightbox img {
+        width: 100%;
+        max-height: 78vh;
+        object-fit: contain;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-primary);
+      }
+
+      .evidence-lightbox .evidence-lightbox-caption {
+        margin-top: 10px;
+        font-size: 0.86rem;
+        color: var(--text-secondary);
       }
 
       .chat-message.loading .message-content {
@@ -984,6 +1027,13 @@ layout: null
         <div class="modal-body">
           <pre id="modalContent"></pre>
         </div>
+      </div>
+    </div>
+    <div class="modal-overlay evidence-lightbox" id="evidenceLightbox" aria-hidden="true">
+      <div class="evidence-lightbox-content" role="dialog" aria-modal="true" aria-label="Screenshot magnifier">
+        <button class="modal-close evidence-lightbox-close" id="evidenceLightboxClose">&times;</button>
+        <img id="evidenceLightboxImage" alt="Magnified screenshot evidence" />
+        <div class="evidence-lightbox-caption" id="evidenceLightboxCaption"></div>
       </div>
     </div>
 
@@ -1597,7 +1647,10 @@ layout: null
 
         // Escape key to close modal
         document.addEventListener("keydown", (e) => {
-          if (e.key === "Escape") hideModal();
+          if (e.key === "Escape") {
+            hideEvidenceLightbox();
+            hideModal();
+          }
         });
       }
 
@@ -1697,6 +1750,68 @@ Tags: ${lesson.tags.join(", ")}`;
 
       function hideModal() {
         document.getElementById("lessonModal").classList.remove("active");
+      }
+
+      function openEvidenceLightbox(src, caption) {
+        const overlay = document.getElementById("evidenceLightbox");
+        const image = document.getElementById("evidenceLightboxImage");
+        const captionEl = document.getElementById("evidenceLightboxCaption");
+        if (!overlay || !image || !captionEl || !src) return;
+        image.src = src;
+        image.alt = caption || "Magnified screenshot evidence";
+        captionEl.textContent = caption || "";
+        overlay.classList.add("active");
+        overlay.setAttribute("aria-hidden", "false");
+      }
+
+      function hideEvidenceLightbox() {
+        const overlay = document.getElementById("evidenceLightbox");
+        const image = document.getElementById("evidenceLightboxImage");
+        const captionEl = document.getElementById("evidenceLightboxCaption");
+        if (!overlay || !image || !captionEl) return;
+        overlay.classList.remove("active");
+        overlay.setAttribute("aria-hidden", "true");
+        image.src = "";
+        captionEl.textContent = "";
+      }
+
+      function setupEvidenceLightboxListeners() {
+        const chatMessages = document.getElementById("chatMessages");
+        const lightbox = document.getElementById("evidenceLightbox");
+        const closeBtn = document.getElementById("evidenceLightboxClose");
+        if (!chatMessages || !lightbox || !closeBtn) return;
+
+        chatMessages.addEventListener("click", (event) => {
+          const target = event.target;
+          if (!(target instanceof HTMLElement)) return;
+          const image = target.closest("img[data-evidence-image='true']");
+          if (!(image instanceof HTMLImageElement)) return;
+          event.preventDefault();
+          openEvidenceLightbox(
+            image.dataset.proofSrc || image.src || "",
+            image.dataset.proofCaption || image.alt || "",
+          );
+        });
+
+        chatMessages.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          const target = event.target;
+          if (!(target instanceof HTMLElement)) return;
+          const image = target.closest("img[data-evidence-image='true']");
+          if (!(image instanceof HTMLImageElement)) return;
+          event.preventDefault();
+          openEvidenceLightbox(
+            image.dataset.proofSrc || image.src || "",
+            image.dataset.proofCaption || image.alt || "",
+          );
+        });
+
+        closeBtn.addEventListener("click", hideEvidenceLightbox);
+        lightbox.addEventListener("click", (event) => {
+          if (event.target instanceof HTMLElement && event.target.id === "evidenceLightbox") {
+            hideEvidenceLightbox();
+          }
+        });
       }
 
       function parseOccSymbol(symbol) {
@@ -2060,11 +2175,11 @@ Tags: ${lesson.tags.join(", ")}`;
           <div class="proof-grid">
             <div class="proof-item">
               <a href="${paperProof}" target="_blank" rel="noopener noreferrer">Paper Account Screenshot Evidence</a>
-              <img src="${paperProof}" alt="Paper trading account screenshot evidence">
+              <img src="${escapeHtml(paperProof)}" alt="Paper trading account screenshot evidence" data-evidence-image="true" data-proof-src="${escapeHtml(paperProof)}" data-proof-caption="Paper Account Screenshot Evidence" role="button" tabindex="0">
             </div>
             <div class="proof-item">
               <a href="${brokerageProof}" target="_blank" rel="noopener noreferrer">Brokerage Account Screenshot Evidence</a>
-              <img src="${brokerageProof}" alt="Brokerage account screenshot evidence">
+              <img src="${escapeHtml(brokerageProof)}" alt="Brokerage account screenshot evidence" data-evidence-image="true" data-proof-src="${escapeHtml(brokerageProof)}" data-proof-caption="Brokerage Account Screenshot Evidence" role="button" tabindex="0">
             </div>
           </div>
         `;
@@ -2556,6 +2671,7 @@ Tags: ${lesson.tags.join(", ")}`;
       // Initialize chat and portfolio on load
       document.addEventListener("DOMContentLoaded", () => {
         setupChatListeners();
+        setupEvidenceLightboxListeners();
         loadPortfolioStatus();
       });
     </script>
