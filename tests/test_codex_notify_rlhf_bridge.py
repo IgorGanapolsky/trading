@@ -51,6 +51,7 @@ def test_process_payload_writes_state_and_runs_pipeline(tmp_path: Path) -> None:
     scripts_feedback.mkdir(parents=True)
     memory_feedback.mkdir(parents=True)
     memalign_script.mkdir(parents=True)
+    (project / ".claude" / "memory" / "feedback").mkdir(parents=True, exist_ok=True)
 
     for rel in (
         scripts_feedback / "semantic-memory-v2.py",
@@ -78,13 +79,17 @@ def test_process_payload_writes_state_and_runs_pipeline(tmp_path: Path) -> None:
     assert result["status"] == "processed"
     assert any("semantic-memory-v2.py" in " ".join(cmd) for cmd in commands)
     assert any("train_from_feedback.py" in " ".join(cmd) for cmd in commands)
-    assert any("cortex_sync.py" in " ".join(cmd) for cmd in commands)
     assert any("rlhf-integration.ts" in " ".join(cmd) for cmd in commands)
 
     state_file = memory_feedback / "codex_notify_state.json"
     assert state_file.exists()
     state = json.loads(state_file.read_text(encoding="utf-8"))
     assert state["last_signal"] == "thumbs_up"
+    assert state["last_pipeline_status"]["cortex_queue"] is True
+
+    pending = memory_feedback / "pending_cortex_sync.jsonl"
+    assert pending.exists()
+    assert pending.read_text(encoding="utf-8").strip()
 
 
 def test_process_payload_is_idempotent_per_event_key(tmp_path: Path) -> None:
@@ -115,4 +120,3 @@ def test_process_payload_is_idempotent_per_event_key(tmp_path: Path) -> None:
     signal = detect_feedback_signal("thumbs down")
     assert signal is not None
     assert second["event_key"] == build_event_key(payload, "thumbs down", signal)
-

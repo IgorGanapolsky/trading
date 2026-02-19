@@ -61,6 +61,7 @@ class BridgePaths:
     project_root: Path
     feedback_dir: Path
     state_file: Path
+    pending_cortex_queue: Path
     semantic_memory_py: Path
     train_script_py: Path
     cortex_sync_py: Path
@@ -229,6 +230,7 @@ def resolve_paths(payload: dict[str, Any], cwd: Path | None = None) -> BridgePat
         project_root=project_root,
         feedback_dir=feedback_dir,
         state_file=feedback_dir / "codex_notify_state.json",
+        pending_cortex_queue=feedback_dir / "pending_cortex_sync.jsonl",
         semantic_memory_py=scripts_dir / "semantic-memory-v2.py",
         train_script_py=scripts_dir / "train_from_feedback.py",
         cortex_sync_py=scripts_dir / "cortex_sync.py",
@@ -359,6 +361,29 @@ def _append_feedback_jsonl_fallback(
         handle.write(json.dumps(entry, ensure_ascii=True) + "\n")
 
 
+def _queue_cortex_pending(paths: BridgePaths, signal: FeedbackSignal, context: str) -> bool:
+    """Queue ShieldCortex sync item without re-writing feedback-log.jsonl."""
+    try:
+        queue_file = paths.pending_cortex_queue
+        queue_file.parent.mkdir(parents=True, exist_ok=True)
+        entry = {
+            "id": f"fb_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{signal.feedback_type[:3]}",
+            "timestamp": _safe_now_iso(),
+            "signal": signal.feedback_type,
+            "intensity": signal.intensity,
+            "context": context,
+            "tool_name": "codex_notify_bridge",
+            "files": [],
+            "source": signal.source,
+            "synced": False,
+        }
+        with queue_file.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(entry, ensure_ascii=True) + "\n")
+        return True
+    except OSError:
+        return False
+
+
 def _run_feedback_pipeline(
     paths: BridgePaths,
     payload: dict[str, Any],
@@ -407,22 +432,7 @@ def _run_feedback_pipeline(
         if runner(train_cmd, timeout=60) == 0:
             result["train"] = True
 
-    if paths.cortex_sync_py.exists():
-        queue_cmd = [
-            py,
-            str(paths.cortex_sync_py),
-            "--queue",
-            "--signal",
-            signal.feedback_type,
-            "--intensity",
-            str(signal.intensity),
-            "--context",
-            context,
-            "--source",
-            signal.source,
-        ]
-        if runner(queue_cmd, timeout=60) == 0:
-            result["cortex_queue"] = True
+    result["cortex_queue"] = _queue_cortex_pending(paths, signal, context)
 
     if paths.memalign_record_ts.exists():
         task_id = (
