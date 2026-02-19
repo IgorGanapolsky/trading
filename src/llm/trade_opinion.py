@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -30,6 +31,7 @@ from src.utils.llm_gateway import (
 from src.utils.model_selector import get_model_selector
 
 logger = logging.getLogger(__name__)
+JSON_BLOCK_RE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.IGNORECASE | re.DOTALL)
 
 
 # =============================================================================
@@ -65,6 +67,117 @@ class TradeOpinion(BaseModel):
 # =============================================================================
 # PRE-TRADE RESEARCH AGENT
 # =============================================================================
+
+
+def _trade_opinion_schema() -> dict[str, Any]:
+    """Return strict JSON schema for provider-native structured output."""
+    schema = TradeOpinion.model_json_schema()
+    if isinstance(schema, dict):
+        schema.setdefault("additionalProperties", False)
+    return schema
+
+
+def _response_format_candidates() -> list[dict[str, Any]]:
+    """
+    Ordered response format preferences.
+
+    1) Strict json_schema for providers that support schema-constrained output.
+    2) json_object fallback for providers that only support JSON mode.
+    """
+    return [
+        {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "trade_opinion",
+                "strict": True,
+                "schema": _trade_opinion_schema(),
+            },
+        },
+        {"type": "json_object"},
+    ]
+
+
+def _extract_text_content(raw: Any) -> str:
+    """Normalize OpenAI-compatible message content into a single string."""
+    if isinstance(raw, str):
+        return raw
+    if isinstance(raw, list):
+        chunks: list[str] = []
+        for item in raw:
+            if isinstance(item, str):
+                chunks.append(item)
+            elif isinstance(item, dict):
+                text = item.get("text")
+                if isinstance(text, str):
+                    chunks.append(text)
+        return "\n".join(part.strip() for part in chunks if part.strip())
+    return ""
+
+
+def _parse_json_object(text: str) -> dict[str, Any]:
+    """Parse JSON object with defensive fallbacks for markdown-wrapped payloads."""
+    normalized = (text or "").strip()
+    if not normalized:
+        raise json.JSONDecodeError("Empty response", text, 0)
+
+    candidates: list[str] = [normalized]
+    match = JSON_BLOCK_RE.search(normalized)
+    if match:
+        candidates.append(match.group(1).strip())
+
+    first = normalized.find("{")
+    last = normalized.rfind("}")
+    if first >= 0 and last > first:
+        candidates.append(normalized[first : last + 1].strip())
+
+    seen: set[str] = set()
+    for candidate in candidates:
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+        try:
+            parsed = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(parsed, dict):
+            return parsed
+
+    raise json.JSONDecodeError("No JSON object found in response", normalized, 0)
+
+
+def _request_structured_completion(
+    client: Any,
+    *,
+    model: str,
+    messages: list[dict[str, str]],
+    max_tokens: int,
+) -> Any:
+    """
+    Call provider with structured output settings.
+
+    Tries strict schema mode first, then falls back to generic JSON mode.
+    """
+    last_exc: Exception | None = None
+    for fmt in _response_format_candidates():
+        try:
+            return client.chat.completions.create(
+                model=model,
+                messages=messages,
+                max_tokens=max_tokens,
+                response_format=fmt,
+            )
+        except Exception as exc:
+            last_exc = exc
+            logger.debug(
+                "Trade opinion: response_format=%s unsupported/failed (%s)",
+                fmt.get("type"),
+                exc,
+            )
+            continue
+
+    if last_exc is not None:
+        raise last_exc
+    raise RuntimeError("No response_format candidates configured")
 
 
 def get_trade_opinion(
@@ -117,15 +230,17 @@ def get_trade_opinion(
         )
         model_for_call = transport_model_id if using_gateway else model_id
 
+        messages = [
+            {"role": "system", "content": _system_prompt()},
+            {"role": "user", "content": prompt},
+        ]
+
         try:
-            response = client.chat.completions.create(
+            response = _request_structured_completion(
+                client,
                 model=model_for_call,
-                messages=[
-                    {"role": "system", "content": _system_prompt()},
-                    {"role": "user", "content": prompt},
-                ],
+                messages=messages,
                 max_tokens=2048,
-                response_format={"type": "json_object"},
             )
         except Exception as gateway_exc:
             # If we're routing through a gateway (TARS) and it fails, retry via
@@ -138,14 +253,11 @@ def get_trade_opinion(
                 fallback_client = OpenAI(
                     api_key=fallback_cfg.api_key, base_url=fallback_cfg.base_url
                 )
-                response = fallback_client.chat.completions.create(
+                response = _request_structured_completion(
+                    fallback_client,
                     model=model_id,
-                    messages=[
-                        {"role": "system", "content": _system_prompt()},
-                        {"role": "user", "content": prompt},
-                    ],
+                    messages=messages,
                     max_tokens=2048,
-                    response_format={"type": "json_object"},
                 )
             else:
                 raise
@@ -159,12 +271,12 @@ def get_trade_opinion(
             )
 
         # Parse response
-        text = response.choices[0].message.content if response.choices else ""
+        text = _extract_text_content(response.choices[0].message.content) if response.choices else ""
         if not text:
             logger.warning("Trade opinion: empty response from LLM")
             return None
 
-        data = json.loads(text)
+        data = _parse_json_object(text)
         opinion = TradeOpinion.model_validate(data)
 
         logger.info(

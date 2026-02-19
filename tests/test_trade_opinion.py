@@ -19,6 +19,7 @@ import pytest
 from src.llm.trade_opinion import (
     TradeOpinion,
     _build_prompt,
+    _parse_json_object,
     _system_prompt,
     get_trade_opinion,
 )
@@ -224,6 +225,78 @@ class TestPromptConstruction:
         assert "5W/1L" in prompt
         assert "TRENDING_UP" in prompt
         assert "Avoid FOMC weeks" in prompt
+
+
+# =============================================================================
+# STRUCTURED OUTPUT RESILIENCE TESTS
+# =============================================================================
+
+
+class TestStructuredOutputResilience:
+    """Ensure schema-first calls degrade safely across provider capabilities."""
+
+    def test_parse_json_object_from_markdown_fence(self):
+        """Parser should handle JSON wrapped in markdown code fences."""
+        text = """```json
+{"should_trade": true, "confidence": 0.76, "regime": "calm", "reasoning": "ok"}
+```"""
+        parsed = _parse_json_object(text)
+        assert parsed["should_trade"] is True
+        assert parsed["confidence"] == 0.76
+        assert parsed["regime"] == "calm"
+
+    @patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-key"})
+    def test_schema_mode_falls_back_to_json_object(self):
+        """If json_schema is unsupported, client falls back to json_object."""
+        _ensure_openai_mock()
+
+        valid_response = json.dumps(
+            {
+                "should_trade": True,
+                "confidence": 0.8,
+                "regime": "calm",
+                "suggested_short_delta": 0.15,
+                "suggested_dte": 35,
+                "reasoning": "Fallback path succeeded.",
+                "risk_flags": [],
+            }
+        )
+
+        with patch("src.llm.trade_opinion.get_model_selector") as mock_sel:
+            mock_selector = MagicMock()
+            mock_selector.select_model.return_value = "deepseek/deepseek-r1"
+            mock_selector.get_model_provider.return_value = "openrouter"
+            mock_selector.get_transport_model_id.return_value = "deepseek/deepseek-r1"
+            mock_sel.return_value = mock_selector
+
+            with patch("openai.OpenAI") as mock_client_cls:
+                mock_client = MagicMock()
+                mock_response = MagicMock()
+                mock_choice = MagicMock()
+                mock_choice.message.content = valid_response
+                mock_response.choices = [mock_choice]
+                mock_response.usage = None
+
+                mock_client.chat.completions.create.side_effect = [
+                    RuntimeError("json_schema not supported"),
+                    mock_response,
+                ]
+                mock_client_cls.return_value = mock_client
+
+                result = get_trade_opinion(vix_current=19.0)
+
+                assert result is not None
+                assert result.should_trade is True
+                assert mock_client.chat.completions.create.call_count == 2
+
+                first_fmt = mock_client.chat.completions.create.call_args_list[0].kwargs[
+                    "response_format"
+                ]
+                second_fmt = mock_client.chat.completions.create.call_args_list[1].kwargs[
+                    "response_format"
+                ]
+                assert first_fmt["type"] == "json_schema"
+                assert second_fmt["type"] == "json_object"
 
 
 # =============================================================================
