@@ -1,0 +1,144 @@
+name: North Star Blocker Watch
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-minimal.txt
+
+      - name: Refresh broker state (best effort)
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          ALPACA_BROKERAGE_TRADING_API_KEY: ${{ secrets.ALPACA_BROKERAGE_TRADING_API_KEY }}
+          ALPACA_BROKERAGE_TRADING_API_SECRET: ${{ secrets.ALPACA_BROKERAGE_TRADING_API_SECRET }}
+        run: |
+          python3 scripts/sync_alpaca_state.py || echo "sync_alpaca_state skipped/failed (continuing)"
+          python3 scripts/auto_clear_stale_trading_halt.py --json || true
+          python3 scripts/update_north_star_operating_plan.py
+
+      - name: Build blocker report artifacts
+        run: |
+          python3 scripts/build_north_star_blocker_report.py \
+            --state data/system_state.json \
+            --history data/north_star_weekly_history.json \
+            --halt-file data/TRADING_HALTED \
+            --json-out artifacts/devloop/north_star_blocker_report.json \
+            --markdown-out artifacts/devloop/north_star_blocker_report.md
+
+      - name: Upsert blocker issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            const title = "North Star Blockers (Automated)";
+            const label = "north-star-blocker";
+            const reportPath = "artifacts/devloop/north_star_blocker_report.json";
+            const markdownPath = "artifacts/devloop/north_star_blocker_report.md";
+            const report = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+            const body = fs.readFileSync(markdownPath, "utf8");
+
+            async function ensureLabel(name, color, description) {
+              try {
+                await github.rest.issues.getLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name,
+                });
+              } catch (err) {
+                if (err.status !== 404) throw err;
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name,
+                  color,
+                  description,
+                });
+              }
+            }
+
+            await ensureLabel(
+              label,
+              "B60205",
+              "Automated North Star blocker tracking"
+            );
+
+            const openIssues = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              labels: label,
+              per_page: 100,
+            });
+
+            const existing = openIssues.find(
+              (item) => !item.pull_request && item.title === title
+            );
+
+            if (report.blocked) {
+              if (existing) {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: existing.number,
+                  body,
+                });
+                core.info(`Updated blocker issue #${existing.number}`);
+              } else {
+                const created = await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title,
+                  body,
+                  labels: [label],
+                });
+                core.info(`Created blocker issue #${created.data.number}`);
+              }
+            } else if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body:
+                  `Auto-close: blockers cleared at ${report.generated_at_utc} UTC.\n\n` +
+                  "The monitor will reopen this issue automatically if blockers return.",
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                state: "closed",
+              });
+              core.info(`Closed blocker issue #${existing.number}`);
+            } else {
+              core.info("No active blockers and no open blocker issue.");
+            }
+
+      - name: Upload report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: north-star-blocker-report
+          path: |
+            artifacts/devloop/north_star_blocker_report.json
+            artifacts/devloop/north_star_blocker_report.md
