@@ -86,8 +86,10 @@ def test_process_payload_writes_state_and_runs_pipeline(tmp_path: Path) -> None:
     state = json.loads(state_file.read_text(encoding="utf-8"))
     assert state["last_signal"] == "thumbs_up"
     assert state["last_pipeline_status"]["cortex_queue"] is True
+    assert state["last_pipeline_status"]["distributed_bandit"] is True
     assert state["last_thompson_report"]["feedback_type"] == "positive"
     assert state["last_thompson_report"]["event_key"] == result["event_key"]
+    assert state["last_distributed_outcome"]["applied"] is True
 
     pending = memory_feedback / "pending_cortex_sync.jsonl"
     assert pending.exists()
@@ -125,6 +127,7 @@ def test_process_payload_is_idempotent_per_event_key(tmp_path: Path) -> None:
     assert first["status"] == "processed"
     assert second["status"] == "ignored"
     assert second["reason"] == "duplicate"
+    assert first["pipeline_status"]["distributed_bandit"] is True
 
     signal = detect_feedback_signal("thumbs down")
     assert signal is not None
@@ -156,11 +159,7 @@ def test_thompson_report_reflects_model_delta(tmp_path: Path) -> None:
     )
 
     def fake_runner(command: list[str], **_: object) -> int:
-        if "train_from_feedback.py" in " ".join(command):
-            model_file.write_text(
-                json.dumps({"alpha": 11.0, "beta": 4.0, "feature_weights": {}, "per_category": {}}),
-                encoding="utf-8",
-            )
+        _ = command
         return 0
 
     payload = {
@@ -177,3 +176,4 @@ def test_thompson_report_reflects_model_delta(tmp_path: Path) -> None:
     assert report["bandit"]["after"]["alpha"] == 11.0
     assert report["bandit"]["delta_alpha"] == 1.0
     assert report["feedback_type"] == "positive"
+    assert result["distributed_outcome"]["applied"] is True
