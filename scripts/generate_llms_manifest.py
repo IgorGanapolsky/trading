@@ -164,7 +164,7 @@ def _render_llms_summary(
         "> Autonomous AI trading system built in public.",
         "",
         "## North Star",
-        "- Target: $6,000/month after-tax by 2029-11-14.",
+        "- Target: $6,000/month after-tax (ASAP; no fixed date).",
         "- Path: SPY iron condor system with strict risk gates and continuous learning.",
         "",
         "## Canonical URLs",

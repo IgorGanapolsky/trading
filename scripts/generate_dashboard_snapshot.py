@@ -86,9 +86,8 @@ def _build_report_content(state: dict, snapshot_date: date) -> str:
         if isinstance(north_star.get("probability_label"), str)
         else "unknown"
     )
-    target_date = (
-        north_star.get("target_date") if isinstance(north_star.get("target_date"), str) else ""
-    )
+    monthly_target = _safe_float(north_star.get("monthly_after_tax_target"))
+    monthly_progress = _safe_float(north_star.get("monthly_target_progress_pct"))
 
     cadence_passed = risk.get("weekly_cadence_kpi_passed")
     cadence_text = (
@@ -132,7 +131,11 @@ def _build_report_content(state: dict, snapshot_date: date) -> str:
             "question": "What is the North Star probability right now?",
             "answer": (
                 f"North Star probability is {_fmt_pct(probability_score)} ({probability_label})"
-                + (f", target date {target_date}." if target_date else ".")
+                + (
+                    f", monthly target {_fmt_currency(monthly_target)} with progress {_fmt_pct(monthly_progress)}."
+                    if monthly_target is not None
+                    else "."
+                )
             ),
         },
     ]
@@ -161,7 +164,7 @@ This report is auto-generated from system state for search and AI discoverabilit
 A: Paper daily P/L is {_fmt_currency(paper_daily_change)}. Live account total P/L is {_fmt_currency(live_total_pl)}.
 
 **Q: Are we on track toward the North Star?**<br>
-A: North Star probability is {_fmt_pct(probability_score)} ({probability_label}){f", target date {target_date}" if target_date else ""}.
+A: North Star probability is {_fmt_pct(probability_score)} ({probability_label}){f", monthly target {_fmt_currency(monthly_target)} with progress {_fmt_pct(monthly_progress)}" if monthly_target is not None else ""}.
 
 **Q: Is execution cadence healthy?**<br>
 A: Weekly cadence KPI is **{cadence_text}** with risk mode **{gate_mode}**.

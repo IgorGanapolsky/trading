@@ -47,7 +47,7 @@ def test_weekly_gate_blocks_when_recent_expectancy_negative(tmp_path):
     assert history_path.exists()
 
 
-def test_contribution_plan_contains_return_scenarios():
+def test_contribution_plan_tracks_monthly_target_progress():
     plan = compute_contribution_plan(
         {
             "paper_account": {"equity": 10_000.0},
@@ -56,11 +56,13 @@ def test_contribution_plan_contains_return_scenarios():
         today=date(2026, 2, 12),
     )
 
-    by_return = plan["required_monthly_contribution_by_return"]
-    assert "20%" in by_return
-    assert "30%" in by_return
-    assert by_return["20%"] >= by_return["30%"]
-    assert by_return["20%"] > 0.0
+    assert plan["target_mode"] == "asap_monthly_income"
+    assert plan["target_date"] is None
+    assert plan["monthly_after_tax_target"] == 6000.0
+    assert plan["daily_after_tax_target"] == 200.0
+    assert plan["required_monthly_contribution_by_return"] == {}
+    assert plan["required_cagr_without_contributions"] is None
+    assert plan["required_daily_after_tax_from_now"] >= 0.0
     assert plan["estimated_live_contribution_this_month"] is not None
 
 

@@ -7,6 +7,7 @@ This module keeps the North Star execution loop practical:
 
 from __future__ import annotations
 
+import calendar
 import json
 import re
 from collections import Counter
@@ -14,7 +15,11 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from src.core.trading_constants import NORTH_STAR_TARGET_CAPITAL, NORTH_STAR_TARGET_DATE
+from src.core.trading_constants import (
+    NORTH_STAR_DAILY_AFTER_TAX,
+    NORTH_STAR_MONTHLY_AFTER_TAX,
+    NORTH_STAR_TARGET_CAPITAL,
+)
 
 DEFAULT_TRADES_PATH = Path("data/trades.json")
 DEFAULT_WEEKLY_HISTORY_PATH = Path("data/north_star_weekly_history.json")
@@ -522,35 +527,6 @@ def _extract_recent_closed_trades(
     return rows
 
 
-def _calc_required_monthly_contribution(
-    current_equity: float,
-    annual_return: float,
-    months_remaining: int,
-    target_capital: float,
-) -> float:
-    if months_remaining <= 0 or current_equity <= 0 or target_capital <= 0:
-        return 0.0
-
-    r = annual_return / 12.0
-    if r <= 0:
-        return max(0.0, (target_capital - current_equity) / months_remaining)
-
-    future_without_contrib = current_equity * ((1 + r) ** months_remaining)
-    if future_without_contrib >= target_capital:
-        return 0.0
-
-    annuity_factor = ((1 + r) ** months_remaining - 1) / r
-    if annuity_factor <= 0:
-        return 0.0
-    return max(0.0, (target_capital - future_without_contrib) / annuity_factor)
-
-
-def _required_cagr_without_contrib(current_equity: float, years_remaining: float) -> float:
-    if current_equity <= 0 or years_remaining <= 0:
-        return 0.0
-    return (NORTH_STAR_TARGET_CAPITAL / current_equity) ** (1.0 / years_remaining) - 1.0
-
-
 def _sync_paper_win_rate_from_trades_payload(
     state: dict[str, Any], trades_payload: dict[str, Any]
 ) -> None:
@@ -923,7 +899,7 @@ def compute_contribution_plan(
     *,
     today: date | None = None,
 ) -> dict[str, Any]:
-    """Compute monthly contribution requirements and current-month progress tracking."""
+    """Compute ASAP monthly-income progress tracking for North Star."""
     today = today or date.today()
     paper = state.get("paper_account", {}) if isinstance(state, dict) else {}
     live = state.get("live_account", {}) if isinstance(state, dict) else {}
@@ -933,27 +909,6 @@ def compute_contribution_plan(
         paper.get("equity"),
         _as_float(state.get("account", {}).get("current_equity"), 0.0),
     )
-
-    months_remaining = (NORTH_STAR_TARGET_DATE.year - today.year) * 12 + (
-        NORTH_STAR_TARGET_DATE.month - today.month
-    )
-    if today.day > NORTH_STAR_TARGET_DATE.day:
-        months_remaining -= 1
-    months_remaining = max(1, months_remaining)
-
-    years_remaining = max(0.01, (NORTH_STAR_TARGET_DATE - today).days / 365.25)
-    required_cagr = _required_cagr_without_contrib(current_equity, years_remaining)
-
-    annual_scenarios = [0.20, 0.25, 0.30, 0.35]
-    required_by_return: dict[str, float] = {}
-    for annual_return in annual_scenarios:
-        monthly = _calc_required_monthly_contribution(
-            current_equity=current_equity,
-            annual_return=annual_return,
-            months_remaining=months_remaining,
-            target_capital=NORTH_STAR_TARGET_CAPITAL,
-        )
-        required_by_return[f"{int(annual_return * 100)}%"] = round(monthly, 2)
 
     month_key = today.strftime("%Y-%m")
     existing_month = str(existing.get("month", ""))
@@ -983,27 +938,42 @@ def compute_contribution_plan(
         contribution_confidence = "medium"
         inference_note = "Live account has no open positions; live equity change is treated as estimated contribution."
 
-    assumed_return = 0.30
-    required_at_assumed = _calc_required_monthly_contribution(
-        current_equity=current_equity,
-        annual_return=assumed_return,
-        months_remaining=months_remaining,
-        target_capital=NORTH_STAR_TARGET_CAPITAL,
+    monthly_target = max(0.0, float(NORTH_STAR_MONTHLY_AFTER_TAX))
+    daily_target = max(0.0, float(NORTH_STAR_DAILY_AFTER_TAX))
+    progress_pct = (equity_change_this_month / monthly_target * 100.0) if monthly_target > 0 else 0.0
+    remaining_to_monthly_target = max(0.0, monthly_target - equity_change_this_month)
+    days_in_month = calendar.monthrange(today.year, today.month)[1]
+    days_elapsed = max(1, today.day)
+    days_remaining = max(0, days_in_month - today.day)
+    projected_month_end_pnl = round((equity_change_this_month / days_elapsed) * days_in_month, 2)
+    projected_gap_at_month_end = round(max(0.0, monthly_target - projected_month_end_pnl), 2)
+    required_daily_from_now = (
+        round(remaining_to_monthly_target / days_remaining, 2) if days_remaining > 0 else 0.0
     )
 
     return {
         "enabled": True,
+        "target_mode": "asap_monthly_income",
         "month": month_key,
-        "months_remaining": months_remaining,
-        "target_date": NORTH_STAR_TARGET_DATE.isoformat(),
+        "target_date": None,
+        "months_remaining": None,
         "target_capital": NORTH_STAR_TARGET_CAPITAL,
+        "monthly_after_tax_target": round(monthly_target, 2),
+        "daily_after_tax_target": round(daily_target, 2),
         "current_equity": round(current_equity, 2),
-        "required_cagr_without_contributions": round(required_cagr, 4),
-        "required_monthly_contribution_by_return": required_by_return,
-        "assumed_return": assumed_return,
-        "required_monthly_contribution_at_assumed_return": round(required_at_assumed, 2),
+        "required_cagr_without_contributions": None,
+        "required_monthly_contribution_by_return": {},
+        "assumed_return": None,
+        "required_monthly_contribution_at_assumed_return": None,
         "month_start_equity": round(month_start_equity, 2),
         "equity_change_this_month": equity_change_this_month,
+        "monthly_target_progress_pct": round(max(0.0, progress_pct), 2),
+        "remaining_to_monthly_target": round(remaining_to_monthly_target, 2),
+        "days_elapsed_this_month": days_elapsed,
+        "days_remaining_this_month": days_remaining,
+        "required_daily_after_tax_from_now": required_daily_from_now,
+        "projected_month_end_after_tax_pnl": projected_month_end_pnl,
+        "projected_gap_to_monthly_target": projected_gap_at_month_end,
         "live_month_start_equity": round(live_month_start_equity, 2),
         "live_equity_change_this_month": live_change_this_month,
         "estimated_live_contribution_this_month": estimated_live_contribution,

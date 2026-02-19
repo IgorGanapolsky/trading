@@ -42,7 +42,8 @@ def main() -> int:
         "Updated North Star plan:",
         f"mode={weekly.get('mode')}",
         f"max_position={weekly.get('recommended_max_position_pct')}",
-        f"req_monthly@30%=${contrib.get('required_monthly_contribution_at_assumed_return')}",
+        f"monthly_target=${contrib.get('monthly_after_tax_target')}",
+        f"month_progress={contrib.get('monthly_target_progress_pct')}%",
     )
     return 0
 

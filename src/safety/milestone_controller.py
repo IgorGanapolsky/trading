@@ -10,24 +10,25 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import date, datetime
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 try:
     from src.core.trading_constants import (
+        NORTH_STAR_MONTHLY_AFTER_TAX,
         NORTH_STAR_TARGET_CAPITAL,
-        NORTH_STAR_TARGET_DATE,
         NORTH_STAR_TARGET_WIN_RATE_PCT,
     )
 except Exception:
-    NORTH_STAR_TARGET_DATE = date(2029, 11, 14)
-    NORTH_STAR_TARGET_CAPITAL = 600_000.0
+    NORTH_STAR_MONTHLY_AFTER_TAX = 6_000.0
+    NORTH_STAR_TARGET_CAPITAL = 300_000.0
     NORTH_STAR_TARGET_WIN_RATE_PCT = 80.0
 
 DEFAULT_STATE_PATH = Path("data/system_state.json")
 DEFAULT_TRADES_PATH = Path("data/trades.json")
-DEFAULT_TARGET_DATE = NORTH_STAR_TARGET_DATE
+DEFAULT_TARGET_MODE = "asap_monthly_income"
+DEFAULT_MONTHLY_AFTER_TAX_TARGET = NORTH_STAR_MONTHLY_AFTER_TAX
 DEFAULT_TARGET_CAPITAL = NORTH_STAR_TARGET_CAPITAL
 DEFAULT_TARGET_WIN_RATE_PCT = NORTH_STAR_TARGET_WIN_RATE_PCT
 DEFAULT_ROLLING_WINDOW = int(os.getenv("MILESTONE_ROLLING_WINDOW", "50"))
@@ -98,12 +99,6 @@ def resolve_strategy_family(strategy: str) -> str:
     if any(token in text for token in alt_tokens):
         return "alternatives"
     return "other"
-
-
-def _required_cagr(current_equity: float, target_capital: float, years_left: float) -> float:
-    if current_equity <= 0 or target_capital <= 0 or years_left <= 0:
-        return 0.0
-    return (target_capital / current_equity) ** (1.0 / years_left) - 1.0
 
 
 def _extract_closed_trades(
@@ -273,6 +268,18 @@ def _estimate_annual_edge_from_expectancy(
     return (expected_daily_pnl * 252.0) / equity
 
 
+def _estimate_monthly_after_tax_from_expectancy(
+    expectancy: float | None,
+    samples: int,
+    paper_day: int,
+) -> float:
+    if expectancy is None or samples <= 0 or paper_day <= 0:
+        return 0.0
+    trades_per_day = samples / max(1, paper_day)
+    expected_daily_pnl = float(expectancy) * trades_per_day
+    return max(0.0, expected_daily_pnl * 21.0)
+
+
 def _north_star_probability(
     state: dict[str, Any],
     primary_metrics: dict[str, Any],
@@ -290,21 +297,25 @@ def _north_star_probability(
     win_rate = primary_metrics.get("win_rate_pct")
     expectancy = primary_metrics.get("expectancy")
     samples = _as_int(primary_metrics.get("samples"), 0)
+    weekly_gate = state.get("north_star_weekly_gate", {}) if isinstance(state, dict) else {}
+    cadence_kpi = weekly_gate.get("cadence_kpi") if isinstance(weekly_gate, dict) else {}
+    cadence_passed = bool(cadence_kpi.get("passed")) if isinstance(cadence_kpi, dict) else False
+    cadence_setups = (
+        _as_int(cadence_kpi.get("qualified_setups_observed"), 0)
+        if isinstance(cadence_kpi, dict)
+        else 0
+    )
 
-    years_left = max(0.0, (DEFAULT_TARGET_DATE - date.today()).days / 365.25)
-    required_cagr = _required_cagr(equity, DEFAULT_TARGET_CAPITAL, years_left)
     estimated_cagr = _estimate_annual_edge_from_expectancy(expectancy, samples, paper_day, equity)
-
-    if required_cagr <= 0.15:
-        trajectory_score = 90.0
-    elif required_cagr <= 0.25:
-        trajectory_score = 70.0
-    elif required_cagr <= 0.35:
-        trajectory_score = 55.0
-    elif required_cagr <= 0.45:
-        trajectory_score = 35.0
-    else:
-        trajectory_score = 15.0
+    estimated_monthly_after_tax = _estimate_monthly_after_tax_from_expectancy(
+        expectancy, samples, paper_day
+    )
+    monthly_progress_ratio = (
+        estimated_monthly_after_tax / DEFAULT_MONTHLY_AFTER_TAX_TARGET
+        if DEFAULT_MONTHLY_AFTER_TAX_TARGET > 0
+        else 0.0
+    )
+    trajectory_score = max(0.0, min(100.0, monthly_progress_ratio * 100.0))
 
     if win_rate is None:
         win_score = 25.0
@@ -313,15 +324,25 @@ def _north_star_probability(
             0.0, min(100.0, (_as_float(win_rate) / DEFAULT_TARGET_WIN_RATE_PCT) * 100.0)
         )
 
-    if estimated_cagr <= 0:
+    expectancy_val = _as_float(expectancy, 0.0) if expectancy is not None else None
+    if expectancy_val is None:
+        edge_score = 20.0
+    elif expectancy_val <= 0:
         edge_score = 0.0
     else:
-        edge_score = max(
-            0.0,
-            min(100.0, (estimated_cagr / max(required_cagr, 0.05)) * 100.0),
-        )
+        edge_score = max(0.0, min(100.0, (expectancy_val / 50.0) * 100.0))
 
-    score = round((0.4 * trajectory_score) + (0.3 * win_score) + (0.3 * edge_score), 1)
+    if cadence_passed:
+        cadence_score = 100.0
+    elif cadence_setups > 0:
+        cadence_score = 45.0
+    else:
+        cadence_score = 15.0
+
+    score = round(
+        (0.4 * trajectory_score) + (0.25 * win_score) + (0.2 * edge_score) + (0.15 * cadence_score),
+        1,
+    )
 
     # Hard cap probability when primary strategy family is explicitly paused.
     if primary_status.get("paused"):
@@ -339,7 +360,11 @@ def _north_star_probability(
     return {
         "score": score,
         "label": label,
-        "required_cagr": round(required_cagr, 4),
+        "target_mode": DEFAULT_TARGET_MODE,
+        "monthly_after_tax_target": round(DEFAULT_MONTHLY_AFTER_TAX_TARGET, 2),
+        "estimated_monthly_after_tax_from_expectancy": round(estimated_monthly_after_tax, 2),
+        "monthly_target_progress_pct": round(max(0.0, monthly_progress_ratio * 100.0), 2),
+        "required_cagr": None,
         "estimated_cagr_from_expectancy": round(estimated_cagr, 4),
         "win_rate_pct": round(_as_float(win_rate, 0.0), 2) if win_rate is not None else None,
         "expectancy_per_trade": round(_as_float(expectancy, 0.0), 4)
@@ -347,7 +372,7 @@ def _north_star_probability(
         else None,
         "samples": samples,
         "target_capital": DEFAULT_TARGET_CAPITAL,
-        "target_date": DEFAULT_TARGET_DATE.isoformat(),
+        "target_date": None,
     }
 
 
@@ -449,6 +474,12 @@ def apply_snapshot_to_state(state: dict[str, Any], snapshot: dict[str, Any]) -> 
     probability = snapshot.get("north_star_probability", {})
     north_star["probability_score"] = probability.get("score")
     north_star["probability_label"] = probability.get("label")
+    north_star["target_mode"] = probability.get("target_mode")
+    north_star["monthly_after_tax_target"] = probability.get("monthly_after_tax_target")
+    north_star["estimated_monthly_after_tax_from_expectancy"] = probability.get(
+        "estimated_monthly_after_tax_from_expectancy"
+    )
+    north_star["monthly_target_progress_pct"] = probability.get("monthly_target_progress_pct")
     north_star["required_cagr"] = probability.get("required_cagr")
     north_star["estimated_cagr_from_expectancy"] = probability.get("estimated_cagr_from_expectancy")
     north_star["target_capital"] = probability.get("target_capital")

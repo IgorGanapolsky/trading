@@ -45,6 +45,13 @@ CRISIS_POSITION_COUNT: int = 4  # More than 4 positions triggers crisis mode
 IRON_CONDOR_STOP_LOSS_MULTIPLIER: float = 1.0
 
 # =============================================================================
+# BEHAVIORAL + EXPIRY CONCENTRATION GUARDS
+# =============================================================================
+MAX_EXPIRY_CONCENTRATION_PCT: float = 0.40  # 40% max ICs in one expiry week
+FOMO_INTRADAY_MOVE_PCT: float = 0.02        # 2% SPY move blocks new IC entry
+STOP_LOSS_COOLING_HOURS: int = 24            # Hours to wait after stop-loss exit
+
+# =============================================================================
 # ANTI-CHURN GUARDRAILS (intraday) - SINGLE SOURCE OF TRUTH
 # =============================================================================
 # "Structures" = strategy-level structures (e.g., 1 iron condor entry record).
@@ -61,11 +68,12 @@ MAX_DTE: int = 45  # Maximum days to expiration per CLAUDE.md
 # =============================================================================
 # NORTH STAR TARGETS - SINGLE SOURCE OF TRUTH
 # =============================================================================
-# Validated autonomous iron condor system → consistent $500/month on $25K+ capital.
-NORTH_STAR_TARGET_DATE: date = date(2029, 11, 14)
-NORTH_STAR_TARGET_CAPITAL: float = 25_000.0
-NORTH_STAR_MONTHLY_AFTER_TAX: float = 500.0
-NORTH_STAR_DAILY_AFTER_TAX: float = 16.67
+# North Star = reach $6K/month after-tax as soon as possible (no fixed deadline date).
+# Keep target capital as an implied benchmark (2% monthly yield -> ~$300K capital base).
+NORTH_STAR_TARGET_DATE: date | None = None
+NORTH_STAR_TARGET_CAPITAL: float = 300_000.0
+NORTH_STAR_MONTHLY_AFTER_TAX: float = 6_000.0
+NORTH_STAR_DAILY_AFTER_TAX: float = 200.0
 NORTH_STAR_TARGET_WIN_RATE_PCT: float = 80.0
 NORTH_STAR_PAPER_VALIDATION_DAYS: int = 90
 
