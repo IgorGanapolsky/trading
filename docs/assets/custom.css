@@ -83,3 +83,59 @@
   font-size: 0.95rem;
   margin-top: 6px;
 }
+
+/* Click-to-zoom for blog/report diagrams and thumbnails */
+.post-content img.zoomable-media,
+.home img.zoomable-media,
+.page-content img.zoomable-media {
+  cursor: zoom-in;
+}
+
+.image-lightbox {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.78);
+  z-index: 10000;
+}
+
+.image-lightbox.active {
+  display: flex;
+}
+
+.image-lightbox-content {
+  max-width: min(96vw, 1600px);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.image-lightbox-close {
+  align-self: flex-end;
+  border: 0;
+  border-radius: 999px;
+  width: 38px;
+  height: 38px;
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.image-lightbox img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(92vh - 64px);
+  object-fit: contain;
+  background: #111;
+  border-radius: 8px;
+}
+
+.image-lightbox-caption {
+  color: #fff;
+  text-align: center;
+  font-size: 0.95rem;
+}

@@ -29,6 +29,82 @@
   });
 </script>
 
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const containers = document.querySelectorAll(
+      ".post-content, .home, .page-content"
+    );
+    if (!containers.length) return;
+
+    const lightbox = document.createElement("div");
+    lightbox.className = "image-lightbox";
+    lightbox.setAttribute("aria-hidden", "true");
+    lightbox.innerHTML = `
+      <div class="image-lightbox-content" role="dialog" aria-modal="true" aria-label="Image viewer">
+        <button class="image-lightbox-close" type="button" aria-label="Close image viewer">&times;</button>
+        <img alt="" />
+        <div class="image-lightbox-caption"></div>
+      </div>
+    `;
+    document.body.appendChild(lightbox);
+
+    const closeBtn = lightbox.querySelector(".image-lightbox-close");
+    const lightboxImg = lightbox.querySelector("img");
+    const caption = lightbox.querySelector(".image-lightbox-caption");
+
+    const closeLightbox = () => {
+      lightbox.classList.remove("active");
+      lightbox.setAttribute("aria-hidden", "true");
+      lightboxImg.src = "";
+      caption.textContent = "";
+    };
+
+    const openLightbox = (imgEl) => {
+      const anchor = imgEl.closest("a[href]");
+      const src =
+        (anchor && anchor.getAttribute("href")) ||
+        imgEl.getAttribute("src") ||
+        imgEl.currentSrc;
+      if (!src) return;
+      lightboxImg.src = src;
+      caption.textContent = imgEl.getAttribute("alt") || "";
+      lightbox.classList.add("active");
+      lightbox.setAttribute("aria-hidden", "false");
+    };
+
+    closeBtn.addEventListener("click", closeLightbox);
+    lightbox.addEventListener("click", (event) => {
+      if (event.target === lightbox) closeLightbox();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && lightbox.classList.contains("active")) {
+        closeLightbox();
+      }
+    });
+
+    containers.forEach((container) => {
+      container.querySelectorAll("img").forEach((img) => {
+        if (img.dataset.noZoom === "true") return;
+        if (img.closest(".image-lightbox")) return;
+        img.classList.add("zoomable-media");
+        if (!img.hasAttribute("tabindex")) img.setAttribute("tabindex", "0");
+        img.setAttribute("role", "button");
+
+        img.addEventListener("click", (event) => {
+          event.preventDefault();
+          openLightbox(img);
+        });
+        img.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openLightbox(img);
+          }
+        });
+      });
+    });
+  });
+</script>
+
 <!-- Custom styles for tech stack diagrams (keep light to avoid fighting Minima defaults) -->
 <style>
   .mermaid {
