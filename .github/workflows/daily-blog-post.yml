@@ -28,8 +28,7 @@ env:
   SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 jobs:
   generate-blog-post:
-    # DISABLED: Dev.to auto-publishing disabled per CEO directive (Feb 1, 2026)
-    if: false
+    # Re-enabled to restore autonomous daily publishing cadence.
     runs-on: ubuntu-latest
 
     steps:

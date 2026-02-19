@@ -21,6 +21,18 @@ _DEFAULT_BUCKET_TICKERS = {
 }
 
 
+def _safe_env_float(name: str, default: float) -> float:
+    """Read numeric env vars defensively."""
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        logger.warning("Invalid %s=%r; using default %.4f", name, raw, default)
+        return default
+
+
 def _load_custom_bucket_map() -> dict[str, list[str]]:
     """Allow overrides via SMART_DCA_BUCKETS env (JSON)."""
     raw = os.getenv("SMART_DCA_BUCKETS")
@@ -197,12 +209,41 @@ class SmartDCAAllocator:
 
     @staticmethod
     def _blend_confidence(strength: float, rl_conf: float, sentiment: float) -> float:
-        """Convert gate signals into a 0-1 weighting factor."""
+        """Convert gate signals into a constrained 0-1 weighting factor.
+
+        Fusion policy:
+        - Normalize positive weights across momentum/RL/sentiment channels.
+        - Cap each channel contribution so one signal cannot dominate.
+        - Keep a configurable base confidence floor.
+        """
         safe_strength = max(0.0, min(1.0, strength))
         safe_rl = max(0.0, min(1.0, rl_conf))
         safe_sentiment = max(-1.0, min(1.0, sentiment))
-        base = 0.2 + 0.5 * safe_strength + 0.4 * safe_rl + 0.2 * max(0.0, safe_sentiment)
-        return max(0.0, min(1.0, base))
+        pos_sentiment = max(0.0, safe_sentiment)
+
+        base = max(0.0, min(1.0, _safe_env_float("SMART_DCA_BLEND_BASE", 0.2)))
+
+        raw_momentum = max(0.0, _safe_env_float("SMART_DCA_BLEND_WEIGHT_MOMENTUM", 0.5))
+        raw_rl = max(0.0, _safe_env_float("SMART_DCA_BLEND_WEIGHT_RL", 0.4))
+        raw_sent = max(0.0, _safe_env_float("SMART_DCA_BLEND_WEIGHT_SENTIMENT", 0.2))
+        total_weight = raw_momentum + raw_rl + raw_sent
+        if total_weight <= 0:
+            w_momentum, w_rl, w_sent = (1 / 3, 1 / 3, 1 / 3)
+        else:
+            w_momentum = raw_momentum / total_weight
+            w_rl = raw_rl / total_weight
+            w_sent = raw_sent / total_weight
+
+        cap_momentum = max(0.0, _safe_env_float("SMART_DCA_BLEND_GAIN_CAP_MOMENTUM", 0.5))
+        cap_rl = max(0.0, _safe_env_float("SMART_DCA_BLEND_GAIN_CAP_RL", 0.4))
+        cap_sent = max(0.0, _safe_env_float("SMART_DCA_BLEND_GAIN_CAP_SENTIMENT", 0.2))
+
+        momentum_contrib = min(w_momentum * safe_strength, cap_momentum)
+        rl_contrib = min(w_rl * safe_rl, cap_rl)
+        sent_contrib = min(w_sent * pos_sentiment, cap_sent)
+
+        blended = base + momentum_contrib + rl_contrib + sent_contrib
+        return max(0.0, min(1.0, blended))
 
     # ------------------------------------------------------------------ #
     # Diagnostics

@@ -12,6 +12,7 @@ The gate pipeline is the core of the trading system - failures here = real money
 
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
@@ -343,6 +344,112 @@ class TestGate3Sentiment:
         from src.orchestrator.gates import Gate3Sentiment
 
         assert Gate3Sentiment is not None
+
+    def test_gate3_llm_blend_applies_normalization_and_gain_caps(self, monkeypatch):
+        """LLM + Playwright fusion should be capped so neither source dominates."""
+        from src.orchestrator.gates import Gate3Sentiment
+
+        monkeypatch.setenv("LLM_SENTIMENT_WEIGHT", "1")
+        monkeypatch.setenv("PLAYWRIGHT_SENTIMENT_WEIGHT", "1")
+        monkeypatch.setenv("LLM_SENTIMENT_GAIN_CAP_LLM", "0.2")
+        monkeypatch.setenv("LLM_SENTIMENT_GAIN_CAP_PLAYWRIGHT", "0.2")
+
+        llm_agent = MagicMock()
+        llm_agent.model_name = "test-model"
+        budget = MagicMock()
+        budget.can_afford_execution.return_value = True
+        failure_manager = MagicMock()
+        failure_manager.run.return_value = SimpleNamespace(
+            ok=True,
+            result={"score": 1.0, "reason": "positive", "cost": 0.02},
+            failure=None,
+        )
+        gate = Gate3Sentiment(
+            llm_agent=llm_agent,
+            bias_provider=None,
+            budget_controller=budget,
+            playwright_scraper=MagicMock(),
+            failure_manager=failure_manager,
+            telemetry=MagicMock(),
+            llm_sentiment_enabled=True,
+        )
+        ctx = TradeContext(
+            ticker="SPY",
+            momentum_signal=SimpleNamespace(indicators={}),
+            momentum_strength=0.8,
+        )
+
+        result = gate._evaluate_llm("SPY", ctx, threshold=-0.2, playwright_score=1.0)
+
+        assert result.status == GateStatus.PASS
+        assert ctx.sentiment_score == pytest.approx(0.4, rel=1e-6)
+        assert result.confidence == pytest.approx(0.4, rel=1e-6)
+
+    def test_gate3_llm_debate_adjustment_respects_bear_cap(self, monkeypatch):
+        """Bearish debate dampening should be bounded by configured cap."""
+        from src.orchestrator.gates import Gate3Sentiment
+
+        monkeypatch.setenv("LLM_SENTIMENT_WEIGHT", "1")
+        monkeypatch.setenv("PLAYWRIGHT_SENTIMENT_WEIGHT", "0")
+        monkeypatch.setenv("LLM_SENTIMENT_GAIN_CAP_LLM", "1")
+        monkeypatch.setenv("LLM_SENTIMENT_GAIN_CAP_PLAYWRIGHT", "0")
+        monkeypatch.setenv("LLM_SENTIMENT_DEBATE_BEAR_CAP", "0.05")
+
+        llm_agent = MagicMock()
+        llm_agent.model_name = "test-model"
+        budget = MagicMock()
+        budget.can_afford_execution.return_value = True
+        failure_manager = MagicMock()
+        failure_manager.run.return_value = SimpleNamespace(
+            ok=True,
+            result={"score": 0.9, "reason": "positive", "cost": 0.02},
+            failure=None,
+        )
+        gate = Gate3Sentiment(
+            llm_agent=llm_agent,
+            bias_provider=None,
+            budget_controller=budget,
+            playwright_scraper=MagicMock(),
+            failure_manager=failure_manager,
+            telemetry=MagicMock(),
+            llm_sentiment_enabled=True,
+        )
+        ctx = TradeContext(
+            ticker="SPY",
+            momentum_signal=SimpleNamespace(indicators={}),
+            momentum_strength=0.8,
+            debate_outcome=SimpleNamespace(winner="BEAR", confidence=1.0),
+        )
+
+        gate._evaluate_llm("SPY", ctx, threshold=-0.2, playwright_score=0.0)
+        assert ctx.sentiment_score == pytest.approx(0.85, rel=1e-6)
+
+    def test_gate3_bias_adjustment_respects_bear_cap(self, monkeypatch):
+        """Cached bias path should use the same bounded adjustment rules."""
+        from src.orchestrator.gates import Gate3Sentiment
+
+        monkeypatch.setenv("LLM_SENTIMENT_DEBATE_BEAR_CAP", "0.05")
+
+        gate = Gate3Sentiment(
+            llm_agent=MagicMock(),
+            bias_provider=None,
+            budget_controller=MagicMock(),
+            playwright_scraper=MagicMock(),
+            failure_manager=MagicMock(),
+            telemetry=MagicMock(),
+            llm_sentiment_enabled=True,
+        )
+        ctx = TradeContext(
+            ticker="SPY",
+            momentum_strength=0.8,
+            debate_outcome=SimpleNamespace(winner="BEAR", confidence=1.0),
+        )
+        bias = SimpleNamespace(score=0.9, reason="cached bias")
+
+        result = gate._evaluate_bias("SPY", bias, threshold=-0.2, ctx=ctx)
+
+        assert result.status == GateStatus.PASS
+        assert ctx.sentiment_score == pytest.approx(0.85, rel=1e-6)
 
 
 class TestGate35Introspection:

@@ -1275,21 +1275,73 @@ class Gate3Sentiment:
             logger.warning("Gate 3 (%s): Playwright failed: %s", ticker, e)
         return 0.0
 
+    @staticmethod
+    def _clamp(value: float, low: float, high: float) -> float:
+        return max(low, min(high, value))
+
+    @staticmethod
+    def _env_float(name: str, default: float) -> float:
+        raw = os.getenv(name)
+        if raw is None:
+            return default
+        try:
+            return float(raw)
+        except (TypeError, ValueError):
+            logger.warning("Gate 3: invalid %s=%r, using default %.4f", name, raw, default)
+            return default
+
+    def _blend_llm_playwright_sentiment(self, llm_score: float, playwright_score: float) -> float:
+        """Blend sentiment sources with normalized weights and gain caps."""
+        safe_llm = self._clamp(float(llm_score), -1.0, 1.0)
+        safe_playwright = self._clamp(float(playwright_score), -1.0, 1.0)
+
+        raw_llm_weight = max(0.0, self._env_float("LLM_SENTIMENT_WEIGHT", 0.7))
+        raw_playwright_weight = max(0.0, self._env_float("PLAYWRIGHT_SENTIMENT_WEIGHT", 0.3))
+        total_weight = raw_llm_weight + raw_playwright_weight
+        if total_weight <= 0:
+            llm_weight = playwright_weight = 0.5
+        else:
+            llm_weight = raw_llm_weight / total_weight
+            playwright_weight = raw_playwright_weight / total_weight
+
+        llm_cap = max(0.0, self._env_float("LLM_SENTIMENT_GAIN_CAP_LLM", 0.7))
+        playwright_cap = max(0.0, self._env_float("LLM_SENTIMENT_GAIN_CAP_PLAYWRIGHT", 0.3))
+
+        llm_contrib_raw = safe_llm * llm_weight
+        playwright_contrib_raw = safe_playwright * playwright_weight
+        llm_contrib = self._clamp(llm_contrib_raw, -llm_cap, llm_cap)
+        playwright_contrib = self._clamp(
+            playwright_contrib_raw, -playwright_cap, playwright_cap
+        )
+
+        return self._clamp(llm_contrib + playwright_contrib, -1.0, 1.0)
+
+    def _apply_bounded_adjustment(self, score: float, raw_delta: float, cap: float) -> float:
+        """Apply an additive delta while capping step size and output range."""
+        bounded_delta = self._clamp(raw_delta, -cap, cap) if cap > 0 else 0.0
+        return self._clamp(score + bounded_delta, -1.0, 1.0)
+
     def _evaluate_bias(
         self, ticker: str, bias: Any, threshold: float, ctx: TradeContext
     ) -> GateResult:
         """Evaluate using cached bias score."""
-        score = bias.score
+        score = self._clamp(float(bias.score), -1.0, 1.0)
+        bear_cap = max(0.0, self._env_float("LLM_SENTIMENT_DEBATE_BEAR_CAP", 0.25))
+        bull_cap = max(0.0, self._env_float("LLM_SENTIMENT_DEBATE_BULL_CAP", 0.15))
 
         # Inter-gate data sharing: adjust bias score with upstream signals
         if ctx.debate_outcome and hasattr(ctx.debate_outcome, "winner"):
             if ctx.debate_outcome.winner == "BEAR" and ctx.debate_outcome.confidence > 0.5:
-                score -= 0.2 * ctx.debate_outcome.confidence
+                score = self._apply_bounded_adjustment(
+                    score, -(0.2 * ctx.debate_outcome.confidence), bear_cap
+                )
             elif ctx.debate_outcome.winner == "BULL" and ctx.debate_outcome.confidence > 0.5:
-                score += 0.1 * ctx.debate_outcome.confidence
+                score = self._apply_bounded_adjustment(
+                    score, 0.1 * ctx.debate_outcome.confidence, bull_cap
+                )
 
         if ctx.momentum_strength < 0.3 and score > 0:
-            score *= 0.8
+            score = self._clamp(score * 0.8, -1.0, 1.0)
 
         ctx.sentiment_score = score
 
@@ -1350,19 +1402,19 @@ class Gate3Sentiment:
         llm_score = llm_result.get("score", 0.0)
 
         # Blend with playwright
-        if playwright_score != 0.0:
-            weight = float(os.getenv("PLAYWRIGHT_SENTIMENT_WEIGHT", "0.3"))
-            sentiment_score = llm_score * (1 - weight) + playwright_score * weight
-        else:
-            sentiment_score = llm_score
+        sentiment_score = self._blend_llm_playwright_sentiment(llm_score, playwright_score)
 
         # Inter-gate data sharing: incorporate upstream signals (agentic workflow improvement)
         # If debate concluded bearish with high confidence, dampen positive sentiment
         # If momentum is weak, require stronger sentiment to pass
+        bear_cap = max(0.0, self._env_float("LLM_SENTIMENT_DEBATE_BEAR_CAP", 0.25))
+        bull_cap = max(0.0, self._env_float("LLM_SENTIMENT_DEBATE_BULL_CAP", 0.15))
         if ctx.debate_outcome and hasattr(ctx.debate_outcome, "winner"):
             if ctx.debate_outcome.winner == "BEAR" and ctx.debate_outcome.confidence > 0.5:
                 dampening = 0.2 * ctx.debate_outcome.confidence
-                sentiment_score -= dampening
+                sentiment_score = self._apply_bounded_adjustment(
+                    sentiment_score, -dampening, bear_cap
+                )
                 logger.info(
                     "Gate 3 (%s): Sentiment dampened by %.2f (bear debate, conf=%.2f)",
                     ticker,
@@ -1371,7 +1423,9 @@ class Gate3Sentiment:
                 )
             elif ctx.debate_outcome.winner == "BULL" and ctx.debate_outcome.confidence > 0.5:
                 boost = 0.1 * ctx.debate_outcome.confidence
-                sentiment_score += boost
+                sentiment_score = self._apply_bounded_adjustment(
+                    sentiment_score, boost, bull_cap
+                )
                 logger.info(
                     "Gate 3 (%s): Sentiment boosted by %.2f (bull debate, conf=%.2f)",
                     ticker,
@@ -1381,7 +1435,7 @@ class Gate3Sentiment:
 
         if ctx.momentum_strength < 0.3 and sentiment_score > 0:
             # Weak momentum + positive sentiment = reduce confidence
-            sentiment_score *= 0.8
+            sentiment_score = self._clamp(sentiment_score * 0.8, -1.0, 1.0)
             logger.info(
                 "Gate 3 (%s): Sentiment reduced 20%% (weak momentum=%.2f)",
                 ticker,
