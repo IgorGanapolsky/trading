@@ -598,16 +598,24 @@ class TradeGateway:
                 exp = symbol[3:9]
                 by_expiry.setdefault(exp, []).append(pos)
 
-        # Only count complete IC structures (>=4 legs with 2 short + 2 long)
+        # Count complete IC structures by contract quantity per expiry.
+        # A single expiry can hold multiple condors; counting only unique expiries
+        # underestimates concentration (e.g., 3 ICs same week looked like 1 IC).
         ic_expiries = []
         for exp, legs in by_expiry.items():
             if len(legs) >= 4:
-                short_count = sum(1 for p in legs if float(p.get("qty", 0)) < 0)
-                long_count = sum(1 for p in legs if float(p.get("qty", 0)) > 0)
-                if short_count >= 2 and long_count >= 2:
+                short_contracts = sum(
+                    abs(float(p.get("qty", 0))) for p in legs if float(p.get("qty", 0)) < 0
+                )
+                long_contracts = sum(
+                    abs(float(p.get("qty", 0))) for p in legs if float(p.get("qty", 0)) > 0
+                )
+                ic_count_for_expiry = int(min(short_contracts, long_contracts) // 2)
+                if ic_count_for_expiry >= 1:
                     try:
                         dt = _dt.strptime(f"20{exp}", "%Y%m%d")
-                        ic_expiries.append(dt.isocalendar()[1])  # ISO week number
+                        iso_week = dt.isocalendar()[1]
+                        ic_expiries.extend([iso_week] * ic_count_for_expiry)
                     except ValueError:
                         continue
 
