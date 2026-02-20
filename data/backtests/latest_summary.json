@@ -1,6 +1,6 @@
 {
-  "total_trades": 18,
-  "total_pnl": 720.0,
+  "total_trades": 6,
+  "total_pnl": 240.0,
   "win_rate": 1.0,
   "avg_trade": 40.0,
   "max_win": 40.0,
@@ -20,7 +20,7 @@
     "risk_free_rate": 0.05,
     "buffer_pct": 0.05
   },
-  "start_date": "2025-12-20",
+  "start_date": "2026-01-09",
   "end_date": "2026-01-19",
-  "timestamp": "2026-01-20T23:04:55.342649"
+  "timestamp": "2026-01-20T11:58:22.943896"
 }
