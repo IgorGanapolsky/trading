@@ -19,6 +19,19 @@ def test_parse_notify_payload_reads_json_from_last_argument() -> None:
     assert parse_notify_payload(argv) == payload
 
 
+def test_parse_notify_payload_reads_json_from_env(monkeypatch) -> None:
+    payload = {"input-messages": ["thumbs down"], "turn-id": "t2"}
+    monkeypatch.setenv("CODEX_NOTIFY_PAYLOAD", json.dumps(payload))
+    assert parse_notify_payload([]) == payload
+
+
+def test_parse_notify_payload_falls_back_to_plain_args() -> None:
+    payload = parse_notify_payload(["thumbs", "up"])
+    assert payload is not None
+    assert payload["input-messages"] == ["thumbs up"]
+    assert payload["source"] == "notify_argv_fallback"
+
+
 def test_extract_messages_from_payload() -> None:
     payload = {
         "input-messages": ["first", {"text": "thumbs down"}],

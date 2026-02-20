@@ -99,7 +99,7 @@ def _normalize_text(value: Any) -> str:
 
 
 def parse_notify_payload(argv: list[str]) -> dict[str, Any] | None:
-    """Parse notify payload JSON from argv, if present."""
+    """Parse notify payload JSON from argv/env, with resilient argv fallback."""
     for raw in reversed(argv):
         candidate = raw.strip()
         if not candidate or not candidate.startswith("{"):
@@ -110,6 +110,27 @@ def parse_notify_payload(argv: list[str]) -> dict[str, Any] | None:
             continue
         if isinstance(payload, dict):
             return payload
+
+    for env_key in ("CODEX_NOTIFY_PAYLOAD", "CODEX_NOTIFY_JSON", "NOTIFY_PAYLOAD"):
+        candidate = _normalize_text(os.environ.get(env_key))
+        if not candidate or not candidate.startswith("{"):
+            continue
+        try:
+            payload = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(payload, dict):
+            return payload
+
+    # Some notify implementations pass plain text args (not JSON).
+    # Preserve that signal so detect_feedback_signal can still fire.
+    fallback_text = _normalize_text(argv)
+    if fallback_text:
+        return {
+            "input-messages": [fallback_text],
+            "timestamp": _safe_now_iso(),
+            "source": "notify_argv_fallback",
+        }
     return None
 
 
