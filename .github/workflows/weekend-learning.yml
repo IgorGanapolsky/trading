@@ -2,10 +2,9 @@ name: Weekend Learning Pipeline
 
 on:
   # RE-ENABLED Jan 30, 2026 - CEO directive: continuous learning for North Star
-  # Run Saturday AND Sunday mornings for full weekend coverage
+  # Run continuously across Saturday + Sunday (every 4 hours)
   schedule:
-    - cron: "0 13 * * 6" # Saturday 8:00 AM ET (13:00 UTC)
-    - cron: "0 13 * * 0" # Sunday 8:00 AM ET (13:00 UTC)
+    - cron: "0 */4 * * 6,0" # Every 4 hours on Saturday/Sunday
   workflow_dispatch:
     inputs:
       full_rebuild:
@@ -83,7 +82,7 @@ jobs:
   weekend-learning:
     needs: cleanup-stale-branches
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
     env:
       # API keys needed for content ingestion
       YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
@@ -106,7 +105,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install yt-dlp youtube-transcript-api pandas numpy requests
+          pip install yt-dlp youtube-transcript-api pandas numpy requests pytest pytest-timeout
 
       - name: "COST CHECK: Verify GCP budget before proceeding"
         env:
@@ -259,6 +258,45 @@ jobs:
               print(f'   - {strategy}: {stats[\"count\"]} trades, {win_rate:.0f}% win rate, \${stats[\"total_pl\"]:.2f} P/L')
           "
 
+      # === PHASE 3b: WEEKEND STRATEGY RESEARCH ===
+      - name: "Phase 3b: Backtest and parameter sweep best options setups"
+        continue-on-error: true
+        run: |
+          echo "🧪 Running weekend strategy research (backtest + sweep)..."
+          mkdir -p data/backtests data/backtests/parameter_sweeps data/evaluations/rag
+
+          echo "  • Iron Condor backtest"
+          python3 scripts/backtest/iron_condor_backtester.py \
+            --days 365 \
+            --ticker SPY \
+            --delta 0.20 \
+            --width 10 \
+            --output data/backtests || echo "⚠️ Iron condor backtest warning"
+
+          echo "  • Bull Put Spread backtest"
+          python3 scripts/backtest/bull_put_spread_backtester.py \
+            --days 365 \
+            --output data/backtests || echo "⚠️ Bull put backtest warning"
+
+          echo "  • Parameter sweep"
+          python3 scripts/backtest/parameter_sweep.py \
+            --days 365 \
+            --max-combos 180 \
+            --output data/backtests/parameter_sweeps || echo "⚠️ Parameter sweep warning"
+
+      # === PHASE 3c: EVALUATION ===
+      - name: "Phase 3c: Evaluate retrieval quality and strategy outputs"
+        continue-on-error: true
+        run: |
+          echo "📏 Evaluating RAG retrieval quality..."
+          python3 scripts/evaluate_rag.py --prefer-lancedb --save --json || echo "⚠️ RAG eval warning"
+
+          echo "🧪 Running targeted weekend regression tests..."
+          python3 -m pytest \
+            tests/test_trade_confidence.py \
+            tests/test_generate_profit_readiness_scorecard.py \
+            -q --maxfail=1 --timeout=180 || echo "⚠️ Weekend regression test warning"
+
       # === PHASE 4: GENERATE INSIGHTS ===
       - name: "Phase 4: Generate weekend insights"
         run: |
@@ -385,6 +423,8 @@ jobs:
             data/vector_db/
             data/youtube_cache/
             data/blog_cache/
+            data/backtests/
+            data/evaluations/
             data/weekend_insights.json
           delete-branch: true
 
