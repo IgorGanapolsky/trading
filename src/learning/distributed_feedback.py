@@ -13,6 +13,7 @@ Design goals:
 from __future__ import annotations
 
 import json
+import os
 import re
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -52,11 +53,21 @@ class DistBackend(Protocol):
 
 @dataclass(frozen=True)
 class LocalBackend:
+    @staticmethod
+    def _env_int(name: str, default: int) -> int:
+        raw = os.getenv(name)
+        if raw is None:
+            return default
+        try:
+            return int(raw)
+        except (TypeError, ValueError):
+            return default
+
     def get_rank(self) -> int:
-        return 0
+        return self._env_int("RANK", 0)
 
     def get_world_size(self) -> int:
-        return 1
+        return max(1, self._env_int("WORLD_SIZE", 1))
 
     def all_reduce_sum_pair(self, positive: float, negative: float) -> tuple[float, float]:
         return positive, negative
