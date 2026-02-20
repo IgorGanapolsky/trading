@@ -50,6 +50,7 @@ from src.risk.options_risk_monitor import OptionsRiskMonitor
 from src.risk.position_manager import ExitConditions, PositionManager
 from src.risk.risk_manager import RiskManager
 from src.risk.trade_gateway import RejectionReason, TradeGateway, TradeRequest
+from src.signals.microstructure_features import MicrostructureFeatureExtractor
 from src.utils.heartbeat import record_heartbeat
 from src.utils.regime_detector import RegimeDetector
 from src.utils.staleness_guard import check_data_staleness
