@@ -14,7 +14,7 @@ import logging
 import re
 from dataclasses import dataclass, field
 
-from src.core.trading_constants import ALLOWED_TICKERS
+from src.core.trading_constants import ALLOWED_TICKERS, extract_underlying
 
 logger = logging.getLogger(__name__)
 
@@ -53,10 +53,7 @@ class PLReport:
 
 def extract_base_ticker(option_symbol: str) -> str:
     """Extract the base ticker from an options symbol like SPY260220P00660000."""
-    match = re.match(r"^([A-Z]+)\d{6}[PC]\d{8}$", option_symbol)
-    if match:
-        return match.group(1)
-    return option_symbol
+    return extract_underlying(option_symbol)
 
 
 def is_spy_option(symbol: str) -> bool:

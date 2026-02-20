@@ -3,6 +3,7 @@ name: EMERGENCY - Reset PDT and Close Position
 on:
   workflow_dispatch:
 
+# DISABLED: PDT workflows irrelevant at $100K (no PDT restrictions). Debt audit Feb 2026.
 permissions:
   contents: write
 
@@ -17,6 +18,7 @@ env:
 
 jobs:
   emergency-close:
+    if: false
     name: Emergency PDT Reset and Close
     runs-on: ubuntu-latest
     timeout-minutes: 5

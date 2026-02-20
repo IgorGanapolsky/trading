@@ -201,6 +201,20 @@ jobs:
           path: coverage.xml
         if: always()
         continue-on-error: true
+      - name: Dead code guard (max 50 unreferenced scripts)
+        run: |
+          count=0
+          for f in scripts/*.py; do
+            base=$(basename "$f" .py)
+            if [ "$base" = "__init__" ] || [ "$base" = "conftest" ]; then continue; fi
+            refs=$(grep -rl "$base" src/ tests/ .github/workflows/ --include='*.py' --include='*.yml' 2>/dev/null | grep -v "$f" | head -1)
+            if [ -z "$refs" ]; then count=$((count + 1)); fi
+          done
+          echo "Unreferenced scripts: $count"
+          if [ "$count" -gt 50 ]; then
+            echo "::error::Dead code threshold exceeded: $count unreferenced scripts (max 50)"
+            exit 1
+          fi
 
   smoke:
     name: Smoke Test

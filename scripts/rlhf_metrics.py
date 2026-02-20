@@ -165,7 +165,7 @@ def compute_metrics() -> dict:
     entries = []
     for entry in iter_feedback_entries():
         signal = _normalize_signal(entry)
-        if not signal:
+        if not signal or signal == "undo_revert":
             continue
         entry["_signal"] = signal
         entry["_timestamp"] = _parse_timestamp(entry)

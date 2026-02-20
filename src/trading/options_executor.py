@@ -35,24 +35,10 @@ logger = logging.getLogger(__name__)
 # ============================================================
 # TICKER WHITELIST - CRITICAL ENFORCEMENT (Jan 15, 2026)
 # Per CLAUDE.md: Liquid ETFs only
-# This prevents trades like SOFI that violated strategy
-# UPDATED Jan 19: Import from central config (single source of truth)
-# ============================================================
-try:
-    from src.core.trading_constants import ALLOWED_TICKERS, extract_underlying
-except ImportError:
-    ALLOWED_TICKERS = {"SPY", "SPX", "XSP", "QQQ", "IWM"}  # Fallback
-
-    def extract_underlying(symbol: str) -> str:  # type: ignore[misc]
-        """Fallback - see trading_constants.extract_underlying."""
-        return symbol.strip().upper()[:6]
-
+from src.core.trading_constants import ALLOWED_TICKERS, extract_underlying
 
 TICKER_WHITELIST_ENABLED = True  # Toggle for paper testing
 
-
-# Backward-compat alias: delegates to trading_constants.extract_underlying
-# (P0 tech debt - consolidated 5 duplicate implementations Feb 17, 2026)
 _extract_underlying_from_option = extract_underlying
 
 

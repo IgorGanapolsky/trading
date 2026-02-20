@@ -17,7 +17,7 @@ All ticker definitions consolidated there per Jan 28, 2026 cleanup.
 
 import logging
 
-from src.core.trading_constants import ALLOWED_TICKERS
+from src.core.trading_constants import ALLOWED_TICKERS, extract_underlying
 
 logger = logging.getLogger(__name__)
 
@@ -31,26 +31,6 @@ class TickerWhitelistViolation(Exception):
     """Raised when attempting to trade non-whitelisted ticker."""
 
     pass
-
-
-def extract_underlying(symbol: str) -> str:
-    """
-    Extract underlying ticker from option symbol.
-
-    Examples:
-        SPY260220P00653000 -> SPY
-        SOFI260213P00032000 -> SOFI
-        SPY -> SPY
-    """
-    # Options have format: UNDERLYING + YYMMDD + P/C + STRIKE
-    # Underlying is letters at the start
-    underlying = ""
-    for char in symbol:
-        if char.isalpha():
-            underlying += char
-        else:
-            break
-    return underlying.upper() if underlying else symbol.upper()
 
 
 def is_ticker_allowed(symbol: str) -> bool:

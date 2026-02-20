@@ -3,6 +3,7 @@ name: Diagnose PDT Issue
 on:
   workflow_dispatch:
 
+# DISABLED: PDT workflows irrelevant at $100K (no PDT restrictions). Debt audit Feb 2026.
 permissions:
   contents: write
 
@@ -12,6 +13,7 @@ env:
 
 jobs:
   diagnose:
+    if: false
     name: Diagnose PDT Configuration
     runs-on: ubuntu-latest
     timeout-minutes: 5

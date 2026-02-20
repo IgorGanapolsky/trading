@@ -25,27 +25,12 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from src.core.trading_constants import ALLOWED_TICKERS, extract_underlying
+
 logger = logging.getLogger(__name__)
 
 # Feedback model path (Thompson Sampling RLHF)
 FEEDBACK_MODEL_PATH = Path(__file__).parent.parent.parent / "models" / "ml" / "feedback_model.json"
-
-
-# ============================================================
-# TICKER WHITELIST - CRITICAL ENFORCEMENT (Jan 15, 2026)
-# Per CLAUDE.md: Liquid ETFs only (SPY, SPX, XSP, QQQ, IWM)
-# This prevents trades like SOFI that violated strategy
-# UPDATED Jan 19: Import from central config (single source of truth)
-# ============================================================
-try:
-    from src.core.trading_constants import ALLOWED_TICKERS, extract_underlying
-except ImportError:
-    # Fallback if constants unavailable (shouldn't happen in production)
-    ALLOWED_TICKERS = {"SPY", "SPX", "XSP", "QQQ", "IWM"}
-
-    def extract_underlying(symbol: str) -> str:  # type: ignore[misc]
-        """Fallback - see trading_constants.extract_underlying."""
-        return symbol.strip().upper()[:6]
 
 
 TICKER_WHITELIST_ENABLED = True  # Toggle for paper testing

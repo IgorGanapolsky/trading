@@ -5,11 +5,13 @@ on:
   schedule:
     - cron: "0 * * * *"
 
+# DISABLED: Local dev workflow, not CI. Debt audit Feb 2026.
 permissions:
   contents: write
 
 jobs:
   devloop:
+    if: false
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:

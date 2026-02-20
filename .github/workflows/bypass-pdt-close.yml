@@ -3,6 +3,8 @@ name: EMERGENCY - Bypass PDT and Close Positions
 on:
   workflow_dispatch:
 
+# DISABLED: PDT workflows irrelevant at $100K (no PDT restrictions). Debt audit Feb 2026.
+
 # Prevent concurrent trade execution (LL-281 race condition fix)
 concurrency:
   group: global-trade-execution
@@ -17,6 +19,7 @@ env:
 
 jobs:
   bypass-pdt-close:
+    if: false
     name: Bypass PDT Protection and Close
     runs-on: ubuntu-latest
     timeout-minutes: 5
