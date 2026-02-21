@@ -1,0 +1,59 @@
+name: Perplexity Utilization Audit
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+env:
+  PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT || github.token }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install requests
+
+      - name: Run utilization audit
+        run: |
+          python3 scripts/run_perplexity_utilization_audit.py \
+            --probe-live \
+            --summary-out data/analytics/perplexity_utilization_latest.json \
+            --jsonl-out data/analytics/perplexity_utilization_history.jsonl \
+            --markdown-out data/analytics/perplexity_utilization_latest.md.txt
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: perplexity-utilization-audit-${{ github.run_number }}
+          path: |
+            data/analytics/perplexity_utilization_latest.json
+            data/analytics/perplexity_utilization_history.jsonl
+            data/analytics/perplexity_utilization_latest.md.txt
+          retention-days: 30
+
+      - name: Commit audit outputs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/analytics/perplexity_utilization_latest.json data/analytics/perplexity_utilization_latest.md.txt
+          git add -f data/analytics/perplexity_utilization_history.jsonl
+          git diff --staged --quiet || git commit -m "chore: perplexity utilization audit"
+          git push || true
