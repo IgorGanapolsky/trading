@@ -105,7 +105,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install yt-dlp youtube-transcript-api pandas numpy requests pytest pytest-timeout
+          pip install yt-dlp youtube-transcript-api pandas numpy requests pytest pytest-timeout scipy
 
       - name: "COST CHECK: Verify GCP budget before proceeding"
         env:
@@ -204,58 +204,59 @@ jobs:
           echo "📊 Keyword RAG Statistics:"
           python3 scripts/vectorize_rag_knowledge.py --stats
 
-          # LanceDB semantic index (requires sentence-transformers)
+          # LanceDB semantic index — skipped in CI (sentence-transformers + torch ~2GB)
+          # Semantic search runs locally; CI uses keyword search only
           echo ""
-          echo "🧠 Building LanceDB semantic index..."
-          python3 -m src.memory.document_aware_rag --reindex --force || {
-            echo "⚠️ LanceDB reindex failed (sentence-transformers may not be installed)"
-            echo "Keyword search will remain active as fallback"
-          }
+          echo "📝 LanceDB semantic index: skipped in CI (requires sentence-transformers + torch)"
+          echo "   Keyword search active as primary retrieval method"
 
       # === PHASE 3: TRADE HISTORY ANALYSIS ===
       - name: "Phase 3: Analyze trade history"
         run: |
-          echo "📈 Analyzing trade history for patterns..."
+          echo "📈 Analyzing trade history from system_state.json (canonical source)..."
           python3 -c "
-          import json
+          import json, re
           from pathlib import Path
-          from datetime import datetime, timedelta
           from collections import defaultdict
 
-          # Load all trade files from last 30 days
-          trades = []
-          data_dir = Path('data')
-          for i in range(30):
-              date = (datetime.now() - timedelta(days=i)).strftime('%Y-%m-%d')
-              trade_file = data_dir / f'trades_{date}.json'
-              if trade_file.exists():
-                  try:
-                      day_trades = json.loads(trade_file.read_text())
-                      if isinstance(day_trades, list):
-                          trades.extend(day_trades)
-                  except:
-                      pass
-
-          if not trades:
-              print('No trades found in last 30 days')
+          OPT_RE = r'^[A-Z]+\d{6}[PC]\d{8}$'
+          state = json.loads(Path('data/system_state.json').read_text())
+          fills = state.get('trade_history', [])
+          if not fills:
+              print('No fills in system_state.json trade_history')
               exit(0)
 
-          # Analyze by strategy
-          by_strategy = defaultdict(lambda: {'count': 0, 'wins': 0, 'total_pl': 0})
-          for t in trades:
-              strategy = t.get('strategy', 'unknown')
-              by_strategy[strategy]['count'] += 1
-              pl = t.get('realized_pl', 0) or t.get('pl', 0) or 0
-              by_strategy[strategy]['total_pl'] += pl
-              if pl > 0:
-                  by_strategy[strategy]['wins'] += 1
+          opt_credit, opt_debit, opt_count = 0.0, 0.0, 0
+          eq_count = 0
+          by_underlying = defaultdict(list)
+          for f in fills:
+              sym = f.get('symbol') or ''
+              price = abs(float(f.get('price', 0)))
+              qty = abs(float(f.get('qty', 0)))
+              side = str(f.get('side', '')).upper()
+              if re.match(OPT_RE, sym):
+                  opt_count += 1
+                  notional = price * qty * 100
+                  if 'SELL' in side:
+                      opt_credit += notional
+                  else:
+                      opt_debit += notional
+                  m = re.match(r'^([A-Z]+)', sym)
+                  if m:
+                      by_underlying[m.group(1)].append(f)
+              elif sym:
+                  eq_count += 1
 
-          print(f'\\n📊 Trade Analysis (last 30 days)')
-          print(f'   Total trades: {len(trades)}')
-          print(f'\\n   By Strategy:')
-          for strategy, stats in sorted(by_strategy.items(), key=lambda x: -x[1]['total_pl']):
-              win_rate = (stats['wins'] / stats['count'] * 100) if stats['count'] > 0 else 0
-              print(f'   - {strategy}: {stats[\"count\"]} trades, {win_rate:.0f}% win rate, \${stats[\"total_pl\"]:.2f} P/L')
+          net = opt_credit - opt_debit
+          print(f'\\n📊 Trade Analysis (system_state.json)')
+          print(f'   Total fills: {len(fills)} ({opt_count} options, {eq_count} equity, {len(fills)-opt_count-eq_count} unknown)')
+          print(f'\\n   Options P/L:')
+          print(f'     Credit received: \${opt_credit:.2f}')
+          print(f'     Debit paid:      \${opt_debit:.2f}')
+          print(f'     Net options P/L: \${net:.2f}')
+          print(f'\\n   By Underlying:')
+          for ticker, tf in sorted(by_underlying.items()):
+              print(f'     {ticker}: {len(tf)} legs')
           "
 
       # === PHASE 3b: WEEKEND STRATEGY RESEARCH ===
