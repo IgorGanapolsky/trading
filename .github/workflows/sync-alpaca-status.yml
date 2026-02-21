@@ -81,6 +81,9 @@ jobs:
           git add -f data/north_star_weekly_history.json 2>/dev/null || true
           git add data/trades.json 2>/dev/null || true
           git add data/runtime/north_star_gate_overrides.json 2>/dev/null || true
+          git add models/ml/trade_confidence_model.json 2>/dev/null || true
+          git add models/ml/feedback_model.json 2>/dev/null || true
+          git add -f data/feedback/trade_trajectories.jsonl 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "No state changes to commit"
             exit 0
