@@ -50,9 +50,9 @@ def test_load_tasks_supports_tasks_wrapper(tmp_path: Path) -> None:
 
 def test_local_provider_success(monkeypatch) -> None:
     provider = LocalHTTPProvider()
-    task = load_tasks(
-        Path("config/browser_automation_pilot_tasks.json")
-    )[0]  # has expected_text "AI Trading Journey"
+    task = load_tasks(Path("config/browser_automation_pilot_tasks.json"))[
+        0
+    ]  # has expected_text "AI Trading Journey"
 
     monkeypatch.setattr(
         "src.analytics.browser_automation_pilot.requests.get",
@@ -66,9 +66,9 @@ def test_local_provider_success(monkeypatch) -> None:
 
 def test_local_provider_expected_text_failure(monkeypatch) -> None:
     provider = LocalHTTPProvider()
-    task = load_tasks(
-        Path("config/browser_automation_pilot_tasks.json")
-    )[0]  # expects "AI Trading Journey"
+    task = load_tasks(Path("config/browser_automation_pilot_tasks.json"))[
+        0
+    ]  # expects "AI Trading Journey"
 
     monkeypatch.setattr(
         "src.analytics.browser_automation_pilot.requests.get",
@@ -120,4 +120,3 @@ def test_summary_cost_per_success() -> None:
     assert summary["success_rate"] == 0.5
     assert summary["cost_usd_total"] == 0.12
     assert summary["cost_per_success_usd"] == 0.12
-

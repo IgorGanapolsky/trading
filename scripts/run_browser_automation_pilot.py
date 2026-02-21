@@ -118,7 +118,9 @@ def main() -> int:
         "--anchor-retries", type=int, default=1, help="Retries for Anchor task calls."
     )
     parser.add_argument(
-        "--anchor-dry-run", action="store_true", help="Skip live Anchor calls (records skipped runs)."
+        "--anchor-dry-run",
+        action="store_true",
+        help="Skip live Anchor calls (records skipped runs).",
     )
     parser.add_argument(
         "--min-success-rate",
@@ -182,4 +184,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

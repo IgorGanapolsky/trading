@@ -79,4 +79,3 @@ def test_render_local_ops_markdown_contains_sections() -> None:
     assert "## Trading" in markdown
     assert "## RAG" in markdown
     assert "## Publishing" in markdown
-

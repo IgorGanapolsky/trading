@@ -84,7 +84,9 @@ def build_local_ops_snapshot(repo_root: Path, *, now: datetime | None = None) ->
         "system_state_stale": bool(
             trading["system_state_age_minutes"] is None or trading["system_state_age_minutes"] > 180
         ),
-        "rag_index_stale": bool(rag["query_index_age_minutes"] is None or rag["query_index_age_minutes"] > 1440),
+        "rag_index_stale": bool(
+            rag["query_index_age_minutes"] is None or rag["query_index_age_minutes"] > 1440
+        ),
         "verification_missing": not bool(verification.get("latest_date")),
         "publishing_missing": not bool(publishing.get("latest_date")),
     }
@@ -236,4 +238,3 @@ def _pick_first_number(*values: Any) -> float | None:
         except (TypeError, ValueError):
             continue
     return None
-
