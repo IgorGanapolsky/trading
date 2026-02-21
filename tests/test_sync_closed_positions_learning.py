@@ -133,7 +133,9 @@ def test_learning_update_idempotent_by_event_key(monkeypatch, tmp_path: Path) ->
     assert stats["negative"] == 0
 
 
-def test_sync_closed_positions_dry_run_has_no_learning_side_effects(monkeypatch, tmp_path: Path) -> None:
+def test_sync_closed_positions_dry_run_has_no_learning_side_effects(
+    monkeypatch, tmp_path: Path
+) -> None:
     project_root = tmp_path / "project"
     trades_file, trajectory_file = _configure_paths(monkeypatch, project_root)
     _seed_system_state(project_root / "data" / "system_state.json")
@@ -155,7 +157,9 @@ def test_sync_closed_positions_dry_run_has_no_learning_side_effects(monkeypatch,
     ).exists()
 
 
-def test_sync_closed_positions_applies_learning_once_for_new_rows(monkeypatch, tmp_path: Path) -> None:
+def test_sync_closed_positions_applies_learning_once_for_new_rows(
+    monkeypatch, tmp_path: Path
+) -> None:
     project_root = tmp_path / "project"
     trades_file, trajectory_file = _configure_paths(monkeypatch, project_root)
     _seed_system_state(project_root / "data" / "system_state.json")
