@@ -1,5 +1,7 @@
 """Tests for RLFilter - Linear Feature Scoring Model (ML-IMP-1)."""
 
+import json
+
 
 class TestRLFilterInit:
     """Test RLFilter initialization."""
@@ -143,3 +145,70 @@ class TestRLFilterBackwardCompatibility:
         assert "action" in result
         assert "confidence" in result
         assert result["action"] in ("enter", "hold", "exit")
+
+
+class TestRLFilterOnlineLearning:
+    """Test RLFilter online learning updates and persistence."""
+
+    def test_record_trade_outcome_method_exists(self):
+        """RLFilter should expose online learning entrypoint."""
+        from src.agents.rl_agent import RLFilter
+
+        rl = RLFilter()
+        assert hasattr(rl, "record_trade_outcome")
+        assert callable(rl.record_trade_outcome)
+
+    def test_record_trade_outcome_updates_and_persists(self, tmp_path, monkeypatch):
+        """Online update should modify weights and persist atomically to disk."""
+        from src.agents import rl_agent
+
+        temp_weights = tmp_path / "rl_filter_weights.json"
+        temp_weights.write_text(
+            json.dumps(
+                {
+                    "default": {
+                        "bias": 0.0,
+                        "weights": {"strength": 0.0, "momentum": 0.0},
+                        "action_threshold": 0.5,
+                        "base_multiplier": 1.0,
+                    },
+                    "SPY": {
+                        "bias": 0.0,
+                        "weights": {"strength": 0.0, "momentum": 0.0},
+                        "action_threshold": 0.5,
+                        "base_multiplier": 1.0,
+                    },
+                }
+            )
+        )
+        monkeypatch.setattr(rl_agent, "WEIGHTS_PATH", temp_weights)
+
+        rl = rl_agent.RLFilter()
+        before_strength = rl.weights["SPY"]["weights"]["strength"]
+        before_bias = rl.weights["SPY"]["bias"]
+
+        metrics = rl.record_trade_outcome(
+            entry_state={
+                "features": {
+                    "strength": 1.0,
+                    "momentum": 0.5,
+                    "non_numeric_feature": "skip_me",
+                    "none_feature": None,
+                }
+            },
+            action=1,
+            exit_state={"features": {"strength": 0.1}},
+            reward=1.0,
+            done=True,
+            ticker="SPY",
+        )
+
+        assert metrics["updated"] is True
+        assert metrics["persisted"] is True
+        assert metrics["updated_weights"] >= 1
+        assert rl.weights["SPY"]["weights"]["strength"] != before_strength
+        assert rl.weights["SPY"]["bias"] != before_bias
+
+        persisted = json.loads(temp_weights.read_text())
+        assert persisted["SPY"]["weights"]["strength"] == rl.weights["SPY"]["weights"]["strength"]
+        assert persisted["SPY"]["bias"] == rl.weights["SPY"]["bias"]
