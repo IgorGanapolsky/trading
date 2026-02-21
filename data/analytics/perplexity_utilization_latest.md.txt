@@ -1,6 +1,6 @@
 # Perplexity Utilization Audit
 
-- Generated (UTC): `2026-02-21T22:46:41.911939Z`
+- Generated (UTC): `2026-02-21T22:49:59.582240Z`
 - Workflows wired: `3`
 - Models referenced: `sonar`
 
@@ -33,7 +33,7 @@
 ## Live Probe
 - enabled: `True`
 - status: `success`
-- latency_ms: `1200.029`
+- latency_ms: `1655.028`
 - model: `sonar`
 
 ## Gaps

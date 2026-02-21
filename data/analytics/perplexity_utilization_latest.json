@@ -1,11 +1,11 @@
 {
   "gaps": [],
-  "generated_at_utc": "2026-02-21T22:46:41.911939Z",
+  "generated_at_utc": "2026-02-21T22:49:59.582240Z",
   "live_probe": {
     "detail": null,
     "enabled": true,
     "http_status": 200,
-    "latency_ms": 1200.029,
+    "latency_ms": 1655.028,
     "model": "sonar",
     "status": "success",
     "usage": {
