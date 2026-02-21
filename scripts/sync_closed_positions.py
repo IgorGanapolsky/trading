@@ -467,6 +467,88 @@ def _compute_stats(trades: list[dict[str, Any]], paper_phase_start: str) -> dict
     }
 
 
+def _learning_event_key(trade: dict[str, Any]) -> str:
+    trade_id = str(trade.get("id") or "unknown")
+    return f"closed_trade_sync::{trade_id}"
+
+
+def _learning_feedback_type(trade: dict[str, Any]) -> str:
+    outcome = str(trade.get("outcome") or "").strip().lower()
+    pnl = _parse_float(trade.get("realized_pnl"), 0.0)
+    if outcome == "win" or pnl > 0:
+        return "positive"
+    return "negative"
+
+
+def _learning_context(trade: dict[str, Any]) -> str:
+    symbol = str(trade.get("symbol") or "UNKNOWN")
+    strategy = str(trade.get("strategy") or "unknown")
+    outcome = str(trade.get("outcome") or "unknown")
+    pnl = _parse_float(trade.get("realized_pnl"), 0.0)
+    exit_time = str(trade.get("exit_time") or "unknown")
+    return (
+        "closed trade sync outcome "
+        f"symbol={symbol} strategy={strategy} outcome={outcome} pnl={pnl:.2f} "
+        f"exit_time={exit_time}"
+    )
+
+
+def _apply_learning_update_for_trade(
+    trade: dict[str, Any], *, project_root: Path
+) -> dict[str, Any]:
+    event_key = _learning_event_key(trade)
+    feedback_type = _learning_feedback_type(trade)
+    context = _learning_context(trade)
+
+    from src.learning.distributed_feedback import LocalBackend, aggregate_feedback
+
+    distributed_outcome = aggregate_feedback(
+        project_root=project_root,
+        event_key=event_key,
+        feedback_type=feedback_type,
+        context=context,
+        backend=LocalBackend(),
+    )
+
+    result: dict[str, Any] = {
+        "event_key": event_key,
+        "feedback_type": feedback_type,
+        "distributed_applied": bool(distributed_outcome.get("applied")),
+        "distributed_skipped_reason": distributed_outcome.get("skipped_reason"),
+    }
+    if not distributed_outcome.get("applied"):
+        return result
+
+    from src.learning.rlhf_storage import store_trade_outcome
+    from src.ml.trade_confidence import get_trade_confidence_model
+
+    symbol = str(trade.get("symbol") or "SPY")
+    strategy = str(trade.get("strategy") or "iron_condor")
+    pnl = _parse_float(trade.get("realized_pnl"), 0.0)
+    won = str(trade.get("outcome") or "").strip().lower() == "win"
+    expiry = str((trade.get("legs") or {}).get("expiry") or "")
+
+    model = get_trade_confidence_model()
+    model.record_trade_outcome(success=won, strategy=strategy, ticker=symbol)
+
+    store_trade_outcome(
+        symbol=symbol,
+        strategy=strategy,
+        reward=pnl,
+        won=won,
+        exit_reason="SYNC_CLOSED_POSITION",
+        expiry=expiry,
+        event_key=event_key,
+        metadata={
+            "source": "sync_closed_positions",
+            "trade_id": str(trade.get("id") or ""),
+            "distributed_feedback_applied": True,
+        },
+    )
+    result["applied"] = True
+    return result
+
+
 def sync_closed_positions(dry_run: bool = False) -> dict[str, Any]:
     logger.info("=" * 60)
     logger.info("SYNC CLOSED POSITIONS")
@@ -527,14 +609,35 @@ def sync_closed_positions(dry_run: bool = False) -> dict[str, Any]:
             "closed_total": _parse_int(ledger.get("stats", {}).get("closed_trades"), 0),
         }
 
+    learning_applied = 0
+    learning_duplicates = 0
+    learning_errors = 0
+    for row in new_rows:
+        try:
+            learning_outcome = _apply_learning_update_for_trade(row, project_root=PROJECT_ROOT)
+            if learning_outcome.get("distributed_applied"):
+                learning_applied += 1
+            elif learning_outcome.get("distributed_skipped_reason") == "duplicate_event":
+                learning_duplicates += 1
+        except Exception as exc:
+            learning_errors += 1
+            logger.warning(
+                "Learning update failed for trade_id=%s: %s",
+                str(row.get("id") or ""),
+                exc,
+            )
+
     if changed:
         TRADES_FILE.parent.mkdir(parents=True, exist_ok=True)
         TRADES_FILE.write_text(new_payload, encoding="utf-8")
         logger.info(
-            "Updated trades.json: new_closed=%s normalized_ids=%s closed_total=%s",
+            "Updated trades.json: new_closed=%s normalized_ids=%s closed_total=%s learning_applied=%s learning_duplicates=%s learning_errors=%s",
             len(new_rows),
             normalized_ids,
             ledger["stats"].get("closed_trades"),
+            learning_applied,
+            learning_duplicates,
+            learning_errors,
         )
     else:
         logger.info("No ledger changes required")
@@ -545,6 +648,9 @@ def sync_closed_positions(dry_run: bool = False) -> dict[str, Any]:
         "new_closed": len(new_rows),
         "normalized_ids": normalized_ids,
         "closed_total": _parse_int(ledger.get("stats", {}).get("closed_trades"), 0),
+        "learning_applied": learning_applied,
+        "learning_duplicates": learning_duplicates,
+        "learning_errors": learning_errors,
     }
 
 
