@@ -1,0 +1,40 @@
+{
+  "tasks": [
+    {
+      "task_id": "gh_pages_home",
+      "url": "https://igorganapolsky.github.io/trading/",
+      "prompt": "Open the AI Trading Journey home page and confirm the site is reachable.",
+      "expected_text": "AI Trading Journey",
+      "tags": ["publishing", "github-pages"]
+    },
+    {
+      "task_id": "rag_query_page",
+      "url": "https://igorganapolsky.github.io/trading/rag-query/",
+      "prompt": "Open the RAG query page and verify the dashboard UI loads.",
+      "expected_text": "RAG Knowledge Base",
+      "tags": ["rag", "dashboard"]
+    },
+    {
+      "task_id": "devto_profile",
+      "url": "https://dev.to/igorganapolsky",
+      "prompt": "Open the Dev.to profile feed and confirm profile content is visible.",
+      "expected_text": "igorganapolsky",
+      "tags": ["publishing", "devto"]
+    },
+    {
+      "task_id": "x_profile",
+      "url": "https://x.com/IgorGanapolsky",
+      "prompt": "Open the X profile page and verify profile metadata can be read.",
+      "expected_text": "Igor Ganapolsky",
+      "tags": ["publishing", "x"]
+    },
+    {
+      "task_id": "linkedin_profile",
+      "url": "https://www.linkedin.com/in/igorganapolsky/",
+      "prompt": "Open the LinkedIn profile page and verify the profile shell is reachable.",
+      "expected_text": "LinkedIn",
+      "tags": ["publishing", "linkedin"]
+    }
+  ]
+}
+

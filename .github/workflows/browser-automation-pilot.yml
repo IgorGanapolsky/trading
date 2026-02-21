@@ -1,0 +1,82 @@
+name: Browser Automation Pilot
+
+on:
+  workflow_dispatch:
+    inputs:
+      runs_per_task:
+        description: "Runs per task for each provider"
+        required: false
+        default: "1"
+      anchor_dry_run:
+        description: "Skip live Anchor calls"
+        required: false
+        default: "false"
+  schedule:
+    - cron: "25 * * * *" # Hourly for a rolling reliability sample
+
+permissions:
+  contents: write
+
+jobs:
+  pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install requests
+
+      - name: Run browser automation A/B pilot
+        env:
+          ANCHOR_API_KEY: ${{ secrets.ANCHOR_API_KEY }}
+        run: |
+          RUNS_PER_TASK="${{ github.event.inputs.runs_per_task || '1' }}"
+          DRY_RUN="${{ github.event.inputs.anchor_dry_run || 'false' }}"
+
+          PROVIDERS="local"
+          if [ -n "$ANCHOR_API_KEY" ]; then
+            PROVIDERS="local,anchor"
+          fi
+
+          EXTRA_ARGS=""
+          if [ "$DRY_RUN" = "true" ]; then
+            EXTRA_ARGS="--anchor-dry-run"
+          fi
+
+          python3 scripts/run_browser_automation_pilot.py \
+            --providers "$PROVIDERS" \
+            --runs-per-task "$RUNS_PER_TASK" \
+            --timeout-seconds 30 \
+            --summary-out data/analytics/browser_automation_pilot_latest.json \
+            --jsonl-out data/analytics/browser_automation_pilot_history.jsonl \
+            $EXTRA_ARGS
+
+      - name: Upload pilot artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-automation-pilot-${{ github.run_id }}
+          path: |
+            data/analytics/browser_automation_pilot_latest.json
+            data/analytics/browser_automation_pilot_history.jsonl
+
+      - name: Commit pilot telemetry
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/analytics/browser_automation_pilot_latest.json data/analytics/browser_automation_pilot_history.jsonl
+          if git diff --cached --quiet; then
+            echo "No browser pilot telemetry changes to commit."
+            exit 0
+          fi
+          git commit -m "chore(ops): browser automation pilot telemetry [auto]"
+          git push
+
