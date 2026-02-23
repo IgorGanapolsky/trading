@@ -28,7 +28,7 @@ python-dotenv==1.2.1
 pydantic-settings==2.13.0
 
 # Market calendars
-holidays==0.90
+holidays==0.91
 
 # Utilities
 python-dateutil==2.9.0.post0
