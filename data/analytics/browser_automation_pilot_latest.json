@@ -1,0 +1,136 @@
+{
+  "run_id": "pilot-20260223T033628Z",
+  "generated_at_utc": "2026-02-23T03:36:30.185201Z",
+  "tasks": [
+    {
+      "task_id": "gh_pages_home",
+      "url": "https://igorganapolsky.github.io/trading/",
+      "prompt": "Open the AI Trading Journey home page and confirm the site is reachable.",
+      "expected_text": "AI Trading Journey",
+      "tags": [
+        "publishing",
+        "github-pages"
+      ]
+    },
+    {
+      "task_id": "rag_query_page",
+      "url": "https://igorganapolsky.github.io/trading/rag-query/",
+      "prompt": "Open the RAG query page and verify the dashboard UI loads.",
+      "expected_text": "RAG Knowledge Base",
+      "tags": [
+        "rag",
+        "dashboard"
+      ]
+    },
+    {
+      "task_id": "devto_profile",
+      "url": "https://dev.to/igorganapolsky",
+      "prompt": "Open the Dev.to profile feed and confirm profile content is visible.",
+      "expected_text": "igorganapolsky",
+      "tags": [
+        "publishing",
+        "devto"
+      ]
+    },
+    {
+      "task_id": "x_profile",
+      "url": "https://x.com/IgorGanapolsky",
+      "prompt": "Open the X profile page and verify profile metadata can be read.",
+      "expected_text": "Igor Ganapolsky",
+      "tags": [
+        "publishing",
+        "x"
+      ]
+    },
+    {
+      "task_id": "linkedin_profile",
+      "url": "https://www.linkedin.com/in/igorganapolsky/",
+      "prompt": "Open the LinkedIn profile page and verify the profile shell is reachable.",
+      "expected_text": "LinkedIn",
+      "tags": [
+        "publishing",
+        "linkedin"
+      ]
+    }
+  ],
+  "providers": [
+    "local"
+  ],
+  "runs_per_task": 1,
+  "results": [
+    {
+      "provider": "local",
+      "task_id": "gh_pages_home",
+      "run_index": 1,
+      "status": "success",
+      "detail": "HTTP fetch check passed.",
+      "started_at_utc": "2026-02-23T03:36:28.456345Z",
+      "latency_ms": 613.664,
+      "retries": 0,
+      "http_status": 200,
+      "cost_usd": 0.0
+    },
+    {
+      "provider": "local",
+      "task_id": "rag_query_page",
+      "run_index": 1,
+      "status": "success",
+      "detail": "HTTP fetch check passed.",
+      "started_at_utc": "2026-02-23T03:36:29.070447Z",
+      "latency_ms": 100.956,
+      "retries": 0,
+      "http_status": 200,
+      "cost_usd": 0.0
+    },
+    {
+      "provider": "local",
+      "task_id": "devto_profile",
+      "run_index": 1,
+      "status": "success",
+      "detail": "HTTP fetch check passed.",
+      "started_at_utc": "2026-02-23T03:36:29.171790Z",
+      "latency_ms": 78.249,
+      "retries": 0,
+      "http_status": 200,
+      "cost_usd": 0.0
+    },
+    {
+      "provider": "local",
+      "task_id": "x_profile",
+      "run_index": 1,
+      "status": "failed",
+      "detail": "Expected text not found.",
+      "started_at_utc": "2026-02-23T03:36:29.250452Z",
+      "latency_ms": 156.684,
+      "retries": 0,
+      "http_status": 200,
+      "cost_usd": 0.0
+    },
+    {
+      "provider": "local",
+      "task_id": "linkedin_profile",
+      "run_index": 1,
+      "status": "failed",
+      "detail": "HTTP 999",
+      "started_at_utc": "2026-02-23T03:36:29.407545Z",
+      "latency_ms": 777.276,
+      "retries": 0,
+      "http_status": 999,
+      "cost_usd": 0.0
+    }
+  ],
+  "summary": {
+    "local": {
+      "runs_total": 5,
+      "attempted": 5,
+      "success": 3,
+      "failed": 2,
+      "skipped": 0,
+      "success_rate": 0.6,
+      "avg_latency_ms": 345.3658,
+      "avg_retries": 0.0,
+      "cost_usd_total": 0.0,
+      "cost_per_success_usd": 0.0
+    }
+  }
+}

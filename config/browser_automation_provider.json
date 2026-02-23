@@ -1,0 +1,16 @@
+{
+  "confidence": 0.3,
+  "policy": {
+    "cost_weight": 2.0,
+    "default_provider": "local",
+    "latency_weight_per_second": 0.005,
+    "max_cost_per_success_usd": 0.02,
+    "min_attempted": 3,
+    "min_success_rate": 0.9,
+    "switch_margin": 0.02
+  },
+  "preferred_provider": "local",
+  "reason": "no eligible provider; fallback to default",
+  "selected_at_utc": "2026-02-23T03:36:30.185201Z",
+  "source_run_id": "pilot-20260223T033628Z"
+}
