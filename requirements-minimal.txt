@@ -25,7 +25,7 @@ youtube-transcript-api==1.2.4
 
 # Configuration
 python-dotenv==1.2.1
-pydantic-settings==2.13.0
+pydantic-settings==2.13.1
 
 # Market calendars
 holidays==0.90
