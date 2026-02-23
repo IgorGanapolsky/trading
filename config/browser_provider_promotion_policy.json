@@ -1,0 +1,9 @@
+{
+  "default_provider": "local",
+  "min_attempted": 3,
+  "min_success_rate": 0.9,
+  "max_cost_per_success_usd": 0.02,
+  "latency_weight_per_second": 0.005,
+  "cost_weight": 2.0,
+  "switch_margin": 0.02
+}

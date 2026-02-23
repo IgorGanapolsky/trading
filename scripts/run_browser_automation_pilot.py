@@ -22,6 +22,13 @@ from src.analytics.browser_automation_pilot import (
     run_browser_ab_pilot,
     write_summary_json,
 )
+from src.analytics.browser_provider_promotion import (
+    load_policy,
+    load_previous_provider,
+    recommend_provider,
+    write_promotion_report,
+    write_provider_state,
+)
 
 
 def _provider_list(
@@ -105,6 +112,21 @@ def main() -> int:
         help="Summary JSON output path.",
     )
     parser.add_argument(
+        "--provider-state-out",
+        default="config/browser_automation_provider.json",
+        help="Provider state JSON path for downstream workflows.",
+    )
+    parser.add_argument(
+        "--promotion-report-out",
+        default="data/analytics/browser_provider_promotion_latest.json",
+        help="Detailed provider promotion report output path.",
+    )
+    parser.add_argument(
+        "--promotion-policy",
+        default="config/browser_provider_promotion_policy.json",
+        help="Promotion policy JSON (optional; defaults applied if missing).",
+    )
+    parser.add_argument(
         "--anchor-base-url",
         default=os.getenv("ANCHOR_API_BASE_URL", ANCHOR_DEFAULT_BASE_URL),
         help="Anchor API base URL.",
@@ -153,13 +175,42 @@ def main() -> int:
 
     jsonl_out = PROJECT_ROOT / args.jsonl_out
     summary_out = PROJECT_ROOT / args.summary_out
+    provider_state_out = PROJECT_ROOT / args.provider_state_out
+    promotion_report_out = PROJECT_ROOT / args.promotion_report_out
+    policy_path = PROJECT_ROOT / args.promotion_policy
     append_results_jsonl(jsonl_out, payload["results"])
     write_summary_json(summary_out, payload)
+
+    previous_provider = load_previous_provider(provider_state_out)
+    promotion_policy = load_policy(policy_path)
+    recommendation = recommend_provider(
+        payload["summary"],
+        policy=promotion_policy,
+        previous_provider=previous_provider,
+    )
+    write_provider_state(
+        provider_state_out,
+        recommendation=recommendation,
+        run_id=str(payload["run_id"]),
+        generated_at_utc=str(payload["generated_at_utc"]),
+    )
+    write_promotion_report(
+        promotion_report_out,
+        recommendation=recommendation,
+        payload=payload,
+    )
 
     print(json.dumps(payload, indent=2))
     print(f"Wrote JSONL history: {jsonl_out}")
     print(f"Wrote summary JSON: {summary_out}")
+    print(f"Wrote provider state: {provider_state_out}")
+    print(f"Wrote promotion report: {promotion_report_out}")
     _print_summary(payload["summary"])
+    print(
+        "Provider recommendation: "
+        f"{recommendation['recommended_provider']} "
+        f"(confidence={recommendation['confidence']}, reason={recommendation['reason']})"
+    )
 
     if args.min_success_rate <= 0:
         return 0

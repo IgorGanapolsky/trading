@@ -58,6 +58,9 @@ jobs:
             --timeout-seconds 30 \
             --summary-out data/analytics/browser_automation_pilot_latest.json \
             --jsonl-out data/analytics/browser_automation_pilot_history.jsonl \
+            --provider-state-out config/browser_automation_provider.json \
+            --promotion-report-out data/analytics/browser_provider_promotion_latest.json \
+            --promotion-policy config/browser_provider_promotion_policy.json \
             $EXTRA_ARGS
 
       - name: Upload pilot artifacts
@@ -67,16 +70,18 @@ jobs:
           path: |
             data/analytics/browser_automation_pilot_latest.json
             data/analytics/browser_automation_pilot_history.jsonl
+            data/analytics/browser_provider_promotion_latest.json
+            config/browser_automation_provider.json
 
       - name: Commit pilot telemetry
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/analytics/browser_automation_pilot_latest.json data/analytics/browser_automation_pilot_history.jsonl
+          git add data/analytics/browser_automation_pilot_latest.json data/analytics/browser_provider_promotion_latest.json config/browser_automation_provider.json
+          git add -f data/analytics/browser_automation_pilot_history.jsonl
           if git diff --cached --quiet; then
             echo "No browser pilot telemetry changes to commit."
             exit 0
           fi
           git commit -m "chore(ops): browser automation pilot telemetry [auto]"
           git push
-
