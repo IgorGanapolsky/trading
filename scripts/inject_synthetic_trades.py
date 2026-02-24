@@ -27,7 +27,7 @@ def generate_regime_aware_trades(count=100):
         # Pick a random regime
         regime_name, vix_range, win_rate, avg_credit, avg_loss = random.choice(REGIMES)
         vix = random.uniform(vix_range[0], vix_range[1])
-        
+
         trade_date = base_date + timedelta(days=i)
         is_win = random.random() < win_rate
 
@@ -75,7 +75,7 @@ def inject():
 
     # Clean existing synthetic trades to avoid duplicates or pollution
     state["trade_history"] = [t for t in state.get("trade_history", []) if not str(t.get("id", "")).startswith("syn-")]
-    
+
     synthetic_trades = generate_regime_aware_trades(100)
     state["trade_history"].extend(synthetic_trades)
 

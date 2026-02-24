@@ -3,14 +3,14 @@ from __future__ import annotations
 
 import json
 import logging
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 # Import constants from the single source of truth
 from src.core.trading_constants import (
-    NORTH_STAR_TARGET_WIN_RATE_PCT,
     NORTH_STAR_MONTHLY_AFTER_TAX,
-    NORTH_STAR_PAPER_VALIDATION_DAYS
+    NORTH_STAR_PAPER_VALIDATION_DAYS,
+    NORTH_STAR_TARGET_WIN_RATE_PCT,
 )
 
 logger = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ def main():
     # Note: Using the paper account metrics for promotion decisions
     paper = state.get("paper_trading", {})
     win_rate = float(paper.get("win_rate", 0.0) or 0.0) * 100.0
-    
+
     # Calculate run rate from history if possible
     # (Simple version: use the milestone controller's estimate if available)
     milestones = state.get("strategy_milestones", {})
@@ -48,7 +48,7 @@ def main():
     # Check 1: Win Rate
     if win_rate < NORTH_STAR_TARGET_WIN_RATE_PCT:
         reasons.append(f"Win Rate {win_rate:.1f}% below target {NORTH_STAR_TARGET_WIN_RATE_PCT}%")
-    
+
     # Check 2: Validation Days
     start_date_str = paper.get("start_date")
     if start_date_str:

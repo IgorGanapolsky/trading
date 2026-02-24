@@ -1,7 +1,8 @@
-import os
 import logging
-from dotenv import load_dotenv
+import os
+
 from alpaca.trading.client import TradingClient
+from dotenv import load_dotenv
 from src.utils.alpaca_client import get_alpaca_credentials, get_brokerage_credentials
 
 # Load environment variables from .env
@@ -21,7 +22,7 @@ def main():
             return
         paper_client = TradingClient(p_key, p_secret, paper=True)
         paper_acc = paper_client.get_account()
-        
+
         # 2. Connect to Field ($200 Live)
         l_key, l_secret = get_brokerage_credentials()
         if not l_key:
@@ -29,13 +30,13 @@ def main():
             return
         live_client = TradingClient(l_key, l_secret, paper=False)
         live_acc = live_client.get_account()
-        
-        print(f"--- DUAL-TRACK SYNC COMPLETE ---")
+
+        print("--- DUAL-TRACK SYNC COMPLETE ---")
         print(f"LAB ($100K Paper):  ${float(paper_acc.equity):,.2f} [Account: {paper_acc.account_number}]")
         print(f"FIELD ($200 Live):  ${float(live_acc.equity):,.2f} [Account: {live_acc.account_number}]")
-        print(f"Strategy Status:    AI-Native Shadowing Active")
-        print(f"North Star Target:  $6,000/month after-tax")
-        
+        print("Strategy Status:    AI-Native Shadowing Active")
+        print("North Star Target:  $6,000/month after-tax")
+
     except Exception as e:
         print(f"❌ FAILED to sync: {e}")
 

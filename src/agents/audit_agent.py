@@ -37,8 +37,8 @@ class AuditReport:
 class AuditAgent(BaseAgent):
     """
     Adversarial Audit Agent.
-    
-    Performs autonomous "Adversarial Audits" on trade execution logs using 
+
+    Performs autonomous "Adversarial Audits" on trade execution logs using
     deterministic checks and RLM Algorithm 1 for complex anomaly detection.
     """
 
@@ -50,7 +50,7 @@ class AuditAgent(BaseAgent):
 
     def analyze(self, data: dict[str, Any]) -> dict[str, Any]:
         """
-        Implementation of abstract base method. 
+        Implementation of abstract base method.
         Calls perform_audit() for the provided date or latest logs.
         """
         date_str = data.get("date", datetime.now().strftime("%Y-%m-%d"))
@@ -80,7 +80,7 @@ class AuditAgent(BaseAgent):
             )
 
         try:
-            with open(log_file, "r") as f:
+            with open(log_file) as f:
                 trades = json.load(f)
         except Exception as e:
             logger.error(f"Failed to load trade log {log_file}: {e}")
@@ -93,7 +93,7 @@ class AuditAgent(BaseAgent):
             )
 
         violations = []
-        
+
         # 1. Scan for Rule #1 Violations (Realized Loss)
         # 2. Scan for Position Sizing Violations
         # 3. Scan for Ticker Violations
@@ -108,7 +108,7 @@ class AuditAgent(BaseAgent):
             # Option symbols are longer, extract underlying
             underlying = symbol[:3] if len(symbol) > 5 else symbol
             allowed = ["SPY", "QQQ", "IWM", "SPX", "XSP", "VIX", "UVXY", "SVXY", "VOO"]
-            
+
             if underlying not in allowed:
                 violations.append(AuditViolation(
                     rule="Ticker Whitelist",
@@ -131,15 +131,13 @@ class AuditAgent(BaseAgent):
 
         # Status Determination
         status = "PASS"
-        if any(v.severity == "CRITICAL" for v in violations):
-            status = "FAIL"
-        elif any(v.severity == "HIGH" for v in violations):
+        if any(v.severity == "CRITICAL" for v in violations) or any(v.severity == "HIGH" for v in violations):
             status = "FAIL"
         elif violations:
             status = "WARN"
 
         summary = f"Audit for {date_str} complete. Scanned {len(trades)} entries. Found {len(violations)} violations."
-        
+
         report = AuditReport(
             timestamp=datetime.now().isoformat(),
             trades_scanned=len(trades),
@@ -166,12 +164,12 @@ class AuditAgent(BaseAgent):
         Use RLM Algorithm 1 to perform a deep reasoning audit.
         Generates Python code to analyze logs for subtle patterns.
         """
-        prompt = f"""
-        You are the Adversarial Audit Agent. Your mission is to find hidden bugs, 
+        _prompt = f"""
+        You are the Adversarial Audit Agent. Your mission is to find hidden bugs,
         risk management failures, or logic errors in today's ({date_str}) trade logs.
-        
+
         Log location: data/trades_{date_str}.json
-        
+
         Task:
         1. Write a pure Python script to analyze this JSON file.
         2. Look for:
@@ -181,9 +179,9 @@ class AuditAgent(BaseAgent):
         3. Output the results as a JSON object with 'anomalies' and 'score'.
         """
         # Algorithm 1: Plan -> Generate -> Execute -> Finalize
-        # Implementation of RLM logic would go here, 
+        # Implementation of RLM logic would go here,
         # using reason_with_llm to get the Python code.
-        
+
         logger.info(f"Running LLM Adversarial Audit for {date_str}...")
         # (Simplified for now - will be expanded in future PRs)
         return {"anomalies": [], "score": 1.0}
