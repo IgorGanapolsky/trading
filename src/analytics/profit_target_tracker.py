@@ -105,12 +105,19 @@ class ProfitTargetTracker:
         state = self._load_state()
         paper = state.get("paper_account", {}) if isinstance(state, dict) else {}
         paper_trading = state.get("paper_trading", {}) if isinstance(state, dict) else {}
+        weekly_gate = state.get("north_star_weekly_gate", {}) if isinstance(state, dict) else {}
 
         current_daily_profit = _as_float(paper.get("daily_change"), 0.0)
         total_pl = _as_float(paper.get("total_pl"), 0.0)
         win_rate = _as_float(paper.get("win_rate"), 0.0)
         paper_day = max(1, _as_int(paper_trading.get("current_day"), 0))
         average_daily_profit = total_pl / paper_day
+        min_scale_sample_size = max(1, _as_int(os.getenv("MIN_SCALE_SAMPLE_SIZE", "30"), 30))
+        sample_size = _as_int(
+            weekly_gate.get("sample_size"),
+            _as_int(paper.get("win_rate_sample_size"), 0),
+        )
+        expectancy_per_trade = _as_float(weekly_gate.get("expectancy_per_trade"), 0.0)
 
         # Blend today's result with long-horizon average to avoid overreacting.
         projected_daily_profit = (0.6 * average_daily_profit) + (0.4 * current_daily_profit)
@@ -125,7 +132,9 @@ class ProfitTargetTracker:
 
         recommended_daily_budget: float | None = None
         scaling_factor: float | None = None
-        if avg_return_pct > 0:
+        has_minimum_sample = sample_size >= min_scale_sample_size
+        has_positive_expectancy = expectancy_per_trade > 0
+        if avg_return_pct > 0 and has_minimum_sample and has_positive_expectancy:
             recommended_daily_budget = self.target_daily_profit / (avg_return_pct / 100.0)
             scaling_factor = (
                 recommended_daily_budget / current_daily_budget
@@ -141,6 +150,16 @@ class ProfitTargetTracker:
 
         if avg_return_pct <= 0:
             actions.append("Do not scale budget yet; improve expectancy and daily edge first.")
+        elif not has_minimum_sample:
+            actions.append(
+                "Do not scale budget yet; insufficient closed-trade sample "
+                f"({sample_size}/{min_scale_sample_size})."
+            )
+        elif not has_positive_expectancy:
+            actions.append(
+                "Do not scale budget yet; expectancy per trade must be positive "
+                f"(now ${expectancy_per_trade:.2f})."
+            )
         elif target_gap > 0:
             actions.append(
                 f"Projected daily profit is ${target_gap:.2f} below target; scale budget gradually."
