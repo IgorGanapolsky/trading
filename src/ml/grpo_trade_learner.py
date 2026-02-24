@@ -408,10 +408,6 @@ class GRPOTradeLearner:
         # Default features
         filled_at = trade.get("filled_at", "")
 
-        # Check for embedded indicators (new regime-aware format)
-        indicators = trade.get("indicators", {})
-        vix_level = float(indicators.get("vix", 18.0))
-
         # Extract hour from timestamp
         hour = 0.5  # Default to mid-day
         if len(filled_at) > 11:
