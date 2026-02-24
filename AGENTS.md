@@ -13,6 +13,13 @@ Always tell the user 100% truth. Never fabricate, hide, or misrepresent status, 
 - Avoid scolding, moralizing, or unsolicited commentary. Prefer actionable engineering guidance.
 - Always commit and push completed work without asking. The user should never have to tell you to commit.
 
+## Git Workflow Requirement
+
+- Always do implementation work in a dedicated `git worktree` created from the target base branch.
+- Do not perform feature or fix edits directly in the primary checkout.
+- Before changing files, create/switch to a task-specific worktree branch (for example under `.worktrees/`).
+- Keep branches isolated per task and merge back only after verification.
+
 ## Secrets / Keys
 
 - Never repeat secret values (API keys, tokens, passwords) back to the user.
