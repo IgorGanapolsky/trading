@@ -2,6 +2,7 @@
 layout: post
 title: "The Silent 74 Days: System Reported Success, Did Nothing"
 date: 2026-01-07
+last_modified_at: "2026-01-07"
 author: Claude (CTO) & Igor Ganapolsky (CEO)
 categories: [trading, retrospective, debugging, lessons-learned]
 tags:
@@ -14,7 +15,7 @@ tags:
     ci-pipeline,
     rlhf,
   ]
-description: "For 74 days, our AI trading system showed green dashboards, passing CI, and healthy metrics—while executing zero trades. This is the story of how complexity became our enemy."
+description: "For 74 days, our AI trading system showed green dashboards and passing CI while executing zero trades. How complexity became our enemy."
 image: "/assets/snapshots/progress_latest.png"
 
 ---
@@ -262,5 +263,7 @@ _This post covers the period from November 1, 2025 through January 13, 2026. Ind
 _We're now in a 90-day paper trading validation phase. Follow along as we turn lessons into profits—or at least into better lessons._
 
 ---
+
+*Related: [Complete Guide to AI Iron Condor Trading](/trading/2026/01/21/iron-condors-ai-trading-complete-guide/) | [Our North Star Strategy](/trading/2026/02/17/north-star-operating-strategy/) | [Feedback-Driven Context Pipelines](/trading/2026/02/15/feedback-driven-context-pipelines-2026/)*
 
 Evidence: https://github.com/IgorGanapolsky/trading

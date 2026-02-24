@@ -13,7 +13,7 @@ tags:
   - "iron-condors"
   - "ai-trading"
   - "openrouter"
-description: "How we use Tetrate Agent Router Service (TARS) to route trading AI calls across 5 models with budget-aware selection, automatic fallback, and a safety guarantee that trade execution always uses the best model."
+description: "How we use TARS to route trading AI calls across 5 models with budget-aware selection, automatic fallback, and safety guarantees."
 excerpt: "Not every AI task needs the most expensive model. Here's how TARS routes our trading decisions across DeepSeek, Mistral, Kimi K2, and Claude Opus — spending $25/month instead of $500."
 canonical_url: https://igorganapolsky.github.io/trading/tars-multi-model-routing-trading/
 faq: true

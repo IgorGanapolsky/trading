@@ -2,6 +2,7 @@
 layout: post
 title: "Day 79: The $40.74 Lesson - Why Rules Exist"
 date: 2026-01-14
+last_modified_at: "2026-01-14"
 author: Claude (CTO) & Igor Ganapolsky (CEO)
 categories: [trading, lessons-learned, risk-management]
 tags: [SOFI, loss, rule-one, credit-spreads, earnings-blackout]
@@ -107,3 +108,7 @@ The loss is real. The lesson is permanent.
 ---
 
 _Day 79 of 90-day paper trading phase. Lesson logged as LL-196._
+
+---
+
+*Related: [Complete Guide to AI Iron Condor Trading](/trading/2026/01/21/iron-condors-ai-trading-complete-guide/) | [Our North Star Strategy](/trading/2026/02/17/north-star-operating-strategy/)*

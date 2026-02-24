@@ -9,6 +9,7 @@ Ensures the webhook correctly:
 """
 
 from unittest.mock import patch
+from pathlib import Path
 
 import pytest
 
@@ -28,10 +29,7 @@ class TestRAGWebhookFormat:
     def test_create_webhook_response_format(self):
         """Verify response matches RAG Webhook format."""
         # Import the function
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import create_webhook_response
 
@@ -46,10 +44,7 @@ class TestRAGWebhookFormat:
 
     def test_format_lessons_response_no_results(self):
         """Verify empty results return helpful message."""
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import format_lessons_response
 
@@ -61,10 +56,7 @@ class TestRAGWebhookFormat:
 
     def test_format_lessons_response_with_results(self):
         """Verify lessons are formatted correctly."""
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import format_lessons_response
 
@@ -212,10 +204,7 @@ class TestRAGWebhookEdgeCases:
 
     def test_format_lesson_full(self):
         """Test format_lesson_full function."""
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import format_lesson_full
 
@@ -232,10 +221,7 @@ class TestRAGWebhookEdgeCases:
 
     def test_format_lesson_full_no_title(self):
         """Test format_lesson_full with no H1 title."""
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import format_lesson_full
 
@@ -357,10 +343,7 @@ class TestTradeQueryDetection:
 
     def test_is_trade_query_money_keywords(self):
         """Test that money-related queries are detected as trade queries."""
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import is_trade_query
 
@@ -382,10 +365,7 @@ class TestTradeQueryDetection:
 
     def test_is_trade_query_lesson_queries(self):
         """Test that lesson queries are NOT detected as trade queries."""
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import is_trade_query
 
@@ -403,10 +383,7 @@ class TestTradeQueryDetection:
 
     def test_is_trade_query_case_insensitive(self):
         """Test that query detection is case insensitive."""
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import is_trade_query
 
@@ -616,10 +593,7 @@ class TestPortfolioStatusFunction:
 
     def test_get_current_portfolio_status_returns_dict(self):
         """Test that function returns a dictionary with expected keys."""
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import get_current_portfolio_status
 
@@ -637,10 +611,7 @@ class TestPortfolioStatusFunction:
 
     def test_get_current_portfolio_status_live_account_fields(self):
         """Test that live account has expected fields."""
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import get_current_portfolio_status
 
@@ -655,10 +626,7 @@ class TestPortfolioStatusFunction:
 
     def test_get_current_portfolio_status_paper_account_fields(self):
         """Test that paper account has expected fields."""
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import get_current_portfolio_status
 
@@ -673,11 +641,8 @@ class TestPortfolioStatusFunction:
     def test_get_current_portfolio_status_github_fallback(self):
         """Test that GitHub fallback is attempted when local file unavailable."""
         import json
-        import sys
-        from pathlib import Path
         from unittest.mock import MagicMock, patch
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         # Mock state data that would come from GitHub
         mock_state = {
@@ -701,7 +666,7 @@ class TestPortfolioStatusFunction:
         # Patch Path.exists to return False (no local file)
         # Patch urllib.request.urlopen to return mock data
         with patch("pathlib.Path.exists", return_value=False):
-            with patch("urllib.request.urlopen") as mock_urlopen:
+            with patch("urllib.request.urlopen") as mock_urlopen, patch("src.agents.rag_webhook.query_alpaca_api_direct", return_value=None):
                 # Set up mock response
                 mock_response = MagicMock()
                 mock_response.read.return_value = json.dumps(mock_state).encode("utf-8")
@@ -735,11 +700,8 @@ class TestPortfolioStatusFunction:
 
     def test_get_current_portfolio_status_returns_empty_on_all_failures(self):
         """Test that empty dict is returned when both local and GitHub fail."""
-        import sys
-        from pathlib import Path
         from unittest.mock import patch
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         # Patch Path.exists to return False (no local file)
         # Patch urllib.request.urlopen to raise exception
@@ -758,10 +720,7 @@ class TestReadinessQueryDetection:
 
     def test_is_readiness_query_detects_ready_keyword(self):
         """Test that 'ready' queries are detected."""
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import is_readiness_query
 
@@ -777,10 +736,7 @@ class TestReadinessQueryDetection:
 
     def test_is_readiness_query_detects_prepared_keyword(self):
         """Test that 'prepared' queries are detected."""
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import is_readiness_query
 
@@ -789,10 +745,7 @@ class TestReadinessQueryDetection:
 
     def test_is_readiness_query_detects_checklist_keywords(self):
         """Test that checklist-related queries are detected."""
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import is_readiness_query
 
@@ -802,10 +755,7 @@ class TestReadinessQueryDetection:
 
     def test_is_readiness_query_case_insensitive(self):
         """Test that detection is case insensitive."""
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import is_readiness_query
 
@@ -815,10 +765,7 @@ class TestReadinessQueryDetection:
 
     def test_is_readiness_query_not_trade_query(self):
         """Test that portfolio queries are NOT detected as readiness."""
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import is_readiness_query
 
@@ -838,10 +785,7 @@ class TestReadinessAssessment:
 
     def test_assess_trading_readiness_returns_dict(self):
         """Test that function returns expected dictionary structure."""
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import assess_trading_readiness
 
@@ -860,10 +804,7 @@ class TestReadinessAssessment:
 
     def test_assess_trading_readiness_valid_status(self):
         """Test that status is one of expected values."""
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import assess_trading_readiness
 
@@ -874,10 +815,7 @@ class TestReadinessAssessment:
 
     def test_assess_trading_readiness_valid_emoji(self):
         """Test that emoji corresponds to status."""
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import assess_trading_readiness
 
@@ -895,10 +833,7 @@ class TestReadinessAssessment:
 
     def test_assess_trading_readiness_score_bounds(self):
         """Test that score is within bounds."""
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import assess_trading_readiness
 
@@ -911,10 +846,7 @@ class TestReadinessAssessment:
 
     def test_assess_trading_readiness_lists_are_lists(self):
         """Test that checks/warnings/blockers are lists."""
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import assess_trading_readiness
 
@@ -930,10 +862,7 @@ class TestFormatReadinessResponse:
 
     def test_format_readiness_response_contains_status(self):
         """Test that formatted response contains status."""
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import format_readiness_response
 
@@ -957,10 +886,7 @@ class TestFormatReadinessResponse:
 
     def test_format_readiness_response_shows_blockers(self):
         """Test that blockers are displayed."""
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import format_readiness_response
 
@@ -984,10 +910,7 @@ class TestFormatReadinessResponse:
 
     def test_format_readiness_response_shows_warnings(self):
         """Test that warnings are displayed."""
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import format_readiness_response
 
@@ -1011,10 +934,7 @@ class TestFormatReadinessResponse:
 
     def test_format_readiness_response_shows_checks(self):
         """Test that passing checks are displayed."""
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import format_readiness_response
 
@@ -1127,10 +1047,7 @@ class TestRAGWebhookSmokeTests:
 
     def test_webhook_response_not_truncated(self):
         """Verify long responses are not truncated."""
-        import sys
-        from pathlib import Path
 
-        sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from src.agents.rag_webhook import create_webhook_response
 
@@ -1144,7 +1061,6 @@ class TestRAGWebhookSmokeTests:
 
     def test_no_hardcoded_broker_responses(self):
         """Verify webhook doesn't contain hardcoded broker references."""
-        from pathlib import Path
 
         webhook_path = Path(__file__).parent.parent / "src" / "agents" / "rag_webhook.py"
         content = webhook_path.read_text()

@@ -2,6 +2,7 @@
 layout: post
 title: "$5K to $100K: Journey to $6K/Month via Options"
 date: 2026-02-01
+last_modified_at: "2026-02-01"
 author: Igor Ganapolsky
 categories: [trading, personal-finance, options, journey]
 tags:
@@ -13,7 +14,7 @@ tags:
     options-trading,
     lessons-learned,
   ]
-description: "The honest story of building an AI-powered trading system - 74 days of silence, a painful SOFI loss, and the pivot to iron condors that finally made the math work."
+description: "Building an AI trading system: 74 days of silence, a painful SOFI loss, and the pivot to iron condors that finally made the math work."
 image: "/assets/snapshots/progress_latest.png"
 
 ---
@@ -341,3 +342,7 @@ And that's worth the wait.
 _This is my journey building an AI-powered options trading system. I'm documenting everything - the failures, the lessons, and (hopefully) the eventual success. All trades are currently paper trades during the validation phase. This is not financial advice._
 
 _Follow the journey: [GitHub](https://github.com/IgorGanapolsky/trading)_
+
+---
+
+*Related: [Complete Guide to AI Iron Condor Trading](/trading/2026/01/21/iron-condors-ai-trading-complete-guide/) | [The Silent 74 Days](/trading/2026/01/07/the-silent-74-days/) | [Our North Star Strategy](/trading/2026/02/17/north-star-operating-strategy/)*

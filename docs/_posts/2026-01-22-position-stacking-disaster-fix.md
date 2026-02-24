@@ -2,6 +2,7 @@
 layout: post
 title: 'LL-275: Position Stacking Disaster and Fix'
 date: 2026-01-22
+last_modified_at: "2026-01-22"
 categories:
 - lessons-learned
 - trading
@@ -146,3 +147,7 @@ _This lesson cost $1,472 in paper trading. The real value is ensuring it never h
 ---
 
 Evidence: https://github.com/IgorGanapolsky/trading
+
+---
+
+*Related: [Complete Guide to AI Iron Condor Trading](/trading/2026/01/21/iron-condors-ai-trading-complete-guide/) | [Feedback-Driven Context Pipelines](/trading/2026/02/15/feedback-driven-context-pipelines-2026/)*

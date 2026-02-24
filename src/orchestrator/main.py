@@ -1343,7 +1343,7 @@ class TradingOrchestrator:
     def _process_ticker(self, ticker: str, rl_threshold: float) -> None:
         # Dec 2025: v2 pipeline is default (LLM-friendly, ~50 lines vs 978-line monolith)
         # Set USE_PIPELINE_V2=false to fall back to legacy. (P0 tech debt Feb 17, 2026)
-        use_v2 = os.getenv("USE_PIPELINE_V2", "true").lower() not in {"0", "false", "no"}
+        use_v2 =  "true" .lower() not in {"0", "false", "no"}
         if use_v2:
             return self._process_ticker_v2(ticker, rl_threshold)
 

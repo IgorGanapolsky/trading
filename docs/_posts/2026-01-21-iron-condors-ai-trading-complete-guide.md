@@ -2,9 +2,11 @@
 layout: post
 title: "Complete Guide: AI-Powered Iron Condor Trading"
 date: 2026-01-21
+last_modified_at: "2026-01-21"
 day_number: 85
 lessons_count: 3
 critical_count: 0
+description: "How we built an AI trading system with Claude, RAG, and iron condors to target $150-200/month passive income with an 86% win rate."
 excerpt: "How we built an autonomous AI trading system combining Claude Opus 4.5, legacy RAG, and iron condor options strategy to target $150-200/month income with 86% win rate."
 tags:
   [

@@ -1,7 +1,7 @@
 ---
 layout: "post"
 title: "Day 89: What We Learned - January 25, 2026"
-description: "Every mistake is a lesson in disguise. Today we uncovered a critical flaw in our system - the kind that separates amateur traders from professionals who survive..."
+description: "Day 89: We uncovered a critical system flaw — the kind that separates amateur traders from professionals. 3 lessons captured, 1 critical."
 date: "2026-01-25"
 last_modified_at: "2026-01-25"
 image: "/assets/og-image.png"

@@ -1,10 +1,3 @@
-LL-297: Daily Trade Limit (Jan 23, 2026)
-SEVERITY: CRITICAL
-PROBLEM: 21 trades caused $11.29 loss from churning
-ROOT CAUSE: Multiple workflow runs, no daily limit
-FIX: Added MAX_TRADES_PER_DAY=4, halt file check
-
-
 === LL-297: Daily Trade Limit to Prevent Churning (Jan 23, 2026) ===
 SEVERITY: CRITICAL
 PROBLEM: 21 trades in one day caused $11.29 loss from bid/ask spreads

@@ -10,12 +10,11 @@ REGIMES = [
     ("CALM", (12, 16), 0.90, 1.00, -200),
     ("NORMAL", (17, 24), 0.85, 1.50, -300),
     ("VOLATILE", (25, 35), 0.70, 2.50, -500),
-    ("STRESS", (36, 50), 0.50, 4.00, -800),
+    ("STRESS", (36, 50), 0.50, 4.00, -800)
 ]
 
 DATA_DIR = Path("data")
 SYSTEM_STATE_PATH = DATA_DIR / "system_state.json"
-
 
 def generate_regime_aware_trades(count=100):
     """
@@ -53,12 +52,14 @@ def generate_regime_aware_trades(count=100):
             "price": price,
             "filled_at": trade_date.isoformat(),
             "pnl": pnl,
-            "indicators": {"vix": vix, "regime": regime_name},
+            "indicators": {
+                "vix": vix,
+                "regime": regime_name
+            }
         }
         synthetic_history.append(trade_entry)
 
     return synthetic_history
-
 
 def inject():
     """Main injection routine."""
@@ -73,9 +74,7 @@ def inject():
         state = json.load(f)
 
     # Clean existing synthetic trades to avoid duplicates or pollution
-    state["trade_history"] = [
-        t for t in state.get("trade_history", []) if not str(t.get("id", "")).startswith("syn-")
-    ]
+    state["trade_history"] = [t for t in state.get("trade_history", []) if not str(t.get("id", "")).startswith("syn-")]
 
     synthetic_trades = generate_regime_aware_trades(100)
     state["trade_history"].extend(synthetic_trades)
@@ -86,7 +85,6 @@ def inject():
     print("✅ Injection Complete.")
     print(f"   Trade History Count: {len(state['trade_history'])}")
     print("\nNext step: Run 'python3 scripts/run_grpo_training.py' to train on REGIME-AWARE data.")
-
 
 if __name__ == "__main__":
     inject()

@@ -118,3 +118,7 @@ Want to follow along? Check out the [full project on GitHub](https://github.com/
 ---
 
 _Day 80/90 complete. 10 to go._
+
+---
+
+*Related: [Complete Guide to AI Iron Condor Trading](/trading/2026/01/21/iron-condors-ai-trading-complete-guide/) | [Our North Star Strategy](/trading/2026/02/17/north-star-operating-strategy/)*

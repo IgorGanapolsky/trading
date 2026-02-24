@@ -12,7 +12,7 @@ tags:
   - "ai-tooling"
   - "developer-experience"
   - "claude-code"
-description: "We used PaperBanana to auto-generate 3 publication-quality architecture diagrams from text descriptions in under 5 minutes. Here's how it works and how we built Claude Code skills around it."
+description: "Auto-generate publication-quality architecture diagrams from text in minutes using PaperBanana and Gemini, with Claude Code skills."
 excerpt: "Drawing architecture diagrams by hand is slow. PaperBanana uses Gemini to generate publication-quality visuals from plain text — and we built Claude Code slash commands to make it repeatable."
 canonical_url: https://igorganapolsky.github.io/trading/paperbanana-automated-architecture-diagrams/
 faq: true

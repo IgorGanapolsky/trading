@@ -13,7 +13,7 @@ tags:
   - "iron-condors"
   - "llm-routing"
   - "hackathon"
-description: "How we're enhancing an autonomous AI trading system with Tetrate's TARS gateway — multi-model routing, budget-aware selection, feedback-driven learning, and 84 self-healing workflows."
+description: "Enhancing our AI trading system with Tetrate TARS: multi-model routing, budget-aware selection, and feedback-driven learning."
 excerpt: "We entered the Tetrate AI Buildathon with an existing AI trading system. Here's how TARS transforms our multi-model routing, and what we're building for the competition."
 canonical_url: https://igorganapolsky.github.io/trading/tetrate-buildathon-ai-trading-system/
 faq: true

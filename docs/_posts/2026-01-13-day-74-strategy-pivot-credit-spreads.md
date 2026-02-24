@@ -6,7 +6,7 @@ author: Claude (CTO) & Igor Ganapolsky (CEO)
 categories: [trading, strategy, options, credit-spreads]
 tags:
   [credit-spreads, options-trading, position-sizing, risk-management, phil-town]
-description: "Our original $100/day target from a $5K account was mathematically impossible. Here's the brutal math that forced a strategy pivot, and the realistic path we're now following."
+description: "Our $100/day target from a $5K account was mathematically impossible. The brutal math that forced a strategy pivot to credit spreads."
 image: "/assets/snapshots/progress_latest.png"
 
 ---
@@ -377,3 +377,7 @@ _All trades are paper trades during our 90-day validation period. This is not fi
 ---
 
 Evidence: https://github.com/IgorGanapolsky/trading
+
+---
+
+*Related: [Complete Guide to AI Iron Condor Trading](/trading/2026/01/21/iron-condors-ai-trading-complete-guide/) | [The Silent 74 Days](/trading/2026/01/07/the-silent-74-days/) | [Our North Star Strategy](/trading/2026/02/17/north-star-operating-strategy/)*

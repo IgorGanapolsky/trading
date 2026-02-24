@@ -66,3 +66,7 @@ Want to follow along? Check out the [full project on GitHub](https://github.com/
 ---
 
 _Day 81/90 complete. 9 to go._
+
+---
+
+*Related: [Complete Guide to AI Iron Condor Trading](/trading/2026/01/21/iron-condors-ai-trading-complete-guide/) | [Feedback-Driven Context Pipelines](/trading/2026/02/15/feedback-driven-context-pipelines-2026/)*

@@ -8,9 +8,9 @@ Welcome to the **AI-Powered Automated Trading System** wiki!
 
 **👉 [View Live Progress Dashboard →](https://igorganapolsky.github.io/trading/)**
 
-The system tracks progress toward validated autonomous trading:
-- North Star goal: **Validated iron condor system → consistent $500/month on $25K+ capital**
-- Current strategy: **Iron Condors on SPY** (minimum $10K capital, code-enforced)
+    The system tracks progress toward financial independence:
+    - North Star goal: **$6K/month after-tax financial independence (execute as fast as safely possible)**
+    - Current strategy: **SPY iron condors (15-20 delta, $10-wide wings, up to 5 concurrent positions)**
 - Phil Town Rule #1: **Don't lose money**
 
 ---
@@ -24,7 +24,6 @@ The system tracks progress toward validated autonomous trading:
 ### System Status
 - [GitHub Actions](https://github.com/IgorGanapolsky/trading/actions) - Execution logs
 - [RAG Chat](https://igorganapolsky.github.io/trading/rag-query/) - Query lessons learned
-- [Judge Demo Evidence](https://igorganapolsky.github.io/trading/lessons/judge-demo.html) - TARS routing proof & readiness metrics
 
 ### Key Features
 - **Iron Condor Guardian**: Automated Rule #1 enforcement (stop loss, 7 DTE exit, 50% profit take)
@@ -34,42 +33,40 @@ The system tracks progress toward validated autonomous trading:
 
 ---
 
-## 📈 Current Status (Feb 23, 2026)
+## 📈 Current Status (Feb 24, 2026)
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| **Lab (Paper)** | $101,275.27 | 🔄 Active (Training) |
-| **Field (Live)** | $207.94 | ✅ Active (Shadowing) |
-| **Net Gain (Lab)** | $+1,275.27 (+1.27%) | — |
-| **Open Positions** | 0 (Market monitoring) | — |
-| **AI Strategy** | ML-Optimized (GRPO) | 🧠 Delta 0.245 |
+| Metric | Value |
+|--------|-------|
+| **Account Equity** | $101,119.18 |
+| **Starting Capital** | $100,000 (Jan 30, 2026) |
+| **Net Gain** | $+1,119.18 (+1.12%) |
+| **Open Positions** | 3 Iron Condor(s) |
+| **Strategy** | SPY Iron Condors (15-20 delta, $10-wide, max 5 concurrent) |
+
+### Open Iron Condors
+| Expiry | Put Spread | Call Spread |
+|--------|------------|-------------|
+| Mar 27, 2026 | 640/650 | 715/725 |
+| Mar 31, 2026 | 640/650 | 715/725 |
+| Apr 02, 2026 | 640/650 | 715/725 |
 
 ---
 
 ## 🎯 North Star Goal
 
-**Vision**: Validated autonomous trading system generating **$6,000/month after-tax passive income**.
-
-**Financial Roadmap** (Reverse-engineered from $6K Net):
-- **Target**: $6,000/mo Net ≈ **$8,600/mo Gross** (assuming ~30% tax).
-- **Yield**: Target 2.5% monthly return (conservative for Iron Condors + Credit Spreads).
-- **Capital Required**: ~$350,000 deployed capital.
+**Vision**: Build a reliable autonomous SPY iron condor engine that reaches $6K/month after-tax as fast as safely possible.
 
 | Phase | Timeline | Target | Status |
 |-------|----------|--------|--------|
-| **Phase 1: Validate** | Feb → Jun 2026 | 30 Lab trades, >85% win rate | 🔄 In progress (6/30) |
-| **Phase 2: Scale** | Jul → Dec 2026 | Reach $150K capital, pivot to SPX/XSP | ⏳ Pending |
-| **Phase 3: Dominate** | 2027 | Scale to $350K+, achieve **$8,600/mo gross** | ⏳ Pending |
-
-**Dual-Track Mandate**:
-- The system is now an **AI-Native Organization**.
-- The **Lab ($100K Paper)** is the training ground.
-- The **Field ($200 Live)** is the opportunistic real-money shadow.
+| **Phase 1: Validate** | Now → Jun 2026 | 30 trades, >75% win rate | 🔄 In progress (1/30) |
+| **Phase 2: Scale** | Jul → Dec 2026 | 3 concurrent ICs, $500/mo | ⏳ Pending |
+| **Phase 3: Grow** | 2027 | 5 ICs + credit spreads, $1,500/mo | ⏳ Pending |
+| **Phase 4: Open** | 2028 | Packaged system for accounts $10K+ | ⏳ Pending |
 
 **Strategy Parameters** (updated Feb 2026 — positive EV):
-- Profit target: **50%** of max profit (high velocity)
-- Stop loss: **200%** of credit (statistical management)
-- Expected value per trade: **+$140** at 15-delta (85% probability)
+- Profit target: **75%** of max profit (let winners run)
+- Stop loss: **100%** of credit (cut losers fast)
+- Expected value per trade: **+$94** at 80% win rate
 
 ---
 
@@ -85,4 +82,4 @@ The **Iron Condor Guardian** runs every 30 minutes during market hours to enforc
 
 ---
 
-*Last updated: 2026-02-16 14:33 ET by GitHub Actions*
+*Last updated: 2026-02-24 12:59 ET by GitHub Actions*

@@ -11,22 +11,20 @@ def main():
     status = compute_milestone_snapshot()
     ns = status.get("north_star_probability", {})
 
-    print("\n" + "=" * 60)
+    print("\n" + "="*60)
     print("NORTH STAR PROBABILITY REPORT")
-    print("=" * 60)
+    print("="*60)
     print("Goal: $6,000/month after-tax")
     print(f"Confidence Score: {ns.get('probability_score', 0):.1f}%")
     print(f"Label: {ns.get('probability_label', 'unknown').upper()}")
     print(f"Target Mode: {ns.get('target_mode', 'N/A')}")
-    print(
-        f"Estimated Monthly (Current Expectancy): ${ns.get('estimated_monthly_after_tax_from_expectancy', 0):.2f}"
-    )
+    print(f"Estimated Monthly (Current Expectancy): ${ns.get('estimated_monthly_after_tax_from_expectancy', 0):.2f}")
     print(f"Monthly Target Progress: {ns.get('monthly_target_progress_pct', 0):.2f}%")
 
-    print("\n" + "=" * 60)
+    print("\n" + "="*60)
     print("CTO HONEST ASSESSMENT")
-    print("=" * 60)
-    score = ns.get("probability_score", 0)
+    print("="*60)
+    score = ns.get('probability_score', 0)
 
     if score > 80:
         print("✅ SYSTEM IS PROVEN. Trajectory is high-certainty.")
@@ -38,7 +36,6 @@ def main():
         print("1. Data Starvation: Need 30+ real trades to prove win rate.")
         print("2. Capital Gap: Current $101K is only 30% of required $350K base.")
         print("3. Tax Erosion: SPY is taxed higher than SPX (need to pivot in Phase 2).")
-
 
 if __name__ == "__main__":
     main()

@@ -11,7 +11,6 @@ load_dotenv()
 # Silence logging for the sync script
 logging.getLogger("src.utils.alpaca_client").setLevel(logging.WARNING)
 
-
 def main():
     try:
         # 1. Connect to Lab ($100K Paper)
@@ -33,18 +32,13 @@ def main():
         live_acc = live_client.get_account()
 
         print("--- DUAL-TRACK SYNC COMPLETE ---")
-        print(
-            f"LAB ($100K Paper):  ${float(paper_acc.equity):,.2f} [Account: {paper_acc.account_number}]"
-        )
-        print(
-            f"FIELD ($200 Live):  ${float(live_acc.equity):,.2f} [Account: {live_acc.account_number}]"
-        )
+        print(f"LAB ($100K Paper):  ${float(paper_acc.equity):,.2f} [Account: {paper_acc.account_number}]")
+        print(f"FIELD ($200 Live):  ${float(live_acc.equity):,.2f} [Account: {live_acc.account_number}]")
         print("Strategy Status:    AI-Native Shadowing Active")
         print("North Star Target:  $6,000/month after-tax")
 
     except Exception as e:
         print(f"❌ FAILED to sync: {e}")
-
 
 if __name__ == "__main__":
     main()

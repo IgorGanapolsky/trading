@@ -13,7 +13,7 @@ tags:
   - "thompson-sampling"
   - "lancedb"
   - "tetrate"
-description: "Most AI agents don't learn between sessions. Here's how we built a feedback-driven context pipeline with Thompson Sampling, LanceDB, and TARS — and how it compares to Mem0, OpenAI Agents SDK, and the 2026 state of the art."
+description: "Most AI agents forget between sessions. How we built a feedback-driven context pipeline with Thompson Sampling, LanceDB, and TARS."
 excerpt: "Your AI agent forgets everything between sessions. Here's how to fix that with structured feedback capture, Thompson Sampling, and semantic memory injection."
 canonical_url: https://igorganapolsky.github.io/trading/feedback-driven-context-pipelines-2026/
 faq: true

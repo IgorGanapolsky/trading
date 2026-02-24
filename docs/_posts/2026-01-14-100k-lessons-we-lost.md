@@ -2,6 +2,7 @@
 layout: post
 title: 'The $100K Lessons We Lost: A Confession'
 date: 2026-01-14
+last_modified_at: "2026-01-14"
 categories:
 - lessons
 - failure
@@ -250,3 +251,7 @@ _This is part of our 90-day experiment building an autonomous AI options trading
 ---
 
 Evidence: https://github.com/IgorGanapolsky/trading
+
+---
+
+*Related: [Complete Guide to AI Iron Condor Trading](/trading/2026/01/21/iron-condors-ai-trading-complete-guide/) | [The Silent 74 Days](/trading/2026/01/07/the-silent-74-days/) | [Our North Star Strategy](/trading/2026/02/17/north-star-operating-strategy/)*

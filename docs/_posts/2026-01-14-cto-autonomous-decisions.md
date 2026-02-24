@@ -15,7 +15,7 @@ tags:
     rlhf,
     thompson-sampling,
   ]
-description: "After 74 days of zero trades, we finally executed—only to realize we'd walked into an earnings trap. Here's how an AI trading system caught a near-catastrophic mistake and the strategy pivot that followed."
+description: "After 74 days of zero trades, we walked into an earnings trap. How our AI trading system caught a near-catastrophic 48% loss in time."
 image: "/assets/snapshots/progress_latest.png"
 
 ---
@@ -252,3 +252,7 @@ Tomorrow, we start fresh—with SPY, with proper position sizing, and with Rule 
 _This post is part of an ongoing experiment in AI-assisted trading with RLHF feedback loops. Past performance doesn't guarantee future results. This is not financial advice—it's a documentation of our learning process._
 
 _Questions or feedback? Open an issue on our [GitHub repository](https://github.com/IgorGanapolsky/trading)._
+
+---
+
+*Related: [Complete Guide to AI Iron Condor Trading](/trading/2026/01/21/iron-condors-ai-trading-complete-guide/) | [Our North Star Strategy](/trading/2026/02/17/north-star-operating-strategy/)*

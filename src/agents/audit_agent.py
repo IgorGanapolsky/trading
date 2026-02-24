@@ -37,8 +37,8 @@ class AuditReport:
 class AuditAgent(BaseAgent):
     """
     Adversarial Audit Agent.
-
-    Performs autonomous "Adversarial Audits" on trade execution logs using
+    
+    Performs autonomous "Adversarial Audits" on trade execution logs using 
     deterministic checks and RLM Algorithm 1 for complex anomaly detection.
     """
 
@@ -50,7 +50,7 @@ class AuditAgent(BaseAgent):
 
     def analyze(self, data: dict[str, Any]) -> dict[str, Any]:
         """
-        Implementation of abstract base method.
+        Implementation of abstract base method. 
         Calls perform_audit() for the provided date or latest logs.
         """
         date_str = data.get("date", datetime.now().strftime("%Y-%m-%d"))
@@ -59,7 +59,7 @@ class AuditAgent(BaseAgent):
             "status": report.status,
             "violations_count": len(report.violations),
             "summary": report.summary,
-            "report_path": str(self.report_dir / f"audit_{date_str}.json"),
+            "report_path": str(self.report_dir / f"audit_{date_str}.json")
         }
 
     def perform_audit(self, date_str: str | None = None) -> AuditReport:
@@ -76,7 +76,7 @@ class AuditAgent(BaseAgent):
                 trades_scanned=0,
                 violations=[],
                 status="PASS",
-                summary=f"No trade logs found for {date_str}.",
+                summary=f"No trade logs found for {date_str}."
             )
 
         try:
@@ -87,11 +87,9 @@ class AuditAgent(BaseAgent):
             return AuditReport(
                 timestamp=datetime.now().isoformat(),
                 trades_scanned=0,
-                violations=[
-                    AuditViolation("Data Integrity", "CRITICAL", f"Failed to load log: {e}")
-                ],
+                violations=[AuditViolation("Data Integrity", "CRITICAL", f"Failed to load log: {e}")],
                 status="FAIL",
-                summary=f"Data integrity failure for {date_str}.",
+                summary=f"Data integrity failure for {date_str}."
             )
 
         violations = []
@@ -112,34 +110,28 @@ class AuditAgent(BaseAgent):
             allowed = ["SPY", "QQQ", "IWM", "SPX", "XSP", "VIX", "UVXY", "SVXY", "VOO"]
 
             if underlying not in allowed:
-                violations.append(
-                    AuditViolation(
-                        rule="Ticker Whitelist",
-                        severity="HIGH",
-                        description=f"Prohibited ticker detected: {symbol}",
-                        trade_id=trade_id,
-                        timestamp=ts,
-                    )
-                )
+                violations.append(AuditViolation(
+                    rule="Ticker Whitelist",
+                    severity="HIGH",
+                    description=f"Prohibited ticker detected: {symbol}",
+                    trade_id=trade_id,
+                    timestamp=ts
+                ))
 
             # Check Position Sizing (Simulated trades in our log often have max_risk)
             max_risk = trade.get("max_risk", 0)
             if max_risk > 500:  # Hardcoded 0.5% of $100K = $500 max risk per IC
-                violations.append(
-                    AuditViolation(
-                        rule="Position Sizing",
-                        severity="MEDIUM",
-                        description=f"Large risk detected: ${max_risk}",
-                        trade_id=trade_id,
-                        timestamp=ts,
-                    )
-                )
+                violations.append(AuditViolation(
+                    rule="Position Sizing",
+                    severity="MEDIUM",
+                    description=f"Large risk detected: ${max_risk}",
+                    trade_id=trade_id,
+                    timestamp=ts
+                ))
 
         # Status Determination
         status = "PASS"
-        if any(v.severity == "CRITICAL" for v in violations) or any(
-            v.severity == "HIGH" for v in violations
-        ):
+        if any(v.severity == "CRITICAL" for v in violations) or any(v.severity == "HIGH" for v in violations):
             status = "FAIL"
         elif violations:
             status = "WARN"
@@ -151,23 +143,19 @@ class AuditAgent(BaseAgent):
             trades_scanned=len(trades),
             violations=violations,
             status=status,
-            summary=summary,
+            summary=summary
         )
 
         # Save Report
         report_file = self.report_dir / f"audit_{date_str}.json"
         with open(report_file, "w") as f:
-            json.dump(
-                {
-                    "timestamp": report.timestamp,
-                    "trades_scanned": report.trades_scanned,
-                    "status": report.status,
-                    "summary": report.summary,
-                    "violations": [v.__dict__ for v in report.violations],
-                },
-                f,
-                indent=2,
-            )
+            json.dump({
+                "timestamp": report.timestamp,
+                "trades_scanned": report.trades_scanned,
+                "status": report.status,
+                "summary": report.summary,
+                "violations": [v.__dict__ for v in report.violations]
+            }, f, indent=2)
 
         return report
 
@@ -175,6 +163,20 @@ class AuditAgent(BaseAgent):
         """
         Use RLM Algorithm 1 to perform a deep reasoning audit.
         Generates Python code to analyze logs for subtle patterns.
+        """
+        prompt = f"""
+        You are the Adversarial Audit Agent. Your mission is to find hidden bugs, 
+        risk management failures, or logic errors in today's ({date_str}) trade logs.
+        
+        Log location: data/trades_{date_str}.json
+        
+        Task:
+        1. Write a pure Python script to analyze this JSON file.
+        2. Look for:
+           - Duplicate orders within seconds (Race conditions)
+           - Inconsistent pricing (fills far from expected)
+           - Strategy drift (trades not matching the iron_condor schema)
+        3. Output the results as a JSON object with 'anomalies' and 'score'.
         """
         # Algorithm 1: Plan -> Generate -> Execute -> Finalize
         # Implementation of RLM logic would go here,

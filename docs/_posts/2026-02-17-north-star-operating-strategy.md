@@ -2,9 +2,10 @@
 layout: post
 title: "North Star Operating Strategy: Fast, Gated, Coherent"
 date: 2026-02-17 13:20:00 -0500
+last_modified_at: "2026-02-17"
 categories: [strategy, north-star, operations]
 tags: [north-star, spy, iron-condor, rag, risk-management, alpaca]
-description: "Canonical operating strategy: reach $6K/month after-tax as fast as safely possible using SPY iron condors, paper-first validation, and opportunistic brokerage execution."
+description: "Canonical operating strategy: reach $6K/month after-tax using SPY iron condors, paper-first validation, and opportunistic execution."
 excerpt: "Our operating strategy is now explicit and consistent across repo, dashboard, and judge demo: fastest safe path to $6K/month with strict RAG + risk gates."
 ---
 

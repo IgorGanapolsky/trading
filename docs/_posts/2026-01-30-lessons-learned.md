@@ -1,7 +1,7 @@
 ---
 layout: "post"
 title: "Day 94: What We Learned - January 30, 2026"
-description: "Every mistake is a lesson in disguise. Today we uncovered a critical flaw in our system - the kind that separates amateur traders from professionals who survive..."
+description: "Day 94: A critical system flaw exposed. 1 lesson captured from our AI trading system — the kind that separates amateurs from survivors."
 date: "2026-01-30"
 last_modified_at: "2026-01-30"
 image: "/assets/og-image.png"

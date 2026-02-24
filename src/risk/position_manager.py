@@ -104,8 +104,11 @@ class ExitConditions:
         Returns:
             Tuple of (take_profit_pct, stop_loss_pct, max_holding_days)
         """
-        # TREASURY and BOND removed Dec 29, 2025 - Phil Town doesn't recommend bonds
-        # All assets now use equity thresholds
+        # Options specific logic (added Feb 24, 2026)
+        if asset_class == AssetClass.OPTIONS:
+            return (0.50, 1.00, 45)  # 50% profit target for credit spreads
+            
+        # All other assets use equity thresholds
         return (self.take_profit_pct, self.stop_loss_pct, self.max_holding_days)
 
 

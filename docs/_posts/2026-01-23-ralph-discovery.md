@@ -97,3 +97,7 @@ Small in absolute terms, but these are the bugs that compound into real losses a
 ---
 
 _Day 87. Every bug we find in paper trading is a bug that won't cost us real money later._
+
+---
+
+*Related: [Complete Guide to AI Iron Condor Trading](/trading/2026/01/21/iron-condors-ai-trading-complete-guide/) | [TARS Multi-Model Routing](/trading/2026/02/15/tars-multi-model-routing-trading/)*

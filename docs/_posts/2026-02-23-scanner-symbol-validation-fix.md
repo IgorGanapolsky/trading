@@ -1,6 +1,7 @@
 ---
 title: "Fix: Validate Option Symbols Before Trading"
 date: 2026-02-23
+last_modified_at: "2026-02-23"
 description: "How a missing symbol validation caused weeks of failed trades and the two-layer defense fix"
 tags: [iron-condor, alpaca, options, bug-fix, trading-system]
 categories: [lessons-learned]
@@ -32,3 +33,7 @@ First autonomous trade in weeks submitted at 17:50 UTC on Feb 23, 2026. Both Sca
 ## Lesson
 
 Never assume financial instrument availability from date math. Always validate against the broker's actual listings before constructing orders.
+
+---
+
+*Related: [Complete Guide to AI Iron Condor Trading](/trading/2026/01/21/iron-condors-ai-trading-complete-guide/) | [Our North Star Strategy](/trading/2026/02/17/north-star-operating-strategy/)*
