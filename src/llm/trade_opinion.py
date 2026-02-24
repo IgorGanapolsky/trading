@@ -18,9 +18,14 @@ Feb 2026 — Built per CEO directive for autonomous, smart, automated execution.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
+import os
 import re
+from collections import Counter
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -62,6 +67,30 @@ class TradeOpinion(BaseModel):
         default_factory=list,
         description="Any risk warnings (earnings, FOMC, etc.)",
     )
+    consensus_samples: int = Field(
+        ge=1,
+        le=10,
+        default=1,
+        description="How many independent samples were used (1=single pass).",
+    )
+    consensus_agreement: float = Field(
+        ge=0.0,
+        le=1.0,
+        default=1.0,
+        description="Agreement ratio among sampled opinions.",
+    )
+
+
+class TradeOpinionJudgeVerdict(BaseModel):
+    """Structured evaluation of a generated trade opinion."""
+
+    approved: bool = Field(description="Whether the opinion passes risk/compliance checks.")
+    score: float = Field(ge=0.0, le=1.0, description="Overall quality/risk score.")
+    verdict: str = Field(description="Short rationale for approval/rejection.")
+    violations: list[str] = Field(
+        default_factory=list,
+        description="Specific rule/context violations.",
+    )
 
 
 # =============================================================================
@@ -84,17 +113,42 @@ def _response_format_candidates() -> list[dict[str, Any]]:
     1) Strict json_schema for providers that support schema-constrained output.
     2) json_object fallback for providers that only support JSON mode.
     """
+    return _response_format_candidates_for_schema(
+        name="trade_opinion",
+        schema=_trade_opinion_schema(),
+    )
+
+
+def _response_format_candidates_for_schema(
+    *,
+    name: str,
+    schema: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Build ordered response format candidates for any strict JSON schema."""
     return [
         {
             "type": "json_schema",
             "json_schema": {
-                "name": "trade_opinion",
+                "name": name,
                 "strict": True,
-                "schema": _trade_opinion_schema(),
+                "schema": schema,
             },
         },
         {"type": "json_object"},
     ]
+
+
+def _judge_schema() -> dict[str, Any]:
+    """Return strict JSON schema for trade-opinion judge verdicts."""
+    schema = TradeOpinionJudgeVerdict.model_json_schema()
+    if isinstance(schema, dict):
+        schema.setdefault("additionalProperties", False)
+    return schema
+
+
+def _judge_response_format_candidates() -> list[dict[str, Any]]:
+    """Response formats for judge verdict generation."""
+    return _response_format_candidates_for_schema(name="trade_opinion_judge", schema=_judge_schema())
 
 
 def _extract_text_content(raw: Any) -> str:
@@ -151,20 +205,28 @@ def _request_structured_completion(
     model: str,
     messages: list[dict[str, str]],
     max_tokens: int,
+    response_formats: list[dict[str, Any]] | None = None,
+    temperature: float | None = None,
 ) -> Any:
     """
     Call provider with structured output settings.
 
     Tries strict schema mode first, then falls back to generic JSON mode.
     """
+    candidates = response_formats if response_formats is not None else _response_format_candidates()
     last_exc: Exception | None = None
-    for fmt in _response_format_candidates():
+    for fmt in candidates:
         try:
+            kwargs: dict[str, Any] = {
+                "model": model,
+                "messages": messages,
+                "max_tokens": max_tokens,
+                "response_format": fmt,
+            }
+            if temperature is not None:
+                kwargs["temperature"] = temperature
             return client.chat.completions.create(
-                model=model,
-                messages=messages,
-                max_tokens=max_tokens,
-                response_format=fmt,
+                **kwargs
             )
         except Exception as exc:
             last_exc = exc
@@ -178,6 +240,158 @@ def _request_structured_completion(
     if last_exc is not None:
         raise last_exc
     raise RuntimeError("No response_format candidates configured")
+
+
+def _is_truthy(value: str | None) -> bool:
+    """Return True for standard truthy env values."""
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _float_env(name: str, default: float) -> float:
+    """Read float from env with safe fallback."""
+    raw = (os.getenv(name) or "").strip()
+    if not raw:
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        logger.warning("Trade opinion: invalid float env %s=%r, using default %.4f", name, raw, default)
+        return default
+
+
+def _int_env(name: str, default: int) -> int:
+    """Read int from env with safe fallback."""
+    raw = (os.getenv(name) or "").strip()
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        logger.warning("Trade opinion: invalid int env %s=%r, using default %d", name, raw, default)
+        return default
+
+
+def _stable_sample(seed: str, sample_rate: float) -> bool:
+    """
+    Deterministic sampling decision in [0,1] for stable replayability.
+
+    Uses a daily bucket to ensure traffic sample rotates each UTC day.
+    """
+    if sample_rate <= 0.0:
+        return False
+    if sample_rate >= 1.0:
+        return True
+    day_seed = datetime.now(UTC).date().isoformat()
+    digest = hashlib.sha256(f"{day_seed}:{seed}".encode()).hexdigest()
+    value = int(digest[:8], 16) / 0xFFFFFFFF
+    return value < sample_rate
+
+
+def _needs_consensus(opinion: TradeOpinion) -> bool:
+    """
+    Decide whether to run additional samples for uncertainty reduction.
+
+    Triggers when confidence is near the decision boundary or when explicit
+    risk flags are present.
+    """
+    if not _is_truthy(os.getenv("TRADE_OPINION_CONSENSUS_ENABLED", "true")):
+        return False
+
+    half_band = max(0.0, min(0.5, _float_env("TRADE_OPINION_UNCERTAIN_BAND", 0.15)))
+    low = 0.5 - half_band
+    high = 0.5 + half_band
+    near_boundary = low <= opinion.confidence <= high
+    has_risk_flags = bool(opinion.risk_flags)
+    return near_boundary or has_risk_flags
+
+
+def _aggregate_consensus(opinions: list[TradeOpinion]) -> TradeOpinion:
+    """Aggregate multiple independent opinions into a single consensus object."""
+    if not opinions:
+        raise ValueError("opinions must not be empty")
+    if len(opinions) == 1:
+        return opinions[0]
+
+    should_trade_votes = [o.should_trade for o in opinions]
+    true_votes = sum(1 for vote in should_trade_votes if vote)
+    false_votes = len(should_trade_votes) - true_votes
+    if true_votes == false_votes:
+        should_trade = False
+        tie_risk_flag = ["consensus_tie"]
+    else:
+        should_trade = true_votes > false_votes
+        tie_risk_flag = []
+
+    majority_count = max(true_votes, false_votes)
+    agreement = max(0.0, min(1.0, majority_count / len(opinions)))
+
+    regimes = [o.regime.strip() for o in opinions if o.regime.strip()]
+    regime = Counter(regimes).most_common(1)[0][0] if regimes else opinions[0].regime
+
+    filtered = [o for o in opinions if o.should_trade == should_trade] or opinions
+    best_reason = max(filtered, key=lambda x: x.confidence).reasoning
+
+    avg_confidence = sum(o.confidence for o in opinions) / len(opinions)
+    confidence = max(0.0, min(1.0, avg_confidence * agreement))
+
+    avg_delta = sum(o.suggested_short_delta for o in opinions) / len(opinions)
+    avg_dte = round(sum(o.suggested_dte for o in opinions) / len(opinions))
+
+    all_risk_flags: list[str] = []
+    for opinion in opinions:
+        all_risk_flags.extend(opinion.risk_flags)
+    all_risk_flags.extend(tie_risk_flag)
+    deduped_flags = sorted({flag for flag in all_risk_flags if flag})
+
+    return TradeOpinion(
+        should_trade=should_trade,
+        confidence=confidence,
+        regime=regime,
+        suggested_short_delta=max(0.05, min(0.30, avg_delta)),
+        suggested_dte=max(14, min(60, avg_dte)),
+        reasoning=best_reason,
+        risk_flags=deduped_flags,
+        consensus_samples=len(opinions),
+        consensus_agreement=agreement,
+    )
+
+
+def _emit_judge_telemetry(payload: dict[str, Any]) -> None:
+    """Append judge telemetry payload to JSONL when enabled."""
+    if not _is_truthy(os.getenv("TRADE_OPINION_JUDGE_LOG_ENABLED", "true")):
+        return
+    log_path = Path(
+        os.getenv("TRADE_OPINION_JUDGE_LOG_PATH", "data/telemetry/trade_opinion_judge.jsonl")
+    )
+    try:
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        with log_path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(payload, sort_keys=True) + "\n")
+    except Exception as exc:
+        logger.warning("Trade opinion judge: failed to write telemetry (%s)", exc)
+
+
+def _judge_system_prompt() -> str:
+    """System prompt for strong-model judge evaluation."""
+    return """You are a strict risk/compliance judge for SPY iron-condor pre-trade opinions.
+
+Evaluate whether the candidate opinion is internally consistent with context and rules:
+- Avoid high-risk conditions (major catalysts, extreme volatility, explicit risk flags)
+- Confidence should match evidence quality (no overconfident weak rationale)
+- Trade recommendation should be conservative when uncertainty is high
+
+Respond ONLY with valid JSON matching the schema."""
+
+
+def _build_judge_prompt(context_prompt: str, opinion: TradeOpinion) -> str:
+    """Build judge prompt from original context and candidate opinion."""
+    opinion_json = json.dumps(opinion.model_dump(), sort_keys=True)
+    return (
+        "Evaluate the candidate opinion below.\n\n"
+        f"Original context:\n{context_prompt}\n\n"
+        f"Candidate opinion JSON:\n{opinion_json}\n\n"
+        "Return JSON with fields: approved, score, verdict, violations."
+    )
 
 
 def get_trade_opinion(
@@ -221,77 +435,211 @@ def get_trade_opinion(
         transport_model_id,
     )
 
-    # Build the prompt
     prompt = _build_prompt(vix_current, thompson_stats, regime, recent_lessons)
+    max_samples = max(1, min(5, _int_env("TRADE_OPINION_MAX_SAMPLES", 3)))
+    base_temperature = max(0.0, min(1.5, _float_env("TRADE_OPINION_TEMPERATURE", 0.1)))
+    temperature_step = max(0.0, min(1.0, _float_env("TRADE_OPINION_TEMPERATURE_STEP", 0.2)))
+
+    judge_enabled = _is_truthy(os.getenv("TRADE_OPINION_JUDGE_ENABLED", "false"))
+    judge_sample_rate = max(0.0, min(1.0, _float_env("TRADE_OPINION_JUDGE_SAMPLE_RATE", 0.15)))
+    judge_enforce = _is_truthy(os.getenv("TRADE_OPINION_JUDGE_ENFORCE", "false"))
 
     try:
         from openai import OpenAI
 
         client = OpenAI(api_key=primary_cfg.api_key, base_url=primary_cfg.base_url)
+        fallback_client: Any = None
         using_gateway = bool(primary_cfg.base_url) and (
             primary_cfg.base_url.rstrip("/") != OPENROUTER_BASE_URL.rstrip("/")
         )
         model_for_call = transport_model_id if using_gateway else model_id
+
+        def run_completion(
+            *,
+            canonical_model: str,
+            primary_model: str,
+            fallback_model: str,
+            messages: list[dict[str, str]],
+            max_tokens: int,
+            response_formats: list[dict[str, Any]] | None = None,
+            temperature: float | None = None,
+        ) -> Any:
+            nonlocal fallback_client
+            try:
+                response = _request_structured_completion(
+                    client,
+                    model=primary_model,
+                    messages=messages,
+                    max_tokens=max_tokens,
+                    response_formats=response_formats,
+                    temperature=temperature,
+                )
+            except Exception as primary_exc:
+                if not fallback_cfg:
+                    raise
+                logger.warning(
+                    "Trade opinion: gateway call failed (%s). Retrying via OpenRouter direct.",
+                    primary_exc,
+                )
+                if fallback_client is None:
+                    fallback_client = OpenAI(
+                        api_key=fallback_cfg.api_key, base_url=fallback_cfg.base_url
+                    )
+                response = _request_structured_completion(
+                    fallback_client,
+                    model=fallback_model,
+                    messages=messages,
+                    max_tokens=max_tokens,
+                    response_formats=response_formats,
+                    temperature=temperature,
+                )
+
+            if response.usage:
+                selector.log_usage(
+                    canonical_model,
+                    response.usage.prompt_tokens,
+                    response.usage.completion_tokens,
+                )
+            return response
+
+        def parse_trade_opinion_response(response: Any) -> TradeOpinion:
+            text = (
+                _extract_text_content(response.choices[0].message.content) if response.choices else ""
+            )
+            if not text:
+                raise json.JSONDecodeError("Empty response", "", 0)
+            data = _parse_json_object(text)
+            return TradeOpinion.model_validate(data)
 
         messages = [
             {"role": "system", "content": _system_prompt()},
             {"role": "user", "content": prompt},
         ]
 
-        try:
-            response = _request_structured_completion(
-                client,
-                model=model_for_call,
-                messages=messages,
-                max_tokens=2048,
-            )
-        except Exception as gateway_exc:
-            # If we're routing through a gateway (TARS) and it fails, retry via
-            # OpenRouter direct (if OPENROUTER_API_KEY is present).
-            if fallback_cfg:
-                logger.warning(
-                    "Trade opinion: gateway call failed (%s). Retrying via OpenRouter direct.",
-                    gateway_exc,
-                )
-                fallback_client = OpenAI(
-                    api_key=fallback_cfg.api_key, base_url=fallback_cfg.base_url
-                )
-                response = _request_structured_completion(
-                    fallback_client,
-                    model=model_id,
-                    messages=messages,
-                    max_tokens=2048,
-                )
-            else:
-                raise
-
-        # Log usage for budget tracking
-        if response.usage:
-            selector.log_usage(
-                model_id,
-                response.usage.prompt_tokens,
-                response.usage.completion_tokens,
-            )
-
-        # Parse response
-        text = (
-            _extract_text_content(response.choices[0].message.content) if response.choices else ""
+        first_response = run_completion(
+            canonical_model=model_id,
+            primary_model=model_for_call,
+            fallback_model=model_id,
+            messages=messages,
+            max_tokens=2048,
+            temperature=base_temperature,
         )
-        if not text:
-            logger.warning("Trade opinion: empty response from LLM")
-            return None
+        first_opinion = parse_trade_opinion_response(first_response)
 
-        data = _parse_json_object(text)
-        opinion = TradeOpinion.model_validate(data)
+        samples: list[TradeOpinion] = [first_opinion]
+        if max_samples > 1 and _needs_consensus(first_opinion):
+            for idx in range(1, max_samples):
+                sample_temperature = min(1.5, base_temperature + (idx * temperature_step))
+                try:
+                    sample_response = run_completion(
+                        canonical_model=model_id,
+                        primary_model=model_for_call,
+                        fallback_model=model_id,
+                        messages=messages,
+                        max_tokens=2048,
+                        temperature=sample_temperature,
+                    )
+                    samples.append(parse_trade_opinion_response(sample_response))
+                except Exception as sample_exc:
+                    logger.warning(
+                        "Trade opinion consensus sample %d failed: %s",
+                        idx + 1,
+                        sample_exc,
+                    )
+
+        opinion = _aggregate_consensus(samples)
+        if len(samples) > 1:
+            logger.info(
+                "Trade opinion consensus: samples=%d agreement=%.2f should_trade=%s",
+                opinion.consensus_samples,
+                opinion.consensus_agreement,
+                opinion.should_trade,
+            )
+
+        judge_sampled = False
+        judge_verdict: TradeOpinionJudgeVerdict | None = None
+        judge_model = ""
+        judge_seed = f"{model_id}:{prompt}:{json.dumps(opinion.model_dump(), sort_keys=True)}"
+        if judge_enabled and _stable_sample(judge_seed, judge_sample_rate):
+            judge_sampled = True
+            judge_model = (os.getenv("TRADE_OPINION_JUDGE_MODEL") or "").strip()
+            if not judge_model:
+                judge_model = selector.select_model("risk_assessment")
+                if selector.get_model_provider(judge_model) != "openrouter":
+                    logger.warning(
+                        "Trade opinion judge skipped: selected judge model is not OpenRouter (%s)",
+                        judge_model,
+                    )
+                    judge_model = ""
+
+            if judge_model:
+                judge_transport_model = (
+                    selector.get_transport_model_id(judge_model) if using_gateway else judge_model
+                )
+                judge_messages = [
+                    {"role": "system", "content": _judge_system_prompt()},
+                    {"role": "user", "content": _build_judge_prompt(prompt, opinion)},
+                ]
+                try:
+                    judge_response = run_completion(
+                        canonical_model=judge_model,
+                        primary_model=judge_transport_model,
+                        fallback_model=judge_model,
+                        messages=judge_messages,
+                        max_tokens=1024,
+                        response_formats=_judge_response_format_candidates(),
+                        temperature=max(0.0, min(1.0, _float_env("TRADE_OPINION_JUDGE_TEMPERATURE", 0.0))),
+                    )
+                    judge_text = (
+                        _extract_text_content(judge_response.choices[0].message.content)
+                        if judge_response.choices
+                        else ""
+                    )
+                    if judge_text:
+                        judge_verdict = TradeOpinionJudgeVerdict.model_validate(
+                            _parse_json_object(judge_text)
+                        )
+                    if judge_verdict and judge_enforce and not judge_verdict.approved:
+                        reason = f"{opinion.reasoning} | judge: {judge_verdict.verdict}".strip()
+                        flags = sorted({*opinion.risk_flags, "judge_rejected"})
+                        opinion = opinion.model_copy(
+                            update={
+                                "should_trade": False,
+                                "risk_flags": flags,
+                                "reasoning": reason,
+                            }
+                        )
+                except Exception as judge_exc:
+                    logger.warning("Trade opinion judge failed: %s", judge_exc)
+
+        _emit_judge_telemetry(
+            {
+                "timestamp": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                "model": model_id,
+                "consensus_samples": opinion.consensus_samples,
+                "consensus_agreement": opinion.consensus_agreement,
+                "judge_enabled": judge_enabled,
+                "judge_sampled": judge_sampled,
+                "judge_model": judge_model or None,
+                "judge_approved": (judge_verdict.approved if judge_verdict else None),
+                "judge_score": (judge_verdict.score if judge_verdict else None),
+                "judge_enforce": judge_enforce,
+                "final_should_trade": opinion.should_trade,
+                "final_confidence": opinion.confidence,
+                "risk_flags": opinion.risk_flags,
+            }
+        )
 
         logger.info(
-            f"Trade opinion: should_trade={opinion.should_trade}, "
-            f"confidence={opinion.confidence:.2f}, regime={opinion.regime}, "
-            f"delta={opinion.suggested_short_delta}, dte={opinion.suggested_dte}"
+            "Trade opinion: should_trade=%s, confidence=%.2f, regime=%s, delta=%.2f, dte=%d",
+            opinion.should_trade,
+            opinion.confidence,
+            opinion.regime,
+            opinion.suggested_short_delta,
+            opinion.suggested_dte,
         )
         if opinion.risk_flags:
-            logger.warning(f"Trade opinion risk flags: {opinion.risk_flags}")
-
+            logger.warning("Trade opinion risk flags: %s", opinion.risk_flags)
         return opinion
 
     except ImportError:

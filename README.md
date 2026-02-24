@@ -59,6 +59,21 @@ The system routes all LLM calls through a unified gateway (`src/utils/llm_gatewa
 
 Safety guarantee: trade execution **always** uses Opus regardless of budget. Fallback chain: Opus -> Kimi K2 -> Mistral -> DeepSeek.
 
+**Autonomous Pre-Trade Reliability Controls** (`src/llm/trade_opinion.py`)
+- **Uncertainty-adaptive consensus**: when confidence is near the boundary (or risk flags exist), the system can run multiple independent samples and aggregate by majority vote + agreement score.
+- **Sampled strong-judge audit**: optional quality/risk judge runs on a sampled subset of opinions and can enforce conservative overrides.
+
+Key env vars:
+| Env Var | Purpose |
+|---|---|
+| `TRADE_OPINION_CONSENSUS_ENABLED` | Enable uncertainty-triggered multi-sample consensus (`true`/`false`) |
+| `TRADE_OPINION_MAX_SAMPLES` | Max samples per opinion when consensus is triggered (default `3`) |
+| `TRADE_OPINION_UNCERTAIN_BAND` | Confidence band around 0.5 to trigger extra sampling (default `0.15`) |
+| `TRADE_OPINION_JUDGE_ENABLED` | Enable sampled judge pipeline (`true`/`false`, default `false`) |
+| `TRADE_OPINION_JUDGE_SAMPLE_RATE` | Fraction of opinions to judge (`0.0`-`1.0`) |
+| `TRADE_OPINION_JUDGE_ENFORCE` | If judge rejects, force conservative `should_trade=false` |
+| `TRADE_OPINION_JUDGE_LOG_PATH` | JSONL evidence log path for judge outcomes |
+
 ### Feedback-Driven Context Pipeline
 
 ![Feedback Pipeline](docs/assets/feedback_pipeline.png)

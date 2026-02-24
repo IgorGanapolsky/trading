@@ -19,8 +19,10 @@ import pytest
 
 from src.llm.trade_opinion import (
     TradeOpinion,
+    _aggregate_consensus,
     _build_prompt,
     _parse_json_object,
+    _stable_sample,
     _system_prompt,
     get_trade_opinion,
 )
@@ -555,3 +557,174 @@ class TestModelRouting:
         from src.utils.model_selector import TASK_COMPLEXITY_MAP, TaskComplexity
 
         assert TASK_COMPLEXITY_MAP["pre_trade_research"] == TaskComplexity.COMPLEX
+
+
+class TestAutonomousConsensusAndJudge:
+    """Validate autonomous consensus scaling + sampled strong-judge behavior."""
+
+    def test_aggregate_consensus_tie_defaults_to_skip(self):
+        opinions = [
+            TradeOpinion(
+                should_trade=True,
+                confidence=0.55,
+                regime="calm",
+                suggested_short_delta=0.14,
+                suggested_dte=30,
+                reasoning="borderline yes",
+                risk_flags=[],
+            ),
+            TradeOpinion(
+                should_trade=False,
+                confidence=0.54,
+                regime="volatile",
+                suggested_short_delta=0.16,
+                suggested_dte=40,
+                reasoning="borderline no",
+                risk_flags=["event_risk"],
+            ),
+        ]
+        merged = _aggregate_consensus(opinions)
+        assert merged.should_trade is False
+        assert merged.consensus_samples == 2
+        assert merged.consensus_agreement == 0.5
+        assert "consensus_tie" in merged.risk_flags
+
+    def test_stable_sample_is_deterministic(self):
+        seed = "same-seed"
+        first = _stable_sample(seed, 0.37)
+        second = _stable_sample(seed, 0.37)
+        assert first == second
+
+    @patch.dict(
+        os.environ,
+        {
+            "OPENROUTER_API_KEY": "test-key",
+            "TRADE_OPINION_CONSENSUS_ENABLED": "true",
+            "TRADE_OPINION_MAX_SAMPLES": "3",
+            "TRADE_OPINION_UNCERTAIN_BAND": "0.2",
+            "TRADE_OPINION_JUDGE_ENABLED": "false",
+        },
+    )
+    def test_uncertainty_triggers_multi_sample_consensus(self):
+        _ensure_openai_mock()
+        raw = [
+            {
+                "should_trade": True,
+                "confidence": 0.52,
+                "regime": "calm",
+                "suggested_short_delta": 0.15,
+                "suggested_dte": 35,
+                "reasoning": "uncertain but acceptable",
+                "risk_flags": [],
+            },
+            {
+                "should_trade": True,
+                "confidence": 0.66,
+                "regime": "calm",
+                "suggested_short_delta": 0.16,
+                "suggested_dte": 33,
+                "reasoning": "better setup",
+                "risk_flags": [],
+            },
+            {
+                "should_trade": False,
+                "confidence": 0.58,
+                "regime": "volatile",
+                "suggested_short_delta": 0.12,
+                "suggested_dte": 40,
+                "reasoning": "watch volatility",
+                "risk_flags": ["vix_rising"],
+            },
+        ]
+
+        with patch("src.llm.trade_opinion.get_model_selector") as mock_sel:
+            mock_selector = MagicMock()
+            mock_selector.select_model.return_value = "deepseek/deepseek-r1"
+            mock_selector.get_model_provider.return_value = "openrouter"
+            mock_selector.get_transport_model_id.return_value = "deepseek/deepseek-r1"
+            mock_sel.return_value = mock_selector
+
+            with patch("openai.OpenAI") as mock_client_cls:
+                mock_client = MagicMock()
+                responses = []
+                for payload in raw:
+                    mock_response = MagicMock()
+                    mock_choice = MagicMock()
+                    mock_choice.message.content = json.dumps(payload)
+                    mock_response.choices = [mock_choice]
+                    mock_response.usage = None
+                    responses.append(mock_response)
+                mock_client.chat.completions.create.side_effect = responses
+                mock_client_cls.return_value = mock_client
+
+                result = get_trade_opinion(vix_current=19.0)
+                assert result is not None
+                assert result.consensus_samples == 3
+                assert result.consensus_agreement == pytest.approx(2 / 3, rel=1e-6)
+                assert mock_client.chat.completions.create.call_count == 3
+
+    def test_judge_can_enforce_conservative_override(self, tmp_path):
+        _ensure_openai_mock()
+        log_path = tmp_path / "judge.jsonl"
+        env = {
+            "OPENROUTER_API_KEY": "test-key",
+            "TRADE_OPINION_CONSENSUS_ENABLED": "false",
+            "TRADE_OPINION_JUDGE_ENABLED": "true",
+            "TRADE_OPINION_JUDGE_SAMPLE_RATE": "1.0",
+            "TRADE_OPINION_JUDGE_ENFORCE": "true",
+            "TRADE_OPINION_JUDGE_LOG_PATH": str(log_path),
+        }
+
+        with patch.dict(os.environ, env):
+            with patch("src.llm.trade_opinion.get_model_selector") as mock_sel:
+                mock_selector = MagicMock()
+                mock_selector.select_model.side_effect = [
+                    "deepseek/deepseek-r1",
+                    "moonshotai/kimi-k2-0905",
+                ]
+                mock_selector.get_model_provider.return_value = "openrouter"
+                mock_selector.get_transport_model_id.side_effect = lambda model: model
+                mock_sel.return_value = mock_selector
+
+                with patch("openai.OpenAI") as mock_client_cls:
+                    mock_client = MagicMock()
+
+                    candidate = MagicMock()
+                    candidate_choice = MagicMock()
+                    candidate_choice.message.content = json.dumps(
+                        {
+                            "should_trade": True,
+                            "confidence": 0.81,
+                            "regime": "calm",
+                            "suggested_short_delta": 0.15,
+                            "suggested_dte": 35,
+                            "reasoning": "good setup",
+                            "risk_flags": [],
+                        }
+                    )
+                    candidate.choices = [candidate_choice]
+                    candidate.usage = None
+
+                    judge = MagicMock()
+                    judge_choice = MagicMock()
+                    judge_choice.message.content = json.dumps(
+                        {
+                            "approved": False,
+                            "score": 0.22,
+                            "verdict": "Catalyst risk underweighted.",
+                            "violations": ["event_risk"],
+                        }
+                    )
+                    judge.choices = [judge_choice]
+                    judge.usage = None
+
+                    mock_client.chat.completions.create.side_effect = [candidate, judge]
+                    mock_client_cls.return_value = mock_client
+
+                    result = get_trade_opinion(vix_current=24.0, regime="volatile")
+                    assert result is not None
+                    assert result.should_trade is False
+                    assert "judge_rejected" in result.risk_flags
+                    assert log_path.exists()
+                    payload = json.loads(log_path.read_text(encoding="utf-8").strip())
+                    assert payload["judge_approved"] is False
