@@ -11,14 +11,14 @@
 
   <rect x="52" y="150" width="1176" height="238" rx="18" fill="#102A42" stroke="#2C567E"/>
   <text x="82" y="198" fill="#F5F9FF" font-size="28" font-family="Avenir Next, Segoe UI, Arial">Net Liquidation Value</text>
-  <text x="82" y="242" fill="#8CE5A9" font-size="44" font-family="Avenir Next, Segoe UI, Arial">$100,987.58</text>
-  <text x="82" y="284" fill="#BFD4EA" font-size="22" font-family="Avenir Next, Segoe UI, Arial">MTD P/L: +987.58 (+0.99%)</text>
-  <text x="82" y="322" fill="#BFD4EA" font-size="22" font-family="Avenir Next, Segoe UI, Arial">Daily return: -168.00 (-16.6 bps)</text>
-  <text x="82" y="360" fill="#BFD4EA" font-size="22" font-family="Avenir Next, Segoe UI, Arial">Buying power utilization: 0.0% (cash 100,364.58)</text>
+  <text x="82" y="242" fill="#8CE5A9" font-size="44" font-family="Avenir Next, Segoe UI, Arial">$101,049.86</text>
+  <text x="82" y="284" fill="#BFD4EA" font-size="22" font-family="Avenir Next, Segoe UI, Arial">MTD P/L: +1,049.86 (+1.05%)</text>
+  <text x="82" y="322" fill="#BFD4EA" font-size="22" font-family="Avenir Next, Segoe UI, Arial">Daily return: -105.72 (-10.5 bps)</text>
+  <text x="82" y="360" fill="#BFD4EA" font-size="22" font-family="Avenir Next, Segoe UI, Arial">Buying power utilization: 0.0% (cash 101,262.86)</text>
 
   <rect x="52" y="418" width="572" height="238" rx="18" fill="#102A42" stroke="#2C567E"/>
   <text x="82" y="466" fill="#F5F9FF" font-size="28" font-family="Avenir Next, Segoe UI, Arial">Execution State</text>
-  <text x="82" y="510" fill="#BFD4EA" font-size="22" font-family="Avenir Next, Segoe UI, Arial">Open structures/legs proxy: 5</text>
+  <text x="82" y="510" fill="#BFD4EA" font-size="22" font-family="Avenir Next, Segoe UI, Arial">Open structures/legs proxy: 4</text>
   <text x="82" y="548" fill="#BFD4EA" font-size="22" font-family="Avenir Next, Segoe UI, Arial">Win-rate estimate: 100.0% (n=1)</text>
   <text x="82" y="586" fill="#BFD4EA" font-size="22" font-family="Avenir Next, Segoe UI, Arial">North Star gate regime: LOW</text>
 
@@ -39,5 +39,5 @@
 
   <rect x="762" y="566" width="359" height="72" rx="10" fill="#0E2539" stroke="#2C567E"/>
   <text x="780" y="593" fill="#BFD4EA" font-size="20" font-family="Avenir Next, Segoe UI, Arial">Adverse drift day; downside variance dominated.</text>
-  <text x="780" y="621" fill="#BFD4EA" font-size="18" font-family="Avenir Next, Segoe UI, Arial">Snapshot: 2026-02-24T17:21:10Z</text>
+  <text x="780" y="621" fill="#BFD4EA" font-size="18" font-family="Avenir Next, Segoe UI, Arial">Snapshot: 2026-02-24T16:18:49Z</text>
 </svg>

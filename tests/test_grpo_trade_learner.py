@@ -26,13 +26,13 @@ def _make_features(**overrides) -> TradeFeatures:
     defaults = dict(
         vix_level=18.0,
         vix_percentile=0.5,
+        vix_term_structure=0.9,
         spy_20d_return=0.01,
         spy_5d_return=0.005,
         hour_of_day=0.5,
         day_of_week=0.4,
         days_to_expiry=30.0,
         put_call_ratio=1.0,
-        vix_term_structure=0.9,
     )
     defaults.update(overrides)
     return TradeFeatures(**defaults)

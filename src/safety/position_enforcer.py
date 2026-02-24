@@ -1,6 +1,8 @@
 import logging
 from dataclasses import dataclass, field
 
+from src.safety.mandatory_trade_gate import safe_close_position
+
 logger = logging.getLogger(__name__)
 
 
@@ -59,7 +61,7 @@ def enforce_positions(trader) -> EnforcementResult:
 
                 # Close the position
                 try:
-                    trader.close_position(symbol)
+                    safe_close_position(trader, symbol)
                     result.positions_closed += 1
                     result.closed_symbols.append(symbol)
                     logger.info(f"✅ Closed violating position: {symbol}")

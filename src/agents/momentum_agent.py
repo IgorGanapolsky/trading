@@ -57,6 +57,7 @@ class MomentumAgent:
         """
         try:
             from src.utils import yfinance_wrapper as yf
+
             stock = yf.Ticker(ticker)
             hist = stock.history(period="60d")
 
@@ -89,19 +90,17 @@ class MomentumAgent:
                 ticker,
                 "BUY" if is_buy else "REJECT",
                 strength,
-                sig.rationale
+                sig.rationale,
             )
 
             return MomentumSignal(
                 is_buy=is_buy,
                 strength=strength,
-                indicators={
-                    "symbol": ticker,
-                    "rationale": sig.rationale,
-                    "price": sig.price
-                },
+                indicators={"symbol": ticker, "rationale": sig.rationale, "price": sig.price},
             )
 
         except Exception as e:
             logger.error(f"{ticker}: Momentum evaluation failed: {e}")
-            return MomentumSignal(is_buy=False, strength=0.0, indicators={"symbol": ticker, "error": str(e)})
+            return MomentumSignal(
+                is_buy=False, strength=0.0, indicators={"symbol": ticker, "error": str(e)}
+            )

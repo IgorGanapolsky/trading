@@ -308,7 +308,9 @@ def expectancy_metrics_from_system_state_history(
     gross_loss = sum(loss_pnls)
     avg_winner = (gross_win / wins) if wins > 0 else None
     avg_loser = (gross_loss / losses) if losses > 0 else None
-    profit_factor = (gross_win / gross_loss) if gross_loss > 0 else (float("inf") if gross_win > 0 else None)
+    profit_factor = (
+        (gross_win / gross_loss) if gross_loss > 0 else (float("inf") if gross_win > 0 else None)
+    )
 
     return {
         "sample_size": sample,

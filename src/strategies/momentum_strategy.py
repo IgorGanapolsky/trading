@@ -125,7 +125,9 @@ class MomentumStrategy(BaseStrategy):
                 if passed:
                     action = "buy"
                     # Calculate composite score (same as legacy)
-                    score = current_price * (1 + macd_hist / 10) * (1 + (70 - rsi) / 100) * vol_ratio
+                    score = (
+                        current_price * (1 + macd_hist / 10) * (1 + (70 - rsi) / 100) * vol_ratio
+                    )
                     # Normalise to 0-1
                     strength = min(1.0, score / (score + 100.0))
                     rationale_parts.append(f"Strong momentum score: {score:.2f}")
@@ -138,7 +140,7 @@ class MomentumStrategy(BaseStrategy):
                         price=current_price,
                         stop_loss=current_price * (1 - self.STOP_LOSS_PCT),
                         take_profit=current_price * (1 + self.TAKE_PROFIT_PCT),
-                        rationale=" | ".join(rationale_parts)
+                        rationale=" | ".join(rationale_parts),
                     )
                 )
 

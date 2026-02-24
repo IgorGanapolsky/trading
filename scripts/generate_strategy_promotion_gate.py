@@ -15,6 +15,7 @@ from src.core.trading_constants import (
 
 logger = logging.getLogger(__name__)
 
+
 def main():
     repo_root = Path(__file__).parent.parent.resolve()
     system_state_path = repo_root / "data/system_state.json"
@@ -55,7 +56,9 @@ def main():
         start_date = datetime.fromisoformat(start_date_str)
         days_elapsed = (datetime.now() - start_date).days
         if days_elapsed < NORTH_STAR_PAPER_VALIDATION_DAYS:
-            reasons.append(f"Validation period {days_elapsed}d below target {NORTH_STAR_PAPER_VALIDATION_DAYS}d")
+            reasons.append(
+                f"Validation period {days_elapsed}d below target {NORTH_STAR_PAPER_VALIDATION_DAYS}d"
+            )
     else:
         reasons.append("Paper trading start date missing")
 
@@ -75,9 +78,9 @@ def main():
             "target_win_rate_pct": NORTH_STAR_TARGET_WIN_RATE_PCT,
             "current_run_rate_mo": round(run_rate, 2),
             "target_run_rate_mo": NORTH_STAR_MONTHLY_AFTER_TAX,
-            "days_validated": days_elapsed if 'days_elapsed' in locals() else 0
+            "days_validated": days_elapsed if "days_elapsed" in locals() else 0,
         },
-        "blockers": reasons
+        "blockers": reasons,
     }
 
     with open(artifact_path, "w") as f:
@@ -85,6 +88,7 @@ def main():
 
     print(f"✅ Promotion gate generated: {status}")
     print(f"   Summary: {summary}")
+
 
 if __name__ == "__main__":
     main()

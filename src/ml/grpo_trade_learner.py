@@ -519,9 +519,7 @@ class GRPOTradeLearner:
         # Get raw P/L values and apply Rule #1 Weighting
         # Losses are 2x more 'impactful' than wins
         raw_pnls = np.array([t.pnl for t in self.trade_history])
-        weighted_pnls = np.array(
-            [p * 2.0 if p < 0 else p for p in raw_pnls]
-        )
+        weighted_pnls = np.array([p * 2.0 if p < 0 else p for p in raw_pnls])
 
         if len(weighted_pnls) < 2:
             return weighted_pnls

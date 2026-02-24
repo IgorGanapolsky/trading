@@ -487,6 +487,7 @@ def create_trading_workflow() -> TradingWorkflow:
         """Adversarial audit node to catch strategy drift or safety violations."""
         try:
             from src.agents.audit_agent import AuditAgent
+
             agent = AuditAgent()
             # Audit today's logs
             report = agent.perform_audit()
@@ -494,14 +495,10 @@ def create_trading_workflow() -> TradingWorkflow:
                 "status": report.status,
                 "violations": len(report.violations),
                 "summary": report.summary,
-                "passed": report.status != "FAIL"
+                "passed": report.status != "FAIL",
             }
         except Exception as e:
-            return {
-                "status": "ERROR",
-                "error": str(e),
-                "passed": False
-            }
+            return {"status": "ERROR", "error": str(e), "passed": False}
 
     workflow.add_node(
         "options_chain",
@@ -519,9 +516,9 @@ def create_trading_workflow() -> TradingWorkflow:
     workflow.add_node(
         "adversarial_audit",
         make_adversarial_audit,
-        "gate_keeper", # Treat as a gate for the next cycle
+        "gate_keeper",  # Treat as a gate for the next cycle
         dependencies=["trade_decision"],
-        cache_enabled=False
+        cache_enabled=False,
     )
 
     return workflow
