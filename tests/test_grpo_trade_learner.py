@@ -26,6 +26,7 @@ def _make_features(**overrides) -> TradeFeatures:
     defaults = dict(
         vix_level=18.0,
         vix_percentile=0.5,
+        vix_term_structure=1.0,
         spy_20d_return=0.01,
         spy_5d_return=0.005,
         hour_of_day=0.5,
@@ -69,20 +70,20 @@ class TestTradeFeatures:
     def test_to_array_shape_and_dtype(self):
         f = _make_features()
         arr = f.to_array()
-        assert arr.shape == (8,)
+        assert arr.shape == (9,)
         assert arr.dtype == np.float32
 
     def test_to_array_normalization(self):
         f = _make_features(vix_level=25.0, days_to_expiry=60.0)
         arr = f.to_array()
         assert arr[0] == pytest.approx(25.0 / 50.0)  # vix normalized
-        assert arr[6] == pytest.approx(60.0 / 60.0)  # dte normalized
+        assert arr[7] == pytest.approx(60.0 / 60.0)  # dte normalized
 
     def test_to_array_returns_scaling(self):
         f = _make_features(spy_20d_return=0.02, spy_5d_return=-0.01)
         arr = f.to_array()
-        assert arr[2] == pytest.approx(0.02 * 10)
-        assert arr[3] == pytest.approx(-0.01 * 10)
+        assert arr[3] == pytest.approx(0.02 * 10)
+        assert arr[4] == pytest.approx(-0.01 * 10)
 
 
 # ---------------------------------------------------------------------------
