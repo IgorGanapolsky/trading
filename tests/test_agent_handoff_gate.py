@@ -12,6 +12,7 @@ from scripts.agent_handoff_gate import (
     parse_changed_paths,
     render_markdown_report,
     select_targeted_tests,
+    validate_delegation_contract_step,
     validate_trading_policy_drift,
     validate_agents_contract,
 )
@@ -83,6 +84,15 @@ def test_render_markdown_report_includes_failed_steps() -> None:
     assert "# Agent Handoff Gate Report" in markdown
     assert "❌ lint" in markdown
     assert "scripts/agent_handoff_gate.py" in markdown
+
+
+def test_validate_delegation_contract_step_fails_on_missing_fields() -> None:
+    result = validate_delegation_contract_step(
+        contract={"assignee": "codex"},
+        changed_paths=["src/orchestrator/main.py"],
+    )
+    assert result.passed is False
+    assert any("missing required field" in detail for detail in result.details)
 
 
 def _write_policy_docs(repo_root: Path, max_positions: int | None = None) -> None:

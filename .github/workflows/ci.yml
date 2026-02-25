@@ -94,6 +94,9 @@ jobs:
             --mode quick \
             --report-md artifacts/devloop/agent_handoff_gate.md \
             --report-json artifacts/devloop/agent_handoff_gate.json \
+            --delegation-contract-out artifacts/devloop/delegation_contract.json \
+            --fallback-plan-json artifacts/devloop/handoff_fallback_plan.json \
+            --audit-jsonl artifacts/devloop/agent_handoff_audit.jsonl \
             --policy-ab-json artifacts/devloop/trading_policy_ab_metrics.json
 
       - name: Collect handoff A/B metrics
@@ -115,6 +118,9 @@ jobs:
           path: |
             artifacts/devloop/agent_handoff_gate.md
             artifacts/devloop/agent_handoff_gate.json
+            artifacts/devloop/delegation_contract.json
+            artifacts/devloop/handoff_fallback_plan.json
+            artifacts/devloop/agent_handoff_audit.jsonl
             artifacts/devloop/trading_policy_ab_metrics.json
             artifacts/devloop/agent_handoff_ab_metrics_latest.json
             artifacts/devloop/agent_handoff_ab_metrics_history.jsonl

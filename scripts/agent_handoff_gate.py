@@ -16,7 +16,16 @@ import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
+from src.safety.handoff_governance import (
+    append_handoff_audit_record,
+    build_delegation_contract,
+    build_fallback_plan,
+    infer_risk_tier,
+    required_step_names_for_tier,
+    validate_delegation_contract,
+)
 from src.safety.trading_policy_drift import (
     DEFAULT_POLICY_DOC_PATHS,
     collect_trading_policy_ab_metrics,
@@ -57,6 +66,11 @@ class GateReport:
     changed_paths: list[str]
     selected_tests: list[str]
     steps: list[GateStepResult]
+    risk_tier: str = "low"
+    delegation_contract: dict[str, Any] = field(default_factory=dict)
+    fallback_plan_json: str | None = None
+    audit_log_jsonl: str | None = None
+    audit_record_hash: str | None = None
     generated_at_utc: str = field(
         default_factory=lambda: datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     )
@@ -263,6 +277,7 @@ def render_markdown_report(report: GateReport) -> str:
         "",
         f"- Status: **{status}**",
         f"- Mode: `{report.mode}`",
+        f"- Risk Tier: `{report.risk_tier}`",
         f"- Base Ref: `{report.base_ref}`",
         f"- Generated (UTC): `{report.generated_at_utc}`",
         "",
@@ -291,6 +306,28 @@ def render_markdown_report(report: GateReport) -> str:
         lines.extend([f"- `{path}`" for path in report.selected_tests])
     else:
         lines.append("- none selected")
+
+    lines.extend(["", "## Delegation Contract", ""])
+    if report.delegation_contract:
+        lines.append(f"- assignee: `{report.delegation_contract.get('assignee')}`")
+        lines.append(
+            f"- fallback_assignee: `{report.delegation_contract.get('fallback_assignee')}`"
+        )
+        lines.append(f"- risk_tier: `{report.delegation_contract.get('risk_tier')}`")
+        lines.append(f"- timeout_minutes: `{report.delegation_contract.get('timeout_minutes')}`")
+        lines.append(
+            "- acceptance_tests: "
+            f"`{', '.join(report.delegation_contract.get('acceptance_tests', []))}`"
+        )
+    else:
+        lines.append("- none")
+
+    if report.fallback_plan_json:
+        lines.extend(["", "## Fallback Plan", "", f"- `{report.fallback_plan_json}`"])
+    if report.audit_log_jsonl:
+        lines.extend(["", "## Audit Trail", "", f"- `{report.audit_log_jsonl}`"])
+    if report.audit_record_hash:
+        lines.append(f"- latest hash: `{report.audit_record_hash}`")
     lines.append("")
     return "\n".join(lines)
 
@@ -379,6 +416,75 @@ def _write_reports(report: GateReport, report_md_path: Path, report_json_path: P
     )
 
 
+def _write_json(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def _load_json(path: Path) -> dict[str, Any]:
+    try:
+        parsed = json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _resolve_delegation_contract(
+    args: argparse.Namespace, changed_paths: list[str]
+) -> dict[str, Any]:
+    if args.delegation_contract_json:
+        contract = _load_json(Path(args.delegation_contract_json).resolve())
+        if contract:
+            return contract
+    return build_delegation_contract(
+        changed_paths=changed_paths,
+        mode=args.mode,
+        assignee=args.assignee,
+        fallback_assignee=args.fallback_assignee,
+        risk_tier=args.risk_tier,
+        objective=args.objective,
+        timeout_minutes=args.timeout_minutes,
+    )
+
+
+def validate_delegation_contract_step(
+    *, contract: dict[str, Any], changed_paths: list[str]
+) -> GateStepResult:
+    issues = validate_delegation_contract(contract, changed_paths=changed_paths)
+    if issues:
+        return GateStepResult(name="delegation contract", passed=False, details=issues)
+
+    details = [
+        f"assignee={contract.get('assignee')}",
+        f"fallback_assignee={contract.get('fallback_assignee')}",
+        f"risk_tier={contract.get('risk_tier')}",
+        f"acceptance_tests={','.join(contract.get('acceptance_tests', []))}",
+    ]
+    return GateStepResult(name="delegation contract", passed=True, details=details)
+
+
+def _run_optional_pytest_step(
+    *, name: str, repo_root: Path, dry_run: bool, test_paths: list[str]
+) -> GateStepResult:
+    existing = [path for path in test_paths if (repo_root / path).exists()]
+    if not existing:
+        return GateStepResult(name=name, passed=True, details=["skipped: targets not found"])
+    return _run_command_step(
+        name=name,
+        command=["python3", "-m", "pytest", "-q", *existing],
+        repo_root=repo_root,
+        dry_run=dry_run,
+    )
+
+
+def _run_optional_command_step(
+    *, name: str, repo_root: Path, dry_run: bool, command: list[str], required_path: str
+) -> GateStepResult:
+    if not (repo_root / required_path).exists():
+        return GateStepResult(name=name, passed=True, details=[f"skipped: missing {required_path}"])
+    return _run_command_step(name=name, command=command, repo_root=repo_root, dry_run=dry_run)
+
+
 def run_gate(args: argparse.Namespace) -> int:
     repo_root = Path(args.repo_root).resolve()
     changed_paths = get_changed_paths(
@@ -386,6 +492,13 @@ def run_gate(args: argparse.Namespace) -> int:
         base_ref=args.base_ref,
         head_ref=args.head_ref,
     )
+    if args.risk_tier == "auto":
+        args.risk_tier = infer_risk_tier(changed_paths)
+
+    contract = _resolve_delegation_contract(args=args, changed_paths=changed_paths)
+    contract_out_path = Path(args.delegation_contract_out).resolve()
+    _write_json(contract_out_path, contract)
+    risk_tier = str(contract.get("risk_tier") or "low")
 
     selected_tests = select_targeted_tests(
         repo_root=repo_root,
@@ -398,6 +511,7 @@ def run_gate(args: argparse.Namespace) -> int:
     steps: list[GateStepResult] = [
         validate_agents_contract(repo_root=repo_root, changed_paths=changed_paths)
     ]
+    steps.append(validate_delegation_contract_step(contract=contract, changed_paths=changed_paths))
 
     policy_doc_paths = args.policy_doc_path or list(DEFAULT_POLICY_DOC_PATHS)
     policy_ab_json_path = Path(args.policy_ab_json).resolve()
@@ -456,22 +570,112 @@ def run_gate(args: argparse.Namespace) -> int:
             dry_run=args.dry_run,
         )
     )
+    if risk_tier in {"medium", "high", "critical"}:
+        steps.append(
+            _run_optional_pytest_step(
+                name="integration smoke",
+                repo_root=repo_root,
+                dry_run=args.dry_run,
+                test_paths=[
+                    "tests/integration/test_trading_pipeline.py",
+                    "tests/integration/test_webhook_integration.py",
+                ],
+            )
+        )
+    if risk_tier in {"high", "critical"}:
+        steps.append(
+            _run_optional_command_step(
+                name="workflow contracts",
+                repo_root=repo_root,
+                dry_run=args.dry_run,
+                command=["python3", "tests/test_workflow_contracts.py"],
+                required_path="tests/test_workflow_contracts.py",
+            )
+        )
+    if risk_tier == "critical":
+        steps.append(
+            _run_command_step(
+                name="full regression tests",
+                command=["python3", "-m", "pytest", "-q", "tests"],
+                repo_root=repo_root,
+                dry_run=args.dry_run,
+            )
+        )
 
+    required_step_names = required_step_names_for_tier(risk_tier)
+    failed_required = [
+        name
+        for name in required_step_names
+        if not any(step.name == name and step.passed for step in steps)
+    ]
+    if failed_required:
+        steps.append(
+            GateStepResult(
+                name="risk tier verification",
+                passed=False,
+                details=[f"missing required passing steps: {', '.join(failed_required)}"],
+            )
+        )
+    else:
+        steps.append(
+            GateStepResult(
+                name="risk tier verification",
+                passed=True,
+                details=[f"all required steps passed for tier={risk_tier}"],
+            )
+        )
+
+    report_md_path = Path(args.report_md).resolve()
+    report_json_path = Path(args.report_json).resolve()
+    fallback_plan_json: str | None = None
+    failed_steps = [step.name for step in steps if not step.passed]
+    if failed_steps and contract.get("fallback_assignee"):
+        fallback = build_fallback_plan(
+            contract=contract,
+            failed_steps=failed_steps,
+            report_json_path=report_json_path,
+        )
+        fallback_path = Path(args.fallback_plan_json).resolve()
+        _write_json(fallback_path, fallback)
+        fallback_plan_json = fallback_path.as_posix()
+
+    audit_log_path = Path(args.audit_jsonl).resolve()
+    audit_record = append_handoff_audit_record(
+        audit_log_path,
+        {
+            "generated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "mode": args.mode,
+            "base_ref": args.base_ref,
+            "risk_tier": risk_tier,
+            "changed_paths": changed_paths,
+            "selected_tests": selected_tests,
+            "contract": contract,
+            "steps": [asdict(step) for step in steps],
+            "passed": all(step.passed for step in steps),
+        },
+    )
     report = GateReport(
         mode=args.mode,
         base_ref=args.base_ref,
         changed_paths=changed_paths,
         selected_tests=selected_tests,
         steps=steps,
+        risk_tier=risk_tier,
+        delegation_contract=contract,
+        fallback_plan_json=fallback_plan_json,
+        audit_log_jsonl=audit_log_path.as_posix(),
+        audit_record_hash=str(audit_record.get("hash") or ""),
     )
 
-    report_md_path = Path(args.report_md).resolve()
-    report_json_path = Path(args.report_json).resolve()
     _write_reports(report, report_md_path=report_md_path, report_json_path=report_json_path)
 
     print(f"Agent handoff gate status: {'PASS' if report.passed else 'FAIL'}")
     print(f"Markdown report: {report_md_path}")
     print(f"JSON report: {report_json_path}")
+    print(f"Delegation contract: {contract_out_path}")
+    print(f"Audit trail: {audit_log_path}")
+    if fallback_plan_json:
+        print(f"Fallback plan: {fallback_plan_json}")
     return 0 if report.passed else 1
 
 
@@ -497,6 +701,53 @@ def build_parser() -> argparse.ArgumentParser:
         choices=("quick", "full"),
         default="quick",
         help="quick=targeted tests, full=full test suite.",
+    )
+    parser.add_argument(
+        "--risk-tier",
+        choices=("auto", "low", "medium", "high", "critical"),
+        default="auto",
+        help="Delegation risk tier (auto infers from changed paths).",
+    )
+    parser.add_argument(
+        "--assignee",
+        default="codex",
+        help="Primary assignee used in generated delegation contract.",
+    )
+    parser.add_argument(
+        "--fallback-assignee",
+        default="guardian",
+        help="Fallback assignee for failure handoffs.",
+    )
+    parser.add_argument(
+        "--objective",
+        default="",
+        help="Optional delegation objective text.",
+    )
+    parser.add_argument(
+        "--timeout-minutes",
+        type=int,
+        default=35,
+        help="Delegation timeout in minutes.",
+    )
+    parser.add_argument(
+        "--delegation-contract-json",
+        default="",
+        help="Existing delegation contract JSON path. If omitted, generate one.",
+    )
+    parser.add_argument(
+        "--delegation-contract-out",
+        default="artifacts/devloop/delegation_contract.json",
+        help="Generated/resolved delegation contract output path.",
+    )
+    parser.add_argument(
+        "--fallback-plan-json",
+        default="artifacts/devloop/handoff_fallback_plan.json",
+        help="Fallback handoff plan output path (written only on failure).",
+    )
+    parser.add_argument(
+        "--audit-jsonl",
+        default="artifacts/devloop/agent_handoff_audit.jsonl",
+        help="Append-only audit trail JSONL path.",
     )
     parser.add_argument(
         "--max-tests",

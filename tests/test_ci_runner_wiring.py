@@ -4,6 +4,7 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CI_WORKFLOW_PATH = PROJECT_ROOT / ".github" / "workflows" / "ci.yml"
+AUTO_PR_WORKFLOW_PATH = PROJECT_ROOT / ".github" / "workflows" / "auto-pr.yml"
 RUNNER_SCRIPT_PATH = PROJECT_ROOT / "scripts" / "ci" / "run_all_tests.sh"
 
 
@@ -18,6 +19,21 @@ def test_ci_workflow_collects_handoff_ab_metrics():
     assert "scripts/collect_agent_handoff_ab_metrics.py collect" in workflow
     assert "artifacts/devloop/agent_handoff_ab_metrics_latest.json" in workflow
     assert "artifacts/devloop/agent_handoff_ab_metrics_history.jsonl" in workflow
+    assert "--delegation-contract-out artifacts/devloop/delegation_contract.json" in workflow
+    assert "--fallback-plan-json artifacts/devloop/handoff_fallback_plan.json" in workflow
+    assert "--audit-jsonl artifacts/devloop/agent_handoff_audit.jsonl" in workflow
+    assert "artifacts/devloop/delegation_contract.json" in workflow
+    assert "artifacts/devloop/agent_handoff_audit.jsonl" in workflow
+
+
+def test_auto_pr_workflow_collects_handoff_governance_artifacts():
+    workflow = AUTO_PR_WORKFLOW_PATH.read_text()
+    assert "scripts/agent_handoff_gate.py" in workflow
+    assert "--delegation-contract-out artifacts/devloop/delegation_contract.json" in workflow
+    assert "--fallback-plan-json artifacts/devloop/handoff_fallback_plan.json" in workflow
+    assert "--audit-jsonl artifacts/devloop/agent_handoff_audit.jsonl" in workflow
+    assert "artifacts/devloop/delegation_contract.json" in workflow
+    assert "artifacts/devloop/agent_handoff_audit.jsonl" in workflow
 
 
 def test_ci_runner_script_exists_and_has_valid_bash_syntax():

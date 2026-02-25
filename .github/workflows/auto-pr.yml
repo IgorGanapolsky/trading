@@ -38,7 +38,10 @@ jobs:
             --base-ref origin/main \
             --mode quick \
             --report-md artifacts/devloop/agent_handoff_gate.md \
-            --report-json artifacts/devloop/agent_handoff_gate.json
+            --report-json artifacts/devloop/agent_handoff_gate.json \
+            --delegation-contract-out artifacts/devloop/delegation_contract.json \
+            --fallback-plan-json artifacts/devloop/handoff_fallback_plan.json \
+            --audit-jsonl artifacts/devloop/agent_handoff_audit.jsonl
 
       - name: Upload handoff gate report
         uses: actions/upload-artifact@v4
@@ -47,6 +50,9 @@ jobs:
           path: |
             artifacts/devloop/agent_handoff_gate.md
             artifacts/devloop/agent_handoff_gate.json
+            artifacts/devloop/delegation_contract.json
+            artifacts/devloop/handoff_fallback_plan.json
+            artifacts/devloop/agent_handoff_audit.jsonl
 
       - name: Create Pull Request
         env:
