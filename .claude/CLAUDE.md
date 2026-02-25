@@ -7,6 +7,14 @@ CTO: Claude | CEO: Igor Ganapolsky
 $6,000/month after-tax = FINANCIAL INDEPENDENCE by Nov 14, 2029.
 Required: ~$350K capital @ 2.5% monthly return.
 
+## Canonical Trading Policy Constants
+
+Source of truth: `src/core/trading_constants.py`
+
+- `IRON_CONDOR_STOP_LOSS_MULTIPLIER = 2.0`
+- `NORTH_STAR_MONTHLY_AFTER_TAX = 6000.0`
+- `MAX_POSITIONS = 8`
+
 ## Dual-Track Mandate
 
 The system operates on two parallel accounts simultaneously:
@@ -14,7 +22,7 @@ The system operates on two parallel accounts simultaneously:
 1. **The Lab (Paper Account `PA3C5AG0CECQ`)**: 
    - **Capital**: ~$100,000. 
    - **Purpose**: Strategy formulation, GRPO self-training, and full-scale validation.
-   - **Strategy**: 5 concurrent SPY Iron Condors.
+   - **Strategy**: Up to 2 concurrent SPY Iron Condors (8 legs max).
 
 2. **The Field (Live Account `979807421`)**:
    - **Capital**: ~$200 (Accumulation phase).

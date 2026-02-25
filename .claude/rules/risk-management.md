@@ -2,10 +2,16 @@
 
 ## Phil Town Rule #1: Don't Lose Money
 
+## Canonical Trading Policy Constants
+
+- `IRON_CONDOR_STOP_LOSS_MULTIPLIER = 2.0`
+- `NORTH_STAR_MONTHLY_AFTER_TAX = 6000.0`
+- `MAX_POSITIONS = 8`
+
 ### Position Sizing
 
 - NEVER more than 5% on single trade ($5,000 risk per position)
-- 5 iron condors max concurrent across different expiry cycles (25% max deployed)
+- 2 iron condors max concurrent across different expiry cycles (8 legs max deployed)
 - NO NAKED OPTIONS, NO UNDEFINED RISK
 
 ### Stop-Loss (MANDATORY)
@@ -21,7 +27,7 @@
 
 ### Financial Independence Path
 
-- Phase 1 ($100K-$150K): 5 iron condors max, $10-wide wings, prove the system
+- Phase 1 ($100K-$150K): 2 iron condors max, $10-wide wings, prove the system
 - Phase 2 ($150K-$300K): Scale to 7-8 if 80%+ win rate
 - Phase 3 ($300K-$600K): 10+, diversify expirations across weekly/monthly
 - Phase 4 ($600K+): Withdraw $6K/month = North Star

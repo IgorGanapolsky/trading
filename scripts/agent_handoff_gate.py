@@ -17,6 +17,12 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
+from src.safety.trading_policy_drift import (
+    DEFAULT_POLICY_DOC_PATHS,
+    collect_trading_policy_ab_metrics,
+    write_trading_policy_ab_metrics,
+)
+
 REQUIRED_AGENTS_SECTIONS = (
     "# AGENTS",
     "## Core Directive",
@@ -159,6 +165,36 @@ def validate_agents_contract(repo_root: Path, changed_paths: list[str]) -> GateS
         details.append("AGENTS contract and coverage checks passed")
 
     return GateStepResult(name="AGENTS contract", passed=passed, details=details)
+
+
+def validate_trading_policy_drift(
+    repo_root: Path,
+    policy_doc_paths: list[str],
+    policy_ab_json_path: Path,
+) -> GateStepResult:
+    """Validate policy docs mirror canonical trading constants."""
+    metrics = collect_trading_policy_ab_metrics(
+        repo_root=repo_root,
+        policy_doc_paths=policy_doc_paths,
+    )
+    write_trading_policy_ab_metrics(metrics=metrics, output_path=policy_ab_json_path)
+
+    details: list[str] = [
+        (
+            "A/B checks "
+            f"{metrics['checks_passed']}/{metrics['checks_total']} "
+            f"(match_rate={metrics['match_rate']:.2%})"
+        ),
+        f"metrics: {policy_ab_json_path}",
+    ]
+    for item in metrics.get("drift_items", []):
+        details.append(item)
+
+    return GateStepResult(
+        name="trading policy drift",
+        passed=not metrics.get("drift_detected", True),
+        details=details,
+    )
 
 
 def _iter_test_files(repo_root: Path) -> list[Path]:
@@ -360,8 +396,27 @@ def run_gate(args: argparse.Namespace) -> int:
         selected_tests = [test for test in DEFAULT_QUICK_TESTS if (repo_root / test).exists()]
 
     steps: list[GateStepResult] = [
-        validate_agents_contract(repo_root=repo_root, changed_paths=changed_paths),
+        validate_agents_contract(repo_root=repo_root, changed_paths=changed_paths)
     ]
+
+    policy_doc_paths = args.policy_doc_path or list(DEFAULT_POLICY_DOC_PATHS)
+    policy_ab_json_path = Path(args.policy_ab_json).resolve()
+    if args.skip_policy_drift_check:
+        steps.append(
+            GateStepResult(
+                name="trading policy drift",
+                passed=True,
+                details=["skipped via --skip-policy-drift-check"],
+            )
+        )
+    else:
+        steps.append(
+            validate_trading_policy_drift(
+                repo_root=repo_root,
+                policy_doc_paths=policy_doc_paths,
+                policy_ab_json_path=policy_ab_json_path,
+            )
+        )
 
     lint_targets = _select_lint_targets(
         repo_root=repo_root,
@@ -469,6 +524,25 @@ def build_parser() -> argparse.ArgumentParser:
         "--dry-run",
         action="store_true",
         help="Plan commands and generate reports without executing lint/tests.",
+    )
+    parser.add_argument(
+        "--policy-doc-path",
+        action="append",
+        default=[],
+        help=(
+            "Policy doc path to validate. Repeat this flag to override defaults "
+            f"({', '.join(DEFAULT_POLICY_DOC_PATHS)})."
+        ),
+    )
+    parser.add_argument(
+        "--policy-ab-json",
+        default="artifacts/devloop/trading_policy_ab_metrics.json",
+        help="A/B policy metrics JSON output path.",
+    )
+    parser.add_argument(
+        "--skip-policy-drift-check",
+        action="store_true",
+        help="Skip policy drift check step.",
     )
     return parser
 

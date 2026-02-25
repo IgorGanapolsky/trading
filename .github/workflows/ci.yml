@@ -93,7 +93,8 @@ jobs:
             --base-ref "origin/${{ github.base_ref }}" \
             --mode quick \
             --report-md artifacts/devloop/agent_handoff_gate.md \
-            --report-json artifacts/devloop/agent_handoff_gate.json
+            --report-json artifacts/devloop/agent_handoff_gate.json \
+            --policy-ab-json artifacts/devloop/trading_policy_ab_metrics.json
 
       - name: Upload gate artifacts
         if: always()
@@ -103,6 +104,7 @@ jobs:
           path: |
             artifacts/devloop/agent_handoff_gate.md
             artifacts/devloop/agent_handoff_gate.json
+            artifacts/devloop/trading_policy_ab_metrics.json
 
   # Added Dec 12, 2025: Workflow validation to prevent dependency issues (LL-021)
   workflow-validation:
