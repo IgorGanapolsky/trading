@@ -1,0 +1,58 @@
+{
+  "signal": "ai_cycle",
+  "status": "unknown",
+  "severity_score": 0.0,
+  "position_size_multiplier": 1.0,
+  "blocked": false,
+  "watch": false,
+  "regime": "unknown",
+  "confidence": 0.0,
+  "capex_deceleration_shock": false,
+  "reasons": [
+    "No AI-cycle market data available."
+  ],
+  "latest_data_date": null,
+  "stale_days": null,
+  "features": {
+    "hyperscaler_capex_proxy_ret_20d": null,
+    "hyperscaler_capex_proxy_ret_5d": null,
+    "capex_proxy_momentum_delta": null,
+    "ai_infra_proxy_ret_20d": null,
+    "edge_monetization_proxy_ret_20d": null,
+    "edge_vs_infra_spread_20d": null,
+    "ai_monetization_proxy_score": null,
+    "nvda_gross_margin_pct": null,
+    "nvda_gross_margin_trend_bps": null
+  },
+  "coverage": {
+    "hyperscaler_capex_proxy_tickers": [
+      "AMZN",
+      "MSFT",
+      "GOOGL",
+      "META",
+      "ORCL"
+    ],
+    "hyperscaler_capex_proxy_observed": 0,
+    "ai_infra_proxy_tickers": [
+      "NVDA",
+      "AVGO",
+      "ANET",
+      "AMD",
+      "SMCI"
+    ],
+    "ai_infra_proxy_observed": 0,
+    "edge_monetization_proxy_tickers": [
+      "META",
+      "AAPL",
+      "GOOGL",
+      "AMZN",
+      "ORCL"
+    ],
+    "edge_monetization_proxy_observed": 0,
+    "total_symbols_requested": 11,
+    "total_symbols_observed": 0
+  },
+  "metrics": {},
+  "source": "bootstrap",
+  "updated_at": "2026-02-25T00:00:00+00:00"
+}

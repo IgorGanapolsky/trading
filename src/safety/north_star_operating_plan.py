@@ -42,6 +42,12 @@ DEFAULT_USD_MACRO_WATCH_SCORE = 30.0
 DEFAULT_USD_MACRO_BLOCK_SCORE = 60.0
 DEFAULT_USD_MACRO_WATCH_MULTIPLIER = 0.95
 DEFAULT_USD_MACRO_BLOCK_MULTIPLIER = 0.90
+DEFAULT_AI_CYCLE_SIGNAL_PATH = Path("market_signals/ai_cycle_signal.json")
+DEFAULT_AI_CYCLE_WATCH_SCORE = 30.0
+DEFAULT_AI_CYCLE_BLOCK_SCORE = 60.0
+DEFAULT_AI_CYCLE_HARD_BLOCK_SCORE = 75.0
+DEFAULT_AI_CYCLE_WATCH_MULTIPLIER = 0.95
+DEFAULT_AI_CYCLE_BLOCK_MULTIPLIER = 0.85
 
 _SPY_OPTION_RE = re.compile(r"^SPY(\d{6})[CP]\d{8}$")
 
@@ -235,6 +241,19 @@ def _categorize_reason(reason: str) -> set[str]:
         )
     ):
         categories.add("usd_macro")
+    if any(
+        token in text
+        for token in (
+            "ai cycle",
+            "hyperscaler capex",
+            "capex proxy",
+            "edge monetization",
+            "gross margin",
+            "capex deceleration",
+            "infrastructure buildout",
+        )
+    ):
+        categories.add("ai_cycle")
     return categories
 
 
@@ -277,6 +296,21 @@ def _normalize_usd_macro_status(signal: dict[str, Any]) -> str:
     return "unknown"
 
 
+def _normalize_ai_cycle_status(signal: dict[str, Any]) -> str:
+    raw_status = str(signal.get("status") or "").strip().lower()
+    score = _as_float(signal.get("severity_score"), 0.0)
+    if (
+        raw_status in {"blocked", "high", "stress", "critical"}
+        or score >= DEFAULT_AI_CYCLE_BLOCK_SCORE
+    ):
+        return "blocked"
+    if raw_status in {"watch", "warning", "elevated"} or score >= DEFAULT_AI_CYCLE_WATCH_SCORE:
+        return "watch"
+    if raw_status in {"pass", "ok", "normal", "low"}:
+        return "pass"
+    return "unknown"
+
+
 def _load_ai_credit_stress_signal(data_dir: Path, state: dict[str, Any]) -> dict[str, Any]:
     file_payload = _load_json_dict(data_dir / DEFAULT_AI_CREDIT_STRESS_PATH)
     if file_payload:
@@ -292,6 +326,16 @@ def _load_usd_macro_sentiment_signal(data_dir: Path, state: dict[str, Any]) -> d
     if file_payload:
         return file_payload
     state_payload = _safe_nested_dict(state, "market_signals").get("usd_macro_sentiment")
+    if isinstance(state_payload, dict):
+        return state_payload
+    return {}
+
+
+def _load_ai_cycle_signal(data_dir: Path, state: dict[str, Any]) -> dict[str, Any]:
+    file_payload = _load_json_dict(data_dir / DEFAULT_AI_CYCLE_SIGNAL_PATH)
+    if file_payload:
+        return file_payload
+    state_payload = _safe_nested_dict(state, "market_signals").get("ai_cycle")
     if isinstance(state_payload, dict):
         return state_payload
     return {}
@@ -459,6 +503,36 @@ def _compute_no_trade_diagnostic(
         "signal_date": usd_macro_signal.get("latest_data_date"),
         "source": usd_macro_signal.get("source", "none"),
         "detail": usd_reason_text,
+    }
+
+    ai_cycle_signal = _load_ai_cycle_signal(data_dir, state)
+    ai_cycle_status = _normalize_ai_cycle_status(ai_cycle_signal)
+    ai_cycle_score = ai_cycle_signal.get("severity_score")
+    ai_cycle_multiplier = _as_float(ai_cycle_signal.get("position_size_multiplier"), 0.0)
+    if ai_cycle_multiplier <= 0:
+        if ai_cycle_status == "blocked":
+            ai_cycle_multiplier = DEFAULT_AI_CYCLE_BLOCK_MULTIPLIER
+        elif ai_cycle_status == "watch":
+            ai_cycle_multiplier = DEFAULT_AI_CYCLE_WATCH_MULTIPLIER
+        else:
+            ai_cycle_multiplier = 1.0
+    ai_cycle_reasons = ai_cycle_signal.get("reasons", [])
+    ai_cycle_reason_text = ""
+    if isinstance(ai_cycle_reasons, list) and ai_cycle_reasons:
+        ai_cycle_reason_text = str(ai_cycle_reasons[0])
+    if not ai_cycle_reason_text:
+        ai_cycle_reason_text = str(ai_cycle_signal.get("note") or "No AI cycle evidence")
+    gate_status["ai_cycle"] = {
+        "status": ai_cycle_status,
+        "signal_status": str(ai_cycle_signal.get("status") or "unknown"),
+        "severity_score": _as_float(ai_cycle_score, 0.0) if ai_cycle_score is not None else None,
+        "position_size_multiplier": round(min(1.0, max(0.1, ai_cycle_multiplier)), 4),
+        "regime": str(ai_cycle_signal.get("regime") or "unknown"),
+        "confidence": _as_float(ai_cycle_signal.get("confidence"), None),
+        "capex_deceleration_shock": bool(ai_cycle_signal.get("capex_deceleration_shock")),
+        "signal_date": ai_cycle_signal.get("latest_data_date"),
+        "source": ai_cycle_signal.get("source", "none"),
+        "detail": ai_cycle_reason_text,
     }
 
     blocked_categories = [
@@ -794,6 +868,35 @@ def compute_weekly_gate(
             f"applied size multiplier {usd_macro_multiplier:.2f}.{score_suffix}"
         )
 
+    ai_cycle_gate = _safe_nested_dict(no_trade_diagnostic, "gate_status", "ai_cycle")
+    ai_cycle_status = str(ai_cycle_gate.get("status") or "unknown").lower()
+    ai_cycle_score = _as_float(ai_cycle_gate.get("severity_score"), 0.0)
+    ai_cycle_multiplier = _as_float(ai_cycle_gate.get("position_size_multiplier"), 1.0)
+    if ai_cycle_multiplier <= 0:
+        ai_cycle_multiplier = 1.0
+    ai_cycle_multiplier = min(1.0, max(0.1, ai_cycle_multiplier))
+    ai_cycle_shock = bool(ai_cycle_gate.get("capex_deceleration_shock"))
+    if ai_cycle_status in {"watch", "blocked"} and ai_cycle_multiplier < 1.0:
+        adjusted_limit = round(recommended_max * ai_cycle_multiplier, 4)
+        recommended_max = min(recommended_max, adjusted_limit)
+        if mode == "expansion_candidate":
+            mode = "cautious"
+        reason = (
+            f"{reason} AI cycle {ai_cycle_status}; "
+            f"applied size multiplier {ai_cycle_multiplier:.2f}."
+        )
+    if ai_cycle_status == "blocked":
+        mode = "defensive"
+        recommended_max = min(recommended_max, 0.01)
+    if ai_cycle_shock or ai_cycle_score >= DEFAULT_AI_CYCLE_HARD_BLOCK_SCORE:
+        mode = "defensive"
+        recommended_max = min(recommended_max, 0.01)
+        block_new_positions = True
+        reason = (
+            f"{reason} AI cycle capex deceleration shock detected; "
+            "blocking new positions until signal normalizes."
+        )
+
     weekly_history = _load_json_list(weekly_history_path)
     week_start = today - timedelta(days=today.weekday())
     week_start_iso = week_start.isoformat()
@@ -908,6 +1011,9 @@ def compute_weekly_gate(
         "scale_blocked_by_ai_credit_stress": ai_credit_status == "blocked",
         "usd_macro_sentiment": usd_macro_gate,
         "scale_multiplier_from_usd_macro": round(usd_macro_multiplier, 4),
+        "ai_cycle": ai_cycle_gate,
+        "scale_blocked_by_ai_cycle": ai_cycle_status == "blocked" or ai_cycle_shock,
+        "scale_multiplier_from_ai_cycle": round(ai_cycle_multiplier, 4),
         "scaling_sample_gate": scaling_sample_gate,
         "liquidity_min_volume_ratio": round(min_liquidity_volume_ratio, 4),
         "no_trade_diagnostic": no_trade_diagnostic,
@@ -1056,4 +1162,19 @@ def apply_operating_plan_to_state(
     state["risk"]["weekly_usd_macro_multiplier"] = _safe_nested_dict(
         weekly_gate, "usd_macro_sentiment"
     ).get("position_size_multiplier")
+    state["risk"]["weekly_ai_cycle_status"] = str(
+        _safe_nested_dict(weekly_gate, "ai_cycle").get("status") or "unknown"
+    )
+    state["risk"]["weekly_ai_cycle_score"] = _safe_nested_dict(weekly_gate, "ai_cycle").get(
+        "severity_score"
+    )
+    state["risk"]["weekly_ai_cycle_multiplier"] = _safe_nested_dict(weekly_gate, "ai_cycle").get(
+        "position_size_multiplier"
+    )
+    state["risk"]["weekly_ai_cycle_regime"] = _safe_nested_dict(weekly_gate, "ai_cycle").get(
+        "regime"
+    )
+    state["risk"]["weekly_ai_cycle_capex_deceleration_shock"] = bool(
+        _safe_nested_dict(weekly_gate, "ai_cycle").get("capex_deceleration_shock")
+    )
     return state, weekly_history

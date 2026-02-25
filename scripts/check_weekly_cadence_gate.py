@@ -66,6 +66,7 @@ def evaluate_weekly_cadence(state: dict[str, Any]) -> dict[str, Any]:
         gate_status.get("ai_credit_stress", {}) if isinstance(gate_status, dict) else {}
     )
     usd_macro = gate_status.get("usd_macro", {}) if isinstance(gate_status, dict) else {}
+    ai_cycle = gate_status.get("ai_cycle", {}) if isinstance(gate_status, dict) else {}
     ai_credit_status = str(ai_credit_stress.get("status") or "unknown").lower()
     ai_credit_score = ai_credit_stress.get("severity_score")
     ai_credit_source = str(ai_credit_stress.get("source") or "none")
@@ -73,6 +74,12 @@ def evaluate_weekly_cadence(state: dict[str, Any]) -> dict[str, Any]:
     usd_macro_score = usd_macro.get("bearish_score")
     usd_macro_multiplier = usd_macro.get("position_size_multiplier")
     usd_macro_source = str(usd_macro.get("source") or "none")
+    ai_cycle_status = str(ai_cycle.get("status") or "unknown").lower()
+    ai_cycle_score = ai_cycle.get("severity_score")
+    ai_cycle_multiplier = ai_cycle.get("position_size_multiplier")
+    ai_cycle_regime = str(ai_cycle.get("regime") or "unknown")
+    ai_cycle_source = str(ai_cycle.get("source") or "none")
+    ai_cycle_shock = bool(ai_cycle.get("capex_deceleration_shock"))
 
     return {
         "passed": passed,
@@ -92,6 +99,12 @@ def evaluate_weekly_cadence(state: dict[str, Any]) -> dict[str, Any]:
         "usd_macro_score": usd_macro_score,
         "usd_macro_multiplier": usd_macro_multiplier,
         "usd_macro_source": usd_macro_source,
+        "ai_cycle_status": ai_cycle_status,
+        "ai_cycle_score": ai_cycle_score,
+        "ai_cycle_multiplier": ai_cycle_multiplier,
+        "ai_cycle_regime": ai_cycle_regime,
+        "ai_cycle_source": ai_cycle_source,
+        "ai_cycle_capex_deceleration_shock": ai_cycle_shock,
     }
 
 
@@ -129,6 +142,18 @@ def markdown_report(result: dict[str, Any]) -> str:
         usd_line += f" size_multiplier={float(result['usd_macro_multiplier']):.2f}"
     usd_line += f" source={result.get('usd_macro_source', 'none')}"
     lines.append(usd_line)
+    ai_cycle_line = (
+        f"- AI Cycle: `{result.get('ai_cycle_status', 'unknown')}`"
+        f" regime={result.get('ai_cycle_regime', 'unknown')}"
+    )
+    if isinstance(result.get("ai_cycle_score"), (int, float)):
+        ai_cycle_line += f" (score={float(result['ai_cycle_score']):.1f})"
+    if isinstance(result.get("ai_cycle_multiplier"), (int, float)):
+        ai_cycle_line += f" size_multiplier={float(result['ai_cycle_multiplier']):.2f}"
+    if result.get("ai_cycle_capex_deceleration_shock"):
+        ai_cycle_line += " capex_shock=true"
+    ai_cycle_line += f" source={result.get('ai_cycle_source', 'none')}"
+    lines.append(ai_cycle_line)
     lines.append("")
     lines.append("## Top Rejection Reasons")
     if result["top_rejection_reasons"]:
@@ -167,6 +192,7 @@ def markdown_public_report(result: dict[str, Any]) -> str:
         "credit",
         "volatility",
         "position_limit",
+        "ai_cycle",
         "none",
     }
     if isinstance(blocked, list) and blocked:
@@ -269,6 +295,13 @@ def main() -> int:
             "usd_macro_status": _sanitize(result.get("usd_macro_status", "unknown")),
             "usd_macro_score": result.get("usd_macro_score"),
             "usd_macro_multiplier": result.get("usd_macro_multiplier"),
+            "ai_cycle_status": _sanitize(result.get("ai_cycle_status", "unknown")),
+            "ai_cycle_score": result.get("ai_cycle_score"),
+            "ai_cycle_multiplier": result.get("ai_cycle_multiplier"),
+            "ai_cycle_regime": _sanitize(result.get("ai_cycle_regime", "unknown")),
+            "ai_cycle_capex_deceleration_shock": bool(
+                result.get("ai_cycle_capex_deceleration_shock", False)
+            ),
         }
         print(json.dumps(safe_result, indent=2))
     else:

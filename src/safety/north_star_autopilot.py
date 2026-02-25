@@ -202,6 +202,20 @@ def compute_regime_aware_sizing(state: dict[str, Any]) -> dict[str, Any]:
         tuned_cap *= 0.90
         multipliers.append({"name": "regime_blocked", "value": 0.90})
 
+    ai_cycle_gate = gate_status.get("ai_cycle", {}) if isinstance(gate_status, dict) else {}
+    ai_cycle_status = str(ai_cycle_gate.get("status") or "unknown").lower()
+    ai_cycle_multiplier = _to_float(ai_cycle_gate.get("position_size_multiplier"), 1.0)
+    if ai_cycle_multiplier <= 0:
+        ai_cycle_multiplier = 1.0
+    ai_cycle_multiplier = _clamp(ai_cycle_multiplier, lo=0.10, hi=1.00)
+    if ai_cycle_status in {"watch", "blocked"} and ai_cycle_multiplier < 1.0:
+        tuned_cap *= ai_cycle_multiplier
+        multipliers.append({"name": "ai_cycle_multiplier", "value": round(ai_cycle_multiplier, 4)})
+
+    if bool(ai_cycle_gate.get("capex_deceleration_shock")):
+        tuned_cap *= 0.80
+        multipliers.append({"name": "ai_cycle_capex_shock", "value": 0.80})
+
     tuned_cap = _clamp(tuned_cap, lo=0.005, hi=base_cap)
     if not multipliers:
         multipliers.append({"name": "none", "value": 1.0})
