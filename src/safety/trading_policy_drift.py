@@ -41,17 +41,24 @@ def canonical_policy_values() -> dict[str, float | int]:
     }
 
 
-def extract_policy_values_from_text(text: str) -> dict[str, float | int]:
-    """Extract machine-readable policy values from documentation text."""
-    values: dict[str, float | int] = {}
+def _extract_policy_value_occurrences(text: str) -> dict[str, list[float | int]]:
+    """Extract all policy value occurrences from text."""
+    occurrences: dict[str, list[float | int]] = {key: [] for key in POLICY_KEYS}
     for match in _POLICY_VALUE_PATTERN.finditer(text):
         key = match.group("key")
         raw_value = match.group("value").replace("_", "").replace(",", "")
         parsed = float(raw_value)
-        if key == "MAX_POSITIONS":
-            values[key] = int(round(parsed))
-        else:
-            values[key] = parsed
+        value: float | int = int(round(parsed)) if key == "MAX_POSITIONS" else parsed
+        occurrences[key].append(value)
+    return occurrences
+
+
+def extract_policy_values_from_text(text: str) -> dict[str, float | int]:
+    """Extract machine-readable policy values from documentation text."""
+    values: dict[str, float | int] = {}
+    for key, key_occurrences in _extract_policy_value_occurrences(text).items():
+        if key_occurrences:
+            values[key] = key_occurrences[-1]
     return values
 
 
@@ -85,16 +92,25 @@ def collect_trading_policy_ab_metrics(
         result: dict[str, Any] = {
             "exists": abs_path.exists(),
             "values": {},
+            "occurrences": {},
             "comparisons": {},
             "missing_keys": [],
         }
 
         if abs_path.exists():
             text = abs_path.read_text(encoding="utf-8", errors="replace")
-            documented_values = extract_policy_values_from_text(text)
+            occurrences = _extract_policy_value_occurrences(text)
+            documented_values = {
+                key: key_occurrences[-1]
+                for key, key_occurrences in occurrences.items()
+                if key_occurrences
+            }
             result["values"] = documented_values
+            result["occurrences"] = occurrences
         else:
+            occurrences = {key: [] for key in POLICY_KEYS}
             documented_values = {}
+            result["occurrences"] = occurrences
 
         comparisons: dict[str, dict[str, Any]] = {}
         missing_keys: list[str] = []
@@ -102,6 +118,18 @@ def collect_trading_policy_ab_metrics(
             checks_total += 1
             expected = canonical[key]
             actual = documented_values.get(key)
+            unique_values = sorted(set(occurrences.get(key, [])))
+            if len(unique_values) > 1:
+                comparisons[key] = {
+                    "expected": expected,
+                    "actual": actual,
+                    "matched": False,
+                    "conflicting_values": unique_values,
+                }
+                drift_items.append(
+                    f"{rel_posix}: conflicting declarations for {key}: {unique_values}"
+                )
+                continue
 
             if actual is None:
                 missing_keys.append(key)

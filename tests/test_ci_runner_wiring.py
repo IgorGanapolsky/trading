@@ -13,6 +13,13 @@ def test_ci_workflow_uses_watchdog_runner_script():
     assert "Upload test diagnostics" in workflow
 
 
+def test_ci_workflow_collects_handoff_ab_metrics():
+    workflow = CI_WORKFLOW_PATH.read_text()
+    assert "scripts/collect_agent_handoff_ab_metrics.py collect" in workflow
+    assert "artifacts/devloop/agent_handoff_ab_metrics_latest.json" in workflow
+    assert "artifacts/devloop/agent_handoff_ab_metrics_history.jsonl" in workflow
+
+
 def test_ci_runner_script_exists_and_has_valid_bash_syntax():
     assert RUNNER_SCRIPT_PATH.exists()
     result = subprocess.run(

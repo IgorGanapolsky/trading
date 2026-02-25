@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from src.safety.trading_policy_drift import canonical_policy_values
 from scripts.agent_handoff_gate import (
     GateReport,
     GateStepResult,
@@ -84,13 +85,17 @@ def test_render_markdown_report_includes_failed_steps() -> None:
     assert "scripts/agent_handoff_gate.py" in markdown
 
 
-def _write_policy_docs(repo_root: Path, max_positions: int = 8) -> None:
+def _write_policy_docs(repo_root: Path, max_positions: int | None = None) -> None:
     (repo_root / ".claude" / "rules").mkdir(parents=True)
+    canonical = canonical_policy_values()
+    resolved_max_positions = (
+        int(canonical["MAX_POSITIONS"]) if max_positions is None else max_positions
+    )
     content = "\n".join(
         [
-            f"IRON_CONDOR_STOP_LOSS_MULTIPLIER = {2.0}",
-            f"NORTH_STAR_MONTHLY_AFTER_TAX = {6000.0}",
-            f"MAX_POSITIONS = {max_positions}",
+            (f"IRON_CONDOR_STOP_LOSS_MULTIPLIER = {canonical['IRON_CONDOR_STOP_LOSS_MULTIPLIER']}"),
+            f"NORTH_STAR_MONTHLY_AFTER_TAX = {canonical['NORTH_STAR_MONTHLY_AFTER_TAX']}",
+            f"MAX_POSITIONS = {resolved_max_positions}",
         ]
     )
     for rel in (

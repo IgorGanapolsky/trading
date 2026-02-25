@@ -11,7 +11,7 @@ Required: ~$350K capital @ 2.5% monthly return.
 
 Source of truth: `src/core/trading_constants.py`
 
-- `IRON_CONDOR_STOP_LOSS_MULTIPLIER = 2.0`
+- `IRON_CONDOR_STOP_LOSS_MULTIPLIER = 1.0`
 - `NORTH_STAR_MONTHLY_AFTER_TAX = 6000.0`
 - `MAX_POSITIONS = 8`
 
