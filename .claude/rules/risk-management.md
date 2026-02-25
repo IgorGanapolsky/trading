@@ -10,7 +10,7 @@
 
 ### Stop-Loss (MANDATORY)
 
-- Close if one side reaches 200% of credit — NO EXCEPTIONS
+- Close if one side reaches 100% of credit — NO EXCEPTIONS
 - If tested, roll untested side closer for additional credit
 - Exit at 7 DTE to avoid gamma risk (changed from 21 DTE per LL-268)
 

@@ -96,7 +96,7 @@ class TestOptionsRiskMonitorInit:
         monitor = OptionsRiskMonitor()
         assert monitor.max_loss_percent == 5.0
         assert monitor.stop_loss_multiplier == DEFAULT_STOP_LOSS_MULTIPLIER
-        assert monitor.stop_loss_multiplier == 2.0
+        assert monitor.stop_loss_multiplier == 1.0
 
     def test_custom_stop_loss_multiplier(self):
         """OptionsRiskMonitor accepts custom stop-loss multiplier."""
@@ -158,26 +158,26 @@ class TestShouldClosePosition:
         assert "within risk limits" in reason.lower()
 
     def test_position_at_max_loss_triggers_close(self, monitor, credit_spread_position):
-        """Position at 2x credit loss should trigger close.
+        """Position at 1x credit loss should trigger close.
 
-        Rule: Close at 2x credit received per CLAUDE.md
+        Rule: Close at 1x credit received per canonical constant
         - Credit = $0.60
-        - Max loss = 2 * $0.60 = $1.20
-        - Close when current_price = $0.60 + $1.20 = $1.80
+        - Max loss = 1 * $0.60 = $0.60
+        - Close when current_price = $0.60 + $0.60 = $1.20
         """
-        # At stop-loss: spread costs $1.80 to close (loss = $1.20 = 2x credit)
-        credit_spread_position.current_price = 1.80
+        # At stop-loss: spread costs $1.20 to close (loss = $0.60 = 1x credit)
+        credit_spread_position.current_price = 1.20
         monitor.add_position(credit_spread_position)
         should_close, reason = monitor.should_close_position("SPY240119P00480000")
 
         assert should_close is True
         assert "stop-loss triggered" in reason.lower()
-        assert "2.0x credit" in reason.lower()
+        assert "1.0x credit" in reason.lower()
 
     def test_position_exceeds_max_loss_triggers_close(self, monitor, credit_spread_position):
-        """Position exceeding 2x credit loss should trigger close."""
-        # Beyond stop-loss: spread costs $2.10 to close (loss = $1.50 > 2x credit)
-        credit_spread_position.current_price = 2.10
+        """Position exceeding 1x credit loss should trigger close."""
+        # Beyond stop-loss: spread costs $1.30 to close (loss = $0.70 > 1x credit)
+        credit_spread_position.current_price = 1.30
         monitor.add_position(credit_spread_position)
         should_close, reason = monitor.should_close_position("SPY240119P00480000")
 
@@ -185,9 +185,9 @@ class TestShouldClosePosition:
         assert "stop-loss triggered" in reason.lower()
 
     def test_position_just_below_max_loss_no_close(self, monitor, credit_spread_position):
-        """Position just below 2x credit should not trigger close."""
-        # Just below stop-loss: spread costs $1.79 (loss = $1.19 < $1.20 = 2x credit)
-        credit_spread_position.current_price = 1.79
+        """Position just below 1x credit should not trigger close."""
+        # Just below stop-loss: spread costs $1.19 (loss = $0.59 < $0.60 = 1x credit)
+        credit_spread_position.current_price = 1.19
         monitor.add_position(credit_spread_position)
         should_close, reason = monitor.should_close_position("SPY240119P00480000")
 
@@ -228,7 +228,7 @@ class TestShouldClosePosition:
 
 
 class TestShouldClosePositionWithDictFormat:
-    """Tests for 2x credit stop-loss with legacy dict format."""
+    """Tests for 1x credit stop-loss with legacy dict format."""
 
     @pytest.fixture
     def monitor(self):
@@ -239,7 +239,7 @@ class TestShouldClosePositionWithDictFormat:
         """Dict-format position at stop-loss should trigger close."""
         position_data = {
             "entry_price": 0.60,
-            "current_price": 1.80,  # Loss = $1.20 = 2x credit
+            "current_price": 1.20,  # Loss = $0.60 = 1x credit
             "position_type": "credit_spread",
             "credit_received": 0.60,
         }
@@ -289,7 +289,7 @@ class TestCheckRisk:
         """Position near stop-loss should have 'warning' status."""
         position_data = {
             "entry_price": 0.60,
-            "current_price": 1.55,  # Loss = $0.95, near 2x credit ($1.20)
+            "current_price": 1.10,  # Loss = $0.50, near 1x credit ($0.60)
             "position_type": "credit_spread",
             "credit_received": 0.60,
         }
@@ -303,7 +303,7 @@ class TestCheckRisk:
         """Position at stop-loss should have 'critical' status."""
         position_data = {
             "entry_price": 0.60,
-            "current_price": 1.80,  # At stop-loss (2x credit)
+            "current_price": 1.20,  # At stop-loss (1x credit)
             "position_type": "credit_spread",
             "credit_received": 0.60,
         }
@@ -390,7 +390,7 @@ class TestRealWorldScenario:
         Setup:
         - Sell 15-20 delta put spread
         - ~$60 premium
-        - Stop-loss: Close at 2x credit received ($120 max loss)
+        - Stop-loss: Close at 1x credit received ($60 max loss)
         - Profit target: 50% of credit
         """
         monitor = OptionsRiskMonitor()
@@ -423,21 +423,21 @@ class TestRealWorldScenario:
         # Day 5: Market dips, spread underwater
         monitor.update_position_price("SPY240215P00475000", 1.00)
         should_close, _ = monitor.should_close_position("SPY240215P00475000")
-        assert should_close is False  # Loss $40, under $120 max (2x credit)
+        assert should_close is False  # Loss $40, under $60 max (1x credit)
 
         # Day 7: Market crashes, approaching stop-loss
-        monitor.update_position_price("SPY240215P00475000", 1.55)
+        monitor.update_position_price("SPY240215P00475000", 1.10)
         risk = monitor.check_risk("SPY240215P00475000")
         assert risk["status"] == "warning"  # 75%+ of max loss
 
         # Day 8: Stop-loss triggered
-        monitor.update_position_price("SPY240215P00475000", 1.80)
+        monitor.update_position_price("SPY240215P00475000", 1.20)
         should_close, reason = monitor.should_close_position("SPY240215P00475000")
         assert should_close is True
-        assert "2.0x credit stop-loss triggered" in reason
+        assert "1.0x credit stop-loss triggered" in reason
 
     def test_iwm_credit_spread_scenario(self):
-        """Test IWM credit spread with 2x stop-loss."""
+        """Test IWM credit spread with 1x stop-loss."""
         monitor = OptionsRiskMonitor()
 
         # IWM spread with smaller premium
@@ -449,11 +449,11 @@ class TestRealWorldScenario:
         }
         monitor.add_position("IWM_SPREAD", spread)
 
-        # Max loss = 2 * $0.50 = $1.00
-        # Stop-loss at current_price = $1.50
+        # Max loss = 1 * $0.50 = $0.50
+        # Stop-loss at current_price = $1.00
 
         # Price rises to stop-loss
-        monitor.positions["IWM_SPREAD"]["current_price"] = 1.50
+        monitor.positions["IWM_SPREAD"]["current_price"] = 1.00
         should_close, reason = monitor.should_close_position("IWM_SPREAD")
 
         assert should_close is True

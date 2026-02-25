@@ -15,7 +15,7 @@
 3. [ ] Iron condor (4-leg, defined risk on BOTH sides)
 4. [ ] Short strikes at 15-20 delta
 5. [ ] 30-45 DTE expiration
-6. [ ] Stop-loss at 200% of credit defined
+6. [ ] Stop-loss at 100% of credit defined
 7. [ ] Exit plan: 50% profit OR 7 DTE (LL-268)
 
 ## Ticker Selection

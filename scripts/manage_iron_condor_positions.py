@@ -4,7 +4,7 @@ Manage Iron Condor Positions - Exit Rules per LL-268/LL-277 Research
 
 Exit conditions for iron condors (NOT stocks):
 1. 50% profit target: Close when P/L >= 50% of credit received
-2. 200% stop-loss: Close when loss >= 2x credit received (per CLAUDE.md)
+2. 100% stop-loss: Close when loss >= 1x credit received (per canonical constant)
 3. 7 DTE exit: Close at 7 days to expiration to avoid gamma risk
 
 This script should run on a schedule during market hours to monitor
@@ -29,6 +29,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from src.core.trading_constants import IRON_CONDOR_STOP_LOSS_MULTIPLIER
 from src.safety.mandatory_trade_gate import safe_submit_order
 
 logging.basicConfig(
@@ -40,7 +41,7 @@ logger = logging.getLogger(__name__)
 # Iron condor exit thresholds per LL-268/LL-277
 IC_EXIT_CONFIG = {
     "profit_target_pct": 0.50,  # Close at 50% profit
-    "stop_loss_pct": 2.00,  # Close at 200% loss (2x credit) per CLAUDE.md
+    "stop_loss_pct": IRON_CONDOR_STOP_LOSS_MULTIPLIER,  # Canonical 1.0x credit stop-loss
     "exit_dte": 7,  # Close at 7 DTE (gamma risk)
 }
 
@@ -166,7 +167,7 @@ def check_exit_conditions(ic: dict) -> tuple[bool, str, str]:
             f"{pl_pct * 100:.1f}% profit (target: {IC_EXIT_CONFIG['profit_target_pct'] * 100:.0f}%)",
         )
 
-    # Check 200% stop-loss (cut losers fast)
+    # Check 100% stop-loss (cut losers fast)
     if pl_pct <= -IC_EXIT_CONFIG["stop_loss_pct"]:
         return (
             True,

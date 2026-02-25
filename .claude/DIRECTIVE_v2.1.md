@@ -26,7 +26,7 @@ Generate $100/day after-tax profit through compounding, following Phil Town Rule
 | Wing width         | $5                                    |
 | DTE                | 30-45 days                            |
 | Exit               | 50% profit OR 7 DTE (whichever first) |
-| Stop-loss          | 200% of credit received               |
+| Stop-loss          | 100% of credit received               |
 | Max risk per trade | 5% of portfolio ($1,500)              |
 
 ---

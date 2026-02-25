@@ -3,7 +3,7 @@
 Iron Condor Guardian - Enforces Phil Town Rule #1
 
 MANDATORY EXITS:
-1. Stop loss at 200% of credit received
+1. Stop loss at 100% of credit received
 2. Exit at 7 DTE (avoid gamma risk)
 3. Take profit at 50% of max profit
 
@@ -20,6 +20,7 @@ from zoneinfo import ZoneInfo
 from alpaca.trading.client import TradingClient
 from alpaca.trading.enums import OrderSide, TimeInForce
 from alpaca.trading.requests import MarketOrderRequest
+from src.core.trading_constants import IRON_CONDOR_STOP_LOSS_MULTIPLIER
 from src.safety.mandatory_trade_gate import safe_submit_order
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -35,7 +36,7 @@ if not API_KEY or not SECRET_KEY:
 PAPER = True
 
 # Phil Town Rule #1 Parameters
-STOP_LOSS_MULTIPLIER = 2.0  # 200% of credit per CLAUDE.md risk rules
+STOP_LOSS_MULTIPLIER = IRON_CONDOR_STOP_LOSS_MULTIPLIER
 PROFIT_TAKE_PCT = 0.50  # 50% of max profit per CLAUDE.md exit rules
 MIN_DTE = 7  # Exit at 7 DTE
 
@@ -181,7 +182,7 @@ def update_trade_log_on_exit(expiry: str, reason: str, pnl: float):
 
 ## Guardian Rules Applied
 - 50% profit target
-- 200% stop loss
+- 100% stop loss
 - 7 DTE exit
 """
 
@@ -275,7 +276,7 @@ def run_guardian():
             close_iron_condor(client, ic_data, f"DTE={dte} <= {MIN_DTE} (gamma risk)", expiry, pnl)
             continue
 
-        # CHECK 2: Stop Loss (200% of credit)
+        # CHECK 2: Stop Loss (100% of credit)
         stop_loss = entry_credit * STOP_LOSS_MULTIPLIER * 100
         if pnl < -stop_loss:
             close_iron_condor(
