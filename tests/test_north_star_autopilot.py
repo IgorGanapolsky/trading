@@ -37,6 +37,11 @@ def _base_state() -> dict:
                     "liquidity": {"status": "blocked", "threshold_min_volume_ratio": 0.2},
                     "ai_credit_stress": {"status": "watch", "severity_score": 40.0},
                     "usd_macro": {"status": "watch", "position_size_multiplier": 0.95},
+                    "ai_cycle": {
+                        "status": "watch",
+                        "position_size_multiplier": 0.95,
+                        "capex_deceleration_shock": False,
+                    },
                     "regime": {"status": "pass"},
                 },
             },
@@ -67,6 +72,21 @@ def test_hard_gate_monitor_critical_on_stale_and_target_mismatch() -> None:
     assert monitor["status"] == "critical"
     assert monitor["critical_count"] >= 1
     assert monitor["block_new_positions"] is True
+
+
+def test_regime_aware_sizing_applies_ai_cycle_shock_multiplier() -> None:
+    state = _base_state()
+    state["north_star_weekly_gate"]["no_trade_diagnostic"]["gate_status"]["ai_cycle"] = {
+        "status": "blocked",
+        "position_size_multiplier": 0.85,
+        "capex_deceleration_shock": True,
+    }
+    result = compute_regime_aware_sizing(state)
+    assert result["recommended_max_position_pct"] < 0.015
+    multipliers = result["applied_multipliers"]
+    names = {row.get("name") for row in multipliers}
+    assert "ai_cycle_multiplier" in names
+    assert "ai_cycle_capex_shock" in names
 
 
 def test_build_snapshot_and_write_overrides(tmp_path: Path) -> None:

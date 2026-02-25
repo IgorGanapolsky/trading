@@ -395,3 +395,127 @@ def test_apply_operating_plan_sets_usd_macro_risk_fields(tmp_path):
     assert updated["risk"]["weekly_usd_macro_status"] == "watch"
     assert updated["risk"]["weekly_usd_macro_score"] == 33.0
     assert updated["risk"]["weekly_usd_macro_multiplier"] == 0.95
+
+
+def test_ai_cycle_watch_applies_soft_size_multiplier(tmp_path):
+    trades_path = tmp_path / "trades.json"
+    history_path = tmp_path / "weekly_history.json"
+    today = date(2026, 2, 20)
+    trades = []
+    for idx in range(12):
+        exit_day = today - timedelta(days=idx)
+        trades.append(
+            {
+                "status": "closed",
+                "strategy": "iron_condor",
+                "realized_pnl": 40.0,
+                "outcome": "win",
+                "exit_date": exit_day.isoformat(),
+            }
+        )
+    _write_json(trades_path, {"stats": {"closed_trades": 40}, "trades": trades})
+
+    market_signals_dir = tmp_path / "market_signals"
+    market_signals_dir.mkdir(parents=True, exist_ok=True)
+    _write_json(
+        market_signals_dir / "ai_cycle_signal.json",
+        {
+            "signal": "ai_cycle",
+            "status": "watch",
+            "severity_score": 41.0,
+            "position_size_multiplier": 0.95,
+            "capex_deceleration_shock": False,
+            "regime": "transition",
+            "latest_data_date": "2026-02-20",
+            "source": "yfinance_public",
+            "reasons": ["Capex momentum decelerating"],
+        },
+    )
+
+    gate, _history = compute_weekly_gate(
+        {"paper_account": {"win_rate": 95.0, "win_rate_sample_size": 40, "total_pl": 480.0}},
+        trades_path=trades_path,
+        weekly_history_path=history_path,
+        today=today,
+    )
+
+    assert gate["ai_cycle"]["status"] == "watch"
+    assert gate["scale_multiplier_from_ai_cycle"] == 0.95
+    assert gate["recommended_max_position_pct"] <= 0.019
+    assert gate["block_new_positions"] is False
+
+
+def test_ai_cycle_shock_blocks_new_positions(tmp_path):
+    trades_path = tmp_path / "trades.json"
+    history_path = tmp_path / "weekly_history.json"
+    today = date(2026, 2, 20)
+    _write_json(trades_path, {"stats": {"closed_trades": 40}, "trades": []})
+
+    market_signals_dir = tmp_path / "market_signals"
+    market_signals_dir.mkdir(parents=True, exist_ok=True)
+    _write_json(
+        market_signals_dir / "ai_cycle_signal.json",
+        {
+            "signal": "ai_cycle",
+            "status": "blocked",
+            "severity_score": 82.0,
+            "position_size_multiplier": 0.85,
+            "capex_deceleration_shock": True,
+            "regime": "capex_deceleration",
+            "latest_data_date": "2026-02-20",
+            "source": "yfinance_public",
+            "reasons": ["Capex deceleration shock condition triggered"],
+        },
+    )
+
+    gate, _history = compute_weekly_gate(
+        {"paper_account": {"win_rate": 95.0, "win_rate_sample_size": 40, "total_pl": 480.0}},
+        trades_path=trades_path,
+        weekly_history_path=history_path,
+        today=today,
+    )
+
+    assert gate["mode"] == "defensive"
+    assert gate["block_new_positions"] is True
+    assert gate["recommended_max_position_pct"] <= 0.01
+    assert gate["scale_blocked_by_ai_cycle"] is True
+
+
+def test_apply_operating_plan_sets_ai_cycle_risk_fields(tmp_path):
+    state = {
+        "paper_account": {"equity": 100000.0, "win_rate": 75.0, "win_rate_sample_size": 40},
+        "live_account": {"equity": 20.0, "positions_count": 0},
+        "risk": {},
+    }
+    trades_path = tmp_path / "trades.json"
+    history_path = tmp_path / "weekly_history.json"
+    market_signals_dir = tmp_path / "market_signals"
+    market_signals_dir.mkdir(parents=True, exist_ok=True)
+    _write_json(
+        market_signals_dir / "ai_cycle_signal.json",
+        {
+            "signal": "ai_cycle",
+            "status": "watch",
+            "severity_score": 37.0,
+            "position_size_multiplier": 0.95,
+            "capex_deceleration_shock": False,
+            "regime": "transition",
+            "latest_data_date": "2026-02-20",
+            "source": "yfinance_public",
+            "reasons": ["Capex momentum decelerating"],
+        },
+    )
+    _write_json(trades_path, {"trades": []})
+
+    updated, _history = apply_operating_plan_to_state(
+        state,
+        trades_path=trades_path,
+        weekly_history_path=history_path,
+        today=date(2026, 2, 20),
+    )
+
+    assert updated["risk"]["weekly_ai_cycle_status"] == "watch"
+    assert updated["risk"]["weekly_ai_cycle_score"] == 37.0
+    assert updated["risk"]["weekly_ai_cycle_multiplier"] == 0.95
+    assert updated["risk"]["weekly_ai_cycle_regime"] == "transition"
+    assert updated["risk"]["weekly_ai_cycle_capex_deceleration_shock"] is False

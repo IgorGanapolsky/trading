@@ -34,6 +34,14 @@ def test_evaluate_weekly_cadence_extracts_kpi_and_diagnostic():
                         "position_size_multiplier": 0.95,
                         "source": "fred_public",
                     },
+                    "ai_cycle": {
+                        "status": "blocked",
+                        "severity_score": 72.0,
+                        "position_size_multiplier": 0.85,
+                        "regime": "capex_deceleration",
+                        "capex_deceleration_shock": True,
+                        "source": "yfinance_public",
+                    },
                 },
                 "top_rejection_reasons": [{"reason": "Vol=0.1x (low)", "count": 2}],
             },
@@ -51,6 +59,11 @@ def test_evaluate_weekly_cadence_extracts_kpi_and_diagnostic():
     assert result["usd_macro_status"] == "watch"
     assert result["usd_macro_score"] == 37.0
     assert result["usd_macro_multiplier"] == 0.95
+    assert result["ai_cycle_status"] == "blocked"
+    assert result["ai_cycle_score"] == 72.0
+    assert result["ai_cycle_multiplier"] == 0.85
+    assert result["ai_cycle_regime"] == "capex_deceleration"
+    assert result["ai_cycle_capex_deceleration_shock"] is True
     assert result["top_rejection_reasons"][0]["count"] == 2
 
 
