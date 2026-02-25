@@ -24,7 +24,7 @@ import logging
 import os
 import re
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -148,7 +148,9 @@ def _judge_schema() -> dict[str, Any]:
 
 def _judge_response_format_candidates() -> list[dict[str, Any]]:
     """Response formats for judge verdict generation."""
-    return _response_format_candidates_for_schema(name="trade_opinion_judge", schema=_judge_schema())
+    return _response_format_candidates_for_schema(
+        name="trade_opinion_judge", schema=_judge_schema()
+    )
 
 
 def _extract_text_content(raw: Any) -> str:
@@ -225,9 +227,7 @@ def _request_structured_completion(
             }
             if temperature is not None:
                 kwargs["temperature"] = temperature
-            return client.chat.completions.create(
-                **kwargs
-            )
+            return client.chat.completions.create(**kwargs)
         except Exception as exc:
             last_exc = exc
             logger.debug(
@@ -255,7 +255,9 @@ def _float_env(name: str, default: float) -> float:
     try:
         return float(raw)
     except ValueError:
-        logger.warning("Trade opinion: invalid float env %s=%r, using default %.4f", name, raw, default)
+        logger.warning(
+            "Trade opinion: invalid float env %s=%r, using default %.4f", name, raw, default
+        )
         return default
 
 
@@ -281,7 +283,7 @@ def _stable_sample(seed: str, sample_rate: float) -> bool:
         return False
     if sample_rate >= 1.0:
         return True
-    day_seed = datetime.now(UTC).date().isoformat()
+    day_seed = datetime.now(timezone.utc).date().isoformat()
     digest = hashlib.sha256(f"{day_seed}:{seed}".encode()).hexdigest()
     value = int(digest[:8], 16) / 0xFFFFFFFF
     return value < sample_rate
@@ -504,7 +506,9 @@ def get_trade_opinion(
 
         def parse_trade_opinion_response(response: Any) -> TradeOpinion:
             text = (
-                _extract_text_content(response.choices[0].message.content) if response.choices else ""
+                _extract_text_content(response.choices[0].message.content)
+                if response.choices
+                else ""
             )
             if not text:
                 raise json.JSONDecodeError("Empty response", "", 0)
@@ -588,7 +592,9 @@ def get_trade_opinion(
                         messages=judge_messages,
                         max_tokens=1024,
                         response_formats=_judge_response_format_candidates(),
-                        temperature=max(0.0, min(1.0, _float_env("TRADE_OPINION_JUDGE_TEMPERATURE", 0.0))),
+                        temperature=max(
+                            0.0, min(1.0, _float_env("TRADE_OPINION_JUDGE_TEMPERATURE", 0.0))
+                        ),
                     )
                     judge_text = (
                         _extract_text_content(judge_response.choices[0].message.content)
@@ -614,7 +620,7 @@ def get_trade_opinion(
 
         _emit_judge_telemetry(
             {
-                "timestamp": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
                 "model": model_id,
                 "consensus_samples": opinion.consensus_samples,
                 "consensus_agreement": opinion.consensus_agreement,
