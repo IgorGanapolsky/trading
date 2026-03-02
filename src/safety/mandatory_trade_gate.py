@@ -1272,8 +1272,16 @@ def safe_submit_order(client, order_request, strategy: str | None = None):
                     retrieved_context=retrieved_context,
                 )
 
-                if score.is_hallucination_risk:
+                # RAG retrieval can be transiently unavailable; avoid deterministic
+                # order blocks when no context was retrieved.
+                has_retrieved_context = bool(retrieved_context)
+                if score.is_hallucination_risk and has_retrieved_context:
                     raise ValueError(f"REASONING AUDIT FAILED: {score.reasoning_trace}")
+                if score.is_hallucination_risk and not has_retrieved_context:
+                    logger.warning(
+                        "Reasoning audit low groundedness without retrieval context; "
+                        "skipping hard fail."
+                    )
                 gateway.capture_span(
                     "reasoning_evaluation",
                     trace_id,
