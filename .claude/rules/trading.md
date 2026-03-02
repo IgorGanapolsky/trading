@@ -1,5 +1,11 @@
 # Trading Rules
 
+## Canonical Policy Constants
+
+- IRON_CONDOR_STOP_LOSS_MULTIPLIER: 1.0
+- NORTH_STAR_MONTHLY_AFTER_TAX: 6000
+- MAX_POSITIONS: 8
+
 ## Strategy: Iron Condors on SPY
 
 - Sell 15-20 delta put spread (bull put) + 15-20 delta call spread (bear call)

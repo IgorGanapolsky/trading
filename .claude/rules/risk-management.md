@@ -1,5 +1,11 @@
 # Risk Management Rules
 
+## Canonical Policy Constants
+
+- IRON_CONDOR_STOP_LOSS_MULTIPLIER: 1.0
+- NORTH_STAR_MONTHLY_AFTER_TAX: 6000
+- MAX_POSITIONS: 8
+
 ## Phil Town Rule #1: Don't Lose Money
 
 ### Position Sizing

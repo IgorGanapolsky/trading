@@ -11,6 +11,10 @@ Required: ~$350K capital @ 2.5% monthly return.
 
 Source of truth: `src/core/trading_constants.py`
 
+- IRON_CONDOR_STOP_LOSS_MULTIPLIER: 1.0
+- NORTH_STAR_MONTHLY_AFTER_TAX: 6000
+- MAX_POSITIONS: 8
+
 ## Dual-Track Mandate
 
 1. **The Lab (Paper Account `PA3C5AG0CECQ`)**: ~$100,000. Strategy formulation + GRPO self-training. Up to 2 concurrent SPY Iron Condors (8 legs max).
