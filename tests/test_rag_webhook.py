@@ -704,6 +704,89 @@ class TestPortfolioStatusFunction:
                 # Should return empty dict when both sources fail
                 assert result == {}
 
+    def test_get_current_portfolio_status_prefers_canonical_trade_history_activity(self, tmp_path):
+        """Stale state['trades'] must not override newer fill activity in trade_history."""
+        import json
+        from datetime import datetime, timezone
+        from unittest.mock import patch
+
+        from src.agents import rag_webhook
+
+        data_dir = tmp_path / "data"
+        data_dir.mkdir(parents=True, exist_ok=True)
+        fill_ts = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+        state = {
+            "account": {"current_equity": 100.0, "total_pl": 5.0, "total_pl_pct": 5.0},
+            "paper_account": {"equity": 5001.0, "total_pl": 1.0, "total_pl_pct": 0.02},
+            "trades": {"last_trade_date": "2000-01-01", "today_trades": 0},
+            "trade_history": [
+                {
+                    "id": "trade-1",
+                    "symbol": "SPY",
+                    "side": "buy",
+                    "qty": "1",
+                    "price": "1.00",
+                    "filled_at": fill_ts,
+                }
+            ],
+        }
+        (data_dir / "system_state.json").write_text(json.dumps(state), encoding="utf-8")
+
+        with (
+            patch.object(rag_webhook, "project_root", tmp_path),
+            patch.object(rag_webhook, "query_alpaca_api_direct", return_value=None),
+        ):
+            result = rag_webhook.get_current_portfolio_status()
+
+        assert result["last_trade_date"] == fill_ts[:10]
+        assert result["last_trade_date"] != "2000-01-01"
+        assert result["trades_today"] == 1
+
+    def test_get_current_portfolio_status_derives_activity_from_trade_files(self, tmp_path):
+        """Fallback should derive activity from local data/trades_*.json when needed."""
+        import json
+        from datetime import datetime, timezone
+        from unittest.mock import patch
+
+        from src.agents import rag_webhook
+
+        data_dir = tmp_path / "data"
+        data_dir.mkdir(parents=True, exist_ok=True)
+        fill_ts = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+        today_str = fill_ts[:10]
+
+        state = {
+            "account": {"current_equity": 100.0, "total_pl": 5.0, "total_pl_pct": 5.0},
+            "paper_account": {"equity": 5001.0, "total_pl": 1.0, "total_pl_pct": 0.02},
+            "trades": {"last_trade_date": "2000-01-01", "today_trades": 0},
+            "trade_history": [],
+        }
+        (data_dir / "system_state.json").write_text(json.dumps(state), encoding="utf-8")
+        (data_dir / f"trades_{today_str}.json").write_text(
+            json.dumps(
+                [
+                    {
+                        "symbol": "QQQ",
+                        "side": "sell",
+                        "qty": 1,
+                        "price": 2.0,
+                        "timestamp": fill_ts,
+                    }
+                ]
+            ),
+            encoding="utf-8",
+        )
+
+        with (
+            patch.object(rag_webhook, "project_root", tmp_path),
+            patch.object(rag_webhook, "query_alpaca_api_direct", return_value=None),
+        ):
+            result = rag_webhook.get_current_portfolio_status()
+
+        assert result["last_trade_date"] == today_str
+        assert result["trades_today"] == 1
+
 
 class TestReadinessQueryDetection:
     """Tests for is_readiness_query() function."""

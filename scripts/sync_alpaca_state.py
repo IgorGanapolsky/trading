@@ -78,6 +78,44 @@ def _parse_filled_at(raw_value: str | None) -> datetime | None:
         return None
 
 
+def _canonical_fill_dt(fill_dt: datetime) -> datetime:
+    """Normalize parsed fill timestamps to UTC for consistent date math."""
+    if fill_dt.tzinfo is None:
+        return fill_dt.replace(tzinfo=timezone.utc)
+    return fill_dt.astimezone(timezone.utc)
+
+
+def _derive_trade_summary_from_fills(trade_history: object, *, now: datetime | None = None) -> dict:
+    """Build canonical trade summary from parsed fill timestamps."""
+    fills: list[tuple[datetime, dict]] = []
+    if isinstance(trade_history, list):
+        for trade in trade_history:
+            if not isinstance(trade, dict):
+                continue
+            filled_dt = _parse_filled_at(str(trade.get("filled_at") or ""))
+            if not filled_dt:
+                continue
+            fills.append((_canonical_fill_dt(filled_dt), trade))
+
+    today_utc = _canonical_fill_dt(now or datetime.now(timezone.utc)).date()
+    todays_fills = sum(1 for filled_dt, _ in fills if filled_dt.date() == today_utc)
+    last_trade_dt = max((filled_dt for filled_dt, _ in fills), default=None)
+
+    last_trade_symbol: str | None = None
+    for _, trade in sorted(fills, key=lambda pair: pair[0], reverse=True):
+        symbol = trade.get("symbol")
+        if symbol not in (None, "", "None"):
+            last_trade_symbol = str(symbol)
+            break
+
+    return {
+        "last_trade_date": last_trade_dt.date().isoformat() if last_trade_dt else None,
+        "today_trades": todays_fills,
+        "total_trades_today": todays_fills,
+        "last_trade_symbol": last_trade_symbol,
+    }
+
+
 def sync_from_alpaca() -> dict | None:
     """
     Sync account state from Alpaca.
@@ -364,39 +402,7 @@ def update_system_state(alpaca_data: dict | None) -> None:
                     logger.info(f"📜 Preserved {len(existing_history)} existing trades")
 
             # Keep a lightweight trade summary for existing dashboards.
-            todays_fills = 0
-            last_trade_dt: datetime | None = None
-            last_trade_symbol: str | None = None
-            for trade in state.get("trade_history", []):
-                filled_at = str(trade.get("filled_at") or "")
-                filled_dt = _parse_filled_at(filled_at)
-                if filled_at.startswith(today_str):
-                    todays_fills += 1
-                if filled_dt and (last_trade_dt is None or filled_dt > last_trade_dt):
-                    last_trade_dt = filled_dt
-                    symbol = trade.get("symbol")
-                    if symbol not in (None, "", "None"):
-                        last_trade_symbol = str(symbol)
-
-            if last_trade_symbol is None and state.get("trade_history"):
-                # Fallback to newest non-null symbol if most recent fill had no symbol.
-                symbol_candidates = []
-                for trade in state.get("trade_history", []):
-                    symbol = trade.get("symbol")
-                    if symbol in (None, "", "None"):
-                        continue
-                    filled_dt = _parse_filled_at(str(trade.get("filled_at") or ""))
-                    if filled_dt:
-                        symbol_candidates.append((filled_dt, str(symbol)))
-                if symbol_candidates:
-                    last_trade_symbol = max(symbol_candidates, key=lambda pair: pair[0])[1]
-
-            state["trades"] = {
-                "last_trade_date": last_trade_dt.date().isoformat() if last_trade_dt else None,
-                "today_trades": todays_fills,
-                "total_trades_today": todays_fills,
-                "last_trade_symbol": last_trade_symbol,
-            }
+            state["trades"] = _derive_trade_summary_from_fills(state.get("trade_history", []))
 
         # ========== UPDATE LIVE (BROKERAGE) ACCOUNT ==========
         # LL-281: This was MISSING - dashboard showed PAPER data for LIVE

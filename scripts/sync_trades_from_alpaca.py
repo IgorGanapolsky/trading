@@ -196,10 +196,12 @@ def update_system_state_trades(trade_count: int, date_str: str) -> bool:
 
         # Update trades section
         state.setdefault("trades", {})
-        state["trades"]["last_trade_date"] = date_str
+        if trade_count > 0:
+            # Only advance last_trade_date when we observed real fills for this date.
+            state["trades"]["last_trade_date"] = date_str
+            state["trades"]["last_trade_symbol"] = "SYNCED"  # Indicates synced from Alpaca
         state["trades"]["today_trades"] = trade_count
         state["trades"]["total_trades_today"] = trade_count
-        state["trades"]["last_trade_symbol"] = "SYNCED"  # Indicates synced from Alpaca
 
         # Update meta
         state.setdefault("meta", {})

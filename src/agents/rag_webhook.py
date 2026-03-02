@@ -52,6 +52,7 @@ except ImportError:
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
+from scripts.sync_alpaca_state import _derive_trade_summary_from_fills  # noqa: E402
 from src.rag.lessons_learned_rag import LessonsLearnedRAG  # noqa: E402
 
 # Configure logging
@@ -464,23 +465,53 @@ def get_current_portfolio_status() -> dict:
     except ImportError:
         today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
-    # Get last trade date and count from state
-    last_trade_date = state.get("trades", {}).get("last_trade_date", "unknown")
-    # FIX Jan 13: Key is "today_trades" not "total_trades_today"
-    # Value can be int OR string "synced" meaning trades happened
-    raw_trades = state.get("trades", {}).get("today_trades", 0)
-    if isinstance(raw_trades, str):
-        # "synced" or other string means trades DID happen
-        stored_trades_today = 1 if raw_trades else 0
-    else:
-        stored_trades_today = int(raw_trades) if raw_trades else 0
+    # Build canonical activity from fills, not state["trades"] summary fields.
+    # state["trades"] can become stale while trade_history is newer.
+    canonical_activity = []
+    seen_fill_keys = set()
 
-    # CRITICAL FIX: Only show trades_today if the last_trade_date matches actual today
-    # Otherwise, 0 trades have occurred today
-    if last_trade_date == today_str:
-        trades_today = stored_trades_today
-    else:
-        trades_today = 0  # No trades today - the stored count is from a previous day
+    def _add_fill_activity(trade: dict) -> None:
+        filled_at = trade.get("filled_at") or trade.get("timestamp")
+        if not filled_at:
+            return
+        fill_key = (
+            str(trade.get("id") or trade.get("order_id") or ""),
+            str(filled_at),
+            str(trade.get("symbol") or ""),
+            str(trade.get("side") or ""),
+            str(trade.get("qty") or ""),
+            str(trade.get("price") or ""),
+        )
+        if fill_key in seen_fill_keys:
+            return
+        seen_fill_keys.add(fill_key)
+        canonical_activity.append({"filled_at": str(filled_at), **trade})
+    trade_history = state.get("trade_history", [])
+    if isinstance(trade_history, list):
+        for trade in trade_history:
+            if not isinstance(trade, dict):
+                continue
+            _add_fill_activity(trade)
+
+    # Include legacy/local trade file activity as fallback evidence.
+    data_dir = project_root / "data"
+    for trades_file in sorted(data_dir.glob("trades_*.json"), reverse=True):
+        try:
+            with open(trades_file) as f:
+                file_trades = json.load(f)
+        except Exception as e:
+            logger.warning(f"Failed to read {trades_file}: {e}")
+            continue
+        if not isinstance(file_trades, list):
+            continue
+        for trade in file_trades:
+            if not isinstance(trade, dict):
+                continue
+            _add_fill_activity(trade)
+
+    trade_summary = _derive_trade_summary_from_fills(canonical_activity)
+    last_trade_date = trade_summary.get("last_trade_date") or "unknown"
+    trades_today = int(trade_summary.get("today_trades") or 0)
 
     return {
         "live": {
