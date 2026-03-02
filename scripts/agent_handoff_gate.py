@@ -12,11 +12,18 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import sys
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+# Ensure repo-root absolute imports (e.g. `src.*`) work when this script is
+# executed directly via `python3 scripts/agent_handoff_gate.py`.
+REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 from src.safety.handoff_governance import (
     append_handoff_audit_record,
