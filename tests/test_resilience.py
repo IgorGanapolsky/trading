@@ -578,6 +578,21 @@ class TestSelfHealerChecks:
 
             assert check.status == HealthStatus.HEALTHY
 
+    def test_check_env_vars_healthy_with_canonical_names(self, temp_project):
+        """Canonical env var names pass check (legacy aliases optional)."""
+        with patch.dict(
+            os.environ,
+            {
+                "ALPACA_PAPER_TRADING_API_KEY": "test_key",
+                "ALPACA_PAPER_TRADING_API_SECRET": "test_secret",
+            },
+            clear=True,
+        ):
+            healer = SelfHealer(project_root=temp_project)
+            check = healer._check_env_vars()
+
+            assert check.status == HealthStatus.HEALTHY
+
     def test_check_env_vars_missing(self, temp_project):
         """Missing environment variables is DEGRADED."""
         with patch.dict(os.environ, {}, clear=True):

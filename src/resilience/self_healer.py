@@ -173,16 +173,23 @@ class SelfHealer:
 
     def _check_env_vars(self) -> HealthCheck:
         """Check critical environment variables."""
-        required = [
-            "ALPACA_PAPER_TRADING_5K_API_KEY",
-            "ALPACA_PAPER_TRADING_5K_API_SECRET",
-        ]
+        # Accept either current canonical env var names or legacy 5K aliases.
+        key_present = bool(
+            os.getenv("ALPACA_PAPER_TRADING_API_KEY")
+            or os.getenv("ALPACA_PAPER_TRADING_5K_API_KEY")
+        )
+        secret_present = bool(
+            os.getenv("ALPACA_PAPER_TRADING_API_SECRET")
+            or os.getenv("ALPACA_PAPER_TRADING_5K_API_SECRET")
+        )
 
-        # Check in .env file or environment
         missing = []
-        for var in required:
-            if not os.getenv(var):
-                missing.append(var)
+        if not key_present:
+            missing.append("ALPACA_PAPER_TRADING_API_KEY (or ALPACA_PAPER_TRADING_5K_API_KEY)")
+        if not secret_present:
+            missing.append(
+                "ALPACA_PAPER_TRADING_API_SECRET (or ALPACA_PAPER_TRADING_5K_API_SECRET)"
+            )
 
         if missing:
             return HealthCheck(

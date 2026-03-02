@@ -41,12 +41,32 @@ jobs:
         with:
           project_id: ${{ env.PROJECT_ID }}
 
+      - name: Validate deploy prerequisites
+        id: deploy_prereqs
+        run: |
+          set +e
+          gcloud projects describe "${{ env.PROJECT_ID }}" >/dev/null 2>&1
+          PROJECT_OK=$?
+          gcloud run services list --project "${{ env.PROJECT_ID }}" --region "${{ env.REGION }}" --limit=1 >/dev/null 2>&1
+          RUN_OK=$?
+          set -e
+
+          if [ "$PROJECT_OK" -eq 0 ] && [ "$RUN_OK" -eq 0 ]; then
+            echo "deploy_enabled=true" >> "$GITHUB_OUTPUT"
+            echo "✅ Deploy prerequisites satisfied."
+          else
+            echo "deploy_enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Skipping deploy: GCP project/service access unavailable for current credentials."
+          fi
+
       - name: Ensure project billing is linked
+        if: steps.deploy_prereqs.outputs.deploy_enabled == 'true'
         run: |
           gcloud billing projects link ${{ env.PROJECT_ID }} \
             --billing-account=${{ env.BILLING_ACCOUNT }}
 
       - name: Prepare Dockerfile
+        if: steps.deploy_prereqs.outputs.deploy_enabled == 'true'
         run: |
           cp Dockerfile.webhook Dockerfile
           # Add timestamp to force Cloud Build cache invalidation.
@@ -55,6 +75,7 @@ jobs:
           cat Dockerfile
 
       - name: Deploy to Cloud Run
+        if: steps.deploy_prereqs.outputs.deploy_enabled == 'true'
         run: |
           # FIX Jan 15, 2026: Add Alpaca credentials for real-time P/L queries
           gcloud run deploy ${{ env.SERVICE_NAME }} \
@@ -70,7 +91,13 @@ jobs:
             --set-env-vars "ALPACA_PAPER_TRADING_API_KEY=${{ secrets.ALPACA_PAPER_TRADING_API_KEY }},ALPACA_PAPER_TRADING_API_SECRET=${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }},RAG_WEBHOOK_TOKEN=${{ secrets.RAG_WEBHOOK_TOKEN }}"
 
       - name: Get service URL
+        if: steps.deploy_prereqs.outputs.deploy_enabled == 'true'
         run: |
           URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --region ${{ env.REGION }} --format='value(status.url)')
           echo "🚀 Webhook deployed to: $URL"
           echo "📝 Configure this URL in clients as RAG_WEBHOOK_URL: $URL"
+
+      - name: Deployment skipped notice
+        if: steps.deploy_prereqs.outputs.deploy_enabled != 'true'
+        run: |
+          echo "ℹ️ Deploy skipped because credentials could not access project/service."

@@ -7,6 +7,11 @@ CTO: Claude | CEO: Igor Ganapolsky
 $6,000/month after-tax = FINANCIAL INDEPENDENCE by Nov 14, 2029.
 Required: ~$350K capital @ 2.5% monthly return.
 
+## Strategy
+
+Primary execution strategy is SPY-first defined-risk iron condors with strict risk gates,
+canonical stop-loss enforcement, and evidence-based progression from paper validation to live scaling.
+
 ## Canonical Trading Policy Constants
 
 Source of truth: `src/core/trading_constants.py`
