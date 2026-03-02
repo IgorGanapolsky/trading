@@ -43,8 +43,8 @@ MAX_POSITIONS: int = 8  # 2 iron condors = 8 legs max (UPDATED Jan 30, 2026 for 
 MAX_CONTRACTS_PER_TRADE: int = 2  # Max contracts per single trade (scaled for $100K)
 CRISIS_LOSS_PCT: float = 0.25  # 25% unrealized loss triggers crisis mode
 CRISIS_POSITION_COUNT: int = 4  # More than 4 positions triggers crisis mode
-# Iron condor stop-loss: close if one side reaches 200% of credit received per CLAUDE.md
-IRON_CONDOR_STOP_LOSS_MULTIPLIER: float = 2.0
+# Iron condor stop-loss: close at 100% of credit received (1.0x loss on credit).
+IRON_CONDOR_STOP_LOSS_MULTIPLIER: float = 1.0
 
 # =============================================================================
 # BEHAVIORAL + EXPIRY CONCENTRATION GUARDS
