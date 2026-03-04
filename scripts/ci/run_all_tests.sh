@@ -8,6 +8,7 @@ PYTEST_TIMEOUT_SECONDS="${PYTEST_TIMEOUT_SECONDS:-300}"
 CORE_TIMEOUT_MINUTES="${CORE_TIMEOUT_MINUTES:-28}"
 INTEGRATION_TIMEOUT_MINUTES="${INTEGRATION_TIMEOUT_MINUTES:-12}"
 COV_FAIL_UNDER="${COV_FAIL_UNDER:-15}"
+HEARTBEAT_SECONDS="${HEARTBEAT_SECONDS:-60}"
 
 mkdir -p "${REPORT_DIR}"
 
@@ -37,37 +38,66 @@ run_phase() {
   timeout_cmd="$(resolve_timeout_cmd)"
   local log_file="${REPORT_DIR}/${phase}.log"
   local junit_file="${REPORT_DIR}/junit-${phase}.xml"
+  local rc_file="${REPORT_DIR}/.${phase}.rc"
+  local -a pytest_targets=("$@")
+
+  rm -f "${rc_file}"
 
   log "starting phase=${phase} timeout=${max_minutes}m"
   set +e
-  if [[ -n "${timeout_cmd}" ]]; then
-    "${timeout_cmd}" --signal=TERM --kill-after=120 "$((max_minutes * 60))" \
+  (
+    if [[ -n "${timeout_cmd}" ]]; then
+      "${timeout_cmd}" --signal=TERM --kill-after=120 "$((max_minutes * 60))" \
+        python -m pytest \
+        -v \
+        --tb=long \
+        --durations=25 \
+        --timeout="${PYTEST_TIMEOUT_SECONDS}" \
+        --timeout-method=thread \
+        --cov=src \
+        --cov-append \
+        --cov-report= \
+        --junitxml="${junit_file}" \
+        "${pytest_targets[@]}"
+      echo $? > "${rc_file}"
+    else
+      log "timeout command not available; running phase without outer watchdog"
       python -m pytest \
-      -v \
-      --tb=long \
-      --durations=25 \
-      --timeout="${PYTEST_TIMEOUT_SECONDS}" \
-      --timeout-method=thread \
-      --cov=src \
-      --cov-append \
-      --cov-report= \
-      --junitxml="${junit_file}" \
-      "$@" 2>&1 | tee "${log_file}"
-  else
-    log "timeout command not available; running phase without outer watchdog"
-    python -m pytest \
-      -v \
-      --tb=long \
-      --durations=25 \
-      --timeout="${PYTEST_TIMEOUT_SECONDS}" \
-      --timeout-method=thread \
-      --cov=src \
-      --cov-append \
-      --cov-report= \
-      --junitxml="${junit_file}" \
-      "$@" 2>&1 | tee "${log_file}"
+        -v \
+        --tb=long \
+        --durations=25 \
+        --timeout="${PYTEST_TIMEOUT_SECONDS}" \
+        --timeout-method=thread \
+        --cov=src \
+        --cov-append \
+        --cov-report= \
+        --junitxml="${junit_file}" \
+        "${pytest_targets[@]}"
+      echo $? > "${rc_file}"
+    fi
+  ) 2>&1 | tee "${log_file}" &
+  local pipeline_pid=$!
+  local started_epoch
+  started_epoch="$(date +%s)"
+
+  while kill -0 "${pipeline_pid}" 2>/dev/null; do
+    sleep "${HEARTBEAT_SECONDS}"
+    if kill -0 "${pipeline_pid}" 2>/dev/null; then
+      local now_epoch
+      now_epoch="$(date +%s)"
+      local elapsed
+      elapsed=$((now_epoch - started_epoch))
+      log "heartbeat phase=${phase} elapsed=${elapsed}s"
+    fi
+  done
+
+  wait "${pipeline_pid}"
+  local pipeline_rc=$?
+  local rc="${pipeline_rc}"
+  if [[ -f "${rc_file}" ]]; then
+    rc="$(<"${rc_file}")"
+    rm -f "${rc_file}"
   fi
-  local rc=${PIPESTATUS[0]}
   set -e
 
   if [[ ${rc} -eq 124 ]]; then

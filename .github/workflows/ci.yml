@@ -14,6 +14,7 @@ on:
 
 permissions:
   contents: read
+  actions: write
 
 # Prevent duplicate CI runs on same branch
 concurrency:
@@ -27,6 +28,59 @@ env:
   SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
 jobs:
+  stale-run-guard:
+    name: Stale Run Guard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel superseded CI runs on main
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const currentRunId = context.runId;
+            const currentSha = context.sha;
+            const workflowName = context.workflow;
+            const candidateRuns = [];
+
+            for (const status of ["in_progress", "queued"]) {
+              const runs = await github.paginate(
+                github.rest.actions.listWorkflowRunsForRepo,
+                {
+                  owner,
+                  repo,
+                  branch: "main",
+                  status,
+                  per_page: 100,
+                },
+              );
+              candidateRuns.push(...runs);
+            }
+
+            const staleRuns = candidateRuns.filter((run) => {
+              if (run.name !== workflowName) return false;
+              if (run.id === currentRunId) return false;
+              if (run.head_sha === currentSha) return false;
+              return true;
+            });
+
+            if (staleRuns.length === 0) {
+              core.info("No stale CI runs found on main.");
+              return;
+            }
+
+            for (const run of staleRuns) {
+              await github.rest.actions.cancelWorkflowRun({
+                owner,
+                repo,
+                run_id: run.id,
+              });
+              core.notice(
+                `Cancelled stale CI run ${run.id} (head=${run.head_sha}, status=${run.status}).`,
+              );
+            }
+
   lint:
     name: Lint & Format
     runs-on: ubuntu-latest
