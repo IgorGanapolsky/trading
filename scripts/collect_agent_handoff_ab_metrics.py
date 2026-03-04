@@ -39,6 +39,21 @@ def _parse_timestamp(value: str) -> datetime | None:
     return parsed.astimezone(timezone.utc)
 
 
+def _to_bool(value: Any, default: bool = False) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "1", "yes", "y", "on", "passed", "pass"}:
+            return True
+        if normalized in {"false", "0", "no", "n", "off", "failed", "fail"}:
+            return False
+        return default
+    if isinstance(value, (int, float)):
+        return bool(value)
+    return default
+
+
 def _sum_gate_latency_seconds(gate_report: dict[str, Any]) -> float:
     total = 0.0
     for step in gate_report.get("steps", []):
@@ -50,7 +65,7 @@ def _sum_gate_latency_seconds(gate_report: dict[str, Any]) -> float:
 def _step_passed(gate_report: dict[str, Any], step_name: str) -> bool | None:
     for step in gate_report.get("steps", []):
         if isinstance(step, dict) and step.get("name") == step_name:
-            return bool(step.get("passed"))
+            return _to_bool(step.get("passed"), default=False)
     return None
 
 
@@ -108,7 +123,7 @@ def collect_ab_metrics(
     metric = {
         "captured_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "variant": variant,
-        "gate_passed": bool(gate_report.get("passed", False)),
+        "gate_passed": _to_bool(gate_report.get("passed", False), default=False),
         "gate_latency_seconds": _sum_gate_latency_seconds(gate_report),
         "lint_passed": _step_passed(gate_report, "lint"),
         "format_passed": _step_passed(gate_report, "format"),

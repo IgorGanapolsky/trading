@@ -10,7 +10,7 @@ Entry Criteria (per CLAUDE.md):
 - 30-45 DTE
 - Short strikes at 15-20 delta
 - $10-wide wings
-- Max 5 positions at a time
+- Max 2 iron condors at a time (8 option legs canonical limit)
 - 5% max risk per position
 
 Usage:
@@ -32,6 +32,7 @@ from zoneinfo import ZoneInfo
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
+from src.core.trading_constants import MAX_POSITIONS as MAX_OPTION_LEGS
 
 # Guard against AssertionError in CI/GitHub Actions where stdin is not a TTY
 try:
@@ -42,8 +43,8 @@ except (AssertionError, Exception):
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-# Constants from CLAUDE.md
-MAX_POSITIONS = 5
+# Constants from CLAUDE.md / trading constants
+MAX_IRON_CONDORS = max(1, int(MAX_OPTION_LEGS) // 4)
 POSITION_SIZE_PCT = 0.05  # 5% max risk per position
 TARGET_DELTA = 0.15  # 15-20 delta range
 MIN_DTE = 21
@@ -110,7 +111,7 @@ def count_open_ic_positions(trading_client) -> int:
         spy_options = [p for p in positions if p.symbol.startswith("SPY") and len(p.symbol) > 5]
         # Each IC has 4 legs, so divide by 4
         ic_count = len(spy_options) // 4
-        logger.info(f"Open IC positions: {ic_count} (max: {MAX_POSITIONS})")
+        logger.info(f"Open IC positions: {ic_count} (max: {MAX_IRON_CONDORS})")
         return ic_count
     except Exception as e:
         logger.error(f"Could not count positions: {e}")
@@ -369,7 +370,7 @@ def create_github_issue(opportunity: dict) -> str | None:
 ### Account Status
 | Metric | Value |
 |--------|-------|
-| **Current Positions** | {opportunity["positions"]}/{MAX_POSITIONS} |
+| **Current Positions** | {opportunity["positions"]}/{MAX_IRON_CONDORS} |
 | **Account Equity** | ${opportunity["equity"]:,.2f} |
 | **Max Risk (5%)** | ${opportunity["equity"] * POSITION_SIZE_PCT:,.2f} |
 
@@ -435,8 +436,10 @@ def scan_for_opportunity(dry_run: bool = False) -> dict | None:
 
     # Check position limit
     open_positions = count_open_ic_positions(trading_client)
-    if open_positions >= MAX_POSITIONS:
-        logger.info(f"Position limit reached ({open_positions}/{MAX_POSITIONS}) - no scan needed")
+    if open_positions >= MAX_IRON_CONDORS:
+        logger.info(
+            f"Position limit reached ({open_positions}/{MAX_IRON_CONDORS}) - no scan needed"
+        )
         return None
 
     # Get market data

@@ -69,7 +69,7 @@ jobs:
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          echo "📊 Checking iron condor exit conditions (50% profit | 200% stop | 7 DTE)..."
+          echo "📊 Checking iron condor exit conditions (50% profit | 100% stop | 7 DTE)..."
           python3 scripts/manage_iron_condor_positions.py || echo "⚠️ IC management skipped"
 
       - name: Commit synced state

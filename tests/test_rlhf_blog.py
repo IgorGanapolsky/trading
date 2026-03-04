@@ -88,6 +88,23 @@ class TestRLHFBlogPublisher:
         title2 = generate_engaging_title("positive", "Iron condor trade executed successfully")
         assert title1 != title2
 
+    def test_generated_content_labels_observed_vs_thompson_rates(self):
+        """Generated content must separate observed and Thompson success rates."""
+        from scripts.publish_rlhf_blog import generate_engaging_content
+
+        content = generate_engaging_content(
+            title="RLHF update",
+            signal="positive",
+            intensity=0.8,
+            context="Integration tests and risk guards improved",
+            stats={"positive": 64, "negative": 50, "total": 114},
+            model={"alpha": 3, "beta": 1},
+            equity=100000.0,
+        )
+
+        assert "observed success rate" in content
+        assert "Thompson expected success rate" in content
+
     def test_blog_posts_directory_exists(self):
         """Ensure blog posts directory exists."""
         posts_dir = Path("docs/_posts")

@@ -425,7 +425,7 @@ function buildNorthStarDeterministicReply(liveData) {
   } else {
     lines.push("Execution focus:");
     lines.push("1) Do not scale size until win rate is >= target on validated samples.");
-    lines.push("2) Enforce exits mechanically: 50% take-profit, 7 DTE close, 200% max loss.");
+    lines.push("2) Enforce exits mechanically: 50% take-profit, 7 DTE close, 100% max loss.");
     lines.push("3) Run post-trade root-cause on each loss and adjust entry filters before adding risk.");
   }
 

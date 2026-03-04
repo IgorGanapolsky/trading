@@ -12,7 +12,7 @@ Stage 3 - RAG Knowledge Retrieval:
 LanceDB semantic search over 300+ documented lessons learned. Queries like "iron condor risk near earnings" retrieve relevant lessons (e.g., LL-268: exit at 7 DTE not 21 DTE to avoid gamma risk). Retrieved context is injected into the decision pipeline.
 
 Stage 4 - Risk Manager:
-Enforces hard limits: maximum 5% of account ($5,000) per position, maximum 2 concurrent iron condors, $5-wide wings only. Stop-loss at 200% of credit received is mandatory with no exceptions.
+Enforces hard limits: maximum 5% of account ($5,000) per position, maximum 2 concurrent iron condors, $10-wide wings only. Stop-loss at 100% of credit received is mandatory with no exceptions.
 
 Stage 5 - LLM Council (via TARS):
 Multiple models vote on the trade. DeepSeek-R1 provides chain-of-thought reasoning on entry timing. Kimi K2 (StockBench #1) analyzes the options structure. Consensus required before execution. All calls routed through TARS gateway.

@@ -37,6 +37,22 @@ DATA_DIR = Path("data")
 SNAPSHOT_MANIFEST_PATH = Path("docs/data/alpaca_snapshots.json")
 
 
+def parse_bool(value: object, default: bool = False) -> bool:
+    """Parse booleans safely, including common string/int representations."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "1", "yes", "y", "on", "passed", "pass"}:
+            return True
+        if normalized in {"false", "0", "no", "n", "off", "failed", "fail"}:
+            return False
+        return default
+    if isinstance(value, (int, float)):
+        return bool(value)
+    return default
+
+
 def load_alpaca_snapshot_manifest() -> dict:
     data = load_json_file(SNAPSHOT_MANIFEST_PATH)
     return data if isinstance(data, dict) else {}
@@ -137,7 +153,9 @@ def calculate_basic_metrics():
     live_starting = live_account.get("starting_balance", 20.0)
     live_pl = live_account.get("total_pl", 0.0)
     live_pl_pct = live_account.get("total_pl_pct", 0.0)
-    live_todays_pl = live_account.get("daily_change") or live_account.get("todays_pl", 0.0)
+    live_todays_pl = live_account.get("daily_change")
+    if live_todays_pl is None:
+        live_todays_pl = live_account.get("todays_pl", 0.0)
     live_todays_pl_pct = live_account.get("todays_pl_pct", 0.0)
     if live_todays_pl != 0 and live_todays_pl_pct == 0 and live_equity > 0:
         live_todays_pl_pct = (live_todays_pl / (live_equity - live_todays_pl)) * 100
@@ -157,9 +175,13 @@ def calculate_basic_metrics():
     # The actual win rate is calculated in trades.json by calculate_win_rate.py
     trades_data = load_json_file(DATA_DIR / "trades.json")
     trades_stats = trades_data.get("stats", {}) if isinstance(trades_data, dict) else {}
-    paper_win_rate = trades_stats.get("win_rate_pct") or paper_account.get("win_rate", 0.0)
+    paper_win_rate = trades_stats.get("win_rate_pct")
+    if paper_win_rate is None:
+        paper_win_rate = paper_account.get("win_rate", 0.0)
     # FIX Jan 16, 2026: system_state.json uses "daily_change" not "todays_pl"
-    paper_todays_pl = paper_account.get("daily_change") or paper_account.get("todays_pl", 0.0)
+    paper_todays_pl = paper_account.get("daily_change")
+    if paper_todays_pl is None:
+        paper_todays_pl = paper_account.get("todays_pl", 0.0)
     # Calculate today's P/L percentage from equity if not provided
     paper_todays_pl_pct = paper_account.get("todays_pl_pct", 0.0)
     if paper_todays_pl != 0 and paper_todays_pl_pct == 0 and paper_equity > 0:
@@ -188,8 +210,12 @@ def calculate_basic_metrics():
 
     performance = system_state.get("performance", {})
     # FIX Jan 18, 2026: Use trades.json stats for win_rate, fallback to performance
-    win_rate = trades_stats.get("win_rate_pct") or performance.get("win_rate", 0.0)
-    total_trades = trades_stats.get("total_trades") or performance.get("total_trades", 0)
+    win_rate = trades_stats.get("win_rate_pct")
+    if win_rate is None:
+        win_rate = performance.get("win_rate", 0.0)
+    total_trades = trades_stats.get("total_trades")
+    if total_trades is None:
+        total_trades = performance.get("total_trades", 0)
 
     challenge = system_state.get("challenge", {})
     # Always calculate current_day dynamically from start_date
@@ -250,6 +276,32 @@ def calculate_basic_metrics():
     milestone_state = (
         system_state.get("strategy_milestones", {}) if isinstance(system_state, dict) else {}
     )
+    north_star_weekly_gate = (
+        system_state.get("north_star_weekly_gate", {}) if isinstance(system_state, dict) else {}
+    )
+    cadence_kpi = (
+        north_star_weekly_gate.get("cadence_kpi", {})
+        if isinstance(north_star_weekly_gate, dict)
+        else {}
+    )
+    risk_state = system_state.get("risk", {}) if isinstance(system_state, dict) else {}
+    weekly_cadence_kpi_passed = risk_state.get("weekly_cadence_kpi_passed")
+    if weekly_cadence_kpi_passed is None:
+        weekly_cadence_kpi_passed = cadence_kpi.get("passed")
+    weekly_cadence_kpi_passed = parse_bool(weekly_cadence_kpi_passed, default=False)
+
+    decision_thresholds = (
+        trades_data.get("meta", {}).get("decision_thresholds", {})
+        if isinstance(trades_data, dict)
+        else {}
+    )
+    min_trades_for_decision = decision_thresholds.get("min_trades_for_decision", 30)
+    try:
+        min_trades_for_decision = int(min_trades_for_decision)
+    except (TypeError, ValueError):
+        min_trades_for_decision = 30
+    if min_trades_for_decision <= 0:
+        min_trades_for_decision = 30
     north_star_state = system_state.get("north_star", {}) if isinstance(system_state, dict) else {}
     north_star_probability = {
         "score": north_star_state.get("probability_score"),
@@ -319,12 +371,16 @@ def calculate_basic_metrics():
         # Win rate tracking stats from trades.json
         "closed_trades": trades_stats.get("closed_trades", 0),
         "open_trades": trades_stats.get("open_trades", 0),
-        "trades_needed_for_stats": max(0, 30 - trades_stats.get("closed_trades", 0)),
+        "min_trades_for_decision": min_trades_for_decision,
+        "trades_needed_for_stats": max(
+            0, min_trades_for_decision - trades_stats.get("closed_trades", 0)
+        ),
         # Today's paper P/L - read from system_state.json
         "today_paper_pl": paper_todays_pl,
         "today_paper_pl_pct": paper_todays_pl_pct,
+        "weekly_cadence_kpi_passed": weekly_cadence_kpi_passed,
         # Milestone controller + North Star probability
-        "milestone_enabled": bool(milestone_state.get("enabled", False)),
+        "milestone_enabled": parse_bool(milestone_state.get("enabled", False), default=False),
         "milestone_primary_family": milestone_state.get("primary_family", "options_income"),
         "milestone_paused_families": milestone_state.get("paused_families", []),
         "north_star_probability_score": north_star_probability.get("score"),
@@ -668,6 +724,20 @@ def generate_world_class_dashboard() -> str:
         paused_families_display = ", ".join(str(item) for item in paused_families)
     else:
         paused_families_display = "none"
+    min_trades_for_decision = int(basic_metrics.get("min_trades_for_decision", 30))
+    closed_trades = int(basic_metrics.get("closed_trades", 0))
+    has_min_sample = closed_trades >= min_trades_for_decision
+    cadence_passed = parse_bool(basic_metrics.get("weekly_cadence_kpi_passed", False), default=False)
+    north_star_probability_passed = bool(
+        north_star_score is not None and float(north_star_score) >= 70.0
+    )
+    assessment_on_track = (
+        basic_metrics["total_pl"] > 0
+        and basic_metrics["win_rate"] >= 80
+        and has_min_sample
+        and cadence_passed
+        and north_star_probability_passed
+    )
 
     # Get today's date string for display
     today_display = date.today().strftime("%Y-%m-%d (%A)")
@@ -820,12 +890,12 @@ def generate_world_class_dashboard() -> str:
 |--------|---------|--------|----------|
 | **Average Daily Profit** | ${basic_metrics["avg_daily_profit"]:.2f}/day | $200.00/day (after-tax) | {display_progress_pct:.2f}% |
 | **Total P/L** | ${basic_metrics["total_pl"]:+,.2f} ({basic_metrics["total_pl_pct"]:+.2f}%) | TBD | {status_emoji} |
-| **Win Rate** | {f"{basic_metrics['win_rate']:.1f}%" if basic_metrics.get("closed_trades", 0) > 0 else f"N/A (need {basic_metrics.get('trades_needed_for_stats', 30)} closed trades)"} | >80% | {"✅" if basic_metrics["win_rate"] >= 80 else "⚠️" if basic_metrics.get("closed_trades", 0) > 0 else "📊"} |
+| **Win Rate** | {f"{basic_metrics['win_rate']:.1f}%" if basic_metrics.get("closed_trades", 0) > 0 else f"N/A (need {basic_metrics.get('trades_needed_for_stats', min_trades_for_decision)} closed trades)"} | >80% | {"✅" if basic_metrics["win_rate"] >= 80 else "⚠️" if basic_metrics.get("closed_trades", 0) > 0 else "📊"} |
 | **North Star Probability (Daily)** | {north_star_probability_display} | >=70/100 | {north_star_probability_status} |
 
 **Progress Bar**: `{north_star_bar}` ({display_progress_pct:.2f}%)
 
-**Assessment**: {"✅ **ON TRACK**" if basic_metrics["total_pl"] > 0 and basic_metrics["win_rate"] >= 80 else "⚠️ **R&D PHASE** - Learning, not earning yet"}
+**Assessment**: {"✅ **ON TRACK**" if assessment_on_track else "⚠️ **R&D PHASE** - Validation gates not yet fully passed"}
 
 > ℹ️ **Note**: ⚠️ warning icons indicate metrics that haven't reached targets yet. This is **expected** during R&D phase while building capital. ✅ indicates target met.
 > 🛡️ **Milestone Controller**: {"ENABLED" if basic_metrics.get("milestone_enabled") else "DISABLED"} | Primary family: `{basic_metrics.get("milestone_primary_family", "options_income")}` | Paused families: {paused_families_display}
@@ -906,7 +976,10 @@ def generate_world_class_dashboard() -> str:
             for action in actions:
                 dashboard += f"- {action}\n"
         else:
-            dashboard += "- ✅ Stay the course - current strategy is on track.\n"
+            dashboard += (
+                "- 📊 Keep validating: maintain cadence, sample size, and risk gates before "
+                "declaring on-track status.\n"
+            )
 
         dashboard += "\n"
     else:

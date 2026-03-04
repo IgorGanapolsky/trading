@@ -23,7 +23,7 @@ class RiskAgent(BaseAgent):
     # Trading rules
     MAX_POSITION_PCT = 0.05  # 5% max per position
     MAX_PORTFOLIO_HEAT = 0.20  # 20% max total exposure
-    STOP_LOSS_MULTIPLIER = 2.0  # 200% of credit
+    STOP_LOSS_MULTIPLIER = 1.0  # 100% of credit
 
     def __init__(self, project_dir: Path | None = None):
         super().__init__("risk")

@@ -85,7 +85,6 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: "pip"
-          cache: "pip"
 
       - name: Install dependencies
         run: |

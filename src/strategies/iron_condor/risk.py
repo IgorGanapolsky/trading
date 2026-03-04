@@ -7,6 +7,7 @@ import logging
 from typing import Any
 
 from src.constants.trading_thresholds import RiskThresholds
+from src.core.trading_constants import MAX_POSITIONS
 
 logger = logging.getLogger(__name__)
 
@@ -16,9 +17,12 @@ class IronCondorRisk:
     Risk Guardian for Iron Condors.
     """
 
-    def __init__(self, max_positions: int = 5):
+    def __init__(self, max_positions: int | None = None):
+        if max_positions is None:
+            # MAX_POSITIONS is tracked in option legs; iron condors are 4-leg structures.
+            max_positions = max(1, int(MAX_POSITIONS) // 4)
         self.max_positions = max_positions
-        self.stop_multiplier = RiskThresholds.IRON_CONDOR_STOP_LOSS_MULTIPLIER  # 2.0
+        self.stop_multiplier = RiskThresholds.IRON_CONDOR_STOP_LOSS_MULTIPLIER
 
     def validate_exposure(self, positions: list[Any], ticker: str) -> bool:
         """
@@ -58,7 +62,9 @@ class IronCondorRisk:
         self, credit_received: float, short_put: float, short_call: float
     ) -> dict[str, float]:
         """
-        Calculate stop prices based on 200% of credit received.
+        Calculate stop prices based on 100% of credit received.
         """
-        stop_offset = credit_received * (self.stop_multiplier - 1.0)
+        # 100% stop-loss means we allow a loss equal to the initial credit.
+        # For short options, that is an adverse move of +1x credit from entry.
+        stop_offset = credit_received * self.stop_multiplier
         return {"put_stop": short_put + stop_offset, "call_stop": short_call + stop_offset}

@@ -105,3 +105,35 @@ def test_summarize_records_filters_by_lookback_and_groups_variants() -> None:
     assert summary["variants"]["B"]["samples"] == 1
     assert summary["variants"]["B"]["gate_pass_rate"] == 0.0
     assert summary["variants"]["B"]["avg_policy_violations"] == 2.0
+
+
+def test_collect_ab_metrics_parses_string_boolean_fields(tmp_path: Path) -> None:
+    gate_report = {
+        "passed": "false",
+        "changed_paths": [],
+        "steps": [
+            {"name": "lint", "passed": "true", "duration_seconds": 0.5},
+            {"name": "tests", "passed": "false", "duration_seconds": 0.5},
+        ],
+    }
+    policy_report = {"checks_failed": 0, "drift_items": []}
+
+    gate_path = tmp_path / "gate.json"
+    policy_path = tmp_path / "policy.json"
+    incident_root = tmp_path / "rag_knowledge" / "lessons_learned"
+    incident_root.mkdir(parents=True)
+
+    _write_json(gate_path, gate_report)
+    _write_json(policy_path, policy_report)
+
+    metrics = collect_ab_metrics(
+        variant="A",
+        gate_report_path=gate_path,
+        policy_report_path=policy_path,
+        ci_conclusion="success",
+        incident_root=incident_root,
+    )
+
+    assert metrics["gate_passed"] is False
+    assert metrics["lint_passed"] is True
+    assert metrics["tests_passed"] is False

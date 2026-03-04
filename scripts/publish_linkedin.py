@@ -187,7 +187,7 @@ def generate_linkedin_text(signal: str, context: str, equity: float = 0.0) -> st
 	📊 Current Status:
 	• Paper account: ${equity:,.2f} ({gain_pct:+.1f}% vs paper start)
 	• Brokerage account: ${live_equity:,.2f} (opportunistic deployment)
-	• Strategy: SPY iron condors (15-20 delta, $10-wide, up to 5 concurrent)
+	• Strategy: SPY iron condors (15-20 delta, $10-wide, up to 8 open legs ~2 concurrent condors)
 	• North Star: $6K/month after-tax, reached as fast as safely possible
 
 🧠 How Our RLHF System Works:

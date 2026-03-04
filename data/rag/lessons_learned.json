@@ -2280,7 +2280,7 @@
       },
       {
         "practice": "Stop-Loss",
-        "rule": "Use 2x credit received as stop-loss trigger",
+        "rule": "Use 1x credit received as stop-loss trigger",
         "source": "datadrivenoptions.com",
         "status": "IMPLEMENTED - verify_stops_in_place.py"
       },

@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import math
 import re
+import subprocess
 from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -110,6 +111,29 @@ class ContextBundleEngine:
         self.project_root = (project_root or Path.cwd()).resolve()
         self.index_dir = self.project_root / "data" / "context_engine"
         self.index_file = self.index_dir / "context_index.json"
+        self._git_tracked_paths = self._load_git_tracked_paths()
+
+    def _load_git_tracked_paths(self) -> set[str] | None:
+        try:
+            result = subprocess.run(
+                ["git", "-C", str(self.project_root), "ls-files"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        except (OSError, subprocess.CalledProcessError):
+            return None
+        tracked = {line.strip() for line in result.stdout.splitlines() if line.strip()}
+        return tracked or None
+
+    def _is_git_tracked(self, file_path: Path) -> bool:
+        if self._git_tracked_paths is None:
+            return True
+        try:
+            rel_path = file_path.relative_to(self.project_root).as_posix()
+        except ValueError:
+            return False
+        return rel_path in self._git_tracked_paths
 
     def build_index(self, *, top_per_source: int = 500) -> dict[str, Any]:
         docs = self._collect_docs(top_per_source=top_per_source)
@@ -322,7 +346,9 @@ class ContextBundleEngine:
         path = self.project_root / "rag_knowledge" / "lessons_learned"
         if not path.exists():
             return []
-        files = sorted(path.glob("*.md"))[-top_per_source:]
+        files = [file_path for file_path in sorted(path.glob("*.md")) if self._is_git_tracked(file_path)][
+            -top_per_source:
+        ]
         docs: list[BundleDoc] = []
         for file_path in files:
             text = file_path.read_text(encoding="utf-8", errors="ignore")
@@ -351,7 +377,7 @@ class ContextBundleEngine:
 
     def _load_rag_query_json(self, *, top_per_source: int) -> list[BundleDoc]:
         path = self.project_root / "data" / "rag" / "lessons_query.json"
-        if not path.exists():
+        if not path.exists() or not self._is_git_tracked(path):
             return []
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
@@ -378,7 +404,7 @@ class ContextBundleEngine:
 
     def _load_feedback_thompson(self, *, top_per_source: int) -> list[BundleDoc]:
         path = self.project_root / ".claude" / "memory" / "feedback" / "thompson_feedback_log.jsonl"
-        if not path.exists():
+        if not path.exists() or not self._is_git_tracked(path):
             return []
         docs: list[BundleDoc] = []
         lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
@@ -412,7 +438,9 @@ class ContextBundleEngine:
         path = self.project_root / "docs" / "_posts"
         if not path.exists():
             return []
-        files = sorted(path.glob("*.md"))[-top_per_source:]
+        files = [file_path for file_path in sorted(path.glob("*.md")) if self._is_git_tracked(file_path)][
+            -top_per_source:
+        ]
         docs: list[BundleDoc] = []
         for file_path in files:
             text = file_path.read_text(encoding="utf-8", errors="ignore")

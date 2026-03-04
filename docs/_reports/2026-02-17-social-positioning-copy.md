@@ -9,7 +9,7 @@ The stack is paper-first on a **$100K Alpaca paper account**, with brokerage tra
 Core strategy profile:
 - 15-20 delta short strikes
 - $10-wide wings
-- Up to 5 concurrent positions
+- Up to 8 open option legs (~2 concurrent condors)
 - Strict pre-trade and post-trade guardrails
 
 ## LinkedIn Short Blurb
@@ -17,7 +17,7 @@ Core strategy profile:
 Operating strategy is now fully coherent across our stack:
 - North Star: $6K/month after-tax
 - Timing: fastest safe path (not calendar-constrained in execution)
-- System: SPY iron condors, 15-20 delta, $10-wide wings, max 5 concurrent
+- System: SPY iron condors, 15-20 delta, $10-wide wings, max 8 open option legs (~2 condors)
 - Deployment: paper-first validation, brokerage opportunistic only when RAG + risk gates pass
 
 Evidence-first links:

@@ -3,7 +3,7 @@
  *
  * Exit conditions checked:
  *   1. DTE <= 7 (gamma risk)
- *   2. Loss >= 200% of entry credit (stop-loss)
+ *   2. Loss >= 100% of entry credit (stop-loss)
  *   3. Profit >= 50% of max profit (take-profit)
  *
  * Calls: scripts/iron_condor_guardian.py

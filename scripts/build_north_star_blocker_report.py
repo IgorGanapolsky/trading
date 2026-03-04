@@ -40,6 +40,21 @@ def _to_int(value: Any) -> int | None:
         return None
 
 
+def _to_bool(value: Any, default: bool | None = None) -> bool | None:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "1", "yes", "y", "on", "passed", "pass"}:
+            return True
+        if normalized in {"false", "0", "no", "n", "off", "failed", "fail"}:
+            return False
+        return default
+    if isinstance(value, (int, float)):
+        return bool(value)
+    return default
+
+
 def _parse_dt(raw: Any) -> datetime | None:
     if raw is None:
         return None
@@ -86,9 +101,7 @@ def _normalize_history_rows(raw: Any) -> list[dict[str, Any]]:
                 "mode": str(row.get("mode", "")),
                 "sample_size": _to_int(row.get("sample_size")) or 0,
                 "expectancy_per_trade": _to_float(row.get("expectancy_per_trade")),
-                "cadence_passed": bool(row.get("cadence_passed"))
-                if row.get("cadence_passed") is not None
-                else None,
+                "cadence_passed": _to_bool(row.get("cadence_passed"), default=None),
             }
         )
     rows.sort(
@@ -151,7 +164,7 @@ def compute_report(
         sample_size = _to_int(weekly_gate.get("sample_size")) or 0
         mode = str(weekly_gate.get("mode") or "unknown")
 
-        if weekly_gate.get("block_new_positions") is True:
+        if _to_bool(weekly_gate.get("block_new_positions"), default=False):
             blockers.append(
                 Blocker(
                     id="block_new_positions",
@@ -162,7 +175,7 @@ def compute_report(
             )
             root_causes.append("Weekly gate set `block_new_positions=true`.")
 
-        if weekly_gate.get("scale_blocked_by_cadence") is True:
+        if _to_bool(weekly_gate.get("scale_blocked_by_cadence"), default=False):
             blockers.append(
                 Blocker(
                     id="cadence_scale_block",
@@ -178,7 +191,8 @@ def compute_report(
             )
             root_causes.append("Setup cadence is below weekly minimum.")
 
-        if cadence.get("passed") is False:
+        cadence_passed = _to_bool(cadence.get("passed"), default=None)
+        if cadence_passed is False:
             blockers.append(
                 Blocker(
                     id="cadence_failed",
@@ -200,7 +214,7 @@ def compute_report(
             )
             root_causes.append("Trade quality/edge is below zero expectancy.")
 
-        if weekly_gate.get("scale_blocked_by_ai_credit_stress") is True:
+        if _to_bool(weekly_gate.get("scale_blocked_by_ai_credit_stress"), default=False):
             blockers.append(
                 Blocker(
                     id="ai_credit_stress_block",
@@ -273,8 +287,10 @@ def compute_report(
             "mode": str(weekly_gate.get("mode") or "unknown"),
             "expectancy_per_trade": _to_float(weekly_gate.get("expectancy_per_trade")),
             "sample_size": _to_int(weekly_gate.get("sample_size")),
-            "block_new_positions": bool(weekly_gate.get("block_new_positions")),
-            "scale_blocked_by_cadence": bool(weekly_gate.get("scale_blocked_by_cadence")),
+            "block_new_positions": _to_bool(weekly_gate.get("block_new_positions"), default=False),
+            "scale_blocked_by_cadence": _to_bool(
+                weekly_gate.get("scale_blocked_by_cadence"), default=False
+            ),
             "cadence_summary": str(cadence.get("summary") or ""),
             "qualified_setups_observed": _to_int(cadence.get("qualified_setups_observed")),
             "min_qualified_setups_per_week": _to_int(cadence.get("min_qualified_setups_per_week")),

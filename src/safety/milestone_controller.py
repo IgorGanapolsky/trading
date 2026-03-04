@@ -62,6 +62,21 @@ def _as_int(value: Any, default: int = 0) -> int:
         return default
 
 
+def _as_bool(value: Any, default: bool | None = None) -> bool | None:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "1", "yes", "y", "on", "passed", "pass"}:
+            return True
+        if normalized in {"false", "0", "no", "n", "off", "failed", "fail"}:
+            return False
+        return default
+    if isinstance(value, (int, float)):
+        return bool(value)
+    return default
+
+
 def _load_json_dict(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
@@ -299,7 +314,7 @@ def _north_star_probability(
     samples = _as_int(primary_metrics.get("samples"), 0)
     weekly_gate = state.get("north_star_weekly_gate", {}) if isinstance(state, dict) else {}
     cadence_kpi = weekly_gate.get("cadence_kpi") if isinstance(weekly_gate, dict) else {}
-    cadence_passed = bool(cadence_kpi.get("passed")) if isinstance(cadence_kpi, dict) else False
+    cadence_passed = _as_bool(cadence_kpi.get("passed"), default=False) if isinstance(cadence_kpi, dict) else False
     cadence_setups = (
         _as_int(cadence_kpi.get("qualified_setups_observed"), 0)
         if isinstance(cadence_kpi, dict)
@@ -435,7 +450,7 @@ def get_milestone_context(
     snapshot = compute_milestone_snapshot(state_path=state_path, trades_path=trades_path)
     family = resolve_strategy_family(strategy)
     family_state = snapshot.get("strategy_families", {}).get(family, {})
-    paused = bool(family_state.get("paused"))
+    paused = bool(_as_bool(family_state.get("paused"), default=False))
 
     block_reason = ""
     if paused:

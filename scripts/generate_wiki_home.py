@@ -190,7 +190,7 @@ Welcome to the **AI-Powered Automated Trading System** wiki!
 
     The system tracks progress toward financial independence:
     - North Star goal: **$6K/month after-tax financial independence (execute as fast as safely possible)**
-    - Current strategy: **SPY iron condors (15-20 delta, $10-wide wings, up to 5 concurrent positions)**
+    - Current strategy: **SPY iron condors (15-20 delta, $10-wide wings, up to 8 open option legs ~2 concurrent condors)**
 - Phil Town Rule #1: **Don't lose money**
 
 ---
@@ -221,7 +221,7 @@ Welcome to the **AI-Powered Automated Trading System** wiki!
 | **Starting Capital** | ${STARTING_CAPITAL:,.0f} (Jan 30, 2026) |
 | **Net Gain** | ${net_gain:+,.2f} ({net_gain_pct:+.2f}%) |
 | **Open Positions** | {len(iron_condors)} Iron Condor(s) |
-| **Strategy** | SPY Iron Condors (15-20 delta, $10-wide, max 5 concurrent) |
+| **Strategy** | SPY Iron Condors (15-20 delta, $10-wide, max 8 open legs ~2 concurrent condors) |
 
 ### Open Iron Condors
 {ic_table}
@@ -238,10 +238,10 @@ Welcome to the **AI-Powered Automated Trading System** wiki!
 | **Phase 3: Grow** | 2027 | 5 ICs + credit spreads, $1,500/mo | ⏳ Pending |
 | **Phase 4: Open** | 2028 | Packaged system for accounts $10K+ | ⏳ Pending |
 
-**Strategy Parameters** (updated Feb 2026 — positive EV):
-- Profit target: **75%** of max profit (let winners run)
+**Strategy Parameters** (updated Feb 2026 — Rule #1 canonical exits):
+- Profit target: **50%** of max profit
 - Stop loss: **100%** of credit (cut losers fast)
-- Expected value per trade: **+$94** at 80% win rate
+- Expected value: **positive edge** with disciplined 50%/100% exits and 80%+ win rate
 
 ---
 
@@ -249,7 +249,7 @@ Welcome to the **AI-Powered Automated Trading System** wiki!
 
 The **Iron Condor Guardian** runs every 30 minutes during market hours to enforce:
 
-1. **Stop Loss**: Exit if loss reaches 200% of credit received
+1. **Stop Loss**: Exit if loss reaches 100% of credit received
 2. **7 DTE Exit**: Close positions at 7 days to expiration (gamma risk)
 3. **50% Profit Take**: Lock in profits at 50% of max profit
 

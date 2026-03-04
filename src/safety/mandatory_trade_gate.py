@@ -640,7 +640,7 @@ def validate_trade_mandatory(
     # =========================================================================
     effective_max_position_pct = MAX_POSITION_PCT
     north_star_guard = context.get("north_star_guard", {}) if context else {}
-    if isinstance(north_star_guard, dict) and north_star_guard.get("enabled"):
+    if isinstance(north_star_guard, dict) and _to_bool(north_star_guard.get("enabled"), default=False):
         guard_mode = str(north_star_guard.get("mode", "unknown"))
         guard_limit = north_star_guard.get("max_position_pct")
         if isinstance(guard_limit, (int, float)) and guard_limit > 0:
@@ -651,7 +651,7 @@ def validate_trade_mandatory(
         )
 
         # Block *new openings* regardless of BUY/SELL semantics (options entries can be SELL-to-open).
-        if is_opening and north_star_guard.get("block_new_positions"):
+        if is_opening and _to_bool(north_star_guard.get("block_new_positions"), default=False):
             reason = str(
                 north_star_guard.get("block_reason")
                 or "North Star guard blocked new position openings."
@@ -669,13 +669,13 @@ def validate_trade_mandatory(
     # Blocks new BUY entries for paused families until rolling metrics recover.
     # =========================================================================
     milestone_ctx = context.get("milestone_controller", {}) if context else {}
-    if isinstance(milestone_ctx, dict) and milestone_ctx.get("enabled"):
+    if isinstance(milestone_ctx, dict) and _to_bool(milestone_ctx.get("enabled"), default=False):
         family = str(milestone_ctx.get("strategy_family", "unknown"))
         family_status = str(milestone_ctx.get("family_status", "unknown"))
         checks_performed.append(f"milestone_controller: family={family} status={family_status}")
 
         # Block *new openings* regardless of BUY/SELL semantics (options entries can be SELL-to-open).
-        if is_opening and milestone_ctx.get("pause_buy_for_family"):
+        if is_opening and _to_bool(milestone_ctx.get("pause_buy_for_family"), default=False):
             reason = str(
                 milestone_ctx.get("block_reason")
                 or f"Milestone controller blocked BUY entries for strategy family '{family}'."
@@ -690,7 +690,7 @@ def validate_trade_mandatory(
 
     # =========================================================================
     # CHECK 2.5: Position COUNT limit (Jan 19, 2026 - LL-246, Jan 22, 2026 - LL-281)
-    # Per CLAUDE.md: "Position limit: 1 iron condor at a time" = 4 legs max
+    # Enforce canonical MAX_POSITIONS from trading_constants.py (single source of truth)
     # This prevents accumulating unlimited positions (root cause of 8 contract crisis)
     # NOTE: MAX_POSITIONS imported from trading_constants.py (single source of truth)
     # =========================================================================
@@ -699,7 +699,7 @@ def validate_trade_mandatory(
     if is_opening and current_position_count >= MAX_POSITIONS:
         return GateResult(
             approved=False,
-            reason=f"Position count {current_position_count} >= max {MAX_POSITIONS} (CLAUDE.md: 1 iron condor at a time)",
+            reason=f"Position count {current_position_count} >= max {MAX_POSITIONS}",
             checks_performed=checks_performed + ["position_count: BLOCKED"],
         )
 
@@ -849,6 +849,21 @@ def _parse_occ_expiry(symbol: str) -> date | None:
 
 def _looks_like_option_symbol(symbol: str) -> bool:
     return bool(_parse_occ_expiry(symbol))
+
+
+def _to_bool(value: Any, default: bool = False) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "1", "yes", "y", "on", "passed", "pass"}:
+            return True
+        if normalized in {"false", "0", "no", "n", "off", "failed", "fail"}:
+            return False
+        return default
+    if isinstance(value, (int, float)):
+        return bool(value)
+    return default
 
 
 def _side_is_buy(side: Any) -> bool:

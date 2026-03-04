@@ -76,3 +76,15 @@ def test_super_retrieve_builds_index_if_missing(tmp_path: Path) -> None:
 
     assert out["meta"]["index_doc_count"] >= 1
     assert (project / "data" / "context_engine" / "context_index.json").exists()
+
+
+def test_build_index_skips_untracked_sources_when_git_tracked_paths_present(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    _seed_project_tree(project)
+
+    engine = ContextBundleEngine(project_root=project)
+    engine._git_tracked_paths = {"data/rag/lessons_query.json"}
+    built = engine.build_index(top_per_source=100)
+
+    assert built["doc_count"] == 1
+    assert built["sources"] == {"rag_query": 1}

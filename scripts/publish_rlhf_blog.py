@@ -93,14 +93,15 @@ def generate_engaging_content(
     total = stats.get("total", 0)
     alpha = model.get("alpha", 1)
     beta = model.get("beta", 1)
-    win_rate = (alpha / (alpha + beta)) * 100 if (alpha + beta) > 0 else 50
+    thompson_success_rate = (alpha / (alpha + beta)) * 100 if (alpha + beta) > 0 else 50
+    observed_success_rate = ((positive / total) * 100) if total > 0 else 0
 
     commits = get_recent_commits()
     recent_work = commits[0] if commits else "system improvements"
 
     # Build story from ACTUAL context, not keyword-matched templates
     if signal == "positive":
-        story = _build_positive_story(context, recent_work, total, win_rate)
+        story = _build_positive_story(context, recent_work, total, thompson_success_rate)
         technical = _build_technical_section(commits, model)
     else:
         story = _build_negative_story(context, recent_work, negative)
@@ -118,7 +119,7 @@ def generate_engaging_content(
         max_chars=160,
     )
 
-    questions = _generate_contextual_faq(signal, context, win_rate, total)
+    questions = _generate_contextual_faq(signal, context, thompson_success_rate, observed_success_rate, total)
 
     frontmatter = render_frontmatter(
         {
@@ -142,7 +143,7 @@ def generate_engaging_content(
 
 {diagram_section}
 
-**Current state**: {positive} positive / {negative} negative = {win_rate:.0f}% success rate after {total} signals.
+**Current state**: {positive} positive / {negative} negative = {observed_success_rate:.0f}% observed success rate after {total} signals. Thompson expected success rate: {thompson_success_rate:.0f}%.
 
 ## Technical Details
 
@@ -198,7 +199,9 @@ The correction is stored in RAG. Next time a similar situation arises, the syste
 Context: {truncate_meta_description(context, max_chars=200)}"""
 
 
-def _generate_contextual_faq(signal: str, context: str, win_rate: float, total: int) -> list[dict]:
+def _generate_contextual_faq(
+    signal: str, context: str, thompson_rate: float, observed_rate: float, total: int
+) -> list[dict]:
     """Generate FAQ questions specific to this post's content."""
     ctx_lower = context.lower()
 
@@ -220,14 +223,18 @@ def _generate_contextual_faq(signal: str, context: str, win_rate: float, total: 
         faqs.append(
             {
                 "question": "What trading strategy is being used?",
-                "answer": "SPY iron condors with 15-delta wings, 30-45 DTE, $5-wide spreads. Exit at 50% profit or 7 DTE.",
+                "answer": "SPY iron condors with 15-delta wings, 30-45 DTE, $10-wide spreads. Exit at 50% profit or 7 DTE.",
             }
         )
     else:
         faqs.append(
             {
                 "question": "How does the feedback system work?",
-                "answer": f"Thompson Sampling with Beta-Bernoulli model. {total} signals captured, {win_rate:.0f}% success rate.",
+                "answer": (
+                    "Thompson Sampling with a Beta-Bernoulli model. "
+                    f"{total} signals captured, {observed_rate:.0f}% observed success, "
+                    f"{thompson_rate:.0f}% Thompson expected success."
+                ),
             }
         )
 

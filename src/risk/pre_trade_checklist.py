@@ -18,9 +18,11 @@ from datetime import datetime
 # UPDATED Jan 19: Import from central config (single source of truth)
 try:
     from src.core.trading_constants import ALLOWED_TICKERS as _CENTRAL_ALLOWED_TICKERS
+    from src.core.trading_constants import MAX_POSITION_PCT as _CENTRAL_MAX_POSITION_PCT
     from src.core.trading_constants import extract_underlying as _extract_underlying_shared
 except ImportError:
     _CENTRAL_ALLOWED_TICKERS = {"SPY", "SPX", "XSP", "QQQ", "IWM"}
+    _CENTRAL_MAX_POSITION_PCT = 0.05
 
     def _extract_underlying_shared(symbol: str) -> str:  # type: ignore[misc]
         """Fallback - see trading_constants.extract_underlying."""
@@ -42,7 +44,7 @@ class PreTradeChecklist:
     """
 
     ALLOWED_TICKERS = _CENTRAL_ALLOWED_TICKERS
-    MAX_POSITION_PCT = 0.05  # 5% max
+    MAX_POSITION_PCT = _CENTRAL_MAX_POSITION_PCT  # canonical max
     MIN_DTE = 30
     MAX_DTE = 45
 

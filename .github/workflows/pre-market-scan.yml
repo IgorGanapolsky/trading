@@ -18,6 +18,9 @@ env:
 
   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
   SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+permissions:
+  contents: write
+
 jobs:
   pre-market-analysis:
     runs-on: ubuntu-latest
@@ -32,7 +35,6 @@ jobs:
         with:
           python-version: "3.12"
           cache: "pip"
-          cache: "pip"
 
       - name: Install dependencies
         run: |
@@ -43,7 +45,8 @@ jobs:
         run: |
           # Skip weekends unless forced
           DAY_OF_WEEK=$(date +%u)
-          if [ "$DAY_OF_WEEK" -gt 5 ] && [ "${{ inputs.force_run }}" != "true" ]; then
+          FORCE_RUN="${{ github.event.inputs.force_run || 'false' }}"
+          if [ "$DAY_OF_WEEK" -gt 5 ] && [ "$FORCE_RUN" != "true" ]; then
             echo "Weekend - skipping scan"
             echo "should_run=false" >> $GITHUB_OUTPUT
           else

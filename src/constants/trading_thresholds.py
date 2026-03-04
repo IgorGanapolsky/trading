@@ -161,7 +161,7 @@ class RiskThresholds:
     # Stop loss levels
     CSP_STOP_LOSS_MULTIPLIER = 2.0  # Exit at 2x premium received
     COVERED_CALL_STOP_LOSS_MULTIPLIER = 2.0
-    IRON_CONDOR_STOP_LOSS_MULTIPLIER = 2.0  # 200% of credit per CLAUDE.md risk rules
+    IRON_CONDOR_STOP_LOSS_MULTIPLIER = 1.0  # 100% of credit (canonical Rule #1 guard)
 
     # Take profit levels
     # For iron condors, enforce the system exit rule: 50% profit OR 7 DTE.
@@ -188,7 +188,7 @@ class RiskThresholds:
 
     # Rolling threshold (Invest with Henry: "Roll before expiration")
     # Roll options when DTE falls below this to avoid assignment risk
-    ROLL_AT_DTE = 5  # Roll positions when 5 DTE or less (backup if 21 DTE exit missed)
+    ROLL_AT_DTE = 5  # Roll positions when 5 DTE or less (backup if 7 DTE exit missed)
 
     # Trade frequency limit (Invest with Henry: "10-15 trades/week max")
     # Prevents overtrading which "primarily benefits the brokerage"

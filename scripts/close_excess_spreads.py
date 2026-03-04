@@ -9,9 +9,9 @@ CRITICAL FIX Jan 23, 2026: Previous version had HARDCODED positions which caused
 
 This version reads ACTUAL positions from Alpaca and closes correctly.
 
-Per CLAUDE.md:
-- "Position limit: 1 iron condor at a time (4 legs max)"
-- If more than 4 option positions exist, close excess
+Per canonical limits:
+- Respect MAX_POSITIONS from src/core/trading_constants.py
+- If current option positions exceed MAX_POSITIONS, close excess
 """
 
 import logging
@@ -24,16 +24,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from alpaca.trading.enums import OrderSide, TimeInForce
 from alpaca.trading.requests import MarketOrderRequest
 from src.core.alpaca_trader import AlpacaTrader
+from src.core.trading_constants import MAX_POSITIONS
 from src.safety.mandatory_trade_gate import safe_submit_order
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
-
-# Maximum positions allowed (1 iron condor = 4 legs)
-MAX_POSITIONS = 4
-
 
 def get_option_positions(trader) -> list:
     """Get all SPY option positions from Alpaca."""
@@ -92,7 +89,7 @@ def close_position(trader, position) -> bool:
 
 
 def main():
-    """Close excess spreads to comply with CLAUDE.md position limit."""
+    """Close excess spreads to comply with canonical position limit."""
     logger.info("=" * 60)
     logger.info("CLOSE EXCESS SPREADS - DYNAMIC (Jan 23 Fix)")
     logger.info("=" * 60)

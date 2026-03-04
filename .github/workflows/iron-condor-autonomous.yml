@@ -80,21 +80,23 @@ jobs:
           python3 << 'PYTHON'
           import os
           from alpaca.trading.client import TradingClient
+          from src.core.trading_constants import MAX_POSITIONS
 
           api_key = os.environ.get('ALPACA_PAPER_TRADING_API_KEY')
           secret = os.environ.get('ALPACA_PAPER_TRADING_API_SECRET')
           client = TradingClient(api_key, secret, paper=True)
+          max_ic = max(1, int(MAX_POSITIONS) // 4)
 
           positions = client.get_all_positions()
           spy_options = [p for p in positions if p.symbol.startswith('SPY') and len(p.symbol) > 5]
           ic_count = len(spy_options) // 4
 
           print(f"Current IC positions: {ic_count}")
-          print(f"Max allowed: 5")
+          print(f"Max allowed (derived): {max_ic}")
 
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
               f.write(f'ic_count={ic_count}\n')
-              f.write(f'can_trade={"true" if ic_count < 5 else "false"}\n')
+              f.write(f'can_trade={"true" if ic_count < max_ic else "false"}\n')
           PYTHON
 
       - name: Scan for opportunity

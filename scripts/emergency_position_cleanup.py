@@ -3,8 +3,8 @@
 Emergency Position Cleanup Script
 
 Closes excess positions to bring portfolio back within risk limits:
-- Max 1 iron condor (2 spreads max if both legs)
-- Max 15% total portfolio risk
+- Max 8 option legs (~2 iron condors)
+- Dynamic cumulative risk cap from core constants (currently 10%)
 
 This script is meant to run via GitHub Actions with Alpaca credentials.
 """
@@ -15,6 +15,7 @@ import os
 import sys
 from datetime import datetime
 
+from src.core.trading_constants import MAX_CUMULATIVE_RISK_PCT, MAX_POSITIONS
 from src.safety.mandatory_trade_gate import safe_submit_order
 
 
@@ -49,6 +50,7 @@ def main():
     account = client.get_account()
     equity = float(account.equity)
     print(f"\nAccount Equity: ${equity:,.2f}")
+    print(f"Cumulative Risk Cap (canonical): {MAX_CUMULATIVE_RISK_PCT:.0%}")
 
     # Get all positions
     positions = client.get_all_positions()
@@ -106,7 +108,7 @@ def main():
         )
 
     # Determine how many to close
-    max_spreads = 1  # CLAUDE.md: 1 iron condor at a time
+    max_spreads = max(1, int(MAX_POSITIONS) // 4)
     excess_spreads = len(spreads) - max_spreads
 
     if excess_spreads <= 0:

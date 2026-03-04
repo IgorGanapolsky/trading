@@ -88,7 +88,7 @@
     "management": {
       "profit_target": "50% of credit",
       "time_trigger": "21 DTE",
-      "stop_loss": "2x credit received"
+      "stop_loss": "1x credit received"
     }
   },
   "portfolio_allocation_rules": {
@@ -144,7 +144,7 @@
       "DTE": "30-45 DTE - ALIGNED",
       "delta": "30 delta - WITHIN RANGE (16-30)",
       "underlying": "SPY/IWM - PERFECT ALIGNMENT",
-      "management": "50% profit, 2x stop - ALIGNED",
+      "management": "50% profit, 1x stop - ALIGNED",
       "position_size": "5% max - ALIGNED (conservative)"
     },
     "recommended_additions": [

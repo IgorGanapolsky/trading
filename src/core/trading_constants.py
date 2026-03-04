@@ -41,6 +41,8 @@ MAX_POSITION_PCT: float = 0.05  # 5% max per position per CLAUDE.md ($5K on $100
 MAX_DAILY_LOSS_PCT: float = 0.02  # 2% max daily loss
 MAX_POSITIONS: int = 8  # 2 iron condors = 8 legs max (UPDATED Jan 30, 2026 for $100K account)
 MAX_CONTRACTS_PER_TRADE: int = 2  # Max contracts per single trade (scaled for $100K)
+MAX_CONCURRENT_IRON_CONDORS: int = max(1, MAX_POSITIONS // 4)
+MAX_CUMULATIVE_RISK_PCT: float = MAX_POSITION_PCT * MAX_CONCURRENT_IRON_CONDORS
 CRISIS_LOSS_PCT: float = 0.25  # 25% unrealized loss triggers crisis mode
 CRISIS_POSITION_COUNT: int = 4  # More than 4 positions triggers crisis mode
 # Iron condor stop-loss: close if one side reaches 100% of credit received

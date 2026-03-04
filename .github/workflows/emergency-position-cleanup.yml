@@ -1,8 +1,8 @@
 name: Emergency Position Cleanup
 
-# Automatically closes excess positions to restore compliance with CLAUDE.md limits:
-# - Max 1 iron condor at a time
-# - Max 15% total portfolio risk
+# Automatically closes excess positions to restore compliance with canonical limits:
+# - Max 8 open option legs (typically ~2 iron condors)
+# - Dynamic cumulative risk cap from core constants (currently 10%)
 
 on:
   workflow_dispatch:
@@ -58,12 +58,14 @@ jobs:
           python3 << 'EOF'
           import os
           from alpaca.trading.client import TradingClient
+          from src.core.trading_constants import MAX_CUMULATIVE_RISK_PCT, MAX_POSITIONS
 
           client = TradingClient(
               os.environ['ALPACA_API_KEY'],
               os.environ['ALPACA_SECRET_KEY'],
               paper=True
           )
+          max_short_legs = max(1, int(MAX_POSITIONS) // 2)
 
           account = client.get_account()
           print(f"Account Equity: ${float(account.equity):,.2f}")
@@ -79,12 +81,13 @@ jobs:
                   short_count += 1
               print(f"  {pos.symbol} | {side} {abs(qty):.0f} | P/L: ${float(pos.unrealized_pl):+.2f}")
 
-          print(f"\nShort positions (spreads): {short_count}")
-          print(f"Max allowed: 1")
-          print(f"Excess: {max(0, short_count - 1)}")
+          print(f"\nShort option legs: {short_count}")
+          print(f"Max short legs allowed (derived): {max_short_legs}")
+          print(f"Excess short legs: {max(0, short_count - max_short_legs)}")
+          print(f"Cumulative risk cap (canonical): {MAX_CUMULATIVE_RISK_PCT:.0%}")
 
-          if short_count > 1:
-              print("\n⚠️  DRY RUN: Would close excess positions")
+          if short_count > max_short_legs:
+              print("\n⚠️  DRY RUN: Would close excess short legs")
           else:
               print("\n✅ DRY RUN: No excess positions")
           EOF

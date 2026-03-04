@@ -30,8 +30,22 @@ import os
 from dataclasses import dataclass, field
 
 try:
-    from src.core.trading_constants import extract_underlying as _extract_underlying_shared
+    from src.core.trading_constants import (
+        MAX_CONCURRENT_IRON_CONDORS as _MAX_CONCURRENT_IRON_CONDORS,
+    )
+    from src.core.trading_constants import (
+        MAX_CUMULATIVE_RISK_PCT as _MAX_CUMULATIVE_RISK_PCT,
+    )
+    from src.core.trading_constants import (
+        MAX_POSITION_PCT as _MAX_POSITION_PCT,
+    )
+    from src.core.trading_constants import (
+        extract_underlying as _extract_underlying_shared,
+    )
 except ImportError:
+    _MAX_POSITION_PCT = 0.05
+    _MAX_CONCURRENT_IRON_CONDORS = 2
+    _MAX_CUMULATIVE_RISK_PCT = _MAX_POSITION_PCT * _MAX_CONCURRENT_IRON_CONDORS
 
     def _extract_underlying_shared(symbol: str) -> str:  # type: ignore[misc]
         """Fallback - see trading_constants.extract_underlying."""
@@ -60,7 +74,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 # Max concurrent iron condors (default 6 for ~10-20% utilization on $100K)
-MAX_CONCURRENT_ICS = int(os.getenv("MAX_CONCURRENT_ICS", "6"))
+MAX_CONCURRENT_ICS = _MAX_CONCURRENT_IRON_CONDORS
 
 # Observability: LanceDB + Local logs (Jan 9, 2026)
 
@@ -69,7 +83,7 @@ class RejectionReason(Enum):
     """Enumeration of trade rejection reasons."""
 
     INSUFFICIENT_FUNDS = "Insufficient funds in account"
-    MAX_ALLOCATION_EXCEEDED = "Maximum allocation per symbol exceeded (15%)"
+    MAX_ALLOCATION_EXCEEDED = "Maximum allocation per symbol exceeded (5%)"
     HIGH_CORRELATION = "High correlation with existing positions (>0.8)"
     FREQUENCY_LIMIT = "Frequency limit exceeded (>5 trades/hour)"
     CIRCUIT_BREAKER_DAILY_LOSS = "Daily loss limit exceeded"
@@ -163,7 +177,7 @@ class TradeGateway:
     # Risk limits (HARD CODED - cannot be bypassed)
     # UPDATED Jan 19, 2026: Enforced 5% per CLAUDE.md (Phil Town Rule #1)
     # Previous: 10% per symbol (Jan 14) - Still too high, caused 35% exposure
-    MAX_SYMBOL_ALLOCATION_PCT = 0.05  # 5% max per symbol per CLAUDE.md
+    MAX_SYMBOL_ALLOCATION_PCT = _MAX_POSITION_PCT  # 5% max per symbol per CLAUDE.md
     MAX_CORRELATION_THRESHOLD = 0.80  # 80% correlation threshold
     MAX_TRADES_PER_HOUR = 5  # Frequency limit
     MIN_TRADE_BATCH = (
@@ -232,7 +246,7 @@ class TradeGateway:
     MAX_BID_ASK_SPREAD_PCT = 0.05  # 5% maximum bid-ask spread
     MAX_CONCURRENT_ICS = MAX_CONCURRENT_ICS
     MAX_OPTION_LEGS_OPEN = MAX_CONCURRENT_ICS * 4
-    MAX_CUMULATIVE_RISK_PCT = float(os.getenv("MAX_CUMULATIVE_RISK_PCT", "0.20"))
+    MAX_CUMULATIVE_RISK_PCT = _MAX_CUMULATIVE_RISK_PCT
 
     # Earnings blackout calendar (Jan 2026)
     # UPDATED Jan 15, 2026: Block trades 7 days before through 1 day after earnings
@@ -256,7 +270,7 @@ class TradeGateway:
     # LL-190: SOFI CSP had 48% portfolio risk - unacceptable
     # UPDATED Jan 15, 2026: Changed from 10% to 5% per CLAUDE.md mandate
     # CLAUDE.md: "Position limit: 1 spread at a time (5% max = $248 risk)"
-    MAX_POSITION_RISK_PCT = 0.05  # 5% max risk per position - MANDATORY per CLAUDE.md
+    MAX_POSITION_RISK_PCT = _MAX_POSITION_PCT  # 5% max risk per position - MANDATORY per CLAUDE.md
 
     def __init__(self, executor=None, paper: bool = True):
         """
@@ -538,8 +552,8 @@ class TradeGateway:
         """
         Enforce concurrent iron condor limit.
 
-        Strategy profile target: 5-10 concurrent defined-risk ICs on $100K.
-        Default is 6 and can be tuned via MAX_CONCURRENT_ICS env.
+        Strategy profile uses canonical concurrency derived from MAX_POSITIONS
+        (default: 2 iron condors for 8 option legs).
         """
         option_positions = [p for p in positions if len(p.get("symbol", "")) > 10]
 
@@ -1037,7 +1051,7 @@ class TradeGateway:
             logger.warning(f"❌ REJECTED: Insufficient funds for ${trade_value:.2f} trade")
 
         # ============================================================
-        # CHECK 2: Maximum Allocation per Symbol (15%)
+        # CHECK 2: Maximum Allocation per Symbol (5%)
         # ============================================================
         current_exposure = self._get_symbol_exposure(request.symbol, positions)
         new_exposure = (

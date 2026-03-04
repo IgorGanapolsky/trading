@@ -155,14 +155,23 @@ jobs:
 
           print(f"✅ PDT check PASSED")
           print(f"")
-          print(f"--- Per-Position Limit (5% Rule) ---")
-          max_per_position = equity * 0.05
-          print(f"5% Position Limit: ${max_per_position:.2f}")
+
+          try:
+              from src.core.trading_constants import MAX_CUMULATIVE_RISK_PCT, MAX_POSITION_PCT
+          except Exception:
+              MAX_POSITION_PCT = 0.05
+              MAX_CUMULATIVE_RISK_PCT = 0.10
+
+          print(f"--- Per-Position Limit ({MAX_POSITION_PCT * 100:.0f}% Rule) ---")
+          max_per_position = equity * MAX_POSITION_PCT
+          print(f"{MAX_POSITION_PCT * 100:.0f}% Position Limit: ${max_per_position:.2f}")
           print(f"Proposed trade risk: ${proposed_risk}")
 
-          # CRITICAL: Check 5% per-position limit BEFORE placing trade
           if proposed_risk > max_per_position:
-              print(f"::error::POSITION SIZE VIOLATION: ${proposed_risk} exceeds 5% limit (${max_per_position:.2f})")
+              print(
+                  f"::error::POSITION SIZE VIOLATION: ${proposed_risk} exceeds "
+                  f"{MAX_POSITION_PCT * 100:.0f}% limit (${max_per_position:.2f})"
+              )
               print(f"::error::Reduce quantity or spread width to comply with CLAUDE.md")
               with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
                   f.write("compliant=false\n")
@@ -170,16 +179,15 @@ jobs:
 
           print(f"✅ Per-position check PASSED (${proposed_risk} <= ${max_per_position:.2f})")
           print(f"")
-          print(f"--- Total Exposure Limit (15% Rule) ---")
+          print(f"--- Total Exposure Limit ({MAX_CUMULATIVE_RISK_PCT * 100:.0f}% Rule) ---")
           total_risk = current_risk + proposed_risk
           total_risk_pct = (total_risk / equity) * 100
           print(f"Current exposure: ${current_risk}")
           print(f"After trade: ${total_risk} ({total_risk_pct:.1f}%)")
 
-          # Check 15% total exposure limit
-          MAX_TOTAL_EXPOSURE_PCT = 15
+          MAX_TOTAL_EXPOSURE_PCT = MAX_CUMULATIVE_RISK_PCT * 100
           if total_risk_pct > MAX_TOTAL_EXPOSURE_PCT:
-              print(f"::error::TOTAL EXPOSURE VIOLATION: {total_risk_pct:.1f}% exceeds {MAX_TOTAL_EXPOSURE_PCT}% limit")
+              print(f"::error::TOTAL EXPOSURE VIOLATION: {total_risk_pct:.1f}% exceeds {MAX_TOTAL_EXPOSURE_PCT:.1f}% limit")
               with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
                   f.write("compliant=false\n")
               exit(1)
@@ -210,7 +218,7 @@ jobs:
           ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
           ALPACA_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
         run: |
-          echo "🛡️ Setting mandatory stop-loss (CLAUDE.md: 2x credit received)"
+          echo "🛡️ Setting mandatory stop-loss (CLAUDE.md: 100% credit-loss threshold)"
           python3 scripts/set_trailing_stops.py --trail-pct 0.20 || {
             echo "::warning::Stop-loss setting had issues - verify manually"
           }
@@ -236,7 +244,7 @@ jobs:
             The credit spread execution workflow failed. Check the logs for details.
 
             **Possible causes:**
-            - Position compliance violation (>15% exposure)
+            - Position compliance violation (risk limits exceeded)
             - Market closed / not a trading day
             - API connection issues
             - Insufficient buying power

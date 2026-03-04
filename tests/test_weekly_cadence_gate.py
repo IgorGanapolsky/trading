@@ -67,6 +67,21 @@ def test_evaluate_weekly_cadence_extracts_kpi_and_diagnostic():
     assert result["top_rejection_reasons"][0]["count"] == 2
 
 
+def test_evaluate_weekly_cadence_parses_string_booleans():
+    state = {
+        "north_star_weekly_gate": {
+            "cadence_kpi": {"passed": "false", "alert_level": "warning"},
+            "no_trade_diagnostic": {
+                "gate_status": {"ai_cycle": {"capex_deceleration_shock": "false"}}
+            },
+        }
+    }
+
+    result = evaluate_weekly_cadence(state)
+    assert result["passed"] is False
+    assert result["ai_cycle_capex_deceleration_shock"] is False
+
+
 def test_should_fail_respects_strict_and_threshold():
     result_warning = {"passed": False, "alert_level": "warning"}
     result_critical = {"passed": False, "alert_level": "critical"}

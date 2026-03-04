@@ -61,7 +61,7 @@
       },
       "management_rules": {
         "profit_target": "50% of credit received",
-        "stop_loss": "2x credit received (optional: 4x for more wiggle room)",
+        "stop_loss": "1x credit received (optional: 4x for more wiggle room)",
         "time_exit": "21 DTE if not already closed",
         "rolling": "Roll down and out when challenged, roll at 21 DTE if profitable"
       }
@@ -137,7 +137,7 @@
       "break_even_win_rate": "70%",
       "target_win_rate": "80%+ with early exits",
       "DTE": "30-45 DTE",
-      "management": "50% profit exit, 2x credit stop-loss",
+      "management": "50% profit exit, 1x credit stop-loss",
       "position_limit": "5% max per trade"
     },
     "validation_result": "ALIGNED WITH TASTYTRADE METHODOLOGY",
@@ -158,8 +158,8 @@
         "verdict": "ALIGNED - similar risk/reward profile"
       },
       "management": {
-        "ours": "50% profit, 2x stop-loss",
-        "tastytrade": "50% profit, 2x stop-loss, 21 DTE trigger",
+        "ours": "50% profit, 1x stop-loss",
+        "tastytrade": "50% profit, 1x stop-loss, 21 DTE trigger",
         "verdict": "ALIGNED - consider adding 21 DTE exit rule"
       },
       "position_sizing": {

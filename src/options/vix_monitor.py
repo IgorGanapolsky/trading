@@ -1034,9 +1034,9 @@ class VIXSignals:
         if regime in [VolatilityRegime.HIGH, VolatilityRegime.EXTREME]:
             return [
                 "Take profits quickly (50% of max profit)",
-                "Exit by 21 DTE to avoid gamma risk",
+                "Exit by 7 DTE to avoid gamma risk",
                 "Close if VIX spikes another 20%+",
-                "Use stop-loss at 2x credit received",
+                "Use stop-loss at 100% of credit received",
             ]
         elif regime in [VolatilityRegime.EXTREME_LOW, VolatilityRegime.LOW]:
             return [
@@ -1046,8 +1046,8 @@ class VIXSignals:
             ]
         else:
             return [
-                "Standard exit: 50% max profit or 21 DTE",
-                "Stop-loss: 2x credit or 50% debit",
+                "Standard exit: 50% max profit or 7 DTE",
+                "Stop-loss: 100% credit loss or 50% debit",
             ]
 
 

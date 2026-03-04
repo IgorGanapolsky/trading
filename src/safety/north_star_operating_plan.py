@@ -66,6 +66,21 @@ def _as_int(value: Any, default: int = 0) -> int:
         return default
 
 
+def _as_bool(value: Any, default: bool | None = None) -> bool | None:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "1", "yes", "y", "on", "passed", "pass"}:
+            return True
+        if normalized in {"false", "0", "no", "n", "off", "failed", "fail"}:
+            return False
+        return default
+    if isinstance(value, (int, float)):
+        return bool(value)
+    return default
+
+
 def _parse_date(value: Any) -> date | None:
     if value is None:
         return None
@@ -390,15 +405,11 @@ def _compute_no_trade_diagnostic(
     dte_raw = _safe_nested_dict(options_chain, "data").get("recommended_dte")
     dte_value = _as_int(dte_raw, 0) if dte_raw is not None else None
 
-    regime_pass_signal: bool | None = None
-    if isinstance(regime_check.get("passed"), bool):
-        regime_pass_signal = bool(regime_check.get("passed"))
-    elif isinstance(iron_regime.get("passed"), bool):
-        regime_pass_signal = bool(iron_regime.get("passed"))
+    regime_pass_signal: bool | None = _as_bool(regime_check.get("passed"), default=None)
+    if regime_pass_signal is None:
+        regime_pass_signal = _as_bool(iron_regime.get("passed"), default=None)
 
-    risk_pass_signal: bool | None = None
-    if isinstance(position_size_check.get("passed"), bool):
-        risk_pass_signal = bool(position_size_check.get("passed"))
+    risk_pass_signal: bool | None = _as_bool(position_size_check.get("passed"), default=None)
 
     def _status(pass_signal: bool | None) -> str:
         if pass_signal is None:
@@ -529,7 +540,7 @@ def _compute_no_trade_diagnostic(
         "position_size_multiplier": round(min(1.0, max(0.1, ai_cycle_multiplier)), 4),
         "regime": str(ai_cycle_signal.get("regime") or "unknown"),
         "confidence": _as_float(ai_cycle_signal.get("confidence"), None),
-        "capex_deceleration_shock": bool(ai_cycle_signal.get("capex_deceleration_shock")),
+        "capex_deceleration_shock": _as_bool(ai_cycle_signal.get("capex_deceleration_shock"), default=False),
         "signal_date": ai_cycle_signal.get("latest_data_date"),
         "source": ai_cycle_signal.get("source", "none"),
         "detail": ai_cycle_reason_text,
@@ -875,7 +886,7 @@ def compute_weekly_gate(
     if ai_cycle_multiplier <= 0:
         ai_cycle_multiplier = 1.0
     ai_cycle_multiplier = min(1.0, max(0.1, ai_cycle_multiplier))
-    ai_cycle_shock = bool(ai_cycle_gate.get("capex_deceleration_shock"))
+    ai_cycle_shock = _as_bool(ai_cycle_gate.get("capex_deceleration_shock"), default=False)
     if ai_cycle_status in {"watch", "blocked"} and ai_cycle_multiplier < 1.0:
         adjusted_limit = round(recommended_max * ai_cycle_multiplier, 4)
         recommended_max = min(recommended_max, adjusted_limit)
@@ -919,7 +930,7 @@ def compute_weekly_gate(
                 and _as_float(row.get("expectancy_per_trade"), -999999.0) == expectancy
                 and str(row.get("mode", "")) == mode
                 and _as_int(row.get("qualified_setups"), -1) == qualified_setups
-                and bool(row.get("cadence_passed")) is cadence_kpi["passed"]
+                and _as_bool(row.get("cadence_passed"), default=False) is cadence_kpi["passed"]
             )
             if unchanged:
                 # Keep historical timestamp untouched when nothing changed.
@@ -1141,11 +1152,13 @@ def apply_operating_plan_to_state(
     state["risk"]["weekly_gate_recommended_max_position_pct"] = weekly_gate.get(
         "recommended_max_position_pct"
     )
-    state["risk"]["weekly_cadence_kpi_passed"] = bool(
-        _safe_nested_dict(weekly_gate, "cadence_kpi").get("passed")
+    state["risk"]["weekly_cadence_kpi_passed"] = _as_bool(
+        _safe_nested_dict(weekly_gate, "cadence_kpi").get("passed"),
+        default=False,
     )
-    state["risk"]["weekly_scaling_sample_gate_passed"] = bool(
-        _safe_nested_dict(weekly_gate, "scaling_sample_gate").get("passed")
+    state["risk"]["weekly_scaling_sample_gate_passed"] = _as_bool(
+        _safe_nested_dict(weekly_gate, "scaling_sample_gate").get("passed"),
+        default=False,
     )
     state["risk"]["weekly_ai_credit_stress_status"] = str(
         _safe_nested_dict(weekly_gate, "ai_credit_stress").get("status") or "unknown"
@@ -1174,7 +1187,8 @@ def apply_operating_plan_to_state(
     state["risk"]["weekly_ai_cycle_regime"] = _safe_nested_dict(weekly_gate, "ai_cycle").get(
         "regime"
     )
-    state["risk"]["weekly_ai_cycle_capex_deceleration_shock"] = bool(
-        _safe_nested_dict(weekly_gate, "ai_cycle").get("capex_deceleration_shock")
+    state["risk"]["weekly_ai_cycle_capex_deceleration_shock"] = _as_bool(
+        _safe_nested_dict(weekly_gate, "ai_cycle").get("capex_deceleration_shock"),
+        default=False,
     )
     return state, weekly_history

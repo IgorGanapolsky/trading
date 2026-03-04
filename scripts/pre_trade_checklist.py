@@ -14,6 +14,11 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+try:
+    from src.core.trading_constants import MAX_POSITIONS
+except ImportError:
+    MAX_POSITIONS = 8
+
 # Allowed tickers - UPDATED Jan 19, 2026 (LL-244): SPY ONLY per CLAUDE.md
 ALLOWED_TICKERS = ["SPY"]  # SPY ONLY - IWM removed per adversarial audit
 
@@ -29,7 +34,7 @@ EARNINGS_BLACKOUTS = {
 MAX_POSITION_PCT = 0.05  # 5% max per trade
 MIN_DTE = 30
 MAX_DTE = 45
-MAX_OPEN_SPREADS = 1  # Position limit: 1 spread at a time per CLAUDE.md
+MAX_OPEN_SPREADS = max(1, int(MAX_POSITIONS) // 2)  # 8 option legs => up to 4 spreads
 
 
 def load_account_state() -> dict:
@@ -188,7 +193,7 @@ def run_full_checklist(
     if not passed:
         all_passed = False
 
-    # Check 6: Spread limit (max 1 spread at a time per CLAUDE.md)
+    # Check 6: Spread limit (derived from canonical option-leg budget)
     passed, msg = check_spread_limit(state)
     results.append(msg)
     if not passed:

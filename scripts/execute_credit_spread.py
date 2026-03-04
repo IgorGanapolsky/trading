@@ -35,6 +35,11 @@ sys.path.insert(0, str(project_root))
 from src.rag.lessons_learned_rag import LessonsLearnedRAG
 from src.safety.mandatory_trade_gate import safe_submit_order  # noqa: E402
 
+try:
+    from src.core.trading_constants import MAX_POSITION_PCT
+except Exception:
+    MAX_POSITION_PCT = 0.05
+
 Path("logs").mkdir(exist_ok=True)
 Path("data").mkdir(exist_ok=True)
 
@@ -368,18 +373,18 @@ def check_position_limit(trading_client, collateral_required: float) -> tuple[bo
     try:
         account = trading_client.get_account()
         equity = float(account.equity)
-        max_per_position = equity * 0.05  # 5% per CLAUDE.md
+        max_per_position = equity * MAX_POSITION_PCT  # canonical per-position risk cap
 
         if collateral_required > max_per_position:
             return (
                 True,
-                f"POSITION SIZE VIOLATION: ${collateral_required:.2f} exceeds 5% limit (${max_per_position:.2f}). "
+                f"POSITION SIZE VIOLATION: ${collateral_required:.2f} exceeds {MAX_POSITION_PCT * 100:.0f}% limit (${max_per_position:.2f}). "
                 f"Account equity: ${equity:.2f}",
             )
 
         return (
             False,
-            f"OK: ${collateral_required:.2f} within 5% limit (${max_per_position:.2f})",
+            f"OK: ${collateral_required:.2f} within {MAX_POSITION_PCT * 100:.0f}% limit (${max_per_position:.2f})",
         )
     except Exception as e:
         logger.warning(f"Could not verify position limit: {e}")

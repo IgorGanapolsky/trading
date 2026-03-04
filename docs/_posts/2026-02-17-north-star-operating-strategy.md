@@ -13,7 +13,7 @@ excerpt: "Our operating strategy is now explicit and consistent across repo, das
 
 - North Star: **$6K/month after-tax financial independence**
 - Timing policy: **not calendar-constrained in execution**; reach the goal **as fast as safely possible**
-- Core setup: **SPY iron condors**, **15-20 delta** short strikes, **$10-wide wings**, **up to 5 concurrent positions**
+- Core setup: **SPY iron condors**, **15-20 delta** short strikes, **$10-wide wings**, **up to 8 open option legs** (typically ~2 concurrent condors)
 
 ## Capital Allocation Policy
 

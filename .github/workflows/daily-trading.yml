@@ -276,7 +276,6 @@ jobs:
         with:
           python-version: "3.12"
           cache: "pip"
-          cache: "pip"
 
       - name: Install dependencies
         run: pip install alpaca-py
@@ -383,7 +382,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: "pip"
           cache: "pip"
 
       - name: Free workspace before install
@@ -654,7 +652,7 @@ jobs:
       # ========================================================================
       # CLAUDE.MD COMPLIANCE CHECK (Jan 19, 2026)
       # CEO Directive: Enforce position limits BEFORE new trades
-      # - Max 4 positions (1 iron condor)
+      # - Max 8 option legs (~2 iron condors)
       # - Max 5% position size ($248 on $4986 account)
       # This prevents accumulating excess spreads that violate strategy
       # ========================================================================
@@ -759,7 +757,7 @@ jobs:
         run: |
           echo "📋 ========================================"
           echo "📋 CLAUDE.MD COMPLIANCE CHECK"
-          echo "📋 Position Limits: Max 4 (1 iron condor)"
+          echo "📋 Position Limits: Max 8 option legs (~2 iron condors)"
           echo "📋 ========================================"
           echo ""
           python3 scripts/close_positions.py --mode excess-only --ticker SPY || {
@@ -1074,7 +1072,7 @@ jobs:
       # IRON CONDOR MANAGEMENT (Feb 13, 2026)
       # CRITICAL FIX: manage_iron_condor_positions.py was never being called!
       # Without this step, ICs sit open until expiration, blocking new entries.
-      # Exit rules: 50% profit, 200% stop-loss, 7 DTE (LL-268/LL-277)
+      # Exit rules: 50% profit, 100% stop-loss, 7 DTE (LL-268/LL-277)
       # This MUST run BEFORE opening new ICs to free up position slots.
       # ========================================================================
       - name: Manage Iron Condor Positions (Exit Rules)
@@ -1088,7 +1086,7 @@ jobs:
         run: |
           echo "📊 ========================================"
           echo "📊 IRON CONDOR POSITION MANAGEMENT"
-          echo "📊 Exit Rules: 50% profit | 200% stop | 7 DTE"
+          echo "📊 Exit Rules: 50% profit | 100% stop | 7 DTE"
           echo "📊 ========================================"
           echo ""
           python3 scripts/manage_iron_condor_positions.py || {

@@ -49,7 +49,6 @@ jobs:
         with:
           python-version: "3.12"
           cache: "pip"
-          cache: "pip"
 
       - name: Pre-check whether capture is needed
         id: precheck

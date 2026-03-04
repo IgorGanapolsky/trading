@@ -50,7 +50,7 @@ class OptionsStrategyCoordinator:
         """Run options position risk check (stop-losses and delta management).
 
         McMillan Rules Applied:
-        - Credit spreads/iron condors: Exit at 2.2x credit received
+        - Credit spreads/iron condors: Exit at 1.0x credit loss threshold
         - Long options: Exit at 50% loss
         - Delta: Rebalance if |net delta| > 60
 

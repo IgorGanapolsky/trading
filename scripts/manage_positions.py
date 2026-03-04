@@ -19,7 +19,7 @@ Exit Conditions (from position_manager.py):
 - Stop-loss: 8% loss (for STOCK positions only)
 - Time-decay: 30 days max hold
 - ATR-based dynamic stop
-- IRON CONDORS: 50% max profit OR 200% stop-loss per CLAUDE.md
+- IRON CONDORS: 50% max profit OR 100% stop-loss per CLAUDE.md
 
 Usage:
     python3 scripts/manage_positions.py

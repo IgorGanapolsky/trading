@@ -3,9 +3,9 @@
 CRITICAL SAFETY COMPONENT - Jan 22, 2026 (LL-281)
 
 This module automatically triggers TRADING_HALTED when crisis conditions detected:
-1. Position count exceeds MAX_POSITIONS (4)
+1. Position count exceeds MAX_POSITIONS
 2. Unrealized loss exceeds CRISIS_LOSS_PCT (25%)
-3. Single position loss exceeds 50% of premium
+3. Single position loss exceeds 100% of premium
 
 Root Cause of Crisis:
 - TRADING_HALTED was only created manually
@@ -43,8 +43,8 @@ except ImportError:
     # Fallback values
     CRISIS_LOSS_PCT = 0.25
     CRISIS_POSITION_COUNT = 4
-    MAX_POSITIONS = 4
-    IRON_CONDOR_STOP_LOSS_MULTIPLIER = 2.0
+    MAX_POSITIONS = 8
+    IRON_CONDOR_STOP_LOSS_MULTIPLIER = 1.0
 
 # File paths
 TRADING_HALTED_FILE = Path("data/TRADING_HALTED")

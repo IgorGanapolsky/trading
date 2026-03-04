@@ -106,10 +106,8 @@ class TestClaudeMdCompliance:
     )
     def test_position_limit_compliance(self, system_state: dict):
         """Verify position count doesn't exceed CLAUDE.md limit."""
-        # CLAUDE.md: "Position limit: 1 iron condor at a time"
-        # Iron condor = 4 legs, credit spread = 2 legs
-        # Max positions: 4 (one iron condor)
-        MAX_POSITIONS = 4
+        # Canonical limit: MAX_POSITIONS=8 option legs (~2 iron condors).
+        MAX_POSITIONS = 8
 
         positions = system_state.get("positions", [])
         position_count = len(positions)

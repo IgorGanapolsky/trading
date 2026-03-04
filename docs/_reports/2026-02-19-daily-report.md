@@ -129,7 +129,7 @@ The **Sharpe Ratio** measures risk-adjusted return: how much excess return we ge
 1. **Historical Data**: We use Alpaca's historical options data with realistic IV estimation
 2. **Black-Scholes Pricing**: Options priced using Black-Scholes with rolling historical volatility
 3. **Slippage & Costs**: 0-5% slippage built into simulation
-4. **Exit Rules**: 50% profit target, 200% stop loss, or 7 DTE exit (per LL-268)
+4. **Exit Rules**: 50% profit target, 100% stop loss, or 7 DTE exit (per LL-268)
 
 ### Strategy: Iron Condors on SPY
 
@@ -153,7 +153,7 @@ Bear Call Spread (upside protection)
 
 **Risk Management:**
 - Max 5% of capital per trade ($248 on $5K account)
-- Stop loss at 200% of credit received
+- Stop loss at 100% of credit received
 - Close at 7 DTE to avoid gamma risk (LL-268: improves win rate to 80%+)
 
 *Sharpe ratio calculated using annualized returns with 4.5% risk-free rate (current 3-month T-bill).*

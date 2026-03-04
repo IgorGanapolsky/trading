@@ -8,7 +8,7 @@ This is the unfiltered story of building an autonomous AI trading system—every
 
 **The goal:** Reach $6K/month after-tax options income as fast as safely possible through disciplined, automated execution.
 
-**Strategy Profile:** Automated iron condor system (SPY-first; expandable to SPX/XSP/QQQ/IWM) with 15-20 delta short strikes, $10-wide wings, and up to 5 concurrent positions.
+**Strategy Profile:** Automated iron condor system (SPY-first; expandable to SPX/XSP/QQQ/IWM) with 15-20 delta short strikes, $10-wide wings, and up to 8 open option legs (typically ~2 concurrent condors).
 
 **Capital Deployment Policy:** Alpaca paper account ($100K) is the primary validation engine. Alpaca brokerage account is traded opportunistically only when the same RAG + risk gates pass.
 

@@ -257,7 +257,7 @@ Before any trade executes:
 3. Is it an iron condor with defined risk on both sides?
 4. Are short strikes at 15-20 delta?
 5. Is expiration 30-45 days out?
-6. Is stop-loss defined at 200% of credit?
+6. Is stop-loss defined at 100% of credit?
 7. Exit plan at 50% profit or 7 days to expiration?
 
 Every box must be checked. No exceptions.
@@ -315,7 +315,7 @@ I can't predict where SPY will be next month. Nobody can. But I can build a syst
 | Position Limit        | 5% ($5,000 max risk per trade) |
 | Win Rate Target       | 80%+                           |
 | Monthly Income Target | $1,600                         |
-| Days Until North Star | ~1,020 (November 14, 2029)     |
+| North Star Horizon    | As fast as safely possible (no fixed date) |
 
 The system is built. The strategy is proven. The math works.
 
@@ -325,9 +325,9 @@ Now comes the hard part: **consistency**. Executing the same boring strategy, da
 
 ## The North Star
 
-By November 14, 2029 - my 50th birthday - I will have:
+With disciplined execution, the North Star remains:
 
-- **$600,000** in trading capital (grown from $100K through disciplined compounding)
+- **~$300,000** target capital benchmark (at ~2% monthly after-tax yield)
 - **$6,000/month** in passive income after taxes
 - **Financial independence** - the freedom to work on what matters, not what pays
 

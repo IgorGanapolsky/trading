@@ -23,6 +23,7 @@ from unittest.mock import MagicMock, patch
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from scripts.iron_condor_trader import IronCondorLegs, IronCondorStrategy
+from src.core.trading_constants import MAX_POSITIONS
 
 
 class TestIronCondorLegs:
@@ -161,10 +162,10 @@ class TestStrategyConfig:
         strategy = IronCondorStrategy()
         assert strategy.config["position_size_pct"] == 0.05
 
-    def test_max_positions_is_5(self):
-        """Per CLAUDE.md: 5 iron condors max concurrent."""
+    def test_max_positions_derived_from_canonical_leg_limit(self):
+        """Max iron-condor count is derived from canonical option-leg budget."""
         strategy = IronCondorStrategy()
-        assert strategy.config["max_positions"] == 5
+        assert strategy.config["max_positions"] == max(1, int(MAX_POSITIONS) // 4)
 
     def test_exit_dte_is_7(self):
         """Per LL-268: Exit at 7 DTE."""

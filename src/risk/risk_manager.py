@@ -11,6 +11,8 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Any
 
+from src.core.trading_constants import MAX_DAILY_LOSS_PCT, MAX_POSITION_PCT
+
 logger = logging.getLogger(__name__)
 
 
@@ -40,8 +42,8 @@ class RiskManager:
     """
 
     # Default risk parameters (CLAUDE.md mandates 5% max - Phil Town Rule #1)
-    DEFAULT_MAX_POSITION_PCT = 0.05  # 5% max per position per CLAUDE.md
-    DEFAULT_MAX_DAILY_LOSS_PCT = 0.02  # 2% max daily loss
+    DEFAULT_MAX_POSITION_PCT = MAX_POSITION_PCT  # canonical max per position
+    DEFAULT_MAX_DAILY_LOSS_PCT = MAX_DAILY_LOSS_PCT  # canonical max daily loss
     DEFAULT_MIN_CASH_RESERVE_PCT = 0.20  # Keep 20% cash
     DEFAULT_MAX_SECTOR_CONCENTRATION = 0.40  # 40% max in one sector
 

@@ -2,8 +2,8 @@
 # Optimized for fast CI/CD installation (<2 minutes)
 # Last updated: 2025-12-02
 #
-# Python Version Requirement: >=3.9,<3.14
-# Note: Python 3.14+ has limited wheel availability; use 3.12 for best compatibility
+# Python Runtime Requirement: >=3.11,<3.12 (CPython 3.11.x)
+# Canonical source: pyproject.toml [project.requires-python]
 aiohappyeyeballs==2.6.1
 aiohttp==3.13.3
 aiosignal==1.4.0

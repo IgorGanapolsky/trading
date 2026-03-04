@@ -57,7 +57,7 @@ echo "Trading Context:"
 echo "  Strategy: Iron Condors on SPY (15-20 delta)"
 echo '  Capital: $100,000 paper (PA3C5AG0CECQ)'
 echo '  Position limit: 5% max ($5,000 risk per trade)'
-echo "  Exit: 50% profit OR 7 DTE | Stop: 200% of credit"
+echo "  Exit: 50% profit OR 7 DTE | Stop: 100% of credit"
 echo ""
 
 # TIER 3: Mandatory Rules (instant)

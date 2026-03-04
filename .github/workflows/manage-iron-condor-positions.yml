@@ -1,7 +1,7 @@
 name: Manage Iron Condor Positions
 
 # Monitor and manage iron condor positions per LL-268/LL-277 research
-# Exit rules: 50% profit, 200% stop-loss, 7 DTE
+# Exit rules: 50% profit, 100% stop-loss, 7 DTE
 #
 # SAFE SCHEDULE: Hourly during market hours (not aggressive like crisis workflows)
 # This is the correct replacement for the disabled crisis workflows
@@ -79,7 +79,7 @@ jobs:
           echo "IRON CONDOR POSITION MANAGEMENT"
           echo "Exit Rules (LL-268/LL-277):"
           echo "  - 50% profit target"
-          echo "  - 200% stop-loss"
+          echo "  - 100% stop-loss"
           echo "  - 7 DTE exit"
           echo "═══════════════════════════════════════════════════════════"
 
@@ -94,7 +94,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Exit Rules**:" >> $GITHUB_STEP_SUMMARY
           echo "- 50% profit target (of credit)" >> $GITHUB_STEP_SUMMARY
-          echo "- 200% stop-loss (2x credit)" >> $GITHUB_STEP_SUMMARY
+          echo "- 100% stop-loss (1x credit)" >> $GITHUB_STEP_SUMMARY
           echo "- 7 DTE exit (gamma risk)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Research**: LL-268, LL-277" >> $GITHUB_STEP_SUMMARY

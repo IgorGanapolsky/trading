@@ -10,7 +10,7 @@ Welcome to the **AI-Powered Automated Trading System** wiki!
 
     The system tracks progress toward financial independence:
     - North Star goal: **$6K/month after-tax financial independence (execute as fast as safely possible)**
-    - Current strategy: **SPY iron condors (15-20 delta, $10-wide wings, up to 5 concurrent positions)**
+    - Current strategy: **SPY iron condors (15-20 delta, $10-wide wings, up to 8 open option legs ~2 concurrent condors)**
 - Phil Town Rule #1: **Don't lose money**
 
 ---
@@ -33,22 +33,18 @@ Welcome to the **AI-Powered Automated Trading System** wiki!
 
 ---
 
-## 📈 Current Status (Feb 25, 2026)
+## 📈 Current Status (Mar 04, 2026)
 
 | Metric | Value |
 |--------|-------|
-| **Account Equity** | $100,859.65 |
+| **Account Equity** | $100,143.29 |
 | **Starting Capital** | $100,000 (Jan 30, 2026) |
-| **Net Gain** | $+859.65 (+0.86%) |
-| **Open Positions** | 3 Iron Condor(s) |
-| **Strategy** | SPY Iron Condors (15-20 delta, $10-wide, max 5 concurrent) |
+| **Net Gain** | $+143.29 (+0.14%) |
+| **Open Positions** | 0 Iron Condor(s) |
+| **Strategy** | SPY Iron Condors (15-20 delta, $10-wide, max 8 open legs ~2 concurrent condors) |
 
 ### Open Iron Condors
-| Expiry | Put Spread | Call Spread |
-|--------|------------|-------------|
-| Mar 27, 2026 | 640/650 | 715/725 |
-| Mar 31, 2026 | 645/655 | 725/735 |
-| Apr 02, 2026 | 645/655 | 725/735 |
+*No open iron condor positions*
 
 ---
 
@@ -63,10 +59,10 @@ Welcome to the **AI-Powered Automated Trading System** wiki!
 | **Phase 3: Grow** | 2027 | 5 ICs + credit spreads, $1,500/mo | ⏳ Pending |
 | **Phase 4: Open** | 2028 | Packaged system for accounts $10K+ | ⏳ Pending |
 
-**Strategy Parameters** (updated Feb 2026 — positive EV):
-- Profit target: **75%** of max profit (let winners run)
+**Strategy Parameters** (updated Feb 2026 — Rule #1 canonical exits):
+- Profit target: **50%** of max profit
 - Stop loss: **100%** of credit (cut losers fast)
-- Expected value per trade: **+$94** at 80% win rate
+- Expected value: **positive edge** with disciplined 50%/100% exits and 80%+ win rate
 
 ---
 
@@ -74,7 +70,7 @@ Welcome to the **AI-Powered Automated Trading System** wiki!
 
 The **Iron Condor Guardian** runs every 30 minutes during market hours to enforce:
 
-1. **Stop Loss**: Exit if loss reaches 200% of credit received
+1. **Stop Loss**: Exit if loss reaches 100% of credit received
 2. **7 DTE Exit**: Close positions at 7 days to expiration (gamma risk)
 3. **50% Profit Take**: Lock in profits at 50% of max profit
 
@@ -82,4 +78,4 @@ The **Iron Condor Guardian** runs every 30 minutes during market hours to enforc
 
 ---
 
-*Last updated: 2026-02-25 12:11 ET by GitHub Actions*
+*Last updated: 2026-03-04 10:01 ET by GitHub Actions*

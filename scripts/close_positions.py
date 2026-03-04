@@ -48,8 +48,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Maximum positions allowed (1 iron condor = 4 legs) per CLAUDE.md
-MAX_POSITIONS = 4
+try:
+    from src.core.trading_constants import MAX_POSITIONS  # noqa: E402
+except ImportError:
+    MAX_POSITIONS = 8
 
 
 def get_alpaca_client(paper: bool = True) -> Optional[TradingClient]:
@@ -219,11 +221,10 @@ def mode_emergency_all(client: TradingClient, ticker: Optional[str], dry_run: bo
 
 def mode_excess_only(client: TradingClient, ticker: Optional[str], dry_run: bool) -> int:
     """
-    Close excess spreads to comply with CLAUDE.md position limit.
-    Per CLAUDE.md: "Position limit: 1 iron condor at a time (4 legs max)"
+    Close excess spreads to comply with canonical MAX_POSITIONS.
     """
     logger.info("=" * 60)
-    logger.info("CLOSE EXCESS SPREADS - CLAUDE.md Compliance")
+    logger.info("CLOSE EXCESS SPREADS - Position Limit Compliance")
     logger.info("=" * 60)
     logger.info(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     logger.info(f"Max positions allowed: {MAX_POSITIONS}")

@@ -33,18 +33,17 @@ class TestMaxPositionsConfig:
     def test_max_positions_is_valid(self):
         """Verify max_positions is configured.
 
-        Note: max_positions=1 is now valid per CLAUDE.md strategy update (Jan 2026).
-        The $5K account uses "1 spread at a time" for 5% max position risk.
-        This is different from the $100K account which had max_positions=10.
-
-        See lesson LL-079 for original issue, LL-209 for strategy update.
+        max_positions should be derived from canonical MAX_POSITIONS (option legs)
+        to avoid drift between scripts.
         """
         from scripts.simple_daily_trader import CONFIG
+        from src.core.trading_constants import MAX_POSITIONS
 
         assert CONFIG["max_positions"] >= 1, (
             f"max_positions is {CONFIG['max_positions']} but must be >= 1. "
             "At least 1 position must be allowed for trading."
         )
+        assert CONFIG["max_positions"] == max(1, int(MAX_POSITIONS) // 2)
 
     def test_config_has_required_keys(self):
         """Ensure all required config keys exist."""
@@ -105,16 +104,12 @@ class TestShouldOpenPosition:
 
         mock_client = MagicMock()
 
-        # With max_positions=1 (per CLAUDE.md), 4 options positions SHOULD block
-        # because we already have 4 positions and max is 1
-        # This is CORRECT behavior for the $5K account strategy
+        # With max_positions derived to 4 option legs budget (spread-level), 4 options positions block.
         result = should_open_position(mock_client, CONFIG)
 
-        # With max_positions=1 and 4 existing positions, should return False
-        # This is the expected behavior per CLAUDE.md "1 spread at a time"
+        # At current limit and with 4 existing positions, should return False.
         assert result is False, (
-            "should_open_position returned True with 4 positions but max=1. "
-            "Per CLAUDE.md $5K strategy, we should only have 1 spread at a time."
+            "should_open_position returned True with 4 positions at the configured max limit."
         )
 
     @patch("scripts.simple_daily_trader.datetime")

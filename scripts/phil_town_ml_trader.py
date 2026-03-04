@@ -115,7 +115,7 @@ def main():
     print("=" * 60)
     print("PHIL TOWN ML TRADER")
     print("=" * 60)
-    print("Goal: Make money toward $600K by Nov 14, 2029")
+    print("Goal: Make money toward $6K/month after-tax as fast as safely possible (no fixed date)")
     print("Strategy: Phil Town Rule #1 + ML")
     print("=" * 60)
 

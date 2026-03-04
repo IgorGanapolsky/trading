@@ -129,3 +129,34 @@ def test_render_markdown_contains_absolute_dates_and_history_table() -> None:
         in markdown
     )
     assert "2026-02-16" in markdown
+
+
+def test_compute_report_parses_boolean_like_strings_in_weekly_gate() -> None:
+    now = datetime(2026, 2, 19, 18, 0, tzinfo=timezone.utc)
+    state = {
+        "meta": {"last_updated": "2026-02-19T17:30:00Z"},
+        "last_updated": "2026-02-19T17:30:00Z",
+        "north_star_weekly_gate": {
+            "updated_at": "2026-02-19T17:30:00Z",
+            "mode": "validation",
+            "sample_size": 2,
+            "expectancy_per_trade": 10.0,
+            "block_new_positions": "false",
+            "scale_blocked_by_cadence": "false",
+            "cadence_kpi": {
+                "passed": "false",
+                "summary": "Cadence KPI miss",
+                "qualified_setups_observed": 0,
+                "min_qualified_setups_per_week": 3,
+                "closed_trades_observed": 0,
+                "min_closed_trades_per_week": 1,
+            },
+        },
+    }
+
+    report = compute_report(state=state, weekly_history=[], halt_exists=False, now_utc=now)
+
+    assert report["current_gate"]["block_new_positions"] is False
+    assert report["current_gate"]["scale_blocked_by_cadence"] is False
+    blocker_ids = {item["id"] for item in report["blockers"]}
+    assert "cadence_failed" in blocker_ids

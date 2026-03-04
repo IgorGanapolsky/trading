@@ -31,7 +31,7 @@ class TestRAGRoundTripLessonFound:
             lesson_content = """# LL-TEST-001: Iron Condor Stop Loss Failure
 
 ## Summary
-Iron condor position was not closed at 200% stop loss, resulting in $500 loss.
+Iron condor position was not closed at 100% stop loss, resulting in $500 loss.
 
 ## Severity
 **Severity**: CRITICAL
@@ -40,7 +40,7 @@ Iron condor position was not closed at 200% stop loss, resulting in $500 loss.
 `iron_condor`, `stop_loss`, `risk_management`
 
 ## Prevention
-Always enforce stop-loss at 200% of credit received. Use automated monitoring.
+Always enforce stop-loss at 100% of credit received. Use automated monitoring.
 
 ## Fix
 Added automated position monitoring script that checks P/L every 5 minutes.

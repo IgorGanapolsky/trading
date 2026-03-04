@@ -16,7 +16,7 @@ Technology: Jekyll, GitHub Pages, Python, Claude AI
 
 /* THE STORY */
 We're on a 90-day journey to build an AI trading system that:
-- Reaches $6,000/month after-tax by November 14, 2029 (~$200/day)
+- Reaches $6,000/month after-tax as fast as safely possible (no fixed date, ~$200/day)
 - Never loses money (Phil Town Rule #1)
 - Learns from every mistake
 - Documents everything publicly

@@ -28,7 +28,7 @@ class TradeProposal:
     dte: int  # Days to expiration
     max_risk: Decimal  # Maximum loss if trade goes wrong
     credit_received: Decimal
-    stop_loss_multiplier: float  # e.g., 2.0 = 200% of credit
+    stop_loss_multiplier: float  # e.g., 1.0 = 100% of credit
     account_value: Decimal
 
 
@@ -236,7 +236,7 @@ class TestTradeExecutionEvals:
         assert not result.passed
 
     def test_missing_stop_loss_fails(self, evals, valid_proposal):
-        """EVAL-007: Stop loss not at 200% must fail."""
+        """EVAL-007: Stop loss not at 100% must fail."""
         valid_proposal.stop_loss_multiplier = 1.5
         result = evals.eval_stop_loss_defined(valid_proposal)
         assert not result.passed

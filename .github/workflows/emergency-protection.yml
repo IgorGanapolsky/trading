@@ -9,9 +9,9 @@ on:
         default: "false"
         type: boolean
       max_loss_pct:
-        description: "Max loss percentage for protection (e.g., 0.50 = 50%)"
+        description: "Max loss percentage for protection (e.g., 1.00 = 100%)"
         required: false
-        default: "0.50"
+        default: "1.00"
         type: string
 
 env:

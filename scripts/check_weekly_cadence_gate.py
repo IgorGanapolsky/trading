@@ -44,12 +44,27 @@ def _to_int(value: Any, default: int = 0) -> int:
         return default
 
 
+def _to_bool(value: Any, default: bool = False) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "1", "yes", "y", "on", "passed", "pass"}:
+            return True
+        if normalized in {"false", "0", "no", "n", "off", "failed", "fail"}:
+            return False
+        return default
+    if isinstance(value, (int, float)):
+        return bool(value)
+    return default
+
+
 def evaluate_weekly_cadence(state: dict[str, Any]) -> dict[str, Any]:
     weekly_gate = state.get("north_star_weekly_gate", {})
     cadence = weekly_gate.get("cadence_kpi", {}) if isinstance(weekly_gate, dict) else {}
     diagnostic = weekly_gate.get("no_trade_diagnostic", {}) if isinstance(weekly_gate, dict) else {}
 
-    passed = bool(cadence.get("passed"))
+    passed = _to_bool(cadence.get("passed"), default=False)
     alert_level = str(cadence.get("alert_level") or "unknown").lower()
     if alert_level not in LEVEL_ORDER:
         alert_level = "unknown"
@@ -79,7 +94,7 @@ def evaluate_weekly_cadence(state: dict[str, Any]) -> dict[str, Any]:
     ai_cycle_multiplier = ai_cycle.get("position_size_multiplier")
     ai_cycle_regime = str(ai_cycle.get("regime") or "unknown")
     ai_cycle_source = str(ai_cycle.get("source") or "none")
-    ai_cycle_shock = bool(ai_cycle.get("capex_deceleration_shock"))
+    ai_cycle_shock = _to_bool(ai_cycle.get("capex_deceleration_shock"), default=False)
 
     return {
         "passed": passed,

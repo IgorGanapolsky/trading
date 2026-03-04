@@ -19,8 +19,8 @@ SUBSYSTEM 2 - AI DECISION ENGINE (center-left, green box):
 
 SUBSYSTEM 3 - TRADE EXECUTION (center, orange box):
 - Iron Condor Builder: 15-20 delta, $10-wide wings, 30-45 DTE
-- Position Manager: 5 concurrent ICs max across expiry cycles
-- Guardian System: 200% stop-loss, 50% profit-take, 7 DTE exit
+- Position Manager: 2 concurrent ICs max across expiry cycles
+- Guardian System: 100% stop-loss, 50% profit-take, 7 DTE exit
 - Label: "Autonomous Execution"
 
 SUBSYSTEM 4 - MONITORING & SAFETY (center-right, red box):
@@ -46,6 +46,6 @@ ARROWS:
 
 NORTH STAR BANNER across the top:
 "$6K/month after-tax = Financial Independence"
-"$100K → $600K via SPY Iron Condors"
+"$100K → ~$300K target capital benchmark via SPY Iron Condors"
 
 Style: Professional, clean, dark theme, suitable for investor/judge presentation.

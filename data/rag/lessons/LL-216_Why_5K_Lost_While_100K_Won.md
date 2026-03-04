@@ -46,9 +46,9 @@
 # BEFORE: Always returned False (no stop-loss)
 return False, "Position within risk limits"
 
-# AFTER: Implements 2x credit stop-loss
-if current_loss >= 2 * credit_received:
-    return True, "2x credit stop-loss triggered"
+# AFTER: Implements 1x credit stop-loss
+if current_loss >= 1 * credit_received:
+    return True, "1x credit stop-loss triggered"
 ```
 
 ### 2. Win Rate Tracking Missing
@@ -73,7 +73,7 @@ The system learned FROM this failure, then fixed CLAUDE.md.
 1. Ticker whitelist hardcoded: SPY/IWM only
 2. Trade gateway blocks naked options
 3. Pre-trade checklist validates all positions
-4. 2x credit stop-loss now enforced
+4. 1x credit stop-loss now enforced
 5. Win rate tracking active
 
 ## Key Insight

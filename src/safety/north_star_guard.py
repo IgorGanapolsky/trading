@@ -56,6 +56,21 @@ def _as_int(value: Any, default: int = 0) -> int:
         return default
 
 
+def _to_bool(value: Any, default: bool = False) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "1", "yes", "y", "on", "passed", "pass"}:
+            return True
+        if normalized in {"false", "0", "no", "n", "off", "failed", "fail"}:
+            return False
+        return default
+    if isinstance(value, (int, float)):
+        return bool(value)
+    return default
+
+
 def _load_state(path: Path = DEFAULT_STATE_PATH) -> dict[str, Any]:
     if not path.exists():
         return {}
@@ -154,7 +169,7 @@ def get_guard_context(state_path: Path = DEFAULT_STATE_PATH) -> dict[str, Any]:
                 f"Weekly gate ({weekly_mode}) caps max position size at {weekly_limit * 100:.1f}%."
             )
 
-        if weekly_gate.get("block_new_positions"):
+        if _to_bool(weekly_gate.get("block_new_positions"), default=False):
             block_new_positions = True
             weekly_reason = str(weekly_gate.get("reason") or "").strip()
             if weekly_reason:
@@ -162,7 +177,7 @@ def get_guard_context(state_path: Path = DEFAULT_STATE_PATH) -> dict[str, Any]:
 
         cadence = weekly_gate.get("cadence_kpi")
         cadence_present = isinstance(cadence, dict) and "passed" in cadence
-        cadence_passed = bool(cadence.get("passed")) if cadence_present else True
+        cadence_passed = _to_bool(cadence.get("passed"), default=False) if cadence_present else True
         expectancy_present = "expectancy_per_trade" in weekly_gate
         expectancy = _as_float(weekly_gate.get("expectancy_per_trade"), 0.0)
         if cadence_present and not cadence_passed and not block_new_positions:
@@ -185,7 +200,7 @@ def get_guard_context(state_path: Path = DEFAULT_STATE_PATH) -> dict[str, Any]:
 
     block_reason = ""
     if block_new_positions:
-        if isinstance(weekly_gate, dict) and weekly_gate.get("block_new_positions"):
+        if isinstance(weekly_gate, dict) and _to_bool(weekly_gate.get("block_new_positions"), default=False):
             block_reason = (
                 "North Star guard: weekly operating gate blocked new position openings "
                 f"({weekly_gate.get('mode', 'unknown')})."

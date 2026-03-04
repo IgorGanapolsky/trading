@@ -66,7 +66,7 @@ class IronCondorConfig:
 
     # Exit conditions (per LL-268 research)
     profit_target_pct: float = 0.50  # Take profit at 50% of credit per CLAUDE.md
-    stop_loss_pct: float = 2.00  # Exit at 200% of credit per CLAUDE.md
+    stop_loss_pct: float = 1.00  # Exit at 100% of credit per canonical policy
     max_dte: int = 7  # Close at 7 DTE regardless (gamma risk)
 
     # Risk parameters
@@ -165,7 +165,7 @@ class IronCondorBacktester:
     - 15-20 delta short strikes = 80-85% probability of profit
     - $5 wide wings for defined risk
     - Exit at 50% profit or 7 DTE
-    - Stop at 200% of credit
+    - Stop at 100% of credit
     """
 
     def __init__(
@@ -234,7 +234,7 @@ class IronCondorBacktester:
         Simulate a single iron condor trade.
 
         Entry: Sell 15-20 delta strangle, buy $5 OTM protection
-        Exit: 50% profit, 200% loss, or 7 DTE
+        Exit: 50% profit, 100% loss, or 7 DTE
         """
         # Get entry price (use open of entry day)
         entry_bar = bars_slice[bars_slice["timestamp"].dt.date == entry_date]
@@ -541,7 +541,7 @@ class IronCondorBacktester:
 
 ### Exit Analysis
 - Profit Target (50%): {summary.get("exit_reasons", {}).get("profit_target", 0)} trades
-- Stop Loss (200%): {summary.get("exit_reasons", {}).get("stop_loss", 0)} trades
+- Stop Loss (100%): {summary.get("exit_reasons", {}).get("stop_loss", 0)} trades
 - Time Exit (7 DTE): {summary.get("exit_reasons", {}).get("time_exit", 0)} trades
 - Expired: {summary.get("exit_reasons", {}).get("expired", 0)} trades
 

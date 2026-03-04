@@ -35,7 +35,12 @@ logger = logging.getLogger(__name__)
 # ============================================================
 # TICKER WHITELIST - CRITICAL ENFORCEMENT (Jan 15, 2026)
 # Per CLAUDE.md: Liquid ETFs only
-from src.core.trading_constants import ALLOWED_TICKERS, extract_underlying
+from src.core.trading_constants import (
+    ALLOWED_TICKERS,
+    MAX_CONTRACTS_PER_TRADE,
+    MAX_POSITION_PCT,
+    extract_underlying,
+)
 
 TICKER_WHITELIST_ENABLED = True  # Toggle for paper testing
 
@@ -111,10 +116,10 @@ class OptionsExecutor:
 
     # Risk management parameters - UPDATED Dec 11, 2025 for growth
     # Old limits blocked options income scaling ($100/day impossible)
-    MAX_PORTFOLIO_RISK_PCT = 0.05  # 5% max per trade (was 2%)
+    MAX_PORTFOLIO_RISK_PCT = MAX_POSITION_PCT  # canonical max per trade
     MIN_PREMIUM_PER_CONTRACT = 0.25  # $25 minimum (was $30)
     MIN_IV_RANK = 20  # Sell when IV > 20 (was 30 - blocked 60% of days)
-    MAX_POSITION_SIZE = 15  # 15 contracts max (was 5)
+    MAX_POSITION_SIZE = MAX_CONTRACTS_PER_TRADE  # canonical max contracts per trade
     MIN_DTE = 30  # Minimum days to expiration
     MAX_DTE = 45  # Maximum days to expiration (per CLAUDE.md: 30-45 DTE)
 
@@ -830,9 +835,9 @@ class OptionsExecutor:
 
         Safety checks:
         0. Ticker whitelist: Liquid ETFs only per CLAUDE.md
-        1. Max portfolio risk: 2% per trade
+        1. Max portfolio risk: canonical per-trade cap
         2. Minimum premium: $0.30 per contract
-        3. Position size limits: Max 5 contracts
+        3. Position size limits: canonical max contracts per trade
         4. Capital requirements: Must have sufficient capital
 
         Args:

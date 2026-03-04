@@ -33,7 +33,7 @@
 
 - [ ] Close at 50% profit
 - [ ] Close at 7 DTE
-- [ ] Stop-loss at 200% of credit
+- [ ] Stop-loss at 100% of credit
 - [ ] Exit early if volatility spikes outside risk limits
 
 ## Notes

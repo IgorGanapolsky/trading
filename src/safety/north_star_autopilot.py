@@ -34,6 +34,21 @@ def _to_int(value: Any, default: int = 0) -> int:
         return default
 
 
+def _to_bool(value: Any, default: bool = False) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "1", "yes", "y", "on", "passed", "pass"}:
+            return True
+        if normalized in {"false", "0", "no", "n", "off", "failed", "fail"}:
+            return False
+        return default
+    if isinstance(value, (int, float)):
+        return bool(value)
+    return default
+
+
 def _parse_dt(raw: Any) -> datetime | None:
     if raw is None:
         return None
@@ -109,11 +124,11 @@ def compute_cadence_optimizer(state: dict[str, Any]) -> dict[str, Any]:
     setups_observed = _to_int(cadence.get("qualified_setups_observed"), 0)
     setups_min = _to_int(cadence.get("min_qualified_setups_per_week"), 0)
     setups_shortfall = max(0, setups_min - setups_observed)
-    cadence_passed = bool(cadence.get("passed"))
+    cadence_passed = _to_bool(cadence.get("passed"), default=False)
 
     ai_status = str(gate_status.get("ai_credit_stress", {}).get("status") or "unknown").lower()
     usd_status = str(gate_status.get("usd_macro", {}).get("status") or "unknown").lower()
-    block_new_positions = bool(weekly.get("block_new_positions"))
+    block_new_positions = _to_bool(weekly.get("block_new_positions"), default=False)
     expectancy = _to_float(weekly.get("expectancy_per_trade"), 0.0)
 
     decision = "hold"
@@ -168,7 +183,7 @@ def compute_regime_aware_sizing(state: dict[str, Any]) -> dict[str, Any]:
     base_cap = _clamp(
         _to_float(weekly.get("recommended_max_position_pct"), 0.02), lo=0.005, hi=0.05
     )
-    if bool(weekly.get("block_new_positions")):
+    if _to_bool(weekly.get("block_new_positions"), default=False):
         return {
             "base_max_position_pct": round(base_cap, 4),
             "recommended_max_position_pct": 0.0,
@@ -212,7 +227,7 @@ def compute_regime_aware_sizing(state: dict[str, Any]) -> dict[str, Any]:
         tuned_cap *= ai_cycle_multiplier
         multipliers.append({"name": "ai_cycle_multiplier", "value": round(ai_cycle_multiplier, 4)})
 
-    if bool(ai_cycle_gate.get("capex_deceleration_shock")):
+    if _to_bool(ai_cycle_gate.get("capex_deceleration_shock"), default=False):
         tuned_cap *= 0.80
         multipliers.append({"name": "ai_cycle_capex_shock", "value": 0.80})
 
@@ -382,7 +397,7 @@ def build_autopilot_snapshot(
         "regime_aware_sizing": regime_sizing,
         "hard_gate_monitor": hard_gate_monitor,
         "blocker_report": {
-            "blocked": bool(blocker_report.get("blocked")),
+            "blocked": _to_bool(blocker_report.get("blocked"), default=False),
             "blocker_count": len(blocker_report.get("blockers", []))
             if isinstance(blocker_report.get("blockers"), list)
             else 0,

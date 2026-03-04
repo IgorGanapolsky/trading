@@ -4,9 +4,9 @@ from src.safety.reasoning_evaluator import ReasoningEvaluator
 def test_evaluator_high_groundedness():
     evaluator = ReasoningEvaluator(threshold=0.7)
     proposal = {"strategy": "iron_condor", "side": "BUY"}
-    reasoning = "Following Phil Town Rule #1, utilizing a 200% stop-loss, checking VIX, and 15-delta strikes for 50% profit or 7 dte exit."
+    reasoning = "Following Phil Town Rule #1, utilizing a 100% stop-loss, checking VIX, and 15-delta strikes for 50% profit or 7 dte exit."
     context = [
-        "Rule #1 is to not lose money. Use 15-delta, check VIX, and 200% stop-loss for 50% profit or 7 dte exit."
+        "Rule #1 is to not lose money. Use 15-delta, check VIX, and 100% stop-loss for 50% profit or 7 dte exit."
     ]
 
     score = evaluator.evaluate(proposal, reasoning, context)
@@ -21,7 +21,7 @@ def test_evaluator_low_groundedness_hallucination():
     proposal = {"strategy": "iron_condor"}
     # Reasoning has no connection to the context keywords
     reasoning = "I think the market will go up because of moon phases."
-    context = ["Rule #1 is to not lose money. Use 15-delta and 200% stop-loss."]
+    context = ["Rule #1 is to not lose money. Use 15-delta and 100% stop-loss."]
 
     score = evaluator.evaluate(proposal, reasoning, context)
 

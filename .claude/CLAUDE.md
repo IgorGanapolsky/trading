@@ -4,8 +4,8 @@ CTO: Claude | CEO: Igor Ganapolsky
 
 ## North Star
 
-$6,000/month after-tax = FINANCIAL INDEPENDENCE by Nov 14, 2029.
-Required: ~$350K capital @ 2.5% monthly return.
+$6,000/month after-tax = FINANCIAL INDEPENDENCE, reached as fast as safely possible (no fixed date).
+Required benchmark: ~$300K capital @ 2.0% monthly return.
 
 ## Canonical Policy Constants
 

@@ -27,6 +27,7 @@ from typing import Optional
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
+from src.core.trading_constants import MAX_POSITIONS
 from src.rag.lessons_learned_rag import LessonsLearnedRAG
 from src.safety.mandatory_trade_gate import safe_submit_order
 from src.utils.error_monitoring import init_sentry
@@ -55,7 +56,7 @@ CONFIG = {
     "min_dte": 21,
     "position_size_pct": 0.05,  # FIXED Jan 19, 2026: 5% max per position - CLAUDE.md MANDATE
     "take_profit_pct": 0.50,  # Close at 50% profit (improves win rate)
-    "max_positions": 1,  # Per CLAUDE.md: "1 spread at a time"
+    "max_positions": max(1, int(MAX_POSITIONS) // 2),  # 8 option legs => up to 4 spreads
     "north_star_daily_target": 200.0,  # $200/day after-tax (~$6K/month) North Star target
     "fallback_symbols": ["IWM"],  # Only IWM as backup per CLAUDE.md whitelist
 }
@@ -430,7 +431,7 @@ def check_exit_conditions(client, positions: list, config: dict) -> list:
 
     Exit conditions:
     1. 50% profit reached
-    2. 21 DTE reached (roll or close)
+    2. 7 DTE reached (roll or close)
     3. Stop loss (100% of premium)
     """
     exits = []

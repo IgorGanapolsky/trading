@@ -16,8 +16,8 @@ Strategy:
 
 Exit Rules:
 - Take profit at 50% of max profit
-- Close at 21 DTE (avoid gamma risk)
-- Close if one side reaches 200% loss
+- Close at 7 DTE (avoid gamma risk)
+- Close if one side reaches 100% loss
 
 THIS IS THE MONEY MAKER.
 """
@@ -34,6 +34,7 @@ from typing import Optional
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
+from src.core.trading_constants import MAX_POSITIONS as MAX_OPTION_LEGS
 from src.orchestrator.telemetry import OrchestratorTelemetry
 from src.rag.lessons_learned_rag import LessonsLearnedRAG
 from src.safety.mandatory_trade_gate import safe_submit_order
@@ -91,11 +92,13 @@ class IronCondorStrategy:
             "short_delta": 0.15,  # 15 delta = ~85% POP (research-backed)
             "wing_width": 10,  # $10 wide spreads per CLAUDE.md
             # EV math: 75% profit / 100% stop → EV = 0.85*0.75 - 0.15*1.0 = +0.49
-            # (Old 50%/200% was EV-neutral: 0.85*0.50 - 0.15*2.0 ≈ 0.0)
+            # Legacy asymmetric take-profit/stop profile was EV-neutral and has been deprecated.
             "take_profit_pct": 0.75,  # Close at 75% profit
             "stop_loss_pct": 1.0,  # Close at 100% loss
             "exit_dte": 7,  # Exit at 7 DTE per LL-268 research (80%+ win rate)
-            "max_positions": 5,  # Per CLAUDE.md: "5 iron condors at a time" (5% max each = 25% total)
+            "max_positions": max(
+                1, int(MAX_OPTION_LEGS) // 4
+            ),  # Canonical limit: 8 option legs => 2 iron condors
             "position_size_pct": 0.05,  # 5% of portfolio per position - CLAUDE.md MANDATE
         }
 
@@ -204,7 +207,7 @@ class IronCondorStrategy:
         if target_date.weekday() > 4:  # Saturday=5, Sunday=6
             days_until_friday = (4 - target_date.weekday()) % 7
         expiry_date = target_date + timedelta(days=days_until_friday)
-        # If this pushed us too close (<21 DTE), use the Friday after
+        # If this pushed us too close (below minimum entry DTE), use the Friday after
         actual_dte = (expiry_date - datetime.now()).days
         if actual_dte < 21:
             expiry_date += timedelta(days=7)
@@ -400,7 +403,7 @@ class IronCondorStrategy:
 
                     # Check iron condor count against max_positions config
                     # 1 iron condor = 4 legs (long put, short put, short call, long call)
-                    max_ic = self.config.get("max_positions", 5)
+                    max_ic = int(self.config.get("max_positions", max(1, int(MAX_OPTION_LEGS) // 4)))
                     max_contracts = max_ic * 4
                     current_ic_count = total_contracts // 4
 

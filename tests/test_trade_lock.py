@@ -222,10 +222,10 @@ class TestCrisisMonitor:
         assert len(loss_conditions) > 0
 
     def test_stop_loss_breach(self):
-        """Test that loss exceeding 200% of credit triggers stop-loss breach."""
+        """Test that loss exceeding 100% of credit triggers stop-loss breach."""
         from src.safety.crisis_monitor import check_crisis_conditions
 
-        # Loss of $2500 on $1000 credit = 250% > 200% threshold
+        # Loss of $2500 on $1000 credit = 250% > 100% threshold
         positions = [
             {
                 "symbol": "SPY260220P00658000",

@@ -50,7 +50,7 @@ After extensive backtesting and real trading experience, we pivoted from credit 
 
 ### How do you set up an iron condor on SPY?
 
-> Set up a 4-leg position: sell a 15-delta put spread and a 15-delta call spread simultaneously on SPY, with $5 wing width and 30-45 DTE expiration. Exit at 50% profit or 21 DTE.
+> Set up a 4-leg position: sell a 15-delta put spread and a 15-delta call spread simultaneously on SPY, with $5 wing width and 30-45 DTE expiration. Exit at 50% profit or 7 DTE.
 
 ```
          ┌─────────────────────────────────────────────┐
@@ -73,8 +73,8 @@ After extensive backtesting and real trading experience, we pivoted from credit 
 - **Short strikes**: 15-20 delta on both sides
 - **Wing width**: $5 (defines max loss)
 - **DTE**: 30-45 days to expiration
-- **Exit**: 50% profit OR 21 DTE (whichever first)
-- **Stop-loss**: Close if either side reaches 200% of credit
+- **Exit**: 50% profit OR 7 DTE (whichever first)
+- **Stop-loss**: Close if either side reaches 100% of credit
 - **Position size**: Max 5% of account ($248 risk on $5K)
 
 ### How does Phil Town Rule #1 apply to options trading?

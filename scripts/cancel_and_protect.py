@@ -114,12 +114,12 @@ def cancel_dangerous_orders(client, dry_run: bool = False) -> list:
         return cancelled
 
 
-def place_protective_orders(client, dry_run: bool = False, max_loss_pct: float = 0.50) -> list:
+def place_protective_orders(client, dry_run: bool = False, max_loss_pct: float = 1.00) -> list:
     """
     Place BUY TO CLOSE limit orders to protect short option positions.
 
     For short puts, we BUY to close at a price that limits our loss.
-    Default: 50% max loss (if we sold at $0.80, buy to close at $1.20 max)
+    Default: 100% max loss (if sold at $0.80, buy to close at $1.60 max)
     """
     protected = []
 
@@ -159,7 +159,7 @@ def place_protective_orders(client, dry_run: bool = False, max_loss_pct: float =
             logger.info(f"   Qty: {qty} (short)")
             logger.info(f"   Entry (sold at): ~${entry_price:.2f}")
             logger.info(f"   Current price: ~${current_price:.2f}")
-            logger.info(f"   Max close price ({max_loss_pct:.0%} loss): ${max_close_price:.2f}")
+            logger.info(f"   Max close price ({max_loss_pct:.0%} max loss): ${max_close_price:.2f}")
 
             # Check if protective order already exists
             existing_orders = client.get_orders()

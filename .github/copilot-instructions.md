@@ -10,7 +10,7 @@ When working inside `src/` or `scripts/`, follow the rules in:
 - [.github/prompts/audit-governance.md](.github/prompts/audit-governance.md)
 
 ## Core Mission
-**North Star**: Generate $6,000/month in after-tax passive income by Nov 14, 2029.
+**North Star**: Generate $6,000/month in after-tax passive income as fast as safely possible (no fixed date).
 **Rule #1**: Never lose money. Protect capital at all costs.
 
 ## Code of Conduct

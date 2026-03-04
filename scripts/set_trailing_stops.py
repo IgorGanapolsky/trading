@@ -35,6 +35,12 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.safety.mandatory_trade_gate import safe_submit_order
 
+try:
+    from src.core.trading_constants import IRON_CONDOR_STOP_LOSS_MULTIPLIER
+except Exception:
+    IRON_CONDOR_STOP_LOSS_MULTIPLIER = 1.0
+
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
@@ -149,12 +155,17 @@ def main(dry_run: bool = False, trail_pct: float | None = None):
         try:
             # OPTIONS: Use limit order (Alpaca doesn't support trailing stops for options)
             if is_option_symbol(symbol):
-                # For short options: stop-loss = buy back at 50% loss (1.5x sold price)
-                # For long options: stop-loss = sell at 50% loss (0.5x current price)
+                # For short options: use entry credit and canonical Rule #1 stop-loss multiplier.
+                # For long options: preserve conservative 50% trailing fallback.
                 if side == "short":
-                    # Calculate stop price: 50% max loss means buy at 1.5x current
-                    stop_price = round(current_price * 1.5, 2)
-                    logger.info(f"    Stop-Loss Price: ${stop_price:.2f} (50% max loss)")
+                    entry_price = float(getattr(pos, "avg_entry_price", current_price) or current_price)
+                    entry_price = abs(entry_price)
+                    stop_price = round(entry_price * (1 + IRON_CONDOR_STOP_LOSS_MULTIPLIER), 2)
+                    logger.info(f"    Entry Credit: ${entry_price:.2f}")
+                    logger.info(
+                        f"    Stop-Loss Price: ${stop_price:.2f} "
+                        f"({IRON_CONDOR_STOP_LOSS_MULTIPLIER:.0%} max loss)"
+                    )
                 else:
                     stop_price = round(current_price * 0.5, 2)
                     logger.info(f"    Stop-Loss Price: ${stop_price:.2f} (50% trailing)")
