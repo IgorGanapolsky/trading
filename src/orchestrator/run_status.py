@@ -67,7 +67,9 @@ def update_run_status(
         "status": status or previous.get("status") or "running",
         "phase": phase or previous.get("phase") or "unknown",
         "last_heartbeat_utc": heartbeat_iso,
-        "retry_count": int(retry_count if retry_count is not None else previous.get("retry_count", 0)),
+        "retry_count": int(
+            retry_count if retry_count is not None else previous.get("retry_count", 0)
+        ),
         "blocker_reason": blocker_reason,
         "updated_at_utc": now_iso,
         "metadata": merged_metadata,

@@ -34,8 +34,9 @@ class TestGetAlpacaClient:
         from src.utils.alpaca_client import get_alpaca_client
 
         # Clear any existing keys
-        with patch.dict(os.environ, {}, clear=True), patch(
-            "src.utils.alpaca_client._bootstrap_env_from_dotenv", return_value=None
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch("src.utils.alpaca_client._bootstrap_env_from_dotenv", return_value=None),
         ):
             result = get_alpaca_client()
             assert result is None
@@ -45,15 +46,17 @@ class TestGetAlpacaClient:
         from src.utils.alpaca_client import get_alpaca_client
 
         # Only API key set
-        with patch.dict(os.environ, {"ALPACA_API_KEY": "test_key"}, clear=True), patch(
-            "src.utils.alpaca_client._bootstrap_env_from_dotenv", return_value=None
+        with (
+            patch.dict(os.environ, {"ALPACA_API_KEY": "test_key"}, clear=True),
+            patch("src.utils.alpaca_client._bootstrap_env_from_dotenv", return_value=None),
         ):
             result = get_alpaca_client()
             assert result is None
 
         # Only secret key set
-        with patch.dict(os.environ, {"ALPACA_SECRET_KEY": "test_secret"}, clear=True), patch(
-            "src.utils.alpaca_client._bootstrap_env_from_dotenv", return_value=None
+        with (
+            patch.dict(os.environ, {"ALPACA_SECRET_KEY": "test_secret"}, clear=True),
+            patch("src.utils.alpaca_client._bootstrap_env_from_dotenv", return_value=None),
         ):
             result = get_alpaca_client()
             assert result is None
@@ -82,8 +85,9 @@ class TestGetOptionsClient:
         from src.utils.alpaca_client import get_options_client
 
         # Without credentials, should return None (same as get_alpaca_client)
-        with patch.dict(os.environ, {}, clear=True), patch(
-            "src.utils.alpaca_client._bootstrap_env_from_dotenv", return_value=None
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch("src.utils.alpaca_client._bootstrap_env_from_dotenv", return_value=None),
         ):
             result = get_options_client(paper=True)
             assert result is None
