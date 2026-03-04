@@ -14,9 +14,51 @@ Updated: Jan 12, 2026
 
 import logging
 import os
+from pathlib import Path
 from typing import Optional
 
+try:
+    from dotenv import find_dotenv, load_dotenv
+except ImportError:  # pragma: no cover - dotenv is present in runtime dependencies
+    find_dotenv = None
+    load_dotenv = None
+
 logger = logging.getLogger(__name__)
+_ENV_BOOTSTRAPPED = False
+
+
+def _bootstrap_env_from_dotenv() -> None:
+    """
+    Load local dotenv files once so credential lookup works in local shells too.
+
+    This keeps CI behavior unchanged because repository/workflow env vars already
+    exist and `override=False` never replaces an existing exported value.
+    """
+    global _ENV_BOOTSTRAPPED
+    if _ENV_BOOTSTRAPPED:
+        return
+    _ENV_BOOTSTRAPPED = True
+
+    if load_dotenv is None or find_dotenv is None:
+        return
+
+    loaded_any = False
+
+    # Primary: resolve from current working directory (developer local runs).
+    for filename in (".env", ".env.local"):
+        env_path = find_dotenv(filename=filename, usecwd=True)
+        if env_path:
+            loaded_any = load_dotenv(env_path, override=False) or loaded_any
+
+    # Fallback: repository root when called from package/module context.
+    repo_root = Path(__file__).resolve().parents[2]
+    for filename in (".env", ".env.local"):
+        env_file = repo_root / filename
+        if env_file.exists():
+            loaded_any = load_dotenv(env_file, override=False) or loaded_any
+
+    if loaded_any:
+        logger.info("Loaded local dotenv file(s) for Alpaca credential discovery")
 
 
 def get_alpaca_credentials() -> tuple[Optional[str], Optional[str]]:
@@ -33,6 +75,8 @@ def get_alpaca_credentials() -> tuple[Optional[str], Optional[str]]:
     Returns:
         Tuple of (api_key, secret_key) or (None, None) if not found.
     """
+    _bootstrap_env_from_dotenv()
+
     env_vars_checked = [
         ("ALPACA_PAPER_TRADING_API_KEY", os.getenv("ALPACA_PAPER_TRADING_API_KEY")),
         ("ALPACA_API_KEY", os.getenv("ALPACA_API_KEY")),
@@ -78,6 +122,8 @@ def get_brokerage_credentials() -> tuple[Optional[str], Optional[str]]:
     Returns:
         Tuple of (api_key, secret_key) or (None, None) if not found.
     """
+    _bootstrap_env_from_dotenv()
+
     api_key = os.getenv("ALPACA_BROKERAGE_TRADING_API_KEY")
     secret_key = os.getenv("ALPACA_BROKERAGE_TRADING_API_SECRET")
 
