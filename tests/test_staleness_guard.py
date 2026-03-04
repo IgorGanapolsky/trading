@@ -9,10 +9,14 @@ from unittest.mock import patch
 import pytest
 
 from src.utils.staleness_guard import (
-    StalenessResult,
+    ContextFreshnessResult,
+    ContextFreshnessSource,
     DataIntegrityResult,
+    StalenessResult,
     check_data_staleness,
+    check_context_freshness,
     require_fresh_data,
+    require_fresh_context,
     get_staleness_warning,
     validate_system_state,
     check_data_integrity,
@@ -206,6 +210,88 @@ class TestGetStalenessWarning:
         with patch("src.utils.staleness_guard.check_data_staleness", return_value=stale):
             warning = get_staleness_warning()
             assert warning is not None
+
+
+# ===========================================================================
+# Context freshness SLO checks
+# ===========================================================================
+
+
+class TestContextFreshness:
+    def test_check_context_freshness_stale_when_index_missing(self, tmp_path, monkeypatch):
+        missing_rag = tmp_path / "missing_lessons_query.json"
+        missing_context = tmp_path / "missing_context_index.json"
+        monkeypatch.setattr("src.utils.staleness_guard.RAG_QUERY_INDEX_PATH", missing_rag)
+        monkeypatch.setattr("src.utils.staleness_guard.CONTEXT_INDEX_PATH", missing_context)
+
+        result = check_context_freshness(is_market_day=True)
+        assert result.is_stale
+        assert result.blocking
+        assert "rag_query_index" in result.stale_sources
+        assert "context_engine_index" in result.stale_sources
+
+    def test_check_context_freshness_passes_when_indexes_are_fresh(self, tmp_path, monkeypatch):
+        rag_path = tmp_path / "lessons_query.json"
+        context_path = tmp_path / "context_index.json"
+
+        rag_path.write_text(
+            json.dumps(
+                [
+                    {
+                        "id": "ll_1",
+                        "indexed_at_utc": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    }
+                ]
+            ),
+            encoding="utf-8",
+        )
+        context_path.write_text(
+            json.dumps({"built_at": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")}),
+            encoding="utf-8",
+        )
+        monkeypatch.setattr("src.utils.staleness_guard.RAG_QUERY_INDEX_PATH", rag_path)
+        monkeypatch.setattr("src.utils.staleness_guard.CONTEXT_INDEX_PATH", context_path)
+        monkeypatch.setenv("RAG_QUERY_INDEX_MAX_AGE_MINUTES", "120")
+        monkeypatch.setenv("CONTEXT_INDEX_MAX_AGE_MINUTES", "120")
+
+        result = check_context_freshness(is_market_day=True)
+        assert not result.is_stale
+        assert not result.blocking
+
+    def test_require_fresh_context_raises_when_blocking(self):
+        stale = ContextFreshnessResult(
+            is_stale=True,
+            blocking=True,
+            checked_at="2026-01-01T00:00:00Z",
+            stale_sources=["rag_query_index"],
+            sources=[
+                ContextFreshnessSource(
+                    source="rag_query_index",
+                    path="data/rag/lessons_query.json",
+                    last_sync=None,
+                    age_minutes=float("inf"),
+                    max_age_minutes=60.0,
+                    is_stale=True,
+                    reason="missing",
+                )
+            ],
+            reason="stale context",
+        )
+        with patch("src.utils.staleness_guard.check_context_freshness", return_value=stale):
+            with pytest.raises(RuntimeError, match="stale context"):
+                require_fresh_context(is_market_day=True)
+
+    def test_require_fresh_context_non_blocking_returns_true(self):
+        stale = ContextFreshnessResult(
+            is_stale=True,
+            blocking=False,
+            checked_at="2026-01-01T00:00:00Z",
+            stale_sources=["rag_query_index"],
+            sources=[],
+            reason="stale context",
+        )
+        with patch("src.utils.staleness_guard.check_context_freshness", return_value=stale):
+            assert require_fresh_context(is_market_day=False) is True
 
 
 # ===========================================================================

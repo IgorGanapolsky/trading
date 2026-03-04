@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -25,6 +27,10 @@ MAX_STALE_HOURS = 24
 
 # Path to system state file
 SYSTEM_STATE_PATH = Path(__file__).parent.parent.parent / "data" / "system_state.json"
+RAG_QUERY_INDEX_PATH = Path(__file__).parent.parent.parent / "data" / "rag" / "lessons_query.json"
+CONTEXT_INDEX_PATH = (
+    Path(__file__).parent.parent.parent / "data" / "context_engine" / "context_index.json"
+)
 
 
 @dataclass
@@ -36,6 +42,31 @@ class StalenessResult:
     last_updated: str | None
     reason: str
     blocking: bool  # True if this should block trading
+
+
+@dataclass
+class ContextFreshnessSource:
+    """Freshness details for a single context source."""
+
+    source: str
+    path: str
+    last_sync: str | None
+    age_minutes: float
+    max_age_minutes: float
+    is_stale: bool
+    reason: str
+
+
+@dataclass
+class ContextFreshnessResult:
+    """Aggregated freshness status for RAG/context sources."""
+
+    is_stale: bool
+    blocking: bool
+    checked_at: str
+    stale_sources: list[str]
+    sources: list[ContextFreshnessSource]
+    reason: str
 
 
 def check_data_staleness(
@@ -172,6 +203,173 @@ def get_staleness_warning() -> str | None:
         return f"⚠️ DATA STALE: {result.reason}"
 
     return None
+
+
+def _env_max_age_minutes(name: str, default_minutes: float) -> float:
+    raw = os.getenv(name, str(default_minutes)).strip()
+    try:
+        value = float(raw)
+        if value <= 0:
+            raise ValueError("must be > 0")
+        return value
+    except ValueError:
+        logger.warning("Invalid %s=%r, using default %.1f", name, raw, default_minutes)
+        return default_minutes
+
+
+def _parse_iso_datetime(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    candidate = value.replace("Z", "+00:00")
+    try:
+        parsed = datetime.fromisoformat(candidate)
+    except ValueError:
+        return None
+    return parsed.replace(tzinfo=None)
+
+
+def _extract_rag_query_index_last_sync(path: Path) -> str | None:
+    try:
+        lessons = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+
+    timestamps: list[datetime] = []
+    if isinstance(lessons, list):
+        for entry in lessons:
+            if not isinstance(entry, dict):
+                continue
+            for field in ("indexed_at_utc", "event_timestamp_utc", "source_mtime_utc"):
+                parsed = _parse_iso_datetime(str(entry.get(field) or ""))
+                if parsed:
+                    timestamps.append(parsed)
+                    break
+
+    if not timestamps:
+        return None
+    latest = max(timestamps)
+    return latest.isoformat() + "Z"
+
+
+def _extract_context_index_last_sync(path: Path) -> str | None:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+
+    if not isinstance(payload, dict):
+        return None
+    built_at = payload.get("built_at")
+    if not isinstance(built_at, str):
+        return None
+    parsed = _parse_iso_datetime(built_at)
+    if not parsed:
+        return None
+    return parsed.isoformat() + "Z"
+
+
+def _build_context_source(
+    *,
+    source: str,
+    path: Path,
+    max_age_minutes: float,
+    extractor: Callable[[Path], str | None] | None = None,
+) -> ContextFreshnessSource:
+    now = datetime.now()
+    if not path.exists():
+        return ContextFreshnessSource(
+            source=source,
+            path=str(path),
+            last_sync=None,
+            age_minutes=float("inf"),
+            max_age_minutes=max_age_minutes,
+            is_stale=True,
+            reason=f"{source} index is missing",
+        )
+
+    last_sync = extractor(path) if extractor else None
+    last_dt = _parse_iso_datetime(last_sync) if last_sync else None
+    if not last_dt:
+        file_dt = datetime.fromtimestamp(path.stat().st_mtime)
+        last_sync = file_dt.isoformat() + "Z"
+        last_dt = file_dt
+
+    age_minutes = (now - last_dt).total_seconds() / 60
+    is_stale = age_minutes > max_age_minutes
+    reason = (
+        f"{source} stale ({age_minutes:.1f}m > max {max_age_minutes:.1f}m)"
+        if is_stale
+        else f"{source} fresh ({age_minutes:.1f}m <= max {max_age_minutes:.1f}m)"
+    )
+    return ContextFreshnessSource(
+        source=source,
+        path=str(path),
+        last_sync=last_sync,
+        age_minutes=age_minutes,
+        max_age_minutes=max_age_minutes,
+        is_stale=is_stale,
+        reason=reason,
+    )
+
+
+def check_context_freshness(is_market_day: bool = True) -> ContextFreshnessResult:
+    """
+    Validate context indexes freshness using explicit SLO thresholds.
+
+    SLOs can be overridden through:
+    - RAG_QUERY_INDEX_MAX_AGE_MINUTES
+    - CONTEXT_INDEX_MAX_AGE_MINUTES
+    """
+    rag_max = _env_max_age_minutes("RAG_QUERY_INDEX_MAX_AGE_MINUTES", 7 * 24 * 60)
+    context_max = _env_max_age_minutes("CONTEXT_INDEX_MAX_AGE_MINUTES", 7 * 24 * 60)
+
+    sources = [
+        _build_context_source(
+            source="rag_query_index",
+            path=RAG_QUERY_INDEX_PATH,
+            max_age_minutes=rag_max,
+            extractor=_extract_rag_query_index_last_sync,
+        ),
+        _build_context_source(
+            source="context_engine_index",
+            path=CONTEXT_INDEX_PATH,
+            max_age_minutes=context_max,
+            extractor=_extract_context_index_last_sync,
+        ),
+    ]
+    stale_sources = [src.source for src in sources if src.is_stale]
+    is_stale = bool(stale_sources)
+    blocking = bool(is_stale and is_market_day)
+    reason = (
+        "Context freshness check passed"
+        if not is_stale
+        else f"Stale context indexes detected: {', '.join(stale_sources)}"
+    )
+
+    return ContextFreshnessResult(
+        is_stale=is_stale,
+        blocking=blocking,
+        checked_at=datetime.now().isoformat(),
+        stale_sources=stale_sources,
+        sources=sources,
+        reason=reason,
+    )
+
+
+def require_fresh_context(is_market_day: bool = True) -> bool:
+    """Raise when context freshness SLOs are violated on a market day."""
+    result = check_context_freshness(is_market_day=is_market_day)
+    if result.is_stale:
+        if result.blocking:
+            details = "; ".join(f"{source.source}: {source.reason}" for source in result.sources)
+            raise RuntimeError(
+                "Trading blocked due to stale context. "
+                f"{details}. Refresh with "
+                "'python scripts/build_rag_query_index.py' and "
+                "'python scripts/build_context_engine_index.py'."
+            )
+        logger.warning("Context stale but non-blocking check: %s", result.reason)
+    return True
 
 
 @dataclass

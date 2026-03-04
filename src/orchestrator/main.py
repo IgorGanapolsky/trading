@@ -42,6 +42,7 @@ from src.orchestrator.parallel_processor import (
     TickerOutcome,
     create_thread_safe_wrapper,
 )
+from src.orchestrator.run_status import update_run_status
 from src.orchestrator.session_manager import SessionManager
 from src.orchestrator.smart_dca import SmartDCAAllocator
 from src.orchestrator.telemetry import OrchestratorTelemetry
@@ -53,7 +54,7 @@ from src.risk.trade_gateway import RejectionReason, TradeGateway, TradeRequest
 from src.signals.microstructure_features import MicrostructureFeatureExtractor
 from src.utils.heartbeat import record_heartbeat
 from src.utils.regime_detector import RegimeDetector
-from src.utils.staleness_guard import check_data_staleness
+from src.utils.staleness_guard import check_context_freshness, check_data_staleness
 
 # Bull/Bear Debate Agents - Multi-perspective analysis (Dec 2025)
 # Based on UCLA/MIT TradingAgents research showing 42% CAGR improvement
@@ -453,7 +454,22 @@ class TradingOrchestrator:
         # caused system to claim "no trades" while 9 live orders existed
         session_profile = self._build_session_profile()
         is_market_day = session_profile.get("is_market_day", True)
+        run_id = self.telemetry.run_id or self.telemetry.session_id
 
+        def _emit_run_status(**kwargs: Any) -> None:
+            try:
+                update_run_status(**kwargs)
+            except Exception as exc:  # pragma: no cover - best effort telemetry
+                logger.debug("Run status write failed: %s", exc)
+
+        _emit_run_status(
+            run_id=run_id,
+            session_id=self.telemetry.session_id,
+            status="running",
+            phase="startup.preflight",
+            retry_count=0,
+            metadata={"source_control_plane": "orchestrator.main"},
+        )
         staleness = check_data_staleness(is_market_day=is_market_day)
         if staleness.is_stale and staleness.blocking:
             logger.error(
@@ -471,6 +487,13 @@ class TradingOrchestrator:
                     "last_updated": staleness.last_updated,
                 },
             )
+            _emit_run_status(
+                run_id=run_id,
+                session_id=self.telemetry.session_id,
+                status="blocked",
+                phase="startup.staleness_guard",
+                blocker_reason=staleness.reason,
+            )
             raise RuntimeError(
                 f"Trading blocked: {staleness.reason}. "
                 "Run 'python scripts/sync_alpaca_state.py' to refresh data."
@@ -479,6 +502,43 @@ class TradingOrchestrator:
             logger.warning("⚠️ STALENESS WARNING: %s", staleness.reason)
         else:
             logger.info("✅ Data freshness verified: %.1fh old", staleness.hours_old)
+
+        context_freshness = check_context_freshness(is_market_day=is_market_day)
+        if context_freshness.is_stale and context_freshness.blocking:
+            logger.error("⛔ CONTEXT FRESHNESS GUARD: %s", context_freshness.reason)
+            stale_details = [
+                {
+                    "source": src.source,
+                    "path": src.path,
+                    "last_sync": src.last_sync,
+                    "age_minutes": src.age_minutes,
+                    "max_age_minutes": src.max_age_minutes,
+                }
+                for src in context_freshness.sources
+                if src.is_stale
+            ]
+            self.telemetry.record(
+                event_type="context_freshness.blocked",
+                ticker="SYSTEM",
+                status="blocked",
+                payload={"reason": context_freshness.reason, "stale_sources": stale_details},
+            )
+            _emit_run_status(
+                run_id=run_id,
+                session_id=self.telemetry.session_id,
+                status="blocked",
+                phase="startup.context_freshness_guard",
+                blocker_reason=context_freshness.reason,
+            )
+            raise RuntimeError(
+                "Trading blocked due to stale context indexes. "
+                "Run 'python scripts/build_rag_query_index.py' and "
+                "'python scripts/build_context_engine_index.py'."
+            )
+        if context_freshness.is_stale:
+            logger.warning("⚠️ CONTEXT FRESHNESS WARNING: %s", context_freshness.reason)
+        else:
+            logger.info("✅ Context freshness verified")
 
         active_tickers = session_profile["tickers"]
         self.session_profile = session_profile
@@ -694,6 +754,14 @@ class TradingOrchestrator:
             )
         except Exception as e:
             logger.warning(f"Failed to record heartbeat: {e}")
+
+        _emit_run_status(
+            run_id=run_id,
+            session_id=self.telemetry.session_id,
+            status="completed",
+            phase="session.end",
+            retry_count=0,
+        )
 
     def _query_lessons_learned(self, context: str = "trading session") -> None:
         """

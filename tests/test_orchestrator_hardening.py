@@ -8,8 +8,10 @@ class TestOrchestratorHardening:
     """Additional unit tests to increase coverage of src/orchestrator/main.py."""
 
     @pytest.fixture
-    def mock_trader(self):
+    def mock_trader(self, monkeypatch):
         """Initialize TradingOrchestrator with mocked dependencies."""
+        monkeypatch.setenv("RAG_QUERY_INDEX_MAX_AGE_MINUTES", "999999")
+        monkeypatch.setenv("CONTEXT_INDEX_MAX_AGE_MINUTES", "999999")
         with (
             patch("src.orchestrator.main.AlpacaExecutor"),
             patch("src.orchestrator.main.MomentumAgent"),

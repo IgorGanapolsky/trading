@@ -9,6 +9,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from src.orchestrator.run_status import update_run_status
+
 logger = logging.getLogger(__name__)
 
 # Tax configuration
@@ -28,12 +30,24 @@ class OrchestratorTelemetry:
         self.log_path = Path(log_path) if log_path else default_path
         self.log_path.parent.mkdir(parents=True, exist_ok=True)
         self.session_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
-        self.run_id = os.getenv("GITHUB_RUN_ID") or os.getenv("RUN_ID")
+        self.run_id = os.getenv("GITHUB_RUN_ID") or os.getenv("RUN_ID") or self.session_id
 
         # Session decision tracking
         self.session_start_time = datetime.now(timezone.utc)
         self.session_decisions: dict[str, dict[str, Any]] = {}
         self.orders_placed = 0
+
+        try:
+            update_run_status(
+                run_id=self.run_id,
+                session_id=self.session_id,
+                status="running",
+                phase="telemetry.init",
+                retry_count=0,
+                metadata={"source_control_plane": "orchestrator.telemetry"},
+            )
+        except Exception as exc:  # pragma: no cover - defensive logging only
+            logger.debug("Run status init write failed: %s", exc)
 
     def start_ticker_decision(self, ticker: str) -> None:
         """Initialize tracking for a ticker evaluation."""
@@ -148,8 +162,9 @@ class OrchestratorTelemetry:
         print("=" * 70 + "\n")
 
     def record(self, event_type: str, ticker: str, status: str, payload: dict[str, Any]) -> None:
+        now_iso = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         entry = {
-            "ts": datetime.now(timezone.utc).isoformat(),
+            "ts": now_iso,
             "session": self.session_id,
             "run_id": self.run_id,
             "event": event_type,
@@ -162,6 +177,37 @@ class OrchestratorTelemetry:
                 handle.write(json.dumps(entry, default=str) + "\n")
         except Exception as exc:  # pragma: no cover - best effort logging
             logger.warning("Telemetry write failed: %s", exc)
+
+        normalized_status = "running"
+        blocker_reason = None
+        retry_count = 0
+
+        if status in {"error", "failed"}:
+            normalized_status = "retrying"
+            attempts = payload.get("attempts", [])
+            if isinstance(attempts, list) and attempts:
+                retry_count = max(0, len(attempts) - 1)
+                if isinstance(attempts[-1], dict):
+                    blocker_reason = str(attempts[-1].get("error") or "")
+        elif status == "blocked":
+            normalized_status = "blocked"
+            blocker_reason = str(payload.get("reason") or payload.get("message") or "")
+        elif event_type.startswith("session.end"):
+            normalized_status = "completed"
+
+        try:
+            update_run_status(
+                run_id=self.run_id,
+                session_id=self.session_id,
+                status=normalized_status,
+                phase=event_type,
+                retry_count=retry_count,
+                blocker_reason=blocker_reason,
+                last_heartbeat_utc=now_iso,
+                metadata={"last_telemetry_ticker": ticker},
+            )
+        except Exception as exc:  # pragma: no cover - defensive logging only
+            logger.debug("Run status update failed: %s", exc)
 
     def gate_pass(self, gate: str, ticker: str, payload: dict[str, Any]) -> None:
         self.record(event_type=f"gate.{gate}", ticker=ticker, status="pass", payload=payload)

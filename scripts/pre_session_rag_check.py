@@ -42,6 +42,8 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from src.utils.staleness_guard import check_context_freshness
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -228,6 +230,26 @@ def main():
 
     has_critical_recent = False
     has_high_recent = False
+    stale_context_block = False
+    context_block_reasons: list[str] = []
+
+    # 0. Freshness SLO check for deterministic RAG/context state
+    print("⏱️  Verifying context freshness SLOs...")
+    context = check_context_freshness(is_market_day=True)
+    if context.is_stale:
+        print(f"   ❌ {context.reason}")
+        for source in context.sources:
+            freshness = "STALE" if source.is_stale else "fresh"
+            print(
+                f"   - {source.source}: {freshness} | "
+                f"last_sync={source.last_sync or 'unknown'} | "
+                f"age={source.age_minutes:.1f}m | max_age={source.max_age_minutes:.1f}m"
+            )
+        if context.blocking and not args.no_block:
+            stale_context_block = True
+            context_block_reasons.append(context.reason)
+    else:
+        print("   ✅ Context freshness SLOs satisfied")
 
     # 1. Check for CRITICAL and HIGH lessons (direct file search)
     # If --allow-warnings, only check CRITICAL. Otherwise check both.
@@ -307,16 +329,22 @@ def main():
         should_block = True
         block_reason.append("HIGH severity recent issues detected")
 
+    if stale_context_block:
+        should_block = True
+        block_reason.extend(context_block_reasons)
+
     # Apply --no-block override
     if args.no_block:
         should_block = False
 
     # Display summary
-    if has_critical_recent or has_high_recent:
+    if has_critical_recent or has_high_recent or stale_context_block:
         if has_critical_recent:
             print("🚨 CRITICAL RECENT FAILURES DETECTED!")
         if has_high_recent:
             print("⚠️  HIGH SEVERITY RECENT ISSUES DETECTED!")
+        if stale_context_block:
+            print("⛔ CONTEXT FRESHNESS SLO FAILED!")
 
         print("   Review these lessons before trading to avoid repeating mistakes.")
 

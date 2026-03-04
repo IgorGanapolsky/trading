@@ -873,6 +873,38 @@ def main() -> None:
     load_dotenv()
     init_sentry()
     logger = setup_logging()
+    from src.orchestrator.run_status import update_run_status
+
+    control_session_id = datetime.utcnow().strftime("%Y%m%dT%H%M%S")
+    control_run_id = (
+        os.getenv("GITHUB_RUN_ID")
+        or os.getenv("RUN_ID")
+        or datetime.utcnow().strftime("local-%Y%m%dT%H%M%S")
+    )
+
+    def _emit_run_status(
+        *,
+        status: str,
+        phase: str,
+        retry_count: int = 0,
+        blocker_reason: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
+        try:
+            update_run_status(
+                run_id=control_run_id,
+                session_id=control_session_id,
+                status=status,
+                phase=phase,
+                retry_count=retry_count,
+                blocker_reason=blocker_reason,
+                last_heartbeat_utc=datetime.utcnow().isoformat() + "Z",
+                metadata=metadata or {"source_control_plane": "scripts.autonomous_trader"},
+            )
+        except Exception as exc:
+            logger.debug("Run status update failed: %s", exc)
+
+    _emit_run_status(status="running", phase="bootstrap.init")
 
     # Dynamic budget scaling: adjust DAILY_INVESTMENT based on account equity
     # This enables the system to scale towards $100/day profit goal
@@ -920,9 +952,15 @@ def main() -> None:
             logger.info("Prediction-only mode requested - executing Kalshi trading.")
             execute_prediction_trading()
             logger.info("Prediction trading session completed.")
+            _emit_run_status(status="completed", phase="prediction_only.completed")
             return
         else:
             logger.warning("Prediction-only requested but ENABLE_PREDICTION_MARKETS is not true.")
+            _emit_run_status(
+                status="blocked",
+                phase="prediction_only.blocked",
+                blocker_reason="ENABLE_PREDICTION_MARKETS is false",
+            )
             return
 
     should_run_prediction = not args.skip_prediction and prediction_allowed
@@ -935,6 +973,7 @@ def main() -> None:
             execute_prediction_trading()
             logger.info("Prediction trading session completed.")
         logger.info("Markets closed - skipping equity trading.")
+        _emit_run_status(status="completed", phase="market_closed.no_equity_run")
         return
 
     # Normal stock trading - import only when needed
@@ -980,11 +1019,21 @@ def main() -> None:
     RETRY_DELAY = 5  # Reduced from 30 to 5 seconds for faster CI feedback
 
     for attempt in range(1, MAX_RETRIES + 1):
+        _emit_run_status(
+            status="running",
+            phase=f"orchestrator.attempt_{attempt}.start",
+            retry_count=max(0, attempt - 1),
+        )
         try:
             logger.info(f"Attempt {attempt}/{MAX_RETRIES}: Starting hybrid funnel orchestrator...")
             orchestrator = TradingOrchestrator(tickers=tickers)
             orchestrator.run()
             print("::notice::1/5 Trading completed OK", flush=True)
+            _emit_run_status(
+                status="running",
+                phase=f"orchestrator.attempt_{attempt}.success",
+                retry_count=max(0, attempt - 1),
+            )
             break
         except Exception as e:
             print(
@@ -993,11 +1042,23 @@ def main() -> None:
             )
             logger.error(f"❌ Attempt {attempt} failed: {e}", exc_info=True)
             if attempt < MAX_RETRIES:
+                _emit_run_status(
+                    status="retrying",
+                    phase=f"orchestrator.attempt_{attempt}.failed",
+                    retry_count=attempt,
+                    blocker_reason=f"{type(e).__name__}: {e}",
+                )
                 logger.info(f"Retrying in {RETRY_DELAY} seconds...")
                 import time
 
                 time.sleep(RETRY_DELAY)
             else:
+                _emit_run_status(
+                    status="failed",
+                    phase=f"orchestrator.attempt_{attempt}.failed",
+                    retry_count=attempt,
+                    blocker_reason=f"{type(e).__name__}: {e}",
+                )
                 logger.critical(
                     f"❌ CRITICAL: All {MAX_RETRIES} attempts failed. Trading session crashed."
                 )
@@ -1078,6 +1139,7 @@ def main() -> None:
         execute_precious_metals_trading()
         logger.info("Precious metals trading session completed.")
 
+    _emit_run_status(status="completed", phase="session.complete")
     print("::notice::3/5 main() returning", flush=True)
 
 
