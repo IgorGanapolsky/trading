@@ -23,8 +23,9 @@ permissions:
 # Prevent duplicate CI runs on same branch
 concurrency:
   group: ci-${{ github.ref }}
-  # Always prefer newest commit and cancel superseded runs, including on main.
-  cancel-in-progress: true
+  # On PR branches, prefer newest commit and cancel superseded runs.
+  # On main, allow run completion; stale-run-guard handles different-SHA cleanup.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
