@@ -169,13 +169,29 @@ def sync_from_alpaca() -> dict | None:
             from alpaca.trading.enums import QueryOrderStatus
             from alpaca.trading.requests import GetOrdersRequest
 
+            orders_client = None
+            trader = getattr(executor, "trader", None)
+            if trader is not None:
+                if hasattr(trader, "get_orders"):
+                    orders_client = trader
+                elif hasattr(trader, "trading_client"):
+                    orders_client = trader.trading_client
+
+            if orders_client is None:
+                from src.utils.alpaca_client import get_alpaca_client
+
+                orders_client = get_alpaca_client(paper=True)
+
+            if orders_client is None or not hasattr(orders_client, "get_orders"):
+                raise AttributeError("No Alpaca orders client available for trade-history sync")
+
             try:
-                orders = executor.client.get_orders(
+                orders = orders_client.get_orders(
                     filter=GetOrdersRequest(status=QueryOrderStatus.CLOSED, limit=200, nested=True)
                 )
             except TypeError:
                 # Backward compatibility with older alpaca-py request schema.
-                orders = executor.client.get_orders(
+                orders = orders_client.get_orders(
                     filter=GetOrdersRequest(status=QueryOrderStatus.CLOSED, limit=200)
                 )
 
