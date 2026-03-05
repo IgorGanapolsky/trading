@@ -118,3 +118,121 @@ def test_milestone_snapshot_activates_family_with_positive_edge(tmp_path):
     assert options_state["status"] == "active"
     assert 0.0 <= snapshot["north_star_probability"]["score"] <= 100.0
     assert snapshot["north_star_probability"]["target_date"] is None
+
+
+def test_north_star_score_is_stable_across_lifetime_day_growth(tmp_path):
+    state_path = tmp_path / "system_state.json"
+    trades_path = tmp_path / "trades.json"
+
+    trades = []
+    for idx in range(20):
+        is_win = idx < 16
+        trades.append(
+            {
+                "id": f"s{idx}",
+                "strategy": "iron_condor",
+                "status": "closed",
+                "realized_pnl": 55.0 if is_win else -20.0,
+                "outcome": "win" if is_win else "loss",
+                "exit_date": f"2026-02-{(idx % 20) + 1:02d}",
+            }
+        )
+    _write_json(trades_path, {"trades": trades})
+
+    _write_json(
+        state_path,
+        {
+            "paper_account": {"equity": 125000, "win_rate": 80.0, "win_rate_sample_size": 20},
+            "paper_trading": {"current_day": 90},
+            "north_star_weekly_gate": {
+                "cadence_kpi": {
+                    "passed": True,
+                    "qualified_setups_observed": 4,
+                    "closed_trades_observed": 3,
+                    "min_qualified_setups_per_week": 4,
+                    "min_closed_trades_per_week": 3,
+                }
+            },
+        },
+    )
+    snapshot_90 = compute_milestone_snapshot(state_path=state_path, trades_path=trades_path)
+
+    _write_json(
+        state_path,
+        {
+            "paper_account": {"equity": 125000, "win_rate": 80.0, "win_rate_sample_size": 20},
+            "paper_trading": {"current_day": 180},
+            "north_star_weekly_gate": {
+                "cadence_kpi": {
+                    "passed": True,
+                    "qualified_setups_observed": 4,
+                    "closed_trades_observed": 3,
+                    "min_qualified_setups_per_week": 4,
+                    "min_closed_trades_per_week": 3,
+                }
+            },
+        },
+    )
+    snapshot_180 = compute_milestone_snapshot(state_path=state_path, trades_path=trades_path)
+
+    score_90 = snapshot_90["north_star_probability"]["score"]
+    score_180 = snapshot_180["north_star_probability"]["score"]
+    assert abs(score_90 - score_180) < 2.0
+
+
+def test_cadence_score_changes_gradually_near_threshold(tmp_path):
+    state_path = tmp_path / "system_state.json"
+    trades_path = tmp_path / "trades.json"
+
+    _write_json(
+        trades_path,
+        {
+            "trades": [
+                {
+                    "strategy": "iron_condor",
+                    "status": "closed",
+                    "realized_pnl": 40.0,
+                    "outcome": "win",
+                    "exit_date": f"2026-02-{idx + 1:02d}",
+                }
+                for idx in range(10)
+            ]
+        },
+    )
+
+    base_state = {
+        "paper_account": {"equity": 110000, "win_rate": 80.0, "win_rate_sample_size": 10},
+        "paper_trading": {"current_day": 80},
+    }
+
+    below = dict(base_state)
+    below["north_star_weekly_gate"] = {
+        "cadence_kpi": {
+            "passed": False,
+            "qualified_setups_observed": 3,
+            "closed_trades_observed": 2,
+            "min_qualified_setups_per_week": 4,
+            "min_closed_trades_per_week": 3,
+        }
+    }
+    _write_json(state_path, below)
+    score_below = compute_milestone_snapshot(
+        state_path=state_path, trades_path=trades_path
+    )["north_star_probability"]["score"]
+
+    near = dict(base_state)
+    near["north_star_weekly_gate"] = {
+        "cadence_kpi": {
+            "passed": False,
+            "qualified_setups_observed": 4,
+            "closed_trades_observed": 2,
+            "min_qualified_setups_per_week": 4,
+            "min_closed_trades_per_week": 3,
+        }
+    }
+    _write_json(state_path, near)
+    score_near = compute_milestone_snapshot(
+        state_path=state_path, trades_path=trades_path
+    )["north_star_probability"]["score"]
+
+    assert 0 <= score_near - score_below < 8.0

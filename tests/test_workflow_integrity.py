@@ -400,6 +400,48 @@ class WorkflowIntegrityTests:
 
         return True, "Secrets validation properly fails workflow"
 
+    def test_event_router_handles_cancelled_and_timed_out_ci(self) -> tuple[bool, str]:
+        workflow_path = self.workflows_dir / "event-router.yml"
+        if not workflow_path.exists():
+            return False, "event-router.yml not found"
+        content = workflow_path.read_text()
+        required = [
+            "workflow_run.conclusion == 'failure'",
+            "workflow_run.conclusion == 'cancelled'",
+            "workflow_run.conclusion == 'timed_out'",
+        ]
+        missing = [item for item in required if item not in content]
+        if missing:
+            return False, f"event-router missing CI conclusions: {', '.join(missing)}"
+        return True, "Event router handles failure/cancelled/timed_out CI outcomes"
+
+    def test_ci_stale_run_watchdog_exists(self) -> tuple[bool, str]:
+        workflow_path = self.workflows_dir / "ci-stale-run-watchdog.yml"
+        if not workflow_path.exists():
+            return False, "ci-stale-run-watchdog.yml missing"
+        content = workflow_path.read_text()
+        required_markers = ["listWorkflowRunsForRepo", "cancelWorkflowRun", "\"queued\", \"in_progress\""]
+        missing = [item for item in required_markers if item not in content]
+        if missing:
+            return False, f"Watchdog missing required logic markers: {', '.join(missing)}"
+        return True, "CI stale run watchdog is present with cancel logic"
+
+    def test_ci_jobs_have_timeouts(self) -> tuple[bool, str]:
+        workflow_path = self.workflows_dir / "ci.yml"
+        if not workflow_path.exists():
+            return False, "ci.yml not found"
+        workflow = load_workflow(workflow_path)
+        jobs = workflow.get("jobs", {}) if isinstance(workflow, dict) else {}
+        missing: list[str] = []
+        for job_id, job_def in jobs.items():
+            if not isinstance(job_def, dict):
+                continue
+            if "timeout-minutes" not in job_def:
+                missing.append(str(job_id))
+        if missing:
+            return False, f"CI jobs missing timeout-minutes: {', '.join(sorted(missing))}"
+        return True, "All CI jobs define timeout-minutes"
+
     def run_all(self) -> list[tuple[str, bool, str]]:
         """Run all integrity tests."""
         tests = [
@@ -414,6 +456,12 @@ class WorkflowIntegrityTests:
                 "Secrets Validation Fails Workflow",
                 self.test_secrets_validation_fails_workflow,
             ),
+            (
+                "Event Router Handles CI Timeout/Cancellation",
+                self.test_event_router_handles_cancelled_and_timed_out_ci,
+            ),
+            ("CI Stale Run Watchdog Exists", self.test_ci_stale_run_watchdog_exists),
+            ("CI Jobs Have Timeouts", self.test_ci_jobs_have_timeouts),
         ]
 
         results = []

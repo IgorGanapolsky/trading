@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -169,6 +169,19 @@ def _extract_closed_trades(
     return rows
 
 
+def _parse_closed_at(value: Any) -> datetime | None:
+    raw = str(value or "").strip()
+    if not raw:
+        return None
+    try:
+        if len(raw) == 10 and raw[4] == "-" and raw[7] == "-":
+            return datetime.strptime(raw, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+    except ValueError:
+        return None
+
+
 def _metrics_for_family(
     family: str,
     closed_trades: list[dict[str, Any]],
@@ -180,6 +193,15 @@ def _metrics_for_family(
     losses = sum(1 for row in family_rows if row.get("outcome") == "loss")
     total_pnl = sum(_as_float(row.get("pnl"), 0.0) for row in family_rows)
 
+    closed_times = [_parse_closed_at(row.get("closed_at")) for row in family_rows]
+    closed_times = [value for value in closed_times if value is not None]
+    window_days = 0.0
+    if closed_times:
+        earliest = min(closed_times)
+        latest = max(closed_times)
+        # Include both boundary days to avoid dividing by 0 on same-day closures.
+        window_days = max(1.0, ((latest - earliest).total_seconds() / 86400.0) + 1.0)
+
     metrics: dict[str, Any] = {
         "samples": samples,
         "wins": wins,
@@ -187,6 +209,7 @@ def _metrics_for_family(
         "total_pnl": round(total_pnl, 2),
         "win_rate_pct": round((wins / samples) * 100.0, 2) if samples > 0 else None,
         "expectancy": round(total_pnl / samples, 4) if samples > 0 else None,
+        "window_days": round(window_days, 2) if samples > 0 else None,
         "evidence_source": "trades.json" if samples > 0 else "none",
     }
 
@@ -275,10 +298,15 @@ def _estimate_annual_edge_from_expectancy(
     samples: int,
     paper_day: int,
     equity: float,
+    window_days: float | None = None,
 ) -> float:
     if expectancy is None or samples <= 0 or paper_day <= 0 or equity <= 0:
         return 0.0
-    trades_per_day = samples / max(1, paper_day)
+    if window_days and window_days > 0:
+        # Use rolling-window cadence with a 7-day floor to avoid one-trade overreaction.
+        trades_per_day = samples / max(7.0, float(window_days))
+    else:
+        trades_per_day = samples / max(1, paper_day)
     expected_daily_pnl = float(expectancy) * trades_per_day
     return (expected_daily_pnl * 252.0) / equity
 
@@ -287,10 +315,14 @@ def _estimate_monthly_after_tax_from_expectancy(
     expectancy: float | None,
     samples: int,
     paper_day: int,
+    window_days: float | None = None,
 ) -> float:
     if expectancy is None or samples <= 0 or paper_day <= 0:
         return 0.0
-    trades_per_day = samples / max(1, paper_day)
+    if window_days and window_days > 0:
+        trades_per_day = samples / max(7.0, float(window_days))
+    else:
+        trades_per_day = samples / max(1, paper_day)
     expected_daily_pnl = float(expectancy) * trades_per_day
     return max(0.0, expected_daily_pnl * 21.0)
 
@@ -312,8 +344,11 @@ def _north_star_probability(
     win_rate = primary_metrics.get("win_rate_pct")
     expectancy = primary_metrics.get("expectancy")
     samples = _as_int(primary_metrics.get("samples"), 0)
+    window_days = _as_float(primary_metrics.get("window_days"), 0.0)
     weekly_gate = state.get("north_star_weekly_gate", {}) if isinstance(state, dict) else {}
     cadence_kpi = weekly_gate.get("cadence_kpi") if isinstance(weekly_gate, dict) else {}
+    if not isinstance(cadence_kpi, dict):
+        cadence_kpi = {}
     cadence_passed = (
         _as_bool(cadence_kpi.get("passed"), default=False)
         if isinstance(cadence_kpi, dict)
@@ -325,9 +360,11 @@ def _north_star_probability(
         else 0
     )
 
-    estimated_cagr = _estimate_annual_edge_from_expectancy(expectancy, samples, paper_day, equity)
+    estimated_cagr = _estimate_annual_edge_from_expectancy(
+        expectancy, samples, paper_day, equity, window_days=window_days
+    )
     estimated_monthly_after_tax = _estimate_monthly_after_tax_from_expectancy(
-        expectancy, samples, paper_day
+        expectancy, samples, paper_day, window_days=window_days
     )
     monthly_progress_ratio = (
         estimated_monthly_after_tax / DEFAULT_MONTHLY_AFTER_TAX_TARGET
@@ -351,12 +388,16 @@ def _north_star_probability(
     else:
         edge_score = max(0.0, min(100.0, (expectancy_val / 50.0) * 100.0))
 
+    min_setups = _as_int(cadence_kpi.get("min_qualified_setups_per_week"), 0)
+    min_closes = _as_int(cadence_kpi.get("min_closed_trades_per_week"), 0)
+    close_obs = _as_int(cadence_kpi.get("closed_trades_observed"), 0)
+    setup_ratio = cadence_setups / max(1, min_setups) if min_setups > 0 else 0.0
+    close_ratio = close_obs / max(1, min_closes) if min_closes > 0 else 0.0
+    cadence_progress = min(1.0, 0.5 * min(1.0, setup_ratio) + 0.5 * min(1.0, close_ratio))
     if cadence_passed:
         cadence_score = 100.0
-    elif cadence_setups > 0:
-        cadence_score = 45.0
     else:
-        cadence_score = 15.0
+        cadence_score = 15.0 + (cadence_progress * 70.0)
 
     score = round(
         (0.4 * trajectory_score) + (0.25 * win_score) + (0.2 * edge_score) + (0.15 * cadence_score),

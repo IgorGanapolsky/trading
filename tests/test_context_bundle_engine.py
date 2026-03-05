@@ -88,3 +88,39 @@ def test_build_index_skips_untracked_sources_when_git_tracked_paths_present(tmp_
 
     assert built["doc_count"] == 1
     assert built["sources"] == {"rag_query": 1}
+
+
+def test_rag_query_loader_accepts_event_timestamp_schema(tmp_path: Path, monkeypatch) -> None:
+    project = tmp_path / "project"
+    lessons_dir = project / "rag_knowledge" / "lessons_learned"
+    lessons_dir.mkdir(parents=True)
+    (lessons_dir / "ll_001.md").write_text("# title", encoding="utf-8")
+
+    rag_dir = project / "data" / "rag"
+    rag_dir.mkdir(parents=True)
+    (rag_dir / "lessons_query.json").write_text(
+        json.dumps(
+            [
+                {
+                    "id": "rq-evt",
+                    "title": "Schema compatibility",
+                    "content": "Uses event timestamp field.",
+                    "tags": ["rag"],
+                    "event_timestamp_utc": "2026-03-05T17:00:00Z",
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    engine = ContextBundleEngine(project_root=project)
+    engine._git_tracked_paths = {"data/rag/lessons_query.json", "rag_knowledge/lessons_learned/ll_001.md"}
+    monkeypatch.delenv("RAG_WRITE_PROFILE", raising=False)
+    built = engine.build_index(top_per_source=50)
+
+    index_path = project / "data" / "context_engine" / "context_index.json"
+    payload = json.loads(index_path.read_text(encoding="utf-8"))
+    rag_doc = next(doc for doc in payload["docs"] if doc["source"] == "rag_query")
+
+    assert built["doc_count"] >= 1
+    assert rag_doc["timestamp"] == "2026-03-05T17:00:00Z"

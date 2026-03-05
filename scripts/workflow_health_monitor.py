@@ -40,6 +40,12 @@ ET = ZoneInfo("America/New_York")
 
 # Workflow schedules (expected execution times)
 WORKFLOW_SCHEDULES = {
+    "ci": {
+        "name": "Main CI",
+        "schedule": "weekdays",  # Expected on active development days
+        "time_et": "12:00",
+        "critical": True,
+    },
     "daily-trading": {
         "name": "Daily Trading Execution",
         "schedule": "weekdays",  # Mon-Fri
@@ -142,10 +148,10 @@ class WorkflowHealthMonitor:
 
         return expected
 
-    def get_actual_executions(self, workflow_id: str, days: int = 7) -> list[datetime]:
-        """Get actual execution times from log."""
+    def get_execution_records(self, workflow_id: str, days: int = 7) -> list[dict[str, Any]]:
+        """Get execution records from log."""
         cutoff = datetime.now(tz=ET) - timedelta(days=days)
-        actual = []
+        records: list[dict[str, Any]] = []
 
         for execution in self.executions.get(workflow_id, []):
             try:
@@ -154,12 +160,12 @@ class WorkflowHealthMonitor:
                     exec_time = exec_time.replace(tzinfo=ET)
                 else:
                     exec_time = exec_time.astimezone(ET)
-                if exec_time >= cutoff and execution.get("status") == "success":
-                    actual.append(exec_time)
+                if exec_time >= cutoff:
+                    records.append({"timestamp": exec_time, "status": execution.get("status", "unknown")})
             except Exception:
                 continue
 
-        return actual
+        return records
 
     def check_health(self, days: int = 7) -> dict[str, Any]:
         """
@@ -178,16 +184,24 @@ class WorkflowHealthMonitor:
 
         for workflow_id, schedule in WORKFLOW_SCHEDULES.items():
             expected = self.get_expected_executions(workflow_id, days)
-            actual = self.get_actual_executions(workflow_id, days)
+            records = self.get_execution_records(workflow_id, days)
+            actual = [row["timestamp"] for row in records if row.get("status") != "skipped"]
+            success_count = sum(1 for row in records if row.get("status") == "success")
+            failed_count = sum(
+                1
+                for row in records
+                if row.get("status") in {"failure", "cancelled", "timed_out"}
+            )
 
             expected_count = len(expected)
             actual_count = len(actual)
             execution_rate = actual_count / expected_count if expected_count > 0 else 0
+            success_rate = success_count / max(1, actual_count)
 
             # Determine status
-            if execution_rate >= 0.9:
+            if execution_rate >= 0.9 and success_rate >= 0.85:
                 status = "HEALTHY"
-            elif execution_rate >= 0.5:
+            elif execution_rate >= 0.5 and success_rate >= 0.6:
                 status = "DEGRADED"
             else:
                 status = "CRITICAL"
@@ -197,7 +211,10 @@ class WorkflowHealthMonitor:
                 "status": status,
                 "expected_executions": expected_count,
                 "actual_executions": actual_count,
+                "success_executions": success_count,
+                "failed_executions": failed_count,
                 "execution_rate": round(execution_rate * 100, 1),
+                "success_rate": round(success_rate * 100, 1),
                 "last_execution": None,
                 "missed_dates": [],
             }
@@ -224,6 +241,9 @@ class WorkflowHealthMonitor:
                 }
                 report["alerts"].append(alert)
                 report["overall_health"] = "CRITICAL"
+            elif status == "CRITICAL":
+                if report["overall_health"] == "HEALTHY":
+                    report["overall_health"] = "DEGRADED"
             elif status == "DEGRADED":
                 if report["overall_health"] != "CRITICAL":
                     report["overall_health"] = "DEGRADED"
@@ -256,6 +276,11 @@ class WorkflowHealthMonitor:
             print(f"   Status: {health['status']}")
             print(
                 f"   Executions: {health['actual_executions']}/{health['expected_executions']} ({health['execution_rate']}%)"
+            )
+            print(
+                f"   Outcomes: {health.get('success_executions', 0)} success / "
+                f"{health.get('failed_executions', 0)} failed "
+                f"(success rate {health.get('success_rate', 0)}%)"
             )
             if health["last_execution"]:
                 print(f"   Last Run: {health['last_execution']}")
@@ -290,7 +315,7 @@ def main():
         "--status",
         type=str,
         default="success",
-        choices=["success", "failure", "skipped"],
+        choices=["success", "failure", "cancelled", "timed_out", "queued", "in_progress", "skipped"],
         help="Status of recorded execution",
     )
     parser.add_argument(

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import re
 import subprocess
 from collections import Counter
@@ -376,7 +377,15 @@ class ContextBundleEngine:
         return docs
 
     def _load_rag_query_json(self, *, top_per_source: int) -> list[BundleDoc]:
-        path = self.project_root / "data" / "rag" / "lessons_query.json"
+        profile = os.getenv("RAG_WRITE_PROFILE", "").strip().lower()
+        repo_path = self.project_root / "data" / "rag" / "lessons_query.json"
+        local_path = self.project_root / "artifacts" / "local" / "rag" / "lessons_query.json"
+        if profile == "repo":
+            path = repo_path
+        elif profile == "local":
+            path = local_path
+        else:
+            path = repo_path if repo_path.exists() else local_path
         if not path.exists() or not self._is_git_tracked(path):
             return []
         try:
@@ -396,7 +405,12 @@ class ContextBundleEngine:
                     title=str(item.get("title") or "RAG Lesson"),
                     text=_normalize_text(str(item.get("content") or "")),
                     tags=[str(tag) for tag in item.get("tags", []) if isinstance(tag, str)],
-                    timestamp=item.get("timestamp"),
+                    timestamp=(
+                        item.get("timestamp")
+                        or item.get("event_timestamp_utc")
+                        or item.get("indexed_at_utc")
+                        or item.get("source_mtime_utc")
+                    ),
                     metadata={"rank": item.get("rank"), "source": item.get("source")},
                 )
             )

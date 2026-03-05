@@ -35,6 +35,7 @@ jobs:
   stale-run-guard:
     name: Stale Run Guard
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Cancel superseded CI runs on main
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -88,6 +89,7 @@ jobs:
   lint:
     name: Lint & Format
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
@@ -128,6 +130,7 @@ jobs:
   agent-handoff-gate:
     name: Agent Handoff Gate
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
@@ -187,6 +190,7 @@ jobs:
   workflow-validation:
     name: Validate Workflows
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -225,6 +229,7 @@ jobs:
     name: North Star Cadence KPI Alert
     runs-on: ubuntu-latest
     needs: workflow-validation
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -317,6 +322,7 @@ jobs:
     name: Smoke Test
     runs-on: ubuntu-latest
     needs: tests
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -378,6 +384,7 @@ jobs:
     name: Integration Tests (P1)
     runs-on: ubuntu-latest
     needs: smoke
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -402,6 +409,7 @@ jobs:
   test:
     name: Test Suite
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -436,6 +444,7 @@ jobs:
     name: Safety Gate Tests
     runs-on: ubuntu-latest
     needs: test
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -472,6 +481,7 @@ jobs:
   security:
     name: Security Scan
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -493,6 +503,7 @@ jobs:
   type-check:
     name: Type Check
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -513,6 +524,7 @@ jobs:
   core-strategy-validation:
     name: Core Strategy Metric Validation
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     # Validating on all runs for safety instead of using invalid path filter
     # if: |
     #   contains(github.event.pull_request.files.*.path, 'src/strategies/core_strategy') ||
@@ -558,6 +570,7 @@ jobs:
   workflow-integrity:
     name: Workflow Integrity Check
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -589,6 +602,7 @@ jobs:
     name: Safety Matrix Tests
     runs-on: ubuntu-latest
     needs: test
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
 
@@ -640,6 +654,7 @@ jobs:
   syntax-and-imports:
     name: Syntax & Import Verification
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -695,6 +710,7 @@ jobs:
   anti-manual-check:
     name: Anti-Manual Mandate Check
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
@@ -716,6 +732,7 @@ jobs:
   dead-code-detection:
     name: Dead Code Detection
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -746,6 +763,7 @@ jobs:
   skill-validation:
     name: Skill Dependency Validation
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -773,6 +791,7 @@ jobs:
   github-pages-validation:
     name: GitHub Pages Link Validation
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -801,6 +820,7 @@ jobs:
   enforce-safe-wrappers:
     name: Enforce Safe Order Wrappers
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -866,6 +886,7 @@ jobs:
   # Enforce CLAUDE.md: No new markdown files (except allowed paths)
   check-no-new-markdown:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:

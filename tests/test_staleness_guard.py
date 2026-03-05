@@ -273,6 +273,27 @@ class TestContextFreshness:
         assert not result.is_stale
         assert not result.blocking
 
+    def test_check_context_freshness_fails_closed_on_corrupt_index(self, tmp_path, monkeypatch):
+        rag_path = tmp_path / "lessons_query.json"
+        context_path = tmp_path / "context_index.json"
+
+        rag_path.write_text("{not-json", encoding="utf-8")
+        context_path.write_text(
+            json.dumps({"built_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}),
+            encoding="utf-8",
+        )
+        monkeypatch.setenv("RAG_WRITE_PROFILE", "repo")
+        monkeypatch.setattr("src.utils.staleness_guard.RAG_QUERY_INDEX_PATH", rag_path)
+        monkeypatch.setattr("src.utils.staleness_guard.CONTEXT_INDEX_PATH", context_path)
+        monkeypatch.setenv("RAG_QUERY_INDEX_MAX_AGE_MINUTES", "120")
+        monkeypatch.setenv("CONTEXT_INDEX_MAX_AGE_MINUTES", "120")
+
+        result = check_context_freshness(is_market_day=True)
+        rag_source = next(source for source in result.sources if source.source == "rag_query_index")
+        assert result.is_stale
+        assert rag_source.is_stale
+        assert "parse failed" in rag_source.reason
+
     def test_check_context_freshness_handles_timezone_offsets(self, tmp_path, monkeypatch):
         rag_path = tmp_path / "lessons_query.json"
         context_path = tmp_path / "context_index.json"

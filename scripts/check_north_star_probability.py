@@ -15,8 +15,10 @@ def main():
     print("NORTH STAR PROBABILITY REPORT")
     print("=" * 60)
     print("Goal: $6,000/month after-tax")
-    print(f"Confidence Score: {ns.get('probability_score', 0):.1f}%")
-    print(f"Label: {ns.get('probability_label', 'unknown').upper()}")
+    score = float(ns.get("score", ns.get("probability_score", 0.0)) or 0.0)
+    label = str(ns.get("label", ns.get("probability_label", "unknown")) or "unknown")
+    print(f"Confidence Score: {score:.1f}%")
+    print(f"Label: {label.upper()}")
     print(f"Target Mode: {ns.get('target_mode', 'N/A')}")
     print(
         f"Estimated Monthly (Current Expectancy): ${ns.get('estimated_monthly_after_tax_from_expectancy', 0):.2f}"
@@ -26,8 +28,6 @@ def main():
     print("\n" + "=" * 60)
     print("CTO HONEST ASSESSMENT")
     print("=" * 60)
-    score = ns.get("probability_score", 0)
-
     if score > 80:
         print("✅ SYSTEM IS PROVEN. Trajectory is high-certainty.")
     elif score > 50:

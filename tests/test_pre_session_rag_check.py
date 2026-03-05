@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+from pathlib import Path
 from unittest.mock import patch
 
 from src.utils.staleness_guard import ContextFreshnessResult
@@ -61,3 +63,25 @@ def test_pre_session_allows_when_context_fresh_and_no_recent_lessons(monkeypatch
     monkeypatch.setattr(module.sys, "argv", ["pre_session_rag_check.py", "--allow-warnings"])
 
     assert module.main() == 0
+
+
+def test_check_recent_lessons_parses_markdown_severity_and_month_name_date(
+    tmp_path: Path, monkeypatch
+):
+    import scripts.pre_session_rag_check as module
+
+    lessons_dir = tmp_path / "rag_knowledge" / "lessons_learned"
+    lessons_dir.mkdir(parents=True)
+    lesson = lessons_dir / "ll_parser_case.md"
+    lesson.write_text(
+        "# Parser Case\n\n**Severity:** HIGH\n\n**Date:** January 22, 2026\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.chdir(tmp_path)
+    results = module.check_recent_critical_lessons(days_back=400, include_high=True)
+    hit = next((row for row in results if row["file"] == "ll_parser_case.md"), None)
+
+    assert hit is not None
+    assert hit["severity"] == "HIGH"
+    assert hit["date"] == datetime(2026, 1, 22)

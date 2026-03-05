@@ -33,7 +33,11 @@ jobs:
   # Route 1: CI Failure -> Self-Healing
   route-ci-failure:
     if: >
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure') ||
+      (github.event_name == 'workflow_run' && (
+        github.event.workflow_run.conclusion == 'failure' ||
+        github.event.workflow_run.conclusion == 'cancelled' ||
+        github.event.workflow_run.conclusion == 'timed_out'
+      )) ||
       (github.event_name == 'workflow_dispatch' && github.event.inputs.event_type == 'ci-failure')
     runs-on: ubuntu-latest
     steps:

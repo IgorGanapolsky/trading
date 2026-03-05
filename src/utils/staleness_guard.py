@@ -33,6 +33,7 @@ RAG_QUERY_INDEX_LOCAL_PATH = PROJECT_ROOT / "artifacts" / "local" / "rag" / "les
 # Backwards-compatible alias used by existing tests/patching hooks.
 RAG_QUERY_INDEX_PATH = RAG_QUERY_INDEX_REPO_PATH
 CONTEXT_INDEX_PATH = PROJECT_ROOT / "data" / "context_engine" / "context_index.json"
+_PARSE_ERROR_SENTINEL = "__PARSE_ERROR__"
 
 
 @dataclass
@@ -275,7 +276,9 @@ def _parse_iso_datetime(value: str | None) -> datetime | None:
 def _extract_rag_query_index_last_sync(path: Path) -> str | None:
     try:
         lessons = json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
+    except json.JSONDecodeError:
+        return _PARSE_ERROR_SENTINEL
+    except OSError:
         return None
 
     timestamps: list[datetime] = []
@@ -298,7 +301,9 @@ def _extract_rag_query_index_last_sync(path: Path) -> str | None:
 def _extract_context_index_last_sync(path: Path) -> str | None:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
+    except json.JSONDecodeError:
+        return _PARSE_ERROR_SENTINEL
+    except OSError:
         return None
 
     if not isinstance(payload, dict):
@@ -332,6 +337,16 @@ def _build_context_source(
         )
 
     last_sync = extractor(path) if extractor else None
+    if last_sync == _PARSE_ERROR_SENTINEL:
+        return ContextFreshnessSource(
+            source=source,
+            path=str(path),
+            last_sync=None,
+            age_minutes=float("inf"),
+            max_age_minutes=max_age_minutes,
+            is_stale=True,
+            reason=f"{source} index parse failed",
+        )
     last_dt = _parse_iso_datetime(last_sync) if last_sync else None
     if not last_dt:
         file_dt = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)

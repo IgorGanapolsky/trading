@@ -36,6 +36,8 @@ Exit Codes:
     1 - CRITICAL or HIGH issues found (trading blocked)
 """
 
+from __future__ import annotations
+
 import argparse
 import logging
 import os
@@ -50,6 +52,40 @@ from src.utils.staleness_guard import check_context_freshness
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 TRUTHY = {"1", "true", "yes", "on"}
+
+
+def _extract_severity(content: str) -> str | None:
+    normalized = re.sub(r"[*_`]", "", content)
+    match = re.search(r"\bseverity\b\s*:\s*(critical|high|medium|low)\b", normalized, flags=re.I)
+    if not match:
+        return None
+    return match.group(1).upper()
+
+
+def _parse_lesson_date(value: str) -> datetime | None:
+    text = re.sub(r"[*_`]", "", (value or "")).strip()
+    if not text:
+        return None
+    patterns = (
+        "%Y-%m-%d",
+        "%Y/%m/%d",
+        "%B %d, %Y",
+        "%b %d, %Y",
+        "%B %d %Y",
+        "%b %d %Y",
+    )
+    for fmt in patterns:
+        try:
+            return datetime.strptime(text, fmt)
+        except ValueError:
+            continue
+    iso_match = re.search(r"\d{4}-\d{2}-\d{2}", text)
+    if iso_match:
+        try:
+            return datetime.strptime(iso_match.group(0), "%Y-%m-%d")
+        except ValueError:
+            return None
+    return None
 
 
 def check_recent_critical_lessons(days_back: int = 7, include_high: bool = False) -> list[dict]:
@@ -74,23 +110,10 @@ def check_recent_critical_lessons(days_back: int = 7, include_high: bool = False
     for lesson_file in lessons_dir.glob("*.md"):
         try:
             content = lesson_file.read_text()
-            content_lower = content.lower()
 
-            # Check if CRITICAL severity
-            is_critical = (
-                "severity**: critical" in content_lower
-                or "severity: critical" in content_lower
-                or "**severity**: critical" in content_lower
-            )
-
-            # Check if HIGH severity (only if requested)
-            is_high = False
-            if include_high:
-                is_high = (
-                    "severity**: high" in content_lower
-                    or "severity: high" in content_lower
-                    or "**severity**: high" in content_lower
-                )
+            severity = _extract_severity(content)
+            is_critical = severity == "CRITICAL"
+            is_high = include_high and severity == "HIGH"
 
             if not (is_critical or is_high):
                 continue
@@ -102,13 +125,11 @@ def check_recent_critical_lessons(days_back: int = 7, include_high: bool = False
             for line in content.split("\n"):
                 if "date" not in line.lower():
                     continue
-                date_match = re.search(r"(\d{4}-\d{2}-\d{2})", line)
-                if date_match:
-                    try:
-                        lesson_date = datetime.strptime(date_match.group(1), "%Y-%m-%d")
-                    except ValueError:
-                        pass
-                break
+                after_colon = line.split(":", 1)[1] if ":" in line else line
+                parsed = _parse_lesson_date(after_colon)
+                if parsed:
+                    lesson_date = parsed
+                    break
 
             # Also check file modification time as fallback
             file_mtime = datetime.fromtimestamp(lesson_file.stat().st_mtime)

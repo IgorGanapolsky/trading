@@ -1,0 +1,81 @@
+name: CI Stale Run Watchdog
+
+on:
+  schedule:
+    - cron: "*/20 * * * 1-5"
+  workflow_dispatch:
+    inputs:
+      stale_minutes:
+        description: "Cancel CI runs on main older than this many minutes"
+        required: false
+        default: "90"
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: ci-stale-watchdog
+  cancel-in-progress: true
+
+jobs:
+  cancel-stale-main-ci:
+    name: Cancel stale queued/in-progress CI on main
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Cancel stale runs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const staleMinutesInput = context.payload.inputs?.stale_minutes;
+            const staleMinutes = Number(staleMinutesInput || "90");
+            const now = Date.now();
+            const staleMs = staleMinutes * 60 * 1000;
+
+            const candidateRuns = [];
+            for (const status of ["queued", "in_progress"]) {
+              const runs = await github.paginate(
+                github.rest.actions.listWorkflowRunsForRepo,
+                {
+                  owner,
+                  repo,
+                  branch: "main",
+                  status,
+                  per_page: 100,
+                },
+              );
+              candidateRuns.push(...runs);
+            }
+
+            const stale = candidateRuns.filter((run) => {
+              if (run.name !== "CI") return false;
+              const createdAt = new Date(run.created_at).getTime();
+              const updatedAt = new Date(run.updated_at).getTime();
+              const ageFromCreate = now - createdAt;
+              const ageFromUpdate = now - updatedAt;
+              return ageFromCreate > staleMs && ageFromUpdate > staleMs;
+            });
+
+            if (stale.length === 0) {
+              core.info(`No stale CI runs older than ${staleMinutes} minutes on main.`);
+              return;
+            }
+
+            for (const run of stale) {
+              await github.rest.actions.cancelWorkflowRun({
+                owner,
+                repo,
+                run_id: run.id,
+              });
+              core.notice(
+                `Cancelled stale CI run ${run.id} (${run.status}, head=${run.head_sha}, updated_at=${run.updated_at}).`,
+              );
+            }
+
+            core.summary
+              .addHeading("CI Stale Run Watchdog")
+              .addRaw(`Cancelled ${stale.length} stale run(s) older than ${staleMinutes} minutes.`)
+              .write();
