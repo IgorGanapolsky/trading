@@ -3,11 +3,15 @@ name: CI
 on:
   push:
     branches: [main]
-    # Avoid cancelling long CI runs due to frequent automated data-sync commits.
-    # CI will still run for any commit that changes code or other non-ignored paths.
+    # Keep heavy CI focused on code changes. Auto-generated operational/reporting
+    # commits are validated by their own targeted workflows.
     paths-ignore:
       - "data/**"
       - "docs/index.md"
+      - "docs/_reports/**"
+      - "docs/data/rag/**"
+      - "docs/lessons/**"
+      - "artifacts/**"
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -19,9 +23,8 @@ permissions:
 # Prevent duplicate CI runs on same branch
 concurrency:
   group: ci-${{ github.ref }}
-  # Keep main CI stable: do not cancel in-progress runs on main due to frequent bot pushes.
-  # Still cancel superseded runs on other branches/PR refs.
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  # Always prefer newest commit and cancel superseded runs, including on main.
+  cancel-in-progress: true
 
 env:
   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
