@@ -8,9 +8,13 @@ on:
     paths-ignore:
       - "data/**"
       - "docs/index.md"
+      - "docs/_posts/**"
       - "docs/_reports/**"
       - "docs/data/rag/**"
       - "docs/lessons/**"
+      - "docs/assets/snapshots/**"
+      - "wiki/**"
+      - "rag_knowledge/lessons_learned/**"
       - "artifacts/**"
   pull_request:
     branches: [main]

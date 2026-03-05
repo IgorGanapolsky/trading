@@ -5,15 +5,9 @@ on:
     # Run daily at 9:30 PM ET (after market close)
     - cron: 30 1 * * 1-5
   workflow_dispatch:
-  # Trigger when system state updates
-  push:
-    branches: [main]
-    paths:
-      - data/system_state.json
-      - scripts/generate_wiki_home.py
   # Also run when dashboard updates
   workflow_run:
-    workflows: [Update Progress Dashboard, Sync Alpaca Status]
+    workflows: [Update Progress Dashboard]
     branches: [main]
     types: [completed]
 
