@@ -36,6 +36,21 @@ RISK_KEYWORDS = {
 }
 
 
+def infer_severity(content: str) -> str:
+    """Infer severity from lesson markdown with explicit precedence."""
+    lowered = content.lower()
+    patterns = (
+        ("critical", ("**severity**: critical", "severity: critical", "severity**: critical")),
+        ("high", ("**severity**: high", "severity: high", "severity**: high")),
+        ("medium", ("**severity**: medium", "severity: medium", "severity**: medium")),
+        ("low", ("**severity**: low", "severity: low", "severity**: low")),
+    )
+    for label, candidates in patterns:
+        if any(candidate in lowered for candidate in candidates):
+            return label
+    return "unknown"
+
+
 def load_lessons() -> list[dict]:
     """Load lessons from both RAG database and markdown files."""
     lessons = []
@@ -61,7 +76,7 @@ def load_lessons() -> list[dict]:
                     "id": md_file.stem,
                     "file": str(md_file),
                     "content": content,
-                    "severity": "high" if "critical" in content.lower() else "medium",
+                    "severity": infer_severity(content),
                 }
                 lessons.append(lesson)
             except Exception as e:

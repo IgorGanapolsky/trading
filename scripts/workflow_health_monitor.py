@@ -29,12 +29,14 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
+ET = ZoneInfo("America/New_York")
 
 # Workflow schedules (expected execution times)
 WORKFLOW_SCHEDULES = {
@@ -96,7 +98,7 @@ class WorkflowHealthMonitor:
             self.executions[workflow_id] = []
 
         execution = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(tz=ET).isoformat(),
             "status": status,
             "details": details or {},
         }
@@ -118,7 +120,8 @@ class WorkflowHealthMonitor:
 
         hour, minute = map(int, time_et.split(":"))
         expected = []
-        today = datetime.now().replace(hour=hour, minute=minute, second=0, microsecond=0)
+        now_et = datetime.now(tz=ET)
+        today = now_et.replace(hour=hour, minute=minute, second=0, microsecond=0)
 
         for i in range(days):
             check_date = today - timedelta(days=i)
@@ -133,18 +136,24 @@ class WorkflowHealthMonitor:
                 should_run = True
 
             if should_run:
+                if check_date > now_et:
+                    continue
                 expected.append(check_date)
 
         return expected
 
     def get_actual_executions(self, workflow_id: str, days: int = 7) -> list[datetime]:
         """Get actual execution times from log."""
-        cutoff = datetime.now() - timedelta(days=days)
+        cutoff = datetime.now(tz=ET) - timedelta(days=days)
         actual = []
 
         for execution in self.executions.get(workflow_id, []):
             try:
                 exec_time = datetime.fromisoformat(execution["timestamp"])
+                if exec_time.tzinfo is None:
+                    exec_time = exec_time.replace(tzinfo=ET)
+                else:
+                    exec_time = exec_time.astimezone(ET)
                 if exec_time >= cutoff and execution.get("status") == "success":
                     actual.append(exec_time)
             except Exception:
@@ -160,7 +169,7 @@ class WorkflowHealthMonitor:
             Health report with status for each workflow
         """
         report = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(tz=ET).isoformat(),
             "period_days": days,
             "workflows": {},
             "alerts": [],
@@ -220,6 +229,7 @@ class WorkflowHealthMonitor:
                     report["overall_health"] = "DEGRADED"
 
         # Save report
+        self.data_dir.mkdir(parents=True, exist_ok=True)
         with open(self.health_report_path, "w") as f:
             json.dump(report, f, indent=2)
 

@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 import pytest
 
+from src.utils import staleness_guard as sg
 from src.utils.staleness_guard import (
     ContextFreshnessResult,
     ContextFreshnessSource,
@@ -218,9 +219,22 @@ class TestGetStalenessWarning:
 
 
 class TestContextFreshness:
+    def test_resolve_rag_query_index_path_prefers_local_profile(self, tmp_path, monkeypatch):
+        repo_path = tmp_path / "repo_lessons_query.json"
+        local_path = tmp_path / "local_lessons_query.json"
+        repo_path.write_text("[]", encoding="utf-8")
+        local_path.write_text("[]", encoding="utf-8")
+
+        monkeypatch.setattr(sg, "RAG_QUERY_INDEX_PATH", repo_path)
+        monkeypatch.setattr(sg, "RAG_QUERY_INDEX_LOCAL_PATH", local_path)
+        monkeypatch.setenv("RAG_WRITE_PROFILE", "local")
+
+        assert sg._resolve_rag_query_index_path() == local_path
+
     def test_check_context_freshness_stale_when_index_missing(self, tmp_path, monkeypatch):
         missing_rag = tmp_path / "missing_lessons_query.json"
         missing_context = tmp_path / "missing_context_index.json"
+        monkeypatch.setenv("RAG_WRITE_PROFILE", "repo")
         monkeypatch.setattr("src.utils.staleness_guard.RAG_QUERY_INDEX_PATH", missing_rag)
         monkeypatch.setattr("src.utils.staleness_guard.CONTEXT_INDEX_PATH", missing_context)
 
@@ -249,6 +263,7 @@ class TestContextFreshness:
             json.dumps({"built_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}),
             encoding="utf-8",
         )
+        monkeypatch.setenv("RAG_WRITE_PROFILE", "repo")
         monkeypatch.setattr("src.utils.staleness_guard.RAG_QUERY_INDEX_PATH", rag_path)
         monkeypatch.setattr("src.utils.staleness_guard.CONTEXT_INDEX_PATH", context_path)
         monkeypatch.setenv("RAG_QUERY_INDEX_MAX_AGE_MINUTES", "120")
@@ -274,6 +289,7 @@ class TestContextFreshness:
             json.dumps({"built_at": offset_ts}),
             encoding="utf-8",
         )
+        monkeypatch.setenv("RAG_WRITE_PROFILE", "repo")
         monkeypatch.setattr("src.utils.staleness_guard.RAG_QUERY_INDEX_PATH", rag_path)
         monkeypatch.setattr("src.utils.staleness_guard.CONTEXT_INDEX_PATH", context_path)
         monkeypatch.setenv("RAG_QUERY_INDEX_MAX_AGE_MINUTES", "30")

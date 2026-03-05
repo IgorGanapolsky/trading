@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Sync today's trades to local records for RAG Webhook queries.
+"""Sync today's trade files to local ledgers used by RAG/Webhook readers.
 
 This script runs post-trade to ensure:
-1. Trades are recorded in system_state.json (source of truth)
-2. Master ledger is updated for win-rate tracking
-3. Local JSON backup is maintained
+1. Trades from daily trade files are consolidated into the master ledger (`data/trades.json`)
+2. Local JSON backup (`data/trades_backup.json`) is maintained for compatibility
+3. Legacy trade readers stay in sync while `data/system_state.json` remains authoritative
 
 Usage:
     python3 scripts/sync_trades_to_rag.py

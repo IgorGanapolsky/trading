@@ -93,7 +93,7 @@ Key env vars:
 
 Ralph is the self-healing loop that keeps the system operational:
 
-- **84 GitHub Actions workflows** — trading execution, position management, monitoring, learning
+- **88 GitHub Actions workflows** — trading execution, position management, monitoring, learning
 - **Self-Healing Monitor** — runs every 15 minutes during market hours, auto-fixes issues
 - **Ralph Loop** — overnight autonomous coding sessions (design-first, atomic tasks, validation gates)
 - **Auto-published blog** — lessons and reports publish to GitHub Pages and Dev.to automatically
@@ -190,7 +190,7 @@ This repo is optimized for AI agent collaboration:
 - RAG knowledge base: `rag_knowledge/`
 - RLHF feedback: `.claude/memory/feedback/`
 - Agent terminal toolkit: `scripts/agent_workflow_toolkit.py`
-- Toolkit usage guide: `docs/agentic-terminal-workflow.md`
+- Toolkit usage: `python3 scripts/agent_workflow_toolkit.py --help`
 - LLM manifest (summary): `https://igorganapolsky.github.io/trading/llms.txt`
 - LLM manifest (full catalog): `https://igorganapolsky.github.io/trading/llms-full.txt`
 - Auto-refresh workflow: `.github/workflows/refresh-llms-manifests.yml`
