@@ -5,9 +5,11 @@ on:
   issues:
     types: [opened, labeled]
   pull_request:
+    branches: [main]
     types: [opened, synchronize]
   workflow_run:
     workflows: ["CI"]
+    branches: [main]
     types: [completed]
   schedule:
     # Run once daily at 6 AM ET (11 UTC) for scheduled dispatch
@@ -22,6 +24,10 @@ on:
           - dependency-update
           - test-coverage
           - health-check
+
+concurrency:
+  group: event-router-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   # Route 1: CI Failure -> Self-Healing

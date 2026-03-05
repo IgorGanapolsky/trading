@@ -10,7 +10,6 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "data/system_state.json"
       - "scripts/generate_world_class_dashboard*.py"
       - "scripts/update_docs_index.py"
 

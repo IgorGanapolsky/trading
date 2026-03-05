@@ -247,6 +247,30 @@ def _apply_dynamic_daily_budget(logger) -> float | None:
     return new_amount
 
 
+def _run_freshness_preflight(logger) -> None:
+    """Fail fast when account/context state is stale before orchestrator boot."""
+    from src.utils.staleness_guard import require_fresh_context, require_fresh_data
+
+    enforce_data = _flag_enabled("ENFORCE_DATA_STALENESS_GUARD", "true")
+    enforce_context = _flag_enabled("ENFORCE_CONTEXT_FRESHNESS_GUARD", "true")
+    block_context_always = _flag_enabled("CONTEXT_FRESHNESS_BLOCK_ALWAYS", "true")
+
+    if block_context_always:
+        os.environ.setdefault("CONTEXT_FRESHNESS_BLOCK_ALWAYS", "true")
+
+    if enforce_data:
+        require_fresh_data(is_market_day=True)
+    if enforce_context:
+        require_fresh_context(is_market_day=True)
+
+    logger.info(
+        "Freshness preflight passed (data=%s, context=%s, context_block_always=%s)",
+        enforce_data,
+        enforce_context,
+        block_context_always,
+    )
+
+
 def prediction_enabled() -> bool:
     """Prediction markets (Kalshi) integration removed Dec 2025. Always returns False."""
     return False
@@ -975,6 +999,8 @@ def main() -> None:
         logger.info("Markets closed - skipping equity trading.")
         _emit_run_status(status="completed", phase="market_closed.no_equity_run")
         return
+
+    _run_freshness_preflight(logger)
 
     # Normal stock trading - import only when needed
     from src.orchestrator.main import TradingOrchestrator

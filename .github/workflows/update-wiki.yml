@@ -14,7 +14,12 @@ on:
   # Also run when dashboard updates
   workflow_run:
     workflows: [Update Progress Dashboard, Sync Alpaca Status]
+    branches: [main]
     types: [completed]
+
+concurrency:
+  group: update-wiki-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: write

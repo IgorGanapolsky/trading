@@ -12,6 +12,10 @@ on:
       - "scripts/**"
       - "tests/**"
 
+concurrency:
+  group: self-healing-auto-fix-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   PYTHON_VERSION: "3.11"
 

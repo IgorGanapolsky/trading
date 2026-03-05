@@ -225,6 +225,13 @@ def _env_max_age_minutes(name: str, default_minutes: float) -> float:
         return default_minutes
 
 
+def _env_flag(name: str, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -337,9 +344,11 @@ def check_context_freshness(is_market_day: bool = True) -> ContextFreshnessResul
     SLOs can be overridden through:
     - RAG_QUERY_INDEX_MAX_AGE_MINUTES
     - CONTEXT_INDEX_MAX_AGE_MINUTES
+    - CONTEXT_FRESHNESS_BLOCK_ALWAYS
     """
-    rag_max = _env_max_age_minutes("RAG_QUERY_INDEX_MAX_AGE_MINUTES", 7 * 24 * 60)
-    context_max = _env_max_age_minutes("CONTEXT_INDEX_MAX_AGE_MINUTES", 7 * 24 * 60)
+    rag_max = _env_max_age_minutes("RAG_QUERY_INDEX_MAX_AGE_MINUTES", 24 * 60)
+    context_max = _env_max_age_minutes("CONTEXT_INDEX_MAX_AGE_MINUTES", 24 * 60)
+    block_always = _env_flag("CONTEXT_FRESHNESS_BLOCK_ALWAYS", False)
 
     sources = [
         _build_context_source(
@@ -357,7 +366,7 @@ def check_context_freshness(is_market_day: bool = True) -> ContextFreshnessResul
     ]
     stale_sources = [src.source for src in sources if src.is_stale]
     is_stale = bool(stale_sources)
-    blocking = bool(is_stale and is_market_day)
+    blocking = bool(is_stale and (is_market_day or block_always))
     reason = (
         "Context freshness check passed"
         if not is_stale
