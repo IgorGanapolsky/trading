@@ -5,9 +5,24 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
 FORCE="${FORCE:-0}"
-LOG_FILE="${LOG_FILE:-$REPO_ROOT/artifacts/devloop/rag_refresh.log}"
-OUT_REPORT="${OUT_REPORT:-$REPO_ROOT/artifacts/devloop/rag_status.md}"
-STATUS_FILE="${STATUS_FILE:-$REPO_ROOT/artifacts/devloop/rag_refresh_status.txt}"
+if [[ -z "${RAG_WRITE_PROFILE:-}" ]]; then
+  if [[ "${CI:-}" == "true" ]]; then
+    RAG_WRITE_PROFILE="repo"
+  else
+    RAG_WRITE_PROFILE="local"
+  fi
+fi
+export RAG_WRITE_PROFILE
+
+if [[ "${RAG_WRITE_PROFILE}" == "repo" ]]; then
+  DEFAULT_DEVLOOP_DIR="$REPO_ROOT/artifacts/devloop"
+else
+  DEFAULT_DEVLOOP_DIR="$REPO_ROOT/artifacts/local/devloop"
+fi
+DEVLOOP_DIR="${DEVLOOP_DIR:-$DEFAULT_DEVLOOP_DIR}"
+LOG_FILE="${LOG_FILE:-$DEVLOOP_DIR/rag_refresh.log}"
+OUT_REPORT="${OUT_REPORT:-$DEVLOOP_DIR/rag_status.md}"
+STATUS_FILE="${STATUS_FILE:-$DEVLOOP_DIR/rag_refresh_status.txt}"
 TARS_INGEST_SCRIPT="$REPO_ROOT/scripts/ingest_tars_artifacts_to_rag.py"
 TARS_VALIDATE_SCRIPT="$REPO_ROOT/scripts/generate_tars_rag_validation.py"
 if [[ -x "$REPO_ROOT/.venv-devloop/bin/python" ]]; then
@@ -70,8 +85,8 @@ run_tars_ingest() {
   "$PYTHON_BIN" "$TARS_INGEST_SCRIPT" \
     --artifact-dir artifacts/tars \
     --out-dir rag_knowledge/lessons_learned \
-    --manifest artifacts/devloop/tars_rag_ingest_manifest.json \
-    --report artifacts/devloop/tars_rag_ingest_report.md >>"$LOG_FILE" 2>&1
+    --manifest "$DEVLOOP_DIR/tars_rag_ingest_manifest.json" \
+    --report "$DEVLOOP_DIR/tars_rag_ingest_report.md" >>"$LOG_FILE" 2>&1
   exit_code=$?
   set -e
   printf "tars_ingest_exit=%s\n" "$exit_code" >>"$STATUS_FILE"
@@ -89,8 +104,8 @@ snapshot_index_stats() {
 }
 
 run_tars_rag_validation() {
-  local before_stats="$REPO_ROOT/artifacts/devloop/index_stats_before_tars_ingest.json"
-  local after_stats="$REPO_ROOT/artifacts/devloop/index_stats_after_tars_ingest.json"
+  local before_stats="$DEVLOOP_DIR/index_stats_before_tars_ingest.json"
+  local after_stats="$DEVLOOP_DIR/index_stats_after_tars_ingest.json"
   snapshot_index_stats "$before_stats"
   run_tars_ingest
   run_reindex
@@ -109,9 +124,9 @@ run_tars_rag_validation() {
   "$PYTHON_BIN" "$TARS_VALIDATE_SCRIPT" \
     --before-stats "$before_stats" \
     --after-stats "$after_stats" \
-    --ingest-report artifacts/devloop/tars_rag_ingest_report.md \
-    --out-json artifacts/devloop/tars_rag_validation.json \
-    --out-md artifacts/devloop/tars_rag_validation.md >>"$LOG_FILE" 2>&1
+    --ingest-report "$DEVLOOP_DIR/tars_rag_ingest_report.md" \
+    --out-json "$DEVLOOP_DIR/tars_rag_validation.json" \
+    --out-md "$DEVLOOP_DIR/tars_rag_validation.md" >>"$LOG_FILE" 2>&1
   exit_code=$?
   set -e
   printf "tars_rag_validation_exit=%s\n" "$exit_code" >>"$STATUS_FILE"
@@ -152,15 +167,18 @@ Commands:
 
 Environment:
   FORCE=1           Force rebuild reindex table
-  LOG_FILE=...      Refresh log path (default: artifacts/devloop/rag_refresh.log)
-  OUT_REPORT=...    Status report path (default: artifacts/devloop/rag_status.md)
-  STATUS_FILE=...   Step status path (default: artifacts/devloop/rag_refresh_status.txt)
+  RAG_WRITE_PROFILE repo|local (default: repo on CI, local otherwise)
+  DEVLOOP_DIR=...   Artifact directory (default based on RAG_WRITE_PROFILE)
+  LOG_FILE=...      Refresh log path (default: \$DEVLOOP_DIR/rag_refresh.log)
+  OUT_REPORT=...    Status report path (default: \$DEVLOOP_DIR/rag_status.md)
+  STATUS_FILE=...   Step status path (default: \$DEVLOOP_DIR/rag_refresh_status.txt)
   PYTHON_BIN=...    Python executable (default: .venv-devloop/bin/python if present)
 EOF
 }
 
 main() {
   local cmd="${1:-full}"
+  mkdir -p "$DEVLOOP_DIR"
   case "$cmd" in
     report)
       touch "$STATUS_FILE"

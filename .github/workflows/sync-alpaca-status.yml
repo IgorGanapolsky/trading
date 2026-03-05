@@ -22,7 +22,7 @@ permissions:
 
 concurrency:
   group: sync-alpaca-status
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 env:
   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}

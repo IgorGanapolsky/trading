@@ -6,6 +6,10 @@ on:
     - cron: "25 14 * * 1-5"
   workflow_dispatch: # Allow manual trigger
 
+concurrency:
+  group: pre-market-sync-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: write # Required to push commits
 

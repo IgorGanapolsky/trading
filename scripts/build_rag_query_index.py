@@ -14,11 +14,13 @@ from html import escape
 from pathlib import Path
 
 RAG_ROOT = Path("rag_knowledge")
-OUTPUT_PATHS = [
+REPO_OUTPUT_PATHS = [
     Path("data/rag/lessons_query.json"),
     Path("docs/data/rag/lessons_query.json"),
 ]
-LESSONS_PAGE_PATH = Path("docs/lessons/index.html")
+LOCAL_OUTPUT_PATHS = [Path("artifacts/local/rag/lessons_query.json")]
+REPO_LESSONS_PAGE_PATH = Path("docs/lessons/index.html")
+LOCAL_LESSONS_PAGE_PATH = Path("artifacts/local/rag/lessons_index.html")
 
 DATE_PATTERNS = [
     re.compile(r"\*\*Date(?:\*\*:|:\*\*)\s*(.+)$", re.IGNORECASE | re.MULTILINE),
@@ -66,6 +68,19 @@ def _parse_frontmatter(text: str) -> dict[str, str]:
         key, value = line.split(":", 1)
         parsed[key.strip().lower()] = value.strip().strip('"').strip("'")
     return parsed
+
+
+def _resolve_write_profile() -> str:
+    raw = os.getenv("RAG_WRITE_PROFILE", "").strip().lower()
+    if raw in {"repo", "local"}:
+        return raw
+    return "repo" if os.getenv("CI", "").strip().lower() in TRUTHY else "local"
+
+
+def _resolve_output_targets(profile: str) -> tuple[list[Path], Path]:
+    if profile == "repo":
+        return REPO_OUTPUT_PATHS, REPO_LESSONS_PAGE_PATH
+    return LOCAL_OUTPUT_PATHS, LOCAL_LESSONS_PAGE_PATH
 
 
 def _extract_tags(text: str) -> list[str]:
@@ -372,16 +387,20 @@ def _build_lessons_page(lessons: list[dict]) -> str:
 
 
 def main() -> int:
+    write_profile = _resolve_write_profile()
+    output_paths, lessons_page_path = _resolve_output_targets(write_profile)
+
     lessons = build_index()
     payload = json.dumps(lessons, indent=2)
-    for output_path in OUTPUT_PATHS:
+    for output_path in output_paths:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(payload)
         print(f"Wrote {len(lessons)} lessons to {output_path}")
 
-    LESSONS_PAGE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    LESSONS_PAGE_PATH.write_text(_build_lessons_page(lessons))
-    print(f"Updated lessons index page: {LESSONS_PAGE_PATH}")
+    lessons_page_path.parent.mkdir(parents=True, exist_ok=True)
+    lessons_page_path.write_text(_build_lessons_page(lessons))
+    print(f"Updated lessons index page: {lessons_page_path}")
+    print(f"RAG write profile: {write_profile}")
     return 0
 
 
