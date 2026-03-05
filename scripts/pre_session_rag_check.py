@@ -209,7 +209,9 @@ def attempt_context_refresh() -> bool:
     """Refresh local context indexes once before hard-failing freshness checks."""
     env = os.environ.copy()
     if "RAG_WRITE_PROFILE" not in env:
-        env["RAG_WRITE_PROFILE"] = "repo" if env.get("CI", "").strip().lower() in TRUTHY else "local"
+        env["RAG_WRITE_PROFILE"] = (
+            "repo" if env.get("CI", "").strip().lower() in TRUTHY else "local"
+        )
 
     commands = [
         ["python3", "scripts/build_rag_query_index.py"],

@@ -187,7 +187,9 @@ def index_documents(force: bool = False) -> dict:
         if force:
             logger.info("Force rebuild: dropping existing table")
         else:
-            logger.info("Existing rag_knowledge table detected; rebuilding to prevent duplicate chunks")
+            logger.info(
+                "Existing rag_knowledge table detected; rebuilding to prevent duplicate chunks"
+            )
         db.drop_table("rag_knowledge")
 
     # Collect all documents
