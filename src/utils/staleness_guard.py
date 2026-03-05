@@ -17,7 +17,7 @@ import logging
 import os
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -113,14 +113,22 @@ def check_data_staleness(
 
         # Parse timestamp
         if "T" in last_updated:
-            updated_dt = datetime.fromisoformat(last_updated.replace("Z", "+00:00"))
-            # Remove timezone for comparison
-            updated_dt = updated_dt.replace(tzinfo=None)
+            updated_dt = _parse_iso_datetime(last_updated)
+            if not updated_dt:
+                return StalenessResult(
+                    is_stale=True,
+                    hours_old=float("inf"),
+                    last_updated=last_updated,
+                    reason=f"Invalid timestamp format: {last_updated}",
+                    blocking=is_market_day,
+                )
         else:
-            updated_dt = datetime.strptime(last_updated, "%Y-%m-%d %H:%M:%S")
+            updated_dt = datetime.strptime(last_updated, "%Y-%m-%d %H:%M:%S").replace(
+                tzinfo=timezone.utc
+            )
 
         # Calculate age
-        age = datetime.now() - updated_dt
+        age = _utc_now() - updated_dt
         hours_old = age.total_seconds() / 3600
 
         if hours_old > max_stale_hours:
@@ -217,6 +225,14 @@ def _env_max_age_minutes(name: str, default_minutes: float) -> float:
         return default_minutes
 
 
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _to_utc_iso(dt: datetime) -> str:
+    return dt.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
 def _parse_iso_datetime(value: str | None) -> datetime | None:
     if not value:
         return None
@@ -225,7 +241,9 @@ def _parse_iso_datetime(value: str | None) -> datetime | None:
         parsed = datetime.fromisoformat(candidate)
     except ValueError:
         return None
-    return parsed.replace(tzinfo=None)
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
 
 
 def _extract_rag_query_index_last_sync(path: Path) -> str | None:
@@ -248,7 +266,7 @@ def _extract_rag_query_index_last_sync(path: Path) -> str | None:
     if not timestamps:
         return None
     latest = max(timestamps)
-    return latest.isoformat() + "Z"
+    return _to_utc_iso(latest)
 
 
 def _extract_context_index_last_sync(path: Path) -> str | None:
@@ -265,7 +283,7 @@ def _extract_context_index_last_sync(path: Path) -> str | None:
     parsed = _parse_iso_datetime(built_at)
     if not parsed:
         return None
-    return parsed.isoformat() + "Z"
+    return _to_utc_iso(parsed)
 
 
 def _build_context_source(
@@ -275,7 +293,7 @@ def _build_context_source(
     max_age_minutes: float,
     extractor: Callable[[Path], str | None] | None = None,
 ) -> ContextFreshnessSource:
-    now = datetime.now()
+    now = _utc_now()
     if not path.exists():
         return ContextFreshnessSource(
             source=source,
@@ -290,8 +308,8 @@ def _build_context_source(
     last_sync = extractor(path) if extractor else None
     last_dt = _parse_iso_datetime(last_sync) if last_sync else None
     if not last_dt:
-        file_dt = datetime.fromtimestamp(path.stat().st_mtime)
-        last_sync = file_dt.isoformat() + "Z"
+        file_dt = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
+        last_sync = _to_utc_iso(file_dt)
         last_dt = file_dt
 
     age_minutes = (now - last_dt).total_seconds() / 60
@@ -349,7 +367,7 @@ def check_context_freshness(is_market_day: bool = True) -> ContextFreshnessResul
     return ContextFreshnessResult(
         is_stale=is_stale,
         blocking=blocking,
-        checked_at=datetime.now().isoformat(),
+        checked_at=_to_utc_iso(_utc_now()),
         stale_sources=stale_sources,
         sources=sources,
         reason=reason,
