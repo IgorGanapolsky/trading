@@ -181,9 +181,13 @@ def index_documents(force: bool = False) -> dict:
     # Connect to database
     db = lancedb.connect(str(LANCEDB_PATH))
 
-    # Drop existing table if force rebuild
-    if force and "rag_knowledge" in db.table_names():
-        logger.info("Force rebuild: dropping existing table")
+    # Rebuild table to avoid duplicate accumulation across repeated runs.
+    # This keeps retrieval quality stable without requiring manual --force.
+    if "rag_knowledge" in db.table_names():
+        if force:
+            logger.info("Force rebuild: dropping existing table")
+        else:
+            logger.info("Existing rag_knowledge table detected; rebuilding to prevent duplicate chunks")
         db.drop_table("rag_knowledge")
 
     # Collect all documents
@@ -239,11 +243,7 @@ def index_documents(force: bool = False) -> dict:
     if documents:
         logger.info(f"Creating embeddings for {len(documents)} chunks...")
 
-        if "rag_knowledge" in db.table_names():
-            table = db.open_table("rag_knowledge")
-            table.add(documents)
-        else:
-            table = db.create_table("rag_knowledge", data=documents, schema=RAGDocument)
+        db.create_table("rag_knowledge", data=documents, schema=RAGDocument)
 
         logger.info(f"Indexed {stats['files_processed']} files, {stats['chunks_created']} chunks")
     else:

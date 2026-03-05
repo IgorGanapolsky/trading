@@ -13,12 +13,12 @@
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│              sync-system-state.yml (GitHub Actions)              │
+│             sync-alpaca-status.yml (GitHub Actions)              │
 │                                                                  │
-│  Schedule: Every hour during market (14:00-21:00 UTC Mon-Fri)   │
+│  Schedule: Intraday + pre-market sync workflows (Mon-Fri)       │
 │  Fetches: Account, Positions, Orders (last 100 filled)          │
 │  Writes to: data/system_state.json                              │
-│  Commits via: Auto-merge PR                                      │
+│  Commits via: direct workflow commit/push                        │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -53,7 +53,8 @@
 
 - Read trade data from `system_state.json` → `trade_history[]`
 - Query Alpaca API directly for real-time data (webhook does this)
-- Trust `sync-system-state.yml` as the sync mechanism
+- Trust `scripts/sync_alpaca_state.py` as canonical sync logic
+- Use `sync-alpaca-status.yml` and `pre-market-sync.yml` as schedulers
 
 ### ❌ DON'T
 
@@ -73,7 +74,7 @@ The system includes staleness guards:
 
 | File                     | Purpose            | Writer                | Readers                      |
 | ------------------------ | ------------------ | --------------------- | ---------------------------- |
-| `data/system_state.json` | Portfolio + Trades | sync-system-state.yml | Webhook, Dashboards, Scripts |
+| `data/system_state.json` | Portfolio + Trades | `scripts/sync_alpaca_state.py` via sync workflows | Webhook, Dashboards, Scripts |
 | `data/trades_*.json`     | **DEPRECATED**     | ~~trade_sync.py~~     | None (remove)                |
 
 ## Why This Architecture?

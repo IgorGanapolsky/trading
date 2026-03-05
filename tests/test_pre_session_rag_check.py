@@ -21,6 +21,7 @@ class _Source:
 def test_pre_session_blocks_on_stale_context(monkeypatch):
     import scripts.pre_session_rag_check as module
 
+    monkeypatch.setenv("PRE_SESSION_AUTO_REFRESH_CONTEXT", "0")
     stale = ContextFreshnessResult(
         is_stale=True,
         blocking=True,
@@ -44,6 +45,7 @@ def test_pre_session_blocks_on_stale_context(monkeypatch):
 def test_pre_session_allows_when_context_fresh_and_no_recent_lessons(monkeypatch):
     import scripts.pre_session_rag_check as module
 
+    monkeypatch.setenv("PRE_SESSION_AUTO_REFRESH_CONTEXT", "0")
     fresh = ContextFreshnessResult(
         is_stale=False,
         blocking=False,

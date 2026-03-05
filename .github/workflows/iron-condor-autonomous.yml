@@ -275,7 +275,13 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/session_decisions_*.json data/ic_entries.json
+          shopt -s nullglob
+          files=(data/session_decisions_*.json data/ic_entries.json)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No trade artifacts found to stage"
+          else
+            git add "${files[@]}"
+          fi
           git diff --cached --quiet || git commit -m "fix: record autonomous IC trade data"
           git push || echo "Push failed - data will sync on next workflow"
 

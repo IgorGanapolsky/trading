@@ -38,6 +38,9 @@ Exit Codes:
 
 import argparse
 import logging
+import os
+import re
+import subprocess
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -46,6 +49,7 @@ from src.utils.staleness_guard import check_context_freshness
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+TRUTHY = {"1", "true", "yes", "on"}
 
 
 def check_recent_critical_lessons(days_back: int = 7, include_high: bool = False) -> list[dict]:
@@ -96,17 +100,15 @@ def check_recent_critical_lessons(days_back: int = 7, include_high: bool = False
             # Try to extract date from content
             lesson_date = None
             for line in content.split("\n"):
-                if "date" in line.lower() and ("2025" in line or "2026" in line):
-                    # Try to parse date
-                    import re
-
-                    date_match = re.search(r"(\d{4}-\d{2}-\d{2})", line)
-                    if date_match:
-                        try:
-                            lesson_date = datetime.strptime(date_match.group(1), "%Y-%m-%d")
-                        except ValueError:
-                            pass
-                    break
+                if "date" not in line.lower():
+                    continue
+                date_match = re.search(r"(\d{4}-\d{2}-\d{2})", line)
+                if date_match:
+                    try:
+                        lesson_date = datetime.strptime(date_match.group(1), "%Y-%m-%d")
+                    except ValueError:
+                        pass
+                break
 
             # Also check file modification time as fallback
             file_mtime = datetime.fromtimestamp(lesson_file.stat().st_mtime)
@@ -203,6 +205,29 @@ def query_rag_for_operational_failures() -> list[dict]:
         return []
 
 
+def attempt_context_refresh() -> bool:
+    """Refresh local context indexes once before hard-failing freshness checks."""
+    env = os.environ.copy()
+    if "RAG_WRITE_PROFILE" not in env:
+        env["RAG_WRITE_PROFILE"] = "repo" if env.get("CI", "").strip().lower() in TRUTHY else "local"
+
+    commands = [
+        ["python3", "scripts/build_rag_query_index.py"],
+        ["python3", "scripts/build_context_engine_index.py", "--project-root", "."],
+    ]
+    for cmd in commands:
+        try:
+            result = subprocess.run(cmd, env=env, capture_output=True, text=True)
+        except OSError as exc:
+            logger.warning("Failed to execute %s: %s", " ".join(cmd), exc)
+            return False
+        if result.returncode != 0:
+            logger.warning("Context refresh step failed: %s", " ".join(cmd))
+            logger.warning(result.stderr.strip() or result.stdout.strip())
+            return False
+    return True
+
+
 def main():
     parser = argparse.ArgumentParser(description="Pre-session RAG check")
     parser.add_argument(
@@ -228,6 +253,9 @@ def main():
     print("=" * 70)
     print()
 
+    if "RAG_WRITE_PROFILE" not in os.environ and os.getenv("CI", "").strip().lower() not in TRUTHY:
+        os.environ["RAG_WRITE_PROFILE"] = "local"
+
     has_critical_recent = False
     has_high_recent = False
     stale_context_block = False
@@ -236,6 +264,7 @@ def main():
     # 0. Freshness SLO check for deterministic RAG/context state
     print("⏱️  Verifying context freshness SLOs...")
     context = check_context_freshness(is_market_day=True)
+    auto_refresh = os.getenv("PRE_SESSION_AUTO_REFRESH_CONTEXT", "true").strip().lower() in TRUTHY
     if context.is_stale:
         print(f"   ❌ {context.reason}")
         for source in context.sources:
@@ -245,6 +274,16 @@ def main():
                 f"last_sync={source.last_sync or 'unknown'} | "
                 f"age={source.age_minutes:.1f}m | max_age={source.max_age_minutes:.1f}m"
             )
+        if auto_refresh:
+            print("   🔄 Attempting automatic context refresh...")
+            if attempt_context_refresh():
+                context = check_context_freshness(is_market_day=True)
+                if context.is_stale:
+                    print(f"   ❌ Refresh completed but context still stale: {context.reason}")
+                else:
+                    print("   ✅ Refresh completed and context freshness SLOs now pass")
+            else:
+                print("   ❌ Automatic context refresh failed")
         if context.blocking and not args.no_block:
             stale_context_block = True
             context_block_reasons.append(context.reason)

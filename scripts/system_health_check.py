@@ -24,9 +24,14 @@ def check_vector_db():
         rag = get_document_aware_rag()
         status = rag.ensure_index()
         if status.get("error"):
-            results["status"] = "BROKEN"
-            results["details"].append(f"✗ LanceDB index unavailable: {status['error']}")
-            return results
+            error_text = str(status["error"])
+            if "already exists" not in error_text.lower():
+                results["status"] = "BROKEN"
+                results["details"].append(f"✗ LanceDB index unavailable: {error_text}")
+                return results
+            results["details"].append(
+                "⚠️ LanceDB ensure_index reported existing table; continuing with direct probe"
+            )
 
         # Run a simple search to ensure table is non-empty
         probe = rag.search("trading", limit=1)
@@ -108,6 +113,10 @@ def check_rl_system():
 
         rl_enabled = os.getenv("RL_FILTER_ENABLED", "false").lower() in {"true", "1"}
         results["details"].append(f"RL_FILTER_ENABLED: {rl_enabled}")
+        if not rl_enabled:
+            results["details"].append("✓ RLFilter disabled by config; runtime gate is intentional")
+            results["status"] = "OK"
+            return results
 
         # Check actual RLFilter (the real RL system)
         from src.agents.rl_agent import RLFilter

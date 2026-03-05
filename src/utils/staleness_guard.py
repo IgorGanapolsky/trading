@@ -25,12 +25,14 @@ logger = logging.getLogger(__name__)
 # Maximum allowed staleness before blocking trading decisions
 MAX_STALE_HOURS = 24
 
-# Path to system state file
-SYSTEM_STATE_PATH = Path(__file__).parent.parent.parent / "data" / "system_state.json"
-RAG_QUERY_INDEX_PATH = Path(__file__).parent.parent.parent / "data" / "rag" / "lessons_query.json"
-CONTEXT_INDEX_PATH = (
-    Path(__file__).parent.parent.parent / "data" / "context_engine" / "context_index.json"
-)
+# Path to system state/index files
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+SYSTEM_STATE_PATH = PROJECT_ROOT / "data" / "system_state.json"
+RAG_QUERY_INDEX_REPO_PATH = PROJECT_ROOT / "data" / "rag" / "lessons_query.json"
+RAG_QUERY_INDEX_LOCAL_PATH = PROJECT_ROOT / "artifacts" / "local" / "rag" / "lessons_query.json"
+# Backwards-compatible alias used by existing tests/patching hooks.
+RAG_QUERY_INDEX_PATH = RAG_QUERY_INDEX_REPO_PATH
+CONTEXT_INDEX_PATH = PROJECT_ROOT / "data" / "context_engine" / "context_index.json"
 
 
 @dataclass
@@ -232,6 +234,23 @@ def _env_flag(name: str, default: bool = False) -> bool:
     return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _resolve_rag_query_index_path() -> Path:
+    """Select active RAG query index path based on write profile/runtime."""
+    profile = os.getenv("RAG_WRITE_PROFILE", "").strip().lower()
+    repo_candidate = Path(RAG_QUERY_INDEX_PATH)
+    local_candidate = Path(RAG_QUERY_INDEX_LOCAL_PATH)
+    if profile == "repo":
+        candidates = [repo_candidate]
+    elif profile == "local":
+        candidates = [local_candidate]
+    else:
+        candidates = [repo_candidate, local_candidate]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return candidates[0]
+
+
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -353,7 +372,7 @@ def check_context_freshness(is_market_day: bool = True) -> ContextFreshnessResul
     sources = [
         _build_context_source(
             source="rag_query_index",
-            path=RAG_QUERY_INDEX_PATH,
+            path=_resolve_rag_query_index_path(),
             max_age_minutes=rag_max,
             extractor=_extract_rag_query_index_last_sync,
         ),
