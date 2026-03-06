@@ -1,0 +1,39 @@
+[
+  {
+    "timestamp": "2026-03-06T16:28:43.837202",
+    "strategy": "iron_condor",
+    "underlying": "SPY",
+    "symbol": "SPY",
+    "expiry": "2026-03-20",
+    "dte": 35,
+    "legs": {
+      "long_put": 650.0,
+      "short_put": 655.0,
+      "short_call": 725.0,
+      "long_call": 730.0
+    },
+    "credit": 3.5,
+    "max_profit": 350.0,
+    "max_risk": 150.0,
+    "status": "SIMULATED",
+    "order_ids": [],
+    "decision_trace": {
+      "captured_at": "2026-03-06T16:28:43.837216",
+      "entry_reason": "test entry",
+      "market_context": {
+        "vix": 29.639999389648438,
+        "vix_3day_ma": 24.84666633605957
+      },
+      "signals_checked": [
+        "vix_mean_reversion"
+      ],
+      "strike_selection": {
+        "method": "15_delta_5pct_otm",
+        "short_put": 655.0,
+        "short_call": 725.0,
+        "wing_width": 5.0
+      },
+      "precedent_query": "SPY iron_condor 35DTE"
+    }
+  }
+]

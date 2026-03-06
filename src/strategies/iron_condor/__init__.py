@@ -61,9 +61,7 @@ class IronCondorController:
             logger.error(f"Execution failed: {e}")
             return {"status": "ERROR", "error": str(e)}
 
-    def check_exits(
-        self, positions: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+    def check_exits(self, positions: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Check open iron condor positions for exit conditions.
 
         Evaluates each position against three exit rules from trading_thresholds:
@@ -103,16 +101,18 @@ class IronCondorController:
                     f"🎯 Profit target hit for {symbol}: "
                     f"${current_profit:.2f} >= ${profit_target:.2f}"
                 )
-                exits.append({
-                    "symbol": symbol,
-                    "action": "CLOSE",
-                    "reason": (
-                        f"50% profit target: profit ${current_profit:.2f} "
-                        f">= target ${profit_target:.2f}"
-                    ),
-                    "entry_credit": entry_credit,
-                    "current_price": current_price,
-                })
+                exits.append(
+                    {
+                        "symbol": symbol,
+                        "action": "CLOSE",
+                        "reason": (
+                            f"50% profit target: profit ${current_profit:.2f} "
+                            f">= target ${profit_target:.2f}"
+                        ),
+                        "entry_credit": entry_credit,
+                        "current_price": current_price,
+                    }
+                )
                 continue
 
             # 2. Stop loss
@@ -121,29 +121,30 @@ class IronCondorController:
                     f"🛑 Stop loss triggered for {symbol}: "
                     f"loss ${current_loss:.2f} >= ${max_loss:.2f}"
                 )
-                exits.append({
-                    "symbol": symbol,
-                    "action": "CLOSE",
-                    "reason": (
-                        f"200% stop loss: loss ${current_loss:.2f} "
-                        f">= max ${max_loss:.2f}"
-                    ),
-                    "entry_credit": entry_credit,
-                    "current_price": current_price,
-                })
+                exits.append(
+                    {
+                        "symbol": symbol,
+                        "action": "CLOSE",
+                        "reason": (
+                            f"200% stop loss: loss ${current_loss:.2f} >= max ${max_loss:.2f}"
+                        ),
+                        "entry_credit": entry_credit,
+                        "current_price": current_price,
+                    }
+                )
                 continue
 
             # 3. DTE exit
             if dte <= RiskThresholds.EXIT_AT_DTE:
-                logger.info(
-                    f"⏰ DTE exit for {symbol}: {dte} DTE <= {RiskThresholds.EXIT_AT_DTE}"
+                logger.info(f"⏰ DTE exit for {symbol}: {dte} DTE <= {RiskThresholds.EXIT_AT_DTE}")
+                exits.append(
+                    {
+                        "symbol": symbol,
+                        "action": "CLOSE",
+                        "reason": f"DTE exit: {dte} days <= {RiskThresholds.EXIT_AT_DTE} DTE threshold",
+                        "entry_credit": entry_credit,
+                        "current_price": current_price,
+                    }
                 )
-                exits.append({
-                    "symbol": symbol,
-                    "action": "CLOSE",
-                    "reason": f"DTE exit: {dte} days <= {RiskThresholds.EXIT_AT_DTE} DTE threshold",
-                    "entry_credit": entry_credit,
-                    "current_price": current_price,
-                })
 
         return exits
