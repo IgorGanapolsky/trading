@@ -30,28 +30,17 @@ class IronCondorSignal:
         self.config = config or {
             "underlying": "SPY",
             "target_dte": 40,  # Perplexity: 35-45 is optimal
-            "short_delta": 0.10,  # Perplexity: ~10-delta is optimal
+            "short_delta": 0.16,  # 16-delta: more premium, within 15-20 range
             "wing_width": 10,
         }
 
     def check_entry_conditions(self) -> tuple[bool, str, float]:
         """
-        Check if conditions are right for entry using VIX Mean Reversion
-        and Perplexity Deep Research Alpha (Tuesdays 18:00).
+        Check if conditions are right for entry using VIX Mean Reversion.
         """
-        now = datetime.now()
-        day = now.weekday()  # 0=Mon, 1=Tue...
-        hour = now.hour
-
-        # PERPLEXITY ALPHA: Tuesday (1) after-hours (18) shows 100% win rate in 491-trade sample
-        is_tuesday_after_hours = day == 1 and hour >= 18
-
         try:
             vix_signal = VIXMeanReversionSignal()
             signal = vix_signal.calculate_signal()
-
-            if is_tuesday_after_hours:
-                return True, f"PERPLEXITY ALPHA: Tuesday after-hours + {signal.reason}", 0.95
 
             if signal.signal == "OPTIMAL_ENTRY":
                 return True, f"OPTIMAL: {signal.reason}", signal.confidence
@@ -60,13 +49,9 @@ class IronCondorSignal:
             if signal.signal == "AVOID":
                 return False, signal.reason, 0.0
 
-            # NEUTRAL: Fall through to legacy check
+            # NEUTRAL: Fall through
         except Exception as e:
             logger.warning(f"VIX Signal failed: {e}")
-
-        # If it's Tuesday after-hours, we trade even if VIX is neutral (small sample alpha)
-        if is_tuesday_after_hours:
-            return True, "PERPLEXITY ALPHA: Tuesday after-hours (High ROI entry window)", 0.90
 
         return False, "Neutral or failed VIX signal", 0.0
 

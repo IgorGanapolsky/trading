@@ -103,7 +103,7 @@ class PositionSizing:
     # "Sell 15-20 delta put spread + Sell 15-20 delta call spread"
     IRON_CONDOR_MIN_DELTA = 0.15  # Minimum delta for short strikes
     IRON_CONDOR_MAX_DELTA = 0.20  # Maximum delta for short strikes (86% win rate)
-    IRON_CONDOR_TARGET_DELTA = 0.15  # Target 15-delta = 85% probability of profit
+    IRON_CONDOR_TARGET_DELTA = 0.16  # Target 16-delta: more premium, 84% prob of profit
 
 
 class RiskThresholds:
