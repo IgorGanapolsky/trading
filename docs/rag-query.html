@@ -1412,25 +1412,47 @@ layout: null
         return text.endsWith(".") ? text : `${text}.`;
       }
 
-      function resolveStateDateKey(state) {
-        const fallback = new Date().toISOString().slice(0, 10);
+      function resolveStateDateKeys(state) {
+        const keys = new Set();
         const root = state && typeof state === "object" ? state : {};
         const meta = root.meta && typeof root.meta === "object" ? root.meta : {};
         const last = meta.last_updated || root.last_updated || "";
-        if (typeof last === "string" && last.length >= 10) {
-          const candidate = last.slice(0, 10);
-          if (/^\d{4}-\d{2}-\d{2}$/.test(candidate)) return candidate;
+        if (typeof last === "string" && last) {
+          const parsed = new Date(last);
+          if (!Number.isNaN(parsed.getTime())) {
+            keys.add(parsed.toISOString().slice(0, 10));
+            const etDate = new Intl.DateTimeFormat("sv-SE", {
+              timeZone: "America/New_York",
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            }).format(parsed);
+            if (/^\d{4}-\d{2}-\d{2}$/.test(etDate)) keys.add(etDate);
+          }
         }
-        return fallback;
+        if (!keys.size) {
+          const now = new Date();
+          keys.add(now.toISOString().slice(0, 10));
+          const todayEt = new Intl.DateTimeFormat("sv-SE", {
+            timeZone: "America/New_York",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          }).format(now);
+          if (/^\d{4}-\d{2}-\d{2}$/.test(todayEt)) keys.add(todayEt);
+        }
+        return keys;
       }
 
       function getSameDayVerificationReport(verificationReports, state) {
         const reports = Array.isArray(verificationReports) ? verificationReports : [];
-        const stateDateKey = resolveStateDateKey(state);
-        return (
-          reports.find((report) => report && typeof report === "object" && report.date === stateDateKey) ||
-          null
-        );
+        const stateDateKeys = resolveStateDateKeys(state);
+        for (let idx = reports.length - 1; idx >= 0; idx -= 1) {
+          const report = reports[idx];
+          if (!report || typeof report !== "object") continue;
+          if (typeof report.date === "string" && stateDateKeys.has(report.date)) return report;
+        }
+        return null;
       }
 
       function isSnapshotCurrent(snapshotCapturedAt, systemAsOfRaw, maxLagMinutes = 30) {
@@ -1441,7 +1463,8 @@ layout: null
           return false;
         }
         const maxLagMs = maxLagMinutes * 60 * 1000;
-        return systemDetails.epochMs - snapshotDetails.epochMs <= maxLagMs;
+        const lagMs = systemDetails.epochMs - snapshotDetails.epochMs;
+        return lagMs >= 0 && lagMs <= maxLagMs;
       }
 
       function computeNorthStarStatus(state) {
@@ -2274,8 +2297,9 @@ Tags: ${lesson.tags.join(", ")}`;
           : "";
         const paperSnapshotAt = paperSnapshot.captured_at_utc || "";
         const liveSnapshotAt = liveSnapshot.captured_at_utc || "";
-        const paperSnapshotCurrent = isSnapshotCurrent(paperSnapshotAt, syncedAt);
-        const liveSnapshotCurrent = isSnapshotCurrent(liveSnapshotAt, syncedAt);
+        const freshnessReferenceAt = syncedAt || paperSnapshotAt || liveSnapshotAt || "";
+        const paperSnapshotCurrent = isSnapshotCurrent(paperSnapshotAt, freshnessReferenceAt);
+        const liveSnapshotCurrent = isSnapshotCurrent(liveSnapshotAt, freshnessReferenceAt);
         const paperWhy = paperSnapshotCurrent
           ? extractExplainerWhy(paperSnapshot.technical_explainer)
           : "";
