@@ -291,3 +291,88 @@ class RiskManager:
                 return False, risk[check_name]["reason"]
 
         return False, "Trade rejected: unknown reason"
+
+    def calculate_size(
+        self,
+        ticker: str,
+        account_equity: float,
+        signal_strength: float,
+        rl_confidence: float = 0.0,
+        sentiment_score: float = 0.0,
+        multiplier: float = 1.0,
+        current_price: float = 0.0,
+        hist=None,
+        market_regime: str | None = None,
+        allocation_cap: float = 1.0,
+    ) -> float:
+        """
+        Calculate risk-adjusted position size (notional dollars).
+
+        Uses ATR-based risk sizing when history is available, otherwise
+        falls back to a percentage-of-equity approach.  Result is capped
+        at MAX_POSITION_PCT of account equity and the allocation_cap.
+
+        Args:
+            ticker: Stock symbol
+            account_equity: Total account equity
+            signal_strength: Momentum signal strength (0-1)
+            rl_confidence: RL model confidence (0-1)
+            sentiment_score: Sentiment score (-1 to 1)
+            multiplier: RL suggested size multiplier
+            current_price: Current share price
+            hist: Historical price DataFrame for ATR calculation
+            market_regime: Market regime label (e.g. "bull", "bear")
+            allocation_cap: Maximum fraction of equity for this allocation bucket
+
+        Returns:
+            Notional dollar amount for the order (0.0 if rejected)
+        """
+        if account_equity <= 0 or current_price <= 0:
+            logger.warning("calculate_size(%s): invalid equity/price", ticker)
+            return 0.0
+
+        max_position = account_equity * self.max_position_pct
+        max_risk_dollars = account_equity * self.max_daily_loss_pct
+
+        # ATR-based sizing: risk dollars / risk-per-share
+        atr_size = 0.0
+        if hist is not None:
+            try:
+                from src.utils.technical_indicators import calculate_atr
+
+                atr = float(calculate_atr(hist))
+                if atr > 0:
+                    risk_per_share = atr * 2  # 2×ATR stop distance
+                    shares = max_risk_dollars / risk_per_share
+                    atr_size = shares * current_price
+            except Exception as exc:  # pragma: no cover
+                logger.debug("ATR sizing failed for %s: %s", ticker, exc)
+
+        # Fallback: fraction of equity scaled by signal
+        base_size = atr_size if atr_size > 0 else max_position * signal_strength
+
+        # Apply RL multiplier and confidence scaling
+        confidence_factor = 0.5 + 0.5 * max(rl_confidence, signal_strength)
+        sized = base_size * multiplier * confidence_factor
+
+        # Dampen in bear regimes
+        if market_regime and "bear" in market_regime.lower():
+            sized *= 0.5
+
+        # Enforce caps
+        cap_dollars = account_equity * min(allocation_cap, 1.0)
+        sized = min(sized, max_position, cap_dollars)
+
+        # Floor at zero
+        sized = max(sized, 0.0)
+
+        logger.info(
+            "calculate_size(%s): $%.2f (equity=$%.2f, signal=%.2f, conf=%.2f, mult=%.1f)",
+            ticker,
+            sized,
+            account_equity,
+            signal_strength,
+            rl_confidence,
+            multiplier,
+        )
+        return round(sized, 2)
