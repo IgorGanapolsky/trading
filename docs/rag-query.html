@@ -1412,6 +1412,38 @@ layout: null
         return text.endsWith(".") ? text : `${text}.`;
       }
 
+      function resolveStateDateKey(state) {
+        const fallback = new Date().toISOString().slice(0, 10);
+        const root = state && typeof state === "object" ? state : {};
+        const meta = root.meta && typeof root.meta === "object" ? root.meta : {};
+        const last = meta.last_updated || root.last_updated || "";
+        if (typeof last === "string" && last.length >= 10) {
+          const candidate = last.slice(0, 10);
+          if (/^\d{4}-\d{2}-\d{2}$/.test(candidate)) return candidate;
+        }
+        return fallback;
+      }
+
+      function getSameDayVerificationReport(verificationReports, state) {
+        const reports = Array.isArray(verificationReports) ? verificationReports : [];
+        const stateDateKey = resolveStateDateKey(state);
+        return (
+          reports.find((report) => report && typeof report === "object" && report.date === stateDateKey) ||
+          null
+        );
+      }
+
+      function isSnapshotCurrent(snapshotCapturedAt, systemAsOfRaw, maxLagMinutes = 30) {
+        const snapshotDetails = parseTimestampDetails(snapshotCapturedAt || "");
+        const systemDetails = parseTimestampDetails(systemAsOfRaw || "");
+        if (!snapshotDetails || !systemDetails) return false;
+        if (!Number.isFinite(snapshotDetails.epochMs) || !Number.isFinite(systemDetails.epochMs)) {
+          return false;
+        }
+        const maxLagMs = maxLagMinutes * 60 * 1000;
+        return systemDetails.epochMs - snapshotDetails.epochMs <= maxLagMs;
+      }
+
       function computeNorthStarStatus(state) {
         const root = state && typeof state === "object" ? state : {};
         const northStar =
@@ -2011,24 +2043,7 @@ Tags: ${lesson.tags.join(", ")}`;
             });
 
           // Daily P&L
-          const resolveReportDate = () => {
-            const fallback = new Date().toISOString().slice(0, 10);
-            const meta = data.meta || {};
-            const last = meta.last_updated || data.last_updated || "";
-            if (typeof last === "string" && last.length >= 10) {
-              const candidate = last.slice(0, 10);
-              if (/^\\d{4}-\\d{2}-\\d{2}$/.test(candidate)) return candidate;
-            }
-            return fallback;
-          };
-
-          const todayKey = resolveReportDate();
-          const reports = Array.isArray(verificationReports)
-            ? verificationReports
-            : [];
-          const todaysReport =
-            reports.find((r) => r && typeof r === "object" && r.date === todayKey) ||
-            (reports.length ? reports[reports.length - 1] : null);
+          const todaysReport = getSameDayVerificationReport(verificationReports, data);
           const dailyPnlFromReport =
             todaysReport && typeof todaysReport.daily_pnl === "number"
               ? todaysReport.daily_pnl
@@ -2187,22 +2202,9 @@ Tags: ${lesson.tags.join(", ")}`;
             extractExplainerDailyPL(paperSnapshot.technical_explainer),
           ) ?? 0;
 
-        const resolveReportDate = () => {
-          const fallback = new Date().toISOString().slice(0, 10);
-          const meta = state.meta || {};
-          const last = meta.last_updated || state.last_updated || "";
-          if (typeof last === "string" && last.length >= 10) {
-            const candidate = last.slice(0, 10);
-            if (/^\\d{4}-\\d{2}-\\d{2}$/.test(candidate)) return candidate;
-          }
-          return fallback;
-        };
-
-        const todayKey = resolveReportDate();
-        const reports = Array.isArray(verificationReports) ? verificationReports : [];
-        const todaysReport =
-          reports.find((r) => r && typeof r === "object" && r.date === todayKey) ||
-          (reports.length ? reports[reports.length - 1] : null);
+        const todaysReport = getSameDayVerificationReport(verificationReports, state);
+        const paperTradeEvents =
+          firstFiniteNumber(state?.trades?.today_trades, state?.trades?.total_trades_today) ?? null;
         const paperStructures =
           toFiniteNumber(state?.trades?.structures_today) ??
           (todaysReport && typeof todaysReport.structures === "number"
@@ -2226,6 +2228,8 @@ Tags: ${lesson.tags.join(", ")}`;
           todaysReport && typeof todaysReport.traded === "boolean"
             ? todaysReport.traded
             : null;
+        const hasPaperTradeBreakdown =
+          paperStructures != null || paperFills != null || paperOrders != null;
 
         // Prefer verification report daily_pnl when system_state daily_change is missing/flat.
         const resolvedPaperTodayPL =
@@ -2264,21 +2268,28 @@ Tags: ${lesson.tags.join(", ")}`;
             extractExplainerDailyPL(liveSnapshot.technical_explainer),
           ) ?? 0;
 
-        const syncedAt =
-          state.last_updated ||
-          live.synced_at ||
-          paperSnapshot.captured_at_utc ||
-          liveSnapshot.captured_at_utc ||
-          "";
+        const syncedAt = state.last_updated || live.synced_at || "";
         const syncLine = syncedAt
           ? `<div class="account-submetric">${renderTimestampMetric("Synced", syncedAt)}</div>`
           : "";
-        const paperWhy = extractExplainerWhy(paperSnapshot.technical_explainer);
-        const liveWhy = extractExplainerWhy(liveSnapshot.technical_explainer);
+        const paperSnapshotAt = paperSnapshot.captured_at_utc || "";
+        const liveSnapshotAt = liveSnapshot.captured_at_utc || "";
+        const paperSnapshotCurrent = isSnapshotCurrent(paperSnapshotAt, syncedAt);
+        const liveSnapshotCurrent = isSnapshotCurrent(liveSnapshotAt, syncedAt);
+        const paperWhy = paperSnapshotCurrent
+          ? extractExplainerWhy(paperSnapshot.technical_explainer)
+          : "";
+        const liveWhy = liveSnapshotCurrent ? extractExplainerWhy(liveSnapshot.technical_explainer) : "";
+        const hasSnapshotTimestamps = Boolean(paperSnapshotAt || liveSnapshotAt);
+        const evidenceFreshnessLine = hasSnapshotTimestamps
+          ? `<div class="account-submetric"><strong>Evidence freshness:</strong> Paper snapshot ${paperSnapshotCurrent ? "current" : "stale"}${paperSnapshotAt ? ` (${escapeHtml(parseTimestampDetails(paperSnapshotAt)?.shortLabel || paperSnapshotAt)})` : ""}; Brokerage snapshot ${liveSnapshotCurrent ? "current" : "stale"}${liveSnapshotAt ? ` (${escapeHtml(parseTimestampDetails(liveSnapshotAt)?.shortLabel || liveSnapshotAt)})` : ""}.</div>`
+          : "";
         const whyLine =
           paperWhy || liveWhy
-            ? `<div class="account-submetric"><strong>Why today:</strong> Paper: ${escapeHtml(paperWhy || "No explicit explanation available.")} Brokerage: ${escapeHtml(liveWhy || "No explicit explanation available.")}</div>`
-            : "";
+            ? `<div class="account-submetric"><strong>Why today:</strong> Paper: ${escapeHtml(paperWhy || "No fresh explanation available.")} Brokerage: ${escapeHtml(liveWhy || "No fresh explanation available.")}</div>`
+            : hasSnapshotTimestamps
+              ? `<div class="account-submetric"><strong>Why today:</strong> Skipped stale snapshot explainers; waiting for fresh evidence aligned to current system sync.</div>`
+              : "";
         const paperProof = paperSnapshot.url || PAPER_PROOF_IMAGE;
         const brokerageProof = liveSnapshot.url || BROKERAGE_PROOF_IMAGE;
 
@@ -2296,7 +2307,7 @@ Tags: ${lesson.tags.join(", ")}`;
               <div class="account-metric">${formatCurrency(paperEquity)}</div>
               <div class="account-submetric">Today: ${formatSignedCurrency(resolvedPaperTodayPL)}</div>
               ${
-                paperStructures != null || paperFills != null || paperOrders != null
+                hasPaperTradeBreakdown
                   ? `<div class="account-submetric">Today activity (paper): ${
                       paperStructures != null
                         ? `${escapeHtml(String(paperStructures))} structure(s)`
@@ -2310,6 +2321,8 @@ Tags: ${lesson.tags.join(", ")}`;
                         ? " (submitted but not filled)"
                         : ""
                     }</div>`
+                  : paperTradeEvents != null
+                    ? `<div class="account-submetric">Today activity (paper): ${escapeHtml(String(paperTradeEvents))} trade event(s) recorded in system state (breakdown unavailable).</div>`
                   : ""
               }
               <div class="account-submetric">Total P/L: ${formatSignedCurrency(paperPL)} (${formatSignedPercent(paperPLPct)})</div>
@@ -2322,6 +2335,7 @@ Tags: ${lesson.tags.join(", ")}`;
             </div>
           </div>
           ${syncLine}
+          ${evidenceFreshnessLine}
           ${whyLine}
           <div class="proof-grid">
             <div class="proof-item">
