@@ -19,6 +19,9 @@ logger = logging.getLogger(__name__)
 # Default stop-loss multiplier: close when loss = 1x credit received.
 DEFAULT_STOP_LOSS_MULTIPLIER = IRON_CONDOR_STOP_LOSS_MULTIPLIER
 
+# All credit-based strategy types subject to stop-loss / profit-target monitoring.
+MONITORED_POSITION_TYPES = {"credit_spread", "iron_condor", "bull_put_spread", "bear_call_spread"}
+
 # 50% profit exit per CLAUDE.md exit rules
 DEFAULT_PROFIT_TARGET_PCT = 0.50
 
@@ -120,9 +123,9 @@ class OptionsRiskMonitor:
             position_type = position.get("position_type", "unknown")
             credit = position.get("credit_received", entry_price)
 
-        # Calculate loss for credit spreads
-        # For credit spread: we received credit, loss = current_price - entry_price
-        if position_type == "credit_spread":
+        # Calculate loss for credit-based strategies
+        # For credit positions: we received credit, loss = current_price - entry_price
+        if position_type in MONITORED_POSITION_TYPES:
             current_loss = max(0, current_price - entry_price)
             max_loss = credit * self.stop_loss_multiplier
             loss_ratio = current_loss / max_loss if max_loss > 0 else 0
@@ -199,8 +202,8 @@ class OptionsRiskMonitor:
             position_type = position.get("position_type", "unknown")
             credit = position.get("credit_received", entry_price)
 
-        # Only apply exit rules to credit spreads
-        if position_type != "credit_spread":
+        # Only apply exit rules to credit-based strategies
+        if position_type not in MONITORED_POSITION_TYPES:
             return False, f"Position type '{position_type}' not subject to exit rules"
 
         # ============================================================
