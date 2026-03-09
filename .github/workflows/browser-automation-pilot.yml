@@ -69,7 +69,7 @@ jobs:
             $EXTRA_ARGS
 
       - name: Upload pilot artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: browser-automation-pilot-${{ github.run_id }}
           path: |

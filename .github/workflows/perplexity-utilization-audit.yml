@@ -40,7 +40,7 @@ jobs:
             --markdown-out data/analytics/perplexity_utilization_latest.md.txt
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: perplexity-utilization-audit-${{ github.run_number }}
           path: |

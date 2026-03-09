@@ -1835,7 +1835,7 @@ jobs:
       - name: Upload execution logs
         if: always()
         continue-on-error: true  # Non-critical: artifact upload failure shouldn't mask trading results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: trading-logs-${{ github.run_id }}
           path: |
@@ -1851,7 +1851,7 @@ jobs:
       - name: Upload logs on failure (early)
         if: failure() || cancelled()
         continue-on-error: true  # Non-critical: artifact upload failure shouldn't mask the actual failure
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: failure-logs-${{ github.run_id }}
           path: |

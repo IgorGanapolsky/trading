@@ -177,7 +177,7 @@ jobs:
 
       - name: Upload gate artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: agent-handoff-gate
           path: |
@@ -292,7 +292,7 @@ jobs:
             --threshold-utility 0.1 \
             --threshold-unanswerable-accuracy 0.67
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-report
           path: |
@@ -301,7 +301,7 @@ jobs:
         if: always()
         continue-on-error: true  # Non-critical: artifact upload failure shouldn't fail CI
       - name: Upload test diagnostics
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-diagnostics
           path: artifacts/test-reports/
@@ -347,7 +347,7 @@ jobs:
           mkdir -p out
           ./scripts/run_smoke.sh tests/fixtures/fixture.csv 42 out/smoke.json
       - name: Upload smoke artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: smoke-result
           path: out/smoke.json

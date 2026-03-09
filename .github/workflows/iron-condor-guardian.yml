@@ -47,7 +47,7 @@ jobs:
 
       - name: Upload guardian log
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: guardian-log-${{ github.run_id }}
           path: data/ic_entries.json
