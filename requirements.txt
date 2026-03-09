@@ -81,6 +81,10 @@ langchain-community==0.4.1
 langchain-core==1.2.16
 langchain-google-genai==4.2.1
 langchain-text-splitters==1.1.0
+langgraph==1.0.10
+langgraph-checkpoint==4.0.1
+langgraph-prebuilt==1.0.8
+langgraph-sdk==0.3.9
 langsmith==0.7.9
 loguru==0.7.3
 lxml==6.0.2
@@ -155,7 +159,7 @@ soupsieve==2.8
 sqlalchemy==2.0.44
 sseclient-py==1.8.0
 stable-baselines3==2.7.1
-streamlit==1.54.0
+streamlit==1.55.0
 sympy==1.14.0
 tenacity==9.1.2
 threadpoolctl==3.6.0
