@@ -150,17 +150,23 @@ def test_build_analytics_artifacts_creates_views_and_summary(tmp_path: Path) -> 
     db_path = tmp_path / "artifacts" / "devloop" / "trading_analytics.sqlite"
     summary_json = tmp_path / "artifacts" / "devloop" / "sql_analytics_summary.json"
     summary_md = tmp_path / "artifacts" / "devloop" / "sql_analytics_summary.md"
+    published_summary_json = tmp_path / "docs" / "data" / "sql_analytics_summary.json"
+    rag_summary_md = tmp_path / "docs" / "_reports" / "sql-analytics-summary.md"
 
     summary = build_analytics_artifacts(
         tmp_path,
         db_path=db_path,
         summary_json_path=summary_json,
         summary_md_path=summary_md,
+        published_summary_json_path=published_summary_json,
+        rag_summary_md_path=rag_summary_md,
     )
 
     assert db_path.exists()
     assert summary_json.exists()
     assert summary_md.exists()
+    assert published_summary_json.exists()
+    assert rag_summary_md.exists()
 
     with sqlite3.connect(db_path) as conn:
         conn.row_factory = sqlite3.Row
@@ -199,3 +205,13 @@ def test_build_analytics_artifacts_creates_views_and_summary(tmp_path: Path) -> 
     assert summary["north_star_progress"]["week_start"] == "2026-03-09"
     assert "North Star weekly gate is blocked" in "\n".join(summary["highlights"])
     assert "SQL Analytics Summary" in summary_md.read_text(encoding="utf-8")
+    assert (
+        json.loads(published_summary_json.read_text(encoding="utf-8"))["account_daily_pop"][
+            "snapshot_date"
+        ]
+        == "2026-03-13"
+    )
+    rag_text = rag_summary_md.read_text(encoding="utf-8")
+    assert "Automated SQL Analytics Summary" in rag_text
+    assert "How did today compare to the previous snapshot?" in rag_text
+    assert "What changed week over week on the North Star?" in rag_text

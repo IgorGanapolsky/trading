@@ -12,6 +12,7 @@ on:
     paths:
       - "scripts/generate_world_class_dashboard*.py"
       - "scripts/update_docs_index.py"
+      - "scripts/build_rag_query_index.py"
       - "scripts/build_sqlite_analytics.py"
       - "src/analytics/__init__.py"
       - "src/analytics/sqlite_analytics.py"
@@ -115,7 +116,9 @@ jobs:
             --repo-root . \
             --db-out artifacts/devloop/trading_analytics.sqlite \
             --summary-json-out artifacts/devloop/sql_analytics_summary.json \
-            --summary-md-out artifacts/devloop/sql_analytics_summary.md
+            --summary-md-out artifacts/devloop/sql_analytics_summary.md \
+            --published-summary-json-out docs/data/sql_analytics_summary.json \
+            --rag-summary-md-out docs/_reports/sql-analytics-summary.md
           echo "✅ SQL analytics artifacts generated"
           head -40 artifacts/devloop/sql_analytics_summary.md
 
@@ -123,8 +126,15 @@ jobs:
         run: |
           echo "🧠 Backfilling historical learning into RLHF + RAG..."
           python3 scripts/historical_learning_backfill.py \
-            --json-out artifacts/devloop/historical_learning_backfill.json
+            --json-out artifacts/devloop/historical_learning_backfill.json \
+            --skip-rebuild-rag-index
           echo "✅ Historical learning backfill complete"
+
+      - name: Refresh published RAG query index
+        run: |
+          echo "🧠 Rebuilding published RAG query index..."
+          python3 scripts/build_rag_query_index.py
+          echo "✅ Published RAG query index refreshed"
 
       - name: Weekly cadence KPI + no-trade diagnostic
         run: |
@@ -264,7 +274,7 @@ jobs:
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          git add data/system_state.json data/north_star_weekly_history.json data/trades.json data/runtime/north_star_gate_overrides.json data/market_signals/ai_credit_stress_signal.json data/market_signals/usd_macro_sentiment_signal.json data/market_signals/ai_cycle_signal.json data/feedback/feedback_historical_backfill.jsonl artifacts/devloop/box_workspace_manifest.json artifacts/devloop/ai_discoverability_report.md artifacts/devloop/ai_discoverability_report.json artifacts/devloop/profit_readiness_scorecard.md artifacts/devloop/north_star_autopilot_report.json artifacts/devloop/north_star_autopilot_report.md artifacts/devloop/historical_learning_backfill.json artifacts/devloop/sql_analytics_summary.json artifacts/devloop/sql_analytics_summary.md artifacts/tars/ docs/ docs/_reports/*-dashboard-snapshot.md docs/_reports/hackathon-system-explainer.md docs/lessons/judge-demo.html wiki/ docs/index.md rag_knowledge/lessons_learned/ll_historical_learning_backfill.md 2>/dev/null || true
+          git add data/system_state.json data/north_star_weekly_history.json data/trades.json data/runtime/north_star_gate_overrides.json data/market_signals/ai_credit_stress_signal.json data/market_signals/usd_macro_sentiment_signal.json data/market_signals/ai_cycle_signal.json data/feedback/feedback_historical_backfill.jsonl data/rag/lessons_query.json artifacts/devloop/box_workspace_manifest.json artifacts/devloop/ai_discoverability_report.md artifacts/devloop/ai_discoverability_report.json artifacts/devloop/profit_readiness_scorecard.md artifacts/devloop/north_star_autopilot_report.json artifacts/devloop/north_star_autopilot_report.md artifacts/devloop/historical_learning_backfill.json artifacts/devloop/sql_analytics_summary.json artifacts/devloop/sql_analytics_summary.md artifacts/tars/ docs/ docs/data/sql_analytics_summary.json docs/_reports/*-dashboard-snapshot.md docs/_reports/hackathon-system-explainer.md docs/_reports/sql-analytics-summary.md docs/lessons/judge-demo.html wiki/ docs/index.md rag_knowledge/lessons_learned/ll_historical_learning_backfill.md 2>/dev/null || true
           if ! git diff --staged --quiet; then
             git commit -m "chore: Sync dashboard data [auto]"
             if [ -n "${{ secrets.GH_PAT }}" ]; then

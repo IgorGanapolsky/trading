@@ -50,6 +50,7 @@ def test_workflow_is_scheduled_and_dispatchable() -> None:
 
 def test_workflow_push_paths_cover_sqlite_analytics_runtime_surface() -> None:
     push_paths = _triggers().get("push", {}).get("paths", [])
+    assert "scripts/build_rag_query_index.py" in push_paths
     assert "scripts/build_sqlite_analytics.py" in push_paths
     assert "src/analytics/__init__.py" in push_paths
     assert "src/analytics/sqlite_analytics.py" in push_paths
@@ -69,6 +70,15 @@ def test_workflow_builds_and_uploads_sqlite_analytics_artifacts() -> None:
     assert "artifacts/devloop/trading_analytics.sqlite" in build_script
     assert "artifacts/devloop/sql_analytics_summary.json" in build_script
     assert "artifacts/devloop/sql_analytics_summary.md" in build_script
+    assert "docs/data/sql_analytics_summary.json" in build_script
+    assert "docs/_reports/sql-analytics-summary.md" in build_script
+
+    rag_step = next(
+        (step for step in steps if step.get("name") == "Refresh published RAG query index"),
+        None,
+    )
+    assert rag_step is not None
+    assert "python3 scripts/build_rag_query_index.py" in rag_step.get("run", "")
 
     upload_step = next(
         (step for step in steps if step.get("name") == "Upload SQL analytics artifact"),
@@ -80,3 +90,13 @@ def test_workflow_builds_and_uploads_sqlite_analytics_artifacts() -> None:
     assert "artifacts/devloop/trading_analytics.sqlite" in upload_path
     assert "artifacts/devloop/sql_analytics_summary.json" in upload_path
     assert "artifacts/devloop/sql_analytics_summary.md" in upload_path
+
+    commit_step = next(
+        (step for step in steps if step.get("name") == "Commit system state changes"),
+        None,
+    )
+    assert commit_step is not None
+    commit_script = commit_step.get("run", "")
+    assert "data/rag/lessons_query.json" in commit_script
+    assert "docs/data/sql_analytics_summary.json" in commit_script
+    assert "docs/_reports/sql-analytics-summary.md" in commit_script

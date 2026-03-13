@@ -32,6 +32,16 @@ def parse_args() -> argparse.Namespace:
         default=str(DEFAULT_SUMMARY_MD_OUT),
         help="Summary markdown output path.",
     )
+    parser.add_argument(
+        "--published-summary-json-out",
+        default="",
+        help="Optional tracked JSON output path for GitHub Pages / rag-query.",
+    )
+    parser.add_argument(
+        "--rag-summary-md-out",
+        default="",
+        help="Optional markdown output path under rag_knowledge/ for RAG indexing.",
+    )
     return parser.parse_args()
 
 
@@ -42,12 +52,20 @@ def main() -> int:
         db_path=Path(args.db_out),
         summary_json_path=Path(args.summary_json_out),
         summary_md_path=Path(args.summary_md_out),
+        published_summary_json_path=(
+            Path(args.published_summary_json_out) if args.published_summary_json_out else None
+        ),
+        rag_summary_md_path=(Path(args.rag_summary_md_out) if args.rag_summary_md_out else None),
     )
 
     latest_account = summary.get("account_daily_pop") or {}
     print(f"SQLite analytics DB written to: {Path(args.db_out)}")
     print(f"Summary JSON written to: {Path(args.summary_json_out)}")
     print(f"Summary markdown written to: {Path(args.summary_md_out)}")
+    if args.published_summary_json_out:
+        print(f"Published summary JSON written to: {Path(args.published_summary_json_out)}")
+    if args.rag_summary_md_out:
+        print(f"RAG summary markdown written to: {Path(args.rag_summary_md_out)}")
     if latest_account.get("snapshot_date"):
         print(
             "Latest account snapshot: "

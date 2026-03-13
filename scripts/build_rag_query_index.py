@@ -14,6 +14,7 @@ from html import escape
 from pathlib import Path
 
 RAG_ROOT = Path("rag_knowledge")
+ADDITIONAL_MARKDOWN_SOURCES = [Path("docs/_reports/sql-analytics-summary.md")]
 REPO_OUTPUT_PATHS = [
     Path("data/rag/lessons_query.json"),
     Path("docs/data/rag/lessons_query.json"),
@@ -213,78 +214,105 @@ def _is_noise_artifact_lesson(
     return "Normalized TARS artifact ingested for RAG retrieval." in text
 
 
+def _build_lesson_record(
+    *,
+    path: Path,
+    rel_path: Path,
+    source_path: str,
+    indexed_at_utc: str,
+    include_artifact_ingest: bool,
+    category_override: str = "",
+) -> dict | None:
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    frontmatter = _parse_frontmatter(text)
+    category = category_override or (rel_path.parts[0] if rel_path.parts else "general")
+    source_mtime_utc = _to_utc_iso(datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc))
+
+    if category == "lessons_learned":
+        item_id = path.stem
+    else:
+        item_id = rel_path.with_suffix("").as_posix()
+
+    title = frontmatter.get("title") or _extract_title(text, item_id)
+    if not include_artifact_ingest and _is_noise_artifact_lesson(path, title, frontmatter, text):
+        return None
+
+    date_raw, date_obj = _parse_date(text, frontmatter.get("date", ""), path=path)
+    if date_obj and date_raw and _has_explicit_time(date_raw):
+        event_timestamp_utc = _to_utc_iso(date_obj)
+    else:
+        event_timestamp_utc = source_mtime_utc
+
+    category_label = _extract_field(
+        re.compile(r"\*\*Category\*\*:\s*(.+)$", re.IGNORECASE | re.MULTILINE),
+        text,
+    )
+    category_label = frontmatter.get("category") or category_label
+    severity = _extract_field(
+        re.compile(r"\*\*Severity\*\*:\s*(.+)$", re.IGNORECASE | re.MULTILINE),
+        text,
+    )
+    severity = frontmatter.get("severity") or severity
+    summary = _extract_summary(text)
+    if not summary:
+        summary = frontmatter.get("description", "")
+    tags = _extract_tags(text)
+
+    return {
+        "id": item_id,
+        "title": title,
+        "date": date_raw or "",
+        "category": category_label or category,
+        "severity": severity.upper() if severity else "",
+        "summary": summary,
+        "tags": tags,
+        "content": text.strip(),
+        "file": source_path,
+        "event_timestamp_utc": event_timestamp_utc,
+        "source_mtime_utc": source_mtime_utc,
+        "indexed_at_utc": indexed_at_utc,
+        "_date_sort": date_obj.isoformat() if date_obj else "",
+    }
+
+
 def build_index() -> list[dict]:
     lessons = []
     if not RAG_ROOT.exists():
-        return lessons
+        markdown_paths: list[Path] = []
+    else:
+        markdown_paths = sorted(RAG_ROOT.rglob("*.md"))
     indexed_at_utc = _to_utc_iso(datetime.now(timezone.utc))
     include_artifact_ingest = (
         os.getenv("INCLUDE_ARTIFACT_INGEST_LESSONS", "").strip().lower() in TRUTHY
     )
 
-    for path in sorted(RAG_ROOT.rglob("*.md")):
+    for path in markdown_paths:
         if path.stem.startswith("tars_") and not include_artifact_ingest:
             continue
-        text = path.read_text(encoding="utf-8", errors="ignore")
-        frontmatter = _parse_frontmatter(text)
         rel_path = path.relative_to(RAG_ROOT)
-        category = rel_path.parts[0] if rel_path.parts else "general"
-        source_path = f"rag_knowledge/{rel_path.as_posix()}"
-        source_mtime_utc = _to_utc_iso(
-            datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
+        lesson = _build_lesson_record(
+            path=path,
+            rel_path=rel_path,
+            source_path=f"rag_knowledge/{rel_path.as_posix()}",
+            indexed_at_utc=indexed_at_utc,
+            include_artifact_ingest=include_artifact_ingest,
         )
+        if lesson is not None:
+            lessons.append(lesson)
 
-        if category == "lessons_learned":
-            item_id = path.stem
-        else:
-            item_id = rel_path.with_suffix("").as_posix()
-
-        title = frontmatter.get("title") or _extract_title(text, item_id)
-        if not include_artifact_ingest and _is_noise_artifact_lesson(
-            path, title, frontmatter, text
-        ):
+    for path in ADDITIONAL_MARKDOWN_SOURCES:
+        if not path.exists():
             continue
-
-        date_raw, date_obj = _parse_date(text, frontmatter.get("date", ""), path=path)
-        event_timestamp_utc = ""
-        if date_obj and date_raw and _has_explicit_time(date_raw):
-            event_timestamp_utc = _to_utc_iso(date_obj)
-        else:
-            # Date-only lessons do not include an intrinsic time; use source file mtime
-            # so the UI can still present an unambiguous freshness timestamp.
-            event_timestamp_utc = source_mtime_utc
-        category_label = _extract_field(
-            re.compile(r"\*\*Category\*\*:\s*(.+)$", re.IGNORECASE | re.MULTILINE),
-            text,
+        lesson = _build_lesson_record(
+            path=path,
+            rel_path=Path("reports") / path.name,
+            source_path=path.as_posix(),
+            indexed_at_utc=indexed_at_utc,
+            include_artifact_ingest=include_artifact_ingest,
+            category_override="reports",
         )
-        category_label = frontmatter.get("category") or category_label
-        severity = _extract_field(
-            re.compile(r"\*\*Severity\*\*:\s*(.+)$", re.IGNORECASE | re.MULTILINE),
-            text,
-        )
-        severity = frontmatter.get("severity") or severity
-        summary = _extract_summary(text)
-        if not summary:
-            summary = frontmatter.get("description", "")
-        tags = _extract_tags(text)
-
-        lessons.append(
-            {
-                "id": item_id,
-                "title": title,
-                "date": date_raw or "",
-                "category": category_label or category,
-                "severity": severity.upper() if severity else "",
-                "summary": summary,
-                "tags": tags,
-                "content": text.strip(),
-                "file": source_path,
-                "event_timestamp_utc": event_timestamp_utc,
-                "source_mtime_utc": source_mtime_utc,
-                "indexed_at_utc": indexed_at_utc,
-                "_date_sort": date_obj.isoformat() if date_obj else "",
-            }
-        )
+        if lesson is not None:
+            lessons.append(lesson)
 
     # Sort by date desc if available; fallback keeps stable ordering
     lessons.sort(

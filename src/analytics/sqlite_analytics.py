@@ -79,6 +79,12 @@ def _iso_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _resolve_output_path(repo_root: Path, path: Path | None) -> Path | None:
+    if path is None:
+        return None
+    return path if path.is_absolute() else repo_root / path
+
+
 def _week_start(value: Any) -> str | None:
     parsed = _parse_dt(value)
     if parsed is None:
@@ -842,29 +848,99 @@ def render_sql_analytics_summary(summary: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def render_sql_analytics_rag_lesson(summary: dict[str, Any]) -> str:
+    account = summary.get("account_daily_pop") or {}
+    closed_trade = summary.get("closed_trade_pop") or {}
+    north_star = summary.get("north_star_progress") or {}
+    highlights = summary.get("highlights") or []
+    generated_at = str(summary.get("generated_at_utc") or "")
+
+    lines = [
+        "---",
+        'title: "Automated SQL Analytics Summary"',
+        'description: "Latest period-over-period trading analytics summary generated from canonical trading JSON sources."',
+        f'date: "{generated_at}"',
+        'severity: "INFO"',
+        'category: "analytics"',
+        "---",
+        "",
+        "# Automated SQL Analytics Summary",
+        "",
+        f"**Date**: {generated_at or 'n/a'}",
+        "**Severity**: INFO",
+        "**Category**: analytics",
+        "",
+        "## Summary",
+        "Automated period-over-period analytics summary generated from canonical trading JSON sources. "
+        "Use this record to answer day-over-day, week-over-week, expectancy, cadence, and North Star progress questions in the published RAG query experience.",
+        "",
+        "## Answer Block",
+        "Q: How did today compare to the previous snapshot?",
+        "A: "
+        f"Equity is {_fmt_money(account.get('equity'))}, resolved daily P/L is {_fmt_money(account.get('resolved_daily_pnl'))}, "
+        f"and the change versus the previous snapshot is {_fmt_money(account.get('equity_change_vs_prev_snapshot'))}.",
+        "",
+        "Q: What changed in closed-trade performance?",
+        "A: "
+        f"The latest closed-trade day is {closed_trade.get('trade_date', 'n/a')}; realized P/L is {_fmt_money(closed_trade.get('realized_pnl'))}, "
+        f"delta versus the previous closed-trade day is {_fmt_money(closed_trade.get('realized_pnl_delta'))}, "
+        f"and cumulative realized P/L is {_fmt_money(closed_trade.get('cumulative_realized_pnl'))}.",
+        "",
+        "Q: What changed week over week on the North Star?",
+        "A: "
+        f"The latest North Star week is {north_star.get('week_start', 'n/a')}; probability is {_fmt_pct(north_star.get('probability_score'))} "
+        f"({north_star.get('probability_label', 'unknown')}), expectancy per trade is {_fmt_money(north_star.get('expectancy_per_trade'))}, "
+        f"and expectancy delta versus the prior week is {_fmt_money(north_star.get('expectancy_delta'))}.",
+        "",
+        "## Highlights",
+    ]
+    lines.extend([f"- {item}" for item in highlights] or ["- No highlights generated."])
+    lines.extend(
+        [
+            "",
+            "## Full Summary",
+            "",
+            render_sql_analytics_summary(summary),
+            "",
+            "## Tags",
+            "`rag`, `analytics`, `period-over-period`, `expectancy`, `cadence`, `north-star`",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
 def build_analytics_artifacts(
     repo_root: Path,
     *,
     db_path: Path = DEFAULT_DB_OUT,
     summary_json_path: Path = DEFAULT_SUMMARY_JSON_OUT,
     summary_md_path: Path = DEFAULT_SUMMARY_MD_OUT,
+    published_summary_json_path: Path | None = None,
+    rag_summary_md_path: Path | None = None,
 ) -> dict[str, Any]:
     repo_root = repo_root.resolve()
-    db_path = db_path if db_path.is_absolute() else repo_root / db_path
-    summary_json_path = (
-        summary_json_path if summary_json_path.is_absolute() else repo_root / summary_json_path
-    )
-    summary_md_path = (
-        summary_md_path if summary_md_path.is_absolute() else repo_root / summary_md_path
-    )
+    db_path = _resolve_output_path(repo_root, db_path)
+    summary_json_path = _resolve_output_path(repo_root, summary_json_path)
+    summary_md_path = _resolve_output_path(repo_root, summary_md_path)
+    published_summary_json_path = _resolve_output_path(repo_root, published_summary_json_path)
+    rag_summary_md_path = _resolve_output_path(repo_root, rag_summary_md_path)
 
     account_rows = _build_account_daily_rows(repo_root)
     closed_trade_rows = _build_closed_trade_rows(repo_root)
     north_star_weekly_rows, north_star_state_row = _build_north_star_weekly_rows(repo_root)
 
+    assert db_path is not None
+    assert summary_json_path is not None
+    assert summary_md_path is not None
+
     db_path.parent.mkdir(parents=True, exist_ok=True)
     summary_json_path.parent.mkdir(parents=True, exist_ok=True)
     summary_md_path.parent.mkdir(parents=True, exist_ok=True)
+    if published_summary_json_path is not None:
+        published_summary_json_path.parent.mkdir(parents=True, exist_ok=True)
+    if rag_summary_md_path is not None:
+        rag_summary_md_path.parent.mkdir(parents=True, exist_ok=True)
     if db_path.exists():
         db_path.unlink()
 
@@ -886,6 +962,15 @@ def build_analytics_artifacts(
             north_star_weekly_rows=north_star_weekly_rows,
         )
 
-    summary_json_path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
-    summary_md_path.write_text(render_sql_analytics_summary(summary), encoding="utf-8")
+    summary_json = json.dumps(summary, indent=2, sort_keys=True)
+    summary_markdown = render_sql_analytics_summary(summary)
+    summary_json_path.write_text(summary_json, encoding="utf-8")
+    summary_md_path.write_text(summary_markdown, encoding="utf-8")
+    if published_summary_json_path is not None:
+        published_summary_json_path.write_text(summary_json, encoding="utf-8")
+    if rag_summary_md_path is not None:
+        rag_summary_md_path.write_text(
+            render_sql_analytics_rag_lesson(summary),
+            encoding="utf-8",
+        )
     return summary

@@ -1196,9 +1196,14 @@ layout: null
       let latestSystemState = null;
       let latestSnapshotManifest = null;
       let latestVerificationReports = null;
+      let latestSqlAnalyticsSummary = null;
       const LESSONS_URL = "{{ '/data/rag/lessons_query.json' | relative_url }}";
       const LESSONS_FALLBACK_URL =
         "https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/rag/lessons_query.json";
+      const SQL_ANALYTICS_SUMMARY_URL =
+        "{{ '/data/sql_analytics_summary.json' | relative_url }}";
+      const SQL_ANALYTICS_SUMMARY_FALLBACK_URL =
+        "https://raw.githubusercontent.com/IgorGanapolsky/trading/main/docs/data/sql_analytics_summary.json";
       const WORKER_URL = "https://trading-rag-chat.iganapolsky.workers.dev";
       const PAPER_PROOF_IMAGE =
         "/trading/assets/snapshots/alpaca_paper_latest.png";
@@ -1625,6 +1630,30 @@ layout: null
         }
         latestVerificationReports = null;
         return null;
+      }
+
+      async function fetchSqlAnalyticsSummary(forceReload = false) {
+        if (!forceReload && latestSqlAnalyticsSummary) return latestSqlAnalyticsSummary;
+        const sources = [SQL_ANALYTICS_SUMMARY_URL, SQL_ANALYTICS_SUMMARY_FALLBACK_URL];
+        for (const source of sources) {
+          try {
+            const res = await fetch(source, { cache: "no-store" });
+            if (!res.ok) continue;
+            const data = await res.json();
+            if (
+              data &&
+              typeof data === "object" &&
+              data.account_daily_pop &&
+              data.north_star_progress
+            ) {
+              latestSqlAnalyticsSummary = data;
+              return data;
+            }
+          } catch {
+            // try next source
+          }
+        }
+        throw new Error("sql analytics summary fetch failed");
       }
 
       function updateLessonsStats() {
@@ -2185,6 +2214,26 @@ Tags: ${lesson.tags.join(", ")}`;
         );
       }
 
+      function isSqlAnalyticsQuery(message) {
+        const q = (message || "").toLowerCase();
+        if (!q) return false;
+        if (
+          /(period over period|day over day|week over week|month over month|\bdod\b|\bwow\b|\bmom\b|rolling 5d|rolling five day)/i.test(
+            q,
+          )
+        ) {
+          return true;
+        }
+        return (
+          /(yesterday|last week|compare|comparison|versus|\bvs\b|what changed|why did)/i.test(
+            q,
+          ) &&
+          /(equity|p\/?l|profit|expectancy|cadence|north star|performance|trade|analytics)/i.test(
+            q,
+          )
+        );
+      }
+
       function buildAccountEvidenceHtml(state, snapshotManifest, verificationReports) {
         const paper = state.paper_account || {};
         const live = state.live_account || {};
@@ -2397,6 +2446,63 @@ Tags: ${lesson.tags.join(", ")}`;
         `;
       }
 
+      function buildSqlAnalyticsEvidenceHtml(summary) {
+        const account = summary?.account_daily_pop || {};
+        const closedTrade = summary?.closed_trade_pop || {};
+        const northStar = summary?.north_star_progress || {};
+        const highlights = Array.isArray(summary?.highlights) ? summary.highlights : [];
+        const generatedDetails = parseTimestampDetails(summary?.generated_at_utc || "");
+        const highlightItems = highlights.length
+          ? highlights
+              .map((item) => `<li>${escapeHtml(String(item))}</li>`)
+              .join("")
+          : "<li>No highlights generated.</li>";
+        const cadencePassed =
+          typeof northStar?.cadence_passed === "boolean"
+            ? northStar.cadence_passed
+            : Boolean(northStar?.cadence_passed);
+        const probabilityLabel = String(northStar?.probability_label || "unknown");
+
+        return `
+          <div class="account-summary">
+            <strong>Period-over-period analytics as of ${escapeHtml(
+              generatedDetails?.shortLabel || summary?.generated_at_utc || "unknown",
+            )}.</strong> This answer is backed by the GitHub-generated SQL analytics summary published for the rag-query page.
+          </div>
+          <div class="account-grid">
+            <div class="account-card">
+              <h4>Account Daily PoP</h4>
+              <div class="account-metric">${formatCurrency(account.equity)}</div>
+              <div class="account-submetric">Snapshot date: ${escapeHtml(String(account.snapshot_date || "n/a"))}</div>
+              <div class="account-submetric">Resolved daily P/L: ${formatSignedCurrency(account.resolved_daily_pnl)}</div>
+              <div class="account-submetric">Change vs prior snapshot: ${formatSignedCurrency(account.equity_change_vs_prev_snapshot)} (${formatSignedPercent(account.equity_change_pct_vs_prev_snapshot)})</div>
+              <div class="account-submetric">Rolling 5D P/L: ${formatSignedCurrency(account.rolling_5d_pnl)}</div>
+            </div>
+            <div class="account-card">
+              <h4>Closed Trade PoP</h4>
+              <div class="account-metric">${formatSignedCurrency(closedTrade.realized_pnl)}</div>
+              <div class="account-submetric">Trade date: ${escapeHtml(String(closedTrade.trade_date || "n/a"))}</div>
+              <div class="account-submetric">Realized P/L delta: ${formatSignedCurrency(closedTrade.realized_pnl_delta)}</div>
+              <div class="account-submetric">Expectancy per trade: ${formatSignedCurrency(closedTrade.expectancy_per_trade)}</div>
+              <div class="account-submetric">Cumulative realized P/L: ${formatSignedCurrency(closedTrade.cumulative_realized_pnl)}</div>
+            </div>
+            <div class="account-card">
+              <h4>North Star Weekly PoP</h4>
+              <div class="account-metric">${formatSignedCurrency(northStar.expectancy_per_trade)}</div>
+              <div class="account-submetric">Week start: ${escapeHtml(String(northStar.week_start || "n/a"))}</div>
+              <div class="account-submetric">Expectancy delta vs prior week: ${formatSignedCurrency(northStar.expectancy_delta)}</div>
+              <div class="account-submetric">Probability: ${formatSignedPercent(northStar.probability_score)} (${escapeHtml(probabilityLabel)})</div>
+              <div class="account-submetric">Cadence passed: ${cadencePassed ? "yes" : "no"}</div>
+            </div>
+          </div>
+          <div class="account-submetric"><strong>Highlights:</strong></div>
+          <ul>${highlightItems}</ul>
+          <div class="account-submetric">
+            Source JSON: <a href="${SQL_ANALYTICS_SUMMARY_URL}" target="_blank" rel="noopener noreferrer">published sql_analytics_summary.json</a>
+          </div>
+        `;
+      }
+
       async function buildLocalChatResponse(message) {
         if (isAccountEvidenceQuery(message)) {
           try {
@@ -2415,6 +2521,28 @@ Tags: ${lesson.tags.join(", ")}`;
               html:
                 "I could not fetch latest account state right now. Please retry in a few seconds.",
               plain: "Account state fetch failed.",
+            };
+          }
+        }
+
+        if (isSqlAnalyticsQuery(message)) {
+          try {
+            const summary = await fetchSqlAnalyticsSummary(true);
+            const account = summary?.account_daily_pop || {};
+            const northStar = summary?.north_star_progress || {};
+            return {
+              html: buildSqlAnalyticsEvidenceHtml(summary),
+              plain:
+                `Period-over-period analytics: equity ${formatCurrency(account.equity)}, ` +
+                `daily P/L ${formatSignedCurrency(account.resolved_daily_pnl)}, ` +
+                `change vs prior snapshot ${formatSignedCurrency(account.equity_change_vs_prev_snapshot)}, ` +
+                `North Star expectancy delta ${formatSignedCurrency(northStar.expectancy_delta)}.`,
+            };
+          } catch {
+            return {
+              html:
+                "I could not fetch the published SQL analytics summary right now. Please retry in a few seconds.",
+              plain: "SQL analytics summary fetch failed.",
             };
           }
         }
