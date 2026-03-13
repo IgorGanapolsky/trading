@@ -12,6 +12,11 @@ on:
     paths:
       - "scripts/generate_world_class_dashboard*.py"
       - "scripts/update_docs_index.py"
+      - "scripts/build_sqlite_analytics.py"
+      - "src/analytics/__init__.py"
+      - "src/analytics/sqlite_analytics.py"
+      - "src/core/trading_constants.py"
+      - ".github/workflows/update-progress-dashboard.yml"
 
 permissions:
   contents: write
@@ -103,6 +108,17 @@ jobs:
           python3 scripts/update_north_star_operating_plan.py
           echo "✅ North Star operating plan updated"
 
+      - name: Build autonomous SQL analytics artifacts
+        run: |
+          echo "🧮 Building SQLite analytics layer + PoP summary..."
+          python3 scripts/build_sqlite_analytics.py \
+            --repo-root . \
+            --db-out artifacts/devloop/trading_analytics.sqlite \
+            --summary-json-out artifacts/devloop/sql_analytics_summary.json \
+            --summary-md-out artifacts/devloop/sql_analytics_summary.md
+          echo "✅ SQL analytics artifacts generated"
+          head -40 artifacts/devloop/sql_analytics_summary.md
+
       - name: Backfill historical learning (RAG + RLHF)
         run: |
           echo "🧠 Backfilling historical learning into RLHF + RAG..."
@@ -179,6 +195,15 @@ jobs:
             --out-dir docs/_reports
           echo "✅ Dashboard snapshot generated"
 
+      - name: Upload SQL analytics artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sql-analytics
+          path: |
+            artifacts/devloop/trading_analytics.sqlite
+            artifacts/devloop/sql_analytics_summary.json
+            artifacts/devloop/sql_analytics_summary.md
+
       - name: Check AI discoverability KPIs
         run: |
           echo "🔎 Evaluating AI discoverability KPIs..."
@@ -239,7 +264,7 @@ jobs:
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          git add data/system_state.json data/north_star_weekly_history.json data/trades.json data/runtime/north_star_gate_overrides.json data/market_signals/ai_credit_stress_signal.json data/market_signals/usd_macro_sentiment_signal.json data/market_signals/ai_cycle_signal.json data/feedback/feedback_historical_backfill.jsonl artifacts/devloop/box_workspace_manifest.json artifacts/devloop/ai_discoverability_report.md artifacts/devloop/ai_discoverability_report.json artifacts/devloop/profit_readiness_scorecard.md artifacts/devloop/north_star_autopilot_report.json artifacts/devloop/north_star_autopilot_report.md artifacts/devloop/historical_learning_backfill.json artifacts/tars/ docs/ docs/_reports/*-dashboard-snapshot.md docs/_reports/hackathon-system-explainer.md docs/lessons/judge-demo.html wiki/ docs/index.md rag_knowledge/lessons_learned/ll_historical_learning_backfill.md 2>/dev/null || true
+          git add data/system_state.json data/north_star_weekly_history.json data/trades.json data/runtime/north_star_gate_overrides.json data/market_signals/ai_credit_stress_signal.json data/market_signals/usd_macro_sentiment_signal.json data/market_signals/ai_cycle_signal.json data/feedback/feedback_historical_backfill.jsonl artifacts/devloop/box_workspace_manifest.json artifacts/devloop/ai_discoverability_report.md artifacts/devloop/ai_discoverability_report.json artifacts/devloop/profit_readiness_scorecard.md artifacts/devloop/north_star_autopilot_report.json artifacts/devloop/north_star_autopilot_report.md artifacts/devloop/historical_learning_backfill.json artifacts/devloop/sql_analytics_summary.json artifacts/devloop/sql_analytics_summary.md artifacts/tars/ docs/ docs/_reports/*-dashboard-snapshot.md docs/_reports/hackathon-system-explainer.md docs/lessons/judge-demo.html wiki/ docs/index.md rag_knowledge/lessons_learned/ll_historical_learning_backfill.md 2>/dev/null || true
           if ! git diff --staged --quiet; then
             git commit -m "chore: Sync dashboard data [auto]"
             if [ -n "${{ secrets.GH_PAT }}" ]; then
