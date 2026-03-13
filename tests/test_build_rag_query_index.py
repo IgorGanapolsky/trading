@@ -14,6 +14,7 @@ def _write(path: Path, content: str) -> None:
 def test_build_index_filters_tars_artifact_ingest_by_default(tmp_path: Path, monkeypatch) -> None:
     rag_root = tmp_path / "rag_knowledge"
     monkeypatch.setattr(build_rag_query_index, "RAG_ROOT", rag_root)
+    monkeypatch.setattr(build_rag_query_index, "ADDITIONAL_MARKDOWN_SOURCES", [])
     monkeypatch.delenv("INCLUDE_ARTIFACT_INGEST_LESSONS", raising=False)
 
     _write(
@@ -50,6 +51,7 @@ def test_build_index_can_include_tars_artifact_ingest_with_opt_in(
 ) -> None:
     rag_root = tmp_path / "rag_knowledge"
     monkeypatch.setattr(build_rag_query_index, "RAG_ROOT", rag_root)
+    monkeypatch.setattr(build_rag_query_index, "ADDITIONAL_MARKDOWN_SOURCES", [])
     monkeypatch.setenv("INCLUDE_ARTIFACT_INGEST_LESSONS", "1")
 
     _write(
@@ -78,6 +80,7 @@ source: tars_artifact_ingest
 def test_build_index_parses_bold_date_with_colon_inside_markup(tmp_path: Path, monkeypatch) -> None:
     rag_root = tmp_path / "rag_knowledge"
     monkeypatch.setattr(build_rag_query_index, "RAG_ROOT", rag_root)
+    monkeypatch.setattr(build_rag_query_index, "ADDITIONAL_MARKDOWN_SOURCES", [])
 
     _write(
         rag_root / "lessons_learned" / "ll_999_markup_date.md",
@@ -102,6 +105,7 @@ def test_build_index_falls_back_to_filename_date_when_metadata_missing(
 ) -> None:
     rag_root = tmp_path / "rag_knowledge"
     monkeypatch.setattr(build_rag_query_index, "RAG_ROOT", rag_root)
+    monkeypatch.setattr(build_rag_query_index, "ADDITIONAL_MARKDOWN_SOURCES", [])
 
     _write(
         rag_root / "lessons_learned" / "ll_proactive_scan_20260216.md",

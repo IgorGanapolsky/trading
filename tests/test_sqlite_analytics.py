@@ -213,5 +213,10 @@ def test_build_analytics_artifacts_creates_views_and_summary(tmp_path: Path) -> 
     )
     rag_text = rag_summary_md.read_text(encoding="utf-8")
     assert "Automated SQL Analytics Summary" in rag_text
+    assert 'image: "/assets/snapshots/progress_latest.png"' in rag_text
     assert "How did today compare to the previous snapshot?" in rag_text
     assert "What changed week over week on the North Star?" in rag_text
+    assert (
+        "https://github.com/IgorGanapolsky/trading/blob/main/docs/data/sql_analytics_summary.json"
+        in rag_text
+    )

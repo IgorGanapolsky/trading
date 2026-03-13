@@ -1,19 +1,24 @@
 ---
 title: "Automated SQL Analytics Summary"
 description: "Latest period-over-period trading analytics summary generated from canonical trading JSON sources."
-date: "2026-03-13T21:12:43.620309+00:00"
+image: "/assets/snapshots/progress_latest.png"
+date: "2026-03-13T21:19:27.211433+00:00"
 severity: "INFO"
 category: "analytics"
 ---
 
 # Automated SQL Analytics Summary
 
-**Date**: 2026-03-13T21:12:43.620309+00:00
+**Date**: 2026-03-13T21:19:27.211433+00:00
 **Severity**: INFO
 **Category**: analytics
 
 ## Summary
 Automated period-over-period analytics summary generated from canonical trading JSON sources. Use this record to answer day-over-day, week-over-week, expectancy, cadence, and North Star progress questions in the published RAG query experience.
+
+## Evidence
+- Published SQL analytics JSON: https://github.com/IgorGanapolsky/trading/blob/main/docs/data/sql_analytics_summary.json
+- SQLite analytics builder: https://github.com/IgorGanapolsky/trading/blob/main/src/analytics/sqlite_analytics.py
 
 ## Answer Block
 Q: How did today compare to the previous snapshot?
@@ -34,7 +39,7 @@ A: The latest North Star week is 2026-03-09; probability is 49.70% (low), expect
 
 # SQL Analytics Summary
 
-- Generated at: `2026-03-13T21:12:43.620309+00:00`
+- Generated at: `2026-03-13T21:19:27.211433+00:00`
 - SQLite DB: `/Users/ganapolsky_i/workspace/git/igor/trading/.worktrees/rag-analytics-answers/artifacts/devloop/trading_analytics.sqlite`
 
 ## Source Coverage

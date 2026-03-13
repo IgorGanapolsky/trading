@@ -859,6 +859,7 @@ def render_sql_analytics_rag_lesson(summary: dict[str, Any]) -> str:
         "---",
         'title: "Automated SQL Analytics Summary"',
         'description: "Latest period-over-period trading analytics summary generated from canonical trading JSON sources."',
+        'image: "/assets/snapshots/progress_latest.png"',
         f'date: "{generated_at}"',
         'severity: "INFO"',
         'category: "analytics"',
@@ -873,6 +874,10 @@ def render_sql_analytics_rag_lesson(summary: dict[str, Any]) -> str:
         "## Summary",
         "Automated period-over-period analytics summary generated from canonical trading JSON sources. "
         "Use this record to answer day-over-day, week-over-week, expectancy, cadence, and North Star progress questions in the published RAG query experience.",
+        "",
+        "## Evidence",
+        "- Published SQL analytics JSON: https://github.com/IgorGanapolsky/trading/blob/main/docs/data/sql_analytics_summary.json",
+        "- SQLite analytics builder: https://github.com/IgorGanapolsky/trading/blob/main/src/analytics/sqlite_analytics.py",
         "",
         "## Answer Block",
         "Q: How did today compare to the previous snapshot?",

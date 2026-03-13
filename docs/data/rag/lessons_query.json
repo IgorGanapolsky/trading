@@ -2,7 +2,7 @@
   {
     "id": "reports/sql-analytics-summary",
     "title": "Automated SQL Analytics Summary",
-    "date": "2026-03-13T21:12:43.620309+00:00",
+    "date": "2026-03-13T21:19:27.211433+00:00",
     "category": "analytics",
     "severity": "INFO",
     "summary": "Automated period-over-period analytics summary generated from canonical trading JSON sources. Use this record to answer day-over-day, week-over-week, expectancy, cadence, and North Star progress questions in the published RAG query experience.",
@@ -14,11 +14,11 @@
       "cadence",
       "north-star"
     ],
-    "content": "---\ntitle: \"Automated SQL Analytics Summary\"\ndescription: \"Latest period-over-period trading analytics summary generated from canonical trading JSON sources.\"\ndate: \"2026-03-13T21:12:43.620309+00:00\"\nseverity: \"INFO\"\ncategory: \"analytics\"\n---\n\n# Automated SQL Analytics Summary\n\n**Date**: 2026-03-13T21:12:43.620309+00:00\n**Severity**: INFO\n**Category**: analytics\n\n## Summary\nAutomated period-over-period analytics summary generated from canonical trading JSON sources. Use this record to answer day-over-day, week-over-week, expectancy, cadence, and North Star progress questions in the published RAG query experience.\n\n## Answer Block\nQ: How did today compare to the previous snapshot?\nA: Equity is $98,527.33, resolved daily P/L is $581.72, and the change versus the previous snapshot is $-1,995.43.\n\nQ: What changed in closed-trade performance?\nA: The latest closed-trade day is 2026-02-06; realized P/L is $41.00, delta versus the previous closed-trade day is n/a, and cumulative realized P/L is $41.00.\n\nQ: What changed week over week on the North Star?\nA: The latest North Star week is 2026-03-09; probability is 49.70% (low), expectancy per trade is $-5,822.50, and expectancy delta versus the prior week is $-1,786.17.\n\n## Highlights\n- Equity declined by $1,995.43 versus the previous snapshot, with resolved daily P/L $581.72.\n- Closed-trade ledger now contains 1 closed trade(s); latest realized P/L was $41.00 on 2026-02-06.\n- North Star weekly gate is blocked; probability label is LOW and monthly target remains $6,000.00.\n\n## Full Summary\n\n# SQL Analytics Summary\n\n- Generated at: `2026-03-13T21:12:43.620309+00:00`\n- SQLite DB: `/Users/ganapolsky_i/workspace/git/igor/trading/.worktrees/rag-analytics-answers/artifacts/devloop/trading_analytics.sqlite`\n\n## Source Coverage\n- Account snapshots loaded: `15`\n- Closed trades loaded: `1`\n- Weekly North Star rows loaded: `5`\n\n## Account Daily PoP\n- Snapshot date: `2026-03-13`\n- Equity: `$98,527.33`\n- Resolved daily P/L: `$581.72`\n- Prior equity: `$100,522.76`\n- Equity change vs prior snapshot: `$-1,995.43`\n- Equity change % vs prior snapshot: `-1.99%`\n- Rolling 5D P/L: `$585.64`\n- Trade activity: orders `n/a`, structures `n/a`, fills `n/a`\n\n## Closed Trade PoP\n- Trade date: `2026-02-06`\n- Closed trades on date: `1`\n- Realized P/L: `$41.00`\n- Realized P/L delta: `n/a`\n- Expectancy per trade: `$41.00`\n- Cumulative realized P/L: `$41.00`\n\n## North Star Weekly PoP\n- Week start: `2026-03-09`\n- Monthly target: `$6,000.00`\n- Probability: `49.70%` (`low`)\n- Monthly progress: `2.05%`\n- Expectancy per trade: `$-5,822.50`\n- Expectancy delta vs prior week: `$-1,786.17`\n- Weekly win rate: `0.00%`\n- Weekly cadence passed: `False`\n\n## Highlights\n- Equity declined by $1,995.43 versus the previous snapshot, with resolved daily P/L $581.72.\n- Closed-trade ledger now contains 1 closed trade(s); latest realized P/L was $41.00 on 2026-02-06.\n- North Star weekly gate is blocked; probability label is LOW and monthly target remains $6,000.00.\n\n\n## Tags\n`rag`, `analytics`, `period-over-period`, `expectancy`, `cadence`, `north-star`",
+    "content": "---\ntitle: \"Automated SQL Analytics Summary\"\ndescription: \"Latest period-over-period trading analytics summary generated from canonical trading JSON sources.\"\nimage: \"/assets/snapshots/progress_latest.png\"\ndate: \"2026-03-13T21:19:27.211433+00:00\"\nseverity: \"INFO\"\ncategory: \"analytics\"\n---\n\n# Automated SQL Analytics Summary\n\n**Date**: 2026-03-13T21:19:27.211433+00:00\n**Severity**: INFO\n**Category**: analytics\n\n## Summary\nAutomated period-over-period analytics summary generated from canonical trading JSON sources. Use this record to answer day-over-day, week-over-week, expectancy, cadence, and North Star progress questions in the published RAG query experience.\n\n## Evidence\n- Published SQL analytics JSON: https://github.com/IgorGanapolsky/trading/blob/main/docs/data/sql_analytics_summary.json\n- SQLite analytics builder: https://github.com/IgorGanapolsky/trading/blob/main/src/analytics/sqlite_analytics.py\n\n## Answer Block\nQ: How did today compare to the previous snapshot?\nA: Equity is $98,527.33, resolved daily P/L is $581.72, and the change versus the previous snapshot is $-1,995.43.\n\nQ: What changed in closed-trade performance?\nA: The latest closed-trade day is 2026-02-06; realized P/L is $41.00, delta versus the previous closed-trade day is n/a, and cumulative realized P/L is $41.00.\n\nQ: What changed week over week on the North Star?\nA: The latest North Star week is 2026-03-09; probability is 49.70% (low), expectancy per trade is $-5,822.50, and expectancy delta versus the prior week is $-1,786.17.\n\n## Highlights\n- Equity declined by $1,995.43 versus the previous snapshot, with resolved daily P/L $581.72.\n- Closed-trade ledger now contains 1 closed trade(s); latest realized P/L was $41.00 on 2026-02-06.\n- North Star weekly gate is blocked; probability label is LOW and monthly target remains $6,000.00.\n\n## Full Summary\n\n# SQL Analytics Summary\n\n- Generated at: `2026-03-13T21:19:27.211433+00:00`\n- SQLite DB: `/Users/ganapolsky_i/workspace/git/igor/trading/.worktrees/rag-analytics-answers/artifacts/devloop/trading_analytics.sqlite`\n\n## Source Coverage\n- Account snapshots loaded: `15`\n- Closed trades loaded: `1`\n- Weekly North Star rows loaded: `5`\n\n## Account Daily PoP\n- Snapshot date: `2026-03-13`\n- Equity: `$98,527.33`\n- Resolved daily P/L: `$581.72`\n- Prior equity: `$100,522.76`\n- Equity change vs prior snapshot: `$-1,995.43`\n- Equity change % vs prior snapshot: `-1.99%`\n- Rolling 5D P/L: `$585.64`\n- Trade activity: orders `n/a`, structures `n/a`, fills `n/a`\n\n## Closed Trade PoP\n- Trade date: `2026-02-06`\n- Closed trades on date: `1`\n- Realized P/L: `$41.00`\n- Realized P/L delta: `n/a`\n- Expectancy per trade: `$41.00`\n- Cumulative realized P/L: `$41.00`\n\n## North Star Weekly PoP\n- Week start: `2026-03-09`\n- Monthly target: `$6,000.00`\n- Probability: `49.70%` (`low`)\n- Monthly progress: `2.05%`\n- Expectancy per trade: `$-5,822.50`\n- Expectancy delta vs prior week: `$-1,786.17`\n- Weekly win rate: `0.00%`\n- Weekly cadence passed: `False`\n\n## Highlights\n- Equity declined by $1,995.43 versus the previous snapshot, with resolved daily P/L $581.72.\n- Closed-trade ledger now contains 1 closed trade(s); latest realized P/L was $41.00 on 2026-02-06.\n- North Star weekly gate is blocked; probability label is LOW and monthly target remains $6,000.00.\n\n\n## Tags\n`rag`, `analytics`, `period-over-period`, `expectancy`, `cadence`, `north-star`",
     "file": "docs/_reports/sql-analytics-summary.md",
-    "event_timestamp_utc": "2026-03-13T21:12:43.620309Z",
-    "source_mtime_utc": "2026-03-13T21:12:43.621990Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "event_timestamp_utc": "2026-03-13T21:19:27.211433Z",
+    "source_mtime_utc": "2026-03-13T21:19:27.213230Z",
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "reports/sql_analytics_summary",
@@ -39,7 +39,7 @@
     "file": "rag_knowledge/reports/sql_analytics_summary.md",
     "event_timestamp_utc": "2026-03-13T21:10:18.283610Z",
     "source_mtime_utc": "2026-03-13T21:10:18.285493Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-353_PR_Merge_CI_Hygiene_Feb16",
@@ -53,7 +53,7 @@
     "file": "rag_knowledge/lessons_learned/LL-353_PR_Merge_CI_Hygiene_Feb16.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.719464Z",
     "source_mtime_utc": "2026-03-13T21:03:59.719464Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_proactive_scan_20260216",
@@ -67,7 +67,7 @@
     "file": "rag_knowledge/lessons_learned/ll_proactive_scan_20260216.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.735106Z",
     "source_mtime_utc": "2026-03-13T21:03:59.735106Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_proactive_scan_20260215",
@@ -81,7 +81,7 @@
     "file": "rag_knowledge/lessons_learned/ll_proactive_scan_20260215.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.735037Z",
     "source_mtime_utc": "2026-03-13T21:03:59.735037Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "automated_position_management_feb08",
@@ -95,7 +95,7 @@
     "file": "rag_knowledge/lessons_learned/automated_position_management_feb08.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.719552Z",
     "source_mtime_utc": "2026-03-13T21:03:59.719552Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "iron_condor_backtest_findings_feb08",
@@ -109,7 +109,7 @@
     "file": "rag_knowledge/lessons_learned/iron_condor_backtest_findings_feb08.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.719811Z",
     "source_mtime_utc": "2026-03-13T21:03:59.719811Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "spx_tax_advantage_feb08",
@@ -123,7 +123,7 @@
     "file": "rag_knowledge/lessons_learned/spx_tax_advantage_feb08.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.735572Z",
     "source_mtime_utc": "2026-03-13T21:03:59.735572Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "win_rate_diagnosis_feb08",
@@ -137,7 +137,7 @@
     "file": "rag_knowledge/lessons_learned/win_rate_diagnosis_feb08.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.735981Z",
     "source_mtime_utc": "2026-03-13T21:03:59.735981Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_skipped_prevention_step_feb06",
@@ -151,7 +151,7 @@
     "file": "rag_knowledge/lessons_learned/ll_skipped_prevention_step_feb06.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.735185Z",
     "source_mtime_utc": "2026-03-13T21:03:59.735185Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_325_cto_violated_rule1_closed_positions_feb04",
@@ -165,7 +165,7 @@
     "file": "rag_knowledge/lessons_learned/ll_325_cto_violated_rule1_closed_positions_feb04.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.734725Z",
     "source_mtime_utc": "2026-03-13T21:03:59.734725Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ml_clustering_20260204",
@@ -179,7 +179,7 @@
     "file": "rag_knowledge/lessons_learned/ml_clustering_20260204.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.735275Z",
     "source_mtime_utc": "2026-03-13T21:03:59.735275Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "claude_date_hallucination_feb01",
@@ -193,7 +193,7 @@
     "file": "rag_knowledge/lessons_learned/claude_date_hallucination_feb01.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.719633Z",
     "source_mtime_utc": "2026-03-13T21:03:59.719633Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "cto_lied_about_secret_upload_feb01",
@@ -207,7 +207,7 @@
     "file": "rag_knowledge/lessons_learned/cto_lied_about_secret_upload_feb01.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.719722Z",
     "source_mtime_utc": "2026-03-13T21:03:59.719722Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_300_cloud_rag_cost_explosion_feb1",
@@ -221,7 +221,7 @@
     "file": "rag_knowledge/lessons_learned/ll_300_cloud_rag_cost_explosion_feb1.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.734200Z",
     "source_mtime_utc": "2026-03-13T21:03:59.734200Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-321_VIX_Entry_Rules_Iron_Condor_Jan31",
@@ -242,7 +242,7 @@
     "file": "rag_knowledge/lessons_learned/LL-321_VIX_Entry_Rules_Iron_Condor_Jan31.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.719122Z",
     "source_mtime_utc": "2026-03-13T21:03:59.719122Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-322_XSP_vs_SPY_Tax_Optimization_Jan31",
@@ -263,7 +263,7 @@
     "file": "rag_knowledge/lessons_learned/LL-322_XSP_vs_SPY_Tax_Optimization_Jan31.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.719254Z",
     "source_mtime_utc": "2026-03-13T21:03:59.719254Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-323_Iron_Condor_Management_71K_Study_Jan31",
@@ -284,7 +284,7 @@
     "file": "rag_knowledge/lessons_learned/LL-323_Iron_Condor_Management_71K_Study_Jan31.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.719383Z",
     "source_mtime_utc": "2026-03-13T21:03:59.719383Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-319_CTO_Rule1_Failure_Jan30",
@@ -305,7 +305,7 @@
     "file": "rag_knowledge/lessons_learned/LL-319_CTO_Rule1_Failure_Jan30.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.718931Z",
     "source_mtime_utc": "2026-03-13T21:03:59.718931Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-320_CEO_Identity_North_Star_Commitment",
@@ -319,7 +319,7 @@
     "file": "rag_knowledge/lessons_learned/LL-320_CEO_Identity_North_Star_Commitment.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.719033Z",
     "source_mtime_utc": "2026-03-13T21:03:59.719033Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_318_async_hooks_performance_jan27",
@@ -333,7 +333,7 @@
     "file": "rag_knowledge/lessons_learned/ll_318_async_hooks_performance_jan27.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.734659Z",
     "source_mtime_utc": "2026-03-13T21:03:59.734659Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-312_Crisis_Prevention_Systems_Audit_Jan26",
@@ -353,7 +353,7 @@
     "file": "rag_knowledge/lessons_learned/LL-312_Crisis_Prevention_Systems_Audit_Jan26.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.718358Z",
     "source_mtime_utc": "2026-03-13T21:03:59.718358Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-314_Execution_Readiness_Checklist_Jan26",
@@ -367,7 +367,7 @@
     "file": "rag_knowledge/lessons_learned/LL-314_Execution_Readiness_Checklist_Jan26.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.718439Z",
     "source_mtime_utc": "2026-03-13T21:03:59.718439Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-315_CTO_Violated_Directive_3_Jan26",
@@ -381,7 +381,7 @@
     "file": "rag_knowledge/lessons_learned/LL-315_CTO_Violated_Directive_3_Jan26.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.718519Z",
     "source_mtime_utc": "2026-03-13T21:03:59.718519Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-316_PR_Hygiene_Session_Jan26",
@@ -395,7 +395,7 @@
     "file": "rag_knowledge/lessons_learned/LL-316_PR_Hygiene_Session_Jan26.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.718607Z",
     "source_mtime_utc": "2026-03-13T21:03:59.718607Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-318_CTO_Wrong_Repo_Confusion_Jan26",
@@ -414,7 +414,7 @@
     "file": "rag_knowledge/lessons_learned/LL-318_CTO_Wrong_Repo_Confusion_Jan26.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.718706Z",
     "source_mtime_utc": "2026-03-13T21:03:59.718706Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_313_rag_hooks_audit_jan26",
@@ -428,7 +428,7 @@
     "file": "rag_knowledge/lessons_learned/ll_313_rag_hooks_audit_jan26.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.734446Z",
     "source_mtime_utc": "2026-03-13T21:03:59.734446Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_316_paper_trading_blocked_vix_jan26",
@@ -442,7 +442,7 @@
     "file": "rag_knowledge/lessons_learned/ll_316_paper_trading_blocked_vix_jan26.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.734519Z",
     "source_mtime_utc": "2026-03-13T21:03:59.734519Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_317_ci_scripts_orphan_positions_jan26",
@@ -456,7 +456,7 @@
     "file": "rag_knowledge/lessons_learned/ll_317_ci_scripts_orphan_positions_jan26.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.734593Z",
     "source_mtime_utc": "2026-03-13T21:03:59.734593Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-306_CTO_Ignores_Surfaced_RAG_Lessons_Jan25",
@@ -470,7 +470,7 @@
     "file": "rag_knowledge/lessons_learned/LL-306_CTO_Ignores_Surfaced_RAG_Lessons_Jan25.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.718234Z",
     "source_mtime_utc": "2026-03-13T21:03:59.718234Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_309_iron_condor_optimal_control_research_jan25",
@@ -484,7 +484,7 @@
     "file": "rag_knowledge/lessons_learned/ll_309_iron_condor_optimal_control_research_jan25.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.734269Z",
     "source_mtime_utc": "2026-03-13T21:03:59.734269Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_310_vix_timing_iron_condor_entry_jan25",
@@ -498,7 +498,7 @@
     "file": "rag_knowledge/lessons_learned/ll_310_vix_timing_iron_condor_entry_jan25.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.734376Z",
     "source_mtime_utc": "2026-03-13T21:03:59.734376Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-302_RLHF_Thompson_Sampling_Model_Jan24",
@@ -518,7 +518,7 @@
     "file": "rag_knowledge/lessons_learned/LL-302_RLHF_Thompson_Sampling_Model_Jan24.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.717912Z",
     "source_mtime_utc": "2026-03-13T21:03:59.717912Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-303_PR_Management_System_Hygiene_Jan24",
@@ -532,7 +532,7 @@
     "file": "rag_knowledge/lessons_learned/LL-303_PR_Management_System_Hygiene_Jan24.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.717995Z",
     "source_mtime_utc": "2026-03-13T21:03:59.717995Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-304_System_Hygiene_Weekend_Jan24",
@@ -546,7 +546,7 @@
     "file": "rag_knowledge/lessons_learned/LL-304_System_Hygiene_Weekend_Jan24.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.718073Z",
     "source_mtime_utc": "2026-03-13T21:03:59.718073Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-305_CI_Lint_Fix_E741_Jan24",
@@ -566,7 +566,7 @@
     "file": "rag_knowledge/lessons_learned/LL-305_CI_Lint_Fix_E741_Jan24.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.718151Z",
     "source_mtime_utc": "2026-03-13T21:03:59.718151Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-296_XSP_Tax_Optimization_Recommendation",
@@ -587,7 +587,7 @@
     "file": "rag_knowledge/lessons_learned/LL-296_XSP_Tax_Optimization_Recommendation.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.717130Z",
     "source_mtime_utc": "2026-03-13T21:03:59.717130Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-297_Comprehensive_Tax_Strategy_Planning",
@@ -610,7 +610,7 @@
     "file": "rag_knowledge/lessons_learned/LL-297_Comprehensive_Tax_Strategy_Planning.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.717288Z",
     "source_mtime_utc": "2026-03-13T21:03:59.717288Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-298_CI_Verification_Honesty_Protocol",
@@ -631,7 +631,7 @@
     "file": "rag_knowledge/lessons_learned/LL-298_CI_Verification_Honesty_Protocol.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.717376Z",
     "source_mtime_utc": "2026-03-13T21:03:59.717376Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-299_Iron_Condor_Adjustment_Strategies",
@@ -651,7 +651,7 @@
     "file": "rag_knowledge/lessons_learned/LL-299_Iron_Condor_Adjustment_Strategies.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.717502Z",
     "source_mtime_utc": "2026-03-13T21:03:59.717502Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-300_RAG_Webhook_RAG_Query_Fix_Jan23",
@@ -665,7 +665,7 @@
     "file": "rag_knowledge/lessons_learned/LL-300_RAG_Webhook_RAG_Query_Fix_Jan23.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.717588Z",
     "source_mtime_utc": "2026-03-13T21:03:59.717588Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-301_IC_Position_Management_System_Jan23",
@@ -684,7 +684,7 @@
     "file": "rag_knowledge/lessons_learned/LL-301_IC_Position_Management_System_Jan23.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.717672Z",
     "source_mtime_utc": "2026-03-13T21:03:59.717672Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-301_Q1_2026_Tax_Action_Plan",
@@ -704,7 +704,7 @@
     "file": "rag_knowledge/lessons_learned/LL-301_Q1_2026_Tax_Action_Plan.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.717753Z",
     "source_mtime_utc": "2026-03-13T21:03:59.717753Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-302_ML_RAG_Integration_Analysis_Jan23",
@@ -718,7 +718,7 @@
     "file": "rag_knowledge/lessons_learned/LL-302_ML_RAG_Integration_Analysis_Jan23.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.717833Z",
     "source_mtime_utc": "2026-03-13T21:03:59.717833Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_298_invalid_strikes_call_legs_fail_jan23",
@@ -732,7 +732,7 @@
     "file": "rag_knowledge/lessons_learned/ll_298_invalid_strikes_call_legs_fail_jan23.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.734051Z",
     "source_mtime_utc": "2026-03-13T21:03:59.734051Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_298_share_churning_loss_jan23",
@@ -746,7 +746,7 @@
     "file": "rag_knowledge/lessons_learned/ll_298_share_churning_loss_jan23.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.734127Z",
     "source_mtime_utc": "2026-03-13T21:03:59.734127Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-282_CTO_Failure_Crisis_Jan22",
@@ -760,7 +760,7 @@
     "file": "rag_knowledge/lessons_learned/LL-282_CTO_Failure_Crisis_Jan22.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.716566Z",
     "source_mtime_utc": "2026-03-13T21:03:59.716566Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-290_Position_Accumulation_Bug_Jan22",
@@ -782,7 +782,7 @@
     "file": "rag_knowledge/lessons_learned/LL-290_Position_Accumulation_Bug_Jan22.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.716647Z",
     "source_mtime_utc": "2026-03-13T21:03:59.716647Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-293_Iron_Condor_30K_Account_Optimization",
@@ -803,7 +803,7 @@
     "file": "rag_knowledge/lessons_learned/LL-293_Iron_Condor_30K_Account_Optimization.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.716770Z",
     "source_mtime_utc": "2026-03-13T21:03:59.716770Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-294_Financial_Independence_Roadmap",
@@ -823,7 +823,7 @@
     "file": "rag_knowledge/lessons_learned/LL-294_Financial_Independence_Roadmap.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.716894Z",
     "source_mtime_utc": "2026-03-13T21:03:59.716894Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-295_Wealth_Building_Pillars",
@@ -845,7 +845,7 @@
     "file": "rag_knowledge/lessons_learned/LL-295_Wealth_Building_Pillars.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.717042Z",
     "source_mtime_utc": "2026-03-13T21:03:59.717042Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_280_cumulative_position_risk_bypass_jan22",
@@ -867,7 +867,7 @@
     "file": "rag_knowledge/lessons_learned/ll_280_cumulative_position_risk_bypass_jan22.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.732869Z",
     "source_mtime_utc": "2026-03-13T21:03:59.732869Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_281_alpaca_api_close_position_bug_jan22",
@@ -888,7 +888,7 @@
     "file": "rag_knowledge/lessons_learned/ll_281_alpaca_api_close_position_bug_jan22.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.733012Z",
     "source_mtime_utc": "2026-03-13T21:03:59.733012Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_281_position_accumulation_crisis_jan22",
@@ -902,7 +902,7 @@
     "file": "rag_knowledge/lessons_learned/ll_281_position_accumulation_crisis_jan22.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.733174Z",
     "source_mtime_utc": "2026-03-13T21:03:59.733174Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_282_close_position_api_for_orphans_jan22",
@@ -916,7 +916,7 @@
     "file": "rag_knowledge/lessons_learned/ll_282_close_position_api_for_orphans_jan22.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.733413Z",
     "source_mtime_utc": "2026-03-13T21:03:59.733413Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_282_crisis_mode_jan22_failure_analysis",
@@ -938,7 +938,7 @@
     "file": "rag_knowledge/lessons_learned/ll_282_crisis_mode_jan22_failure_analysis.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.733806Z",
     "source_mtime_utc": "2026-03-13T21:03:59.733806Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "research/january_2026_deep_research",
@@ -960,7 +960,7 @@
     "file": "rag_knowledge/research/january_2026_deep_research.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.738059Z",
     "source_mtime_utc": "2026-03-13T21:03:59.738059Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-268_Iron_Condor_Win_Rate_Research",
@@ -980,7 +980,7 @@
     "file": "rag_knowledge/lessons_learned/LL-268_Iron_Condor_Win_Rate_Research.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.716156Z",
     "source_mtime_utc": "2026-03-13T21:03:59.716156Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-269_Iron_Condor_Entry_Signals",
@@ -1000,7 +1000,7 @@
     "file": "rag_knowledge/lessons_learned/LL-269_Iron_Condor_Entry_Signals.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.716239Z",
     "source_mtime_utc": "2026-03-13T21:03:59.716239Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-272_SOFI_Position_Blocked_Trading_Jan21",
@@ -1014,7 +1014,7 @@
     "file": "rag_knowledge/lessons_learned/LL-272_SOFI_Position_Blocked_Trading_Jan21.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.716322Z",
     "source_mtime_utc": "2026-03-13T21:03:59.716322Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-273_CTO_Failure_Stale_Data_Jan21",
@@ -1028,7 +1028,7 @@
     "file": "rag_knowledge/lessons_learned/LL-273_CTO_Failure_Stale_Data_Jan21.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.716404Z",
     "source_mtime_utc": "2026-03-13T21:03:59.716404Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_272_strategy_violation_crisis_jan21",
@@ -1050,7 +1050,7 @@
     "file": "rag_knowledge/lessons_learned/ll_272_strategy_violation_crisis_jan21.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.732511Z",
     "source_mtime_utc": "2026-03-13T21:03:59.732511Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_276_day2_crisis_no_call_legs_jan21",
@@ -1064,7 +1064,7 @@
     "file": "rag_knowledge/lessons_learned/ll_276_day2_crisis_no_call_legs_jan21.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.732589Z",
     "source_mtime_utc": "2026-03-13T21:03:59.732589Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_277_iron_condor_optimization_research_jan21",
@@ -1078,7 +1078,7 @@
     "file": "rag_knowledge/lessons_learned/ll_277_iron_condor_optimization_research_jan21.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.732663Z",
     "source_mtime_utc": "2026-03-13T21:03:59.732663Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_278_position_imbalance_crisis_jan21",
@@ -1092,7 +1092,7 @@
     "file": "rag_knowledge/lessons_learned/ll_278_position_imbalance_crisis_jan21.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.732730Z",
     "source_mtime_utc": "2026-03-13T21:03:59.732730Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_279_partial_iron_condor_auto_close_jan21",
@@ -1106,7 +1106,7 @@
     "file": "rag_knowledge/lessons_learned/ll_279_partial_iron_condor_auto_close_jan21.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.732798Z",
     "source_mtime_utc": "2026-03-13T21:03:59.732798Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_280_position_limit_contract_counting_jan21",
@@ -1120,7 +1120,7 @@
     "file": "rag_knowledge/lessons_learned/ll_280_position_limit_contract_counting_jan21.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.732938Z",
     "source_mtime_utc": "2026-03-13T21:03:59.732938Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_281_call_leg_pricing_fix_jan21",
@@ -1134,7 +1134,7 @@
     "file": "rag_knowledge/lessons_learned/ll_281_call_leg_pricing_fix_jan21.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.733090Z",
     "source_mtime_utc": "2026-03-13T21:03:59.733090Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_247_sofi_pdt_crisis_jan20",
@@ -1148,7 +1148,7 @@
     "file": "rag_knowledge/lessons_learned/ll_247_sofi_pdt_crisis_jan20.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.728428Z",
     "source_mtime_utc": "2026-03-13T21:03:59.728428Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_250_trading_crisis_jan20_2026",
@@ -1162,7 +1162,7 @@
     "file": "rag_knowledge/lessons_learned/ll_250_trading_crisis_jan20_2026.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.728509Z",
     "source_mtime_utc": "2026-03-13T21:03:59.728509Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_269_ci_failure_sofi_position_jan20",
@@ -1183,7 +1183,7 @@
     "file": "rag_knowledge/lessons_learned/ll_269_ci_failure_sofi_position_jan20.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.732211Z",
     "source_mtime_utc": "2026-03-13T21:03:59.732211Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_270_system_blocked_no_auto_cleanup_jan20",
@@ -1204,7 +1204,7 @@
     "file": "rag_knowledge/lessons_learned/ll_270_system_blocked_no_auto_cleanup_jan20.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.732289Z",
     "source_mtime_utc": "2026-03-13T21:03:59.732289Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_271_exceptional_daily_profit_jan20",
@@ -1218,7 +1218,7 @@
     "file": "rag_knowledge/lessons_learned/ll_271_exceptional_daily_profit_jan20.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.732360Z",
     "source_mtime_utc": "2026-03-13T21:03:59.732360Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_272_pdt_blocks_sofi_close_jan20",
@@ -1238,7 +1238,7 @@
     "file": "rag_knowledge/lessons_learned/ll_272_pdt_blocks_sofi_close_jan20.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.732427Z",
     "source_mtime_utc": "2026-03-13T21:03:59.732427Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_241_holiday_hallucination_jan19",
@@ -1258,7 +1258,7 @@
     "file": "rag_knowledge/lessons_learned/ll_241_holiday_hallucination_jan19.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.727988Z",
     "source_mtime_utc": "2026-03-13T21:03:59.727988Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_242_adversarial_audit_strategy_mismatch_jan19",
@@ -1281,7 +1281,7 @@
     "file": "rag_knowledge/lessons_learned/ll_242_adversarial_audit_strategy_mismatch_jan19.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.728106Z",
     "source_mtime_utc": "2026-03-13T21:03:59.728106Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_244_adversarial_audit_findings_jan19",
@@ -1302,7 +1302,7 @@
     "file": "rag_knowledge/lessons_learned/ll_244_adversarial_audit_findings_jan19.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.728176Z",
     "source_mtime_utc": "2026-03-13T21:03:59.728176Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_245_better_context_beats_better_model_jan19",
@@ -1316,7 +1316,7 @@
     "file": "rag_knowledge/lessons_learned/ll_245_better_context_beats_better_model_jan19.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.728256Z",
     "source_mtime_utc": "2026-03-13T21:03:59.728256Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_246_position_count_not_enforced_jan19",
@@ -1336,7 +1336,7 @@
     "file": "rag_knowledge/lessons_learned/ll_246_position_count_not_enforced_jan19.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.728343Z",
     "source_mtime_utc": "2026-03-13T21:03:59.728343Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_257_5k_vs_100k_failure_analysis_jan19",
@@ -1350,7 +1350,7 @@
     "file": "rag_knowledge/lessons_learned/ll_257_5k_vs_100k_failure_analysis_jan19.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.729858Z",
     "source_mtime_utc": "2026-03-13T21:03:59.729858Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_258_5pct_position_limit_enforcement_jan19",
@@ -1364,7 +1364,7 @@
     "file": "rag_knowledge/lessons_learned/ll_258_5pct_position_limit_enforcement_jan19.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.730049Z",
     "source_mtime_utc": "2026-03-13T21:03:59.730049Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_259_5pct_limit_script_bypass_jan19",
@@ -1378,7 +1378,7 @@
     "file": "rag_knowledge/lessons_learned/ll_259_5pct_limit_script_bypass_jan19.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.730239Z",
     "source_mtime_utc": "2026-03-13T21:03:59.730239Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_261_position_size_hardcoded_violations_jan19",
@@ -1392,7 +1392,7 @@
     "file": "rag_knowledge/lessons_learned/ll_261_position_size_hardcoded_violations_jan19.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.730613Z",
     "source_mtime_utc": "2026-03-13T21:03:59.730613Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_264_trade_history_sync_fix_jan19",
@@ -1412,7 +1412,7 @@
     "file": "rag_knowledge/lessons_learned/ll_264_trade_history_sync_fix_jan19.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.730921Z",
     "source_mtime_utc": "2026-03-13T21:03:59.730921Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_265_credit_spread_exit_strategies_jan19",
@@ -1426,7 +1426,7 @@
     "file": "rag_knowledge/lessons_learned/ll_265_credit_spread_exit_strategies_jan19.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.731149Z",
     "source_mtime_utc": "2026-03-13T21:03:59.731149Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_266_position_sizing_kelly_criterion_jan19",
@@ -1440,7 +1440,7 @@
     "file": "rag_knowledge/lessons_learned/ll_266_position_sizing_kelly_criterion_jan19.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.731405Z",
     "source_mtime_utc": "2026-03-13T21:03:59.731405Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_267_env_var_bypass_vulnerability_jan19",
@@ -1460,7 +1460,7 @@
     "file": "rag_knowledge/lessons_learned/ll_267_env_var_bypass_vulnerability_jan19.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.731693Z",
     "source_mtime_utc": "2026-03-13T21:03:59.731693Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_268_iron_condor_execution_failure_jan19",
@@ -1481,7 +1481,7 @@
     "file": "rag_knowledge/lessons_learned/ll_268_iron_condor_execution_failure_jan19.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.732071Z",
     "source_mtime_utc": "2026-03-13T21:03:59.732071Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_256_webhook_trade_data_source_jan17",
@@ -1495,7 +1495,7 @@
     "file": "rag_knowledge/lessons_learned/ll_256_webhook_trade_data_source_jan17.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.729574Z",
     "source_mtime_utc": "2026-03-13T21:03:59.729574Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-226_Trade_Data_Source_Priority_Bug",
@@ -1509,7 +1509,7 @@
     "file": "rag_knowledge/lessons_learned/LL-226_Trade_Data_Source_Priority_Bug.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.716073Z",
     "source_mtime_utc": "2026-03-13T21:03:59.716073Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_231_failure_analysis_jan16",
@@ -1523,7 +1523,7 @@
     "file": "rag_knowledge/lessons_learned/ll_231_failure_analysis_jan16.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.725373Z",
     "source_mtime_utc": "2026-03-13T21:03:59.725373Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_232_position_sizing_violation_jan16",
@@ -1537,7 +1537,7 @@
     "file": "rag_knowledge/lessons_learned/ll_232_position_sizing_violation_jan16.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.725450Z",
     "source_mtime_utc": "2026-03-13T21:03:59.725450Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_233_rule1_alignment_audit_jan16",
@@ -1551,7 +1551,7 @@
     "file": "rag_knowledge/lessons_learned/ll_233_rule1_alignment_audit_jan16.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.725523Z",
     "source_mtime_utc": "2026-03-13T21:03:59.725523Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_234_close_workflow_bugs_jan16",
@@ -1570,7 +1570,7 @@
     "file": "rag_knowledge/lessons_learned/ll_234_close_workflow_bugs_jan16.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.725600Z",
     "source_mtime_utc": "2026-03-13T21:03:59.725600Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_235_cto_violated_claude_md_jan16",
@@ -1589,7 +1589,7 @@
     "file": "rag_knowledge/lessons_learned/ll_235_cto_violated_claude_md_jan16.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.727085Z",
     "source_mtime_utc": "2026-03-13T21:03:59.727085Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_236_market_calendar_failure_jan16",
@@ -1607,7 +1607,7 @@
     "file": "rag_knowledge/lessons_learned/ll_236_market_calendar_failure_jan16.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.727434Z",
     "source_mtime_utc": "2026-03-13T21:03:59.727434Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_237_trust_failure_calendar_jan16",
@@ -1626,7 +1626,7 @@
     "file": "rag_knowledge/lessons_learned/ll_237_trust_failure_calendar_jan16.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.727661Z",
     "source_mtime_utc": "2026-03-13T21:03:59.727661Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_238_lancedb_rag_init_failure_jan16",
@@ -1640,7 +1640,7 @@
     "file": "rag_knowledge/lessons_learned/ll_238_lancedb_rag_init_failure_jan16.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.727756Z",
     "source_mtime_utc": "2026-03-13T21:03:59.727756Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_239_pr_management_jan16_clean",
@@ -1654,7 +1654,7 @@
     "file": "rag_knowledge/lessons_learned/ll_239_pr_management_jan16_clean.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.727837Z",
     "source_mtime_utc": "2026-03-13T21:03:59.727837Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_253_rule1_compliance_jan16",
@@ -1668,7 +1668,7 @@
     "file": "rag_knowledge/lessons_learned/ll_253_rule1_compliance_jan16.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.728746Z",
     "source_mtime_utc": "2026-03-13T21:03:59.728746Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_254_is_market_holiday_bug_jan16",
@@ -1682,7 +1682,7 @@
     "file": "rag_knowledge/lessons_learned/ll_254_is_market_holiday_bug_jan16.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.728943Z",
     "source_mtime_utc": "2026-03-13T21:03:59.728943Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_255_deep_research_small_account_success_jan16",
@@ -1696,7 +1696,7 @@
     "file": "rag_knowledge/lessons_learned/ll_255_deep_research_small_account_success_jan16.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.729349Z",
     "source_mtime_utc": "2026-03-13T21:03:59.729349Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_260_weekly_options_book_evaluation_jan16",
@@ -1710,7 +1710,7 @@
     "file": "rag_knowledge/lessons_learned/ll_260_weekly_options_book_evaluation_jan16.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.730438Z",
     "source_mtime_utc": "2026-03-13T21:03:59.730438Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_262_sync_infrastructure_improvements_jan16",
@@ -1724,7 +1724,7 @@
     "file": "rag_knowledge/lessons_learned/ll_262_sync_infrastructure_improvements_jan16.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.730736Z",
     "source_mtime_utc": "2026-03-13T21:03:59.730736Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_263_pdt_blocks_fix_scheduled_retry_jan16",
@@ -1738,7 +1738,7 @@
     "file": "rag_knowledge/lessons_learned/ll_263_pdt_blocks_fix_scheduled_retry_jan16.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.730832Z",
     "source_mtime_utc": "2026-03-13T21:03:59.730832Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_206_execution_failure_analysis_jan15",
@@ -1759,7 +1759,7 @@
     "file": "rag_knowledge/lessons_learned/ll_206_execution_failure_analysis_jan15.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.723292Z",
     "source_mtime_utc": "2026-03-13T21:03:59.723292Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_207_income_math_deep_research_jan15",
@@ -1773,7 +1773,7 @@
     "file": "rag_knowledge/lessons_learned/ll_207_income_math_deep_research_jan15.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.723376Z",
     "source_mtime_utc": "2026-03-13T21:03:59.723376Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_208_why_5k_failed_100k_succeeded_jan15",
@@ -1787,7 +1787,7 @@
     "file": "rag_knowledge/lessons_learned/ll_208_why_5k_failed_100k_succeeded_jan15.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.723461Z",
     "source_mtime_utc": "2026-03-13T21:03:59.723461Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_209_math_error_spy_spreads_affordable_jan15",
@@ -1801,7 +1801,7 @@
     "file": "rag_knowledge/lessons_learned/ll_209_math_error_spy_spreads_affordable_jan15.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.723544Z",
     "source_mtime_utc": "2026-03-13T21:03:59.723544Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_211_100k_history_analysis_workflow_jan15",
@@ -1821,7 +1821,7 @@
     "file": "rag_knowledge/lessons_learned/ll_211_100k_history_analysis_workflow_jan15.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.723711Z",
     "source_mtime_utc": "2026-03-13T21:03:59.723711Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_212_north_star_math_roadmap_jan15",
@@ -1835,7 +1835,7 @@
     "file": "rag_knowledge/lessons_learned/ll_212_north_star_math_roadmap_jan15.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.723835Z",
     "source_mtime_utc": "2026-03-13T21:03:59.723835Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_213_trading_system_fixes_jan15",
@@ -1849,7 +1849,7 @@
     "file": "rag_knowledge/lessons_learned/ll_213_trading_system_fixes_jan15.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.724046Z",
     "source_mtime_utc": "2026-03-13T21:03:59.724046Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_214_rolling_strategy_losing_trades_jan15",
@@ -1863,7 +1863,7 @@
     "file": "rag_knowledge/lessons_learned/ll_214_rolling_strategy_losing_trades_jan15.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.724123Z",
     "source_mtime_utc": "2026-03-13T21:03:59.724123Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_215_call_credit_spreads_bearish_neutral_jan15",
@@ -1877,7 +1877,7 @@
     "file": "rag_knowledge/lessons_learned/ll_215_call_credit_spreads_bearish_neutral_jan15.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.724241Z",
     "source_mtime_utc": "2026-03-13T21:03:59.724241Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_217_options_risk_monitor_paper_arg_crisis_jan15",
@@ -1891,7 +1891,7 @@
     "file": "rag_knowledge/lessons_learned/ll_217_options_risk_monitor_paper_arg_crisis_jan15.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.724320Z",
     "source_mtime_utc": "2026-03-13T21:03:59.724320Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_218_dashboard_100k_bug_jan15",
@@ -1905,7 +1905,7 @@
     "file": "rag_knowledge/lessons_learned/ll_218_dashboard_100k_bug_jan15.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.724392Z",
     "source_mtime_utc": "2026-03-13T21:03:59.724392Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_220_north_star_30month_roadmap_jan15",
@@ -1919,7 +1919,7 @@
     "file": "rag_knowledge/lessons_learned/ll_220_north_star_30month_roadmap_jan15.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.724483Z",
     "source_mtime_utc": "2026-03-13T21:03:59.724483Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_221_orphan_put_crisis_jan15",
@@ -1933,7 +1933,7 @@
     "file": "rag_knowledge/lessons_learned/ll_221_orphan_put_crisis_jan15.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.724583Z",
     "source_mtime_utc": "2026-03-13T21:03:59.724583Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_222_plan_mode_video_evaluation_jan15",
@@ -1947,7 +1947,7 @@
     "file": "rag_knowledge/lessons_learned/ll_222_plan_mode_video_evaluation_jan15.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.724663Z",
     "source_mtime_utc": "2026-03-13T21:03:59.724663Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_223_session_start_verification_jan15",
@@ -1961,7 +1961,7 @@
     "file": "rag_knowledge/lessons_learned/ll_223_session_start_verification_jan15.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.724745Z",
     "source_mtime_utc": "2026-03-13T21:03:59.724745Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_229_ai_options_traders_research_jan15",
@@ -1975,7 +1975,7 @@
     "file": "rag_knowledge/lessons_learned/ll_229_ai_options_traders_research_jan15.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.725218Z",
     "source_mtime_utc": "2026-03-13T21:03:59.725218Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_230_pr_hygiene_jan15",
@@ -1994,7 +1994,7 @@
     "file": "rag_knowledge/lessons_learned/ll_230_pr_hygiene_jan15.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.725297Z",
     "source_mtime_utc": "2026-03-13T21:03:59.725297Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-191",
@@ -2008,7 +2008,7 @@
     "file": "rag_knowledge/lessons_learned/LL-191.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.715909Z",
     "source_mtime_utc": "2026-03-13T21:03:59.715909Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-195",
@@ -2022,7 +2022,7 @@
     "file": "rag_knowledge/lessons_learned/LL-195.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.715988Z",
     "source_mtime_utc": "2026-03-13T21:03:59.715988Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_193_mandate_violation_manual_handoff_jan14",
@@ -2036,7 +2036,7 @@
     "file": "rag_knowledge/lessons_learned/ll_193_mandate_violation_manual_handoff_jan14.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.722478Z",
     "source_mtime_utc": "2026-03-13T21:03:59.722478Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_194_cto_autonomous_sofi_exit_decision_jan14",
@@ -2057,7 +2057,7 @@
     "file": "rag_knowledge/lessons_learned/ll_194_cto_autonomous_sofi_exit_decision_jan14.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.722561Z",
     "source_mtime_utc": "2026-03-13T21:03:59.722561Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_201_systems_thinking_audiobook_evaluation_jan14",
@@ -2076,7 +2076,7 @@
     "file": "rag_knowledge/lessons_learned/ll_201_systems_thinking_audiobook_evaluation_jan14.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.722904Z",
     "source_mtime_utc": "2026-03-13T21:03:59.722904Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_202_sofi_earnings_risk_jan14",
@@ -2096,7 +2096,7 @@
     "file": "rag_knowledge/lessons_learned/ll_202_sofi_earnings_risk_jan14.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.722994Z",
     "source_mtime_utc": "2026-03-13T21:03:59.722994Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_203_100k_account_analysis_jan14",
@@ -2110,7 +2110,7 @@
     "file": "rag_knowledge/lessons_learned/ll_203_100k_account_analysis_jan14.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.723082Z",
     "source_mtime_utc": "2026-03-13T21:03:59.723082Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_205_jan14_loss_root_cause_analysis",
@@ -2132,7 +2132,7 @@
     "file": "rag_knowledge/lessons_learned/ll_205_jan14_loss_root_cause_analysis.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.723205Z",
     "source_mtime_utc": "2026-03-13T21:03:59.723205Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_210_options_position_import_fix_jan14",
@@ -2146,7 +2146,7 @@
     "file": "rag_knowledge/lessons_learned/ll_210_options_position_import_fix_jan14.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.723627Z",
     "source_mtime_utc": "2026-03-13T21:03:59.723627Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_226_cto_directive_violations_jan14",
@@ -2166,7 +2166,7 @@
     "file": "rag_knowledge/lessons_learned/ll_226_cto_directive_violations_jan14.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.724979Z",
     "source_mtime_utc": "2026-03-13T21:03:59.724979Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_227_rag_failure_100k_lessons_lost_jan14",
@@ -2185,7 +2185,7 @@
     "file": "rag_knowledge/lessons_learned/ll_227_rag_failure_100k_lessons_lost_jan14.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.725056Z",
     "source_mtime_utc": "2026-03-13T21:03:59.725056Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_228_sandbox_git_proxy_limitations_jan14",
@@ -2199,7 +2199,7 @@
     "file": "rag_knowledge/lessons_learned/ll_228_sandbox_git_proxy_limitations_jan14.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.725135Z",
     "source_mtime_utc": "2026-03-13T21:03:59.725135Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_251_pr_hygiene_jan14_2026",
@@ -2218,7 +2218,7 @@
     "file": "rag_knowledge/lessons_learned/ll_251_pr_hygiene_jan14_2026.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.728593Z",
     "source_mtime_utc": "2026-03-13T21:03:59.728593Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_252_sofi_ticker_blackout_violation_jan14",
@@ -2232,7 +2232,7 @@
     "file": "rag_knowledge/lessons_learned/ll_252_sofi_ticker_blackout_violation_jan14.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.728669Z",
     "source_mtime_utc": "2026-03-13T21:03:59.728669Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_145_technical_debt_cleanup_jan13",
@@ -2246,7 +2246,7 @@
     "file": "rag_knowledge/lessons_learned/ll_145_technical_debt_cleanup_jan13.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.720448Z",
     "source_mtime_utc": "2026-03-13T21:03:59.720448Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_147_placeholder_tests_removed_jan13",
@@ -2260,7 +2260,7 @@
     "file": "rag_knowledge/lessons_learned/ll_147_placeholder_tests_removed_jan13.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.720617Z",
     "source_mtime_utc": "2026-03-13T21:03:59.720617Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_148_missing_test_files_blocking_trading_jan13",
@@ -2274,7 +2274,7 @@
     "file": "rag_knowledge/lessons_learned/ll_148_missing_test_files_blocking_trading_jan13.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.720703Z",
     "source_mtime_utc": "2026-03-13T21:03:59.720703Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_153_ci_missing_tests_jan13",
@@ -2288,7 +2288,7 @@
     "file": "rag_knowledge/lessons_learned/ll_153_ci_missing_tests_jan13.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.720783Z",
     "source_mtime_utc": "2026-03-13T21:03:59.720783Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_157_rag_webhook_analytical_query_routing_jan13",
@@ -2302,7 +2302,7 @@
     "file": "rag_knowledge/lessons_learned/ll_157_rag_webhook_analytical_query_routing_jan13.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.720877Z",
     "source_mtime_utc": "2026-03-13T21:03:59.720877Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_158_day74_emergency_fix_jan13",
@@ -2316,7 +2316,7 @@
     "file": "rag_knowledge/lessons_learned/ll_158_day74_emergency_fix_jan13.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.720958Z",
     "source_mtime_utc": "2026-03-13T21:03:59.720958Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_161_zero_options_buying_power_root_cause_jan13",
@@ -2330,7 +2330,7 @@
     "file": "rag_knowledge/lessons_learned/ll_161_zero_options_buying_power_root_cause_jan13.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.721043Z",
     "source_mtime_utc": "2026-03-13T21:03:59.721043Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_162_rag_system_analysis_jan13",
@@ -2344,7 +2344,7 @@
     "file": "rag_knowledge/lessons_learned/ll_162_rag_system_analysis_jan13.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.721126Z",
     "source_mtime_utc": "2026-03-13T21:03:59.721126Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_166_rag_webhook_lancedb_missing_jan13",
@@ -2358,7 +2358,7 @@
     "file": "rag_knowledge/lessons_learned/ll_166_rag_webhook_lancedb_missing_jan13.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.721290Z",
     "source_mtime_utc": "2026-03-13T21:03:59.721290Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_168_alpaca_options_no_trailing_stop_jan13",
@@ -2372,7 +2372,7 @@
     "file": "rag_knowledge/lessons_learned/ll_168_alpaca_options_no_trailing_stop_jan13.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.721373Z",
     "source_mtime_utc": "2026-03-13T21:03:59.721373Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_171_phil_town_rule_violation_jan13",
@@ -2386,7 +2386,7 @@
     "file": "rag_knowledge/lessons_learned/ll_171_phil_town_rule_violation_jan13.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.721565Z",
     "source_mtime_utc": "2026-03-13T21:03:59.721565Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_172_prevent_duplicate_short_positions_jan13",
@@ -2400,7 +2400,7 @@
     "file": "rag_knowledge/lessons_learned/ll_172_prevent_duplicate_short_positions_jan13.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.721644Z",
     "source_mtime_utc": "2026-03-13T21:03:59.721644Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_174_rule1_violation_jan13_session2",
@@ -2414,7 +2414,7 @@
     "file": "rag_knowledge/lessons_learned/ll_174_rule1_violation_jan13_session2.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.721721Z",
     "source_mtime_utc": "2026-03-13T21:03:59.721721Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_175_stop_repeating_failures_jan13",
@@ -2428,7 +2428,7 @@
     "file": "rag_knowledge/lessons_learned/ll_175_stop_repeating_failures_jan13.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.721892Z",
     "source_mtime_utc": "2026-03-13T21:03:59.721892Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_176_pdt_protection_blocks_trade_jan13",
@@ -2442,7 +2442,7 @@
     "file": "rag_knowledge/lessons_learned/ll_176_pdt_protection_blocks_trade_jan13.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.721981Z",
     "source_mtime_utc": "2026-03-13T21:03:59.721981Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_181_ceo_review_session_jan13",
@@ -2456,7 +2456,7 @@
     "file": "rag_knowledge/lessons_learned/ll_181_ceo_review_session_jan13.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.722063Z",
     "source_mtime_utc": "2026-03-13T21:03:59.722063Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_183_comprehensive_review_jan13",
@@ -2470,7 +2470,7 @@
     "file": "rag_knowledge/lessons_learned/ll_183_comprehensive_review_jan13.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.722152Z",
     "source_mtime_utc": "2026-03-13T21:03:59.722152Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_185_north_star_revision_data_driven_jan13",
@@ -2484,7 +2484,7 @@
     "file": "rag_knowledge/lessons_learned/ll_185_north_star_revision_data_driven_jan13.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.722230Z",
     "source_mtime_utc": "2026-03-13T21:03:59.722230Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_187_tech_debt_audit_jan13",
@@ -2503,7 +2503,7 @@
     "file": "rag_knowledge/lessons_learned/ll_187_tech_debt_audit_jan13.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.722311Z",
     "source_mtime_utc": "2026-03-13T21:03:59.722311Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_190_sofi_blackout_violation_jan13",
@@ -2523,7 +2523,7 @@
     "file": "rag_knowledge/lessons_learned/ll_190_sofi_blackout_violation_jan13.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.722395Z",
     "source_mtime_utc": "2026-03-13T21:03:59.722395Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_196_trade_gateway_rule1_fix_jan13",
@@ -2537,7 +2537,7 @@
     "file": "rag_knowledge/lessons_learned/ll_196_trade_gateway_rule1_fix_jan13.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.722644Z",
     "source_mtime_utc": "2026-03-13T21:03:59.722644Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_197_math_reality_check_jan13",
@@ -2551,7 +2551,7 @@
     "file": "rag_knowledge/lessons_learned/ll_197_math_reality_check_jan13.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.722727Z",
     "source_mtime_utc": "2026-03-13T21:03:59.722727Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_198_git_workflows_evaluation_jan13",
@@ -2565,7 +2565,7 @@
     "file": "rag_knowledge/lessons_learned/ll_198_git_workflows_evaluation_jan13.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.722812Z",
     "source_mtime_utc": "2026-03-13T21:03:59.722812Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_224_agentic_memory_paper_evaluation_jan13",
@@ -2584,7 +2584,7 @@
     "file": "rag_knowledge/lessons_learned/ll_224_agentic_memory_paper_evaluation_jan13.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.724824Z",
     "source_mtime_utc": "2026-03-13T21:03:59.724824Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_225_dead_code_cleanup_jan13",
@@ -2598,7 +2598,7 @@
     "file": "rag_knowledge/lessons_learned/ll_225_dead_code_cleanup_jan13.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.724901Z",
     "source_mtime_utc": "2026-03-13T21:03:59.724901Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_131_never_tell_ceo_to_run_ci_jan12",
@@ -2617,7 +2617,7 @@
     "file": "rag_knowledge/lessons_learned/ll_131_never_tell_ceo_to_run_ci_jan12.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.720046Z",
     "source_mtime_utc": "2026-03-13T21:03:59.720046Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_133_registry_fix_and_hygiene_jan12",
@@ -2631,7 +2631,7 @@
     "file": "rag_knowledge/lessons_learned/ll_133_registry_fix_and_hygiene_jan12.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.720126Z",
     "source_mtime_utc": "2026-03-13T21:03:59.720126Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_135_investment_strategy_comprehensive_review_jan12",
@@ -2652,7 +2652,7 @@
     "file": "rag_knowledge/lessons_learned/ll_135_investment_strategy_comprehensive_review_jan12.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.720207Z",
     "source_mtime_utc": "2026-03-13T21:03:59.720207Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_137_branch_and_pr_hygiene_jan12",
@@ -2666,7 +2666,7 @@
     "file": "rag_knowledge/lessons_learned/ll_137_branch_and_pr_hygiene_jan12.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.720285Z",
     "source_mtime_utc": "2026-03-13T21:03:59.720285Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_144_stale_order_threshold_fix_jan12",
@@ -2680,7 +2680,7 @@
     "file": "rag_knowledge/lessons_learned/ll_144_stale_order_threshold_fix_jan12.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.720367Z",
     "source_mtime_utc": "2026-03-13T21:03:59.720367Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_163_sandbox_vs_github_api_access_jan12",
@@ -2694,7 +2694,7 @@
     "file": "rag_knowledge/lessons_learned/ll_163_sandbox_vs_github_api_access_jan12.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.721203Z",
     "source_mtime_utc": "2026-03-13T21:03:59.721203Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "research/top_options_strategies_2026",
@@ -2708,7 +2708,7 @@
     "file": "rag_knowledge/research/top_options_strategies_2026.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.738426Z",
     "source_mtime_utc": "2026-03-13T21:03:59.738426Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_001_phil_town_valuations_dec2025",
@@ -2728,7 +2728,7 @@
     "file": "rag_knowledge/lessons_learned/ll_001_phil_town_valuations_dec2025.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.719887Z",
     "source_mtime_utc": "2026-03-13T21:03:59.719887Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_002_theta_scaling_plan_dec2025",
@@ -2749,7 +2749,7 @@
     "file": "rag_knowledge/lessons_learned/ll_002_theta_scaling_plan_dec2025.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.719969Z",
     "source_mtime_utc": "2026-03-13T21:03:59.719969Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "blogs/phil_town/phil_town_blog_posts",
@@ -2763,7 +2763,7 @@
     "file": "rag_knowledge/blogs/phil_town/phil_town_blog_posts.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.715142Z",
     "source_mtime_utc": "2026-03-13T21:03:59.715142Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "books/phil_town_four_ms_detailed",
@@ -2777,7 +2777,7 @@
     "file": "rag_knowledge/books/phil_town_four_ms_detailed.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.715449Z",
     "source_mtime_utc": "2026-03-13T21:03:59.715449Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "books/phil_town_rule_one",
@@ -2791,7 +2791,7 @@
     "file": "rag_knowledge/books/phil_town_rule_one.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.715591Z",
     "source_mtime_utc": "2026-03-13T21:03:59.715591Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "LL-274_RAG_Webhook_Compound_Query_Routing_Fix",
@@ -2805,7 +2805,7 @@
     "file": "rag_knowledge/lessons_learned/LL-274_RAG_Webhook_Compound_Query_Routing_Fix.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.716488Z",
     "source_mtime_utc": "2026-03-13T21:03:59.716488Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_240_deep_integrity_audit_14_issues",
@@ -2819,7 +2819,7 @@
     "file": "rag_knowledge/lessons_learned/ll_240_deep_integrity_audit_14_issues.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.727909Z",
     "source_mtime_utc": "2026-03-13T21:03:59.727909Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "ll_340_macro_geopolitical_risk",
@@ -2833,7 +2833,7 @@
     "file": "rag_knowledge/lessons_learned/ll_340_macro_geopolitical_risk.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.734966Z",
     "source_mtime_utc": "2026-03-13T21:03:59.734966Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "podcasts/phil_town/invested_podcast_overview",
@@ -2847,7 +2847,7 @@
     "file": "rag_knowledge/podcasts/phil_town/invested_podcast_overview.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.736863Z",
     "source_mtime_utc": "2026-03-13T21:03:59.736863Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "podcasts/phil_town/iron_condor_strategy_synthesis",
@@ -2861,7 +2861,7 @@
     "file": "rag_knowledge/podcasts/phil_town/iron_condor_strategy_synthesis.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.737120Z",
     "source_mtime_utc": "2026-03-13T21:03:59.737120Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "podcasts/phil_town/risk_management_principles",
@@ -2875,7 +2875,7 @@
     "file": "rag_knowledge/podcasts/phil_town/risk_management_principles.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.737244Z",
     "source_mtime_utc": "2026-03-13T21:03:59.737244Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "podcasts/phil_town/rule1_options_trading_strategy",
@@ -2889,7 +2889,7 @@
     "file": "rag_knowledge/podcasts/phil_town/rule1_options_trading_strategy.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.737611Z",
     "source_mtime_utc": "2026-03-13T21:03:59.737611Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "research/energy/ai_energy_race_sky_news_jan2026",
@@ -2912,7 +2912,7 @@
     "file": "rag_knowledge/research/energy/ai_energy_race_sky_news_jan2026.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.737932Z",
     "source_mtime_utc": "2026-03-13T21:03:59.737932Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "research/options_strategies_research",
@@ -2926,7 +2926,7 @@
     "file": "rag_knowledge/research/options_strategies_research.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.738214Z",
     "source_mtime_utc": "2026-03-13T21:03:59.738214Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "youtube/transcripts/8pPnLzZmKKY_What_is_a_Moat_in_Investing",
@@ -2940,7 +2940,7 @@
     "file": "rag_knowledge/youtube/transcripts/8pPnLzZmKKY_What_is_a_Moat_in_Investing.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.742095Z",
     "source_mtime_utc": "2026-03-13T21:03:59.742095Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "youtube/transcripts/9hWMAL0q-xw_How_to_Read_Financial_Statements",
@@ -2954,7 +2954,7 @@
     "file": "rag_knowledge/youtube/transcripts/9hWMAL0q-xw_How_to_Read_Financial_Statements.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.742266Z",
     "source_mtime_utc": "2026-03-13T21:03:59.742266Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "youtube/transcripts/A9kZ_fVwLLo_Margin_of_Safety_Explained",
@@ -2968,7 +2968,7 @@
     "file": "rag_knowledge/youtube/transcripts/A9kZ_fVwLLo_Margin_of_Safety_Explained.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.742350Z",
     "source_mtime_utc": "2026-03-13T21:03:59.742350Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "youtube/transcripts/B9xVBqxTHKI_Understanding_ROIC_-_Return_on_Invested_Capital",
@@ -2982,7 +2982,7 @@
     "file": "rag_knowledge/youtube/transcripts/B9xVBqxTHKI_Understanding_ROIC_-_Return_on_Invested_Capital.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.742431Z",
     "source_mtime_utc": "2026-03-13T21:03:59.742431Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "youtube/transcripts/E7t8qPKGMxs_When_to_Sell_a_Stock_-_Exit_Strategy",
@@ -2996,7 +2996,7 @@
     "file": "rag_knowledge/youtube/transcripts/E7t8qPKGMxs_When_to_Sell_a_Stock_-_Exit_Strategy.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.742512Z",
     "source_mtime_utc": "2026-03-13T21:03:59.742512Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "youtube/transcripts/HcZRD3YUKZM_Value_Investing_vs_Growth_Investing",
@@ -3010,7 +3010,7 @@
     "file": "rag_knowledge/youtube/transcripts/HcZRD3YUKZM_Value_Investing_vs_Growth_Investing.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.742591Z",
     "source_mtime_utc": "2026-03-13T21:03:59.742591Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "youtube/transcripts/Hfq4K1nP4v4_The_Wheel_Strategy_Explained",
@@ -3024,7 +3024,7 @@
     "file": "rag_knowledge/youtube/transcripts/Hfq4K1nP4v4_The_Wheel_Strategy_Explained.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.742668Z",
     "source_mtime_utc": "2026-03-13T21:03:59.742668Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "youtube/transcripts/K6CkCQU_qkE_The_4_Ms_of_Investing_-_Rule_1_Investing",
@@ -3038,7 +3038,7 @@
     "file": "rag_knowledge/youtube/transcripts/K6CkCQU_qkE_The_4_Ms_of_Investing_-_Rule_1_Investing.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.742746Z",
     "source_mtime_utc": "2026-03-13T21:03:59.742746Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "youtube/transcripts/P6dqZMjZxHA_The_Payback_Time_Strategy",
@@ -3052,7 +3052,7 @@
     "file": "rag_knowledge/youtube/transcripts/P6dqZMjZxHA_The_Payback_Time_Strategy.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.742831Z",
     "source_mtime_utc": "2026-03-13T21:03:59.742831Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "youtube/transcripts/QmVKxH2PdCI_Circle_of_Competence_-_Stay_in_Your_Lane",
@@ -3066,7 +3066,7 @@
     "file": "rag_knowledge/youtube/transcripts/QmVKxH2PdCI_Circle_of_Competence_-_Stay_in_Your_Lane.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.742911Z",
     "source_mtime_utc": "2026-03-13T21:03:59.742911Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "youtube/transcripts/Rm69dKSsTrA_How_to_Invest_in_Stocks_for_Beginners_2024",
@@ -3080,7 +3080,7 @@
     "file": "rag_knowledge/youtube/transcripts/Rm69dKSsTrA_How_to_Invest_in_Stocks_for_Beginners_2024.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.742991Z",
     "source_mtime_utc": "2026-03-13T21:03:59.742991Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "youtube/transcripts/WRF86rX2wXs_Cash_Secured_Puts_Strategy",
@@ -3094,7 +3094,7 @@
     "file": "rag_knowledge/youtube/transcripts/WRF86rX2wXs_Cash_Secured_Puts_Strategy.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.743077Z",
     "source_mtime_utc": "2026-03-13T21:03:59.743077Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "youtube/transcripts/XyYjVrMbMpI_How_to_Calculate_Sticker_Price_-_Intrinsic_Value",
@@ -3108,7 +3108,7 @@
     "file": "rag_knowledge/youtube/transcripts/XyYjVrMbMpI_How_to_Calculate_Sticker_Price_-_Intrinsic_Value.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.743352Z",
     "source_mtime_utc": "2026-03-13T21:03:59.743352Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "youtube/transcripts/Yp7_oQEGfNc_Market_Crashes_-_Opportunity_of_a_Lifetime",
@@ -3122,7 +3122,7 @@
     "file": "rag_knowledge/youtube/transcripts/Yp7_oQEGfNc_Market_Crashes_-_Opportunity_of_a_Lifetime.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.743584Z",
     "source_mtime_utc": "2026-03-13T21:03:59.743584Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "youtube/transcripts/Z5chrxMuBoo_Rule_1_Dont_Lose_Money",
@@ -3136,7 +3136,7 @@
     "file": "rag_knowledge/youtube/transcripts/Z5chrxMuBoo_Rule_1_Dont_Lose_Money.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.743721Z",
     "source_mtime_utc": "2026-03-13T21:03:59.743721Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "youtube/transcripts/dVKjsPQbZNo_Owner_Earnings_Explained_-_Buffetts_Secret_Metric",
@@ -3150,7 +3150,7 @@
     "file": "rag_knowledge/youtube/transcripts/dVKjsPQbZNo_Owner_Earnings_Explained_-_Buffetts_Secret_Metric.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.744270Z",
     "source_mtime_utc": "2026-03-13T21:03:59.744270Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "youtube/transcripts/gWIi6WLczZA_Warren_Buffett_How_to_Invest_for_Beginners",
@@ -3164,7 +3164,7 @@
     "file": "rag_knowledge/youtube/transcripts/gWIi6WLczZA_Warren_Buffett_How_to_Invest_for_Beginners.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.744534Z",
     "source_mtime_utc": "2026-03-13T21:03:59.744534Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "youtube/transcripts/iRvKG9yFNBo_Debt_and_the_Balance_Sheet",
@@ -3178,7 +3178,7 @@
     "file": "rag_knowledge/youtube/transcripts/iRvKG9yFNBo_Debt_and_the_Balance_Sheet.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.744732Z",
     "source_mtime_utc": "2026-03-13T21:03:59.744732Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "youtube/transcripts/k2z7K4PLkQg_Building_a_Watchlist_-_Stock_Analysis_Process",
@@ -3192,7 +3192,7 @@
     "file": "rag_knowledge/youtube/transcripts/k2z7K4PLkQg_Building_a_Watchlist_-_Stock_Analysis_Process.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.744807Z",
     "source_mtime_utc": "2026-03-13T21:03:59.744807Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   },
   {
     "id": "youtube/transcripts/oLaGH5LVhJ8_Covered_Calls_for_Income_-_Options_Strategy",
@@ -3206,6 +3206,6 @@
     "file": "rag_knowledge/youtube/transcripts/oLaGH5LVhJ8_Covered_Calls_for_Income_-_Options_Strategy.md",
     "event_timestamp_utc": "2026-03-13T21:03:59.744885Z",
     "source_mtime_utc": "2026-03-13T21:03:59.744885Z",
-    "indexed_at_utc": "2026-03-13T21:12:43.597517Z"
+    "indexed_at_utc": "2026-03-13T21:19:27.182596Z"
   }
 ]
