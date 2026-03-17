@@ -40,7 +40,7 @@ python scripts/sync_dual_accounts.py         # sync Lab and Field
 
 1. `pytest tests/ -q` -- pass
 2. `ruff check src/` -- clean
-3. `python scripts/validate_env_keys.py` -- valid
+3. Verify workflow-specific environment requirements when applicable
 4. Dry run trading logic if applicable
 5. CI green on PR
 

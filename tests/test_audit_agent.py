@@ -45,8 +45,7 @@ def test_audit_agent_perform_audit(mock_trade_logs):
     """Test deterministic audit logic."""
     log_dir, date_str = mock_trade_logs
 
-    agent = AuditAgent()
-    agent.log_dir = Path(log_dir)  # Point to mock dir
+    agent = AuditAgent(log_dir=log_dir, report_dir=Path(log_dir) / "reports")
 
     report = agent.perform_audit(date_str)
 
@@ -68,8 +67,7 @@ def test_audit_agent_perform_audit(mock_trade_logs):
 
 def test_audit_agent_no_logs():
     """Test audit with no logs."""
-    agent = AuditAgent()
-    agent.log_dir = Path("non_existent_dir")
+    agent = AuditAgent(log_dir="non_existent_dir", report_dir=Path("non_existent_dir") / "reports")
 
     report = agent.perform_audit("2020-01-01")
     assert report.trades_scanned == 0

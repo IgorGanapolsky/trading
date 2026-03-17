@@ -144,7 +144,8 @@ class TestDecisionTrace:
         ic = self._make_ic()
 
         # Execute in simulated mode (no live trading)
-        result = trader.execute(ic, live=False, entry_reason="test entry")
+        with patch.object(trader, "_record_trade"):
+            result = trader.execute(ic, live=False, entry_reason="test entry")
 
         assert "decision_trace" in result
         assert result["decision_trace"]["entry_reason"] == "test entry"

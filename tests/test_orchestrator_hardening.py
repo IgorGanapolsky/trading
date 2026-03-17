@@ -1,5 +1,6 @@
 import os
 import pytest
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch, ANY
 from src.orchestrator.main import TradingOrchestrator
 
@@ -12,6 +13,19 @@ class TestOrchestratorHardening:
         """Initialize TradingOrchestrator with mocked dependencies."""
         monkeypatch.setenv("RAG_QUERY_INDEX_MAX_AGE_MINUTES", "999999")
         monkeypatch.setenv("CONTEXT_INDEX_MAX_AGE_MINUTES", "999999")
+        fresh_data = SimpleNamespace(
+            is_stale=False,
+            blocking=False,
+            hours_old=0.0,
+            reason="fresh",
+            last_updated=None,
+        )
+        fresh_context = SimpleNamespace(
+            is_stale=False,
+            blocking=False,
+            reason="fresh",
+            sources=[],
+        )
         with (
             patch("src.orchestrator.main.AlpacaExecutor"),
             patch("src.orchestrator.main.MomentumAgent"),
@@ -23,6 +37,9 @@ class TestOrchestratorHardening:
             patch("src.orchestrator.main.BudgetController"),
             patch("src.orchestrator.main.AnomalyMonitor"),
             patch("src.orchestrator.main.FailureIsolationManager"),
+            patch("src.orchestrator.main.check_data_staleness", return_value=fresh_data),
+            patch("src.orchestrator.main.check_context_freshness", return_value=fresh_context),
+            patch("src.orchestrator.main.record_heartbeat"),
         ):
             trader = TradingOrchestrator(tickers=["SPY", "QQQ"])
             # Manually inject a mock for mental_coach since it's None by default
@@ -37,7 +54,7 @@ class TestOrchestratorHardening:
             trader._run_portfolio_strategies = MagicMock()
             trader.run_options_strategy = MagicMock()
             trader.run_iv_options_execution = MagicMock()
-            return trader
+            yield trader
 
     def test_gate_0_blocking_strict_mode(self, mock_trader):
         """Test that Gate 0 (Mental Coach) blocks the session in strict mode."""

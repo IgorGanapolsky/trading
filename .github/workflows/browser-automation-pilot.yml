@@ -25,6 +25,8 @@ jobs:
   pilot:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      TELEMETRY_BRANCH: ops/browser-automation-pilot
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,6 +41,13 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip
           pip install requests
+
+      - name: Restore provider state from telemetry branch
+        run: |
+          if git ls-remote --exit-code --heads origin "$TELEMETRY_BRANCH" >/dev/null 2>&1; then
+            git fetch origin "$TELEMETRY_BRANCH" --depth=1
+            git show "origin/$TELEMETRY_BRANCH:config/browser_automation_provider.json" > config/browser_automation_provider.json || true
+          fi
 
       - name: Run browser automation A/B pilot
         env:
@@ -83,10 +92,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/analytics/browser_automation_pilot_latest.json data/analytics/browser_provider_promotion_latest.json config/browser_automation_provider.json
-          git add -f data/analytics/browser_automation_pilot_history.jsonl
           if git diff --cached --quiet; then
             echo "No browser pilot telemetry changes to commit."
             exit 0
           fi
           git commit -m "chore(ops): browser automation pilot telemetry [auto]"
-          git push
+          git push origin HEAD:refs/heads/"$TELEMETRY_BRANCH" || echo "Telemetry push skipped; artifacts remain attached to this run."

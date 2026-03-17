@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 from src.analytics.perplexity_utilization_audit import (
@@ -8,6 +10,8 @@ from src.analytics.perplexity_utilization_audit import (
     render_markdown_report,
     scan_perplexity_workflows,
 )
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
 def test_scan_perplexity_workflows_detects_models_and_secret(tmp_path: Path) -> None:
@@ -71,3 +75,14 @@ def test_build_perplexity_usage_snapshot_and_markdown(tmp_path: Path) -> None:
     markdown = render_markdown_report(report)
     assert "# Perplexity Utilization Audit" in markdown
     assert "Workflow Wiring" in markdown
+
+
+def test_runner_script_bootstraps_repo_imports() -> None:
+    result = subprocess.run(
+        [sys.executable, "scripts/run_perplexity_utilization_audit.py", "--help"],
+        cwd=PROJECT_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "--probe-live" in result.stdout

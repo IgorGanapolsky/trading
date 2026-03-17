@@ -42,10 +42,16 @@ class AuditAgent(BaseAgent):
     deterministic checks and RLM Algorithm 1 for complex anomaly detection.
     """
 
-    def __init__(self, model: str | None = None):
+    def __init__(
+        self,
+        model: str | None = None,
+        *,
+        log_dir: str | Path | None = None,
+        report_dir: str | Path | None = None,
+    ):
         super().__init__(name="audit_agent", role="System Auditor", model=model)
-        self.log_dir = Path("data")
-        self.report_dir = Path("reports/audits")
+        self.log_dir = Path(log_dir) if log_dir is not None else Path("data")
+        self.report_dir = Path(report_dir) if report_dir is not None else Path("reports/audits")
         self.report_dir.mkdir(parents=True, exist_ok=True)
 
     def analyze(self, data: dict[str, Any]) -> dict[str, Any]:
@@ -156,8 +162,8 @@ class AuditAgent(BaseAgent):
 
         # Save Report
         report_file = self.report_dir / f"audit_{date_str}.json"
-        with open(report_file, "w") as f:
-            json.dump(
+        report_file.write_text(
+            json.dumps(
                 {
                     "timestamp": report.timestamp,
                     "trades_scanned": report.trades_scanned,
@@ -165,9 +171,11 @@ class AuditAgent(BaseAgent):
                     "summary": report.summary,
                     "violations": [v.__dict__ for v in report.violations],
                 },
-                f,
                 indent=2,
             )
+            + "\n",
+            encoding="utf-8",
+        )
 
         return report
 

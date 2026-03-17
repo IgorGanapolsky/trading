@@ -5,6 +5,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CI_WORKFLOW_PATH = PROJECT_ROOT / ".github" / "workflows" / "ci.yml"
 AUTO_PR_WORKFLOW_PATH = PROJECT_ROOT / ".github" / "workflows" / "auto-pr.yml"
+BROWSER_PILOT_WORKFLOW_PATH = PROJECT_ROOT / ".github" / "workflows" / "browser-automation-pilot.yml"
 RUNNER_SCRIPT_PATH = PROJECT_ROOT / "scripts" / "ci" / "run_all_tests.sh"
 
 
@@ -51,3 +52,11 @@ def test_ci_runner_script_has_timeout_and_coverage_controls():
     assert "resolve_timeout_cmd" in content
     assert "COV_FAIL_UNDER" in content
     assert "--timeout=" in content
+
+
+def test_browser_pilot_workflow_uses_dedicated_telemetry_branch():
+    workflow = BROWSER_PILOT_WORKFLOW_PATH.read_text()
+    assert "ops/browser-automation-pilot" in workflow
+    assert "git push origin HEAD:refs/heads/\"$TELEMETRY_BRANCH\"" in workflow
+    assert "Telemetry push skipped; artifacts remain attached to this run." in workflow
+    assert "git add -f data/analytics/browser_automation_pilot_history.jsonl" not in workflow
