@@ -90,10 +90,29 @@ jobs:
               );
             }
 
-  lint:
-    name: Lint & Format
+  changes:
+    name: Determine Changed Scope
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
+    outputs:
+      docs_only: ${{ steps.classify.outputs.docs_only }}
+      run_agent_handoff: ${{ steps.classify.outputs.run_agent_handoff }}
+      run_core_strategy_validation: ${{ steps.classify.outputs.run_core_strategy_validation }}
+      run_core_test_suite: ${{ steps.classify.outputs.run_core_test_suite }}
+      run_dead_code_detection: ${{ steps.classify.outputs.run_dead_code_detection }}
+      run_full_tests: ${{ steps.classify.outputs.run_full_tests }}
+      run_integration: ${{ steps.classify.outputs.run_integration }}
+      run_lint_docs: ${{ steps.classify.outputs.run_lint_docs }}
+      run_lint_python: ${{ steps.classify.outputs.run_lint_python }}
+      run_pages_validation: ${{ steps.classify.outputs.run_pages_validation }}
+      run_safe_wrapper_scan: ${{ steps.classify.outputs.run_safe_wrapper_scan }}
+      run_safety_jobs: ${{ steps.classify.outputs.run_safety_jobs }}
+      run_security: ${{ steps.classify.outputs.run_security }}
+      run_skill_validation: ${{ steps.classify.outputs.run_skill_validation }}
+      run_smoke: ${{ steps.classify.outputs.run_smoke }}
+      run_syntax_imports: ${{ steps.classify.outputs.run_syntax_imports }}
+      run_type_check: ${{ steps.classify.outputs.run_type_check }}
+      run_workflow_checks: ${{ steps.classify.outputs.run_workflow_checks }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -103,24 +122,67 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - name: Resolve diff refs
+        id: refs
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "base_ref=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "push" ] && [ -n "${{ github.event.before }}" ]; then
+            echo "base_ref=${{ github.event.before }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "base_ref=HEAD~1" >> "$GITHUB_OUTPUT"
+          fi
+          echo "head_ref=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - name: Classify changes
+        id: classify
+        run: |
+          python3 scripts/ci/classify_changes.py \
+            --base-ref "${{ steps.refs.outputs.base_ref }}" \
+            --head-ref "${{ steps.refs.outputs.head_ref }}" \
+            --github-output
+
+  lint:
+    name: Lint & Format
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        if: needs.changes.outputs.run_lint_python == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
           cache: "pip"
 
       - name: Verify pinned versions exist on PyPI
+        if: needs.changes.outputs.run_lint_python == 'true'
         run: python scripts/check_pypi_pins.py
 
       - name: Install Ruff
+        if: needs.changes.outputs.run_lint_python == 'true'
         run: pip install ruff
 
       - name: Run Ruff linter
+        if: needs.changes.outputs.run_lint_python == 'true'
         run: ruff check . --output-format=github
 
       - name: Run Ruff formatter check
+        if: needs.changes.outputs.run_lint_python == 'true'
         run: ruff format --check .
 
       - name: Lint blog posts (Discover compliance)
+        if: needs.changes.outputs.run_lint_docs == 'true'
         run: python3 scripts/lint_blog_posts.py --changed --strict
 
       - name: AI discoverability gate (critical)
+        if: needs.changes.outputs.run_lint_docs == 'true'
         run: |
           python3 scripts/check_ai_discoverability.py \
             --repo-root . \
@@ -129,13 +191,19 @@ jobs:
             --fail-on critical
 
       - name: Anthropic compliance guardrail
+        if: needs.changes.outputs.run_lint_docs == 'true'
         run: python3 scripts/check_anthropic_compliance.py
+
+      - name: No relevant lint scope
+        if: needs.changes.outputs.run_lint_python != 'true' && needs.changes.outputs.run_lint_docs != 'true'
+        run: echo "No Python or docs lint scope detected; lint job completed as a no-op."
 
   agent-handoff-gate:
     name: Agent Handoff Gate
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && needs.changes.outputs.run_agent_handoff == 'true'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -193,6 +261,8 @@ jobs:
   # Added Dec 12, 2025: Workflow validation to prevent dependency issues (LL-021)
   workflow-validation:
     name: Validate Workflows
+    needs: changes
+    if: needs.changes.outputs.run_workflow_checks == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -231,8 +301,9 @@ jobs:
 
   north-star-cadence-alert:
     name: North Star Cadence KPI Alert
-    runs-on: ubuntu-latest
     needs: workflow-validation
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
@@ -257,7 +328,8 @@ jobs:
   tests:
     name: Run All Tests
     runs-on: ubuntu-latest
-    needs: lint
+    needs: [changes, lint]
+    if: always() && needs.changes.outputs.run_full_tests == 'true' && needs.lint.result == 'success'
     # Prevent indefinite hangs from blocking main CI.
     timeout-minutes: 45
     steps:
@@ -325,7 +397,8 @@ jobs:
   smoke:
     name: Smoke Test
     runs-on: ubuntu-latest
-    needs: tests
+    needs: [changes, tests]
+    if: always() && needs.changes.outputs.run_smoke == 'true' && needs.tests.result == 'success'
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -387,7 +460,8 @@ jobs:
   integration:
     name: Integration Tests (P1)
     runs-on: ubuntu-latest
-    needs: smoke
+    needs: [changes, smoke]
+    if: always() && needs.changes.outputs.run_integration == 'true' && needs.smoke.result == 'success'
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -412,6 +486,8 @@ jobs:
 
   test:
     name: Test Suite
+    needs: changes
+    if: needs.changes.outputs.run_core_test_suite == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -447,7 +523,8 @@ jobs:
   safety-gates:
     name: Safety Gate Tests
     runs-on: ubuntu-latest
-    needs: test
+    needs: [changes, test]
+    if: always() && needs.changes.outputs.run_safety_jobs == 'true' && needs.test.result == 'success'
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -484,6 +561,8 @@ jobs:
 
   security:
     name: Security Scan
+    needs: changes
+    if: needs.changes.outputs.run_security == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -506,6 +585,8 @@ jobs:
 
   type-check:
     name: Type Check
+    needs: changes
+    if: needs.changes.outputs.run_type_check == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -527,6 +608,8 @@ jobs:
 
   core-strategy-validation:
     name: Core Strategy Metric Validation
+    needs: changes
+    if: needs.changes.outputs.run_core_strategy_validation == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     # Validating on all runs for safety instead of using invalid path filter
@@ -573,6 +656,8 @@ jobs:
 
   workflow-integrity:
     name: Workflow Integrity Check
+    needs: changes
+    if: needs.changes.outputs.run_workflow_checks == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -605,7 +690,8 @@ jobs:
   safety-matrix:
     name: Safety Matrix Tests
     runs-on: ubuntu-latest
-    needs: test
+    needs: [changes, test]
+    if: always() && needs.changes.outputs.run_safety_jobs == 'true' && needs.test.result == 'success'
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
@@ -657,6 +743,8 @@ jobs:
   # See: rag_knowledge/lessons_learned/ll_009_ci_syntax_failure_dec11.md
   syntax-and-imports:
     name: Syntax & Import Verification
+    needs: changes
+    if: needs.changes.outputs.run_syntax_imports == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -735,6 +823,8 @@ jobs:
   # See: rag_knowledge/lessons_learned/ll_010_dead_code_and_dormant_systems_dec11.md
   dead-code-detection:
     name: Dead Code Detection
+    needs: changes
+    if: needs.changes.outputs.run_dead_code_detection == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -766,6 +856,8 @@ jobs:
   # See: Skills audit performed Dec 24, 2025
   skill-validation:
     name: Skill Dependency Validation
+    needs: changes
+    if: needs.changes.outputs.run_skill_validation == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -794,6 +886,8 @@ jobs:
   # Prevents 404s from broken relative_url filters
   github-pages-validation:
     name: GitHub Pages Link Validation
+    needs: changes
+    if: needs.changes.outputs.run_pages_validation == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -823,6 +917,8 @@ jobs:
   # calls outside the mandatory_trade_gate.py wrapper.
   enforce-safe-wrappers:
     name: Enforce Safe Order Wrappers
+    needs: changes
+    if: needs.changes.outputs.run_safe_wrapper_scan == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

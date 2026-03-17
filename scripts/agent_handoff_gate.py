@@ -38,6 +38,7 @@ from src.safety.trading_policy_drift import (
     collect_trading_policy_ab_metrics,
     write_trading_policy_ab_metrics,
 )
+from src.utils.change_detection import get_changed_paths, parse_changed_paths
 
 REQUIRED_AGENTS_SECTIONS = (
     "# AGENTS",
@@ -54,6 +55,10 @@ DEFAULT_QUICK_TESTS = (
 
 DEFAULT_LINT_FALLBACK = ("src", "scripts", "tests")
 MAX_OUTPUT_CHARS = 2500
+
+__all__ = [
+    "parse_changed_paths",
+]
 
 
 @dataclass
@@ -87,11 +92,6 @@ class GateReport:
         return all(step.passed for step in self.steps)
 
 
-def parse_changed_paths(raw_text: str) -> list[str]:
-    """Parse git diff --name-only output into normalized paths."""
-    return [line.strip() for line in raw_text.splitlines() if line.strip()]
-
-
 def _trim_output(raw_text: str) -> str:
     text = (raw_text or "").strip()
     if len(text) <= MAX_OUTPUT_CHARS:
@@ -102,41 +102,6 @@ def _trim_output(raw_text: str) -> str:
 def _python_command(*args: str) -> list[str]:
     """Run child Python commands with the same interpreter as the gate."""
     return [sys.executable, *args]
-
-
-def _run_git_diff(repo_root: Path, base_ref: str, head_ref: str) -> tuple[int, str, str]:
-    result = subprocess.run(
-        [
-            "git",
-            "diff",
-            "--name-only",
-            "--diff-filter=ACMR",
-            f"{base_ref}...{head_ref}",
-        ],
-        cwd=str(repo_root),
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-    return result.returncode, result.stdout, result.stderr
-
-
-def get_changed_paths(repo_root: Path, base_ref: str, head_ref: str = "HEAD") -> list[str]:
-    """Get changed file paths against a base ref, with a shallow-clone fallback."""
-    code, stdout, _stderr = _run_git_diff(repo_root=repo_root, base_ref=base_ref, head_ref=head_ref)
-    if code == 0:
-        return parse_changed_paths(stdout)
-
-    fallback_base = f"{head_ref}~1"
-    code, stdout, _stderr = _run_git_diff(
-        repo_root=repo_root,
-        base_ref=fallback_base,
-        head_ref=head_ref,
-    )
-    if code == 0:
-        return parse_changed_paths(stdout)
-
-    return []
 
 
 def _find_covering_agents_file(repo_root: Path, rel_path: str) -> Path | None:

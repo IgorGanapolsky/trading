@@ -9,6 +9,7 @@ BROWSER_PILOT_WORKFLOW_PATH = (
     PROJECT_ROOT / ".github" / "workflows" / "browser-automation-pilot.yml"
 )
 RUNNER_SCRIPT_PATH = PROJECT_ROOT / "scripts" / "ci" / "run_all_tests.sh"
+CLASSIFIER_SCRIPT_PATH = PROJECT_ROOT / "scripts" / "ci" / "classify_changes.py"
 
 
 def test_ci_workflow_uses_watchdog_runner_script():
@@ -54,6 +55,18 @@ def test_ci_runner_script_has_timeout_and_coverage_controls():
     assert "resolve_timeout_cmd" in content
     assert "COV_FAIL_UNDER" in content
     assert "--timeout=" in content
+
+
+def test_ci_workflow_uses_change_classifier_for_job_routing():
+    workflow = CI_WORKFLOW_PATH.read_text()
+    assert "scripts/ci/classify_changes.py" in workflow
+    assert "Determine Changed Scope" in workflow
+    assert "needs.changes.outputs.run_full_tests" in workflow
+    assert "needs.changes.outputs.run_workflow_checks" in workflow
+
+
+def test_change_classifier_script_exists():
+    assert CLASSIFIER_SCRIPT_PATH.exists()
 
 
 def test_browser_pilot_workflow_uses_dedicated_telemetry_branch():

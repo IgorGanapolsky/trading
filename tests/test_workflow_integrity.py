@@ -105,6 +105,26 @@ KNOWN_EXTERNAL_OUTPUTS = {
     # Python Path.write_text() in capture-trading-screenshots.yml precheck step
     ("precheck", "capture_needed"),
     ("precheck", "reason"),
+    # scripts/ci/classify_changes.py writes these in ci.yml
+    ("classify", "changed_paths"),
+    ("classify", "docs_only"),
+    ("classify", "run_agent_handoff"),
+    ("classify", "run_core_strategy_validation"),
+    ("classify", "run_core_test_suite"),
+    ("classify", "run_dead_code_detection"),
+    ("classify", "run_full_tests"),
+    ("classify", "run_integration"),
+    ("classify", "run_lint_docs"),
+    ("classify", "run_lint_python"),
+    ("classify", "run_pages_validation"),
+    ("classify", "run_safe_wrapper_scan"),
+    ("classify", "run_safety_jobs"),
+    ("classify", "run_security"),
+    ("classify", "run_skill_validation"),
+    ("classify", "run_smoke"),
+    ("classify", "run_syntax_imports"),
+    ("classify", "run_type_check"),
+    ("classify", "run_workflow_checks"),
 }
 
 
