@@ -85,7 +85,7 @@ def test_workflow_builds_and_uploads_sqlite_analytics_artifacts() -> None:
         None,
     )
     assert upload_step is not None
-    assert upload_step.get("uses") == "actions/upload-artifact@v4"
+    assert upload_step.get("uses") == "actions/upload-artifact@v7"
     upload_path = upload_step.get("with", {}).get("path", "")
     assert "artifacts/devloop/trading_analytics.sqlite" in upload_path
     assert "artifacts/devloop/sql_analytics_summary.json" in upload_path
