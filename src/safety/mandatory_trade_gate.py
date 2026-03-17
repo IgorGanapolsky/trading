@@ -114,7 +114,9 @@ _daily_loss_lock = threading.Lock()
 _daily_loss_tracker: dict[str, float] = {"total": 0.0, "date": ""}
 
 _SYSTEM_STATE_PATH = Path(__file__).parent.parent.parent / "data" / "system_state.json"
-_POLICY_METADATA_PATH = Path(__file__).parent.parent.parent / "models" / "ml" / "grpo_trade_metadata.json"
+_POLICY_METADATA_PATH = (
+    Path(__file__).parent.parent.parent / "models" / "ml" / "grpo_trade_metadata.json"
+)
 _DEFAULT_POLICY_MAX_AGE_DAYS = 7
 _DEFAULT_POLICY_MIN_TRADE_COUNT = 30
 
@@ -349,7 +351,9 @@ def _policy_name_for_strategy(strategy: str) -> str:
     return normalized.strip("_") or "default"
 
 
-def _load_policy_gate_config(strategy: str, context: dict[str, Any] | None) -> tuple[str, dict[str, Any]]:
+def _load_policy_gate_config(
+    strategy: str, context: dict[str, Any] | None
+) -> tuple[str, dict[str, Any]]:
     gate_config = context.get("policy_gate") if context else None
     gate_config = gate_config if isinstance(gate_config, dict) else {}
 
@@ -816,7 +820,9 @@ def validate_trade_mandatory(
             return GateResult(
                 approved=False,
                 reason=f"Trade blocked by stale context: {context_result.reason}",
-                rag_warnings=[source.reason for source in context_result.sources if source.is_stale],
+                rag_warnings=[
+                    source.reason for source in context_result.sources if source.is_stale
+                ],
                 ml_anomalies=list(context_result.stale_sources),
                 checks_performed=checks_performed + ["context_freshness: BLOCKED"],
             )

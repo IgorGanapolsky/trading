@@ -61,7 +61,9 @@ def _compute_return_pct(payload: Mapping[str, Any], reward: float) -> float | No
         return round((reward / credit_base) * 100.0, 4)
 
     entry_price = _safe_float(_pick_first(payload, ("entry_price", "avg_entry_price")))
-    exit_price = _safe_float(_pick_first(payload, ("exit_price", "avg_exit_price", "current_price")))
+    exit_price = _safe_float(
+        _pick_first(payload, ("exit_price", "avg_exit_price", "current_price"))
+    )
     if entry_price is not None and exit_price is not None and entry_price != 0:
         return round(((exit_price - entry_price) / entry_price) * 100.0, 4)
 

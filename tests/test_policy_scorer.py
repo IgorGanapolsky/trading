@@ -99,4 +99,3 @@ def test_policy_scorer_passes_when_all_checks_pass() -> None:
     assert decision["eligible"] is True
     assert decision["block_reasons"] == []
     assert decision["decision_summary"].startswith("ELIGIBLE:")
-

@@ -60,9 +60,9 @@ def test_auto_record_lesson_workflow_uses_gateway_and_no_main_push() -> None:
 
 
 def test_rlhf_blog_workflow_no_longer_reads_claude_memory_feedback_log() -> None:
-    workflow_text = (
-        PROJECT_ROOT / ".github" / "workflows" / "rlhf-blog-publisher.yml"
-    ).read_text(encoding="utf-8")
+    workflow_text = (PROJECT_ROOT / ".github" / "workflows" / "rlhf-blog-publisher.yml").read_text(
+        encoding="utf-8"
+    )
     assert ".claude/memory/feedback/feedback-log.jsonl" not in workflow_text
 
 

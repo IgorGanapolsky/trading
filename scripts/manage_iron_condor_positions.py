@@ -288,7 +288,9 @@ def record_trade_outcome(ic: dict, reason: str, won: bool) -> None:
                 },
             }
         )
-        logger.info("Canonical trade episode updated: %s (%s)", episode_id, outcome_label["outcome"])
+        logger.info(
+            "Canonical trade episode updated: %s (%s)", episode_id, outcome_label["outcome"]
+        )
     except Exception as e:
         logger.warning(f"Could not update canonical trade episode: {e}")
 

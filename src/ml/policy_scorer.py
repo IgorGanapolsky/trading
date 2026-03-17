@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, Mapping, Optional
+from typing import Any, Mapping, Optional
 
 from src.ml.policy_registry import PolicyRegistry
 
@@ -21,7 +21,7 @@ class PolicyScorer:
         *,
         model_metrics: Optional[Mapping[str, Any]] = None,
         as_of: Optional[datetime] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         metrics = dict(model_metrics or {})
         registry_status = self.registry.status(policy_name, as_of=as_of)
         expected_return_per_trade = float(
@@ -61,4 +61,3 @@ class PolicyScorer:
             "expected_return_per_trade": expected_return_per_trade,
             "policy_status": registry_status,
         }
-

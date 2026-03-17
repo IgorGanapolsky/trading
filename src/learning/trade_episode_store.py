@@ -33,7 +33,9 @@ def _event_timestamp(event: Mapping[str, Any]) -> str:
     return ""
 
 
-def _normalize_event(event: Mapping[str, Any], forced_event_type: str | None = None) -> dict[str, Any]:
+def _normalize_event(
+    event: Mapping[str, Any], forced_event_type: str | None = None
+) -> dict[str, Any]:
     normalized: dict[str, Any] = deepcopy(dict(event))
     if forced_event_type:
         normalized["event_type"] = forced_event_type
@@ -118,7 +120,9 @@ class TradeEpisodeStore:
         episodes = self.load()
         return [deepcopy(episodes[episode_id]) for episode_id in sorted(episodes)]
 
-    def get(self, *, episode_id: str | None = None, order_id: str | None = None) -> dict[str, Any] | None:
+    def get(
+        self, *, episode_id: str | None = None, order_id: str | None = None
+    ) -> dict[str, Any] | None:
         """Get one episode by episode_id or order_id."""
         episodes = self.load()
         if episode_id:
@@ -291,7 +295,11 @@ class TradeEpisodeStore:
         events = list(episode.get("events", []))
         event_key = str(event.get("event_key"))
         existing_idx = next(
-            (index for index, existing in enumerate(events) if str(existing.get("event_key")) == event_key),
+            (
+                index
+                for index, existing in enumerate(events)
+                if str(existing.get("event_key")) == event_key
+            ),
             None,
         )
         if existing_idx is None:
@@ -338,4 +346,3 @@ class TradeEpisodeStore:
         if raw.get("strategy"):
             canonical["strategy"] = raw.get("strategy")
         return canonical
-
