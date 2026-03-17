@@ -36,25 +36,9 @@ def test_detect_feedback_signal_explicit_and_implicit() -> None:
     assert detect_feedback_signal("neutral request") is None
 
 
-def test_process_payload_writes_state_and_runs_pipeline(tmp_path: Path) -> None:
+def test_process_payload_records_gateway_commands_and_rlhf_state(tmp_path: Path) -> None:
     project = tmp_path / "project"
-    scripts_feedback = project / ".claude" / "scripts" / "feedback"
-    memory_feedback = project / ".claude" / "memory" / "feedback"
-    memalign_script = (
-        project / "plugins" / "automation-plugin" / "skills" / "dynamic-agent-spawner" / "scripts"
-    )
-    scripts_feedback.mkdir(parents=True)
-    memory_feedback.mkdir(parents=True)
-    memalign_script.mkdir(parents=True)
-    (project / ".claude" / "memory" / "feedback").mkdir(parents=True, exist_ok=True)
-
-    for rel in (
-        scripts_feedback / "semantic-memory-v2.py",
-        scripts_feedback / "train_from_feedback.py",
-        scripts_feedback / "cortex_sync.py",
-        memalign_script / "rlhf-integration.ts",
-    ):
-        rel.write_text("# placeholder\n", encoding="utf-8")
+    (project / ".claude").mkdir(parents=True)
 
     commands: list[list[str]] = []
 
@@ -72,44 +56,61 @@ def test_process_payload_writes_state_and_runs_pipeline(tmp_path: Path) -> None:
     result = process_payload(payload, runner=fake_runner)
 
     assert result["status"] == "processed"
-    assert any("semantic-memory-v2.py" in " ".join(cmd) for cmd in commands)
-    assert any("train_from_feedback.py" in " ".join(cmd) for cmd in commands)
-    assert any("rlhf-integration.ts" in " ".join(cmd) for cmd in commands)
+    assert any("mcp-memory-gateway@0.7.1" in " ".join(cmd) for cmd in commands)
+    assert any(" capture " in f" {' '.join(cmd)} " for cmd in commands)
+    assert any(" rules " in f" {' '.join(cmd)} " for cmd in commands)
 
-    state_file = memory_feedback / "codex_notify_state.json"
+    state_file = project / ".rlhf" / "codex_notify_state.json"
     assert state_file.exists()
     state = json.loads(state_file.read_text(encoding="utf-8"))
     assert state["last_signal"] == "thumbs_up"
-    assert state["last_pipeline_status"]["cortex_queue"] is True
-    assert state["last_pipeline_status"]["distributed_bandit"] is True
-    assert state["last_pipeline_status"]["context_index"] is True
-    assert state["last_thompson_report"]["feedback_type"] == "positive"
-    assert state["last_thompson_report"]["event_key"] == result["event_key"]
-    assert state["last_distributed_outcome"]["applied"] is True
+    assert state["last_pipeline_status"]["gateway_capture"] is True
+    assert state["last_pipeline_status"]["gateway_rules"] is True
+    assert state["last_pipeline_status"]["fallback_log"] is False
 
-    pending = memory_feedback / "pending_cortex_sync.jsonl"
-    assert pending.exists()
-    assert pending.read_text(encoding="utf-8").strip()
-
-    thompson_log = memory_feedback / "thompson_feedback_log.jsonl"
-    assert thompson_log.exists()
-    row = json.loads(thompson_log.read_text(encoding="utf-8").strip().splitlines()[-1])
+    event_log = project / ".rlhf" / "codex_notify_events.jsonl"
+    assert event_log.exists()
+    row = json.loads(event_log.read_text(encoding="utf-8").strip().splitlines()[-1])
     assert row["event_key"] == result["event_key"]
-    assert row["bandit"]["before"]["alpha"] >= 1.0
-    assert row["bandit"]["after"]["beta"] >= 1.0
+    assert row["pipeline_status"]["gateway_capture"] is True
 
-    context_index = project / "data" / "context_engine" / "context_index.json"
-    assert context_index.exists()
+
+def test_process_payload_falls_back_to_rlhf_log_on_gateway_failure(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    (project / ".claude").mkdir(parents=True)
+
+    def failing_runner(command: list[str], **_: object) -> int:
+        _ = command
+        return 1
+
+    payload = {
+        "cwd": str(project),
+        "session_id": "s1",
+        "turn_id": "t-negative",
+        "input-messages": ["thumbs down"],
+        "last-assistant-message": "bad patch",
+    }
+    result = process_payload(payload, runner=failing_runner)
+
+    assert result["status"] == "processed"
+    assert result["pipeline_status"]["gateway_capture"] is False
+    assert result["pipeline_status"]["fallback_log"] is True
+
+    feedback_log = project / ".rlhf" / "feedback-log.jsonl"
+    assert feedback_log.exists()
+    row = json.loads(feedback_log.read_text(encoding="utf-8").strip().splitlines()[-1])
+    assert row["signal"] == "down"
+    assert row["source"] in {"user", "auto"}
 
 
 def test_process_payload_is_idempotent_per_event_key(tmp_path: Path) -> None:
     project = tmp_path / "project"
-    (project / ".claude" / "scripts" / "feedback").mkdir(parents=True)
-    (project / ".claude" / "memory" / "feedback").mkdir(parents=True)
+    (project / ".claude").mkdir(parents=True)
 
     called = {"count": 0}
 
     def fake_runner(command: list[str], **_: object) -> int:
+        _ = command
         called["count"] += 1
         return 0
 
@@ -126,55 +127,8 @@ def test_process_payload_is_idempotent_per_event_key(tmp_path: Path) -> None:
     assert first["status"] == "processed"
     assert second["status"] == "ignored"
     assert second["reason"] == "duplicate"
-    assert first["pipeline_status"]["distributed_bandit"] is True
+    assert called["count"] == 2
 
     signal = detect_feedback_signal("thumbs down")
     assert signal is not None
     assert second["event_key"] == build_event_key(payload, "thumbs down", signal)
-
-    thompson_log = project / ".claude" / "memory" / "feedback" / "thompson_feedback_log.jsonl"
-    assert thompson_log.exists()
-    assert (
-        len([line for line in thompson_log.read_text(encoding="utf-8").splitlines() if line]) == 1
-    )
-
-
-def test_thompson_report_reflects_model_delta(tmp_path: Path) -> None:
-    project = tmp_path / "project"
-    scripts_feedback = project / ".claude" / "scripts" / "feedback"
-    memory_feedback = project / ".claude" / "memory" / "feedback"
-    model_file = project / "models" / "ml" / "feedback_model.json"
-    scripts_feedback.mkdir(parents=True)
-    memory_feedback.mkdir(parents=True)
-    model_file.parent.mkdir(parents=True)
-
-    for rel in (
-        scripts_feedback / "semantic-memory-v2.py",
-        scripts_feedback / "train_from_feedback.py",
-    ):
-        rel.write_text("# placeholder\n", encoding="utf-8")
-
-    model_file.write_text(
-        json.dumps({"alpha": 10.0, "beta": 4.0, "feature_weights": {}, "per_category": {}}),
-        encoding="utf-8",
-    )
-
-    def fake_runner(command: list[str], **_: object) -> int:
-        _ = command
-        return 0
-
-    payload = {
-        "cwd": str(project),
-        "session_id": "s2",
-        "turn_id": "t-positive",
-        "input-messages": ["thumbs up, that worked"],
-        "last-assistant-message": "patched publishing pipeline",
-    }
-    result = process_payload(payload, runner=fake_runner)
-
-    report = result["thompson_report"]
-    assert report["bandit"]["before"]["alpha"] == 10.0
-    assert report["bandit"]["after"]["alpha"] == 11.0
-    assert report["bandit"]["delta_alpha"] == 1.0
-    assert report["feedback_type"] == "positive"
-    assert result["distributed_outcome"]["applied"] is True
