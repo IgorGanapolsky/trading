@@ -105,7 +105,9 @@ def _find_project_root(start: Path) -> Path:
 
 def resolve_paths(payload: dict[str, Any], cwd: Path | None = None) -> BridgePaths:
     payload_cwd = _normalize_payload_text(payload.get("cwd")) if payload else ""
-    base = Path(payload_cwd).expanduser().resolve() if payload_cwd else (cwd or Path.cwd()).resolve()
+    base = (
+        Path(payload_cwd).expanduser().resolve() if payload_cwd else (cwd or Path.cwd()).resolve()
+    )
     project_root = _find_project_root(base)
     rlhf_dir = project_root / ".rlhf"
     return BridgePaths(

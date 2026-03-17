@@ -43,12 +43,10 @@ jobs:
 
           ERROR_MSG=$(grep -i "error\|failed\|denied\|exception" artifacts/rlhf/failure-log.txt | head -5 | tr '\n' ' ' | cut -c1-500)
 
-          {
-            echo "workflow_name=$WORKFLOW_NAME"
-            echo "workflow_slug=$WORKFLOW_SLUG"
-            echo "run_url=$RUN_URL"
-            echo "error_msg=$ERROR_MSG"
-          } >> "$GITHUB_OUTPUT"
+          echo "workflow_name=$WORKFLOW_NAME" >> "$GITHUB_OUTPUT"
+          echo "workflow_slug=$WORKFLOW_SLUG" >> "$GITHUB_OUTPUT"
+          echo "run_url=$RUN_URL" >> "$GITHUB_OUTPUT"
+          echo "error_msg=$ERROR_MSG" >> "$GITHUB_OUTPUT"
 
       - name: Capture failure through MCP Memory Gateway
         run: |

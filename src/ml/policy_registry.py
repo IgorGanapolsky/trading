@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Mapping, Optional
+from typing import Any, Mapping, Optional
 
 
 def _to_utc_datetime(value: Any) -> datetime:
@@ -39,7 +39,7 @@ class PolicyMetadata:
         *,
         default_max_age_days: int,
         default_min_trades_required: int,
-    ) -> "PolicyMetadata":
+    ) -> PolicyMetadata:
         trained_at_raw = payload.get("trained_at")
         if trained_at_raw is None:
             raise ValueError("Policy metadata missing required field: trained_at")
@@ -79,7 +79,7 @@ class PolicyRegistry:
     ) -> None:
         self.default_max_age_days = int(default_max_age_days)
         self.default_min_trades_required = int(default_min_trades_required)
-        self._entries: Dict[str, PolicyMetadata] = {}
+        self._entries: dict[str, PolicyMetadata] = {}
         if entries:
             for policy_name, payload in entries.items():
                 self.upsert(policy_name, payload)
@@ -96,7 +96,7 @@ class PolicyRegistry:
     def get(self, policy_name: str) -> Optional[PolicyMetadata]:
         return self._entries.get(policy_name)
 
-    def status(self, policy_name: str, *, as_of: Optional[datetime] = None) -> Dict[str, Any]:
+    def status(self, policy_name: str, *, as_of: Optional[datetime] = None) -> dict[str, Any]:
         metadata = self.get(policy_name)
         if metadata is None:
             return {
@@ -123,8 +123,8 @@ class PolicyRegistry:
             "sufficient_samples": metadata.has_sufficient_samples(),
         }
 
-    def to_dict(self) -> Dict[str, Dict[str, Any]]:
-        serialized: Dict[str, Dict[str, Any]] = {}
+    def to_dict(self) -> dict[str, dict[str, Any]]:
+        serialized: dict[str, dict[str, Any]] = {}
         for policy_name, meta in self._entries.items():
             serialized[policy_name] = {
                 "version": meta.version,
@@ -134,4 +134,3 @@ class PolicyRegistry:
                 "min_trades_required": meta.min_trades_required,
             }
         return serialized
-

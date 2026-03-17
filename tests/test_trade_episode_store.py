@@ -185,7 +185,10 @@ def test_load_rebuilds_from_jsonl_when_snapshot_missing(tmp_path):
 
     assert "ep-rebuild" in episodes
     assert episodes["ep-rebuild"]["status"] == "closed"
-    assert [event["event_type"] for event in episodes["ep-rebuild"]["events"]] == ["entry", "outcome"]
+    assert [event["event_type"] for event in episodes["ep-rebuild"]["events"]] == [
+        "entry",
+        "outcome",
+    ]
     assert snapshot.exists()
 
 
@@ -199,4 +202,3 @@ def test_list_is_sorted_by_episode_id(tmp_path):
 
     episodes = store.list()
     assert [episode["episode_id"] for episode in episodes] == ["ep-a", "ep-b"]
-

@@ -31,6 +31,7 @@ def test_settings_routes_pre_tool_use_to_gsd_pipeline():
     command = _first_hook_command(settings, "PreToolUse")
     assert "gsd-pipeline.sh pre_tool_use" in command
 
+
 def test_gsd_pipeline_script_exists_and_is_valid_bash():
     assert GSD_PIPELINE_PATH.exists()
     result = subprocess.run(

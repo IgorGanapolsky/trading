@@ -16,9 +16,7 @@ def test_policy_registry_marks_stale_metadata() -> None:
         }
     )
 
-    status = registry.status(
-        "iron_condor", as_of=datetime(2026, 3, 17, 12, 0, tzinfo=timezone.utc)
-    )
+    status = registry.status("iron_condor", as_of=datetime(2026, 3, 17, 12, 0, tzinfo=timezone.utc))
 
     assert status["exists"] is True
     assert status["age_days"] == 16
@@ -39,9 +37,7 @@ def test_policy_registry_marks_insufficient_samples() -> None:
         }
     )
 
-    status = registry.status(
-        "iron_condor", as_of=datetime(2026, 3, 17, 9, 0, tzinfo=timezone.utc)
-    )
+    status = registry.status("iron_condor", as_of=datetime(2026, 3, 17, 9, 0, tzinfo=timezone.utc))
 
     assert status["exists"] is True
     assert status["is_fresh"] is True
@@ -64,4 +60,3 @@ def test_policy_registry_roundtrip_serialization() -> None:
     serialized = registry.to_dict()
     assert serialized["iron_condor"]["version"] == "2.0.0"
     assert serialized["iron_condor"]["trades_trained_on"] == 88
-
