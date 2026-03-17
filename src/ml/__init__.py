@@ -30,6 +30,8 @@ from src.ml.market_regime import (
     MarketRegimeClassifier,
     get_regime_signal,
 )
+from src.ml.policy_registry import PolicyRegistry
+from src.ml.policy_scorer import PolicyScorer
 
 # Trade Confidence (Thompson Sampling)
 from src.ml.trade_confidence import (
@@ -52,6 +54,9 @@ __all__ = [
     "TradeConfidenceModel",
     "get_trade_confidence_model",
     "sample_trade_confidence",
+    # Policy gating
+    "PolicyRegistry",
+    "PolicyScorer",
     # Market Regime
     "MarketRegimeClassifier",
     "MarketRegime",

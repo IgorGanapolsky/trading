@@ -1,5 +1,7 @@
 """Tests for mandatory_trade_gate.py - Critical trade validation."""
 
+from types import SimpleNamespace
+
 import pytest
 
 # Guard against partial module load in CI
@@ -14,6 +16,32 @@ pytestmark = pytest.mark.skipif(
     not _GATE_AVAILABLE,
     reason="mandatory_trade_gate not fully available (partial module load in CI)",
 )
+
+
+@pytest.fixture(autouse=True)
+def _fresh_context_and_policy(monkeypatch):
+    import src.safety.mandatory_trade_gate as gate_mod
+
+    monkeypatch.setattr(
+        gate_mod,
+        "check_context_freshness",
+        lambda is_market_day=True: SimpleNamespace(
+            is_stale=False,
+            blocking=False,
+            stale_sources=[],
+            sources=[],
+            reason="fresh",
+        ),
+    )
+    monkeypatch.setattr(
+        gate_mod,
+        "_evaluate_policy_gate",
+        lambda strategy, context: {
+            "eligible": True,
+            "block_reasons": [],
+            "decision_summary": "ELIGIBLE: test policy",
+        },
+    )
 
 
 class TestGateResult:
@@ -233,11 +261,11 @@ class TestValidateTradeMandatory:
         assert "milestone controller blocked" in result.reason.lower()
 
 
-class TestMLFeedbackModel:
-    """Test ML feedback model integration (LL-302)."""
+class TestPolicyGate:
+    """Test policy freshness/expectancy gating for new openings."""
 
-    def test_ml_check_included_in_result(self):
-        """Test that ML feedback check is included in checks_performed."""
+    def test_policy_gate_included_in_result(self):
+        """Test that policy gate check is included in checks_performed."""
         from src.safety.mandatory_trade_gate import validate_trade_mandatory
 
         result = validate_trade_mandatory(
@@ -247,33 +275,63 @@ class TestMLFeedbackModel:
             strategy="iron_condor",
             context={"equity": 5000.0},
         )
-        # ML feedback check should be in the performed checks
-        ml_checks = [c for c in result.checks_performed if "ml_feedback" in c]
-        assert len(ml_checks) == 1
-        assert "confidence=" in ml_checks[0]
+        policy_checks = [c for c in result.checks_performed if "policy_gate" in c]
+        assert policy_checks == ["policy_gate: PASS"]
 
-    def test_ml_anomalies_populated(self):
-        """Test that ml_anomalies field is populated when model exists."""
-        from src.safety.mandatory_trade_gate import validate_trade_mandatory
+    def test_policy_gate_blocks_ineligible_policy(self, monkeypatch):
+        """Test that stale or weak policy metadata blocks new openings."""
+        import src.safety.mandatory_trade_gate as gate_mod
 
-        result = validate_trade_mandatory(
+        monkeypatch.setattr(
+            gate_mod,
+            "_evaluate_policy_gate",
+            lambda strategy, context: {
+                "eligible": False,
+                "block_reasons": ["stale_registry", "insufficient_samples"],
+                "decision_summary": "INELIGIBLE: stale_registry,insufficient_samples",
+            },
+        )
+
+        result = gate_mod.validate_trade_mandatory(
             symbol="SPY",
             amount=200.0,
             side="BUY",
-            strategy="test",  # 'test' is a positive pattern in feedback model
+            strategy="iron_condor",
             context={"equity": 5000.0},
         )
-        # ml_anomalies should be a list (may be empty if no anomalies)
-        assert isinstance(result.ml_anomalies, list)
 
-    def test_query_feedback_model_function(self):
-        """Test the _query_feedback_model function directly."""
-        from src.safety.mandatory_trade_gate import _query_feedback_model
+        assert result.approved is False
+        assert "policy gate" in result.reason.lower()
+        assert "stale_registry" in result.ml_anomalies
+        assert "insufficient_samples" in result.ml_anomalies
 
-        confidence, anomalies = _query_feedback_model("iron_condor", {"equity": 5000})
-        # Should return valid confidence and anomalies list
-        assert 0 <= confidence <= 1.0
-        assert isinstance(anomalies, list)
+    def test_context_freshness_blocks_opening_trade(self, monkeypatch):
+        """Test that stale RAG/context indexes block new openings."""
+        import src.safety.mandatory_trade_gate as gate_mod
+
+        monkeypatch.setattr(
+            gate_mod,
+            "check_context_freshness",
+            lambda is_market_day=True: SimpleNamespace(
+                is_stale=True,
+                blocking=True,
+                stale_sources=["rag_query_index"],
+                sources=[SimpleNamespace(is_stale=True, reason="rag_query_index stale")],
+                reason="Stale context indexes detected: rag_query_index",
+            ),
+        )
+
+        result = gate_mod.validate_trade_mandatory(
+            symbol="SPY",
+            amount=200.0,
+            side="BUY",
+            strategy="iron_condor",
+            context={"equity": 5000.0},
+        )
+
+        assert result.approved is False
+        assert "stale context" in result.reason.lower()
+        assert "rag_query_index" in result.ml_anomalies
 
 
 class TestRegimeCheck:
