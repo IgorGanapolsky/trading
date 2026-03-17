@@ -30,6 +30,8 @@ Source of truth: `src/core/trading_constants.py`
 ```bash
 pytest tests/ -q                            # run tests
 ruff check src/                             # lint
+npx -y mcp-memory-gateway@0.7.1 status      # inspect local agent feedback memory
+printf 'thumbs down' | python3 scripts/capture_hook_feedback.py
 python scripts/run_grpo_training.py          # train/optimize ML brain
 python src/orchestration/daggr_workflow.py   # run full trading session
 python scripts/check_north_star_probability.py # trajectory audit

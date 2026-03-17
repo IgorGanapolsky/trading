@@ -1,11 +1,6 @@
 name: RLHF Blog Publisher
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - .claude/memory/feedback/feedback-log.jsonl
-      - data/feedback/stats.json
   workflow_dispatch:
     inputs:
       signal:
@@ -22,10 +17,6 @@ on:
 
 permissions:
   contents: write
-
-env:
-  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
 jobs:
   publish-blog:
@@ -46,43 +37,6 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Get latest feedback (auto-trigger)
-        if: ${{ github.event_name == 'push' }}
-        id: feedback
-        run: |
-          # Resolve most recent feedback entry from tracked or local feedback logs.
-          LAST_ENTRY='{}'
-          if [ -f ".claude/memory/feedback/feedback-log.jsonl" ]; then
-            LAST_ENTRY=$(tail -1 .claude/memory/feedback/feedback-log.jsonl 2>/dev/null || echo '{}')
-          elif [ -f "data/feedback/feedback-log.jsonl" ]; then
-            LAST_ENTRY=$(tail -1 data/feedback/feedback-log.jsonl 2>/dev/null || echo '{}')
-          fi
-
-          RAW_SIGNAL=$(echo "$LAST_ENTRY" | jq -r '.signal // .feedback // "positive"')
-          case "$RAW_SIGNAL" in
-            thumbs_up|positive) SIGNAL="positive" ;;
-            thumbs_down|negative) SIGNAL="negative" ;;
-            *) SIGNAL="positive" ;;
-          esac
-          INTENSITY=$(echo "$LAST_ENTRY" | jq -r '.intensity // 0.5')
-          FEEDBACK_CONTEXT=$(echo "$LAST_ENTRY" | jq -r '.context // empty')
-
-          # Get recent commit messages as context
-          COMMIT_CONTEXT=$(git log --oneline -5 --format='%s' | head -3 | tr '\n' '; ')
-          CONTEXT=${FEEDBACK_CONTEXT:-$COMMIT_CONTEXT}
-
-          echo "signal=$SIGNAL" >> "$GITHUB_OUTPUT"
-          echo "intensity=$INTENSITY" >> "$GITHUB_OUTPUT"
-          echo "context=$CONTEXT" >> "$GITHUB_OUTPUT"
-
-      - name: Use manual input (workflow_dispatch)
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        id: manual
-        run: |
-          echo "signal=${{ inputs.signal }}" >> "$GITHUB_OUTPUT"
-          echo "intensity=0.7" >> "$GITHUB_OUTPUT"
-          echo "context=${{ inputs.context }}" >> "$GITHUB_OUTPUT"
-
       - name: Publish blog post
         env:
           DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
@@ -95,40 +49,19 @@ jobs:
           X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
           X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
         run: |
-          # Determine which input source to use
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            SIGNAL="${{ steps.manual.outputs.signal }}"
-            INTENSITY="${{ steps.manual.outputs.intensity }}"
-            CONTEXT="${{ steps.manual.outputs.context }}"
-          else
-            SIGNAL="${{ steps.feedback.outputs.signal }}"
-            INTENSITY="${{ steps.feedback.outputs.intensity }}"
-            CONTEXT="${{ steps.feedback.outputs.context }}"
-          fi
-
           python scripts/publish_rlhf_blog.py \
-            --signal "$SIGNAL" \
-            --intensity "$INTENSITY" \
-            --context "$CONTEXT"
+            --signal "${{ inputs.signal }}" \
+            --intensity "0.7" \
+            --context "${{ inputs.context }}"
 
       - name: Publish to LinkedIn
         env:
           LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
         run: |
-          # Determine which input source to use
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            SIGNAL="${{ steps.manual.outputs.signal }}"
-            CONTEXT="${{ steps.manual.outputs.context }}"
-          else
-            SIGNAL="${{ steps.feedback.outputs.signal }}"
-            CONTEXT="${{ steps.feedback.outputs.context }}"
-          fi
-
-          # Post to LinkedIn (graceful skip if no token)
           if [ -n "$LINKEDIN_ACCESS_TOKEN" ]; then
             python scripts/publish_linkedin.py \
-              --signal "$SIGNAL" \
-              --context "$CONTEXT" || echo "LinkedIn post failed (non-blocking)"
+              --signal "${{ inputs.signal }}" \
+              --context "${{ inputs.context }}" || echo "LinkedIn post failed (non-blocking)"
           else
             echo "LINKEDIN_ACCESS_TOKEN not set, skipping LinkedIn post"
           fi
@@ -138,22 +71,16 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
 
-          # Check for new blog posts
           if git diff --quiet docs/_posts/; then
             echo "No new blog posts to commit"
             exit 0
           fi
 
           git add docs/_posts/
-          git commit -m "chore: Auto-publish RLHF blog post
-
-          Triggered by feedback signal. Autonomous blog publishing.
-
-          Co-Authored-By: GitHub Actions <noreply@github.com>"
+          git commit -m "chore: publish RLHF blog post"
           git push
 
       - name: Verify blog post
         run: |
-          # List recent blog posts
           echo "Recent blog posts:"
           ls -la docs/_posts/*.md | tail -5

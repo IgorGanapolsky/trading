@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Fan out Codex notify payload to OMX hook + repo RLHF bridge.
+# Fan out Codex notify payload to OMX hook + repo feedback bridge.
 
 set -u
 
@@ -10,6 +10,6 @@ if [ -f "$OMX_NOTIFY_HOOK" ]; then
   node "$OMX_NOTIFY_HOOK" "$@" >/dev/null 2>&1 || true
 fi
 
-python3 "$SCRIPT_DIR/codex_notify_rlhf_bridge.py" "$@" >/dev/null 2>&1 || true
+python3 -m src.learning.codex_feedback_bridge "$@" >/dev/null 2>&1 || true
 
 exit 0
