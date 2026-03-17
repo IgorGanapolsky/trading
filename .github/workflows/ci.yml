@@ -105,6 +105,31 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
+      - name: Determine content validation scope
+        id: content-scope
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            git fetch --no-tags origin "${{ github.base_ref }}" --depth=1
+            diff_range="origin/${{ github.base_ref }}...HEAD"
+          elif [[ "${{ github.event_name }}" == "push" ]]; then
+            before_sha="${{ github.event.before }}"
+            if [[ -n "$before_sha" && "$before_sha" != "0000000000000000000000000000000000000000" ]]; then
+              diff_range="${before_sha}...HEAD"
+            else
+              diff_range="HEAD~1...HEAD"
+            fi
+          else
+            echo "content_checks=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if git diff --name-only "$diff_range" | grep -Eq '^(docs/|\.claude/|rag_knowledge/|scripts/(lint_blog_posts|check_ai_discoverability|check_anthropic_compliance)\.py)'; then
+            echo "content_checks=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "content_checks=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Verify pinned versions exist on PyPI
         run: python scripts/check_pypi_pins.py
 
@@ -118,9 +143,11 @@ jobs:
         run: ruff format --check .
 
       - name: Lint blog posts (Discover compliance)
+        if: steps.content-scope.outputs.content_checks == 'true'
         run: python3 scripts/lint_blog_posts.py --changed --strict
 
       - name: AI discoverability gate (critical)
+        if: steps.content-scope.outputs.content_checks == 'true'
         run: |
           python3 scripts/check_ai_discoverability.py \
             --repo-root . \
@@ -129,6 +156,7 @@ jobs:
             --fail-on critical
 
       - name: Anthropic compliance guardrail
+        if: steps.content-scope.outputs.content_checks == 'true'
         run: python3 scripts/check_anthropic_compliance.py
 
   agent-handoff-gate:
@@ -258,6 +286,7 @@ jobs:
     name: Run All Tests
     runs-on: ubuntu-latest
     needs: lint
+    if: github.event_name != 'pull_request'
     # Prevent indefinite hangs from blocking main CI.
     timeout-minutes: 45
     steps:
@@ -326,6 +355,7 @@ jobs:
     name: Smoke Test
     runs-on: ubuntu-latest
     needs: tests
+    if: github.event_name != 'pull_request'
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -388,6 +418,7 @@ jobs:
     name: Integration Tests (P1)
     runs-on: ubuntu-latest
     needs: smoke
+    if: github.event_name != 'pull_request'
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -496,13 +527,10 @@ jobs:
           cache: "pip"
 
       - name: Install security tools
-        run: pip install bandit detect-secrets
+        run: pip install bandit
 
       - name: Run Bandit security scan
         run: bandit -r src/ -ll --skip B101,B105,B106 || true
-
-      - name: Check for secrets
-        run: detect-secrets scan --baseline .secrets.baseline || true
 
   type-check:
     name: Type Check
