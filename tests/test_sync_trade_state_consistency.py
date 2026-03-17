@@ -106,6 +106,7 @@ def test_update_system_state_trades_preserves_last_trade_date_when_no_fills(tmp_
     assert trades["last_trade_symbol"] == "SPY"
     assert trades["today_trades"] == 0
     assert trades["total_trades_today"] == 0
+    assert state["last_updated"] == state["meta"]["last_updated"]
 
 
 def test_update_system_state_trades_sets_last_trade_date_when_fills_exist(tmp_path):
@@ -126,3 +127,4 @@ def test_update_system_state_trades_sets_last_trade_date_when_fills_exist(tmp_pa
     assert trades["last_trade_symbol"] == "SYNCED"
     assert trades["today_trades"] == 2
     assert trades["total_trades_today"] == 2
+    assert state["last_updated"] == state["meta"]["last_updated"]
