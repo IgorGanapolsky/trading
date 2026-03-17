@@ -16,8 +16,8 @@
 ## Operational Metrics
 - Workflows configured: 89
 - Blog posts indexed: 58
-- Reports indexed: 28
-- Lessons indexed: 169
+- Reports indexed: 29
+- Lessons indexed: 172
 
 ## Blog Posts (Newest First)
 - [Fix: Validate Option Symbols Before Trading](https://igorganapolsky.github.io/trading/2026/02/23/scanner-symbol-validation-fix.html) - 2026-02-23
@@ -80,6 +80,7 @@
 - [The Silent 74 Days: System Reported Success, Did Nothing](https://igorganapolsky.github.io/trading/2026/01/07/the-silent-74-days.html) - 2026-01-07
 
 ## Reports
+- [Daily Dashboard Snapshot - 2026-03-17](https://igorganapolsky.github.io/trading/reports/2026-03-17-dashboard-snapshot/) - 2026-03-17
 - [Daily Dashboard Snapshot - 2026-03-13](https://igorganapolsky.github.io/trading/reports/2026-03-13-dashboard-snapshot/) - 2026-03-13
 - [Daily Dashboard Snapshot - 2026-03-06](https://igorganapolsky.github.io/trading/reports/2026-03-06-dashboard-snapshot/) - 2026-03-06
 - [Daily Dashboard Snapshot - 2026-03-05](https://igorganapolsky.github.io/trading/reports/2026-03-05-dashboard-snapshot/) - 2026-03-05
@@ -110,6 +111,9 @@
 - [Beats](https://igorganapolsky.github.io/trading/reports/beats/) - undated
 
 ## Lessons (Source Markdown)
+- [Portfolio sync failed - blind trading risk](https://github.com/IgorGanapolsky/trading/blob/main/rag_knowledge/lessons_learned/auto_sync_failed_mar17_3.md) - 2026-03-17
+- [Portfolio sync failed - blind trading risk](https://github.com/IgorGanapolsky/trading/blob/main/rag_knowledge/lessons_learned/auto_sync_failed_mar17_2.md) - 2026-03-17
+- [Portfolio sync failed - blind trading risk](https://github.com/IgorGanapolsky/trading/blob/main/rag_knowledge/lessons_learned/auto_sync_failed_mar17.md) - 2026-03-17
 - [LL-353: PR Merge Requires CI-Lint + Content-Lint Alignment](https://github.com/IgorGanapolsky/trading/blob/main/rag_knowledge/lessons_learned/LL-353_PR_Merge_CI_Hygiene_Feb16.md) - 2026-02-16
 - [LL: Skipped Prevention Step in Compound Engineering](https://github.com/IgorGanapolsky/trading/blob/main/rag_knowledge/lessons_learned/ll_skipped_prevention_step_feb06.md) - 2026-02-06
 - [Trade Pattern Analysis - Unsupervised ML Insights](https://github.com/IgorGanapolsky/trading/blob/main/rag_knowledge/lessons_learned/ml_clustering_20260204.md) - 2026-02-04
@@ -227,9 +231,6 @@
 - [LL-206: Why $5K Account Failed - Complete Execution Failure Analysis](https://github.com/IgorGanapolsky/trading/blob/main/rag_knowledge/lessons_learned/ll_206_execution_failure_analysis_jan15.md) - undated
 - [LL-205: January 14, 2026 Loss Root Cause Analysis](https://github.com/IgorGanapolsky/trading/blob/main/rag_knowledge/lessons_learned/ll_205_jan14_loss_root_cause_analysis.md) - undated
 - [LL-203: $100K Paper Account - What Actually Worked](https://github.com/IgorGanapolsky/trading/blob/main/rag_knowledge/lessons_learned/ll_203_100k_account_analysis_jan14.md) - undated
-- [LL-202: SOFI Earnings Risk - Emergency Close](https://github.com/IgorGanapolsky/trading/blob/main/rag_knowledge/lessons_learned/ll_202_sofi_earnings_risk_jan14.md) - undated
-- [LL-201: Resource Evaluation: Systems Thinking Audiobook](https://github.com/IgorGanapolsky/trading/blob/main/rag_knowledge/lessons_learned/ll_201_systems_thinking_audiobook_evaluation_jan14.md) - undated
-- [LL-198: Git Workflows Video Evaluation](https://github.com/IgorGanapolsky/trading/blob/main/rag_knowledge/lessons_learned/ll_198_git_workflows_evaluation_jan13.md) - undated
 
 ## Notes
 - Lesson links point to source markdown in GitHub.

@@ -16,11 +16,11 @@
 
 ## Content Snapshot
 - Blog posts published: 58
-- Reports published: 28
-- Lessons in RAG markdown: 169
+- Reports published: 29
+- Lessons in RAG markdown: 172
 - Automation workflows: 89
 - Latest blog post date: 2026-02-23
-- Latest lesson date: 2026-02-16
+- Latest lesson date: 2026-03-17
 
 ## Tech Stack (How It Plays Together)
 - Market + execution: Alpaca APIs (paper/live).
