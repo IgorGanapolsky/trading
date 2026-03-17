@@ -99,6 +99,11 @@ def _trim_output(raw_text: str) -> str:
     return f"{text[:MAX_OUTPUT_CHARS]} ...[trimmed]"
 
 
+def _python_command(*args: str) -> list[str]:
+    """Run child Python commands with the same interpreter as the gate."""
+    return [sys.executable, *args]
+
+
 def _run_git_diff(repo_root: Path, base_ref: str, head_ref: str) -> tuple[int, str, str]:
     result = subprocess.run(
         [
@@ -478,7 +483,7 @@ def _run_optional_pytest_step(
         return GateStepResult(name=name, passed=True, details=["skipped: targets not found"])
     return _run_command_step(
         name=name,
-        command=["python3", "-m", "pytest", "-q", *existing],
+        command=_python_command("-m", "pytest", "-q", *existing),
         repo_root=repo_root,
         dry_run=dry_run,
     )
@@ -561,7 +566,7 @@ def run_gate(args: argparse.Namespace) -> int:
         )
     )
 
-    test_command = ["python3", "-m", "pytest", "-q"]
+    test_command = _python_command("-m", "pytest", "-q")
     if args.mode == "full":
         test_command.extend(["tests"])
     elif selected_tests:
@@ -595,7 +600,7 @@ def run_gate(args: argparse.Namespace) -> int:
                 name="workflow contracts",
                 repo_root=repo_root,
                 dry_run=args.dry_run,
-                command=["python3", "tests/test_workflow_contracts.py"],
+                command=_python_command("tests/test_workflow_contracts.py"),
                 required_path="tests/test_workflow_contracts.py",
             )
         )
@@ -603,7 +608,7 @@ def run_gate(args: argparse.Namespace) -> int:
         steps.append(
             _run_command_step(
                 name="full regression tests",
-                command=["python3", "-m", "pytest", "-q", "tests"],
+                command=_python_command("-m", "pytest", "-q", "tests"),
                 repo_root=repo_root,
                 dry_run=args.dry_run,
             )

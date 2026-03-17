@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
+from subprocess import CompletedProcess
 
+import scripts.agent_handoff_gate as handoff_gate
 from src.safety.trading_policy_drift import canonical_policy_values
 from scripts.agent_handoff_gate import (
     GateReport,
@@ -93,6 +96,32 @@ def test_validate_delegation_contract_step_fails_on_missing_fields() -> None:
     )
     assert result.passed is False
     assert any("missing required field" in detail for detail in result.details)
+
+
+def test_optional_pytest_step_uses_active_interpreter(tmp_path: Path, monkeypatch) -> None:
+    (tmp_path / "tests").mkdir()
+    (tmp_path / "tests" / "test_example.py").write_text(
+        "def test_ok():\n    assert True\n",
+        encoding="utf-8",
+    )
+    captured: dict[str, list[str]] = {}
+
+    def fake_run(command, **kwargs):
+        captured["command"] = command
+        return CompletedProcess(command, 0, stdout="ok", stderr="")
+
+    monkeypatch.setattr(handoff_gate.subprocess, "run", fake_run)
+
+    result = handoff_gate._run_optional_pytest_step(
+        name="tests",
+        repo_root=tmp_path,
+        dry_run=False,
+        test_paths=["tests/test_example.py"],
+    )
+
+    assert result.passed is True
+    assert captured["command"][:3] == [sys.executable, "-m", "pytest"]
+    assert result.command.startswith(f"{sys.executable} -m pytest -q")
 
 
 def _write_policy_docs(repo_root: Path, max_positions: int | None = None) -> None:
