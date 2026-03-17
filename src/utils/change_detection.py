@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import fnmatch
 import json
 import subprocess
 from dataclasses import asdict, dataclass
@@ -137,8 +138,8 @@ def get_changed_paths(repo_root: Path, base_ref: str, head_ref: str = "HEAD") ->
 
 
 def _matches(path: str, *patterns: str) -> bool:
-    posix = PurePosixPath(path)
-    return any(posix.match(pattern) for pattern in patterns)
+    normalized = PurePosixPath(path).as_posix()
+    return any(fnmatch.fnmatch(normalized, pattern) for pattern in patterns)
 
 
 def _is_dependency_path(path: str) -> bool:

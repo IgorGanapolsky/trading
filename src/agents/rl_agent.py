@@ -23,6 +23,8 @@ The RLHF feedback model (models/ml/feedback_model.json) continues to learn
 from user feedback using Thompson Sampling.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import os

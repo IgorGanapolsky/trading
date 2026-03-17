@@ -97,4 +97,13 @@ jobs:
             exit 0
           fi
           git commit -m "chore(ops): browser automation pilot telemetry [auto]"
-          git push origin HEAD:refs/heads/"$TELEMETRY_BRANCH" || echo "Telemetry push skipped; artifacts remain attached to this run."
+          for attempt in 1 2 3; do
+            git fetch origin "$TELEMETRY_BRANCH" --depth=1 || true
+            if git push --force-with-lease origin HEAD:refs/heads/"$TELEMETRY_BRANCH"; then
+              exit 0
+            fi
+            echo "Telemetry push attempt $attempt failed; retrying..."
+            sleep $((attempt * 2))
+          done
+          echo "::error::Failed to push browser pilot telemetry to $TELEMETRY_BRANCH"
+          exit 1

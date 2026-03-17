@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -238,3 +238,6 @@ def _pick_first_number(*values: Any) -> float | None:
         except (TypeError, ValueError):
             continue
     return None
+
+
+UTC = timezone.utc

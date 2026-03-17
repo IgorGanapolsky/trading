@@ -55,6 +55,19 @@ def test_trading_risk_change_runs_runtime_and_safety_jobs() -> None:
     assert result.run_safe_wrapper_scan is True
 
 
+def test_nested_safety_paths_match_recursive_patterns() -> None:
+    result = classify_changed_paths(
+        [
+            "src/risk/validators/position_limits.py",
+        ]
+    )
+
+    assert result.run_full_tests is True
+    assert result.run_smoke is True
+    assert result.run_integration is True
+    assert result.run_safety_jobs is True
+
+
 def test_skill_change_triggers_skill_validation() -> None:
     result = classify_changed_paths(
         [

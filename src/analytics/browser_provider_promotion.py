@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -196,3 +196,6 @@ def _confidence_from_metrics(metrics: dict[str, Any]) -> float:
     sample_factor = min(1.0, attempted / 10.0)
     confidence = success_rate * sample_factor
     return round(max(0.0, min(1.0, confidence)), 4)
+
+
+UTC = timezone.utc

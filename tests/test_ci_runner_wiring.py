@@ -72,6 +72,7 @@ def test_change_classifier_script_exists():
 def test_browser_pilot_workflow_uses_dedicated_telemetry_branch():
     workflow = BROWSER_PILOT_WORKFLOW_PATH.read_text()
     assert "ops/browser-automation-pilot" in workflow
-    assert 'git push origin HEAD:refs/heads/"$TELEMETRY_BRANCH"' in workflow
-    assert "Telemetry push skipped; artifacts remain attached to this run." in workflow
+    assert 'git push --force-with-lease origin HEAD:refs/heads/"$TELEMETRY_BRANCH"' in workflow
+    assert "Failed to push browser pilot telemetry" in workflow
+    assert "Telemetry push skipped; artifacts remain attached to this run." not in workflow
     assert "git add -f data/analytics/browser_automation_pilot_history.jsonl" not in workflow

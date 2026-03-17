@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import time
 from dataclasses import asdict, dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -440,3 +440,6 @@ def _utc_now_iso() -> str:
 
 def _latency_ms(start_time: float) -> float:
     return round((time.perf_counter() - start_time) * 1000.0, 3)
+
+
+UTC = timezone.utc

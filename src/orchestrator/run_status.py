@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+UTC = timezone.utc
 
 DEFAULT_LATEST_STATUS_PATH = Path("data/runtime/autonomous_run_status_latest.json")
 DEFAULT_HISTORY_PATH = Path("data/runtime/autonomous_run_status_history.jsonl")

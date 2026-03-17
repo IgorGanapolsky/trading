@@ -182,7 +182,7 @@ def test_all_workflows_have_valid_yaml():
 
 
 def test_workflow_python_versions():
-    """Check that workflows use compatible Python versions."""
+    """Check that workflows use the repo's actual supported Python runtime range."""
     for workflow_path in WORKFLOWS_DIR.glob("*.yml"):
         with open(workflow_path) as f:
             content = yaml.safe_load(f)
@@ -194,8 +194,8 @@ def test_workflow_python_versions():
 
         for version in python_versions:
             major, minor = map(int, version.split("."))
-            assert major == 3 and minor >= 9, (
-                f"{workflow_path.name} uses Python {version}. Minimum supported is 3.9."
+            assert major == 3 and minor >= 11, (
+                f"{workflow_path.name} uses Python {version}. Minimum supported is 3.11."
             )
             assert major == 3 and minor < 14, (
                 f"{workflow_path.name} uses Python {version}. "
