@@ -9,6 +9,7 @@ on:
   # schedule:
   #   - cron: '*/3 14-21 * * 1-5'
   push:
+    branches: [main]
     paths:
       - ".github/workflows/close-shorts-first.yml"
       - "scripts/close_shorts_first.py"

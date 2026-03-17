@@ -2,6 +2,7 @@ name: Daily Trading Execution
 
 on:
   push:
+    branches: [main]
     paths:
       - "TRIGGER_TRADE.md" # Push trigger for immediate trading
   schedule:

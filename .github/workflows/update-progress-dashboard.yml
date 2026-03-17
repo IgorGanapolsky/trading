@@ -9,6 +9,7 @@ on:
     - cron: "0 11 * * *"
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - "scripts/generate_world_class_dashboard*.py"
       - "scripts/update_docs_index.py"

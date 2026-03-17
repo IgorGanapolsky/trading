@@ -19,6 +19,7 @@ on:
           - "false"
           - "true"
   push:
+    branches: [main]
     paths:
       - "CLOSE_ORPHAN.trigger"
 

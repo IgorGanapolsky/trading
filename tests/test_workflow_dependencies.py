@@ -39,6 +39,21 @@ LIGHTWEIGHT_WORKFLOWS = [
     "update-wiki.yml",
 ]
 
+MAIN_ONLY_OPERATIONAL_PUSH_WORKFLOWS = [
+    "close-orphan-position.yml",
+    "close-orphan-spy-puts.yml",
+    "close-shorts-first.yml",
+    "daily-trading.yml",
+    "force-close-position.yml",
+    "one-time-secret-update.yml",
+    "update-progress-dashboard.yml",
+]
+
+
+def load_workflow_text(workflow_name: str) -> str:
+    """Read a workflow as plain text for trigger-shape assertions."""
+    return (WORKFLOWS_DIR / workflow_name).read_text()
+
 
 def get_workflow_requirements(workflow_path: Path) -> list[str]:
     """Extract requirements files referenced by a workflow."""
@@ -186,6 +201,21 @@ def test_workflow_python_versions():
                 f"{workflow_path.name} uses Python {version}. "
                 f"Python 3.14+ has limited wheel availability."
             )
+
+
+def test_operational_push_workflows_are_main_only():
+    """Operational push triggers must never execute from non-main branches."""
+    for workflow_name in MAIN_ONLY_OPERATIONAL_PUSH_WORKFLOWS:
+        workflow_path = WORKFLOWS_DIR / workflow_name
+        if not workflow_path.exists():
+            pytest.fail(f"Expected workflow missing: {workflow_name}")
+
+        content = load_workflow_text(workflow_name)
+        assert re.search(r"(?m)^  push:\n(?:    .+\n)*?    branches: \[main\]", content), (
+            f"{workflow_name} allows push execution outside main. "
+            "Operational trading, secret-management, and dashboard sync workflows must "
+            "scope push triggers to main to avoid branch-side effects and CI noise."
+        )
 
 
 if __name__ == "__main__":

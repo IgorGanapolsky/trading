@@ -3,6 +3,7 @@ name: EMERGENCY Force Close ALL Positions
 on:
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - "FORCE_CLOSE.trigger"
   # DISABLED Jan 23, 2026: 5-min schedule was too aggressive

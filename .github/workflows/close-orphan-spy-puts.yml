@@ -8,6 +8,7 @@ on:
         required: true
         default: ""
   push:
+    branches: [main]
     paths:
       - "CLOSE_SPY_PUTS.trigger"
 
