@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import subprocess
+import sys
 from pathlib import Path
 
 from src.analytics.sqlite_analytics import build_analytics_artifacts
@@ -220,3 +222,105 @@ def test_build_analytics_artifacts_creates_views_and_summary(tmp_path: Path) -> 
         "https://github.com/IgorGanapolsky/trading/blob/main/docs/data/sql_analytics_summary.json"
         in rag_text
     )
+
+
+def test_build_sqlite_analytics_cli_bootstraps_repo_root(tmp_path: Path) -> None:
+    _write_json(
+        tmp_path / "data" / "performance_log.json",
+        [
+            {
+                "date": "2026-03-11",
+                "timestamp": "2026-03-11T21:00:00Z",
+                "equity": 101000.0,
+                "cash": 99000.0,
+                "buying_power": 198000.0,
+                "account_type": "PAPER",
+            }
+        ],
+    )
+    _write_json(
+        tmp_path / "data" / "verification_reports.json",
+        [
+            {
+                "date": "2026-03-11",
+                "traded": False,
+                "orders": 0,
+                "structures": 0,
+                "fills": 0,
+                "positions": 0,
+                "equity": 101000.0,
+                "last_equity": 101000.0,
+                "daily_pnl": 0.0,
+                "total_pnl": 1000.0,
+            }
+        ],
+    )
+    _write_json(
+        tmp_path / "data" / "system_state.json",
+        {
+            "last_updated": "2026-03-11T20:00:00+00:00",
+            "paper_account": {
+                "equity": 101000.0,
+                "cash": 99000.0,
+                "buying_power": 198000.0,
+                "daily_change": 0.0,
+                "total_pl": 1000.0,
+                "last_equity": 101000.0,
+                "positions_count": 0,
+            },
+            "north_star": {
+                "monthly_after_tax_target": 6000.0,
+                "probability_score": 50.0,
+                "probability_label": "medium",
+                "monthly_target_progress_pct": 10.0,
+                "estimated_monthly_after_tax_from_expectancy": 1500.0,
+                "target_capital": 300000.0,
+                "updated_at": "2026-03-11T20:00:00+00:00",
+            },
+            "north_star_weekly_gate": {
+                "updated_at": "2026-03-11T20:00:00+00:00",
+                "sample_size": 1,
+                "win_rate_pct": 100.0,
+                "expectancy_per_trade": 40.0,
+                "mode": "validation",
+                "cadence_kpi": {
+                    "qualified_setups_observed": 1,
+                    "passed": True,
+                },
+            },
+        },
+    )
+    _write_json(
+        tmp_path / "data" / "trades.json",
+        {"meta": {"version": "2.0"}, "stats": {"closed_trades": 0}, "trades": []},
+    )
+    _write_json(tmp_path / "data" / "north_star_weekly_history.json", [])
+
+    db_path = tmp_path / "artifacts" / "devloop" / "trading_analytics.sqlite"
+    summary_json = tmp_path / "artifacts" / "devloop" / "sql_analytics_summary.json"
+    summary_md = tmp_path / "artifacts" / "devloop" / "sql_analytics_summary.md"
+    script_path = Path(__file__).resolve().parents[1] / "scripts" / "build_sqlite_analytics.py"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(script_path),
+            "--repo-root",
+            str(tmp_path),
+            "--db-out",
+            str(db_path),
+            "--summary-json-out",
+            str(summary_json),
+            "--summary-md-out",
+            str(summary_md),
+        ],
+        check=True,
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+    )
+
+    assert db_path.exists()
+    assert summary_json.exists()
+    assert summary_md.exists()
+    assert "SQLite analytics DB written to:" in result.stdout

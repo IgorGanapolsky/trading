@@ -5,7 +5,6 @@ from pathlib import Path
 
 import scripts.sync_closed_positions as sync_closed
 from src.learning import rlhf_storage
-from src.ml import trade_confidence
 
 
 def _read_json(path: Path) -> dict:
@@ -21,27 +20,6 @@ def _read_jsonl(path: Path) -> list[dict]:
         if line:
             rows.append(json.loads(line))
     return rows
-
-
-def _seed_trade_confidence_model(path: Path) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(
-            {
-                "iron_condor": {"alpha": 1.0, "beta": 1.0, "wins": 0, "losses": 0},
-                "spy_specific": {"alpha": 1.0, "beta": 1.0, "wins": 0, "losses": 0},
-                "regime_adjustments": {
-                    "calm": 1.1,
-                    "trending": 0.9,
-                    "volatile": 0.8,
-                    "spike": 0.0,
-                },
-            },
-            indent=2,
-        )
-        + "\n",
-        encoding="utf-8",
-    )
 
 
 def _seed_system_state(path: Path) -> None:
@@ -80,7 +58,6 @@ def _configure_paths(monkeypatch, project_root: Path) -> tuple[Path, Path]:
     system_state_file = data_dir / "system_state.json"
     trades_file = data_dir / "trades.json"
     trajectory_file = data_dir / "feedback" / "trade_trajectories.jsonl"
-    model_file = project_root / "models" / "ml" / "trade_confidence_model.json"
 
     monkeypatch.setattr(sync_closed, "PROJECT_ROOT", project_root)
     monkeypatch.setattr(sync_closed, "DATA_DIR", data_dir)
@@ -88,10 +65,6 @@ def _configure_paths(monkeypatch, project_root: Path) -> tuple[Path, Path]:
     monkeypatch.setattr(sync_closed, "TRADES_FILE", trades_file)
 
     monkeypatch.setattr(rlhf_storage, "TRAJECTORY_PATH", trajectory_file)
-    monkeypatch.setattr(trade_confidence, "MODEL_PATH", model_file)
-    monkeypatch.setattr(trade_confidence, "_trade_confidence_model", None)
-
-    _seed_trade_confidence_model(model_file)
     return trades_file, trajectory_file
 
 
@@ -117,15 +90,15 @@ def test_learning_update_idempotent_by_event_key(monkeypatch, tmp_path: Path) ->
     assert second["distributed_applied"] is False
     assert second["distributed_skipped_reason"] == "duplicate_event"
 
-    model = _read_json(project_root / "models" / "ml" / "trade_confidence_model.json")
-    assert model["iron_condor"]["wins"] == 1
-    assert model["iron_condor"]["alpha"] == 2.0
-    assert model["spy_specific"]["wins"] == 1
-
     rows = _read_jsonl(trajectory_file)
     assert len(rows) == 1
     assert rows[0]["event_type"] == "outcome"
     assert rows[0]["event_key"] == "closed_trade_sync::IC_test_trade"
+
+    episodes = _read_json(project_root / "data" / "feedback" / "trade_episodes.json")
+    assert len(episodes["episodes"]) == 1
+    assert episodes["episodes"][0]["episode_id"] == "IC_test_trade"
+    assert episodes["episodes"][0]["outcome"]["outcome"] == "won"
 
     stats = _read_json(project_root / "data" / "feedback" / "stats.json")
     assert stats["total"] == 1
@@ -140,18 +113,15 @@ def test_sync_closed_positions_dry_run_has_no_learning_side_effects(
     trades_file, trajectory_file = _configure_paths(monkeypatch, project_root)
     _seed_system_state(project_root / "data" / "system_state.json")
 
-    model_file = project_root / "models" / "ml" / "trade_confidence_model.json"
-    before_model = model_file.read_text(encoding="utf-8")
-
     result = sync_closed.sync_closed_positions(dry_run=True)
 
     assert result["success"] is True
     assert result["dry_run"] is True
     assert result["new_closed"] == 1
     assert not trades_file.exists()
-    assert model_file.read_text(encoding="utf-8") == before_model
     assert not trajectory_file.exists()
     assert not (project_root / "data" / "feedback" / "stats.json").exists()
+    assert not (project_root / "data" / "feedback" / "trade_episodes.json").exists()
     assert not (
         project_root / ".claude" / "memory" / "feedback" / "distributed_feedback_state.json"
     ).exists()
@@ -185,9 +155,10 @@ def test_sync_closed_positions_applies_learning_once_for_new_rows(
     rows = _read_jsonl(trajectory_file)
     assert len(rows) == 1
 
-    model = _read_json(project_root / "models" / "ml" / "trade_confidence_model.json")
-    assert model["iron_condor"]["wins"] == 1
-    assert model["iron_condor"]["alpha"] == 2.0
+    episodes = _read_json(project_root / "data" / "feedback" / "trade_episodes.json")
+    assert len(episodes["episodes"]) == 1
+    assert episodes["episodes"][0]["status"] == "closed"
+    assert episodes["episodes"][0]["outcome"]["reward"] == 150.0
 
     stats = _read_json(project_root / "data" / "feedback" / "stats.json")
     assert stats["total"] == 1

@@ -26,11 +26,11 @@ from pathlib import Path
 from typing import Any
 
 from src.core.trading_constants import ALLOWED_TICKERS, extract_underlying
+from src.ml.policy_registry import PolicyRegistry
+from src.ml.policy_scorer import PolicyScorer
+from src.utils.staleness_guard import check_context_freshness
 
 logger = logging.getLogger(__name__)
-
-# Feedback model path (Thompson Sampling RLHF)
-FEEDBACK_MODEL_PATH = Path(__file__).parent.parent.parent / "models" / "ml" / "feedback_model.json"
 
 
 TICKER_WHITELIST_ENABLED = True  # Toggle for paper testing
@@ -114,6 +114,11 @@ _daily_loss_lock = threading.Lock()
 _daily_loss_tracker: dict[str, float] = {"total": 0.0, "date": ""}
 
 _SYSTEM_STATE_PATH = Path(__file__).parent.parent.parent / "data" / "system_state.json"
+_POLICY_METADATA_PATH = (
+    Path(__file__).parent.parent.parent / "models" / "ml" / "grpo_trade_metadata.json"
+)
+_DEFAULT_POLICY_MAX_AGE_DAYS = 7
+_DEFAULT_POLICY_MIN_TRADE_COUNT = 30
 
 
 def _today_et_str() -> str:
@@ -341,69 +346,107 @@ def _check_daily_loss_limit(equity: float, potential_loss: float = 0.0) -> tuple
         return True, f"Daily loss OK: ${projected_loss:.2f} of ${max_loss:.2f} limit"
 
 
-def _query_feedback_model(strategy: str, context: dict | None) -> tuple[float, list[str]]:
-    """
-    Query the RLHF feedback model for confidence adjustment.
+def _policy_name_for_strategy(strategy: str) -> str:
+    normalized = re.sub(r"[^a-z0-9]+", "_", str(strategy or "default").strip().lower())
+    return normalized.strip("_") or "default"
 
-    Uses Thompson Sampling posterior and feature weights to assess
-    whether this trade type has historically led to positive outcomes.
 
-    Args:
-        strategy: Trade strategy name
-        context: Trade context with additional info
+def _load_policy_gate_config(
+    strategy: str, context: dict[str, Any] | None
+) -> tuple[str, dict[str, Any]]:
+    gate_config = context.get("policy_gate") if context else None
+    gate_config = gate_config if isinstance(gate_config, dict) else {}
 
-    Returns:
-        (confidence_adjustment, anomalies_list)
-        - confidence_adjustment: multiplier (0.8-1.0) based on patterns
-        - anomalies_list: warnings about negative patterns detected
-    """
-    anomalies = []
-    confidence = 1.0
+    metadata_path = Path(str(gate_config.get("metadata_path") or _POLICY_METADATA_PATH))
+    policy_name = str(gate_config.get("policy_name") or _policy_name_for_strategy(strategy))
+    payload: dict[str, Any] = {}
 
-    try:
-        if not FEEDBACK_MODEL_PATH.exists():
-            return 1.0, []
+    metadata_override = gate_config.get("metadata")
+    if isinstance(metadata_override, dict):
+        payload = dict(metadata_override)
+    elif metadata_path.exists():
+        try:
+            payload = json.loads(metadata_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            payload = {}
 
-        with open(FEEDBACK_MODEL_PATH) as f:
-            model = json.load(f)
+    if not payload:
+        return policy_name, {
+            "metadata": None,
+            "metrics": dict(gate_config.get("metrics") or {}),
+            "metadata_path": str(metadata_path),
+        }
 
-        alpha = model.get("alpha", 1.0)
-        beta = model.get("beta", 1.0)
-        feature_weights = model.get("feature_weights", {})
+    trained_at = (
+        payload.get("trained_at")
+        or payload.get("updated_at")
+        or payload.get("last_updated")
+        or datetime.fromtimestamp(metadata_path.stat().st_mtime, tz=timezone.utc).isoformat()
+    )
+    metadata = {
+        "version": str(
+            payload.get("version")
+            or payload.get("policy_version")
+            or payload.get("model_version")
+            or payload.get("policy_name")
+            or "grpo_trade_policy"
+        ),
+        "trained_at": trained_at,
+        "trades_trained_on": int(payload.get("trades_trained_on", 0) or 0),
+        "max_age_days": int(
+            gate_config.get("max_age_days")
+            or payload.get("max_age_days")
+            or _DEFAULT_POLICY_MAX_AGE_DAYS
+        ),
+        "min_trades_required": int(
+            gate_config.get("min_trades_required")
+            or payload.get("min_trades_required")
+            or _DEFAULT_POLICY_MIN_TRADE_COUNT
+        ),
+    }
 
-        # Calculate Thompson Sampling posterior (overall model confidence)
-        posterior = alpha / (alpha + beta)
+    metrics = dict(gate_config.get("metrics") or {})
+    if "expected_return_per_trade" not in metrics and "expectancy" not in metrics:
+        for source in (
+            payload,
+            context.get("policy_metrics") if context else {},
+            context.get("weekly_gate") if context else {},
+            context.get("north_star_guard") if context else {},
+        ):
+            if not isinstance(source, dict):
+                continue
+            if "expected_return_per_trade" in source:
+                metrics["expected_return_per_trade"] = source["expected_return_per_trade"]
+                break
+            if "expectancy_per_trade" in source:
+                metrics["expected_return_per_trade"] = source["expectancy_per_trade"]
+                break
+            if "expectancy" in source:
+                metrics["expectancy"] = source["expectancy"]
+                break
 
-        # Check if we have enough samples to trust the model
-        total_samples = int(alpha + beta - 2)  # Subtract priors
-        if total_samples < 5:
-            # Not enough data yet - don't adjust confidence
-            return 1.0, ["ML model insufficient samples (<5)"]
+    return policy_name, {
+        "metadata": metadata,
+        "metrics": metrics,
+        "metadata_path": str(metadata_path),
+    }
 
-        # Check for negative feature patterns in strategy/context
-        strategy_lower = strategy.lower() if strategy else ""
-        context_str = str(context).lower() if context else ""
-        combined = f"{strategy_lower} {context_str}"
 
-        negative_patterns = []
-        for feature, weight in feature_weights.items():
-            if weight < -0.1 and feature in combined:
-                negative_patterns.append(f"{feature}({weight:+.2f})")
+def _evaluate_policy_gate(strategy: str, context: dict[str, Any] | None) -> dict[str, Any]:
+    policy_name, policy_payload = _load_policy_gate_config(strategy, context)
+    registry = PolicyRegistry()
+    metadata = policy_payload.get("metadata")
+    if isinstance(metadata, dict):
+        registry.upsert(policy_name, metadata)
 
-        if negative_patterns:
-            # Reduce confidence based on negative patterns
-            confidence = max(0.7, posterior - 0.1)
-            anomalies.append(f"Negative ML patterns: {', '.join(negative_patterns)}")
-
-        # If overall model posterior is low, add warning
-        if posterior < 0.6:
-            anomalies.append(f"Low ML confidence: posterior={posterior:.2f}")
-            confidence = min(confidence, posterior)
-
-    except Exception as e:
-        logger.debug(f"Feedback model query failed (non-fatal): {e}")
-
-    return confidence, anomalies
+    scorer = PolicyScorer(registry)
+    decision = scorer.score(
+        policy_name,
+        model_metrics=policy_payload.get("metrics"),
+        as_of=datetime.now(timezone.utc),
+    )
+    decision["metadata_path"] = policy_payload.get("metadata_path")
+    return decision
 
 
 def _check_market_regime(strategy: str, context: dict | None) -> tuple[float, list[str]]:
@@ -767,56 +810,94 @@ def validate_trade_mandatory(
 
         checks_performed.append("daily_loss: PASS")
 
-    # =========================================================================
-    # CHECK 5: RAG lesson blocking
-    # =========================================================================
-    rag_block, rag_warnings = _query_rag_for_blocking_lessons(symbol, strategy)
-    warnings.extend(rag_warnings)
+    context_result = None
+    if is_opening:
+        # =========================================================================
+        # CHECK 5: Context freshness for opening trades
+        # =========================================================================
+        context_result = check_context_freshness(is_market_day=True)
+        if context_result.is_stale and context_result.blocking:
+            return GateResult(
+                approved=False,
+                reason=f"Trade blocked by stale context: {context_result.reason}",
+                rag_warnings=[
+                    source.reason for source in context_result.sources if source.is_stale
+                ],
+                ml_anomalies=list(context_result.stale_sources),
+                checks_performed=checks_performed + ["context_freshness: BLOCKED"],
+            )
+        checks_performed.append("context_freshness: PASS")
 
-    if rag_block:
-        return GateResult(
-            approved=False,
-            reason=f"Trade blocked by RAG lesson: {rag_warnings[0] if rag_warnings else 'Unknown'}",
-            rag_warnings=rag_warnings,
-            checks_performed=checks_performed + ["rag_check: BLOCKED"],
+        # =========================================================================
+        # CHECK 6: Policy freshness and expectancy gate
+        # =========================================================================
+        policy_decision = _evaluate_policy_gate(strategy, context)
+        checks_performed.append(
+            "policy_gate: PASS"
+            if policy_decision["eligible"]
+            else f"policy_gate: BLOCKED ({','.join(policy_decision['block_reasons'])})"
         )
-
-    checks_performed.append(f"rag_check: PASS ({len(rag_warnings)} warnings)")
+        if not policy_decision["eligible"]:
+            return GateResult(
+                approved=False,
+                reason=f"Trade blocked by policy gate: {policy_decision['decision_summary']}",
+                rag_warnings=[],
+                ml_anomalies=list(policy_decision["block_reasons"]),
+                checks_performed=checks_performed,
+            )
+    else:
+        checks_performed.append("context_freshness: SKIP")
+        checks_performed.append("policy_gate: SKIP")
 
     # =========================================================================
-    # CHECK 6: ML Feedback Model (Jan 24, 2026 - LL-302)
-    # Query Thompson Sampling model for confidence adjustment based on
-    # learned patterns from user feedback. Does NOT block, only adjusts confidence.
+    # CHECK 7: RAG lesson blocking (openings only)
     # =========================================================================
-    ml_confidence, ml_anomalies = _query_feedback_model(strategy, context)
-    checks_performed.append(f"ml_feedback: confidence={ml_confidence:.2f}")
+    if is_opening:
+        rag_block, rag_warnings = _query_rag_for_blocking_lessons(symbol, strategy)
+        warnings.extend(rag_warnings)
+
+        if rag_block:
+            return GateResult(
+                approved=False,
+                reason=f"Trade blocked by RAG lesson: {rag_warnings[0] if rag_warnings else 'Unknown'}",
+                rag_warnings=rag_warnings,
+                checks_performed=checks_performed + ["rag_check: BLOCKED"],
+            )
+
+        checks_performed.append(f"rag_check: PASS ({len(rag_warnings)} warnings)")
+    else:
+        checks_performed.append("rag_check: SKIP")
 
     # =========================================================================
-    # CHECK 7: Regime Detection Gate (Jan 25, 2026 - LL-247 ML-IMP-2)
+    # CHECK 8: Regime Detection Gate (Jan 25, 2026 - LL-247 ML-IMP-2)
     # Use market regime to optimize iron condor entry timing:
     # - BLOCK in "spike" regime (crisis mode, pause_trading=True)
     # - WARN in "volatile" regime (high risk, adjust confidence)
     # - BOOST confidence in "calm" regime (ideal for iron condors)
     # =========================================================================
-    regime_confidence, regime_warnings = _check_market_regime(strategy, context)
-    warnings.extend(regime_warnings)
-    checks_performed.append(f"regime_check: {regime_confidence:.2f}")
+    regime_confidence = 1.0
+    if is_opening:
+        regime_confidence, regime_warnings = _check_market_regime(strategy, context)
+        warnings.extend(regime_warnings)
+        checks_performed.append(f"regime_check: {regime_confidence:.2f}")
 
-    if regime_confidence == 0.0:
-        # Spike regime - block the trade
-        return GateResult(
-            approved=False,
-            reason="Trade blocked by SPIKE regime - markets in crisis mode (LL-247)",
-            rag_warnings=warnings,
-            checks_performed=checks_performed + ["regime_check: BLOCKED"],
-        )
+        if regime_confidence == 0.0:
+            # Spike regime - block the trade
+            return GateResult(
+                approved=False,
+                reason="Trade blocked by SPIKE regime - markets in crisis mode (LL-247)",
+                rag_warnings=warnings,
+                checks_performed=checks_performed + ["regime_check: BLOCKED"],
+            )
+    else:
+        checks_performed.append("regime_check: SKIP")
 
     # =========================================================================
     # ALL CHECKS PASSED
     # =========================================================================
-    # Calculate final confidence from RAG warnings, ML model, and regime
+    # Calculate final confidence from warnings, context freshness, policy gate, and regime.
     base_confidence = 1.0 if not warnings else 0.8
-    final_confidence = min(base_confidence, ml_confidence, regime_confidence)
+    final_confidence = min(base_confidence, regime_confidence)
 
     logger.info(f"✅ Mandatory gate APPROVED: {side} ${amount:.2f} {symbol} ({strategy})")
 
@@ -824,7 +905,7 @@ def validate_trade_mandatory(
         approved=True,
         reason="Trade approved - all mandatory checks passed",
         rag_warnings=warnings,
-        ml_anomalies=ml_anomalies,
+        ml_anomalies=[],
         checks_performed=checks_performed,
         confidence=final_confidence,
     )

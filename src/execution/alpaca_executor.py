@@ -107,22 +107,53 @@ class AlpacaExecutor:
         """Store trade as RLHF trajectory for ML learning."""
         try:
             from src.learning.rlhf_storage import store_trade_trajectory
+            from src.learning.trade_episode_store import TradeEpisodeStore
 
             symbol = order.get("symbol", "UNKNOWN")
             side = order.get("side", "").lower()
             order_id = order.get("id", f"{symbol}_{int(datetime.now().timestamp())}")
+            timestamp = str(
+                order.get("filled_at")
+                or order.get("submitted_at")
+                or order.get("created_at")
+                or datetime.now().astimezone().isoformat()
+            )
 
-            # Create a basic state representation
-            # TODO: Enhance with actual market features from RLFilter
             entry_state = {
                 "price": price,
                 "symbol": symbol,
                 "strategy": strategy,
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": timestamp,
+                "side": side,
+                "qty": order.get("filled_qty", order.get("qty")),
+                "status": order.get("status"),
             }
 
             # Determine action: 1=BUY, 2=SELL, 0=HOLD
             action = 1 if side == "buy" else (2 if side == "sell" else 0)
+            metadata = {
+                "strategy": strategy,
+                "broker": "alpaca",
+                "mode": "paper" if self.paper else "live",
+                "side": side,
+                "qty": order.get("filled_qty", order.get("qty")),
+                "status": order.get("status"),
+            }
+
+            TradeEpisodeStore().upsert_entry(
+                {
+                    "episode_id": str(order_id),
+                    "order_id": str(order_id),
+                    "event_type": "entry",
+                    "timestamp": timestamp,
+                    "symbol": symbol,
+                    "strategy": strategy,
+                    "side": side,
+                    "qty": order.get("filled_qty", order.get("qty")),
+                    "price": price,
+                    "metadata": metadata,
+                }
+            )
 
             result = store_trade_trajectory(
                 episode_id=str(order_id),
@@ -132,11 +163,7 @@ class AlpacaExecutor:
                 reward=0.0,  # Will be calculated on position close
                 symbol=symbol,
                 policy_version="1.0.0",
-                metadata={
-                    "strategy": strategy,
-                    "broker": "alpaca",
-                    "mode": "paper" if self.paper else "live",
-                },
+                metadata=metadata,
             )
 
             if result:

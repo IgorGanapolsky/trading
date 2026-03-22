@@ -79,6 +79,7 @@ Key env vars:
 ![Feedback Pipeline](docs/assets/feedback_pipeline.png)
 *Continuous learning: Signal Capture -> Thompson Sampling -> Memory Storage -> Context Injection*
 
+- **MCP Memory Gateway** — project-local feedback queue and prevention-rule engine (`.rlhf/`, `.mcp.json`, `.claude/settings.json`)
 - **LanceDB vector store** — Semantic search over 170+ lessons learned (`rag_knowledge/lessons_learned/`)
 - **Thompson Sampling** — Beta-Bernoulli model per task category with 30-day exponential decay
 - **MemAlign** — Distills feedback into principles; syncs to ShieldCortex persistent memory
@@ -188,7 +189,10 @@ This repo is optimized for AI agent collaboration:
 - System rules: `.claude/CLAUDE.md`
 - Mandatory rules: `.claude/rules/MANDATORY_RULES.md`
 - RAG knowledge base: `rag_knowledge/`
-- RLHF feedback: `.claude/memory/feedback/`
+- MCP Memory Gateway queue: `.rlhf/`
+- MCP server wiring: `.mcp.json` and `.claude/settings.json`
+- Shared feedback bridge: `src/learning/codex_feedback_bridge.py`
+- Honest boundary: this improves agent memory and prevention rules; it does not replace the closed-trade ML policy loop
 - Agent terminal toolkit: `scripts/agent_workflow_toolkit.py`
 - Toolkit usage: `python3 scripts/agent_workflow_toolkit.py --help`
 - LLM manifest (summary): `https://igorganapolsky.github.io/trading/llms.txt`
@@ -201,6 +205,7 @@ Quick bootstrap:
 python3 scripts/agent_workflow_toolkit.py zsh-snippet   # x/p/s/funked helpers
 python3 scripts/agent_workflow_toolkit.py slim-logs --in artifacts/devloop/continuous.log
 python3 scripts/agent_workflow_toolkit.py bundle README.md src/utils/llm_gateway.py --out artifacts/devloop/context_bundle.md
+printf 'thumbs down' | python3 scripts/capture_hook_feedback.py
 ```
 
 ---

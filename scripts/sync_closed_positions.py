@@ -499,9 +499,28 @@ def _apply_learning_update_for_trade(
     event_key = _learning_event_key(trade)
     feedback_type = _learning_feedback_type(trade)
     context = _learning_context(trade)
+    symbol = str(trade.get("symbol") or "SPY")
+    strategy = str(trade.get("strategy") or "iron_condor")
+    pnl = _parse_float(trade.get("realized_pnl"), 0.0)
+    expiry = str((trade.get("legs") or {}).get("expiry") or "")
+    trade_id = str(trade.get("id") or "")
+    exit_time = str(trade.get("exit_time") or datetime.now(timezone.utc).isoformat())
 
     from src.learning.distributed_feedback import LocalBackend, aggregate_feedback
+    from src.learning.outcome_labeler import build_outcome_label
+    from src.learning.rlhf_storage import store_trade_outcome
+    from src.learning.trade_episode_store import TradeEpisodeStore
 
+    outcome_label = build_outcome_label(
+        {
+            "symbol": symbol,
+            "strategy": strategy,
+            "realized_pl": pnl,
+            "exit_reason": "SYNC_CLOSED_POSITION",
+            "won": str(trade.get("outcome") or "").strip().lower() == "win",
+            "exit_time": exit_time,
+        }
+    )
     distributed_outcome = aggregate_feedback(
         project_root=project_root,
         event_key=event_key,
@@ -519,30 +538,51 @@ def _apply_learning_update_for_trade(
     if not distributed_outcome.get("applied"):
         return result
 
-    from src.learning.rlhf_storage import store_trade_outcome
-    from src.ml.trade_confidence import get_trade_confidence_model
-
-    symbol = str(trade.get("symbol") or "SPY")
-    strategy = str(trade.get("strategy") or "iron_condor")
-    pnl = _parse_float(trade.get("realized_pnl"), 0.0)
-    won = str(trade.get("outcome") or "").strip().lower() == "win"
-    expiry = str((trade.get("legs") or {}).get("expiry") or "")
-
-    model = get_trade_confidence_model()
-    model.record_trade_outcome(success=won, strategy=strategy, ticker=symbol)
+    episode_store = TradeEpisodeStore(
+        event_log_path=project_root / "data" / "feedback" / "trade_episode_events.jsonl",
+        snapshot_path=project_root / "data" / "feedback" / "trade_episodes.json",
+    )
+    episode_store.upsert_outcome(
+        {
+            "episode_id": trade_id or event_key,
+            "order_id": trade_id or None,
+            "event_type": "outcome",
+            "timestamp": exit_time,
+            "event_key": event_key,
+            "symbol": symbol,
+            "strategy": strategy,
+            "reward": float(outcome_label["reward"]),
+            "return_pct": outcome_label["return_pct"],
+            "won": bool(outcome_label["won"]),
+            "lost": bool(outcome_label["lost"]),
+            "outcome": outcome_label["outcome"],
+            "holding_minutes": outcome_label["holding_minutes"],
+            "exit_reason": "SYNC_CLOSED_POSITION",
+            "expiry": expiry,
+            "metadata": {
+                "source": "sync_closed_positions",
+                "trade_id": trade_id,
+                "summary": outcome_label["summary"],
+            },
+        }
+    )
 
     store_trade_outcome(
         symbol=symbol,
         strategy=strategy,
-        reward=pnl,
-        won=won,
+        reward=float(outcome_label["reward"]),
+        won=bool(outcome_label["won"]),
         exit_reason="SYNC_CLOSED_POSITION",
         expiry=expiry,
+        episode_id=trade_id or event_key,
         event_key=event_key,
         metadata={
             "source": "sync_closed_positions",
-            "trade_id": str(trade.get("id") or ""),
+            "trade_id": trade_id,
             "distributed_feedback_applied": True,
+            "summary": outcome_label["summary"],
+            "return_pct": outcome_label["return_pct"],
+            "holding_minutes": outcome_label["holding_minutes"],
         },
     )
     result["applied"] = True

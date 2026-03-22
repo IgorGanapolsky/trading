@@ -1,57 +1,19 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2312,SC2016,SC2126
-# Session Start Hook - SYNC (Fast, <1s)
-#
-# Architecture (Feb 2026 - Enterprise Standard):
-# SYNC (this file): Critical context + Thompson state (<1s)
-# ASYNC (session-start-async.sh): LanceDB, cortex sync, health checks (background)
-#
-# LOCAL ONLY - Do not commit to repository
+# Session Start Hook - gateway-backed summary for local agent memory.
+
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-PYTHON_BIN="${PROJECT_ROOT}/venv/bin/python"
-if [[ ! -x "${PYTHON_BIN}" ]] || ! "${PYTHON_BIN}" -V >/dev/null 2>&1; then
-	PYTHON_BIN="python3"
-fi
+PROJECT_ROOT="${CLAUDE_PROJECT_DIR:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
+RLHF_DIR="${PROJECT_ROOT}/.rlhf"
+RULES_FILE="${RLHF_DIR}/prevention-rules.md"
+GATEWAY_CMD=(npx -y mcp-memory-gateway@0.7.1)
 
-# Single-instance lock - prevent duplicate runs across sessions
-LOCK_HASH=$(echo "${PROJECT_ROOT}" | md5 2>/dev/null | awk '{print $1}' || echo "default")
-LOCKFILE="/tmp/claude-project-session-${LOCK_HASH}.lock"
-exec 9>"${LOCKFILE}"
-flock -n 9 || exit 0
-
-# Load .env for API keys
-if [[ -f "${PROJECT_ROOT}/.env" ]]; then
-	# shellcheck disable=SC2046
-	export $(grep -v '^#' "${PROJECT_ROOT}/.env" | grep -E '^[A-Z_]+=.' | xargs)
-fi
+mkdir -p "${RLHF_DIR}"
 
 echo "============================================"
 echo "SESSION START - Trading System"
 echo "============================================"
-echo ""
-
-# TIER 1: Thompson Sampling Reliability (FAST - reads JSON only)
-TRAIN_SCRIPT="${PROJECT_ROOT}/.claude/scripts/feedback/train_from_feedback.py"
-MODEL_JSON="${PROJECT_ROOT}/.claude/memory/feedback/feedback_model.json"
-if [[ -f ${TRAIN_SCRIPT} ]] && [[ -f ${MODEL_JSON} ]]; then
-	"${PYTHON_BIN}" "${TRAIN_SCRIPT}" --reliability --json 2>/dev/null | "${PYTHON_BIN}" -c "
-import sys, json
-try:
-    data = json.load(sys.stdin)
-    cats = data.get('categories', {})
-    print(f'  Model: {data.get(\"total_entries\", 0)} entries')
-    for cat, info in sorted(cats.items(), key=lambda x: -x[1]['reliability'])[:5]:
-        r = info['reliability']
-        bar = '#' * int(r * 10) + '-' * (10 - int(r * 10))
-        print(f'  {cat:<18s} [{bar}] {r:.0%} ({info[\"samples\"]} samples)')
-except Exception:
-    print('  (Model not yet trained)')
-" 2>/dev/null || echo "  (Thompson Sampling not available)"
-fi
-
-# TIER 2: Trading Context (static, instant)
 echo ""
 echo "Trading Context:"
 echo "  Strategy: Iron Condors on SPY (15-20 delta)"
@@ -59,34 +21,55 @@ echo '  Capital: $100,000 paper (PA3C5AG0CECQ)'
 echo '  Position limit: 5% max ($5,000 risk per trade)'
 echo "  Exit: 50% profit OR 7 DTE | Stop: 100% of credit"
 echo ""
-
-# TIER 3: Mandatory Rules (instant)
-echo "MANDATORY RULES:"
+echo "Mandatory Rules:"
 echo "  1. Phil Town Rule #1: Don't lose money"
-echo "  2. Thumbs down -> STOP -> Record lesson -> Apologize"
-echo "  3. Compound engineering: Fix -> Test -> Prevent -> Memory -> Verify"
-echo "  4. Memory/lessons are LOCAL ONLY - never commit"
+echo "  2. Thumbs down -> record the failure pattern before continuing"
+echo "  3. Use MCP Memory Gateway as the canonical local feedback path"
 echo ""
 
-# TIER 4: Cortex Sync Status (fast check, sync action deferred to async)
-PENDING_FILE="${PROJECT_ROOT}/.claude/memory/feedback/pending_cortex_sync.jsonl"
-if [[ -f ${PENDING_FILE} ]] && [[ -s ${PENDING_FILE} ]]; then
-	PENDING_COUNT=$(grep -c '"synced":\s*false' "${PENDING_FILE}" 2>/dev/null || true)
-	LEGACY_COUNT=$(grep -v '"synced"' "${PENDING_FILE}" 2>/dev/null | wc -l | xargs)
-	PENDING_COUNT=$(printf '%s\n' "${PENDING_COUNT:-0}" | tail -n1 | tr -d '[:space:]')
-	LEGACY_COUNT=${LEGACY_COUNT:-0}
-	TOTAL=$((PENDING_COUNT + LEGACY_COUNT))
-	if [[ ${TOTAL} -gt 0 ]]; then
-		echo "Cortex: ${TOTAL} pending feedback entries (async sync starting)"
-	fi
+python3 - "${RLHF_DIR}" <<'PY' 2>/dev/null || true
+import json
+import sys
+from pathlib import Path
+
+rlhf_dir = Path(sys.argv[1])
+feedback_log = rlhf_dir / "feedback-log.jsonl"
+counts = {"total": 0, "positive": 0, "negative": 0}
+last_signal = None
+
+if feedback_log.exists():
+    for raw in feedback_log.read_text(encoding="utf-8").splitlines():
+        if not raw.strip():
+            continue
+        counts["total"] += 1
+        try:
+            entry = json.loads(raw)
+        except json.JSONDecodeError:
+            continue
+        signal = str(entry.get("signal", "")).lower()
+        last_signal = signal or last_signal
+        if signal in {"positive", "up", "thumbs_up"}:
+            counts["positive"] += 1
+        elif signal in {"negative", "down", "thumbs_down", "undo_revert"}:
+            counts["negative"] += 1
+
+print(
+    "Gateway feedback:"
+    f" {counts['total']} entries"
+    f" ({counts['positive']} positive / {counts['negative']} negative)"
+)
+if last_signal:
+    print(f"Last local signal: {last_signal}")
+PY
+
+if command -v npx >/dev/null 2>&1; then
+  "${GATEWAY_CMD[@]}" rules --output="${RULES_FILE}" --min=2 >/dev/null 2>&1 || true
 fi
 
-# TIER 5: Launch async hook in background
-ASYNC_HOOK="${SCRIPT_DIR}/session-start-async.sh"
-if [[ -f ${ASYNC_HOOK} ]] && [[ -x ${ASYNC_HOOK} ]]; then
-	"${ASYNC_HOOK}" >/tmp/claude-session-start-async.log 2>&1 &
-	echo "[ASYNC] Background tasks launched (LanceDB, health check, cortex sync)"
+if [[ -f "${RULES_FILE}" ]]; then
+  echo ""
+  echo "Active Prevention Rules:"
+  sed -n '1,20p' "${RULES_FILE}" || true
 fi
 
-echo "============================================"
 echo ""

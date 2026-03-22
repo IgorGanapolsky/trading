@@ -24,7 +24,7 @@ from __future__ import annotations
 import json
 import logging
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -233,91 +233,106 @@ def close_iron_condor(client, ic: dict, reason: str, dry_run: bool = False) -> b
 
 
 def record_trade_outcome(ic: dict, reason: str, won: bool) -> None:
-    """Record trade outcome to Thompson model and trajectory log.
-
-    This is the ONLY place trade outcomes feed back into the ML model.
-    Called when an IC is closed (profit target, stop loss, or DTE exit).
-    """
+    """Record trade outcome into canonical episode storage and RLHF logs."""
     pl = ic["total_pl"]
     credit = ic["credit_received"]
     expiry = ic["expiry_str"]
-
     project_root = Path(__file__).parent.parent
-
-    # 1. Update Thompson sampling model
-    model_path = Path(__file__).parent.parent / "models" / "ml" / "trade_confidence_model.json"
-    try:
-        with open(model_path) as f:
-            model = json.load(f)
-
-        for key in ["iron_condor", "spy_specific"]:
-            if key in model:
-                if won:
-                    model[key]["alpha"] = model[key].get("alpha", 1.0) + 1
-                    model[key]["wins"] = model[key].get("wins", 0) + 1
-                else:
-                    model[key]["beta"] = model[key].get("beta", 1.0) + 1
-                    model[key]["losses"] = model[key].get("losses", 0) + 1
-
-        model["last_updated"] = datetime.now().isoformat()
-
-        with open(model_path, "w") as f:
-            json.dump(model, f, indent=2)
-
-        logger.info(
-            f"Thompson model updated: {'WIN' if won else 'LOSS'} "
-            f"(alpha={model['iron_condor']['alpha']}, beta={model['iron_condor']['beta']})"
-        )
-    except Exception as e:
-        logger.warning(f"Could not update Thompson model: {e}")
-
-    # 2. Append to trade trajectory log
-    trajectory_path = project_root / "data" / "feedback" / "trade_trajectories.jsonl"
-    try:
-        trajectory_path.parent.mkdir(parents=True, exist_ok=True)
-        entry = {
-            "timestamp": datetime.now().isoformat() + "Z",
-            "strategy": "iron_condor",
-            "symbol": ic.get("underlying", "SPY"),
-            "expiry": expiry,
-            "exit_reason": reason,
-            "credit": credit,
-            "pnl": pl,
-            "won": won,
-            "source": "position_manager",
-        }
-        with trajectory_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(entry) + "\n")
-        logger.info(f"Trade trajectory recorded: {reason} P/L=${pl:.2f}")
-    except Exception as e:
-        logger.warning(f"Could not record trajectory: {e}")
-
-    # 3. Persist structured RLHF close-out event (used by downstream learning/audits)
+    timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    episode_id = str(
+        ic.get("episode_id") or f"iron_condor::{ic.get('underlying', 'SPY')}::{expiry}"
+    )
     event_key = (
         f"iron_condor_close::{ic.get('underlying', 'SPY')}::"
         f"{ic.get('expiry_str', 'unknown')}::{reason}::{round(float(pl), 2)}"
     )
+
     try:
+        from src.learning.outcome_labeler import build_outcome_label
+        from src.learning.trade_episode_store import TradeEpisodeStore
+
+        outcome_label = build_outcome_label(
+            {
+                "symbol": ic.get("underlying", "SPY"),
+                "strategy": "iron_condor",
+                "total_pl": pl,
+                "credit_received": credit,
+                "exit_reason": reason,
+                "won": won,
+            }
+        )
+        episode_store = TradeEpisodeStore(
+            event_log_path=project_root / "data" / "feedback" / "trade_episode_events.jsonl",
+            snapshot_path=project_root / "data" / "feedback" / "trade_episodes.json",
+        )
+        episode_store.upsert_outcome(
+            {
+                "episode_id": episode_id,
+                "event_type": "outcome",
+                "timestamp": timestamp,
+                "event_key": event_key,
+                "symbol": str(ic.get("underlying", "SPY")),
+                "strategy": "iron_condor",
+                "reward": float(outcome_label["reward"]),
+                "return_pct": outcome_label["return_pct"],
+                "won": bool(outcome_label["won"]),
+                "lost": bool(outcome_label["lost"]),
+                "outcome": outcome_label["outcome"],
+                "holding_minutes": outcome_label["holding_minutes"],
+                "exit_reason": reason,
+                "expiry": str(ic.get("expiry_str", "")),
+                "metadata": {
+                    "source": "manage_iron_condor_positions",
+                    "summary": outcome_label["summary"],
+                    "legs": [leg.get("symbol") for leg in ic.get("legs", []) if leg.get("symbol")],
+                },
+            }
+        )
+        logger.info(
+            "Canonical trade episode updated: %s (%s)", episode_id, outcome_label["outcome"]
+        )
+    except Exception as e:
+        logger.warning(f"Could not update canonical trade episode: {e}")
+
+    # Persist structured RLHF close-out event for compatibility with downstream analytics.
+    try:
+        from src.learning.outcome_labeler import build_outcome_label
         from src.learning.rlhf_storage import store_trade_outcome
 
+        outcome_label = build_outcome_label(
+            {
+                "symbol": ic.get("underlying", "SPY"),
+                "strategy": "iron_condor",
+                "total_pl": pl,
+                "credit_received": credit,
+                "exit_reason": reason,
+                "won": won,
+            }
+        )
         store_trade_outcome(
             symbol=str(ic.get("underlying", "SPY")),
             strategy="iron_condor",
-            reward=float(pl),
-            won=bool(won),
+            reward=float(outcome_label["reward"]),
+            won=bool(outcome_label["won"]),
             exit_reason=reason,
             expiry=str(ic.get("expiry_str", "")),
+            episode_id=episode_id,
             event_key=event_key,
-            metadata={"source": "manage_iron_condor_positions"},
+            metadata={
+                "source": "manage_iron_condor_positions",
+                "summary": outcome_label["summary"],
+                "return_pct": outcome_label["return_pct"],
+                "holding_minutes": outcome_label["holding_minutes"],
+            },
         )
     except Exception as e:
         logger.warning(f"Could not store structured RLHF outcome: {e}")
 
-    # 4. Feed distributed feedback model so learning updates are immediate and idempotent
+    # Feed distributed feedback model so learning updates are immediate and idempotent.
     try:
         from src.learning.distributed_feedback import LocalBackend, aggregate_feedback
 
-        feedback_type = "positive" if won else "negative"
+        feedback_type = "positive" if bool(won) else "negative"
         context = (
             f"iron_condor closed symbol={ic.get('underlying', 'SPY')} "
             f"expiry={ic.get('expiry_str', '')} exit_reason={reason} pnl={float(pl):.2f}"

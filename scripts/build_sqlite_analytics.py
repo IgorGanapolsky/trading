@@ -7,9 +7,17 @@ import argparse
 import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+
+def _bootstrap_repo_root() -> Path:
+    """Ensure the repository root is importable when the CLI is run directly."""
+    repo_root = Path(__file__).resolve().parents[1]
+    repo_root_str = str(repo_root)
+    if repo_root_str not in sys.path:
+        sys.path.insert(0, repo_root_str)
+    return repo_root
+
+
+_bootstrap_repo_root()
 
 from src.analytics.sqlite_analytics import (
     DEFAULT_DB_OUT,

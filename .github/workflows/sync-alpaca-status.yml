@@ -50,6 +50,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -q -r requirements-minimal.txt || pip install -q alpaca-py requests python-dotenv
+          pip install -q torch --index-url https://download.pytorch.org/whl/cpu 2>/dev/null || echo "⚠️ PyTorch not available - GRPO training will use fallback"
 
       - name: Sync Alpaca state
         env:
@@ -72,6 +73,13 @@ jobs:
           echo "📊 Checking iron condor exit conditions (50% profit | 100% stop | 7 DTE)..."
           python3 scripts/manage_iron_condor_positions.py || echo "⚠️ IC management skipped"
 
+      - name: Retrain GRPO Model
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          echo "🧠 Retraining GRPO policy from closed trade history..."
+          python3 scripts/run_grpo_training.py || echo "⚠️ GRPO training skipped (insufficient data or missing deps)"
+
       - name: Commit synced state
         run: |
           git config user.name "GitHub Actions Bot"
@@ -86,6 +94,8 @@ jobs:
           git add models/ml/trade_confidence_model.json 2>/dev/null || true
           git add models/ml/feedback_model.json 2>/dev/null || true
           git add -f data/feedback/trade_trajectories.jsonl 2>/dev/null || true
+          git add models/ml/grpo_trade_policy.pt 2>/dev/null || true
+          git add models/ml/grpo_trade_metadata.json 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "No state changes to commit"
             exit 0

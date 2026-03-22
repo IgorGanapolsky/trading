@@ -8,7 +8,10 @@
     "dev": "npx trigger.dev@latest dev",
     "deploy": "npx trigger.dev@latest deploy",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "memory:status": "npx -y mcp-memory-gateway@0.7.1 status",
+    "memory:rules": "npx -y mcp-memory-gateway@0.7.1 rules --output=.rlhf/prevention-rules.md --min=2",
+    "memory:capture": "printf 'thumbs down' | python3 scripts/capture_hook_feedback.py"
   },
   "dependencies": {
     "@trigger.dev/sdk": "^4.4.1"

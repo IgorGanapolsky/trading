@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "gates": [
+    {
+      "id": "push-without-thread-check",
+      "pattern": "git push(?!.*--force)(?!.* -f)",
+      "action": "block",
+      "severity": "high",
+      "message": "Check PR review threads and satisfy the gate before pushing.",
+      "unless": "pr_threads_checked"
+    },
+    {
+      "id": "protected-branch-push",
+      "pattern": "git push( origin)? (main|master|develop)\\b",
+      "action": "block",
+      "severity": "critical",
+      "message": "Push through a branch and PR, not directly to a protected branch."
+    },
+    {
+      "id": "force-push",
+      "pattern": "git push .*--force|git push .* -f\\b",
+      "action": "block",
+      "severity": "critical",
+      "message": "Force push is disabled in this repo."
+    },
+    {
+      "id": "package-lock-reset",
+      "pattern": "git checkout .* -- package-lock\\.json",
+      "action": "block",
+      "severity": "medium",
+      "message": "Do not reset package-lock.json without verifying downstream impact."
+    }
+  ]
+}
