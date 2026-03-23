@@ -56,7 +56,7 @@ jobs:
       trading_halted: ${{ steps.check.outputs.halted }}
     steps:
       - name: Checkout for halt file check
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           sparse-checkout: |
             data/TRADING_HALTED
@@ -167,14 +167,14 @@ jobs:
       secrets_valid: ${{ steps.validate_secrets.outputs.secrets_valid }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
       # Note: pip cache is disabled to avoid large post-job tar uploads that
       # were cancelling runs on GitHub-hosted runners.
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: "pip"
@@ -277,12 +277,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.GH_PAT || github.token }}
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: "pip"
@@ -338,7 +338,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # Use the ref that triggered the workflow (branch or main)
           fetch-depth: 1
@@ -389,7 +389,7 @@ jobs:
           echo "✅ MCP server started on 127.0.0.1:8801 (mode: $MCP_MODE)"
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: "pip"

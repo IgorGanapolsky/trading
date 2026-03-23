@@ -41,7 +41,7 @@ jobs:
       (github.event_name == 'workflow_dispatch' && github.event.inputs.event_type == 'ci-failure')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Dispatch self-healing
         run: |
           echo "CI failure detected -- dispatching self-healing agent"
@@ -56,7 +56,7 @@ jobs:
       (github.event_name == 'workflow_dispatch' && github.event.inputs.event_type == 'dependency-update')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Auto-review dependabot PR
         run: |
           echo "Dependabot PR detected -- auto-reviewing"
@@ -76,9 +76,9 @@ jobs:
       (github.event_name == 'workflow_dispatch' && github.event.inputs.event_type == 'test-coverage')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: "pip"
@@ -103,7 +103,7 @@ jobs:
       (github.event_name == 'workflow_dispatch' && github.event.inputs.event_type == 'health-check')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Dispatch health monitor
         run: |
           echo "Manual health check -- dispatching monitor"
