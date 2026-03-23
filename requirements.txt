@@ -80,7 +80,7 @@ langchain-classic==1.0.3
 langchain-community==0.4.1
 langchain-core==1.2.19
 langchain-google-genai==4.2.1
-langchain-text-splitters==1.1.0
+langchain-text-splitters==1.1.1
 langgraph==1.1.2
 langgraph-checkpoint==4.0.1
 langgraph-prebuilt==1.0.8
