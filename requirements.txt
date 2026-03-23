@@ -116,7 +116,7 @@ nvidia-nvshmem-cu12==3.4.5
 nvidia-nvtx-cu12==12.8.90
 oauthlib==3.3.1
 openai==1.109.1
-orjson==3.11.6
+orjson==3.11.7
 ormsgpack==1.12.0
 packaging==25.0
 pandas==2.3.3
