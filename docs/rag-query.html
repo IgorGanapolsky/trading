@@ -10,7 +10,7 @@ layout: null
     <title>Progress Dashboard</title>
     <meta
       name="description"
-      content="Live portfolio dashboard and knowledge base for AI trading system"
+      content="Live portfolio evidence and indexed trading lessons dashboard"
     />
     <style>
       :root {
@@ -1019,7 +1019,7 @@ layout: null
             aria-label="Open daily profit and loss details"
           >
 	          <div class="port-stat-value" id="portDailyPL">--</div>
-	          <div class="port-stat-label">Daily P&amp;L</div>
+	          <div class="port-stat-label" id="portDailyPLLabel">Daily P&amp;L</div>
           </button>
 	        <button
             type="button"
@@ -1199,7 +1199,7 @@ layout: null
         <p>
           Part of the
           <a href="{{ '/' | relative_url }}"
-            >AI Trading System</a
+            >Trading System</a
           >
         </p>
         <p style="margin-top: 8px">
@@ -1256,8 +1256,6 @@ layout: null
       const SNAPSHOT_MANIFEST_FALLBACK_URL =
         "https://raw.githubusercontent.com/IgorGanapolsky/trading/main/docs/data/alpaca_snapshots.json";
       const VERIFICATION_REPORTS_URL =
-        "{{ '/data/verification_reports.json' | relative_url }}";
-      const VERIFICATION_REPORTS_FALLBACK_URL =
         "https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/verification_reports.json";
       const GITHUB_RAW_URL =
         "https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/system_state.json";
@@ -1657,7 +1655,7 @@ layout: null
 
       async function fetchVerificationReports(forceReload = false) {
         if (!forceReload && latestVerificationReports) return latestVerificationReports;
-        const sources = [VERIFICATION_REPORTS_URL, VERIFICATION_REPORTS_FALLBACK_URL];
+        const sources = [VERIFICATION_REPORTS_URL];
         for (const source of sources) {
           try {
             const res = await fetch(source, { cache: "no-store" });
@@ -1707,7 +1705,7 @@ layout: null
 
         if (totalEl) totalEl.textContent = total.toLocaleString();
         if (subtitleEl) {
-          subtitleEl.textContent = `Search ${total.toLocaleString()} lessons from building an autonomous AI trading system`;
+          subtitleEl.textContent = `Search ${total.toLocaleString()} indexed lessons and live trading evidence`;
         }
 
         if (!daysEl) return;
@@ -2232,6 +2230,15 @@ Tags: ${lesson.tags.join(", ")}`;
           const positions = data.positions || [];
           const account = data.account || {};
           const paperTrading = data.paper_trading || {};
+          const syncDetails = parseTimestampDetails(
+            data.last_updated || paper.synced_at || data?.meta?.last_updated || "",
+          );
+          const syncDateKey =
+            syncDetails && Number.isFinite(syncDetails.epochMs)
+              ? getEtDateKey(new Date(syncDetails.epochMs))
+              : "";
+          const todayDateKey = getEtDateKey(new Date());
+          const dataIsCurrentToday = Boolean(syncDateKey) && syncDateKey === todayDateKey;
           const equity =
             Number(port.equity) ||
             Number(paper.current_equity) ||
@@ -2264,10 +2271,19 @@ Tags: ${lesson.tags.join(", ")}`;
               ? dailyPnlFromReport
               : Number(paper.daily_change) || 0;
           const plEl = document.getElementById("portDailyPL");
+          const plLabelEl = document.getElementById("portDailyPLLabel");
           plEl.textContent =
-            (dailyPL >= 0 ? "+$" : "-$") + Math.abs(dailyPL).toLocaleString();
+            (dailyPL >= 0 ? "+$" : "-$") +
+            Math.abs(dailyPL).toLocaleString() +
+            (dataIsCurrentToday ? "" : "*");
           plEl.className =
             "port-stat-value " + (dailyPL >= 0 ? "positive" : "negative");
+          if (plLabelEl) {
+            plLabelEl.textContent = dataIsCurrentToday ? "Daily P&L" : "Latest Session";
+          }
+          plEl.title = dataIsCurrentToday
+            ? "Current trading-day profit and loss"
+            : `Latest synced session P&L from ${syncDetails?.shortLabel || "latest sync"}`;
 
           // Positions count
           const positionCount =
@@ -2502,6 +2518,26 @@ Tags: ${lesson.tags.join(", ")}`;
           ) ?? 0;
 
         const syncedAt = state.last_updated || live.synced_at || "";
+        const syncDetails = parseTimestampDetails(syncedAt || "");
+        const syncDateKey =
+          syncDetails && Number.isFinite(syncDetails.epochMs)
+            ? getEtDateKey(new Date(syncDetails.epochMs))
+            : "";
+        const todayDateKey = getEtDateKey(new Date());
+        const dataIsCurrentToday = Boolean(syncDateKey) && syncDateKey === todayDateKey;
+        const paperSessionLabel = dataIsCurrentToday ? "Today" : "Latest synced session";
+        const paperActivityLabel = dataIsCurrentToday
+          ? "Today activity (paper)"
+          : "Latest synced activity (paper)";
+        const accountHeadline = dataIsCurrentToday
+          ? `Paper account is ${formatSignedCurrency(
+              resolvedPaperTodayPL,
+            )} today at ${formatCurrency(paperEquity)} equity.`
+          : `Latest synced paper P/L is ${formatSignedCurrency(
+              resolvedPaperTodayPL,
+            )} at ${formatCurrency(paperEquity)} equity.${
+              syncDetails?.shortLabel ? ` Data is from ${syncDetails.shortLabel}.` : ""
+            }`;
         const syncLine = syncedAt
           ? `<div class="account-submetric">${renderTimestampMetric("Synced", syncedAt)}</div>`
           : "";
@@ -2529,20 +2565,25 @@ Tags: ${lesson.tags.join(", ")}`;
 
         return `
           <div class="account-summary">
-            <strong>North Star status now: ${escapeHtml(northStarStatus.verdict)}.</strong> ${escapeHtml(
-          northStarStatus.headline,
-        )}
+            <strong>${escapeHtml(accountHeadline)}</strong>
           </div>
-          <div class="account-submetric"><strong>Gate evidence:</strong> ${escapeHtml(northStarStatus.evidenceLine)}</div>
-          <div class="account-submetric"><strong>Priority actions:</strong> ${escapeHtml(northStarStatus.actionsLine)}</div>
+          <div class="account-submetric"><strong>Freshness check:</strong> ${escapeHtml(
+            dataIsCurrentToday
+              ? "Current trading-day snapshot."
+              : `Not current for today; latest sync is ${
+                  syncDetails?.shortLabel || "the latest recorded snapshot"
+                }.`,
+          )}</div>
           <div class="account-grid">
             <div class="account-card">
               <h4>Paper Account (Primary)</h4>
               <div class="account-metric">${formatCurrency(paperEquity)}</div>
-              <div class="account-submetric">Today: ${formatSignedCurrency(resolvedPaperTodayPL)}</div>
+              <div class="account-submetric">${paperSessionLabel}: ${formatSignedCurrency(
+                resolvedPaperTodayPL,
+              )}</div>
               ${
                 hasPaperTradeBreakdown
-                  ? `<div class="account-submetric">Today activity (paper): ${
+                  ? `<div class="account-submetric">${paperActivityLabel}: ${
                       paperStructures != null
                         ? `${escapeHtml(String(paperStructures))} structure(s)`
                         : "n/a structures"
@@ -2556,7 +2597,7 @@ Tags: ${lesson.tags.join(", ")}`;
                         : ""
                     }</div>`
                   : paperTradeEvents != null
-                    ? `<div class="account-submetric">Today activity (paper): ${escapeHtml(String(paperTradeEvents))} trade event(s) recorded in system state (breakdown unavailable).</div>`
+                    ? `<div class="account-submetric">${paperActivityLabel}: ${escapeHtml(String(paperTradeEvents))} trade event(s) recorded in system state (breakdown unavailable).</div>`
                   : ""
               }
               <div class="account-submetric">Total P/L: ${formatSignedCurrency(paperPL)} (${formatSignedPercent(paperPLPct)})</div>
@@ -2564,13 +2605,18 @@ Tags: ${lesson.tags.join(", ")}`;
             <div class="account-card">
               <h4>Brokerage Account (Opportunistic)</h4>
               <div class="account-metric">${formatCurrency(brokerageEquity)}</div>
-              <div class="account-submetric">Today: ${formatSignedCurrency(brokerageTodayPL)}</div>
+              <div class="account-submetric">${paperSessionLabel}: ${formatSignedCurrency(
+                brokerageTodayPL,
+              )}</div>
               <div class="account-submetric">Total P/L: ${formatSignedCurrency(brokeragePL)} (${formatSignedPercent(brokeragePLPct)})</div>
             </div>
           </div>
           ${syncLine}
           ${evidenceFreshnessLine}
           ${whyLine}
+          <div class="account-submetric"><strong>Gate context:</strong> North Star ${escapeHtml(
+            northStarStatus.verdict,
+          )}; ${escapeHtml(northStarStatus.evidenceLine)}</div>
           <div class="proof-grid">
             <div class="proof-item">
               <a href="${paperProof}" target="_blank" rel="noopener noreferrer">Paper Account Screenshot Evidence</a>
@@ -3187,14 +3233,14 @@ Tags: ${lesson.tags.join(", ")}`;
         const reason = String(options.reason || "").trim();
 
         if (reason) {
-          lines.push(`AI chat is unavailable: ${reason}`);
+          lines.push(`AI chat is unavailable right now (${reason}).`);
         } else {
-          lines.push("AI chat is unavailable.");
+          lines.push("AI chat is unavailable right now.");
         }
 
         if (timeWindow && latest?.dateKey && latest.dateKey < timeWindow.startKey) {
           lines.push(
-            `The local lesson index is stale for ${timeWindow.label}. Knowledge base only reaches ${latestLabel}.`,
+            `This question is date-sensitive, but the local lesson index is stale for ${timeWindow.label}. Knowledge base only reaches ${latestLabel}.`,
           );
           if (systemAsOf) {
             lines.push(
@@ -3208,7 +3254,7 @@ Tags: ${lesson.tags.join(", ")}`;
         }
 
         if (timeWindow) {
-          lines.push(`Showing local lesson matches for ${timeWindow.label}.`);
+          lines.push(`Showing the best local lesson matches for ${timeWindow.label}.`);
         } else {
           lines.push("Showing the best local lesson matches from the current index.");
         }
@@ -3220,6 +3266,7 @@ Tags: ${lesson.tags.join(", ")}`;
           return lines.join("\n");
         }
 
+        lines.push("Top matches:");
         for (const lesson of matches) {
           const when =
             lesson.timestampDetails?.shortLabel ||

@@ -4,11 +4,13 @@ from pathlib import Path
 RAG_QUERY_HTML = Path("docs/rag-query.html")
 
 
-def test_rag_query_replaces_static_account_status_copy() -> None:
+def test_rag_query_account_evidence_prioritizes_live_account_answer() -> None:
     html = RAG_QUERY_HTML.read_text(encoding="utf-8")
 
-    assert "function computeNorthStarStatus(state)" in html
-    assert "North Star status now:" in html
+    assert "function buildAccountEvidenceHtml(state, snapshotManifest, verificationReports)" in html
+    assert "const accountHeadline =" in html
+    assert "Paper account is ${formatSignedCurrency(" in html
+    assert "Latest synced paper P/L is ${formatSignedCurrency(" in html
     assert "Account status now:</strong> paper strategy remains the primary engine" not in html
 
 
@@ -37,7 +39,8 @@ def test_rag_query_chat_fallback_detects_stale_temporal_lesson_queries() -> None
 
     assert "function inferLessonTimeWindow(query)" in html
     assert "function getLatestLessonDetails()" in html
-    assert "The local lesson index is stale for" in html
+    assert "AI chat is unavailable right now." in html
+    assert "This question is date-sensitive, but the local lesson index is stale for" in html
     assert "System sync is newer" in html
     assert "Action: sync fresh lessons and rebuild the RAG index" in html
 
@@ -63,3 +66,20 @@ def test_rag_query_portfolio_bar_cards_are_actionable() -> None:
     assert "function setupPortfolioActionListeners()" in html
     assert 'function buildOpenPositionsHtml(state, focus = "positions")' in html
     assert "function buildWinRateDetailHtml(state)" in html
+
+
+def test_rag_query_uses_non_marketing_copy_for_dashboard_status() -> None:
+    html = RAG_QUERY_HTML.read_text(encoding="utf-8")
+
+    assert "indexed lessons and live trading evidence" in html
+    assert "autonomous AI trading system" not in html
+
+
+def test_rag_query_verification_reports_source_avoids_broken_pages_path() -> None:
+    html = RAG_QUERY_HTML.read_text(encoding="utf-8")
+
+    assert (
+        'const VERIFICATION_REPORTS_URL =\n        "https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/verification_reports.json";'
+        in html
+    )
+    assert "VERIFICATION_REPORTS_FALLBACK_URL" not in html
