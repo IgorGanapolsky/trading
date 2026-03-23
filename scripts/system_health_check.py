@@ -6,6 +6,7 @@ Run daily before trading to catch silent failures.
 Usage: python3 scripts/system_health_check.py
 """
 
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -15,22 +16,23 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 PROJECT_ROOT = Path(__file__).parent.parent
 LANCEDB_PATH = PROJECT_ROOT / ".claude" / "memory" / "lancedb"
+OPTION_SYMBOL_RE = re.compile(r"^(?P<underlying>[A-Z]+)(?P<expiry>\d{6})(?P<option_type>[CP])\d{8}$")
 
 
 def _list_lancedb_tables(db) -> list[str]:
     """Return table names across LanceDB API versions without loading embeddings."""
-    if hasattr(db, "table_names"):
-        try:
-            return list(db.table_names())
-        except Exception:
-            return []
-
     if hasattr(db, "list_tables"):
         try:
             tables_response = db.list_tables()
             if hasattr(tables_response, "tables"):
                 return list(tables_response.tables)
             return list(tables_response)
+        except Exception:
+            return []
+
+    if hasattr(db, "table_names"):
+        try:
+            return list(db.table_names())
         except Exception:
             return []
 
@@ -79,6 +81,14 @@ def _probe_vector_index() -> tuple[bool, str]:
         return True, "LanceDB table present"
 
     return True, f"LanceDB table ready ({row_count} rows)"
+
+
+def _parse_option_symbol(symbol: str) -> tuple[str, str] | None:
+    """Return (expiry, option_type) for OCC-style option symbols."""
+    match = OPTION_SYMBOL_RE.match(symbol)
+    if not match:
+        return None
+    return match.group("expiry"), match.group("option_type")
 
 
 def check_vector_db():
@@ -220,17 +230,15 @@ def check_ml_pipeline():
 
 
 def check_position_completeness():
-    """Verify iron condor positions have all 4 legs.
+    """Verify options structures keep any short exposure defined-risk.
 
     Added Jan 27, 2026: Caught incomplete IC with only 3 legs.
-    A proper iron condor MUST have:
-    - Long put (lower strike)
-    - Short put (higher strike)
-    - Short call (lower strike)
-    - Long call (higher strike)
+    Updated Mar 23, 2026: do not assume every expiry is a 4-leg iron condor.
+    Long-only structures are already defined-risk; any short exposure must have
+    protective long legs on the same side.
     """
     results = {
-        "name": "Position Completeness (Iron Condor)",
+        "name": "Position Protection (Options)",
         "status": "UNKNOWN",
         "details": [],
     }
@@ -259,42 +267,72 @@ def check_position_completeness():
         by_expiry = defaultdict(list)
         for p in positions:
             symbol = p.get("symbol", "")
-            if len(symbol) > 10:  # Options have long symbols
-                # Extract expiry from symbol (e.g., SPY260227C00735000)
-                expiry = symbol[3:9]  # YYMMDD
+            parsed = _parse_option_symbol(symbol)
+            if parsed is not None:
+                expiry, _option_type = parsed
                 by_expiry[expiry].append(p)
 
-        # Check each expiry group for complete IC
+        # Check each expiry group for defined-risk protection.
         for expiry, legs in by_expiry.items():
-            long_puts = [leg for leg in legs if "P" in leg["symbol"] and leg["qty"] > 0]
-            short_puts = [leg for leg in legs if "P" in leg["symbol"] and leg["qty"] < 0]
-            long_calls = [leg for leg in legs if "C" in leg["symbol"] and leg["qty"] > 0]
-            short_calls = [leg for leg in legs if "C" in leg["symbol"] and leg["qty"] < 0]
+            long_puts = []
+            short_puts = []
+            long_calls = []
+            short_calls = []
 
-            has_all_legs = (
-                len(long_puts) >= 1
-                and len(short_puts) >= 1
-                and len(long_calls) >= 1
-                and len(short_calls) >= 1
-            )
+            for leg in legs:
+                parsed = _parse_option_symbol(leg.get("symbol", ""))
+                if parsed is None:
+                    continue
+                _expiry, option_type = parsed
+                qty = leg.get("qty", 0)
+                if option_type == "P":
+                    if qty > 0:
+                        long_puts.append(leg)
+                    elif qty < 0:
+                        short_puts.append(leg)
+                elif option_type == "C":
+                    if qty > 0:
+                        long_calls.append(leg)
+                    elif qty < 0:
+                        short_calls.append(leg)
 
-            if not has_all_legs:
-                results["status"] = "BROKEN"
-                missing = []
-                if not long_puts:
-                    missing.append("long put")
-                if not short_puts:
-                    missing.append("short put")
-                if not long_calls:
-                    missing.append("long call")
-                if not short_calls:
-                    missing.append("SHORT CALL")  # Most critical
+            has_short_puts = len(short_puts) >= 1
+            has_short_calls = len(short_calls) >= 1
+            has_long_puts = len(long_puts) >= 1
+            has_long_calls = len(long_calls) >= 1
+
+            if not has_short_puts and not has_short_calls:
                 results["details"].append(
-                    f"✗ Expiry {expiry}: INCOMPLETE IC - missing {', '.join(missing)}"
+                    f"✓ Expiry {expiry}: Long-only defined-risk structure ({len(legs)} legs)"
                 )
-                results["details"].append(f"  Current legs: {len(legs)}/4")
+                continue
+
+            missing = []
+            if has_short_puts and not has_long_puts:
+                missing.append("long put hedge")
+            if has_short_calls and not has_long_calls:
+                missing.append("long call hedge")
+
+            if missing:
+                results["status"] = "BROKEN"
+                results["details"].append(
+                    f"✗ Expiry {expiry}: Unhedged short exposure - missing {', '.join(missing)}"
+                )
+                results["details"].append(f"  Current legs: {len(legs)}")
+                continue
+
+            if has_short_puts and has_short_calls:
+                results["details"].append(
+                    f"✓ Expiry {expiry}: Protected 4-leg structure ({len(legs)} legs)"
+                )
+            elif has_short_puts:
+                results["details"].append(
+                    f"✓ Expiry {expiry}: Protected put-side spread ({len(legs)} legs)"
+                )
             else:
-                results["details"].append(f"✓ Expiry {expiry}: Complete 4-leg IC")
+                results["details"].append(
+                    f"✓ Expiry {expiry}: Protected call-side spread ({len(legs)} legs)"
+                )
 
         if results["status"] != "BROKEN":
             results["status"] = "OK"

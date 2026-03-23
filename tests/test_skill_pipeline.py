@@ -54,7 +54,7 @@ def test_trace_recorder_writes_replayable_artifact(tmp_path) -> None:
         run_id="run-1",
         session_id="session-1",
         ticker="SPY",
-        replay_command="python scripts/autonomous_trader.py --tickers SPY --prediction-only",
+        replay_command="python scripts/iron_condor_trader.py --symbol SPY --dry-run",
         output_dir=tmp_path,
     )
     runner = DeterministicSkillRunner(registry, recorder)
@@ -75,5 +75,5 @@ def test_trace_recorder_writes_replayable_artifact(tmp_path) -> None:
     payload = json.loads(out_path.read_text(encoding="utf-8"))
     assert payload["run_id"] == "run-1"
     assert payload["ticker"] == "SPY"
-    assert payload["replay_command"].startswith("python scripts/autonomous_trader.py")
+    assert payload["replay_command"].startswith("python scripts/iron_condor_trader.py")
     assert payload["stages"][0]["stage"] == "market_analysis"

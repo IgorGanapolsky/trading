@@ -31,20 +31,50 @@ def check_workflow_commands(workflow_path: Path):
     for job_name, job in workflow.get("jobs", {}).items():
         for step in job.get("steps", []):
             run_cmd = step.get("run", "")
-            if "autonomous_trader.py" in run_cmd:
-                found_commands.append((job_name, step.get("name", "unnamed"), run_cmd))
+            for line in run_cmd.splitlines():
+                if re.search(r"python3?\s+scripts/autonomous_trader\.py(?:\s|$)", line):
+                    found_commands.append((job_name, step.get("name", "unnamed"), line.strip()))
 
     if not found_commands:
-        print("✅ Weekend workflow uses inline Python (not autonomous_trader.py)")
+        print("✅ No live autonomous_trader.py invocations found")
         return
 
     # Validate each command uses current CLI interface
     for job_name, step_name, cmd in found_commands:
-        for line in cmd.split("&&"):
-            line = line.strip()
-            if "autonomous_trader.py" in line:
-                python_cmd = line.split("python3 ")[-1].strip()
-                print(f"✅ {job_name}/{step_name}: {python_cmd}")
+        print(f"✅ {job_name}/{step_name}: {cmd}")
+
+
+def _declared_iron_condor_flags() -> set[str]:
+    trader_text = Path("scripts/iron_condor_trader.py").read_text()
+    return set(re.findall(r"""['"](--[a-z-]+)['"]""", trader_text))
+
+
+def _daily_trading_iron_condor_commands() -> list[tuple[str, str, str]]:
+    workflow_path = Path(".github/workflows/daily-trading.yml")
+    workflow = yaml.safe_load(workflow_path.read_text())
+
+    commands: list[tuple[str, str, str]] = []
+    for job_name, job in workflow.get("jobs", {}).items():
+        for step in job.get("steps", []):
+            run_cmd = step.get("run", "")
+            for line in run_cmd.splitlines():
+                if re.search(r"python3?\s+scripts/iron_condor_trader\.py(?:\s|$)", line):
+                    commands.append((job_name, step.get("name", "unnamed"), line.strip()))
+    return commands
+
+
+def _daily_trading_autonomous_commands() -> list[tuple[str, str, str]]:
+    workflow_path = Path(".github/workflows/daily-trading.yml")
+    workflow = yaml.safe_load(workflow_path.read_text())
+
+    commands: list[tuple[str, str, str]] = []
+    for job_name, job in workflow.get("jobs", {}).items():
+        for step in job.get("steps", []):
+            run_cmd = step.get("run", "")
+            for line in run_cmd.splitlines():
+                if re.search(r"python3?\s+scripts/autonomous_trader\.py(?:\s|$)", line):
+                    commands.append((job_name, step.get("name", "unnamed"), line.strip()))
+    return commands
 
 
 def test_all_cli_flags_exist():
@@ -54,13 +84,12 @@ def test_all_cli_flags_exist():
     so workflow validation can run in minimal environments that only install
     test dependencies.
     """
-    trader_text = Path("scripts/iron_condor_trader.py").read_text()
-
     # Expected CLI flags that workflows depend on
-    expected_flags = ["--symbol"]
+    expected_flags = ["--symbol", "--force", "--live", "--dry-run"]
+    declared_flags = _declared_iron_condor_flags()
 
     for flag in expected_flags:
-        if f'"{flag}"' in trader_text or f"'{flag}'" in trader_text:
+        if flag in declared_flags:
             print(f"✅ Flag '{flag}' exists in CLI")
         else:
             print(f"❌ Flag '{flag}' not found in iron_condor_trader.py")
@@ -68,28 +97,41 @@ def test_all_cli_flags_exist():
 
 
 def test_daily_trading_workflow_flags():
-    """Verify daily-trading.yml uses valid autonomous_trader.py flags."""
+    """Verify daily-trading.yml uses only declared iron_condor_trader flags."""
     workflow_path = Path(".github/workflows/daily-trading.yml")
 
     if not workflow_path.exists():
         print(f"⚠️  Workflow not found: {workflow_path}")
         return
 
-    workflow = yaml.safe_load(workflow_path.read_text())
+    declared_flags = _declared_iron_condor_flags()
+    invalid_invocations: list[str] = []
+    for job_name, step_name, cmd in _daily_trading_iron_condor_commands():
+        literal_flags = set(re.findall(r"--[a-z-]+", cmd))
+        unknown_flags = sorted(literal_flags - declared_flags)
+        if unknown_flags:
+            invalid_invocations.append(
+                f"{job_name}/{step_name}: unknown flags {unknown_flags} in `{cmd}`"
+            )
 
-    # Check for autonomous_trader.py usage
-    found_commands = []
-    for job_name, job in workflow.get("jobs", {}).items():
-        for step in job.get("steps", []):
-            run_cmd = step.get("run", "")
-            if "autonomous_trader.py" in run_cmd:
-                found_commands.append((job_name, step.get("name", "unnamed"), run_cmd))
+    if invalid_invocations:
+        for message in invalid_invocations:
+            print(f"❌ {message}")
+        sys.exit(1)
+
+    print("✅ daily-trading.yml iron_condor_trader.py invocations use declared flags only")
+
+
+def test_daily_trading_workflow_has_no_live_autonomous_trader_invocations():
+    """Verify daily-trading.yml does not execute the deleted autonomous trader."""
+    found_commands = _daily_trading_autonomous_commands()
 
     if found_commands:
         for job_name, step_name, cmd in found_commands:
-            print(f"✅ {job_name}/{step_name}: Uses autonomous_trader.py")
-    else:
-        print("ℹ️  No autonomous_trader.py commands in daily-trading.yml")
+            print(f"❌ {job_name}/{step_name}: {cmd}")
+        sys.exit(1)
+
+    print("✅ No live autonomous_trader.py commands in daily-trading.yml")
 
 
 def test_daily_trading_workflow_checks_both_halt_sentinels():

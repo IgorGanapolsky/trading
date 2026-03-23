@@ -2466,7 +2466,13 @@ class TradingOrchestrator:
             )
             return
 
-        replay_command = f"python scripts/autonomous_trader.py --tickers {ticker} --prediction-only"
+        if ticker.upper() == "SPY":
+            replay_command = "python scripts/iron_condor_trader.py --symbol SPY --dry-run"
+        else:
+            replay_command = (
+                f"manual replay required: no single-script replay path for {ticker}; "
+                "inspect orchestrator trace artifacts"
+            )
         trace_recorder = RunTraceRecorder(
             run_id=self.telemetry.run_id or self.telemetry.session_id,
             session_id=self.telemetry.session_id,

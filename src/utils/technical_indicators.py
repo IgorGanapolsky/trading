@@ -5,7 +5,7 @@ This module provides a single source of truth for technical indicator calculatio
 (MACD, RSI, Volume Ratio) used across the trading system.
 
 Consolidates duplicate logic from:
-- scripts/autonomous_trader.py
+- legacy scripts/autonomous_trader.py
 - src/strategies/core_strategy.py
 - src/strategies/growth_strategy.py
 """
@@ -216,7 +216,7 @@ def calculate_technical_score(
     """
     Calculate composite technical score for a symbol.
 
-    This function implements the same logic as autonomous_trader.py but
+    This function preserves the legacy autonomous trader logic but
     uses the shared indicator functions.
 
     Args:

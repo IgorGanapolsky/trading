@@ -350,6 +350,22 @@ class WorkflowIntegrityTests:
                 r"python3?\s+scripts/autonomous_trader\.py.*\|\|\s*exit\s+0",
                 "autonomous_trader.py || exit 0",
             ),
+            (
+                r"python3?\s+scripts/iron_condor_trader\.py.*\|\|\s*true",
+                "iron_condor_trader.py || true",
+            ),
+            (
+                r"python3?\s+scripts/iron_condor_trader\.py.*\|\|\s*exit\s+0",
+                "iron_condor_trader.py || exit 0",
+            ),
+            (
+                r"python3?\s+scripts/autonomous_trader\.py.*\|\|\s*\{",
+                "autonomous_trader.py || { ... }",
+            ),
+            (
+                r"python3?\s+scripts/iron_condor_trader\.py.*\|\|\s*\{",
+                "iron_condor_trader.py || { ... }",
+            ),
         ]
 
         for workflow_name in self.critical_workflows:

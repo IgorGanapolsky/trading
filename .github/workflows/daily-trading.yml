@@ -940,8 +940,8 @@ jobs:
           # Track execution start
           EXEC_START=$(date +%s)
 
-          # Run the trading script and capture exit code
-          echo "🚀 Running autonomous_trader.py..."
+          # Run the active control-plane preflight and capture exit code
+          echo "🚀 Running options control-plane preflight..."
           echo "📦 Python path: $PYTHONPATH"
           echo "📦 Working directory: $(pwd)"
           echo "📦 Python version: $(python3 --version)"
@@ -1057,11 +1057,10 @@ jobs:
           echo "🔍 ========================================"
           # =========================================================
 
-          # DISABLED Jan 21, 2026: SmartDCA buys SPY STOCK, not iron condors
-          # Per CLAUDE.md: "Primary strategy: IRON CONDORS on SPY ONLY"
-          # autonomous_trader.py uses SmartDCA which buys STOCK - WRONG STRATEGY
-          # Iron condors are executed in "Harvest theta" step below
-          echo "⏭️ SKIPPING autonomous_trader.py - uses SmartDCA (stock buying)"
+          # Legacy autonomous trader remains retired because it buys SPY shares
+          # instead of defined-risk SPY options structures.
+          # Iron condors are executed in "Harvest theta" step below.
+          echo "⏭️ Legacy autonomous trader remains disabled (stock-buying path)"
           echo "   Per CLAUDE.md: IRON CONDORS ONLY - not stock accumulation"
           echo "   Iron condor execution happens in 'Harvest theta' step"
           EXEC_STATUS="SKIPPED"
@@ -1198,9 +1197,7 @@ jobs:
             for TICKER in $TICKERS; do
               echo ""
               echo "   📊 Iron Condor on ${TICKER} (15-20 delta, 30-45 DTE)..."
-              python3 scripts/iron_condor_trader.py --symbol "${TICKER}" $FORCE_FLAG || {
-                echo "   ⚠️  ${TICKER} iron condor returned non-zero"
-              }
+              python3 scripts/iron_condor_trader.py --symbol "${TICKER}" $FORCE_FLAG
             done
 
             echo ""
@@ -1223,9 +1220,7 @@ jobs:
             for TICKER in SPY; do
               echo ""
               echo "   📊 Iron Condor on ${TICKER} (15-20 delta, 30-45 DTE)..."
-              python3 scripts/iron_condor_trader.py --symbol "${TICKER}" $FORCE_FLAG || {
-                echo "   ⚠️  ${TICKER} iron condor returned non-zero"
-              }
+              python3 scripts/iron_condor_trader.py --symbol "${TICKER}" $FORCE_FLAG
             done
 
             echo ""
@@ -1325,10 +1320,7 @@ jobs:
             FORCE_FLAG="--force"
           fi
 
-          python3 scripts/iron_condor_trader.py $FORCE_FLAG || {
-            echo "⚠️  Iron condor execution returned non-zero"
-            echo "   This is often due to market conditions - not fatal"
-          }
+          python3 scripts/iron_condor_trader.py $FORCE_FLAG
           echo ""
           echo "✅ Iron condor strategy complete"
 

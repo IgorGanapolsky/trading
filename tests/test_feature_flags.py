@@ -35,7 +35,7 @@ class TestFeatureFlagsDefaults:
             # Import after clearing env to get fresh state
             from importlib import reload
 
-            import scripts.autonomous_trader as trader
+            import src.utils.feature_flags as trader
 
             reload(trader)
 
@@ -52,7 +52,7 @@ class TestFeatureFlagsDefaults:
 
             from importlib import reload
 
-            import scripts.autonomous_trader as trader
+            import src.utils.feature_flags as trader
 
             reload(trader)
 
@@ -62,7 +62,7 @@ class TestFeatureFlagsDefaults:
 
     def test_prediction_always_disabled(self):
         """Prediction markets (Kalshi) were removed Dec 2025."""
-        from scripts.autonomous_trader import prediction_enabled
+        from src.utils.feature_flags import prediction_enabled
 
         # Should always return False regardless of env
         assert prediction_enabled() is False
@@ -77,7 +77,7 @@ class TestFeatureFlagsEnvOverride:
         with patch.dict(os.environ, {"ENABLE_REIT_STRATEGY": value}):
             from importlib import reload
 
-            import scripts.autonomous_trader as trader
+            import src.utils.feature_flags as trader
 
             reload(trader)
 
@@ -91,7 +91,7 @@ class TestFeatureFlagsEnvOverride:
         with patch.dict(os.environ, {"ENABLE_REIT_STRATEGY": value}):
             from importlib import reload
 
-            import scripts.autonomous_trader as trader
+            import src.utils.feature_flags as trader
 
             reload(trader)
 
@@ -105,7 +105,7 @@ class TestFeatureFlagsEnvOverride:
         with patch.dict(os.environ, {"ENABLE_PRECIOUS_METALS": value}):
             from importlib import reload
 
-            import scripts.autonomous_trader as trader
+            import src.utils.feature_flags as trader
 
             reload(trader)
 
@@ -124,7 +124,7 @@ class TestFeatureFlagsIntegration:
 
             from importlib import reload
 
-            import scripts.autonomous_trader as trader
+            import src.utils.feature_flags as trader
 
             reload(trader)
 

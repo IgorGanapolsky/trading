@@ -1,3 +1,4 @@
+import json
 from types import SimpleNamespace
 
 import scripts.system_health_check as sh
@@ -69,3 +70,69 @@ def test_check_vector_db_reports_broken_on_empty_index(monkeypatch):
 
     assert result["status"] == "BROKEN"
     assert any("table empty" in detail for detail in result["details"])
+
+
+def test_check_position_completeness_allows_long_only_defined_risk_structure(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    (data_dir / "system_state.json").write_text(
+        json.dumps(
+            {
+                "positions": [
+                    {"symbol": "SPY260430C00700000", "qty": 2},
+                    {"symbol": "SPY260430P00615000", "qty": 2},
+                ]
+            }
+        )
+    )
+
+    result = sh.check_position_completeness()
+
+    assert result["status"] == "OK"
+    assert any("Long-only defined-risk structure" in detail for detail in result["details"])
+
+
+def test_check_position_completeness_blocks_unhedged_short_exposure(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    (data_dir / "system_state.json").write_text(
+        json.dumps(
+            {
+                "positions": [
+                    {"symbol": "SPY260430P00620000", "qty": -1},
+                    {"symbol": "SPY260430C00700000", "qty": 1},
+                ]
+            }
+        )
+    )
+
+    result = sh.check_position_completeness()
+
+    assert result["status"] == "BROKEN"
+    assert any("Unhedged short exposure" in detail for detail in result["details"])
+    assert any("long put hedge" in detail for detail in result["details"])
+
+
+def test_check_position_completeness_accepts_protected_four_leg_structure(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    (data_dir / "system_state.json").write_text(
+        json.dumps(
+            {
+                "positions": [
+                    {"symbol": "SPY260430P00610000", "qty": 1},
+                    {"symbol": "SPY260430P00620000", "qty": -1},
+                    {"symbol": "SPY260430C00690000", "qty": -1},
+                    {"symbol": "SPY260430C00700000", "qty": 1},
+                ]
+            }
+        )
+    )
+
+    result = sh.check_position_completeness()
+
+    assert result["status"] == "OK"
+    assert any("Protected 4-leg structure" in detail for detail in result["details"])
