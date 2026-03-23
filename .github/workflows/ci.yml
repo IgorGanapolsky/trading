@@ -706,7 +706,7 @@ jobs:
               ("TradingOrchestrator", "from src.orchestrator.main import TradingOrchestrator"),
               ("AlpacaExecutor", "from src.execution.alpaca_executor import AlpacaExecutor"),
               ("TradeGateway", "from src.risk.trade_gateway import TradeGateway"),
-              ("CoreStrategy", "from src.strategies.core_strategy import CoreStrategy"),
+              ("TradingHaltState", "from src.safety.trading_halt import TradingHaltState"),
           ]
 
           failed = []
