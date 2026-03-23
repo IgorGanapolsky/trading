@@ -1,0 +1,54 @@
+[
+  {
+    "id": "backtest_summary_20260323_123644",
+    "type": "BACKTEST_SUMMARY",
+    "title": "Bull Put Spread Backtest: 2025-03-22 to 2026-03-22",
+    "content": "\n## Backtest Results\n\n**Period**: 2025-03-22 to 2026-03-22\n**Total Trades**: 250\n**Total P&L**: $16140.13\n**Win Rate**: 98.8%\n**Average Trade**: $64.56\n\n### Risk-Adjusted Metrics (Annualized)\n**Sharpe Ratio**: 0.35\n**Sortino Ratio**: 0.00\n**Calmar Ratio**: 0.00\n**Max Drawdown**: 0.0%\n**Profit Factor**: 0.00\n\n### Configuration Used\n- Short Delta Range: [-0.6, -0.2]\n- Long Delta Range: [-0.4, -0.2]\n- Spread Width: $2.0 - $4.0\n- Profit Target: 50.0% of credit\n\n### Key Insight\nStrategy was profitable over this period.\n            ",
+    "metadata": {
+      "total_trades": 250,
+      "total_pnl": 16140.130998543154,
+      "win_rate": 0.988,
+      "avg_trade": 64.56052399417257,
+      "max_win": 1337.0562421481495,
+      "max_loss": -276.09155549816035,
+      "std_dev": 185.1932557582653,
+      "sharpe_ratio": 0.3486116366918032,
+      "config": {
+        "underlying_symbol": "SPY",
+        "short_put_delta_min": -0.6,
+        "short_put_delta_max": -0.2,
+        "long_put_delta_min": -0.4,
+        "long_put_delta_max": -0.2,
+        "spread_width_min": 2.0,
+        "spread_width_max": 4.0,
+        "target_profit_pct": 0.5,
+        "delta_stop_loss_multiplier": 2.0,
+        "risk_free_rate": 0.05,
+        "buffer_pct": 0.05
+      },
+      "start_date": "2025-03-22",
+      "end_date": "2026-03-22",
+      "timestamp": "2026-03-23T12:36:44.673534"
+    }
+  },
+  {
+    "id": "backtest_failure_20260323_123644",
+    "type": "FAILURE_MODE",
+    "title": "Bull Put Spread Loss Analysis",
+    "content": "\n## Loss Analysis\n\n**Losing Trades**: 3 (1.2% of total)\n**Total Losses**: $-652.88\n\n### Worst Trade\n- **Date**: 2026-02-02\n- **Loss**: $-276.09\n- **Status**: max_loss\n- **Short Strike**: $252\n- **Long Strike**: $249\n- **Underlying at Entry**: $257.38\n\n### Prevention Strategies\n1. Consider tighter stop losses (current: 2.0x delta)\n2. Avoid trading during high volatility periods\n3. Consider smaller position sizes\n                ",
+    "metadata": {
+      "status": "max_loss",
+      "theoretical_pnl": -276.09155549816035,
+      "short_put_symbol": "SPY260202P00252000",
+      "long_put_symbol": "SPY260202P00249000",
+      "entry_time": "2026-02-02T09:45:00-05:00",
+      "exit_time": "2026-02-02T15:45:00-05:00",
+      "short_strike": 252,
+      "long_strike": 249,
+      "credit_received": 0.23908444501839654,
+      "underlying_at_entry": 257.38249999999994,
+      "underlying_at_exit": 69.005,
+      "exit_reason": "max_loss"
+    }
+  }
+]

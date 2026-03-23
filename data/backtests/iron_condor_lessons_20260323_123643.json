@@ -1,0 +1,44 @@
+[
+  {
+    "id": "iron_condor_backtest_20260323_123643",
+    "type": "BACKTEST_SUMMARY",
+    "title": "Iron Condor Backtest: 2025-03-22 to 2026-03-22",
+    "content": "\n## Iron Condor Backtest Results\n\n**Period**: 2025-03-22 to 2026-03-22\n**Underlying**: SPY\n\n### Performance\n- **Total Trades**: 44\n- **Win Rate**: 70.5%\n- **Total P&L**: $3018.14\n- **Average Trade**: $68.59\n- **Profit Factor**: 2.11\n- **Sharpe Ratio**: 0.34\n\n### Exit Analysis\n- Profit Target (50%): 29 trades\n- Stop Loss (100%): 6 trades\n- Time Exit (7 DTE): 9 trades\n- Expired: 0 trades\n\n### Configuration\n- Short Delta: 0.2\n- Wing Width: $10.0\n- DTE: 30-45\n- Profit Target: 50.0%\n- Stop Loss: 100.0%\n\n### Key Insight\nWin rate 70.5% below 80% target. Consider tighter deltas or wider wings.\n            ",
+    "metadata": {
+      "total_trades": 44,
+      "wins": 31,
+      "losses": 13,
+      "win_rate": 0.7045454545454546,
+      "total_pnl": 3018.1363386889357,
+      "avg_pnl": 68.5940076974758,
+      "avg_win": 185.38026898951622,
+      "avg_loss": -209.896307691236,
+      "max_win": 267.16119458400595,
+      "max_loss": -561.4254146027968,
+      "profit_factor": 2.106090603970146,
+      "sharpe_ratio": 0.3413212033761707,
+      "exit_reasons": {
+        "profit_target": 29,
+        "stop_loss": 6,
+        "time_exit": 9,
+        "expired": 0
+      },
+      "config": {
+        "underlying_symbol": "SPY",
+        "short_delta": 0.2,
+        "wing_width": 10.0,
+        "dte_min": 30,
+        "dte_max": 45,
+        "profit_target_pct": 0.5,
+        "stop_loss_pct": 1.0,
+        "max_dte": 7,
+        "risk_free_rate": 0.05,
+        "max_position_pct": 0.05,
+        "account_size": 100000.0
+      },
+      "start_date": "2025-03-22",
+      "end_date": "2026-03-22",
+      "timestamp": "2026-03-23T12:36:43.160470"
+    }
+  }
+]
