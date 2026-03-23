@@ -7,9 +7,6 @@ on:
         description: "Type 'CLOSE' to confirm closing orphan SPY puts"
         required: true
         default: ""
-  push:
-    paths:
-      - "CLOSE_SPY_PUTS.trigger"
 
 # Prevent concurrent trade execution (LL-281 race condition fix)
 concurrency:
@@ -23,7 +20,7 @@ env:
 jobs:
   close-positions:
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.confirm == 'CLOSE' || github.event_name == 'push' }}
+    if: ${{ github.event.inputs.confirm == 'CLOSE' }}
 
     steps:
       - uses: actions/checkout@v4

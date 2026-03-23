@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-# Strategy registry stub - original deleted in cleanup PR #1445
-# Minimal implementation to prevent import errors
+# Minimal registry retained for compatibility. The active strategy scope is
+# SPY options execution; legacy strategies are no longer the operating default.
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
@@ -61,7 +61,7 @@ class StrategyInterface(ABC):
 
 
 class StrategyRegistry:
-    """Stub registry for strategies - Phil Town CSP strategy is primary."""
+    """Compatibility registry with an SPY options default."""
 
     _instance = None
     _strategies: dict[str, StrategyRegistration] = {}
@@ -69,9 +69,8 @@ class StrategyRegistry:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            # Auto-register Phil Town strategy for health checks
-            cls._strategies["PhilTownCSP"] = StrategyRegistration(
-                name="PhilTownCSP",
+            cls._strategies["SPYIronCondor"] = StrategyRegistration(
+                name="SPYIronCondor",
                 status=StrategyStatus.ACTIVE,
                 asset_class=AssetClass.OPTIONS,
             )

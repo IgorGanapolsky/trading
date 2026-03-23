@@ -318,7 +318,6 @@ class ContextBundleEngine:
             "thompson": 1.0,
             "lesson": 0.95,
             "rag_query": 0.9,
-            "blog_post": 0.7,
         }
         return source_weights.get(source, 0.6)
 
@@ -337,7 +336,6 @@ class ContextBundleEngine:
         docs.extend(self._load_lessons(top_per_source=top_per_source))
         docs.extend(self._load_rag_query_json(top_per_source=top_per_source))
         docs.extend(self._load_feedback_thompson(top_per_source=top_per_source))
-        docs.extend(self._load_recent_blog_posts(top_per_source=min(top_per_source, 200)))
         deduped: dict[str, BundleDoc] = {}
         for doc in docs:
             deduped[f"{doc.source}:{doc.id}"] = doc
@@ -444,33 +442,6 @@ class ContextBundleEngine:
                         else None,
                         "signal": row.get("signal"),
                     },
-                )
-            )
-        return docs
-
-    def _load_recent_blog_posts(self, *, top_per_source: int) -> list[BundleDoc]:
-        path = self.project_root / "docs" / "_posts"
-        if not path.exists():
-            return []
-        files = [
-            file_path for file_path in sorted(path.glob("*.md")) if self._is_git_tracked(file_path)
-        ][-top_per_source:]
-        docs: list[BundleDoc] = []
-        for file_path in files:
-            text = file_path.read_text(encoding="utf-8", errors="ignore")
-            title_match = re.search(r'^title:\s*"?(.*?)"?$', text, flags=re.MULTILINE)
-            title = title_match.group(1).strip() if title_match else file_path.stem
-            docs.append(
-                BundleDoc(
-                    id=file_path.stem,
-                    source="blog_post",
-                    title=title,
-                    text=_normalize_text(text),
-                    tags=["blog", "public"],
-                    timestamp=datetime.fromtimestamp(
-                        file_path.stat().st_mtime, tz=timezone.utc
-                    ).isoformat(),
-                    metadata={"path": str(file_path.relative_to(self.project_root))},
                 )
             )
         return docs

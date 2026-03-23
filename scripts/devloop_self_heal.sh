@@ -24,7 +24,6 @@ REQUIRED_SCRIPTS=(
   "scripts/enforce_layer1_focus.py"
   "scripts/generate_task_runtime_report.py"
   "scripts/generate_system_explainer.py"
-  "scripts/generate_judge_demo_page.py"
 )
 
 restarts=0

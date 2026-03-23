@@ -33,7 +33,6 @@ on:
 
 permissions:
   contents: write
-  pages: write
 
 # CRITICAL: Global trade concurrency - prevents race conditions (LL-281)
 # All workflows that can execute trades MUST use this same concurrency group
@@ -1469,20 +1468,8 @@ jobs:
             git diff --stat data/
           fi
 
-          # Also check for new untracked trade files
-          TODAY=$(date +%Y-%m-%d)
-          if [ -f "data/trades_${TODAY}.json" ]; then
-            git status data/trades_${TODAY}.json
-            echo "state_changed=true" >> $GITHUB_OUTPUT
-          fi
-
-      # FIX Jan 15, 2026: Sync trades FROM Alpaca before dashboard generation
-      # ROOT CAUSE: Dashboard showed 0 trades while RAG Webhook showed 9 trades
-      # because trading scripts don't create local trade files.
-      # SOLUTION: Fetch fills from Alpaca API and create trades_{date}.json
-      #
-      # CRITICAL (Feb 17, 2026): This must run BEFORE commit/API sync, otherwise
-      # system_state.json and trades_{date}.json get published with stale today_trades=0.
+      # Legacy compatibility sync for local consumers that still read
+      # date-sharded trade files. Canonical repo state remains data/trades.json.
       - name: Sync Trades from Alpaca (Pre-Dashboard)
         if: always()
         env:
@@ -1493,7 +1480,7 @@ jobs:
           echo "🔄 SYNC TRADES FROM ALPACA (Pre-Dashboard)"
           echo "🔄 ========================================"
           echo ""
-          echo "This sync fetches fills from Alpaca and creates local trade files"
+          echo "This sync fetches fills from Alpaca for legacy local trade snapshots"
           echo ""
           python3 scripts/sync_trades_from_alpaca.py || {
             echo "⚠️ Trade sync from Alpaca failed - dashboard may show stale data"
@@ -1520,7 +1507,7 @@ jobs:
           git config user.email "actions@github.com"
 
           # Stage ALL trading data files FIRST
-          git add data/system_state.json data/performance_log.json data/trades_*.json data/verification_reports.json 2>/dev/null || true
+          git add data/system_state.json data/performance_log.json data/verification_reports.json 2>/dev/null || true
 
           # Check if there are changes to commit
           if git diff --cached --quiet; then
@@ -1554,7 +1541,7 @@ jobs:
               git add data/
               git rebase --continue 2>/dev/null || git rebase --abort
               # Re-commit after abort
-              git add data/system_state.json data/performance_log.json data/trades_*.json data/verification_reports.json 2>/dev/null || true
+              git add data/system_state.json data/performance_log.json data/verification_reports.json 2>/dev/null || true
               git commit -m "chore: Update trading data ($TODAY) [${{ github.run_id }}]" 2>/dev/null || true
             }
 
@@ -1591,14 +1578,6 @@ jobs:
           python3 scripts/sync_data_to_github.py --file data/system_state.json || {
             echo "::warning::system_state.json API sync failed"
           }
-
-          # Sync today's trades file if it exists
-          TODAY=$(date +%Y-%m-%d)
-          if [ -f "data/trades_${TODAY}.json" ]; then
-            python3 scripts/sync_data_to_github.py --file "data/trades_${TODAY}.json" || {
-              echo "::warning::trades file API sync failed"
-            }
-          fi
 
           # Sync performance log
           python3 scripts/sync_data_to_github.py --file data/performance_log.json || {
@@ -1648,108 +1627,19 @@ jobs:
           echo "📊 Checking TLT momentum gate status..."
           python3 scripts/monitor_tlt_momentum.py || echo "⚠️  TLT monitoring completed with warnings"
 
-      - name: Update GitHub Pages Data
-        # PREVENTION: Auto-update docs/index.md with current portfolio data
-        # Added Jan 3, 2026 after discovering stale data on GitHub Pages
-        continue-on-error: true  # Non-critical: cosmetic dashboard update shouldn't block trading
-        timeout-minutes: 2
+      - name: Skip archived GitHub Pages surface
+        if: always()
+        continue-on-error: true
         run: |
-          echo "📊 Updating GitHub Pages with current portfolio data..."
-          python3 scripts/update_github_pages.py
+          echo "📦 GitHub Pages portfolio publishing archived in repo simplification pass"
 
-          # Commit changes if any
-          if git diff --quiet docs/index.md; then
-            echo "ℹ️ docs/index.md already up to date"
-          else
-            git config user.name "GitHub Actions Bot"
-            git config user.email "actions@github.com"
-            git add docs/index.md
-            git commit -m "chore: Auto-update GitHub Pages with current portfolio data" || true
-            git push || echo "⚠️ Push failed - will retry in next run"
-          fi
-
-      - name: Update Progress Dashboard Wiki
-        # FIXED Dec 29, 2025: Always update dashboard, even when trading skipped
-        # FIXED Jan 5, 2026: Added if: always() so dashboard updates even when trading fails
-        if: always() # Run even when previous steps fail
-        continue-on-error: true  # Non-critical: wiki/dashboard update shouldn't block trading workflow
-        timeout-minutes: 5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Skip archived repo publishing surface
+        if: always()
+        continue-on-error: true
         run: |
+          echo "📦 Blog/wiki/dashboard publishing archived in repo simplification pass"
           echo "📊 Syncing closed positions for accurate win rate..."
           python3 scripts/sync_closed_positions.py || echo "⚠️ Closed positions sync failed"
-
-          echo "📊 Generating enhanced world-class progress dashboard..."
-          python3 scripts/generate_world_class_dashboard_enhanced.py || python3 scripts/generate_world_class_dashboard.py
-
-          echo "📝 Updating GitHub Wiki..."
-
-          # Clone wiki repository (create if doesn't exist)
-          WIKI_DIR="wiki_repo"
-          if git clone https://${{ secrets.GITHUB_TOKEN }}@github.com/IgorGanapolsky/trading.wiki.git "$WIKI_DIR" 2>/dev/null; then
-            echo "✅ Wiki repository exists, updating..."
-          else
-            echo "⚠️  Wiki repository doesn't exist yet - will create on first push"
-            mkdir -p "$WIKI_DIR"
-            cd "$WIKI_DIR"
-            git init
-            git config user.name "GitHub Actions Bot"
-            git config user.email "actions@github.com"
-            git remote add origin https://${{ secrets.GITHUB_TOKEN }}@github.com/IgorGanapolsky/trading.wiki.git
-            cd ..
-          fi
-
-          # Copy generated dashboard and home page to wiki
-          cp wiki/Progress-Dashboard.md "$WIKI_DIR/Progress-Dashboard.md"
-          if [ -f wiki/Home.md ]; then
-            cp wiki/Home.md "$WIKI_DIR/Home.md"
-          fi
-
-          # Copy chart images if they exist
-          if [ -d wiki/charts ]; then
-            mkdir -p "$WIKI_DIR/charts"
-            cp -r wiki/charts/* "$WIKI_DIR/charts/" 2>/dev/null || true
-          fi
-
-          # Commit and push to wiki
-          cd "$WIKI_DIR"
-          git config user.name "GitHub Actions Bot"
-          git config user.email "actions@github.com"
-          git add -A
-
-          if git diff --staged --quiet && [ -n "$(git log --oneline 2>/dev/null)" ]; then
-            echo "📋 No changes to dashboard"
-          else
-            if [ -z "$(git log --oneline 2>/dev/null)" ]; then
-              COMMIT_MSG="🎉 Initial wiki setup - Progress Dashboard and Home page"
-            else
-              COMMIT_MSG="📊 Auto-update progress dashboard - $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
-            fi
-
-            git commit -m "$COMMIT_MSG" || echo "No changes to commit"
-
-            # Push to wiki - detect current branch or use master (wiki default)
-            CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "master")
-            echo "📌 Pushing to branch: $CURRENT_BRANCH"
-
-            # Re-authenticate for push (token may have been invalidated)
-            git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/IgorGanapolsky/trading.wiki.git"
-
-            if git push -u origin "$CURRENT_BRANCH" 2>&1; then
-              echo "✅ Wiki dashboard updated successfully!"
-            else
-              echo "⚠️  Wiki push failed - trying force push..."
-              if git push -u origin "$CURRENT_BRANCH" --force 2>&1; then
-                echo "✅ Wiki dashboard force-pushed successfully!"
-              else
-                echo "⚠️  Wiki push failed - wiki repository may need manual initialization"
-                echo "   1. Visit: https://github.com/IgorGanapolsky/trading/wiki"
-                echo "   2. Click 'Create the first page'"
-                echo "   3. Name it 'Home' and save"
-              fi
-            fi
-          fi
 
       - name: Record run status (success)
         if: success()
@@ -1774,11 +1664,6 @@ jobs:
             "error": "See artifacts for details"
           }
           EOF
-
-      - name: Regenerate dashboard snapshot
-        if: always()
-        run: |
-          python3 scripts/generate_world_class_dashboard_enhanced.py || true
 
       - name: Run health check
         if: always()
@@ -1843,9 +1728,7 @@ jobs:
             logs/adk_service.log
             logs/adk_orchestrator.jsonl
             data/system_state.json
-            data/trades_*.json
             data/verification_reports.json
-            wiki/Progress-Dashboard.md
           retention-days: 30
 
       - name: Upload logs on failure (early)

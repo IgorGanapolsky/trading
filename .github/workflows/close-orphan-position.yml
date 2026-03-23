@@ -18,9 +18,6 @@ on:
         options:
           - "false"
           - "true"
-  push:
-    paths:
-      - "triggers/CLOSE_ORPHAN.trigger"
 
 # CRITICAL: Global trade concurrency - prevents race conditions (LL-281)
 concurrency:
@@ -34,7 +31,7 @@ env:
 jobs:
   close-position:
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.target_symbol != '' || github.event_name == 'push' }}
+    if: ${{ github.event.inputs.target_symbol != '' }}
 
     steps:
       - uses: actions/checkout@v4

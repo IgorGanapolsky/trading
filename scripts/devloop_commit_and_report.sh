@@ -63,8 +63,6 @@ generate_report() {
   log "generate morning report start"
   "$PYTHON_BIN" scripts/generate_morning_report.py --repo-root . --out artifacts/devloop/morning_report.md >>"$LOG_FILE" 2>&1
   "$PYTHON_BIN" scripts/generate_system_explainer.py --repo-root . --out docs/_reports/hackathon-system-explainer.md >>"$LOG_FILE" 2>&1 || true
-  "$PYTHON_BIN" scripts/generate_judge_demo_page.py --repo-root . --out docs/lessons/judge-demo.html >>"$LOG_FILE" 2>&1 || true
-  "$PYTHON_BIN" scripts/generate_ops_status_page.py --repo-root . --out docs/lessons/ops-status.html >>"$LOG_FILE" 2>&1 || true
   if [[ "$SYNC_GDOC" == "1" ]] && [[ -n "$GDRIVE_DOC_URL" ]]; then
     "$PYTHON_BIN" scripts/sync_explainer_to_gdoc.py --doc "$GDRIVE_DOC_URL" --in docs/_reports/hackathon-system-explainer.md --creds "$GDRIVE_CREDS_FILE" >>"$LOG_FILE" 2>&1 || true
   fi
@@ -93,8 +91,6 @@ stage_targets() {
     data \
     docs \
     docs/_reports/hackathon-system-explainer.md \
-    docs/lessons/judge-demo.html \
-    docs/lessons/ops-status.html \
     data/rag/lessons_query.json \
     docs/data/rag/lessons_query.json \
     docs/lessons/index.html \

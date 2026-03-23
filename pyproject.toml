@@ -1,7 +1,7 @@
 [project]
 name = "trading"
 version = "1.0.0"
-description = "Validated profitable automated trading system with AI-powered decision making"
+description = "SPY options trading system with broker sync, safety gates, and local RAG tooling"
 readme = "README.md"
 requires-python = ">=3.11,<3.12"  # CI uses Python 3.11
 license = {text = "MIT"}

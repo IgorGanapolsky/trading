@@ -59,13 +59,6 @@ def test_auto_record_lesson_workflow_uses_gateway_and_no_main_push() -> None:
     assert "git push origin main" not in step_commands
 
 
-def test_rlhf_blog_workflow_no_longer_reads_claude_memory_feedback_log() -> None:
-    workflow_text = (PROJECT_ROOT / ".github" / "workflows" / "rlhf-blog-publisher.yml").read_text(
-        encoding="utf-8"
-    )
-    assert ".claude/memory/feedback/feedback-log.jsonl" not in workflow_text
-
-
 def test_gateway_pretool_hook_has_repo_local_gate_config() -> None:
     hook_path = PROJECT_ROOT / ".claude" / "hooks" / "memory-gateway-pretool.sh"
     gates_path = PROJECT_ROOT / "config" / "memory-gateway" / "gates.json"

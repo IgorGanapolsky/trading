@@ -8,6 +8,13 @@ Project instructions live in `.claude/CLAUDE.md`. Rules auto-load from `.claude/
 - **The Field ($200 Live)**: Opportunistic real-money shadow execution.
 - **North Star**: $6,000/month after-tax passive income.
 
+## Active Operating Scope
+
+- Primary execution path: `scripts/iron_condor_trader.py`
+- Canonical ledgers: `data/system_state.json` and `data/trades.json`
+- Archived from the default operating path: blog/wiki/dashboard/pages publishing and discovery marketing workflows
+- Never describe the system as profitable or validated unless current ledger data proves it
+
 ## Session Directive: PR Management & System Hygiene
 
 - Execute session start protocol each run: read CLAUDE directives, query RAG lessons, inspect open PRs/branches, then check CI.

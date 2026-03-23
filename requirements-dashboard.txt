@@ -1,0 +1,8 @@
+# Minimal dependencies for dashboard workflow
+# This is used by GitHub Actions to avoid installing heavy GPU/ML packages
+# Updated: Dec 12, 2025 (LL-021)
+alpaca-py>=0.43.0
+python-dotenv>=1.0.0
+numpy>=1.26.0
+pandas>=2.0.0
+yfinance>=0.2.50

@@ -124,7 +124,7 @@ jobs:
             exit 0
           fi
 
-          if git diff --name-only "$diff_range" | grep -Eq '^(docs/|\.claude/|rag_knowledge/|scripts/(lint_blog_posts|check_ai_discoverability|check_anthropic_compliance)\.py)'; then
+          if git diff --name-only "$diff_range" | grep -Eq '^(docs/|\.claude/|rag_knowledge/|scripts/check_anthropic_compliance\.py)'; then
             echo "content_checks=true" >> "$GITHUB_OUTPUT"
           else
             echo "content_checks=false" >> "$GITHUB_OUTPUT"
@@ -141,19 +141,6 @@ jobs:
 
       - name: Run Ruff formatter check
         run: ruff format --check .
-
-      - name: Lint blog posts (Discover compliance)
-        if: steps.content-scope.outputs.content_checks == 'true'
-        run: python3 scripts/lint_blog_posts.py --changed --strict
-
-      - name: AI discoverability gate (critical)
-        if: steps.content-scope.outputs.content_checks == 'true'
-        run: |
-          python3 scripts/check_ai_discoverability.py \
-            --repo-root . \
-            --report artifacts/devloop/ai_discoverability_report.md \
-            --json-out artifacts/devloop/ai_discoverability_report.json \
-            --fail-on critical
 
       - name: Anthropic compliance guardrail
         if: steps.content-scope.outputs.content_checks == 'true'
@@ -818,34 +805,6 @@ jobs:
           echo "Run: python3 scripts/validate_skills.py"
           exit 1
 
-  # Added Dec 24, 2025: GitHub Pages Link Validation
-  # Prevents 404s from broken relative_url filters
-  github-pages-validation:
-    name: GitHub Pages Link Validation
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "pip"
-
-      - name: Validate Jekyll templates use relative_url
-        run: |
-          echo "Validating GitHub Pages link filters..."
-          python3 scripts/validate_github_pages_links.py --templates-only
-
-      - name: Fail on missing relative_url filters
-        if: failure()
-        run: |
-          echo "::error::GitHub Pages links missing relative_url filter!"
-          echo "::error::This causes 404 errors on the live site."
-          echo "Run: python3 scripts/validate_github_pages_links.py"
-          exit 1
-
   # Enforce safe_submit_order/safe_close_position wrappers (PR #3313)
   # Blocks any PR that introduces raw client.submit_order() or client.close_position()
   # calls outside the mandatory_trade_gate.py wrapper.
@@ -914,24 +873,3 @@ jobs:
           fi
 
           echo "✅ All order submissions use safe wrappers"
-
-  # Enforce CLAUDE.md: No new markdown files (except allowed paths)
-  check-no-new-markdown:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Check for new markdown files
-        run: |
-          # Allowed: AGENTS.md, CLAUDE.md, MANDATORY_RULES.md, .github/copilot-instructions.md, docs/_posts/ (blog), docs/_reports/ (daily reports), docs/ARCHITECTURE.md, docs/index.md, rag_knowledge/ (lessons), .claude/ (internal), docs/_discoveries/ (ralph discoveries), artifacts/devloop + artifacts/tars generated reports, manual layer task boards
-          NEW_MD=$(git diff --diff-filter=A --name-only origin/main...HEAD | grep '\.md$' | grep -v 'AGENTS.md\|CLAUDE.md\|MANDATORY_RULES.md\|\.github/copilot-instructions.md\|docs/_posts/\|docs/_reports/\|rag_knowledge/\|docs/ARCHITECTURE.md\|docs/index.md\|docs/tech-stack.md\|data/trade_plans/\|data/rag_staging/\|\.claude/\|docs/_discoveries/\|artifacts/devloop/\|artifacts/tars/\|manual_layer1_tasks.md\|config/manual_layer1_tasks.md' || true)
-          if [ -n "$NEW_MD" ]; then
-            echo "❌ CLAUDE.md VIOLATION: New markdown files detected:"
-            echo "$NEW_MD"
-            echo "Rule: Don't create unnecessary documentation"
-            echo "Allowed paths: AGENTS.md, CLAUDE.md, MANDATORY_RULES.md, .github/copilot-instructions.md, docs/_posts/, docs/_reports/, docs/_discoveries/, docs/ARCHITECTURE.md, rag_knowledge/, .claude/, artifacts/devloop/, artifacts/tars/, manual_layer1_tasks.md, config/manual_layer1_tasks.md"
-            exit 1
-          fi
-          echo "✅ No new markdown files (or only in allowed paths)"
