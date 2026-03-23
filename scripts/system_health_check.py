@@ -6,6 +6,8 @@ Run daily before trading to catch silent failures.
 Usage: python3 scripts/system_health_check.py
 """
 
+from __future__ import annotations
+
 import re
 import sys
 from datetime import datetime
@@ -16,7 +18,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 PROJECT_ROOT = Path(__file__).parent.parent
 LANCEDB_PATH = PROJECT_ROOT / ".claude" / "memory" / "lancedb"
-OPTION_SYMBOL_RE = re.compile(r"^(?P<underlying>[A-Z]+)(?P<expiry>\d{6})(?P<option_type>[CP])\d{8}$")
+OPTION_SYMBOL_RE = re.compile(
+    r"^(?P<underlying>[A-Z]+)(?P<expiry>\d{6})(?P<option_type>[CP])\d{8}$"
+)
 
 
 def _list_lancedb_tables(db) -> list[str]:
