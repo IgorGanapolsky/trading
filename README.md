@@ -1,65 +1,78 @@
-# AI Trading System
+# Trading System
 
 [![CI](https://github.com/IgorGanapolsky/trading/actions/workflows/ci.yml/badge.svg)](https://github.com/IgorGanapolsky/trading/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11.x-blue.svg)](pyproject.toml)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-Autonomous AI trading system: SPY iron condors with defined risk, continuous learning, and strict safety gates.
+This repository runs a paper-traded SPY options system. It is not a validated autonomous income machine, and it should not be described that way.
 
-> **North Star**: $6K/month after-tax options income via SPY iron condors.
->
-> **Strategy**: 15-20 delta, $10-wide wings, 30-45 DTE. Exit at 50% profit or 7 DTE. Stop at 100% of credit.
->
-> **Accounts**: Paper ($100K) validates. Live mirrors qualified setups behind risk gates.
+## Current Reality
 
-**[Progress Dashboard](https://igorganapolsky.github.io/trading/rag-query/)**
+As of **March 21, 2026**:
 
----
+- Paper equity: **$99,600.93** vs. **$100,000.00** starting balance
+- Canonical closed-trade sample: **1** closed iron condor for **+$41.00** realized P/L
+- Current open book is not a clean production short-premium iron-condor book
+- Live brokerage is not validated for autonomous scaling
+- Progress dashboard: [RAG query / progress dashboard](https://igorganapolsky.github.io/trading/rag-query/)
 
-## System Overview
+## Active Scope
+
+The active operating scope is intentionally narrow:
+
+- **Primary mandate:** SPY options execution and risk controls
+- **Canonical trade ledger:** `data/trades.json`
+- **Broker snapshot/state:** `data/system_state.json`
+- **Primary execution path:** `scripts/iron_condor_trader.py`
+- **Primary sync path:** `scripts/sync_alpaca_state.py`
+- **Closed-trade pairing:** `scripts/sync_closed_positions.py`
+- **Primary gate:** `src/safety/mandatory_trade_gate.py`
+
+These are no longer treated as active operating scope:
+
+- blog/wiki/dashboard publishing
+- SEO/content automation
+- multi-strategy portfolio experiments
+- confidence theater built on tiny samples
+
+## Architecture Maps
+
+The Paperbanana-generated diagrams are still useful as orientation. They stay in the repo as descriptive maps, not as proof that the strategy works.
 
 ![System Overview](docs/assets/system_overview.png)
 
----
-
-## Architecture
-
 ![Trading Pipeline](docs/assets/trading_pipeline.png)
 
-![Iron Condor Payoff](docs/assets/iron_condor_payoff.png)
-
-![Theta Decay Curve](docs/assets/theta_decay_curve.png)
-
----
+![CI/CD Pipeline](docs/assets/ci_cd_pipeline.png)
 
 ## Quick Start
+
+Runtime requirement: **Python >=3.11,<3.12** (CPython 3.11.x).
 
 ```bash
 git clone https://github.com/IgorGanapolsky/trading.git
 cd trading
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env  # Configure API keys
+cp .env.example .env
 ```
 
 ```bash
-pytest tests/ -q                            # Run tests
-ruff check src/                             # Lint
-python3 scripts/run_grpo_training.py        # Train ML brain
-python3 scripts/sync_alpaca_state.py        # Sync broker state
-python3 scripts/system_health_check.py      # Health check
+python3 scripts/sync_alpaca_state.py
+python3 scripts/sync_closed_positions.py --dry-run
+python3 scripts/system_health_check.py
+pytest tests/test_iron_condor_integration.py tests/test_mandatory_trade_gate.py -q
 ```
 
----
+## Operating Rules
 
-## Risk Rules
-
-- Max 5% risk per position ($5,000)
-- Stop-loss at 100% of credit received
-- Exit at 50% profit or 7 DTE
-- Max 2 iron condors open (8 legs)
-- Max 2 new IC opens per day
-
----
+| Rule | Value |
+|---|---|
+| Underlying | SPY options only unless explicitly re-scoped |
+| Ledger of record | `data/trades.json` |
+| Max risk per position | 5% ($5,000) |
+| Stop-loss | 100% of credit for defined-risk short premium |
+| Exit target | 50% profit or 7 DTE for true credit structures |
+| Scaling gate | Do not claim validation from single-digit samples |
 
 **Maintained by** [Igor Ganapolsky](https://github.com/IgorGanapolsky)

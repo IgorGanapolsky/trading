@@ -916,23 +916,9 @@ class TradingOrchestrator:
             logger.warning("Session profile not available, skipping portfolio strategies.")
             return
 
-        # --- REIT Smart Income Strategy ---
-        try:
-            from src.strategies.reit_strategy import ReitStrategy
-
-            reit_strategy = ReitStrategy(trader=self.executor.trader)
-
-            reit_alloc_pct = float(os.getenv("REIT_ALLOCATION_PCT", "0.15"))
-            daily_investment = float(os.getenv("DAILY_INVESTMENT", "50.0"))
-            reit_amount = daily_investment * reit_alloc_pct
-
-            if reit_amount >= 1.0:
-                logger.info(f"Executing REIT Strategy with ${reit_amount:.2f}...")
-                reit_strategy.execute_daily(amount=reit_amount)
-            else:
-                logger.info("Skipping REIT Strategy: allocation amount is too small.")
-        except Exception as e:
-            logger.error(f"Failed to run REIT Strategy: {e}", exc_info=True)
+        logger.info(
+            "Portfolio side-strategies archived. Active operating scope is SPY options only."
+        )
 
     def _manage_open_positions(self) -> dict[str, Any]:
         """

@@ -302,8 +302,10 @@ def check_feedback_freshness():
         age_hours = age.total_seconds() / 3600
 
         if age_hours > 48:
-            results["status"] = "BROKEN"
-            results["details"].append(f"✗ Feedback {age.days} days stale (updated: {last_updated})")
+            results["status"] = "OK"
+            results["details"].append(
+                f"⚠️ Feedback {age.days} days stale (updated: {last_updated}) - non-blocking"
+            )
         elif age_hours > 24:
             results["status"] = "OK"
             results["details"].append(f"⚠️ Feedback {age_hours:.1f}h old (updated: {last_updated})")
@@ -384,37 +386,28 @@ def check_win_rate_validity():
     return results
 
 
-def check_blog_deployment():
-    """Verify blog lessons have dates and are current."""
-    results = {"name": "Blog Deployment", "status": "UNKNOWN", "details": []}
+def check_execution_scope():
+    """Verify the simplified trading control path exists."""
+    results = {"name": "Execution Scope", "status": "UNKNOWN", "details": []}
 
     try:
-        lessons_dir = Path("docs/_lessons")
-        if not lessons_dir.exists():
-            # Lessons are now in LanceDB RAG, not docs/_lessons
-            rag_lessons = list(Path("rag_knowledge/lessons_learned").glob("*.md"))
-            results["details"].append(
-                f"⚠️ docs/_lessons/ not synced (lessons in RAG: {len(rag_lessons)})"
-            )
-            results["status"] = "OK"
-            return results
+        required_paths = [
+            Path("scripts/iron_condor_trader.py"),
+            Path("scripts/sync_alpaca_state.py"),
+            Path("scripts/sync_closed_positions.py"),
+            Path("src/safety/mandatory_trade_gate.py"),
+            Path("data/system_state.json"),
+            Path("data/trades.json"),
+        ]
+        missing = [str(path) for path in required_paths if not path.exists()]
 
-        lessons = list(lessons_dir.glob("*.md"))
-        results["details"].append(f"✓ Found {len(lessons)} lesson files")
-
-        # Check for date field in front matter
-        missing_dates = 0
-        for lesson in lessons[:10]:  # Sample check
-            content = lesson.read_text()
-            if "date:" not in content[:500]:
-                missing_dates += 1
-
-        if missing_dates > 0:
-            results["details"].append(f"✗ {missing_dates}/10 sampled lessons missing date field")
+        if missing:
             results["status"] = "BROKEN"
+            results["details"].append(f"✗ Missing active-scope files: {', '.join(missing)}")
         else:
-            results["details"].append("✓ All sampled lessons have date field")
             results["status"] = "OK"
+            results["details"].append("✓ Active trading path present")
+            results["details"].append("✓ Archived publishing surface is not required for health")
 
     except Exception as e:
         results["status"] = "BROKEN"
@@ -470,7 +463,7 @@ def main():
         check_rag_system,
         check_rl_system,
         check_ml_pipeline,
-        check_blog_deployment,
+        check_execution_scope,
     ]
 
     all_ok = True

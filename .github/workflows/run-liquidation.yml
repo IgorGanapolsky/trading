@@ -1,13 +1,7 @@
 name: Run Liquidation Script
 
-# Trigger: Push LIQUIDATE_NOW file OR manual workflow_dispatch
+# Trigger: manual workflow_dispatch only
 on:
-  push:
-    branches:
-      - main
-      - "claude/*"
-    paths:
-      - "triggers/LIQUIDATE_NOW"
   workflow_dispatch:
     inputs:
       dry_run:

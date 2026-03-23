@@ -32,6 +32,16 @@ def test_rag_query_surface_has_explicit_as_of_timestamp_labels() -> None:
     assert "function renderTimestampMetric(label, raw)" in html
 
 
+def test_rag_query_chat_fallback_detects_stale_temporal_lesson_queries() -> None:
+    html = RAG_QUERY_HTML.read_text(encoding="utf-8")
+
+    assert "function inferLessonTimeWindow(query)" in html
+    assert "function getLatestLessonDetails()" in html
+    assert "The local lesson index is stale for" in html
+    assert "System sync is newer" in html
+    assert "Action: sync fresh lessons and rebuild the RAG index" in html
+
+
 def test_rag_query_evidence_screenshots_support_click_to_magnify() -> None:
     html = RAG_QUERY_HTML.read_text(encoding="utf-8")
 
@@ -40,3 +50,16 @@ def test_rag_query_evidence_screenshots_support_click_to_magnify() -> None:
     assert "function openEvidenceLightbox(src, caption)" in html
     assert "function setupEvidenceLightboxListeners()" in html
     assert 'data-evidence-image="true"' in html
+
+
+def test_rag_query_portfolio_bar_cards_are_actionable() -> None:
+    html = RAG_QUERY_HTML.read_text(encoding="utf-8")
+
+    assert 'data-action-query="Show paper account vs brokerage status."' in html
+    assert 'data-action-query="How much money did we make today and why?"' in html
+    assert 'data-action-query="Show my current open positions."' in html
+    assert 'data-action-query="Show nearest expiry and exit pressure."' in html
+    assert 'data-action-query="Show current win rate and trade sample size."' in html
+    assert "function setupPortfolioActionListeners()" in html
+    assert 'function buildOpenPositionsHtml(state, focus = "positions")' in html
+    assert "function buildWinRateDetailHtml(state)" in html

@@ -1149,21 +1149,7 @@ def main() -> None:
         execute_prediction_trading()
         logger.info("Prediction trading session completed.")
 
-    # Execute REIT strategy (Tier 7) - runs daily during market hours
-    # Uses regime-based sector rotation for income and growth
-    should_run_reit = reit_enabled() and not is_weekend_day and not is_holiday
-    if should_run_reit:
-        logger.info("Executing Tier 7 - REIT Smart Income Strategy...")
-        execute_reit_trading()
-        logger.info("REIT trading session completed.")
-
-    # Execute Precious Metals strategy (Tier 8) - runs daily during market hours
-    # Provides inflation hedge and portfolio diversification via GLD/SLV
-    should_run_metals = precious_metals_enabled() and not is_weekend_day and not is_holiday
-    if should_run_metals:
-        logger.info("Executing Tier 8 - Precious Metals Strategy (GLD/SLV)...")
-        execute_precious_metals_trading()
-        logger.info("Precious metals trading session completed.")
+    logger.info("Archived non-core portfolio strategies skipped (REIT / precious metals).")
 
     _emit_run_status(status="completed", phase="session.complete")
     print("::notice::3/5 main() returning", flush=True)

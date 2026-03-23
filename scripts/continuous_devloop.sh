@@ -101,24 +101,9 @@ run_cycle() {
   ) &
   local pid_runtime=$!
 
-  local render_demo_cycle=1
-  if (( RENDER_DEMO_EVERY > 1 )) && (( cycle % RENDER_DEMO_EVERY != 0 )); then
-    render_demo_cycle=0
-  fi
-  if (( render_demo_cycle == 1 )); then
-    (
-      "$PYTHON_BIN" scripts/generate_judge_demo_page.py --repo-root . --out docs/lessons/judge-demo.html >>"$LOG_FILE" 2>&1 || true
-    ) &
-    local pid_demo=$!
-    (
-      "$PYTHON_BIN" scripts/generate_ops_status_page.py --repo-root . --out docs/lessons/ops-status.html >>"$LOG_FILE" 2>&1 || true
-    ) &
-    local pid_ops=$!
-  else
-    log "cycle=$cycle judge demo render skipped (cadence RENDER_DEMO_EVERY=$RENDER_DEMO_EVERY)"
-    local pid_demo=""
-    local pid_ops=""
-  fi
+  log "cycle=$cycle archived demo/status page render skipped"
+  local pid_demo=""
+  local pid_ops=""
 
   (
     "$PYTHON_BIN" scripts/generate_next_copilot_prompt.py --repo-root . --out artifacts/devloop/next_copilot_prompt.md >>"$LOG_FILE" 2>&1 || true

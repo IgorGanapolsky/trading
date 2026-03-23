@@ -142,12 +142,13 @@ class TestRunOptionsStrategy:
             paper=True,
         )
 
-    def test_disabled_when_env_false(self, coordinator):
-        """Should be disabled when ENABLE_THETA_AUTOMATION is false."""
+    def test_archived_when_env_false(self, coordinator):
+        """Legacy Rule One gate stays archived regardless of old env flags."""
         with patch.dict(os.environ, {"ENABLE_THETA_AUTOMATION": "false"}):
             result = coordinator.run_options_strategy()
-            assert result["action"] == "disabled"
-            assert "ENABLE_THETA_AUTOMATION" in result["reason"]
+            assert result["action"] == "archived"
+            assert "Rule One" in result["reason"]
+            assert result["active_path"] == "scripts/iron_condor_trader.py"
 
 
 class TestPaperMode:

@@ -8,7 +8,7 @@ on:
       - "src/agents/rag_webhook.py"
       - "src/rag/**"
       - "rag_knowledge/lessons_learned/**"
-      - "Dockerfile.webhook"
+      - "deploy/rag-webhook/Dockerfile"
       - ".github/workflows/deploy-rag-webhook.yml"
   workflow_dispatch: # Manual trigger
 
@@ -48,7 +48,7 @@ jobs:
 
       - name: Prepare Dockerfile
         run: |
-          cp Dockerfile.webhook Dockerfile
+          cp deploy/rag-webhook/Dockerfile Dockerfile
           # Add timestamp to force Cloud Build cache invalidation.
           echo "# Build timestamp: $(date -u +%Y%m%d%H%M%S)" >> Dockerfile
           echo "=== Final Dockerfile ==="

@@ -121,9 +121,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Add debug output and any trade files
+          # Add debug output and canonical state files
           git add data/debug/*.txt 2>/dev/null || true
-          git add data/trades_*.json data/system_state.json 2>/dev/null || true
+          git add data/system_state.json 2>/dev/null || true
 
           if git diff --staged --quiet; then
             echo "No changes to commit"

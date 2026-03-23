@@ -623,6 +623,47 @@ layout: null
         min-width: 100px;
       }
 
+      .port-stat-button,
+      .port-badge-button {
+        appearance: none;
+        background: transparent;
+        border: 1px solid transparent;
+        color: inherit;
+        cursor: pointer;
+        font: inherit;
+        padding: 8px 10px;
+        border-radius: 10px;
+        transition:
+          border-color 0.2s,
+          background 0.2s,
+          transform 0.2s;
+      }
+
+      .port-stat-button:hover,
+      .port-badge-button:hover {
+        background: rgba(255, 255, 255, 0.03);
+        border-color: var(--border-color);
+        transform: translateY(-1px);
+      }
+
+      .port-stat-button:focus-visible,
+      .port-badge-button:focus-visible {
+        outline: none;
+        border-color: var(--accent-blue);
+        box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
+      }
+
+      .port-stat-button .port-stat-label::after,
+      .port-badge-button::after {
+        content: "Open details";
+        display: block;
+        margin-top: 4px;
+        font-size: 0.68rem;
+        color: var(--text-muted);
+        text-transform: none;
+        letter-spacing: 0;
+      }
+
       .port-stat-value {
         font-size: 1.2rem;
         font-weight: 700;
@@ -943,6 +984,8 @@ layout: null
         <p class="subtitle" id="subtitleText">
           Live portfolio + knowledge base search
         </p>
+        <p class="subtitle-meta" id="ragAsOfText">Knowledge base as of: --</p>
+        <p class="subtitle-meta" id="systemAsOfText">System sync as of: --</p>
         <div class="stats-bar">
           <div class="stat">
             <div class="stat-value" id="totalLessons">--</div>
@@ -957,31 +1000,62 @@ layout: null
             <div class="stat-label">Equity</div>
           </div>
         </div>
-      </header>
-	      <div class="portfolio-bar loading" id="portfolioBar">
-	        <div class="port-stat">
+	      </header>
+
+	      <div class="portfolio-bar loading" id="portfolioBar" aria-label="Portfolio quick actions">
+	        <button
+            type="button"
+            class="port-stat port-stat-button"
+            data-action-query="Show paper account vs brokerage status."
+            aria-label="Open account status details"
+          >
 	          <div class="port-stat-value" id="portEquity">--</div>
 	          <div class="port-stat-label">Equity</div>
-	        </div>
-	        <div class="port-stat">
+          </button>
+	        <button
+            type="button"
+            class="port-stat port-stat-button"
+            data-action-query="How much money did we make today and why?"
+            aria-label="Open daily profit and loss details"
+          >
 	          <div class="port-stat-value" id="portDailyPL">--</div>
 	          <div class="port-stat-label">Daily P&amp;L</div>
-	        </div>
-	        <div class="port-stat">
+          </button>
+	        <button
+            type="button"
+            class="port-stat port-stat-button"
+            data-action-query="Show my current open positions."
+            aria-label="Open current positions details"
+          >
 	          <div class="port-stat-value" id="portPositions">--</div>
 	          <div class="port-stat-label">Positions</div>
-	        </div>
-	        <div class="port-stat">
+          </button>
+	        <button
+            type="button"
+            class="port-stat port-stat-button"
+            data-action-query="Show nearest expiry and exit pressure."
+            aria-label="Open nearest expiry details"
+          >
 	          <div class="port-stat-value" id="portDTE">--</div>
 	          <div class="port-stat-label">Nearest DTE</div>
-	        </div>
-	        <div class="port-stat">
+          </button>
+	        <button
+            type="button"
+            class="port-stat port-stat-button"
+            data-action-query="Show current win rate and trade sample size."
+            aria-label="Open win rate details"
+          >
 	          <div class="port-stat-value" id="portWinRate">--</div>
 	          <div class="port-stat-label">Win Rate</div>
-	        </div>
-	        <div>
+          </button>
+	        <button
+            type="button"
+            class="port-badge-button"
+            data-action-query="Show paper account vs brokerage status."
+            aria-label="Open account mode details"
+          >
 	          <span class="port-badge" id="portBadge">PAPER</span>
-	        </div>
+          </button>
 	      </div>
 
 	      <div class="chat-section">
@@ -989,6 +1063,10 @@ layout: null
 	          <span class="panel-icon">&#128172;</span>
 	          <span>Ask the Knowledge Base</span>
 	        </div>
+          <div class="chat-asof">
+            <div id="ragAsOfTextChat">Knowledge base as of: --</div>
+            <div id="systemAsOfTextChat">System sync as of: --</div>
+          </div>
 	        <div class="chat-container">
 	          <div class="chat-messages" id="chatMessages">
 	            <div class="chat-message assistant">
@@ -999,6 +1077,11 @@ layout: null
 	              </div>
 	            </div>
 	          </div>
+            <p class="ai-disclosure">
+              AI Disclosure: This interface uses AI to search and summarize
+              internal lessons. Not financial advice. Human review required for
+              any trading decisions.
+            </p>
 	          <div class="chat-input-wrapper">
 	            <input
 	              type="text"
@@ -2023,6 +2106,119 @@ Tags: ${lesson.tags.join(", ")}`;
         };
       }
 
+      function getPortfolioPositionRows(state) {
+        const positions = Array.isArray(state?.positions) ? state.positions : [];
+        const now = new Date();
+        return positions
+          .map((pos) => {
+            const parsed = parseOccSymbol(pos.symbol || "");
+            const expiryDate = parsed ? new Date(parsed.expiry + "T16:00:00Z") : null;
+            const dte =
+              expiryDate && Number.isFinite(expiryDate.getTime())
+                ? Math.ceil((expiryDate - now) / 86400000)
+                : null;
+            return {
+              symbol: String(pos.symbol || ""),
+              qty: toFiniteNumber(pos.qty),
+              pnl: firstFiniteNumber(pos.pnl, pos.unrealized_pl),
+              value: firstFiniteNumber(pos.value, pos.market_value),
+              parsed,
+              dte,
+            };
+          })
+          .sort((a, b) => {
+            const aDte = a.dte == null ? Number.POSITIVE_INFINITY : a.dte;
+            const bDte = b.dte == null ? Number.POSITIVE_INFINITY : b.dte;
+            return aDte - bDte;
+          });
+      }
+
+      function buildOpenPositionsHtml(state, focus = "positions") {
+        const rows = getPortfolioPositionRows(state);
+        if (!rows.length) {
+          return `
+            <div class="account-summary">
+              <strong>No open positions are recorded in the current system state.</strong>
+            </div>
+          `;
+        }
+
+        const nearest = rows.find((row) => row.dte != null) || rows[0];
+        const totalPnl = rows.reduce((sum, row) => sum + (toFiniteNumber(row.pnl) || 0), 0);
+        const headline =
+          focus === "dte"
+            ? `Nearest expiry is ${nearest.parsed?.expiry || "unknown"}${nearest.dte != null ? ` (${nearest.dte}d)` : ""}.`
+            : `Open positions now: ${rows.length}.`;
+
+        const detailRows = rows
+          .map((row) => {
+            const expiryLine = row.parsed
+              ? `${row.parsed.ticker} ${row.parsed.type} ${row.parsed.strike} exp ${row.parsed.expiry}`
+              : row.symbol;
+            const qtyLine = row.qty != null ? `Qty ${row.qty}` : "Qty --";
+            const dteLine = row.dte != null ? `${row.dte}d` : "DTE --";
+            const pnlLine = row.pnl != null ? formatSignedCurrency(row.pnl) : "--";
+            const valueLine = row.value != null ? formatCurrency(row.value) : "--";
+            return `<div class="account-submetric"><code>${escapeHtml(row.symbol)}</code> ${escapeHtml(expiryLine)} | ${escapeHtml(qtyLine)} | ${escapeHtml(dteLine)} | P/L ${escapeHtml(pnlLine)} | Value ${escapeHtml(valueLine)}</div>`;
+          })
+          .join("");
+
+        return `
+          <div class="account-summary">
+            <strong>${escapeHtml(headline)}</strong> Total open-position P/L in current state: ${escapeHtml(
+          formatSignedCurrency(totalPnl),
+        )}
+          </div>
+          <div class="account-submetric"><strong>Nearest structure:</strong> <code>${escapeHtml(
+            nearest.symbol,
+          )}</code>${nearest.dte != null ? ` expires in ${escapeHtml(String(nearest.dte))}d` : ""}.</div>
+          ${detailRows}
+        `;
+      }
+
+      function buildWinRateDetailHtml(state) {
+        const paper = state?.paper_account || {};
+        const currentEquity = toFiniteNumber(paper.current_equity ?? paper.equity);
+        const startingBalance = toFiniteNumber(paper.starting_balance);
+        const winRate = toFiniteNumber(paper.win_rate);
+        const sampleSize = toFiniteNumber(paper.win_rate_sample_size);
+        const totalPl =
+          firstFiniteNumber(
+            paper.total_pl,
+            currentEquity != null && startingBalance != null
+              ? currentEquity - startingBalance
+              : null,
+          ) ?? 0;
+        const rawFills = toFiniteNumber(state?.trades_loaded);
+        const verdict =
+          sampleSize == null || sampleSize <= 1
+            ? "not decision-grade yet"
+            : winRate != null && winRate >= 80
+              ? "currently strong"
+              : "needs work";
+
+        return `
+          <div class="account-summary">
+            <strong>Win rate is ${winRate != null ? escapeHtml(`${winRate}%`) : "--"} and ${verdict}.</strong>
+            ${
+              sampleSize != null
+                ? `The closed-trade sample backing that number is ${escapeHtml(String(sampleSize))}.`
+                : "No closed-trade sample size is available in the current state."
+            }
+          </div>
+          <div class="account-submetric"><strong>Total paper P/L:</strong> ${escapeHtml(
+            formatSignedCurrency(totalPl),
+          )}</div>
+          <div class="account-submetric"><strong>Equity:</strong> ${escapeHtml(
+            formatCurrency(currentEquity),
+          )} vs start ${escapeHtml(formatCurrency(startingBalance))}</div>
+          <div class="account-submetric"><strong>Raw fills loaded:</strong> ${escapeHtml(
+            rawFills != null ? String(rawFills) : "--",
+          )}</div>
+          <div class="account-submetric"><strong>Reality check:</strong> The headline win-rate tile can look strong even when the sample is too small to trust.</div>
+        `;
+      }
+
       async function loadPortfolioStatus() {
         const bar = document.getElementById("portfolioBar");
         try {
@@ -2133,6 +2329,25 @@ Tags: ${lesson.tags.join(", ")}`;
         } catch {
           bar.classList.add("error");
         }
+      }
+
+      function isOpenPositionsQuery(message) {
+        const q = (message || "").toLowerCase();
+        return /(current open positions|show my current open positions|show my positions|open positions now)/i.test(
+          q,
+        );
+      }
+
+      function isNearestExpiryQuery(message) {
+        const q = (message || "").toLowerCase();
+        return /(nearest expiry|nearest dte|exit pressure)/i.test(q);
+      }
+
+      function isWinRateStatusQuery(message) {
+        const q = (message || "").toLowerCase();
+        return /(current win rate and trade sample size|win rate details|trade sample size)/i.test(
+          q,
+        );
       }
 
       function isAccountEvidenceQuery(message) {
@@ -2450,6 +2665,51 @@ Tags: ${lesson.tags.join(", ")}`;
       }
 
       async function buildLocalChatResponse(message) {
+        if (isOpenPositionsQuery(message)) {
+          try {
+            const state = await fetchSystemState(true);
+            return {
+              html: buildOpenPositionsHtml(state, "positions"),
+              plain: "Provided current open positions from system state.",
+            };
+          } catch {
+            return {
+              html: "I could not fetch current open positions right now. Please retry in a few seconds.",
+              plain: "Open positions fetch failed.",
+            };
+          }
+        }
+
+        if (isNearestExpiryQuery(message)) {
+          try {
+            const state = await fetchSystemState(true);
+            return {
+              html: buildOpenPositionsHtml(state, "dte"),
+              plain: "Provided nearest expiry and open-position pressure from system state.",
+            };
+          } catch {
+            return {
+              html: "I could not fetch nearest expiry details right now. Please retry in a few seconds.",
+              plain: "Nearest expiry fetch failed.",
+            };
+          }
+        }
+
+        if (isWinRateStatusQuery(message)) {
+          try {
+            const state = await fetchSystemState(true);
+            return {
+              html: buildWinRateDetailHtml(state),
+              plain: "Provided current win-rate details and sample-size context.",
+            };
+          } catch {
+            return {
+              html: "I could not fetch current win-rate details right now. Please retry in a few seconds.",
+              plain: "Win-rate detail fetch failed.",
+            };
+          }
+        }
+
         if (isAccountEvidenceQuery(message)) {
           try {
             const [state, snapshotManifest, verificationReports] = await Promise.all([
@@ -2657,6 +2917,24 @@ Tags: ${lesson.tags.join(", ")}`;
         renderChatQuestionSuggestions();
       }
 
+      function scrollChatSectionIntoView() {
+        document.querySelector(".chat-section")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+
+      function setupPortfolioActionListeners() {
+        document.querySelectorAll("[data-action-query]").forEach((el) => {
+          el.addEventListener("click", () => {
+            const question = String(el.dataset.actionQuery || "").trim();
+            if (!question) return;
+            scrollChatSectionIntoView();
+            void sendChatMessage(question);
+          });
+        });
+      }
+
       function normalizeToken(token) {
         let t = String(token || "").toLowerCase().replace(/[^a-z0-9]/g, "");
         if (!t) return "";
@@ -2743,14 +3021,145 @@ Tags: ${lesson.tags.join(", ")}`;
         return score;
       }
 
+      function getEtDateKey(date) {
+        return new Intl.DateTimeFormat("sv-SE", {
+          timeZone: "America/New_York",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        }).format(date);
+      }
+
+      function shiftDateKey(dateKey, days) {
+        const date = new Date(`${dateKey}T00:00:00Z`);
+        if (Number.isNaN(date.getTime())) return dateKey;
+        date.setUTCDate(date.getUTCDate() + days);
+        return date.toISOString().slice(0, 10);
+      }
+
+      function getLessonSortEpochMs(lesson) {
+        const timestampEpoch = lesson?.timestampDetails?.epochMs;
+        if (Number.isFinite(timestampEpoch)) return timestampEpoch;
+        const dateEpoch = lesson?.dateDetails?.epochMs;
+        if (Number.isFinite(dateEpoch)) return dateEpoch;
+        return Number.isFinite(lesson?.dateEpochMs) ? lesson.dateEpochMs : 0;
+      }
+
+      function getLessonDateKey(lesson) {
+        const epochMs = getLessonSortEpochMs(lesson);
+        if (Number.isFinite(epochMs) && epochMs > 0) {
+          return getEtDateKey(new Date(epochMs));
+        }
+        const parsed = parseDateValue(lesson?.timestampRaw || lesson?.date || "");
+        return parsed ? getEtDateKey(parsed) : "";
+      }
+
+      function getLatestLessonDetails() {
+        if (!Array.isArray(lessons) || lessons.length === 0) return null;
+        const sorted = lessons
+          .slice()
+          .sort((a, b) => getLessonSortEpochMs(b) - getLessonSortEpochMs(a));
+        const latest = sorted[0];
+        if (!latest) return null;
+        const details = latest.timestampDetails || latest.dateDetails || null;
+        return {
+          lesson: latest,
+          details,
+          dateKey: getLessonDateKey(latest),
+        };
+      }
+
+      function readAsOfLabelValue(id, prefix) {
+        const el = document.getElementById(id);
+        if (!el) return "";
+        return String(el.textContent || "")
+          .replace(new RegExp(`^${prefix}:\\s*`), "")
+          .trim();
+      }
+
+      function inferLessonTimeWindow(query) {
+        const q = String(query || "").toLowerCase();
+        const todayKey = getEtDateKey(new Date());
+        const day = new Date(`${todayKey}T00:00:00Z`).getUTCDay();
+        const mondayKey = shiftDateKey(todayKey, -((day + 6) % 7));
+        const thisWeekendStart = shiftDateKey(todayKey, day === 0 ? -1 : 6 - day);
+
+        if (/\btoday\b/.test(q)) {
+          return {
+            label: `today (${todayKey})`,
+            startKey: todayKey,
+            endKey: todayKey,
+          };
+        }
+
+        if (/\byesterday\b/.test(q)) {
+          const yesterdayKey = shiftDateKey(todayKey, -1);
+          return {
+            label: `yesterday (${yesterdayKey})`,
+            startKey: yesterdayKey,
+            endKey: yesterdayKey,
+          };
+        }
+
+        if (/\blast weekend\b/.test(q)) {
+          const lastWeekendStart = shiftDateKey(thisWeekendStart, -7);
+          return {
+            label: `last weekend (${lastWeekendStart} to ${shiftDateKey(lastWeekendStart, 1)})`,
+            startKey: lastWeekendStart,
+            endKey: shiftDateKey(lastWeekendStart, 1),
+          };
+        }
+
+        if (/\bthis weekend\b/.test(q) || /\bweekend\b/.test(q)) {
+          return {
+            label: `this weekend (${thisWeekendStart} to ${shiftDateKey(thisWeekendStart, 1)})`,
+            startKey: thisWeekendStart,
+            endKey: shiftDateKey(thisWeekendStart, 1),
+          };
+        }
+
+        if (/\bthis week\b/.test(q)) {
+          return {
+            label: `this week (${mondayKey} to ${todayKey})`,
+            startKey: mondayKey,
+            endKey: todayKey,
+          };
+        }
+
+        if (/\blast week\b/.test(q)) {
+          const lastWeekEnd = shiftDateKey(mondayKey, -1);
+          const lastWeekStart = shiftDateKey(lastWeekEnd, -6);
+          return {
+            label: `last week (${lastWeekStart} to ${lastWeekEnd})`,
+            startKey: lastWeekStart,
+            endKey: lastWeekEnd,
+          };
+        }
+
+        return null;
+      }
+
       function findLocalLessonsForChat(query, maxResults = 5) {
         if (!lessonsLoaded || !Array.isArray(lessons) || lessons.length === 0) {
           return [];
         }
         const tokens = tokenizeQueryForFallback(query);
-        if (!tokens.length) return [];
+        const timeWindow = inferLessonTimeWindow(query);
+        const candidateLessons = (timeWindow
+          ? lessons.filter((lesson) => {
+              const dateKey = getLessonDateKey(lesson);
+              return dateKey && dateKey >= timeWindow.startKey && dateKey <= timeWindow.endKey;
+            })
+          : lessons
+        ).slice();
 
-        return lessons
+        if (!tokens.length) {
+          return candidateLessons
+            .sort((a, b) => getLessonSortEpochMs(b) - getLessonSortEpochMs(a))
+            .slice(0, maxResults);
+        }
+
+        const scored = candidateLessons
           .map((lesson) => ({
             lesson,
             score: scoreLessonForTokens(lesson, tokens),
@@ -2759,16 +3168,57 @@ Tags: ${lesson.tags.join(", ")}`;
           .sort((a, b) => b.score - a.score)
           .slice(0, maxResults)
           .map((entry) => entry.lesson);
+
+        if (scored.length) return scored;
+        if (!timeWindow) return [];
+
+        return candidateLessons
+          .sort((a, b) => getLessonSortEpochMs(b) - getLessonSortEpochMs(a))
+          .slice(0, maxResults);
       }
 
-      function buildLocalLessonFallbackReply(query, matches) {
-        const lines = [
-          "AI chat is temporarily unavailable. Here are the most relevant lessons from local index:",
-          "",
-          `Query: ${query}`,
-          "",
-          "KEY LESSONS (local_fallback):",
-        ];
+      function buildLocalLessonFallbackReply(query, matches, options = {}) {
+        const lines = [];
+        const latest = getLatestLessonDetails();
+        const timeWindow = inferLessonTimeWindow(query);
+        const latestLabel =
+          latest?.details?.shortLabel || latest?.details?.utcIso || latest?.dateKey || "unknown";
+        const systemAsOf = readAsOfLabelValue("systemAsOfTextChat", "System sync as of");
+        const reason = String(options.reason || "").trim();
+
+        if (reason) {
+          lines.push(`AI chat is unavailable: ${reason}`);
+        } else {
+          lines.push("AI chat is unavailable.");
+        }
+
+        if (timeWindow && latest?.dateKey && latest.dateKey < timeWindow.startKey) {
+          lines.push(
+            `The local lesson index is stale for ${timeWindow.label}. Knowledge base only reaches ${latestLabel}.`,
+          );
+          if (systemAsOf) {
+            lines.push(
+              `System sync is newer (${systemAsOf}), but the lesson index was not refreshed for that period.`,
+            );
+          }
+          lines.push(
+            "Action: sync fresh lessons and rebuild the RAG index before asking date-sensitive lesson questions.",
+          );
+          return lines.join("\n");
+        }
+
+        if (timeWindow) {
+          lines.push(`Showing local lesson matches for ${timeWindow.label}.`);
+        } else {
+          lines.push("Showing the best local lesson matches from the current index.");
+        }
+        lines.push(`Knowledge base as of: ${latestLabel}.`);
+        lines.push("");
+
+        if (!matches.length) {
+          lines.push("No matching lessons were found in the current local index.");
+          return lines.join("\n");
+        }
 
         for (const lesson of matches) {
           const when =
@@ -2776,19 +3226,17 @@ Tags: ${lesson.tags.join(", ")}`;
             lesson.dateDetails?.shortLabel ||
             lesson.date ||
             "date n/a";
-          lines.push(
-            `- ${lesson.id}: ${lesson.title} [${when}]`,
-          );
+          lines.push(`- ${lesson.title} [${when}]`);
         }
 
         return lines.join("\n");
       }
 
-      async function sendChatMessage() {
+      async function sendChatMessage(messageOverride = null) {
         const chatInput = document.getElementById("chatInput");
         const chatMessages = document.getElementById("chatMessages");
         const chatSendBtn = document.getElementById("chatSendBtn");
-        const message = chatInput.value.trim();
+        const message = String(messageOverride ?? chatInput.value).trim();
 
         if (!message) return;
 
@@ -2854,8 +3302,10 @@ Tags: ${lesson.tags.join(", ")}`;
           document.getElementById(loadingId)?.remove();
 
           if (data.error) {
-            const fallbackText = localFallbackMatches.length
-              ? buildLocalLessonFallbackReply(message, localFallbackMatches)
+            const fallbackText = lessonsLoaded
+              ? buildLocalLessonFallbackReply(message, localFallbackMatches, {
+                  reason: data.error,
+                })
               : `Error: ${String(data.error || "unknown error")}`;
             chatMessages.innerHTML += `
                         <div class="chat-message assistant">
@@ -2871,7 +3321,9 @@ Tags: ${lesson.tags.join(", ")}`;
               /KEY LESSONS \(keyword_index\):\s*-\s*No lessons available for this query\./i.test(
                 replyText,
               );
-            if (workerNoResults && localFallbackMatches.length) {
+            if (data.fallback === true && lessonsLoaded) {
+              replyText = buildLocalLessonFallbackReply(message, localFallbackMatches);
+            } else if (workerNoResults && lessonsLoaded) {
               replyText = buildLocalLessonFallbackReply(
                 message,
                 localFallbackMatches,
@@ -2898,8 +3350,10 @@ Tags: ${lesson.tags.join(", ")}`;
           }
         } catch (error) {
           document.getElementById(loadingId)?.remove();
-          const fallbackText = localFallbackMatches.length
-            ? buildLocalLessonFallbackReply(message, localFallbackMatches)
+          const fallbackText = lessonsLoaded
+            ? buildLocalLessonFallbackReply(message, localFallbackMatches, {
+                reason: "request failed",
+              })
             : "Chat service unavailable. Please try again.";
           chatMessages.innerHTML += `
                     <div class="chat-message assistant">
@@ -2934,6 +3388,7 @@ Tags: ${lesson.tags.join(", ")}`;
       // Initialize chat and portfolio on load
       document.addEventListener("DOMContentLoaded", () => {
         setupChatListeners();
+        setupPortfolioActionListeners();
         setupEvidenceLightboxListeners();
         loadPortfolioStatus();
       });

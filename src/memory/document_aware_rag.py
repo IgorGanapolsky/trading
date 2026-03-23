@@ -37,7 +37,6 @@ logger = logging.getLogger(__name__)
 # Configuration
 LANCEDB_PATH = Path(__file__).parent.parent.parent / ".claude" / "memory" / "lancedb"
 RAG_KNOWLEDGE_DIR = Path(__file__).parent.parent.parent / "rag_knowledge"
-BLOG_POSTS_DIR = Path(__file__).parent.parent.parent / "docs" / "_posts"
 EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
 FTS_COLUMNS = ["text", "doc_title", "section_title", "lesson_id"]
 
@@ -595,7 +594,7 @@ class DocumentAwareRAG:
 
         Args:
             force: If True, drop existing table and rebuild
-            sources: Optional list of source directories (default: rag_knowledge + blog posts)
+            sources: Optional list of source directories (default: rag_knowledge)
 
         Returns:
             Statistics dict with files_processed, sections_created, errors
@@ -641,11 +640,9 @@ class DocumentAwareRAG:
         if sources:
             source_dirs = [Path(s) for s in sources]
         else:
-            # Default sources: full rag_knowledge + blog posts
+            # Default source: full rag_knowledge
             if RAG_KNOWLEDGE_DIR.exists():
                 source_dirs.append(RAG_KNOWLEDGE_DIR)
-            if BLOG_POSTS_DIR.exists():
-                source_dirs.append(BLOG_POSTS_DIR)
 
         # Collect all documents
         documents = []

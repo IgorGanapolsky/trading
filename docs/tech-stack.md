@@ -324,29 +324,11 @@ sequenceDiagram
 
 </div>
 
-### Blog Generation Flow
+### Public Publishing Surface
 
-<div class="mermaid">
-flowchart LR
-    subgraph Data["Data Sources"]
-        ALPACA["Alpaca API"] --> PERF["Performance Log"]
-        FRED["FRED API"] --> YIELDS["Treasury Yields"]
-        RAG["RAG Lessons"] --> CONTENT["Lesson Content"]
-    end
-
-    subgraph Generation["Blog Generation"]
-        PERF --> SCRIPT["generate_daily_blog_post.py"]
-        YIELDS --> SCRIPT
-        CONTENT --> SYNC["sync_rag_to_blog.py"]
-    end
-
-    subgraph Output["Publishing"]
-        SCRIPT --> GH["GitHub Pages"]
-        SCRIPT --> DEVTO["Dev.to"]
-        SYNC --> GH
-    end
-
-</div>
+The blog/wiki/dashboard publishing stack was archived in the March 2026
+simplification pass. The default operating path now focuses on broker sync,
+safety gates, execution, and local RAG only.
 
 ---
 
