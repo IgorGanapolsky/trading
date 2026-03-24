@@ -25,10 +25,10 @@ except ImportError as e:
     sys.exit(1)
 
 try:
-    from src.strategies.core_strategy import CoreStrategy
-    print("  ✅ CoreStrategy")
+    from src.strategies.registry import StrategyRegistry
+    print("  ✅ StrategyRegistry")
 except ImportError as e:
-    print(f"  ❌ CoreStrategy: {e}")
+    print(f"  ❌ StrategyRegistry: {e}")
     sys.exit(1)
 
 try:
