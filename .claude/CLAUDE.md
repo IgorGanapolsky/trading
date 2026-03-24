@@ -18,7 +18,7 @@ Source of truth: `src/core/trading_constants.py`
 ## Dual-Track Mandate
 
 1. **The Lab (Paper Account `PA3C5AG0CECQ`)**: ~$100,000. Strategy formulation + GRPO self-training. Up to 2 concurrent SPY Iron Condors (8 legs max).
-2. **The Field (Live Account `979807421`)**: ~$200. Shadows Lab signals via fractional ETF (SPY/VOO) buys.
+2. **The Field (Live Account `979807421`)**: $0 equity (started $20, lost 100%). Inactive — no capital deployed.
 
 ## AI-Native Strategy (GRPO)
 
