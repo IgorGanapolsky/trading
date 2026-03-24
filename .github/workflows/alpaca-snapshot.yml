@@ -14,6 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GH_PAT || github.token }}
+          fetch-depth: 0
 
       - uses: actions/setup-python@v6
         with:
@@ -44,5 +47,8 @@ jobs:
           else
             git commit -m "chore: daily portfolio snapshot $(date +%Y-%m-%d)"
             git pull --rebase origin main || git rebase --abort
-            git push origin HEAD:main
+            if [ -n "${{ secrets.GH_PAT }}" ]; then
+              git remote set-url origin "https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git"
+            fi
+            git push origin HEAD:main || echo "Push failed (protected branch or conflict)"
           fi
