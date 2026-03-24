@@ -42,7 +42,7 @@ jobs:
           if git diff --staged --quiet; then
             echo "No snapshot changes to commit"
           else
-            git pull --rebase origin main
             git commit -m "chore: daily portfolio snapshot $(date +%Y-%m-%d)"
-            git push
+            git pull --rebase origin main || git rebase --abort
+            git push origin HEAD:main
           fi

@@ -72,7 +72,7 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git pull --rebase origin main
             git commit -m "chore: pre-market data sync $(date +%Y-%m-%d)"
-            git push
+            git pull --rebase origin main || git rebase --abort
+            git push origin HEAD:main
           fi
