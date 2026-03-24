@@ -1,32 +1,20 @@
-# AI Trading System — LLM Index
-> Open-source autonomous SPY iron condor trading system with defined risk, continuous learning, and strict safety gates.
+# SPY Iron Condor Trader — LLM Index
+> Paper-trading SPY iron condors to validate a quantitative options strategy.
 
-## North Star
-$6,000/month after-tax passive income via SPY iron condors.
+## Status
+Validation phase: proving 80%+ win rate over 30 trades.
+Paper equity: $95,324 (started $100K). Trade 1 of 30 open.
+
+## Strategy
+- SPY iron condors, 15-delta, $10-wide wings, 30-45 DTE
+- Exit: 50% profit or 7 DTE, stop at 100% of credit
+- Backed by 71,417-trade study (projectfinance.com, 2007-2017)
 
 ## URLs
 - Progress Dashboard: https://igorganapolsky.github.io/trading/rag-query/
 - Repository: https://github.com/IgorGanapolsky/trading
-- Blog: https://igorganapolsky.github.io/trading/
-
-## Content
-- Blog posts: 2
-- RAG lessons: 179
-- CI workflows: 72
-- Latest post: 2026-03-23
-
-## Strategy
-- SPY iron condors, 15-20 delta, $10-wide wings, 30-45 DTE
-- Exit: 50% profit or 7 DTE, stop at 100% of credit
-- Max 2 concurrent condors (8 legs), max 5% risk per position
-- Backed by 71,417-trade study (projectfinance.com, 2007-2017)
 
 ## Tech
-- Python 3.11, Alpaca API (paper + live), GRPO ML optimization
+- Python 3.11, Alpaca API (paper), GRPO ML optimization
 - LanceDB RAG over 179 lessons learned
-- GitHub Actions CI/CD (72 workflows)
-- Phil Town Rule #1 enforced at every layer: don't lose money
-
-## Key Research
-- [71K Iron Condor Trade Study](https://igorganapolsky.github.io/trading/2026/03/23/iron-condor-71k-trade-study/)
-- [PaperBanana Architecture Diagrams](https://igorganapolsky.github.io/trading/2026/02/15/paperbanana-automated-architecture-diagrams/)
+- GitHub Actions CI/CD

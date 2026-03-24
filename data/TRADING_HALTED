@@ -1,1 +1,1 @@
-HALTED 2026-03-23T13:45:49Z: System producing losses from churning, orphan legs, and high VIX. Fixes in progress.
+HALTED 2026-03-23T20:08:41Z: CI workflow still churning. Disable daily-trading.yml before removing.

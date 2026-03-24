@@ -28,13 +28,13 @@ jobs:
     outputs:
       fixed: ${{ steps.fix.outputs.fixed }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           token: ${{ secrets.GH_PAT }}
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: "pip"
@@ -84,12 +84,12 @@ jobs:
       tests_passed: ${{ steps.test.outputs.passed }}
       failure_count: ${{ steps.test.outputs.failures }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: main # Get latest after lint fixes
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: "pip"
@@ -127,7 +127,7 @@ jobs:
   auto-cleanup:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -157,7 +157,7 @@ jobs:
     needs: test-and-report
     if: needs.test-and-report.outputs.tests_passed == 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Merge eligible PRs
         env:
@@ -183,7 +183,7 @@ jobs:
     needs: [auto-fix-lint, test-and-report, auto-cleanup]
     if: always()
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           token: ${{ secrets.GH_PAT }}
           ref: main

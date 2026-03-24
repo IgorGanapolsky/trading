@@ -37,10 +37,10 @@ jobs:
       issues_found: ${{ steps.scan.outputs.issues_found }}
       issue_count: ${{ steps.scan.outputs.count }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: "pip"
@@ -84,10 +84,10 @@ jobs:
     outputs:
       dead_code_found: ${{ steps.scan.outputs.found }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: "pip"
@@ -122,10 +122,10 @@ jobs:
     outputs:
       quality_issues: ${{ steps.quality.outputs.issues }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: "pip"
@@ -158,7 +158,7 @@ jobs:
     needs: [security-scan, dead-code-scan, code-quality]
     if: always()
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           token: ${{ secrets.GH_PAT }}
 
