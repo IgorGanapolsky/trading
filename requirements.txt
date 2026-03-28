@@ -78,7 +78,7 @@ langchain==1.2.12
 langchain-anthropic==1.4.0
 langchain-classic==1.0.3
 langchain-community==0.4.1
-langchain-core==1.2.19
+langchain-core==1.2.22
 langchain-google-genai==4.2.1
 langchain-text-splitters==1.1.1
 langgraph==1.1.2
