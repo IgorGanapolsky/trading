@@ -68,7 +68,7 @@ httpx-sse==0.4.3
 idna==3.11
 jinja2==3.1.6
 jiter==0.13.0
-joblib==1.5.2
+joblib==1.5.3
 jsonpatch==1.33
 jsonpointer==3.0.0
 jsonschema==4.25.1
