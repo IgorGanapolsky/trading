@@ -36,7 +36,7 @@ distro==1.9.0
 docstring-parser==0.17.0
 farama-notifications==0.0.4
 feedparser==6.0.12
-filelock==3.20.3
+filelock==3.25.2
 filetype==1.2.0
 fonttools==4.61.1
 frozendict==2.4.7
