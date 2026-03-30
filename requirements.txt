@@ -107,7 +107,7 @@ packaging==25.0
 pandas==2.3.3
 peewee==3.18.3
 pillow==12.1.1
-platformdirs==4.5.1
+platformdirs==4.9.4
 praw==7.8.1
 prawcore==2.4.0
 propcache==0.4.1
