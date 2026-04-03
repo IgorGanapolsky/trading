@@ -15,11 +15,12 @@ import pytest
 # Ensure project root is on path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.markets.option_chain import StrikeSelection
+import sys as _sys
 
 # Stub out heavy dependencies not installed locally (alpaca, numpy, etc.)
 import types
-import sys as _sys
+
+from src.markets.option_chain import StrikeSelection
 
 
 def _ensure_module(name):
