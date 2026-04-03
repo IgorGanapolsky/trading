@@ -63,22 +63,9 @@ CONFIG = {
 }
 
 from src.utils.alpaca_client import (  # noqa: E402
+    get_account_info,
     get_alpaca_client,
 )
-
-
-def get_account_info(client) -> Optional[dict]:
-    """Get account information."""
-    try:
-        account = client.get_account()
-        return {
-            "equity": float(account.equity),
-            "cash": float(account.cash),
-            "buying_power": float(account.buying_power),
-        }
-    except Exception as e:
-        logger.error(f"Failed to get account info: {e}")
-        return None
 
 
 def get_current_positions(client) -> list:

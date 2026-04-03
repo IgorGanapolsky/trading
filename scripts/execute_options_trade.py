@@ -49,8 +49,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 from src.utils.alpaca_client import (  # noqa: E402
+    get_account_info,
     get_alpaca_client,
     get_options_data_client,
+)
+from src.utils.options_analysis import (  # noqa: E402
+    MIN_IV_PERCENTILE_FOR_SELLING,
+    get_iv_percentile,
 )
 
 
@@ -85,17 +90,6 @@ def get_alpaca_clients():
     return trading_client, options_client
 
 
-def get_account_info(trading_client):
-    """Get current account information."""
-    account = trading_client.get_account()
-    return {
-        "cash": float(account.cash),
-        "buying_power": float(account.buying_power),
-        "portfolio_value": float(account.portfolio_value),
-        "options_buying_power": float(
-            getattr(account, "options_buying_power", account.buying_power)
-        ),
-    }
 
 
 def get_underlying_price(symbol: str) -> float:
@@ -107,76 +101,6 @@ def get_underlying_price(symbol: str) -> float:
     if data.empty:
         raise ValueError(f"Could not get price for {symbol}")
     return float(data["Close"].iloc[-1])
-
-
-def get_iv_percentile(symbol: str, lookback_days: int = 252) -> dict:
-    """
-    Calculate IV Percentile for a symbol.
-
-    IV Percentile = % of days in past year when IV was lower than current IV.
-    Per RAG knowledge (volatility_forecasting_2025.json):
-    - IV Percentile > 50%: Favor selling strategies (CSPs, covered calls)
-    - IV Percentile < 30%: Favor buying strategies or stay on sidelines
-
-    Returns dict with iv_percentile, current_iv, recommendation.
-    """
-    import numpy as np
-    import yfinance as yf
-
-    logger.info(f"📊 Calculating IV Percentile for {symbol}...")
-
-    try:
-        ticker = yf.Ticker(symbol)
-
-        # Get historical data for IV calculation (we'll use HV as proxy if IV not available)
-        hist = ticker.history(period="1y")
-        if len(hist) < 20:
-            logger.warning(f"   ⚠️ Insufficient history for {symbol}, defaulting to neutral")
-            return {
-                "iv_percentile": 50,
-                "current_iv": None,
-                "recommendation": "NEUTRAL",
-            }
-
-        # Calculate historical volatility (20-day rolling)
-        returns = np.log(hist["Close"] / hist["Close"].shift(1))
-        rolling_vol = returns.rolling(window=20).std() * np.sqrt(252) * 100  # Annualized %
-
-        current_hv = rolling_vol.iloc[-1]
-
-        # Calculate percentile
-        valid_vols = rolling_vol.dropna()
-        iv_percentile = (valid_vols < current_hv).sum() / len(valid_vols) * 100
-
-        # Determine recommendation per RAG knowledge
-        if iv_percentile >= 50:
-            recommendation = "SELL_PREMIUM"
-            logger.info(
-                f"   ✅ IV Percentile: {iv_percentile:.1f}% - FAVORABLE for selling premium"
-            )
-        elif iv_percentile >= 30:
-            recommendation = "NEUTRAL"
-            logger.info(f"   ⚠️ IV Percentile: {iv_percentile:.1f}% - NEUTRAL conditions")
-        else:
-            recommendation = "AVOID_SELLING"
-            logger.info(f"   ❌ IV Percentile: {iv_percentile:.1f}% - UNFAVORABLE for selling")
-
-        return {
-            "iv_percentile": round(iv_percentile, 1),
-            "current_iv": round(current_hv, 2),
-            "recommendation": recommendation,
-        }
-
-    except Exception as e:
-        logger.error(f"   ❌ IV calculation failed: {e}")
-        return {"iv_percentile": 50, "current_iv": None, "recommendation": "NEUTRAL"}
-
-
-# Minimum IV percentile threshold for selling options
-# LL-269 (Jan 21, 2026): Restored to 50% based on research
-# IV Percentile >50% = options expensive enough to sell profitably
-# Lower IV = thin premiums, not worth the risk
-MIN_IV_PERCENTILE_FOR_SELLING = 50
 
 
 def get_trend_filter(symbol: str, lookback_days: int = 20) -> dict:

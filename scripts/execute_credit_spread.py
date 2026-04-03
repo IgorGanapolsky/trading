@@ -57,6 +57,7 @@ from src.utils.alpaca_client import (  # noqa: E402
     get_alpaca_client,
     get_options_data_client,
 )
+from src.utils.options_analysis import get_iv_percentile  # noqa: E402
 
 
 def get_alpaca_clients():
@@ -82,37 +83,6 @@ def get_underlying_price(symbol: str) -> float:
     return float(data["Close"].iloc[-1])
 
 
-def get_iv_percentile(symbol: str) -> dict:
-    """Calculate IV Percentile - same as execute_options_trade.py"""
-    import numpy as np
-    import yfinance as yf
-
-    try:
-        ticker = yf.Ticker(symbol)
-        hist = ticker.history(period="1y")
-        if len(hist) < 20:
-            return {"iv_percentile": 50, "recommendation": "NEUTRAL"}
-
-        returns = np.log(hist["Close"] / hist["Close"].shift(1))
-        rolling_vol = returns.rolling(window=20).std() * np.sqrt(252) * 100
-        current_hv = rolling_vol.iloc[-1]
-        valid_vols = rolling_vol.dropna()
-        iv_percentile = (valid_vols < current_hv).sum() / len(valid_vols) * 100
-
-        if iv_percentile >= 50:
-            recommendation = "SELL_PREMIUM"
-        elif iv_percentile >= 30:
-            recommendation = "NEUTRAL"
-        else:
-            recommendation = "AVOID_SELLING"
-
-        return {
-            "iv_percentile": round(iv_percentile, 1),
-            "recommendation": recommendation,
-        }
-    except Exception as e:
-        logger.error(f"IV calculation failed: {e}")
-        return {"iv_percentile": 50, "recommendation": "NEUTRAL"}
 
 
 def get_trend_filter(symbol: str) -> dict:
