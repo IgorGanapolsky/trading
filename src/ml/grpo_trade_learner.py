@@ -1,6 +1,11 @@
 """
 Group Relative Policy Optimization (GRPO) for Trading.
 
+STATUS: RESEARCH ONLY — not wired into the trading execution path.
+Per CLAUDE.md: "optional research tooling, not the default operator path."
+The Thompson Sampler in update_ml_from_trades.py is the operational model.
+GRPO will be wired in only after proven edge on 30+ trades.
+
 Implements GRPO with verifiable rewards based on Sebastian Raschka's work.
 Key insight: Eliminates the critic model by using verifiable rewards.
 
