@@ -499,7 +499,7 @@ def main(dry_run: bool = False):
         for orphan in orphan_groups:
             orphan_dte = calculate_dte(orphan["expiry"])
             entry_date = orphan.get("entry_date")
-            hours_since_entry = 0
+            hours_since_entry: float = 0.0
             if entry_date:
                 try:
                     entry_dt = datetime.fromisoformat(entry_date)
