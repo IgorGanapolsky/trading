@@ -5,6 +5,9 @@ concurrency:
   group: ${{ format('ci-{0}-{1}', github.ref, github.sha) }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
+permissions:
+  contents: read
+
 jobs:
   trunk-check:
     name: Trunk Check
@@ -16,3 +19,74 @@ jobs:
         uses: trunk-io/trunk-action@v1
         with:
           trunk-token: ${{ secrets.TRUNK_API_TOKEN }}
+
+  test-suite:
+    name: Run All Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-ci.txt
+
+      - name: Install CI dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-ci.txt
+
+      - name: Run test runner
+        env:
+          PYTHON_BIN: python
+          REPORT_DIR: artifacts/test-reports
+        run: |
+          chmod +x scripts/ci/run_all_tests.sh
+          bash scripts/ci/run_all_tests.sh
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ci-test-artifacts
+          retention-days: 7
+          path: |
+            coverage.xml
+            .coverage
+            artifacts/test-reports/**
+
+  validate-workflows:
+    name: Validate Workflows
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-ci.txt
+
+      - name: Install CI dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-ci.txt
+
+      - name: Validate workflow YAML
+        run: sh scripts/validate_yaml_before_commit.sh
+
+      - name: Run workflow regression tests
+        run: |
+          pytest \
+            tests/test_ci_runner_wiring.py \
+            tests/test_workflow_contracts.py \
+            tests/test_workflow_dependencies.py \
+            tests/test_workflow_integrity.py \
+            -q

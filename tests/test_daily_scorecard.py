@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import json
+import sys
+import types
 from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any, cast
 from zoneinfo import ZoneInfo
 
 from src.analytics import daily_scorecard as daily_scorecard_mod
@@ -32,6 +35,16 @@ class _FakeClient:
 
     def get_orders(self, filter=None):  # noqa: ARG002
         return self._orders
+
+
+class _TrackingFakeClient(_FakeClient):
+    def __init__(self, account, positions, orders):
+        super().__init__(account, positions, orders)
+        self.last_filter = None
+
+    def get_orders(self, filter=None):
+        self.last_filter = filter
+        return super().get_orders(filter=filter)
 
 
 def _write_json(path: Path, payload: dict) -> None:
@@ -198,6 +211,7 @@ def test_build_daily_scorecard_derives_realized_from_account_delta(tmp_path: Pat
         in scorecard["paper"]["why_today"]["summary"]
     )
     assert "realized activity $2.00 across 2 fills" in scorecard["paper"]["why_today"]["summary"]
+
     assert (
         "biggest structure offset SPY 2026-04-24 $3.00"
         in scorecard["paper"]["why_today"]["summary"]
@@ -253,6 +267,55 @@ def test_build_daily_scorecard_derives_realized_from_account_delta(tmp_path: Pat
     ]
     assert scorecard["north_star"]["scale_allowed"] is False
     assert scorecard["north_star"]["stale"] is False
+
+
+def test_build_daily_scorecard_falls_back_when_query_order_status_all_missing(
+    tmp_path: Path, monkeypatch
+):
+    repo = tmp_path
+    _write_json(repo / "data/system_state.json", {})
+    _write_json(repo / "data/trades.json", {"trades": [], "stats": {}})
+
+    alpaca_mod = types.ModuleType("alpaca")
+    trading_mod = types.ModuleType("alpaca.trading")
+    enums_mod = cast(Any, types.ModuleType("alpaca.trading.enums"))
+    requests_mod = cast(Any, types.ModuleType("alpaca.trading.requests"))
+
+    enums_mod.QueryOrderStatus = type("QueryOrderStatus", (), {"CLOSED": "closed"})
+
+    class _GetOrdersRequest:
+        def __init__(self, **kwargs):
+            self.__dict__.update(kwargs)
+
+    requests_mod.GetOrdersRequest = _GetOrdersRequest
+
+    monkeypatch.setitem(sys.modules, "alpaca", alpaca_mod)
+    monkeypatch.setitem(sys.modules, "alpaca.trading", trading_mod)
+    monkeypatch.setitem(sys.modules, "alpaca.trading.enums", enums_mod)
+    monkeypatch.setitem(sys.modules, "alpaca.trading.requests", requests_mod)
+
+    paper_client = _TrackingFakeClient(
+        SimpleNamespace(equity="1000", last_equity="1000", cash="900", buying_power="1800"),
+        [],
+        [],
+    )
+    live_client = _FakeClient(
+        SimpleNamespace(equity="20", last_equity="20", cash="20", buying_power="40"),
+        [],
+        [],
+    )
+
+    scorecard = build_daily_scorecard(
+        repo,
+        now=datetime(2026, 4, 1, 10, 30, tzinfo=ET),
+        paper_client=paper_client,
+        live_client=live_client,
+        sync_paired_ledger=False,
+    )
+
+    assert paper_client.last_filter is not None
+    assert paper_client.last_filter.status == "closed"
+    assert "reason" not in scorecard["paper"]
 
 
 def test_write_daily_scorecard_artifacts_and_markdown(tmp_path: Path):
