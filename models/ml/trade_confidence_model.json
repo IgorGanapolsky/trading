@@ -4,20 +4,16 @@
   "created": "2026-01-26",
   "prior_source": "Tastytrade 15-delta IC research: 86% win rate over 15+ years",
   "iron_condor": {
-    "alpha": 87.0,
-    "beta": 14.0,
-    "wins": 1,
-    "losses": 0,
-    "prior_alpha": 86.0,
-    "prior_beta": 14.0,
-    "_note": "Beta(86,14) prior = 86% win rate from Tastytrade research. +1 win from real trade IC_260220."
+    "alpha": 17.0,
+    "beta": 50.0,
+    "wins": 16,
+    "losses": 49
   },
   "spy_specific": {
-    "alpha": 87.0,
-    "beta": 14.0,
-    "wins": 1,
-    "losses": 0,
-    "_note": "SPY-specific: same informative prior + 1 real win"
+    "alpha": 17.0,
+    "beta": 50.0,
+    "wins": 16,
+    "losses": 49
   },
   "regime_adjustments": {
     "calm": 1.1,
@@ -25,5 +21,15 @@
     "volatile": 0.8,
     "spike": 0.5
   },
-  "last_updated": "2026-03-31T00:00:00.000000"
+  "last_updated": "2026-04-03T17:55:19.600731+00:00",
+  "feedback_source": "canonical_trades_json",
+  "gate": {
+    "should_trade": false,
+    "total_trades": 66,
+    "win_rate": 24.24,
+    "expectancy_per_trade": -52.95,
+    "min_trades_met": true,
+    "min_win_rate_met": false,
+    "block_reason": "Win rate 24.2% < 50.0%"
+  }
 }
