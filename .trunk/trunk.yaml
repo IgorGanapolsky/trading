@@ -50,16 +50,6 @@ lint:
       paths:
         - tests/**
 
-# Flaky Test Management (March 2026 Update)
-flaky:
-  quarantine: true
-  monitors:
-    enabled:
-      - python-pytest
-  detection:
-    threshold: 3
-    window: 10
-
 actions:
   disabled:
     - trunk-announce
