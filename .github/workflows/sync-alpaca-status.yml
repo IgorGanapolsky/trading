@@ -94,6 +94,15 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
 
+          npx --yes prettier@3.6.2 --write \
+            data/system_state.json \
+            data/runtime/intraday_pnl_history.json \
+            data/runtime/intraday_pnl_latest.json \
+            data/trades.json \
+            docs/data/public_status.json \
+            models/ml/grpo_trade_metadata.json \
+            || true
+
           git add data/system_state.json
           git add data/runtime/intraday_pnl_history.json 2>/dev/null || true
           git add data/runtime/intraday_pnl_latest.json 2>/dev/null || true
@@ -148,7 +157,7 @@ jobs:
 
       - name: Notify on Failure
         if: failure()
-        continue-on-error: true  # Non-critical: notification failure shouldn't change workflow status
+        continue-on-error: true # Non-critical: notification failure shouldn't change workflow status
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
