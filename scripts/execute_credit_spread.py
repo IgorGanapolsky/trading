@@ -57,7 +57,11 @@ from src.utils.alpaca_client import (  # noqa: E402
     get_alpaca_client,
     get_options_data_client,
 )
-from src.utils.options_analysis import get_iv_percentile  # noqa: E402
+from src.utils.options_analysis import (  # noqa: E402
+    get_iv_percentile,
+    get_trend_filter,
+    get_underlying_price,
+)
 
 
 def get_alpaca_clients():
@@ -70,59 +74,6 @@ def get_alpaca_clients():
         raise ValueError("Failed to initialize Alpaca clients")
 
     return trading_client, options_client
-
-
-def get_underlying_price(symbol: str) -> float:
-    """Get current price of underlying symbol."""
-    import yfinance as yf
-
-    ticker = yf.Ticker(symbol)
-    data = ticker.history(period="1d")
-    if data.empty:
-        raise ValueError(f"Could not get price for {symbol}")
-    return float(data["Close"].iloc[-1])
-
-
-
-
-def get_trend_filter(symbol: str) -> dict:
-    """Check trend filter - same as execute_options_trade.py"""
-    import yfinance as yf
-
-    try:
-        ticker = yf.Ticker(symbol)
-        hist = ticker.history(period="2mo")
-        if len(hist) < 20:
-            return {"trend": "NEUTRAL", "recommendation": "PROCEED"}
-
-        ma_20 = hist["Close"].rolling(window=20).mean()
-        recent_ma = ma_20.iloc[-5:]
-        slope = (recent_ma.iloc[-1] - recent_ma.iloc[0]) / recent_ma.iloc[0] * 100 / 5
-        current_price = hist["Close"].iloc[-1]
-        ma_current = ma_20.iloc[-1]
-        price_vs_ma = (current_price - ma_current) / ma_current * 100
-
-        if slope < -0.5 and price_vs_ma < -5:
-            return {
-                "trend": "STRONG_DOWNTREND",
-                "slope": slope,
-                "recommendation": "AVOID_PUTS",
-            }
-        elif slope < -0.3:
-            return {
-                "trend": "MODERATE_DOWNTREND",
-                "slope": slope,
-                "recommendation": "CAUTION",
-            }
-        else:
-            return {
-                "trend": "UPTREND_OR_SIDEWAYS",
-                "slope": slope,
-                "recommendation": "PROCEED",
-            }
-    except Exception as e:
-        logger.error(f"Trend filter failed: {e}")
-        return {"trend": "UNKNOWN", "recommendation": "PROCEED"}
 
 
 def find_bull_put_spread(

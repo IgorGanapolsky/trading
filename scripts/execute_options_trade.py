@@ -56,6 +56,8 @@ from src.utils.alpaca_client import (  # noqa: E402
 from src.utils.options_analysis import (  # noqa: E402
     MIN_IV_PERCENTILE_FOR_SELLING,
     get_iv_percentile,
+    get_trend_filter,
+    get_underlying_price,
 )
 
 
@@ -88,92 +90,6 @@ def get_alpaca_clients():
         logger.warning(f"   ⚠️ Account check failed: {e}")
 
     return trading_client, options_client
-
-
-
-
-def get_underlying_price(symbol: str) -> float:
-    """Get current price of underlying symbol."""
-    import yfinance as yf
-
-    ticker = yf.Ticker(symbol)
-    data = ticker.history(period="1d")
-    if data.empty:
-        raise ValueError(f"Could not get price for {symbol}")
-    return float(data["Close"].iloc[-1])
-
-
-def get_trend_filter(symbol: str, lookback_days: int = 20) -> dict:
-    """
-    Check market trend to avoid selling puts in downtrending markets.
-
-    Per options_backtest_summary.md recommendations:
-    - All losses (5/5) came from positions entered in strong trends
-    - Add trend filter to avoid selling options in adverse conditions
-    - Use 20-day MA slope as trend indicator
-
-    For CASH-SECURED PUTS:
-    - Uptrend/Sideways: SAFE to sell puts (bullish bias helps)
-    - Strong Downtrend: AVOID selling puts (will get assigned at bad prices)
-
-    Returns dict with trend, slope, recommendation.
-    """
-    import yfinance as yf
-
-    logger.info(f"📈 Checking trend filter for {symbol}...")
-
-    try:
-        ticker = yf.Ticker(symbol)
-        hist = ticker.history(period="2mo")
-
-        if len(hist) < lookback_days:
-            logger.warning("   ⚠️ Insufficient history for trend filter, defaulting to neutral")
-            return {"trend": "NEUTRAL", "slope": 0, "recommendation": "PROCEED"}
-
-        # Calculate 20-day moving average
-        ma_20 = hist["Close"].rolling(window=lookback_days).mean()
-
-        # Calculate slope over last 5 days (normalized as % per day)
-        recent_ma = ma_20.iloc[-5:]
-        slope = (recent_ma.iloc[-1] - recent_ma.iloc[0]) / recent_ma.iloc[0] * 100 / 5
-
-        # Also check if price is above or below MA
-        current_price = hist["Close"].iloc[-1]
-        ma_current = ma_20.iloc[-1]
-        price_vs_ma = (current_price - ma_current) / ma_current * 100
-
-        # Determine trend
-        # RELAXED thresholds to allow more trades (Dec 16 fix)
-        # Strong downtrend: slope < -0.5% per day AND price below MA by 5%+
-        # Moderate downtrend: slope < -0.3% per day
-        # Uptrend/Sideways: slope >= -0.3%
-
-        if slope < -0.5 and price_vs_ma < -5:
-            trend = "STRONG_DOWNTREND"
-            recommendation = "AVOID_PUTS"
-            logger.warning("   ❌ STRONG DOWNTREND detected!")
-            logger.warning(f"      MA slope: {slope:.3f}%/day, Price vs MA: {price_vs_ma:.1f}%")
-        elif slope < -0.3:
-            trend = "MODERATE_DOWNTREND"
-            recommendation = "CAUTION_BUT_PROCEED"
-            logger.info("   ⚠️ Moderate downtrend - proceeding with caution")
-            logger.info(f"      MA slope: {slope:.3f}%/day, Price vs MA: {price_vs_ma:.1f}%")
-        else:
-            trend = "UPTREND_OR_SIDEWAYS"
-            recommendation = "PROCEED"
-            logger.info("   ✅ Trend FAVORABLE for selling puts")
-            logger.info(f"      MA slope: {slope:.3f}%/day, Price vs MA: {price_vs_ma:.1f}%")
-
-        return {
-            "trend": trend,
-            "slope": round(slope, 4),
-            "price_vs_ma": round(price_vs_ma, 2),
-            "recommendation": recommendation,
-        }
-
-    except Exception as e:
-        logger.error(f"   ❌ Trend filter failed: {e}")
-        return {"trend": "UNKNOWN", "slope": 0, "recommendation": "PROCEED"}
 
 
 def find_optimal_put(
