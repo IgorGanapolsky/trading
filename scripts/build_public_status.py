@@ -41,39 +41,56 @@ def _short_status(block_new_positions: bool | None, mode: str | None) -> str:
     return "unknown"
 
 
-def _why_today_summary(scorecard: dict[str, Any]) -> str:
-    paper = scorecard.get("paper", {})
-    total = paper.get("total_pnl_today")
-    realized = paper.get("realized_pnl_today")
-    unrealized = paper.get("unrealized_pnl_today")
-    fills = paper.get("fills_today_count", 0)
+def _pick_first(*values: Any) -> Any:
+    for value in values:
+        if value is not None:
+            return value
+    return None
 
-    if fills:
+
+def _why_today_summary(total: Any, positions_count: Any) -> str:
+    if total is not None and positions_count == 0:
         return (
-            f"Broker-backed session with {fills} fills. "
-            f"Total today {_fmt_money(total)} split between realized {_fmt_money(realized)} "
-            f"and unrealized {_fmt_money(unrealized)}."
+            f"Latest tracked broker sync shows {_fmt_money(total)} today with no open paper positions. "
+            "Use the operator scorecard for fill-level decomposition."
+        )
+    if total is not None and positions_count is not None:
+        return (
+            f"Latest tracked broker sync shows {_fmt_money(total)} today with {positions_count} open paper positions. "
+            "Use the operator scorecard for realized/unrealized and leg-level decomposition."
         )
     if total is not None:
         return (
-            f"No fills today. Total today {_fmt_money(total)} came from open-position repricing, "
-            f"with realized {_fmt_money(realized)} and unrealized {_fmt_money(unrealized)}."
+            f"Latest tracked broker sync shows {_fmt_money(total)} today. "
+            "Use the operator scorecard for realized/unrealized and fill-level decomposition."
         )
     return "Latest daily scorecard is unavailable."
 
 
 def build_public_status(repo_root: Path) -> dict[str, Any]:
-    scorecard = _load_json(repo_root / "artifacts/daily_scorecard/latest_daily_scorecard.json")
+    runtime = _load_json(repo_root / "data/runtime/intraday_pnl_latest.json")
     state = _load_json(repo_root / "data/system_state.json")
     trades = _load_json(repo_root / "data/trades.json")
+    scorecard = _load_json(repo_root / "artifacts/daily_scorecard/latest_daily_scorecard.json")
 
-    paper = scorecard.get("paper", {})
-    live = scorecard.get("live", {})
+    runtime_paper = runtime.get("paper", {})
+    runtime_live = runtime.get("live", {})
     weekly = state.get("north_star_weekly_gate") or {}
     cadence = weekly.get("cadence_kpi") or {}
     scaling = weekly.get("scaling_sample_gate") or {}
     stats = trades.get("stats") or {}
-    generated_at_et = scorecard.get("generated_at_et") or datetime.now().astimezone().isoformat()
+    paper_total_pnl_today = _pick_first(
+        runtime_paper.get("daily_change"),
+        scorecard.get("paper", {}).get("total_pnl_today"),
+    )
+    generated_at_et = _pick_first(
+        runtime.get("captured_at"),
+        state.get("last_updated"),
+        stats.get("last_updated"),
+        trades.get("meta", {}).get("last_sync"),
+        scorecard.get("generated_at_et"),
+        datetime.now().astimezone().isoformat(),
+    )
 
     closed_total = stats.get("closed_trades", scaling.get("closed_trades_observed", 0))
     total_realized = stats.get("total_realized_pnl", stats.get("total_pnl"))
@@ -86,15 +103,22 @@ def build_public_status(repo_root: Path) -> dict[str, Any]:
             "public_status": _short_status(weekly.get("block_new_positions"), weekly.get("mode")),
         },
         "paper": {
-            "equity": paper.get("equity"),
-            "total_pnl_today": paper.get("total_pnl_today"),
-            "realized_pnl_today": paper.get("realized_pnl_today"),
-            "unrealized_pnl_today": paper.get("unrealized_pnl_today"),
-            "fills_today_count": paper.get("fills_today_count", 0),
+            "equity": _pick_first(
+                runtime_paper.get("equity"),
+                scorecard.get("paper", {}).get("equity"),
+            ),
+            "total_pnl_today": paper_total_pnl_today,
+            "realized_pnl_today": None,
+            "unrealized_pnl_today": None,
+            "fills_today_count": None,
+            "positions_count": runtime_paper.get("positions_count"),
         },
         "live": {
-            "equity": live.get("equity"),
-            "total_pnl_today": live.get("total_pnl_today"),
+            "equity": _pick_first(runtime_live.get("equity"), scorecard.get("live", {}).get("equity")),
+            "total_pnl_today": _pick_first(
+                runtime_live.get("daily_change"),
+                scorecard.get("live", {}).get("total_pnl_today"),
+            ),
         },
         "ledger": {
             "closed_trades_total": closed_total,
@@ -124,7 +148,10 @@ def build_public_status(repo_root: Path) -> dict[str, Any]:
             "scaling_gate_min_closed_trades": scaling.get("min_closed_trades_for_scaling"),
         },
         "narrative": {
-            "summary": _why_today_summary(scorecard),
+            "summary": _why_today_summary(
+                paper_total_pnl_today,
+                runtime_paper.get("positions_count"),
+            ),
             "thesis": (
                 "This project is currently a paper-first validation platform, not a proven passive-income engine. "
                 "Public surfaces should show current gate state and broker-backed evidence rather than frozen claims."

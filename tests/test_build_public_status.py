@@ -15,6 +15,7 @@ from scripts.build_public_status import (
 def _seed_repo(tmp_path: Path) -> Path:
     (tmp_path / "artifacts/daily_scorecard").mkdir(parents=True, exist_ok=True)
     (tmp_path / "data").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "data/runtime").mkdir(parents=True, exist_ok=True)
     scorecard = {
         "generated_at_et": "2026-04-03T10:33:34-04:00",
         "paper": {
@@ -46,6 +47,19 @@ def _seed_repo(tmp_path: Path) -> Path:
             },
         }
     }
+    runtime = {
+        "captured_at": "2026-04-03T14:33:34+00:00",
+        "paper": {
+            "equity": 93990.30,
+            "daily_change": -14.0,
+            "positions_count": 4,
+        },
+        "live": {
+            "equity": 0.0,
+            "daily_change": 0.0,
+            "positions_count": 0,
+        },
+    }
     trades = {
         "meta": {"last_sync": "2026-04-03T14:33:35+00:00"},
         "stats": {
@@ -61,6 +75,9 @@ def _seed_repo(tmp_path: Path) -> Path:
     (tmp_path / "artifacts/daily_scorecard/latest_daily_scorecard.json").write_text(
         json.dumps(scorecard), encoding="utf-8"
     )
+    (tmp_path / "data/runtime/intraday_pnl_latest.json").write_text(
+        json.dumps(runtime), encoding="utf-8"
+    )
     (tmp_path / "data/system_state.json").write_text(json.dumps(state), encoding="utf-8")
     (tmp_path / "data/trades.json").write_text(json.dumps(trades), encoding="utf-8")
     return tmp_path
@@ -71,6 +88,8 @@ def test_build_public_status_uses_canonical_inputs(tmp_path: Path):
     status = build_public_status(repo)
 
     assert status["paper"]["equity"] == 93990.30
+    assert status["paper"]["total_pnl_today"] == -14.0
+    assert status["paper"]["realized_pnl_today"] is None
     assert status["ledger"]["closed_trades_total"] == 134
     assert status["gate"]["block_new_positions"] is True
     assert status["system"]["public_status"] == "halted"
@@ -105,3 +124,15 @@ def test_renderers_include_live_status(tmp_path: Path):
 
     assert "Generated from canonical ledgers" in home
     assert "Paper equity" in progress
+
+
+def test_build_public_status_falls_back_to_tracked_runtime_without_scorecard(tmp_path: Path):
+    repo = _seed_repo(tmp_path)
+    (repo / "artifacts/daily_scorecard/latest_daily_scorecard.json").unlink()
+
+    status = build_public_status(repo)
+
+    assert status["generated_at_et"] == "2026-04-03T14:33:34+00:00"
+    assert status["paper"]["equity"] == 93990.30
+    assert status["paper"]["total_pnl_today"] == -14.0
+    assert "tracked broker sync" in status["narrative"]["summary"]

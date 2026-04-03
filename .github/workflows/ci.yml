@@ -15,4 +15,4 @@ jobs:
       - name: Trunk Check
         uses: trunk-io/trunk-action@v1
         with:
-          trunk_token: ${{ secrets.TRUNK_API_TOKEN }}
+          trunk-token: ${{ secrets.TRUNK_API_TOKEN }}

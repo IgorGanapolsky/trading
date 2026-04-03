@@ -3,6 +3,7 @@ layout: none
 title: SPY Options Validation Platform
 permalink: /
 ---
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -274,6 +275,7 @@ permalink: /
         }
       }
     </style>
+
   </head>
   <body>
     <main class="shell">
@@ -326,7 +328,7 @@ permalink: /
         <article class="panel metric">
           <h2>Today P/L</h2>
           <strong id="paper-pnl">—</strong>
-          <small id="paper-pnl-detail">Realized and unrealized decomposition loads below.</small>
+          <small id="paper-pnl-detail">Detailed decomposition is sourced from the operator scorecard.</small>
         </article>
         <article class="panel metric">
           <h2>Closed Trades</h2>
@@ -401,8 +403,17 @@ permalink: /
 
         document.getElementById("paper-equity").textContent = formatMoney(paper.equity);
         document.getElementById("paper-pnl").textContent = formatMoney(paper.total_pnl_today);
-        document.getElementById("paper-pnl-detail").textContent =
-          `Realized ${formatMoney(paper.realized_pnl_today)} | Unrealized ${formatMoney(paper.unrealized_pnl_today)} | Fills ${paper.fills_today_count ?? "n/a"}`;
+        if (
+          typeof paper.realized_pnl_today === "number" ||
+          typeof paper.unrealized_pnl_today === "number" ||
+          paper.fills_today_count !== null && paper.fills_today_count !== undefined
+        ) {
+          document.getElementById("paper-pnl-detail").textContent =
+            `Realized ${formatMoney(paper.realized_pnl_today)} | Unrealized ${formatMoney(paper.unrealized_pnl_today)} | Fills ${paper.fills_today_count ?? "n/a"}`;
+        } else {
+          document.getElementById("paper-pnl-detail").textContent =
+            "Detailed realized/unrealized decomposition is available in the operator scorecard.";
+        }
 
         document.getElementById("closed-trades").textContent = `${ledger.closed_trades_total ?? "n/a"}`;
         document.getElementById("win-rate").textContent =
@@ -441,5 +452,6 @@ permalink: /
             "The current public-status bundle could not be loaded. This is itself a public-surface failure.";
         });
     </script>
+
   </body>
 </html>
