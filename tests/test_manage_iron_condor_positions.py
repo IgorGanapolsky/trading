@@ -21,7 +21,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from scripts.manage_iron_condor_positions import (
@@ -108,6 +107,7 @@ class TestExitConditions:
             "expiry": datetime.now() + timedelta(days=5),
             "total_pl": 50,
             "credit_received": 200,
+            "entry_date": (datetime.now() - timedelta(days=25)).isoformat(),  # held 25 days
         }
         should_exit, reason, _ = check_exit_conditions(ic)
         assert should_exit is True
@@ -119,6 +119,7 @@ class TestExitConditions:
             "expiry": datetime.now() + timedelta(days=30),  # Not near expiry
             "total_pl": 110,  # 55% profit (above 50% target)
             "credit_received": 200,
+            "entry_date": (datetime.now() - timedelta(days=2)).isoformat(),  # held 2 days
         }
         should_exit, reason, _ = check_exit_conditions(ic)
         assert should_exit is True
@@ -130,6 +131,7 @@ class TestExitConditions:
             "expiry": datetime.now() + timedelta(days=30),
             "total_pl": -220,  # 110% loss (above 100% stop)
             "credit_received": 200,
+            "entry_date": (datetime.now() - timedelta(days=2)).isoformat(),  # held 2 days
         }
         should_exit, reason, _ = check_exit_conditions(ic)
         assert should_exit is True
@@ -141,6 +143,7 @@ class TestExitConditions:
             "expiry": datetime.now() + timedelta(days=25),  # 25 DTE
             "total_pl": 40,  # 20% profit - not at target
             "credit_received": 200,
+            "entry_date": (datetime.now() - timedelta(days=2)).isoformat(),  # held 2 days
         }
         should_exit, reason, _ = check_exit_conditions(ic)
         assert should_exit is False
