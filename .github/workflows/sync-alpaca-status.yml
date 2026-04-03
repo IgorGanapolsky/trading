@@ -63,6 +63,8 @@ jobs:
           python3 scripts/sync_alpaca_state.py
           python3 scripts/sync_closed_positions.py || echo "⚠️ Closed positions sync failed - win rate may be stale"
           python3 scripts/update_ml_from_trades.py || echo "⚠️ ML feedback loop update failed"
+          python3 scripts/research_strategies.py || echo "⚠️ Strategy research failed"
+          python3 scripts/post_market_analysis.py || echo "⚠️ Post-market analysis failed"
           python3 scripts/update_north_star_operating_plan.py || echo "⚠️ North Star operating plan update failed"
 
       - name: Build public status surfaces
@@ -118,6 +120,9 @@ jobs:
           git add models/ml/grpo_trade_policy.pt 2>/dev/null || true
           git add models/ml/grpo_trade_metadata.json 2>/dev/null || true
           git add -f data/rag_knowledge/lessons_learned/postmortem_*.md 2>/dev/null || true
+          git add -f data/rag_knowledge/lessons_learned/research_*.md 2>/dev/null || true
+          git add data/research_state.json 2>/dev/null || true
+          git add -f data/post_market_analysis/ 2>/dev/null || true
           git add data/TRADING_HALTED 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "No state changes to commit"

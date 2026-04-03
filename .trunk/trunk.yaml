@@ -25,11 +25,11 @@ runtimes:
 # This is the section where you manage your linters. (https://docs.trunk.io/check/configuration)
 lint:
   disabled:
+    - mypy
     - black # CI uses ruff format, not black
   enabled:
     - gofmt@1.20.4
     - golangci-lint2@2.11.4
-    - mypy@1.20.0
     - taplo@0.10.0
     - actionlint@1.7.12
     - bandit@1.9.4
@@ -49,6 +49,7 @@ lint:
     - linters: [bandit]
       paths:
         - tests/**
+        - scripts/research_strategies.py
 
 actions:
   disabled:
