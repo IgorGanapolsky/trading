@@ -722,11 +722,18 @@ class IronCondorStrategy:
                         OptionLegRequest(symbol=long_call_sym, side=OrderSide.BUY, ratio_qty=1),
                     ]
 
-                    logger.info("📋 Building MLeg (multi-leg) iron condor order...")
-                    logger.info(f"   Long Put:   {long_put_sym} (BUY)")
-                    logger.info(f"   Short Put:  {short_put_sym} (SELL)")
-                    logger.info(f"   Short Call: {short_call_sym} (SELL)")
-                    logger.info(f"   Long Call:  {long_call_sym} (BUY)")
+                    # FIX Apr 3, 2026: Scale to 2 contracts per IC.
+                    # 1 contract collects ~$200 (0.2% of account). 2 contracts = ~$400.
+                    # MAX_CONTRACTS_PER_TRADE from constants controls this.
+                    from src.core.trading_constants import MAX_CONTRACTS_PER_TRADE
+
+                    ic_qty = MAX_CONTRACTS_PER_TRADE  # Default: 2
+
+                    logger.info(f"📋 Building MLeg iron condor order ({ic_qty} contracts)...")
+                    logger.info(f"   Long Put:   {long_put_sym} (BUY x{ic_qty})")
+                    logger.info(f"   Short Put:  {short_put_sym} (SELL x{ic_qty})")
+                    logger.info(f"   Short Call: {short_call_sym} (SELL x{ic_qty})")
+                    logger.info(f"   Long Call:  {long_call_sym} (BUY x{ic_qty})")
 
                     # Use LIMIT order to control entry credit (market orders lose $12-40/trade in slippage)
                     # The executor supports LimitOrderRequest with net_credit as limit_price.
@@ -739,10 +746,11 @@ class IronCondorStrategy:
                         limit_credit = round(ic.credit_received - 0.05, 2)
                         if limit_credit < 0.50:
                             limit_credit = 0.50  # Floor: never accept less than $0.50
-                        logger.info(f"   Limit price: -${limit_credit:.2f} (credit)")
+                        logger.info(f"   Limit price: -${limit_credit:.2f} (credit per contract)")
+                        logger.info(f"   Total credit target: ~${limit_credit * ic_qty * 100:.0f}")
 
                         order_req = LimitOrderRequest(
-                            qty=1,
+                            qty=ic_qty,
                             order_class=OrderClass.MLEG,
                             legs=option_legs,
                             time_in_force=TimeInForce.DAY,
@@ -768,6 +776,65 @@ class IronCondorStrategy:
                         logger.info(f"✅ MLeg order submitted: {order.id}")
                         logger.info(f"   Status: {order.status}")
                         status = "LIVE_SUBMITTED"
+
+                        # FIX Apr 3, 2026: Place GTC 50% profit close order AFTER fill.
+                        # Data shows 90% of trades closed by manage script in < 1 hour
+                        # at 6.5% win rate. A GTC limit order on Alpaca lets theta work.
+                        # SAFETY: Must wait for entry fill — placing a close order before
+                        # the entry fills would create naked positions in the opposite direction.
+                        import time
+
+                        try:
+                            profit_target_credit = round(limit_credit * IC_PROFIT_TARGET_PCT, 2)
+                            close_debit = round(limit_credit - profit_target_credit, 2)
+
+                            # Poll for entry fill (max 60 seconds)
+                            entry_filled = False
+                            for _poll in range(12):
+                                refreshed = client.get_order_by_id(order.id)
+                                if str(refreshed.status) in ("OrderStatus.FILLED", "filled"):
+                                    entry_filled = True
+                                    logger.info(f"   Entry order FILLED at {refreshed.filled_avg_price}")
+                                    break
+                                if str(refreshed.status) in (
+                                    "OrderStatus.CANCELED", "OrderStatus.EXPIRED",
+                                    "OrderStatus.REJECTED", "canceled", "expired", "rejected",
+                                ):
+                                    logger.warning(f"   Entry order {refreshed.status} — skipping close order")
+                                    break
+                                time.sleep(5)
+
+                            if entry_filled:
+                                close_legs = [
+                                    OptionLegRequest(symbol=long_put_sym, side=OrderSide.SELL, ratio_qty=1),
+                                    OptionLegRequest(symbol=short_put_sym, side=OrderSide.BUY, ratio_qty=1),
+                                    OptionLegRequest(symbol=short_call_sym, side=OrderSide.BUY, ratio_qty=1),
+                                    OptionLegRequest(symbol=long_call_sym, side=OrderSide.SELL, ratio_qty=1),
+                                ]
+
+                                close_order_req = LimitOrderRequest(
+                                    qty=ic_qty,
+                                    order_class=OrderClass.MLEG,
+                                    legs=close_legs,
+                                    time_in_force=TimeInForce.GTC,
+                                    limit_price=round(close_debit, 2),
+                                )
+
+                                close_order = safe_submit_order(client, close_order_req)
+                                logger.info(f"✅ GTC 50% profit close order placed: {close_order.id}")
+                                logger.info(f"   Close at ${close_debit:.2f} debit (50% of ${limit_credit:.2f} credit)")
+                                order_ids.append(
+                                    {
+                                        "order_id": str(close_order.id),
+                                        "type": "gtc_profit_target_close",
+                                        "close_debit": close_debit,
+                                    }
+                                )
+                            else:
+                                logger.warning("   Entry not filled within 60s — close order deferred to manage script")
+                        except Exception as close_err:
+                            logger.warning(f"⚠️ Could not place GTC profit close: {close_err}")
+                            logger.warning("   Will rely on manage_iron_condor_positions.py for exits")
 
                         # Save entry credit so Guardian knows the real entry price
                         try:

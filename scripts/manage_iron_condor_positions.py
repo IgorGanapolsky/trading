@@ -160,7 +160,12 @@ def check_exit_conditions(ic: dict) -> tuple[bool, str, str]:
     Check if iron condor meets exit conditions.
     Returns: (should_exit, reason, details)
     """
-    # Minimum holding period: 4 hours (prevent same-day churn)
+    # Minimum holding period: 24 hours (prevent same-day churn)
+    # FIX Apr 3, 2026: Increased from 4h to 24h. Data shows 90% of trades
+    # held < 1 hour have 6.5% win rate vs 50% for trades held > 1 day.
+    # Theta decay needs TIME to work. Also: if entry_date is missing,
+    # HOLD by default instead of bypassing the check.
+    MIN_HOLD_HOURS = 24
     entry_date = ic.get("entry_date")
     if entry_date:
         from datetime import datetime
@@ -168,10 +173,13 @@ def check_exit_conditions(ic: dict) -> tuple[bool, str, str]:
         try:
             entry_dt = datetime.fromisoformat(entry_date)
             hours_held = (datetime.now() - entry_dt).total_seconds() / 3600
-            if hours_held < 4:
-                return False, "HOLD", f"Held {hours_held:.1f}h < 4h minimum"
+            if hours_held < MIN_HOLD_HOURS:
+                return False, "HOLD", f"Held {hours_held:.1f}h < {MIN_HOLD_HOURS}h minimum"
         except (ValueError, TypeError):
             pass
+    else:
+        # No entry date recorded — hold by default to prevent premature exits
+        return False, "HOLD", "No entry_date recorded — holding (safety default)"
 
     dte = calculate_dte(ic["expiry"])
     pl = ic["total_pl"]
@@ -410,21 +418,28 @@ def record_trade_outcome(ic: dict, reason: str, won: bool) -> None:
 
 
 def get_alpaca_credentials():
-    """Get Alpaca credentials from environment variables (CI-compatible)."""
-    import os
+    """Get Alpaca credentials — delegates to canonical function.
 
-    # Try multiple env var names for compatibility
-    api_key = (
-        os.environ.get("ALPACA_API_KEY")
-        or os.environ.get("ALPACA_PAPER_TRADING_5K_API_KEY")
-        or os.environ.get("ALPACA_PAPER_TRADING_30K_API_KEY")
-    )
-    secret_key = (
-        os.environ.get("ALPACA_SECRET_KEY")
-        or os.environ.get("ALPACA_PAPER_TRADING_5K_API_SECRET")
-        or os.environ.get("ALPACA_PAPER_TRADING_30K_API_SECRET")
-    )
-    return api_key, secret_key
+    FIX Apr 3, 2026: Was checking wrong env var names (5K/30K variants).
+    Now uses the canonical lookup from src/utils/alpaca_client.py which
+    checks ALPACA_PAPER_TRADING_API_KEY (matching .env).
+    """
+    try:
+        from src.utils.alpaca_client import get_alpaca_credentials as _canonical
+
+        return _canonical()
+    except ImportError:
+        import os
+
+        api_key = (
+            os.environ.get("ALPACA_PAPER_TRADING_API_KEY")
+            or os.environ.get("ALPACA_API_KEY")
+        )
+        secret_key = (
+            os.environ.get("ALPACA_PAPER_TRADING_API_SECRET")
+            or os.environ.get("ALPACA_SECRET_KEY")
+        )
+        return api_key, secret_key
 
 
 def main(dry_run: bool = False):
@@ -478,14 +493,31 @@ def main(dry_run: bool = False):
             orphan_groups.append(ic)
 
     if orphan_groups:
-        logger.warning(f"Found {len(orphan_groups)} ORPHAN position group(s) — closing")
+        # FIX Apr 3, 2026: Don't immediately close orphans — they may be partial fills
+        # that will complete. Only close orphans older than 24 hours.
+        logger.warning(f"Found {len(orphan_groups)} ORPHAN position group(s)")
         for orphan in orphan_groups:
+            orphan_dte = calculate_dte(orphan["expiry"])
+            entry_date = orphan.get("entry_date")
+            hours_since_entry = 0
+            if entry_date:
+                try:
+                    entry_dt = datetime.fromisoformat(entry_date)
+                    hours_since_entry = (datetime.now() - entry_dt).total_seconds() / 3600
+                except (ValueError, TypeError):
+                    pass
+
             logger.warning(
                 f"  Orphan: {orphan['expiry_str']} ({len(orphan['legs'])} legs, "
-                f"P/L=${orphan['total_pl']:.2f})"
+                f"P/L=${orphan['total_pl']:.2f}, age={hours_since_entry:.1f}h)"
             )
-            if close_iron_condor(client, orphan, "ORPHAN_CLEANUP", dry_run):
-                record_trade_outcome(orphan, "ORPHAN_CLEANUP", won=False)
+
+            if hours_since_entry >= 24 or orphan_dte <= 1:
+                logger.warning(f"  Closing orphan (age={hours_since_entry:.1f}h, DTE={orphan_dte})")
+                if close_iron_condor(client, orphan, "ORPHAN_CLEANUP", dry_run):
+                    record_trade_outcome(orphan, "ORPHAN_CLEANUP", won=False)
+            else:
+                logger.info("  Holding orphan — may be partial fill (age < 24h)")
 
     iron_condors = valid_condors
     logger.info(f"Valid iron condors: {len(iron_condors)}")
