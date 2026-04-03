@@ -135,7 +135,12 @@ def build_public_status(repo_root: Path) -> dict[str, Any]:
         "gate": {
             "mode": weekly.get("mode"),
             "block_new_positions": weekly.get("block_new_positions"),
-            "verified_edge_available": weekly.get("verified_edge_available"),
+            # FIX Apr 3, 2026: Edge requires all-time win rate >= 50% AND 30+ trades.
+            "verified_edge_available": (
+                bool(weekly.get("verified_edge_available"))
+                and (stats.get("win_rate_pct") or 0) >= 50
+                and closed_total >= 30
+            ),
             "recommended_max_position_pct": weekly.get("recommended_max_position_pct"),
             "sample_size": weekly.get("sample_size"),
             "expectancy_per_trade": weekly.get("expectancy_per_trade"),
@@ -143,7 +148,14 @@ def build_public_status(repo_root: Path) -> dict[str, Any]:
             "blocker_reason": weekly.get("reason"),
             "qualified_setups_this_week": cadence.get("qualified_setups_observed"),
             "closed_trades_this_week": cadence.get("closed_trades_observed"),
-            "scale_allowed": not bool(weekly.get("block_new_positions")),
+            # FIX Apr 3, 2026: Override scale_allowed using all-time win rate.
+            # Weekly window can cherry-pick 1 winning trade and claim "edge available"
+            # while the full ledger shows 24% win rate and -$3,402 P&L.
+            "scale_allowed": (
+                not bool(weekly.get("block_new_positions"))
+                and (stats.get("win_rate_pct") or 0) >= 50
+                and closed_total >= 30
+            ),
             "scaling_gate_closed_trades_observed": scaling.get(
                 "closed_trades_observed", closed_total
             ),
@@ -160,7 +172,7 @@ def build_public_status(repo_root: Path) -> dict[str, Any]:
             ),
         },
         "links": {
-            "operator_dashboard": "/trading/rag-query.html",
+            "operator_dashboard": "https://github.com/IgorGanapolsky/trading/wiki/Progress-Dashboard",
             "repo": "https://github.com/IgorGanapolsky/trading",
             "wiki": "https://github.com/IgorGanapolsky/trading/wiki",
         },

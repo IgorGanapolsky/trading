@@ -30,7 +30,7 @@
   "gate": {
     "mode": "validation",
     "block_new_positions": false,
-    "verified_edge_available": true,
+    "verified_edge_available": false,
     "recommended_max_position_pct": 0.015,
     "sample_size": 1,
     "expectancy_per_trade": 96.0,
@@ -38,7 +38,7 @@
     "blocker_reason": "Insufficient recent weekly evidence; keep conservative sizing. Cadence KPI miss: setups 0/1, closed trades 1/1.",
     "qualified_setups_this_week": 0,
     "closed_trades_this_week": 1,
-    "scale_allowed": true,
+    "scale_allowed": false,
     "scaling_gate_closed_trades_observed": 66,
     "scaling_gate_min_closed_trades": 30
   },
@@ -47,7 +47,7 @@
     "thesis": "This project is currently a paper-first validation platform, not a proven passive-income engine. Public surfaces should show current gate state and broker-backed evidence rather than frozen claims."
   },
   "links": {
-    "operator_dashboard": "/trading/rag-query.html",
+    "operator_dashboard": "https://github.com/IgorGanapolsky/trading/wiki/Progress-Dashboard",
     "repo": "https://github.com/IgorGanapolsky/trading",
     "wiki": "https://github.com/IgorGanapolsky/trading/wiki"
   }

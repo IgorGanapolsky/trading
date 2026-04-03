@@ -285,7 +285,7 @@ permalink: /
           <span>SPY Options Validation Platform</span>
         </div>
         <nav class="nav">
-          <a href="{{ '/rag-query.html' | relative_url }}">Operator Dashboard</a>
+          <a href="https://github.com/IgorGanapolsky/trading/wiki/Progress-Dashboard">Operator Dashboard</a>
           <a href="{{ '/blog.html' | relative_url }}">Research</a>
           <a href="https://github.com/IgorGanapolsky/trading/wiki">Wiki</a>
           <a href="https://github.com/IgorGanapolsky/trading">GitHub</a>
@@ -301,7 +301,7 @@ permalink: /
             This page renders from a generated public-status bundle so investor-facing copy stays congruent with the ledgers.
           </p>
           <div class="hero-actions">
-            <a class="cta" href="{{ '/rag-query.html' | relative_url }}">Open operator dashboard</a>
+            <a class="cta" href="https://github.com/IgorGanapolsky/trading/wiki/Progress-Dashboard">Open operator dashboard</a>
             <a class="ghost" href="https://github.com/IgorGanapolsky/trading">View repository</a>
           </div>
           <div class="timestamp" id="generated-at">Loading current public status…</div>

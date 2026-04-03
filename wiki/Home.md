@@ -15,7 +15,7 @@ This wiki is generated from the same source used by the public dashboard and rep
 ## Key Links
 
 - [Public dashboard](https://igorganapolsky.github.io/trading)
-- [Operator dashboard](https://igorganapolsky.github.io/trading/rag-query.html)
+- [Operator dashboard](Progress-Dashboard)
 - [Progress Dashboard](Progress-Dashboard)
 - [Development Engine and Evidence](Development-Engine-and-Evidence)
 

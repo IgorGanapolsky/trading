@@ -12,7 +12,6 @@ plugins:
   - jekyll-sitemap
 
 header_pages:
-  - rag-query.html
   - blog.html
 
 defaults:

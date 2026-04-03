@@ -16,7 +16,7 @@ This document describes the current validated playbook surface, not a promise of
 Current operating truth should be pulled from the canonical ledgers and public dashboard:
 
 - [Public status bundle](data/public_status.json)
-- [Operator dashboard](rag-query.html)
+- [Operator dashboard](https://github.com/IgorGanapolsky/trading/wiki/Progress-Dashboard)
 - [System state](../data/system_state.json)
 - [Paired-trade ledger](../data/trades.json)
 

@@ -20,9 +20,9 @@ This page is generated from broker-backed scorecards and the canonical paired-tr
 
 - Mode: `validation`
 - Block new positions: `False`
-- Verified edge available: `True`
-- Recommended max position size: `0.015`
-- Weekly expectancy per trade: `$96.00`
+- Verified edge available: `False` (24.24% win rate < 50% threshold)
+- Recommended max position size: `0.01` (conservative — no proven edge)
+- Weekly expectancy per trade: `$96.00` (1-week window, not statistically significant)
 - Scaling gate: `66` / `30`
 - Qualified setups this week: `0`
 - Closed trades this week: `1`
@@ -33,6 +33,6 @@ This page is generated from broker-backed scorecards and the canonical paired-tr
 
 ## Canonical Links
 
-- Public dashboard: https://igorganapolsky.github.io/trading/rag-query.html
+- Public dashboard: https://igorganapolsky.github.io/trading/
 - GitHub repo: https://github.com/IgorGanapolsky/trading
 - Wiki: https://github.com/IgorGanapolsky/trading/wiki
