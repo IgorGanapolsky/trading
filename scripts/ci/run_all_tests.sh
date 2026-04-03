@@ -10,7 +10,7 @@ INTEGRATION_TIMEOUT_MINUTES="${INTEGRATION_TIMEOUT_MINUTES:-12}"
 COV_FAIL_UNDER="${COV_FAIL_UNDER:-15}"
 HEARTBEAT_SECONDS="${HEARTBEAT_SECONDS:-60}"
 PYTHON_BIN="${PYTHON_BIN-}"
-COV_TARGET="${COV_TARGET:-src}"
+COV_TARGET="${COV_TARGET:-src scripts}"
 CORE_TARGETS="${CORE_TARGETS:-tests --ignore=tests/integration}"
 INTEGRATION_TARGETS="${INTEGRATION_TARGETS:-tests/integration}"
 CRITICAL_COVERAGE_SCRIPT="${CRITICAL_COVERAGE_SCRIPT:-scripts/ci/check_critical_coverage.py}"
@@ -100,6 +100,17 @@ run_phase() {
 	if [[ -n ${timeout_args} ]]; then
 		read -r -a timeout_args_arr <<<"${timeout_args}"
 	fi
+	local -a cov_targets_arr=()
+	local -a cov_args=()
+	read -r -a cov_targets_arr <<<"${COV_TARGET}"
+	if [[ ${#cov_targets_arr[@]} -eq 0 ]]; then
+		cov_targets_arr=("src")
+	fi
+	local cov_target
+	for cov_target in "${cov_targets_arr[@]}"; do
+		[[ -n ${cov_target} ]] || continue
+		cov_args+=("--cov=${cov_target}")
+	done
 	local log_file="${REPORT_DIR}/${phase}.log"
 	local junit_file="${REPORT_DIR}/junit-${phase}.xml"
 	local rc_file="${REPORT_DIR}/.${phase}.rc"
@@ -117,7 +128,7 @@ run_phase() {
 				--tb=long \
 				--durations=25 \
 				"${timeout_args_arr[@]}" \
-				--cov="${COV_TARGET}" \
+				"${cov_args[@]}" \
 				--cov-append \
 				--cov-report= \
 				--junitxml="${junit_file}" \
@@ -130,7 +141,7 @@ run_phase() {
 				--tb=long \
 				--durations=25 \
 				"${timeout_args_arr[@]}" \
-				--cov="${COV_TARGET}" \
+				"${cov_args[@]}" \
 				--cov-append \
 				--cov-report= \
 				--junitxml="${junit_file}" \

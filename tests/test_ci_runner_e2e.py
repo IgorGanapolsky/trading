@@ -142,3 +142,39 @@ def test_runner_reports_missing_integration_tests_truthfully(tmp_path: Path):
     assert result.returncode == 0, result.stdout + result.stderr
     assert "integration phase skipped: no tests/integration test files" in result.stdout
     assert not (report_dir / "junit-integration.xml").exists()
+
+
+def test_runner_supports_multiple_coverage_targets(tmp_path: Path):
+    repo = _seed_runner_repo(tmp_path)
+    (repo / "scripts" / "sample_script.py").write_text(
+        "def ping() -> str:\n    return 'pong'\n",
+        encoding="utf-8",
+    )
+    (repo / "tests" / "test_script.py").write_text(
+        textwrap.dedent(
+            """
+            from scripts.sample_script import ping
+
+            def test_ping():
+                assert ping() == "pong"
+            """
+        ).strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    report_dir = repo / "artifacts" / "reports"
+    env = _runner_env(report_dir)
+    env["COV_TARGET"] = "src scripts"
+
+    result = subprocess.run(
+        ["bash", "scripts/ci/run_all_tests.sh"],
+        cwd=repo,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    coverage_xml = (repo / "coverage.xml").read_text(encoding="utf-8")
+    assert "sample_script.py" in coverage_xml

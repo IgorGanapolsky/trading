@@ -445,10 +445,11 @@ class TestTradeLog:
 
 class TestCloseIronCondor:
     def test_closes_all_legs(self, guardian):
-        """close_iron_condor should submit a close order for each leg."""
+        """A complete IC should submit a single atomic MLEG close."""
         mock_client = MagicMock()
         mock_order = MagicMock()
         mock_order.status = "filled"
+        mock_order.id = "mleg-close-1"
 
         with patch.object(guardian, "safe_submit_order", return_value=mock_order) as mock_submit:
             with patch.object(guardian, "update_trade_log_on_exit"):
@@ -461,10 +462,12 @@ class TestCloseIronCondor:
                     ]
                 }
                 guardian.close_iron_condor(mock_client, ic_data, "TEST", "260410", 100.0)
-                assert mock_submit.call_count == 4
+                assert mock_submit.call_count == 1
+                order_request = mock_submit.call_args[0][1]
+                assert len(order_request.legs) == 4
 
     def test_short_legs_get_buy_order(self, guardian):
-        """Short legs (qty < 0) should be closed with BUY orders."""
+        """Short single legs fall back to BUY market orders."""
         mock_client = MagicMock()
         mock_order = MagicMock()
         mock_order.status = "filled"
@@ -479,10 +482,11 @@ class TestCloseIronCondor:
                 guardian.close_iron_condor(mock_client, ic_data, "TEST", "260410", 0.0)
                 call_args = mock_submit.call_args[0]
                 order_request = call_args[1]
-                assert order_request.side.value == "buy"
+                side = getattr(order_request.side, "value", order_request.side)
+                assert side == "buy"
 
     def test_long_legs_get_sell_order(self, guardian):
-        """Long legs (qty > 0) should be closed with SELL orders."""
+        """Long single legs fall back to SELL market orders."""
         mock_client = MagicMock()
         mock_order = MagicMock()
         mock_order.status = "filled"
@@ -497,7 +501,8 @@ class TestCloseIronCondor:
                 guardian.close_iron_condor(mock_client, ic_data, "TEST", "260410", 0.0)
                 call_args = mock_submit.call_args[0]
                 order_request = call_args[1]
-                assert order_request.side.value == "sell"
+                side = getattr(order_request.side, "value", order_request.side)
+                assert side == "sell"
 
     def test_handles_close_failure(self, guardian):
         """If a leg fails to close, the other legs should still be attempted."""

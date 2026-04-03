@@ -7,6 +7,7 @@ price-walking, and full E2E pipeline with mocked Alpaca client.
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -28,7 +29,12 @@ def _ensure_module(name):
         for i in range(len(parts)):
             partial = ".".join(parts[: i + 1])
             if partial not in _sys.modules:
-                _sys.modules[partial] = types.ModuleType(partial)
+                module = types.ModuleType(partial)
+                _sys.modules[partial] = module
+                if i > 0:
+                    parent_name = ".".join(parts[:i])
+                    parent = _sys.modules[parent_name]
+                    setattr(parent, parts[i], module)
 
 
 # Alpaca SDK stubs
@@ -47,6 +53,15 @@ for mod in [
     _ensure_module(mod)
 
 # Create mock enums/classes that place_ic imports
+_client = cast(Any, _sys.modules["alpaca.trading.client"])
+_client.TradingClient = type(
+    "TradingClient",
+    (),
+    {
+        "__init__": lambda self, *args, **kwargs: None,
+    },
+)
+
 _enums = _sys.modules["alpaca.trading.enums"]
 _enums.OrderClass = type("OrderClass", (), {"MLEG": "MLEG", "SIMPLE": "SIMPLE"})
 _enums.OrderSide = type("OrderSide", (), {"BUY": "buy", "SELL": "sell"})
@@ -430,6 +445,7 @@ class TestE2EPipeline:
     @patch("scripts.ic_simple._wait_for_fill", return_value=True)
     @patch("src.safety.mandatory_trade_gate.safe_submit_order")
     @patch("scripts.ic_simple.find_opportunity")
+    @patch("scripts.ic_simple._get_thompson_confidence", return_value=0.90)
     @patch("scripts.ic_simple._count_open_ics", return_value=0)
     @patch("scripts.ic_simple._cancel_stale_orders")
     @patch("scripts.ic_simple._check_recent_fills")
@@ -444,6 +460,7 @@ class TestE2EPipeline:
         mock_fills,
         mock_stale,
         mock_count,
+        mock_thompson,
         mock_opp,
         mock_submit,
         mock_wait,

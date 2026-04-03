@@ -254,6 +254,7 @@ def close_iron_condor(client, ic_data: dict, reason: str, expiry: str, pnl: floa
 
         if len(option_legs) == 4:
             from alpaca.trading.requests import LimitOrderRequest as LmtReq
+            from alpaca.trading.requests import OptionLegRequest
 
             # Calculate debit limit for close: current value + $0.10 concession
             current_debit = abs(
@@ -265,7 +266,7 @@ def close_iron_condor(client, ic_data: dict, reason: str, expiry: str, pnl: floa
             mleg_order = LmtReq(
                 qty=close_qty,
                 order_class=OC.MLEG,
-                legs=option_legs,
+                legs=[OptionLegRequest(**leg) for leg in option_legs],
                 time_in_force=TimeInForce.DAY,
                 limit_price=round(limit_debit, 2),
             )
