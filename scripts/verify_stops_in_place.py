@@ -24,7 +24,6 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -35,35 +34,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Add project root to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-def get_alpaca_client():
-    """Get Alpaca trading client with paper trading 5K credentials."""
-    try:
-        from alpaca.trading.client import TradingClient
-    except ImportError:
-        logger.error("alpaca-py not installed. Cannot verify stops.")
-        return None
-
-    # Use unified credentials (prioritizes $5K paper account per CLAUDE.md)
-    try:
-        from src.utils.alpaca_client import get_alpaca_credentials
-
-        api_key, api_secret = get_alpaca_credentials()
-    except ImportError:
-        # Fallback: use $5K account credentials directly
-        api_key = os.environ.get("ALPACA_PAPER_TRADING_5K_API_KEY")
-        api_secret = os.environ.get("ALPACA_PAPER_TRADING_5K_API_SECRET")
-
-    if not api_key or not api_secret:
-        logger.error("Alpaca credentials not found in environment")
-        return None
-
-    try:
-        client = TradingClient(api_key, api_secret, paper=True)
-        return client
-    except Exception as e:
-        logger.error(f"Failed to create Alpaca client: {e}")
-        return None
+from src.utils.alpaca_client import get_alpaca_client  # noqa: E402
 
 
 def get_open_positions(client) -> list[dict]:

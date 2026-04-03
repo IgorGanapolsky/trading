@@ -6,7 +6,6 @@ Covers: is_trading_day, get_next_trading_day, validate_schedule_time, get_alpaca
 All Alpaca API calls are mocked -- no live network needed.
 """
 
-import os
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -17,7 +16,6 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.utils.calendar_validation import (
-    get_alpaca_client,
     get_next_trading_day,
     is_trading_day,
     validate_schedule_time,
@@ -32,41 +30,8 @@ SATURDAY = datetime(2026, 2, 21, 10, 0, 0)  # Saturday
 SUNDAY = datetime(2026, 2, 22, 10, 0, 0)  # Sunday
 
 
-# ---------------------------------------------------------------------------
-# get_alpaca_client
-# ---------------------------------------------------------------------------
-
-
-@patch("src.utils.calendar_validation.get_alpaca_credentials", return_value=("key", "secret"))
-@patch("src.utils.calendar_validation.TradingClient")
-def test_get_alpaca_client_returns_client(mock_tc, mock_creds):
-    """Should construct a TradingClient with credentials."""
-    client = get_alpaca_client()
-    mock_tc.assert_called_once_with("key", "secret", paper=True)
-    assert client is mock_tc.return_value
-
-
-@patch("src.utils.calendar_validation.get_alpaca_credentials", return_value=("key", "secret"))
-@patch("src.utils.calendar_validation.TradingClient")
-@patch.dict(os.environ, {"PAPER_TRADING": "false"})
-def test_get_alpaca_client_live_mode(mock_tc, mock_creds):
-    """When PAPER_TRADING=false, paper should be False."""
-    get_alpaca_client()
-    mock_tc.assert_called_once_with("key", "secret", paper=False)
-
-
-@patch("src.utils.calendar_validation.get_alpaca_credentials", return_value=("", ""))
-def test_get_alpaca_client_raises_on_empty_credentials(mock_creds):
-    """Should raise ValueError when credentials are empty strings."""
-    with pytest.raises(ValueError, match="credentials not configured"):
-        get_alpaca_client()
-
-
-@patch("src.utils.calendar_validation.get_alpaca_credentials", return_value=(None, None))
-def test_get_alpaca_client_raises_on_none_credentials(mock_creds):
-    """Should raise ValueError when credentials are None."""
-    with pytest.raises(ValueError, match="credentials not configured"):
-        get_alpaca_client()
+# NOTE: get_alpaca_client tests removed — function now imported from
+# src.utils.alpaca_client (tested in tests/test_alpaca_client.py)
 
 
 # ---------------------------------------------------------------------------
@@ -234,13 +199,6 @@ def test_get_next_trading_day_holiday_on_friday(mock_is_td):
     assert result == expected_monday
 
 
-@patch("src.utils.calendar_validation.get_alpaca_credentials", return_value=("key", "secret"))
-@patch("src.utils.calendar_validation.TradingClient")
-@patch.dict(os.environ, {"PAPER_TRADING": "TRUE"})
-def test_get_alpaca_client_paper_case_insensitive(mock_tc, mock_creds):
-    """PAPER_TRADING env var should be case-insensitive."""
-    get_alpaca_client()
-    mock_tc.assert_called_once_with("key", "secret", paper=True)
 
 
 if __name__ == "__main__":

@@ -53,11 +53,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+from src.utils.alpaca_client import (  # noqa: E402
+    get_alpaca_client,
+    get_options_data_client,
+)
+
 
 def get_alpaca_clients():
     """Initialize Alpaca trading and options clients."""
-    from src.utils.alpaca_client import get_alpaca_client, get_options_data_client
-
     paper = os.getenv("PAPER_TRADING", "true").lower() == "true"
     trading_client = get_alpaca_client(paper=paper)
     options_client = get_options_data_client()

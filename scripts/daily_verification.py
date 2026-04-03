@@ -12,10 +12,19 @@ No complexity. No lies. Just facts.
 
 import json
 import ssl
+import sys
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import NamedTuple
+
+# Add project root to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from src.utils.alpaca_client import (  # noqa: E402
+    get_alpaca_client,
+    get_alpaca_credentials,
+)
 
 
 class DailyReport(NamedTuple):
@@ -33,11 +42,6 @@ class DailyReport(NamedTuple):
     starting_equity: float = 100000.0
 
 
-def get_alpaca_client():
-    """Get Alpaca client or None if not configured."""
-    from src.utils.alpaca_client import get_alpaca_client as _get_client
-
-    return _get_client(paper=True)
 
 
 def _today_et() -> tuple[str, datetime]:
@@ -60,8 +64,6 @@ def _today_et() -> tuple[str, datetime]:
 
 def _fetch_fills_count_for_date(date_str: str, paper: bool = True) -> int:
     """Fetch fill count for a given date via Alpaca account activities endpoint."""
-    from src.utils.alpaca_client import get_alpaca_credentials
-
     api_key, secret_key = get_alpaca_credentials()
     if not api_key or not secret_key:
         return 0

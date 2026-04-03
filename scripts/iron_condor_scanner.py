@@ -32,6 +32,7 @@ from zoneinfo import ZoneInfo
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
+
 from src.core.trading_constants import MAX_POSITIONS as MAX_OPTION_LEGS
 
 # Guard against AssertionError in CI/GitHub Actions where stdin is not a TTY
@@ -53,13 +54,14 @@ WING_WIDTH = 10  # $10 wide spreads per CLAUDE.md
 
 IC_TRADE_LOG = Path(__file__).parent.parent / "data" / "ic_trade_log.json"
 
+from src.utils.alpaca_client import get_alpaca_credentials  # noqa: E402
+
 
 def get_alpaca_clients():
     """Get Alpaca trading and data clients."""
     from alpaca.data.historical import StockHistoricalDataClient
     from alpaca.data.historical.option import OptionHistoricalDataClient
     from alpaca.trading.client import TradingClient
-    from src.utils.alpaca_client import get_alpaca_credentials
 
     api_key, secret = get_alpaca_credentials()
     if not api_key or not secret:

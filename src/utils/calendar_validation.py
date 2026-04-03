@@ -9,19 +9,7 @@ import os
 from datetime import datetime, timedelta
 from typing import Optional
 
-from alpaca.trading.client import TradingClient
-from src.utils.alpaca_client import get_alpaca_credentials
-
-
-def get_alpaca_client() -> TradingClient:
-    """Get authenticated Alpaca client using unified credentials."""
-    api_key, secret_key = get_alpaca_credentials()
-    paper = os.environ.get("PAPER_TRADING", "true").lower() == "true"
-
-    if not api_key or not secret_key:
-        raise ValueError("Alpaca credentials not configured - use get_alpaca_credentials()")
-
-    return TradingClient(api_key, secret_key, paper=paper)
+from src.utils.alpaca_client import get_alpaca_client
 
 
 def is_trading_day(target_date: datetime) -> bool:
@@ -35,7 +23,8 @@ def is_trading_day(target_date: datetime) -> bool:
         True if market is open on that day, False otherwise
     """
     try:
-        client = get_alpaca_client()
+        paper = os.environ.get("PAPER_TRADING", "true").lower() == "true"
+        client = get_alpaca_client(paper=paper)
         date_str = target_date.strftime("%Y-%m-%d")
         calendar = client.get_calendar(start=date_str, end=date_str)
         return len(calendar) > 0
