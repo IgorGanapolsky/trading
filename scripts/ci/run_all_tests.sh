@@ -200,7 +200,7 @@ python_bin="$(resolve_python_bin)"
 # Per-file coverage enforcement for critical trading files
 log "checking critical file coverage minimums..."
 if [[ -f ${CRITICAL_COVERAGE_SCRIPT} ]]; then
-	python3 "${CRITICAL_COVERAGE_SCRIPT}" coverage.xml || {
+	"${python_bin}" "${CRITICAL_COVERAGE_SCRIPT}" coverage.xml || {
 		log "CRITICAL FILE COVERAGE CHECK FAILED"
 		exit 1
 	}
