@@ -20,6 +20,7 @@ from zoneinfo import ZoneInfo
 from alpaca.trading.client import TradingClient
 from alpaca.trading.enums import OrderSide, TimeInForce
 from alpaca.trading.requests import MarketOrderRequest
+
 from src.core.trading_constants import IRON_CONDOR_STOP_LOSS_MULTIPLIER
 from src.safety.mandatory_trade_gate import safe_submit_order
 
@@ -86,7 +87,7 @@ def parse_ic_positions(positions) -> dict:
 
         qty = int(float(pos.qty))
         entry = float(pos.avg_entry_price)
-        current = float(pos.current_price) if hasattr(pos, "current_price") else entry
+        current = float(pos.current_price) if getattr(pos, "current_price", None) is not None else entry
 
         pos_data = {
             "symbol": symbol,
