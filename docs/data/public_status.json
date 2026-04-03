@@ -1,0 +1,53 @@
+{
+  "generated_at_et": "2026-04-03T11:03:57.882537-04:00",
+  "system": {
+    "name": "SPY Options Validation Platform",
+    "tagline": "Broker-backed scorecards, hard risk gates, paired-trade accounting, and live operator surfaces.",
+    "public_status": "validation"
+  },
+  "paper": {
+    "equity": 93990.3,
+    "total_pnl_today": -14.0,
+    "realized_pnl_today": 0.0,
+    "unrealized_pnl_today": -14.0,
+    "fills_today_count": 0
+  },
+  "live": {
+    "equity": 0.0,
+    "total_pnl_today": 0.0
+  },
+  "ledger": {
+    "closed_trades_total": 66,
+    "wins": 16,
+    "losses": 49,
+    "breakeven": 1,
+    "win_rate_pct": 24.24,
+    "profit_factor": 0.25,
+    "total_realized_pnl": -3402.0,
+    "last_updated": "2026-04-03T15:03:59.230432+00:00"
+  },
+  "gate": {
+    "mode": "validation",
+    "block_new_positions": false,
+    "verified_edge_available": true,
+    "recommended_max_position_pct": 0.015,
+    "sample_size": 1,
+    "expectancy_per_trade": 96.0,
+    "win_rate_pct": 100.0,
+    "blocker_reason": "Insufficient recent weekly evidence; keep conservative sizing. Cadence KPI miss: setups 0/1, closed trades 1/1.",
+    "qualified_setups_this_week": 0,
+    "closed_trades_this_week": 1,
+    "scale_allowed": true,
+    "scaling_gate_closed_trades_observed": 66,
+    "scaling_gate_min_closed_trades": 30
+  },
+  "narrative": {
+    "summary": "No fills today. Total today $-14.00 came from open-position repricing, with realized $0.00 and unrealized $-14.00.",
+    "thesis": "This project is currently a paper-first validation platform, not a proven passive-income engine. Public surfaces should show current gate state and broker-backed evidence rather than frozen claims."
+  },
+  "links": {
+    "operator_dashboard": "/trading/rag-query.html",
+    "repo": "https://github.com/IgorGanapolsky/trading",
+    "wiki": "https://github.com/IgorGanapolsky/trading/wiki"
+  }
+}

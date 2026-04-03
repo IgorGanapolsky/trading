@@ -1,0 +1,1 @@
+Paper-first SPY options validation platform with broker-backed scorecards, hard risk gates, paired-trade accounting, and live dashboards.

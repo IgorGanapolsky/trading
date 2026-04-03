@@ -1,0 +1,61 @@
+name: Public Surface Guard
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "README.md"
+      - "docs/**"
+      - "wiki/**"
+      - ".github/public/about.txt"
+      - "scripts/build_public_status.py"
+      - "scripts/check_public_copy_freshness.py"
+      - "tests/test_build_public_status.py"
+      - "tests/test_public_copy_freshness.py"
+      - ".github/workflows/public-surface-guard.yml"
+      - ".github/workflows/sync-alpaca-status.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "README.md"
+      - "docs/**"
+      - "wiki/**"
+      - ".github/public/about.txt"
+      - "scripts/build_public_status.py"
+      - "scripts/check_public_copy_freshness.py"
+      - "tests/test_build_public_status.py"
+      - "tests/test_public_copy_freshness.py"
+      - ".github/workflows/public-surface-guard.yml"
+      - ".github/workflows/sync-alpaca-status.yml"
+  workflow_dispatch:
+
+jobs:
+  guard:
+    name: Validate Public Surfaces
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pyyaml
+
+      - name: Rebuild generated public surfaces
+        run: |
+          python3 scripts/build_public_status.py --repo-root .
+          python3 scripts/build_public_status.py --repo-root . --check
+
+      - name: Check public copy freshness
+        run: python3 scripts/check_public_copy_freshness.py --repo-root .
+
+      - name: Run targeted public-surface tests
+        run: |
+          pytest tests/test_build_public_status.py tests/test_public_copy_freshness.py -q

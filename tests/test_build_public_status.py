@@ -1,0 +1,107 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from scripts.build_public_status import (
+    build_public_status,
+    check_public_surfaces,
+    render_home,
+    render_progress_dashboard,
+    write_public_surfaces,
+)
+
+
+def _seed_repo(tmp_path: Path) -> Path:
+    (tmp_path / "artifacts/daily_scorecard").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "data").mkdir(parents=True, exist_ok=True)
+    scorecard = {
+        "generated_at_et": "2026-04-03T10:33:34-04:00",
+        "paper": {
+            "equity": 93990.30,
+            "total_pnl_today": -14.0,
+            "realized_pnl_today": 0.0,
+            "unrealized_pnl_today": -14.0,
+            "fills_today_count": 0,
+        },
+        "live": {"equity": 0.0, "total_pnl_today": 0.0},
+    }
+    state = {
+        "north_star_weekly_gate": {
+            "mode": "defensive",
+            "block_new_positions": True,
+            "verified_edge_available": True,
+            "recommended_max_position_pct": 0.01,
+            "sample_size": 81,
+            "expectancy_per_trade": -14.1852,
+            "win_rate_pct": 2.47,
+            "reason": "CRITICAL: Negative expectancy.",
+            "cadence_kpi": {
+                "qualified_setups_observed": 0,
+                "closed_trades_observed": 81,
+            },
+            "scaling_sample_gate": {
+                "closed_trades_observed": 134,
+                "min_closed_trades_for_scaling": 30,
+            },
+        }
+    }
+    trades = {
+        "meta": {"last_sync": "2026-04-03T14:33:35+00:00"},
+        "stats": {
+            "closed_trades": 134,
+            "wins": 13,
+            "losses": 120,
+            "breakeven": 1,
+            "win_rate_pct": 9.7,
+            "profit_factor": 0.14,
+            "total_realized_pnl": -2756.0,
+        },
+    }
+    (tmp_path / "artifacts/daily_scorecard/latest_daily_scorecard.json").write_text(
+        json.dumps(scorecard), encoding="utf-8"
+    )
+    (tmp_path / "data/system_state.json").write_text(json.dumps(state), encoding="utf-8")
+    (tmp_path / "data/trades.json").write_text(json.dumps(trades), encoding="utf-8")
+    return tmp_path
+
+
+def test_build_public_status_uses_canonical_inputs(tmp_path: Path):
+    repo = _seed_repo(tmp_path)
+    status = build_public_status(repo)
+
+    assert status["paper"]["equity"] == 93990.30
+    assert status["ledger"]["closed_trades_total"] == 134
+    assert status["gate"]["block_new_positions"] is True
+    assert status["system"]["public_status"] == "halted"
+
+
+def test_write_and_check_public_surfaces(tmp_path: Path):
+    repo = _seed_repo(tmp_path)
+    changed = write_public_surfaces(repo)
+
+    assert changed["docs/data/public_status.json"] is True
+    assert changed["wiki/Home.md"] is True
+    assert changed["wiki/Progress-Dashboard.md"] is True
+    assert "CRITICAL: Negative expectancy." in (
+        repo / "wiki/Progress-Dashboard.md"
+    ).read_text(encoding="utf-8")
+    assert check_public_surfaces(repo) == 0
+
+
+def test_check_public_surfaces_fails_when_dashboard_drifted(tmp_path: Path):
+    repo = _seed_repo(tmp_path)
+    write_public_surfaces(repo)
+    (repo / "wiki/Home.md").write_text("stale", encoding="utf-8")
+    assert check_public_surfaces(repo) == 1
+
+
+def test_renderers_include_live_status(tmp_path: Path):
+    repo = _seed_repo(tmp_path)
+    status = build_public_status(repo)
+
+    home = render_home(status)
+    progress = render_progress_dashboard(status)
+
+    assert "Generated from canonical ledgers" in home
+    assert "Paper equity" in progress

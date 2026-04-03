@@ -64,6 +64,17 @@ jobs:
           python3 scripts/sync_closed_positions.py || echo "⚠️ Closed positions sync failed - win rate may be stale"
           python3 scripts/update_north_star_operating_plan.py || echo "⚠️ North Star operating plan update failed"
 
+      - name: Build public status surfaces
+        env:
+          ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          ALPACA_BROKERAGE_TRADING_API_KEY: ${{ secrets.ALPACA_BROKERAGE_TRADING_API_KEY }}
+          ALPACA_BROKERAGE_TRADING_API_SECRET: ${{ secrets.ALPACA_BROKERAGE_TRADING_API_SECRET }}
+          REQUIRE_ALPACA_KEYS: "true"
+        run: |
+          python3 scripts/daily_scorecard.py --repo-root .
+          python3 scripts/build_public_status.py --repo-root .
+
       # DISABLED: ic_simple.py is the sole position manager (2026-04-01)
       # manage_iron_condor_positions.py was closing positions via individual legs
       # while ic_simple.py manages them via MLEG — two competing systems caused
@@ -88,6 +99,8 @@ jobs:
           git add data/runtime/intraday_pnl_latest.json 2>/dev/null || true
           git add -f data/north_star_weekly_history.json 2>/dev/null || true
           git add data/trades.json 2>/dev/null || true
+          git add docs/data/public_status.json 2>/dev/null || true
+          git add wiki/Home.md wiki/Progress-Dashboard.md wiki/Development-Engine-and-Evidence.md 2>/dev/null || true
           git add data/runtime/north_star_gate_overrides.json 2>/dev/null || true
           git add models/ml/trade_confidence_model.json 2>/dev/null || true
           git add models/ml/feedback_model.json 2>/dev/null || true
@@ -106,6 +119,32 @@ jobs:
           fi
 
           git push origin HEAD:main || echo "Push to main skipped (protected branch or no permission)"
+
+      - name: Sync public wiki and repo metadata
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
+        run: |
+          set -euo pipefail
+
+          description="$(tr '\n' ' ' < .github/public/about.txt | sed 's/[[:space:]]\\+/ /g' | sed 's/^ //; s/ $//')"
+          gh repo edit "${{ github.repository }}" --description "$description"
+
+          tmp_dir="$(mktemp -d)"
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.wiki.git" "$tmp_dir/wiki"
+          cp wiki/Home.md "$tmp_dir/wiki/Home.md"
+          cp wiki/Progress-Dashboard.md "$tmp_dir/wiki/Progress-Dashboard.md"
+          cp wiki/Development-Engine-and-Evidence.md "$tmp_dir/wiki/Development-Engine-and-Evidence.md"
+          cd "$tmp_dir/wiki"
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add Home.md Progress-Dashboard.md Development-Engine-and-Evidence.md
+          if git diff --staged --quiet; then
+            echo "No wiki or metadata changes to publish"
+            exit 0
+          fi
+          git commit -m "chore: sync public wiki surfaces [auto]"
+          git push origin HEAD
 
       - name: Notify on Failure
         if: failure()

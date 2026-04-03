@@ -1,15 +1,10 @@
 {
-  "last_updated": "2026-04-03T14:48:26.579764+00:00",
+  "last_updated": "2026-04-03T15:04:23.096927+00:00",
   "sync_health": {
-    "last_successful_sync": "2026-04-03T14:48:26.579764+00:00",
+    "last_successful_sync": "2026-04-03T15:04:23.096927+00:00",
     "sync_source": "sync_alpaca_state.py",
-    "sync_count_today": 3,
+    "sync_count_today": 4,
     "history": [
-      {
-        "timestamp": "2026-04-01T19:07:21.133424+00:00",
-        "equity": 95375.11,
-        "success": true
-      },
       {
         "timestamp": "2026-04-01T19:37:22.405419+00:00",
         "equity": 95375.11,
@@ -124,9 +119,14 @@
         "timestamp": "2026-04-03T14:48:26.579764+00:00",
         "equity": 93990.3,
         "success": true
+      },
+      {
+        "timestamp": "2026-04-03T15:04:23.096927+00:00",
+        "equity": 93990.3,
+        "success": true
       }
     ],
-    "last_attempt": "2026-04-03T14:48:26.579764+00:00"
+    "last_attempt": "2026-04-03T15:04:23.096927+00:00"
   },
   "portfolio": {
     "equity": 93990.3,
@@ -140,8 +140,8 @@
     "total_pl_pct": -6.009699999999997,
     "positions_count": 4,
     "daily_change": -14.0,
-    "win_rate": 100.0,
-    "win_rate_sample_size": 1,
+    "win_rate": 24.24,
+    "win_rate_sample_size": 66,
     "starting_balance": 100000.0,
     "current_equity": 93990.3,
     "last_equity": 94004.3
@@ -2587,9 +2587,9 @@
     "total_pl": -6009.699999999997,
     "unrealized_pl": -7.46,
     "weekly_gate_mode": "validation",
-    "weekly_gate_recommended_max_position_pct": 0.01,
+    "weekly_gate_recommended_max_position_pct": 0.015,
     "weekly_cadence_kpi_passed": false,
-    "weekly_scaling_sample_gate_passed": false,
+    "weekly_scaling_sample_gate_passed": true,
     "weekly_ai_credit_stress_status": "unknown",
     "weekly_ai_credit_stress_score": 0.0,
     "weekly_usd_macro_status": "unknown",
@@ -2610,12 +2610,12 @@
     "buying_power": 186466.6
   },
   "meta": {
-    "last_updated": "2026-04-03T14:48:26.579764+00:00",
+    "last_updated": "2026-04-03T15:04:23.096927+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5,
-    "last_sync_attempt": "2026-04-03T14:48:26.579764+00:00",
+    "last_sync_attempt": "2026-04-03T15:04:23.096927+00:00",
     "alpaca_keys_present": true,
-    "last_sync": "2026-04-03T14:48:26.469537",
+    "last_sync": "2026-04-03T11:04:22.931101",
     "sync_mode": "paper+live",
     "last_daily_verification_at": "2026-03-25T14:58:32.591868+00:00"
   },
@@ -2679,36 +2679,37 @@
     "starting_balance": 20.0,
     "total_pl": -20.0,
     "total_pl_pct": -100.0,
-    "synced_at": "2026-04-03T14:48:26.577268"
+    "synced_at": "2026-04-03T11:04:23.095165"
   },
   "strategy_milestones": {
     "enabled": true,
-    "generated_at": "2026-04-03T14:48:26.584950Z",
+    "generated_at": "2026-04-03T15:04:23.102167Z",
     "primary_family": "options_income",
     "rolling_window": 50,
     "paused_families": [
+      "options_income",
       "equity_momentum",
       "alternatives",
       "other"
     ],
     "strategy_families": {
       "options_income": {
-        "status": "validation",
-        "paused": false,
-        "reason": "options_income validation mode (1/12 closed trades).",
+        "status": "paused",
+        "paused": true,
+        "reason": "options_income paused: win rate 22.0% below 60.0% threshold.",
         "thresholds": {
           "min_win_rate_pct": 60.0,
           "min_expectancy": 0.0,
           "min_samples": 12
         },
         "metrics": {
-          "samples": 1,
-          "wins": 1,
-          "losses": 0,
-          "total_pnl": 41.0,
-          "win_rate_pct": 100.0,
-          "expectancy": 41.0,
-          "window_days": 1.0,
+          "samples": 50,
+          "wins": 11,
+          "losses": 38,
+          "total_pnl": -3066.0,
+          "win_rate_pct": 22.0,
+          "expectancy": -61.32,
+          "window_days": 37.0,
           "evidence_source": "trades.json"
         }
       },
@@ -2775,42 +2776,42 @@
     }
   },
   "north_star": {
-    "probability_score": 44.5,
-    "probability_label": "low",
+    "probability_score": 14.4,
+    "probability_label": "critical",
     "required_cagr": null,
-    "estimated_cagr_from_expectancy": 0.0157,
+    "estimated_cagr_from_expectancy": -0.2222,
     "target_capital": 300000.0,
     "target_date": null,
-    "updated_at": "2026-04-03T14:48:26.584950Z",
+    "updated_at": "2026-04-03T15:04:23.102167Z",
     "target_mode": "asap_monthly_income",
     "monthly_after_tax_target": 6000.0,
-    "estimated_monthly_after_tax_from_expectancy": 123.0,
-    "monthly_target_progress_pct": 2.05
+    "estimated_monthly_after_tax_from_expectancy": 0.0,
+    "monthly_target_progress_pct": 0.0
   },
   "north_star_weekly_gate": {
     "enabled": true,
     "lookback_days": 7,
     "mode": "validation",
-    "sample_size": 0,
-    "win_rate_pct": 0.0,
-    "expectancy_per_trade": 0.0,
-    "recommended_max_position_pct": 0.01,
+    "sample_size": 1,
+    "win_rate_pct": 100.0,
+    "expectancy_per_trade": 96.0,
+    "recommended_max_position_pct": 0.015,
     "block_new_positions": false,
-    "reason": "No recent paired closed trades; do not infer edge from raw fills. Keep validation sizing only. Cadence KPI miss: setups 0/1, closed trades 0/1.",
+    "reason": "Insufficient recent weekly evidence; keep conservative sizing. Cadence KPI miss: setups 0/1, closed trades 1/1.",
     "positive_weeks_streak": 0,
-    "evidence_source": "insufficient_paired_closed_trades",
-    "verified_edge_available": false,
+    "evidence_source": "trades.json",
+    "verified_edge_available": true,
     "cadence_kpi": {
       "enabled": true,
       "min_qualified_setups_per_week": 1,
       "min_closed_trades_per_week": 1,
       "qualified_setups_observed": 0,
-      "closed_trades_observed": 0,
+      "closed_trades_observed": 1,
       "meets_qualified_setups": false,
-      "meets_closed_trades": false,
+      "meets_closed_trades": true,
       "passed": false,
-      "alert_level": "critical",
-      "summary": "Cadence KPI miss: qualified setups and closed trades are both below weekly minimum."
+      "alert_level": "warning",
+      "summary": "Cadence KPI miss: one or more weekly minimums not met."
     },
     "scale_blocked_by_cadence": true,
     "ai_credit_stress": {
@@ -2849,14 +2850,14 @@
     "scaling_sample_gate": {
       "enabled": true,
       "min_closed_trades_for_scaling": 30,
-      "closed_trades_observed": 1,
-      "passed": false
+      "closed_trades_observed": 66,
+      "passed": true
     },
     "liquidity_min_volume_ratio": 0.2,
     "no_trade_diagnostic": {
       "lookback_days": 7,
       "decision_records_observed": 0,
-      "closed_trades_observed": 0,
+      "closed_trades_observed": 1,
       "qualified_setups_observed": 0,
       "gate_status": {
         "regime": {
@@ -2917,17 +2918,10 @@
       "blocked_categories": [],
       "gate_block_counts": {},
       "top_rejection_reasons": [],
-      "summary": "No qualified setups captured in lookback window. Focus on setup generation cadence before adjusting execution.",
-      "updated_at": "2026-04-03T14:48:27.014713+00:00"
+      "summary": "Closed trades exist in lookback window; no-trade root cause not currently active.",
+      "updated_at": "2026-04-03T15:04:23.103952+00:00"
     },
-    "updated_at": "2026-04-03T14:48:27.015000+00:00",
-    "unverified_trade_history_diagnostic": {
-      "samples": 4,
-      "wins": 1,
-      "win_rate_pct": 25.0,
-      "expectancy": -2065.75,
-      "evidence_source": "trade_history_ic_only"
-    }
+    "updated_at": "2026-04-03T15:04:23.104155+00:00"
   },
   "north_star_contributions": {
     "enabled": true,
@@ -2957,7 +2951,7 @@
     "estimated_live_contribution_this_month": 0.0,
     "contribution_estimate_confidence": "medium",
     "inference_note": "Live account has no open positions; live equity change is treated as estimated contribution.",
-    "updated_at": "2026-04-03T14:48:27.015039+00:00"
+    "updated_at": "2026-04-03T15:04:23.104211+00:00"
   },
   "ic_position_management": {
     "last_run": "2026-04-01T18:33:13.205819",
@@ -3510,7 +3504,7 @@
   "position_entries": {},
   "position_entry_features": {},
   "north_star_autopilot": {
-    "generated_at_utc": "2026-04-03T14:48:27.015059Z",
+    "generated_at_utc": "2026-04-03T15:04:21.790464Z",
     "cadence_optimizer": {
       "decision": "hold",
       "reason": "Liquidity floor unchanged.",
@@ -3523,8 +3517,8 @@
       "apply_override": false
     },
     "regime_aware_sizing": {
-      "base_max_position_pct": 0.01,
-      "recommended_max_position_pct": 0.01,
+      "base_max_position_pct": 0.015,
+      "recommended_max_position_pct": 0.015,
       "block_new_positions": false,
       "applied_multipliers": [
         {
@@ -3553,7 +3547,7 @@
         {
           "name": "state_freshness",
           "status": "ok",
-          "detail": "fresh (0.0h old)."
+          "detail": "fresh (0.3h old)."
         },
         {
           "name": "weekly_gate_freshness",
@@ -3578,7 +3572,7 @@
     },
     "active_overrides": {
       "min_liquidity_volume_ratio": 0.2,
-      "max_position_pct_cap": 0.01
+      "max_position_pct_cap": 0.015
     },
     "execution_actions": [
       {
@@ -3589,11 +3583,11 @@
       }
     ],
     "override_write": {
-      "path": "/home/runner/work/trading/trading/data/runtime/north_star_gate_overrides.json",
+      "path": "/Users/igorganapolsky/workspace/git/igor/trading/.worktrees/public-surface-main-sync/data/runtime/north_star_gate_overrides.json",
       "changed": false,
       "payload": {
         "min_liquidity_volume_ratio": 0.2,
-        "updated_at": "2026-04-03T14:48:27.015059+00:00",
+        "updated_at": "2026-04-03T15:04:21.790464+00:00",
         "source": "north_star_autopilot"
       }
     }

@@ -1,5 +1,5 @@
-title: "Trading System"
-description: "Operator surfaces, live dashboard entry points, and selected engineering artifacts for the trading repo."
+title: "SPY Options Validation Platform"
+description: "Broker-backed SPY options validation platform with hard risk gates, paired-trade accounting, and live operator surfaces."
 url: "https://igorganapolsky.github.io"
 baseurl: "/trading"
 lang: en

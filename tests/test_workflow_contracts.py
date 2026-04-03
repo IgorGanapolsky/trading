@@ -140,6 +140,26 @@ def test_main_ci_concurrency_uses_per_sha_key():
     assert "cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}" in workflow_text
 
 
+def test_sync_alpaca_status_updates_public_surfaces():
+    """Alpaca sync must regenerate the public bundle and wiki surfaces."""
+    workflow_text = Path(".github/workflows/sync-alpaca-status.yml").read_text()
+
+    assert "scripts/daily_scorecard.py --repo-root ." in workflow_text
+    assert "scripts/build_public_status.py --repo-root ." in workflow_text
+    assert "docs/data/public_status.json" in workflow_text
+    assert "wiki/Progress-Dashboard.md" in workflow_text
+    assert "gh repo edit" in workflow_text
+
+
+def test_public_surface_guard_workflow_exists():
+    """Public-facing copy must have its own lightweight guard workflow."""
+    workflow_text = Path(".github/workflows/public-surface-guard.yml").read_text()
+
+    assert "scripts/build_public_status.py --repo-root . --check" in workflow_text
+    assert "scripts/check_public_copy_freshness.py --repo-root ." in workflow_text
+    assert "tests/test_build_public_status.py" in workflow_text
+
+
 if __name__ == "__main__":
     print("=" * 70)
     print("WORKFLOW CONTRACT TESTS")

@@ -1,5 +1,10 @@
 name: CI
 on: [push, pull_request]
+
+concurrency:
+  group: ${{ format('ci-{0}-{1}', github.ref, github.sha) }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   trunk-check:
     name: Trunk Check

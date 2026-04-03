@@ -1,38 +1,28 @@
-# SPY Iron Condor - Live Strategy Specification
+# Live Strategy Spec
 
-**Version**: 2.0.0 (Enhanced)  
-**Date**: 2026-03-25  
-**Canonical Source**: `src/strategies/core_strategy.py`
+This document describes the current validated playbook surface, not a promise of current profitability.
 
-## 1. Strategy Overview
-High-probability income generation via SPY Iron Condors, leveraging rapid theta decay and volatility mean reversion.
+## Baseline Playbook
 
-## 2. Entry Logic
-- **Ticker**: SPY (Liquid ETF only)
-- **Target DTE**: 30-45 Days (Standard) | 4 Days (Tactical)
-- **Short Strikes**: 15-delta (True delta from live option chain)
-- **Wing Width**: Dynamic by Volatility Regime:
-    - VIX < 15: $5 wide
-    - VIX 15-25: $10 wide
-    - VIX > 25: $15 wide
-- **Position Sizing**: 5% of Portfolio max per position.
+- Underlying: `SPY`
+- Structure family: defined-risk options premium structures
+- Primary template: iron-condor style entries when gates allow them
+- Target DTE band: `30-45`
+- Typical short-strike selection: around `15 delta`
+- Position sizing: weekly gate controlled, currently capped by risk mode
 
-## 3. Volatility Gate (Regime Aware)
-- **VIX Bands**: OK to trade if $12 < \text{VIX} < 35$.
-- **Edge Requirement**: $\text{IV} - \text{RV}_{20\text{d}} \ge 5\%$.
-- **Signal**: VIX Mean Reversion (Enter on drop from spike).
+## What Is Live Right Now
 
-## 4. Exit Logic (Canonical)
-- **Profit Target**: 50% of Credit Received.
-- **Stop Loss**: 100% of Credit Received (1x loss).
-- **Time Exit**: 7 Days to Expiration (Gamma risk avoidance).
+Current operating truth should be pulled from the canonical ledgers and public dashboard:
 
-## 5. Safety & Observability
-- **RAG Safety Guard**: Consults historical 'Lessons Learned' database for regime-specific failure patterns before entry.
-- **Structured Journaling**: Every trade snapshots VIX, IV, RV, and RAG warnings for post-trade analysis.
-- **Execution Gate**: Mandatory mid-price verification and bid/ask spread checks.
-- **Step 8: Autonomous Promotion**: Successes and entries are broadcasted to X, LinkedIn, and Reddit via Zernio API.
+- [Public status bundle](data/public_status.json)
+- [Operator dashboard](rag-query.html)
+- [System state](../data/system_state.json)
+- [Paired-trade ledger](../data/trades.json)
 
-## 6. Maintenance
-- **Review Period**: Weekly RAG ingestion of closed trade PnL.
-- **Circuit Breaker**: 2% Max Daily Drawdown.
+## Operating Rules
+
+- No scale-up while the weekly gate blocks new positions.
+- No marketing claims based on stale snapshots.
+- Completed paired-trade evidence matters more than fill activity.
+- Public copy must stay congruent with broker-backed status and canonical ledgers.

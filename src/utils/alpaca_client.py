@@ -27,6 +27,33 @@ logger = logging.getLogger(__name__)
 _ENV_BOOTSTRAPPED = False
 
 
+def _iter_local_env_files(repo_root: Path) -> list[Path]:
+    """Return candidate local dotenv files, including the primary repo from a worktree."""
+    candidates: list[Path] = []
+
+    for filename in (".env", ".env.local"):
+        env_path = find_dotenv(filename=filename, usecwd=True) if find_dotenv else ""
+        if env_path:
+            candidates.append(Path(env_path))
+
+    for filename in (".env", ".env.local"):
+        candidates.append(repo_root / filename)
+
+    if repo_root.parent.name == ".worktrees":
+        primary_repo_root = repo_root.parent.parent
+        for filename in (".env", ".env.local"):
+            candidates.append(primary_repo_root / filename)
+
+    deduped: list[Path] = []
+    seen: set[Path] = set()
+    for candidate in candidates:
+        if candidate in seen or not candidate.exists():
+            continue
+        deduped.append(candidate)
+        seen.add(candidate)
+    return deduped
+
+
 def _bootstrap_env_from_dotenv() -> None:
     """
     Load local dotenv files once so credential lookup works in local shells too.
@@ -42,20 +69,10 @@ def _bootstrap_env_from_dotenv() -> None:
     if load_dotenv is None or find_dotenv is None:
         return
 
-    loaded_any = False
-
-    # Primary: resolve from current working directory (developer local runs).
-    for filename in (".env", ".env.local"):
-        env_path = find_dotenv(filename=filename, usecwd=True)
-        if env_path:
-            loaded_any = load_dotenv(env_path, override=False) or loaded_any
-
-    # Fallback: repository root when called from package/module context.
     repo_root = Path(__file__).resolve().parents[2]
-    for filename in (".env", ".env.local"):
-        env_file = repo_root / filename
-        if env_file.exists():
-            loaded_any = load_dotenv(env_file, override=False) or loaded_any
+    loaded_any = False
+    for env_file in _iter_local_env_files(repo_root):
+        loaded_any = load_dotenv(env_file, override=False) or loaded_any
 
     if loaded_any:
         logger.info("Loaded local dotenv file(s) for Alpaca credential discovery")

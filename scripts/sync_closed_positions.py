@@ -25,6 +25,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 SYSTEM_STATE_FILE = DATA_DIR / "system_state.json"
 TRADES_FILE = DATA_DIR / "trades.json"
+DEFAULT_BROKER_ORDER_LIMIT = 1000
 OPTION_SYMBOL_RE = re.compile(
     r"^(?P<underlying>[A-Z]{1,8})(?P<yy>\d{2})(?P<mm>\d{2})(?P<dd>\d{2})(?P<kind>[CP])(?P<strike>\d{8})$"
 )
@@ -65,6 +66,15 @@ def _parse_side(value: Any) -> str | None:
     if "BUY" in raw:
         return "BUY"
     return None
+
+
+def _parse_position_intent(value: Any) -> str | None:
+    raw = str(value or "").strip().upper()
+    if not raw or raw == "NONE":
+        return None
+    if raw.startswith("POSITIONINTENT."):
+        raw = raw.split(".", 1)[1]
+    return raw or None
 
 
 def _strike_from_raw(raw: str) -> float:
@@ -135,26 +145,251 @@ def _signature_to_legs(signature: str) -> dict[str, Any]:
     }
 
 
+def _field(source: Any, key: str) -> Any:
+    if isinstance(source, dict):
+        return source.get(key)
+    return getattr(source, key, None)
+
+
+def _serialize_leg(leg: Any) -> dict[str, Any]:
+    return {
+        "id": str(_field(leg, "id") or ""),
+        "symbol": _field(leg, "symbol"),
+        "side": str(_field(leg, "side") or ""),
+        "qty": str(_field(leg, "qty") or ""),
+        "filled_qty": str(_field(leg, "filled_qty") or ""),
+        "filled_avg_price": str(_field(leg, "filled_avg_price") or ""),
+        "position_intent": str(_field(leg, "position_intent") or ""),
+        "status": str(_field(leg, "status") or ""),
+    }
+
+
+def _serialize_order(order: Any) -> dict[str, Any]:
+    raw_legs = _field(order, "legs")
+    legs = [_serialize_leg(leg) for leg in raw_legs or []]
+    return {
+        "id": str(_field(order, "id") or ""),
+        "symbol": _field(order, "symbol"),
+        "side": str(_field(order, "side") or ""),
+        "qty": str(_field(order, "filled_qty") or _field(order, "qty") or ""),
+        "price": str(_field(order, "filled_avg_price") or _field(order, "price") or ""),
+        "filled_at": str(_field(order, "filled_at") or ""),
+        "status": str(_field(order, "status") or ""),
+        "order_class": str(_field(order, "order_class") or ""),
+        "position_intent": str(_field(order, "position_intent") or ""),
+        "legs": legs,
+    }
+
+
+def _row_dedupe_key(row: dict[str, Any]) -> str:
+    row_id = str(row.get("id") or "").strip()
+    if row_id:
+        return f"id::{row_id}"
+    filled_at = str(row.get("filled_at") or "")
+    symbol = str(row.get("symbol") or "")
+    legs = row.get("legs") if isinstance(row.get("legs"), list) else []
+    leg_symbols = [
+        str(leg.get("symbol") if isinstance(leg, dict) else leg or "")
+        for leg in legs
+        if leg is not None
+    ]
+    return (
+        f"composite::{filled_at}::{symbol}::{row.get('side')}::{row.get('qty')}::"
+        f"{row.get('price')}::{'|'.join(sorted(leg_symbols))}"
+    )
+
+
+def _row_detail_score(row: dict[str, Any]) -> tuple[int, int]:
+    raw_legs = row.get("legs") if isinstance(row.get("legs"), list) else []
+    detailed_legs = sum(1 for leg in raw_legs if isinstance(leg, dict))
+    return detailed_legs, len(raw_legs)
+
+
+def _merge_trade_rows(*collections: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    merged: dict[str, dict[str, Any]] = {}
+    for rows in collections:
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            key = _row_dedupe_key(row)
+            existing = merged.get(key)
+            if existing is None or _row_detail_score(row) > _row_detail_score(existing):
+                merged[key] = row
+    return sorted(merged.values(), key=lambda row: _parse_dt(row.get("filled_at")) or datetime.min)
+
+
+def _fetch_broker_trade_history(limit: int = DEFAULT_BROKER_ORDER_LIMIT) -> list[dict[str, Any]]:
+    try:
+        from alpaca.trading.client import TradingClient
+        from alpaca.trading.enums import QueryOrderStatus
+        from alpaca.trading.requests import GetOrdersRequest
+        from src.utils.alpaca_client import get_alpaca_credentials
+    except Exception as exc:
+        logger.info("Broker trade-history sync unavailable: %s", exc)
+        return []
+
+    api_key, secret_key = get_alpaca_credentials()
+    if not api_key or not secret_key:
+        return []
+
+    try:
+        client = TradingClient(api_key, secret_key, paper=True)
+        try:
+            orders = client.get_orders(
+                filter=GetOrdersRequest(
+                    status=QueryOrderStatus.CLOSED,
+                    limit=limit,
+                    nested=True,
+                    direction="desc",
+                )
+            )
+        except TypeError:
+            orders = client.get_orders(
+                filter=GetOrdersRequest(status=QueryOrderStatus.CLOSED, limit=limit, nested=True)
+            )
+    except Exception as exc:
+        logger.warning("Failed to fetch broker trade history: %s", exc)
+        return []
+
+    rows = []
+    for order in orders:
+        filled_dt = _parse_dt(_field(order, "filled_at"))
+        if filled_dt is None:
+            continue
+        rows.append(_serialize_order(order))
+    logger.info("Fetched %s closed orders from broker for ledger sync", len(rows))
+    return rows
+
+
+def _load_trade_history() -> tuple[list[dict[str, Any]], str]:
+    state = _load_system_state()
+    state_history = state.get("trade_history", []) if isinstance(state, dict) else []
+    if not isinstance(state_history, list):
+        state_history = []
+
+    broker_history = _fetch_broker_trade_history()
+    if broker_history:
+        merged = _merge_trade_rows(state_history, broker_history)
+        return merged, "broker+system_state"
+    return state_history, "system_state"
+
+
+def _normalize_leg_row(raw_leg: Any) -> dict[str, Any] | None:
+    if isinstance(raw_leg, str):
+        parsed = _parse_option_symbol(raw_leg)
+        if parsed is None:
+            return None
+        return {
+            "symbol": parsed["symbol"],
+            "parsed": parsed,
+            "side": None,
+            "qty": 0.0,
+            "price": 0.0,
+            "position_intent": None,
+        }
+
+    symbol = _field(raw_leg, "symbol")
+    parsed = _parse_option_symbol(symbol)
+    if parsed is None:
+        return None
+    return {
+        "symbol": parsed["symbol"],
+        "parsed": parsed,
+        "side": _parse_side(_field(raw_leg, "side")),
+        "qty": _parse_float(
+            _field(raw_leg, "filled_qty"), _parse_float(_field(raw_leg, "qty"), 0.0)
+        ),
+        "price": _parse_float(
+            _field(raw_leg, "filled_avg_price"),
+            _parse_float(_field(raw_leg, "price"), 0.0),
+        ),
+        "position_intent": _parse_position_intent(_field(raw_leg, "position_intent")),
+    }
+
+
+def _normalized_row_legs(row: dict[str, Any]) -> list[dict[str, Any]]:
+    raw_legs = row.get("legs") if isinstance(row.get("legs"), list) else []
+    normalized = []
+    for raw_leg in raw_legs:
+        leg = _normalize_leg_row(raw_leg)
+        if leg is not None:
+            normalized.append(leg)
+    return normalized
+
+
+def _phase_from_legs(legs: list[dict[str, Any]]) -> str | None:
+    phases = {
+        "OPEN" if leg.get("position_intent") and "OPEN" in str(leg["position_intent"]) else "CLOSE"
+        for leg in legs
+        if leg.get("position_intent")
+    }
+    if len(phases) == 1:
+        return next(iter(phases))
+    return None
+
+
+def _signed_cash(side: str | None, qty: float, price: float) -> float:
+    if side == "SELL":
+        return qty * price * 100.0
+    if side == "BUY":
+        return -qty * price * 100.0
+    return 0.0
+
+
+def _close_action_for_open_leg(leg: dict[str, Any]) -> str | None:
+    intent = str(leg.get("position_intent") or "")
+    if "SELL_TO_OPEN" in intent:
+        return "BUY_TO_CLOSE"
+    if "BUY_TO_OPEN" in intent:
+        return "SELL_TO_CLOSE"
+    side = leg.get("side")
+    if side == "SELL":
+        return "BUY_TO_CLOSE"
+    if side == "BUY":
+        return "SELL_TO_CLOSE"
+    return None
+
+
 def _event_from_parent_order(row: dict[str, Any]) -> dict[str, Any] | None:
     filled_dt = _parse_dt(row.get("filled_at"))
     if filled_dt is None:
         return None
-    side = _parse_side(row.get("side"))
-    if side is None:
-        return None
 
-    legs_symbols = row.get("legs") if isinstance(row.get("legs"), list) else []
-    parsed_legs = [parsed for symbol in legs_symbols if (parsed := _parse_option_symbol(symbol))]
+    legs = _normalized_row_legs(row)
+    parsed_legs = [leg["parsed"] for leg in legs]
+    if not parsed_legs:
+        legs_symbols = row.get("legs") if isinstance(row.get("legs"), list) else []
+        parsed_legs = [
+            parsed for symbol in legs_symbols if (parsed := _parse_option_symbol(symbol))
+        ]
     signature = _build_signature(parsed_legs)
     if signature is None:
         return None
 
-    qty = _parse_float(row.get("qty"), 1.0)
-    price = _parse_float(row.get("price"), 0.0)
-    cash = qty * price * 100.0
-    if cash <= 0:
-        return None
-    net_cash = cash if side == "SELL" else -cash
+    detailed_legs = [
+        leg
+        for leg in legs
+        if leg.get("side") and leg.get("qty", 0.0) > 0 and leg.get("price", 0.0) > 0
+    ]
+    if detailed_legs:
+        net_cash = sum(
+            _signed_cash(
+                str(leg.get("side")),
+                _parse_float(leg.get("qty"), 0.0),
+                _parse_float(leg.get("price"), 0.0),
+            )
+            for leg in detailed_legs
+        )
+    else:
+        side = _parse_side(row.get("side"))
+        if side is None:
+            return None
+        qty = _parse_float(row.get("qty"), 1.0)
+        price = _parse_float(row.get("price"), 0.0)
+        cash = qty * price * 100.0
+        if cash <= 0:
+            return None
+        net_cash = cash if side == "SELL" else -cash
     if abs(net_cash) < 0.01:
         return None
 
@@ -163,7 +398,9 @@ def _event_from_parent_order(row: dict[str, Any]) -> dict[str, Any] | None:
         "signature": signature,
         "timestamp": filled_dt,
         "net_cash": round(net_cash, 4),
-        "symbols": sorted({str(s) for s in legs_symbols if s}),
+        "symbols": sorted(
+            {leg["symbol"] for leg in legs} or {str(s) for s in row.get("legs", []) if s}
+        ),
         "order_ids": [str(row.get("id"))] if row.get("id") else [],
     }
 
@@ -295,6 +532,269 @@ def _collect_events(trade_history: list[dict[str, Any]]) -> list[dict[str, Any]]
             deduped[dedupe_key] = event
 
     return sorted(deduped.values(), key=lambda item: item["timestamp"])
+
+
+def _open_parent_lots(trade_history: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    lots: list[dict[str, Any]] = []
+    for row in sorted(
+        trade_history, key=lambda item: _parse_dt(item.get("filled_at")) or datetime.min
+    ):
+        if not isinstance(row, dict):
+            continue
+        filled_dt = _parse_dt(row.get("filled_at"))
+        if filled_dt is None:
+            continue
+        legs = _normalized_row_legs(row)
+        if not legs:
+            continue
+        if _phase_from_legs(legs) != "OPEN":
+            continue
+        signature = _build_signature([leg["parsed"] for leg in legs])
+        if signature is None:
+            continue
+        quantity = _parse_float(row.get("qty"), 0.0) or min(
+            (_parse_float(leg.get("qty"), 0.0) for leg in legs),
+            default=0.0,
+        )
+        if quantity <= 0:
+            continue
+        expected_close_legs = []
+        for leg in legs:
+            close_action = _close_action_for_open_leg(leg)
+            if close_action is None:
+                expected_close_legs = []
+                break
+            expected_close_legs.append(
+                {
+                    "symbol": leg["symbol"],
+                    "close_action": close_action,
+                    "quantity": quantity,
+                }
+            )
+        if not expected_close_legs:
+            continue
+        entry_net_cash = round(
+            sum(
+                _signed_cash(
+                    str(leg.get("side")),
+                    _parse_float(leg.get("qty"), 0.0),
+                    _parse_float(leg.get("price"), 0.0),
+                )
+                for leg in legs
+            ),
+            2,
+        )
+        lots.append(
+            {
+                "signature": signature,
+                "timestamp": filled_dt,
+                "net_cash": entry_net_cash,
+                "quantity": quantity,
+                "symbols": sorted({leg["symbol"] for leg in legs}),
+                "expected_close_legs": expected_close_legs,
+                "source": "alpaca_parent_lot",
+                "order_ids": [str(row.get("id"))] if row.get("id") else [],
+            }
+        )
+    return lots
+
+
+def _close_inventory(
+    trade_history: list[dict[str, Any]],
+) -> dict[tuple[str, str], list[dict[str, Any]]]:
+    inventory: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    sorted_rows = sorted(
+        (row for row in trade_history if isinstance(row, dict)),
+        key=lambda item: _parse_dt(item.get("filled_at")) or datetime.min,
+    )
+    for row in sorted_rows:
+        filled_dt = _parse_dt(row.get("filled_at"))
+        if filled_dt is None:
+            continue
+        legs = _normalized_row_legs(row)
+        if legs and _phase_from_legs(legs) == "CLOSE":
+            for leg in legs:
+                action = str(leg.get("position_intent") or "")
+                if not action or "CLOSE" not in action:
+                    continue
+                quantity = _parse_float(leg.get("qty"), 0.0)
+                price = _parse_float(leg.get("price"), 0.0)
+                if quantity <= 0 or price <= 0:
+                    continue
+                inventory[(leg["symbol"], action)].append(
+                    {
+                        "timestamp": filled_dt,
+                        "remaining_qty": quantity,
+                        "price": price,
+                        "side": leg.get("side"),
+                        "order_id": str(row.get("id") or ""),
+                        "source": "alpaca_parent_close",
+                    }
+                )
+            continue
+
+        parsed = _parse_option_symbol(row.get("symbol"))
+        if parsed is None:
+            continue
+        action = _parse_position_intent(row.get("position_intent"))
+        if action is None or "CLOSE" not in action:
+            continue
+        quantity = _parse_float(row.get("qty"), 0.0)
+        price = _parse_float(row.get("price"), 0.0)
+        if quantity <= 0 or price <= 0:
+            continue
+        inventory[(parsed["symbol"], action)].append(
+            {
+                "timestamp": filled_dt,
+                "remaining_qty": quantity,
+                "price": price,
+                "side": _parse_side(row.get("side")),
+                "order_id": str(row.get("id") or ""),
+                "source": "alpaca_simple_close",
+            }
+        )
+    return inventory
+
+
+def _plan_close_allocations(
+    fills: list[dict[str, Any]],
+    *,
+    needed_qty: float,
+    not_before: datetime,
+) -> list[tuple[dict[str, Any], float]] | None:
+    remaining = needed_qty
+    allocations: list[tuple[dict[str, Any], float]] = []
+    for fill in fills:
+        available_qty = _parse_float(fill.get("remaining_qty"), 0.0)
+        fill_ts = fill.get("timestamp")
+        if available_qty <= 0:
+            continue
+        if not isinstance(fill_ts, datetime) or fill_ts < not_before:
+            continue
+        take_qty = min(remaining, available_qty)
+        if take_qty <= 0:
+            continue
+        allocations.append((fill, take_qty))
+        remaining = round(remaining - take_qty, 8)
+        if remaining <= 1e-8:
+            return allocations
+    return None
+
+
+def _allocation_net_cash(fill: dict[str, Any], quantity: float, action: str) -> float:
+    side = _parse_side(fill.get("side"))
+    if side is None:
+        side = "BUY" if "BUY_TO_CLOSE" in action else "SELL"
+    return round(_signed_cash(side, quantity, _parse_float(fill.get("price"), 0.0)), 4)
+
+
+def _to_closed_trade_from_inventory(
+    lot: dict[str, Any],
+    matched_legs: list[dict[str, Any]],
+) -> dict[str, Any]:
+    signature = str(lot["signature"])
+    entry_ts = lot["timestamp"]
+    exit_ts = max(
+        allocation.get("timestamp") for leg in matched_legs for allocation, _ in leg["allocations"]
+    )
+    exit_net_cash = round(
+        sum(
+            _allocation_net_cash(allocation, take_qty, leg["close_action"])
+            for leg in matched_legs
+            for allocation, take_qty in leg["allocations"]
+        ),
+        2,
+    )
+    pnl = round(_parse_float(lot.get("net_cash"), 0.0) + exit_net_cash, 2)
+    outcome = "win" if pnl > 0 else "loss" if pnl < 0 else "breakeven"
+    legs = _signature_to_legs(signature)
+    entry_net_cash = round(_parse_float(lot.get("net_cash"), 0.0), 2)
+    order_ids = sorted(
+        {
+            str(order_id)
+            for order_id in (
+                list(lot.get("order_ids") or [])
+                + [
+                    allocation.get("order_id")
+                    for leg in matched_legs
+                    for allocation, _ in leg["allocations"]
+                ]
+            )
+            if order_id
+        }
+    )
+    return {
+        "id": _trade_id(signature, entry_ts, exit_ts),
+        "symbol": legs.get("underlying") or "SPY",
+        "type": "option",
+        "strategy": "iron_condor",
+        "status": "closed",
+        "entry_date": entry_ts.date().isoformat(),
+        "exit_date": exit_ts.date().isoformat(),
+        "entry_time": entry_ts.isoformat(),
+        "exit_time": exit_ts.isoformat(),
+        "entry_net_cash": entry_net_cash,
+        "entry_credit": round(max(entry_net_cash, 0.0), 2),
+        "entry_debit": round(max(-entry_net_cash, 0.0), 2),
+        "entry_style": "credit" if entry_net_cash > 0 else "debit",
+        "exit_net_cash": exit_net_cash,
+        "exit_credit": round(max(exit_net_cash, 0.0), 2),
+        "exit_debit": round(max(-exit_net_cash, 0.0), 2),
+        "exit_style": "credit" if exit_net_cash > 0 else "debit",
+        "realized_pnl": pnl,
+        "outcome": outcome,
+        "signature": signature,
+        "legs": legs,
+        "quantity": lot.get("quantity"),
+        "source": "alpaca_parent_lot->alpaca_close_inventory",
+        "order_ids": {
+            "entry": list(lot.get("order_ids") or []),
+            "exit": [
+                order_id
+                for order_id in order_ids
+                if order_id not in set(lot.get("order_ids") or [])
+            ],
+        },
+    }
+
+
+def _pair_closed_trades_from_inventory(trade_history: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    lots = _open_parent_lots(trade_history)
+    if not lots:
+        return []
+
+    inventory = _close_inventory(trade_history)
+    closed: list[dict[str, Any]] = []
+    for lot in lots:
+        matched_legs = []
+        for leg in lot["expected_close_legs"]:
+            fills = inventory.get((leg["symbol"], leg["close_action"]), [])
+            plan = _plan_close_allocations(
+                fills,
+                needed_qty=_parse_float(lot.get("quantity"), 0.0),
+                not_before=lot["timestamp"],
+            )
+            if plan is None:
+                matched_legs = []
+                break
+            matched_legs.append(
+                {
+                    "symbol": leg["symbol"],
+                    "close_action": leg["close_action"],
+                    "allocations": plan,
+                }
+            )
+        if not matched_legs:
+            continue
+        for leg in matched_legs:
+            for allocation, take_qty in leg["allocations"]:
+                allocation["remaining_qty"] = round(
+                    _parse_float(allocation.get("remaining_qty"), 0.0) - take_qty,
+                    8,
+                )
+        closed.append(_to_closed_trade_from_inventory(lot, matched_legs))
+    closed.sort(key=lambda row: row.get("exit_time") or "")
+    return closed
 
 
 def _safe_id(value: str) -> str:
@@ -610,15 +1110,30 @@ def sync_closed_positions(dry_run: bool = False) -> dict[str, Any]:
     logger.info("SYNC CLOSED POSITIONS")
     logger.info("=" * 60)
 
-    state = _load_system_state()
-    trade_history = state.get("trade_history", []) if isinstance(state, dict) else []
+    trade_history, trade_history_source = _load_trade_history()
     if not isinstance(trade_history, list) or not trade_history:
-        logger.warning("No trade_history available in system_state.json")
+        logger.warning("No trade_history available from broker or system_state.json")
         return {"success": False, "error": "no_trade_history"}
 
     events = _collect_events(trade_history)
-    closed_candidates = _pair_closed_trades(events)
-    logger.info("Events detected: %s | Closed candidates: %s", len(events), len(closed_candidates))
+    inventory_candidates = _pair_closed_trades_from_inventory(trade_history)
+    legacy_candidates = _pair_closed_trades(events)
+    deduped_candidates: dict[str, dict[str, Any]] = {}
+    for row in inventory_candidates + legacy_candidates:
+        row_id = str(row.get("id") or "")
+        if row_id and row_id not in deduped_candidates:
+            deduped_candidates[row_id] = row
+    closed_candidates = sorted(
+        deduped_candidates.values(),
+        key=lambda row: row.get("exit_time") or "",
+    )
+    logger.info(
+        "Trade history source: %s | Events detected: %s | Inventory candidates: %s | Closed candidates: %s",
+        trade_history_source,
+        len(events),
+        len(inventory_candidates),
+        len(closed_candidates),
+    )
 
     ledger = _load_json(TRADES_FILE, _empty_ledger())
     if not isinstance(ledger, dict):
@@ -663,6 +1178,7 @@ def sync_closed_positions(dry_run: bool = False) -> dict[str, Any]:
             "new_closed": len(new_rows),
             "normalized_ids": normalized_ids,
             "closed_total": _parse_int(ledger.get("stats", {}).get("closed_trades"), 0),
+            "trade_history_source": trade_history_source,
         }
 
     learning_applied = 0
@@ -707,6 +1223,7 @@ def sync_closed_positions(dry_run: bool = False) -> dict[str, Any]:
         "learning_applied": learning_applied,
         "learning_duplicates": learning_duplicates,
         "learning_errors": learning_errors,
+        "trade_history_source": trade_history_source,
     }
 
 

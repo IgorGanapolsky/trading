@@ -154,6 +154,22 @@ class TestPaperModeDefault:
         assert paper_param.default is True, "Safety: paper mode should be default"
 
 
+class TestDotenvDiscovery:
+    def test_iter_local_env_files_includes_primary_repo_from_worktree(self, tmp_path):
+        from src.utils.alpaca_client import _iter_local_env_files
+
+        primary_repo = tmp_path / "repo"
+        worktree_repo = primary_repo / ".worktrees" / "task"
+        worktree_repo.mkdir(parents=True)
+        (primary_repo / ".env").write_text("ALPACA_API_KEY=test\n", encoding="utf-8")
+        (worktree_repo / ".env.local").write_text("LOCAL=1\n", encoding="utf-8")
+
+        candidates = _iter_local_env_files(worktree_repo)
+
+        assert primary_repo / ".env" in candidates
+        assert worktree_repo / ".env.local" in candidates
+
+
 # =============================================================================
 # Run Tests
 # =============================================================================
