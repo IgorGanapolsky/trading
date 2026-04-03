@@ -5,9 +5,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from src.safety.north_star_congruence import assess_gate_congruence  # noqa: E402
 
 
 def _load_json(path: Path, default: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -79,6 +86,7 @@ def build_public_status(repo_root: Path) -> dict[str, Any]:
     cadence = weekly.get("cadence_kpi") or {}
     scaling = weekly.get("scaling_sample_gate") or {}
     stats = trades.get("stats") or {}
+    congruence = assess_gate_congruence(weekly, trades)
     paper_total_pnl_today = _pick_first(
         runtime_paper.get("daily_change"),
         scorecard.get("paper", {}).get("total_pnl_today"),
@@ -100,7 +108,10 @@ def build_public_status(repo_root: Path) -> dict[str, Any]:
         "system": {
             "name": "SPY Options Validation Platform",
             "tagline": "Broker-backed scorecards, hard risk gates, paired-trade accounting, and live operator surfaces.",
-            "public_status": _short_status(weekly.get("block_new_positions"), weekly.get("mode")),
+            "public_status": _short_status(
+                bool(weekly.get("block_new_positions")) or congruence["contradiction_detected"],
+                weekly.get("mode"),
+            ),
         },
         "paper": {
             "equity": _pick_first(
@@ -130,36 +141,32 @@ def build_public_status(repo_root: Path) -> dict[str, Any]:
             "win_rate_pct": stats.get("win_rate_pct"),
             "profit_factor": stats.get("profit_factor"),
             "total_realized_pnl": total_realized,
+            "expectancy_per_trade": congruence["lifetime_ledger"]["expectancy_per_trade"],
             "last_updated": stats.get("last_updated") or trades.get("meta", {}).get("last_sync"),
         },
         "gate": {
             "mode": weekly.get("mode"),
-            "block_new_positions": weekly.get("block_new_positions"),
-            # FIX Apr 3, 2026: Edge requires all-time win rate >= 50% AND 30+ trades.
-            "verified_edge_available": (
-                bool(weekly.get("verified_edge_available"))
-                and (stats.get("win_rate_pct") or 0) >= 50
-                and closed_total >= 30
-            ),
+            "block_new_positions": bool(weekly.get("block_new_positions"))
+            or congruence["contradiction_detected"],
+            "verified_edge_available": congruence["effective_verified_edge_available"],
             "recommended_max_position_pct": weekly.get("recommended_max_position_pct"),
             "sample_size": weekly.get("sample_size"),
             "expectancy_per_trade": weekly.get("expectancy_per_trade"),
             "win_rate_pct": weekly.get("win_rate_pct"),
-            "blocker_reason": weekly.get("reason"),
+            "blocker_reason": congruence["contradiction_reason"] or weekly.get("reason"),
             "qualified_setups_this_week": cadence.get("qualified_setups_observed"),
             "closed_trades_this_week": cadence.get("closed_trades_observed"),
-            # FIX Apr 3, 2026: Override scale_allowed using all-time win rate.
-            # Weekly window can cherry-pick 1 winning trade and claim "edge available"
-            # while the full ledger shows 24% win rate and -$3,402 P&L.
-            "scale_allowed": (
-                not bool(weekly.get("block_new_positions"))
-                and (stats.get("win_rate_pct") or 0) >= 50
-                and closed_total >= 30
-            ),
+            "scale_allowed": congruence["effective_scale_allowed"],
             "scaling_gate_closed_trades_observed": scaling.get(
                 "closed_trades_observed", closed_total
             ),
             "scaling_gate_min_closed_trades": scaling.get("min_closed_trades_for_scaling"),
+            "contradiction_detected": congruence["contradiction_detected"],
+            "lifetime_edge_confirmed": congruence["lifetime_ledger"]["edge_confirmed"],
+            "lifetime_closed_trades": congruence["lifetime_ledger"]["closed_trades"],
+            "lifetime_profit_factor": congruence["lifetime_ledger"]["profit_factor"],
+            "lifetime_expectancy_per_trade": congruence["lifetime_ledger"]["expectancy_per_trade"],
+            "lifetime_total_realized_pnl": congruence["lifetime_ledger"]["total_realized_pnl"],
         },
         "narrative": {
             "summary": _why_today_summary(

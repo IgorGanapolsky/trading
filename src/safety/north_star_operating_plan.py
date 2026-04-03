@@ -21,6 +21,8 @@ from src.core.trading_constants import (
     NORTH_STAR_TARGET_CAPITAL,
 )
 
+from .north_star_congruence import assess_lifetime_ledger
+
 DEFAULT_TRADES_PATH = Path("data/trades.json")
 DEFAULT_WEEKLY_HISTORY_PATH = Path("data/north_star_weekly_history.json")
 DEFAULT_LOOKBACK_DAYS = 7
@@ -764,6 +766,10 @@ def compute_weekly_gate(
         _safe_nested_dict(trades_payload, "stats").get("closed_trades"),
         0,
     )
+    lifetime_ledger = assess_lifetime_ledger(
+        trades_payload,
+        min_closed_trades=DEFAULT_MIN_CLOSED_TRADES_FOR_SCALING,
+    )
 
     unverified_trade_history_diagnostic: dict[str, Any] | None = None
     if samples > 0:
@@ -999,6 +1005,24 @@ def compute_weekly_gate(
             f"{DEFAULT_MIN_CLOSED_TRADES_PER_WEEK}."
         )
 
+    contradiction_detected = False
+    contradiction_reason = None
+    if lifetime_ledger["closed_trades"] >= DEFAULT_MIN_CLOSED_TRADES_FOR_SCALING and not lifetime_ledger[
+        "edge_confirmed"
+    ]:
+        contradiction_detected = samples > 0 and expectancy > 0
+        contradiction_reason = (
+            "CRITICAL: Lifetime paired-trade ledger remains negative despite the recent weekly window. "
+            f"Ledger expectancy ${_as_float(lifetime_ledger.get('expectancy_per_trade'), 0.0):.2f}/trade, "
+            f"profit factor {_as_float(lifetime_ledger.get('profit_factor'), 0.0):.2f}, "
+            f"total realized P/L ${_as_float(lifetime_ledger.get('total_realized_pnl'), 0.0):.2f} "
+            f"over {lifetime_ledger['closed_trades']} closed trades. Trading HALTED."
+        )
+        mode = "defensive"
+        recommended_max = min(recommended_max, 0.01)
+        block_new_positions = True
+        reason = contradiction_reason
+
     weekly_history_path.parent.mkdir(parents=True, exist_ok=True)
     new_weekly_payload = json.dumps(weekly_history, indent=2) + "\n"
     current_weekly_payload = (
@@ -1019,9 +1043,10 @@ def compute_weekly_gate(
         "reason": reason,
         "positive_weeks_streak": positive_streak,
         "evidence_source": evidence_source,
-        "verified_edge_available": samples > 0,
+        "verified_edge_available": bool(lifetime_ledger["edge_confirmed"]),
         "cadence_kpi": cadence_kpi,
         "scale_blocked_by_cadence": not cadence_kpi["passed"],
+        "scale_blocked_by_lifetime_ledger": not lifetime_ledger["edge_confirmed"],
         "ai_credit_stress": ai_credit_gate,
         "scale_blocked_by_ai_credit_stress": ai_credit_status == "blocked",
         "usd_macro_sentiment": usd_macro_gate,
@@ -1030,6 +1055,9 @@ def compute_weekly_gate(
         "scale_blocked_by_ai_cycle": ai_cycle_status == "blocked" or ai_cycle_shock,
         "scale_multiplier_from_ai_cycle": round(ai_cycle_multiplier, 4),
         "scaling_sample_gate": scaling_sample_gate,
+        "lifetime_ledger": lifetime_ledger,
+        "contradiction_detected": contradiction_detected,
+        "contradiction_reason": contradiction_reason,
         "liquidity_min_volume_ratio": round(min_liquidity_volume_ratio, 4),
         "no_trade_diagnostic": no_trade_diagnostic,
         "updated_at": datetime.now(timezone.utc).isoformat(),

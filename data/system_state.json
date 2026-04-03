@@ -2586,8 +2586,8 @@
     "status": "WARNING - NEGATIVE P/L",
     "total_pl": -6009.699999999997,
     "unrealized_pl": -7.46,
-    "weekly_gate_mode": "validation",
-    "weekly_gate_recommended_max_position_pct": 0.015,
+    "weekly_gate_mode": "defensive",
+    "weekly_gate_recommended_max_position_pct": 0.01,
     "weekly_cadence_kpi_passed": false,
     "weekly_scaling_sample_gate_passed": true,
     "weekly_ai_credit_stress_status": "unknown",
@@ -2791,16 +2791,16 @@
   "north_star_weekly_gate": {
     "enabled": true,
     "lookback_days": 7,
-    "mode": "validation",
+    "mode": "defensive",
     "sample_size": 1,
     "win_rate_pct": 100.0,
     "expectancy_per_trade": 96.0,
-    "recommended_max_position_pct": 0.015,
-    "block_new_positions": false,
-    "reason": "Insufficient recent weekly evidence; keep conservative sizing. Cadence KPI miss: setups 0/1, closed trades 1/1.",
+    "recommended_max_position_pct": 0.01,
+    "block_new_positions": true,
+    "reason": "CRITICAL: Lifetime paired-trade ledger remains negative despite the recent weekly window. Ledger expectancy $-51.55/trade, profit factor 0.25, total realized P/L $-3402.00 over 66 closed trades. Trading HALTED.",
     "positive_weeks_streak": 0,
     "evidence_source": "trades.json",
-    "verified_edge_available": true,
+    "verified_edge_available": false,
     "cadence_kpi": {
       "enabled": true,
       "min_qualified_setups_per_week": 1,
@@ -2814,6 +2814,7 @@
       "summary": "Cadence KPI miss: one or more weekly minimums not met."
     },
     "scale_blocked_by_cadence": true,
+    "scale_blocked_by_lifetime_ledger": true,
     "ai_credit_stress": {
       "status": "unknown",
       "signal_status": "unknown",
@@ -2853,6 +2854,21 @@
       "closed_trades_observed": 66,
       "passed": true
     },
+    "lifetime_ledger": {
+      "closed_trades": 66,
+      "win_rate_pct": 24.24,
+      "profit_factor": 0.25,
+      "total_realized_pnl": -3402.0,
+      "expectancy_per_trade": -51.5455,
+      "has_min_sample": true,
+      "positive_expectancy": false,
+      "positive_total_realized_pnl": false,
+      "profit_factor_passed": false,
+      "edge_confirmed": false,
+      "min_closed_trades_for_confirmed_edge": 30
+    },
+    "contradiction_detected": true,
+    "contradiction_reason": "CRITICAL: Lifetime paired-trade ledger remains negative despite the recent weekly window. Ledger expectancy $-51.55/trade, profit factor 0.25, total realized P/L $-3402.00 over 66 closed trades. Trading HALTED.",
     "liquidity_min_volume_ratio": 0.2,
     "no_trade_diagnostic": {
       "lookback_days": 7,
@@ -2919,9 +2935,9 @@
       "gate_block_counts": {},
       "top_rejection_reasons": [],
       "summary": "Closed trades exist in lookback window; no-trade root cause not currently active.",
-      "updated_at": "2026-04-03T16:44:23.327371+00:00"
+      "updated_at": "2026-04-03T16:58:34.909601+00:00"
     },
-    "updated_at": "2026-04-03T16:44:23.327693+00:00"
+    "updated_at": "2026-04-03T16:58:34.909822+00:00"
   },
   "north_star_contributions": {
     "enabled": true,
@@ -2951,7 +2967,7 @@
     "estimated_live_contribution_this_month": 0.0,
     "contribution_estimate_confidence": "medium",
     "inference_note": "Live account has no open positions; live equity change is treated as estimated contribution.",
-    "updated_at": "2026-04-03T16:44:23.327764+00:00"
+    "updated_at": "2026-04-03T16:58:34.909862+00:00"
   },
   "ic_position_management": {
     "last_run": "2026-04-01T18:33:13.205819",
@@ -3504,10 +3520,10 @@
   "position_entries": {},
   "position_entry_features": {},
   "north_star_autopilot": {
-    "generated_at_utc": "2026-04-03T16:44:23.327813Z",
+    "generated_at_utc": "2026-04-03T16:58:34.909889Z",
     "cadence_optimizer": {
-      "decision": "hold",
-      "reason": "Liquidity floor unchanged.",
+      "decision": "hold_risk_blocked",
+      "reason": "Block-new-positions is active; no cadence tuning is applied.",
       "cadence_passed": false,
       "setups_shortfall": 1,
       "liquidity_block_share": 0.0,
@@ -3517,16 +3533,16 @@
       "apply_override": false
     },
     "regime_aware_sizing": {
-      "base_max_position_pct": 0.015,
-      "recommended_max_position_pct": 0.015,
-      "block_new_positions": false,
+      "base_max_position_pct": 0.01,
+      "recommended_max_position_pct": 0.0,
+      "block_new_positions": true,
       "applied_multipliers": [
         {
-          "name": "none",
-          "value": 1.0
+          "name": "weekly_block",
+          "value": 0.0
         }
       ],
-      "reason": "Applied regime/macro multipliers to weekly cap."
+      "reason": "Weekly gate blocks new positions."
     },
     "hard_gate_monitor": {
       "status": "ok",
@@ -3547,7 +3563,7 @@
         {
           "name": "state_freshness",
           "status": "ok",
-          "detail": "fresh (0.0h old)."
+          "detail": "fresh (0.2h old)."
         },
         {
           "name": "weekly_gate_freshness",
@@ -3563,18 +3579,25 @@
     },
     "blocker_report": {
       "blocked": true,
-      "blocker_count": 2,
-      "warning_count": 1,
+      "blocker_count": 3,
+      "warning_count": 0,
       "root_causes": [
+        "Weekly gate set `block_new_positions=true`.",
         "Setup cadence is below weekly minimum.",
         "Cadence KPI is failing."
       ]
     },
     "active_overrides": {
       "min_liquidity_volume_ratio": 0.2,
-      "max_position_pct_cap": 0.015
+      "max_position_pct_cap": 0.0
     },
     "execution_actions": [
+      {
+        "priority": 3,
+        "action": "enforce_regime_sizing_cap",
+        "automated": true,
+        "reason": "Weekly gate blocks new positions."
+      },
       {
         "priority": 4,
         "action": "publish_blocker_report",
@@ -3583,11 +3606,11 @@
       }
     ],
     "override_write": {
-      "path": "/home/runner/work/trading/trading/data/runtime/north_star_gate_overrides.json",
+      "path": "/Users/igorganapolsky/workspace/git/igor/trading/.worktrees/congruence-fix-main/data/runtime/north_star_gate_overrides.json",
       "changed": false,
       "payload": {
         "min_liquidity_volume_ratio": 0.2,
-        "updated_at": "2026-04-03T16:44:23.327813+00:00",
+        "updated_at": "2026-04-03T16:58:34.909889+00:00",
         "source": "north_star_autopilot"
       }
     }

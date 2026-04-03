@@ -18,10 +18,10 @@ This page is generated from broker-backed scorecards and the canonical paired-tr
 
 ## Gate State
 
-- Mode: `validation`
-- Block new positions: `False`
+- Mode: `defensive`
+- Block new positions: `True`
 - Verified edge available: `False`
-- Recommended max position size: `0.015`
+- Recommended max position size: `0.01`
 - Weekly expectancy per trade: `$96.00`
 - Scaling gate: `66` / `30`
 - Qualified setups this week: `0`
@@ -29,7 +29,7 @@ This page is generated from broker-backed scorecards and the canonical paired-tr
 
 ## Exact Blocker
 
-`Insufficient recent weekly evidence; keep conservative sizing. Cadence KPI miss: setups 0/1, closed trades 1/1.`
+`CRITICAL: Weekly gate conflicts with lifetime paired-trade ledger. Lifetime ledger shows 66 closed trades, expectancy $-51.55/trade, profit factor 0.25, total realized P/L $-3402.00. Block new positions until lifetime edge is positive.`
 
 ## Canonical Links
 

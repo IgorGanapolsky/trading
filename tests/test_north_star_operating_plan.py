@@ -364,6 +364,51 @@ def test_expansion_mode_requires_thirty_closed_trades_for_scaling(tmp_path):
     assert gate["scaling_sample_gate"]["min_closed_trades_for_scaling"] == 30
 
 
+def test_weekly_gate_halts_when_recent_window_conflicts_with_lifetime_losing_ledger(tmp_path):
+    trades_path = tmp_path / "trades.json"
+    history_path = tmp_path / "weekly_history.json"
+    today = date(2026, 4, 3)
+    _write_json(
+        trades_path,
+        {
+            "stats": {
+                "closed_trades": 66,
+                "wins": 16,
+                "losses": 49,
+                "breakeven": 1,
+                "win_rate_pct": 24.24,
+                "profit_factor": 0.25,
+                "total_realized_pnl": -3402.0,
+            },
+            "trades": [
+                {
+                    "status": "closed",
+                    "strategy": "iron_condor",
+                    "realized_pnl": 96.0,
+                    "outcome": "win",
+                    "exit_date": today.isoformat(),
+                }
+            ],
+        },
+    )
+
+    gate, _history = compute_weekly_gate(
+        {"paper_account": {"win_rate": 24.24, "win_rate_sample_size": 66, "total_pl": -3402.0}},
+        trades_path=trades_path,
+        weekly_history_path=history_path,
+        today=today,
+    )
+
+    assert gate["mode"] == "defensive"
+    assert gate["block_new_positions"] is True
+    assert gate["verified_edge_available"] is False
+    assert gate["scale_blocked_by_lifetime_ledger"] is True
+    assert gate["contradiction_detected"] is True
+    assert "lifetime paired-trade ledger remains negative" in gate["reason"].lower()
+    assert gate["lifetime_ledger"]["closed_trades"] == 66
+    assert gate["lifetime_ledger"]["edge_confirmed"] is False
+
+
 def test_ai_credit_stress_watch_caps_expansion_to_cautious(tmp_path):
     trades_path = tmp_path / "trades.json"
     history_path = tmp_path / "weekly_history.json"

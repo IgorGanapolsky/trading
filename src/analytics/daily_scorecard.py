@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from src.safety.north_star_congruence import assess_gate_congruence
 from src.utils.alpaca_client import get_alpaca_credentials, get_brokerage_credentials
 
 ET_TZ = ZoneInfo("America/New_York")
@@ -506,28 +507,30 @@ def _build_account_scorecard(
 
 def _load_north_star_status(repo_root: Path, now: datetime) -> dict[str, Any]:
     state = _load_json(repo_root / "data" / "system_state.json", {})
+    trades_payload = _load_json(repo_root / "data" / "trades.json", {})
     if not isinstance(state, dict):
         return {"available": False, "reason": "system_state.json missing or invalid"}
 
-    north_star = state.get("north_star") if isinstance(state.get("north_star"), dict) else {}
-    weekly_gate = (
-        state.get("north_star_weekly_gate")
-        if isinstance(state.get("north_star_weekly_gate"), dict)
-        else {}
+    north_star_raw = state.get("north_star")
+    north_star: dict[str, Any] = north_star_raw if isinstance(north_star_raw, dict) else {}
+    weekly_gate_raw = state.get("north_star_weekly_gate")
+    weekly_gate: dict[str, Any] = (
+        weekly_gate_raw if isinstance(weekly_gate_raw, dict) else {}
     )
-    cadence_kpi = (
-        weekly_gate.get("cadence_kpi") if isinstance(weekly_gate.get("cadence_kpi"), dict) else {}
+    cadence_kpi_raw = weekly_gate.get("cadence_kpi")
+    cadence_kpi: dict[str, Any] = cadence_kpi_raw if isinstance(cadence_kpi_raw, dict) else {}
+    scaling_sample_gate_raw = weekly_gate.get("scaling_sample_gate")
+    scaling_sample_gate: dict[str, Any] = (
+        scaling_sample_gate_raw if isinstance(scaling_sample_gate_raw, dict) else {}
     )
-    scaling_sample_gate = (
-        weekly_gate.get("scaling_sample_gate")
-        if isinstance(weekly_gate.get("scaling_sample_gate"), dict)
-        else {}
-    )
+    congruence = assess_gate_congruence(weekly_gate, trades_payload)
+    state_meta_raw = state.get("meta")
+    state_meta: dict[str, Any] = state_meta_raw if isinstance(state_meta_raw, dict) else {}
     updated_at_raw = (
         north_star.get("updated_at")
         or weekly_gate.get("updated_at")
         or state.get("last_updated")
-        or state.get("meta", {}).get("last_updated")
+        or state_meta.get("last_updated")
     )
     updated_at = _parse_iso(updated_at_raw)
     stale = True
@@ -546,16 +549,21 @@ def _load_north_star_status(repo_root: Path, now: datetime) -> dict[str, Any]:
         "monthly_target_progress_pct": north_star.get("monthly_target_progress_pct"),
         "qualified_setups_this_week": cadence_kpi.get("qualified_setups_observed"),
         "closed_trades_this_week": cadence_kpi.get("closed_trades_observed"),
-        "verified_edge_available": weekly_gate.get("verified_edge_available"),
+        "verified_edge_available": congruence["effective_verified_edge_available"],
         "recommended_max_position_pct": weekly_gate.get("recommended_max_position_pct"),
-        "scale_allowed": bool(
-            weekly_gate.get("verified_edge_available")
-            and not weekly_gate.get("scale_blocked_by_cadence")
-            and scaling_sample_gate.get("passed")
-        ),
+        "scale_allowed": congruence["effective_scale_allowed"],
         "scaling_gate_closed_trades_observed": scaling_sample_gate.get("closed_trades_observed"),
         "scaling_gate_min_closed_trades": scaling_sample_gate.get("min_closed_trades_for_scaling"),
-        "blocker_reason": weekly_gate.get("reason") or cadence_kpi.get("summary"),
+        "blocker_reason": (
+            congruence["contradiction_reason"]
+            or weekly_gate.get("reason")
+            or cadence_kpi.get("summary")
+        ),
+        "contradiction_detected": congruence["contradiction_detected"],
+        "lifetime_closed_trades": congruence["lifetime_ledger"]["closed_trades"],
+        "lifetime_profit_factor": congruence["lifetime_ledger"]["profit_factor"],
+        "lifetime_expectancy_per_trade": congruence["lifetime_ledger"]["expectancy_per_trade"],
+        "lifetime_total_realized_pnl": congruence["lifetime_ledger"]["total_realized_pnl"],
     }
 
 

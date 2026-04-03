@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 from scripts.build_public_status import (
@@ -93,6 +95,11 @@ def test_build_public_status_uses_canonical_inputs(tmp_path: Path):
     assert status["ledger"]["closed_trades_total"] == 134
     assert status["gate"]["block_new_positions"] is True
     assert status["system"]["public_status"] == "halted"
+    assert status["gate"]["verified_edge_available"] is False
+    assert status["gate"]["scale_allowed"] is False
+    assert status["gate"]["contradiction_detected"] is True
+    assert status["gate"]["lifetime_edge_confirmed"] is False
+    assert status["ledger"]["expectancy_per_trade"] == -20.5672
 
 
 def test_write_and_check_public_surfaces(tmp_path: Path):
@@ -102,9 +109,9 @@ def test_write_and_check_public_surfaces(tmp_path: Path):
     assert changed["docs/data/public_status.json"] is True
     assert changed["wiki/Home.md"] is True
     assert changed["wiki/Progress-Dashboard.md"] is True
-    assert "CRITICAL: Negative expectancy." in (repo / "wiki/Progress-Dashboard.md").read_text(
-        encoding="utf-8"
-    )
+    assert "lifetime paired-trade ledger" in (
+        repo / "wiki/Progress-Dashboard.md"
+    ).read_text(encoding="utf-8").lower()
     assert check_public_surfaces(repo) == 0
 
 
@@ -136,3 +143,43 @@ def test_build_public_status_falls_back_to_tracked_runtime_without_scorecard(tmp
     assert status["paper"]["equity"] == 93990.30
     assert status["paper"]["total_pnl_today"] == -14.0
     assert "tracked broker sync" in status["narrative"]["summary"]
+
+
+def test_build_public_status_fails_closed_when_weekly_gate_and_lifetime_ledger_conflict(
+    tmp_path: Path,
+):
+    repo = _seed_repo(tmp_path)
+    state = json.loads((repo / "data/system_state.json").read_text(encoding="utf-8"))
+    state["north_star_weekly_gate"].update(
+        {
+            "mode": "validation",
+            "block_new_positions": False,
+            "verified_edge_available": True,
+            "reason": "Looks good this week.",
+        }
+    )
+    (repo / "data/system_state.json").write_text(json.dumps(state), encoding="utf-8")
+
+    status = build_public_status(repo)
+
+    assert status["system"]["public_status"] == "halted"
+    assert status["gate"]["block_new_positions"] is True
+    assert status["gate"]["verified_edge_available"] is False
+    assert status["gate"]["scale_allowed"] is False
+    assert status["gate"]["contradiction_detected"] is True
+    assert "lifetime paired-trade ledger" in status["gate"]["blocker_reason"].lower()
+
+
+def test_build_public_status_cli_runs_from_repo_root(tmp_path: Path):
+    repo = _seed_repo(tmp_path)
+    script = Path(__file__).resolve().parents[1] / "scripts" / "build_public_status.py"
+
+    result = subprocess.run(
+        [sys.executable, str(script), "--repo-root", str(repo)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "docs/data/public_status.json changed=True" in result.stdout

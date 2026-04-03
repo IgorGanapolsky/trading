@@ -6,11 +6,11 @@ This wiki is generated from the same source used by the public dashboard and rep
 
 ## Current Snapshot
 
-- Public status: `validation`
+- Public status: `halted`
 - Paper equity: `$93,990.30`
 - Closed trades total: `66`
 - Total realized P/L: `$-3,402.00`
-- Weekly gate mode: `validation`
+- Weekly gate mode: `defensive`
 
 ## Key Links
 
@@ -25,4 +25,4 @@ This project is currently a paper-first validation platform, not a proven passiv
 
 ## Current Blocker
 
-`Insufficient recent weekly evidence; keep conservative sizing. Cadence KPI miss: setups 0/1, closed trades 1/1.`
+`CRITICAL: Weekly gate conflicts with lifetime paired-trade ledger. Lifetime ledger shows 66 closed trades, expectancy $-51.55/trade, profit factor 0.25, total realized P/L $-3402.00. Block new positions until lifetime edge is positive.`

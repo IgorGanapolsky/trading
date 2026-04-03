@@ -3,7 +3,7 @@
   "system": {
     "name": "SPY Options Validation Platform",
     "tagline": "Broker-backed scorecards, hard risk gates, paired-trade accounting, and live operator surfaces.",
-    "public_status": "validation"
+    "public_status": "halted"
   },
   "paper": {
     "equity": 93990.3,
@@ -25,22 +25,29 @@
     "win_rate_pct": 24.24,
     "profit_factor": 0.25,
     "total_realized_pnl": -3402.0,
+    "expectancy_per_trade": -51.5455,
     "last_updated": "2026-04-03T16:44:24.353917+00:00"
   },
   "gate": {
-    "mode": "validation",
-    "block_new_positions": false,
+    "mode": "defensive",
+    "block_new_positions": true,
     "verified_edge_available": false,
-    "recommended_max_position_pct": 0.015,
+    "recommended_max_position_pct": 0.01,
     "sample_size": 1,
     "expectancy_per_trade": 96.0,
     "win_rate_pct": 100.0,
-    "blocker_reason": "Insufficient recent weekly evidence; keep conservative sizing. Cadence KPI miss: setups 0/1, closed trades 1/1.",
+    "blocker_reason": "CRITICAL: Weekly gate conflicts with lifetime paired-trade ledger. Lifetime ledger shows 66 closed trades, expectancy $-51.55/trade, profit factor 0.25, total realized P/L $-3402.00. Block new positions until lifetime edge is positive.",
     "qualified_setups_this_week": 0,
     "closed_trades_this_week": 1,
     "scale_allowed": false,
     "scaling_gate_closed_trades_observed": 66,
-    "scaling_gate_min_closed_trades": 30
+    "scaling_gate_min_closed_trades": 30,
+    "contradiction_detected": true,
+    "lifetime_edge_confirmed": false,
+    "lifetime_closed_trades": 66,
+    "lifetime_profit_factor": 0.25,
+    "lifetime_expectancy_per_trade": -51.5455,
+    "lifetime_total_realized_pnl": -3402.0
   },
   "narrative": {
     "summary": "Latest tracked broker sync shows $-14.00 today with 4 open paper positions. Use the operator scorecard for realized/unrealized and leg-level decomposition.",

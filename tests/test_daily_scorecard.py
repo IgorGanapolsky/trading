@@ -15,7 +15,6 @@ from src.analytics.daily_scorecard import (
     write_daily_scorecard_artifacts,
 )
 
-
 ET = ZoneInfo("America/New_York")
 
 
@@ -679,7 +678,10 @@ def test_build_daily_scorecard_without_credentials_and_with_filtered_trades(
         "available": False,
         "reason": "Live Alpaca credentials not available.",
     }
-    assert scorecard["north_star"]["scale_allowed"] is True
+    assert scorecard["north_star"]["verified_edge_available"] is False
+    assert scorecard["north_star"]["scale_allowed"] is False
+    assert scorecard["north_star"]["contradiction_detected"] is True
+    assert "minimum 30 closed trades" in scorecard["north_star"]["blocker_reason"].lower()
     assert scorecard["paired_closed_trades"]["closed_trades_today_count"] == 1
     assert scorecard["paired_closed_trades"]["exact_realized_pnl_today"] == 44.0
     assert (

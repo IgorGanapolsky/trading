@@ -21,9 +21,9 @@ This page explains how public-facing system copy stays congruent with live state
 
 - Paper equity: `$93,990.30`
 - Total realized P/L ledger: `$-3,402.00`
-- Weekly gate mode: `validation`
-- Block new positions: `False`
+- Weekly gate mode: `defensive`
+- Block new positions: `True`
 
 ## Exact Blocker
 
-`Insufficient recent weekly evidence; keep conservative sizing. Cadence KPI miss: setups 0/1, closed trades 1/1.`
+`CRITICAL: Weekly gate conflicts with lifetime paired-trade ledger. Lifetime ledger shows 66 closed trades, expectancy $-51.55/trade, profit factor 0.25, total realized P/L $-3402.00. Block new positions until lifetime edge is positive.`
