@@ -684,6 +684,21 @@ def _create_client(credentials: tuple[str | None, str | None], *, paper: bool) -
     return TradingClient(api_key, secret_key, paper=paper)
 
 
+def _build_order_history_filter(limit: int = 200) -> Any:
+    from alpaca.trading.enums import QueryOrderStatus
+    from alpaca.trading.requests import GetOrdersRequest
+
+    # Older Alpaca SDKs expose CLOSED/OPEN but not ALL.
+    status = getattr(QueryOrderStatus, "ALL", None)
+    if status is None:
+        status = getattr(QueryOrderStatus, "CLOSED", None)
+
+    kwargs: dict[str, Any] = {"limit": limit, "nested": True, "direction": "desc"}
+    if status is not None:
+        kwargs["status"] = status
+    return GetOrdersRequest(**kwargs)
+
+
 def build_daily_scorecard(
     repo_root: Path,
     *,
@@ -714,14 +729,7 @@ def build_daily_scorecard(
     }
 
     if paper_client is not None:
-        from alpaca.trading.enums import QueryOrderStatus
-        from alpaca.trading.requests import GetOrdersRequest
-
-        paper_orders = paper_client.get_orders(
-            filter=GetOrdersRequest(
-                status=QueryOrderStatus.ALL, limit=200, nested=True, direction="desc"
-            )
-        )
+        paper_orders = paper_client.get_orders(filter=_build_order_history_filter())
         scorecard["paper"] = _build_account_scorecard(
             "paper",
             paper_client.get_account(),
