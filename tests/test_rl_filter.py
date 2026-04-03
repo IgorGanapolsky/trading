@@ -2,6 +2,11 @@
 
 import json
 
+import pytest
+
+# Skip all tests if anthropic is not available
+pytest.importorskip("anthropic")
+
 
 class TestRLFilterInit:
     """Test RLFilter initialization."""

@@ -6,7 +6,6 @@ from pathlib import Path
 
 import yaml
 
-
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -19,7 +18,7 @@ def test_mcp_config_pins_memory_gateway_server() -> None:
     settings = json.loads((PROJECT_ROOT / ".claude" / "settings.json").read_text(encoding="utf-8"))
     claude_server = settings["mcpServers"]["rlhf"]
     assert claude_server["command"] == "npx"
-    assert claude_server["args"] == ["-y", "mcp-memory-gateway@0.7.1", "serve"]
+    assert claude_server["args"] == ["-y", "mcp-memory-gateway@0.8.5", "serve"]
 
 
 def test_gsd_pipeline_uses_gateway_backed_hooks_only() -> None:

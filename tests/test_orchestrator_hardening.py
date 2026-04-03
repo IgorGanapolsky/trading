@@ -1,6 +1,11 @@
 import os
+from unittest.mock import ANY, MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, ANY
+
+# Skip all tests if anthropic is not available
+pytest.importorskip("anthropic")
+
 from src.orchestrator.main import TradingOrchestrator
 
 

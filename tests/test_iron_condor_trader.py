@@ -19,6 +19,10 @@ from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+
+# Skip all tests if dotenv is not available
+pytest.importorskip("dotenv")
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 

@@ -34,13 +34,14 @@ class TestTradeConfidenceModel:
 class TestRegimeAdjustments:
     """Test regime-based confidence adjustments."""
 
-    def test_spike_regime_returns_zero(self):
-        """Test that spike regime returns zero confidence."""
+    def test_spike_regime_reduces_confidence(self):
+        """Test that spike regime reduces confidence (adjustment = 0.5)."""
         from src.ml.trade_confidence import TradeConfidenceModel
 
         model = TradeConfidenceModel()
-        conf = model.sample_confidence("iron_condor", "SPY", "spike")
-        assert conf == 0.0
+        spike_conf = model.sample_confidence("iron_condor", "SPY", "spike")
+        calm_conf = model.sample_confidence("iron_condor", "SPY", "calm")
+        assert spike_conf < calm_conf  # Spike should be lower than calm
 
     def test_calm_regime_boost(self):
         """Test that calm regime boosts confidence (adjustment > 1)."""

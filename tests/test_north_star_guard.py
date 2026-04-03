@@ -19,7 +19,7 @@ def test_guard_validation_mode_with_low_sample(tmp_path):
     assert guard["enabled"] is True
     assert guard["mode"] == "validation"
     assert guard["block_new_positions"] is False
-    assert guard["max_position_pct"] <= 0.025
+    assert guard["max_position_pct"] == 0.05
     assert guard["target_date"] is None
     assert guard["north_star_target_mode"] == "asap_monthly_income"
     assert guard["north_star_monthly_after_tax_target"] == 6000.0

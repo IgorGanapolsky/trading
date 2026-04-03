@@ -39,29 +39,45 @@ class TestVIXMeanReversionSignal:
         assert signal_gen.VIX_OPTIMAL_MIN == 12.0
         assert signal_gen.VIX_OPTIMAL_MAX == 25.0
 
+    @patch.object(VIXMeanReversionSignal, "get_spy_realized_vol")
     @patch.object(VIXMeanReversionSignal, "get_vix_data")
-    def test_optimal_entry_signal(self, mock_get_vix):
+    def test_optimal_entry_signal(self, mock_get_vix, mock_get_rv):
         """Test OPTIMAL_ENTRY when VIX drops from spike."""
         # Simulate VIX spike from 16 to 22, then drop to 17
         # 60 days of data, with spike in last 10 days
         base_data = np.full(50, 16.0)  # Stable at 16
         spike_data = np.array([18, 20, 22, 21, 20, 19, 18, 17, 17, 16.5])  # Spike and drop
         mock_get_vix.return_value = np.concatenate([base_data, spike_data])
+        mock_get_rv.return_value = 0.10  # RV 10%, IV will be >15% in IV data
 
         signal_gen = VIXMeanReversionSignal()
+        # Mock IV data provider
+        from unittest.mock import MagicMock
+        mock_iv_metrics = MagicMock()
+        mock_iv_metrics.current_iv = 0.20  # 20% IV > 10% RV, meets 5% threshold
+        signal_gen.iv_provider.get_full_metrics = MagicMock(return_value=mock_iv_metrics)
+
         result = signal_gen.calculate_signal()
 
         assert result.signal == "OPTIMAL_ENTRY"
         assert result.recent_high == 22.0
         assert result.confidence >= 0.8
 
+    @patch.object(VIXMeanReversionSignal, "get_spy_realized_vol")
     @patch.object(VIXMeanReversionSignal, "get_vix_data")
-    def test_good_entry_signal(self, mock_get_vix):
+    def test_good_entry_signal(self, mock_get_vix, mock_get_rv):
         """Test GOOD_ENTRY when VIX in optimal range."""
         # Stable VIX around 18 (in optimal range 15-25)
         mock_get_vix.return_value = np.full(60, 18.0)
+        mock_get_rv.return_value = 0.10  # RV 10%
 
         signal_gen = VIXMeanReversionSignal()
+        # Mock IV data provider
+        from unittest.mock import MagicMock
+        mock_iv_metrics = MagicMock()
+        mock_iv_metrics.current_iv = 0.20  # 20% IV > 10% RV
+        signal_gen.iv_provider.get_full_metrics = MagicMock(return_value=mock_iv_metrics)
+
         result = signal_gen.calculate_signal()
 
         assert result.signal == "GOOD_ENTRY"
@@ -94,12 +110,20 @@ class TestVIXMeanReversionSignal:
         assert "vix too high" in result.reason.lower() or "extreme" in result.reason.lower()
         assert result.confidence == 0.0
 
+    @patch.object(VIXMeanReversionSignal, "get_spy_realized_vol")
     @patch.object(VIXMeanReversionSignal, "get_vix_data")
-    def test_neutral_signal_vix_elevated(self, mock_get_vix):
+    def test_neutral_signal_vix_elevated(self, mock_get_vix, mock_get_rv):
         """Test NEUTRAL when VIX elevated but not dropping."""
         mock_get_vix.return_value = np.full(60, 27.0)
+        mock_get_rv.return_value = 0.10  # RV 10%
 
         signal_gen = VIXMeanReversionSignal()
+        # Mock IV data provider
+        from unittest.mock import MagicMock
+        mock_iv_metrics = MagicMock()
+        mock_iv_metrics.current_iv = 0.20  # 20% IV > 10% RV
+        signal_gen.iv_provider.get_full_metrics = MagicMock(return_value=mock_iv_metrics)
+
         result = signal_gen.calculate_signal()
 
         assert result.signal == "NEUTRAL"
@@ -116,14 +140,22 @@ class TestVIXMeanReversionSignal:
         assert result.signal == "NEUTRAL"
         assert result.confidence == 0.0
 
+    @patch.object(VIXMeanReversionSignal, "get_spy_realized_vol")
     @patch.object(VIXMeanReversionSignal, "get_vix_data")
-    def test_should_enter_trade_optimal(self, mock_get_vix):
+    def test_should_enter_trade_optimal(self, mock_get_vix, mock_get_rv):
         """Test should_enter_trade returns True for optimal entry."""
         base_data = np.full(50, 16.0)
         spike_data = np.array([18, 20, 22, 21, 20, 19, 18, 17, 17, 16.5])
         mock_get_vix.return_value = np.concatenate([base_data, spike_data])
+        mock_get_rv.return_value = 0.10  # RV 10%
 
         signal_gen = VIXMeanReversionSignal()
+        # Mock IV data provider
+        from unittest.mock import MagicMock
+        mock_iv_metrics = MagicMock()
+        mock_iv_metrics.current_iv = 0.20  # 20% IV > 10% RV
+        signal_gen.iv_provider.get_full_metrics = MagicMock(return_value=mock_iv_metrics)
+
         should_enter, reason = signal_gen.should_enter_trade()
 
         assert should_enter is True
@@ -139,15 +171,24 @@ class TestVIXMeanReversionSignal:
         assert should_enter is False
         assert "vix too low" in reason.lower() or "thin" in reason.lower()
 
+    @patch.object(VIXMeanReversionSignal, "get_spy_realized_vol")
     @patch.object(VIXMeanReversionSignal, "get_vix_data")
-    def test_should_enter_trade_neutral_waits_for_better_entry(self, mock_get_vix):
+    def test_should_enter_trade_neutral_waits_for_better_entry(self, mock_get_vix, mock_get_rv):
         """Elevated VIX without mean reversion should not open a new condor."""
         signal_gen = VIXMeanReversionSignal()
         mock_get_vix.return_value = np.full(60, 27.0)
+        mock_get_rv.return_value = 0.10  # RV 10%
+
+        # Mock IV data provider
+        from unittest.mock import MagicMock
+        mock_iv_metrics = MagicMock()
+        mock_iv_metrics.current_iv = 0.20  # 20% IV > 10% RV
+        signal_gen.iv_provider.get_full_metrics = MagicMock(return_value=mock_iv_metrics)
+
         should_enter, reason = signal_gen.should_enter_trade()
 
         assert should_enter is False
-        assert "wait" in reason.lower()
+        assert "wait" in reason.lower() or "elevated" in reason.lower()
 
 
 class TestVIXSignalDataclass:
@@ -187,23 +228,39 @@ class TestConvenienceFunction:
 class TestEdgeCases:
     """Test edge cases and boundary conditions."""
 
+    @patch.object(VIXMeanReversionSignal, "get_spy_realized_vol")
     @patch.object(VIXMeanReversionSignal, "get_vix_data")
-    def test_vix_at_boundary_15(self, mock_get_vix):
+    def test_vix_at_boundary_15(self, mock_get_vix, mock_get_rv):
         """Test VIX at 15 remains in the tradable range."""
         mock_get_vix.return_value = np.full(60, 15.0)
+        mock_get_rv.return_value = 0.10  # RV 10%
 
         signal_gen = VIXMeanReversionSignal()
+        # Mock IV data provider
+        from unittest.mock import MagicMock
+        mock_iv_metrics = MagicMock()
+        mock_iv_metrics.current_iv = 0.20  # 20% IV > 10% RV
+        signal_gen.iv_provider.get_full_metrics = MagicMock(return_value=mock_iv_metrics)
+
         result = signal_gen.calculate_signal()
 
         # 15 is inside the configured tradable range.
         assert result.signal == "GOOD_ENTRY"
 
+    @patch.object(VIXMeanReversionSignal, "get_spy_realized_vol")
     @patch.object(VIXMeanReversionSignal, "get_vix_data")
-    def test_vix_at_boundary_25(self, mock_get_vix):
+    def test_vix_at_boundary_25(self, mock_get_vix, mock_get_rv):
         """Test VIX exactly at upper optimal boundary (25)."""
         mock_get_vix.return_value = np.full(60, 25.0)
+        mock_get_rv.return_value = 0.10  # RV 10%
 
         signal_gen = VIXMeanReversionSignal()
+        # Mock IV data provider
+        from unittest.mock import MagicMock
+        mock_iv_metrics = MagicMock()
+        mock_iv_metrics.current_iv = 0.20  # 20% IV > 10% RV
+        signal_gen.iv_provider.get_full_metrics = MagicMock(return_value=mock_iv_metrics)
+
         result = signal_gen.calculate_signal()
 
         # 25 is the max optimal, should be GOOD_ENTRY

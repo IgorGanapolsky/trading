@@ -1,5 +1,10 @@
-from src.monitoring.telemetry_gateway import TelemetryGateway
+import pytest
+
+# Skip all tests if anthropic is not available
+pytest.importorskip("anthropic")
+
 from src.agents.observability_agent import ObservabilityAgent
+from src.monitoring.telemetry_gateway import TelemetryGateway
 
 
 def test_observability_agent_detects_mismatch():

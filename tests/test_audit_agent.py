@@ -1,6 +1,11 @@
 import json
-import pytest
 from pathlib import Path
+
+import pytest
+
+# Skip all tests if anthropic is not available
+pytest.importorskip("anthropic")
+
 from src.agents.audit_agent import AuditAgent
 
 
