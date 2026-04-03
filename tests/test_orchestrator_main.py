@@ -11,6 +11,8 @@ from datetime import date
 
 import pytest
 
+pytest.importorskip("anthropic")
+
 
 class TestTradingOrchestratorImports:
     """Test that TradingOrchestrator can be imported and instantiated."""

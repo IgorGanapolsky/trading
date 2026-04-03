@@ -16,8 +16,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# Skip all tests if dotenv is not installed (required by iron_condor_trader)
+pytest.importorskip("dotenv", reason="python-dotenv required for iron_condor_trader")
 
 
 class TestIronCondorSuccessfulEntry:

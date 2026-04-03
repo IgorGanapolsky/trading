@@ -13,6 +13,11 @@ Run in CI to prevent integration wiring regressions.
 import os
 import sys
 from pathlib import Path
+
+import pytest
+
+# Skip if anthropic not installed (required by src.agents.base_agent)
+pytest.importorskip("anthropic", reason="anthropic required for agent wiring tests")
 from unittest.mock import MagicMock, patch
 
 from src.utils.model_selector import (
