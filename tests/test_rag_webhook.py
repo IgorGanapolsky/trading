@@ -8,10 +8,12 @@ Ensures the webhook correctly:
 4. Handles errors gracefully
 """
 
-from unittest.mock import patch
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
+
+pytest.importorskip("anthropic", reason="anthropic required for rag_webhook tests")
 
 # Skip all tests if fastapi is not installed or has import issues
 try:
@@ -828,8 +830,9 @@ class TestPortfolioStatusFunction:
 
     def test_portfolio_status_endpoint_returns_live_snapshot(self):
         """Portfolio status endpoint should expose the same live-status snapshot used by the dashboard."""
-        from fastapi.testclient import TestClient
         from unittest.mock import patch
+
+        from fastapi.testclient import TestClient
 
         from src.agents.rag_webhook import app
 

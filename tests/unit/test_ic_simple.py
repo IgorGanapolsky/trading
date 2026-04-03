@@ -6,6 +6,7 @@ price-walking, and full E2E pipeline with mocked Alpaca client.
 
 import sys
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -14,21 +15,31 @@ import pytest
 # Ensure project root is on path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.markets.option_chain import StrikeSelection
+import sys as _sys
 
 # Stub out heavy dependencies not installed locally (alpaca, numpy, etc.)
 import types
-import sys as _sys
+
+from src.markets.option_chain import StrikeSelection
 
 
 def _ensure_module(name):
-    """Create stub module if not already importable."""
+    """Create stub module if not already importable.
+
+    FIX Apr 3, 2026: Only stub modules that don't exist as real packages.
+    Previously, this would overwrite src.safety (a real package) with a bare
+    ModuleType, causing 'src.safety is not a package' errors in later tests.
+    """
     if name not in _sys.modules:
         parts = name.split(".")
         for i in range(len(parts)):
             partial = ".".join(parts[: i + 1])
             if partial not in _sys.modules:
-                _sys.modules[partial] = types.ModuleType(partial)
+                # Don't stub src.* packages that exist on disk
+                try:
+                    __import__(partial)
+                except ImportError:
+                    _sys.modules[partial] = types.ModuleType(partial)
 
 
 # Alpaca SDK stubs
@@ -48,10 +59,35 @@ for mod in [
 
 # Create mock enums/classes that place_ic imports
 _enums = _sys.modules["alpaca.trading.enums"]
-_enums.OrderClass = type("OrderClass", (), {"MLEG": "MLEG", "SIMPLE": "SIMPLE"})
-_enums.OrderSide = type("OrderSide", (), {"BUY": "buy", "SELL": "sell"})
-_enums.TimeInForce = type("TimeInForce", (), {"DAY": "day", "GTC": "gtc"})
-_enums.QueryOrderStatus = type("QueryOrderStatus", (), {"CLOSED": "closed", "OPEN": "open"})
+# FIX Apr 3, 2026: Use enum-like objects with .value/.name so downstream code
+# (guardian, scorecard) that accesses .value doesn't crash with AttributeError.
+
+
+class _OrderClass(Enum):
+    MLEG = "MLEG"
+    SIMPLE = "SIMPLE"
+
+
+class _OrderSide(Enum):
+    BUY = "buy"
+    SELL = "sell"
+
+
+class _TimeInForce(Enum):
+    DAY = "day"
+    GTC = "gtc"
+
+
+class _QueryOrderStatus(Enum):
+    CLOSED = "closed"
+    OPEN = "open"
+    ALL = "all"
+
+
+_enums.OrderClass = _OrderClass
+_enums.OrderSide = _OrderSide
+_enums.TimeInForce = _TimeInForce
+_enums.QueryOrderStatus = _QueryOrderStatus
 
 _requests = _sys.modules["alpaca.trading.requests"]
 _requests.LimitOrderRequest = type(
