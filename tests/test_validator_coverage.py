@@ -90,6 +90,7 @@ class TestMultiBrokerValidation:
 
 class TestExecutionAgentValidation:
     def test_execute_order_blocks_non_spy(self):
+        pytest.importorskip("anthropic")
         from src.agents.execution_agent import ExecutionAgent
 
         agent = ExecutionAgent(alpaca_api=MagicMock(), paper=True)
@@ -98,6 +99,7 @@ class TestExecutionAgentValidation:
         assert "TICKER NOT ALLOWED" in result["error"]
 
     def test_submit_option_order_blocks_non_spy(self):
+        pytest.importorskip("anthropic")
         from src.agents.execution_agent import ExecutionAgent
 
         agent = ExecutionAgent(alpaca_api=MagicMock(), paper=True)
@@ -110,6 +112,7 @@ class TestExecutionAgentValidation:
 
     def test_submit_option_order_allows_spy(self):
         """SPY option passes validation (simulated fallback, no Alpaca client)."""
+        pytest.importorskip("anthropic")
         from src.agents.execution_agent import ExecutionAgent
 
         agent = ExecutionAgent(alpaca_api=MagicMock(), paper=True)
