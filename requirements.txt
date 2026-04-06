@@ -144,7 +144,7 @@ soupsieve==2.8
 sqlalchemy==2.0.48
 sseclient-py==1.9.0
 stable-baselines3==2.7.1
-streamlit==1.55.0
+streamlit==1.56.0
 sympy==1.14.0
 tenacity==9.1.2
 threadpoolctl==3.6.0
