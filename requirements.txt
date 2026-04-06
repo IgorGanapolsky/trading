@@ -30,7 +30,7 @@ cryptography==46.0.6
 curl-cffi==0.13.0
 cycler==0.12.1
 dataclasses-json==0.6.7
-deepagents==0.4.11
+deepagents==0.4.12
 defusedxml==0.7.1
 distro==1.9.0
 docstring-parser==0.17.0
