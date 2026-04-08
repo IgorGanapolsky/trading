@@ -15,15 +15,26 @@ from datetime import date, datetime, timedelta
 from math import log, sqrt
 from typing import TYPE_CHECKING, Literal, Sequence
 
+from src.core.trading_constants import (
+    IRON_CONDOR_DELTA_MAX,
+    IRON_CONDOR_DELTA_MIN,
+    IRON_CONDOR_TARGET_DELTA,
+    IRON_CONDOR_TARGET_DTE,
+    IRON_CONDOR_UNDERLYING,
+    IRON_CONDOR_WING_WIDTH,
+    MAX_DTE,
+    MIN_DTE,
+)
+
 if TYPE_CHECKING:
     pass
 
 logger = logging.getLogger(__name__)
 
 # Delta tolerance band for strike selection
-DELTA_TARGET = 0.15
-DELTA_MIN = 0.10
-DELTA_MAX = 0.22
+DELTA_TARGET = IRON_CONDOR_TARGET_DELTA
+DELTA_MIN = IRON_CONDOR_DELTA_MIN
+DELTA_MAX = IRON_CONDOR_DELTA_MAX
 MIN_OPEN_INTEREST = 0  # OI=0 normal for newer expiries
 MIN_BID = 0.05
 
@@ -89,11 +100,12 @@ class OptionContract:
 
 def select_strikes_by_delta(
     underlying_price: float,
-    wing_width: float = 10.0,
+    underlying: str = IRON_CONDOR_UNDERLYING,
+    wing_width: float = IRON_CONDOR_WING_WIDTH,
     target_delta: float = DELTA_TARGET,
-    target_dte: int = 30,
-    min_dte: int = 21,
-    max_dte: int = 45,
+    target_dte: int = IRON_CONDOR_TARGET_DTE,
+    min_dte: int = MIN_DTE,
+    max_dte: int = MAX_DTE,
 ) -> StrikeSelection:
     """Select iron condor strikes using real delta from Alpaca option chain.
 
@@ -103,7 +115,13 @@ def select_strikes_by_delta(
 
     try:
         return _select_from_live_chain(
-            underlying_price, wing_width, target_delta, expiry_date, min_dte, max_dte
+            underlying,
+            underlying_price,
+            wing_width,
+            target_delta,
+            expiry_date,
+            min_dte,
+            max_dte,
         )
     except Exception as e:
         logger.warning(f"Live chain unavailable ({e}), using heuristic fallback")
@@ -200,6 +218,7 @@ class OptionChainService:
 
 
 def _select_from_live_chain(
+    underlying: str,
     price: float,
     wing_width: float,
     target_delta: float,
@@ -214,7 +233,7 @@ def _select_from_live_chain(
     expiry_str = expiry_date.strftime("%Y-%m-%d")
 
     options = provider.get_options_chain_with_greeks(
-        symbol="SPY",
+        symbol=underlying,
         expiration=expiry_str,
         min_delta=DELTA_MIN,
         max_delta=DELTA_MAX,
@@ -230,7 +249,7 @@ def _select_from_live_chain(
                 continue
             alt_str = alt_expiry.strftime("%Y-%m-%d")
             options = provider.get_options_chain_with_greeks(
-                symbol="SPY",
+                symbol=underlying,
                 expiration=alt_str,
                 min_delta=DELTA_MIN,
                 max_delta=DELTA_MAX,
@@ -241,7 +260,9 @@ def _select_from_live_chain(
                 break
 
     if not options:
-        raise ValueError(f"No SPY options with delta {DELTA_MIN}-{DELTA_MAX} near {expiry_str}")
+        raise ValueError(
+            f"No {underlying} options with delta {DELTA_MIN}-{DELTA_MAX} near {expiry_str}"
+        )
 
     puts = [o for o in options if o["type"] == "put" and o.get("bid", 0) >= MIN_BID]
     calls = [o for o in options if o["type"] == "call" and o.get("bid", 0) >= MIN_BID]

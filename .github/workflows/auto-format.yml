@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 env:
   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
@@ -38,6 +39,8 @@ jobs:
         run: ruff check . --fix || true
 
       - name: Commit changes
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
@@ -45,6 +48,23 @@ jobs:
           if git diff --staged --quiet; then
             echo "No formatting changes needed"
           else
+            branch="auto/ruff-format-${{ github.run_id }}"
+            git checkout -b "$branch"
             git commit -m "style: Auto-format with ruff"
-            git push origin main
+            git push origin "HEAD:$branch"
+            pr_url="https://github.com/${{ github.repository }}/pull/new/$branch"
+            if ! gh pr create \
+              --base main \
+              --head "$branch" \
+              --title "style: auto-format with ruff" \
+              --body "Automated Ruff formatting from workflow run ${{ github.run_id }}."; then
+              echo "::warning::Branch $branch was pushed but PR creation is blocked for GitHub Actions. Open $pr_url manually."
+              {
+                echo "## Auto-format PR follow-up"
+                echo ""
+                echo "Pushed branch \`$branch\` but GitHub Actions could not create the PR automatically."
+                echo ""
+                echo "Open manually: $pr_url"
+              } >> "$GITHUB_STEP_SUMMARY"
+            fi
           fi

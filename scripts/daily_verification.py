@@ -16,7 +16,7 @@ import sys
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import NamedTuple
+from typing import Any, NamedTuple, Optional
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -41,7 +41,9 @@ class DailyReport(NamedTuple):
     last_equity: float
     starting_equity: float = 100000.0
 
-
+class LatestTrade(NamedTuple):
+    date: Optional[str]
+    symbol: Optional[str]
 
 
 def _today_et() -> tuple[str, datetime]:
@@ -110,7 +112,86 @@ def _count_structures_from_trade_file(date_str: str) -> int:
     return structures
 
 
-def _update_system_state_from_report(report: DailyReport) -> None:
+def _extract_latest_trade_from_orders(client: Any) -> Optional[LatestTrade]:
+    """Best-effort latest fill lookup to keep last_trade_date fresh even if sync lagged."""
+    from alpaca.trading.enums import QueryOrderStatus
+    from alpaca.trading.requests import GetOrdersRequest
+    from src.utils.trade_activity import parse_trade_timestamp
+
+    try:
+        orders_request = GetOrdersRequest(status=QueryOrderStatus.CLOSED, limit=50, nested=True)
+        orders = client.get_orders(filter=orders_request)
+    except TypeError:
+        orders_request = GetOrdersRequest(status=QueryOrderStatus.CLOSED, limit=50)
+        orders = client.get_orders(filter=orders_request)
+    except Exception:
+        return None
+
+    for order in orders:
+        filled_at = parse_trade_timestamp(getattr(order, "filled_at", None))
+        if filled_at is None:
+            continue
+
+        symbol = getattr(order, "symbol", None)
+        if not symbol:
+            for leg in getattr(order, "legs", None) or []:
+                leg_symbol = leg.get("symbol") if isinstance(leg, dict) else getattr(leg, "symbol", None)
+                if leg_symbol:
+                    symbol = str(leg_symbol)
+                    break
+
+        if filled_at.tzinfo is None:
+            filled_at = filled_at.replace(tzinfo=timezone.utc)
+        else:
+            filled_at = filled_at.astimezone(timezone.utc)
+
+        return LatestTrade(date=filled_at.date().isoformat(), symbol=str(symbol) if symbol else None)
+
+    return None
+
+
+def _report_payload(report: DailyReport) -> dict[str, Any]:
+    return {
+        "date": report.date,
+        "traded": report.traded_today,
+        "orders": report.orders_today,
+        "structures": report.structures_today,
+        "fills": report.fills_today,
+        "positions": report.positions_count,
+        "equity": report.equity,
+        "last_equity": report.last_equity,
+        "daily_pnl": report.daily_pnl,
+        "total_pnl": report.total_pnl,
+    }
+
+
+def _dedupe_reports_by_date(rows: list[Any]) -> list[dict[str, Any]]:
+    latest_by_date: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        date_value = row.get("date")
+        if not isinstance(date_value, str) or not date_value.strip():
+            continue
+        latest_by_date[date_value.strip()] = row
+    return [latest_by_date[date_key] for date_key in sorted(latest_by_date)]
+
+
+def _calculate_trading_days_since_last_trade(last_trade_date: Optional[str]) -> Optional[int]:
+    if not last_trade_date:
+        return None
+
+    try:
+        from monitor_trade_activity import calculate_days_since_trade
+
+        return int(calculate_days_since_trade(last_trade_date))
+    except Exception:
+        return None
+
+
+def _update_system_state_from_report(
+    report: DailyReport, *, latest_trade: Optional[LatestTrade] = None
+) -> None:
     """Mirror canonical intraday metrics into data/system_state.json to prevent UI mismatches."""
     state_path = Path("data") / "system_state.json"
     try:
@@ -123,11 +204,14 @@ def _update_system_state_from_report(report: DailyReport) -> None:
     state.setdefault("paper_account", {})
     state.setdefault("trades", {})
     state.setdefault("meta", {})
+    state.setdefault("sync_health", {})
+    now_iso = datetime.now(timezone.utc).isoformat()
 
     state["paper_account"]["equity"] = report.equity
     state["paper_account"]["current_equity"] = report.equity
     state["paper_account"]["cash"] = report.cash
     state["paper_account"]["last_equity"] = report.last_equity
+    state["paper_account"]["positions_count"] = int(report.positions_count)
     state["paper_account"]["daily_change"] = round(float(report.daily_pnl or 0.0), 2)
 
     state["trades"]["metrics_date"] = report.date
@@ -137,8 +221,19 @@ def _update_system_state_from_report(report: DailyReport) -> None:
     # Backward-compat fields for older dashboards.
     state["trades"]["today_trades"] = int(report.fills_today)
     state["trades"]["total_trades_today"] = int(report.fills_today)
+    if latest_trade and latest_trade.date:
+        state["trades"]["last_trade_date"] = latest_trade.date
+    if latest_trade and latest_trade.symbol:
+        state["trades"]["last_trade_symbol"] = latest_trade.symbol
+    elif report.traded_today:
+        state["trades"]["last_trade_symbol"] = state["trades"].get("last_trade_symbol")
 
-    state["meta"]["last_daily_verification_at"] = datetime.now(timezone.utc).isoformat()
+    state["meta"]["last_updated"] = now_iso
+    state["meta"]["last_daily_verification_at"] = now_iso
+    state["meta"]["verification_source"] = "daily_verification.py"
+    state["sync_health"]["last_attempt"] = now_iso
+    state["sync_health"]["sync_source"] = "daily_verification.py"
+    state["last_updated"] = now_iso
 
     state_path.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = state_path.with_suffix(".tmp")
@@ -212,6 +307,7 @@ def verify_today() -> DailyReport:
     # "Structures" are strategy-level entries recorded to the trades file.
     structures_today = _count_structures_from_trade_file(today)
 
+    latest_trade = _extract_latest_trade_from_orders(client)
     traded_today = fills_today > 0
 
     report = DailyReport(
@@ -228,7 +324,7 @@ def verify_today() -> DailyReport:
         last_equity=last_equity,
         starting_equity=starting,
     )
-    _update_system_state_from_report(report)
+    _update_system_state_from_report(report, latest_trade=latest_trade)
     return report
 
 
@@ -298,21 +394,8 @@ def save_report(report: DailyReport):
     except (FileNotFoundError, json.JSONDecodeError):
         reports = []
 
-    # Add today's report
-    reports.append(
-        {
-            "date": report.date,
-            "traded": report.traded_today,
-            "orders": report.orders_today,
-            "structures": report.structures_today,
-            "fills": report.fills_today,
-            "positions": report.positions_count,
-            "equity": report.equity,
-            "last_equity": report.last_equity,
-            "daily_pnl": report.daily_pnl,
-            "total_pnl": report.total_pnl,
-        }
-    )
+    reports.append(_report_payload(report))
+    reports = _dedupe_reports_by_date(reports)
 
     # Keep last 90 days
     reports = reports[-90:]
@@ -325,24 +408,33 @@ def save_report(report: DailyReport):
 
 def check_consecutive_no_trades():
     """Alert if we haven't traded in multiple days."""
-    reports_file = "data/verification_reports.json"
-
     try:
-        with open(reports_file) as f:
-            reports = json.load(f)
+        state = json.loads(Path("data/system_state.json").read_text(encoding="utf-8"))
     except (FileNotFoundError, json.JSONDecodeError):
-        return
+        state = {}
 
-    # Count consecutive days without trades
-    consecutive = 0
-    for report in reversed(reports):
-        if not report.get("traded", False):
-            consecutive += 1
-        else:
-            break
+    last_trade_date = None
+    if isinstance(state, dict):
+        last_trade_date = state.get("trades", {}).get("last_trade_date")
 
-    if consecutive >= 3:
-        print(f"\n🚨 ALERT: NO TRADES FOR {consecutive} CONSECUTIVE DAYS!")
+    trading_days_without_activity = _calculate_trading_days_since_last_trade(last_trade_date)
+    if trading_days_without_activity is None:
+        reports_file = "data/verification_reports.json"
+        try:
+            with open(reports_file) as f:
+                reports = _dedupe_reports_by_date(json.load(f))
+        except (FileNotFoundError, json.JSONDecodeError):
+            return
+
+        trading_days_without_activity = 0
+        for report in reversed(reports):
+            if not report.get("traded", False):
+                trading_days_without_activity += 1
+            else:
+                break
+
+    if trading_days_without_activity >= 3:
+        print(f"\n🚨 ALERT: NO TRADES FOR {trading_days_without_activity} TRADING DAYS!")
         print("   The system may be broken. Investigate immediately.")
 
 

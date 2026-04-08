@@ -192,8 +192,10 @@ def update_system_state_trades(trade_count: int, date_str: str) -> bool:
 
         # Update meta
         state.setdefault("meta", {})
-        state["meta"]["last_updated"] = datetime.now(timezone.utc).isoformat()
+        now_iso = datetime.now(timezone.utc).isoformat()
+        state["meta"]["last_updated"] = now_iso
         state["meta"]["trade_sync"] = "alpaca_api"
+        state["last_updated"] = now_iso
 
         # Write atomically
         temp_file = state_file.with_suffix(".tmp")

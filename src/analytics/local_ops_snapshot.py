@@ -29,7 +29,9 @@ def build_local_ops_snapshot(repo_root: Path, *, now: datetime | None = None) ->
     latest_verification = _latest_verification_row(verification_reports)
     latest_publication = _latest_jsonl_row(publication_file)
 
-    system_last_updated = _parse_dt(system_state.get("last_updated"))
+    system_last_updated = _parse_dt(
+        system_state.get("meta", {}).get("last_updated") or system_state.get("last_updated")
+    )
     rag_index_updated = _file_mtime_utc(rag_index_file)
     lessons_count = len(list(lessons_dir.glob("*.md"))) if lessons_dir.exists() else 0
 

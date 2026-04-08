@@ -175,6 +175,24 @@ def test_main_head_verification_runs_bounded_health_mode():
     assert 'SYSTEM_HEALTH_BOUNDED: "1"' in workflow_text
 
 
+def test_auto_format_opens_pr_instead_of_pushing_main():
+    """Auto-format must not push straight to protected main."""
+    workflow_text = Path(".github/workflows/auto-format.yml").read_text()
+
+    assert "gh pr create" in workflow_text
+    assert "git push origin main" not in workflow_text
+    assert 'pull-requests: write' in workflow_text
+
+
+def test_self_healing_uses_pr_safe_mutation_flow():
+    """Self-healing workflow must not mutate protected main directly."""
+    workflow_text = Path(".github/workflows/self-healing-auto-fix.yml").read_text()
+
+    assert "gh pr create" in workflow_text
+    assert "git push origin main" not in workflow_text
+    assert "secrets.GH_PAT" not in workflow_text
+
+
 if __name__ == "__main__":
     print("=" * 70)
     print("WORKFLOW CONTRACT TESTS")

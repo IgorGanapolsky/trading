@@ -79,3 +79,35 @@ def test_render_local_ops_markdown_contains_sections() -> None:
     assert "## Trading" in markdown
     assert "## RAG" in markdown
     assert "## Publishing" in markdown
+
+
+def test_build_local_ops_snapshot_prefers_meta_last_updated(tmp_path: Path) -> None:
+    data_dir = tmp_path / "data"
+    (data_dir / "rag").mkdir(parents=True)
+    (data_dir / "analytics").mkdir(parents=True)
+    lessons_dir = tmp_path / "rag_knowledge" / "lessons_learned"
+    lessons_dir.mkdir(parents=True)
+
+    (data_dir / "system_state.json").write_text(
+        json.dumps(
+            {
+                "meta": {"last_updated": "2026-03-17T12:00:00Z"},
+                "paper_account": {
+                    "equity": 95526.93,
+                    "cash": 89392.93,
+                    "daily_change": 34.0,
+                },
+                "positions": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (data_dir / "verification_reports.json").write_text("[]", encoding="utf-8")
+    (data_dir / "rag" / "lessons_query.json").write_text(
+        json.dumps({"rows": []}),
+        encoding="utf-8",
+    )
+    (data_dir / "analytics" / "publication-status-history.jsonl").write_text("", encoding="utf-8")
+
+    snapshot = build_local_ops_snapshot(tmp_path)
+    assert snapshot["trading"]["system_last_updated_utc"] == "2026-03-17T12:00:00Z"
