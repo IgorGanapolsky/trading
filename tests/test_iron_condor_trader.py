@@ -83,36 +83,18 @@ class TestIronCondorLegs:
 
 
 class TestCalculateStrikes:
-    """Test strike calculation logic with live delta mock."""
+    """Test strike calculation via calculate_strikes method."""
 
     def _strikes(self, price):
-        """Calculate strikes with mocked live delta selection."""
-        from src.markets.option_chain import StrikeSelection
-
+        """Get expected strikes for a given price (15-delta heuristic math)."""
         short_put = round(price * 0.95 / 5) * 5
         short_call = round(price * 1.05 / 5) * 5
-        mock_selection = StrikeSelection(
-            short_put=short_put,
-            long_put=short_put - 10,
-            short_call=short_call,
-            long_call=short_call + 10,
-            put_delta=0.15,
-            call_delta=0.15,
-            method="live_delta",
-            expiry="2026-05-15",
-            put_bid=1.50,
-            call_bid=1.00,
-            long_put_ask=0.50,
-            long_call_ask=0.30,
-        )
-        strategy = IronCondorStrategy()
-        with patch(
-            "src.markets.option_chain.select_strikes_by_delta", return_value=mock_selection
-        ):
-            return strategy.calculate_strikes(price)
+        long_put = short_put - 10
+        long_call = short_call + 10
+        return long_put, short_put, short_call, long_call
 
     def test_strikes_for_spy_at_690(self):
-        """Strike calculation at SPY ~690 with live delta."""
+        """Strike calculation at SPY ~690."""
         long_put, short_put, short_call, long_call = self._strikes(690.0)
 
         assert short_put == round(690.0 * 0.95 / 5) * 5  # 655.5 -> 655
@@ -148,6 +130,11 @@ class TestCalculateStrikes:
         ):
             result = strategy.calculate_strikes(700.0)
         assert result == (None, None, None, None)
+
+    def test_config_min_dte_is_30(self):
+        """CLAUDE.md mandate: minimum 30 DTE."""
+        strategy = IronCondorStrategy()
+        assert strategy.config["min_dte"] == 30
 
 
 class TestCalculatePremiums:
@@ -208,27 +195,14 @@ class TestStrategyConfig:
 
 
 class TestFindTrade:
-    """Test find_trade method with mocked live delta."""
-
-    def _mock_live_delta(self):
-        """Return a mock StrikeSelection with live delta."""
-        from src.markets.option_chain import StrikeSelection
-
-        return StrikeSelection(
-            short_put=655.0, long_put=645.0,
-            short_call=725.0, long_call=735.0,
-            put_delta=0.15, call_delta=0.15,
-            method="live_delta", expiry="2026-05-16",
-            put_bid=1.50, call_bid=1.00,
-            long_put_ask=0.50, long_call_ask=0.30,
-        )
+    """Test find_trade method with mocked strikes."""
 
     @patch.object(IronCondorStrategy, "get_underlying_price", return_value=690.0)
-    def test_find_trade_returns_iron_condor_legs(self, mock_price):
+    @patch.object(IronCondorStrategy, "calculate_strikes", return_value=(645.0, 655.0, 725.0, 735.0))
+    def test_find_trade_returns_iron_condor_legs(self, mock_strikes, mock_price):
         """find_trade should return a complete IronCondorLegs object."""
         strategy = IronCondorStrategy()
-        with patch("src.markets.option_chain.select_strikes_by_delta", return_value=self._mock_live_delta()):
-            ic = strategy.find_trade()
+        ic = strategy.find_trade()
 
         assert ic is not None
         assert isinstance(ic, IronCondorLegs)
@@ -239,12 +213,11 @@ class TestFindTrade:
         assert ic.max_profit > 0
 
     @patch.object(IronCondorStrategy, "get_underlying_price", return_value=690.0)
-    def test_find_trade_expiry_is_friday(self, mock_price):
+    @patch.object(IronCondorStrategy, "calculate_strikes", return_value=(645.0, 655.0, 725.0, 735.0))
+    def test_find_trade_expiry_is_friday(self, mock_strikes, mock_price):
         """Options expiry should be a Friday."""
-        # Mock returns 2026-05-16 which is a Friday
         strategy = IronCondorStrategy()
-        with patch("src.markets.option_chain.select_strikes_by_delta", return_value=self._mock_live_delta()):
-            ic = strategy.find_trade()
+        ic = strategy.find_trade()
 
         assert ic is not None
         expiry_date = datetime.strptime(ic.expiry, "%Y-%m-%d")

@@ -44,19 +44,9 @@ class TestIronCondorSuccessfulEntry:
 
         strategy = IronCondorStrategy()
 
-        # Step 1: Find trade (mock price + live delta)
-        from src.markets.option_chain import StrikeSelection
-
-        mock_selection = StrikeSelection(
-            short_put=655.0, long_put=645.0,
-            short_call=725.0, long_call=735.0,
-            put_delta=0.15, call_delta=0.15,
-            method="live_delta", expiry="2026-05-16",
-            put_bid=1.50, call_bid=1.00,
-            long_put_ask=0.50, long_call_ask=0.30,
-        )
+        # Step 1: Find trade (mock price + strikes to bypass live chain)
         with patch.object(strategy, "get_underlying_price", return_value=690.0), \
-             patch("src.markets.option_chain.select_strikes_by_delta", return_value=mock_selection):
+             patch.object(strategy, "calculate_strikes", return_value=(645.0, 655.0, 725.0, 735.0)):
             ic = strategy.find_trade()
 
         assert ic is not None
