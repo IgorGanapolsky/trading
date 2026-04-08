@@ -806,8 +806,7 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           LLM_GATEWAY_BASE_URL: ${{ secrets.LLM_GATEWAY_BASE_URL }}
           LLM_GATEWAY_API_KEY: ${{ secrets.LLM_GATEWAY_API_KEY }}
-          HELICONE_API_KEY: ${{ secrets.HELICONE_API_KEY }}
-          # LangSmith removed Jan 9, 2026 - local observability only
+          OPENROUTER_INPUT_OUTPUT_LOGGING_ENABLED: ${{ vars.OPENROUTER_INPUT_OUTPUT_LOGGING_ENABLED || 'false' }}
           ALPHA_VANTAGE_API_KEY: ${{ secrets.ALPHA_VANTAGE_API_KEY }}
           # Phase 1: Polygon.io + Finnhub integration
           POLYGON_API_KEY: ${{ secrets.POLYGON_API_KEY }}
@@ -851,27 +850,9 @@ jobs:
           python3 scripts/pre_session_rag_check.py --days 7 --allow-warnings
           # ========================================================
 
-          # ========== PRE-FLIGHT: VERIFY OBSERVABILITY ==========
-          echo "🔍 Verifying LangSmith tracing is operational..."
-          python3 -c "
-          import sys
-          sys.path.insert(0, '.')
-          try:
-              from src.observability.tracing_health_check import verify_tracing_health
-              result = verify_tracing_health()
-              print(f'LangSmith Configured: {result.langsmith_configured}')
-              print(f'LangSmith Reachable: {result.langsmith_reachable}')
-              print(f'Tracer Initialized: {result.tracer_initialized}')
-              print(f'Test Trace Sent: {result.test_trace_sent}')
-              if result.healthy:
-                  print('✅ TRACING HEALTH CHECK PASSED')
-              else:
-                  print(f'⚠️ TRACING HEALTH CHECK FAILED: {result.errors}')
-                  print('   Trading will proceed but may not be fully traced!')
-          except Exception as e:
-              print(f'⚠️ Tracing health check error: {e}')
-              print('   Trading will proceed without guaranteed tracing')
-          " || echo "⚠️ Tracing health check script failed - proceeding anyway"
+          # ========== PRE-FLIGHT: VERIFY LLM OBSERVABILITY ==========
+          echo "🔍 Verifying LLM route and OpenRouter logging coverage..."
+          python3 scripts/check_llm_observability.py || echo "⚠️ LLM observability check failed - proceeding anyway"
           # ======================================================
 
           # ========== MANDATORY: PRE-TRADE SMOKE TESTS ==========
@@ -1335,7 +1316,7 @@ jobs:
 
       - name: Update performance log
         if: steps.execute_trading.conclusion == 'success'
-        continue-on-error: true  # Non-critical: performance log is reporting only, trading already succeeded
+        continue-on-error: true # Non-critical: performance log is reporting only, trading already succeeded
         env:
           ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_API_KEY }}
           ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_API_SECRET }}
@@ -1347,7 +1328,7 @@ jobs:
       - name: Verify Positions (Alpaca vs Local)
         id: verify_positions
         if: steps.execute_trading.conclusion == 'success'
-        continue-on-error: true  # Non-critical: informational check only, Alpaca is source of truth
+        continue-on-error: true # Non-critical: informational check only, Alpaca is source of truth
         env:
           ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_API_KEY }}
           ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_API_SECRET }}
@@ -1361,7 +1342,7 @@ jobs:
       - name: Verify Orders (Trust But Verify)
         id: verify_orders
         if: steps.execute_trading.conclusion == 'success'
-        continue-on-error: true  # Non-critical: informational check only, Alpaca is source of truth
+        continue-on-error: true # Non-critical: informational check only, Alpaca is source of truth
         env:
           ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_API_KEY }}
           ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_API_SECRET }}
@@ -1491,7 +1472,7 @@ jobs:
       - name: Daily Verification Report
         # Must run BEFORE commit/API sync so verification_reports.json is published to main.
         if: always()
-        continue-on-error: true  # Non-critical: report generation failure shouldn't block data commits
+        continue-on-error: true # Non-critical: report generation failure shouldn't block data commits
         env:
           ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_API_KEY }}
           ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_API_SECRET }}
@@ -1501,7 +1482,7 @@ jobs:
 
       - name: Commit trading data updates
         if: always()
-        continue-on-error: true  # Non-critical: git commit/push can fail due to conflicts, trading already succeeded
+        continue-on-error: true # Non-critical: git commit/push can fail due to conflicts, trading already succeeded
         run: |
           echo "💾 Committing trading data updates..."
 
@@ -1564,7 +1545,7 @@ jobs:
         # This is an atomic operation that bypasses git conflicts entirely
         # Added Jan 6, 2026 after repeated push failures during concurrent merges
         if: always()
-        continue-on-error: true  # Non-critical: fallback sync, primary git push already attempted
+        continue-on-error: true # Non-critical: fallback sync, primary git push already attempted
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT || github.token }}
           GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
@@ -1620,7 +1601,7 @@ jobs:
 
       - name: Monitor TLT Momentum Gate
         if: steps.check_execution.outputs.skip != 'true'
-        continue-on-error: true  # Non-critical: TLT monitoring is advisory, not a trade gate
+        continue-on-error: true # Non-critical: TLT monitoring is advisory, not a trade gate
         timeout-minutes: 3
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -1721,7 +1702,7 @@ jobs:
 
       - name: Upload execution logs
         if: always()
-        continue-on-error: true  # Non-critical: artifact upload failure shouldn't mask trading results
+        continue-on-error: true # Non-critical: artifact upload failure shouldn't mask trading results
         uses: actions/upload-artifact@v7
         with:
           name: trading-logs-${{ github.run_id }}
@@ -1735,7 +1716,7 @@ jobs:
 
       - name: Upload logs on failure (early)
         if: failure() || cancelled()
-        continue-on-error: true  # Non-critical: artifact upload failure shouldn't mask the actual failure
+        continue-on-error: true # Non-critical: artifact upload failure shouldn't mask the actual failure
         uses: actions/upload-artifact@v7
         with:
           name: failure-logs-${{ github.run_id }}
@@ -1750,7 +1731,7 @@ jobs:
       # ========================================================================
       - name: Notify CEO on failure
         if: failure()
-        continue-on-error: true  # Non-critical: notification failure shouldn't change workflow status
+        continue-on-error: true # Non-critical: notification failure shouldn't change workflow status
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}

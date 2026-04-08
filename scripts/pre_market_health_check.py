@@ -13,23 +13,26 @@ Runs before trading starts to validate:
 CRITICAL: Must pass before allowing trading
 """
 
+import logging
 import os
+import signal
 import sys
+from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from dotenv import load_dotenv
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 try:
     load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"), override=False)
 except (AssertionError, Exception):
     pass  # In CI, env vars are set via workflow secrets
 
-import logging
-import signal
-from datetime import datetime
-
+from src.observability.llm_observability import (
+    build_llm_observability_report,
+    render_llm_observability_lines,
+)
 from src.utils.error_monitoring import init_sentry
 
 # Setup logging
@@ -151,6 +154,20 @@ def check_anthropic_api() -> bool:
     # Skip Anthropic check - not critical and can hang (we have fallback)
     print("✅ Anthropic API: Skipped (not critical, fallback available)")
     return True  # Not critical - we have fallback
+
+
+def check_llm_observability() -> bool:
+    """Report whether the current LLM path matches OpenRouter logging expectations."""
+    try:
+        report = build_llm_observability_report()
+        prefix = {"ok": "✅", "warning": "⚠️", "broken": "❌"}.get(report.status, "❓")
+        print(f"{prefix} LLM Observability: {report.summary}")
+        for line in render_llm_observability_lines(report):
+            print(f"   {line}")
+        return report.status == "ok"
+    except Exception as e:
+        print(f"⚠️  LLM Observability: CHECK FAILED - {e}")
+        return True
 
 
 def check_market_status() -> bool:
@@ -347,6 +364,7 @@ def main():
             "Alpaca API": check_alpaca_api(),
             "Market Status": check_market_status(),
             "Anthropic API": check_anthropic_api(),
+            "LLM Observability": check_llm_observability(),
             "Economic Calendar": check_economic_calendar(),
             "Circuit Breakers": check_circuit_breakers(),
             "Strategy Execution": check_strategy_execution(),
@@ -369,6 +387,7 @@ def main():
         warning_checks = [
             "Market Status",
             "Anthropic API",
+            "LLM Observability",
             "Economic Calendar",
             "Strategy Execution",
         ]

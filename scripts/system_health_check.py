@@ -17,6 +17,10 @@ from pathlib import Path
 # Ensure src is importable
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from src.observability.llm_observability import (
+    build_llm_observability_report,
+    render_llm_observability_lines,
+)
 from src.utils.git_paths import resolve_shared_repo_root
 
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -240,6 +244,24 @@ def check_ml_pipeline():
         results["details"].append("✓ GeminiDeepResearch class available")
         results["status"] = "OK"
 
+    except Exception as e:
+        results["status"] = "BROKEN"
+        results["details"].append(f"✗ Error: {e}")
+
+    return results
+
+
+def check_llm_observability():
+    """Verify the active LLM route matches the documented observability path."""
+    results = {"name": "LLM Observability", "status": "UNKNOWN", "details": []}
+
+    try:
+        report = build_llm_observability_report()
+        results["status"] = {"ok": "OK", "warning": "WARNING", "broken": "BROKEN"}.get(
+            report.status, "UNKNOWN"
+        )
+        results["details"].append(report.summary)
+        results["details"].extend(render_llm_observability_lines(report))
     except Exception as e:
         results["status"] = "BROKEN"
         results["details"].append(f"✗ Error: {e}")
@@ -570,13 +592,20 @@ def main():
         check_rag_system,
         check_rl_system,
         check_ml_pipeline,
+        check_llm_observability,
         check_execution_scope,
     ]
 
     all_ok = True
     for check in checks:
         result = check()
-        status_icon = {"OK": "✅", "STUB": "⚠️", "BROKEN": "❌", "UNKNOWN": "❓"}
+        status_icon = {
+            "OK": "✅",
+            "STUB": "⚠️",
+            "WARNING": "⚠️",
+            "BROKEN": "❌",
+            "UNKNOWN": "❓",
+        }
         icon = status_icon.get(result["status"], "❓")
 
         print(f"\n{icon} {result['name']}: {result['status']}")
