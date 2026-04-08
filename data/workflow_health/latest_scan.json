@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-03-06T03:49:03Z",
+  "timestamp": "2026-03-26T03:59:18Z",
   "security_clean": false,
-  "security_issues": 10,
+  "security_issues": 7,
   "dead_code_clean": false,
   "quality_good": true,
   "overall_healthy": false

@@ -1,7 +1,0 @@
-name = "trading-vix-data"
-main = "worker.js"
-compatibility_date = "2024-01-01"
-
-# Optional: Add scheduled trigger to check VIX hourly
-# [triggers]
-# crons = ["0 * * * *"]

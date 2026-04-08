@@ -21,7 +21,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import ssl
 import sys
 import urllib.request
@@ -40,19 +39,7 @@ logger = logging.getLogger(__name__)
 
 DATA_DIR = PROJECT_ROOT / "data"
 
-
-def get_alpaca_credentials() -> tuple[str, str]:
-    """Get Alpaca API credentials from environment."""
-    # Try paper trading credentials first (per CLAUDE.md priority)
-    api_key = os.environ.get("ALPACA_PAPER_TRADING_5K_API_KEY", "")
-    api_secret = os.environ.get("ALPACA_PAPER_TRADING_5K_API_SECRET", "")
-
-    if not api_key or not api_secret:
-        # Fallback to standard names
-        api_key = os.environ.get("ALPACA_API_KEY", "")
-        api_secret = os.environ.get("ALPACA_SECRET_KEY", "")
-
-    return api_key, api_secret
+from src.utils.alpaca_client import get_alpaca_credentials  # noqa: E402
 
 
 def fetch_todays_fills(date_str: str | None = None) -> list[dict]:

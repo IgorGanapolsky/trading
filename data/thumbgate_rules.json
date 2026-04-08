@@ -1,0 +1,18 @@
+[
+  {
+    "id": "rule_001",
+    "active": true,
+    "condition": {"vix_above": 35},
+    "reason": "VIX > 35: extreme volatility, premiums rich but gamma risk too high",
+    "created": "2026-03-26",
+    "source": "LL-269 research + March 2026 tariff crash"
+  },
+  {
+    "id": "rule_002",
+    "active": false,
+    "condition": {"day_of_week": "Friday"},
+    "reason": "Avoid Friday entries (weekend theta decay is priced in, gamma exposure)",
+    "created": "2026-03-26",
+    "source": "Industry best practice for weekly options"
+  }
+]

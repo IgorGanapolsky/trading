@@ -1,6 +1,11 @@
 """
 Group Relative Policy Optimization (GRPO) for Trading.
 
+STATUS: RESEARCH ONLY — not wired into the trading execution path.
+Per CLAUDE.md: "optional research tooling, not the default operator path."
+The Thompson Sampler in update_ml_from_trades.py is the operational model.
+GRPO will be wired in only after proven edge on 30+ trades.
+
 Implements GRPO with verifiable rewards based on Sebastian Raschka's work.
 Key insight: Eliminates the critic model by using verifiable rewards.
 
@@ -22,6 +27,8 @@ Where:
     - R(s,a) = normalized P/L (verifiable reward)
     - pi(a|s) = policy network output
 """
+
+from __future__ import annotations
 
 import json
 import logging
@@ -52,6 +59,8 @@ MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
 MODEL_PATH = MODELS_DIR / "grpo_trade_policy.pt"
 METADATA_PATH = MODELS_DIR / "grpo_trade_metadata.json"
+TRADE_LEDGER_PATH = DATA_DIR / "trades.json"
+SYSTEM_STATE_PATH = DATA_DIR / "system_state.json"
 
 
 @dataclass
@@ -68,7 +77,7 @@ class TradeFeatures:
     days_to_expiry: float  # Current option DTE
     put_call_ratio: float  # Market sentiment
 
-    def to_tensor(self) -> "torch.Tensor":
+    def to_tensor(self) -> torch.Tensor:
         """Convert to PyTorch tensor."""
         if not TORCH_AVAILABLE:
             raise RuntimeError("PyTorch not available")
@@ -294,16 +303,17 @@ class GRPOTradeLearner:
 
     def load_trade_history(self, file_path: Optional[Path] = None) -> int:
         """
-        Load trade history from system_state.json.
+        Load trade history from the paired trade ledger when available.
 
         Args:
-            file_path: Optional override path. Defaults to data/system_state.json
+            file_path: Optional override path. Defaults to `data/trades.json`
+                with legacy fallback to `data/system_state.json`.
 
         Returns:
             Number of trades loaded
         """
         if file_path is None:
-            file_path = DATA_DIR / "system_state.json"
+            file_path = TRADE_LEDGER_PATH if TRADE_LEDGER_PATH.exists() else SYSTEM_STATE_PATH
 
         if not file_path.exists():
             logger.warning(f"Trade history file not found: {file_path}")
@@ -311,19 +321,80 @@ class GRPOTradeLearner:
 
         try:
             with open(file_path) as f:
-                state = json.load(f)
+                payload = json.load(f)
 
-            raw_trades = state.get("trade_history", [])
+            closed_trades = payload.get("trades", []) if isinstance(payload, dict) else []
+            if isinstance(closed_trades, list):
+                self.trade_history = self._process_closed_trades(closed_trades)
+                if self.trade_history:
+                    logger.info(
+                        "Loaded %d paired closed trades from %s",
+                        len(self.trade_history),
+                        file_path,
+                    )
+                    return len(self.trade_history)
+
+            raw_trades = payload.get("trade_history", []) if isinstance(payload, dict) else []
             self.trade_history = self._process_raw_trades(raw_trades)
-
             logger.info(
-                f"Loaded {len(self.trade_history)} processed trades from {len(raw_trades)} raw trades"
+                "Loaded %d legacy processed trades from %d raw fills in %s",
+                len(self.trade_history),
+                len(raw_trades) if isinstance(raw_trades, list) else 0,
+                file_path,
             )
             return len(self.trade_history)
 
         except (json.JSONDecodeError, KeyError) as e:
             logger.error(f"Failed to load trade history: {e}")
             return 0
+
+    def _process_closed_trades(self, closed_trades: list[dict]) -> list[TradeRecord]:
+        """Process paired closed trades from data/trades.json into TradeRecord objects."""
+        processed: list[TradeRecord] = []
+
+        for trade in closed_trades:
+            if not isinstance(trade, dict):
+                continue
+
+            if str(trade.get("status", "")).lower() != "closed":
+                continue
+
+            timestamp = self._parse_trade_timestamp(
+                trade.get("exit_time")
+                or trade.get("exit_date")
+                or trade.get("closed_at")
+                or trade.get("timestamp")
+            )
+            if timestamp is None:
+                continue
+
+            pnl = float(trade.get("realized_pnl", trade.get("pnl", trade.get("pl", 0.0))) or 0.0)
+            outcome = str(trade.get("outcome") or "").lower()
+            if outcome not in {"win", "loss", "breakeven"}:
+                outcome = "win" if pnl > 0 else "loss" if pnl < 0 else "breakeven"
+
+            basis = abs(
+                float(
+                    trade.get("entry_credit")
+                    or trade.get("entry_debit")
+                    or trade.get("entry_net_cash")
+                    or 0.0
+                )
+            )
+            if basis <= 0:
+                basis = max(abs(pnl), 1.0)
+
+            record = TradeRecord(
+                features=self._estimate_features_from_closed_trade(trade, timestamp),
+                params=self._estimate_params_from_closed_trade(trade, timestamp),
+                pnl=pnl,
+                pnl_pct=(pnl / basis) if basis > 0 else 0.0,
+                outcome=outcome,
+                timestamp=timestamp,
+            )
+            processed.append(record)
+
+        return processed
 
     def _process_raw_trades(self, raw_trades: list[dict]) -> list[TradeRecord]:
         """
@@ -403,6 +474,54 @@ class GRPOTradeLearner:
 
         return processed
 
+    def _parse_trade_timestamp(self, value: Any) -> datetime | None:
+        raw = str(value or "").strip()
+        if not raw:
+            return None
+        try:
+            if len(raw) == 10 and raw[4] == "-" and raw[7] == "-":
+                return datetime.fromisoformat(f"{raw}T00:00:00")
+            return datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+
+    def _estimate_features_from_closed_trade(
+        self, trade: dict[str, Any], timestamp: datetime
+    ) -> TradeFeatures:
+        """Estimate learning features from a paired closed trade row."""
+        entry_time = self._parse_trade_timestamp(
+            trade.get("entry_time") or trade.get("entry_date") or trade.get("timestamp")
+        )
+        base_ts = entry_time or timestamp
+
+        hour = 0.5
+        minute_fraction = base_ts.minute / 60.0
+        hour = ((base_ts.hour + minute_fraction) - 9.5) / 6.5
+        hour = max(0.0, min(1.0, hour))
+
+        day_of_week = max(0.0, min(1.0, base_ts.weekday() / 4.0))
+
+        expiry_raw = ""
+        legs = trade.get("legs")
+        if isinstance(legs, dict):
+            expiry_raw = str(legs.get("expiry") or "")
+        dte = 30.0
+        expiry_ts = self._parse_trade_timestamp(expiry_raw)
+        if expiry_ts is not None:
+            dte = float(max(1, (expiry_ts.date() - base_ts.date()).days))
+
+        return TradeFeatures(
+            vix_level=18.0,
+            vix_percentile=0.5,
+            vix_term_structure=0.9,
+            spy_20d_return=0.0,
+            spy_5d_return=0.0,
+            hour_of_day=hour,
+            day_of_week=day_of_week,
+            days_to_expiry=dte,
+            put_call_ratio=1.0,
+        )
+
     def _estimate_features_from_trade(self, trade: dict, date_key: str) -> TradeFeatures:
         """Estimate market features at time of trade."""
         # Default features
@@ -457,6 +576,44 @@ class GRPOTradeLearner:
             day_of_week=day_of_week,
             days_to_expiry=float(dte),
             put_call_ratio=1.0,
+        )
+
+    def _estimate_params_from_closed_trade(
+        self, trade: dict[str, Any], timestamp: datetime
+    ) -> TradeParams:
+        """Estimate training parameters from a paired closed trade row."""
+        entry_time = self._parse_trade_timestamp(
+            trade.get("entry_time") or trade.get("entry_date") or trade.get("timestamp")
+        )
+        base_ts = entry_time or timestamp
+
+        hour = ((base_ts.hour + (base_ts.minute / 60.0)) - 9.5) / 6.5
+        hour = max(0.0, min(1.0, hour))
+
+        dte = 30
+        legs = trade.get("legs")
+        expiry_raw = ""
+        if isinstance(legs, dict):
+            expiry_raw = str(legs.get("expiry") or "")
+        expiry_ts = self._parse_trade_timestamp(expiry_raw)
+        if expiry_ts is not None:
+            dte = max(1, min(60, (expiry_ts.date() - base_ts.date()).days))
+
+        exit_profit_pct = 0.50
+        entry_credit = float(trade.get("entry_credit") or 0.0)
+        if entry_credit > 0:
+            realized_pnl = float(
+                trade.get("realized_pnl", trade.get("pnl", trade.get("pl", 0.0))) or 0.0
+            )
+            realized_ratio = realized_pnl / entry_credit
+            exit_profit_pct = max(0.25, min(0.75, realized_ratio)) if realized_ratio > 0 else 0.50
+
+        return TradeParams(
+            delta=0.15,
+            dte=dte,
+            entry_hour=hour,
+            exit_profit_pct=exit_profit_pct,
+            confidence=0.6,
         )
 
     def _estimate_params_from_trades(self, trades: list[dict]) -> TradeParams:

@@ -150,7 +150,7 @@ def get_guard_context(state_path: Path = DEFAULT_STATE_PATH) -> dict[str, Any]:
         )
     elif current_day < target_days or sample_size < DEFAULT_MIN_SAMPLE_SIZE:
         mode = "validation"
-        max_position_pct = 0.025
+        max_position_pct = 0.05  # CLAUDE.md mandate: 5% max per position during paper validation
         reasons.append(
             f"Paper validation incomplete (day {current_day}/{target_days}, samples {sample_size}/{DEFAULT_MIN_SAMPLE_SIZE})."
         )

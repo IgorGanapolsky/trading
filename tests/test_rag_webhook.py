@@ -8,10 +8,12 @@ Ensures the webhook correctly:
 4. Handles errors gracefully
 """
 
-from unittest.mock import patch
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
+
+pytest.importorskip("anthropic", reason="anthropic required for rag_webhook tests")
 
 # Skip all tests if fastapi is not installed or has import issues
 try:
@@ -786,6 +788,69 @@ class TestPortfolioStatusFunction:
 
         assert result["last_trade_date"] == today_str
         assert result["trades_today"] == 1
+
+    def test_get_current_portfolio_status_direct_alpaca_uses_cached_100k_baseline(self):
+        """Direct Alpaca mode must preserve the canonical paper-account baseline and win-rate context."""
+        from unittest.mock import patch
+
+        from src.agents import rag_webhook
+
+        cached_state = {
+            "paper_account": {
+                "starting_balance": 100000.0,
+                "win_rate": 66.7,
+                "win_rate_sample_size": 3,
+            },
+            "paper_trading": {"start_date": "2026-01-30"},
+        }
+        alpaca_data = {
+            "equity": 95449.47,
+            "cash": 93989.47,
+            "buying_power": 185978.94,
+            "last_equity": 95255.47,
+            "daily_change": 194.0,
+            "positions_count": 0,
+            "positions": [],
+            "trades_today": 0,
+            "queried_at": "2026-03-24T10:27:00-04:00",
+            "source": "alpaca_api_direct",
+        }
+
+        with (
+            patch.object(rag_webhook, "_load_cached_system_state", return_value=cached_state),
+            patch.object(rag_webhook, "query_alpaca_api_direct", return_value=alpaca_data),
+        ):
+            result = rag_webhook.get_current_portfolio_status()
+
+        assert result["paper"]["equity"] == pytest.approx(95449.47)
+        assert result["paper"]["total_pl"] == pytest.approx(-4550.53)
+        assert result["paper"]["total_pl_pct"] == pytest.approx(-4.55053)
+        assert result["paper"]["win_rate"] == pytest.approx(66.7)
+        assert result["source"] == "alpaca_api_direct"
+
+    def test_portfolio_status_endpoint_returns_live_snapshot(self):
+        """Portfolio status endpoint should expose the same live-status snapshot used by the dashboard."""
+        from unittest.mock import patch
+
+        from fastapi.testclient import TestClient
+
+        from src.agents.rag_webhook import app
+
+        with patch(
+            "src.agents.rag_webhook.build_live_system_state_snapshot",
+            return_value={
+                "paper_account": {"equity": 123456.78},
+                "portfolio": {"equity": 123456.78},
+                "meta": {"portfolio_status_source": "alpaca_api_direct"},
+            },
+        ):
+            client = TestClient(app)
+            response = client.get("/portfolio-status")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["paper_account"]["equity"] == pytest.approx(123456.78)
+        assert data["meta"]["portfolio_status_source"] == "alpaca_api_direct"
 
 
 class TestReadinessQueryDetection:

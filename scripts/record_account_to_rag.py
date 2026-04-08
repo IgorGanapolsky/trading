@@ -24,12 +24,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-
-def get_alpaca_client(paper: bool = False):
-    """Get Alpaca trading client."""
-    from src.utils.alpaca_client import get_alpaca_client as _get_client
-
-    return _get_client(paper=paper)
+from src.utils.alpaca_client import get_alpaca_client  # noqa: E402
 
 
 def fetch_account_data(client) -> dict:
@@ -195,7 +190,8 @@ def main():
 
     # Fetch brokerage account
     print("\n📊 Fetching BROKERAGE account...")
-    brokerage_client = get_alpaca_client(paper=False)
+    from src.utils.alpaca_client import get_brokerage_client
+    brokerage_client = get_brokerage_client()
     brokerage_data = None
     brokerage_positions = []
 

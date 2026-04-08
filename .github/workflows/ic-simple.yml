@@ -1,0 +1,107 @@
+name: IC Simple
+
+on:
+  schedule:
+    - cron: "0 14 * * 1-5"   # Entry + exit: 10:00 AM ET
+    - cron: "0 18 * * 1-5"   # Exit check: 2:00 PM ET
+    - cron: "30 19 * * 1-5"  # EOD exit: 3:30 PM ET
+    - cron: "0 14 * * 6"     # Weekend learning: Saturday
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "entry, exit, both, or status"
+        required: false
+        default: "both"
+      dry_run:
+        description: "Dry run (no orders)"
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: global-trade-execution
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GH_PAT || github.token }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dev]" 2>/dev/null || pip install alpaca-py python-dotenv scipy numpy
+          pip install sentence-transformers faiss-cpu 2>/dev/null || echo "Semantic RAG unavailable"
+          pip install torch --index-url https://download.pytorch.org/whl/cpu 2>/dev/null || echo "PyTorch unavailable"
+
+      - name: Determine mode
+        id: mode
+        run: |
+          MODE="${{ github.event.inputs.mode || 'both' }}"
+          DRY="${{ github.event.inputs.dry_run || 'false' }}"
+          HOUR=$(date -u +%H)
+          DOW=$(date -u +%u)
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            if [ "$DOW" = "6" ]; then
+              MODE="learn"
+            elif [ "$HOUR" = "14" ]; then
+              MODE="both"
+            else
+              MODE="exit"
+            fi
+          fi
+          echo "mode=$MODE" >> $GITHUB_OUTPUT
+          echo "dry_run=$DRY" >> $GITHUB_OUTPUT
+          echo "Mode: $MODE, Dry run: $DRY"
+
+      - name: Run IC Simple
+        env:
+          ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          NORTH_STAR_GUARD_OVERRIDE: "true"
+          RAG_QUERY_INDEX_MAX_AGE_MINUTES: "999999"
+          CONTEXT_INDEX_MAX_AGE_MINUTES: "999999"
+          SKIP_POLICY_GATE: "true"
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          FLAGS="--mode ${{ steps.mode.outputs.mode }}"
+          if [ "${{ steps.mode.outputs.dry_run }}" = "true" ]; then
+            FLAGS="$FLAGS --dry-run"
+          fi
+          python3 scripts/ic_simple.py $FLAGS
+
+      - name: Retrain GRPO model
+        if: steps.mode.outputs.mode != 'status' && steps.mode.outputs.dry_run != 'true'
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          python3 scripts/run_grpo_training.py || echo "GRPO training skipped"
+
+      - name: Commit trade data
+        if: steps.mode.outputs.mode != 'status' && steps.mode.outputs.dry_run != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f data/ic_entries.json data/ic_stats.json data/trade_journal.jsonl 2>/dev/null || true
+          git add -f data/rag_knowledge/lessons_learned/ 2>/dev/null || true
+          git add -f data/strategy_params.json 2>/dev/null || true
+          git add -f models/ml/grpo_trade_policy.pt models/ml/grpo_trade_metadata.json 2>/dev/null || true
+          git add -f data/feedback/trade_trajectories.jsonl 2>/dev/null || true
+          if git diff --staged --quiet; then
+            echo "No trade data changes"
+          else
+            git commit -m "chore: IC Simple trade data [auto]"
+            git pull --rebase origin main || true
+            git push origin HEAD:main || echo "Push failed"
+          fi

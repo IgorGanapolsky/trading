@@ -20,7 +20,13 @@ from zoneinfo import ZoneInfo
 from alpaca.trading.client import TradingClient
 from alpaca.trading.enums import OrderSide, TimeInForce
 from alpaca.trading.requests import MarketOrderRequest
-from src.core.trading_constants import IRON_CONDOR_STOP_LOSS_MULTIPLIER
+
+from src.core.trading_constants import (
+    IC_PROFIT_TARGET_PCT,
+    IRON_CONDOR_EXIT_DTE,
+    IRON_CONDOR_MIN_HOLD_HOURS,
+    IRON_CONDOR_STOP_LOSS_MULTIPLIER,
+)
 from src.safety.mandatory_trade_gate import safe_submit_order
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -37,8 +43,9 @@ PAPER = True
 
 # Phil Town Rule #1 Parameters
 STOP_LOSS_MULTIPLIER = IRON_CONDOR_STOP_LOSS_MULTIPLIER
-PROFIT_TAKE_PCT = 0.50  # 50% of max profit per CLAUDE.md exit rules
-MIN_DTE = 7  # Exit at 7 DTE
+PROFIT_TAKE_PCT = IC_PROFIT_TARGET_PCT
+MIN_DTE = IRON_CONDOR_EXIT_DTE
+MIN_HOLD_HOURS = IRON_CONDOR_MIN_HOLD_HOURS
 
 # Track iron condor entry credits
 IC_ENTRIES_FILE = Path(__file__).parent.parent / "data" / "ic_entries.json"
@@ -86,7 +93,9 @@ def parse_ic_positions(positions) -> dict:
 
         qty = int(float(pos.qty))
         entry = float(pos.avg_entry_price)
-        current = float(pos.current_price) if hasattr(pos, "current_price") else entry
+        current = (
+            float(pos.current_price) if getattr(pos, "current_price", None) is not None else entry
+        )
 
         pos_data = {
             "symbol": symbol,
@@ -102,26 +111,52 @@ def parse_ic_positions(positions) -> dict:
         else:
             ics[expiry]["calls"].append(pos_data)
 
-    return ics
+    # Validate IC completeness: must have balanced puts and calls
+    valid_ics = {}
+    for expiry, ic_data in ics.items():
+        n_puts = len(ic_data["puts"])
+        n_calls = len(ic_data["calls"])
+        n_short = sum(1 for p in ic_data["positions"] if p["qty"] < 0)
+        n_long = sum(1 for p in ic_data["positions"] if p["qty"] > 0)
+
+        if n_puts == 2 and n_calls == 2 and n_short == 2 and n_long == 2:
+            valid_ics[expiry] = ic_data
+        else:
+            logger.warning(
+                f"  ORPHAN legs for {expiry}: {n_puts}P {n_calls}C "
+                f"({n_short} short, {n_long} long) — skipping (not a complete IC)"
+            )
+
+    return valid_ics
 
 
 def calculate_ic_pnl(ic_data: dict, entry_credit: float) -> tuple[float, float]:
     """Calculate current P/L for an iron condor.
 
     Returns: (current_value, pnl)
+
+    Note: entry_credit is per-share, but current_value sums across all contracts.
+    We must scale entry_credit by the total contract count to match dimensions.
     """
     current_value = 0
+    contract_count = 0
     for pos in ic_data["positions"]:
         # Short positions: we received premium, now we'd pay to close
         # Long positions: we paid premium, now we'd receive to close
         if pos["qty"] < 0:  # Short
             current_value -= pos["current"] * abs(pos["qty"]) * 100
+            contract_count = max(contract_count, abs(pos["qty"]))
         else:  # Long
             current_value += pos["current"] * abs(pos["qty"]) * 100
+            contract_count = max(contract_count, abs(pos["qty"]))
+
+    # Scale entry_credit by contract count (entry_credit is per-share, current_value is total)
+    if contract_count == 0:
+        contract_count = 1
 
     # P/L = entry_credit - current_value_to_close
     # If current_value is negative (costs to close), we profit
-    pnl = entry_credit * 100 + current_value
+    pnl = entry_credit * contract_count * 100 + current_value
     return current_value, pnl
 
 
@@ -199,9 +234,59 @@ def update_trade_log_on_exit(expiry: str, reason: str, pnl: float):
 
 
 def close_iron_condor(client, ic_data: dict, reason: str, expiry: str, pnl: float):
-    """Close all legs of an iron condor."""
+    """Close all legs of an iron condor atomically via MLEG order.
+
+    Falls back to individual leg closes only if MLEG fails.
+    """
     logger.warning(f"🚨 CLOSING IRON CONDOR: {reason}")
 
+    # Try atomic MLEG close first (single fill, no legging risk)
+    try:
+        from alpaca.trading.enums import OrderClass as OC
+        from alpaca.trading.enums import OrderSide as OS
+
+        # Build closing legs
+        option_legs = []
+        close_qty = 0
+        for pos in ic_data["positions"]:
+            side = OS.BUY if pos["qty"] < 0 else OS.SELL
+            close_qty = max(close_qty, abs(pos["qty"]))
+            option_legs.append(
+                {
+                    "symbol": pos["symbol"],
+                    "side": side,
+                    "ratio_qty": 1,
+                }
+            )
+
+        if len(option_legs) == 4:
+            from alpaca.trading.requests import LimitOrderRequest as LmtReq
+            from alpaca.trading.requests import OptionLegRequest
+
+            # Calculate debit limit for close: current value + $0.10 concession
+            current_debit = abs(
+                sum(pos["current"] * (1 if pos["qty"] < 0 else -1) for pos in ic_data["positions"])
+            )
+            limit_debit = round(current_debit + 0.10, 2)
+            logger.info(f"  Close limit: ${limit_debit:.2f} debit (mid + $0.10 concession)")
+
+            mleg_order = LmtReq(
+                qty=close_qty,
+                order_class=OC.MLEG,
+                legs=[OptionLegRequest(**leg) for leg in option_legs],
+                time_in_force=TimeInForce.DAY,
+                limit_price=round(limit_debit, 2),
+            )
+            order = safe_submit_order(client, mleg_order)
+            logger.info(f"  MLEG close submitted: {order.id} status={order.status}")
+            update_trade_log_on_exit(expiry, reason, pnl)
+            return
+        else:
+            logger.warning(f"  Cannot MLEG close: {len(option_legs)} legs (need 4)")
+    except Exception as e:
+        logger.warning(f"  MLEG close failed ({e}), falling back to individual legs")
+
+    # Fallback: individual leg closes (last resort)
     for pos in ic_data["positions"]:
         side = OrderSide.BUY if pos["qty"] < 0 else OrderSide.SELL
         qty = abs(pos["qty"])
@@ -249,6 +334,13 @@ def run_guardian():
         dte = get_dte(sample_symbol)
         logger.info(f"  DTE: {dte}")
 
+        # FAILSAFE: DTE <= 1 = force close regardless of anything else
+        # If Guardian misses the 7 DTE exit, this catches expiring positions
+        if dte <= 1:
+            logger.warning(f"  FAILSAFE: DTE={dte} — force closing to avoid assignment/pin risk")
+            close_iron_condor(client, ic_data, f"FAILSAFE: DTE={dte} (expiring)", expiry, 0)
+            continue
+
         # Get entry credit (or estimate from positions)
         entry_key = f"IC_{expiry}"
         if entry_key not in entries:
@@ -281,6 +373,29 @@ def run_guardian():
         current_value, pnl = calculate_ic_pnl(ic_data, entry_credit)
         max_profit = entry_credit * 100
         logger.info(f"  Current P/L: ${pnl:.2f} (max profit: ${max_profit:.2f})")
+
+        # CHECK 0: Minimum holding period (prevent same-day churn)
+        # Entry date from ic_entries.json or default to now (skip if unknown)
+        entry_date_str = entries.get(entry_key, {}).get("date")
+        if entry_date_str:
+            from datetime import datetime as dt
+
+            try:
+                entry_dt = dt.fromisoformat(entry_date_str)
+                # Normalize both to naive UTC to avoid naive/aware comparison
+                if entry_dt.tzinfo is not None:
+                    entry_dt = entry_dt.replace(tzinfo=None)
+                now = dt.now()
+                hours_held = (now - entry_dt).total_seconds() / 3600
+                if hours_held < MIN_HOLD_HOURS:
+                    logger.info(
+                        f"  Position held {hours_held:.1f}h < {MIN_HOLD_HOURS}h minimum. "
+                        f"Skipping exit checks (let theta work)."
+                    )
+                    continue
+            except (ValueError, TypeError) as e:
+                logger.warning(f"  Could not parse entry date '{entry_date_str}': {e}")
+                # Don't silently skip — log and proceed with checks
 
         # CHECK 1: DTE Exit (7 days)
         if dte <= MIN_DTE:

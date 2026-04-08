@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 RL Filter - Linear Feature Scoring Model
 
@@ -29,6 +31,7 @@ import os
 import tempfile
 from copy import deepcopy
 from pathlib import Path
+from typing import Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +84,7 @@ class RLFilter:
             return self.weights[ticker_upper]
         return self.weights.get("default", {})
 
-    def _extract_features(self, state: dict | None) -> dict:
+    def _extract_features(self, state: Optional[dict]) -> dict:
         """Extract and normalize features from a state payload."""
         if not isinstance(state, dict):
             return {}
@@ -263,12 +266,12 @@ class RLFilter:
 
     def record_trade_outcome(
         self,
-        entry_state: dict | None,
-        action: int | float | None,
-        exit_state: dict | None,
-        reward: float | None,
+        entry_state: Optional[dict],
+        action: Optional[Union[int, float]],
+        exit_state: Optional[dict],
+        reward: Optional[float],
         done: bool,
-        ticker: str | None = None,
+        ticker: Optional[str] = None,
     ) -> dict:
         """
         Online update for linear RL filter weights from a completed trade.

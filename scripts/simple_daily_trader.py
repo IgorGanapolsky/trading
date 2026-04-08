@@ -27,6 +27,7 @@ from typing import Optional
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
+
 from src.core.trading_constants import MAX_POSITIONS
 from src.rag.lessons_learned_rag import LessonsLearnedRAG
 from src.safety.mandatory_trade_gate import safe_submit_order
@@ -61,33 +62,10 @@ CONFIG = {
     "fallback_symbols": ["IWM"],  # Only IWM as backup per CLAUDE.md whitelist
 }
 
-
-def get_alpaca_client():
-    """Get Alpaca trading client."""
-    from src.utils.alpaca_client import get_alpaca_client as _get_client
-
-    return _get_client(paper=True)
-
-
-def get_options_client():
-    """Get Alpaca options client."""
-    from src.utils.alpaca_client import get_options_client as _get_options
-
-    return _get_options(paper=True)
-
-
-def get_account_info(client) -> Optional[dict]:
-    """Get account information."""
-    try:
-        account = client.get_account()
-        return {
-            "equity": float(account.equity),
-            "cash": float(account.cash),
-            "buying_power": float(account.buying_power),
-        }
-    except Exception as e:
-        logger.error(f"Failed to get account info: {e}")
-        return None
+from src.utils.alpaca_client import (  # noqa: E402
+    get_account_info,
+    get_alpaca_client,
+)
 
 
 def get_current_positions(client) -> list:
@@ -282,6 +260,7 @@ def execute_cash_secured_put(client, option: dict, config: dict) -> Optional[dic
             # Get options chain to find real contract
             from alpaca.data.historical.option import OptionHistoricalDataClient
             from alpaca.data.requests import OptionChainRequest
+
             from src.utils.alpaca_client import get_alpaca_credentials
 
             api_key, secret_key = get_alpaca_credentials()

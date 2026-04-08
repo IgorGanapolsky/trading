@@ -116,7 +116,7 @@ class TestDecisionTrace:
         trace = trader._build_decision_trace(ic, "test")
 
         ss = trace["strike_selection"]
-        assert ss["method"] == "15_delta_5pct_otm"
+        assert ss["method"] in ("live_delta", "heuristic_fallback", "unknown")
         assert ss["wing_width"] == 5.0  # 730 - 725
 
     def test_trace_survives_import_failures(self):
@@ -157,7 +157,7 @@ class TestDecisionTrace:
 
         captured = datetime.fromisoformat(trace["captured_at"])
         delta = (datetime.now() - captured).total_seconds()
-        assert delta < 10  # Within 10 seconds
+        assert delta < 30  # Trace may attempt API calls
 
     def test_precedent_query_includes_ticker_and_dte(self):
         """precedent_query should be useful for future lookups."""

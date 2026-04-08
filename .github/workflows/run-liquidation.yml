@@ -1,13 +1,7 @@
 name: Run Liquidation Script
 
-# Trigger: Push LIQUIDATE_NOW file OR manual workflow_dispatch
+# Trigger: manual workflow_dispatch only
 on:
-  push:
-    branches:
-      - main
-      - "claude/*"
-    paths:
-      - "LIQUIDATE_NOW"
   workflow_dispatch:
     inputs:
       dry_run:
@@ -38,10 +32,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: "pip"
@@ -100,7 +94,7 @@ jobs:
       - name: Remove Trigger File
         if: github.event_name == 'push'
         run: |
-          if [ -f "LIQUIDATE_NOW" ]; then
+          if [ -f "triggers/LIQUIDATE_NOW" ]; then
             rm -f LIQUIDATE_NOW
             git config user.name "GitHub Actions"
             git config user.email "actions@github.com"
@@ -111,7 +105,7 @@ jobs:
 
       - name: Trigger State Sync
         if: inputs.dry_run == 'false'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |

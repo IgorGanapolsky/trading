@@ -1,0 +1,54 @@
+{
+  "IC_260220": {
+    "credit": 0.81,
+    "date": "2026-02-03T13:20:45.676082"
+  },
+  "IC_260313": {
+    "credit": 1.1799999999999997,
+    "date": "2026-02-03T13:20:45.676650"
+  },
+  "IC_260320": {
+    "credit": 2.0,
+    "date": "2026-03-26T09:56:10.142865",
+    "order_id": "mleg-order-001",
+    "strikes": {
+      "short_put": 655.0,
+      "short_call": 725.0,
+      "long_put": 645.0,
+      "long_call": 735.0
+    }
+  },
+  "IC_20260320": {
+    "credit": 2.0,
+    "date": "2026-03-25T17:37:15.315385",
+    "order_id": "mleg-order-001",
+    "strikes": {
+      "short_put": 655.0,
+      "short_call": 725.0,
+      "long_put": 645.0,
+      "long_call": 735.0
+    }
+  },
+  "IC_260501": {
+    "credit": 2.2279999999999998,
+    "date": "2026-04-01T21:03:30.296785",
+    "order_id": "9c000882-3fb9-4ec0-a43b-bdfa09a567d9",
+    "strikes": {
+      "short_put": 605.0,
+      "short_call": 688.0,
+      "long_put": 595.0,
+      "long_call": 698.0
+    }
+  },
+  "IC_260508": {
+    "credit": 2.4640000000000004,
+    "date": "2026-04-03T14:17:22.842000",
+    "order_id": "590a704f-a1d2-4787-a348-cf81d1d4ee77",
+    "strikes": {
+      "short_put": 605.0,
+      "short_call": 690.0,
+      "long_put": 595.0,
+      "long_call": 700.0
+    }
+  }
+}

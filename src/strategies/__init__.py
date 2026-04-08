@@ -1,18 +1,8 @@
-"""
-Trading Strategies Module
+"""Trading strategy interfaces and registry.
 
-This module contains all trading strategies registered in the canonical pipeline.
-
-Standard Flow:
-    data_ingest/ → features/ → signals/ → backtest/ → report/ → execution/
-
-All strategies must:
-1. Register via the strategy registry
-2. Implement the StrategyInterface
-3. Reuse existing data loaders and backtest wrappers
-
-Author: Trading System
-Created: 2025-12-03
+Only the SPY options path is considered active operating scope. Legacy
+momentum, REIT, and Rule One modules remain importable for historical
+reference, but they are not part of the primary trading mandate.
 """
 
 from src.strategies.registry import (

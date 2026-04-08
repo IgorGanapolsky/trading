@@ -1,97 +1,457 @@
 ---
-layout: home
-title: AI Trading Journey
-list_title: " "
+layout: none
+title: SPY Options Validation Platform
+permalink: /
 ---
 
-This is the unfiltered story of building an autonomous AI trading system—every bug, every breakthrough, every lesson learned.
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>SPY Options Validation Platform</title>
+    <meta
+      name="description"
+      content="Broker-backed SPY options validation platform with hard risk gates, paired-trade accounting, and live operator surfaces."
+    >
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      :root {
+        --ink: #102131;
+        --muted: #5e6c78;
+        --accent: #0d63ff;
+        --accent-2: #ec7a1c;
+        --bg: #f4f0e8;
+        --panel: rgba(255, 255, 255, 0.82);
+        --border: rgba(16, 33, 49, 0.12);
+        --good: #1f8f4e;
+        --bad: #b43b29;
+        --shadow: 0 24px 60px rgba(16, 33, 49, 0.12);
+      }
 
-**The goal:** Reach $6K/month after-tax options income as fast as safely possible through disciplined, automated execution.
+      * {
+        box-sizing: border-box;
+      }
 
-**Strategy Profile:** Automated iron condor system (SPY-first; expandable to SPX/XSP/QQQ/IWM) with 15-20 delta short strikes, $10-wide wings, and up to 8 open option legs (typically ~2 concurrent condors).
+      body {
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(13, 99, 255, 0.11), transparent 36%),
+          radial-gradient(circle at bottom right, rgba(236, 122, 28, 0.14), transparent 32%),
+          linear-gradient(180deg, #f8f5ee 0%, #efe8db 100%);
+        font-family: "Avenir Next", "Segoe UI", sans-serif;
+      }
 
-**Capital Deployment Policy:** Alpaca paper account ($100K) is the primary validation engine. Alpaca brokerage account is traded opportunistically only when the same RAG + risk gates pass.
+      .shell {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 28px 20px 80px;
+      }
 
-**The method:** A full autonomous stack where each layer has a strict role:
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 28px;
+        font-size: 14px;
+      }
 
-- **Signal + market data layer**: Alpaca + macro/news inputs feed the orchestrator.
-- **Decision layer**: Claude Opus handles trade-critical reasoning; TARS/OpenRouter route non-critical tasks for cost control.
-- **Memory layer**: LanceDB RAG retrieves prior failures and lessons before trade and code decisions.
-- **Execution layer**: Orchestrator + trade gateway enforce a liquid index-options whitelist (SPY-first; expandable to SPX/XSP/QQQ/IWM), sizing, entry/exit, and stop-loss policies before orders hit Alpaca.
-- **Risk layer**: Hard gates (position limits, drawdown controls, pre-trade smoke tests, mandatory checklists) block unsafe actions.
-- **Reliability layer**: Ralph Mode and CI workflows continuously test, repair, and document the system.
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
 
-Full architecture: **[Tech Stack](/trading/tech-stack/)**.
+      .brand-mark {
+        width: 12px;
+        height: 12px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      }
 
-Latest shipping timeline (reports + cross-post status): **[Beats](/trading/reports/beats/)**.
+      .nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
 
----
+      .nav a,
+      .cta,
+      .ghost {
+        text-decoration: none;
+        color: var(--ink);
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.68);
+        padding: 11px 14px;
+        border-radius: 999px;
+        font-weight: 600;
+      }
 
-## Where We Are Today
+      .cta {
+        background: linear-gradient(135deg, var(--accent), #4c8eff);
+        border-color: transparent;
+        color: #fff;
+      }
 
-<!-- AUTO_STATUS_START -->
-_Last Sync: 2026-03-06 11:08 UTC (source: `data/system_state.json`)_
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.3fr) minmax(340px, 0.9fr);
+        gap: 24px;
+        align-items: stretch;
+      }
 
-| What | Status |
-| ---- | ------ |
-| Account Equity | $98,396.43 |
-| Daily P/L | +$4.00 |
-| Win Rate | 100.0% (1 trades; target 80.0%) |
-| Paper Phase | Day 14/90 |
-| North Star Gate | ACTIVE (VALIDATING) |
-| Open Positions | 1 structure(s), 4 option leg(s) |
-| Unrealized P/L | -$72.33 |
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 28px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(12px);
+      }
 
-**Execution Focus:** Do not scale risk until validation passes.
-<!-- AUTO_STATUS_END -->
+      .hero-copy {
+        padding: 38px;
+      }
 
-This section is auto-updated from `data/system_state.json` by `scripts/update_docs_index.py` via GitHub Actions.
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(13, 99, 255, 0.08);
+        color: var(--accent);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
 
----
+      h1 {
+        margin: 18px 0 12px;
+        font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+        font-size: clamp(44px, 8vw, 72px);
+        line-height: 0.94;
+        letter-spacing: -0.04em;
+      }
 
-## Alpaca Account Snapshots (Auto)
+      .hero-copy p {
+        margin: 0;
+        max-width: 54ch;
+        font-size: 18px;
+        line-height: 1.65;
+        color: var(--muted);
+      }
 
-<!-- AUTO_SNAPSHOT_START -->
-Latest snapshots are refreshed by automation and published to GitHub Pages.
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 26px;
+      }
 
-### Paper ($100K) Snapshot + PaperBanana Financial Diagram
+      .hero-status {
+        padding: 32px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
 
-| Alpaca Snapshot | PaperBanana Diagram |
-| --- | --- |
-| ![Alpaca Paper Snapshot](/trading/assets/snapshots/alpaca_paper_latest.png) | ![PaperBanana Paper Diagram](/trading/assets/snapshots/paperbanana_paper_latest.svg) |
+      .status-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        font-weight: 800;
+      }
 
-Captured: `2026-03-05T21:27:12Z`
+      .status-pill {
+        margin-top: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        font-weight: 800;
+        text-transform: capitalize;
+      }
 
-Technical readout: Paper Account: net liquidation value $98,398.02; daily P/L +662.88 (+65.9 bps) indicating a positive drift session; cumulative P/L -1,601.98 (-1.60%); low capital deployment at 0.0% utilization with cash $98,966.02; open position proxy 4; win-rate estimate 100.0% (n=1); North Star gate LOW.
+      .status-halted {
+        background: rgba(180, 59, 41, 0.12);
+        color: var(--bad);
+      }
 
-### Brokerage (Live) Snapshot + PaperBanana Financial Diagram
+      .status-active,
+      .status-defensive {
+        background: rgba(13, 99, 255, 0.1);
+        color: var(--accent);
+      }
 
-| Alpaca Snapshot | PaperBanana Diagram |
-| --- | --- |
-| ![Alpaca Brokerage Snapshot](/trading/assets/snapshots/alpaca_live_latest.png) | ![PaperBanana Brokerage Diagram](/trading/assets/snapshots/paperbanana_live_latest.svg) |
+      .status-ok {
+        background: rgba(31, 143, 78, 0.12);
+        color: var(--good);
+      }
 
-Captured: `2026-03-05T21:27:12Z`
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 24px;
+      }
 
-Technical readout: Brokerage Account: net liquidation value $0.00; daily P/L +0.00 (+0.0 bps) indicating a flat premium-decay session; cumulative P/L -20.00 (-100.00%); low capital deployment at 0.0% utilization with cash $0.00; open position proxy 0; win-rate estimate 0.0% (n=0); North Star gate LOW.
+      .metric {
+        padding: 22px;
+      }
 
-### Progress Dashboard Snapshot
-![Progress Dashboard Snapshot](/trading/assets/snapshots/progress_latest.png)
+      .metric h2 {
+        margin: 0;
+        font-size: 15px;
+        color: var(--muted);
+        font-weight: 700;
+      }
 
-Captured: `2026-03-05T21:27:12Z`
+      .metric strong {
+        display: block;
+        margin-top: 10px;
+        font-size: clamp(24px, 3vw, 34px);
+        line-height: 1.05;
+      }
 
-Manifest: [`/trading/data/alpaca_snapshots.json`](/trading/data/alpaca_snapshots.json)
-<!-- AUTO_SNAPSHOT_END -->
+      .metric small {
+        display: block;
+        margin-top: 8px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
 
----
+      .section-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+        gap: 18px;
+        margin-top: 18px;
+      }
 
-## Featured Posts
+      .section {
+        padding: 28px;
+      }
 
-- **[The Silent 74 Days](/trading/2026/01/07/the-silent-74-days/)** — How we built a system that did nothing for 74 days
-- **[Complete Iron Condor Guide](/trading/2026/01/21/iron-condors-ai-trading-complete-guide/)** — Our full strategy and tech stack
-- **[The Position Stacking Disaster](/trading/2026/01/22/position-stacking-disaster-fix/)** — A bug that cost $1,472 in paper trading
+      .section h3 {
+        margin: 0 0 14px;
+        font-size: 14px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
 
-[View all posts by category →](/trading/blog/)
+      .section p,
+      .section li {
+        color: var(--muted);
+        line-height: 1.7;
+      }
 
----
+      .section ul {
+        margin: 0;
+        padding-left: 18px;
+      }
 
-_Built by Igor Ganapolsky (CEO) with Claude-powered autonomous agents, including Ralph Mode._
+      .timestamp {
+        margin-top: 18px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .blocker {
+        font-weight: 700;
+        color: var(--ink);
+      }
+
+      @media (max-width: 960px) {
+        .hero,
+        .section-grid,
+        .metric-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+
+  </head>
+  <body>
+    <main class="shell">
+      <div class="topbar">
+        <div class="brand">
+          <span class="brand-mark"></span>
+          <span>SPY Options Validation Platform</span>
+        </div>
+        <nav class="nav">
+          <a href="https://github.com/IgorGanapolsky/trading/wiki/Progress-Dashboard">Operator Dashboard</a>
+          <a href="{{ '/blog.html' | relative_url }}">Research</a>
+          <a href="https://github.com/IgorGanapolsky/trading/wiki">Wiki</a>
+          <a href="https://github.com/IgorGanapolsky/trading">GitHub</a>
+        </nav>
+      </div>
+
+      <section class="hero">
+        <article class="panel hero-copy">
+          <div class="eyebrow">Live Public Surface</div>
+          <h1>Current truth, not frozen marketing.</h1>
+          <p>
+            This system should be judged by broker-backed scorecards, paired-trade accounting, and active gate state.
+            This page renders from a generated public-status bundle so investor-facing copy stays congruent with the ledgers.
+          </p>
+          <div class="hero-actions">
+            <a class="cta" href="https://github.com/IgorGanapolsky/trading/wiki/Progress-Dashboard">Open operator dashboard</a>
+            <a class="ghost" href="https://github.com/IgorGanapolsky/trading">View repository</a>
+          </div>
+          <div class="timestamp" id="generated-at">Loading current public status…</div>
+        </article>
+
+        <aside class="panel hero-status">
+          <div>
+            <div class="status-label">Current Operating Status</div>
+            <div class="status-pill status-active" id="public-status-pill">Loading…</div>
+          </div>
+          <div>
+            <div class="status-label">Exact Blocker</div>
+            <p class="blocker" id="blocker-text">Fetching canonical gate state…</p>
+          </div>
+        </aside>
+      </section>
+
+      <section class="metric-grid">
+        <article class="panel metric">
+          <h2>Paper Equity</h2>
+          <strong id="paper-equity">—</strong>
+          <small>Directly derived from the current public-status bundle.</small>
+        </article>
+        <article class="panel metric">
+          <h2>Today P/L</h2>
+          <strong id="paper-pnl">—</strong>
+          <small id="paper-pnl-detail">Detailed decomposition is sourced from the operator scorecard.</small>
+        </article>
+        <article class="panel metric">
+          <h2>Closed Trades</h2>
+          <strong id="closed-trades">—</strong>
+          <small id="win-rate">—</small>
+        </article>
+        <article class="panel metric">
+          <h2>Gate Mode</h2>
+          <strong id="gate-mode">—</strong>
+          <small id="gate-detail">—</small>
+        </article>
+      </section>
+
+      <section class="section-grid">
+        <article class="panel section">
+          <h3>Why This Exists</h3>
+          <p id="summary-text">
+            Loading broker-backed daily summary…
+          </p>
+          <p>
+            The platform’s value is operational discipline: hard risk gates, paired-trade accounting, current public status,
+            and a clean line between live facts and aspirational strategy.
+          </p>
+        </article>
+        <article class="panel section">
+          <h3>Current Constraints</h3>
+          <ul id="constraints-list">
+            <li>Loading current constraints…</li>
+          </ul>
+        </article>
+      </section>
+    </main>
+
+    <script>
+      const STATUS_URL = "{{ '/data/public_status.json' | relative_url }}";
+
+      function formatMoney(value) {
+        if (typeof value !== "number") return "n/a";
+        return new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+          maximumFractionDigits: 2
+        }).format(value);
+      }
+
+      function formatPct(value) {
+        if (typeof value !== "number") return "n/a";
+        return `${value.toFixed(2)}%`;
+      }
+
+      function statusClass(value) {
+        if (value === "halted") return "status-halted";
+        if (value === "defensive") return "status-defensive";
+        return "status-ok";
+      }
+
+      function render(status) {
+        const paper = status.paper || {};
+        const ledger = status.ledger || {};
+        const gate = status.gate || {};
+        const narrative = status.narrative || {};
+
+        document.getElementById("generated-at").textContent =
+          `Generated from canonical public status at ${status.generated_at_et}.`;
+
+        const pill = document.getElementById("public-status-pill");
+        pill.textContent = status.system?.public_status || "unknown";
+        pill.className = `status-pill ${statusClass(status.system?.public_status)}`;
+
+        document.getElementById("blocker-text").textContent =
+          gate.blocker_reason || "No blocker reported.";
+
+        document.getElementById("paper-equity").textContent = formatMoney(paper.equity);
+        document.getElementById("paper-pnl").textContent = formatMoney(paper.total_pnl_today);
+        if (
+          typeof paper.realized_pnl_today === "number" ||
+          typeof paper.unrealized_pnl_today === "number" ||
+          paper.fills_today_count !== null && paper.fills_today_count !== undefined
+        ) {
+          document.getElementById("paper-pnl-detail").textContent =
+            `Realized ${formatMoney(paper.realized_pnl_today)} | Unrealized ${formatMoney(paper.unrealized_pnl_today)} | Fills ${paper.fills_today_count ?? "n/a"}`;
+        } else {
+          document.getElementById("paper-pnl-detail").textContent =
+            "Detailed realized/unrealized decomposition is available in the operator scorecard.";
+        }
+
+        document.getElementById("closed-trades").textContent = `${ledger.closed_trades_total ?? "n/a"}`;
+        document.getElementById("win-rate").textContent =
+          `Win rate ${formatPct(ledger.win_rate_pct)} | Profit factor ${ledger.profit_factor ?? "n/a"}`;
+
+        document.getElementById("gate-mode").textContent = gate.mode || "unknown";
+        document.getElementById("gate-detail").textContent =
+          `Scale allowed: ${gate.scale_allowed} | Max position pct: ${gate.recommended_max_position_pct ?? "n/a"}`;
+
+        document.getElementById("summary-text").textContent =
+          narrative.summary || "No summary available.";
+
+        const constraints = [
+          `Current gate mode: ${gate.mode || "unknown"}`,
+          `Block new positions: ${gate.block_new_positions}`,
+          `Qualified setups this week: ${gate.qualified_setups_this_week ?? "n/a"}`,
+          `Closed trades this week: ${gate.closed_trades_this_week ?? "n/a"}`,
+          `Scaling gate: ${gate.scaling_gate_closed_trades_observed ?? "n/a"} / ${gate.scaling_gate_min_closed_trades ?? "n/a"}`
+        ];
+        const list = document.getElementById("constraints-list");
+        list.innerHTML = constraints.map((item) => `<li>${item}</li>`).join("");
+      }
+
+      fetch(STATUS_URL, { cache: "no-store" })
+        .then((response) => {
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return response.json();
+        })
+        .then(render)
+        .catch((error) => {
+          document.getElementById("generated-at").textContent =
+            `Public status fetch failed: ${error.message}. Use the operator dashboard for canonical status.`;
+          document.getElementById("public-status-pill").textContent = "fetch-failed";
+          document.getElementById("public-status-pill").className = "status-pill status-halted";
+          document.getElementById("blocker-text").textContent =
+            "The current public-status bundle could not be loaded. This is itself a public-surface failure.";
+        });
+    </script>
+
+  </body>
+</html>

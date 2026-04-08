@@ -13,10 +13,10 @@ from src.safety.trading_policy_drift import (
 
 def test_extract_policy_values_from_text() -> None:
     canonical = canonical_policy_values()
-    text = """
-    IRON_CONDOR_STOP_LOSS_MULTIPLIER = 1.0
-    NORTH_STAR_MONTHLY_AFTER_TAX = 6000.0
-    MAX_POSITIONS = 8
+    text = f"""
+    IRON_CONDOR_STOP_LOSS_MULTIPLIER = {canonical["IRON_CONDOR_STOP_LOSS_MULTIPLIER"]}
+    NORTH_STAR_MONTHLY_AFTER_TAX = {canonical["NORTH_STAR_MONTHLY_AFTER_TAX"]}
+    MAX_POSITIONS = {canonical["MAX_POSITIONS"]}
     """
     values = extract_policy_values_from_text(text)
     assert (

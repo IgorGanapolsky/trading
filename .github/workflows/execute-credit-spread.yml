@@ -1,13 +1,10 @@
 name: Execute Credit Spread
 
 on:
-  schedule:
+  # DISABLED: ic_simple.py is sole trader (2026-04-01)
+  # schedule:
     # Run at 9:35 AM ET on weekdays (covers EST/EDT)
-    - cron: "35 13,14 * * 1-5"
-  push:
-    branches: [main]
-    paths:
-      - "EXECUTE_SPREAD.trigger"
+    #     - cron: "35 13,14 * * 1-5"
   workflow_dispatch:
     inputs:
       symbol:
@@ -49,10 +46,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: "pip"
@@ -228,7 +225,7 @@ jobs:
       - name: Create Alert on Failure
         if: failure()
         continue-on-error: true  # Non-critical: notification failure shouldn't change workflow status
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |

@@ -4,9 +4,9 @@ name: Scheduled Position Close (Jan 23)
 # This is a one-time workflow to close positions after PDT restriction resets
 
 on:
-  schedule:
-    # Run at 9:45 AM ET (14:45 UTC) on Jan 23, 2026
-    - cron: "45 14 23 1 *"
+  # DISABLED: one-time Jan 23 workflow, no longer needed
+  # schedule:
+  #   - cron: "45 14 23 1 *"
   workflow_dispatch:
     inputs:
       target_symbol:
@@ -34,10 +34,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: "pip"

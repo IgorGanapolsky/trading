@@ -41,6 +41,7 @@ from src.core.trading_constants import (
     MAX_POSITION_PCT,
     extract_underlying,
 )
+from src.ml.grpo_trade_learner import METADATA_PATH, get_optimal_trade_params
 
 TICKER_WHITELIST_ENABLED = True  # Toggle for paper testing
 
@@ -122,6 +123,7 @@ class OptionsExecutor:
     MAX_POSITION_SIZE = MAX_CONTRACTS_PER_TRADE  # canonical max contracts per trade
     MIN_DTE = 30  # Minimum days to expiration
     MAX_DTE = 45  # Maximum days to expiration (per CLAUDE.md: 30-45 DTE)
+    MAX_IC_OPENS_PER_DAY = 2  # Max iron condor opens per day (prevent churn)
 
     # Strategy-specific parameters
     COVERED_CALL_TARGET_DELTA = 0.30  # Sell 30-delta calls
@@ -172,6 +174,109 @@ class OptionsExecutor:
         self.trader = AlpacaTrader(paper=paper)
 
         logger.info(f"OptionsExecutor initialized (Paper: {paper})")
+
+    def _check_daily_ic_limit(self) -> tuple[bool, int]:
+        """Check if we've exceeded daily IC open limit (anti-churn guard)."""
+        import json
+        from datetime import date
+        from pathlib import Path
+
+        state_path = Path(__file__).parent.parent.parent / "data" / "system_state.json"
+        today = date.today().isoformat()
+        try:
+            if state_path.exists():
+                with open(state_path) as f:
+                    state = json.load(f)
+                churn_guard = state.get("churn_guard", {})
+                if churn_guard.get("date") == today:
+                    opens = churn_guard.get("ic_opens", 0)
+                    return opens < self.MAX_IC_OPENS_PER_DAY, opens
+            return True, 0
+        except Exception:
+            return True, 0
+
+    def _record_ic_open(self) -> None:
+        """Record an IC open in the churn guard."""
+        import json
+        from datetime import date
+        from pathlib import Path
+
+        state_path = Path(__file__).parent.parent.parent / "data" / "system_state.json"
+        today = date.today().isoformat()
+        try:
+            with open(state_path) as f:
+                state = json.load(f)
+            churn_guard = state.get("churn_guard", {})
+            if churn_guard.get("date") != today:
+                churn_guard = {"date": today, "ic_opens": 0}
+            churn_guard["ic_opens"] = churn_guard.get("ic_opens", 0) + 1
+            state["churn_guard"] = churn_guard
+            with open(state_path, "w") as f:
+                json.dump(state, f, indent=2)
+        except Exception as e:
+            logger.warning(f"Could not record IC open: {e}")
+
+    def _get_ml_guided_params(self) -> tuple[float, int, float] | None:
+        """Get GRPO-optimized parameters if model is sufficiently trained.
+
+        Returns (delta, dte, exit_pct) or None if not ready.
+        Gates on >= 30 trades and >= 0.6 confidence. Clamps to safe bounds.
+        """
+        import json
+
+        try:
+            if METADATA_PATH.exists():
+                meta = json.loads(METADATA_PATH.read_text())
+                if meta.get("trades_trained_on", 0) < 30:
+                    logger.info(
+                        f"GRPO: insufficient training data ({meta.get('trades_trained_on', 0)}/30 trades)"
+                    )
+                    return None
+            else:
+                return None
+            params = get_optimal_trade_params()
+            if params.confidence < 0.6:
+                logger.info(f"GRPO: low confidence ({params.confidence:.2f}), using defaults")
+                return None
+            from src.constants.trading_thresholds import PositionSizing, RiskThresholds
+
+            delta = max(
+                PositionSizing.IRON_CONDOR_MIN_DELTA,
+                min(PositionSizing.IRON_CONDOR_MAX_DELTA, params.delta),
+            )
+            dte = max(
+                RiskThresholds.IRON_CONDOR_MIN_DTE,
+                min(RiskThresholds.IRON_CONDOR_MAX_DTE, params.dte),
+            )
+            exit_pct = max(0.25, min(0.75, params.exit_profit_pct))
+            logger.info(
+                f"GRPO: using ML params delta={delta:.3f}, DTE={dte}, exit={exit_pct:.0%} "
+                f"(confidence={params.confidence:.2f})"
+            )
+            return (delta, dte, exit_pct)
+        except Exception as e:
+            logger.warning(f"GRPO: failed to get params: {e}")
+            return None
+
+    def _check_rag_lessons(self, ticker: str) -> list[str]:
+        """Query RAG for relevant iron condor lessons. Returns warning strings."""
+        warnings = []
+        severity_rank = {"CRITICAL": 5, "HIGH": 4, "MEDIUM": 3, "LOW": 2}
+        try:
+            from src.rag.lessons_search import get_lessons_search
+
+            search = get_lessons_search()
+            results = search.search("iron condor SPY risk loss", top_k=5)
+            for lesson, _score in results:
+                sev_num = severity_rank.get(lesson.severity.upper(), 0)
+                if sev_num >= 4:
+                    label = lesson.title or lesson.id
+                    warnings.append(f"RAG {lesson.severity} [{sev_num}]: {label[:100]}")
+        except ImportError:
+            pass
+        except Exception as e:
+            logger.warning(f"RAG query failed: {e}")
+        return warnings
 
     def execute_covered_call(
         self,
@@ -400,7 +505,13 @@ class OptionsExecutor:
             RuntimeError: If execution fails
         """
         width = width or self.SPREAD_WIDTH
-        target_delta = target_delta or self.IRON_CONDOR_TARGET_DELTA
+
+        # Consult GRPO model for optimized parameters
+        ml_params = self._get_ml_guided_params()
+        if ml_params and target_delta is None:
+            target_delta, dte, _exit_pct = ml_params
+        else:
+            target_delta = target_delta or self.IRON_CONDOR_TARGET_DELTA
 
         logger.info(f"Executing iron condor: {ticker} ({width}w, {dte} DTE, Δ={target_delta})")
 
@@ -408,6 +519,21 @@ class OptionsExecutor:
         ticker_valid, ticker_error = validate_ticker_for_options(ticker)
         if not ticker_valid:
             raise ValueError(f"TICKER NOT ALLOWED: {ticker_error}")
+
+        # 0a. Anti-churn guard: prevent rapid IC cycling (Mar 2026)
+        can_open, opens_today = self._check_daily_ic_limit()
+        if not can_open:
+            raise ValueError(
+                f"CHURN GUARD: Already opened {opens_today} iron condors today "
+                f"(max {self.MAX_IC_OPENS_PER_DAY}). Preventing rapid cycling."
+            )
+
+        # 0b. Query RAG lessons for relevant warnings (advisory only)
+        rag_warnings = self._check_rag_lessons(ticker)
+        if rag_warnings:
+            for w in rag_warnings:
+                logger.warning(f"RAG Lesson: {w}")
+            logger.info(f"Proceeding with {len(rag_warnings)} RAG warning(s) noted")
 
         # 1. Get account info for position sizing
         account = self.trader.get_account_info()
@@ -599,6 +725,8 @@ class OptionsExecutor:
             opened_at=datetime.now(),
         )
         self.risk_monitor.add_position(position)
+
+        self._record_ic_open()
 
         return {
             "status": "success",

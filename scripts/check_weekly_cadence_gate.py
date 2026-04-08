@@ -227,6 +227,8 @@ def _should_fail(*, result: dict[str, Any], strict: bool, fail_on: str) -> bool:
         return False
     if strict:
         return True
+    if fail_on == "none":
+        return False
     threshold = LEVEL_ORDER.get(fail_on, LEVEL_ORDER["critical"])
     observed = LEVEL_ORDER.get(str(result.get("alert_level", "unknown")), LEVEL_ORDER["unknown"])
     return observed >= threshold

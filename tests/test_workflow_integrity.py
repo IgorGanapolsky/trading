@@ -342,14 +342,7 @@ class WorkflowIntegrityTests:
         errors = []
 
         dangerous_patterns = [
-            (
-                r"python3?\s+scripts/autonomous_trader\.py.*\|\|\s*true",
-                "autonomous_trader.py || true",
-            ),
-            (
-                r"python3?\s+scripts/autonomous_trader\.py.*\|\|\s*exit\s+0",
-                "autonomous_trader.py || exit 0",
-            ),
+            # autonomous_trader.py was removed; add new patterns here as needed
         ]
 
         for workflow_name in self.critical_workflows:

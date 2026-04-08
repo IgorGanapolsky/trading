@@ -27,6 +27,8 @@ requires semantic search.
 
 from __future__ import annotations
 
+import copy
+import json
 import logging
 import os
 import ssl
@@ -249,16 +251,19 @@ def query_alpaca_api_direct() -> Optional[dict]:
     import json
     import urllib.request
 
-    # Get Alpaca credentials using the standard priority chain
-    # Priority: 5K paper > 100K paper > legacy keys
+    # Get Alpaca credentials using the standard priority chain.
     try:
         from src.utils.alpaca_client import get_alpaca_credentials
 
         api_key, api_secret = get_alpaca_credentials()
     except ImportError:
-        # Fallback if import fails - try direct env vars
-        api_key = os.environ.get("ALPACA_PAPER_TRADING_5K_API_KEY", "")
-        api_secret = os.environ.get("ALPACA_PAPER_TRADING_5K_API_SECRET", "")
+        # Fallback if import fails - try the current paper-trading env vars.
+        api_key = os.environ.get("ALPACA_PAPER_TRADING_API_KEY", "") or os.environ.get(
+            "ALPACA_API_KEY", ""
+        )
+        api_secret = os.environ.get("ALPACA_PAPER_TRADING_API_SECRET", "") or os.environ.get(
+            "ALPACA_SECRET_KEY", ""
+        )
 
     if not api_key or not api_secret:
         logger.warning(
@@ -337,7 +342,10 @@ def query_alpaca_api_direct() -> Optional[dict]:
             "last_equity": last_equity,
             "daily_change": daily_change,
             "positions_count": len(positions),
+            "positions": positions,
             "trades_today": len(activities),
+            "activities": activities,
+            "queried_at": datetime.now().astimezone().isoformat(),
             "source": "alpaca_api_direct",
         }
 
@@ -346,18 +354,113 @@ def query_alpaca_api_direct() -> Optional[dict]:
         return None
 
 
-def _calculate_challenge_day() -> int:
+def _load_cached_system_state() -> dict:
+    """Load the canonical cached state from disk, then GitHub as fallback."""
+    import base64
+    import json
+    import urllib.request
+
+    state = None
+    state_path = project_root / "data" / "system_state.json"
+
+    try:
+        if state_path.exists():
+            with open(state_path) as f:
+                state = json.load(f)
+            logger.info("Loaded portfolio from local system_state.json")
+    except Exception as e:
+        logger.warning(f"Failed to read local system state: {e}")
+
+    if state:
+        return state
+
+    try:
+        github_url = (
+            "https://api.github.com/repos/IgorGanapolsky/trading/contents/data/system_state.json"
+        )
+        req = urllib.request.Request(
+            github_url,
+            headers={
+                "Accept": "application/vnd.github.v3+json",
+                "User-Agent": "TradingBot/1.0",
+            },
+        )
+        ssl_context = ssl.create_default_context()
+        with urllib.request.urlopen(req, timeout=5, context=ssl_context) as response:
+            api_response = json.loads(response.read().decode("utf-8"))
+            content_b64 = api_response.get("content", "")
+            content = base64.b64decode(content_b64).decode("utf-8")
+            state = json.loads(content)
+        logger.info("Loaded portfolio from GitHub API fallback")
+    except Exception as e:
+        logger.warning(f"Failed to fetch cached system state from GitHub API: {e}")
+
+    return state or {}
+
+
+def _map_alpaca_positions_to_state_shapes(
+    raw_positions: list[dict],
+) -> tuple[list[dict], list[dict], float]:
+    """Normalize Alpaca REST position payloads into dashboard/state shapes."""
+    top_level_positions: list[dict] = []
+    performance_positions: list[dict] = []
+    total_unrealized = 0.0
+
+    for position in raw_positions:
+        if not isinstance(position, dict):
+            continue
+
+        qty = _coerce_float(position.get("qty"), 0.0)
+        entry_price = _coerce_float(position.get("avg_entry_price"), 0.0) * 100.0
+        current_price = _coerce_float(position.get("current_price"), 0.0) * 100.0
+        market_value = _coerce_float(position.get("market_value"), 0.0)
+        unrealized_pl = _coerce_float(position.get("unrealized_pl"), 0.0)
+        unrealized_pl_pct = _coerce_float(position.get("unrealized_plpc"), 0.0)
+        side_raw = str(position.get("side") or "")
+        side = "short" if qty < 0 or side_raw.upper().endswith("SHORT") else "long"
+        symbol = str(position.get("symbol") or "")
+
+        total_unrealized += unrealized_pl
+        top_level_positions.append(
+            {
+                "symbol": symbol,
+                "qty": qty,
+                "price": current_price,
+                "value": market_value,
+                "pnl": unrealized_pl,
+                "type": "option",
+            }
+        )
+        performance_positions.append(
+            {
+                "symbol": symbol,
+                "quantity": qty,
+                "entry_price": entry_price,
+                "current_price": current_price,
+                "market_value": market_value,
+                "unrealized_pl": unrealized_pl,
+                "unrealized_pl_pct": unrealized_pl_pct,
+                "side": side,
+            }
+        )
+
+    return top_level_positions, performance_positions, round(total_unrealized, 2)
+
+
+def _calculate_challenge_day(start_date_raw: str | None = None) -> int:
     """Calculate the current challenge day from start date.
 
-    Challenge started Oct 30, 2025 (Day 1).
+    Defaults to the current paper-trading start date when available.
     Only counts trading days (Mon-Fri, excluding holidays).
-
-    FIX Jan 16, 2026: Replace hardcoded value with dynamic calculation.
     """
     from datetime import date
 
-    # Challenge start: Oct 30, 2025 (Day 1)
-    start_date = date(2025, 10, 30)
+    try:
+        start_date = (
+            date.fromisoformat(str(start_date_raw)) if start_date_raw else date(2026, 1, 30)
+        )
+    except ValueError:
+        start_date = date(2026, 1, 30)
     today = date.today()
 
     # Count trading days (simplified - just weekdays)
@@ -371,15 +474,10 @@ def _calculate_challenge_day() -> int:
     return min(trading_days, 90)  # Cap at 90-day challenge
 
 
-def get_current_portfolio_status() -> dict:
-    """Get current portfolio status - PREFER Alpaca API, fallback to cached files."""
-    import json
+def build_live_system_state_snapshot() -> dict:
+    """Return a system-state-shaped snapshot with live Alpaca paper data overlaid when available."""
     from datetime import datetime, timezone
 
-    # FIX Jan 15, 2026: Query Alpaca API FIRST for real-time data
-    alpaca_data = query_alpaca_api_direct()
-
-    # Get actual today's date
     try:
         from zoneinfo import ZoneInfo
 
@@ -387,73 +485,109 @@ def get_current_portfolio_status() -> dict:
     except ImportError:
         today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
-    if alpaca_data:
-        # Use fresh Alpaca data directly
-        return {
-            "live": {
-                "equity": 0,  # Live account not queried
-                "total_pl": 0,
-                "total_pl_pct": 0,
-                "positions_count": 0,
-            },
-            "paper": {
-                "equity": alpaca_data["equity"],
-                "total_pl": alpaca_data["equity"] - 5000,  # Started with $5K
-                "total_pl_pct": ((alpaca_data["equity"] - 5000) / 5000) * 100,
-                "positions_count": alpaca_data["positions_count"],
-                "win_rate": 0,  # Not tracked via API
-                "daily_change": alpaca_data["daily_change"],
-            },
-            "last_trade_date": (today_str if alpaca_data["trades_today"] > 0 else "unknown"),
-            "trades_today": alpaca_data["trades_today"],
-            "actual_today": today_str,
-            # FIX Jan 16, 2026: Calculate challenge day from start date (Oct 30, 2025)
-            "challenge_day": _calculate_challenge_day(),
-            "source": "alpaca_api_direct",
-        }
+    cached_state = _load_cached_system_state()
+    has_cached_state = bool(cached_state)
+    if not cached_state:
+        cached_state = {}
 
-    # FALLBACK: Use cached files if Alpaca API unavailable
-    logger.warning("Alpaca API unavailable, falling back to cached files")
-    state = None
+    state = copy.deepcopy(cached_state)
+    state.setdefault("portfolio", {})
+    state.setdefault("paper_account", {})
+    state.setdefault("live_account", {})
+    state.setdefault("account", {})
+    state.setdefault("meta", {})
+    state.setdefault("risk", {})
+    state.setdefault("performance", {})
+    state.setdefault("trades", {})
+    state.setdefault("paper_trading", {})
+    state.setdefault("positions", [])
 
-    # Try local file first
-    state_path = project_root / "data" / "system_state.json"
-    try:
-        if state_path.exists():
-            with open(state_path) as f:
-                state = json.load(f)
-            logger.info("Loaded portfolio from local system_state.json (FALLBACK)")
-    except Exception as e:
-        logger.warning(f"Failed to read local system state: {e}")
+    alpaca_data = query_alpaca_api_direct()
+    if not alpaca_data:
+        if not has_cached_state:
+            return {}
+        state["actual_today"] = today_str
+        state["status_source"] = "cached_system_state"
+        state["meta"]["portfolio_status_source"] = "cached_system_state"
+        return state
 
-    # Fallback: Fetch from GitHub API if local file unavailable
-    # Use GitHub API v3 instead of raw URL to bypass CDN caching (fixes stale data issue)
-    if not state:
-        try:
-            import base64
-            import urllib.request
+    paper = state["paper_account"]
+    portfolio = state["portfolio"]
+    account = state["account"]
+    live = state["live_account"]
+    meta = state["meta"]
+    risk = state["risk"]
+    performance = state["performance"]
+    trades = state["trades"]
+    paper_trading = state["paper_trading"]
 
-            # GitHub API v3 endpoint - provides fresh data, no CDN caching
-            github_url = "https://api.github.com/repos/IgorGanapolsky/trading/contents/data/system_state.json"
-            req = urllib.request.Request(
-                github_url,
-                headers={
-                    "Accept": "application/vnd.github.v3+json",
-                    "User-Agent": "TradingBot/1.0",
-                },
-            )
-            # Security: Use verified SSL context (fixes MitM vulnerability)
-            ssl_context = ssl.create_default_context()
-            with urllib.request.urlopen(req, timeout=5, context=ssl_context) as response:
-                api_response = json.loads(response.read().decode("utf-8"))
-                # GitHub API returns base64-encoded content
-                content_b64 = api_response.get("content", "")
-                content = base64.b64decode(content_b64).decode("utf-8")
-                state = json.loads(content)
-            logger.info("Loaded portfolio from GitHub API (FALLBACK)")
-        except Exception as e:
-            logger.warning(f"Failed to fetch from GitHub API: {e}")
+    starting_balance = _coerce_float(paper.get("starting_balance"), 100000.0) or 100000.0
+    top_positions, performance_positions, total_unrealized = _map_alpaca_positions_to_state_shapes(
+        alpaca_data.get("positions") or []
+    )
 
+    equity = _coerce_float(alpaca_data.get("equity"))
+    cash = _coerce_float(alpaca_data.get("cash"))
+    buying_power = _coerce_float(alpaca_data.get("buying_power"))
+    last_equity = _coerce_float(alpaca_data.get("last_equity"))
+    daily_change = _coerce_float(alpaca_data.get("daily_change"))
+    queried_at = str(alpaca_data.get("queried_at") or datetime.now(timezone.utc).isoformat())
+    total_pl = equity - starting_balance
+    total_pl_pct = (total_pl / starting_balance * 100.0) if starting_balance > 0 else 0.0
+
+    portfolio["equity"] = equity
+    portfolio["cash"] = cash
+
+    paper["equity"] = equity
+    paper["current_equity"] = equity
+    paper["cash"] = cash
+    paper["buying_power"] = buying_power
+    paper["last_equity"] = last_equity
+    paper["daily_change"] = round(daily_change, 2)
+    paper["starting_balance"] = starting_balance
+    paper["total_pl"] = total_pl
+    paper["total_pl_pct"] = total_pl_pct
+    paper["positions_count"] = len(top_positions)
+    paper["synced_at"] = queried_at
+
+    account["current_equity"] = equity
+    account["equity"] = equity
+    account["cash"] = cash
+    account["buying_power"] = buying_power
+    account["positions_count"] = len(top_positions)
+    account["total_pl"] = total_pl
+    account["total_pl_pct"] = total_pl_pct
+
+    state["positions"] = top_positions
+    performance["open_positions"] = performance_positions
+    risk["unrealized_pl"] = total_unrealized
+    risk["total_pl"] = total_pl
+
+    trades["today_trades"] = int(alpaca_data.get("trades_today") or 0)
+    trades["total_trades_today"] = int(alpaca_data.get("trades_today") or 0)
+    if trades["today_trades"] > 0:
+        trades["last_trade_date"] = today_str
+
+    live.setdefault("equity", _coerce_float(live.get("equity")))
+    live.setdefault("current_equity", _coerce_float(live.get("current_equity")))
+
+    paper_trading["current_day"] = _calculate_challenge_day(paper_trading.get("start_date"))
+
+    state["last_updated"] = queried_at
+    meta["last_updated"] = queried_at
+    meta["last_sync"] = queried_at
+    meta["portfolio_status_source"] = "alpaca_api_direct"
+    meta["live_query_at"] = queried_at
+    state["actual_today"] = today_str
+    state["status_source"] = "alpaca_api_direct"
+    return state
+
+
+def get_current_portfolio_status() -> dict:
+    """Get current portfolio status - PREFER Alpaca API, fallback to cached files."""
+    from datetime import datetime, timezone
+
+    state = build_live_system_state_snapshot()
     if not state:
         return {}
 
@@ -540,7 +674,8 @@ def get_current_portfolio_status() -> dict:
         "trades_today": trades_today,
         "actual_today": today_str,
         # FIX: state.challenge.current_day doesn't exist - calculate dynamically
-        "challenge_day": _calculate_challenge_day(),
+        "challenge_day": _calculate_challenge_day(state.get("paper_trading", {}).get("start_date")),
+        "source": state.get("status_source", "cached_system_state"),
     }
 
 
@@ -2185,6 +2320,12 @@ async def diagnostics():
     }
 
 
+@app.get("/portfolio-status")
+async def portfolio_status():
+    """Return the freshest broker-backed portfolio snapshot available."""
+    return build_live_system_state_snapshot()
+
+
 @app.get("/")
 async def root():
     """Root endpoint with info."""
@@ -2201,6 +2342,7 @@ async def root():
         "endpoints": {
             "/webhook": "POST - RAG Webhook (lessons + trades + readiness)",
             "/rag-search": "POST - RAG search (LanceDB-first, JSON response)",
+            "/portfolio-status": "GET - Broker-backed portfolio snapshot for dashboard/status surfaces",
             "/health": "GET - Health check",
             "/diagnostics": "GET - Detailed diagnostic info for debugging",
             "/test": "GET - Test lessons query",

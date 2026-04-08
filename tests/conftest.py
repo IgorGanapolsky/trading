@@ -23,15 +23,24 @@ def disable_circuit_breaker_for_tests():
 
     halt_file = Path("data/TRADING_HALTED")
     backup_file = Path("data/TRADING_HALTED.test_backup")
+    renamed_original = False
 
     # Temporarily move the halt file if it exists
     if halt_file.exists():
-        halt_file.rename(backup_file)
+        try:
+            if backup_file.exists():
+                backup_file.unlink()
+            halt_file.rename(backup_file)
+            renamed_original = True
+        except FileNotFoundError:
+            renamed_original = False
 
     yield
 
     # Restore the halt file after test
-    if backup_file.exists():
+    if renamed_original and backup_file.exists():
+        if halt_file.exists():
+            halt_file.unlink()
         backup_file.rename(halt_file)
 
 

@@ -25,6 +25,7 @@ THIS IS THE MONEY MAKER.
 import json
 import logging
 import sys
+import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -34,11 +35,14 @@ from typing import Optional
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
+
 from src.core.trading_constants import MAX_POSITIONS as MAX_OPTION_LEGS
+from src.core.trading_profiles import get_iron_condor_strategy_config
 from src.orchestrator.telemetry import OrchestratorTelemetry
 from src.rag.lessons_learned_rag import LessonsLearnedRAG
 from src.safety.mandatory_trade_gate import safe_submit_order
 from src.safety.trade_lock import TradeLockTimeout, acquire_trade_lock
+from src.safety.trading_halt import get_trading_halt_state
 from src.utils.error_monitoring import init_sentry
 
 try:
@@ -81,109 +85,104 @@ class IronCondorStrategy:
     - Theta decay works for you
     """
 
-    def __init__(self):
-        # FIXED Jan 19 2026: SPY ONLY per CLAUDE.md (TastyTrade strategy scrapped)
-        # Iron condors replace credit spreads - 86% win rate from $100K success
-        self.config = {
-            "underlying": "SPY",  # SPY ONLY per CLAUDE.md - best liquidity, $100K success
-            "target_dte": 30,
-            "min_dte": 21,
-            "max_dte": 45,
-            "short_delta": 0.15,  # 15 delta = ~85% POP (research-backed)
-            "wing_width": 10,  # $10 wide spreads per CLAUDE.md
-            # EV math: 75% profit / 100% stop → EV = 0.85*0.75 - 0.15*1.0 = +0.49
-            # Legacy asymmetric take-profit/stop profile was EV-neutral and has been deprecated.
-            "take_profit_pct": 0.75,  # Close at 75% profit
-            "stop_loss_pct": 1.0,  # Close at 100% loss
-            "exit_dte": 7,  # Exit at 7 DTE per LL-268 research (80%+ win rate)
-            "max_positions": max(
-                1, int(MAX_OPTION_LEGS) // 4
-            ),  # Canonical limit: 8 option legs => 2 iron condors
-            "position_size_pct": 0.05,  # 5% of portfolio per position - CLAUDE.md MANDATE
-        }
+    def __init__(self, underlying: str | None = None):
+        self.config = get_iron_condor_strategy_config(underlying=underlying)
+        self.config["max_positions"] = max(
+            self.config["max_positions"],
+            max(1, int(MAX_OPTION_LEGS) // 4),
+        )
 
     def get_underlying_price(self) -> float:
-        """Get current price of SPY from Alpaca or estimate."""
+        """Get current price of the configured underlying from Alpaca."""
         # FIX Jan 20, 2026: Fetch real price from Alpaca instead of hardcoding
         # ROOT CAUSE: Hardcoded $595 was causing wrong strike calculations
         # SPY was actually ~$600, causing PUT-only fills (CALL strikes too low)
         try:
             from alpaca.data.historical import StockHistoricalDataClient
             from alpaca.data.requests import StockLatestQuoteRequest
+
             from src.utils.alpaca_client import get_alpaca_credentials
 
             api_key, secret = get_alpaca_credentials()
             if api_key and secret:
                 data_client = StockHistoricalDataClient(api_key, secret)
-                request = StockLatestQuoteRequest(symbol_or_symbols=["SPY"])
+                underlying = self.config["underlying"]
+                request = StockLatestQuoteRequest(symbol_or_symbols=[underlying])
                 quote = data_client.get_stock_latest_quote(request)
-                if "SPY" in quote:
-                    mid_price = (quote["SPY"].ask_price + quote["SPY"].bid_price) / 2
-                    logger.info(f"Live SPY price from Alpaca: ${mid_price:.2f}")
+                if underlying in quote:
+                    mid_price = (quote[underlying].ask_price + quote[underlying].bid_price) / 2
+                    logger.info(f"Live {underlying} price from Alpaca: ${mid_price:.2f}")
                     return mid_price
         except Exception as e:
-            logger.warning(f"Could not fetch live SPY price: {e}")
+            logger.warning(f"Could not fetch live {self.config['underlying']} price: {e}")
 
-        # Fallback: Use recent estimate (updated Jan 23, 2026)
-        # NOTE: SPY at $688 as of Jan 23, 2026 - update if stale
-        fallback_price = 688.0
-        logger.info(f"Using fallback SPY price: ${fallback_price:.2f}")
-        return fallback_price
+        # FIXED Mar 23, 2026: No fallback price. Hardcoded $688 caused wrong
+        # strike calculations when SPY moved. Trading on stale prices = losses.
+        raise RuntimeError(
+            f"Live {self.config['underlying']} price unavailable — refusing to trade on stale data"
+        )
 
     def calculate_strikes(self, price: float) -> tuple[float, float, float, float]:
         """
-        Calculate iron condor strikes based on delta targeting.
+        Calculate iron condor strikes using live delta from Alpaca option chain.
 
-        For 15 delta on SPY (~$690):
-        - Short put: ~5% below price (~$655)
-        - Short call: ~5% above price (~$725)
-        - Wing width: $5 (appropriate for SPY)
-
-        CRITICAL FIX Jan 23, 2026:
-        SPY options have $5 strike increments for OTM options.
-        Must round to nearest $5 multiple or orders will fail!
-        ROOT CAUSE: $724/$729 strikes don't exist, only $725/$730
+        Falls back to 5% OTM heuristic if chain data is unavailable.
+        Stores the selection result on self._last_strike_selection for tracing.
         """
-        # 15 delta is roughly 1.5 standard deviation move
-        # For 30 DTE on SPY, use ~5% OTM for 15-delta equivalent
+        from src.markets.option_chain import select_strikes_by_delta
 
-        wing = self.config["wing_width"]
+        selection = select_strikes_by_delta(
+            underlying=self.config["underlying"],
+            underlying_price=price,
+            wing_width=self.config["wing_width"],
+            target_delta=self.config["short_delta"],
+            target_dte=self.config["target_dte"],
+            min_dte=self.config["min_dte"],
+            max_dte=self.config["max_dte"],
+        )
 
-        # FIX: Round to nearest $5 increment (SPY OTM options only exist at $5 intervals)
-        def round_to_5(x: float) -> float:
-            return round(x / 5) * 5
+        self._last_strike_selection = selection
 
-        short_put = round_to_5(price * 0.95)  # 5% OTM for puts, rounded to $5
-        long_put = short_put - wing
+        if selection.method == "live_delta":
+            logger.info(
+                f"LIVE DELTA strikes: put delta={selection.put_delta:.3f}, "
+                f"call delta={selection.call_delta:.3f}"
+            )
+        else:
+            logger.warning("Using HEURISTIC fallback — not true 15-delta")
 
-        short_call = round_to_5(price * 1.05)  # 5% OTM for calls, rounded to $5
-        long_call = short_call + wing
-
-        return long_put, short_put, short_call, long_call
+        return selection.long_put, selection.short_put, selection.short_call, selection.long_call
 
     def calculate_premiums(self, legs: tuple[float, float, float, float], dte: int) -> dict:
         """
         Estimate premiums for iron condor legs.
 
-        Real implementation would use options pricing model or market data.
+        FIXED Mar 23, 2026: Estimates only used for pre-trade sizing check.
+        Actual execution uses live bid/ask from Alpaca option chain.
+        The MLEG order gets market fill — these estimates just gate whether
+        the trade is worth attempting.
         """
-        long_put, short_put, short_call, long_call = legs
-
-        # SPY premium estimates (~$595 stock)
-        # At 30 DTE, 15-delta 5% OTM options: ~$1.50-2.50 for SPY
-        # $5 wide spreads collect roughly $0.75-1.25 net credit per side
-        put_spread_credit = 1.00  # Sell short put, buy long put
-        call_spread_credit = 1.00  # Sell short call, buy long call
-
-        total_credit = put_spread_credit + call_spread_credit
         wing_width = self.config["wing_width"]
-        max_risk = (wing_width * 100) - (total_credit * 100)  # Per contract
+
+        # Use live bids from chain if available
+        selection = getattr(self, "_last_strike_selection", None)
+        if selection and selection.method == "live_delta" and selection.put_bid > 0:
+            estimated_credit = round(selection.net_credit, 2)
+            logger.info(
+                f"Live net credit: ${estimated_credit:.2f} "
+                f"(short put ${selection.put_bid:.2f} + short call ${selection.call_bid:.2f} "
+                f"- long put ${selection.long_put_ask:.2f} - long call ${selection.long_call_ask:.2f})"
+            )
+        else:
+            # Conservative fallback for a $10-wide index ETF condor when live quotes are unavailable.
+            estimated_credit = 1.50
+        max_risk = (wing_width * 100) - (estimated_credit * 100)
 
         return {
-            "credit": total_credit,
+            "credit": estimated_credit,
             "max_risk": max_risk,
-            "max_profit": total_credit * 100,
-            "risk_reward": max_risk / (total_credit * 100) if total_credit > 0 else 0,
+            "max_profit": estimated_credit * 100,
+            "risk_reward": max_risk / (estimated_credit * 100) if estimated_credit > 0 else 0,
         }
 
     def find_trade(self) -> Optional[IronCondorLegs]:
@@ -197,22 +196,18 @@ class IronCondorStrategy:
         long_put, short_put, short_call, long_call = self.calculate_strikes(price)
         logger.info(f"Strikes: LP={long_put} SP={short_put} SC={short_call} LC={long_call}")
 
-        # Calculate expiry - MUST be a Friday (options expire on Fridays)
-        target_date = datetime.now() + timedelta(days=self.config["target_dte"])
-        # Adjust to nearest Friday: weekday() returns 0=Mon, 4=Fri
-        days_until_friday = (4 - target_date.weekday()) % 7
-        if days_until_friday == 0 and target_date.weekday() != 4:
-            days_until_friday = 7  # Next Friday if we're past Friday
-        # If target is Sat/Sun, go to next Friday; otherwise go to this week's Friday
-        if target_date.weekday() > 4:  # Saturday=5, Sunday=6
+        selection = getattr(self, "_last_strike_selection", None)
+        if selection and getattr(selection, "expiry", None):
+            expiry_date = datetime.strptime(selection.expiry, "%Y-%m-%d")
+        else:
+            target_date = datetime.now() + timedelta(days=self.config["target_dte"])
             days_until_friday = (4 - target_date.weekday()) % 7
-        expiry_date = target_date + timedelta(days=days_until_friday)
-        # If this pushed us too close (below minimum entry DTE), use the Friday after
+            expiry_date = target_date + timedelta(days=days_until_friday)
+            if (expiry_date - datetime.now()).days < self.config["min_dte"]:
+                expiry_date += timedelta(days=7)
         actual_dte = (expiry_date - datetime.now()).days
-        if actual_dte < 21:
-            expiry_date += timedelta(days=7)
         logger.info(
-            f"Expiry: {expiry_date.strftime('%Y-%m-%d')} ({expiry_date.strftime('%A')}) - {(expiry_date - datetime.now()).days} DTE"
+            f"Expiry: {expiry_date.strftime('%Y-%m-%d')} ({expiry_date.strftime('%A')}) - {actual_dte} DTE"
         )
 
         # Estimate premiums
@@ -220,10 +215,27 @@ class IronCondorStrategy:
             (long_put, short_put, short_call, long_call), self.config["target_dte"]
         )
 
+        # GUARD: Never enter a net-debit iron condor (Phil Town Rule #1)
+        if premiums["credit"] <= 0:
+            logger.error(
+                f"BLOCKED: Net-debit IC (credit=${premiums['credit']:.2f}). "
+                f"This would lose money from the start."
+            )
+            return None
+
+        # GUARD: Minimum credit threshold ($0.50 per IC)
+        min_credit = 0.50
+        if premiums["credit"] < min_credit:
+            logger.warning(
+                f"BLOCKED: Credit ${premiums['credit']:.2f} < ${min_credit:.2f} minimum. "
+                f"Not enough premium to justify the risk."
+            )
+            return None
+
         return IronCondorLegs(
             underlying=self.config["underlying"],
             expiry=expiry_date.strftime("%Y-%m-%d"),
-            dte=self.config["target_dte"],
+            dte=actual_dte,
             short_put=short_put,
             long_put=long_put,
             short_call=short_call,
@@ -318,9 +330,93 @@ class IronCondorStrategy:
             return True, f"VIX {current_vix:.2f} favorable"
 
         except Exception as e:
-            # If VIX check fails, log warning but allow trade
-            logger.warning(f"VIX check failed: {e} - proceeding with caution")
-            return True, "VIX check failed, proceeding with caution"
+            # FIXED Mar 23, 2026: If VIX check fails, BLOCK the trade.
+            # Previous behavior: allowed trade on VIX failure, which let trades
+            # through during VIX > 30 (tariff crash March 2026).
+            logger.error(f"VIX check failed: {e} - BLOCKING trade (fail-safe)")
+            return False, f"VIX check failed: {e} — refusing to trade blind"
+
+    def check_iv_vs_rv(self) -> tuple[bool, str]:
+        """Check if implied volatility exceeds realized volatility.
+
+        We only sell premium when IV > RV (market pricing in more risk than
+        realized). Soft gate: allows trade if data unavailable.
+        """
+        try:
+            from src.data.iv_data_provider import IVDataProvider
+
+            provider = IVDataProvider()
+            underlying = self.config["underlying"]
+            current_iv = provider.get_current_iv(underlying)
+            rv = self._compute_realized_vol()
+
+            if rv is None or rv <= 0:
+                logger.warning("Could not compute realized vol — allowing trade (soft gate)")
+                return True, "RV unavailable — IV check skipped"
+
+            iv_rv_ratio = current_iv / rv if rv > 0 else 999.0
+
+            logger.info("=" * 50)
+            logger.info("IV vs RV PREMIUM CHECK")
+            logger.info("=" * 50)
+            logger.info(f"  {underlying} IV (annualized): {current_iv:.1%}")
+            logger.info(f"  {underlying} 20d RV:          {rv:.1%}")
+            logger.info(f"  IV/RV ratio:         {iv_rv_ratio:.2f}")
+            logger.info("=" * 50)
+
+            if iv_rv_ratio < 0.90:
+                reason = (
+                    f"IV ({current_iv:.1%}) < RV ({rv:.1%}), ratio={iv_rv_ratio:.2f} — "
+                    f"premium too cheap to sell"
+                )
+                logger.warning(f"BLOCKED: {reason}")
+                return False, reason
+
+            logger.info(f"IV/RV={iv_rv_ratio:.2f} — premium is rich, good to sell")
+            return True, f"IV/RV={iv_rv_ratio:.2f} favorable"
+
+        except Exception as e:
+            logger.warning(f"IV/RV check failed ({e}) — allowing trade (soft gate)")
+            return True, f"IV/RV check unavailable: {e}"
+
+    def _compute_realized_vol(self, lookback_days: int = 20) -> float | None:
+        """Compute annualized realized volatility from underlying daily closes."""
+        try:
+            import numpy as np
+            from alpaca.data.historical import StockHistoricalDataClient
+            from alpaca.data.requests import StockBarsRequest
+            from alpaca.data.timeframe import TimeFrame
+
+            from src.utils.alpaca_client import get_alpaca_credentials
+
+            api_key, secret = get_alpaca_credentials()
+            if not api_key or not secret:
+                return None
+
+            client = StockHistoricalDataClient(api_key, secret)
+            underlying = self.config["underlying"]
+            request = StockBarsRequest(
+                symbol_or_symbols=underlying,
+                timeframe=TimeFrame.Day,
+                start=datetime.now() - timedelta(days=lookback_days + 10),
+                end=datetime.now(),
+            )
+            bars = client.get_stock_bars(request)
+
+            if underlying not in bars.data or len(bars.data[underlying]) < lookback_days:
+                return None
+
+            closes = [float(bar.close) for bar in bars.data[underlying]]
+            if len(closes) < 2:
+                return None
+
+            returns = np.diff(np.log(closes))
+            rv = float(np.std(returns[-lookback_days:]) * np.sqrt(252))
+            return rv
+
+        except Exception as e:
+            logger.warning(f"Failed to compute realized vol: {e}")
+            return None
 
     def _build_decision_trace(self, ic: IronCondorLegs, entry_reason: str) -> dict:
         """Build a decision trace capturing market context at entry time (Context Graph pattern)."""
@@ -330,9 +426,17 @@ class IronCondorStrategy:
             "market_context": {},
             "signals_checked": [],
             "strike_selection": {
-                "method": "15_delta_5pct_otm",
+                "method": getattr(
+                    getattr(self, "_last_strike_selection", None), "method", "unknown"
+                ),
                 "short_put": ic.short_put,
                 "short_call": ic.short_call,
+                "put_delta": getattr(
+                    getattr(self, "_last_strike_selection", None), "put_delta", 0.0
+                ),
+                "call_delta": getattr(
+                    getattr(self, "_last_strike_selection", None), "call_delta", 0.0
+                ),
                 "wing_width": ic.long_call - ic.short_call,
             },
             "precedent_query": f"{ic.underlying} iron_condor {ic.dte}DTE",
@@ -377,6 +481,7 @@ class IronCondorStrategy:
             logger.info("=" * 60)
             try:
                 from alpaca.trading.client import TradingClient
+
                 from src.utils.alpaca_client import get_alpaca_credentials
 
                 api_key, secret = get_alpaca_credentials()
@@ -384,12 +489,12 @@ class IronCondorStrategy:
                     client = TradingClient(api_key, secret, paper=True)
                     positions = client.get_all_positions()
 
-                    # Count SPY OPTION positions only (iron condor = 4 legs)
-                    # Options have format like SPY260220P00565000, shares are just "SPY"
+                    underlying = ic.underlying
+                    # Count option legs for the configured underlying only.
                     spy_option_positions = [
                         p
                         for p in positions
-                        if p.symbol.startswith("SPY")
+                        if p.symbol.startswith(underlying)
                         and len(p.symbol) > 5  # Options have longer symbols
                     ]
 
@@ -398,7 +503,7 @@ class IronCondorStrategy:
                     unique_symbols = len(spy_option_positions)
 
                     logger.info(
-                        f"Current SPY OPTION positions: {unique_symbols} symbols, {total_contracts} contracts"
+                        f"Current {underlying} OPTION positions: {unique_symbols} symbols, {total_contracts} contracts"
                     )
 
                     # Check iron condor count against max_positions config
@@ -441,6 +546,24 @@ class IronCondorStrategy:
                         logger.info(
                             f"Position check OK: {current_ic_count}/{max_ic} iron condors - room for new entry"
                         )
+
+                    # ADDED Mar 23, 2026: Check for duplicate expiry
+                    # Prevents opening a new IC at the same expiry as an existing position
+                    target_expiry = ic.expiry.replace("-", "")[2:]  # "2026-04-25" -> "260425"
+                    existing_expiries = set()
+                    for p in spy_option_positions:
+                        if len(p.symbol) > 10:
+                            existing_expiries.add(p.symbol[3:9])
+
+                    if target_expiry in existing_expiries:
+                        logger.warning(f"BLOCKED: Already have positions at expiry {ic.expiry}")
+                        return {
+                            "timestamp": datetime.now().isoformat(),
+                            "strategy": "iron_condor",
+                            "underlying": ic.underlying,
+                            "status": "BLOCKED_DUPLICATE_EXPIRY",
+                            "reason": f"Already holding legs at expiry {ic.expiry}",
+                        }
             except Exception as pos_err:
                 # CRITICAL: If we can't verify positions, BLOCK the trade
                 # This prevents placing duplicate trades when Alpaca API fails
@@ -464,15 +587,32 @@ class IronCondorStrategy:
         rag = LessonsLearnedRAG()
 
         # Check for strategy-specific failures
-        # FIX Jan 21, 2026: Only block on CRITICAL lessons that are NOT resolved
-        # LL-244 (security audit) was blocking even though it's a general audit
+        # FIX Mar 23, 2026: Only block on ACTIVE INCIDENT lessons, not research.
+        # Research lessons (LL-268, LL-277) were blocking ALL trades because
+        # the RAG index had stale severity=CRITICAL. Research lessons inform
+        # strategy but should not block execution.
         strategy_lessons = rag.search("iron condor failures losses", top_k=3)
         for lesson, score in strategy_lessons:
-            # Skip lessons that have been resolved or fixed
-            if lesson.severity == "RESOLVED" or "resolved" in lesson.snippet.lower():
-                logger.info(f"Skipping resolved lesson: {lesson.id}")
+            snippet_lower = lesson.snippet.lower()
+            title_lower = lesson.title.lower()
+            if (
+                lesson.severity == "RESOLVED"
+                or "resolved" in snippet_lower
+                or "fixed" in snippet_lower
+            ):
+                logger.info(f"Skipping resolved/fixed lesson: {lesson.id}")
                 continue
-            # Only block on lessons specifically about iron condor execution
+            # Skip research/optimization lessons — they inform, not block
+            if "research" in title_lower or "optimization" in title_lower:
+                logger.info(f"Skipping research lesson: {lesson.id}")
+                continue
+            # Skip known-fixed lessons whose RAG index is stale
+            # LL-279 (partial auto-close) fixed Jan 2026, LL-268/277 are research
+            if any(fixed_id in lesson.id for fixed_id in ["LL-279", "LL-268", "LL-277"]):
+                logger.info(f"Skipping known-fixed lesson: {lesson.id}")
+                continue
+                logger.info(f"Skipping research lesson: {lesson.id} - {lesson.title}")
+                continue
             if lesson.severity == "CRITICAL" and "iron condor" in lesson.title.lower():
                 logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
                 logger.error(f"Prevention: {lesson.prevention}")
@@ -533,6 +673,7 @@ class IronCondorStrategy:
                 from alpaca.trading.client import TradingClient
                 from alpaca.trading.enums import OrderClass, OrderSide
                 from alpaca.trading.requests import OptionLegRequest
+
                 from src.utils.alpaca_client import get_alpaca_credentials
 
                 api_key, secret = get_alpaca_credentials()
@@ -575,27 +716,39 @@ class IronCondorStrategy:
                         OptionLegRequest(symbol=long_call_sym, side=OrderSide.BUY, ratio_qty=1),
                     ]
 
-                    logger.info("📋 Building MLeg (multi-leg) iron condor order...")
-                    logger.info(f"   Long Put:   {long_put_sym} (BUY)")
-                    logger.info(f"   Short Put:  {short_put_sym} (SELL)")
-                    logger.info(f"   Short Call: {short_call_sym} (SELL)")
-                    logger.info(f"   Long Call:  {long_call_sym} (BUY)")
+                    # FIX Apr 3, 2026: Scale to 2 contracts per IC.
+                    # 1 contract collects ~$200 (0.2% of account). 2 contracts = ~$400.
+                    # MAX_CONTRACTS_PER_TRADE from constants controls this.
+                    from src.core.trading_constants import MAX_CONTRACTS_PER_TRADE
 
-                    # For iron condor, we receive net credit (negative limit price)
-                    # Conservative: accept any credit >= $0.50 per contract
-                    # The actual credit will depend on market conditions
-                    # Using market order (no limit_price) lets the market determine credit
+                    ic_qty = MAX_CONTRACTS_PER_TRADE  # Default: 2
+
+                    logger.info(f"📋 Building MLeg iron condor order ({ic_qty} contracts)...")
+                    logger.info(f"   Long Put:   {long_put_sym} (BUY x{ic_qty})")
+                    logger.info(f"   Short Put:  {short_put_sym} (SELL x{ic_qty})")
+                    logger.info(f"   Short Call: {short_call_sym} (SELL x{ic_qty})")
+                    logger.info(f"   Long Call:  {long_call_sym} (BUY x{ic_qty})")
+
+                    # Use LIMIT order to control entry credit (market orders lose $12-40/trade in slippage)
+                    # The executor supports LimitOrderRequest with net_credit as limit_price.
+                    # Alpaca MLEG limit: negative limit_price = minimum credit we'll accept.
                     try:
                         from alpaca.trading.enums import TimeInForce
-                        from alpaca.trading.requests import MarketOrderRequest
+                        from alpaca.trading.requests import LimitOrderRequest
 
-                        # Submit as market MLeg order - all 4 legs fill together or not at all
-                        # time_in_force is REQUIRED by SDK even for options (DAY is standard)
-                        order_req = MarketOrderRequest(
-                            qty=1,
+                        # Calculate limit price: use estimated credit with $0.05 concession
+                        limit_credit = round(ic.credit_received - 0.05, 2)
+                        if limit_credit < 0.50:
+                            limit_credit = 0.50  # Floor: never accept less than $0.50
+                        logger.info(f"   Limit price: -${limit_credit:.2f} (credit per contract)")
+                        logger.info(f"   Total credit target: ~${limit_credit * ic_qty * 100:.0f}")
+
+                        order_req = LimitOrderRequest(
+                            qty=ic_qty,
                             order_class=OrderClass.MLEG,
                             legs=option_legs,
                             time_in_force=TimeInForce.DAY,
+                            limit_price=round(-limit_credit, 2),  # Negative = credit
                         )
 
                         logger.info("🚀 Submitting MLeg iron condor order...")
@@ -617,6 +770,118 @@ class IronCondorStrategy:
                         logger.info(f"✅ MLeg order submitted: {order.id}")
                         logger.info(f"   Status: {order.status}")
                         status = "LIVE_SUBMITTED"
+
+                        # FIX Apr 3, 2026: Place GTC 50% profit close order AFTER fill.
+                        # Data shows 90% of trades closed by manage script in < 1 hour
+                        # at 6.5% win rate. A GTC limit order on Alpaca lets theta work.
+                        # SAFETY: Must wait for entry fill — placing a close order before
+                        # the entry fills would create naked positions in the opposite direction.
+                        try:
+                            profit_target_credit = round(
+                                limit_credit * self.config["take_profit_pct"],
+                                2,
+                            )
+                            close_debit = round(limit_credit - profit_target_credit, 2)
+
+                            # Poll for entry fill (max 60 seconds)
+                            entry_filled = False
+                            for _poll in range(12):
+                                refreshed = client.get_order_by_id(order.id)
+                                if str(refreshed.status) in ("OrderStatus.FILLED", "filled"):
+                                    entry_filled = True
+                                    logger.info(
+                                        f"   Entry order FILLED at {refreshed.filled_avg_price}"
+                                    )
+                                    break
+                                if str(refreshed.status) in (
+                                    "OrderStatus.CANCELED",
+                                    "OrderStatus.EXPIRED",
+                                    "OrderStatus.REJECTED",
+                                    "canceled",
+                                    "expired",
+                                    "rejected",
+                                ):
+                                    logger.warning(
+                                        f"   Entry order {refreshed.status} — skipping close order"
+                                    )
+                                    break
+                                time.sleep(5)
+
+                            if entry_filled:
+                                close_legs = [
+                                    OptionLegRequest(
+                                        symbol=long_put_sym, side=OrderSide.SELL, ratio_qty=1
+                                    ),
+                                    OptionLegRequest(
+                                        symbol=short_put_sym, side=OrderSide.BUY, ratio_qty=1
+                                    ),
+                                    OptionLegRequest(
+                                        symbol=short_call_sym, side=OrderSide.BUY, ratio_qty=1
+                                    ),
+                                    OptionLegRequest(
+                                        symbol=long_call_sym, side=OrderSide.SELL, ratio_qty=1
+                                    ),
+                                ]
+
+                                close_order_req = LimitOrderRequest(
+                                    qty=ic_qty,
+                                    order_class=OrderClass.MLEG,
+                                    legs=close_legs,
+                                    time_in_force=TimeInForce.GTC,
+                                    limit_price=round(close_debit, 2),
+                                )
+
+                                close_order = safe_submit_order(client, close_order_req)
+                                logger.info(
+                                    f"✅ GTC 50% profit close order placed: {close_order.id}"
+                                )
+                                logger.info(
+                                    f"   Close at ${close_debit:.2f} debit (50% of ${limit_credit:.2f} credit)"
+                                )
+                                order_ids.append(
+                                    {
+                                        "order_id": str(close_order.id),
+                                        "type": "gtc_profit_target_close",
+                                        "close_debit": str(close_debit),
+                                    }
+                                )
+                            else:
+                                logger.warning(
+                                    "   Entry not filled within 60s — close order deferred to manage script"
+                                )
+                        except Exception as close_err:
+                            logger.warning(f"⚠️ Could not place GTC profit close: {close_err}")
+                            logger.warning(
+                                "   Will rely on manage_iron_condor_positions.py for exits"
+                            )
+
+                        # Save entry credit so Guardian knows the real entry price
+                        try:
+                            ic_entries_file = Path("data/ic_entries.json")
+                            ic_entries = {}
+                            if ic_entries_file.exists():
+                                ic_entries = json.loads(ic_entries_file.read_text())
+                            entry_key = (
+                                f"IC_{ic.expiry.replace('-', '')[2:]}"  # YYMMDD to match Guardian
+                            )
+                            ic_entries[entry_key] = {
+                                "credit": ic.credit_received,
+                                "date": datetime.now().isoformat(),
+                                "order_id": str(order.id),
+                                "strikes": {
+                                    "short_put": ic.short_put,
+                                    "short_call": ic.short_call,
+                                    "long_put": ic.long_put,
+                                    "long_call": ic.long_call,
+                                },
+                            }
+                            ic_entries_file.write_text(json.dumps(ic_entries, indent=2))
+                            logger.info(
+                                f"   Saved entry credit ${ic.credit_received:.2f} "
+                                f"to ic_entries.json (key={entry_key})"
+                            )
+                        except Exception as e:
+                            logger.warning(f"   Failed to save entry credit: {e}")
 
                     except Exception as mleg_error:
                         logger.error(f"❌ MLeg order failed: {mleg_error}")
@@ -681,8 +946,8 @@ class IronCondorStrategy:
                     "symbol": trade["underlying"],
                     "strategy": "iron_condor",
                     "entry_reason": "high_iv_environment",
-                    "won": True,  # Will update when closed
-                    "pnl": 0,  # Will update when closed
+                    "won": None,  # Unknown until closed — do not pollute learning data
+                    "pnl": None,  # Set by sync_closed_positions.py on exit
                     "lesson": f"Opened IC at {trade['credit']:.2f} credit, {trade['dte']} DTE",
                 }
             )
@@ -718,7 +983,7 @@ def main():
     parser.add_argument("--live", action="store_true", help="Execute LIVE trades on Alpaca")
     parser.add_argument("--dry-run", action="store_true", help="Dry run (simulate only)")
     parser.add_argument(
-        "--symbol", type=str, default="SPY", help="Underlying symbol (default: SPY)"
+        "--symbol", type=str, default=None, help="Underlying symbol override"
     )
     parser.add_argument(
         "--force",
@@ -731,7 +996,8 @@ def main():
     live_mode = args.live or (not args.dry_run)
 
     telemetry = OrchestratorTelemetry()
-    ticker = (args.symbol or "SPY").upper()
+    strategy = IronCondorStrategy(underlying=args.symbol)
+    ticker = strategy.config["underlying"]
     telemetry.start_ticker_decision(ticker)
     session_profile = {
         "session_type": "iron_condor_trader",
@@ -741,27 +1007,25 @@ def main():
 
     logger.info("IRON CONDOR TRADER - STARTING")
     logger.info(f"Mode: {'LIVE' if live_mode else 'SIMULATED'}")
-    logger.info(f"Symbol: {args.symbol}")
+    logger.info(f"Symbol: {ticker}")
 
     try:
-        # CHECK TRADING HALT FILE FIRST
-        halt_file = Path("data/trading_halt.txt")
-        if halt_file.exists():
+        halt_state = get_trading_halt_state()
+        if halt_state.active:
             logger.warning("=" * 60)
-            logger.warning("TRADING HALTED - Manual halt in effect")
+            logger.warning("TRADING HALTED - execution blocked")
             logger.warning("=" * 60)
-            with open(halt_file) as f:
-                logger.warning(f.read())
-            logger.warning("Remove data/trading_halt.txt to resume trading")
+            logger.warning(halt_state.reason)
+            logger.warning(f"Active halt file: {halt_state.path}")
             logger.warning("=" * 60)
             telemetry.update_ticker_decision(
                 ticker,
                 gate=0,
                 status="REJECT",
-                rejection_reason="Trading halted - manual halt in effect",
-                indicators={"halt_file": str(halt_file)},
+                rejection_reason=f"Trading halted - {halt_state.kind}",
+                indicators={"halt_file": halt_state.path, "halt_kind": halt_state.kind},
             )
-            return {"success": False, "reason": "Trading halted - manual halt in effect"}
+            return {"success": False, "reason": halt_state.reason}
 
         try:
             # LL-297 FIX (Jan 23, 2026): Daily trade limit to prevent churning
@@ -825,12 +1089,6 @@ def main():
         # HARD BLOCK: Validate ticker before proceeding (Jan 20 2026 - SOFI crisis)
         from src.utils.ticker_validator import validate_ticker
 
-        strategy = IronCondorStrategy()
-        # Override symbol from command line if provided (Jan 21, 2026 fix)
-        # ROOT CAUSE: Workflow called with --symbol SPY but argparse rejected it
-        # This blocked trading for 8+ days with silent "unrecognized arguments" error
-        if args.symbol:
-            strategy.config["underlying"] = args.symbol.upper()
         validate_ticker(strategy.config["underlying"], context="iron_condor_trader")
 
         # Check entry conditions (unless --force bypasses VIX checks)
@@ -852,6 +1110,15 @@ def main():
         else:
             should_enter, reason = strategy.check_entry_conditions()
             logger.info(f"Entry conditions: {should_enter} ({reason})")
+            if should_enter:
+                # Secondary gate: IV vs RV premium check
+                iv_ok, iv_reason = strategy.check_iv_vs_rv()
+                if not iv_ok:
+                    should_enter = False
+                    reason = iv_reason
+                else:
+                    reason = f"{reason} | {iv_reason}"
+
             if should_enter:
                 telemetry.update_ticker_decision(
                     ticker,
@@ -882,7 +1149,7 @@ def main():
                 tc_model = get_trade_confidence_model()
                 thompson_stats = tc_model.get_trade_confidence(
                     strategy="iron_condor",
-                    ticker=args.symbol,
+                    ticker=ticker,
                     regime=None,
                 )
 

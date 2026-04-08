@@ -1,19 +1,17 @@
 """
-Tests for Pre-Trade Research Agent (DeepSeek-R1 powered IC entry opinion).
+Tests for Pre-Trade Research Agent (trade opinion module).
 
 Verifies:
 - TradeOpinion Pydantic model validation
-- get_trade_opinion() graceful fallbacks
+- get_trade_opinion() bypass behavior (Simplification Sprint)
 - Prompt construction with various context combinations
 - Model routing via BATS framework (R1 for pre_trade_research)
-- Advisory-only behavior (never overrides hard risk limits)
+- Consensus aggregation helpers
 """
 
 import json
-import logging
 import os
-import sys
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -248,280 +246,50 @@ class TestStructuredOutputResilience:
         assert parsed["confidence"] == 0.76
         assert parsed["regime"] == "calm"
 
-    @patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-key"})
-    def test_schema_mode_falls_back_to_json_object(self):
-        """If json_schema is unsupported, client falls back to json_object."""
-        _ensure_openai_mock()
-
-        valid_response = json.dumps(
-            {
-                "should_trade": True,
-                "confidence": 0.8,
-                "regime": "calm",
-                "suggested_short_delta": 0.15,
-                "suggested_dte": 35,
-                "reasoning": "Fallback path succeeded.",
-                "risk_flags": [],
-            }
-        )
-
-        with patch("src.llm.trade_opinion.get_model_selector") as mock_sel:
-            mock_selector = MagicMock()
-            mock_selector.select_model.return_value = "deepseek/deepseek-r1"
-            mock_selector.get_model_provider.return_value = "openrouter"
-            mock_selector.get_transport_model_id.return_value = "deepseek/deepseek-r1"
-            mock_sel.return_value = mock_selector
-
-            with patch("openai.OpenAI") as mock_client_cls:
-                mock_client = MagicMock()
-                mock_response = MagicMock()
-                mock_choice = MagicMock()
-                mock_choice.message.content = valid_response
-                mock_response.choices = [mock_choice]
-                mock_response.usage = None
-
-                mock_client.chat.completions.create.side_effect = [
-                    RuntimeError("json_schema not supported"),
-                    mock_response,
-                ]
-                mock_client_cls.return_value = mock_client
-
-                result = get_trade_opinion(vix_current=19.0)
-
-                assert result is not None
-                assert result.should_trade is True
-                assert mock_client.chat.completions.create.call_count == 2
-
-                first_fmt = mock_client.chat.completions.create.call_args_list[0].kwargs[
-                    "response_format"
-                ]
-                second_fmt = mock_client.chat.completions.create.call_args_list[1].kwargs[
-                    "response_format"
-                ]
-                assert first_fmt["type"] == "json_schema"
-                assert second_fmt["type"] == "json_object"
-
 
 # =============================================================================
-# get_trade_opinion() FALLBACK TESTS
+# get_trade_opinion() BYPASS TESTS (Simplification Sprint Mar 2026)
 # =============================================================================
 
 
-def _ensure_openai_mock():
-    """Ensure openai module is available (mocked if not installed)."""
-    if "openai" not in sys.modules:
-        mock_openai = MagicMock()
-        mock_openai.OpenAI = MagicMock
-        sys.modules["openai"] = mock_openai
-    return sys.modules["openai"]
+class TestGetTradeOpinionBypass:
+    """After the Simplification Sprint, get_trade_opinion() always returns
+    a hard-coded bypass TradeOpinion so risk gates take full control."""
 
+    def test_bypass_returns_trade_opinion(self):
+        """Always returns a TradeOpinion, never None."""
+        result = get_trade_opinion()
+        assert result is not None
+        assert isinstance(result, TradeOpinion)
 
-class TestGetTradeOpinionFallbacks:
-    """Test get_trade_opinion() graceful degradation."""
+    def test_bypass_always_should_trade(self):
+        """Bypass opinion delegates to risk gates (should_trade=True)."""
+        result = get_trade_opinion()
+        assert result.should_trade is True
+        assert result.confidence == 1.0
 
-    def test_no_api_key_returns_none(self):
-        """Returns None when OPENROUTER_API_KEY is not set."""
+    def test_bypass_reasoning_is_explicit(self):
+        """Reasoning clearly states LLM is bypassed."""
+        result = get_trade_opinion()
+        assert "Bypassed" in result.reasoning or "bypassed" in result.reasoning.lower()
+
+    def test_bypass_with_regime(self):
+        """Regime param is passed through."""
+        result = get_trade_opinion(regime="volatile")
+        assert result.regime == "volatile"
+
+    def test_bypass_defaults_to_unknown_regime(self):
+        """Default regime is 'unknown'."""
+        result = get_trade_opinion()
+        assert result.regime == "unknown"
+
+    def test_bypass_no_api_key_still_works(self):
+        """Works even without OPENROUTER_API_KEY."""
         with patch.dict(os.environ, {}, clear=True):
             os.environ.pop("OPENROUTER_API_KEY", None)
             result = get_trade_opinion()
-            assert result is None
-
-    def test_no_api_key_logs_warning(self, caplog):
-        """Missing key should emit warning so advisory disablement is visible."""
-        with patch.dict(os.environ, {}, clear=True):
-            os.environ.pop("OPENROUTER_API_KEY", None)
-            with caplog.at_level(logging.WARNING):
-                result = get_trade_opinion()
-            assert result is None
-            assert "Trade opinion disabled" in caplog.text
-
-    @patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-key"})
-    def test_non_openrouter_provider_returns_none(self):
-        """Returns None when selected model is not OpenRouter."""
-        with patch("src.llm.trade_opinion.get_model_selector") as mock_sel:
-            mock_selector = MagicMock()
-            mock_selector.select_model.return_value = "claude-opus-4-5-20251101"
-            mock_selector.get_model_provider.return_value = "anthropic"
-            mock_sel.return_value = mock_selector
-
-            result = get_trade_opinion()
-            assert result is None
-
-    @patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-key"})
-    def test_import_error_returns_none(self):
-        """Returns None when openai package is not installed."""
-        with patch("src.llm.trade_opinion.get_model_selector") as mock_sel:
-            mock_selector = MagicMock()
-            mock_selector.select_model.return_value = "deepseek/deepseek-r1"
-            mock_selector.get_model_provider.return_value = "openrouter"
-            mock_sel.return_value = mock_selector
-
-            # Force ImportError on openai
-            with patch.dict(sys.modules, {"openai": None}):
-                result = get_trade_opinion()
-                assert result is None
-
-    @patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-key"})
-    def test_json_decode_error_returns_none(self):
-        """Returns None when LLM returns invalid JSON."""
-        _ensure_openai_mock()
-
-        with patch("src.llm.trade_opinion.get_model_selector") as mock_sel:
-            mock_selector = MagicMock()
-            mock_selector.select_model.return_value = "deepseek/deepseek-r1"
-            mock_selector.get_model_provider.return_value = "openrouter"
-            mock_sel.return_value = mock_selector
-
-            with patch("openai.OpenAI") as mock_client_cls:
-                mock_client = MagicMock()
-                mock_response = MagicMock()
-                mock_choice = MagicMock()
-                mock_choice.message.content = "not valid json!!!"
-                mock_response.choices = [mock_choice]
-                mock_response.usage = None
-                mock_client.chat.completions.create.return_value = mock_response
-                mock_client_cls.return_value = mock_client
-
-                result = get_trade_opinion()
-                assert result is None
-
-    @patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-key"})
-    def test_empty_response_returns_none(self):
-        """Returns None when LLM returns empty content."""
-        _ensure_openai_mock()
-
-        with patch("src.llm.trade_opinion.get_model_selector") as mock_sel:
-            mock_selector = MagicMock()
-            mock_selector.select_model.return_value = "deepseek/deepseek-r1"
-            mock_selector.get_model_provider.return_value = "openrouter"
-            mock_sel.return_value = mock_selector
-
-            with patch("openai.OpenAI") as mock_client_cls:
-                mock_client = MagicMock()
-                mock_response = MagicMock()
-                mock_response.choices = []
-                mock_response.usage = None
-                mock_client.chat.completions.create.return_value = mock_response
-                mock_client_cls.return_value = mock_client
-
-                result = get_trade_opinion()
-                assert result is None
-
-    @patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-key"})
-    def test_api_exception_returns_none(self):
-        """Returns None when API call raises an exception."""
-        _ensure_openai_mock()
-
-        with patch("src.llm.trade_opinion.get_model_selector") as mock_sel:
-            mock_selector = MagicMock()
-            mock_selector.select_model.return_value = "deepseek/deepseek-r1"
-            mock_selector.get_model_provider.return_value = "openrouter"
-            mock_sel.return_value = mock_selector
-
-            with patch("openai.OpenAI") as mock_client_cls:
-                mock_client = MagicMock()
-                mock_client.chat.completions.create.side_effect = RuntimeError("API timeout")
-                mock_client_cls.return_value = mock_client
-
-                result = get_trade_opinion()
-                assert result is None
-
-
-# =============================================================================
-# get_trade_opinion() SUCCESS PATH
-# =============================================================================
-
-
-class TestGetTradeOpinionSuccess:
-    """Test get_trade_opinion() successful LLM call."""
-
-    @patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-key"})
-    def test_successful_trade_opinion(self):
-        """Successful LLM call returns TradeOpinion."""
-        _ensure_openai_mock()
-
-        valid_response = json.dumps(
-            {
-                "should_trade": True,
-                "confidence": 0.82,
-                "regime": "calm",
-                "suggested_short_delta": 0.15,
-                "suggested_dte": 35,
-                "reasoning": "VIX at 18, no catalysts.",
-                "risk_flags": [],
-            }
-        )
-
-        with patch("src.llm.trade_opinion.get_model_selector") as mock_sel:
-            mock_selector = MagicMock()
-            mock_selector.select_model.return_value = "deepseek/deepseek-r1"
-            mock_selector.get_model_provider.return_value = "openrouter"
-            mock_sel.return_value = mock_selector
-
-            with patch("openai.OpenAI") as mock_client_cls:
-                mock_client = MagicMock()
-                mock_response = MagicMock()
-                mock_choice = MagicMock()
-                mock_choice.message.content = valid_response
-                mock_response.choices = [mock_choice]
-                mock_response.usage = MagicMock(prompt_tokens=500, completion_tokens=200)
-                mock_client.chat.completions.create.return_value = mock_response
-                mock_client_cls.return_value = mock_client
-
-                result = get_trade_opinion(vix_current=18.0)
-
-                assert result is not None
-                assert isinstance(result, TradeOpinion)
-                assert result.should_trade is True
-                assert result.confidence == 0.82
-                assert result.regime == "calm"
-
-                # Verify usage was logged
-                mock_selector.log_usage.assert_called_once_with(
-                    "deepseek/deepseek-r1",
-                    500,
-                    200,
-                )
-
-    @patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-key"})
-    def test_skip_opinion_with_risk_flags(self):
-        """LLM advises to skip with risk flags."""
-        _ensure_openai_mock()
-
-        skip_response = json.dumps(
-            {
-                "should_trade": False,
-                "confidence": 0.91,
-                "regime": "volatile",
-                "suggested_short_delta": 0.10,
-                "suggested_dte": 45,
-                "reasoning": "FOMC meeting tomorrow.",
-                "risk_flags": ["FOMC", "earnings"],
-            }
-        )
-
-        with patch("src.llm.trade_opinion.get_model_selector") as mock_sel:
-            mock_selector = MagicMock()
-            mock_selector.select_model.return_value = "deepseek/deepseek-r1"
-            mock_selector.get_model_provider.return_value = "openrouter"
-            mock_sel.return_value = mock_selector
-
-            with patch("openai.OpenAI") as mock_client_cls:
-                mock_client = MagicMock()
-                mock_response = MagicMock()
-                mock_choice = MagicMock()
-                mock_choice.message.content = skip_response
-                mock_response.choices = [mock_choice]
-                mock_response.usage = None
-                mock_client.chat.completions.create.return_value = mock_response
-                mock_client_cls.return_value = mock_client
-
-                result = get_trade_opinion()
-
-                assert result is not None
-                assert result.should_trade is False
-                assert result.confidence == 0.91
-                assert "FOMC" in result.risk_flags
+            assert result is not None
+            assert result.should_trade is True
 
 
 # =============================================================================
@@ -559,8 +327,13 @@ class TestModelRouting:
         assert TASK_COMPLEXITY_MAP["pre_trade_research"] == TaskComplexity.COMPLEX
 
 
-class TestAutonomousConsensusAndJudge:
-    """Validate autonomous consensus scaling + sampled strong-judge behavior."""
+# =============================================================================
+# CONSENSUS & SAMPLING HELPERS
+# =============================================================================
+
+
+class TestConsensusHelpers:
+    """Validate consensus aggregation and sampling helpers."""
 
     def test_aggregate_consensus_tie_defaults_to_skip(self):
         opinions = [
@@ -594,137 +367,3 @@ class TestAutonomousConsensusAndJudge:
         first = _stable_sample(seed, 0.37)
         second = _stable_sample(seed, 0.37)
         assert first == second
-
-    @patch.dict(
-        os.environ,
-        {
-            "OPENROUTER_API_KEY": "test-key",
-            "TRADE_OPINION_CONSENSUS_ENABLED": "true",
-            "TRADE_OPINION_MAX_SAMPLES": "3",
-            "TRADE_OPINION_UNCERTAIN_BAND": "0.2",
-            "TRADE_OPINION_JUDGE_ENABLED": "false",
-        },
-    )
-    def test_uncertainty_triggers_multi_sample_consensus(self):
-        _ensure_openai_mock()
-        raw = [
-            {
-                "should_trade": True,
-                "confidence": 0.52,
-                "regime": "calm",
-                "suggested_short_delta": 0.15,
-                "suggested_dte": 35,
-                "reasoning": "uncertain but acceptable",
-                "risk_flags": [],
-            },
-            {
-                "should_trade": True,
-                "confidence": 0.66,
-                "regime": "calm",
-                "suggested_short_delta": 0.16,
-                "suggested_dte": 33,
-                "reasoning": "better setup",
-                "risk_flags": [],
-            },
-            {
-                "should_trade": False,
-                "confidence": 0.58,
-                "regime": "volatile",
-                "suggested_short_delta": 0.12,
-                "suggested_dte": 40,
-                "reasoning": "watch volatility",
-                "risk_flags": ["vix_rising"],
-            },
-        ]
-
-        with patch("src.llm.trade_opinion.get_model_selector") as mock_sel:
-            mock_selector = MagicMock()
-            mock_selector.select_model.return_value = "deepseek/deepseek-r1"
-            mock_selector.get_model_provider.return_value = "openrouter"
-            mock_selector.get_transport_model_id.return_value = "deepseek/deepseek-r1"
-            mock_sel.return_value = mock_selector
-
-            with patch("openai.OpenAI") as mock_client_cls:
-                mock_client = MagicMock()
-                responses = []
-                for payload in raw:
-                    mock_response = MagicMock()
-                    mock_choice = MagicMock()
-                    mock_choice.message.content = json.dumps(payload)
-                    mock_response.choices = [mock_choice]
-                    mock_response.usage = None
-                    responses.append(mock_response)
-                mock_client.chat.completions.create.side_effect = responses
-                mock_client_cls.return_value = mock_client
-
-                result = get_trade_opinion(vix_current=19.0)
-                assert result is not None
-                assert result.consensus_samples == 3
-                assert result.consensus_agreement == pytest.approx(2 / 3, rel=1e-6)
-                assert mock_client.chat.completions.create.call_count == 3
-
-    def test_judge_can_enforce_conservative_override(self, tmp_path):
-        _ensure_openai_mock()
-        log_path = tmp_path / "judge.jsonl"
-        env = {
-            "OPENROUTER_API_KEY": "test-key",
-            "TRADE_OPINION_CONSENSUS_ENABLED": "false",
-            "TRADE_OPINION_JUDGE_ENABLED": "true",
-            "TRADE_OPINION_JUDGE_SAMPLE_RATE": "1.0",
-            "TRADE_OPINION_JUDGE_ENFORCE": "true",
-            "TRADE_OPINION_JUDGE_LOG_PATH": str(log_path),
-        }
-
-        with patch.dict(os.environ, env):
-            with patch("src.llm.trade_opinion.get_model_selector") as mock_sel:
-                mock_selector = MagicMock()
-                mock_selector.select_model.side_effect = [
-                    "deepseek/deepseek-r1",
-                    "moonshotai/kimi-k2-0905",
-                ]
-                mock_selector.get_model_provider.return_value = "openrouter"
-                mock_selector.get_transport_model_id.side_effect = lambda model: model
-                mock_sel.return_value = mock_selector
-
-                with patch("openai.OpenAI") as mock_client_cls:
-                    mock_client = MagicMock()
-
-                    candidate = MagicMock()
-                    candidate_choice = MagicMock()
-                    candidate_choice.message.content = json.dumps(
-                        {
-                            "should_trade": True,
-                            "confidence": 0.81,
-                            "regime": "calm",
-                            "suggested_short_delta": 0.15,
-                            "suggested_dte": 35,
-                            "reasoning": "good setup",
-                            "risk_flags": [],
-                        }
-                    )
-                    candidate.choices = [candidate_choice]
-                    candidate.usage = None
-
-                    judge = MagicMock()
-                    judge_choice = MagicMock()
-                    judge_choice.message.content = json.dumps(
-                        {
-                            "approved": False,
-                            "score": 0.22,
-                            "verdict": "Catalyst risk underweighted.",
-                            "violations": ["event_risk"],
-                        }
-                    )
-                    judge.choices = [judge_choice]
-                    judge.usage = None
-
-                    mock_client.chat.completions.create.side_effect = [candidate, judge]
-                    mock_client_cls.return_value = mock_client
-
-                    result = get_trade_opinion(vix_current=24.0, regime="volatile")
-                    assert result is not None
-                    assert result.should_trade is False
-                    assert "judge_rejected" in result.risk_flags
-                    assert log_path.exists()
-                    payload = json.loads(log_path.read_text(encoding="utf-8").strip())
-                    assert payload["judge_approved"] is False

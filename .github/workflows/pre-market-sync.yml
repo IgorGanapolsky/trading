@@ -22,10 +22,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GH_PAT || github.token }}
+          fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: "pip"
@@ -64,31 +67,18 @@ jobs:
           print('💓 Heartbeat recorded')
           "
 
-      - name: Commit and Create PR
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+      - name: Commit sync data
         run: |
-          # Check if there are changes
-          git add data/system_state.json data/heartbeat.json
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-            exit 0
-          fi
-
-          # Configure git
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Create unique branch
-          BRANCH="auto/pre-market-sync-$(date +%Y%m%d-%H%M%S)"
-          git checkout -b "$BRANCH"
-          git commit -m "chore: Pre-market data sync [auto]"
-          git push -u origin "$BRANCH"
-
-          # Create and merge PR using gh CLI
-          PR_URL=$(gh pr create --title "chore: Pre-market sync [auto]" --body "Automated pre-market data sync" --head "$BRANCH" --base main)
-          echo "Created PR: $PR_URL"
-
-          # Auto-merge
-          gh pr merge "$BRANCH" --squash --delete-branch --admin
-          echo "PR merged and branch deleted"
+          git add data/system_state.json data/heartbeat.json data/runtime/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: pre-market data sync $(date +%Y-%m-%d)"
+            git pull --rebase origin main || git rebase --abort
+            if [ -n "${{ secrets.GH_PAT }}" ]; then
+              git remote set-url origin "https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git"
+            fi
+            git push origin HEAD:main || echo "Push failed (protected branch or conflict)"
+          fi

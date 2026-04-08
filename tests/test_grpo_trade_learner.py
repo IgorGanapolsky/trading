@@ -253,6 +253,36 @@ class TestLoadTradeHistory:
 
     @patch("src.ml.grpo_trade_learner.TORCH_AVAILABLE", False)
     @patch("src.ml.grpo_trade_learner.MODEL_PATH", Path("/nonexistent/model.pt"))
+    def test_prefers_paired_closed_trade_ledger(self, tmp_path):
+        f = tmp_path / "trades.json"
+        f.write_text(
+            json.dumps(
+                {
+                    "trades": [
+                        {
+                            "status": "closed",
+                            "strategy": "iron_condor",
+                            "entry_time": "2026-03-10T15:06:00+00:00",
+                            "exit_time": "2026-03-12T15:06:00+00:00",
+                            "entry_debit": 262.0,
+                            "exit_credit": 436.0,
+                            "realized_pnl": 174.0,
+                            "outcome": "win",
+                            "legs": {"expiry": "2026-04-02"},
+                        }
+                    ]
+                }
+            )
+        )
+        learner = GRPOTradeLearner()
+        result = learner.load_trade_history(f)
+        assert result == 1
+        assert learner.trade_history[0].pnl == pytest.approx(174.0)
+        assert learner.trade_history[0].outcome == "win"
+        assert learner.trade_history[0].params.dte > 0
+
+    @patch("src.ml.grpo_trade_learner.TORCH_AVAILABLE", False)
+    @patch("src.ml.grpo_trade_learner.MODEL_PATH", Path("/nonexistent/model.pt"))
     def test_loads_option_trades(self, tmp_path):
         trades = [
             {

@@ -20,6 +20,7 @@ concurrency:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   pilot:
@@ -27,10 +28,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: "pip"
@@ -69,7 +70,7 @@ jobs:
             $EXTRA_ARGS
 
       - name: Upload pilot artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: browser-automation-pilot-${{ github.run_id }}
           path: |
@@ -78,7 +79,9 @@ jobs:
             data/analytics/browser_provider_promotion_latest.json
             config/browser_automation_provider.json
 
-      - name: Commit pilot telemetry
+      - name: Commit pilot telemetry via PR
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -89,4 +92,23 @@ jobs:
             exit 0
           fi
           git commit -m "chore(ops): browser automation pilot telemetry [auto]"
-          git push
+          BRANCH="auto/browser-pilot-${{ github.run_id }}"
+          git checkout -b "$BRANCH"
+          git push -u origin "$BRANCH"
+
+          PR_URL=$(gh pr create \
+            --title "chore(ops): browser automation pilot telemetry [auto]" \
+            --body "Automated browser automation pilot telemetry.
+
+          - Run: ${{ github.run_id }}
+          - Trigger: ${{ github.event_name }}
+          - Artifacts: browser automation pilot telemetry bundle" \
+            --base main \
+            --head "$BRANCH") || {
+              echo "::notice::Telemetry branch pushed but PR creation failed for $BRANCH"
+              exit 0
+            }
+
+          echo "Created PR: $PR_URL"
+          gh pr merge "$BRANCH" --auto --squash --delete-branch || \
+            echo "::notice::Auto-merge not enabled for $BRANCH"

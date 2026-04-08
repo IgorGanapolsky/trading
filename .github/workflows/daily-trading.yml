@@ -1,16 +1,14 @@
 name: Daily Trading Execution
 
 on:
-  push:
-    paths:
-      - "TRIGGER_TRADE.md" # Push trigger for immediate trading
-  schedule:
-    # Run every weekday at 9:35 AM Eastern
-    # AUTOMATIC DST HANDLING: Runs at both times to cover EST/EDT transitions
-    # EST (Nov-Mar): UTC-5 -> 9:35 AM ET = 14:35 UTC
-    # EDT (Mar-Nov): UTC-4 -> 9:35 AM ET = 13:35 UTC
-    # Run: python3 scripts/get_utc_time.py 9 35 1-5
-    - cron: "35 13,14 * * 1-5" # 9:35 AM Eastern (covers both EST and EDT)
+  # DISABLED: Replaced by ic-simple.yml as primary trading workflow (2026-03-30)
+  # Reason: 12+ sequential gates caused silent trade blocking, 26-day outage Feb 28 - Mar 24
+  # Keep workflow_dispatch for manual emergency use only
+  # push:
+  #   paths:
+  #     - "TRIGGER_TRADE.md"
+  # schedule:
+  #   - cron: "35 13,14 * * 1-5"
   workflow_dispatch:
     inputs:
       force_trade:
@@ -33,7 +31,6 @@ on:
 
 permissions:
   contents: write
-  pages: write
 
 # CRITICAL: Global trade concurrency - prevents race conditions (LL-281)
 # All workflows that can execute trades MUST use this same concurrency group
@@ -57,10 +54,11 @@ jobs:
       trading_halted: ${{ steps.check.outputs.halted }}
     steps:
       - name: Checkout for halt file check
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           sparse-checkout: |
             data/TRADING_HALTED
+            data/trading_halt.txt
             data/system_state.json
             scripts/auto_clear_stale_trading_halt.py
 
@@ -144,6 +142,16 @@ jobs:
             exit 0
           fi
 
+          # Check 3: legacy manual halt file
+          if [ -f "data/trading_halt.txt" ]; then
+            echo "🚨 trading_halt.txt exists - manual halt active"
+            echo "Reason:"
+            cat data/trading_halt.txt
+            echo ""
+            echo "halted=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
           echo "✅ Trading ALLOWED - no halt conditions detected"
           echo "halted=false" >> $GITHUB_OUTPUT
 
@@ -157,14 +165,14 @@ jobs:
       secrets_valid: ${{ steps.validate_secrets.outputs.secrets_valid }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
       # Note: pip cache is disabled to avoid large post-job tar uploads that
       # were cancelling runs on GitHub-hosted runners.
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: "pip"
@@ -267,12 +275,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.GH_PAT || github.token }}
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: "pip"
@@ -328,7 +336,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # Use the ref that triggered the workflow (branch or main)
           fetch-depth: 1
@@ -379,7 +387,7 @@ jobs:
           echo "✅ MCP server started on 127.0.0.1:8801 (mode: $MCP_MODE)"
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: "pip"
@@ -930,8 +938,8 @@ jobs:
           # Track execution start
           EXEC_START=$(date +%s)
 
-          # Run the trading script and capture exit code
-          echo "🚀 Running autonomous_trader.py..."
+          # Run the active control-plane preflight and capture exit code
+          echo "🚀 Running options control-plane preflight..."
           echo "📦 Python path: $PYTHONPATH"
           echo "📦 Working directory: $(pwd)"
           echo "📦 Python version: $(python3 --version)"
@@ -1047,11 +1055,10 @@ jobs:
           echo "🔍 ========================================"
           # =========================================================
 
-          # DISABLED Jan 21, 2026: SmartDCA buys SPY STOCK, not iron condors
-          # Per CLAUDE.md: "Primary strategy: IRON CONDORS on SPY ONLY"
-          # autonomous_trader.py uses SmartDCA which buys STOCK - WRONG STRATEGY
-          # Iron condors are executed in "Harvest theta" step below
-          echo "⏭️ SKIPPING autonomous_trader.py - uses SmartDCA (stock buying)"
+          # Legacy autonomous trader remains retired because it buys SPY shares
+          # instead of defined-risk SPY options structures.
+          # Iron condors are executed in "Harvest theta" step below.
+          echo "⏭️ Legacy autonomous trader remains disabled (stock-buying path)"
           echo "   Per CLAUDE.md: IRON CONDORS ONLY - not stock accumulation"
           echo "   Iron condor execution happens in 'Harvest theta' step"
           EXEC_STATUS="SKIPPED"
@@ -1188,9 +1195,7 @@ jobs:
             for TICKER in $TICKERS; do
               echo ""
               echo "   📊 Iron Condor on ${TICKER} (15-20 delta, 30-45 DTE)..."
-              python3 scripts/iron_condor_trader.py --symbol "${TICKER}" $FORCE_FLAG || {
-                echo "   ⚠️  ${TICKER} iron condor returned non-zero"
-              }
+              python3 scripts/iron_condor_trader.py --symbol "${TICKER}" $FORCE_FLAG
             done
 
             echo ""
@@ -1213,9 +1218,7 @@ jobs:
             for TICKER in SPY; do
               echo ""
               echo "   📊 Iron Condor on ${TICKER} (15-20 delta, 30-45 DTE)..."
-              python3 scripts/iron_condor_trader.py --symbol "${TICKER}" $FORCE_FLAG || {
-                echo "   ⚠️  ${TICKER} iron condor returned non-zero"
-              }
+              python3 scripts/iron_condor_trader.py --symbol "${TICKER}" $FORCE_FLAG
             done
 
             echo ""
@@ -1244,10 +1247,11 @@ jobs:
               state['options']['last_theta_harvest'] = datetime.utcnow().isoformat() + 'Z'
               state['options']['harvest_source'] = 'daily-trading-workflow'
               state['options']['execution_date'] = datetime.utcnow().strftime('%Y-%m-%d')
-              # Track strategy based on buying power
-              state['options']['selection_method'] = 'adaptive'  # CSPs or spreads based on buying power
-              state['options']['target_tickers'] = ['SPY', 'IWM']  # FIXED Jan 19: SPY/IWM ONLY per CLAUDE.md mandate
-              state['options']['strategy_note'] = 'Uses credit spreads when buying power < $1000, CSPs otherwise'
+              # SINGLE PLAYBOOK: SPY Iron Condors (Quantitative)
+              state['options']['selection_method'] = 'quantitative_delta'
+              state['options']['target_tickers'] = ['SPY']
+              state['options']['strategy'] = 'iron_condor'
+              state['options']['strategy_note'] = '15-Delta targeting on SPY only'
 
               # Count today's options logs to verify execution
               today = datetime.utcnow().strftime('%Y%m%d')
@@ -1315,10 +1319,7 @@ jobs:
             FORCE_FLAG="--force"
           fi
 
-          python3 scripts/iron_condor_trader.py $FORCE_FLAG || {
-            echo "⚠️  Iron condor execution returned non-zero"
-            echo "   This is often due to market conditions - not fatal"
-          }
+          python3 scripts/iron_condor_trader.py $FORCE_FLAG
           echo ""
           echo "✅ Iron condor strategy complete"
 
@@ -1469,20 +1470,8 @@ jobs:
             git diff --stat data/
           fi
 
-          # Also check for new untracked trade files
-          TODAY=$(date +%Y-%m-%d)
-          if [ -f "data/trades_${TODAY}.json" ]; then
-            git status data/trades_${TODAY}.json
-            echo "state_changed=true" >> $GITHUB_OUTPUT
-          fi
-
-      # FIX Jan 15, 2026: Sync trades FROM Alpaca before dashboard generation
-      # ROOT CAUSE: Dashboard showed 0 trades while RAG Webhook showed 9 trades
-      # because trading scripts don't create local trade files.
-      # SOLUTION: Fetch fills from Alpaca API and create trades_{date}.json
-      #
-      # CRITICAL (Feb 17, 2026): This must run BEFORE commit/API sync, otherwise
-      # system_state.json and trades_{date}.json get published with stale today_trades=0.
+      # Legacy compatibility sync for local consumers that still read
+      # date-sharded trade files. Canonical repo state remains data/trades.json.
       - name: Sync Trades from Alpaca (Pre-Dashboard)
         if: always()
         env:
@@ -1493,7 +1482,7 @@ jobs:
           echo "🔄 SYNC TRADES FROM ALPACA (Pre-Dashboard)"
           echo "🔄 ========================================"
           echo ""
-          echo "This sync fetches fills from Alpaca and creates local trade files"
+          echo "This sync fetches fills from Alpaca for legacy local trade snapshots"
           echo ""
           python3 scripts/sync_trades_from_alpaca.py || {
             echo "⚠️ Trade sync from Alpaca failed - dashboard may show stale data"
@@ -1520,7 +1509,7 @@ jobs:
           git config user.email "actions@github.com"
 
           # Stage ALL trading data files FIRST
-          git add data/system_state.json data/performance_log.json data/trades_*.json data/verification_reports.json 2>/dev/null || true
+          git add data/system_state.json data/performance_log.json data/verification_reports.json 2>/dev/null || true
 
           # Check if there are changes to commit
           if git diff --cached --quiet; then
@@ -1554,7 +1543,7 @@ jobs:
               git add data/
               git rebase --continue 2>/dev/null || git rebase --abort
               # Re-commit after abort
-              git add data/system_state.json data/performance_log.json data/trades_*.json data/verification_reports.json 2>/dev/null || true
+              git add data/system_state.json data/performance_log.json data/verification_reports.json 2>/dev/null || true
               git commit -m "chore: Update trading data ($TODAY) [${{ github.run_id }}]" 2>/dev/null || true
             }
 
@@ -1591,14 +1580,6 @@ jobs:
           python3 scripts/sync_data_to_github.py --file data/system_state.json || {
             echo "::warning::system_state.json API sync failed"
           }
-
-          # Sync today's trades file if it exists
-          TODAY=$(date +%Y-%m-%d)
-          if [ -f "data/trades_${TODAY}.json" ]; then
-            python3 scripts/sync_data_to_github.py --file "data/trades_${TODAY}.json" || {
-              echo "::warning::trades file API sync failed"
-            }
-          fi
 
           # Sync performance log
           python3 scripts/sync_data_to_github.py --file data/performance_log.json || {
@@ -1648,108 +1629,19 @@ jobs:
           echo "📊 Checking TLT momentum gate status..."
           python3 scripts/monitor_tlt_momentum.py || echo "⚠️  TLT monitoring completed with warnings"
 
-      - name: Update GitHub Pages Data
-        # PREVENTION: Auto-update docs/index.md with current portfolio data
-        # Added Jan 3, 2026 after discovering stale data on GitHub Pages
-        continue-on-error: true  # Non-critical: cosmetic dashboard update shouldn't block trading
-        timeout-minutes: 2
+      - name: Skip archived GitHub Pages surface
+        if: always()
+        continue-on-error: true
         run: |
-          echo "📊 Updating GitHub Pages with current portfolio data..."
-          python3 scripts/update_github_pages.py
+          echo "📦 GitHub Pages portfolio publishing archived in repo simplification pass"
 
-          # Commit changes if any
-          if git diff --quiet docs/index.md; then
-            echo "ℹ️ docs/index.md already up to date"
-          else
-            git config user.name "GitHub Actions Bot"
-            git config user.email "actions@github.com"
-            git add docs/index.md
-            git commit -m "chore: Auto-update GitHub Pages with current portfolio data" || true
-            git push || echo "⚠️ Push failed - will retry in next run"
-          fi
-
-      - name: Update Progress Dashboard Wiki
-        # FIXED Dec 29, 2025: Always update dashboard, even when trading skipped
-        # FIXED Jan 5, 2026: Added if: always() so dashboard updates even when trading fails
-        if: always() # Run even when previous steps fail
-        continue-on-error: true  # Non-critical: wiki/dashboard update shouldn't block trading workflow
-        timeout-minutes: 5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Skip archived repo publishing surface
+        if: always()
+        continue-on-error: true
         run: |
+          echo "📦 Blog/wiki/dashboard publishing archived in repo simplification pass"
           echo "📊 Syncing closed positions for accurate win rate..."
           python3 scripts/sync_closed_positions.py || echo "⚠️ Closed positions sync failed"
-
-          echo "📊 Generating enhanced world-class progress dashboard..."
-          python3 scripts/generate_world_class_dashboard_enhanced.py || python3 scripts/generate_world_class_dashboard.py
-
-          echo "📝 Updating GitHub Wiki..."
-
-          # Clone wiki repository (create if doesn't exist)
-          WIKI_DIR="wiki_repo"
-          if git clone https://${{ secrets.GITHUB_TOKEN }}@github.com/IgorGanapolsky/trading.wiki.git "$WIKI_DIR" 2>/dev/null; then
-            echo "✅ Wiki repository exists, updating..."
-          else
-            echo "⚠️  Wiki repository doesn't exist yet - will create on first push"
-            mkdir -p "$WIKI_DIR"
-            cd "$WIKI_DIR"
-            git init
-            git config user.name "GitHub Actions Bot"
-            git config user.email "actions@github.com"
-            git remote add origin https://${{ secrets.GITHUB_TOKEN }}@github.com/IgorGanapolsky/trading.wiki.git
-            cd ..
-          fi
-
-          # Copy generated dashboard and home page to wiki
-          cp wiki/Progress-Dashboard.md "$WIKI_DIR/Progress-Dashboard.md"
-          if [ -f wiki/Home.md ]; then
-            cp wiki/Home.md "$WIKI_DIR/Home.md"
-          fi
-
-          # Copy chart images if they exist
-          if [ -d wiki/charts ]; then
-            mkdir -p "$WIKI_DIR/charts"
-            cp -r wiki/charts/* "$WIKI_DIR/charts/" 2>/dev/null || true
-          fi
-
-          # Commit and push to wiki
-          cd "$WIKI_DIR"
-          git config user.name "GitHub Actions Bot"
-          git config user.email "actions@github.com"
-          git add -A
-
-          if git diff --staged --quiet && [ -n "$(git log --oneline 2>/dev/null)" ]; then
-            echo "📋 No changes to dashboard"
-          else
-            if [ -z "$(git log --oneline 2>/dev/null)" ]; then
-              COMMIT_MSG="🎉 Initial wiki setup - Progress Dashboard and Home page"
-            else
-              COMMIT_MSG="📊 Auto-update progress dashboard - $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
-            fi
-
-            git commit -m "$COMMIT_MSG" || echo "No changes to commit"
-
-            # Push to wiki - detect current branch or use master (wiki default)
-            CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "master")
-            echo "📌 Pushing to branch: $CURRENT_BRANCH"
-
-            # Re-authenticate for push (token may have been invalidated)
-            git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/IgorGanapolsky/trading.wiki.git"
-
-            if git push -u origin "$CURRENT_BRANCH" 2>&1; then
-              echo "✅ Wiki dashboard updated successfully!"
-            else
-              echo "⚠️  Wiki push failed - trying force push..."
-              if git push -u origin "$CURRENT_BRANCH" --force 2>&1; then
-                echo "✅ Wiki dashboard force-pushed successfully!"
-              else
-                echo "⚠️  Wiki push failed - wiki repository may need manual initialization"
-                echo "   1. Visit: https://github.com/IgorGanapolsky/trading/wiki"
-                echo "   2. Click 'Create the first page'"
-                echo "   3. Name it 'Home' and save"
-              fi
-            fi
-          fi
 
       - name: Record run status (success)
         if: success()
@@ -1774,11 +1666,6 @@ jobs:
             "error": "See artifacts for details"
           }
           EOF
-
-      - name: Regenerate dashboard snapshot
-        if: always()
-        run: |
-          python3 scripts/generate_world_class_dashboard_enhanced.py || true
 
       - name: Run health check
         if: always()
@@ -1835,7 +1722,7 @@ jobs:
       - name: Upload execution logs
         if: always()
         continue-on-error: true  # Non-critical: artifact upload failure shouldn't mask trading results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: trading-logs-${{ github.run_id }}
           path: |
@@ -1843,15 +1730,13 @@ jobs:
             logs/adk_service.log
             logs/adk_orchestrator.jsonl
             data/system_state.json
-            data/trades_*.json
             data/verification_reports.json
-            wiki/Progress-Dashboard.md
           retention-days: 30
 
       - name: Upload logs on failure (early)
         if: failure() || cancelled()
         continue-on-error: true  # Non-critical: artifact upload failure shouldn't mask the actual failure
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: failure-logs-${{ github.run_id }}
           path: |

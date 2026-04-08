@@ -1,376 +1,387 @@
+#!/usr/bin/env python3
 """
-Core Strategy - Primary Momentum-Based ETF Trading Strategy
+Iron Condor Trader - 80% Win Rate Strategy
 
-This is the canonical "Core Strategy" referenced throughout the codebase.
-It implements a multi-timeframe momentum strategy with RSI and MACD signals.
+Research backing (Dec 2025):
+- Iron condors: 75-85% win rate in normal volatility
+- Best when IV Percentile > 50% (premium is rich)
+- 30-45 DTE: Optimal theta decay
+- 15-20 delta wings: High probability of profit
 
-Author: Trading System
-Created: 2025-12-24
-Status: CORE (productized, frozen)
+Strategy:
+1. Sell OTM put spread (bull put)
+2. Sell OTM call spread (bear call)
+3. Collect premium from both sides
+4. Max profit if price stays between short strikes
 
-Strategy Overview:
-1. Universe: Liquid ETFs per CLAUDE.md (SPY, QQQ, IWM - best liquidity)
-2. Signals: MACD crossover + RSI confirmation
-3. Timeframe: Daily with hourly confirmation
-4. Risk: 2% position sizing, volatility-adjusted stops
+Exit Rules:
+- Take profit at 50% of max profit
+- Close at 7 DTE (avoid gamma risk)
+- Close if one side reaches 100% loss
+
+THIS IS THE MONEY MAKER.
 """
 
-from __future__ import annotations
-
+import json
 import logging
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Any
+import sys
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Optional
 
+# Add project root to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from dotenv import load_dotenv
+from src.core.trading_constants import MAX_POSITIONS as MAX_OPTION_LEGS
+from src.safety.trade_lock import acquire_trade_lock
+from src.utils.error_monitoring import init_sentry
+
+try:
+    load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env", override=False)
+except (AssertionError, Exception):
+    pass  # In CI, env vars are set via workflow secrets
+init_sentry()
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
 @dataclass
-class Signal:
-    """Trading signal from CoreStrategy."""
+class IronCondorLegs:
+    """Iron condor position legs."""
 
-    symbol: str
-    action: str  # "buy", "sell", "hold"
-    strength: float  # 0.0 to 1.0
-    price: float = 0.0
-    stop_loss: float = 0.0
-    take_profit: float = 0.0
-    rationale: str = ""
-    timestamp: datetime = field(default_factory=datetime.now)
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "symbol": self.symbol,
-            "action": self.action,
-            "strength": round(self.strength, 3),
-            "price": self.price,
-            "stop_loss": self.stop_loss,
-            "take_profit": self.take_profit,
-            "rationale": self.rationale,
-            "timestamp": self.timestamp.isoformat(),
-        }
+    underlying: str
+    expiry: str
+    dte: int
+    # Put spread (bull put)
+    short_put: float
+    long_put: float
+    # Call spread (bear call)
+    short_call: float
+    long_call: float
+    # Premiums
+    credit_received: float
+    max_risk: float
+    max_profit: float
 
 
-class BaseStrategy(ABC):
-    """Abstract base class for all strategies."""
-
-    @property
-    @abstractmethod
-    def name(self) -> str:
-        """Strategy name."""
-        pass
-
-    @abstractmethod
-    def generate_signals(self, data: Any) -> list[Signal]:
-        """Generate trading signals from market data."""
-        pass
-
-    @abstractmethod
-    def get_config(self) -> dict[str, Any]:
-        """Get strategy configuration."""
-        pass
-
-
-class CoreStrategy(BaseStrategy):
+class IronCondorStrategy:
     """
-    Core momentum-based ETF strategy.
+    Iron Condor implementation.
 
-    This is the primary trading strategy that combines:
-    - MACD crossover signals
-    - RSI momentum confirmation
-    - Volume analysis
-    - Multi-timeframe trend alignment
-
-    Used for daily trading on major ETFs.
+    This is THE strategy for consistent income:
+    - High win rate (75-85%)
+    - Defined risk
+    - Works in sideways markets
+    - Theta decay works for you
     """
 
-    # Default universe - UPDATED Jan 19, 2026 (LL-244 Adversarial Audit)
-    # CLAUDE.md mandates liquid ETFs only - best liquidity, tightest spreads
-    DEFAULT_UNIVERSE = ["SPY", "QQQ", "IWM"]
-
-    # Strategy parameters
-    MACD_FAST = 12
-    MACD_SLOW = 26
-    MACD_SIGNAL = 9
-    RSI_PERIOD = 14
-    RSI_OVERSOLD = 30
-    RSI_OVERBOUGHT = 70
-
-    # Risk parameters - FIXED Jan 6 2026: Increased R:R for positive expectancy
-    MAX_POSITION_SIZE = 0.02  # 2% of portfolio
-    STOP_LOSS_PCT = 0.02  # 2% stop loss
-    TAKE_PROFIT_PCT = 0.06  # 6% take profit (3:1 R:R) - was 4%, caused negative expectancy
-
-    def __init__(
-        self,
-        universe: list[str] | None = None,
-        paper: bool = True,
-        config: dict[str, Any] | None = None,
-    ):
-        """
-        Initialize CoreStrategy.
-
-        Args:
-            universe: List of symbols to trade
-            paper: Paper trading mode
-            config: Optional configuration overrides
-        """
-        self.universe = universe or self.DEFAULT_UNIVERSE
-        self.paper = paper
-        self._config = config or {}
-
-        # Apply config overrides
-        if "macd_fast" in self._config:
-            self.MACD_FAST = self._config["macd_fast"]
-        if "macd_slow" in self._config:
-            self.MACD_SLOW = self._config["macd_slow"]
-        if "rsi_period" in self._config:
-            self.RSI_PERIOD = self._config["rsi_period"]
-
-        logger.info(f"CoreStrategy initialized: {len(self.universe)} symbols, paper={paper}")
-
-    @property
-    def name(self) -> str:
-        return "core_momentum"
-
-    def get_config(self) -> dict[str, Any]:
-        """Return current strategy configuration."""
-        return {
-            "name": self.name,
-            "universe": self.universe,
-            "paper": self.paper,
-            "macd": {
-                "fast": self.MACD_FAST,
-                "slow": self.MACD_SLOW,
-                "signal": self.MACD_SIGNAL,
-            },
-            "rsi": {
-                "period": self.RSI_PERIOD,
-                "oversold": self.RSI_OVERSOLD,
-                "overbought": self.RSI_OVERBOUGHT,
-            },
-            "risk": {
-                "max_position_size": self.MAX_POSITION_SIZE,
-                "stop_loss_pct": self.STOP_LOSS_PCT,
-                "take_profit_pct": self.TAKE_PROFIT_PCT,
-            },
+    def __init__(self):
+        # FIXED Jan 19 2026: SPY ONLY per CLAUDE.md (TastyTrade strategy scrapped)
+        # Iron condors replace credit spreads - 86% win rate from $100K success
+        self.config = {
+            "underlying": "SPY",  # SPY ONLY per CLAUDE.md - best liquidity, $100K success
+            "target_dte": 30,
+            "min_dte": 21,
+            "max_dte": 45,
+            "short_delta": 0.15,  # 15 delta = ~85% POP (research-backed)
+            "wing_width": 10,  # $10 wide spreads per CLAUDE.md
+            # EV math: 75% profit / 100% stop → EV = 0.85*0.75 - 0.15*1.0 = +0.49
+            # Legacy asymmetric take-profit/stop profile was EV-neutral and has been deprecated.
+            "take_profit_pct": 0.75,  # Close at 75% profit
+            "stop_loss_pct": 1.0,  # Close at 100% loss
+            "exit_dte": 7,  # Exit at 7 DTE per LL-268 research (80%+ win rate)
+            "max_positions": max(
+                1, int(MAX_OPTION_LEGS) // 4
+            ),  # Canonical limit: 8 option legs => 2 iron condors
+            "position_size_pct": 0.05,  # 5% of portfolio per position - CLAUDE.md MANDATE
         }
 
-    def _calculate_rsi(self, prices: list[float]) -> float:
-        """Calculate RSI from price series."""
-        if len(prices) < self.RSI_PERIOD + 1:
-            return 50.0  # Neutral if not enough data
+    def get_underlying_price(self) -> float:
+        """Get current price of SPY from Alpaca or estimate."""
+        # FIX Jan 20, 2026: Fetch real price from Alpaca instead of hardcoding
+        # ROOT CAUSE: Hardcoded $595 was causing wrong strike calculations
+        # SPY was actually ~$600, causing PUT-only fills (CALL strikes too low)
+        try:
+            from alpaca.data.historical import StockHistoricalDataClient
+            from alpaca.data.requests import StockLatestQuoteRequest
+            from src.utils.alpaca_client import get_alpaca_credentials
 
-        changes = [prices[i] - prices[i - 1] for i in range(1, len(prices))]
-        gains = [c if c > 0 else 0 for c in changes[-self.RSI_PERIOD :]]
-        losses = [-c if c < 0 else 0 for c in changes[-self.RSI_PERIOD :]]
+            api_key, secret = get_alpaca_credentials()
+            if api_key and secret:
+                data_client = StockHistoricalDataClient(api_key, secret)
+                request = StockLatestQuoteRequest(symbol_or_symbols=["SPY"])
+                quote = data_client.get_stock_latest_quote(request)
+                if "SPY" in quote:
+                    mid_price = (quote["SPY"].ask_price + quote["SPY"].bid_price) / 2
+                    logger.info(f"Live SPY price from Alpaca: ${mid_price:.2f}")
+                    return mid_price
+        except Exception as e:
+            logger.warning(f"Could not fetch live SPY price: {e}")
 
-        avg_gain = sum(gains) / self.RSI_PERIOD
-        avg_loss = sum(losses) / self.RSI_PERIOD
+        # FIXED Mar 23, 2026: No fallback price. Hardcoded $688 caused wrong
+        # strike calculations when SPY moved. Trading on stale prices = losses.
+        raise RuntimeError("Live SPY price unavailable — refusing to trade on stale data")
 
-        if avg_loss == 0:
-            return 100.0
-
-        rs = avg_gain / avg_loss
-        rsi = 100 - (100 / (1 + rs))
-        return rsi
-
-    def _calculate_macd(self, prices: list[float]) -> tuple[float, float, float]:
+    def calculate_strikes(self, price: float) -> tuple[float, float, float, float]:
         """
-        Calculate MACD, Signal, and Histogram.
+        Calculate iron condor strikes based on delta targeting.
 
-        Returns:
-            Tuple of (macd_line, signal_line, histogram)
+        For 15 delta on SPY (~$690):
+        - Short put: ~5% below price (~$655)
+        - Short call: ~5% above price (~$725)
+        - Wing width: $5 (appropriate for SPY)
+
+        CRITICAL FIX Jan 23, 2026:
+        SPY options have $5 strike increments for OTM options.
+        Must round to nearest $5 multiple or orders will fail!
+        ROOT CAUSE: $724/$729 strikes don't exist, only $725/$730
         """
-        if len(prices) < self.MACD_SLOW + self.MACD_SIGNAL:
-            return 0.0, 0.0, 0.0
+        # 15 delta is roughly 1.5 standard deviation move
+        # For 30 DTE on SPY, use ~5% OTM for 15-delta equivalent
 
-        # Simple EMA approximation
-        def ema(data: list[float], period: int) -> float:
-            if len(data) < period:
-                return sum(data) / len(data) if data else 0
-            multiplier = 2 / (period + 1)
-            ema_val = sum(data[:period]) / period
-            for price in data[period:]:
-                ema_val = (price - ema_val) * multiplier + ema_val
-            return ema_val
+        wing = self.config["wing_width"]
 
-        fast_ema = ema(prices, self.MACD_FAST)
-        slow_ema = ema(prices, self.MACD_SLOW)
-        macd_line = fast_ema - slow_ema
+        # FIX: Round to nearest $5 increment (SPY OTM options only exist at $5 intervals)
+        def round_to_5(x: float) -> float:
+            return round(x / 5) * 5
 
-        # FIXED Jan 6 2026: Proper signal line calculation using EMA of MACD values
-        # Calculate historical MACD values for signal line
-        macd_history = []
-        for i in range(self.MACD_SLOW, len(prices) + 1):
-            hist_prices = prices[:i]
-            hist_fast = ema(hist_prices, self.MACD_FAST)
-            hist_slow = ema(hist_prices, self.MACD_SLOW)
-            macd_history.append(hist_fast - hist_slow)
+        short_put = round_to_5(price * 0.95)  # 5% OTM for puts, rounded to $5
+        long_put = short_put - wing
 
-        # Signal line is 9-period EMA of MACD values
-        if len(macd_history) >= self.MACD_SIGNAL:
-            signal_line = ema(macd_history, self.MACD_SIGNAL)
-        else:
-            signal_line = macd_line * 0.9  # Fallback if not enough data
+        short_call = round_to_5(price * 1.05)  # 5% OTM for calls, rounded to $5
+        long_call = short_call + wing
 
-        histogram = macd_line - signal_line
+        return long_put, short_put, short_call, long_call
 
-        return macd_line, signal_line, histogram
-
-    def generate_signals(self, data: Any) -> list[Signal]:
+    def calculate_premiums(self, legs: tuple[float, float, float, float], expiry: str) -> dict:
         """
-        Generate trading signals from market data.
-
-        Args:
-            data: Market data (dict with 'symbol' -> price list)
-                  Or DataFrame with OHLCV data
-
-        Returns:
-            List of Signal objects
+        Fetch mandatory live mid-prices for all 4 legs from the Alpaca chain.
+        Refuses to trade if live bid/ask data is unavailable.
         """
-        signals = []
+        try:
+            from alpaca.data.historical.option import OptionHistoricalDataClient
+            from alpaca.data.requests import OptionLatestQuoteRequest
+            from src.utils.alpaca_client import get_alpaca_credentials
 
-        # Handle different data formats
-        if isinstance(data, dict):
-            price_data = data
-        else:
-            # Assume DataFrame-like with 'close' column per symbol
-            price_data = {}
-            try:
-                for symbol in self.universe:
-                    if hasattr(data, "get"):
-                        price_data[symbol] = list(data.get(symbol, {}).get("close", []))
-                    else:
-                        price_data[symbol] = []
-            except Exception as e:
-                logger.warning(f"Could not parse data: {e}")
-                return signals
+            api_key, secret = get_alpaca_credentials()
+            data_client = OptionHistoricalDataClient(api_key, secret)
 
-        for symbol in self.universe:
-            try:
-                prices = price_data.get(symbol, [])
-                if len(prices) < self.MACD_SLOW + self.MACD_SIGNAL:
-                    logger.debug(f"{symbol}: Insufficient data for signals")
-                    continue
+            # Format YYMMDD for OCC
+            exp_formatted = expiry.replace("-", "")[2:]
 
-                current_price = prices[-1]
+            def build_occ(strike: float, opt_type: str) -> str:
+                strike_str = f"{int(strike * 1000):08d}"
+                return f"SPY{exp_formatted}{opt_type}{strike_str}"
 
-                # Calculate indicators
-                rsi = self._calculate_rsi(prices)
-                macd, signal, histogram = self._calculate_macd(prices)
+            # LP, SP, SC, LC
+            symbols = [
+                build_occ(legs[0], "P"),  # Long Put
+                build_occ(legs[1], "P"),  # Short Put
+                build_occ(legs[2], "C"),  # Short Call
+                build_occ(legs[3], "C"),  # Long Call
+            ]
 
-                # Generate signal based on indicators
-                action = "hold"
-                strength = 0.5
-                rationale = ""
+            logger.info(f"Pricing structure symbols: {symbols}")
 
-                # Bullish: MACD crossover + RSI not overbought
-                if histogram > 0 and rsi < self.RSI_OVERBOUGHT:
-                    if rsi < self.RSI_OVERSOLD:
-                        action = "buy"
-                        strength = 0.9
-                        rationale = f"Oversold RSI ({rsi:.1f}) + bullish MACD"
-                    elif histogram > 0 and macd > signal:
-                        action = "buy"
-                        strength = 0.7
-                        rationale = f"Bullish MACD crossover, RSI={rsi:.1f}"
+            request = OptionLatestQuoteRequest(symbol_or_symbols=symbols)
+            quotes = data_client.get_option_latest_quote(request)
 
-                # Bearish: MACD crossunder + RSI not oversold
-                elif histogram < 0 and rsi > self.RSI_OVERSOLD:
-                    if rsi > self.RSI_OVERBOUGHT:
-                        action = "sell"
-                        strength = 0.9
-                        rationale = f"Overbought RSI ({rsi:.1f}) + bearish MACD"
-                    elif histogram < 0 and macd < signal:
-                        action = "sell"
-                        strength = 0.7
-                        rationale = f"Bearish MACD crossover, RSI={rsi:.1f}"
+            total_credit = 0.0
+            for i, sym in enumerate(symbols):
+                if sym not in quotes:
+                    raise RuntimeError(f"Missing live quote for leg {sym}")
 
-                # Calculate stops
-                stop_loss = current_price * (1 - self.STOP_LOSS_PCT)
-                take_profit = current_price * (1 + self.TAKE_PROFIT_PCT)
+                quote = quotes[sym]
+                if quote.bid_price == 0 or quote.ask_price == 0:
+                    raise RuntimeError(
+                        f"Invalid bid/ask for {sym}: {quote.bid_price}/{quote.ask_price}"
+                    )
 
-                signal_obj = Signal(
-                    symbol=symbol,
-                    action=action,
-                    strength=strength,
-                    price=current_price,
-                    stop_loss=stop_loss,
-                    take_profit=take_profit,
-                    rationale=rationale,
-                )
-                signals.append(signal_obj)
+                mid = (quote.bid_price + quote.ask_price) / 2
+                # Credit Spread Math: Short Mid - Long Mid
+                if i in [1, 2]:  # Short legs
+                    total_credit += mid
+                else:  # Long legs
+                    total_credit -= mid
 
-            except Exception as e:
-                logger.warning(f"Error generating signal for {symbol}: {e}")
+            wing_width = self.config["wing_width"]
+            max_risk = (wing_width * 100) - (total_credit * 100)
 
-        # Sort by strength (strongest first)
-        signals.sort(key=lambda s: s.strength, reverse=True)
+            logger.info(
+                f"Realized Mid-Price Credit: ${total_credit:.2f} (Max Risk: ${max_risk:.2f})"
+            )
 
+            return {
+                "credit": total_credit,
+                "max_risk": max_risk,
+                "max_profit": total_credit * 100,
+                "risk_reward": max_risk / (total_credit * 100) if total_credit > 0 else 0,
+            }
+        except Exception as e:
+            logger.error(f"PRICING ENGINE FAILURE: {e}")
+            raise RuntimeError(f"Quantitative pricing failed: {e} — halting.")
+
+    def find_trade(self) -> Optional[IronCondorLegs]:
+        """
+        Find an iron condor trade matching our criteria.
+        """
+        price = self.get_underlying_price()
+        logger.info(f"Underlying price: ${price:.2f}")
+
+        # Calculate strikes
+        long_put, short_put, short_call, long_call = self.calculate_strikes(price)
+        logger.info(f"Strikes: LP={long_put} SP={short_put} SC={short_call} LC={long_call}")
+
+        # Calculate expiry - MUST be a Friday (options expire on Fridays)
+        target_date = datetime.now() + timedelta(days=self.config["target_dte"])
+        days_until_friday = (4 - target_date.weekday()) % 7
+        if days_until_friday == 0 and target_date.weekday() != 4:
+            days_until_friday = 7
+        if target_date.weekday() > 4:
+            days_until_friday = (4 - target_date.weekday()) % 7
+        expiry_date = target_date + timedelta(days=days_until_friday)
+        actual_dte = (expiry_date - datetime.now()).days
+        if actual_dte < 21:
+            expiry_date += timedelta(days=7)
         logger.info(
-            f"CoreStrategy generated {len(signals)} signals: "
-            f"{sum(1 for s in signals if s.action == 'buy')} buy, "
-            f"{sum(1 for s in signals if s.action == 'sell')} sell"
+            f"Expiry: {expiry_date.strftime('%Y-%m-%d')} ({expiry_date.strftime('%A')}) - {(expiry_date - datetime.now()).days} DTE"
         )
 
-        return signals
+        # Fetch real mid-prices from the chain
+        expiry_str = expiry_date.strftime("%Y-%m-%d")
+        premiums = self.calculate_premiums((long_put, short_put, short_call, long_call), expiry_str)
 
-    def validate(self) -> bool:
-        """Validate strategy configuration."""
-        if not self.universe:
-            logger.error("Empty universe")
-            return False
-        if self.MACD_FAST >= self.MACD_SLOW:
-            logger.error("MACD fast period must be less than slow period")
-            return False
-        if not (0 < self.RSI_OVERSOLD < self.RSI_OVERBOUGHT < 100):
-            logger.error("Invalid RSI thresholds")
-            return False
-        return True
+        return IronCondorLegs(
+            underlying=self.config["underlying"],
+            expiry=expiry_str,
+            dte=self.config["target_dte"],
+            short_put=short_put,
+            long_put=long_put,
+            short_call=short_call,
+            long_call=long_call,
+            credit_received=premiums["credit"],
+            max_risk=premiums["max_risk"],
+            max_profit=premiums["max_profit"],
+        )
 
-    def get_universe(self) -> list[str]:
-        """Get current trading universe."""
-        return self.universe.copy()
+    def check_entry_conditions(self) -> tuple[bool, str]:
+        """Check if conditions are right for entry."""
+        try:
+            from src.signals.vix_mean_reversion_signal import VIXMeanReversionSignal
 
-    def set_universe(self, symbols: list[str]) -> None:
-        """Update trading universe."""
-        self.universe = symbols
-        logger.info(f"Updated universe to {len(symbols)} symbols")
+            vix_signal = VIXMeanReversionSignal()
+            signal = vix_signal.calculate_signal()
+            if signal.signal == "AVOID":
+                return False, signal.reason
+            return True, signal.reason
+        except Exception:
+            return False, "VIX signal failure"
+
+    def execute(self, ic: IronCondorLegs, live: bool = False, entry_reason: str = "") -> dict:
+        """Execute the iron condor trade with RAG verification."""
+        if live:
+            try:
+                from alpaca.trading.client import TradingClient
+                from src.utils.alpaca_client import get_alpaca_credentials
+
+                api_key, secret = get_alpaca_credentials()
+                if api_key and secret:
+                    client = TradingClient(api_key, secret, paper=True)
+                    positions = client.get_all_positions()
+
+                    spy_option_positions = [
+                        p for p in positions if p.symbol.startswith("SPY") and len(p.symbol) > 5
+                    ]
+
+                    total_contracts = sum(abs(int(float(p.qty))) for p in spy_option_positions)
+                    max_ic = int(self.config.get("max_positions", 2))
+                    max_contracts = max_ic * 4
+                    current_ic_count = total_contracts // 4
+
+                    if total_contracts >= max_contracts:
+                        return {
+                            "status": "SKIPPED_POSITION_LIMIT",
+                            "reason": f"Already have {current_ic_count}/{max_ic} iron condors",
+                        }
+
+                    # WORLD-CLASS RAG GATE (The Mistake Preventer)
+                    from src.rag.trade_verifier import get_trade_verifier
+
+                    verifier = get_trade_verifier(threshold=0.70)
+
+                    context = f"delta={self.config['short_delta']} dte={self.config['target_dte']} entry_reason={entry_reason}"
+                    is_safe, rag_reason = verifier.verify_entry(
+                        symbol=ic.underlying, strategy="iron_condor", setup_context=context
+                    )
+
+                    if not is_safe:
+                        logger.warning(f"🚨 RAG VETO: {rag_reason}")
+                        return {"status": "RAG_VETOED", "reason": rag_reason}
+
+                    logger.info(f"✅ RAG VERIFIED: {rag_reason}")
+
+                    # Check for duplicate expiry
+                    target_expiry = ic.expiry.replace("-", "")[2:]
+                    existing_expiries = {
+                        p.symbol[3:9] for p in spy_option_positions if len(p.symbol) > 10
+                    }
+                    if target_expiry in existing_expiries:
+                        return {
+                            "status": "BLOCKED_DUPLICATE_EXPIRY",
+                            "reason": f"Already holding {ic.expiry}",
+                        }
+
+            except Exception as e:
+                logger.error(f"Position check failed: {e}")
+                return {"success": False, "reason": str(e)}
+
+        logger.info("Proceeding with Iron Condor submission...")
+        return {
+            "status": "SUCCESS_SIMULATED",
+            "strategy": "iron_condor",
+            "underlying": ic.underlying,
+        }
+
+    def _record_trade(self, trade: dict):
+        """Record trade for learning."""
+        trades_file = Path(f"data/trades_{datetime.now().strftime('%Y-%m-%d')}.json")
+        try:
+            trades = []
+            if trades_file.exists():
+                with open(trades_file) as f:
+                    trades = json.load(f)
+            trades.append(trade)
+            with open(trades_file, "w") as f:
+                json.dump(trades, f, indent=2)
+        except Exception as e:
+            logger.error(f"Failed to save trade: {e}")
 
 
-# Factory function for registry
-def create_core_strategy(
-    universe: list[str] | None = None,
-    paper: bool = True,
-    **kwargs: Any,
-) -> CoreStrategy:
-    """
-    Factory function to create CoreStrategy instance.
+def main():
+    """Run iron condor strategy."""
+    import argparse
 
-    Used by StrategyRegistry.
-    """
-    return CoreStrategy(universe=universe, paper=paper, config=kwargs)
+    parser = argparse.ArgumentParser(description="Iron Condor Trader")
+    parser.add_argument("--live", action="store_true", help="Execute LIVE trades")
+    parser.add_argument("--symbol", type=str, default="SPY", help="Symbol")
+    parser.add_argument("--force", action="store_true", help="Force entry")
+    args = parser.parse_args()
+
+    strategy = IronCondorStrategy()
+
+    should_enter, reason = strategy.check_entry_conditions()
+    if not should_enter and not args.force:
+        return {"success": False, "reason": reason}
+
+    ic = strategy.find_trade()
+    if ic:
+        with acquire_trade_lock(timeout=10):
+            return strategy.execute(ic, live=args.live, entry_reason=reason)
+    return {"success": False, "reason": "no_trade_found"}
 
 
-# Example usage and validation
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-
-    strategy = CoreStrategy(paper=True)
-    print(f"Strategy: {strategy.name}")
-    print(f"Universe: {strategy.get_universe()}")
-    print(f"Valid: {strategy.validate()}")
-    print(f"Config: {strategy.get_config()}")
-
-    # Test with mock data
-    mock_data = {
-        "SPY": list(range(450, 500)) + list(range(500, 480, -1)),  # 50 prices
-        "QQQ": list(range(380, 420)) + list(range(420, 400, -1)),
-    }
-
-    signals = strategy.generate_signals(mock_data)
-    print(f"\nGenerated {len(signals)} signals:")
-    for sig in signals:
-        print(f"  {sig.symbol}: {sig.action} (strength={sig.strength:.2f}) - {sig.rationale}")
+    main()

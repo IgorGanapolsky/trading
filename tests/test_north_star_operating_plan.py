@@ -47,6 +47,44 @@ def test_weekly_gate_blocks_when_recent_expectancy_negative(tmp_path):
     assert history_path.exists()
 
 
+def test_weekly_gate_blocks_early_when_two_recent_losses_show_negative_expectancy(tmp_path):
+    trades_path = tmp_path / "trades.json"
+    history_path = tmp_path / "weekly_history.json"
+    today = date(2026, 2, 12)
+    _write_json(
+        trades_path,
+        {
+            "trades": [
+                {
+                    "status": "closed",
+                    "strategy": "iron_condor",
+                    "realized_pnl": -150.0,
+                    "outcome": "loss",
+                    "exit_date": today.isoformat(),
+                },
+                {
+                    "status": "closed",
+                    "strategy": "iron_condor",
+                    "realized_pnl": -50.0,
+                    "outcome": "loss",
+                    "exit_date": (today - timedelta(days=1)).isoformat(),
+                },
+            ]
+        },
+    )
+
+    gate, _history = compute_weekly_gate(
+        {"paper_account": {"win_rate": 50.0, "win_rate_sample_size": 2, "total_pl": -200.0}},
+        trades_path=trades_path,
+        weekly_history_path=history_path,
+        today=today,
+    )
+
+    assert gate["mode"] == "defensive"
+    assert gate["block_new_positions"] is True
+    assert "negative expectancy" in gate["reason"].lower()
+
+
 def test_contribution_plan_tracks_monthly_target_progress():
     plan = compute_contribution_plan(
         {
@@ -240,6 +278,61 @@ def test_weekly_gate_respects_liquidity_floor_override(tmp_path):
     assert liquidity.get("status") == "pass"
 
 
+def test_weekly_gate_does_not_promote_raw_fill_history_to_verified_edge(tmp_path):
+    trades_path = tmp_path / "trades.json"
+    history_path = tmp_path / "weekly_history.json"
+    today = date(2026, 2, 16)
+    _write_json(trades_path, {"stats": {"closed_trades": 0}, "trades": []})
+
+    state = {
+        "trade_history": [
+            *[
+                {
+                    "symbol": symbol,
+                    "side": "SELL",
+                    "price": 2.0,
+                    "qty": 1,
+                    "filled_at": "2026-02-14T15:00:00Z",
+                }
+                for symbol in (
+                    "SPY260320P00650000",
+                    "SPY260320P00640000",
+                    "SPY260320C00720000",
+                    "SPY260320C00730000",
+                )
+            ],
+            *[
+                {
+                    "symbol": symbol,
+                    "side": "BUY",
+                    "price": 2.5,
+                    "qty": 1,
+                    "filled_at": "2026-02-14T20:00:00Z",
+                }
+                for symbol in (
+                    "SPY260320P00650000",
+                    "SPY260320P00640000",
+                    "SPY260320C00720000",
+                    "SPY260320C00730000",
+                )
+            ],
+        ]
+    }
+
+    gate, _history = compute_weekly_gate(
+        state,
+        trades_path=trades_path,
+        weekly_history_path=history_path,
+        today=today,
+    )
+
+    assert gate["sample_size"] == 0
+    assert gate["evidence_source"] == "insufficient_paired_closed_trades"
+    assert gate["verified_edge_available"] is False
+    assert gate["unverified_trade_history_diagnostic"]["evidence_source"] == "trade_history_ic_only"
+    assert gate["unverified_trade_history_diagnostic"]["samples"] == 1
+
+
 def test_expansion_mode_requires_thirty_closed_trades_for_scaling(tmp_path):
     trades_path = tmp_path / "trades.json"
     history_path = tmp_path / "weekly_history.json"
@@ -269,6 +362,51 @@ def test_expansion_mode_requires_thirty_closed_trades_for_scaling(tmp_path):
     assert gate["scaling_sample_gate"]["passed"] is False
     assert gate["scaling_sample_gate"]["closed_trades_observed"] == 12
     assert gate["scaling_sample_gate"]["min_closed_trades_for_scaling"] == 30
+
+
+def test_weekly_gate_halts_when_recent_window_conflicts_with_lifetime_losing_ledger(tmp_path):
+    trades_path = tmp_path / "trades.json"
+    history_path = tmp_path / "weekly_history.json"
+    today = date(2026, 4, 3)
+    _write_json(
+        trades_path,
+        {
+            "stats": {
+                "closed_trades": 66,
+                "wins": 16,
+                "losses": 49,
+                "breakeven": 1,
+                "win_rate_pct": 24.24,
+                "profit_factor": 0.25,
+                "total_realized_pnl": -3402.0,
+            },
+            "trades": [
+                {
+                    "status": "closed",
+                    "strategy": "iron_condor",
+                    "realized_pnl": 96.0,
+                    "outcome": "win",
+                    "exit_date": today.isoformat(),
+                }
+            ],
+        },
+    )
+
+    gate, _history = compute_weekly_gate(
+        {"paper_account": {"win_rate": 24.24, "win_rate_sample_size": 66, "total_pl": -3402.0}},
+        trades_path=trades_path,
+        weekly_history_path=history_path,
+        today=today,
+    )
+
+    assert gate["mode"] == "defensive"
+    assert gate["block_new_positions"] is True
+    assert gate["verified_edge_available"] is False
+    assert gate["scale_blocked_by_lifetime_ledger"] is True
+    assert gate["contradiction_detected"] is True
+    assert "lifetime paired-trade ledger remains negative" in gate["reason"].lower()
+    assert gate["lifetime_ledger"]["closed_trades"] == 66
+    assert gate["lifetime_ledger"]["edge_confirmed"] is False
 
 
 def test_ai_credit_stress_watch_caps_expansion_to_cautious(tmp_path):

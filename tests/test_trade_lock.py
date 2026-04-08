@@ -193,11 +193,21 @@ class TestCrisisMonitor:
                 "unrealized_pl": -50,
                 "cost_basis": 500,
             },
+            # Add more positions to exceed MAX_POSITIONS (16)
+            *[
+                {
+                    "symbol": f"SPY260220P00{620 + i:03d}000",
+                    "qty": 1,
+                    "unrealized_pl": -10,
+                    "cost_basis": 100,
+                }
+                for i in range(10)
+            ],
         ]
 
         conditions = check_crisis_conditions(positions, account_equity=5000)
 
-        # Should detect excess positions (9 > 8)
+        # Should detect excess positions (19 > 16)
         excess_conditions = [c for c in conditions if c.condition_type == "EXCESS_POSITIONS"]
         assert len(excess_conditions) > 0
 

@@ -18,23 +18,31 @@ Source of truth: `src/core/trading_constants.py`
 ## Dual-Track Mandate
 
 1. **The Lab (Paper Account `PA3C5AG0CECQ`)**: ~$100,000. Strategy formulation + GRPO self-training. Up to 2 concurrent SPY Iron Condors (8 legs max).
-2. **The Field (Live Account `979807421`)**: ~$200. Shadows Lab signals via fractional ETF (SPY/VOO) buys.
+2. **The Field (Live Account `979807421`)**: $0 equity (started $20, lost 100%). Inactive — no capital deployed.
 
 ## AI-Native Strategy (GRPO)
 
-- Optimized by `src/ml/grpo_trade_learner.py`. Update daily via `scripts/run_grpo_training.py`.
-- Current Optimal: Delta 0.245 | DTE 24 | Exit 29%.
+- `src/ml/grpo_trade_learner.py` is optional research tooling, not the default operator path.
+- Do not present GRPO outputs as authoritative unless paired closed-trade sample size is sufficient.
 
 ## Commands
 
 ```bash
 pytest tests/ -q                            # run tests
 ruff check src/                             # lint
-python scripts/run_grpo_training.py          # train/optimize ML brain
+npx -y mcp-memory-gateway@0.7.1 status      # inspect local agent feedback memory
+printf 'thumbs down' | python3 scripts/capture_hook_feedback.py
+python scripts/sync_alpaca_state.py          # refresh broker snapshot
+python scripts/sync_closed_positions.py      # refresh paired trade ledger
+python scripts/system_health_check.py        # verify protected systems before trading
 python src/orchestration/daggr_workflow.py   # run full trading session
-python scripts/check_north_star_probability.py # trajectory audit
-python scripts/sync_dual_accounts.py         # sync Lab and Field
 ```
+
+## Simplification Mandate
+
+- Active default scope is SPY options trading, broker sync, safety gates, and local RAG.
+- Public publishing surfaces are archived unless they directly support trading operations.
+- Date-sensitive RAG answers must surface freshness limits instead of bluffing with stale lessons.
 
 ## Pre-Merge Checklist
 

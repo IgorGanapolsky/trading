@@ -86,7 +86,8 @@ class TestShouldOpenPosition:
 
         mock_datetime.now.return_value = mock_now
 
-        # Simulate 4 options positions (used to block with max=3)
+        # Simulate 4 option legs. Canonical config currently allows up to 8 legs
+        # for this script, so this should still allow a new spread.
         mock_positions.return_value = [
             {"symbol": "INTC260109P00035000"},  # Option
             {"symbol": "SOFI260123P00024000"},  # Option
@@ -104,12 +105,11 @@ class TestShouldOpenPosition:
 
         mock_client = MagicMock()
 
-        # With max_positions derived to 4 option legs budget (spread-level), 4 options positions block.
+        # With canonical max_positions currently at 8 option legs, 4 open legs remain under the limit.
         result = should_open_position(mock_client, CONFIG)
 
-        # At current limit and with 4 existing positions, should return False.
-        assert result is False, (
-            "should_open_position returned True with 4 positions at the configured max limit."
+        assert result is True, (
+            "should_open_position should allow a new spread when 4 option legs are below the configured limit."
         )
 
     @patch("scripts.simple_daily_trader.datetime")

@@ -14,6 +14,7 @@ def _write(path: Path, content: str) -> None:
 def test_build_index_filters_tars_artifact_ingest_by_default(tmp_path: Path, monkeypatch) -> None:
     rag_root = tmp_path / "rag_knowledge"
     monkeypatch.setattr(build_rag_query_index, "RAG_ROOT", rag_root)
+    monkeypatch.setattr(build_rag_query_index, "ADDITIONAL_MARKDOWN_SOURCES", [])
     monkeypatch.delenv("INCLUDE_ARTIFACT_INGEST_LESSONS", raising=False)
 
     _write(
@@ -50,6 +51,7 @@ def test_build_index_can_include_tars_artifact_ingest_with_opt_in(
 ) -> None:
     rag_root = tmp_path / "rag_knowledge"
     monkeypatch.setattr(build_rag_query_index, "RAG_ROOT", rag_root)
+    monkeypatch.setattr(build_rag_query_index, "ADDITIONAL_MARKDOWN_SOURCES", [])
     monkeypatch.setenv("INCLUDE_ARTIFACT_INGEST_LESSONS", "1")
 
     _write(
@@ -78,6 +80,7 @@ source: tars_artifact_ingest
 def test_build_index_parses_bold_date_with_colon_inside_markup(tmp_path: Path, monkeypatch) -> None:
     rag_root = tmp_path / "rag_knowledge"
     monkeypatch.setattr(build_rag_query_index, "RAG_ROOT", rag_root)
+    monkeypatch.setattr(build_rag_query_index, "ADDITIONAL_MARKDOWN_SOURCES", [])
 
     _write(
         rag_root / "lessons_learned" / "ll_999_markup_date.md",
@@ -102,6 +105,7 @@ def test_build_index_falls_back_to_filename_date_when_metadata_missing(
 ) -> None:
     rag_root = tmp_path / "rag_knowledge"
     monkeypatch.setattr(build_rag_query_index, "RAG_ROOT", rag_root)
+    monkeypatch.setattr(build_rag_query_index, "ADDITIONAL_MARKDOWN_SOURCES", [])
 
     _write(
         rag_root / "lessons_learned" / "ll_proactive_scan_20260216.md",
@@ -124,3 +128,39 @@ No explicit date metadata in this lesson body.
         "ll_proactive_scan_20260215",
     ]
     assert lessons[0]["date"] == "2026-02-16"
+
+
+def test_build_index_includes_sql_analytics_report_markdown(tmp_path: Path, monkeypatch) -> None:
+    rag_root = tmp_path / "rag_knowledge"
+    monkeypatch.setattr(build_rag_query_index, "RAG_ROOT", rag_root)
+    monkeypatch.setattr(
+        build_rag_query_index,
+        "ADDITIONAL_MARKDOWN_SOURCES",
+        [tmp_path / "docs" / "_reports" / "sql-analytics-summary.md"],
+    )
+
+    _write(
+        tmp_path / "docs" / "_reports" / "sql-analytics-summary.md",
+        """---
+title: "Automated SQL Analytics Summary"
+description: "Latest period-over-period trading analytics summary generated from canonical trading JSON sources."
+date: 2026-03-13T20:00:00Z
+severity: INFO
+category: analytics
+---
+
+# Automated SQL Analytics Summary
+
+## Answer Block
+Q: How did today compare to the previous snapshot?
+A: Equity improved.
+""",
+    )
+
+    lessons = build_rag_query_index.build_index()
+    assert len(lessons) == 1
+    assert lessons[0]["id"] == "reports/sql-analytics-summary"
+    assert lessons[0]["title"] == "Automated SQL Analytics Summary"
+    assert lessons[0]["category"] == "analytics"
+    assert lessons[0]["severity"] == "INFO"
+    assert lessons[0]["date"] == "2026-03-13T20:00:00Z"

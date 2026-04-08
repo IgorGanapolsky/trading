@@ -21,7 +21,7 @@ questions:
     answer: "PaperBanana is an open-source Python framework that generates publication-quality academic diagrams from text descriptions using a multi-agent pipeline powered by Google Gemini."
   - question: "How does PaperBanana generate diagrams?"
     answer: "It uses 5 specialized agents: Retriever finds reference examples, Planner creates a visual plan, Stylist applies academic aesthetics, Visualizer renders the image via Gemini Imagen, and Critic evaluates and triggers refinements."
-image: "/assets/snapshots/progress_latest.png"
+image: "/assets/llm_gateway_architecture.png"
 
 ---
 

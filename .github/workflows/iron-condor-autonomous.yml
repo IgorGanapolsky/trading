@@ -4,11 +4,11 @@ name: Iron Condor Autonomous System
 # Per LL-306: "Trust the guardrails, not the agent"
 
 on:
-  schedule:
-    # Scan at 9:45 AM ET (14:45 UTC) Mon-Fri
-    - cron: "45 14 * * 1-5"
-    # Retry scan at 12:30 PM ET (17:30 UTC) Mon-Fri
-    - cron: "30 17 * * 1-5"
+  # DISABLED: ic_simple.py is the sole trader (2026-04-01)
+  # This was a competing entry system opening ICs independently.
+  # schedule:
+  #   - cron: "45 14 * * 1-5"
+  #   - cron: "30 17 * * 1-5"
   workflow_dispatch:
     inputs:
       action:
@@ -34,9 +34,9 @@ jobs:
   autonomous-trading:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: "pip"
@@ -112,19 +112,48 @@ jobs:
           import sys
           sys.path.insert(0, '.')
 
-          from scripts.iron_condor_scanner import scan_for_opportunity
-          result = scan_for_opportunity(dry_run=False)
+          # Use real delta-based strike selection (replaces scanner heuristic)
+          from src.markets.option_chain import select_strikes_by_delta
+          from alpaca.data.historical import StockHistoricalDataClient
+          from alpaca.data.requests import StockLatestQuoteRequest
 
-          if result:
-              print(f"✅ Opportunity found: {result['expiry']}")
+          api_key = os.environ.get('ALPACA_PAPER_TRADING_API_KEY')
+          secret = os.environ.get('ALPACA_PAPER_TRADING_API_SECRET')
+
+          data_client = StockHistoricalDataClient(api_key, secret)
+          quote = data_client.get_stock_latest_quote(StockLatestQuoteRequest(symbol_or_symbols=["SPY"]))
+          spy_price = (quote["SPY"].ask_price + quote["SPY"].bid_price) / 2
+          print(f"SPY price: ${spy_price:.2f}")
+
+          selection = select_strikes_by_delta(
+              underlying_price=spy_price, wing_width=10.0,
+              target_delta=0.15, target_dte=30, min_dte=21, max_dte=45,
+          )
+          print(f"Method: {selection.method} | SP={selection.short_put} SC={selection.short_call}")
+
+          est_credit = selection.net_credit
+          if selection.method == "heuristic_fallback" or est_credit <= 0:
+              est_credit = 1.50
+
+          if est_credit < 0.50:
+              print(f"Credit ${est_credit:.2f} too thin. Skipping.")
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write('found=false\n')
+          else:
+              result = {
+                  "expiry": selection.expiry,
+                  "strikes": {
+                      "long_put": selection.long_put, "short_put": selection.short_put,
+                      "short_call": selection.short_call, "long_call": selection.long_call,
+                  },
+                  "method": selection.method,
+                  "est_credit": est_credit,
+              }
+              print(f"✅ Opportunity: {selection.expiry} credit=${est_credit:.2f}")
               with open('opportunity.json', 'w') as f:
                   json.dump(result, f)
               with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
                   f.write('found=true\n')
-          else:
-              print("No opportunity found")
-              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-                  f.write('found=false\n')
           PYTHON
 
       - name: Execute trade (AUTONOMOUS)
@@ -183,12 +212,19 @@ jobs:
               OptionLegRequest(symbol=long_call, side=OrderSide.BUY, ratio_qty=1),
           ]
 
-          # 2 contracts per IC: $1,600 max risk (under 5% of $101K)
-          order = client.submit_order(MarketOrderRequest(
-              qty=2,
+          # Use LIMIT order: accept credit >= estimated - $0.05 concession
+          from alpaca.trading.requests import LimitOrderRequest
+          limit_credit = round(opp.get("est_credit", 1.50) - 0.05, 2)
+          if limit_credit < 0.50:
+              limit_credit = 0.50
+          print(f"Limit credit: ${limit_credit:.2f}")
+
+          order = client.submit_order(LimitOrderRequest(
+              qty=1,
               order_class=OrderClass.MLEG,
               legs=legs,
               time_in_force=TimeInForce.DAY,
+              limit_price=round(-limit_credit, 2),
           ))
 
           print(f"✅ Order submitted: {order.id} - {order.status}")
@@ -201,11 +237,15 @@ jobs:
                   ic_entries = json.load(f)
           except (FileNotFoundError, json.JSONDecodeError):
               ic_entries = {}
-          credit = abs(float(order.filled_avg_price)) if order.filled_avg_price else 2.00
+          from datetime import datetime as dt
+          fill_price = float(order.filled_avg_price) if order.filled_avg_price else None
+          if fill_price is not None and fill_price > 0:
+              print(f"WARNING: MLEG filled at DEBIT ${fill_price:.2f}")
+          credit = abs(fill_price) if fill_price else 0.0
           ic_entries[expiry_key] = {
               "credit": credit,
               "order_id": str(order.id),
-              "date": opp.get("timestamp", ""),
+              "date": dt.now().isoformat(),
               "strikes": strikes,
           }
           with open(entries_file, 'w') as f:
@@ -280,7 +320,7 @@ jobs:
           if [ ${#files[@]} -eq 0 ]; then
             echo "No trade artifacts found to stage"
           else
-            git add "${files[@]}"
+            git add -f "${files[@]}"
           fi
           git diff --cached --quiet || git commit -m "fix: record autonomous IC trade data"
           git push || echo "Push failed - data will sync on next workflow"

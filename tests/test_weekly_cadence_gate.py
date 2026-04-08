@@ -88,6 +88,8 @@ def test_should_fail_respects_strict_and_threshold():
     result_ok = {"passed": True, "alert_level": "ok"}
 
     assert _should_fail(result=result_ok, strict=False, fail_on="warning") is False
+    assert _should_fail(result=result_warning, strict=False, fail_on="none") is False
+    assert _should_fail(result=result_critical, strict=False, fail_on="none") is False
     assert _should_fail(result=result_warning, strict=False, fail_on="critical") is False
     assert _should_fail(result=result_critical, strict=False, fail_on="critical") is True
     assert _should_fail(result=result_warning, strict=True, fail_on="none") is True

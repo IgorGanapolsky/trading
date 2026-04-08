@@ -46,7 +46,7 @@ def test_update_run_status_merges_metadata_and_retry_count(tmp_path: Path) -> No
         status="running",
         phase="attempt.start",
         retry_count=0,
-        metadata={"source_control_plane": "scripts.autonomous_trader"},
+        metadata={"source_control_plane": "scripts.iron_condor_trader"},
         latest_path=latest,
         history_path=history,
     )
@@ -64,7 +64,7 @@ def test_update_run_status_merges_metadata_and_retry_count(tmp_path: Path) -> No
 
     assert payload["retry_count"] == 1
     assert payload["blocker_reason"] == "Timeout"
-    assert payload["metadata"]["source_control_plane"] == "scripts.autonomous_trader"
+    assert payload["metadata"]["source_control_plane"] == "scripts.iron_condor_trader"
     assert payload["metadata"]["last_telemetry_ticker"] == "SPY"
 
     rows = [json.loads(line) for line in history.read_text(encoding="utf-8").splitlines() if line]

@@ -2,54 +2,15 @@
 layout: page
 title: "Blog"
 permalink: /blog/
-description: "Browse posts by topic. Internal linking hubs for AI trading, options strategy, automation, and lessons learned."
+description: "Selected public posts from the trading repo."
 ---
 
 <h1>Blog</h1>
 
-<p>Browse by topic first (best way to navigate), or scroll recent posts.</p>
-
-<hr />
-
-<h2>Topics</h2>
-
-<div class="topic-grid">
-  <div class="topic-card">
-    <a href="{{ '/topics/ai-trading/' | relative_url }}"><strong>ai-trading</strong></a>
-    <div class="topic-count">{{ site.tags['ai-trading'].size | default: 0 }} post(s)</div>
-  </div>
-  <div class="topic-card">
-    <a href="{{ '/topics/lessons-learned/' | relative_url }}"><strong>lessons-learned</strong></a>
-    <div class="topic-count">{{ site.tags['lessons-learned'].size | default: 0 }} post(s)</div>
-  </div>
-  <div class="topic-card">
-    <a href="{{ '/topics/building-in-public/' | relative_url }}"><strong>building-in-public</strong></a>
-    <div class="topic-count">{{ site.tags['building-in-public'].size | default: 0 }} post(s)</div>
-  </div>
-  <div class="topic-card">
-    <a href="{{ '/topics/iron-condors/' | relative_url }}"><strong>iron-condors</strong></a>
-    <div class="topic-count">{{ site.tags['iron-condors'].size | default: 0 }} post(s)</div>
-  </div>
-  <div class="topic-card">
-    <a href="{{ '/topics/risk-management/' | relative_url }}"><strong>risk-management</strong></a>
-    <div class="topic-count">{{ site.tags['risk-management'].size | default: 0 }} post(s)</div>
-  </div>
-  <div class="topic-card">
-    <a href="{{ '/topics/rlhf/' | relative_url }}"><strong>rlhf</strong></a>
-    <div class="topic-count">{{ site.tags['rlhf'].size | default: 0 }} post(s)</div>
-  </div>
-</div>
-
-<hr />
-
-<p><strong><a href="{{ '/topics/' | relative_url }}">Browse all maintained topic hubs →</a></strong></p>
-
-<hr />
-
-<h2>Recent Posts</h2>
+<p>This is a trimmed surface for the posts that are still worth publishing.</p>
 
 <ul>
-{% for post in site.posts limit: 50 %}
+{% for post in site.posts %}
   <li>
     <a href="{{ post.url | relative_url }}">{{ post.title }}</a>
     <small>({{ post.date | date: "%Y-%m-%d" }})</small>

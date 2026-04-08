@@ -50,12 +50,7 @@ log "pipeline start"
 case "${EVENT}" in
 session_start)
   run_hook "session-start.sh"
-  run_hook "force_rag_learning.sh"
-  if [[ -f "${SCRIPT_DIR}/session-start-memalign.sh" ]]; then
-    # Keep startup fast; memalign sync continues in background.
-    nohup bash "${SCRIPT_DIR}/session-start-memalign.sh" >>"${LOG_FILE}" 2>&1 &
-    log "spawned async session-start-memalign.sh"
-  fi
+  run_hook "inject_trading_context.sh"
   ;;
 user_prompt_submit)
   USER_PROMPT="$(cat || true)"
@@ -63,6 +58,7 @@ user_prompt_submit)
   run_hook "inject_trading_context.sh"
   ;;
 pre_tool_use)
+  run_hook "memory-gateway-pretool.sh" "${TOOL_INPUT}"
   run_hook "block_position_close.sh" "${TOOL_INPUT}"
   run_hook "require_magic_word.sh" "${TOOL_INPUT}"
   ;;

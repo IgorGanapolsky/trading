@@ -1,0 +1,14 @@
+{
+  "total": 1,
+  "wins": 1,
+  "losses": 0,
+  "total_pnl": 41.0,
+  "avg_win": 41.0,
+  "avg_loss": 0,
+  "win_rate": 100.0,
+  "profit_factor": 999.0,
+  "win_pnls": [
+    41.0
+  ],
+  "loss_pnls": []
+}

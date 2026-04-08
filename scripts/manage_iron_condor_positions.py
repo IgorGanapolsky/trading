@@ -24,12 +24,18 @@ from __future__ import annotations
 import json
 import logging
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.core.trading_constants import IRON_CONDOR_STOP_LOSS_MULTIPLIER
+from src.core.trading_constants import (
+    IC_PROFIT_TARGET_PCT,
+    IRON_CONDOR_EXIT_DTE,
+    IRON_CONDOR_MIN_HOLD_HOURS,
+    IRON_CONDOR_STOP_LOSS_MULTIPLIER,
+    IRON_CONDOR_UNDERLYING,
+)
 from src.safety.mandatory_trade_gate import safe_submit_order
 
 logging.basicConfig(
@@ -40,10 +46,12 @@ logger = logging.getLogger(__name__)
 
 # Iron condor exit thresholds per LL-268/LL-277
 IC_EXIT_CONFIG = {
-    "profit_target_pct": 0.50,  # Close at 50% profit
+    "profit_target_pct": IC_PROFIT_TARGET_PCT,
     "stop_loss_pct": IRON_CONDOR_STOP_LOSS_MULTIPLIER,  # Canonical 1.0x credit stop-loss
-    "exit_dte": 7,  # Close at 7 DTE (gamma risk)
+    "exit_dte": IRON_CONDOR_EXIT_DTE,
 }
+MIN_HOLD_HOURS = IRON_CONDOR_MIN_HOLD_HOURS
+DEFAULT_UNDERLYING = IRON_CONDOR_UNDERLYING
 
 
 def is_option_symbol(symbol: str) -> bool:
@@ -130,13 +138,27 @@ def group_iron_condors(positions: list[dict]) -> list[dict]:
         by_expiry[expiry_key]["legs"].append(pos)
         by_expiry[expiry_key]["total_pl"] += pos["unrealized_pl"]
 
-    # Calculate credit received (sum of entry prices for short legs)
+    # Calculate credit received and populate entry_date from ic_entries.json
+    ic_entries = {}
+    ic_entries_path = Path(__file__).parent.parent / "data" / "ic_entries.json"
+    try:
+        if ic_entries_path.exists():
+            ic_entries = json.loads(ic_entries_path.read_text())
+    except Exception:
+        pass
+
     for ic in by_expiry.values():
         credit = 0
         for leg in ic["legs"]:
             if leg["qty"] < 0:  # Short leg
                 credit += abs(leg["avg_entry_price"] * leg["qty"] * 100)
         ic["credit_received"] = credit
+
+        # Populate entry_date so 4-hour holding period works
+        expiry_yymmdd = ic["expiry_str"].replace("-", "")[2:]
+        entry_key = f"IC_{expiry_yymmdd}"
+        if entry_key in ic_entries:
+            ic["entry_date"] = ic_entries[entry_key].get("date")
 
     return list(by_expiry.values())
 
@@ -146,6 +168,26 @@ def check_exit_conditions(ic: dict) -> tuple[bool, str, str]:
     Check if iron condor meets exit conditions.
     Returns: (should_exit, reason, details)
     """
+    # Minimum holding period: 24 hours (prevent same-day churn)
+    # FIX Apr 3, 2026: Increased from 4h to 24h. Data shows 90% of trades
+    # held < 1 hour have 6.5% win rate vs 50% for trades held > 1 day.
+    # Theta decay needs TIME to work. Also: if entry_date is missing,
+    # HOLD by default instead of bypassing the check.
+    entry_date = ic.get("entry_date")
+    if entry_date:
+        from datetime import datetime
+
+        try:
+            entry_dt = datetime.fromisoformat(entry_date)
+            hours_held = (datetime.now() - entry_dt).total_seconds() / 3600
+            if hours_held < MIN_HOLD_HOURS:
+                return False, "HOLD", f"Held {hours_held:.1f}h < {MIN_HOLD_HOURS}h minimum"
+        except (ValueError, TypeError):
+            pass
+    else:
+        # No entry date recorded — hold by default to prevent premature exits
+        return False, "HOLD", "No entry_date recorded — holding (safety default)"
+
     dte = calculate_dte(ic["expiry"])
     pl = ic["total_pl"]
     credit = ic["credit_received"]
@@ -213,113 +255,153 @@ def close_iron_condor(client, ic: dict, reason: str, dry_run: bool = False) -> b
         return True
 
     try:
-        # Submit as MLeg order - all legs close together or not at all
-        # NOTE: TimeInForce not supported for options MLeg orders (Alpaca constraint)
+        # Try MLeg first (atomic close)
         order_req = MarketOrderRequest(
-            qty=1,  # MLeg uses ratio_qty in legs
+            qty=1,
             order_class=OrderClass.MLEG,
             legs=option_legs,
         )
         result = safe_submit_order(client, order_req)
         logger.info(f"    ✅ MLeg close order submitted: {result.id}")
-        logger.info(f"       Status: {result.status}")
         return True
 
-    except Exception as e:
-        logger.error(f"    ❌ MLeg close order FAILED: {e}")
-        logger.error("       Iron condor NOT closed - all legs preserved")
-        logger.error("       Manual intervention may be required")
-        return False
+    except Exception as mleg_err:
+        # FALLBACK Mar 23, 2026: Alpaca rejects MLEG closes with
+        # "mleg uncovered short contracts not allowed". Fall back to
+        # closing all legs as individual SIMPLE orders simultaneously.
+        logger.warning(f"    ⚠️ MLeg close failed: {mleg_err}")
+        logger.info("    Falling back to individual leg closes...")
+
+        from alpaca.trading.enums import TimeInForce
+
+        failed_legs = []
+        for leg in ic["legs"]:
+            symbol = leg["symbol"]
+            qty = abs(int(leg["qty"]))
+            close_side = OrderSide.BUY if leg["qty"] < 0 else OrderSide.SELL
+
+            try:
+                leg_order = MarketOrderRequest(
+                    symbol=symbol,
+                    qty=qty,
+                    side=close_side,
+                    time_in_force=TimeInForce.DAY,
+                )
+                result = safe_submit_order(client, leg_order)
+                logger.info(f"    ✅ {close_side.name} {qty}x {symbol}: {result.id}")
+            except Exception as leg_err:
+                logger.error(f"    ❌ {symbol} close FAILED: {leg_err}")
+                failed_legs.append(symbol)
+
+        if failed_legs:
+            logger.error(f"    {len(failed_legs)} leg(s) failed to close: {failed_legs}")
+            return False
+        return True
 
 
 def record_trade_outcome(ic: dict, reason: str, won: bool) -> None:
-    """Record trade outcome to Thompson model and trajectory log.
-
-    This is the ONLY place trade outcomes feed back into the ML model.
-    Called when an IC is closed (profit target, stop loss, or DTE exit).
-    """
+    """Record trade outcome into canonical episode storage and RLHF logs."""
     pl = ic["total_pl"]
     credit = ic["credit_received"]
     expiry = ic["expiry_str"]
-
     project_root = Path(__file__).parent.parent
-
-    # 1. Update Thompson sampling model
-    model_path = Path(__file__).parent.parent / "models" / "ml" / "trade_confidence_model.json"
-    try:
-        with open(model_path) as f:
-            model = json.load(f)
-
-        for key in ["iron_condor", "spy_specific"]:
-            if key in model:
-                if won:
-                    model[key]["alpha"] = model[key].get("alpha", 1.0) + 1
-                    model[key]["wins"] = model[key].get("wins", 0) + 1
-                else:
-                    model[key]["beta"] = model[key].get("beta", 1.0) + 1
-                    model[key]["losses"] = model[key].get("losses", 0) + 1
-
-        model["last_updated"] = datetime.now().isoformat()
-
-        with open(model_path, "w") as f:
-            json.dump(model, f, indent=2)
-
-        logger.info(
-            f"Thompson model updated: {'WIN' if won else 'LOSS'} "
-            f"(alpha={model['iron_condor']['alpha']}, beta={model['iron_condor']['beta']})"
-        )
-    except Exception as e:
-        logger.warning(f"Could not update Thompson model: {e}")
-
-    # 2. Append to trade trajectory log
-    trajectory_path = project_root / "data" / "feedback" / "trade_trajectories.jsonl"
-    try:
-        trajectory_path.parent.mkdir(parents=True, exist_ok=True)
-        entry = {
-            "timestamp": datetime.now().isoformat() + "Z",
-            "strategy": "iron_condor",
-            "symbol": ic.get("underlying", "SPY"),
-            "expiry": expiry,
-            "exit_reason": reason,
-            "credit": credit,
-            "pnl": pl,
-            "won": won,
-            "source": "position_manager",
-        }
-        with trajectory_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(entry) + "\n")
-        logger.info(f"Trade trajectory recorded: {reason} P/L=${pl:.2f}")
-    except Exception as e:
-        logger.warning(f"Could not record trajectory: {e}")
-
-    # 3. Persist structured RLHF close-out event (used by downstream learning/audits)
+    timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    episode_id = str(
+        ic.get("episode_id") or f"iron_condor::{ic.get('underlying', DEFAULT_UNDERLYING)}::{expiry}"
+    )
     event_key = (
-        f"iron_condor_close::{ic.get('underlying', 'SPY')}::"
+        f"iron_condor_close::{ic.get('underlying', DEFAULT_UNDERLYING)}::"
         f"{ic.get('expiry_str', 'unknown')}::{reason}::{round(float(pl), 2)}"
     )
+
     try:
+        from src.learning.outcome_labeler import build_outcome_label
+        from src.learning.trade_episode_store import TradeEpisodeStore
+
+        outcome_label = build_outcome_label(
+            {
+                "symbol": ic.get("underlying", DEFAULT_UNDERLYING),
+                "strategy": "iron_condor",
+                "total_pl": pl,
+                "credit_received": credit,
+                "exit_reason": reason,
+                "won": won,
+            }
+        )
+        episode_store = TradeEpisodeStore(
+            event_log_path=project_root / "data" / "feedback" / "trade_episode_events.jsonl",
+            snapshot_path=project_root / "data" / "feedback" / "trade_episodes.json",
+        )
+        episode_store.upsert_outcome(
+            {
+                "episode_id": episode_id,
+                "event_type": "outcome",
+                "timestamp": timestamp,
+                "event_key": event_key,
+                "symbol": str(ic.get("underlying", DEFAULT_UNDERLYING)),
+                "strategy": "iron_condor",
+                "reward": float(outcome_label["reward"]),
+                "return_pct": outcome_label["return_pct"],
+                "won": bool(outcome_label["won"]),
+                "lost": bool(outcome_label["lost"]),
+                "outcome": outcome_label["outcome"],
+                "holding_minutes": outcome_label["holding_minutes"],
+                "exit_reason": reason,
+                "expiry": str(ic.get("expiry_str", "")),
+                "metadata": {
+                    "source": "manage_iron_condor_positions",
+                    "summary": outcome_label["summary"],
+                    "legs": [leg.get("symbol") for leg in ic.get("legs", []) if leg.get("symbol")],
+                },
+            }
+        )
+        logger.info(
+            "Canonical trade episode updated: %s (%s)", episode_id, outcome_label["outcome"]
+        )
+    except Exception as e:
+        logger.warning(f"Could not update canonical trade episode: {e}")
+
+    # Persist structured RLHF close-out event for compatibility with downstream analytics.
+    try:
+        from src.learning.outcome_labeler import build_outcome_label
         from src.learning.rlhf_storage import store_trade_outcome
 
+        outcome_label = build_outcome_label(
+            {
+                "symbol": ic.get("underlying", DEFAULT_UNDERLYING),
+                "strategy": "iron_condor",
+                "total_pl": pl,
+                "credit_received": credit,
+                "exit_reason": reason,
+                "won": won,
+            }
+        )
         store_trade_outcome(
-            symbol=str(ic.get("underlying", "SPY")),
+            symbol=str(ic.get("underlying", DEFAULT_UNDERLYING)),
             strategy="iron_condor",
-            reward=float(pl),
-            won=bool(won),
+            reward=float(outcome_label["reward"]),
+            won=bool(outcome_label["won"]),
             exit_reason=reason,
             expiry=str(ic.get("expiry_str", "")),
+            episode_id=episode_id,
             event_key=event_key,
-            metadata={"source": "manage_iron_condor_positions"},
+            metadata={
+                "source": "manage_iron_condor_positions",
+                "summary": outcome_label["summary"],
+                "return_pct": outcome_label["return_pct"],
+                "holding_minutes": outcome_label["holding_minutes"],
+            },
         )
     except Exception as e:
         logger.warning(f"Could not store structured RLHF outcome: {e}")
 
-    # 4. Feed distributed feedback model so learning updates are immediate and idempotent
+    # Feed distributed feedback model so learning updates are immediate and idempotent.
     try:
         from src.learning.distributed_feedback import LocalBackend, aggregate_feedback
 
-        feedback_type = "positive" if won else "negative"
+        feedback_type = "positive" if bool(won) else "negative"
         context = (
-            f"iron_condor closed symbol={ic.get('underlying', 'SPY')} "
+            f"iron_condor closed symbol={ic.get('underlying', DEFAULT_UNDERLYING)} "
             f"expiry={ic.get('expiry_str', '')} exit_reason={reason} pnl={float(pl):.2f}"
         )
         outcome = aggregate_feedback(
@@ -343,21 +425,24 @@ def record_trade_outcome(ic: dict, reason: str, won: bool) -> None:
 
 
 def get_alpaca_credentials():
-    """Get Alpaca credentials from environment variables (CI-compatible)."""
-    import os
+    """Get Alpaca credentials — delegates to canonical function.
 
-    # Try multiple env var names for compatibility
-    api_key = (
-        os.environ.get("ALPACA_API_KEY")
-        or os.environ.get("ALPACA_PAPER_TRADING_5K_API_KEY")
-        or os.environ.get("ALPACA_PAPER_TRADING_30K_API_KEY")
-    )
-    secret_key = (
-        os.environ.get("ALPACA_SECRET_KEY")
-        or os.environ.get("ALPACA_PAPER_TRADING_5K_API_SECRET")
-        or os.environ.get("ALPACA_PAPER_TRADING_30K_API_SECRET")
-    )
-    return api_key, secret_key
+    FIX Apr 3, 2026: Was checking wrong env var names (5K/30K variants).
+    Now uses the canonical lookup from src/utils/alpaca_client.py which
+    checks ALPACA_PAPER_TRADING_API_KEY (matching .env).
+    """
+    try:
+        from src.utils.alpaca_client import get_alpaca_credentials as _canonical
+
+        return _canonical()
+    except ImportError:
+        import os
+
+        api_key = os.environ.get("ALPACA_PAPER_TRADING_API_KEY") or os.environ.get("ALPACA_API_KEY")
+        secret_key = os.environ.get("ALPACA_PAPER_TRADING_API_SECRET") or os.environ.get(
+            "ALPACA_SECRET_KEY"
+        )
+        return api_key, secret_key
 
 
 def main(dry_run: bool = False):
@@ -397,7 +482,50 @@ def main(dry_run: bool = False):
 
     # Group into iron condors
     iron_condors = group_iron_condors(positions)
-    logger.info(f"Grouped into {len(iron_condors)} iron condor(s)")
+    logger.info(f"Grouped into {len(iron_condors)} position group(s)")
+
+    # Detect and close orphan legs (incomplete condors with no short legs)
+    orphan_groups = []
+    valid_condors = []
+    for ic in iron_condors:
+        has_shorts = any(leg["qty"] < 0 for leg in ic["legs"])
+        has_4_legs = len(ic["legs"]) == 4
+        if has_shorts and has_4_legs:
+            valid_condors.append(ic)
+        else:
+            orphan_groups.append(ic)
+
+    if orphan_groups:
+        # FIX Apr 3, 2026: Don't immediately close orphans — they may be partial fills
+        # that will complete. Only close orphans older than 24 hours.
+        logger.warning(f"Found {len(orphan_groups)} ORPHAN position group(s)")
+        for orphan in orphan_groups:
+            orphan_dte = calculate_dte(orphan["expiry"])
+            entry_date = orphan.get("entry_date")
+            hours_since_entry: float = 0.0
+            if entry_date:
+                try:
+                    entry_dt = datetime.fromisoformat(entry_date)
+                    hours_since_entry = (datetime.now() - entry_dt).total_seconds() / 3600
+                except (ValueError, TypeError):
+                    pass
+
+            logger.warning(
+                f"  Orphan: {orphan['expiry_str']} ({len(orphan['legs'])} legs, "
+                f"P/L=${orphan['total_pl']:.2f}, age={hours_since_entry:.1f}h)"
+            )
+
+            if hours_since_entry >= MIN_HOLD_HOURS or orphan_dte <= 1:
+                logger.warning(f"  Closing orphan (age={hours_since_entry:.1f}h, DTE={orphan_dte})")
+                if close_iron_condor(client, orphan, "ORPHAN_CLEANUP", dry_run):
+                    record_trade_outcome(orphan, "ORPHAN_CLEANUP", won=False)
+            else:
+                logger.info(
+                    f"  Holding orphan — may be partial fill (age < {MIN_HOLD_HOURS}h)"
+                )
+
+    iron_condors = valid_condors
+    logger.info(f"Valid iron condors: {len(iron_condors)}")
 
     exits_triggered = 0
     exits_executed = 0

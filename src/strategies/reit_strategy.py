@@ -25,6 +25,7 @@ from typing import Any
 from src.core.alpaca_trader import AlpacaTrader
 from src.rag.collectors import FredCollector
 from src.strategies.registry import StrategyInterface
+from src.utils.feature_flags import reit_enabled
 from src.utils.market_data import get_market_data_provider
 from src.utils.technical_indicators import calculate_technical_score
 
@@ -144,6 +145,10 @@ class ReitStrategy(StrategyInterface):
 
     def execute_daily(self, amount: float = 0.0) -> None:
         """Execute strategy."""
+        if not reit_enabled():
+            logger.info("Skipping REIT execution: ENABLE_REIT_STRATEGY is disabled")
+            return
+
         if not self.trader:
             logger.error("No trader initialized")
             return

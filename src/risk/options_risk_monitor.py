@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import Literal
 
-from src.core.trading_constants import IRON_CONDOR_STOP_LOSS_MULTIPLIER
+from src.core.trading_constants import IC_PROFIT_TARGET_PCT, IRON_CONDOR_STOP_LOSS_MULTIPLIER
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +22,8 @@ DEFAULT_STOP_LOSS_MULTIPLIER = IRON_CONDOR_STOP_LOSS_MULTIPLIER
 # All credit-based strategy types subject to stop-loss / profit-target monitoring.
 MONITORED_POSITION_TYPES = {"credit_spread", "iron_condor", "bull_put_spread", "bear_call_spread"}
 
-# 50% profit exit per CLAUDE.md exit rules
-DEFAULT_PROFIT_TARGET_PCT = 0.50
+# Canonical profit target from trading_constants (single source of truth)
+DEFAULT_PROFIT_TARGET_PCT = IC_PROFIT_TARGET_PCT
 
 
 @dataclass

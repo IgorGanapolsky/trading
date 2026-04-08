@@ -5,8 +5,15 @@ Project instructions live in `.claude/CLAUDE.md`. Rules auto-load from `.claude/
 ## Dual-Track Strategy (Aligned Feb 23, 2026)
 
 - **The Lab ($100K Paper)**: Formulation and GRPO self-training.
-- **The Field ($200 Live)**: Opportunistic real-money shadow execution.
+- **The Field (Live)**: $0 equity. Inactive — no capital deployed.
 - **North Star**: $6,000/month after-tax passive income.
+
+## Active Operating Scope
+
+- Primary execution path: `scripts/iron_condor_trader.py`
+- Canonical ledgers: `data/system_state.json` and `data/trades.json`
+- Archived from the default operating path: blog/wiki/dashboard/pages publishing and discovery marketing workflows
+- Never describe the system as profitable or validated unless current ledger data proves it
 
 ## Session Directive: PR Management & System Hygiene
 

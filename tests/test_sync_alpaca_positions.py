@@ -182,6 +182,34 @@ class TestUpdateSystemStatePositions:
             f"positions_count ({positions_count}) doesn't match actual positions ({len(positions)})"
         )
 
+    def test_last_equity_is_persisted_for_daily_pnl_accuracy(self, temp_state_file):
+        """The sync must write last_equity alongside daily_change to avoid stale P/L cards."""
+        alpaca_data = {
+            "paper": {
+                "equity": 100942.23,
+                "cash": 86629.95,
+                "buying_power": 1341.99,
+                "last_equity": 101250.00,
+                "positions": [],
+                "positions_count": 0,
+                "daily_change": -307.77,
+                "mode": "paper",
+                "synced_at": "2026-01-04T12:00:00",
+            },
+            "live": None,
+        }
+
+        with patch("sync_alpaca_state.SYSTEM_STATE_FILE", temp_state_file):
+            from sync_alpaca_state import update_system_state
+
+            update_system_state(alpaca_data)
+
+        with open(temp_state_file) as f:
+            state = json.load(f)
+
+        assert state["paper_account"]["last_equity"] == 101250.00
+        assert state["paper_account"]["daily_change"] == -307.77
+
     def test_none_alpaca_data_preserves_positions(self, temp_state_file):
         """When alpaca_data is None (no API keys), positions should be preserved."""
         # First, set some positions

@@ -72,7 +72,8 @@ def parse_fred_csv(csv_text: str) -> list[tuple[date, float]]:
     for row in reader:
         if not isinstance(row, dict):
             continue
-        raw_date = str(row.get("DATE", "")).strip()
+        # Support both 'DATE' and 'observation_date' (FRED recently changed their format)
+        raw_date = str(row.get("DATE") or row.get("observation_date") or "").strip()
         if not raw_date:
             continue
         try:
@@ -82,7 +83,7 @@ def parse_fred_csv(csv_text: str) -> list[tuple[date, float]]:
 
         value: float | None = None
         for key, raw_value in row.items():
-            if key == "DATE":
+            if key in ("DATE", "observation_date"):
                 continue
             text = str(raw_value).strip()
             if not text or text == ".":
@@ -361,7 +362,7 @@ def main() -> int:
     parser.add_argument(
         "--max-stale-days",
         type=int,
-        default=7,
+        default=14,
         help="Mark signal unknown when freshest data exceeds this age.",
     )
     parser.add_argument(

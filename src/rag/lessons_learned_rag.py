@@ -322,15 +322,20 @@ class LessonsLearnedRAG:
             if lesson["severity"] == "CRITICAL":
                 score *= 2
 
-            # RECENCY BOOST: Prioritize recent content (but don't PENALIZE old lessons)
-            # CRITICAL lessons from any date should still be findable
-            if "jan11" in lesson_id or "jan10" in lesson_id or "jan09" in lesson_id:
-                score *= 2.0  # Boost recent lessons
-            elif "jan" in lesson_id:
-                score *= 1.5  # Moderate boost for January
-            elif "trading_rules" in lesson_id or "2026" in lesson_id:
-                score *= 2.0  # Boost actionable rules
-            # Note: Old lessons are NOT penalized - we need to find CRITICAL lessons from any date
+            # RECENCY BOOST: Dynamic based on current month (not hardcoded)
+            # Boost lessons from the last 30 days, but never penalize old ones
+            from datetime import datetime as _dt
+
+            current_month = _dt.now().strftime("%b").lower()[:3]  # e.g. "mar"
+            prev_month = (
+                (_dt.now().replace(day=1) - __import__("datetime").timedelta(days=1))
+                .strftime("%b")
+                .lower()[:3]
+            )
+            if current_month in lesson_id or prev_month in lesson_id:
+                score *= 1.5  # Boost recent lessons
+            if "trading_rules" in lesson_id:
+                score *= 2.0  # Always boost actionable rules
 
             if score > 0:
                 # Normalize score to 0-1 range for consistency with ChromaDB

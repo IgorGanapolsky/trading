@@ -7,11 +7,11 @@ name: Manage Iron Condor Positions
 # This is the correct replacement for the disabled crisis workflows
 
 on:
-  schedule:
-    # Run hourly during market hours: 10 AM - 3:30 PM ET (15:00 - 20:30 UTC)
-    # EST: UTC-5, EDT: UTC-4 (covers both)
-    - cron: "0 15,16,17,18,19,20 * * 1-5" # Top of hour, Mon-Fri
-  workflow_dispatch: # Allow manual trigger
+  # DISABLED: ic_simple.py is the sole position manager (2026-04-01)
+  # This workflow was competing with ic_simple.py, causing unexpected closes.
+  # schedule:
+  #   - cron: "0 15,16,17,18,19,20 * * 1-5"
+  workflow_dispatch: # Keep manual trigger for emergencies
 
 # Prevent concurrent trade execution (LL-281 race condition fix)
 concurrency:
@@ -33,10 +33,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: "pip"

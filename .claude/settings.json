@@ -76,5 +76,30 @@
         ]
       }
     ]
+  },
+  "mcpServers": {
+    "rlhf": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-memory-gateway@0.8.5",
+        "serve"
+      ]
+    },
+    "massive": {
+      "command": "mcp_massive",
+      "env": {
+        "MASSIVE_API_KEY": "${MASSIVE_API_KEY}"
+      }
+    },
+    "alpaca": {
+      "command": "alpaca-mcp-server",
+      "env": {
+        "APCA_API_KEY_ID": "${ALPACA_PAPER_TRADING_API_KEY}",
+        "APCA_API_SECRET_KEY": "${ALPACA_PAPER_TRADING_API_SECRET}",
+        "APCA_API_BASE_URL": "https://paper-api.alpaca.markets",
+        "ALPACA_TOOLSETS": "account,trading,options-data,stock-data"
+      }
+    }
   }
 }

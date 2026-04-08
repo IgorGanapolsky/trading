@@ -36,6 +36,7 @@ sys.path.insert(0, str(project_root))
 from alpaca.trading.client import TradingClient
 from alpaca.trading.enums import OrderSide, TimeInForce
 from alpaca.trading.requests import ClosePositionRequest, MarketOrderRequest
+
 from src.safety.mandatory_trade_gate import (  # noqa: E402
     safe_close_position,
     safe_submit_order,
@@ -53,36 +54,9 @@ try:
 except ImportError:
     MAX_POSITIONS = 8
 
-
-def get_alpaca_client(paper: bool = True) -> Optional[TradingClient]:
-    """
-    Get Alpaca trading client using the canonical credential lookup.
-
-    Follows the pattern from src/utils/alpaca_client.py for consistency.
-    """
-    # Try to use the shared utility first
-    try:
-        from src.utils.alpaca_client import get_alpaca_credentials
-
-        api_key, secret_key = get_alpaca_credentials()
-    except ImportError:
-        # Fallback to direct env var lookup
-        api_key = (
-            os.getenv("ALPACA_PAPER_TRADING_5K_API_KEY")
-            or os.getenv("ALPACA_API_KEY")
-            or os.getenv("ALPACA_PAPER_TRADING_30K_API_KEY")
-        )
-        secret_key = (
-            os.getenv("ALPACA_PAPER_TRADING_5K_API_SECRET")
-            or os.getenv("ALPACA_SECRET_KEY")
-            or os.getenv("ALPACA_PAPER_TRADING_30K_API_SECRET")
-        )
-
-    if not api_key or not secret_key:
-        logger.error("Missing Alpaca API credentials")
-        return None
-
-    return TradingClient(api_key, secret_key, paper=paper)
+from src.utils.alpaca_client import (  # noqa: E402
+    get_alpaca_client,
+)
 
 
 def is_option_symbol(symbol: str) -> bool:

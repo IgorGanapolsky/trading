@@ -90,6 +90,7 @@ class TestMultiBrokerValidation:
 
 class TestExecutionAgentValidation:
     def test_execute_order_blocks_non_spy(self):
+        pytest.importorskip("anthropic")
         from src.agents.execution_agent import ExecutionAgent
 
         agent = ExecutionAgent(alpaca_api=MagicMock(), paper=True)
@@ -98,6 +99,7 @@ class TestExecutionAgentValidation:
         assert "TICKER NOT ALLOWED" in result["error"]
 
     def test_submit_option_order_blocks_non_spy(self):
+        pytest.importorskip("anthropic")
         from src.agents.execution_agent import ExecutionAgent
 
         agent = ExecutionAgent(alpaca_api=MagicMock(), paper=True)
@@ -110,6 +112,7 @@ class TestExecutionAgentValidation:
 
     def test_submit_option_order_allows_spy(self):
         """SPY option passes validation (simulated fallback, no Alpaca client)."""
+        pytest.importorskip("anthropic")
         from src.agents.execution_agent import ExecutionAgent
 
         agent = ExecutionAgent(alpaca_api=MagicMock(), paper=True)
@@ -235,6 +238,63 @@ class TestSafeSubmitOrder:
 
         safe_submit_order(mock_client, mock_request)
         mock_client.submit_order.assert_called_once()
+
+    @patch("src.safety.mandatory_trade_gate._get_positions_qty_map", return_value={})
+    @patch("src.safety.mandatory_trade_gate.validate_trade_mandatory")
+    @patch("src.safety.mandatory_trade_gate._infer_is_closing_order", return_value=False)
+    def test_blocks_debit_oriented_iron_condor_entry(
+        self, _mock_is_closing, mock_gate, _mock_qty_map
+    ):
+        """Opening options-income structures must be short-credit oriented."""
+        mock_gate.return_value = MagicMock(approved=True, reason="")
+
+        mock_client = MagicMock(spec=["get_account", "submit_order"])
+        mock_client.get_account.return_value = MagicMock(equity="10000")
+
+        mock_request = MagicMock()
+        mock_request.symbol = None
+        mock_request.limit_price = None
+        mock_request.qty = 1
+        mock_request.legs = [
+            MagicMock(symbol="SPY260402P00645000", side="BUY", ratio_qty=1),
+            MagicMock(symbol="SPY260402P00635000", side="SELL", ratio_qty=1),
+            MagicMock(symbol="SPY260402C00725000", side="SELL", ratio_qty=1),
+            MagicMock(symbol="SPY260402C00715000", side="BUY", ratio_qty=1),
+        ]
+
+        with pytest.raises(ValueError, match="OPTIONS-INCOME BLOCKED"):
+            safe_submit_order(mock_client, mock_request, strategy="iron_condor")
+
+        mock_client.submit_order.assert_not_called()
+
+    @patch("src.safety.mandatory_trade_gate._get_positions_qty_map", return_value={})
+    @patch("src.safety.mandatory_trade_gate._estimate_opening_max_loss")
+    @patch("src.safety.mandatory_trade_gate.validate_trade_mandatory")
+    @patch("src.safety.mandatory_trade_gate._infer_is_closing_order", return_value=False)
+    def test_allows_credit_oriented_iron_condor_entry(
+        self, _mock_is_closing, mock_gate, mock_estimate_opening_max_loss, _mock_qty_map
+    ):
+        """Proper short iron condors should still pass through safe_submit_order."""
+        mock_gate.return_value = MagicMock(approved=True, reason="")
+        mock_estimate_opening_max_loss.return_value = (100.0, 35, "SPY")
+
+        mock_client = MagicMock(spec=["get_account", "submit_order"])
+        mock_client.get_account.return_value = MagicMock(equity="10000")
+        mock_client.submit_order.return_value = MagicMock(id="ok")
+
+        mock_request = MagicMock()
+        mock_request.symbol = None
+        mock_request.limit_price = 1.5
+        mock_request.qty = 1
+        mock_request.legs = [
+            MagicMock(symbol="SPY260402P00630000", side="BUY", ratio_qty=1),
+            MagicMock(symbol="SPY260402P00635000", side="SELL", ratio_qty=1),
+            MagicMock(symbol="SPY260402C00710000", side="SELL", ratio_qty=1),
+            MagicMock(symbol="SPY260402C00715000", side="BUY", ratio_qty=1),
+        ]
+
+        safe_submit_order(mock_client, mock_request, strategy="iron_condor")
+        mock_client.submit_order.assert_called_once_with(mock_request)
 
     @patch("src.safety.mandatory_trade_gate.validate_trade_mandatory")
     @patch("src.safety.milestone_controller.get_milestone_context")

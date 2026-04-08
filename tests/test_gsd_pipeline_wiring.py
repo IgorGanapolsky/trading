@@ -6,6 +6,8 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 SETTINGS_PATH = PROJECT_ROOT / ".claude" / "settings.json"
 GSD_PIPELINE_PATH = PROJECT_ROOT / ".claude" / "hooks" / "gsd-pipeline.sh"
+PRETOOL_HOOK_PATH = PROJECT_ROOT / ".claude" / "hooks" / "memory-gateway-pretool.sh"
+MCP_CONFIG_PATH = PROJECT_ROOT / ".mcp.json"
 
 
 def _first_hook_command(settings: dict, event_key: str) -> str:
@@ -38,3 +40,25 @@ def test_gsd_pipeline_script_exists_and_is_valid_bash():
         text=True,
     )
     assert result.returncode == 0, result.stderr
+
+
+def test_gsd_pipeline_runs_memory_gateway_pretool_gate():
+    content = GSD_PIPELINE_PATH.read_text(encoding="utf-8")
+    assert 'run_hook "memory-gateway-pretool.sh" "${TOOL_INPUT}"' in content
+
+
+def test_memory_gateway_pretool_script_exists_and_is_valid_bash():
+    assert PRETOOL_HOOK_PATH.exists()
+    result = subprocess.run(
+        ["bash", "-n", str(PRETOOL_HOOK_PATH)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+
+
+def test_project_mcp_config_registers_gateway_server():
+    config = json.loads(MCP_CONFIG_PATH.read_text(encoding="utf-8"))
+    server = config["mcpServers"]["rlhf"]
+    assert server["command"] == "npx"
+    assert server["args"] == ["-y", "mcp-memory-gateway@0.7.1", "serve"]

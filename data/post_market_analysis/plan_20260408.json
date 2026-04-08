@@ -1,0 +1,17 @@
+{
+  "date": "2026-04-08",
+  "current_regime": "unknown",
+  "regime_win_rate": 0,
+  "regime_sample_size": 0,
+  "regime_allows_trading": false,
+  "research_allows_trading": false,
+  "global_gate_open": false,
+  "action": "HOLD",
+  "suggested_delta": 10,
+  "suggested_profit_target": 0.5,
+  "hold_reasons": [
+    "Regime 'unknown' win rate 0% (need 50%+, 0 trades)",
+    "Research says avoid (VIX regime unfavorable)",
+    "Global gate blocked: Win rate 24.2% < 50.0%"
+  ]
+}

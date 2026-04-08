@@ -27,7 +27,7 @@ def load_todays_trades(date_str: str | None = None) -> list[dict]:
     """Load trades from ALL trade files for given date.
 
     FIX (Jan 12, 2026): Now looks for MULTIPLE file formats:
-    - data/trades_YYYY-MM-DD.json (autonomous_trader, rule_one_trader)
+    - data/trades_YYYY-MM-DD.json (legacy autonomous_trader, rule_one_trader)
     - data/options_trades_YYYYMMDD.json (execute_options_trade.py)
 
     ROOT CAUSE: execute_options_trade.py saves to options_trades_YYYYMMDD.json

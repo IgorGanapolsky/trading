@@ -1,0 +1,61 @@
+{
+  "generated_at_et": "2026-04-08T20:03:21.036829+00:00",
+  "system": {
+    "name": "SPY Options Validation Platform",
+    "tagline": "Broker-backed scorecards, hard risk gates, paired-trade accounting, and live operator surfaces.",
+    "public_status": "halted"
+  },
+  "paper": {
+    "equity": 93838.3,
+    "total_pnl_today": -140.0,
+    "realized_pnl_today": null,
+    "unrealized_pnl_today": null,
+    "fills_today_count": null,
+    "positions_count": 4
+  },
+  "live": {
+    "equity": 0.0,
+    "total_pnl_today": 0.0
+  },
+  "ledger": {
+    "closed_trades_total": 66,
+    "wins": 16,
+    "losses": 49,
+    "breakeven": 1,
+    "win_rate_pct": 24.24,
+    "profit_factor": 0.25,
+    "total_realized_pnl": -3402.0,
+    "expectancy_per_trade": -51.5455,
+    "last_updated": "2026-04-08T20:03:23.358156+00:00"
+  },
+  "gate": {
+    "mode": "defensive",
+    "block_new_positions": true,
+    "verified_edge_available": false,
+    "recommended_max_position_pct": 0.01,
+    "sample_size": 1,
+    "expectancy_per_trade": 96.0,
+    "win_rate_pct": 100.0,
+    "blocker_reason": "CRITICAL: Weekly gate conflicts with lifetime paired-trade ledger. Lifetime ledger shows 66 closed trades, expectancy $-51.55/trade, profit factor 0.25, total realized P/L $-3402.00. Block new positions until lifetime edge is positive.",
+    "qualified_setups_this_week": 0,
+    "closed_trades_this_week": 1,
+    "scale_allowed": false,
+    "scaling_gate_closed_trades_observed": 66,
+    "scaling_gate_min_closed_trades": 30,
+    "contradiction_detected": true,
+    "lifetime_edge_confirmed": false,
+    "lifetime_closed_trades": 66,
+    "lifetime_profit_factor": 0.25,
+    "lifetime_expectancy_per_trade": -51.5455,
+    "lifetime_total_realized_pnl": -3402.0
+  },
+  "narrative": {
+    "summary": "Latest tracked broker sync shows $-140.00 today with 4 open paper positions. Use the operator scorecard for realized/unrealized and leg-level decomposition.",
+    "thesis": "This project is currently a paper-first validation platform, not a proven passive-income engine. Public surfaces should show current gate state and broker-backed evidence rather than frozen claims."
+  },
+  "links": {
+    "operator_dashboard": "https://github.com/IgorGanapolsky/trading/wiki/Progress-Dashboard",
+    "repo": "https://github.com/IgorGanapolsky/trading",
+    "wiki": "https://github.com/IgorGanapolsky/trading/wiki"
+  }
+}

@@ -21,10 +21,13 @@ from src.core.trading_constants import (
     NORTH_STAR_TARGET_CAPITAL,
 )
 
+from .north_star_congruence import assess_lifetime_ledger
+
 DEFAULT_TRADES_PATH = Path("data/trades.json")
 DEFAULT_WEEKLY_HISTORY_PATH = Path("data/north_star_weekly_history.json")
 DEFAULT_LOOKBACK_DAYS = 7
 DEFAULT_WEEKLY_MIN_SAMPLES = 5
+DEFAULT_EARLY_EXPECTANCY_BLOCK_SAMPLES = 2
 DEFAULT_HISTORY_WEEKS = 104
 DEFAULT_MIN_QUALIFIED_SETUPS_PER_WEEK = 1
 DEFAULT_MIN_CLOSED_TRADES_PER_WEEK = 1
@@ -763,36 +766,40 @@ def compute_weekly_gate(
         _safe_nested_dict(trades_payload, "stats").get("closed_trades"),
         0,
     )
+    lifetime_ledger = assess_lifetime_ledger(
+        trades_payload,
+        min_closed_trades=DEFAULT_MIN_CLOSED_TRADES_FOR_SCALING,
+    )
 
+    unverified_trade_history_diagnostic: dict[str, Any] | None = None
     if samples > 0:
         win_rate_pct = round((wins / samples) * 100.0, 2)
         expectancy = round(total_pnl / samples, 4)
         evidence_source = "trades.json"
     else:
-        # Fallback: compute IC-only win rate from trade_history in system_state.
-        # The blended paper_account.win_rate includes non-IC trades (REITs, stocks,
-        # individual puts) which pollute the iron condor strategy signal.
-        ic_stats = _compute_ic_win_rate_from_history(state)
-        samples = ic_stats["samples"]
-        wins = ic_stats["wins"]
-        win_rate_pct = ic_stats["win_rate_pct"]
-        expectancy = ic_stats["expectancy"]
-        evidence_source = ic_stats["evidence_source"]
-        if lifetime_closed_trades <= 0:
-            lifetime_closed_trades = samples
+        # Do not infer weekly edge from raw fills. Raw trade_history is useful as a
+        # diagnostic, but control decisions must be based on paired closed trades.
+        unverified_trade_history_diagnostic = _compute_ic_win_rate_from_history(state)
+        win_rate_pct = 0.0
+        expectancy = 0.0
+        evidence_source = "insufficient_paired_closed_trades"
 
     mode = "validation"
-    recommended_max = 0.02
+    recommended_max = 0.01 if samples == 0 else 0.02
     block_new_positions = False
-    reason = "Insufficient recent weekly evidence; keep conservative sizing."
+    if samples == 0:
+        reason = (
+            "No recent paired closed trades; do not infer edge from raw fills. "
+            "Keep validation sizing only."
+        )
+    else:
+        reason = "Insufficient recent weekly evidence; keep conservative sizing."
 
-    if samples >= DEFAULT_WEEKLY_MIN_SAMPLES and expectancy <= 0:
+    if samples >= 2 and expectancy <= 0:
         mode = "defensive"
         recommended_max = 0.01
         block_new_positions = True
-        reason = (
-            f"Weekly expectancy ${expectancy:.2f}/trade over {samples} samples is non-positive."
-        )
+        reason = f"CRITICAL: Negative expectancy ${expectancy:.2f}/trade over {samples} samples. Trading HALTED."
     elif samples >= DEFAULT_WEEKLY_MIN_SAMPLES and win_rate_pct < 65.0:
         mode = "defensive"
         recommended_max = 0.01
@@ -998,6 +1005,25 @@ def compute_weekly_gate(
             f"{DEFAULT_MIN_CLOSED_TRADES_PER_WEEK}."
         )
 
+    contradiction_detected = False
+    contradiction_reason = None
+    if (
+        lifetime_ledger["closed_trades"] >= DEFAULT_MIN_CLOSED_TRADES_FOR_SCALING
+        and not lifetime_ledger["edge_confirmed"]
+    ):
+        contradiction_detected = samples > 0 and expectancy > 0
+        contradiction_reason = (
+            "CRITICAL: Lifetime paired-trade ledger remains negative despite the recent weekly window. "
+            f"Ledger expectancy ${_as_float(lifetime_ledger.get('expectancy_per_trade'), 0.0):.2f}/trade, "
+            f"profit factor {_as_float(lifetime_ledger.get('profit_factor'), 0.0):.2f}, "
+            f"total realized P/L ${_as_float(lifetime_ledger.get('total_realized_pnl'), 0.0):.2f} "
+            f"over {lifetime_ledger['closed_trades']} closed trades. Trading HALTED."
+        )
+        mode = "defensive"
+        recommended_max = min(recommended_max, 0.01)
+        block_new_positions = True
+        reason = contradiction_reason
+
     weekly_history_path.parent.mkdir(parents=True, exist_ok=True)
     new_weekly_payload = json.dumps(weekly_history, indent=2) + "\n"
     current_weekly_payload = (
@@ -1018,8 +1044,10 @@ def compute_weekly_gate(
         "reason": reason,
         "positive_weeks_streak": positive_streak,
         "evidence_source": evidence_source,
+        "verified_edge_available": bool(lifetime_ledger["edge_confirmed"]),
         "cadence_kpi": cadence_kpi,
         "scale_blocked_by_cadence": not cadence_kpi["passed"],
+        "scale_blocked_by_lifetime_ledger": not lifetime_ledger["edge_confirmed"],
         "ai_credit_stress": ai_credit_gate,
         "scale_blocked_by_ai_credit_stress": ai_credit_status == "blocked",
         "usd_macro_sentiment": usd_macro_gate,
@@ -1028,10 +1056,15 @@ def compute_weekly_gate(
         "scale_blocked_by_ai_cycle": ai_cycle_status == "blocked" or ai_cycle_shock,
         "scale_multiplier_from_ai_cycle": round(ai_cycle_multiplier, 4),
         "scaling_sample_gate": scaling_sample_gate,
+        "lifetime_ledger": lifetime_ledger,
+        "contradiction_detected": contradiction_detected,
+        "contradiction_reason": contradiction_reason,
         "liquidity_min_volume_ratio": round(min_liquidity_volume_ratio, 4),
         "no_trade_diagnostic": no_trade_diagnostic,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
+    if unverified_trade_history_diagnostic is not None:
+        gate["unverified_trade_history_diagnostic"] = unverified_trade_history_diagnostic
     return gate, weekly_history
 
 

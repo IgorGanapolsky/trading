@@ -53,12 +53,14 @@ class VIXMeanReversionSignal:
     # Configuration - Updated Jan 31, 2026 (LL-321 Research)
     # Uses RiskThresholds for centralized constants
     VIX_SPIKE_THRESHOLD = 20.0  # VIX above this = "elevated" (optimal zone start)
-    VIX_OPTIMAL_MIN = 12.0  # VIX below this = premiums too thin (per LL-316 RiskThresholds)
-    VIX_OPTIMAL_MAX = 25.0  # VIX above this = high volatility, use caution
-    VIX_EXTREME = 30.0  # VIX above this = AVOID (extreme zone per LL-321)
+    VIX_MIN = 12.0  # VIX below this = premiums too thin (Step 3: parameterized)
+    VIX_MAX = 35.0  # VIX above this = crash risk (Step 3: parameterized)
+    VIX_OPTIMAL_MIN = 12.0  # Allow paper trading even with thin premiums
+    VIX_OPTIMAL_MAX = 25.0  # Use caution when VIX > 25 (high volatility)
     MA_PERIOD = 3  # 3-day moving average
     STD_LOOKBACK = 30  # 30-day std dev lookback
     STD_MULTIPLIER = 2.0  # 2 standard deviations for threshold
+    IV_RV_PREMIUM_THRESHOLD = 0.05  # IV must be > RV by 5% (Step 3: vol aware)
 
     # Position sizing multipliers by VIX zone (LL-321)
     # Full position = 1.0, reduced = 0.5, none = 0.0
@@ -67,13 +69,16 @@ class VIXMeanReversionSignal:
         "low_medium": 0.5,  # VIX 12-20 - half position
         "optimal": 1.0,  # VIX 20-25 - full position
         "high": 0.75,  # VIX 25-30 - 75% position
-        "extreme": 0.0,  # VIX > 30 - avoid
+        "extreme": 0.0,  # VIX > 35 - avoid
     }
 
     def __init__(self):
         """Initialize the signal generator."""
         logger.info("VIXMeanReversionSignal initialized")
         self._cache: dict = {}
+        from src.data.iv_data_provider import get_iv_data_provider
+
+        self.iv_provider = get_iv_data_provider()
 
     def get_vix_data(self, lookback_days: int = 60) -> Optional[np.ndarray]:
         """
@@ -99,9 +104,21 @@ class VIXMeanReversionSignal:
             logger.error(f"Failed to fetch VIX data: {e}")
             return None
 
+    def get_spy_realized_vol(self, lookback: int = 20) -> float:
+        """Calculate 20-day annualized realized volatility for SPY."""
+        try:
+            spy = yf.Ticker("SPY")
+            hist = spy.history(period=f"{lookback + 5}d")
+            returns = np.log(hist["Close"] / hist["Close"].shift(1)).dropna()
+            realized_vol = returns.std() * np.sqrt(252)
+            return float(realized_vol)
+        except Exception as e:
+            logger.warning(f"Failed to calculate RV: {e}")
+            return 0.20  # Fallback
+
     def calculate_signal(self) -> VIXSignal:
         """
-        Calculate the VIX mean reversion signal.
+        Calculate the VIX mean reversion signal with IV vs RV check.
 
         Returns:
             VIXSignal with entry recommendation
@@ -121,6 +138,29 @@ class VIXMeanReversionSignal:
 
         # Current VIX
         current_vix = float(vix_data[-1])
+
+        # Step 3: Hard VIX bands
+        if current_vix < self.VIX_MIN:
+            return VIXSignal("AVOID", current_vix, 0, 0, 0, f"VIX too low (<{self.VIX_MIN})", 0)
+        if current_vix > self.VIX_MAX:
+            return VIXSignal("AVOID", current_vix, 0, 0, 0, f"VIX too high (>{self.VIX_MAX})", 0)
+
+        # Step 3: IV vs RV Check
+        iv_metrics = self.iv_provider.get_full_metrics("SPY")
+        current_iv = iv_metrics.current_iv
+        realized_vol = self.get_spy_realized_vol(20)
+
+        iv_rv_spread = current_iv - realized_vol
+        if iv_rv_spread < self.IV_RV_PREMIUM_THRESHOLD:
+            return VIXSignal(
+                signal="AVOID",
+                current_vix=current_vix,
+                vix_3day_ma=0.0,
+                recent_high=0.0,
+                threshold=0.0,
+                reason=f"Insufficient risk premium: IV({current_iv:.1%}) - RV({realized_vol:.1%}) = {iv_rv_spread:.1%} < {self.IV_RV_PREMIUM_THRESHOLD:.1%}",
+                confidence=0.0,
+            )
 
         # 3-day moving average (smooths noise)
         vix_3day_ma = float(np.mean(vix_data[-self.MA_PERIOD :]))
@@ -171,10 +211,10 @@ class VIXMeanReversionSignal:
             Tuple of (signal, reason, confidence)
         """
         # AVOID: VIX too extreme
-        if current_vix > self.VIX_EXTREME:
+        if current_vix > self.VIX_MAX:
             return (
                 "AVOID",
-                f"VIX {current_vix:.1f} > {self.VIX_EXTREME} (extreme volatility)",
+                f"VIX {current_vix:.1f} > {self.VIX_MAX} (extreme volatility)",
                 0.0,
             )
 
@@ -234,8 +274,7 @@ class VIXMeanReversionSignal:
         elif signal.signal == "AVOID":
             return False, signal.reason
         else:
-            # NEUTRAL: Allow entry but note it's not optimal
-            return True, f"Neutral conditions: {signal.reason}"
+            return False, f"Wait for better entry: {signal.reason}"
 
 
 def get_vix_entry_signal() -> VIXSignal:

@@ -440,7 +440,7 @@ class BullPutSpreadBacktester:
         print(f"📈 Estimated historical volatility: {base_iv * 100:.1f}%")
 
         # Filter to actual backtest period
-        bars_in_range = bars[bars["timestamp"] >= pd.Timestamp(start_date)]
+        bars_in_range = bars[bars["timestamp"] >= pd.Timestamp(start_date, tz="UTC")]
         print(f"📊 Retrieved {len(bars_in_range)} trading days of data")
 
         results = []

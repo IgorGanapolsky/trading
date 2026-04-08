@@ -34,13 +34,14 @@ class TestTradeConfidenceModel:
 class TestRegimeAdjustments:
     """Test regime-based confidence adjustments."""
 
-    def test_spike_regime_returns_zero(self):
-        """Test that spike regime returns zero confidence."""
+    def test_spike_regime_reduces_confidence(self):
+        """Test that spike regime reduces confidence (adjustment = 0.5)."""
         from src.ml.trade_confidence import TradeConfidenceModel
 
         model = TradeConfidenceModel()
-        conf = model.sample_confidence("iron_condor", "SPY", "spike")
-        assert conf == 0.0
+        spike_conf = model.sample_confidence("iron_condor", "SPY", "spike")
+        calm_conf = model.sample_confidence("iron_condor", "SPY", "calm")
+        assert spike_conf < calm_conf  # Spike should be lower than calm
 
     def test_calm_regime_boost(self):
         """Test that calm regime boosts confidence (adjustment > 1)."""
@@ -77,6 +78,9 @@ class TestTradeConfidenceResult:
             "wins",
             "losses",
             "total_trades",
+            "minimum_sample_size",
+            "sample_gate_passed",
+            "is_reliable",
         ]
         for key in required_keys:
             assert key in result, f"Missing key: {key}"
@@ -89,6 +93,34 @@ class TestTradeConfidenceResult:
         result = model.get_trade_confidence("iron_condor", "SPY", "calm")
         valid_recommendations = ["ENTER", "CONSIDER", "CAUTIOUS", "AVOID"]
         assert result["recommendation"] in valid_recommendations
+
+    def test_insufficient_samples_force_conservative_recommendation(self):
+        """Sparse samples should not produce an entry recommendation."""
+        from src.ml.trade_confidence import TradeConfidenceModel
+
+        model = TradeConfidenceModel()
+        model.model["spy_specific"] = {"alpha": 6.0, "beta": 1.0, "wins": 1, "losses": 0}
+
+        result = model.get_trade_confidence("iron_condor", "SPY", "calm")
+
+        assert result["total_trades"] == 1
+        assert result["sample_gate_passed"] is False
+        assert result["is_reliable"] is False
+        assert result["recommendation"] == "AVOID"
+
+    def test_non_spy_strategy_uses_strategy_specific_stats(self):
+        """Non-SPY lookups should use the requested strategy bucket, not SPY stats."""
+        from src.ml.trade_confidence import TradeConfidenceModel
+
+        model = TradeConfidenceModel()
+        model.model["bull_put_spread"] = {"alpha": 9.0, "beta": 3.0, "wins": 7, "losses": 2}
+
+        result = model.get_trade_confidence("bull_put_spread", "QQQ", "calm")
+
+        assert result["wins"] == 7
+        assert result["losses"] == 2
+        assert result["total_trades"] == 9
+        assert result["sample_gate_passed"] is True
 
 
 class TestSingletonAccess:

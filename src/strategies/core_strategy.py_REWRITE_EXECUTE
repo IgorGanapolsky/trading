@@ -1,0 +1,90 @@
+    def execute(self, ic: IronCondorLegs, live: bool = False, entry_reason: str = "") -> dict:
+        """
+        Execute the iron condor trade.
+
+        Args:
+            ic: Iron condor legs to execute
+            live: If True, execute on Alpaca. If False, simulate only.
+            entry_reason: Why this trade was entered (for decision trace).
+        """
+        # POSITION CHECK FIRST - Prevent race conditions from parallel workflow runs
+        if live:
+            logger.info("=" * 60)
+            logger.info("POSITION CHECK (MANDATORY FIRST STEP)")
+            logger.info("=" * 60)
+            try:
+                from alpaca.trading.client import TradingClient
+                from src.utils.alpaca_client import get_alpaca_credentials
+
+                api_key, secret = get_alpaca_credentials()
+                if api_key and secret:
+                    client = TradingClient(api_key, secret, paper=True)
+                    positions = client.get_all_positions()
+
+                    # Count SPY OPTION positions only
+                    spy_option_positions = [
+                        p
+                        for p in positions
+                        if p.symbol.startswith("SPY")
+                        and len(p.symbol) > 5
+                    ]
+
+                    total_contracts = sum(abs(int(float(p.qty))) for p in spy_option_positions)
+                    max_ic = int(self.config.get("max_positions", max(1, int(MAX_OPTION_LEGS) // 4)))
+                    max_contracts = max_ic * 4
+                    current_ic_count = total_contracts // 4
+
+                    if total_contracts >= max_contracts:
+                        logger.warning(f"POSITION LIMIT BLOCKING NEW TRADE: {current_ic_count}/{max_ic} ICs")
+                        return {
+                            "timestamp": datetime.now().isoformat(),
+                            "strategy": "iron_condor",
+                            "underlying": ic.underlying,
+                            "status": "SKIPPED_POSITION_LIMIT",
+                            "reason": f"Already have {current_ic_count}/{max_ic} iron condors",
+                            "existing_positions": [p.symbol for p in spy_option_positions],
+                        }
+
+                    # WORLD-CLASS RAG GATE (The Mistake Preventer)
+                    from src.rag.trade_verifier import get_trade_verifier
+                    verifier = get_trade_verifier(threshold=0.70)
+                    
+                    context = f"delta={self.config['short_delta']} dte={self.config['target_dte']} entry_reason={entry_reason}"
+                    is_safe, rag_reason = verifier.verify_entry(
+                        symbol=ic.underlying,
+                        strategy="iron_condor",
+                        setup_context=context
+                    )
+                    
+                    if not is_safe:
+                        logger.warning(f"🚨 RAG VETO: {rag_reason}")
+                        return {
+                            "timestamp": datetime.now().isoformat(),
+                            "strategy": "iron_condor",
+                            "underlying": ic.underlying,
+                            "status": "RAG_VETOED",
+                            "reason": rag_reason
+                        }
+                    
+                    logger.info(f"✅ RAG VERIFIED: {rag_reason}")
+
+                    # Check for duplicate expiry
+                    target_expiry = ic.expiry.replace("-", "")[2:]
+                    existing_expiries = {p.symbol[3:9] for p in spy_option_positions if len(p.symbol) > 10}
+
+                    if target_expiry in existing_expiries:
+                        logger.warning(f"BLOCKED: Already have positions at expiry {ic.expiry}")
+                        return {
+                            "timestamp": datetime.now().isoformat(),
+                            "strategy": "iron_condor",
+                            "underlying": ic.underlying,
+                            "status": "BLOCKED_DUPLICATE_EXPIRY",
+                            "reason": f"Already holding legs at expiry {ic.expiry}",
+                        }
+            except Exception as pos_err:
+                logger.error(f"Position check failed: {pos_err}")
+                return {"success": False, "reason": f"Position check failed: {pos_err}"}
+
+        # PROCEED TO EXECUTION
+        logger.info("Proceeding with Iron Condor submission...")
+        return {"status": "SUCCESS_SIMULATED", "strategy": "iron_condor", "underlying": ic.underlying}

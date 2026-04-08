@@ -1,30 +1,9 @@
-# GitHub Pages Configuration
-title: "AI Trading Journey"
-tagline: "Building an Autonomous AI Trading System in Public"
-description: "Open-source autonomous AI trading system built in public. Combines iron condor strategy execution, risk guardrails, searchable lessons learned, and a Ralph Mode subsystem for self-healing CI and automated bug-fix workflows."
+title: "SPY Options Validation Platform"
+description: "Broker-backed SPY options validation platform with hard risk gates, paired-trade accounting, and live operator surfaces."
 url: "https://igorganapolsky.github.io"
 baseurl: "/trading"
 lang: en
 
-# SEO - Enhanced for search visibility
-author: "Igor Ganapolsky & Claude"
-keywords: "AI trading, autonomous trading bot, Claude AI, options trading, algorithmic trading, machine learning trading, LLM trading, paper trading, lessons learned, self-healing CI, GitHub Actions automation, iron condor strategy, SPY options, autonomous systems, AI engineering, dev.to, ralph mode"
-twitter:
-  card: summary_large_image
-  username: igorganapolsky
-social:
-  name: Igor Ganapolsky
-  links:
-    - https://github.com/IgorGanapolsky
-    - https://twitter.com/igorganapolsky
-    - https://linkedin.com/in/igorganapolsky
-
-# Open Graph defaults
-defaults_og:
-  image: /assets/og-image.png
-  type: website
-
-# Build settings
 theme: minima
 permalink: /:year/:month/:day/:title/
 plugins:
@@ -32,50 +11,17 @@ plugins:
   - jekyll-seo-tag
   - jekyll-sitemap
 
-# Navigation - clean 3-item nav
 header_pages:
   - blog.html
-  - _reports/beats.md
-  - tech-stack.md
-  - about.html
 
-# Collections
-collections:
-  lessons:
-    output: false # Disabled Jan 12, 2026 - lessons contain stale stats, keep in rag_knowledge only
-    permalink: /lessons/:name/
-  reports:
-    output: true
-    permalink: /reports/:name/
-  discoveries:
-    output: true
-    permalink: /discoveries/:name/
-
-# Defaults
 defaults:
   - scope:
       path: ""
       type: "posts"
     values:
       layout: "post"
-      author: "Igor Ganapolsky & Claude"
-  - scope:
-      path: ""
-      type: "reports"
-    values:
-      layout: "post"
-      author: "AI Trading System"
-  - scope:
-      path: ""
-      type: "discoveries"
-    values:
-      layout: "post"
-      author: "AI CTO (Ralph Mode)"
+      author: "Igor Ganapolsky"
 
-# Analytics (add your GA4 ID)
-google_analytics:
-
-# Exclude from build
 exclude:
   - Gemfile
   - Gemfile.lock

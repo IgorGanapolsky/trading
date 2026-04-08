@@ -230,6 +230,7 @@ def sync_from_alpaca() -> dict | None:
             "equity": executor.account_equity,
             "cash": executor.account_snapshot.get("cash", 0),
             "buying_power": executor.account_snapshot.get("buying_power", 0),
+            "last_equity": last_equity,
             "positions": positions,
             "positions_count": len(positions),
             "trade_history": trade_history,
@@ -347,6 +348,7 @@ def update_system_state(alpaca_data: dict | None) -> None:
             state["paper_account"]["equity"] = paper_data.get("equity", 0)
             state["paper_account"]["cash"] = paper_data.get("cash", 0)
             state["paper_account"]["buying_power"] = paper_data.get("buying_power", 0)
+            state["paper_account"]["last_equity"] = paper_data.get("last_equity", 0)
             state["paper_account"]["positions_count"] = paper_data.get("positions_count", 0)
             state["paper_account"]["starting_balance"] = paper_starting
             state["paper_account"]["total_pl"] = paper_current - paper_starting

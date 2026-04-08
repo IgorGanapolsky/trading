@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "updated_at": "2026-03-30T20:30:00Z",
+  "updated_by": "seed",
+  "params": {
+    "target_delta": 0.15,
+    "wing_width": 10,
+    "target_dte": 30,
+    "min_dte": 21,
+    "max_dte": 45,
+    "min_credit": 0.50,
+    "profit_target": 0.50,
+    "stop_loss": 1.0,
+    "exit_dte": 7,
+    "max_ic": 4
+  },
+  "adjustments": [],
+  "confidence": 0.0,
+  "note": "Seed values from CLAUDE.md trading rules. ML pipeline will adjust params when confidence > 0.7 and trade_count >= 10."
+}

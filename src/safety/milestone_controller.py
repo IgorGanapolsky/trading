@@ -36,12 +36,9 @@ DEFAULT_PRIMARY_FAMILY = os.getenv("PRIMARY_STRATEGY_FAMILY", "options_income")
 
 KNOWN_FAMILIES = ("options_income", "equity_momentum", "alternatives", "other")
 FAMILY_THRESHOLDS: dict[str, dict[str, float | int]] = {
-    # Lowered from 75% to 60% for validation phase (Feb 13, 2026).
-    # Rationale: 75% threshold with contaminated win rate (37.5% from non-IC trades)
-    # was permanently blocking all IC entries, preventing the system from building
-    # the 30-trade track record needed for North Star validation.
-    # Once 30+ IC trades are closed, raise back to 75%.
-    "options_income": {"min_win_rate_pct": 60.0, "min_expectancy": 0.0, "min_samples": 0},
+    # Keep options income in validation mode until there is a real paired-trade sample.
+    # Paper-account summaries and raw fills are too noisy to certify edge.
+    "options_income": {"min_win_rate_pct": 60.0, "min_expectancy": 0.0, "min_samples": 12},
     "equity_momentum": {"min_win_rate_pct": 55.0, "min_expectancy": 0.0, "min_samples": 12},
     "alternatives": {"min_win_rate_pct": 55.0, "min_expectancy": 0.0, "min_samples": 12},
     "other": {"min_win_rate_pct": 55.0, "min_expectancy": 0.0, "min_samples": 12},
@@ -212,27 +209,6 @@ def _metrics_for_family(
         "window_days": round(window_days, 2) if samples > 0 else None,
         "evidence_source": "trades.json" if samples > 0 else "none",
     }
-
-    # Fallback: use paper_account summary for primary family if paired-trade ledger is sparse.
-    if samples == 0 and family == DEFAULT_PRIMARY_FAMILY:
-        paper = state.get("paper_account", {}) if isinstance(state, dict) else {}
-        paper_samples = _as_int(paper.get("win_rate_sample_size"), 0)
-        paper_win_rate = _as_float(paper.get("win_rate"), 0.0)
-        paper_total_pl = _as_float(paper.get("total_pl"), 0.0)
-        if paper_samples > 0:
-            expectancy_estimate = round(paper_total_pl / paper_samples, 4)
-            metrics.update(
-                {
-                    "samples": paper_samples,
-                    "wins": round((paper_win_rate / 100.0) * paper_samples),
-                    "losses": max(
-                        0, paper_samples - round((paper_win_rate / 100.0) * paper_samples)
-                    ),
-                    "win_rate_pct": round(paper_win_rate, 2),
-                    "expectancy": expectancy_estimate,
-                    "evidence_source": "paper_account_estimate",
-                }
-            )
 
     return metrics
 

@@ -36,13 +36,13 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.GH_PAT || github.token }}
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: "pip"
@@ -50,6 +50,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -q -r requirements-minimal.txt || pip install -q alpaca-py requests python-dotenv
+          pip install -q torch --index-url https://download.pytorch.org/whl/cpu 2>/dev/null || echo "⚠️ PyTorch not available - GRPO training will use fallback"
 
       - name: Sync Alpaca state
         env:
@@ -61,31 +62,68 @@ jobs:
         run: |
           python3 scripts/sync_alpaca_state.py
           python3 scripts/sync_closed_positions.py || echo "⚠️ Closed positions sync failed - win rate may be stale"
+          python3 scripts/update_ml_from_trades.py || echo "⚠️ ML feedback loop update failed"
+          python3 scripts/research_strategies.py || echo "⚠️ Strategy research failed"
+          python3 scripts/post_market_analysis.py || echo "⚠️ Post-market analysis failed"
           python3 scripts/update_north_star_operating_plan.py || echo "⚠️ North Star operating plan update failed"
 
-      - name: Manage Iron Condor Exits (Intraday)
+      - name: Build public status surfaces
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          ALPACA_BROKERAGE_TRADING_API_KEY: ${{ secrets.ALPACA_BROKERAGE_TRADING_API_KEY }}
+          ALPACA_BROKERAGE_TRADING_API_SECRET: ${{ secrets.ALPACA_BROKERAGE_TRADING_API_SECRET }}
+          REQUIRE_ALPACA_KEYS: "true"
+        run: |
+          python3 scripts/daily_scorecard.py --repo-root .
+          python3 scripts/build_public_status.py --repo-root .
+
+      # DISABLED: ic_simple.py is the sole position manager (2026-04-01)
+      # manage_iron_condor_positions.py was closing positions via individual legs
+      # while ic_simple.py manages them via MLEG — two competing systems caused
+      # unexpected position closures and potential P/L loss.
+      # - name: Manage Iron Condor Exits (Intraday)
+      #   run: python3 scripts/manage_iron_condor_positions.py
+
+      - name: Retrain GRPO Model
+        env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          echo "📊 Checking iron condor exit conditions (50% profit | 100% stop | 7 DTE)..."
-          python3 scripts/manage_iron_condor_positions.py || echo "⚠️ IC management skipped"
+          echo "🧠 Retraining GRPO policy from closed trade history..."
+          python3 scripts/run_grpo_training.py || echo "⚠️ GRPO training skipped (insufficient data or missing deps)"
 
       - name: Commit synced state
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
 
+          npx --yes prettier@3.6.2 --write \
+            data/system_state.json \
+            data/runtime/intraday_pnl_history.json \
+            data/runtime/intraday_pnl_latest.json \
+            data/trades.json \
+            docs/data/public_status.json \
+            models/ml/grpo_trade_metadata.json \
+            || true
+
           git add data/system_state.json
           git add data/runtime/intraday_pnl_history.json 2>/dev/null || true
           git add data/runtime/intraday_pnl_latest.json 2>/dev/null || true
           git add -f data/north_star_weekly_history.json 2>/dev/null || true
           git add data/trades.json 2>/dev/null || true
+          git add docs/data/public_status.json 2>/dev/null || true
+          git add wiki/Home.md wiki/Progress-Dashboard.md wiki/Development-Engine-and-Evidence.md 2>/dev/null || true
           git add data/runtime/north_star_gate_overrides.json 2>/dev/null || true
           git add models/ml/trade_confidence_model.json 2>/dev/null || true
           git add models/ml/feedback_model.json 2>/dev/null || true
           git add -f data/feedback/trade_trajectories.jsonl 2>/dev/null || true
+          git add models/ml/grpo_trade_policy.pt 2>/dev/null || true
+          git add models/ml/grpo_trade_metadata.json 2>/dev/null || true
+          git add -f data/rag_knowledge/lessons_learned/postmortem_*.md 2>/dev/null || true
+          git add -f data/rag_knowledge/lessons_learned/research_*.md 2>/dev/null || true
+          git add data/research_state.json 2>/dev/null || true
+          git add -f data/post_market_analysis/ 2>/dev/null || true
+          git add data/TRADING_HALTED 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "No state changes to commit"
             exit 0
@@ -99,9 +137,35 @@ jobs:
 
           git push origin HEAD:main || echo "Push to main skipped (protected branch or no permission)"
 
+      - name: Sync public wiki and repo metadata
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
+        run: |
+          set -euo pipefail
+
+          description="$(tr '\n' ' ' < .github/public/about.txt | sed 's/[[:space:]]\\+/ /g' | sed 's/^ //; s/ $//')"
+          gh repo edit "${{ github.repository }}" --description "$description"
+
+          tmp_dir="$(mktemp -d)"
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.wiki.git" "$tmp_dir/wiki"
+          cp wiki/Home.md "$tmp_dir/wiki/Home.md"
+          cp wiki/Progress-Dashboard.md "$tmp_dir/wiki/Progress-Dashboard.md"
+          cp wiki/Development-Engine-and-Evidence.md "$tmp_dir/wiki/Development-Engine-and-Evidence.md"
+          cd "$tmp_dir/wiki"
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add Home.md Progress-Dashboard.md Development-Engine-and-Evidence.md
+          if git diff --staged --quiet; then
+            echo "No wiki or metadata changes to publish"
+            exit 0
+          fi
+          git commit -m "chore: sync public wiki surfaces [auto]"
+          git push origin HEAD
+
       - name: Notify on Failure
         if: failure()
-        continue-on-error: true  # Non-critical: notification failure shouldn't change workflow status
+        continue-on-error: true # Non-critical: notification failure shouldn't change workflow status
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}

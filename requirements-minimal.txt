@@ -16,7 +16,7 @@ alpha-vantage==2.3.1
 # schedule==1.2.2              # REMOVED: Never imported (Jan 2026)
 
 # Web Scraping & APIs
-requests==2.32.5
+requests==2.33.1
 praw==7.8.1
 # feedparser==6.0.12           # REMOVED: Never imported (Jan 2026)
 
@@ -28,7 +28,7 @@ python-dotenv==1.2.2
 pydantic-settings==2.13.1
 
 # Market calendars
-holidays==0.91
+holidays==0.93
 
 # Utilities
 python-dateutil==2.9.0.post0
@@ -54,8 +54,8 @@ pytest-timeout>=2.0.0
 # selenium==4.15.0               # Never imported - web scraping not implemented
 # beautifulsoup4==4.12.2         # Never imported - HTML parsing not used
 # lxml==4.9.3                    # Never imported - XML parsing not used
-fastapi==0.135.1                # MCP server for component manifest
-uvicorn==0.41.0                 # ASGI server for MCP
+fastapi==0.135.2                # MCP server for component manifest
+uvicorn==0.42.0                 # ASGI server for MCP
 httpx==0.28.1                   # TestClient compatibility with fastapi/starlette
 # scikit-learn==1.5.0            # Never imported - ML models not implemented
 # python-crontab==3.0.0          # Never imported - using schedule instead

@@ -248,23 +248,25 @@ class TradeGateway:
     MAX_OPTION_LEGS_OPEN = MAX_CONCURRENT_ICS * 4
     MAX_CUMULATIVE_RISK_PCT = _MAX_CUMULATIVE_RISK_PCT
 
-    # Earnings blackout calendar (Jan 2026)
-    # UPDATED Jan 15, 2026: Block trades 7 days before through 1 day after earnings
-    # LL-190: SOFI CSP was opened during blackout - caused 48% portfolio risk
-    # LL-191: SOFI position still open despite strategy saying "AVOID until Feb 1"
-    EARNINGS_BLACKOUTS = {
-        "SOFI": {
-            "start": "2026-01-23",
-            "end": "2026-02-01",
-            "earnings": "2026-01-30",
-        },  # 7 days before earnings
-        "F": {
-            "start": "2026-02-03",
-            "end": "2026-02-11",
-            "earnings": "2026-02-10",
-        },  # 7 days before earnings
-        # Add more tickers as needed
-    }
+    # Earnings blackout: SPY is an ETF — no earnings.
+    # Individual stocks are blacklisted (CLAUDE.md: SPY ONLY).
+    # FOMC dates are the real risk for SPY ICs.
+    # 2026 FOMC meeting dates (announcement day):
+    FOMC_DATES = [
+        "2026-01-28",
+        "2026-03-18",
+        "2026-05-06",
+        "2026-06-17",
+        "2026-07-29",
+        "2026-09-16",
+        "2026-11-04",
+        "2026-12-16",
+    ]
+    # Block new IC entries 2 days before FOMC through 1 day after
+    FOMC_BLACKOUT_DAYS_BEFORE = 2
+    FOMC_BLACKOUT_DAYS_AFTER = 1
+
+    EARNINGS_BLACKOUTS: dict = {}  # No individual stocks traded
 
     # Maximum position risk as percentage of portfolio
     # LL-190: SOFI CSP had 48% portfolio risk - unacceptable
@@ -353,27 +355,24 @@ class TradeGateway:
 
     def _check_earnings_blackout(self, symbol: str) -> tuple[bool, str]:
         """
-        Check if symbol is in earnings blackout period.
+        Check if symbol is in FOMC blackout period.
 
-        Args:
-            symbol: Stock or option symbol
-
-        Returns:
-            (is_blocked, reason_message)
+        SPY is an ETF with no earnings. FOMC dates are the real vol risk.
+        Block new IC entries 2 days before through 1 day after FOMC.
         """
+        from datetime import timedelta
+
         today = datetime.now().date()
-        underlying = self._get_underlying_symbol(symbol)
 
-        if underlying.upper() in self.EARNINGS_BLACKOUTS:
-            blackout = self.EARNINGS_BLACKOUTS[underlying.upper()]
-            start = datetime.strptime(blackout["start"], "%Y-%m-%d").date()
-            end = datetime.strptime(blackout["end"], "%Y-%m-%d").date()
-            earnings = blackout["earnings"]
+        for fomc_str in self.FOMC_DATES:
+            fomc_date = datetime.strptime(fomc_str, "%Y-%m-%d").date()
+            blackout_start = fomc_date - timedelta(days=self.FOMC_BLACKOUT_DAYS_BEFORE)
+            blackout_end = fomc_date + timedelta(days=self.FOMC_BLACKOUT_DAYS_AFTER)
 
-            if start <= today <= end:
+            if blackout_start <= today <= blackout_end:
                 return (
                     True,
-                    f"{underlying} in earnings blackout {start} to {end} (earnings: {earnings})",
+                    f"FOMC blackout {blackout_start} to {blackout_end} (announcement: {fomc_str})",
                 )
 
         return False, ""

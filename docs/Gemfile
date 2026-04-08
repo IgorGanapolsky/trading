@@ -1,5 +1,0 @@
-source "https://rubygems.org"
-
-# Keep GitHub Pages' own dependency set so the built-in `pages-build-deployment`
-# workflow can build the site without Gem version conflicts.
-gem "github-pages", group: :jekyll_plugins

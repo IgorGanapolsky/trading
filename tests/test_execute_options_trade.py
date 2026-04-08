@@ -17,7 +17,6 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from scripts.execute_options_trade import (
@@ -154,20 +153,18 @@ class TestGetAccountInfo:
     """Test account info extraction."""
 
     def test_get_account_info_extracts_values(self):
-        """Account info should extract cash, buying_power, portfolio_value."""
+        """Account info should extract equity, cash, buying_power."""
         mock_client = MagicMock()
         mock_account = MagicMock()
+        mock_account.equity = "100000.00"
         mock_account.cash = "100000.00"
         mock_account.buying_power = "200000.00"
-        mock_account.portfolio_value = "100000.00"
-        mock_account.options_buying_power = "50000.00"
         mock_client.get_account.return_value = mock_account
 
         info = get_account_info(mock_client)
+        assert info["equity"] == 100000.0
         assert info["cash"] == 100000.0
         assert info["buying_power"] == 200000.0
-        assert info["portfolio_value"] == 100000.0
-        assert info["options_buying_power"] == 50000.0
 
 
 class TestExecuteCashSecuredPut:

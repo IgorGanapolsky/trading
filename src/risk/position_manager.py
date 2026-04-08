@@ -106,7 +106,9 @@ class ExitConditions:
         """
         # Options specific logic (added Feb 24, 2026)
         if asset_class == AssetClass.OPTIONS:
-            return (0.50, 1.00, 45)  # 50% profit target for credit spreads
+            from src.core.trading_constants import IC_PROFIT_TARGET_PCT
+
+            return (IC_PROFIT_TARGET_PCT, 1.00, 45)  # Canonical profit target
 
         # All other assets use equity thresholds
         return (self.take_profit_pct, self.stop_loss_pct, self.max_holding_days)

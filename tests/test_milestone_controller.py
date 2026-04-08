@@ -236,3 +236,24 @@ def test_cadence_score_changes_gradually_near_threshold(tmp_path):
     ]["score"]
 
     assert 0 <= score_near - score_below < 8.0
+
+
+def test_milestone_snapshot_does_not_infer_family_edge_from_paper_account_summary(tmp_path):
+    state_path = tmp_path / "system_state.json"
+    trades_path = tmp_path / "trades.json"
+
+    _write_json(
+        state_path,
+        {
+            "paper_account": {"equity": 101000, "win_rate": 80.0, "win_rate_sample_size": 40},
+            "paper_trading": {"current_day": 12, "target_duration_days": 90},
+        },
+    )
+    _write_json(trades_path, {"trades": []})
+
+    snapshot = compute_milestone_snapshot(state_path=state_path, trades_path=trades_path)
+    options_state = snapshot["strategy_families"]["options_income"]
+
+    assert options_state["metrics"]["samples"] == 0
+    assert options_state["metrics"]["evidence_source"] == "none"
+    assert options_state["status"] == "validation"
