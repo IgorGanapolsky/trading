@@ -38,6 +38,7 @@ from dotenv import load_dotenv
 
 from src.core.trading_constants import IC_PROFIT_TARGET_PCT
 from src.core.trading_constants import MAX_POSITIONS as MAX_OPTION_LEGS
+from src.markets.option_chain import select_strikes_by_delta as _select_strikes_by_delta
 from src.orchestrator.telemetry import OrchestratorTelemetry
 from src.rag.lessons_learned_rag import LessonsLearnedRAG
 from src.safety.mandatory_trade_gate import safe_submit_order
@@ -53,6 +54,11 @@ init_sentry()
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
+
+def select_strikes_by_delta(*args, **kwargs):
+    """Compatibility seam for trader tests and callers patching this module."""
+    return _select_strikes_by_delta(*args, **kwargs)
 
 
 @dataclass
@@ -140,8 +146,6 @@ class IronCondorStrategy:
         Falls back to 5% OTM heuristic if chain data is unavailable.
         Stores the selection result on self._last_strike_selection for tracing.
         """
-        from src.markets.option_chain import select_strikes_by_delta
-
         selection = select_strikes_by_delta(
             underlying_price=price,
             wing_width=self.config["wing_width"],
