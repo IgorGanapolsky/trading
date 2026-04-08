@@ -80,7 +80,7 @@
   "mcpServers": {
     "rlhf": {
       "command": "npx",
-      "args": ["--yes", "--package", "thumbgate@0.9.13", "thumbgate", "serve"]
+      "args": ["--yes", "--package", "thumbgate@0.9.14", "thumbgate", "serve"]
     },
     "massive": {
       "command": "mcp_massive",

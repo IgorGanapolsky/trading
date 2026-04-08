@@ -5,7 +5,7 @@
       "args": [
         "--yes",
         "--package",
-        "thumbgate@0.9.13",
+        "thumbgate@0.9.14",
         "thumbgate",
         "serve"
       ]

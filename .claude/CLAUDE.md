@@ -30,7 +30,7 @@ Source of truth: `src/core/trading_constants.py`
 ```bash
 pytest tests/ -q                            # run tests
 ruff check src/                             # lint
-npx --yes --package thumbgate@0.9.13 thumbgate summary  # inspect local agent feedback memory
+npx --yes --package thumbgate@0.9.14 thumbgate summary  # inspect local agent feedback memory
 printf 'thumbs down' | python3 scripts/capture_hook_feedback.py
 python scripts/sync_alpaca_state.py          # refresh broker snapshot
 python scripts/sync_closed_positions.py      # refresh paired trade ledger

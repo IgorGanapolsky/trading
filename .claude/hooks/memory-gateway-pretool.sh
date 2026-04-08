@@ -7,7 +7,7 @@ TOOL_COMMAND="${1-}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 CUSTOM_GATES="${PROJECT_ROOT}/config/memory-gateway/gates.json"
-THUMBGATE_CMD=(npx --yes --package thumbgate@0.9.13 thumbgate gate-check)
+THUMBGATE_CMD=(npx --yes --package thumbgate@0.9.14 thumbgate gate-check)
 
 HOOK_JSON="$(
 	python3 - "${TOOL_COMMAND}" <<'PY'

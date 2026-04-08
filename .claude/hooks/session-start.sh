@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${CLAUDE_PROJECT_DIR:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 RLHF_DIR="${PROJECT_ROOT}/.rlhf"
 RULES_FILE="${RLHF_DIR}/prevention-rules.md"
-THUMBGATE_CMD=(npx --yes --package thumbgate@0.9.13 thumbgate)
+THUMBGATE_CMD=(npx --yes --package thumbgate@0.9.14 thumbgate)
 
 mkdir -p "${RLHF_DIR}"
 
