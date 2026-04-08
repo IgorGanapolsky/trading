@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Session Start Hook - gateway-backed summary for local agent memory.
+# Session Start Hook - ThumbGate-backed summary for local agent memory.
 
 set -euo pipefail
 
@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${CLAUDE_PROJECT_DIR:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 RLHF_DIR="${PROJECT_ROOT}/.rlhf"
 RULES_FILE="${RLHF_DIR}/prevention-rules.md"
-GATEWAY_CMD=(npx -y mcp-memory-gateway@0.8.5)
+THUMBGATE_CMD=(npx --yes --package thumbgate@0.9.13 thumbgate)
 
 mkdir -p "${RLHF_DIR}"
 
@@ -24,7 +24,7 @@ echo ""
 echo "Mandatory Rules:"
 echo "  1. Phil Town Rule #1: Don't lose money"
 echo "  2. Thumbs down -> record the failure pattern before continuing"
-echo "  3. Use MCP Memory Gateway as the canonical local feedback path"
+echo "  3. Use ThumbGate as the canonical local feedback path"
 echo ""
 
 python3 - "${RLHF_DIR}" <<'PY' 2>/dev/null || true
@@ -63,13 +63,14 @@ if last_signal:
 PY
 
 if command -v npx >/dev/null 2>&1; then
-  "${GATEWAY_CMD[@]}" rules --output="${RULES_FILE}" --min=2 >/dev/null 2>&1 || true
+	"${THUMBGATE_CMD[@]}" session-start >/dev/null 2>&1 || true
+	"${THUMBGATE_CMD[@]}" rules --output="${RULES_FILE}" --min=2 >/dev/null 2>&1 || true
 fi
 
-if [[ -f "${RULES_FILE}" ]]; then
-  echo ""
-  echo "Active Prevention Rules:"
-  sed -n '1,20p' "${RULES_FILE}" || true
+if [[ -f ${RULES_FILE} ]]; then
+	echo ""
+	echo "Active Prevention Rules:"
+	sed -n '1,20p' "${RULES_FILE}" || true
 fi
 
 # Also surface recent mistakes directly from memory log (prevention rules may be empty)

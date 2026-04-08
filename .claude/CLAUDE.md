@@ -30,7 +30,7 @@ Source of truth: `src/core/trading_constants.py`
 ```bash
 pytest tests/ -q                            # run tests
 ruff check src/                             # lint
-npx -y mcp-memory-gateway@0.7.1 status      # inspect local agent feedback memory
+npx --yes --package thumbgate@0.9.13 thumbgate summary  # inspect local agent feedback memory
 printf 'thumbs down' | python3 scripts/capture_hook_feedback.py
 python scripts/sync_alpaca_state.py          # refresh broker snapshot
 python scripts/sync_closed_positions.py      # refresh paired trade ledger
@@ -57,14 +57,14 @@ python src/orchestration/daggr_workflow.py   # run full trading session
 1. Never repeat an unverified claim -- if you said it once without evidence, verify before saying it again
 2. Never argue with the CEO -- execute immediately
 3. Don't lose money -- Phil Town Rule #1
-3. Never tell CEO to do manual work -- automate everything
-4. Always show evidence -- command output with every claim
-5. Never lie -- "verifying now..." NOT "Done!"
-6. Never hallucinate -- 0 data = "I don't know"
-7. Use PRs for all changes -- merge via GitHub API
-8. Compound engineering -- Fix -> Test -> Prevent -> Memory -> Verify
-9. Never hardcode credentials -- use env vars only
-10. Parallel execution -- use Task tool agents
+4. Never tell CEO to do manual work -- automate everything
+5. Always show evidence -- command output with every claim
+6. Never lie -- "verifying now..." NOT "Done!"
+7. Never hallucinate -- 0 data = "I don't know"
+8. Use PRs for all changes -- merge via GitHub API
+9. Compound engineering -- Fix -> Test -> Prevent -> Memory -> Verify
+10. Never hardcode credentials -- use env vars only
+11. Parallel execution -- use Task tool agents
 
 ## CTO Mandates
 

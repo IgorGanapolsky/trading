@@ -3,8 +3,10 @@
     "rlhf": {
       "command": "npx",
       "args": [
-        "-y",
-        "mcp-memory-gateway@0.7.1",
+        "--yes",
+        "--package",
+        "thumbgate@0.9.13",
+        "thumbgate",
         "serve"
       ]
     }
