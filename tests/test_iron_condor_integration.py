@@ -56,7 +56,7 @@ class TestIronCondorSuccessfulEntry:
             long_put_ask=0.50, long_call_ask=0.30,
         )
         with patch.object(strategy, "get_underlying_price", return_value=690.0), \
-             patch("scripts.iron_condor_trader.select_strikes_by_delta", return_value=mock_selection):
+             patch("src.markets.option_chain.select_strikes_by_delta", return_value=mock_selection):
             ic = strategy.find_trade()
 
         assert ic is not None

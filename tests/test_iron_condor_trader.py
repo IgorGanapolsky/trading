@@ -107,7 +107,7 @@ class TestCalculateStrikes:
         )
         strategy = IronCondorStrategy()
         with patch(
-            "scripts.iron_condor_trader.select_strikes_by_delta", return_value=mock_selection
+            "src.markets.option_chain.select_strikes_by_delta", return_value=mock_selection
         ):
             return strategy.calculate_strikes(price)
 
@@ -227,7 +227,7 @@ class TestFindTrade:
     def test_find_trade_returns_iron_condor_legs(self, mock_price):
         """find_trade should return a complete IronCondorLegs object."""
         strategy = IronCondorStrategy()
-        with patch("scripts.iron_condor_trader.select_strikes_by_delta", return_value=self._mock_live_delta()):
+        with patch("src.markets.option_chain.select_strikes_by_delta", return_value=self._mock_live_delta()):
             ic = strategy.find_trade()
 
         assert ic is not None
@@ -243,7 +243,7 @@ class TestFindTrade:
         """Options expiry should be a Friday."""
         # Mock returns 2026-05-16 which is a Friday
         strategy = IronCondorStrategy()
-        with patch("scripts.iron_condor_trader.select_strikes_by_delta", return_value=self._mock_live_delta()):
+        with patch("src.markets.option_chain.select_strikes_by_delta", return_value=self._mock_live_delta()):
             ic = strategy.find_trade()
 
         assert ic is not None
