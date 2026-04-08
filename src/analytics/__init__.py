@@ -9,11 +9,14 @@ __all__ = [
     "build_analytics_artifacts",
     "build_local_ops_snapshot",
     "build_perplexity_usage_snapshot",
+    "build_trade_setup_audit",
     "recommend_provider",
     "render_local_ops_markdown",
     "render_sql_analytics_summary",
+    "render_trade_setup_audit_markdown",
     "run_browser_ab_pilot",
     "summarize_provider_results",
+    "write_trade_setup_audit_artifacts",
 ]
 
 
@@ -44,6 +47,18 @@ def __getattr__(name: str) -> Any:
         "render_sql_analytics_summary": (
             "src.analytics.sqlite_analytics",
             "render_sql_analytics_summary",
+        ),
+        "build_trade_setup_audit": (
+            "src.analytics.trade_setup_audit",
+            "build_trade_setup_audit",
+        ),
+        "render_trade_setup_audit_markdown": (
+            "src.analytics.trade_setup_audit",
+            "render_trade_setup_audit_markdown",
+        ),
+        "write_trade_setup_audit_artifacts": (
+            "src.analytics.trade_setup_audit",
+            "write_trade_setup_audit_artifacts",
         ),
     }
     if name not in module_map:
