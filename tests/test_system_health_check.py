@@ -2,6 +2,7 @@ import json
 from types import SimpleNamespace
 
 import scripts.system_health_check as sh
+from src.observability.llm_observability import LLMObservabilityReport
 
 
 class _FakeTable:
@@ -80,6 +81,37 @@ def test_check_vector_db_is_non_blocking_in_bounded_mode_for_missing_path(monkey
 
     assert result["status"] == "STUB"
     assert any("non-blocking in bounded CI mode" in detail for detail in result["details"])
+
+
+def test_check_llm_observability_surfaces_warning_without_failing(monkeypatch):
+    monkeypatch.setattr(
+        sh,
+        "build_llm_observability_report",
+        lambda: LLMObservabilityReport(
+            status="warning",
+            summary="Gateway routing active; OpenRouter logs are subset-only.",
+            primary_route="gateway",
+            primary_base_url="https://gateway.example/v1",
+            primary_base_host="gateway.example",
+            fallback_base_host="openrouter.ai",
+            openrouter_api_key_present=True,
+            gateway_base_url_present=True,
+            gateway_base_host="gateway.example",
+            gateway_api_key_present=True,
+            input_output_logging_declared=True,
+            openrouter_private_logs_cover_primary=False,
+            openrouter_private_logs_cover_fallback=True,
+            critical_execution_provider="anthropic",
+            critical_execution_covered_by_openrouter=False,
+            warnings=("subset-only coverage",),
+            notes=("critical execution outside OpenRouter logs",),
+        ),
+    )
+
+    result = sh.check_llm_observability()
+
+    assert result["status"] == "WARNING"
+    assert any("subset-only" in detail for detail in result["details"])
 
 
 def test_check_position_completeness_allows_long_only_defined_risk_structure(monkeypatch, tmp_path):

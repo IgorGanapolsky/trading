@@ -115,6 +115,15 @@ def test_daily_trading_workflow_checks_both_halt_sentinels():
     assert "manual halt active" in workflow_text
 
 
+def test_daily_trading_workflow_uses_llm_observability_check():
+    """Daily trading should use the real LLM observability check, not stale LangSmith text."""
+    workflow_text = Path(".github/workflows/daily-trading.yml").read_text()
+
+    assert "python3 scripts/check_llm_observability.py" in workflow_text
+    assert "LangSmith" not in workflow_text
+    assert "HELICONE_API_KEY" not in workflow_text
+
+
 def test_browser_automation_pilot_respects_pr_only_rule():
     """Browser telemetry workflow must not push directly to protected main."""
     workflow_path = Path(".github/workflows/browser-automation-pilot.yml")
