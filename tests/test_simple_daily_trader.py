@@ -86,13 +86,11 @@ class TestShouldOpenPosition:
 
         mock_datetime.now.return_value = mock_now
 
-        # Simulate 4 option legs. Canonical config currently allows up to 8 legs
-        # for this script, so this should still allow a new spread.
+        # Simulate 2 option legs. Canonical MAX_POSITIONS=8, this script uses 8//2=4.
+        # 2 positions < 4 limit, so new entry should be allowed.
         mock_positions.return_value = [
-            {"symbol": "INTC260109P00035000"},  # Option
-            {"symbol": "SOFI260123P00024000"},  # Option
-            {"symbol": "AMD260116P00200000"},  # Option
             {"symbol": "SPY260123P00660000"},  # Option
+            {"symbol": "SPY260123P00650000"},  # Option
         ]
 
         # Cash-secured puts require: strike_estimate * 100

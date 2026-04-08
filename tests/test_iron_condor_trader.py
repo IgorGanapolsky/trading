@@ -83,18 +83,36 @@ class TestIronCondorLegs:
 
 
 class TestCalculateStrikes:
-    """Test strike calculation logic (heuristic fallback path)."""
+    """Test strike calculation logic with live delta mock."""
 
     def _strikes(self, price):
-        """Calculate strikes with chain mocked to force heuristic."""
+        """Calculate strikes with mocked live delta selection."""
+        from src.markets.option_chain import StrikeSelection
+
+        short_put = round(price * 0.95 / 5) * 5
+        short_call = round(price * 1.05 / 5) * 5
+        mock_selection = StrikeSelection(
+            short_put=short_put,
+            long_put=short_put - 10,
+            short_call=short_call,
+            long_call=short_call + 10,
+            put_delta=0.15,
+            call_delta=0.15,
+            method="live_delta",
+            expiry="2026-05-15",
+            put_bid=1.50,
+            call_bid=1.00,
+            long_put_ask=0.50,
+            long_call_ask=0.30,
+        )
         strategy = IronCondorStrategy()
         with patch(
-            "src.markets.option_chain._select_from_live_chain", side_effect=ValueError("test")
+            "scripts.iron_condor_trader.select_strikes_by_delta", return_value=mock_selection
         ):
             return strategy.calculate_strikes(price)
 
     def test_strikes_for_spy_at_690(self):
-        """Strike calculation at SPY ~690 (heuristic)."""
+        """Strike calculation at SPY ~690 with live delta."""
         long_put, short_put, short_call, long_call = self._strikes(690.0)
 
         assert short_put == round(690.0 * 0.95 / 5) * 5  # 655.5 -> 655
@@ -121,6 +139,15 @@ class TestCalculateStrikes:
         """Strikes must be ordered: LP < SP < SC < LC."""
         long_put, short_put, short_call, long_call = self._strikes(700.0)
         assert long_put < short_put < short_call < long_call
+
+    def test_heuristic_fallback_blocked(self):
+        """Heuristic fallback must return None (unknown delta is unsafe)."""
+        strategy = IronCondorStrategy()
+        with patch(
+            "src.markets.option_chain._select_from_live_chain", side_effect=ValueError("test")
+        ):
+            result = strategy.calculate_strikes(700.0)
+        assert result == (None, None, None, None)
 
 
 class TestCalculatePremiums:
@@ -181,13 +208,27 @@ class TestStrategyConfig:
 
 
 class TestFindTrade:
-    """Test find_trade method."""
+    """Test find_trade method with mocked live delta."""
+
+    def _mock_live_delta(self):
+        """Return a mock StrikeSelection with live delta."""
+        from src.markets.option_chain import StrikeSelection
+
+        return StrikeSelection(
+            short_put=655.0, long_put=645.0,
+            short_call=725.0, long_call=735.0,
+            put_delta=0.15, call_delta=0.15,
+            method="live_delta", expiry="2026-05-16",
+            put_bid=1.50, call_bid=1.00,
+            long_put_ask=0.50, long_call_ask=0.30,
+        )
 
     @patch.object(IronCondorStrategy, "get_underlying_price", return_value=690.0)
     def test_find_trade_returns_iron_condor_legs(self, mock_price):
         """find_trade should return a complete IronCondorLegs object."""
         strategy = IronCondorStrategy()
-        ic = strategy.find_trade()
+        with patch("scripts.iron_condor_trader.select_strikes_by_delta", return_value=self._mock_live_delta()):
+            ic = strategy.find_trade()
 
         assert ic is not None
         assert isinstance(ic, IronCondorLegs)
@@ -200,9 +241,12 @@ class TestFindTrade:
     @patch.object(IronCondorStrategy, "get_underlying_price", return_value=690.0)
     def test_find_trade_expiry_is_friday(self, mock_price):
         """Options expiry should be a Friday."""
+        # Mock returns 2026-05-16 which is a Friday
         strategy = IronCondorStrategy()
-        ic = strategy.find_trade()
+        with patch("scripts.iron_condor_trader.select_strikes_by_delta", return_value=self._mock_live_delta()):
+            ic = strategy.find_trade()
 
+        assert ic is not None
         expiry_date = datetime.strptime(ic.expiry, "%Y-%m-%d")
         assert expiry_date.weekday() == 4, f"Expiry {ic.expiry} is not a Friday"
 
