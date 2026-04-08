@@ -3,7 +3,7 @@
 Tests for Pre-Trade Checklist Module - CLAUDE.md Enforcement
 
 Comprehensive test suite covering:
-- Ticker validation (SPY/IWM only)
+- Ticker validation (SPY only)
 - Position size limits (5% max)
 - Spread requirement enforcement
 - Earnings blackout detection
@@ -45,7 +45,7 @@ class TestPreTradeChecklistInitialization:
 
     def test_constants_match_claude_md(self):
         """Verify constants match trading_constants.py specification."""
-        assert {"SPY", "SPX", "XSP", "QQQ", "IWM"} == PreTradeChecklist.ALLOWED_TICKERS
+        assert {"SPY"} == PreTradeChecklist.ALLOWED_TICKERS
         assert PreTradeChecklist.MAX_POSITION_PCT == 0.05
         assert PreTradeChecklist.MIN_DTE == 30
         assert PreTradeChecklist.MAX_DTE == 45
@@ -65,30 +65,34 @@ class TestTickerValidation:
         assert passed is True
         assert len(failures) == 0
 
-    def test_spx_allowed(self, checklist):
-        """SPX should pass ticker check."""
+    def test_spx_blocked(self, checklist):
+        """SPX should fail ticker check - SPY only per CLAUDE.md."""
         passed, failures = checklist.validate(symbol="SPX", max_loss=100.0, dte=35, is_spread=True)
-        assert passed is True
+        assert passed is False
+        assert any("SPX not allowed" in f for f in failures)
 
-    def test_xsp_allowed(self, checklist):
-        """XSP should pass ticker check."""
+    def test_xsp_blocked(self, checklist):
+        """XSP should fail ticker check - SPY only per CLAUDE.md."""
         passed, failures = checklist.validate(symbol="XSP", max_loss=100.0, dte=35, is_spread=True)
-        assert passed is True
+        assert passed is False
+        assert any("XSP not allowed" in f for f in failures)
 
-    def test_iwm_allowed(self, checklist):
-        """IWM should pass ticker check - UPDATED Feb 16, 2026: liquid ETFs per CLAUDE.md."""
+    def test_iwm_blocked(self, checklist):
+        """IWM should fail ticker check - SPY only per CLAUDE.md."""
         passed, failures = checklist.validate(symbol="IWM", max_loss=100.0, dte=35, is_spread=True)
-        assert passed is True
+        assert passed is False
+        assert any("IWM not allowed" in f for f in failures)
 
     def test_spy_lowercase_allowed(self, checklist):
         """Lowercase spy should pass ticker check."""
         passed, failures = checklist.validate(symbol="spy", max_loss=100.0, dte=35, is_spread=True)
         assert passed is True
 
-    def test_spx_mixed_case_allowed(self, checklist):
-        """Mixed case SpX should pass ticker check."""
+    def test_spx_mixed_case_blocked(self, checklist):
+        """Mixed case SpX should fail ticker check - SPY only per CLAUDE.md."""
         passed, failures = checklist.validate(symbol="SpX", max_loss=100.0, dte=35, is_spread=True)
-        assert passed is True
+        assert passed is False
+        assert any("SPX not allowed" in f for f in failures)
 
     def test_f_not_allowed(self, checklist):
         """F (Ford) should fail ticker check."""
@@ -131,26 +135,29 @@ class TestOptionsSymbolParsing:
         )
         assert passed is True
 
-    def test_spx_options_symbol_extraction(self, checklist):
-        """SPX options symbol should extract SPX underlying."""
+    def test_spx_options_symbol_blocked(self, checklist):
+        """SPX options symbol should fail - SPY only per CLAUDE.md."""
         passed, failures = checklist.validate(
             symbol="SPX260221P00660000", max_loss=100.0, dte=35, is_spread=True
         )
-        assert passed is True
+        assert passed is False
+        assert any("SPX not allowed" in f for f in failures)
 
-    def test_xsp_options_symbol_extraction(self, checklist):
-        """XSP options symbol should extract XSP underlying."""
+    def test_xsp_options_symbol_blocked(self, checklist):
+        """XSP options symbol should fail - SPY only per CLAUDE.md."""
         passed, failures = checklist.validate(
             symbol="XSP260221P00066000", max_loss=100.0, dte=35, is_spread=True
         )
-        assert passed is True
+        assert passed is False
+        assert any("XSP not allowed" in f for f in failures)
 
-    def test_iwm_options_symbol_allowed(self, checklist):
-        """IWM options symbol should pass - UPDATED Feb 16, 2026: liquid ETFs."""
+    def test_iwm_options_symbol_blocked(self, checklist):
+        """IWM options symbol should fail - SPY only per CLAUDE.md."""
         passed, failures = checklist.validate(
             symbol="IWM260221C00220000", max_loss=100.0, dte=35, is_spread=True
         )
-        assert passed is True
+        assert passed is False
+        assert any("IWM not allowed" in f for f in failures)
 
     def test_aapl_options_symbol_rejected(self, checklist):
         """AAPL options symbol should be rejected."""
@@ -269,10 +276,11 @@ class TestEarningsBlackoutValidation:
         assert passed is True
         assert not any("blackout" in f.lower() for f in failures)
 
-    def test_iwm_passes_ticker_check(self, checklist):
-        """IWM should pass ticker check - UPDATED Feb 16, 2026: liquid ETFs per CLAUDE.md."""
+    def test_iwm_blocked_ticker_check(self, checklist):
+        """IWM should fail ticker check - SPY only per CLAUDE.md."""
         passed, failures = checklist.validate(symbol="IWM", max_loss=100.0, dte=35, is_spread=True)
-        assert passed is True
+        assert passed is False
+        assert any("IWM not allowed" in f for f in failures)
 
     def test_sofi_during_blackout_fails(self, checklist):
         """SOFI during earnings blackout should fail."""
@@ -541,8 +549,8 @@ class TestChecklistStatus:
             symbol="SPY", max_loss=100.0, dte=35, is_spread=True
         )
 
-        # CLAUDE.md strategy update Feb 16, 2026: liquid ETFs
-        assert "Liquid ETFs" in status["ticker_allowed"]["requirement"]
+        # CLAUDE.md: SPY only - best liquidity, tightest spreads
+        assert "SPY" in status["ticker_allowed"]["requirement"]
         assert "5%" in status["position_size"]["requirement"]
         assert "spread" in status["is_spread"]["requirement"].lower()
         assert "30-45" in status["dte_range"]["requirement"]
@@ -674,7 +682,7 @@ class TestCLAUDEMDCompliance:
 
     def test_individual_stock_rejected(self, checklist_4959):
         """Individual stocks (F, SOFI) should be rejected per CLAUDE.md."""
-        # CLAUDE.md: "SPY or IWM? (NO individual stocks until proven)"
+        # CLAUDE.md: "SPY only - best liquidity, tightest spreads"
         for ticker in ["F", "SOFI", "T", "AAPL", "NVDA"]:
             passed, failures = checklist_4959.validate(
                 symbol=ticker,

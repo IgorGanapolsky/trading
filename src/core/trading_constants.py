@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import re
 
-ALLOWED_TICKERS: set[str] = {"SPY", "SPX", "XSP", "QQQ", "IWM"}
+ALLOWED_TICKERS: set[str] = {"SPY"}  # SPY ONLY per CLAUDE.md — best liquidity, no early assignment
 MAX_POSITION_PCT: float = 0.05
 MAX_DAILY_LOSS_PCT: float = 0.02
-MAX_POSITIONS: int = 16  # 4 ICs x 4 legs
+MAX_POSITIONS: int = 8  # 2 ICs x 4 legs — CLAUDE.md mandate
 MAX_CONTRACTS_PER_TRADE: int = 2
-MAX_CONCURRENT_IRON_CONDORS: int = 4
+MAX_CONCURRENT_IRON_CONDORS: int = 2  # CLAUDE.md: 2 concurrent ICs max (8 legs)
 MAX_CUMULATIVE_RISK_PCT: float = 0.10
 CRISIS_LOSS_PCT: float = 0.25
 CRISIS_POSITION_COUNT: int = 4

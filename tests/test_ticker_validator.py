@@ -15,7 +15,6 @@ from src.utils.ticker_validator import (
     validate_ticker,
 )
 
-
 # ---------------------------------------------------------------------------
 # validate_ticker
 # ---------------------------------------------------------------------------
@@ -32,12 +31,10 @@ def test_validate_ticker_all_allowed():
 
 def test_validate_ticker_lowercase_normalizes():
     assert validate_ticker("spy") == "SPY"
-    assert validate_ticker("qqq") == "QQQ"
 
 
 def test_validate_ticker_strips_whitespace():
     assert validate_ticker("  SPY  ") == "SPY"
-    assert validate_ticker("\tIWM\n") == "IWM"
 
 
 def test_validate_ticker_mixed_case():
@@ -93,8 +90,9 @@ def test_is_allowed_lowercase():
     assert is_allowed_ticker("spy") is True
 
 
-def test_is_allowed_whitespace():
-    assert is_allowed_ticker("  QQQ  ") is True
+def test_is_not_allowed_qqq():
+    assert is_allowed_ticker("QQQ") is False
+    assert is_allowed_ticker("  QQQ  ") is False
 
 
 def test_is_not_allowed_sofi():
@@ -188,7 +186,7 @@ def test_extract_single_char_underlying():
 
 
 def test_allowed_tickers_contains_expected():
-    expected = {"SPY", "SPX", "XSP", "QQQ", "IWM"}
+    expected = {"SPY"}
     assert expected == ALLOWED_TICKERS
 
 

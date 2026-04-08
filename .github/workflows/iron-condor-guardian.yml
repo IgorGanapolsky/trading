@@ -1,10 +1,10 @@
 name: Iron Condor Guardian - Phil Town Rule #1
 
 on:
-  schedule:
-    # Run every 30 minutes during market hours (9:30 AM - 4:00 PM ET)
-    # UTC times: 14:30 - 21:00 (EST) or 13:30 - 20:00 (EDT)
-    - cron: 0,30 14-21 * * 1-5
+  # DISABLED: ic_simple.py is the sole position manager (Apr 2026).
+  # Guardian had contract-count scaling bugs causing premature exits.
+  # schedule:
+  #   - cron: 0,30 14-21 * * 1-5
   workflow_dispatch:
 
 # Prevent concurrent trade execution (LL-281 race condition fix)

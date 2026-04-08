@@ -35,6 +35,7 @@ from typing import Optional
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
+
 from src.core.trading_constants import IC_PROFIT_TARGET_PCT
 from src.core.trading_constants import MAX_POSITIONS as MAX_OPTION_LEGS
 from src.orchestrator.telemetry import OrchestratorTelemetry
@@ -90,7 +91,7 @@ class IronCondorStrategy:
         self.config = {
             "underlying": "SPY",  # SPY ONLY per CLAUDE.md - best liquidity, $100K success
             "target_dte": 30,
-            "min_dte": 21,
+            "min_dte": 30,  # CLAUDE.md mandate: 30-45 DTE only (was 21, caused gamma losses)
             "max_dte": 45,
             "short_delta": 0.15,  # 15 delta = ~85% POP (research-backed)
             "wing_width": 10,  # $10 wide spreads per CLAUDE.md
@@ -113,6 +114,7 @@ class IronCondorStrategy:
         try:
             from alpaca.data.historical import StockHistoricalDataClient
             from alpaca.data.requests import StockLatestQuoteRequest
+
             from src.utils.alpaca_client import get_alpaca_credentials
 
             api_key, secret = get_alpaca_credentials()
@@ -157,7 +159,11 @@ class IronCondorStrategy:
                 f"call delta={selection.call_delta:.3f}"
             )
         else:
-            logger.warning("Using HEURISTIC fallback — not true 15-delta")
+            logger.error(
+                "BLOCKED: Heuristic fallback has unknown delta (0.0). "
+                "Cannot verify 15-20 delta mandate. Refusing to trade."
+            )
+            return None, None, None, None
 
         return selection.long_put, selection.short_put, selection.short_call, selection.long_call
 
@@ -200,8 +206,11 @@ class IronCondorStrategy:
         price = self.get_underlying_price()
         logger.info(f"Underlying price: ${price:.2f}")
 
-        # Calculate strikes
+        # Calculate strikes (returns None tuple if delta unavailable)
         long_put, short_put, short_call, long_call = self.calculate_strikes(price)
+        if long_put is None:
+            logger.error("No valid strikes found (delta unavailable). Aborting trade.")
+            return None
         logger.info(f"Strikes: LP={long_put} SP={short_put} SC={short_call} LC={long_call}")
 
         # Calculate expiry - MUST be a Friday (options expire on Fridays)
@@ -216,7 +225,7 @@ class IronCondorStrategy:
         expiry_date = target_date + timedelta(days=days_until_friday)
         # If this pushed us too close (below minimum entry DTE), use the Friday after
         actual_dte = (expiry_date - datetime.now()).days
-        if actual_dte < 21:
+        if actual_dte < 30:  # CLAUDE.md mandate: minimum 30 DTE
             expiry_date += timedelta(days=7)
         logger.info(
             f"Expiry: {expiry_date.strftime('%Y-%m-%d')} ({expiry_date.strftime('%A')}) - {(expiry_date - datetime.now()).days} DTE"
@@ -397,6 +406,7 @@ class IronCondorStrategy:
             from alpaca.data.historical import StockHistoricalDataClient
             from alpaca.data.requests import StockBarsRequest
             from alpaca.data.timeframe import TimeFrame
+
             from src.utils.alpaca_client import get_alpaca_credentials
 
             api_key, secret = get_alpaca_credentials()
@@ -490,6 +500,7 @@ class IronCondorStrategy:
             logger.info("=" * 60)
             try:
                 from alpaca.trading.client import TradingClient
+
                 from src.utils.alpaca_client import get_alpaca_credentials
 
                 api_key, secret = get_alpaca_credentials()
@@ -681,6 +692,7 @@ class IronCondorStrategy:
                 from alpaca.trading.client import TradingClient
                 from alpaca.trading.enums import OrderClass, OrderSide
                 from alpaca.trading.requests import OptionLegRequest
+
                 from src.utils.alpaca_client import get_alpaca_credentials
 
                 api_key, secret = get_alpaca_credentials()
@@ -1145,6 +1157,61 @@ def main():
                 )
                 logger.info("Skipping trade - conditions not met")
                 return {"success": False, "reason": reason}
+
+        # REGIME GATE: Block iron condors in trending/volatile/spike markets
+        # Research: 71,417-trade study shows ICs lose in trending markets (ADX > 30)
+        try:
+            from src.utils.regime_detector import RegimeDetector
+
+            detector = RegimeDetector()
+            snapshot = detector.detect_live_regime_with_prediction()
+            logger.info(
+                f"Regime: {snapshot.label} (id={snapshot.regime_id}, "
+                f"confidence={snapshot.confidence:.2f}, VIX={snapshot.vix_level:.1f})"
+            )
+            if snapshot.regime_id >= 2:  # volatile or spike
+                msg = (
+                    f"REGIME BLOCKED: {snapshot.label} (id={snapshot.regime_id}). "
+                    f"Iron condors require calm/low-trend markets."
+                )
+                logger.warning(msg)
+                telemetry.update_ticker_decision(
+                    ticker, gate=2, status="REJECT",
+                    rejection_reason=msg,
+                    indicators={"regime": snapshot.label, "regime_id": snapshot.regime_id},
+                )
+                return {"success": False, "reason": msg}
+            if hasattr(snapshot, 'transition_prediction') and snapshot.transition_prediction:
+                tp = snapshot.transition_prediction
+                if tp.transition_detected and tp.predicted_regime in ("volatile", "spike"):
+                    msg = (
+                        f"REGIME TRANSITION: {tp.predicted_regime} predicted "
+                        f"(prob={tp.transition_probability:.2f}). Blocking entry."
+                    )
+                    logger.warning(msg)
+                    return {"success": False, "reason": msg}
+        except Exception as e:
+            logger.debug(f"Regime check skipped (non-blocking): {e}")
+
+        # IV RANK GATE: Only sell premium when IV is rich (IV Rank > 20)
+        try:
+            from src.data.iv_data_provider import IVDataProvider
+
+            iv_provider = IVDataProvider()
+            iv_rank = iv_provider.get_iv_rank("SPY")
+            if iv_rank is not None:
+                logger.info(f"IV Rank: {iv_rank:.1f}")
+                if iv_rank < 20:
+                    msg = f"IV Rank {iv_rank:.1f} < 20 — premium too cheap to sell iron condors"
+                    logger.warning(msg)
+                    telemetry.update_ticker_decision(
+                        ticker, gate=2, status="REJECT",
+                        rejection_reason=msg,
+                        indicators={"iv_rank": iv_rank},
+                    )
+                    return {"success": False, "reason": msg}
+        except Exception as e:
+            logger.debug(f"IV Rank check skipped (non-blocking): {e}")
 
         try:
             # LLM PRE-TRADE RESEARCH AGENT (Feb 2026)

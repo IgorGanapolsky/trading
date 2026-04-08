@@ -6,13 +6,13 @@
     "target_delta": 0.15,
     "wing_width": 10,
     "target_dte": 30,
-    "min_dte": 21,
+    "min_dte": 30,
     "max_dte": 45,
-    "min_credit": 0.50,
-    "profit_target": 0.50,
+    "min_credit": 0.5,
+    "profit_target": 0.5,
     "stop_loss": 1.0,
     "exit_dte": 7,
-    "max_ic": 4
+    "max_ic": 2
   },
   "adjustments": [],
   "confidence": 0.0,

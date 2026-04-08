@@ -363,9 +363,13 @@ def run_guardian():
             entry_credit = entries[entry_key]["credit"]
             logger.info(f"  Entry credit: ${entry_credit:.2f}")
 
-        # Calculate current P/L
+        # Calculate current P/L (scale thresholds by contract count)
         current_value, pnl = calculate_ic_pnl(ic_data, entry_credit)
-        max_profit = entry_credit * 100
+        contract_count = max(
+            (abs(pos["qty"]) for pos in ic_data["positions"]),
+            default=1,
+        )
+        max_profit = entry_credit * contract_count * 100
         logger.info(f"  Current P/L: ${pnl:.2f} (max profit: ${max_profit:.2f})")
 
         # CHECK 0: Minimum holding period (prevent same-day churn)
@@ -381,9 +385,9 @@ def run_guardian():
                     entry_dt = entry_dt.replace(tzinfo=None)
                 now = dt.now()
                 hours_held = (now - entry_dt).total_seconds() / 3600
-                if hours_held < 4:
+                if hours_held < 24:
                     logger.info(
-                        f"  Position held {hours_held:.1f}h < 4h minimum. "
+                        f"  Position held {hours_held:.1f}h < 24h minimum. "
                         f"Skipping exit checks (let theta work)."
                     )
                     continue
@@ -396,8 +400,8 @@ def run_guardian():
             close_iron_condor(client, ic_data, f"DTE={dte} <= {MIN_DTE} (gamma risk)", expiry, pnl)
             continue
 
-        # CHECK 2: Stop Loss (100% of credit)
-        stop_loss = entry_credit * STOP_LOSS_MULTIPLIER * 100
+        # CHECK 2: Stop Loss (100% of credit, scaled by contract count)
+        stop_loss = entry_credit * contract_count * STOP_LOSS_MULTIPLIER * 100
         if pnl < -stop_loss:
             close_iron_condor(
                 client,

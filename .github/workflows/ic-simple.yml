@@ -2,10 +2,11 @@ name: IC Simple
 
 on:
   schedule:
-    - cron: "0 14 * * 1-5"   # Entry + exit: 10:00 AM ET
-    - cron: "0 18 * * 1-5"   # Exit check: 2:00 PM ET
-    - cron: "30 19 * * 1-5"  # EOD exit: 3:30 PM ET
-    - cron: "0 14 * * 6"     # Weekend learning: Saturday
+    - cron: "0 14 * * 1-5" # Entry + exit: 10:00 AM ET
+    - cron: 0 16 * * 1-5 # Exit check: 12:00 PM ET (closes 4h gap)
+    - cron: "0 18 * * 1-5" # Exit check: 2:00 PM ET
+    - cron: "30 19 * * 1-5" # EOD exit: 3:30 PM ET
+    - cron: "0 14 * * 6" # Weekend learning: Saturday
   workflow_dispatch:
     inputs:
       mode:

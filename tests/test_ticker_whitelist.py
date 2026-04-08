@@ -46,19 +46,19 @@ class TestIsTickerAllowed:
         assert is_ticker_allowed("SPY260220P00653000") is True
         assert is_ticker_allowed("SPY260115C00700000") is True
 
-    def test_spx_allowed(self):
-        assert is_ticker_allowed("SPX") is True
+    def test_spx_blocked(self):
+        assert is_ticker_allowed("SPX") is False
 
-    def test_spx_options_allowed(self):
-        assert is_ticker_allowed("SPX260220P00660000") is True
-        assert is_ticker_allowed("SPX260313C00725000") is True
+    def test_spx_options_blocked(self):
+        assert is_ticker_allowed("SPX260220P00660000") is False
+        assert is_ticker_allowed("SPX260313C00725000") is False
 
-    def test_xsp_allowed(self):
-        assert is_ticker_allowed("XSP") is True
+    def test_xsp_blocked(self):
+        assert is_ticker_allowed("XSP") is False
 
-    def test_xsp_options_allowed(self):
-        assert is_ticker_allowed("XSP260220P00066000") is True
-        assert is_ticker_allowed("XSP260313C00072500") is True
+    def test_xsp_options_blocked(self):
+        assert is_ticker_allowed("XSP260220P00066000") is False
+        assert is_ticker_allowed("XSP260313C00072500") is False
 
     def test_sofi_blocked(self):
         assert is_ticker_allowed("SOFI") is False
@@ -69,11 +69,11 @@ class TestIsTickerAllowed:
         assert is_ticker_allowed("TSLA") is False
         assert is_ticker_allowed("NVDA") is False
 
-    def test_liquid_etf_tickers_allowed(self):
-        assert is_ticker_allowed("QQQ") is True
-        assert is_ticker_allowed("IWM") is True
-        assert is_ticker_allowed("QQQ260313C00420000") is True
-        assert is_ticker_allowed("IWM260313P00200000") is True
+    def test_liquid_etf_tickers_blocked(self):
+        assert is_ticker_allowed("QQQ") is False
+        assert is_ticker_allowed("IWM") is False
+        assert is_ticker_allowed("QQQ260313C00420000") is False
+        assert is_ticker_allowed("IWM260313P00200000") is False
 
 
 class TestValidateTicker:
@@ -83,13 +83,17 @@ class TestValidateTicker:
         assert validate_ticker("SPY") is True
         assert validate_ticker("SPY260220P00653000") is True
 
-    def test_spx_passes(self):
-        assert validate_ticker("SPX") is True
-        assert validate_ticker("SPX260220P00660000") is True
+    def test_spx_blocked(self):
+        with pytest.raises(TickerWhitelistViolation):
+            validate_ticker("SPX")
+        with pytest.raises(TickerWhitelistViolation):
+            validate_ticker("SPX260220P00660000")
 
-    def test_xsp_passes(self):
-        assert validate_ticker("XSP") is True
-        assert validate_ticker("XSP260220P00066000") is True
+    def test_xsp_blocked(self):
+        with pytest.raises(TickerWhitelistViolation):
+            validate_ticker("XSP")
+        with pytest.raises(TickerWhitelistViolation):
+            validate_ticker("XSP260220P00066000")
 
     def test_sofi_raises_exception(self):
         with pytest.raises(TickerWhitelistViolation) as excinfo:
@@ -110,7 +114,9 @@ class TestWhitelistConfiguration:
     """Test whitelist is correctly configured."""
 
     def test_whitelist_matches_canonical_constants(self):
+        """Whitelist must match trading_constants.py (SPY only)."""
         assert frozenset(ALLOWED_TICKERS) == ALLOWED_UNDERLYING
+        assert {"SPY"} == ALLOWED_TICKERS
 
     def test_whitelist_is_immutable(self):
         # frozenset cannot be modified

@@ -61,9 +61,8 @@ except ImportError:
     nn_mod.ReLU = type("ReLU", (), {})
     nn_mod.Sequential = type("Sequential", (), {"__init__": lambda s, *a: None})
 
-from src.ml.reward import compute_trade_reward, compute_portfolio_reward
+from src.ml.reward import compute_portfolio_reward, compute_trade_reward
 from src.rag.vector_store import TradeRAG
-
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 1. Thompson Sampling
@@ -273,16 +272,17 @@ class TestStrategyParams:
         for key in required:
             assert key in params, f"Missing param: {key}"
 
-    def test_max_ic_is_4(self):
+    def test_max_ic_is_2(self):
+        """CLAUDE.md mandate: max 2 concurrent iron condors."""
         sys.path.insert(0, ".")
         from scripts.ic_simple import _load_strategy_params
 
         params = _load_strategy_params()
-        assert params["max_ic"] == 4
+        assert params["max_ic"] == 2
 
     def test_adjust_strategy_params_respects_bounds(self):
         sys.path.insert(0, ".")
-        from scripts.ic_simple import _adjust_strategy_params, STRATEGY_PARAMS_FILE
+        from scripts.ic_simple import STRATEGY_PARAMS_FILE, _adjust_strategy_params
 
         # Save original
         original = STRATEGY_PARAMS_FILE.read_text() if STRATEGY_PARAMS_FILE.exists() else None
@@ -305,7 +305,7 @@ class TestStrategyParams:
 
     def test_adjust_rejected_below_confidence(self):
         sys.path.insert(0, ".")
-        from scripts.ic_simple import _adjust_strategy_params, STRATEGY_PARAMS_FILE
+        from scripts.ic_simple import STRATEGY_PARAMS_FILE, _adjust_strategy_params
 
         original = STRATEGY_PARAMS_FILE.read_text() if STRATEGY_PARAMS_FILE.exists() else None
         original_data = json.loads(original) if original else {}

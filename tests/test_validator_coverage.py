@@ -39,13 +39,17 @@ class TestValidateTicker:
         valid, error = validate_ticker("SPY260220P00660000")
         assert valid is True
 
-    def test_spx_option_allowed(self):
+    def test_spx_option_blocked(self):
+        """SPX blocked — SPY ONLY per CLAUDE.md."""
         valid, error = validate_ticker("SPX260220P00660000")
-        assert valid is True
+        assert valid is False
+        assert "SPX" in error
 
-    def test_xsp_option_allowed(self):
+    def test_xsp_option_blocked(self):
+        """XSP blocked — SPY ONLY per CLAUDE.md."""
         valid, error = validate_ticker("XSP260220P00066000")
-        assert valid is True
+        assert valid is False
+        assert "XSP" in error
 
     def test_sofi_option_blocked(self):
         valid, error = validate_ticker("SOFI260206P00024000")

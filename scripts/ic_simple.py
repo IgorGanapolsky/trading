@@ -31,13 +31,13 @@ def _load_strategy_params() -> dict:
         "target_delta": 0.15,
         "wing_width": 10,
         "target_dte": 30,
-        "min_dte": 21,
+        "min_dte": 30,  # CLAUDE.md mandate: 30 DTE minimum
         "max_dte": 45,
         "min_credit": 0.50,
         "profit_target": 0.50,
         "stop_loss": 1.0,
         "exit_dte": 7,
-        "max_ic": 4,
+        "max_ic": 2,  # CLAUDE.md mandate: 2 ICs max
     }
     try:
         if STRATEGY_PARAMS_FILE.exists():
@@ -57,7 +57,7 @@ def _load_strategy_params() -> dict:
 _SP = _load_strategy_params()
 MAX_IC = _SP["max_ic"]
 MIN_CREDIT = _SP["min_credit"]
-MIN_HOLD_HOURS = 4  # Not ML-adjustable (safety)
+MIN_HOLD_HOURS = 24  # Not ML-adjustable (safety). Research: <1h hold = 6.5% win, >1d = 50% win
 PROFIT_TARGET = _SP["profit_target"]
 STOP_LOSS = _SP["stop_loss"]
 EXIT_DTE = _SP["exit_dte"]
@@ -69,6 +69,7 @@ ENTRIES_FILE = Path(__file__).parent.parent / "data" / "ic_entries.json"
 # ── Alpaca Client ────────────────────────────────────────────────────────────
 def get_client():
     from alpaca.trading.client import TradingClient
+
     from src.utils.alpaca_client import get_alpaca_credentials
 
     api_key, secret = get_alpaca_credentials()
@@ -80,6 +81,7 @@ def get_client():
 def get_spy_price(client):
     from alpaca.data.historical import StockHistoricalDataClient
     from alpaca.data.requests import StockLatestQuoteRequest
+
     from src.utils.alpaca_client import get_alpaca_credentials
 
     api_key, secret = get_alpaca_credentials()
@@ -98,7 +100,7 @@ def find_opportunity(spy_price: float) -> dict | None:
         wing_width=WING_WIDTH,
         target_delta=TARGET_DELTA,
         target_dte=30,
-        min_dte=21,
+        min_dte=30,  # CLAUDE.md mandate: 30 DTE minimum
         max_dte=45,
     )
 
@@ -132,6 +134,7 @@ def place_ic(client, opp: dict) -> str | None:
     """Submit limit MLEG order. Returns order ID or None."""
     from alpaca.trading.enums import OrderClass, OrderSide, TimeInForce
     from alpaca.trading.requests import LimitOrderRequest, OptionLegRequest
+
     from src.safety.mandatory_trade_gate import safe_submit_order
 
     expiry_yymmdd = opp["expiry"].replace("-", "")[2:]
@@ -273,7 +276,7 @@ def check_exits(client):
                 logger.warning(f"IC {expiry}: non-positive credit ${entry_credit:.2f}. Skip.")
                 continue
 
-        # Minimum holding period
+        # Minimum holding period — MUST hold to allow theta decay
         if entry_date:
             try:
                 entry_dt = datetime.fromisoformat(entry_date)
@@ -284,7 +287,12 @@ def check_exits(client):
                     logger.info(f"IC {expiry}: held {hours:.1f}h < {MIN_HOLD_HOURS}h. Hold.")
                     continue
             except (ValueError, TypeError):
-                pass
+                logger.warning(f"IC {expiry}: unparseable entry_date '{entry_date}'. Hold (safety).")
+                continue
+        else:
+            # Unknown entry date — hold by default (don't exit blind)
+            logger.warning(f"IC {expiry}: no entry_date recorded. Hold (safety default).")
+            continue
 
         # Calculate P/L
         contract_count = max(abs(leg["qty"]) for leg in legs)
@@ -331,7 +339,12 @@ def check_exits(client):
 def _close_ic(client, legs: list[dict], qty: int):
     """Close IC with MLEG limit order. Fallback to individual legs."""
     from alpaca.trading.enums import OrderClass, OrderSide, TimeInForce
-    from alpaca.trading.requests import LimitOrderRequest, MarketOrderRequest, OptionLegRequest
+    from alpaca.trading.requests import (
+        LimitOrderRequest,
+        MarketOrderRequest,
+        OptionLegRequest,
+    )
+
     from src.safety.mandatory_trade_gate import safe_submit_order
 
     # Calculate current debit
@@ -1174,12 +1187,40 @@ def main():
         except Exception as e:
             logger.debug(f"IV/RV check skipped: {e}")
 
+        # REGIME GATE: Iron condors lose in trending/spike markets (research: ADX > 30 = loss)
+        regime_blocked = False
+        try:
+            from src.utils.regime_detector import RegimeDetector
+
+            detector = RegimeDetector()
+            snapshot = detector.detect_live_regime_with_prediction()
+            logger.info(
+                f"Regime: {snapshot.label} (id={snapshot.regime_id}, "
+                f"confidence={snapshot.confidence:.2f}, VIX={snapshot.vix_level:.1f})"
+            )
+            if snapshot.regime_id >= 2:  # volatile or spike
+                logger.warning(
+                    f"REGIME BLOCKED: {snapshot.label} regime (id={snapshot.regime_id}). "
+                    f"Iron condors require calm/low-trend markets."
+                )
+                regime_blocked = True
+            elif hasattr(snapshot, 'transition_prediction') and snapshot.transition_prediction:
+                tp = snapshot.transition_prediction
+                if tp.transition_detected and tp.predicted_regime in ("volatile", "spike"):
+                    logger.warning(
+                        f"REGIME WARNING: Transition to {tp.predicted_regime} predicted "
+                        f"(prob={tp.transition_probability:.2f}). Blocking entry."
+                    )
+                    regime_blocked = True
+        except Exception as e:
+            logger.debug(f"Regime check skipped: {e}")
+
         # Cancel stale unfilled orders before checking entry
         _cancel_stale_orders(client)
 
         # Position limit
         ic_count = _count_open_ics(client)
-        if fomc_blocked or thumbgate_blocked or iv_rv_blocked:
+        if fomc_blocked or thumbgate_blocked or iv_rv_blocked or regime_blocked:
             pass  # Skip entry
         elif ic_count >= MAX_IC:
             logger.info(f"Position limit: {ic_count}/{MAX_IC} ICs. No new entry.")
