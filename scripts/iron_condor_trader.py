@@ -35,8 +35,9 @@ from typing import Optional
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
-from src.core.trading_constants import IC_PROFIT_TARGET_PCT
+
 from src.core.trading_constants import MAX_POSITIONS as MAX_OPTION_LEGS
+from src.core.trading_profiles import get_iron_condor_strategy_config
 from src.orchestrator.telemetry import OrchestratorTelemetry
 from src.rag.lessons_learned_rag import LessonsLearnedRAG
 from src.safety.mandatory_trade_gate import safe_submit_order
@@ -84,52 +85,42 @@ class IronCondorStrategy:
     - Theta decay works for you
     """
 
-    def __init__(self):
-        # FIXED Jan 19 2026: SPY ONLY per CLAUDE.md (TastyTrade strategy scrapped)
-        # Iron condors replace credit spreads - 86% win rate from $100K success
-        self.config = {
-            "underlying": "SPY",  # SPY ONLY per CLAUDE.md - best liquidity, $100K success
-            "target_dte": 30,
-            "min_dte": 21,
-            "max_dte": 45,
-            "short_delta": 0.15,  # 15 delta = ~85% POP (research-backed)
-            "wing_width": 10,  # $10 wide spreads per CLAUDE.md
-            # EV math: 50% profit / 100% stop → EV = 0.85*0.50 - 0.15*1.0 = +0.275
-            # 50% target = faster cycle, lower tail risk, aligned across all components.
-            "take_profit_pct": IC_PROFIT_TARGET_PCT,  # Close at 50% profit (canonical constant)
-            "stop_loss_pct": 1.0,  # Close at 100% loss
-            "exit_dte": 7,  # Exit at 7 DTE per LL-268 research (80%+ win rate)
-            "max_positions": max(
-                1, int(MAX_OPTION_LEGS) // 4
-            ),  # Canonical limit: 8 option legs => 2 iron condors
-            "position_size_pct": 0.05,  # 5% of portfolio per position - CLAUDE.md MANDATE
-        }
+    def __init__(self, underlying: str | None = None):
+        self.config = get_iron_condor_strategy_config(underlying=underlying)
+        self.config["max_positions"] = max(
+            self.config["max_positions"],
+            max(1, int(MAX_OPTION_LEGS) // 4),
+        )
 
     def get_underlying_price(self) -> float:
-        """Get current price of SPY from Alpaca or estimate."""
+        """Get current price of the configured underlying from Alpaca."""
         # FIX Jan 20, 2026: Fetch real price from Alpaca instead of hardcoding
         # ROOT CAUSE: Hardcoded $595 was causing wrong strike calculations
         # SPY was actually ~$600, causing PUT-only fills (CALL strikes too low)
         try:
             from alpaca.data.historical import StockHistoricalDataClient
             from alpaca.data.requests import StockLatestQuoteRequest
+
             from src.utils.alpaca_client import get_alpaca_credentials
 
             api_key, secret = get_alpaca_credentials()
             if api_key and secret:
                 data_client = StockHistoricalDataClient(api_key, secret)
-                request = StockLatestQuoteRequest(symbol_or_symbols=["SPY"])
+                underlying = self.config["underlying"]
+                request = StockLatestQuoteRequest(symbol_or_symbols=[underlying])
                 quote = data_client.get_stock_latest_quote(request)
-                if "SPY" in quote:
-                    mid_price = (quote["SPY"].ask_price + quote["SPY"].bid_price) / 2
-                    logger.info(f"Live SPY price from Alpaca: ${mid_price:.2f}")
+                if underlying in quote:
+                    mid_price = (quote[underlying].ask_price + quote[underlying].bid_price) / 2
+                    logger.info(f"Live {underlying} price from Alpaca: ${mid_price:.2f}")
                     return mid_price
         except Exception as e:
-            logger.warning(f"Could not fetch live SPY price: {e}")
+            logger.warning(f"Could not fetch live {self.config['underlying']} price: {e}")
 
         # FIXED Mar 23, 2026: No fallback price. Hardcoded $688 caused wrong
         # strike calculations when SPY moved. Trading on stale prices = losses.
-        raise RuntimeError("Live SPY price unavailable — refusing to trade on stale data")
+        raise RuntimeError(
+            f"Live {self.config['underlying']} price unavailable — refusing to trade on stale data"
+        )
 
     def calculate_strikes(self, price: float) -> tuple[float, float, float, float]:
         """
@@ -141,6 +132,7 @@ class IronCondorStrategy:
         from src.markets.option_chain import select_strikes_by_delta
 
         selection = select_strikes_by_delta(
+            underlying=self.config["underlying"],
             underlying_price=price,
             wing_width=self.config["wing_width"],
             target_delta=self.config["short_delta"],
@@ -182,7 +174,7 @@ class IronCondorStrategy:
                 f"- long put ${selection.long_put_ask:.2f} - long call ${selection.long_call_ask:.2f})"
             )
         else:
-            # Conservative fallback: $10-wide wings on SPY typically collect $1.50-2.50
+            # Conservative fallback for a $10-wide index ETF condor when live quotes are unavailable.
             estimated_credit = 1.50
         max_risk = (wing_width * 100) - (estimated_credit * 100)
 
@@ -204,22 +196,18 @@ class IronCondorStrategy:
         long_put, short_put, short_call, long_call = self.calculate_strikes(price)
         logger.info(f"Strikes: LP={long_put} SP={short_put} SC={short_call} LC={long_call}")
 
-        # Calculate expiry - MUST be a Friday (options expire on Fridays)
-        target_date = datetime.now() + timedelta(days=self.config["target_dte"])
-        # Adjust to nearest Friday: weekday() returns 0=Mon, 4=Fri
-        days_until_friday = (4 - target_date.weekday()) % 7
-        if days_until_friday == 0 and target_date.weekday() != 4:
-            days_until_friday = 7  # Next Friday if we're past Friday
-        # If target is Sat/Sun, go to next Friday; otherwise go to this week's Friday
-        if target_date.weekday() > 4:  # Saturday=5, Sunday=6
+        selection = getattr(self, "_last_strike_selection", None)
+        if selection and getattr(selection, "expiry", None):
+            expiry_date = datetime.strptime(selection.expiry, "%Y-%m-%d")
+        else:
+            target_date = datetime.now() + timedelta(days=self.config["target_dte"])
             days_until_friday = (4 - target_date.weekday()) % 7
-        expiry_date = target_date + timedelta(days=days_until_friday)
-        # If this pushed us too close (below minimum entry DTE), use the Friday after
+            expiry_date = target_date + timedelta(days=days_until_friday)
+            if (expiry_date - datetime.now()).days < self.config["min_dte"]:
+                expiry_date += timedelta(days=7)
         actual_dte = (expiry_date - datetime.now()).days
-        if actual_dte < 21:
-            expiry_date += timedelta(days=7)
         logger.info(
-            f"Expiry: {expiry_date.strftime('%Y-%m-%d')} ({expiry_date.strftime('%A')}) - {(expiry_date - datetime.now()).days} DTE"
+            f"Expiry: {expiry_date.strftime('%Y-%m-%d')} ({expiry_date.strftime('%A')}) - {actual_dte} DTE"
         )
 
         # Estimate premiums
@@ -247,7 +235,7 @@ class IronCondorStrategy:
         return IronCondorLegs(
             underlying=self.config["underlying"],
             expiry=expiry_date.strftime("%Y-%m-%d"),
-            dte=self.config["target_dte"],
+            dte=actual_dte,
             short_put=short_put,
             long_put=long_put,
             short_call=short_call,
@@ -358,7 +346,8 @@ class IronCondorStrategy:
             from src.data.iv_data_provider import IVDataProvider
 
             provider = IVDataProvider()
-            current_iv = provider.get_current_iv("SPY")
+            underlying = self.config["underlying"]
+            current_iv = provider.get_current_iv(underlying)
             rv = self._compute_realized_vol()
 
             if rv is None or rv <= 0:
@@ -370,8 +359,8 @@ class IronCondorStrategy:
             logger.info("=" * 50)
             logger.info("IV vs RV PREMIUM CHECK")
             logger.info("=" * 50)
-            logger.info(f"  SPY IV (annualized): {current_iv:.1%}")
-            logger.info(f"  SPY 20d RV:          {rv:.1%}")
+            logger.info(f"  {underlying} IV (annualized): {current_iv:.1%}")
+            logger.info(f"  {underlying} 20d RV:          {rv:.1%}")
             logger.info(f"  IV/RV ratio:         {iv_rv_ratio:.2f}")
             logger.info("=" * 50)
 
@@ -391,12 +380,13 @@ class IronCondorStrategy:
             return True, f"IV/RV check unavailable: {e}"
 
     def _compute_realized_vol(self, lookback_days: int = 20) -> float | None:
-        """Compute annualized realized volatility from SPY daily closes."""
+        """Compute annualized realized volatility from underlying daily closes."""
         try:
             import numpy as np
             from alpaca.data.historical import StockHistoricalDataClient
             from alpaca.data.requests import StockBarsRequest
             from alpaca.data.timeframe import TimeFrame
+
             from src.utils.alpaca_client import get_alpaca_credentials
 
             api_key, secret = get_alpaca_credentials()
@@ -404,18 +394,19 @@ class IronCondorStrategy:
                 return None
 
             client = StockHistoricalDataClient(api_key, secret)
+            underlying = self.config["underlying"]
             request = StockBarsRequest(
-                symbol_or_symbols="SPY",
+                symbol_or_symbols=underlying,
                 timeframe=TimeFrame.Day,
                 start=datetime.now() - timedelta(days=lookback_days + 10),
                 end=datetime.now(),
             )
             bars = client.get_stock_bars(request)
 
-            if "SPY" not in bars.data or len(bars.data["SPY"]) < lookback_days:
+            if underlying not in bars.data or len(bars.data[underlying]) < lookback_days:
                 return None
 
-            closes = [float(bar.close) for bar in bars.data["SPY"]]
+            closes = [float(bar.close) for bar in bars.data[underlying]]
             if len(closes) < 2:
                 return None
 
@@ -490,6 +481,7 @@ class IronCondorStrategy:
             logger.info("=" * 60)
             try:
                 from alpaca.trading.client import TradingClient
+
                 from src.utils.alpaca_client import get_alpaca_credentials
 
                 api_key, secret = get_alpaca_credentials()
@@ -497,12 +489,12 @@ class IronCondorStrategy:
                     client = TradingClient(api_key, secret, paper=True)
                     positions = client.get_all_positions()
 
-                    # Count SPY OPTION positions only (iron condor = 4 legs)
-                    # Options have format like SPY260220P00565000, shares are just "SPY"
+                    underlying = ic.underlying
+                    # Count option legs for the configured underlying only.
                     spy_option_positions = [
                         p
                         for p in positions
-                        if p.symbol.startswith("SPY")
+                        if p.symbol.startswith(underlying)
                         and len(p.symbol) > 5  # Options have longer symbols
                     ]
 
@@ -511,7 +503,7 @@ class IronCondorStrategy:
                     unique_symbols = len(spy_option_positions)
 
                     logger.info(
-                        f"Current SPY OPTION positions: {unique_symbols} symbols, {total_contracts} contracts"
+                        f"Current {underlying} OPTION positions: {unique_symbols} symbols, {total_contracts} contracts"
                     )
 
                     # Check iron condor count against max_positions config
@@ -681,6 +673,7 @@ class IronCondorStrategy:
                 from alpaca.trading.client import TradingClient
                 from alpaca.trading.enums import OrderClass, OrderSide
                 from alpaca.trading.requests import OptionLegRequest
+
                 from src.utils.alpaca_client import get_alpaca_credentials
 
                 api_key, secret = get_alpaca_credentials()
@@ -784,7 +777,10 @@ class IronCondorStrategy:
                         # SAFETY: Must wait for entry fill — placing a close order before
                         # the entry fills would create naked positions in the opposite direction.
                         try:
-                            profit_target_credit = round(limit_credit * IC_PROFIT_TARGET_PCT, 2)
+                            profit_target_credit = round(
+                                limit_credit * self.config["take_profit_pct"],
+                                2,
+                            )
                             close_debit = round(limit_credit - profit_target_credit, 2)
 
                             # Poll for entry fill (max 60 seconds)
@@ -987,7 +983,7 @@ def main():
     parser.add_argument("--live", action="store_true", help="Execute LIVE trades on Alpaca")
     parser.add_argument("--dry-run", action="store_true", help="Dry run (simulate only)")
     parser.add_argument(
-        "--symbol", type=str, default="SPY", help="Underlying symbol (default: SPY)"
+        "--symbol", type=str, default=None, help="Underlying symbol override"
     )
     parser.add_argument(
         "--force",
@@ -1000,7 +996,8 @@ def main():
     live_mode = args.live or (not args.dry_run)
 
     telemetry = OrchestratorTelemetry()
-    ticker = (args.symbol or "SPY").upper()
+    strategy = IronCondorStrategy(underlying=args.symbol)
+    ticker = strategy.config["underlying"]
     telemetry.start_ticker_decision(ticker)
     session_profile = {
         "session_type": "iron_condor_trader",
@@ -1010,7 +1007,7 @@ def main():
 
     logger.info("IRON CONDOR TRADER - STARTING")
     logger.info(f"Mode: {'LIVE' if live_mode else 'SIMULATED'}")
-    logger.info(f"Symbol: {args.symbol}")
+    logger.info(f"Symbol: {ticker}")
 
     try:
         halt_state = get_trading_halt_state()
@@ -1092,12 +1089,6 @@ def main():
         # HARD BLOCK: Validate ticker before proceeding (Jan 20 2026 - SOFI crisis)
         from src.utils.ticker_validator import validate_ticker
 
-        strategy = IronCondorStrategy()
-        # Override symbol from command line if provided (Jan 21, 2026 fix)
-        # ROOT CAUSE: Workflow called with --symbol SPY but argparse rejected it
-        # This blocked trading for 8+ days with silent "unrecognized arguments" error
-        if args.symbol:
-            strategy.config["underlying"] = args.symbol.upper()
         validate_ticker(strategy.config["underlying"], context="iron_condor_trader")
 
         # Check entry conditions (unless --force bypasses VIX checks)
@@ -1158,7 +1149,7 @@ def main():
                 tc_model = get_trade_confidence_model()
                 thompson_stats = tc_model.get_trade_confidence(
                     strategy="iron_condor",
-                    ticker=args.symbol,
+                    ticker=ticker,
                     regime=None,
                 )
 

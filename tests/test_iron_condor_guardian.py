@@ -327,6 +327,10 @@ class TestExitConditions:
         """Profit target should be 50% of max profit."""
         assert guardian.PROFIT_TAKE_PCT == 0.50
 
+    def test_min_hold_is_24_hours(self, guardian):
+        """Guardian should align with the 24h minimum-hold policy."""
+        assert guardian.MIN_HOLD_HOURS == 24
+
     def test_stop_loss_triggers_correctly(self, guardian):
         """Stop loss: when P/L < -(credit * multiplier * 100)."""
         entry_credit = 2.04

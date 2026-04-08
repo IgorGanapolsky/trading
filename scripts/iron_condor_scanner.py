@@ -2,11 +2,11 @@
 """
 Iron Condor Scanner - Daily Entry Opportunity Detection
 
-Scans for optimal iron condor entry conditions on SPY and creates
+Scans for optimal iron-condor entry conditions for the active profile and creates
 GitHub issue for CEO approval with auto-execute after 30 minutes.
 
 Entry Criteria (per CLAUDE.md):
-- SPY only (best liquidity, tightest spreads)
+- Active iron-condor underlying from the canonical profile
 - 30-45 DTE
 - Short strikes at 15-20 delta
 - $10-wide wings
@@ -33,7 +33,15 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
 
-from src.core.trading_constants import MAX_POSITIONS as MAX_OPTION_LEGS
+from src.core.trading_constants import (
+    IRON_CONDOR_TARGET_DELTA,
+    IRON_CONDOR_UNDERLYING,
+    IRON_CONDOR_WING_WIDTH,
+    MAX_CONCURRENT_IRON_CONDORS,
+    MAX_DTE,
+    MAX_POSITION_PCT,
+    MIN_DTE,
+)
 
 # Guard against AssertionError in CI/GitHub Actions where stdin is not a TTY
 try:
@@ -44,13 +52,11 @@ except (AssertionError, Exception):
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-# Constants from CLAUDE.md / trading constants
-MAX_IRON_CONDORS = max(1, int(MAX_OPTION_LEGS) // 4)
-POSITION_SIZE_PCT = 0.05  # 5% max risk per position
-TARGET_DELTA = 0.15  # 15-20 delta range
-MIN_DTE = 21
-MAX_DTE = 50
-WING_WIDTH = 10  # $10 wide spreads per CLAUDE.md
+UNDERLYING = IRON_CONDOR_UNDERLYING
+MAX_IRON_CONDORS = MAX_CONCURRENT_IRON_CONDORS
+POSITION_SIZE_PCT = MAX_POSITION_PCT
+TARGET_DELTA = IRON_CONDOR_TARGET_DELTA
+WING_WIDTH = IRON_CONDOR_WING_WIDTH
 
 IC_TRADE_LOG = Path(__file__).parent.parent / "data" / "ic_trade_log.json"
 
@@ -75,19 +81,19 @@ def get_alpaca_clients():
     return trading_client, stock_data_client, options_data_client
 
 
-def get_spy_price(stock_client) -> float:
-    """Get current SPY price."""
+def get_underlying_price(stock_client) -> float:
+    """Get current price of the active iron-condor underlying."""
     from alpaca.data.requests import StockLatestQuoteRequest
 
     try:
-        request = StockLatestQuoteRequest(symbol_or_symbols=["SPY"])
+        request = StockLatestQuoteRequest(symbol_or_symbols=[UNDERLYING])
         quote = stock_client.get_stock_latest_quote(request)
-        if "SPY" in quote:
-            mid = (quote["SPY"].ask_price + quote["SPY"].bid_price) / 2
-            logger.info(f"SPY current price: ${mid:.2f}")
+        if UNDERLYING in quote:
+            mid = (quote[UNDERLYING].ask_price + quote[UNDERLYING].bid_price) / 2
+            logger.info(f"{UNDERLYING} current price: ${mid:.2f}")
             return mid
     except Exception as e:
-        logger.warning(f"Could not fetch SPY price: {e}")
+        logger.warning(f"Could not fetch {UNDERLYING} price: {e}")
 
     # Fallback
     return 600.0
@@ -109,10 +115,11 @@ def count_open_ic_positions(trading_client) -> int:
     """Count current open iron condor positions."""
     try:
         positions = trading_client.get_all_positions()
-        # Count SPY option positions (IC = 4 legs)
-        spy_options = [p for p in positions if p.symbol.startswith("SPY") and len(p.symbol) > 5]
+        underlying_options = [
+            p for p in positions if p.symbol.startswith(UNDERLYING) and len(p.symbol) > 5
+        ]
         # Each IC has 4 legs, so divide by 4
-        ic_count = len(spy_options) // 4
+        ic_count = len(underlying_options) // 4
         logger.info(f"Open IC positions: {ic_count} (max: {MAX_IRON_CONDORS})")
         return ic_count
     except Exception as e:
@@ -127,9 +134,8 @@ def get_existing_expiries(trading_client) -> set[str]:
         expiries = set()
         for p in positions:
             sym = p.symbol
-            if sym.startswith("SPY") and len(sym) > 5:
-                # OCC format: SPY260327P00640000 -> 260327 -> 2026-03-27
-                date_part = sym[3:9]
+            if sym.startswith(UNDERLYING) and len(sym) > 5:
+                date_part = sym[len(UNDERLYING) : len(UNDERLYING) + 6]
                 expiry = f"20{date_part[:2]}-{date_part[2:4]}-{date_part[4:6]}"
                 expiries.add(expiry)
         logger.info(f"Existing IC expiries: {sorted(expiries) if expiries else 'none'}")
@@ -141,7 +147,7 @@ def get_existing_expiries(trading_client) -> set[str]:
 
 def find_expiration_date(
     options_client=None,
-    spy_price: float = 600.0,
+    underlying_price: float = 600.0,
     exclude_expiries: set[str] | None = None,
 ) -> str | None:
     """Find optimal expiration date by querying Alpaca for real option chains.
@@ -160,9 +166,9 @@ def find_expiration_date(
 
             # Query a near-ATM put to discover available expirations
             request = OptionChainRequest(
-                underlying_symbol="SPY",
-                strike_price_gte=spy_price * 0.93,
-                strike_price_lte=spy_price * 0.97,
+                underlying_symbol=UNDERLYING,
+                strike_price_gte=underlying_price * 0.93,
+                strike_price_lte=underlying_price * 0.97,
                 type="put",
             )
             chain = options_client.get_option_chain(request)
@@ -170,9 +176,8 @@ def find_expiration_date(
             # Extract unique expirations from the chain
             real_expiries = set()
             for symbol in chain:
-                # OCC symbol: SPY260327P00650000 -> expiry 260327
-                if len(symbol) >= 9:
-                    date_part = symbol[3:9]
+                if len(symbol) >= len(UNDERLYING) + 6:
+                    date_part = symbol[len(UNDERLYING) : len(UNDERLYING) + 6]
                     try:
                         exp_date = datetime.strptime(f"20{date_part}", "%Y%m%d")
                         exp_str = exp_date.strftime("%Y-%m-%d")
@@ -222,18 +227,17 @@ def find_expiration_date(
     return best[0]
 
 
-def calculate_strikes(spy_price: float) -> dict:
+def calculate_strikes(underlying_price: float) -> dict:
     """Calculate iron condor strikes based on 15-20 delta targeting."""
-    # 15 delta is roughly 5% OTM for 30-45 DTE
-    # Round to nearest $5 increment (SPY options)
+    # 15 delta is roughly 5% OTM for the current profile.
 
     def round_to_5(x: float) -> float:
         return round(x / 5) * 5
 
-    short_put = round_to_5(spy_price * 0.95)  # ~5% below
+    short_put = round_to_5(underlying_price * 0.95)  # ~5% below
     long_put = short_put - WING_WIDTH
 
-    short_call = round_to_5(spy_price * 1.05)  # ~5% above
+    short_call = round_to_5(underlying_price * 1.05)  # ~5% above
     long_call = short_call + WING_WIDTH
 
     return {
@@ -247,7 +251,7 @@ def calculate_strikes(spy_price: float) -> dict:
 def build_occ_symbol(expiry: str, strike: float, opt_type: str) -> str:
     """Build OCC option symbol. expiry='2026-03-27', opt_type='P' or 'C'."""
     date_part = expiry.replace("-", "")[2:]  # YYMMDD
-    return f"SPY{date_part}{opt_type}{int(strike * 1000):08d}"
+    return f"{UNDERLYING}{date_part}{opt_type}{int(strike * 1000):08d}"
 
 
 def validate_symbols_exist(options_client, expiry: str, strikes: dict) -> bool:
@@ -284,7 +288,7 @@ def validate_symbols_exist(options_client, expiry: str, strikes: dict) -> bool:
 
 def estimate_credit(strikes: dict) -> dict:
     """Estimate credit and risk for the iron condor."""
-    # Conservative estimate: $1.50-2.50 total credit for SPY IC
+    # Conservative estimate for the current profile's $10-wide condor.
     # Using $1.85 as middle estimate
     estimated_credit = 2.00
     max_risk = (WING_WIDTH * 100) - (estimated_credit * 100)
@@ -350,15 +354,15 @@ def create_github_issue(opportunity: dict) -> str | None:
     from urllib.error import URLError
     from urllib.request import Request, urlopen
 
-    body = f"""## 🎯 IRON CONDOR OPPORTUNITY - SPY
+    body = f"""## 🎯 IRON CONDOR OPPORTUNITY - {UNDERLYING}
 
 ### Trade Details
 | Field | Value |
 |-------|-------|
 | **Expiry** | {opportunity["expiry"]} ({opportunity["dte"]} DTE) |
-| **Short Put** | ${opportunity["strikes"]["short_put"]:.0f} (delta: ~0.15) |
+| **Short Put** | ${opportunity["strikes"]["short_put"]:.0f} (delta: ~{TARGET_DELTA:.2f}) |
 | **Long Put** | ${opportunity["strikes"]["long_put"]:.0f} |
-| **Short Call** | ${opportunity["strikes"]["short_call"]:.0f} (delta: ~0.15) |
+| **Short Call** | ${opportunity["strikes"]["short_call"]:.0f} (delta: ~{TARGET_DELTA:.2f}) |
 | **Long Call** | ${opportunity["strikes"]["long_call"]:.0f} |
 
 ### Financials
@@ -374,7 +378,7 @@ def create_github_issue(opportunity: dict) -> str | None:
 |--------|-------|
 | **Current Positions** | {opportunity["positions"]}/{MAX_IRON_CONDORS} |
 | **Account Equity** | ${opportunity["equity"]:,.2f} |
-| **Max Risk (5%)** | ${opportunity["equity"] * POSITION_SIZE_PCT:,.2f} |
+| **Max Risk ({POSITION_SIZE_PCT * 100:.0f}%)** | ${opportunity["equity"] * POSITION_SIZE_PCT:,.2f} |
 
 ### VIX Conditions
 {opportunity["vix_status"]}
@@ -393,7 +397,7 @@ This trade will **auto-execute at {(datetime.utcnow() + timedelta(minutes=30)).s
 """
 
     payload = {
-        "title": f"🎯 IC Opportunity: SPY {opportunity['expiry']} | ${opportunity['pricing']['credit_dollars']:.0f} credit",
+        "title": f"🎯 IC Opportunity: {UNDERLYING} {opportunity['expiry']} | ${opportunity['pricing']['credit_dollars']:.0f} credit",
         "body": body,
         "labels": ["iron-condor", "trade-approval", "automated"],
     }
@@ -445,7 +449,7 @@ def scan_for_opportunity(dry_run: bool = False) -> dict | None:
         return None
 
     # Get market data
-    spy_price = get_spy_price(stock_client)
+    underlying_price = get_underlying_price(stock_client)
     equity = get_account_equity(trading_client)
 
     # Check VIX conditions
@@ -458,14 +462,14 @@ def scan_for_opportunity(dry_run: bool = False) -> dict | None:
     existing_expiries = get_existing_expiries(trading_client)
     expiry = find_expiration_date(
         options_client=options_client,
-        spy_price=spy_price,
+        underlying_price=underlying_price,
         exclude_expiries=existing_expiries,
     )
     if not expiry:
         logger.info("No available expiry dates — all slots in DTE window taken")
         return None
     dte = (datetime.strptime(expiry, "%Y-%m-%d") - datetime.now()).days
-    strikes = calculate_strikes(spy_price)
+    strikes = calculate_strikes(underlying_price)
 
     # Validate all 4 OCC symbols exist on Alpaca before proceeding
     if not validate_symbols_exist(options_client, expiry, strikes):
@@ -476,7 +480,8 @@ def scan_for_opportunity(dry_run: bool = False) -> dict | None:
 
     opportunity = {
         "timestamp": datetime.utcnow().isoformat(),
-        "spy_price": spy_price,
+        "underlying": UNDERLYING,
+        "underlying_price": underlying_price,
         "expiry": expiry,
         "dte": dte,
         "strikes": strikes,
@@ -492,6 +497,7 @@ def scan_for_opportunity(dry_run: bool = False) -> dict | None:
     logger.info(f"Expiry: {expiry} ({dte} DTE)")
     logger.info(f"Put Spread: ${strikes['long_put']:.0f}/${strikes['short_put']:.0f}")
     logger.info(f"Call Spread: ${strikes['short_call']:.0f}/${strikes['long_call']:.0f}")
+    logger.info(f"Underlying: {UNDERLYING} @ ${underlying_price:.2f}")
     logger.info(f"Credit: ${pricing['credit']:.2f} (${pricing['credit_dollars']:.0f})")
     logger.info(f"Max Risk: ${pricing['max_risk']:.0f}")
     logger.info(f"VIX: {vix_status}")

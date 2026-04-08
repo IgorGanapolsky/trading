@@ -21,7 +21,12 @@ from alpaca.trading.client import TradingClient
 from alpaca.trading.enums import OrderSide, TimeInForce
 from alpaca.trading.requests import MarketOrderRequest
 
-from src.core.trading_constants import IRON_CONDOR_STOP_LOSS_MULTIPLIER
+from src.core.trading_constants import (
+    IC_PROFIT_TARGET_PCT,
+    IRON_CONDOR_EXIT_DTE,
+    IRON_CONDOR_MIN_HOLD_HOURS,
+    IRON_CONDOR_STOP_LOSS_MULTIPLIER,
+)
 from src.safety.mandatory_trade_gate import safe_submit_order
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -38,8 +43,9 @@ PAPER = True
 
 # Phil Town Rule #1 Parameters
 STOP_LOSS_MULTIPLIER = IRON_CONDOR_STOP_LOSS_MULTIPLIER
-PROFIT_TAKE_PCT = 0.50  # 50% of max profit per CLAUDE.md exit rules
-MIN_DTE = 7  # Exit at 7 DTE
+PROFIT_TAKE_PCT = IC_PROFIT_TARGET_PCT
+MIN_DTE = IRON_CONDOR_EXIT_DTE
+MIN_HOLD_HOURS = IRON_CONDOR_MIN_HOLD_HOURS
 
 # Track iron condor entry credits
 IC_ENTRIES_FILE = Path(__file__).parent.parent / "data" / "ic_entries.json"
@@ -381,9 +387,9 @@ def run_guardian():
                     entry_dt = entry_dt.replace(tzinfo=None)
                 now = dt.now()
                 hours_held = (now - entry_dt).total_seconds() / 3600
-                if hours_held < 4:
+                if hours_held < MIN_HOLD_HOURS:
                     logger.info(
-                        f"  Position held {hours_held:.1f}h < 4h minimum. "
+                        f"  Position held {hours_held:.1f}h < {MIN_HOLD_HOURS}h minimum. "
                         f"Skipping exit checks (let theta work)."
                     )
                     continue

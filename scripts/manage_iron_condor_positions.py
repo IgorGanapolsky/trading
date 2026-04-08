@@ -29,7 +29,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.core.trading_constants import IRON_CONDOR_STOP_LOSS_MULTIPLIER
+from src.core.trading_constants import (
+    IC_PROFIT_TARGET_PCT,
+    IRON_CONDOR_EXIT_DTE,
+    IRON_CONDOR_MIN_HOLD_HOURS,
+    IRON_CONDOR_STOP_LOSS_MULTIPLIER,
+    IRON_CONDOR_UNDERLYING,
+)
 from src.safety.mandatory_trade_gate import safe_submit_order
 
 logging.basicConfig(
@@ -40,10 +46,12 @@ logger = logging.getLogger(__name__)
 
 # Iron condor exit thresholds per LL-268/LL-277
 IC_EXIT_CONFIG = {
-    "profit_target_pct": 0.50,  # Close at 50% profit
+    "profit_target_pct": IC_PROFIT_TARGET_PCT,
     "stop_loss_pct": IRON_CONDOR_STOP_LOSS_MULTIPLIER,  # Canonical 1.0x credit stop-loss
-    "exit_dte": 7,  # Close at 7 DTE (gamma risk)
+    "exit_dte": IRON_CONDOR_EXIT_DTE,
 }
+MIN_HOLD_HOURS = IRON_CONDOR_MIN_HOLD_HOURS
+DEFAULT_UNDERLYING = IRON_CONDOR_UNDERLYING
 
 
 def is_option_symbol(symbol: str) -> bool:
@@ -165,7 +173,6 @@ def check_exit_conditions(ic: dict) -> tuple[bool, str, str]:
     # held < 1 hour have 6.5% win rate vs 50% for trades held > 1 day.
     # Theta decay needs TIME to work. Also: if entry_date is missing,
     # HOLD by default instead of bypassing the check.
-    MIN_HOLD_HOURS = 24
     entry_date = ic.get("entry_date")
     if entry_date:
         from datetime import datetime
@@ -300,10 +307,10 @@ def record_trade_outcome(ic: dict, reason: str, won: bool) -> None:
     project_root = Path(__file__).parent.parent
     timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     episode_id = str(
-        ic.get("episode_id") or f"iron_condor::{ic.get('underlying', 'SPY')}::{expiry}"
+        ic.get("episode_id") or f"iron_condor::{ic.get('underlying', DEFAULT_UNDERLYING)}::{expiry}"
     )
     event_key = (
-        f"iron_condor_close::{ic.get('underlying', 'SPY')}::"
+        f"iron_condor_close::{ic.get('underlying', DEFAULT_UNDERLYING)}::"
         f"{ic.get('expiry_str', 'unknown')}::{reason}::{round(float(pl), 2)}"
     )
 
@@ -313,7 +320,7 @@ def record_trade_outcome(ic: dict, reason: str, won: bool) -> None:
 
         outcome_label = build_outcome_label(
             {
-                "symbol": ic.get("underlying", "SPY"),
+                "symbol": ic.get("underlying", DEFAULT_UNDERLYING),
                 "strategy": "iron_condor",
                 "total_pl": pl,
                 "credit_received": credit,
@@ -331,7 +338,7 @@ def record_trade_outcome(ic: dict, reason: str, won: bool) -> None:
                 "event_type": "outcome",
                 "timestamp": timestamp,
                 "event_key": event_key,
-                "symbol": str(ic.get("underlying", "SPY")),
+                "symbol": str(ic.get("underlying", DEFAULT_UNDERLYING)),
                 "strategy": "iron_condor",
                 "reward": float(outcome_label["reward"]),
                 "return_pct": outcome_label["return_pct"],
@@ -361,7 +368,7 @@ def record_trade_outcome(ic: dict, reason: str, won: bool) -> None:
 
         outcome_label = build_outcome_label(
             {
-                "symbol": ic.get("underlying", "SPY"),
+                "symbol": ic.get("underlying", DEFAULT_UNDERLYING),
                 "strategy": "iron_condor",
                 "total_pl": pl,
                 "credit_received": credit,
@@ -370,7 +377,7 @@ def record_trade_outcome(ic: dict, reason: str, won: bool) -> None:
             }
         )
         store_trade_outcome(
-            symbol=str(ic.get("underlying", "SPY")),
+            symbol=str(ic.get("underlying", DEFAULT_UNDERLYING)),
             strategy="iron_condor",
             reward=float(outcome_label["reward"]),
             won=bool(outcome_label["won"]),
@@ -394,7 +401,7 @@ def record_trade_outcome(ic: dict, reason: str, won: bool) -> None:
 
         feedback_type = "positive" if bool(won) else "negative"
         context = (
-            f"iron_condor closed symbol={ic.get('underlying', 'SPY')} "
+            f"iron_condor closed symbol={ic.get('underlying', DEFAULT_UNDERLYING)} "
             f"expiry={ic.get('expiry_str', '')} exit_reason={reason} pnl={float(pl):.2f}"
         )
         outcome = aggregate_feedback(
@@ -508,12 +515,14 @@ def main(dry_run: bool = False):
                 f"P/L=${orphan['total_pl']:.2f}, age={hours_since_entry:.1f}h)"
             )
 
-            if hours_since_entry >= 24 or orphan_dte <= 1:
+            if hours_since_entry >= MIN_HOLD_HOURS or orphan_dte <= 1:
                 logger.warning(f"  Closing orphan (age={hours_since_entry:.1f}h, DTE={orphan_dte})")
                 if close_iron_condor(client, orphan, "ORPHAN_CLEANUP", dry_run):
                     record_trade_outcome(orphan, "ORPHAN_CLEANUP", won=False)
             else:
-                logger.info("  Holding orphan — may be partial fill (age < 24h)")
+                logger.info(
+                    f"  Holding orphan — may be partial fill (age < {MIN_HOLD_HOURS}h)"
+                )
 
     iron_condors = valid_condors
     logger.info(f"Valid iron condors: {len(iron_condors)}")
