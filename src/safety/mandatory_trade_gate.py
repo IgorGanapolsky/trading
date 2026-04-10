@@ -171,11 +171,43 @@ def _infer_paper_trading_client(client: Any) -> bool:
     try:
         from src.utils.alpaca_client import get_alpaca_credentials
 
-        _api_key, _api_secret, is_paper = get_alpaca_credentials()
-        return bool(is_paper)
+        is_paper = _infer_paper_from_credentials(get_alpaca_credentials())
+        if is_paper is not None:
+            return is_paper
     except Exception as exc:
         logger.warning("Unable to infer paper trading mode; validation reset stays closed: %s", exc)
+
+    return False
+
+
+def _infer_paper_from_credentials(credentials: Any) -> bool | None:
+    """Infer paper mode from supported Alpaca credential tuple shapes.
+
+    get_alpaca_credentials() is intentionally a two-value helper across most of
+    the repo. Some legacy call sites used a three-value shape. This keeps the
+    final trade gate compatible with both without ever logging secret values.
+    """
+    if not isinstance(credentials, (tuple, list)) or len(credentials) < 2:
+        return None
+
+    if len(credentials) >= 3 and isinstance(credentials[2], bool):
+        return bool(credentials[2])
+
+    api_key = credentials[0]
+    if not api_key:
+        return None
+
+    paper_key = os.getenv("ALPACA_PAPER_TRADING_API_KEY")
+    live_key = os.getenv("ALPACA_API_KEY")
+
+    if paper_key and api_key == paper_key:
+        return True
+    if live_key and api_key == live_key and not paper_key:
         return False
+    if paper_key and not live_key:
+        return True
+
+    return None
 
 
 def _allows_controlled_validation_halt_override(
@@ -236,7 +268,10 @@ def _count_structures_today_from_alpaca() -> int:
     try:
         from src.utils.alpaca_client import get_alpaca_credentials
 
-        api_key, api_secret, is_paper = get_alpaca_credentials()
+        credentials = get_alpaca_credentials()
+        api_key, api_secret = credentials[0], credentials[1]
+        inferred_paper = _infer_paper_from_credentials(credentials)
+        is_paper = True if inferred_paper is None else inferred_paper
         if not api_key or not api_secret:
             raise ValueError("No Alpaca credentials")
 
@@ -1523,6 +1558,18 @@ def safe_submit_order(client, order_request, strategy: str | None = None):
                         and str(strategy or "").strip().lower() in _VALIDATION_STRATEGIES
                     ),
                 }
+                gateway.capture_span(
+                    "paper_mode_inferred",
+                    trace_id,
+                    attributes={
+                        "strategy": strategy,
+                        "paper_trading": paper_trading,
+                        "validation_entry_quantity": order_qty,
+                        "controlled_paper_validation_entry": account_context[
+                            "controlled_paper_validation_entry"
+                        ],
+                    },
+                )
 
                 # Include current positions for stacking + count checks (best-effort).
                 try:
@@ -1568,8 +1615,42 @@ def safe_submit_order(client, order_request, strategy: str | None = None):
                     strategy=strategy,
                     context=account_context,
                 )
+                gate_checks = getattr(gate, "checks_performed", [])
+                if not isinstance(gate_checks, list):
+                    gate_checks = []
+                gate_confidence = getattr(gate, "confidence", None)
+                if not isinstance(gate_confidence, (int, float)):
+                    gate_confidence = None
                 if not gate.approved:
+                    gateway.capture_span(
+                        "mandatory_gate_blocked",
+                        trace_id,
+                        attributes={
+                            "reason": gate.reason,
+                            "checks": gate_checks,
+                            "confidence": gate_confidence,
+                            "paper_trading": account_context["paper_trading"],
+                            "validation_entry_quantity": account_context[
+                                "validation_entry_quantity"
+                            ],
+                            "controlled_paper_validation_entry": account_context[
+                                "controlled_paper_validation_entry"
+                            ],
+                        },
+                    )
                     raise ValueError(f"MANDATORY GATE BLOCKED: {gate.reason}")
+                gateway.capture_span(
+                    "mandatory_gate_passed",
+                    trace_id,
+                    attributes={
+                        "checks": gate_checks,
+                        "confidence": gate_confidence,
+                        "paper_trading": account_context["paper_trading"],
+                        "controlled_paper_validation_entry": account_context[
+                            "controlled_paper_validation_entry"
+                        ],
+                    },
+                )
             except ValueError:
                 raise
             except Exception as exc:
