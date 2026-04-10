@@ -352,6 +352,46 @@ class TestSafeSubmitOrder:
         assert ctx["positions"]
         mock_client.submit_order.assert_called_once_with(mock_request)
 
+    @patch("src.safety.mandatory_trade_gate._infer_paper_trading_client", return_value=True)
+    @patch("src.safety.mandatory_trade_gate._get_positions_qty_map", return_value={})
+    @patch("src.safety.mandatory_trade_gate._estimate_opening_max_loss")
+    @patch("src.safety.mandatory_trade_gate.validate_trade_mandatory")
+    @patch("src.safety.mandatory_trade_gate._infer_is_closing_order", return_value=False)
+    def test_marks_one_lot_paper_ic_as_controlled_validation_entry(
+        self,
+        _mock_is_closing,
+        mock_gate,
+        mock_estimate_opening_max_loss,
+        _mock_qty_map,
+        _mock_paper,
+    ):
+        """The final order gate gets enough context to keep live/scaling blocked."""
+        mock_gate.return_value = MagicMock(approved=True, reason="")
+        mock_estimate_opening_max_loss.return_value = (500.0, 35, "SPY")
+
+        mock_client = MagicMock(spec=["get_account", "submit_order"])
+        mock_client.get_account.return_value = MagicMock(equity="100000")
+        mock_client.submit_order.return_value = MagicMock(id="ok")
+
+        mock_request = MagicMock()
+        mock_request.symbol = None
+        mock_request.limit_price = -2.05
+        mock_request.qty = 1
+        mock_request.legs = [
+            MagicMock(symbol="SPY260515P00634000", side="BUY", ratio_qty=1),
+            MagicMock(symbol="SPY260515P00639000", side="SELL", ratio_qty=1),
+            MagicMock(symbol="SPY260515C00712000", side="SELL", ratio_qty=1),
+            MagicMock(symbol="SPY260515C00717000", side="BUY", ratio_qty=1),
+        ]
+
+        safe_submit_order(mock_client, mock_request, strategy="iron_condor")
+
+        ctx = mock_gate.call_args.kwargs["context"]
+        assert ctx["paper_trading"] is True
+        assert ctx["validation_entry_quantity"] == 1
+        assert ctx["controlled_paper_validation_entry"] is True
+        mock_client.submit_order.assert_called_once_with(mock_request)
+
 
 # -------------------------------------------------------------------
 # safe_close_position wrapper

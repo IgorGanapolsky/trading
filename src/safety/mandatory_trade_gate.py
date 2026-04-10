@@ -119,6 +119,99 @@ _POLICY_METADATA_PATH = (
 )
 _DEFAULT_POLICY_MAX_AGE_DAYS = 7
 _DEFAULT_POLICY_MIN_TRADE_COUNT = 30
+_VALIDATION_ENTRY_MAX_QTY = 1
+_VALIDATION_STRATEGIES = {"iron_condor", "ic_simple", "options_income"}
+
+
+def _load_north_star_weekly_gate() -> dict[str, Any]:
+    """Load the current North Star weekly gate from system state."""
+    try:
+        payload = json.loads(_SYSTEM_STATE_PATH.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {}
+    except Exception as exc:
+        logger.warning("Failed to read North Star weekly gate: %s", exc)
+        return {}
+
+    if not isinstance(payload, dict):
+        return {}
+    gate = payload.get("north_star_weekly_gate", {})
+    return gate if isinstance(gate, dict) else {}
+
+
+def _weekly_gate_allows_validation_entries(gate: dict[str, Any] | None = None) -> bool:
+    gate = gate if isinstance(gate, dict) else _load_north_star_weekly_gate()
+    return (
+        str(gate.get("mode") or "").strip().lower() == "validation_reset"
+        and _to_bool(gate.get("allow_validation_entries"), default=False)
+        and _to_bool(gate.get("block_live_new_positions"), default=False)
+    )
+
+
+def _is_ml_gate_halt_reason(reason: str) -> bool:
+    normalized = str(reason or "").upper()
+    return "ML GATE BLOCKED" in normalized and "WIN RATE" in normalized
+
+
+def _extract_order_qty(order_request: Any) -> int:
+    try:
+        return max(1, int(float(getattr(order_request, "qty", 1) or 1)))
+    except Exception as exc:
+        logger.debug("Failed to parse order qty %r: %s", getattr(order_request, "qty", None), exc)
+        return 1
+
+
+def _infer_paper_trading_client(client: Any) -> bool:
+    """Best-effort paper/live inference. Unknown defaults to live/fail-closed."""
+    for attr in ("paper", "_paper", "is_paper", "paper_trading"):
+        value = getattr(client, attr, None)
+        if isinstance(value, bool):
+            return value
+
+    try:
+        from src.utils.alpaca_client import get_alpaca_credentials
+
+        _api_key, _api_secret, is_paper = get_alpaca_credentials()
+        return bool(is_paper)
+    except Exception as exc:
+        logger.warning("Unable to infer paper trading mode; validation reset stays closed: %s", exc)
+        return False
+
+
+def _allows_controlled_validation_halt_override(
+    *,
+    halt_reason: str,
+    strategy: str,
+    context: dict[str, Any] | None,
+) -> bool:
+    """Allow only explicit one-lot paper validation entries through the ML halt.
+
+    This does not disable crisis/manual halts. It only prevents the legacy
+    ML win-rate sentinel from deadlocking the validation cohort that must
+    generate new evidence before live/scaling can resume.
+    """
+    if not _is_ml_gate_halt_reason(halt_reason):
+        return False
+    if not _weekly_gate_allows_validation_entries():
+        return False
+
+    context = context or {}
+    if not _to_bool(context.get("controlled_paper_validation_entry"), default=False):
+        return False
+    if not _to_bool(context.get("paper_trading"), default=False):
+        return False
+
+    strategy_name = str(strategy or "").strip().lower()
+    if strategy_name not in _VALIDATION_STRATEGIES:
+        return False
+
+    try:
+        qty = int(float(context.get("validation_entry_quantity", 999)))
+    except Exception as exc:
+        logger.debug("Failed to parse validation quantity: %s", exc)
+        return False
+
+    return 1 <= qty <= _VALIDATION_ENTRY_MAX_QTY
 
 
 def _today_et_str() -> str:
@@ -701,6 +794,8 @@ def validate_trade_mandatory(
     if side == "SELL" and symbol in current_symbols:
         is_opening = False
 
+    halt_state = None
+    halt_override_allowed = False
     if is_opening:
         try:
             from src.safety.trading_halt import get_trading_halt_state
@@ -710,11 +805,29 @@ def validate_trade_mandatory(
             halt_state = None
 
         if halt_state and halt_state.active:
-            return GateResult(
-                approved=False,
-                reason=f"Trading halted: {halt_state.reason}",
-                checks_performed=checks_performed + [f"trading_halt: BLOCKED ({halt_state.kind})"],
+            halt_override_allowed = _allows_controlled_validation_halt_override(
+                halt_reason=halt_state.reason,
+                strategy=strategy,
+                context=context,
             )
+            if halt_override_allowed:
+                warning = (
+                    "validation_reset: legacy ML halt bypassed for one-lot paper "
+                    "validation entry; live/scaling remains blocked"
+                )
+                warnings.append(warning)
+                checks_performed.append("trading_halt: ML_HALT_BYPASSED_VALIDATION_RESET")
+                logger.warning("⚠️ %s", warning)
+            else:
+                return GateResult(
+                    approved=False,
+                    reason=f"Trading halted: {halt_state.reason}",
+                    checks_performed=checks_performed
+                    + [f"trading_halt: BLOCKED ({halt_state.kind})"],
+                )
+
+    if not halt_override_allowed:
+        checks_performed.append("trading_halt: PASS" if is_opening else "trading_halt: SKIP")
 
     guard_ok, guard_reason = _enforce_intraday_guardrails(
         equity=float(equity or 0.0),
@@ -1396,9 +1509,20 @@ def safe_submit_order(client, order_request, strategy: str | None = None):
                 equity = _get_account_equity_from_client(client) or 0.0
                 max_loss, _dte, _underlying = _estimate_opening_max_loss(order_request)
                 est_amount = float(max_loss or 0.0)
+                order_qty = _extract_order_qty(order_request)
+                paper_trading = _infer_paper_trading_client(client)
                 # Best-effort account context so that direct script submissions
                 # still benefit from the same dynamic guardrails as AlpacaExecutor.
-                account_context: dict[str, Any] = {"equity": float(equity)}
+                account_context: dict[str, Any] = {
+                    "equity": float(equity),
+                    "paper_trading": paper_trading,
+                    "validation_entry_quantity": order_qty,
+                    "controlled_paper_validation_entry": (
+                        paper_trading
+                        and order_qty <= _VALIDATION_ENTRY_MAX_QTY
+                        and str(strategy or "").strip().lower() in _VALIDATION_STRATEGIES
+                    ),
+                }
 
                 # Include current positions for stacking + count checks (best-effort).
                 try:

@@ -406,10 +406,12 @@ class TestPriceWalk:
         mock_submit.return_value = mock_order
         mock_wait.return_value = True  # Fills immediately
 
-        place_ic(MagicMock(), self._make_opp(est_credit=2.50))
+        result = place_ic(MagicMock(), self._make_opp(est_credit=2.50))
 
         # Should only submit once (no retry needed)
         assert mock_submit.call_count == 1
+        assert result == "order-1"
+        mock_save.assert_called_once()
         # Verify limit price: -(est_credit - 0.05) = -2.45
         submitted_request = mock_submit.call_args[0][1]
         assert submitted_request.limit_price == pytest.approx(-2.45)
@@ -457,10 +459,12 @@ class TestPriceWalk:
         mock_submit.return_value = mock_order
 
         client = MagicMock()
-        place_ic(client, self._make_opp(est_credit=2.50))
+        result = place_ic(client, self._make_opp(est_credit=2.50))
 
         # MAX_WALK = 0.20, WALK_INCREMENT = 0.05 → 5 attempts (0, 0.05, 0.10, 0.15, 0.20)
         assert mock_submit.call_count == 5
+        assert result is None
+        mock_save.assert_not_called()
 
     @patch("scripts.ic_simple._save_entries")
     @patch("scripts.ic_simple._load_entries", return_value={})
@@ -476,10 +480,12 @@ class TestPriceWalk:
 
         client = MagicMock()
         # est_credit = 0.60, limit = 0.55. After walk $0.05 → 0.50 (MIN). After $0.10 → 0.45 < MIN → stop
-        place_ic(client, self._make_opp(est_credit=0.60))
+        result = place_ic(client, self._make_opp(est_credit=0.60))
 
         # Should submit only 2 times: at $0.55 and $0.50 (then $0.45 < MIN_CREDIT stops)
         assert mock_submit.call_count == 2
+        assert result is None
+        mock_save.assert_not_called()
 
 
 # ══════════════════════════════════════════════════════════════════════════════

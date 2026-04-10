@@ -64,6 +64,8 @@ EXIT_DTE = _SP["exit_dte"]
 WING_WIDTH = _SP["wing_width"]
 TARGET_DELTA = _SP["target_delta"]
 ENTRIES_FILE = Path(__file__).parent.parent / "data" / "ic_entries.json"
+SYSTEM_STATE_FILE = Path(__file__).parent.parent / "data" / "system_state.json"
+THOMPSON_MIN_CONFIDENCE = 0.40
 
 
 # ── Alpaca Client ────────────────────────────────────────────────────────────
@@ -200,6 +202,7 @@ def place_ic(client, opp: dict) -> str | None:
 
     if not filled:
         logger.warning(f"Price walk exhausted (${MAX_WALK:.2f} concession). No fill.")
+        return None
 
     # Save entry data
     entries = _load_entries()
@@ -940,6 +943,40 @@ def _get_thompson_confidence() -> float:
         return 0.0  # Fail-closed: block entry when model unavailable
 
 
+def _load_north_star_weekly_gate() -> dict:
+    try:
+        data = json.loads(SYSTEM_STATE_FILE.read_text(encoding="utf-8"))
+        gate = data.get("north_star_weekly_gate", {})
+        return gate if isinstance(gate, dict) else {}
+    except Exception as exc:
+        logger.debug(f"North Star weekly gate load failed: {exc}")
+        return {}
+
+
+def _allows_controlled_paper_validation_entry() -> bool:
+    gate = _load_north_star_weekly_gate()
+    return (
+        gate.get("mode") == "validation_reset"
+        and bool(gate.get("allow_validation_entries"))
+        and bool(gate.get("block_live_new_positions"))
+    )
+
+
+def _should_skip_for_thompson(confidence: float) -> tuple[bool, str]:
+    if confidence >= THOMPSON_MIN_CONFIDENCE:
+        return False, (
+            f"Thompson confidence {confidence:.3f} >= {THOMPSON_MIN_CONFIDENCE:.2f}"
+        )
+    if _allows_controlled_paper_validation_entry():
+        return False, (
+            f"Thompson confidence {confidence:.3f} < {THOMPSON_MIN_CONFIDENCE:.2f}, "
+            "but controlled paper validation entries are allowed; live/scaling remains blocked."
+        )
+    return True, (
+        f"Thompson confidence {confidence:.3f} < {THOMPSON_MIN_CONFIDENCE:.2f} — skip entry"
+    )
+
+
 def _query_rag_before_entry(spy_price: float):
     """Query RAG for relevant lessons before entering a trade."""
     try:
@@ -1289,15 +1326,17 @@ def main():
             else:
                 opp = find_opportunity(spy_price)
                 if opp:
-                    if thompson_conf < 0.40:
-                        logger.warning(
-                            f"Thompson confidence {thompson_conf:.3f} < 0.40 — skip entry"
-                        )
-                    elif args.dry_run:
-                        logger.info(f"(dry run — would place IC: {opp})")
+                    should_skip, thompson_reason = _should_skip_for_thompson(thompson_conf)
+                    if should_skip:
+                        logger.warning(thompson_reason)
                     else:
-                        order_id = place_ic(client, opp)
-                        logger.info(f"Placed IC: order={order_id}")
+                        if thompson_conf < THOMPSON_MIN_CONFIDENCE:
+                            logger.info(thompson_reason)
+                        if args.dry_run:
+                            logger.info(f"(dry run — would place IC: {opp})")
+                        else:
+                            order_id = place_ic(client, opp)
+                            logger.info(f"Placed IC: order={order_id}")
                 else:
                     logger.info("No opportunity found.")
 

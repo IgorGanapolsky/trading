@@ -277,6 +277,164 @@ class TestValidateTradeMandatory:
         assert "rebuild in progress" in result.reason.lower()
         assert any("trading_halt: BLOCKED" in check for check in result.checks_performed)
 
+    def test_ml_halt_allows_controlled_paper_validation_reset(
+        self, monkeypatch, tmp_path
+    ):
+        """Validation reset can collect new one-lot paper evidence despite legacy ML halt."""
+        import json
+
+        import src.safety.mandatory_trade_gate as gate_mod
+        import src.safety.trading_halt as halt_mod
+
+        state_file = tmp_path / "system_state.json"
+        state_file.write_text(
+            json.dumps(
+                {
+                    "north_star_weekly_gate": {
+                        "mode": "validation_reset",
+                        "allow_validation_entries": True,
+                        "block_live_new_positions": True,
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(gate_mod, "_SYSTEM_STATE_PATH", state_file)
+        monkeypatch.setattr(
+            halt_mod,
+            "get_trading_halt_state",
+            lambda: SimpleNamespace(
+                active=True,
+                kind="system_halt",
+                path="data/TRADING_HALTED",
+                reason="ML GATE BLOCKED: Win rate 24.2% < 50.0%",
+            ),
+        )
+        monkeypatch.setattr(gate_mod, "_query_rag_for_blocking_lessons", lambda *_: (False, []))
+        monkeypatch.setattr(gate_mod, "_check_market_regime", lambda *_: (1.0, []))
+
+        result = gate_mod.validate_trade_mandatory(
+            symbol="SPY260515P00639000",
+            amount=200.0,
+            side="SELL",
+            strategy="iron_condor",
+            context={
+                "equity": 100000.0,
+                "paper_trading": True,
+                "controlled_paper_validation_entry": True,
+                "validation_entry_quantity": 1,
+            },
+        )
+
+        assert result.approved is True
+        assert any(
+            "ML_HALT_BYPASSED_VALIDATION_RESET" in check
+            for check in result.checks_performed
+        )
+        assert any("legacy ML halt bypassed" in warning for warning in result.rag_warnings)
+
+    def test_ml_halt_still_blocks_live_or_scaling_entries(
+        self, monkeypatch, tmp_path
+    ):
+        """Validation reset must not become a live/scaling bypass."""
+        import json
+
+        import src.safety.mandatory_trade_gate as gate_mod
+        import src.safety.trading_halt as halt_mod
+
+        state_file = tmp_path / "system_state.json"
+        state_file.write_text(
+            json.dumps(
+                {
+                    "north_star_weekly_gate": {
+                        "mode": "validation_reset",
+                        "allow_validation_entries": True,
+                        "block_live_new_positions": True,
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(gate_mod, "_SYSTEM_STATE_PATH", state_file)
+        monkeypatch.setattr(
+            halt_mod,
+            "get_trading_halt_state",
+            lambda: SimpleNamespace(
+                active=True,
+                kind="system_halt",
+                path="data/TRADING_HALTED",
+                reason="ML GATE BLOCKED: Win rate 24.2% < 50.0%",
+            ),
+        )
+
+        result = gate_mod.validate_trade_mandatory(
+            symbol="SPY260515P00639000",
+            amount=200.0,
+            side="SELL",
+            strategy="iron_condor",
+            context={
+                "equity": 100000.0,
+                "paper_trading": False,
+                "controlled_paper_validation_entry": True,
+                "validation_entry_quantity": 1,
+            },
+        )
+
+        assert result.approved is False
+        assert "ml gate blocked" in result.reason.lower()
+        assert any("trading_halt: BLOCKED" in check for check in result.checks_performed)
+
+    def test_validation_reset_does_not_bypass_manual_halt(
+        self, monkeypatch, tmp_path
+    ):
+        """Only the legacy ML win-rate sentinel is bypassable."""
+        import json
+
+        import src.safety.mandatory_trade_gate as gate_mod
+        import src.safety.trading_halt as halt_mod
+
+        state_file = tmp_path / "system_state.json"
+        state_file.write_text(
+            json.dumps(
+                {
+                    "north_star_weekly_gate": {
+                        "mode": "validation_reset",
+                        "allow_validation_entries": True,
+                        "block_live_new_positions": True,
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(gate_mod, "_SYSTEM_STATE_PATH", state_file)
+        monkeypatch.setattr(
+            halt_mod,
+            "get_trading_halt_state",
+            lambda: SimpleNamespace(
+                active=True,
+                kind="legacy_manual_halt",
+                path="data/trading_halt.txt",
+                reason="Manual halt for operator review.",
+            ),
+        )
+
+        result = gate_mod.validate_trade_mandatory(
+            symbol="SPY260515P00639000",
+            amount=200.0,
+            side="SELL",
+            strategy="iron_condor",
+            context={
+                "equity": 100000.0,
+                "paper_trading": True,
+                "controlled_paper_validation_entry": True,
+                "validation_entry_quantity": 1,
+            },
+        )
+
+        assert result.approved is False
+        assert "manual halt" in result.reason.lower()
+        assert any("trading_halt: BLOCKED" in check for check in result.checks_performed)
+
     def test_milestone_controller_blocks_paused_strategy_family(self):
         """Test that milestone controller blocks BUY for paused strategy families."""
         from src.safety.mandatory_trade_gate import validate_trade_mandatory
