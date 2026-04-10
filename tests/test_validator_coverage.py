@@ -9,6 +9,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 try:
+    from src.safety import mandatory_trade_gate as gate_mod
     from src.safety.mandatory_trade_gate import (
         safe_close_position,
         safe_submit_order,
@@ -171,6 +172,32 @@ class TestAlpacaTraderValidation:
 
 
 class TestSafeSubmitOrder:
+    def test_infers_paper_mode_from_two_value_paper_credentials(self, monkeypatch):
+        """Workflow credentials are two-value tuples; paper env vars must still infer paper."""
+        monkeypatch.setenv("ALPACA_PAPER_TRADING_API_KEY", "paper-key")
+        monkeypatch.setenv("ALPACA_PAPER_TRADING_API_SECRET", "paper-secret")
+        monkeypatch.delenv("ALPACA_API_KEY", raising=False)
+        monkeypatch.delenv("ALPACA_SECRET_KEY", raising=False)
+
+        with patch(
+            "src.utils.alpaca_client.get_alpaca_credentials",
+            return_value=("paper-key", "paper-secret"),
+        ):
+            assert gate_mod._infer_paper_trading_client(object()) is True
+
+    def test_infers_live_mode_from_two_value_live_credentials(self, monkeypatch):
+        """Unknown paper status stays closed unless credentials match live fallback only."""
+        monkeypatch.delenv("ALPACA_PAPER_TRADING_API_KEY", raising=False)
+        monkeypatch.delenv("ALPACA_PAPER_TRADING_API_SECRET", raising=False)
+        monkeypatch.setenv("ALPACA_API_KEY", "live-key")
+        monkeypatch.setenv("ALPACA_SECRET_KEY", "live-secret")
+
+        with patch(
+            "src.utils.alpaca_client.get_alpaca_credentials",
+            return_value=("live-key", "live-secret"),
+        ):
+            assert gate_mod._infer_paper_trading_client(object()) is False
+
     def test_blocks_non_spy_symbol(self):
         """safe_submit_order rejects non-SPY order requests."""
         mock_client = MagicMock()
@@ -390,6 +417,88 @@ class TestSafeSubmitOrder:
         assert ctx["paper_trading"] is True
         assert ctx["validation_entry_quantity"] == 1
         assert ctx["controlled_paper_validation_entry"] is True
+        mock_client.submit_order.assert_called_once_with(mock_request)
+
+    def test_one_lot_paper_validation_order_bypasses_legacy_ml_halt(self, monkeypatch, tmp_path):
+        """Regression for IC Simple live E2E: two-value paper creds must open validation reset."""
+        from src.safety.trading_halt import TradingHaltState
+
+        state_path = tmp_path / "system_state.json"
+        state_path.write_text(
+            """
+            {
+              "north_star_weekly_gate": {
+                "mode": "validation_reset",
+                "allow_validation_entries": true,
+                "block_live_new_positions": true
+              }
+            }
+            """,
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(gate_mod, "_SYSTEM_STATE_PATH", state_path)
+        monkeypatch.setenv("ALPACA_PAPER_TRADING_API_KEY", "paper-key")
+        monkeypatch.setenv("ALPACA_PAPER_TRADING_API_SECRET", "paper-secret")
+        monkeypatch.delenv("ALPACA_API_KEY", raising=False)
+        monkeypatch.delenv("ALPACA_SECRET_KEY", raising=False)
+        monkeypatch.setenv("SKIP_POLICY_GATE", "true")
+
+        mock_client = MagicMock(spec=["get_account", "submit_order"])
+        mock_client.get_account.return_value = MagicMock(equity="100000")
+        mock_client.submit_order.return_value = MagicMock(id="validation-ok")
+
+        mock_request = MagicMock()
+        mock_request.symbol = None
+        mock_request.limit_price = -1.88
+        mock_request.qty = 1
+        mock_request.side = "SELL"
+        mock_request.legs = [
+            MagicMock(symbol="SPY260515P00634000", side="BUY", ratio_qty=1),
+            MagicMock(symbol="SPY260515P00639000", side="SELL", ratio_qty=1),
+            MagicMock(symbol="SPY260515C00712000", side="SELL", ratio_qty=1),
+            MagicMock(symbol="SPY260515C00717000", side="BUY", ratio_qty=1),
+        ]
+
+        with (
+            patch(
+                "src.utils.alpaca_client.get_alpaca_credentials",
+                return_value=("paper-key", "paper-secret"),
+            ),
+            patch("src.utils.alpaca_client.get_options_data_client", return_value=MagicMock()),
+            patch("src.safety.macro_risk_guard.MacroRiskGuard") as mock_macro_guard,
+            patch("src.safety.trading_halt.get_trading_halt_state") as mock_halt,
+            patch.object(gate_mod, "_infer_is_closing_order", return_value=False),
+            patch.object(gate_mod, "_get_positions_qty_map", return_value={}),
+            patch.object(gate_mod, "_estimate_opening_max_loss", return_value=(500.0, 35, "SPY")),
+            patch.object(gate_mod, "_enforce_intraday_guardrails", return_value=(True, "")),
+            patch.object(gate_mod, "_query_rag_for_blocking_lessons", return_value=(False, [])),
+            patch.object(gate_mod, "_check_market_regime", return_value=(1.0, [])),
+            patch.object(gate_mod, "check_context_freshness") as mock_freshness,
+            patch("src.safety.multi_model_juror.MultiModelJuror") as mock_juror,
+            patch("src.safety.reasoning_evaluator.ReasoningEvaluator") as mock_evaluator,
+            patch("src.rag.lessons_search.LessonsSearch") as mock_lessons,
+        ):
+            mock_macro_guard.return_value.get_macro_snapshot.return_value = {}
+            mock_macro_guard.return_value.check_macro_vitals.return_value = (True, "")
+            mock_halt.return_value = TradingHaltState(
+                active=True,
+                kind="system_halt",
+                path="data/TRADING_HALTED",
+                reason="ML GATE BLOCKED: Win rate 24.2% < 50.0%",
+            )
+            mock_freshness.return_value = MagicMock(
+                is_stale=False, blocking=False, sources=[], stale_sources=[]
+            )
+            mock_juror.return_value.get_consensus.return_value = True
+            mock_evaluator.return_value.evaluate.return_value = MagicMock(
+                is_hallucination_risk=False,
+                groundedness=0.95,
+                reasoning_trace="grounded",
+            )
+            mock_lessons.return_value.search.return_value = []
+
+            safe_submit_order(mock_client, mock_request, strategy="iron_condor")
+
         mock_client.submit_order.assert_called_once_with(mock_request)
 
 

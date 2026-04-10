@@ -11,6 +11,7 @@ permissions:
 jobs:
   trunk-check:
     name: Trunk Check
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -22,6 +23,7 @@ jobs:
 
   test-suite:
     name: Run All Tests
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 50
     steps:
@@ -61,6 +63,7 @@ jobs:
 
   validate-workflows:
     name: Validate Workflows
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
