@@ -139,7 +139,8 @@ _requests.GetOrdersRequest = type(
 # Safety gate stub
 _ensure_module("src.safety.mandatory_trade_gate")
 _safe_mod = _sys.modules["src.safety.mandatory_trade_gate"]
-_safe_mod.safe_submit_order = lambda *a, **kw: None
+if not hasattr(_safe_mod, "safe_submit_order"):
+    _safe_mod.safe_submit_order = lambda *a, **kw: None
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -226,14 +227,14 @@ class TestStrikeSelectionNetCredit:
 class TestFindOpportunity:
     """Verify find_opportunity uses selection.net_credit."""
 
-    def _mock_selection(self, net_credit_val, method="live_delta"):
+    def _mock_selection(self, net_credit_val, method="live_delta", put_delta=0.15, call_delta=0.15):
         sel = StrikeSelection(
             short_put=620.0,
             long_put=610.0,
             short_call=680.0,
             long_call=690.0,
-            put_delta=0.15,
-            call_delta=0.15,
+            put_delta=put_delta,
+            call_delta=call_delta,
             method=method,
             expiry="2026-05-01",
             put_bid=3.90,
@@ -279,15 +280,24 @@ class TestFindOpportunity:
         assert opp["target_delta"] == TARGET_DELTA
 
     @patch("src.markets.option_chain.select_strikes_by_delta")
-    def test_heuristic_fallback_uses_conservative_estimate(self, mock_select):
+    def test_heuristic_fallback_is_rejected(self, mock_select):
         from scripts.ic_simple import find_opportunity
 
         mock_select.return_value = self._mock_selection(
             net_credit_val=0.0, method="heuristic_fallback"
         )
         opp = find_opportunity(spy_price=650.0)
-        assert opp is not None
-        assert opp["est_credit"] == pytest.approx(1.50)
+        assert opp is None
+
+    @patch("src.markets.option_chain.select_strikes_by_delta")
+    def test_rejects_live_delta_outside_validation_band(self, mock_select):
+        from scripts.ic_simple import find_opportunity
+
+        mock_select.return_value = self._mock_selection(
+            net_credit_val=2.00, method="live_delta", put_delta=0.0, call_delta=0.15
+        )
+        opp = find_opportunity(spy_price=650.0)
+        assert opp is None
 
 
 # ══════════════════════════════════════════════════════════════════════════════

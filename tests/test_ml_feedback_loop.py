@@ -3,7 +3,7 @@ Tests for ML feedback loop (update_ml_from_trades.py).
 
 Covers:
 1. Thompson Sampler update from real trade data
-2. Trading gate enforcement (win rate + sample size)
+2. Trading gate enforcement (sample size + win rate + positive expectancy)
 3. Post-mortem lesson generation from losses
 4. Drift detection alerts
 5. Halt file enforcement
@@ -12,6 +12,7 @@ Covers:
 
 from __future__ import annotations
 
+import scripts.update_ml_from_trades as feedback
 from scripts.update_ml_from_trades import (
     check_trading_gate,
     generate_loss_postmortems,
@@ -102,6 +103,9 @@ def test_validation_phase_stats_exclude_legacy_failure_cohort():
     assert stats["wins"] == 1
     assert stats["losses"] == 1
     assert stats["win_rate_pct"] == 50.0
+    assert stats["total_realized_pnl"] == 21.0
+    assert stats["profit_factor"] == 2.05
+    assert stats["expectancy_per_trade"] == 10.5
 
 
 # --- Trading Gate Tests ---
@@ -124,11 +128,33 @@ def test_gate_blocks_insufficient_trades():
 
 
 def test_gate_allows_good_performance():
-    """High win rate with enough trades should allow."""
+    """Enough trades with positive expectancy and profit factor should allow."""
     stats = {"closed_trades": 50, "win_rate_pct": 75.0, "avg_win": 100, "avg_loss": 80}
     gate = check_trading_gate(stats)
     assert gate["should_trade"]
     assert gate["expectancy_per_trade"] > 0
+    assert gate["profit_factor"] > 1.0
+
+
+def test_gate_blocks_high_win_rate_with_negative_expectancy():
+    """High win rate still fails when losses swamp winners."""
+    stats = {"closed_trades": 50, "win_rate_pct": 80.0, "avg_win": 10, "avg_loss": 100}
+    gate = check_trading_gate(stats)
+    assert not gate["should_trade"]
+    assert not gate["positive_expectancy_met"]
+    assert not gate["min_profit_factor_met"]
+    assert "Expectancy" in gate["block_reason"]
+    assert "Profit factor" in gate["block_reason"]
+
+
+def test_gate_blocks_breakeven_profit_factor():
+    """Profit factor must be strictly above breakeven before promotion."""
+    stats = {"closed_trades": 40, "win_rate_pct": 50.0, "avg_win": 100, "avg_loss": 100}
+    gate = check_trading_gate(stats)
+    assert not gate["should_trade"]
+    assert gate["profit_factor"] == 1.0
+    assert not gate["positive_expectancy_met"]
+    assert not gate["min_profit_factor_met"]
 
 
 def test_gate_calculates_expectancy():
@@ -137,6 +163,13 @@ def test_gate_calculates_expectancy():
     gate = check_trading_gate(stats)
     # Expected: 0.8 * 100 - 0.2 * 200 = 80 - 40 = 40
     assert gate["expectancy_per_trade"] == 40.0
+
+
+def test_postmortem_lessons_write_to_primary_rag_corpus():
+    """Loss lessons must land where IC Simple and the RAG index actually read them."""
+    lessons_dir = str(feedback.LESSONS_DIR)
+    assert lessons_dir.endswith("rag_knowledge/lessons_learned")
+    assert "data/rag_knowledge" not in lessons_dir
 
 
 # --- Post-Mortem Tests ---

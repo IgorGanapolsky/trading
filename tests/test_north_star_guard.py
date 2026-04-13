@@ -43,6 +43,50 @@ def test_guard_capital_preservation_blocks_new_positions(tmp_path):
     assert guard["max_position_pct"] <= 0.01
 
 
+def test_guard_ignores_unconfirmed_env_override(tmp_path, monkeypatch):
+    """A stray scheduled env var must not disable North Star blocking."""
+    state = tmp_path / "system_state.json"
+    state.write_text(
+        """
+{
+  "paper_account": {"equity": 101000, "win_rate": 37.5, "win_rate_sample_size": 32},
+  "paper_trading": {"current_day": 40, "target_duration_days": 90}
+}
+""".strip(),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("NORTH_STAR_GUARD_OVERRIDE", "true")
+    monkeypatch.delenv("NORTH_STAR_GUARD_OVERRIDE_CONFIRM", raising=False)
+
+    guard = get_guard_context(state)
+
+    assert guard["mode"] == "capital_preservation"
+    assert guard["block_new_positions"] is True
+    assert any("ignored" in reason for reason in guard["reasons"])
+
+
+def test_guard_accepts_explicit_manual_override(tmp_path, monkeypatch):
+    """Manual override now requires a second explicit confirmation env var."""
+    state = tmp_path / "system_state.json"
+    state.write_text(
+        """
+{
+  "paper_account": {"equity": 101000, "win_rate": 37.5, "win_rate_sample_size": 32},
+  "paper_trading": {"current_day": 40, "target_duration_days": 90}
+}
+""".strip(),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("NORTH_STAR_GUARD_OVERRIDE", "true")
+    monkeypatch.setenv("NORTH_STAR_GUARD_OVERRIDE_CONFIRM", "manual-risk-accepted")
+
+    guard = get_guard_context(state)
+
+    assert guard["mode"] == "override"
+    assert guard["block_new_positions"] is False
+    assert guard["max_position_pct"] == 0.05
+
+
 def test_guard_scale_ready_when_validation_passes(tmp_path):
     state = tmp_path / "system_state.json"
     state.write_text(

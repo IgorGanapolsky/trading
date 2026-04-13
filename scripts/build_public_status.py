@@ -47,13 +47,72 @@ def _short_status(block_new_positions: bool | None, mode: str | None) -> str:
     The contradiction is expected — lifetime ledger is negative from old trades
     while validation is proving new edge.
     """
-    if mode and "validation" in str(mode).lower():
-        return str(mode).lower()
+    normalized_mode = str(mode).lower() if mode else None
+    if normalized_mode == "validation_reset":
+        return normalized_mode
     if block_new_positions:
         return "halted"
-    if mode:
-        return str(mode).lower()
+    if normalized_mode:
+        return normalized_mode
     return "unknown"
+
+
+def _as_bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "1", "yes", "y", "on", "pass", "passed"}:
+            return True
+        if normalized in {"false", "0", "no", "n", "off", "fail", "failed"}:
+            return False
+    if isinstance(value, (int, float)):
+        return bool(value)
+    return False
+
+
+def _weekly_claims_readiness(weekly: dict[str, Any]) -> bool:
+    mode = str(weekly.get("mode") or "unknown").lower()
+    validation_reset_active = bool(
+        mode == "validation_reset"
+        and _as_bool(weekly.get("allow_validation_entries"))
+        and _as_bool(weekly.get("block_live_new_positions"))
+    )
+    return bool(
+        _as_bool(weekly.get("verified_edge_available"))
+        or (
+            "block_new_positions" in weekly
+            and not _as_bool(weekly.get("block_new_positions"))
+            and not validation_reset_active
+        )
+        or mode == "expansion_candidate"
+    )
+
+
+def _public_fail_closed(weekly: dict[str, Any], congruence: dict[str, Any]) -> bool:
+    if _as_bool(weekly.get("block_new_positions")):
+        return True
+    if bool(congruence["contradiction_detected"]):
+        return True
+    return bool(
+        _weekly_claims_readiness(weekly)
+        and not bool(congruence["lifetime_ledger"]["edge_confirmed"])
+    )
+
+
+def _blocker_reason(weekly: dict[str, Any], congruence: dict[str, Any]) -> Any:
+    if congruence["contradiction_reason"]:
+        return congruence["contradiction_reason"]
+    if (
+        _weekly_claims_readiness(weekly)
+        and not bool(congruence["lifetime_ledger"]["edge_confirmed"])
+    ):
+        return (
+            "CRITICAL: Weekly gate claims readiness before the lifetime paired-trade "
+            "ledger has confirmed positive edge. Block new positions until lifetime "
+            "expectancy and profit factor are positive."
+        )
+    return weekly.get("reason")
 
 
 def _pick_first(*values: Any) -> Any:
@@ -110,6 +169,8 @@ def build_public_status(repo_root: Path) -> dict[str, Any]:
 
     closed_total = stats.get("closed_trades", scaling.get("closed_trades_observed", 0))
     total_realized = stats.get("total_realized_pnl", stats.get("total_pnl"))
+    fail_closed = _public_fail_closed(weekly, congruence)
+    blocker_reason = _blocker_reason(weekly, congruence)
 
     return {
         "generated_at_et": generated_at_et,
@@ -117,7 +178,7 @@ def build_public_status(repo_root: Path) -> dict[str, Any]:
             "name": "SPY Options Validation Platform",
             "tagline": "Broker-backed scorecards, hard risk gates, paired-trade accounting, and live operator surfaces.",
             "public_status": _short_status(
-                bool(weekly.get("block_new_positions")) or congruence["contradiction_detected"],
+                fail_closed,
                 weekly.get("mode"),
             ),
         },
@@ -154,14 +215,13 @@ def build_public_status(repo_root: Path) -> dict[str, Any]:
         },
         "gate": {
             "mode": weekly.get("mode"),
-            "block_new_positions": bool(weekly.get("block_new_positions"))
-            or congruence["contradiction_detected"],
+            "block_new_positions": fail_closed,
             "verified_edge_available": congruence["effective_verified_edge_available"],
             "recommended_max_position_pct": weekly.get("recommended_max_position_pct"),
             "sample_size": weekly.get("sample_size"),
             "expectancy_per_trade": weekly.get("expectancy_per_trade"),
             "win_rate_pct": weekly.get("win_rate_pct"),
-            "blocker_reason": congruence["contradiction_reason"] or weekly.get("reason"),
+            "blocker_reason": blocker_reason,
             "qualified_setups_this_week": cadence.get("qualified_setups_observed"),
             "closed_trades_this_week": cadence.get("closed_trades_observed"),
             "scale_allowed": congruence["effective_scale_allowed"],

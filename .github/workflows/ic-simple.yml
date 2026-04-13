@@ -76,10 +76,8 @@ jobs:
           ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
           ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
-          NORTH_STAR_GUARD_OVERRIDE: "true"
           RAG_QUERY_INDEX_MAX_AGE_MINUTES: "999999"
           CONTEXT_INDEX_MAX_AGE_MINUTES: "999999"
-          SKIP_POLICY_GATE: "true"
           PYTHONPATH: ${{ github.workspace }}
         run: |
           FLAGS="--mode ${{ steps.mode.outputs.mode }}"

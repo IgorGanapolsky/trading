@@ -17,6 +17,7 @@ Layers:
 from __future__ import annotations
 
 import logging
+import math
 import os
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -40,6 +41,16 @@ REGIME_ALLOCATIONS = {
     "volatile": {"equities": 0.4, "treasuries": 0.5, "pause_trading": False},
     "spike": {"equities": 0.0, "treasuries": 0.6, "pause_trading": True},
 }
+
+
+def _finite_positive_float(value: Any) -> float | None:
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(parsed) or parsed <= 0:
+        return None
+    return parsed
 
 
 @dataclass
@@ -183,18 +194,21 @@ class RegimeDetector:
                 return self._fallback_snapshot()
 
             # Current levels
-            vix = float(closes["^VIX"].iloc[-1]) if "^VIX" in closes else 20.0
-            vvix = float(closes["^VVIX"].iloc[-1]) if "^VVIX" in closes else 100.0
+            if "^VIX" not in closes or "^VVIX" not in closes:
+                logger.warning("VIX/VVIX close data missing; regime detection fails closed")
+                return self._fallback_snapshot()
+            vix = _finite_positive_float(closes["^VIX"].iloc[-1])
+            vvix = _finite_positive_float(closes["^VVIX"].iloc[-1])
+            if vix is None or vvix is None:
+                logger.warning("VIX/VVIX latest close is invalid; regime detection fails closed")
+                return self._fallback_snapshot()
 
             # Calculate skew percentile (VVIX relative to VIX)
-            if vix > 0:
-                skew_ratio = vvix / vix
-                # Historical percentile of skew ratio
-                hist_skew = (closes["^VVIX"] / closes["^VIX"]).dropna()
-                if len(hist_skew) > 10:
-                    skew_percentile = (hist_skew < skew_ratio).mean() * 100
-                else:
-                    skew_percentile = 50.0
+            skew_ratio = vvix / vix
+            # Historical percentile of skew ratio
+            hist_skew = (closes["^VVIX"] / closes["^VIX"]).replace([np.inf, -np.inf], np.nan).dropna()
+            if len(hist_skew) > 10:
+                skew_percentile = (hist_skew < skew_ratio).mean() * 100
             else:
                 skew_percentile = 50.0
 

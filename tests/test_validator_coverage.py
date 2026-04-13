@@ -441,7 +441,7 @@ class TestSafeSubmitOrder:
         monkeypatch.setenv("ALPACA_PAPER_TRADING_API_SECRET", "paper-secret")
         monkeypatch.delenv("ALPACA_API_KEY", raising=False)
         monkeypatch.delenv("ALPACA_SECRET_KEY", raising=False)
-        monkeypatch.setenv("SKIP_POLICY_GATE", "true")
+        monkeypatch.delenv("SKIP_POLICY_GATE", raising=False)
 
         mock_client = MagicMock(spec=["get_account", "submit_order"])
         mock_client.get_account.return_value = MagicMock(equity="100000")

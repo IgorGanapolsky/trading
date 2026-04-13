@@ -10,6 +10,10 @@ This replaces: iron_condor_trader.py, iron_condor_guardian.py,
 iron_condor_scanner.py, manage_iron_condor_positions.py, and 6 workflows.
 """
 
+# Trunk/isort and Ruff disagree on local imports inside function scopes in this script.
+# Keep the repo's commit-hook formatting and suppress only import-order diagnostics here.
+# ruff: noqa: I001
+
 import json
 import logging
 import sys
@@ -66,6 +70,8 @@ TARGET_DELTA = _SP["target_delta"]
 ENTRIES_FILE = Path(__file__).parent.parent / "data" / "ic_entries.json"
 SYSTEM_STATE_FILE = Path(__file__).parent.parent / "data" / "system_state.json"
 THOMPSON_MIN_CONFIDENCE = 0.40
+MIN_ACCEPTABLE_SHORT_DELTA = 0.08
+MAX_ACCEPTABLE_SHORT_DELTA = 0.22
 
 
 # ── Alpaca Client ────────────────────────────────────────────────────────────
@@ -106,10 +112,30 @@ def find_opportunity(spy_price: float) -> dict | None:
         max_dte=45,
     )
 
+    if selection.method != "live_delta":
+        logger.warning(
+            f"Strike selection method {selection.method!r} is not live_delta. "
+            "Skip: validation trades require real delta provenance."
+        )
+        return None
+
+    put_delta = abs(float(selection.put_delta or 0.0))
+    call_delta = abs(float(selection.call_delta or 0.0))
+    if not (
+        MIN_ACCEPTABLE_SHORT_DELTA <= put_delta <= MAX_ACCEPTABLE_SHORT_DELTA
+        and MIN_ACCEPTABLE_SHORT_DELTA <= call_delta <= MAX_ACCEPTABLE_SHORT_DELTA
+    ):
+        logger.warning(
+            f"Live deltas outside validation band: put={put_delta:.3f}, call={call_delta:.3f}, "
+            f"required={MIN_ACCEPTABLE_SHORT_DELTA:.2f}-{MAX_ACCEPTABLE_SHORT_DELTA:.2f}. Skip."
+        )
+        return None
+
     # Net credit = short premiums - long premiums (NOT just short bids)
     est_credit = selection.net_credit
-    if selection.method == "heuristic_fallback" or est_credit <= 0:
-        est_credit = 1.50  # Conservative guess when we can't price the wings
+    if est_credit <= 0:
+        logger.warning(f"Non-positive net credit ${est_credit:.2f}. Skip.")
+        return None
 
     if est_credit < MIN_CREDIT:
         logger.warning(f"Credit ${est_credit:.2f} < ${MIN_CREDIT:.2f} minimum. Skip.")
@@ -893,7 +919,7 @@ def _daily_learn():
     _print_report()
 
 
-def _auto_adjust_from_performance(stats: dict):
+def _auto_adjust_from_performance(_stats: dict):
     """Adjust strategy params based on actual trade performance data.
 
     DISABLED during controlled experiment phase (Apr 2026).
@@ -901,40 +927,6 @@ def _auto_adjust_from_performance(stats: dict):
     See .claude/rules/controlled-experiment.md
     """
     logger.info("Auto-adjust DISABLED during controlled experiment phase.")
-    return
-    trade_count = stats.get("total", 0)
-    win_rate = stats.get("win_rate", 0)
-    avg_win = stats.get("avg_win", 0)
-    avg_loss = abs(stats.get("avg_loss", 0))
-
-    adjustments = {}
-    reasons = []
-    confidence = min(0.5 + (trade_count / 60), 0.90)  # Caps at 0.90
-
-    # Delta adjustment based on win rate
-    if win_rate < 70 and trade_count >= 10:
-        adjustments["target_delta"] = 0.12  # Wider = higher probability
-        reasons.append(f"win rate {win_rate:.0f}% < 70% → widen to 12-delta")
-    elif win_rate > 90 and trade_count >= 15:
-        adjustments["target_delta"] = 0.18  # Tighter = more premium
-        reasons.append(f"win rate {win_rate:.0f}% > 90% → tighten to 18-delta for more premium")
-
-    # Stop loss adjustment
-    if avg_loss > 0 and avg_win > 0 and avg_loss > 2 * avg_win and trade_count >= 10:
-        adjustments["stop_loss"] = 0.75  # Tighter stop
-        reasons.append(
-            f"avg loss ${avg_loss:.0f} > 2x avg win ${avg_win:.0f} → tighten stop to 75%"
-        )
-
-    if adjustments:
-        _adjust_strategy_params(
-            adjustments,
-            reason=" | ".join(reasons),
-            source="performance_auto",
-            confidence=confidence,
-        )
-    else:
-        logger.info("Auto-adjust: no changes needed based on current performance")
 
 
 def _research_strategies(win_rate: float, trade_count: int, total_pnl: float):
