@@ -5,6 +5,7 @@ price-walking, and full E2E pipeline with mocked Alpaca client.
 """
 
 import json
+import logging
 import sys
 from dataclasses import dataclass
 from enum import Enum
@@ -533,7 +534,82 @@ class TestThompsonValidationResetGate:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# 6. E2E: Full pipeline mock
+# 6. Reporting: validation slice must not mask lifetime ledger
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+class TestNorthStarReadinessReport:
+    def test_print_report_includes_lifetime_ledger_and_gate_state(
+        self, tmp_path, monkeypatch, caplog
+    ):
+        import scripts.ic_simple as ic
+
+        stats_file = tmp_path / "ic_stats.json"
+        stats_file.write_text(
+            json.dumps(
+                {
+                    "total": 1,
+                    "wins": 1,
+                    "losses": 0,
+                    "win_rate": 100.0,
+                    "profit_factor": 999.0,
+                    "total_pnl": 41.0,
+                    "avg_win": 41.0,
+                    "avg_loss": 0.0,
+                }
+            )
+        )
+        trades_file = tmp_path / "trades.json"
+        trades_file.write_text(
+            json.dumps(
+                {
+                    "stats": {
+                        "closed_trades": 66,
+                        "wins": 16,
+                        "losses": 49,
+                        "win_rate_pct": 24.24,
+                        "profit_factor": 0.25,
+                        "total_realized_pnl": -3402.0,
+                    }
+                }
+            )
+        )
+        state_file = tmp_path / "system_state.json"
+        state_file.write_text(
+            json.dumps(
+                {
+                    "north_star_weekly_gate": {
+                        "mode": "validation_reset",
+                        "scale_allowed": False,
+                        "block_new_positions": True,
+                        "blocker_reason": "lifetime ledger negative",
+                    }
+                }
+            )
+        )
+
+        monkeypatch.setattr(ic, "IC_STATS_FILE", stats_file)
+        monkeypatch.setattr(ic, "TRADE_LEDGER_FILE", trades_file)
+        monkeypatch.setattr(ic, "SYSTEM_STATE_FILE", state_file)
+        monkeypatch.setattr(ic, "JOURNAL_FILE", tmp_path / "missing.jsonl")
+
+        caplog.set_level(logging.INFO, logger="ic_simple")
+        ic._print_report()
+
+        assert "NORTH STAR READINESS" in caplog.text
+        assert "Validation slice: 1/30 closed trades" in caplog.text
+        assert "Lifetime ledger: 66 closed" in caplog.text
+        assert "win_rate=24.24%" in caplog.text
+        assert "PF=0.25" in caplog.text
+        assert "expectancy=$-51.55/trade" in caplog.text
+        assert "mode=validation_reset" in caplog.text
+        assert "scale_allowed=False" in caplog.text
+        assert "block_new_positions=True" in caplog.text
+        assert "lifetime ledger negative" in caplog.text
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 7. E2E: Full pipeline mock
 # ══════════════════════════════════════════════════════════════════════════════
 
 
