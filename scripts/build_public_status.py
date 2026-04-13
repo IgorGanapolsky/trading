@@ -41,11 +41,6 @@ def _fmt_pct(value: Any) -> str:
 
 
 def _short_status(block_new_positions: bool | None, mode: str | None) -> str:
-    # During validation_reset, show mode even if congruence flags a contradiction.
-    # The contradiction is expected — lifetime ledger is negative from old trades
-    # while validation is proving new edge.
-    if mode and "validation" in str(mode).lower():
-        return str(mode).lower()
     if block_new_positions:
         return "halted"
     if mode:
