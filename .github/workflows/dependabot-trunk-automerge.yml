@@ -28,7 +28,7 @@ jobs:
 
       - name: Auto-approve update
         continue-on-error: true  # Non-critical: approval may fail due to permissions, merge step handles retry
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |

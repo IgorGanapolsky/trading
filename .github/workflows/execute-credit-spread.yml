@@ -225,7 +225,7 @@ jobs:
       - name: Create Alert on Failure
         if: failure()
         continue-on-error: true  # Non-critical: notification failure shouldn't change workflow status
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
