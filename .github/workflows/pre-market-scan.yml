@@ -56,115 +56,22 @@ jobs:
       - name: Run Pre-Market Scan
         if: steps.market_check.outputs.should_run == 'true'
         id: scan
+        env:
+          PYTHONPATH: ${{ github.workspace }}
         run: |
+          python3 scripts/run_perplexity_trading_intel.py --mode pre_market
+
           python3 << 'EOF'
-          import asyncio
           import json
           import os
-          from datetime import datetime
           from pathlib import Path
 
-          import httpx
+          report = json.loads(Path("data/analysis/perplexity/pre_market_latest.json").read_text())
+          print(f"Pre-Market Scan - {report['generated_at_utc']}")
+          print(f"Risk Score: {report['risk_score']}")
+          print(f"Recommendation: {report['recommendation']}")
+          print(f"Reason: {report['gate_contract']['reason']}")
 
-          PERPLEXITY_API_KEY = os.environ.get("PERPLEXITY_API_KEY", "")
-
-          async def search_perplexity(query: str) -> dict:
-              """Execute Perplexity search."""
-              if not PERPLEXITY_API_KEY:
-                  return {"answer": "API key not configured", "error": True}
-
-              headers = {
-                  "Authorization": f"Bearer {PERPLEXITY_API_KEY}",
-                  "Content-Type": "application/json",
-              }
-
-              payload = {
-                  "model": "sonar",
-                  "messages": [
-                      {"role": "system", "content": "You are a financial analyst. Provide concise answers about market events."},
-                      {"role": "user", "content": query},
-                  ],
-                  "search_recency_filter": "day",
-              }
-
-              async with httpx.AsyncClient() as client:
-                  response = await client.post(
-                      "https://api.perplexity.ai/chat/completions",
-                      headers=headers,
-                      json=payload,
-                      timeout=30.0,
-                  )
-                  response.raise_for_status()
-                  data = response.json()
-                  return {"answer": data["choices"][0]["message"]["content"]}
-
-          async def run_scan():
-              """Run pre-market intelligence scan."""
-              queries = {
-                  "fed_speakers": "Are there any Federal Reserve speakers or FOMC events today?",
-                  "economic_data": "What economic data releases are scheduled today?",
-                  "spy_earnings": "Major S&P 500 earnings reports today?",
-                  "options_flow": "Unusual options activity on SPY today?",
-              }
-
-              results = {}
-              risk_score = 0.0
-
-              for key, query in queries.items():
-                  try:
-                      result = await search_perplexity(query)
-                      results[key] = result.get("answer", "No data")
-
-                      # Assess risk
-                      answer = result.get("answer", "").lower()
-                      if any(w in answer for w in ["fed", "fomc", "powell", "rate"]):
-                          risk_score += 0.3
-                      if any(w in answer for w in ["cpi", "jobs", "gdp", "inflation"]):
-                          risk_score += 0.2
-                      if any(w in answer for w in ["earnings", "guidance"]):
-                          risk_score += 0.15
-                  except Exception as e:
-                      results[key] = f"Error: {e}"
-
-              # Determine recommendation
-              if risk_score >= 0.5:
-                  recommendation = "AVOID"
-                  reason = "High-impact events could cause volatility"
-              elif risk_score >= 0.3:
-                  recommendation = "CAUTION"
-                  reason = "Moderate event risk - consider wider strikes"
-              else:
-                  recommendation = "CLEAR"
-                  reason = "No major market-moving events"
-
-              report = {
-                  "date": datetime.now().strftime("%Y-%m-%d"),
-                  "time": datetime.now().strftime("%H:%M UTC"),
-                  "risk_score": round(min(risk_score, 1.0), 2),
-                  "recommendation": recommendation,
-                  "reason": reason,
-                  "intel": results,
-              }
-
-              # Save to file
-              Path("data/analysis").mkdir(parents=True, exist_ok=True)
-              output_file = f"data/analysis/pre_market_{report['date']}.json"
-              Path(output_file).write_text(json.dumps(report, indent=2))
-
-              # Print summary
-              print(f"📊 Pre-Market Scan - {report['date']}")
-              print(f"Risk Score: {report['risk_score']}")
-              print(f"Recommendation: {report['recommendation']}")
-              print(f"Reason: {report['reason']}")
-              print("\n--- Intel ---")
-              for k, v in results.items():
-                  print(f"{k}: {v[:200]}...")
-
-              return report
-
-          report = asyncio.run(run_scan())
-
-          # Set outputs for next steps
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
               f.write(f"recommendation={report['recommendation']}\n")
               f.write(f"risk_score={report['risk_score']}\n")
@@ -175,7 +82,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/analysis/
+          git add -f data/analysis/ data/feedback/perplexity_intel_events.jsonl rag_knowledge/lessons_learned/
           git diff --staged --quiet || git commit -m "chore: Pre-market scan $(date +%Y-%m-%d)"
           git push || echo "Nothing to push"
 

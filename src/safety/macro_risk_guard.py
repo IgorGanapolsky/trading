@@ -5,8 +5,10 @@ to prevent trading during 'Black Swan' regime shifts.
 Inspired by CNBC/PwC: 'Investors becoming more cautious on U.S. allocations'.
 """
 
+import json
 import logging
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
@@ -22,12 +24,28 @@ class MacroRiskGuard:
     TREASURY_YIELD_SPIKE_THRESHOLD: float = 0.05  # 5% move in TNX
     OIL_CRISIS_PRICE: float = 100.0
 
-    def __init__(self, data_client: Optional[Any] = None):
+    def __init__(
+        self,
+        data_client: Optional[Any] = None,
+        *,
+        intel_path: Path | str | None = None,
+        intel_max_age_minutes: int = 240,
+    ):
         """
         Args:
             data_client: Alpaca StockHistoricalDataClient instance
         """
         self.data_client = data_client
+        self.intel_path = (
+            Path(intel_path)
+            if intel_path is not None
+            else Path(__file__).resolve().parents[2]
+            / "data"
+            / "analysis"
+            / "perplexity"
+            / "trading_intel_latest.json"
+        )
+        self.intel_max_age_minutes = intel_max_age_minutes
 
     def check_macro_vitals(self, macro_data: dict[str, Any]) -> tuple[bool, str]:
         """
@@ -49,7 +67,52 @@ class MacroRiskGuard:
             logger.critical(f"🚨 {reason}")
             return False, reason
 
+        # 3. Check fresh Perplexity event/regime intelligence.
+        intel_safe, intel_reason = self.check_perplexity_event_risk()
+        if not intel_safe:
+            logger.critical("Perplexity event risk halt: %s", intel_reason)
+            return False, intel_reason
+
         logger.info("✅ Macro vitals within normal parameters.")
+        return True, ""
+
+    def check_perplexity_event_risk(self) -> tuple[bool, str]:
+        """Block only when a fresh Perplexity artifact explicitly flags high event risk."""
+
+        try:
+            payload = json.loads(self.intel_path.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            return True, ""
+        except Exception as exc:
+            logger.warning("Failed to read Perplexity trading intel: %s", exc)
+            return True, ""
+
+        generated_raw = payload.get("generated_at_utc")
+        if not generated_raw:
+            return True, ""
+
+        try:
+            generated_at = datetime.fromisoformat(str(generated_raw).replace("Z", "+00:00"))
+        except ValueError:
+            logger.warning("Invalid Perplexity intel timestamp: %s", generated_raw)
+            return True, ""
+
+        age_minutes = (datetime.now(timezone.utc) - generated_at).total_seconds() / 60
+        if age_minutes > self.intel_max_age_minutes:
+            logger.info("Ignoring stale Perplexity intel age %.1f minutes", age_minutes)
+            return True, ""
+
+        recommendation = str(payload.get("recommendation") or "").upper()
+        risk_score = float(payload.get("risk_score") or 0.0)
+        gate_contract = payload.get("gate_contract")
+        gate_contract = gate_contract if isinstance(gate_contract, dict) else {}
+        blocks = bool(gate_contract.get("blocks_new_iron_condors"))
+        if blocks or recommendation == "BLOCK_NEW_IC" or risk_score >= 0.70:
+            reason = gate_contract.get("reason") or (
+                f"Perplexity event/regime risk score {risk_score:.2f} blocks new entries."
+            )
+            return False, f"PERPLEXITY EVENT RISK HALT: {reason}"
+
         return True, ""
 
     def get_macro_snapshot(self) -> dict[str, Any]:
