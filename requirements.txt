@@ -96,7 +96,7 @@ msgpack==1.1.2
 multidict==6.7.1
 multitasking==0.0.12
 mypy-extensions==1.1.0
-narwhals==2.18.1
+narwhals==2.19.0
 networkx==3.6.1
 numpy==1.26.4
 oauthlib==3.3.1
