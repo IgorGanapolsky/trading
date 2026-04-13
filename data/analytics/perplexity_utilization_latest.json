@@ -1,6 +1,6 @@
 {
-  "active_perplexity_files": 22,
-  "api_key_present_in_runtime": false,
+  "active_perplexity_files": 25,
+  "credential_available_in_runtime": false,
   "expected_high_roi_files": [
     "src/analytics/perplexity_trading_intel.py",
     "src/analytics/perplexity_utilization_audit.py",
@@ -9,10 +9,10 @@
     ".github/workflows/perplexity-trading-intel.yml"
   ],
   "gaps": [
-    "local_runtime_missing_PERPLEXITY_API_KEY",
+    "local_runtime_missing_perplexity_credential",
     "agent_playground_not_versioned_in_repo"
   ],
-  "generated_at_utc": "2026-04-13T21:16:58.577102+00:00",
+  "generated_at_utc": "2026-04-13T21:24:45.233340+00:00",
   "max_utilization_score": 70,
   "missing_expected_files": [],
   "models_referenced": ["sonar", "sonar-pro"],
@@ -20,16 +20,23 @@
     {
       "mentions_agent_playground": false,
       "models": [],
+      "path": "scripts/ic_simple.py",
+      "uses_api_endpoint": false,
+      "uses_perplexity_credential": false
+    },
+    {
+      "mentions_agent_playground": false,
+      "models": [],
       "path": "scripts/perplexity_local_mcp_snapshot.py",
       "uses_api_endpoint": false,
-      "uses_api_key": false
+      "uses_perplexity_credential": false
     },
     {
       "mentions_agent_playground": false,
       "models": [],
       "path": "scripts/run_perplexity_trading_intel.py",
       "uses_api_endpoint": false,
-      "uses_api_key": false
+      "uses_perplexity_credential": false
     }
   ],
   "source_modules_with_perplexity": [
@@ -38,114 +45,128 @@
       "models": [],
       "path": "src/agents/__init__.py",
       "uses_api_endpoint": false,
-      "uses_api_key": false
+      "uses_perplexity_credential": false
     },
     {
       "mentions_agent_playground": false,
       "models": ["sonar-pro"],
       "path": "src/agents/billing_guardian_agent.py",
       "uses_api_endpoint": true,
-      "uses_api_key": true
+      "uses_perplexity_credential": true
     },
     {
       "mentions_agent_playground": false,
       "models": ["sonar-pro"],
       "path": "src/agents/research_agent.py",
       "uses_api_endpoint": true,
-      "uses_api_key": true
+      "uses_perplexity_credential": true
     },
     {
       "mentions_agent_playground": false,
       "models": [],
       "path": "src/analytics/__init__.py",
       "uses_api_endpoint": false,
-      "uses_api_key": false
+      "uses_perplexity_credential": false
     },
     {
       "mentions_agent_playground": false,
       "models": [],
       "path": "src/analytics/local_ops_snapshot.py",
       "uses_api_endpoint": false,
-      "uses_api_key": false
+      "uses_perplexity_credential": false
     },
     {
       "mentions_agent_playground": false,
       "models": ["sonar-pro"],
       "path": "src/analytics/perplexity_trading_intel.py",
       "uses_api_endpoint": true,
-      "uses_api_key": true
+      "uses_perplexity_credential": true
     },
     {
       "mentions_agent_playground": false,
       "models": ["sonar"],
       "path": "src/analytics/perplexity_utilization_audit.py",
       "uses_api_endpoint": true,
-      "uses_api_key": true
+      "uses_perplexity_credential": true
     },
     {
       "mentions_agent_playground": false,
       "models": [],
       "path": "src/orchestration/agentic_guardrails.py",
       "uses_api_endpoint": false,
-      "uses_api_key": false
+      "uses_perplexity_credential": false
     },
     {
       "mentions_agent_playground": false,
       "models": [],
       "path": "src/orchestration/daggr_workflow.py",
       "uses_api_endpoint": false,
-      "uses_api_key": false
+      "uses_perplexity_credential": false
     },
     {
       "mentions_agent_playground": false,
       "models": [],
       "path": "src/orchestration/teammate_swarm.py",
       "uses_api_endpoint": false,
-      "uses_api_key": false
+      "uses_perplexity_credential": false
     },
     {
       "mentions_agent_playground": false,
       "models": ["sonar-pro"],
       "path": "src/orchestrator/gates.py",
       "uses_api_endpoint": true,
-      "uses_api_key": true
+      "uses_perplexity_credential": true
     },
     {
       "mentions_agent_playground": false,
       "models": [],
       "path": "src/research/__init__.py",
       "uses_api_endpoint": false,
-      "uses_api_key": false
+      "uses_perplexity_credential": false
+    },
+    {
+      "mentions_agent_playground": false,
+      "models": ["sonar"],
+      "path": "src/research/pre_trade_research.py",
+      "uses_api_endpoint": true,
+      "uses_perplexity_credential": true
     },
     {
       "mentions_agent_playground": false,
       "models": [],
       "path": "src/safety/macro_risk_guard.py",
       "uses_api_endpoint": false,
-      "uses_api_key": false
+      "uses_perplexity_credential": false
     },
     {
       "mentions_agent_playground": false,
       "models": [],
       "path": "src/strategies/iron_condor/signal.py",
       "uses_api_endpoint": false,
-      "uses_api_key": false
+      "uses_perplexity_credential": false
     }
   ],
   "workflows_with_perplexity": [
     {
       "mentions_agent_playground": false,
       "models": [],
+      "path": ".github/workflows/ic-simple.yml",
+      "uses_api_endpoint": false,
+      "uses_perplexity_credential": true
+    },
+    {
+      "mentions_agent_playground": false,
+      "models": [],
       "path": ".github/workflows/perplexity-trading-intel.yml",
       "uses_api_endpoint": false,
-      "uses_api_key": true
+      "uses_perplexity_credential": true
     },
     {
       "mentions_agent_playground": false,
       "models": [],
       "path": ".github/workflows/pre-market-scan.yml",
       "uses_api_endpoint": false,
-      "uses_api_key": true
+      "uses_perplexity_credential": true
     }
   ]
 }

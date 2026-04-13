@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -49,7 +48,7 @@ def _scan_file(path: Path, repo_root: Path) -> dict[str, Any] | None:
     return {
         "path": path_label,
         "models": models,
-        "uses_api_key": "PERPLEXITY_API_KEY" in text,
+        "uses_perplexity_credential": "PERPLEXITY_API_KEY" in text,
         "uses_api_endpoint": "api.perplexity.ai" in text,
         "mentions_agent_playground": playground_reference,
     }
@@ -77,7 +76,7 @@ def _iter_scannable_files(repo_root: Path) -> list[Path]:
 def build_perplexity_usage_snapshot(
     repo_root: Path | str | None = None,
     *,
-    api_key_present: bool | None = None,
+    credential_present: bool = False,
 ) -> dict[str, Any]:
     """Build a machine-readable Perplexity utilization snapshot."""
 
@@ -93,12 +92,9 @@ def build_perplexity_usage_snapshot(
     script_matches = [item for item in matches if item["path"].startswith("scripts/")]
     missing_expected = [path for path in EXPECTED_HIGH_ROI_FILES if not (root / path).exists()]
 
-    if api_key_present is None:
-        api_key_present = bool(os.getenv("PERPLEXITY_API_KEY"))
-
     gaps: list[str] = []
-    if not api_key_present:
-        gaps.append("local_runtime_missing_PERPLEXITY_API_KEY")
+    if not credential_present:
+        gaps.append("local_runtime_missing_perplexity_credential")
     if missing_expected:
         gaps.append("missing_high_roi_files")
     if not any(item["path"] == ".github/workflows/perplexity-trading-intel.yml" for item in matches):
@@ -110,7 +106,7 @@ def build_perplexity_usage_snapshot(
 
     return {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-        "api_key_present_in_runtime": api_key_present,
+        "credential_available_in_runtime": credential_present,
         "active_perplexity_files": len(matches),
         "workflows_with_perplexity": workflow_matches,
         "source_modules_with_perplexity": source_matches,
@@ -120,7 +116,7 @@ def build_perplexity_usage_snapshot(
         "missing_expected_files": missing_expected,
         "gaps": gaps,
         "max_utilization_score": _score_utilization(
-            api_key_present=api_key_present,
+            credential_present=credential_present,
             missing_expected=missing_expected,
             matches=matches,
         ),
@@ -129,12 +125,12 @@ def build_perplexity_usage_snapshot(
 
 def _score_utilization(
     *,
-    api_key_present: bool,
+    credential_present: bool,
     missing_expected: list[str],
     matches: list[dict[str, Any]],
 ) -> int:
     score = 0
-    if api_key_present:
+    if credential_present:
         score += 20
     if not missing_expected:
         score += 30
@@ -154,7 +150,7 @@ def render_perplexity_usage_markdown(snapshot: dict[str, Any]) -> str:
         "# Perplexity Utilization Audit",
         "",
         f"- Generated UTC: `{snapshot.get('generated_at_utc')}`",
-        f"- Runtime API key present: `{snapshot.get('api_key_present_in_runtime')}`",
+        f"- Runtime credential available: `{snapshot.get('credential_available_in_runtime')}`",
         f"- Active Perplexity files: `{snapshot.get('active_perplexity_files')}`",
         f"- Max utilization score: `{snapshot.get('max_utilization_score')}/100`",
         f"- Models referenced: `{', '.join(snapshot.get('models_referenced') or []) or 'none'}`",
@@ -186,10 +182,10 @@ def render_perplexity_usage_markdown(snapshot: dict[str, Any]) -> str:
 def write_perplexity_usage_artifacts(
     repo_root: Path | str | None = None,
     *,
-    api_key_present: bool | None = None,
+    credential_present: bool = False,
 ) -> dict[str, Path]:
     root = Path.cwd().resolve() if repo_root is None else Path(repo_root).resolve()
-    snapshot = build_perplexity_usage_snapshot(root, api_key_present=api_key_present)
+    snapshot = build_perplexity_usage_snapshot(root, credential_present=credential_present)
     output_dir = root / "data" / "analytics"
     output_dir.mkdir(parents=True, exist_ok=True)
     json_path = output_dir / "perplexity_utilization_latest.json"
@@ -203,17 +199,24 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Audit Perplexity utilization")
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
     parser.add_argument("--write", action="store_true")
+    parser.add_argument("--credential-present", action="store_true")
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
     if args.write:
-        paths = write_perplexity_usage_artifacts(args.repo_root)
+        paths = write_perplexity_usage_artifacts(
+            args.repo_root,
+            credential_present=args.credential_present,
+        )
         print(json.dumps({key: str(value) for key, value in paths.items()}, indent=2))
         return
 
-    snapshot = build_perplexity_usage_snapshot(args.repo_root)
+    snapshot = build_perplexity_usage_snapshot(
+        args.repo_root,
+        credential_present=args.credential_present,
+    )
     print(json.dumps(snapshot, indent=2, sort_keys=True))
 
 

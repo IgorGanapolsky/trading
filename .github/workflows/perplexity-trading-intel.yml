@@ -81,7 +81,11 @@ jobs:
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          python3 -m src.analytics.perplexity_utilization_audit --write
+          CREDENTIAL_FLAG=""
+          if [ -n "$PERPLEXITY_API_KEY" ]; then
+            CREDENTIAL_FLAG="--credential-present"
+          fi
+          python3 -m src.analytics.perplexity_utilization_audit --write $CREDENTIAL_FLAG
 
       - name: Commit intelligence artifacts
         run: |

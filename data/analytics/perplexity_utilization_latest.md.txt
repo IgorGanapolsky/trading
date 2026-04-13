@@ -1,15 +1,16 @@
 # Perplexity Utilization Audit
 
-- Generated UTC: `2026-04-13T21:16:58.577102+00:00`
-- Runtime API key present: `False`
-- Active Perplexity files: `22`
+- Generated UTC: `2026-04-13T21:24:45.233340+00:00`
+- Runtime credential available: `False`
+- Active Perplexity files: `25`
 - Max utilization score: `70/100`
 - Models referenced: `sonar, sonar-pro`
 
 ## Workflows
+- `.github/workflows/ic-simple.yml` models=`n/a`
 - `.github/workflows/perplexity-trading-intel.yml` models=`n/a`
 - `.github/workflows/pre-market-scan.yml` models=`n/a`
 
 ## Gaps
-- `local_runtime_missing_PERPLEXITY_API_KEY`
+- `local_runtime_missing_perplexity_credential`
 - `agent_playground_not_versioned_in_repo`
