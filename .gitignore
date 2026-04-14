@@ -49,6 +49,7 @@ article_*.html
 data/cache/
 data/gpu_backtests/cache/
 data/gpu_backtests/price_cache/
+data/market_cache/
 **/*.jsonl
 
 # Historical data (can be regenerated, but some may be useful to track)

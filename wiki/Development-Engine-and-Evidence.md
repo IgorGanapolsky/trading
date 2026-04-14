@@ -1,6 +1,6 @@
 # Development Engine and Evidence
 
-Generated from canonical ledgers at `2026-04-12T15:11:37.456922+00:00`.
+Generated from canonical ledgers at `2026-04-13T20:49:55.912889+00:00`.
 
 This page explains how public-facing system copy stays congruent with live state.
 
@@ -19,11 +19,11 @@ This page explains how public-facing system copy stays congruent with live state
 
 ## Current Operator Summary
 
-- Paper equity: `$93,822.10`
-- Total realized P/L ledger: `$-3,402.00`
+- Paper equity: `$93,728.02`
+- Total realized P/L ledger: `$-3,669.00`
 - Weekly gate mode: `validation_reset`
-- Block new positions: `True`
+- Block new positions: `False`
 
 ## Exact Blocker
 
-`CRITICAL: Weekly gate conflicts with lifetime paired-trade ledger. Lifetime ledger shows 66 closed trades, expectancy $-51.55/trade, profit factor 0.25, total realized P/L $-3402.00. Block new positions until lifetime edge is positive.`
+`CRITICAL: Lifetime paired-trade ledger remains negative. Live/scaling stays blocked, but controlled paper validation remains allowed at minimum size until a fresh cohort proves edge.`

@@ -1,5 +1,7 @@
 """Tests for ML/RAG pipeline — Thompson sampling, vector RAG, composite reward, strategy params."""
 
+import builtins
+import importlib.util
 import json
 import sys
 import types
@@ -21,9 +23,7 @@ def _ensure_module(name):
 
 
 # Only stub modules that aren't already installed
-try:
-    import numpy
-except ImportError:
+if importlib.util.find_spec("numpy") is None:
     _ensure_module("numpy")
     np_mod = sys.modules["numpy"]
     np_mod.array = lambda *a, **k: []
@@ -42,9 +42,7 @@ except ImportError:
     np_mod.object_ = object
     np_mod.str_ = str
 
-try:
-    import torch
-except ImportError:
+if importlib.util.find_spec("torch") is None:
     _ensure_module("torch")
     _ensure_module("torch.nn")
     _ensure_module("torch.optim")
@@ -143,6 +141,23 @@ class TestThompsonSampling:
 class TestRAGVectorStore:
     """Verify RAG indexes documents and returns relevant results."""
 
+    @staticmethod
+    def _disable_external_embedder(monkeypatch):
+        from src.rag import vector_store
+
+        monkeypatch.setattr(vector_store.TradeRAG, "_init_embedder", lambda self: None)
+
+    @staticmethod
+    def _block_sklearn(monkeypatch):
+        real_import = builtins.__import__
+
+        def guarded_import(name, *args, **kwargs):
+            if name.startswith("sklearn"):
+                raise ImportError("blocked to verify keyword fallback")
+            return real_import(name, *args, **kwargs)
+
+        monkeypatch.setattr(builtins, "__import__", guarded_import)
+
     def test_builds_index_without_error(self):
         rag = TradeRAG()
         # Manually add a doc instead of relying on filesystem
@@ -190,6 +205,114 @@ class TestRAGVectorStore:
         ]
         for doc in rag.documents:
             assert doc["source"] in ("lesson", "journal", "test")
+
+    def test_build_index_loads_lessons_and_journal_with_keyword_fallback(
+        self, tmp_path, monkeypatch
+    ):
+        from src.rag import vector_store
+
+        self._disable_external_embedder(monkeypatch)
+        self._block_sklearn(monkeypatch)
+
+        lessons_dir = tmp_path / "lessons"
+        lessons_dir.mkdir()
+        (lessons_dir / "vix_stop.md").write_text(
+            "VIX spike lesson: keep iron condor stops strict.", encoding="utf-8"
+        )
+
+        journal_file = tmp_path / "trade_journal.jsonl"
+        journal_file.write_text(
+            "\n".join(
+                [
+                    json.dumps(
+                        {
+                            "expiry": "260508",
+                            "outcome": "loss",
+                            "pnl": -120.0,
+                            "pnl_pct": -0.4,
+                            "exit_reason": "stop",
+                            "dte_at_exit": 25,
+                            "credit_per_share": 2.46,
+                        }
+                    ),
+                    "",
+                    "not valid json",
+                ]
+            ),
+            encoding="utf-8",
+        )
+
+        monkeypatch.setattr(vector_store, "LESSONS_DIR", lessons_dir)
+        monkeypatch.setattr(vector_store, "JOURNAL_FILE", journal_file)
+
+        rag = vector_store.TradeRAG()
+        rag.build_index()
+
+        assert len(rag.documents) == 2
+        assert {doc["source"] for doc in rag.documents} == {"lesson", "journal"}
+        assert rag.embeddings is None
+
+        results = rag.query("vix stop", top_k=2)
+
+        assert results[0]["source"] == "lesson"
+        assert results[0]["score"] > 0
+
+    def test_query_builds_index_and_returns_empty_when_no_documents(self, tmp_path, monkeypatch):
+        from src.rag import vector_store
+
+        self._disable_external_embedder(monkeypatch)
+
+        monkeypatch.setattr(vector_store, "LESSONS_DIR", tmp_path / "missing_lessons")
+        monkeypatch.setattr(vector_store, "JOURNAL_FILE", tmp_path / "missing_journal.jsonl")
+
+        rag = vector_store.TradeRAG()
+
+        assert rag.query("north star", top_k=3) == []
+
+    def test_numpy_cosine_backend_orders_by_similarity(self, monkeypatch):
+        import numpy as np
+
+        from src.rag import vector_store
+
+        self._disable_external_embedder(monkeypatch)
+
+        class FakeEmbedder:
+            def encode(self, texts, convert_to_numpy=True):
+                return np.array([[1.0, 0.0]], dtype=float)
+
+        rag = vector_store.TradeRAG()
+        rag.documents = [
+            {"id": "match", "content": "iron condor entry", "source": "lesson"},
+            {"id": "miss", "content": "unrelated macro note", "source": "lesson"},
+        ]
+        rag.embeddings = np.array([[1.0, 0.0], [0.0, 1.0]], dtype=float)
+        rag._embedder = FakeEmbedder()
+        rag._use_faiss = True
+
+        results = rag.query("iron condor", top_k=2)
+
+        assert [result["id"] for result in results] == ["match", "miss"]
+        assert results[0]["score"] > results[1]["score"]
+
+    def test_query_lessons_builds_and_queries_store(self, monkeypatch):
+        from src.rag import vector_store
+
+        calls = []
+
+        class FakeRAG:
+            def build_index(self):
+                calls.append("build_index")
+
+            def query(self, question, top_k):
+                calls.append(("query", question, top_k))
+                return [{"id": "lesson", "score": 1.0}]
+
+        monkeypatch.setattr(vector_store, "TradeRAG", FakeRAG)
+
+        results = vector_store.query_lessons("north star", top_k=2)
+
+        assert results == [{"id": "lesson", "score": 1.0}]
+        assert calls == ["build_index", ("query", "north star", 2)]
 
 
 # ══════════════════════════════════════════════════════════════════════════════

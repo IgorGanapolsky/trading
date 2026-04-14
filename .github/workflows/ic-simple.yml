@@ -75,10 +75,9 @@ jobs:
         env:
           ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
           ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
-          NORTH_STAR_GUARD_OVERRIDE: "true"
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
           RAG_QUERY_INDEX_MAX_AGE_MINUTES: "999999"
           CONTEXT_INDEX_MAX_AGE_MINUTES: "999999"
-          SKIP_POLICY_GATE: "true"
           PYTHONPATH: ${{ github.workspace }}
         run: |
           FLAGS="--mode ${{ steps.mode.outputs.mode }}"
@@ -115,7 +114,7 @@ jobs:
           git add -f data/ic_entries.json data/ic_stats.json data/trade_journal.jsonl 2>/dev/null || true
           git add -f data/system_state.json data/trades.json data/verification_reports.json 2>/dev/null || true
           git add -f data/runtime/intraday_pnl_latest.json data/runtime/intraday_pnl_history.json 2>/dev/null || true
-          git add -f data/rag_knowledge/lessons_learned/ 2>/dev/null || true
+          git add -f rag_knowledge/lessons_learned/ 2>/dev/null || true
           git add -f data/strategy_params.json 2>/dev/null || true
           git add -f models/ml/grpo_trade_policy.pt models/ml/grpo_trade_metadata.json 2>/dev/null || true
           git add -f data/feedback/trade_trajectories.jsonl 2>/dev/null || true

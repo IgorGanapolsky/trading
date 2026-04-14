@@ -1,56 +1,56 @@
 {
-  "generated_at_et": "2026-04-12T15:11:37.456922+00:00",
+  "generated_at_et": "2026-04-13T20:49:55.912889+00:00",
   "system": {
     "name": "SPY Options Validation Platform",
     "tagline": "Broker-backed scorecards, hard risk gates, paired-trade accounting, and live operator surfaces.",
-    "public_status": "halted"
+    "public_status": "validation_reset"
   },
   "paper": {
-    "equity": 93822.1,
-    "total_pnl_today": -3.0,
+    "equity": 93728.02,
+    "total_pnl_today": -97.08,
     "realized_pnl_today": null,
     "unrealized_pnl_today": null,
     "fills_today_count": null,
-    "positions_count": 8
+    "positions_count": 4
   },
   "live": {
     "equity": 0.0,
     "total_pnl_today": 0.0
   },
   "ledger": {
-    "closed_trades_total": 66,
+    "closed_trades_total": 67,
     "wins": 16,
-    "losses": 49,
+    "losses": 50,
     "breakeven": 1,
-    "win_rate_pct": 24.24,
-    "profit_factor": 0.25,
-    "total_realized_pnl": -3402.0,
-    "expectancy_per_trade": -51.5455,
-    "last_updated": "2026-04-12T15:11:40.026944+00:00"
+    "win_rate_pct": 23.88,
+    "profit_factor": 0.24,
+    "total_realized_pnl": -3669.0,
+    "expectancy_per_trade": -54.7612,
+    "last_updated": "2026-04-13T19:55:53.078910+00:00"
   },
   "gate": {
     "mode": "validation_reset",
-    "block_new_positions": true,
+    "block_new_positions": false,
     "verified_edge_available": false,
     "recommended_max_position_pct": 0.01,
-    "sample_size": 0,
-    "expectancy_per_trade": 0.0,
+    "sample_size": 1,
+    "expectancy_per_trade": -267.0,
     "win_rate_pct": 0.0,
-    "blocker_reason": "CRITICAL: Weekly gate conflicts with lifetime paired-trade ledger. Lifetime ledger shows 66 closed trades, expectancy $-51.55/trade, profit factor 0.25, total realized P/L $-3402.00. Block new positions until lifetime edge is positive.",
+    "blocker_reason": "CRITICAL: Lifetime paired-trade ledger remains negative. Live/scaling stays blocked, but controlled paper validation remains allowed at minimum size until a fresh cohort proves edge.",
     "qualified_setups_this_week": 0,
-    "closed_trades_this_week": 0,
+    "closed_trades_this_week": 1,
     "scale_allowed": false,
-    "scaling_gate_closed_trades_observed": 66,
+    "scaling_gate_closed_trades_observed": 67,
     "scaling_gate_min_closed_trades": 30,
-    "contradiction_detected": true,
+    "contradiction_detected": false,
     "lifetime_edge_confirmed": false,
-    "lifetime_closed_trades": 66,
-    "lifetime_profit_factor": 0.25,
-    "lifetime_expectancy_per_trade": -51.5455,
-    "lifetime_total_realized_pnl": -3402.0
+    "lifetime_closed_trades": 67,
+    "lifetime_profit_factor": 0.24,
+    "lifetime_expectancy_per_trade": -54.7612,
+    "lifetime_total_realized_pnl": -3669.0
   },
   "narrative": {
-    "summary": "Latest tracked broker sync shows $-3.00 today with 8 open paper positions. Use the operator scorecard for realized/unrealized and leg-level decomposition.",
+    "summary": "Latest tracked broker sync shows $-97.08 today with 4 open paper positions. Use the operator scorecard for realized/unrealized and leg-level decomposition.",
     "thesis": "This project is currently a paper-first validation platform, not a proven passive-income engine. Public surfaces should show current gate state and broker-backed evidence rather than frozen claims."
   },
   "links": {

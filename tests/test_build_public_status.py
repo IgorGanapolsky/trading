@@ -171,6 +171,38 @@ def test_build_public_status_fails_closed_when_weekly_gate_and_lifetime_ledger_c
     assert "lifetime paired-trade ledger" in status["gate"]["blocker_reason"].lower()
 
 
+def test_build_public_status_preserves_controlled_validation_reset(tmp_path: Path):
+    repo = _seed_repo(tmp_path)
+    state = json.loads((repo / "data/system_state.json").read_text(encoding="utf-8"))
+    state["north_star_weekly_gate"].update(
+        {
+            "mode": "validation_reset",
+            "block_new_positions": False,
+            "block_live_new_positions": True,
+            "allow_validation_entries": True,
+            "verified_edge_available": False,
+            "reason": (
+                "Legacy lifetime ledger remains negative; live/scaling stays blocked "
+                "while controlled paper validation continues at minimum size."
+            ),
+            "scaling_sample_gate": {
+                "closed_trades_observed": 134,
+                "min_closed_trades_for_scaling": 30,
+                "passed": False,
+            },
+        }
+    )
+    (repo / "data/system_state.json").write_text(json.dumps(state), encoding="utf-8")
+
+    status = build_public_status(repo)
+
+    assert status["system"]["public_status"] == "validation_reset"
+    assert status["gate"]["block_new_positions"] is False
+    assert status["gate"]["scale_allowed"] is False
+    assert status["gate"]["contradiction_detected"] is False
+    assert "controlled paper validation" in status["gate"]["blocker_reason"].lower()
+
+
 def test_build_public_status_cli_runs_from_repo_root(tmp_path: Path):
     repo = _seed_repo(tmp_path)
     script = Path(__file__).resolve().parents[1] / "scripts" / "build_public_status.py"

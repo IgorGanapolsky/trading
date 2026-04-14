@@ -224,6 +224,13 @@ def _allows_controlled_validation_halt_override(
     """
     if not _is_ml_gate_halt_reason(halt_reason):
         return False
+    return _is_controlled_paper_validation_context(strategy=strategy, context=context)
+
+
+def _is_controlled_paper_validation_context(
+    *, strategy: str, context: dict[str, Any] | None
+) -> bool:
+    """Return true only for one-lot paper entries in validation-reset mode."""
     if not _weekly_gate_allows_validation_entries():
         return False
 
@@ -1031,14 +1038,29 @@ def validate_trade_mandatory(
 
         # =========================================================================
         # CHECK 6: Policy freshness and expectancy gate
-        # (Skip in paper validation: insufficient data to evaluate policy)
+        # Skip only for controlled one-lot paper validation reset entries.
         # =========================================================================
-        if os.environ.get("SKIP_POLICY_GATE") == "true":
+        controlled_validation_entry = _is_controlled_paper_validation_context(
+            strategy=strategy, context=context
+        )
+        if controlled_validation_entry:
             policy_decision = {
                 "eligible": True,
                 "block_reasons": [],
-                "decision_summary": "SKIPPED (paper validation)",
+                "decision_summary": (
+                    "SKIPPED (controlled one-lot paper validation reset; "
+                    "live/scaling remains blocked)"
+                ),
             }
+        elif os.environ.get("SKIP_POLICY_GATE") == "true":
+            return GateResult(
+                approved=False,
+                reason=(
+                    "Trade blocked: SKIP_POLICY_GATE is only allowed for controlled "
+                    "one-lot paper validation reset entries."
+                ),
+                checks_performed=checks_performed + ["policy_gate: SKIP_BLOCKED"],
+            )
         else:
             policy_decision = _evaluate_policy_gate(strategy, context)
         checks_performed.append(

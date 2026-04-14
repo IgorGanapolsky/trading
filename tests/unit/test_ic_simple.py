@@ -5,6 +5,7 @@ price-walking, and full E2E pipeline with mocked Alpaca client.
 """
 
 import json
+import logging
 import sys
 from dataclasses import dataclass
 from enum import Enum
@@ -138,7 +139,8 @@ _requests.GetOrdersRequest = type(
 # Safety gate stub
 _ensure_module("src.safety.mandatory_trade_gate")
 _safe_mod = _sys.modules["src.safety.mandatory_trade_gate"]
-_safe_mod.safe_submit_order = lambda *a, **kw: None
+if not hasattr(_safe_mod, "safe_submit_order"):
+    _safe_mod.safe_submit_order = lambda *a, **kw: None
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -225,14 +227,14 @@ class TestStrikeSelectionNetCredit:
 class TestFindOpportunity:
     """Verify find_opportunity uses selection.net_credit."""
 
-    def _mock_selection(self, net_credit_val, method="live_delta"):
+    def _mock_selection(self, net_credit_val, method="live_delta", put_delta=0.15, call_delta=0.15):
         sel = StrikeSelection(
             short_put=620.0,
             long_put=610.0,
             short_call=680.0,
             long_call=690.0,
-            put_delta=0.15,
-            call_delta=0.15,
+            put_delta=put_delta,
+            call_delta=call_delta,
             method=method,
             expiry="2026-05-01",
             put_bid=3.90,
@@ -278,15 +280,24 @@ class TestFindOpportunity:
         assert opp["target_delta"] == TARGET_DELTA
 
     @patch("src.markets.option_chain.select_strikes_by_delta")
-    def test_heuristic_fallback_uses_conservative_estimate(self, mock_select):
+    def test_heuristic_fallback_is_rejected(self, mock_select):
         from scripts.ic_simple import find_opportunity
 
         mock_select.return_value = self._mock_selection(
             net_credit_val=0.0, method="heuristic_fallback"
         )
         opp = find_opportunity(spy_price=650.0)
-        assert opp is not None
-        assert opp["est_credit"] == pytest.approx(1.50)
+        assert opp is None
+
+    @patch("src.markets.option_chain.select_strikes_by_delta")
+    def test_rejects_live_delta_outside_validation_band(self, mock_select):
+        from scripts.ic_simple import find_opportunity
+
+        mock_select.return_value = self._mock_selection(
+            net_credit_val=2.00, method="live_delta", put_delta=0.0, call_delta=0.15
+        )
+        opp = find_opportunity(spy_price=650.0)
+        assert opp is None
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -533,7 +544,82 @@ class TestThompsonValidationResetGate:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# 6. E2E: Full pipeline mock
+# 6. Reporting: validation slice must not mask lifetime ledger
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+class TestNorthStarReadinessReport:
+    def test_print_report_includes_lifetime_ledger_and_gate_state(
+        self, tmp_path, monkeypatch, caplog
+    ):
+        import scripts.ic_simple as ic
+
+        stats_file = tmp_path / "ic_stats.json"
+        stats_file.write_text(
+            json.dumps(
+                {
+                    "total": 1,
+                    "wins": 1,
+                    "losses": 0,
+                    "win_rate": 100.0,
+                    "profit_factor": 999.0,
+                    "total_pnl": 41.0,
+                    "avg_win": 41.0,
+                    "avg_loss": 0.0,
+                }
+            )
+        )
+        trades_file = tmp_path / "trades.json"
+        trades_file.write_text(
+            json.dumps(
+                {
+                    "stats": {
+                        "closed_trades": 66,
+                        "wins": 16,
+                        "losses": 49,
+                        "win_rate_pct": 24.24,
+                        "profit_factor": 0.25,
+                        "total_realized_pnl": -3402.0,
+                    }
+                }
+            )
+        )
+        state_file = tmp_path / "system_state.json"
+        state_file.write_text(
+            json.dumps(
+                {
+                    "north_star_weekly_gate": {
+                        "mode": "validation_reset",
+                        "scale_allowed": False,
+                        "block_new_positions": True,
+                        "blocker_reason": "lifetime ledger negative",
+                    }
+                }
+            )
+        )
+
+        monkeypatch.setattr(ic, "IC_STATS_FILE", stats_file)
+        monkeypatch.setattr(ic, "TRADE_LEDGER_FILE", trades_file)
+        monkeypatch.setattr(ic, "SYSTEM_STATE_FILE", state_file)
+        monkeypatch.setattr(ic, "JOURNAL_FILE", tmp_path / "missing.jsonl")
+
+        caplog.set_level(logging.INFO, logger="ic_simple")
+        ic._print_report()
+
+        assert "NORTH STAR READINESS" in caplog.text
+        assert "Validation slice: 1/30 closed trades" in caplog.text
+        assert "Lifetime ledger: 66 closed" in caplog.text
+        assert "win_rate=24.24%" in caplog.text
+        assert "PF=0.25" in caplog.text
+        assert "expectancy=$-51.55/trade" in caplog.text
+        assert "mode=validation_reset" in caplog.text
+        assert "scale_allowed=False" in caplog.text
+        assert "block_new_positions=True" in caplog.text
+        assert "lifetime ledger negative" in caplog.text
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 7. E2E: Full pipeline mock
 # ══════════════════════════════════════════════════════════════════════════════
 
 
@@ -600,11 +686,25 @@ class TestE2EPipeline:
             vix_level = 18.0
             transition_prediction = None
 
+        # Patch sync freshness and re-entry gates (added Apr 2026)
+        import json
+        from datetime import datetime, timezone
+
+        fresh_sync = {"sync_health": {"last_successful_sync": datetime.now(timezone.utc).isoformat()}}
+        original_read = Path.read_text
+
+        def _patched_read(self):
+            if "system_state" in str(self):
+                return json.dumps(fresh_sync)
+            if "trades.json" in str(self):
+                return json.dumps({"trades": []})
+            return original_read(self)
+
         sys.argv = ["ic_simple.py", "--mode", "both"]
         with patch(
             "src.utils.regime_detector.RegimeDetector.detect_live_regime_with_prediction",
             return_value=_Snapshot(),
-        ):
+        ), patch.object(Path, "read_text", _patched_read):
             ic.main()
 
         # Verify order was submitted

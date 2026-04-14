@@ -103,16 +103,11 @@ def _resolve_current_day(paper_trading: dict[str, Any]) -> int:
 def get_guard_context(state_path: Path = DEFAULT_STATE_PATH) -> dict[str, Any]:
     """Return dynamic risk constraints for mandatory trade validation."""
     state = _load_state(state_path)
-
-    if _truthy(os.getenv("NORTH_STAR_GUARD_OVERRIDE", "")):
-        return {
-            "enabled": True,
-            "mode": "override",
-            "max_position_pct": 0.05,
-            "block_new_positions": False,
-            "block_reason": "",
-            "reasons": ["NORTH_STAR_GUARD_OVERRIDE enabled"],
-        }
+    override_requested = _truthy(os.getenv("NORTH_STAR_GUARD_OVERRIDE", ""))
+    override_confirmed = (
+        os.getenv("NORTH_STAR_GUARD_OVERRIDE_CONFIRM", "").strip().lower()
+        == "manual-risk-accepted"
+    )
 
     paper_account = state.get("paper_account", {}) if isinstance(state, dict) else {}
     paper_trading = state.get("paper_trading", {}) if isinstance(state, dict) else {}
@@ -134,6 +129,11 @@ def get_guard_context(state_path: Path = DEFAULT_STATE_PATH) -> dict[str, Any]:
     max_position_pct = 0.025
     block_new_positions = False
     reasons: list[str] = []
+    if override_requested and not override_confirmed:
+        reasons.append(
+            "NORTH_STAR_GUARD_OVERRIDE ignored; set "
+            "NORTH_STAR_GUARD_OVERRIDE_CONFIRM=manual-risk-accepted for an explicit manual override."
+        )
     validation_reset_active = bool(
         isinstance(weekly_gate, dict)
         and _to_bool(weekly_gate.get("allow_validation_entries"), default=False)
@@ -215,6 +215,14 @@ def get_guard_context(state_path: Path = DEFAULT_STATE_PATH) -> dict[str, Any]:
                 reasons.append(
                     f"Autopilot regime-aware sizing caps max position size at {tuned_cap * 100:.2f}%."
                 )
+
+    if override_requested and override_confirmed:
+        mode = "override"
+        max_position_pct = 0.05
+        block_new_positions = False
+        reasons.append(
+            "Explicit manual North Star override active; automated scheduled workflows must not set this."
+        )
 
     block_reason = ""
     if block_new_positions:

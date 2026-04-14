@@ -12,25 +12,25 @@
       "min_trades_for_decision": 30
     },
     "notes": "CLEANED Jan 27, 2026 - Removed pre-Jan-22 garbage (SOFI trades, stock DCA). Fresh start per $30K account reset.",
-    "last_sync": "2026-04-12T15:11:40.026952+00:00",
+    "last_sync": "2026-04-13T19:55:53.078918+00:00",
     "sync_source": "sync_closed_positions.py"
   },
   "stats": {
-    "total_trades": 66,
-    "closed_trades": 66,
+    "total_trades": 67,
+    "closed_trades": 67,
     "open_trades": 0,
     "wins": 16,
-    "losses": 49,
+    "losses": 50,
     "breakeven": 1,
-    "win_rate_pct": 24.24,
+    "win_rate_pct": 23.88,
     "avg_win": 70.5,
-    "avg_loss": 92.45,
-    "profit_factor": 0.25,
-    "total_pnl": -3402.0,
-    "total_realized_pnl": -3402.0,
+    "avg_loss": 95.94,
+    "profit_factor": 0.24,
+    "total_pnl": -3669.0,
+    "total_realized_pnl": -3669.0,
     "paper_phase_start": "2026-01-22",
-    "paper_phase_days": 80,
-    "last_updated": "2026-04-12T15:11:40.026944+00:00"
+    "paper_phase_days": 81,
+    "last_updated": "2026-04-13T19:55:53.078910+00:00"
   },
   "trades": [
     {
@@ -2594,6 +2594,40 @@
           "61b7b2bf-32c5-4e38-aaac-d12d3a3027cf",
           "9b68a161-3e3b-45fa-8b4d-6df5088ca186"
         ]
+      }
+    },
+    {
+      "id": "IC_SPY_2026_05_08_P590_600_C690_700_20260402144706_20260413195552",
+      "symbol": "SPY",
+      "type": "option",
+      "strategy": "iron_condor",
+      "status": "closed",
+      "entry_date": "2026-04-02",
+      "exit_date": "2026-04-13",
+      "entry_time": "2026-04-02T14:47:06.670449+00:00",
+      "exit_time": "2026-04-13T19:55:52.087311+00:00",
+      "entry_net_cash": 236.0,
+      "entry_credit": 236.0,
+      "entry_debit": 0.0,
+      "entry_style": "credit",
+      "exit_net_cash": -503.0,
+      "exit_credit": 0.0,
+      "exit_debit": 503.0,
+      "exit_style": "debit",
+      "realized_pnl": -267.0,
+      "outcome": "loss",
+      "signature": "SPY_2026-05-08_P590-600_C690-700",
+      "legs": {
+        "underlying": "SPY",
+        "expiry": "2026-05-08",
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
+      },
+      "quantity": 1.0,
+      "source": "alpaca_parent_lot->alpaca_close_inventory",
+      "order_ids": {
+        "entry": ["e0449e4b-394f-48ee-bc3b-d0c6199140cc"],
+        "exit": ["b0ce5191-a895-4453-9fb8-514750b0a442"]
       }
     }
   ]

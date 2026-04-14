@@ -10,6 +10,10 @@ This replaces: iron_condor_trader.py, iron_condor_guardian.py,
 iron_condor_scanner.py, manage_iron_condor_positions.py, and 6 workflows.
 """
 
+# Trunk/isort and Ruff disagree on local imports inside function scopes in this script.
+# Keep the repo's commit-hook formatting and suppress only import-order diagnostics here.
+# ruff: noqa: I001
+
 import json
 import logging
 import sys
@@ -66,6 +70,8 @@ TARGET_DELTA = _SP["target_delta"]
 ENTRIES_FILE = Path(__file__).parent.parent / "data" / "ic_entries.json"
 SYSTEM_STATE_FILE = Path(__file__).parent.parent / "data" / "system_state.json"
 THOMPSON_MIN_CONFIDENCE = 0.40
+MIN_ACCEPTABLE_SHORT_DELTA = 0.08
+MAX_ACCEPTABLE_SHORT_DELTA = 0.22
 
 
 # ── Alpaca Client ────────────────────────────────────────────────────────────
@@ -106,10 +112,30 @@ def find_opportunity(spy_price: float) -> dict | None:
         max_dte=45,
     )
 
+    if selection.method != "live_delta":
+        logger.warning(
+            f"Strike selection method {selection.method!r} is not live_delta. "
+            "Skip: validation trades require real delta provenance."
+        )
+        return None
+
+    put_delta = abs(float(selection.put_delta or 0.0))
+    call_delta = abs(float(selection.call_delta or 0.0))
+    if not (
+        MIN_ACCEPTABLE_SHORT_DELTA <= put_delta <= MAX_ACCEPTABLE_SHORT_DELTA
+        and MIN_ACCEPTABLE_SHORT_DELTA <= call_delta <= MAX_ACCEPTABLE_SHORT_DELTA
+    ):
+        logger.warning(
+            f"Live deltas outside validation band: put={put_delta:.3f}, call={call_delta:.3f}, "
+            f"required={MIN_ACCEPTABLE_SHORT_DELTA:.2f}-{MAX_ACCEPTABLE_SHORT_DELTA:.2f}. Skip."
+        )
+        return None
+
     # Net credit = short premiums - long premiums (NOT just short bids)
     est_credit = selection.net_credit
-    if selection.method == "heuristic_fallback" or est_credit <= 0:
-        est_credit = 1.50  # Conservative guess when we can't price the wings
+    if est_credit <= 0:
+        logger.warning(f"Non-positive net credit ${est_credit:.2f}. Skip.")
+        return None
 
     if est_credit < MIN_CREDIT:
         logger.warning(f"Credit ${est_credit:.2f} < ${MIN_CREDIT:.2f} minimum. Skip.")
@@ -430,6 +456,8 @@ def _close_ic(client, legs: list[dict], qty: int):
 # ── Learning: RAG + Trade Journal + Stats ────────────────────────────────────
 
 JOURNAL_FILE = Path(__file__).parent.parent / "data" / "trade_journal.jsonl"
+IC_STATS_FILE = Path(__file__).parent.parent / "data" / "ic_stats.json"
+TRADE_LEDGER_FILE = Path(__file__).parent.parent / "data" / "trades.json"
 LESSONS_DIR = Path(__file__).parent.parent / "rag_knowledge" / "lessons_learned"  # Primary corpus
 
 
@@ -513,11 +541,10 @@ def _record_lesson(expiry: str, credit: float, pnl: float, reason: str, dte: int
 
 def _update_stats(trade: dict):
     """Update running win rate and P/L stats."""
-    stats_file = Path(__file__).parent.parent / "data" / "ic_stats.json"
     try:
         stats = (
-            json.loads(stats_file.read_text())
-            if stats_file.exists()
+            json.loads(IC_STATS_FILE.read_text())
+            if IC_STATS_FILE.exists()
             else {
                 "total": 0,
                 "wins": 0,
@@ -560,7 +587,7 @@ def _update_stats(trade: dict):
         else 999.0
     )
 
-    stats_file.write_text(json.dumps(stats, indent=2))
+    IC_STATS_FILE.write_text(json.dumps(stats, indent=2))
     logger.info(
         f"Stats: {stats['total']} trades | {stats['win_rate']}% win rate | "
         f"PF={stats['profit_factor']} | Total P/L=${stats['total_pnl']:+.2f}"
@@ -570,14 +597,96 @@ def _update_stats(trade: dict):
 # ── Report + Weekend Learning ────────────────────────────────────────────────
 
 
-def _print_report():
-    """Print full performance report from trade journal."""
-    stats_file = Path(__file__).parent.parent / "data" / "ic_stats.json"
-    if not stats_file.exists():
-        logger.info("No stats yet. Complete trades to build data.")
+def _as_report_float(value, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _as_report_int(value, default: int = 0) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _load_lifetime_ledger_summary() -> dict:
+    """Load paired-trade lifetime stats so validation reports cannot overstate edge."""
+    try:
+        payload = json.loads(TRADE_LEDGER_FILE.read_text(encoding="utf-8"))
+    except Exception as exc:
+        logger.debug(f"Lifetime ledger summary unavailable: {exc}")
+        return {}
+
+    stats = payload.get("stats", {}) if isinstance(payload, dict) else {}
+    if not isinstance(stats, dict):
+        return {}
+
+    closed = _as_report_int(stats.get("closed_trades") or stats.get("total_trades"))
+    wins = _as_report_int(stats.get("wins"))
+    losses = _as_report_int(stats.get("losses"))
+    win_rate = _as_report_float(stats.get("win_rate_pct"))
+    profit_factor = _as_report_float(stats.get("profit_factor"))
+    total_realized = _as_report_float(
+        stats.get("total_realized_pnl", stats.get("total_pnl"))
+    )
+    expectancy = round(total_realized / closed, 4) if closed else 0.0
+
+    return {
+        "closed_trades": closed,
+        "wins": wins,
+        "losses": losses,
+        "win_rate_pct": win_rate,
+        "profit_factor": profit_factor,
+        "total_realized_pnl": total_realized,
+        "expectancy_per_trade": expectancy,
+    }
+
+
+def _print_north_star_readiness_report(validation_total: int):
+    ledger = _load_lifetime_ledger_summary()
+    gate = _load_north_star_weekly_gate()
+    if not ledger and not gate:
         return
 
-    stats = json.loads(stats_file.read_text())
+    logger.info("")
+    logger.info("NORTH STAR READINESS")
+    logger.info(
+        "Validation slice is not promotion evidence until it reaches 30 clean closed trades."
+    )
+    logger.info(f"Validation slice: {validation_total}/30 closed trades")
+
+    if ledger:
+        logger.info(
+            "Lifetime ledger: "
+            f"{ledger['closed_trades']} closed | "
+            f"win_rate={ledger['win_rate_pct']:.2f}% | "
+            f"PF={ledger['profit_factor']:.2f} | "
+            f"expectancy=${ledger['expectancy_per_trade']:+.2f}/trade | "
+            f"realized=${ledger['total_realized_pnl']:+,.2f}"
+        )
+
+    if gate:
+        logger.info(
+            "Gate state: "
+            f"mode={gate.get('mode', 'unknown')} | "
+            f"scale_allowed={bool(gate.get('scale_allowed'))} | "
+            f"block_new_positions={bool(gate.get('block_new_positions'))}"
+        )
+        reason = str(gate.get("blocker_reason") or gate.get("reason") or "").strip()
+        if reason:
+            logger.info(f"Gate blocker: {reason}")
+
+
+def _print_report():
+    """Print full performance report from trade journal."""
+    if not IC_STATS_FILE.exists():
+        logger.info("No stats yet. Complete trades to build data.")
+        _print_north_star_readiness_report(0)
+        return
+
+    stats = json.loads(IC_STATS_FILE.read_text())
     logger.info("=" * 60)
     logger.info("PERFORMANCE REPORT")
     logger.info("=" * 60)
@@ -601,6 +710,8 @@ def _print_report():
             logger.info("\n70-80% win rate. Marginal — review delta selection.")
         else:
             logger.info(f"\n{wr}% win rate. Below target. Reassess strategy.")
+
+    _print_north_star_readiness_report(stats.get("total", 0))
 
     # Print recent trades from journal
     if JOURNAL_FILE.exists():
@@ -788,12 +899,11 @@ def _daily_learn():
         logger.debug(f"GRPO retrain skipped: {e}")
 
     # 2. Quick strategy research (one query per session, saves to RAG)
-    stats_file = Path(__file__).parent.parent / "data" / "ic_stats.json"
     trade_count = 0
     win_rate = 0
     total_pnl = 0
     try:
-        stats = json.loads(stats_file.read_text()) if stats_file.exists() else {}
+        stats = json.loads(IC_STATS_FILE.read_text()) if IC_STATS_FILE.exists() else {}
         win_rate = stats.get("win_rate", 0)
         trade_count = stats.get("total", 0)
         total_pnl = stats.get("total_pnl", 0)
@@ -809,7 +919,7 @@ def _daily_learn():
     _print_report()
 
 
-def _auto_adjust_from_performance(stats: dict):
+def _auto_adjust_from_performance(_stats: dict):
     """Adjust strategy params based on actual trade performance data.
 
     DISABLED during controlled experiment phase (Apr 2026).
@@ -817,40 +927,6 @@ def _auto_adjust_from_performance(stats: dict):
     See .claude/rules/controlled-experiment.md
     """
     logger.info("Auto-adjust DISABLED during controlled experiment phase.")
-    return
-    trade_count = stats.get("total", 0)
-    win_rate = stats.get("win_rate", 0)
-    avg_win = stats.get("avg_win", 0)
-    avg_loss = abs(stats.get("avg_loss", 0))
-
-    adjustments = {}
-    reasons = []
-    confidence = min(0.5 + (trade_count / 60), 0.90)  # Caps at 0.90
-
-    # Delta adjustment based on win rate
-    if win_rate < 70 and trade_count >= 10:
-        adjustments["target_delta"] = 0.12  # Wider = higher probability
-        reasons.append(f"win rate {win_rate:.0f}% < 70% → widen to 12-delta")
-    elif win_rate > 90 and trade_count >= 15:
-        adjustments["target_delta"] = 0.18  # Tighter = more premium
-        reasons.append(f"win rate {win_rate:.0f}% > 90% → tighten to 18-delta for more premium")
-
-    # Stop loss adjustment
-    if avg_loss > 0 and avg_win > 0 and avg_loss > 2 * avg_win and trade_count >= 10:
-        adjustments["stop_loss"] = 0.75  # Tighter stop
-        reasons.append(
-            f"avg loss ${avg_loss:.0f} > 2x avg win ${avg_win:.0f} → tighten stop to 75%"
-        )
-
-    if adjustments:
-        _adjust_strategy_params(
-            adjustments,
-            reason=" | ".join(reasons),
-            source="performance_auto",
-            confidence=confidence,
-        )
-    else:
-        logger.info("Auto-adjust: no changes needed based on current performance")
 
 
 def _research_strategies(win_rate: float, trade_count: int, total_pnl: float):
@@ -1369,6 +1445,20 @@ def main():
         else:
             spy_price = get_spy_price(client)
             logger.info(f"SPY: ${spy_price:.2f}")
+
+            # Pre-trade research via Perplexity (advisory, non-blocking)
+            try:
+                from src.research.pre_trade_research import get_pre_trade_research
+
+                vix_val = current_vix if "current_vix" in dir() and current_vix else 0
+                regime_label = snapshot.label if "snapshot" in dir() else "unknown"
+                research = get_pre_trade_research(
+                    spy_price=spy_price, vix=vix_val, regime=regime_label
+                )
+                if research.get("summary"):
+                    logger.info(f"Perplexity: {research['summary'][:120]}")
+            except Exception as e:
+                logger.debug(f"Pre-trade research skipped: {e}")
 
             # Thompson Sampling confidence check
             thompson_conf = _get_thompson_confidence()

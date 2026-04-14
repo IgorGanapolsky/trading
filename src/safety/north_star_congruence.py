@@ -151,11 +151,19 @@ def assess_gate_congruence(
     cadence_passed = _as_bool(cadence.get("passed"))
     scaling_passed = _as_bool(scaling.get("passed"))
     weekly_mode = str(gate.get("mode") or "unknown").lower()
+    validation_reset_active = bool(
+        weekly_mode == "validation_reset"
+        and _as_bool(gate.get("allow_validation_entries"))
+        and _as_bool(gate.get("block_live_new_positions"))
+    )
 
     readiness_claimed = bool(
         weekly_verified
-        or scaling_passed
-        or (block_new_positions_present and not block_new_positions)
+        or (
+            block_new_positions_present
+            and not block_new_positions
+            and not validation_reset_active
+        )
         or weekly_mode == "expansion_candidate"
     )
 

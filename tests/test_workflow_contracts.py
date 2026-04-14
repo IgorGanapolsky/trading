@@ -150,7 +150,11 @@ def test_main_ci_concurrency_uses_per_sha_key():
 
 
 def test_sync_alpaca_status_updates_public_surfaces():
-    """Alpaca sync must regenerate the public bundle and wiki surfaces."""
+    """Alpaca sync must regenerate the public bundle and wiki surfaces.
+
+    Note: Sync Alpaca only commits its own files (broker state, pnl, public status, wiki).
+    ML models, trade data, and RAG lessons are owned by IC Simple.
+    """
     workflow_text = Path(".github/workflows/sync-alpaca-status.yml").read_text()
 
     assert "npx --yes prettier@3.6.2 --write" in workflow_text
@@ -158,10 +162,9 @@ def test_sync_alpaca_status_updates_public_surfaces():
     assert "scripts/build_public_status.py --repo-root ." in workflow_text
     assert "docs/data/public_status.json" in workflow_text
     assert "wiki/Progress-Dashboard.md" in workflow_text
-    assert "models/ml/trade_confidence_model.json" in workflow_text
-    assert "data/post_market_analysis/*.json" in workflow_text
-    assert "data/research_state.json" in workflow_text
     assert "gh repo edit" in workflow_text
+    # ML models are now owned by IC Simple, not Sync Alpaca (commit race fix)
+    assert "models/ml/trade_confidence_model.json" not in workflow_text
 
 
 def test_state_writer_workflows_share_a_single_queue():

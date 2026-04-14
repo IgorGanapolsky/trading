@@ -1,1 +1,2 @@
 {"timestamp": "2026-02-06T18:48:36.298501+00:00", "expiry": "260220", "credit_per_share": 0.81, "qty": 1, "pnl": 41.0, "pnl_pct": 50.6, "outcome": "WIN", "exit_reason": "PROFIT: 50% target", "dte_at_exit": 14}
+{"timestamp": "2026-04-13T19:55:52.039602", "expiry": "260508", "credit_per_share": 2.4640000000000004, "qty": 1, "pnl": -255.6, "pnl_pct": -103.7, "outcome": "LOSS", "exit_reason": "STOP: $-255.60 <= -$246.40", "dte_at_exit": 25, "composite_reward": -41.725, "reward_components": {"return": -24.7596, "downside": 8.3977, "benchmark_excess": -0.3399}}

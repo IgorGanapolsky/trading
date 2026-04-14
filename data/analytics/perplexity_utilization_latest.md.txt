@@ -1,40 +1,16 @@
 # Perplexity Utilization Audit
 
-- Generated (UTC): `2026-02-21T22:49:59.582240Z`
-- Workflows wired: `3`
-- Models referenced: `sonar`
+- Generated UTC: `2026-04-13T21:24:45.233340+00:00`
+- Runtime credential available: `False`
+- Active Perplexity files: `25`
+- Max utilization score: `70/100`
+- Models referenced: `sonar, sonar-pro`
 
-## Workflow Wiring
-- `.github/workflows/perplexity-utilization-audit.yml`
-  - secret ref: `True`
-  - endpoint refs: `0`
-  - models: `none`
-- `.github/workflows/pre-market-scan.yml`
-  - secret ref: `True`
-  - endpoint refs: `1`
-  - models: `sonar`
-- `.github/workflows/weekend-research.yml`
-  - secret ref: `True`
-  - endpoint refs: `0`
-  - models: `none`
-
-## Source Presence
-- `local_mcp_snapshot_script`: `True`
-- `pre_market_scan_workflow`: `True`
-- `research_agent`: `True`
-- `weekend_research_workflow`: `True`
-
-## Recent Workflow Runs
-- `pre-market-scan.yml`: status=`completed` conclusion=`success` updated=`2026-02-20T14:20:58Z`
-- `pre-market-scan.yml`: status=`completed` conclusion=`success` updated=`2026-02-19T14:26:55Z`
-- `weekend-research.yml`: status=`completed` conclusion=`failure` updated=`2026-02-21T06:11:25Z`
-- `weekend-research.yml`: status=`completed` conclusion=`failure` updated=`2026-02-14T06:12:56Z`
-
-## Live Probe
-- enabled: `True`
-- status: `success`
-- latency_ms: `1655.028`
-- model: `sonar`
+## Workflows
+- `.github/workflows/ic-simple.yml` models=`n/a`
+- `.github/workflows/perplexity-trading-intel.yml` models=`n/a`
+- `.github/workflows/pre-market-scan.yml` models=`n/a`
 
 ## Gaps
-- none
+- `local_runtime_missing_perplexity_credential`
+- `agent_playground_not_versioned_in_repo`

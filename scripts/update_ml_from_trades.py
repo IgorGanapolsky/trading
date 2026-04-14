@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -36,12 +37,14 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).parent.parent
 TRADES_FILE = PROJECT_ROOT / "data" / "trades.json"
 MODEL_FILE = PROJECT_ROOT / "models" / "ml" / "trade_confidence_model.json"
-LESSONS_DIR = PROJECT_ROOT / "data" / "rag_knowledge" / "lessons_learned"
+LESSONS_DIR = PROJECT_ROOT / "rag_knowledge" / "lessons_learned"
 SYSTEM_STATE_FILE = PROJECT_ROOT / "data" / "system_state.json"
 
 # Thresholds
 MIN_TRADES_FOR_GATE = 30
 MIN_WIN_RATE_TO_TRADE = 50.0  # %
+MIN_EXPECTANCY_TO_TRADE = 0.0  # $/trade; breakeven is not an edge
+MIN_PROFIT_FACTOR_TO_TRADE = 1.0  # breakeven is not an edge
 DRIFT_ALERT_THRESHOLD = 20.0  # % divergence between model and realized
 VALIDATION_PHASE_START_DATE = "2026-04-10"
 VALIDATION_RESET_NOTE = (
@@ -99,6 +102,17 @@ def validation_phase_trades(trades_data: dict) -> list[dict]:
     ]
 
 
+def _as_float(value: object, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _round_metric(value: float, digits: int = 2) -> float:
+    return value if math.isinf(value) else round(value, digits)
+
+
 def stats_from_trades(trades: list[dict]) -> dict:
     """Build the stats shape expected by the Thompson updater from trade rows."""
     wins: list[float] = []
@@ -126,6 +140,16 @@ def stats_from_trades(trades: list[dict]) -> dict:
 
     closed = len(wins) + len(losses)
     win_rate = (len(wins) / closed * 100) if closed else 0.0
+    gross_profit = sum(pnl for pnl in wins if pnl > 0)
+    gross_loss = abs(sum(pnl for pnl in losses if pnl < 0))
+    total_realized_pnl = sum(wins) + sum(losses)
+    if gross_loss > 0:
+        profit_factor = gross_profit / gross_loss
+    elif gross_profit > 0:
+        profit_factor = math.inf
+    else:
+        profit_factor = 0.0
+    expectancy = total_realized_pnl / closed if closed else 0.0
     return {
         "wins": len(wins),
         "losses": len(losses),
@@ -133,6 +157,11 @@ def stats_from_trades(trades: list[dict]) -> dict:
         "win_rate_pct": round(win_rate, 2),
         "avg_win": sum(wins) / len(wins) if wins else 0,
         "avg_loss": abs(sum(losses) / len(losses)) if losses else 0,
+        "gross_profit": round(gross_profit, 2),
+        "gross_loss": round(gross_loss, 2),
+        "total_realized_pnl": round(total_realized_pnl, 2),
+        "profit_factor": _round_metric(profit_factor),
+        "expectancy_per_trade": round(expectancy, 2),
     }
 
 
@@ -191,20 +220,55 @@ def update_thompson_sampler(trades_data: dict, model: dict) -> dict:
 def check_trading_gate(stats: dict) -> dict:
     """Check if trading should be allowed based on empirical performance."""
     total = stats.get("closed_trades", 0)
-    win_rate = stats.get("win_rate_pct", 0)
-    avg_win = stats.get("avg_win", 0) or 0
-    avg_loss = stats.get("avg_loss", 0) or 0
-    expectancy = (
-        (win_rate / 100 * avg_win) - ((100 - win_rate) / 100 * avg_loss) if total > 0 else 0
-    )
+    win_rate = _as_float(stats.get("win_rate_pct"), 0.0)
+    avg_win = _as_float(stats.get("avg_win"), 0.0)
+    avg_loss = _as_float(stats.get("avg_loss"), 0.0)
+
+    if "expectancy_per_trade" in stats:
+        expectancy = _as_float(stats.get("expectancy_per_trade"), 0.0)
+    elif "total_realized_pnl" in stats and total > 0:
+        expectancy = _as_float(stats.get("total_realized_pnl"), 0.0) / total
+    elif total > 0:
+        expectancy = (win_rate / 100 * avg_win) - ((100 - win_rate) / 100 * avg_loss)
+    else:
+        expectancy = 0.0
+
+    profit_factor_raw = stats.get("profit_factor")
+    if profit_factor_raw is None:
+        gross_profit = _as_float(stats.get("gross_profit"), 0.0)
+        gross_loss = _as_float(stats.get("gross_loss"), 0.0)
+        if gross_profit <= 0 and avg_win > 0 and total > 0:
+            gross_profit = (win_rate / 100) * total * avg_win
+        if gross_loss <= 0 and avg_loss > 0 and total > 0:
+            gross_loss = ((100 - win_rate) / 100) * total * avg_loss
+
+        if gross_loss > 0:
+            profit_factor = gross_profit / gross_loss
+        elif gross_profit > 0:
+            profit_factor = math.inf
+        else:
+            profit_factor = 0.0
+    else:
+        profit_factor = _as_float(profit_factor_raw, 0.0)
+
+    positive_expectancy_met = expectancy > MIN_EXPECTANCY_TO_TRADE
+    min_profit_factor_met = profit_factor > MIN_PROFIT_FACTOR_TO_TRADE
 
     gate = {
-        "should_trade": total >= MIN_TRADES_FOR_GATE and win_rate >= MIN_WIN_RATE_TO_TRADE,
+        "should_trade": (
+            total >= MIN_TRADES_FOR_GATE
+            and win_rate >= MIN_WIN_RATE_TO_TRADE
+            and positive_expectancy_met
+            and min_profit_factor_met
+        ),
         "total_trades": total,
         "win_rate": win_rate,
         "expectancy_per_trade": round(expectancy, 2),
+        "profit_factor": _round_metric(profit_factor),
         "min_trades_met": total >= MIN_TRADES_FOR_GATE,
         "min_win_rate_met": win_rate >= MIN_WIN_RATE_TO_TRADE,
+        "positive_expectancy_met": positive_expectancy_met,
+        "min_profit_factor_met": min_profit_factor_met,
     }
 
     if not gate["should_trade"]:
@@ -213,11 +277,18 @@ def check_trading_gate(stats: dict) -> dict:
             reasons.append(f"Only {total}/{MIN_TRADES_FOR_GATE} trades")
         if not gate["min_win_rate_met"]:
             reasons.append(f"Win rate {win_rate:.1f}% < {MIN_WIN_RATE_TO_TRADE}%")
+        if not gate["positive_expectancy_met"]:
+            reasons.append(f"Expectancy ${expectancy:.2f}/trade <= ${MIN_EXPECTANCY_TO_TRADE:.2f}")
+        if not gate["min_profit_factor_met"]:
+            reasons.append(
+                f"Profit factor {_round_metric(profit_factor):.2f} <= {MIN_PROFIT_FACTOR_TO_TRADE:.2f}"
+            )
         gate["block_reason"] = "; ".join(reasons)
         logger.warning(f"  TRADING BLOCKED: {gate['block_reason']}")
     else:
         logger.info(
-            f"  TRADING ALLOWED: {total} trades, {win_rate:.1f}% win rate, ${expectancy:.2f}/trade expectancy"
+            f"  TRADING ALLOWED: {total} trades, {win_rate:.1f}% win rate, "
+            f"${expectancy:.2f}/trade expectancy, {profit_factor:.2f} profit factor"
         )
 
     return gate

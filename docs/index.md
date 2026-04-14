@@ -1,5 +1,5 @@
 ---
-layout: none
+layout: null
 title: SPY Options Validation Platform
 permalink: /
 ---

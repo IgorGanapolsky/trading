@@ -42,7 +42,7 @@ dependencies = [
   # Utilities
   "python-dateutil>=2.9.0",
   # "pytz>=2023.3",  # REMOVED: Never imported (Jan 2026)
-  "holidays>=0.56", # Market holiday detection (Critical for calendar awareness - LL-051)
+  "holidays>=0.94", # Market holiday detection (Critical for calendar awareness - LL-051)
   # "loguru>=0.7.2",  # REMOVED: Never imported (Jan 2026)
   "anthropic>=0.73.0,<1.0.0",
   "google-generativeai>=0.8.0,<1.0.0",
@@ -52,7 +52,7 @@ dependencies = [
   "scikit-learn>=1.3.0,<2.0.0", # Used in src/agents/rl_weight_updater.py
 
   # DeepAgents Integration (updated for deepagents 0.3.x compatibility)
-  "langchain>=0.3.0",
+  "langchain>=1.2.15",
   "langchain-core>=0.3.0",      # deepagents 0.3.x needs >=1.0, allow auto-resolution
   "langchain-anthropic>=0.3.0",
   "langchain-community>=0.3.0",
@@ -70,14 +70,14 @@ dev = [
   "pytest-asyncio>=0.21.1",
   "pytest-cov>=4.1.0",
   "pytest-timeout>=2.2.0",
-  "ruff>=0.9.0",
-  "mypy>=1.0.0",
-  "pre-commit>=3.0.0",
+  "ruff>=0.15.10",
+  "mypy>=1.20.1",
+  "pre-commit>=3.8.0",
 ]
 
 security = ["detect-secrets>=1.5.0", "bandit>=1.7.7"]
 
-rag = ["sentence-transformers>=2.2.0", "lancedb>=0.8.0", "chromadb>=0.4.0"]
+rag = ["sentence-transformers>=2.7.0", "lancedb>=0.30.2", "chromadb>=0.4.0"]
 
 # deepagents = [  # REMOVED: Never imported (Jan 2026)
 #     "deepagents>=0.2.5",

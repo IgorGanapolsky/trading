@@ -29,6 +29,9 @@ PROJECT_DIR = Path(__file__).parent.parent.parent
 DATA_DIR = PROJECT_DIR / "data"
 WORKFLOW_STATE_DIR = DATA_DIR / "workflow_state"
 WORKFLOW_STATE_DIR.mkdir(parents=True, exist_ok=True)
+PERPLEXITY_TRADING_INTEL_PATH = (
+    DATA_DIR / "analysis" / "perplexity" / "trading_intel_latest.json"
+)
 
 
 @dataclass
@@ -57,6 +60,38 @@ class NodeResult:
             "cached": self.cached,
             "error": self.error,
         }
+
+
+def load_latest_perplexity_trading_intel(
+    path: Path = PERPLEXITY_TRADING_INTEL_PATH,
+    *,
+    max_age_minutes: int = 240,
+    now: datetime | None = None,
+) -> dict[str, Any] | None:
+    """Load fresh Perplexity trading intel for DAGGR decision nodes."""
+
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return None
+    except Exception:
+        return None
+
+    generated_raw = payload.get("generated_at_utc")
+    if not generated_raw:
+        return None
+
+    try:
+        generated_at = datetime.fromisoformat(str(generated_raw).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+    current = now or datetime.now(timezone.utc)
+    age_minutes = (current - generated_at).total_seconds() / 60
+    if age_minutes > max_age_minutes:
+        return None
+
+    return payload
 
 
 @dataclass
@@ -419,6 +454,24 @@ def create_trading_workflow() -> TradingWorkflow:
 
     async def perplexity_intel(**kwargs) -> dict:
         """Perplexity-powered market intelligence."""
+        latest = load_latest_perplexity_trading_intel()
+        if latest:
+            risk_score = float(latest.get("risk_score") or 0.0)
+            confidence = float(latest.get("confidence") or 0.5)
+            signal = max(0.1, min(0.9, 0.5 - (risk_score * 0.4)))
+            return {
+                "signal": signal,
+                "confidence": confidence,
+                "data": {
+                    "source": "perplexity_trading_intel",
+                    "recommendation": latest.get("recommendation"),
+                    "risk_score": risk_score,
+                    "api_status": latest.get("api_status"),
+                    "gate_contract": latest.get("gate_contract", {}),
+                    "generated_at_utc": latest.get("generated_at_utc"),
+                },
+            }
+
         try:
             from src.agents.research_agent import get_research_signal
 
@@ -469,6 +522,20 @@ def create_trading_workflow() -> TradingWorkflow:
 
         signal = options.get("signal", 0.5)
         confidence = options.get("confidence", 0.5)
+        perplexity_data = perplexity.get("data", {})
+        perplexity_gate = perplexity_data.get("gate_contract", {})
+
+        if (
+            perplexity_gate.get("blocks_new_iron_condors")
+            or perplexity_data.get("recommendation") == "BLOCK_NEW_IC"
+        ):
+            return {
+                "decision": "HOLD",
+                "signal": min(signal, 0.5),
+                "confidence": confidence,
+                "trade_params": None,
+                "reason": perplexity_gate.get("reason", "Perplexity event risk blocked entry"),
+            }
 
         # Boost confidence if research confirms
         if perplexity.get("confidence", 0) > 0.6:
