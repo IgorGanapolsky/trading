@@ -36,9 +36,7 @@ try:
     from src.core.trading_constants import (
         MAX_CUMULATIVE_RISK_PCT as _MAX_CUMULATIVE_RISK_PCT,
     )
-    from src.core.trading_constants import (
-        MAX_POSITION_PCT as _MAX_POSITION_PCT,
-    )
+    from src.core.trading_constants import MAX_POSITION_PCT as _MAX_POSITION_PCT
     from src.core.trading_constants import (
         extract_underlying as _extract_underlying_shared,
     )
@@ -83,7 +81,7 @@ class RejectionReason(Enum):
     """Enumeration of trade rejection reasons."""
 
     INSUFFICIENT_FUNDS = "Insufficient funds in account"
-    MAX_ALLOCATION_EXCEEDED = "Maximum allocation per symbol exceeded (5%)"
+    MAX_ALLOCATION_EXCEEDED = "Maximum allocation per symbol exceeded"
     HIGH_CORRELATION = "High correlation with existing positions (>0.8)"
     FREQUENCY_LIMIT = "Frequency limit exceeded (>5 trades/hour)"
     CIRCUIT_BREAKER_DAILY_LOSS = "Daily loss limit exceeded"
@@ -101,12 +99,12 @@ class RejectionReason(Enum):
         "Phil Town Rule #1 validation failed - not a wonderful company at attractive price"
     )
     EARNINGS_BLACKOUT = "Ticker is in earnings blackout period - avoid new positions"
-    POSITION_SIZE_TOO_LARGE = "Position max loss exceeds 5% of portfolio"
+    POSITION_SIZE_TOO_LARGE = "Position max loss exceeds configured portfolio cap"
     TICKER_NOT_ALLOWED = "Ticker not in whitelist - liquid ETFs only per CLAUDE.md"
     FORBIDDEN_STRATEGY = "Strategy is forbidden - naked positions not allowed"
     PRE_TRADE_CHECKLIST_FAILED = "Pre-trade checklist failed - CLAUDE.md rules violated"
     DTE_OUT_OF_RANGE = "DTE must be 30-45 days per CLAUDE.md"
-    CUMULATIVE_RISK_TOO_HIGH = "Cumulative position risk exceeds 5% limit"
+    CUMULATIVE_RISK_TOO_HIGH = "Cumulative position risk exceeds configured limit"
     MAX_IRON_CONDORS_EXCEEDED = f"Max {MAX_CONCURRENT_ICS} iron condors at a time"
     EXPIRY_CONCENTRATION_TOO_HIGH = "Too many ICs in same expiry week (>40%)"
     BEHAVIORAL_GUARD_BLOCKED = "Behavioral guard blocked trade (FOMO/cooling/blacklist)"
@@ -175,9 +173,9 @@ class TradeGateway:
     """
 
     # Risk limits (HARD CODED - cannot be bypassed)
-    # UPDATED Jan 19, 2026: Enforced 5% per CLAUDE.md (Phil Town Rule #1)
+    # UPDATED Apr 14, 2026: Enforced canonical per-position cap (Phil Town Rule #1)
     # Previous: 10% per symbol (Jan 14) - Still too high, caused 35% exposure
-    MAX_SYMBOL_ALLOCATION_PCT = _MAX_POSITION_PCT  # 5% max per symbol per CLAUDE.md
+    MAX_SYMBOL_ALLOCATION_PCT = _MAX_POSITION_PCT
     MAX_CORRELATION_THRESHOLD = 0.80  # 80% correlation threshold
     MAX_TRADES_PER_HOUR = 5  # Frequency limit
     MIN_TRADE_BATCH = (
@@ -270,9 +268,8 @@ class TradeGateway:
 
     # Maximum position risk as percentage of portfolio
     # LL-190: SOFI CSP had 48% portfolio risk - unacceptable
-    # UPDATED Jan 15, 2026: Changed from 10% to 5% per CLAUDE.md mandate
-    # CLAUDE.md: "Position limit: 1 spread at a time (5% max = $248 risk)"
-    MAX_POSITION_RISK_PCT = _MAX_POSITION_PCT  # 5% max risk per position - MANDATORY per CLAUDE.md
+    # UPDATED Apr 14, 2026: Use canonical position cap from trading_constants.
+    MAX_POSITION_RISK_PCT = _MAX_POSITION_PCT
 
     def __init__(self, executor=None, paper: bool = True):
         """
@@ -1050,7 +1047,7 @@ class TradeGateway:
             logger.warning(f"❌ REJECTED: Insufficient funds for ${trade_value:.2f} trade")
 
         # ============================================================
-        # CHECK 2: Maximum Allocation per Symbol (5%)
+        # CHECK 2: Maximum allocation per symbol
         # ============================================================
         current_exposure = self._get_symbol_exposure(request.symbol, positions)
         new_exposure = (

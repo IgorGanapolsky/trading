@@ -12,6 +12,11 @@ from typing import Any, Optional, TypeVar
 
 from pydantic import BaseModel, Field, field_validator
 
+try:
+    from src.core.trading_constants import MAX_POSITION_PCT
+except ImportError:
+    MAX_POSITION_PCT = 0.02
+
 # Allowlist of tradeable symbols - UPDATED Jan 19, 2026 (LL-244)
 # Per CLAUDE.md: SPY/SPX/XSP for index options
 # SPY = equity option, SPX/XSP = index options with Section 1256 tax treatment
@@ -19,8 +24,8 @@ ALLOWED_SYMBOLS = frozenset({"SPY"})  # SPY ONLY per CLAUDE.md — aligned with 
 
 # Maximum values to prevent resource exhaustion
 MAX_LOOKBACK_DAYS = 365
-MAX_ORDER_AMOUNT_USD = 5000.0  # 5% of $100K account
-MAX_POSITION_RISK = 5000.0
+MAX_ORDER_AMOUNT_USD = MAX_POSITION_PCT * 100_000.0
+MAX_POSITION_RISK = MAX_ORDER_AMOUNT_USD
 
 
 T = TypeVar("T", bound=BaseModel)

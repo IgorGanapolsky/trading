@@ -7,7 +7,7 @@ Coverage:
 - IronCondorStrategy.execute (live & simulated, position limits, RAG blocking)
 - IronCondorLegs dataclass
 - 4-leg validation (all legs present)
-- Position sizing (5% limit via config)
+- Position sizing (canonical limit via config)
 - Error handling (API failures, credential failures, position check failures)
 
 All Alpaca API calls are mocked. No real API calls.
@@ -28,7 +28,7 @@ pytest.importorskip("dotenv")
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from scripts.iron_condor_trader import IronCondorLegs, IronCondorStrategy
-from src.core.trading_constants import MAX_POSITIONS
+from src.core.trading_constants import MAX_POSITION_PCT, MAX_POSITIONS
 
 
 class TestIronCondorLegs:
@@ -174,10 +174,10 @@ class TestStrategyConfig:
         strategy = IronCondorStrategy()
         assert strategy.config["underlying"] == "SPY"
 
-    def test_position_size_is_5_percent(self):
-        """Per CLAUDE.md: 5% of portfolio per position."""
+    def test_position_size_matches_canonical_limit(self):
+        """Per CLAUDE.md: use the canonical position cap."""
         strategy = IronCondorStrategy()
-        assert strategy.config["position_size_pct"] == 0.05
+        assert strategy.config["position_size_pct"] == MAX_POSITION_PCT
 
     def test_max_positions_derived_from_canonical_leg_limit(self):
         """Max iron-condor count is derived from canonical option-leg budget."""

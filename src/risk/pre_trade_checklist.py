@@ -2,7 +2,7 @@
 
 This module enforces the MANDATORY Pre-Trade Checklist from CLAUDE.md:
 1. Is ticker SPY? (SPY only per CLAUDE.md - best liquidity, tightest spreads)
-2. Is position size <=5% of account ($248)?
+2. Is position size within the canonical account risk cap?
 3. Is it a SPREAD (not naked put)?
 4. Checked earnings calendar? (No blackout violations)
 5. 30-45 DTE expiration?
@@ -24,7 +24,7 @@ try:
     )
 except ImportError:
     _CENTRAL_ALLOWED_TICKERS = {"SPY", "SPX", "XSP", "QQQ", "IWM"}
-    _CENTRAL_MAX_POSITION_PCT = 0.05
+    _CENTRAL_MAX_POSITION_PCT = 0.02
 
     def _extract_underlying_shared(symbol: str) -> str:  # type: ignore[misc]
         """Fallback - see trading_constants.extract_underlying."""
@@ -39,7 +39,7 @@ class PreTradeChecklist:
 
     Attributes:
         ALLOWED_TICKERS: Set of approved underlying tickers (SPY only per CLAUDE.md).
-        MAX_POSITION_PCT: Maximum position size as percentage of account (5%).
+        MAX_POSITION_PCT: Maximum position size as percentage of account.
         MIN_DTE: Minimum days to expiration (30).
         MAX_DTE: Maximum days to expiration (45).
         EARNINGS_BLACKOUTS: Dictionary of ticker blackout periods around earnings.
@@ -82,7 +82,7 @@ class PreTradeChecklist:
 
         Validates a proposed trade against all CLAUDE.md checklist items:
         1. Ticker must be SPY
-        2. Max loss must be <= 5% of account
+        2. Max loss must be within the canonical account risk cap
         3. Must be a spread (not naked)
         4. Must not be in earnings blackout period
         5. DTE must be 30-45
@@ -109,7 +109,9 @@ class PreTradeChecklist:
 
         # 2. Position size check
         if max_loss > self.max_risk:
-            failures.append(f"Max loss ${max_loss:.2f} exceeds 5% limit (${self.max_risk:.2f})")
+            failures.append(
+                f"Max loss ${max_loss:.2f} exceeds {self.MAX_POSITION_PCT:.0%} limit (${self.max_risk:.2f})"
+            )
 
         # 3. Spread check
         if not is_spread:
@@ -182,7 +184,7 @@ class PreTradeChecklist:
             "position_size": {
                 "passed": max_loss <= self.max_risk,
                 "value": f"${max_loss:.2f}",
-                "requirement": f"<= ${self.max_risk:.2f} (5%)",
+                "requirement": f"<= ${self.max_risk:.2f} ({self.MAX_POSITION_PCT:.0%})",
             },
             "is_spread": {
                 "passed": is_spread,

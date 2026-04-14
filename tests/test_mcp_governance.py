@@ -132,8 +132,8 @@ class TestInputValidation:
         expected = frozenset(ALLOWED_TICKERS)
         assert expected == ALLOWED_SYMBOLS
 
-    def test_max_order_amount_matches_5_percent_rule(self):
-        """Max order amount enforces 5% sizing for $100K validation account."""
+    def test_max_order_amount_matches_canonical_position_rule(self):
+        """Max order amount enforces canonical sizing for $100K validation account."""
         expected_max = MAX_POSITION_PCT * 100_000.0
         assert expected_max == MAX_ORDER_AMOUNT_USD
 

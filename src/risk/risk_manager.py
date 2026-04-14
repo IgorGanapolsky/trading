@@ -35,13 +35,13 @@ class RiskManager:
     Risk manager for Phil Town options trading.
 
     Enforces:
-    - Position size limits (max 5% of portfolio per position)
+    - Position size limits (canonical max of portfolio per position)
     - Daily loss limits (max 2% daily drawdown)
     - Concentration limits (no more than 20% in single sector)
     - Cash reserve requirements (keep 20% cash minimum)
     """
 
-    # Default risk parameters (CLAUDE.md mandates 5% max - Phil Town Rule #1)
+    # Default risk parameters (canonical max - Phil Town Rule #1)
     DEFAULT_MAX_POSITION_PCT = MAX_POSITION_PCT  # canonical max per position
     DEFAULT_MAX_DAILY_LOSS_PCT = MAX_DAILY_LOSS_PCT  # canonical max daily loss
     DEFAULT_MIN_CASH_RESERVE_PCT = 0.20  # Keep 20% cash

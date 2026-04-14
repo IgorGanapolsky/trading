@@ -4,7 +4,7 @@ Tests for Pre-Trade Checklist Module - CLAUDE.md Enforcement
 
 Comprehensive test suite covering:
 - Ticker validation (SPY only)
-- Position size limits (5% max)
+- Position size limits (2% max)
 - Spread requirement enforcement
 - Earnings blackout detection
 - DTE range validation (30-45)
@@ -30,7 +30,7 @@ class TestPreTradeChecklistInitialization:
         """Checklist initializes correctly with valid equity."""
         checklist = PreTradeChecklist(account_equity=5000.0)
         assert checklist.account_equity == 5000.0
-        assert checklist.max_risk == 250.0  # 5% of $5000
+        assert checklist.max_risk == 100.0  # 2% of $5000
 
     def test_initialization_with_zero_equity(self):
         """Checklist handles zero equity."""
@@ -46,7 +46,7 @@ class TestPreTradeChecklistInitialization:
     def test_constants_match_claude_md(self):
         """Verify constants match trading_constants.py specification."""
         assert {"SPY"} == PreTradeChecklist.ALLOWED_TICKERS
-        assert PreTradeChecklist.MAX_POSITION_PCT == 0.05
+        assert PreTradeChecklist.MAX_POSITION_PCT == 0.02
         assert PreTradeChecklist.MIN_DTE == 30
         assert PreTradeChecklist.MAX_DTE == 45
 
@@ -184,31 +184,31 @@ class TestPositionSizeValidation:
 
     @pytest.fixture
     def checklist(self):
-        """Create a checklist with $5000 equity (max risk = $250)."""
+        """Create a checklist with $5000 equity (max risk = $100)."""
         return PreTradeChecklist(account_equity=5000.0)
 
     def test_position_within_limit_passes(self, checklist):
-        """Position at 3% ($150) should pass."""
-        passed, failures = checklist.validate(symbol="SPY", max_loss=150.0, dte=35, is_spread=True)
+        """Position at 1.5% ($75) should pass."""
+        passed, failures = checklist.validate(symbol="SPY", max_loss=75.0, dte=35, is_spread=True)
         assert passed is True
 
     def test_position_at_exactly_limit_passes(self, checklist):
-        """Position at exactly 5% ($250) should pass."""
-        passed, failures = checklist.validate(symbol="SPY", max_loss=250.0, dte=35, is_spread=True)
+        """Position at exactly 2% ($100) should pass."""
+        passed, failures = checklist.validate(symbol="SPY", max_loss=100.0, dte=35, is_spread=True)
         assert passed is True
 
     def test_position_exceeds_limit_fails(self, checklist):
-        """Position at 6% ($300) should fail."""
-        passed, failures = checklist.validate(symbol="SPY", max_loss=300.0, dte=35, is_spread=True)
+        """Position at 3% ($150) should fail."""
+        passed, failures = checklist.validate(symbol="SPY", max_loss=150.0, dte=35, is_spread=True)
         assert passed is False
-        assert any("exceeds 5% limit" in f for f in failures)
+        assert any("exceeds 2% limit" in f for f in failures)
 
     def test_large_position_fails(self, checklist):
         """Large position ($500 = 10%) should fail."""
         passed, failures = checklist.validate(symbol="SPY", max_loss=500.0, dte=35, is_spread=True)
         assert passed is False
         assert any("$500.00" in f for f in failures)
-        assert any("$250.00" in f for f in failures)
+        assert any("$100.00" in f for f in failures)
 
     def test_zero_loss_passes(self, checklist):
         """Zero max loss should pass."""
@@ -218,19 +218,19 @@ class TestPositionSizeValidation:
     def test_small_account_proportional_limit(self):
         """Smaller account should have proportionally smaller limit."""
         small_checklist = PreTradeChecklist(account_equity=1000.0)
-        # 5% of $1000 = $50
+        # 2% of $1000 = $20
         passed, failures = small_checklist.validate(
-            symbol="SPY", max_loss=60.0, dte=35, is_spread=True
+            symbol="SPY", max_loss=25.0, dte=35, is_spread=True
         )
         assert passed is False
-        assert any("$50.00" in f for f in failures)
+        assert any("$20.00" in f for f in failures)
 
     def test_large_account_proportional_limit(self):
         """Larger account should have proportionally larger limit."""
         large_checklist = PreTradeChecklist(account_equity=50000.0)
-        # 5% of $50000 = $2500
+        # 2% of $50000 = $1000
         passed, failures = large_checklist.validate(
-            symbol="SPY", max_loss=2000.0, dte=35, is_spread=True
+            symbol="SPY", max_loss=900.0, dte=35, is_spread=True
         )
         assert passed is True
 
@@ -458,7 +458,7 @@ class TestMultipleFailures:
         """Trade violating all rules should have all failures."""
         passed, failures = checklist.validate(
             symbol="AAPL",  # Not allowed
-            max_loss=500.0,  # Exceeds 5%
+            max_loss=500.0,  # Exceeds 2%
             dte=7,  # Too short
             is_spread=False,  # Naked
             stop_loss_defined=False,  # No stop
@@ -466,7 +466,7 @@ class TestMultipleFailures:
         assert passed is False
         assert len(failures) == 5
         assert any("AAPL not allowed" in f for f in failures)
-        assert any("exceeds 5%" in f for f in failures)
+        assert any("exceeds 2%" in f for f in failures)
         assert any("DTE 7 outside range" in f for f in failures)
         assert any("Naked positions" in f for f in failures)
         assert any("Stop-loss" in f for f in failures)
@@ -551,7 +551,7 @@ class TestChecklistStatus:
 
         # CLAUDE.md: SPY only - best liquidity, tightest spreads
         assert "SPY" in status["ticker_allowed"]["requirement"]
-        assert "5%" in status["position_size"]["requirement"]
+        assert "2%" in status["position_size"]["requirement"]
         assert "spread" in status["is_spread"]["requirement"].lower()
         assert "30-45" in status["dte_range"]["requirement"]
 
@@ -562,11 +562,11 @@ class TestEquityUpdate:
     def test_update_equity(self):
         """Equity update should recalculate max risk."""
         checklist = PreTradeChecklist(account_equity=5000.0)
-        assert checklist.max_risk == 250.0
+        assert checklist.max_risk == 100.0
 
         checklist.update_equity(10000.0)
         assert checklist.account_equity == 10000.0
-        assert checklist.max_risk == 500.0
+        assert checklist.max_risk == 200.0
 
     def test_update_equity_negative_raises(self):
         """Negative equity update should raise."""
@@ -578,13 +578,13 @@ class TestEquityUpdate:
         """Equity update should affect validation."""
         checklist = PreTradeChecklist(account_equity=5000.0)
 
-        # $300 exceeds 5% of $5000 ($250)
-        passed, _ = checklist.validate(symbol="SPY", max_loss=300.0, dte=35, is_spread=True)
+        # $150 exceeds 2% of $5000 ($100)
+        passed, _ = checklist.validate(symbol="SPY", max_loss=150.0, dte=35, is_spread=True)
         assert passed is False
 
-        # Update equity to $10000 - now $300 is within 5% ($500)
+        # Update equity to $10000 - now $150 is within 2% ($200)
         checklist.update_equity(10000.0)
-        passed, _ = checklist.validate(symbol="SPY", max_loss=300.0, dte=35, is_spread=True)
+        passed, _ = checklist.validate(symbol="SPY", max_loss=150.0, dte=35, is_spread=True)
         assert passed is True
 
 
@@ -648,19 +648,19 @@ class TestCLAUDEMDCompliance:
         return PreTradeChecklist(account_equity=4959.26)
 
     def test_max_risk_matches_claude_md(self, checklist_4959):
-        """Max risk should be ~$248 per CLAUDE.md."""
-        # CLAUDE.md: 5% max = $248 risk (5% of $4959.26 = $247.96)
-        assert checklist_4959.max_risk == pytest.approx(247.96, rel=0.01)
+        """Max risk should be ~$99 per CLAUDE.md."""
+        # CLAUDE.md: 2% max = $99 risk (2% of $4959.26 = $99.19)
+        assert checklist_4959.max_risk == pytest.approx(99.19, rel=0.01)
 
     def test_valid_credit_spread_passes(self, checklist_4959):
         """Valid credit spread per CLAUDE.md should pass."""
         # CLAUDE.md: Sell 30-delta put, buy 20-delta put = ~$500 collateral, ~$50-70 premium
         # Max loss on credit spread = spread width - premium = ~$430-450
-        # This exceeds our 5% limit, so we need smaller position
-        # Let's say max loss is $200 (within limit)
+        # This exceeds our 2% limit, so we need smaller position
+        # Let's say max loss is $90 (within limit)
         passed, failures = checklist_4959.validate(
             symbol="SPY",
-            max_loss=200.0,  # Within $248 limit
+            max_loss=90.0,  # Within $99 limit
             dte=35,  # Within 30-45 DTE
             is_spread=True,  # Required
             stop_loss_defined=True,
@@ -706,16 +706,16 @@ class TestCLAUDEMDCompliance:
         assert any("DTE 7 outside range" in f for f in failures)
 
     def test_oversized_position_rejected(self, checklist_4959):
-        """Position >5% should be rejected per CLAUDE.md."""
-        # CLAUDE.md: "Position limit: 1 spread at a time (5% max = $248 risk)"
+        """Position >2% should be rejected per CLAUDE.md."""
+        # CLAUDE.md: "Position limit: 1 spread at a time (2% max = $99 risk)"
         passed, failures = checklist_4959.validate(
             symbol="SPY",
-            max_loss=300.0,  # > $248
+            max_loss=150.0,  # > $99
             dte=35,
             is_spread=True,
         )
         assert passed is False
-        assert any("exceeds 5% limit" in f for f in failures)
+        assert any("exceeds 2% limit" in f for f in failures)
 
 
 class TestPhilTownRule1:
@@ -723,8 +723,8 @@ class TestPhilTownRule1:
 
     def test_conservative_defaults(self):
         """Default settings should be conservative."""
-        # 5% max position is conservative for capital preservation
-        assert PreTradeChecklist.MAX_POSITION_PCT == 0.05
+        # 2% max position is conservative for capital preservation
+        assert PreTradeChecklist.MAX_POSITION_PCT == 0.02
 
     def test_spread_requirement_protects_capital(self):
         """Spread requirement limits max loss."""

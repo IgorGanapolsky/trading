@@ -234,7 +234,7 @@ class TestTradeGatewayAllocationLimits:
             positions=[{"symbol": "XOM", "market_value": 400}],  # 4% already
         )
 
-        # Trying to add $200 more would push to 6% (> 5% limit)
+        # Trying to add $200 more would push to 6% (> 2% limit)
         request = TradeRequest(
             symbol="XOM",
             side="buy",
@@ -247,18 +247,18 @@ class TestTradeGatewayAllocationLimits:
         assert RejectionReason.MAX_ALLOCATION_EXCEEDED in decision.rejection_reasons
 
     def test_under_allocation_approved(self):
-        """Test that < 5% allocation is approved (per CLAUDE.md)."""
+        """Test that allocation below the canonical cap is not rejected."""
         gateway = TradeGateway(executor=None, paper=True)
         gateway.executor = MockExecutor(
             account_equity=10000,
-            positions=[{"symbol": "TSLA", "market_value": 100}],  # 1% already
+            positions=[{"symbol": "SPY", "market_value": 100}],  # 1% already
         )
 
-        # Adding $300 more would be 4% total (under 5%)
+        # Adding $75 more would be 1.75% total (under 2%)
         request = TradeRequest(
-            symbol="TSLA",
+            symbol="SPY",
             side="buy",
-            notional=300,
+            notional=75,
             source="test",
         )
         decision = gateway.evaluate(request)
