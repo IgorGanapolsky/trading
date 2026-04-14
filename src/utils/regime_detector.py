@@ -16,11 +16,13 @@ Layers:
 
 from __future__ import annotations
 
+import json
 import logging
 import math
 import os
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -42,6 +44,11 @@ REGIME_ALLOCATIONS = {
     "spike": {"equities": 0.0, "treasuries": 0.6, "pause_trading": True},
 }
 
+REGIME_DATA_CACHE = Path(os.getenv("REGIME_DATA_CACHE", "data/market_cache/regime_latest.json"))
+REGIME_DATA_CACHE_MAX_AGE = timedelta(
+    minutes=int(os.getenv("REGIME_DATA_CACHE_MAX_AGE_MINUTES", "90"))
+)
+
 
 def _finite_positive_float(value: Any) -> float | None:
     try:
@@ -51,6 +58,75 @@ def _finite_positive_float(value: Any) -> float | None:
     if not math.isfinite(parsed) or parsed <= 0:
         return None
     return parsed
+
+
+def _latest_finite_positive(series: Any) -> float | None:
+    try:
+        return _finite_positive_float(series.iloc[-1])
+    except AttributeError:
+        values = list(series or [])
+    except IndexError:
+        return None
+    return _finite_positive_float(values[-1]) if values else None
+
+
+def _parse_cache_timestamp(value: Any) -> datetime | None:
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def _load_regime_data_cache() -> dict[str, float] | None:
+    try:
+        payload = json.loads(REGIME_DATA_CACHE.read_text())
+    except (OSError, json.JSONDecodeError):
+        return None
+
+    cached_at = _parse_cache_timestamp(payload.get("timestamp"))
+    if cached_at is None or datetime.now(timezone.utc) - cached_at > REGIME_DATA_CACHE_MAX_AGE:
+        return None
+
+    vix = _finite_positive_float(payload.get("vix_level"))
+    vvix = _finite_positive_float(payload.get("vvix_level"))
+    if vix is None or vvix is None:
+        return None
+    return {"vix_level": vix, "vvix_level": vvix}
+
+
+def _save_regime_data_cache(vix: float, vvix: float) -> None:
+    try:
+        REGIME_DATA_CACHE.parent.mkdir(parents=True, exist_ok=True)
+        REGIME_DATA_CACHE.write_text(
+            json.dumps(
+                {
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "vix_level": round(vix, 4),
+                    "vvix_level": round(vvix, 4),
+                },
+                sort_keys=True,
+            )
+        )
+    except OSError as exc:
+        logger.debug("Failed to write regime market data cache: %s", exc)
+
+
+def _fetch_single_latest_close(yf_module: Any, symbol: str) -> float | None:
+    try:
+        ticker = yf_module.get_ticker(symbol)
+        history = ticker.history(period="5d")
+    except Exception as exc:
+        logger.warning("Single-ticker regime fetch failed for %s: %s", symbol, exc)
+        return None
+
+    if getattr(history, "empty", True) or "Close" not in history:
+        return None
+    return _latest_finite_positive(history["Close"])
 
 
 @dataclass
@@ -197,11 +273,30 @@ class RegimeDetector:
             if "^VIX" not in closes or "^VVIX" not in closes:
                 logger.warning("VIX/VVIX close data missing; regime detection fails closed")
                 return self._fallback_snapshot()
-            vix = _finite_positive_float(closes["^VIX"].iloc[-1])
-            vvix = _finite_positive_float(closes["^VVIX"].iloc[-1])
+            live_vix = _latest_finite_positive(closes["^VIX"])
+            live_vvix = _latest_finite_positive(closes["^VVIX"])
+            if live_vix is None:
+                live_vix = _fetch_single_latest_close(yf, "^VIX")
+            if live_vvix is None:
+                live_vvix = _fetch_single_latest_close(yf, "^VVIX")
+            vix = live_vix
+            vvix = live_vvix
             if vix is None or vvix is None:
-                logger.warning("VIX/VVIX latest close is invalid; regime detection fails closed")
-                return self._fallback_snapshot()
+                cached = _load_regime_data_cache()
+                if cached is not None:
+                    if vix is None:
+                        vix = cached["vix_level"]
+                    if vvix is None:
+                        vvix = cached["vvix_level"]
+                    logger.warning(
+                        "Using fresh cached regime data for missing live VIX/VVIX field(s)"
+                    )
+                else:
+                    logger.warning("VIX/VVIX latest close is invalid; regime detection fails closed")
+                    return self._fallback_snapshot()
+
+            if live_vix is not None and live_vvix is not None:
+                _save_regime_data_cache(live_vix, live_vvix)
 
             # Calculate skew percentile (VVIX relative to VIX)
             skew_ratio = vvix / vix
