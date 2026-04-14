@@ -34,6 +34,11 @@ DEFAULT_MIN_CLOSED_TRADES_PER_WEEK = 1
 DEFAULT_MIN_CLOSED_TRADES_FOR_SCALING = 30
 DEFAULT_MIN_LIQUIDITY_VOLUME_RATIO = 0.20
 DEFAULT_GATE_OVERRIDES_PATH = Path("runtime/north_star_gate_overrides.json")
+DEFAULT_VALIDATION_HYPOTHESIS_PATH = Path("runtime/strategy_validation_hypothesis.json")
+DEFAULT_QUARANTINE_MIN_COHORT_TRADES = 30
+DEFAULT_QUARANTINE_MIN_PROFIT_FACTOR = 1.0
+DEFAULT_QUARANTINE_MIN_EXPECTANCY = 0.0
+DEFAULT_QUARANTINE_MIN_REALIZED_PNL = 0.0
 DEFAULT_MAX_TARGET_DTE = 45
 DEFAULT_MIN_TARGET_DTE = 21
 DEFAULT_AI_CREDIT_STRESS_PATH = Path("market_signals/ai_credit_stress_signal.json")
@@ -138,6 +143,68 @@ def _load_json_list(path: Path) -> list[dict[str, Any]]:
 def _load_gate_overrides(data_dir: Path) -> dict[str, Any]:
     payload = _load_json_dict(data_dir / DEFAULT_GATE_OVERRIDES_PATH)
     return payload if isinstance(payload, dict) else {}
+
+
+def _validation_hypothesis_status(data_dir: Path) -> dict[str, Any]:
+    """Validate the written hypothesis required to restart a losing strategy."""
+    path = data_dir / DEFAULT_VALIDATION_HYPOTHESIS_PATH
+    payload = _load_json_dict(path)
+    errors: list[str] = []
+
+    if not payload:
+        errors.append(f"{path} missing or empty")
+    if _as_bool(payload.get("enabled"), default=False) is not True:
+        errors.append("enabled must be true")
+
+    strategy_family = str(payload.get("strategy_family") or "").strip().lower()
+    if strategy_family not in {"iron_condor", "ic_simple", "options_income"}:
+        errors.append("strategy_family must be iron_condor, ic_simple, or options_income")
+
+    hypothesis = str(payload.get("hypothesis") or "").strip()
+    if len(hypothesis) < 25:
+        errors.append("hypothesis must describe the changed edge thesis")
+
+    changed_rules = payload.get("changed_rules", [])
+    if not isinstance(changed_rules, list) or not [
+        item for item in changed_rules if str(item).strip()
+    ]:
+        errors.append("changed_rules must contain at least one concrete rule change")
+
+    kill = payload.get("kill_criteria", {})
+    if not isinstance(kill, dict):
+        kill = {}
+        errors.append("kill_criteria must be an object")
+
+    min_closed = _as_int(kill.get("min_closed_trades"), 0)
+    min_expectancy = _as_float(kill.get("min_expectancy_per_trade"), -999999.0)
+    min_profit_factor = _as_float(kill.get("min_profit_factor"), 0.0)
+    min_total_pnl = _as_float(kill.get("min_total_realized_pnl"), -999999.0)
+    if min_closed < DEFAULT_QUARANTINE_MIN_COHORT_TRADES:
+        errors.append(
+            f"kill_criteria.min_closed_trades must be >= {DEFAULT_QUARANTINE_MIN_COHORT_TRADES}"
+        )
+    if min_expectancy <= DEFAULT_QUARANTINE_MIN_EXPECTANCY:
+        errors.append("kill_criteria.min_expectancy_per_trade must be > 0")
+    if min_profit_factor <= DEFAULT_QUARANTINE_MIN_PROFIT_FACTOR:
+        errors.append("kill_criteria.min_profit_factor must be > 1")
+    if min_total_pnl <= DEFAULT_QUARANTINE_MIN_REALIZED_PNL:
+        errors.append("kill_criteria.min_total_realized_pnl must be > 0")
+
+    valid = not errors
+    return {
+        "path": str(path),
+        "valid": valid,
+        "errors": errors,
+        "strategy_family": strategy_family or None,
+        "hypothesis": hypothesis if valid else None,
+        "changed_rules": changed_rules if valid else [],
+        "kill_criteria": {
+            "min_closed_trades": min_closed,
+            "min_expectancy_per_trade": min_expectancy,
+            "min_profit_factor": min_profit_factor,
+            "min_total_realized_pnl": min_total_pnl,
+        },
+    }
 
 
 def _live_account_inactive(state: dict[str, Any]) -> bool:
@@ -759,6 +826,7 @@ def compute_weekly_gate(
     recent_closed = _extract_recent_closed_trades(trades_payload, today=today)
     data_dir = trades_path.parent
     min_liquidity_volume_ratio = _resolve_min_liquidity_volume_ratio(data_dir)
+    validation_hypothesis = _validation_hypothesis_status(data_dir)
     recent_decisions = _extract_recent_session_decisions(
         data_dir=data_dir,
         today=today,
@@ -1018,10 +1086,27 @@ def compute_weekly_gate(
 
     contradiction_detected = False
     contradiction_reason = None
+    north_star_claims_frozen = False
+    strategy_quarantine: dict[str, Any] = {
+        "active": False,
+        "block_new_positions": False,
+        "paper_validation_allowed": allow_validation_entries,
+        "north_star_claims_frozen": False,
+        "reason": "",
+        "required_action": "",
+        "validation_hypothesis": validation_hypothesis,
+        "kill_criteria": {
+            "min_closed_trades": DEFAULT_QUARANTINE_MIN_COHORT_TRADES,
+            "min_expectancy_per_trade": DEFAULT_QUARANTINE_MIN_EXPECTANCY,
+            "min_profit_factor": DEFAULT_QUARANTINE_MIN_PROFIT_FACTOR,
+            "min_total_realized_pnl": DEFAULT_QUARANTINE_MIN_REALIZED_PNL,
+        },
+    }
     if (
         lifetime_ledger["closed_trades"] >= DEFAULT_MIN_CLOSED_TRADES_FOR_SCALING
         and not lifetime_ledger["edge_confirmed"]
     ):
+        north_star_claims_frozen = True
         contradiction_detected = samples > 0 and expectancy > 0
         lifetime_ledger_evidence = (
             "CRITICAL: Lifetime paired-trade ledger remains negative despite the recent weekly window. "
@@ -1030,10 +1115,15 @@ def compute_weekly_gate(
             f"total realized P/L ${_as_float(lifetime_ledger.get('total_realized_pnl'), 0.0):.2f} "
             f"over {lifetime_ledger['closed_trades']} closed trades."
         )
-        if _live_account_inactive(state) and not block_new_positions:
+        validation_restart_authorized = bool(
+            _live_account_inactive(state)
+            and not block_new_positions
+            and validation_hypothesis["valid"]
+        )
+        if validation_restart_authorized:
             contradiction_reason = (
                 f"{lifetime_ledger_evidence} Live/scaling remains blocked while controlled "
-                "paper validation continues at minimum size."
+                "paper validation continues at minimum size under a written changed-rule hypothesis."
             )
             validation_reset_active = True
             validation_reset_reason = contradiction_reason
@@ -1044,7 +1134,57 @@ def compute_weekly_gate(
             reason = (
                 "CRITICAL: Lifetime paired-trade ledger remains negative. "
                 "Live/scaling stays blocked, but controlled paper validation remains allowed "
-                "at minimum size until a fresh cohort proves edge."
+                "at minimum size under a written changed-rule hypothesis until a fresh cohort proves edge."
+            )
+            strategy_quarantine.update(
+                {
+                    "active": True,
+                    "block_new_positions": False,
+                    "paper_validation_allowed": True,
+                    "north_star_claims_frozen": True,
+                    "reason": (
+                        "Negative lifetime expectancy freezes North Star claims; only "
+                        "minimum-size paper validation is allowed because a valid changed-rule "
+                        "hypothesis is present."
+                    ),
+                    "required_action": (
+                        "Complete the fresh validation cohort. If the cohort misses kill criteria, "
+                        "remove IC Simple as a North Star candidate."
+                    ),
+                    "kill_criteria": validation_hypothesis["kill_criteria"],
+                }
+            )
+        elif _live_account_inactive(state) and not block_new_positions:
+            contradiction_reason = (
+                f"{lifetime_ledger_evidence} All new entries are quarantined until a written "
+                "changed-rule validation hypothesis with hard kill criteria is present."
+            )
+            validation_reset_active = False
+            validation_reset_reason = None
+            allow_validation_entries = False
+            block_live_new_positions = True
+            block_new_positions = True
+            mode = "quarantine"
+            recommended_max = 0.0
+            reason = (
+                "MATHEMATICAL QUARANTINE: negative lifetime expectancy means the current "
+                "strategy cannot reach the North Star. New entries are blocked until "
+                f"{data_dir / DEFAULT_VALIDATION_HYPOTHESIS_PATH} defines a changed-rule "
+                "hypothesis and hard kill criteria."
+            )
+            strategy_quarantine.update(
+                {
+                    "active": True,
+                    "block_new_positions": True,
+                    "paper_validation_allowed": False,
+                    "north_star_claims_frozen": True,
+                    "reason": reason,
+                    "required_action": (
+                        "Audit the failed ledger, write strategy_validation_hypothesis.json, "
+                        "then run only minimum-size paper validation. If the next cohort fails "
+                        "positive expectancy, profit factor, and realized-P/L criteria, kill IC Simple."
+                    ),
+                }
             )
         else:
             contradiction_reason = f"{lifetime_ledger_evidence} Trading halted."
@@ -1052,6 +1192,16 @@ def compute_weekly_gate(
             recommended_max = min(recommended_max, 0.01)
             block_new_positions = True
             reason = contradiction_reason
+            strategy_quarantine.update(
+                {
+                    "active": True,
+                    "block_new_positions": True,
+                    "paper_validation_allowed": False,
+                    "north_star_claims_frozen": True,
+                    "reason": reason,
+                    "required_action": "Stop new entries until lifetime edge is positive.",
+                }
+            )
 
     weekly_history_path.parent.mkdir(parents=True, exist_ok=True)
     new_weekly_payload = json.dumps(weekly_history, indent=2) + "\n"
@@ -1074,6 +1224,7 @@ def compute_weekly_gate(
         "allow_validation_entries": allow_validation_entries,
         "validation_reset_active": validation_reset_active,
         "validation_reset_reason": validation_reset_reason,
+        "north_star_claims_frozen": north_star_claims_frozen,
         "reason": reason,
         "positive_weeks_streak": positive_streak,
         "evidence_source": evidence_source,
@@ -1090,6 +1241,7 @@ def compute_weekly_gate(
         "scale_multiplier_from_ai_cycle": round(ai_cycle_multiplier, 4),
         "scaling_sample_gate": scaling_sample_gate,
         "lifetime_ledger": lifetime_ledger,
+        "strategy_quarantine": strategy_quarantine,
         "contradiction_detected": contradiction_detected,
         "contradiction_reason": contradiction_reason,
         "liquidity_min_volume_ratio": round(min_liquidity_volume_ratio, 4),

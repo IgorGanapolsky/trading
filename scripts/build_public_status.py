@@ -50,6 +50,8 @@ def _short_status(block_new_positions: bool | None, mode: str | None) -> str:
     normalized_mode = str(mode).lower() if mode else None
     if normalized_mode == "validation_reset":
         return normalized_mode
+    if normalized_mode == "quarantine":
+        return normalized_mode
     if block_new_positions:
         return "halted"
     if normalized_mode:
@@ -101,6 +103,9 @@ def _public_fail_closed(weekly: dict[str, Any], congruence: dict[str, Any]) -> b
 
 
 def _blocker_reason(weekly: dict[str, Any], congruence: dict[str, Any]) -> Any:
+    quarantine = weekly.get("strategy_quarantine")
+    if isinstance(quarantine, dict) and _as_bool(quarantine.get("active")):
+        return quarantine.get("reason") or quarantine.get("required_action")
     if congruence["contradiction_reason"]:
         return congruence["contradiction_reason"]
     if (

@@ -11,7 +11,31 @@ from src.safety.north_star_operating_plan import (
 
 
 def _write_json(path, payload):
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload), encoding="utf-8")
+
+
+def _write_valid_hypothesis(root):
+    _write_json(
+        root / "runtime" / "strategy_validation_hypothesis.json",
+        {
+            "enabled": True,
+            "strategy_family": "ic_simple",
+            "hypothesis": (
+                "Use changed entry, exit, DTE, and regime rules to test whether the "
+                "fresh validation cohort can restore positive expectancy."
+            ),
+            "changed_rules": [
+                "Require changed entry timing and exits before restarting validation."
+            ],
+            "kill_criteria": {
+                "min_closed_trades": 30,
+                "min_expectancy_per_trade": 0.01,
+                "min_profit_factor": 1.01,
+                "min_total_realized_pnl": 0.01,
+            },
+        },
+    )
 
 
 def test_weekly_gate_blocks_when_recent_expectancy_negative(tmp_path):
@@ -85,10 +109,58 @@ def test_weekly_gate_blocks_early_when_two_recent_losses_show_negative_expectanc
     assert "negative expectancy" in gate["reason"].lower()
 
 
-def test_weekly_gate_keeps_live_block_but_allows_paper_validation_reset(tmp_path):
+def test_weekly_gate_quarantines_negative_lifetime_ledger_without_hypothesis(tmp_path):
     trades_path = tmp_path / "trades.json"
     history_path = tmp_path / "weekly_history.json"
     today = date(2026, 4, 9)
+    _write_json(
+        trades_path,
+        {
+            "stats": {
+                "closed_trades": 66,
+                "win_rate_pct": 24.24,
+                "profit_factor": 0.25,
+                "total_realized_pnl": -3402.0,
+            },
+            "trades": [
+                {
+                    "status": "closed",
+                    "strategy": "iron_condor",
+                    "realized_pnl": 96.0,
+                    "outcome": "win",
+                    "exit_date": today.isoformat(),
+                }
+            ],
+        },
+    )
+
+    gate, _history = compute_weekly_gate(
+        {
+            "paper_account": {"equity": 93838.3, "win_rate": 24.24, "win_rate_sample_size": 66},
+            "live_account": {"equity": 0.0, "positions_count": 0},
+        },
+        trades_path=trades_path,
+        weekly_history_path=history_path,
+        today=today,
+    )
+
+    assert gate["mode"] == "quarantine"
+    assert gate["block_new_positions"] is True
+    assert gate["block_live_new_positions"] is True
+    assert gate["allow_validation_entries"] is False
+    assert gate["validation_reset_active"] is False
+    assert gate["north_star_claims_frozen"] is True
+    assert gate["strategy_quarantine"]["active"] is True
+    assert gate["strategy_quarantine"]["block_new_positions"] is True
+    assert gate["strategy_quarantine"]["paper_validation_allowed"] is False
+    assert "mathematical quarantine" in gate["reason"].lower()
+
+
+def test_weekly_gate_allows_changed_rule_validation_hypothesis(tmp_path):
+    trades_path = tmp_path / "trades.json"
+    history_path = tmp_path / "weekly_history.json"
+    today = date(2026, 4, 9)
+    _write_valid_hypothesis(tmp_path)
     _write_json(
         trades_path,
         {
@@ -125,6 +197,10 @@ def test_weekly_gate_keeps_live_block_but_allows_paper_validation_reset(tmp_path
     assert gate["block_live_new_positions"] is True
     assert gate["allow_validation_entries"] is True
     assert gate["validation_reset_active"] is True
+    assert gate["north_star_claims_frozen"] is True
+    assert gate["strategy_quarantine"]["active"] is True
+    assert gate["strategy_quarantine"]["paper_validation_allowed"] is True
+    assert gate["strategy_quarantine"]["validation_hypothesis"]["valid"] is True
     assert "paper validation" in gate["reason"].lower()
     assert "trading halted" not in gate["validation_reset_reason"].lower()
     assert "live/scaling remains blocked" in gate["validation_reset_reason"].lower()

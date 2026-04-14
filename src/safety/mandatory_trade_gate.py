@@ -141,6 +141,14 @@ def _load_north_star_weekly_gate() -> dict[str, Any]:
 
 def _weekly_gate_allows_validation_entries(gate: dict[str, Any] | None = None) -> bool:
     gate = gate if isinstance(gate, dict) else _load_north_star_weekly_gate()
+    quarantine = gate.get("strategy_quarantine", {}) if isinstance(gate, dict) else {}
+    if isinstance(quarantine, dict):
+        if _to_bool(quarantine.get("block_new_positions"), default=False):
+            return False
+        if _to_bool(quarantine.get("active"), default=False) and not _to_bool(
+            quarantine.get("paper_validation_allowed"), default=False
+        ):
+            return False
     return (
         str(gate.get("mode") or "").strip().lower() == "validation_reset"
         and _to_bool(gate.get("allow_validation_entries"), default=False)

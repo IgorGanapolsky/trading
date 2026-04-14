@@ -181,3 +181,36 @@ def test_guard_allows_validation_reset_entries_while_live_risk_stays_blocked(tmp
     assert guard["allow_validation_entries"] is True
     assert guard["block_live_new_positions"] is True
     assert guard["max_position_pct"] <= 0.01
+
+
+def test_guard_blocks_quarantined_validation_reset_entries(tmp_path):
+    state = tmp_path / "system_state.json"
+    state.write_text(
+        """
+{
+  "paper_account": {"equity": 93838.3, "win_rate": 24.24, "win_rate_sample_size": 66},
+  "paper_trading": {"current_day": 91, "target_duration_days": 90},
+  "north_star_weekly_gate": {
+    "mode": "quarantine",
+    "recommended_max_position_pct": 0.0,
+    "block_new_positions": true,
+    "block_live_new_positions": true,
+    "allow_validation_entries": false,
+    "strategy_quarantine": {
+      "active": true,
+      "block_new_positions": true,
+      "paper_validation_allowed": false,
+      "reason": "MATHEMATICAL QUARANTINE: negative expectancy blocks new entries."
+    }
+  }
+}
+""".strip(),
+        encoding="utf-8",
+    )
+
+    guard = get_guard_context(state)
+    assert guard["mode"] == "quarantine"
+    assert guard["block_new_positions"] is True
+    assert guard["allow_validation_entries"] is False
+    assert guard["max_position_pct"] == 0.0
+    assert "quarantine" in guard["block_reason"].lower()

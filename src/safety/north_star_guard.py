@@ -139,8 +139,32 @@ def get_guard_context(state_path: Path = DEFAULT_STATE_PATH) -> dict[str, Any]:
         and _to_bool(weekly_gate.get("allow_validation_entries"), default=False)
         and _to_bool(weekly_gate.get("block_live_new_positions"), default=False)
     )
+    quarantine = (
+        weekly_gate.get("strategy_quarantine", {})
+        if isinstance(weekly_gate.get("strategy_quarantine"), dict)
+        else {}
+    )
+    quarantine_blocks_new = bool(
+        _to_bool(quarantine.get("block_new_positions"), default=False)
+        or (
+            _to_bool(quarantine.get("active"), default=False)
+            and not _to_bool(quarantine.get("paper_validation_allowed"), default=False)
+        )
+    )
+    if quarantine_blocks_new:
+        validation_reset_active = False
 
-    if validation_reset_active:
+    if quarantine_blocks_new:
+        mode = "quarantine"
+        max_position_pct = 0.0
+        block_new_positions = True
+        reasons.append(
+            str(
+                quarantine.get("reason")
+                or "Mathematical quarantine active; negative expectancy blocks new entries."
+            )
+        )
+    elif validation_reset_active:
         mode = "validation_reset"
         max_position_pct = 0.01
         reasons.append(
@@ -226,7 +250,11 @@ def get_guard_context(state_path: Path = DEFAULT_STATE_PATH) -> dict[str, Any]:
 
     block_reason = ""
     if block_new_positions:
-        if isinstance(weekly_gate, dict) and _to_bool(
+        if quarantine_blocks_new:
+            block_reason = (
+                "North Star guard: mathematical quarantine blocked new position openings."
+            )
+        elif isinstance(weekly_gate, dict) and _to_bool(
             weekly_gate.get("block_new_positions"), default=False
         ):
             block_reason = (

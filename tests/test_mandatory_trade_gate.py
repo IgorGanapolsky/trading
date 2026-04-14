@@ -249,6 +249,28 @@ class TestValidateTradeMandatory:
         assert result.approved is False
         assert "guard blocked" in result.reason.lower()
 
+    def test_weekly_gate_validation_override_rejects_strategy_quarantine(self):
+        """Validation-reset ML bypass must fail closed under math quarantine."""
+        from src.safety.mandatory_trade_gate import (
+            _weekly_gate_allows_validation_entries,
+        )
+
+        assert (
+            _weekly_gate_allows_validation_entries(
+                {
+                    "mode": "validation_reset",
+                    "allow_validation_entries": True,
+                    "block_live_new_positions": True,
+                    "strategy_quarantine": {
+                        "active": True,
+                        "block_new_positions": True,
+                        "paper_validation_allowed": False,
+                    },
+                }
+            )
+            is False
+        )
+
     def test_trading_halt_blocks_new_openings(self, monkeypatch):
         """Repo halt sentinel must block new openings regardless of strategy details."""
         import src.safety.trading_halt as halt_mod

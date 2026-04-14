@@ -203,6 +203,34 @@ def test_build_public_status_preserves_controlled_validation_reset(tmp_path: Pat
     assert "controlled paper validation" in status["gate"]["blocker_reason"].lower()
 
 
+def test_build_public_status_surfaces_strategy_quarantine(tmp_path: Path):
+    repo = _seed_repo(tmp_path)
+    state = json.loads((repo / "data/system_state.json").read_text(encoding="utf-8"))
+    state["north_star_weekly_gate"].update(
+        {
+            "mode": "quarantine",
+            "block_new_positions": True,
+            "block_live_new_positions": True,
+            "allow_validation_entries": False,
+            "verified_edge_available": False,
+            "reason": "MATHEMATICAL QUARANTINE: negative expectancy blocks new entries.",
+            "strategy_quarantine": {
+                "active": True,
+                "block_new_positions": True,
+                "paper_validation_allowed": False,
+                "reason": "MATHEMATICAL QUARANTINE: negative expectancy blocks new entries.",
+            },
+        }
+    )
+    (repo / "data/system_state.json").write_text(json.dumps(state), encoding="utf-8")
+
+    status = build_public_status(repo)
+
+    assert status["system"]["public_status"] == "quarantine"
+    assert status["gate"]["block_new_positions"] is True
+    assert "mathematical quarantine" in status["gate"]["blocker_reason"].lower()
+
+
 def test_build_public_status_cli_runs_from_repo_root(tmp_path: Path):
     repo = _seed_repo(tmp_path)
     script = Path(__file__).resolve().parents[1] / "scripts" / "build_public_status.py"
