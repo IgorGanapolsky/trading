@@ -85,7 +85,7 @@ jobs:
 
       - name: Create issue on failure (weekdays only, with deduplication)
         if: steps.verify.outputs.verification_passed == 'false' && steps.check_weekday.outputs.is_weekday == 'true'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const date = '${{ steps.get_date.outputs.date }}';

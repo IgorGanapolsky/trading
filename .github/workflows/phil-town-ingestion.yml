@@ -5,7 +5,7 @@ name: Phil Town Knowledge Ingestion
 on:
   schedule:
     # Run Saturday and Sunday at 8:00 AM Eastern (weekend learning)
-    - cron: '0 13 * * 0,6'
+    - cron: "0 13 * * 0,6"
   workflow_dispatch:
     inputs:
       mode:
@@ -216,7 +216,7 @@ jobs:
 
       - name: Create issue on failure
         if: failure()
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const title = '❌ Phil Town Ingestion Failed';
