@@ -91,13 +91,12 @@ class TestValidateTradeMandatory:
     """Test validate_trade_mandatory function."""
 
     def test_valid_trade_approved(self):
-        """Test that valid trade is approved (within 10% position limit)."""
+        """Test that valid trade is approved within the 2% position limit."""
         from src.safety.mandatory_trade_gate import validate_trade_mandatory
 
-        # Trade must be <5% of equity to pass (per CLAUDE.md)
         result = validate_trade_mandatory(
             symbol="SPY",
-            amount=200.0,  # 4% of 5000 - within 5% limit
+            amount=100.0,  # 2% of 5000 - within limit
             side="BUY",
             strategy="CSP",
             context={"equity": 5000.0},
@@ -490,7 +489,7 @@ class TestPolicyGate:
 
         result = validate_trade_mandatory(
             symbol="SPY",
-            amount=200.0,
+            amount=100.0,
             side="BUY",
             strategy="iron_condor",
             context={"equity": 5000.0},
@@ -514,7 +513,7 @@ class TestPolicyGate:
 
         result = gate_mod.validate_trade_mandatory(
             symbol="SPY",
-            amount=200.0,
+            amount=100.0,
             side="BUY",
             strategy="iron_condor",
             context={"equity": 5000.0},
@@ -543,7 +542,7 @@ class TestPolicyGate:
 
         result = gate_mod.validate_trade_mandatory(
             symbol="SPY",
-            amount=200.0,
+            amount=100.0,
             side="BUY",
             strategy="iron_condor",
             context={"equity": 5000.0},
@@ -563,7 +562,7 @@ class TestRegimeCheck:
 
         result = validate_trade_mandatory(
             symbol="SPY",
-            amount=200.0,
+            amount=100.0,
             side="BUY",
             strategy="iron_condor",
             context={"equity": 5000.0},
