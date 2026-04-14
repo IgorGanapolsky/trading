@@ -158,6 +158,10 @@ def test_main_ci_fast_paths_workflow_docs_config_changes():
     assert "Only workflow/docs/config files changed" in workflow_text
     assert "Skipping full Python test suite" in workflow_text
     assert ".github/workflows/*" in workflow_text
+    assert "data/system_state.json" in workflow_text
+    assert "data/runtime/intraday_pnl_latest.json" in workflow_text
+    assert "data/runtime/intraday_pnl_history.json" in workflow_text
+    assert "data/north_star_weekly_history.json" in workflow_text
 
 
 def test_sync_alpaca_status_updates_public_surfaces():

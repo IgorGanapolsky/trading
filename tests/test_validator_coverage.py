@@ -419,8 +419,10 @@ class TestSafeSubmitOrder:
         assert ctx["controlled_paper_validation_entry"] is True
         mock_client.submit_order.assert_called_once_with(mock_request)
 
-    def test_one_lot_paper_validation_order_bypasses_legacy_ml_halt(self, monkeypatch, tmp_path):
-        """Regression for IC Simple live E2E: two-value paper creds must open validation reset."""
+    def test_one_lot_paper_validation_order_bypasses_legacy_ml_halt_when_guard_allows(
+        self, monkeypatch, tmp_path
+    ):
+        """Validation reset can bypass legacy ML halts only when North Star guard permits."""
         from src.safety.trading_halt import TradingHaltState
 
         state_path = tmp_path / "system_state.json"
@@ -474,6 +476,25 @@ class TestSafeSubmitOrder:
             patch.object(gate_mod, "_query_rag_for_blocking_lessons", return_value=(False, [])),
             patch.object(gate_mod, "_check_market_regime", return_value=(1.0, [])),
             patch.object(gate_mod, "check_context_freshness") as mock_freshness,
+            patch(
+                "src.safety.north_star_guard.get_guard_context",
+                return_value={
+                    "mode": "validation_reset",
+                    "max_position_pct": 0.01,
+                    "block_new_positions": False,
+                    "reasons": ["test validation reset allowed"],
+                },
+            ),
+            patch(
+                "src.safety.milestone_controller.get_milestone_context",
+                return_value={
+                    "enabled": True,
+                    "strategy_family": "options_income",
+                    "family_status": "active",
+                    "pause_buy_for_family": False,
+                    "block_reason": "",
+                },
+            ),
             patch("src.safety.multi_model_juror.MultiModelJuror") as mock_juror,
             patch("src.safety.reasoning_evaluator.ReasoningEvaluator") as mock_evaluator,
             patch("src.rag.lessons_search.LessonsSearch") as mock_lessons,

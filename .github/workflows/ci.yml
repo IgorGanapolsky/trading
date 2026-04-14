@@ -54,6 +54,10 @@ jobs:
             case "${path}" in
               .github/workflows/* | .github/dependabot.yml | .gitignore | .claude/*.json | docs/* | *.md)
                 ;;
+              data/system_state.json | data/runtime/intraday_pnl_history.json | data/runtime/intraday_pnl_latest.json)
+                ;;
+              data/north_star_weekly_history.json | data/runtime/north_star_gate_overrides.json | data/TRADING_HALTED)
+                ;;
               *)
                 safe_only=false
                 ;;
