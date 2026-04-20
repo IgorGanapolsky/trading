@@ -71,7 +71,7 @@ jiter==0.13.0
 joblib==1.5.3
 jsonpatch==1.33
 jsonpointer==3.1.1
-jsonschema==4.25.1
+jsonschema==4.26.0
 jsonschema-specifications==2025.9.1
 kiwisolver==1.5.0
 langchain==1.2.12
