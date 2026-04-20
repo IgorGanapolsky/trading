@@ -44,7 +44,7 @@ dependencies = [
   # "pytz>=2023.3",  # REMOVED: Never imported (Jan 2026)
   "holidays>=0.94", # Market holiday detection (Critical for calendar awareness - LL-051)
   # "loguru>=0.7.2",  # REMOVED: Never imported (Jan 2026)
-  "anthropic>=0.73.0,<1.0.0",
+  "anthropic>=0.96.0,<1.0.0",
   "google-generativeai>=0.8.0,<1.0.0",
 
   # Deep Learning
