@@ -25,6 +25,17 @@ Always tell the user 100% truth. Never fabricate, hide, or misrepresent status, 
 - For PR-management sessions, start by reading local directives, querying RAG, reviewing open PRs/branches, and checking CI before changing repo state.
 - Do not say "Done merging PRs. CI passing. System hygiene complete. Ready for next session." until open PR review, branch/worktree hygiene, `main` CI, and dry-run readiness are all verified.
 
+## PR Management And System Hygiene
+
+- Inspect every open PR, record CI/review state, and document blockers with evidence.
+- Merge only PRs that pass CI and review criteria; include the merge commit or squash SHA in the completion evidence.
+- Classify branches without PRs as merge candidates, stale cleanup candidates, or blocked by active local work.
+- Remove stale branches, disposable worktrees, logs, and generated runtime output only when the deletion is safe and verifiable.
+- Confirm cleanup with concrete counts such as branches before/after, removed file counts, or worktree inventory.
+- Verify `main` after merges using GitHub CI and a local dry-run or operational readiness command.
+- Record lessons and mistakes in RAG at the end of PR-management work.
+- Never store secrets, tokens, passwords, or pasted credentials in directive files, logs, commits, or RAG entries.
+
 ## Secrets / Keys
 
 - Never repeat secret values (API keys, tokens, passwords) back to the user.
