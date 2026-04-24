@@ -1,136 +1,178 @@
-"""Trading policy drift detection and monitoring."""
+"""Trading policy drift metrics for canonical-vs-doc consistency checks."""
 
-import hashlib
+from __future__ import annotations
+
 import json
-import logging
-from dataclasses import dataclass
+import re
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Any, Sequence
 
-logger = logging.getLogger(__name__)
+from src.core.trading_constants import (
+    IRON_CONDOR_STOP_LOSS_MULTIPLIER,
+    MAX_POSITIONS,
+    NORTH_STAR_MONTHLY_AFTER_TAX,
+)
 
-DEFAULT_POLICY_DOC_PATHS = [
-    "docs/trading/policy.md",
-    "docs/trading/risk_management.md",
-    "docs/trading/compliance.md",
-]
+DEFAULT_POLICY_DOC_PATHS: tuple[str, ...] = (
+    ".claude/CLAUDE.md",
+    ".claude/rules/risk-management.md",
+    ".claude/rules/trading.md",
+)
 
-CANONICAL_POLICY_VALUES = {
-    "max_position_size": 0.02,
-    "max_daily_loss": 0.01,
-    "max_sector_concentration": 0.15,
-    "required_stop_loss": True,
-    "minimum_liquidity_threshold": 1000000,
-}
+POLICY_KEYS: tuple[str, ...] = (
+    "IRON_CONDOR_STOP_LOSS_MULTIPLIER",
+    "NORTH_STAR_MONTHLY_AFTER_TAX",
+    "MAX_POSITIONS",
+)
 
-def canonical_policy_values() -> Dict:
-    """Return canonical policy configuration values."""
-    return CANONICAL_POLICY_VALUES.copy()
+_POLICY_VALUE_PATTERN = re.compile(
+    r"(?P<key>IRON_CONDOR_STOP_LOSS_MULTIPLIER|NORTH_STAR_MONTHLY_AFTER_TAX|MAX_POSITIONS)"
+    r"\s*[:=]\s*`?(?P<value>[0-9][0-9_,]*(?:\.[0-9]+)?)`?",
+)
 
-@dataclass
-class PolicySnapshot:
-    """Snapshot of policy state at a point in time."""
-    
-    timestamp: str
-    file_hashes: Dict[str, str]
-    extracted_values: Dict[str, any]
-    metadata: Dict[str, any]
 
-class PolicyDriftMonitor:
-    """Monitor trading policy documents for drift and changes."""
-    
-    def __init__(self, policy_paths: Optional[List[str]] = None):
-        self.policy_paths = policy_paths or DEFAULT_POLICY_DOC_PATHS
-        self.baseline_snapshot: Optional[PolicySnapshot] = None
-        
-    def take_snapshot(self) -> PolicySnapshot:
-        """Take a snapshot of current policy state."""
-        file_hashes = {}
-        extracted_values = {}
-        
-        for policy_path in self.policy_paths:
-            path = Path(policy_path)
-            if path.exists():
-                content = path.read_text()
-                file_hashes[policy_path] = hashlib.md5(content.encode()).hexdigest()
-                
-                # Extract policy values from content
-                extracted = self._extract_policy_values(content)
-                extracted_values.update(extracted)
-        
-        return PolicySnapshot(
-            timestamp=str(Path().resolve()),
-            file_hashes=file_hashes,
-            extracted_values=extracted_values,
-            metadata={"policy_paths": self.policy_paths}
-        )
-    
-    def _extract_policy_values(self, content: str) -> Dict[str, any]:
-        """Extract policy values from document content."""
-        # Simple extraction - look for key patterns
-        values = {}
-        lines = content.lower().split('\n')
-        
-        for line in lines:
-            if 'max_position_size' in line and ':' in line:
-                try:
-                    value = float(line.split(':')[1].strip().rstrip('%'))
-                    values['max_position_size'] = value / 100 if '%' in line else value
-                except (ValueError, IndexError):
-                    pass
-                    
-            elif 'max_daily_loss' in line and ':' in line:
-                try:
-                    value = float(line.split(':')[1].strip().rstrip('%'))
-                    values['max_daily_loss'] = value / 100 if '%' in line else value
-                except (ValueError, IndexError):
-                    pass
-                    
-        return values
-    
-    def detect_drift(self, current_snapshot: Optional[PolicySnapshot] = None) -> Dict[str, any]:
-        """Detect policy drift from baseline."""
-        if not self.baseline_snapshot:
-            logger.warning("No baseline snapshot available for drift detection")
-            return {"drift_detected": False, "changes": []}
-            
-        if current_snapshot is None:
-            current_snapshot = self.take_snapshot()
-            
-        changes = []
-        
-        # Check file hash changes
-        for path, baseline_hash in self.baseline_snapshot.file_hashes.items():
-            current_hash = current_snapshot.file_hashes.get(path)
-            if current_hash != baseline_hash:
-                changes.append({
-                    "type": "file_change",
-                    "path": path,
-                    "baseline_hash": baseline_hash,
-                    "current_hash": current_hash
-                })
-        
-        # Check extracted value changes
-        for key, baseline_value in self.baseline_snapshot.extracted_values.items():
-            current_value = current_snapshot.extracted_values.get(key)
-            if current_value != baseline_value:
-                changes.append({
-                    "type": "value_change",
-                    "key": key,
-                    "baseline_value": baseline_value,
-                    "current_value": current_value
-                })
-        
-        return {
-            "drift_detected": len(changes) > 0,
-            "changes": changes,
-            "baseline_timestamp": self.baseline_snapshot.timestamp,
-            "current_timestamp": current_snapshot.timestamp
+def canonical_policy_values() -> dict[str, float | int]:
+    """Return canonical policy values from trading constants (A cohort)."""
+    return {
+        "IRON_CONDOR_STOP_LOSS_MULTIPLIER": float(IRON_CONDOR_STOP_LOSS_MULTIPLIER),
+        "NORTH_STAR_MONTHLY_AFTER_TAX": float(NORTH_STAR_MONTHLY_AFTER_TAX),
+        "MAX_POSITIONS": int(MAX_POSITIONS),
+    }
+
+
+def _extract_policy_value_occurrences(text: str) -> dict[str, list[float | int]]:
+    """Extract all policy value occurrences from text."""
+    occurrences: dict[str, list[float | int]] = {key: [] for key in POLICY_KEYS}
+    for match in _POLICY_VALUE_PATTERN.finditer(text):
+        key = match.group("key")
+        raw_value = match.group("value").replace("_", "").replace(",", "")
+        parsed = float(raw_value)
+        value: float | int = int(round(parsed)) if key == "MAX_POSITIONS" else parsed
+        occurrences[key].append(value)
+    return occurrences
+
+
+def extract_policy_values_from_text(text: str) -> dict[str, float | int]:
+    """Extract machine-readable policy values from documentation text."""
+    values: dict[str, float | int] = {}
+    for key, key_occurrences in _extract_policy_value_occurrences(text).items():
+        if key_occurrences:
+            values[key] = key_occurrences[-1]
+    return values
+
+
+def _values_match(expected: float | int, actual: float | int) -> bool:
+    if isinstance(expected, int):
+        return int(actual) == expected
+    return abs(float(actual) - expected) <= 1e-9
+
+
+def collect_trading_policy_ab_metrics(
+    repo_root: Path,
+    policy_doc_paths: Sequence[str] | None = None,
+) -> dict[str, Any]:
+    """Collect A/B metrics comparing canonical constants vs documented values.
+
+    A cohort: canonical constants from ``src/core/trading_constants.py``.
+    B cohort: declarations in policy docs.
+    """
+    root = repo_root.resolve()
+    docs = list(policy_doc_paths or DEFAULT_POLICY_DOC_PATHS)
+    canonical = canonical_policy_values()
+
+    checks_total = 0
+    checks_passed = 0
+    drift_items: list[str] = []
+    document_results: dict[str, dict[str, Any]] = {}
+
+    for rel_path in docs:
+        rel_posix = Path(rel_path).as_posix()
+        abs_path = (root / rel_posix).resolve()
+        result: dict[str, Any] = {
+            "exists": abs_path.exists(),
+            "values": {},
+            "occurrences": {},
+            "comparisons": {},
+            "missing_keys": [],
         }
-    
-    def set_baseline(self, snapshot: Optional[PolicySnapshot] = None) -> None:
-        """Set baseline snapshot for drift detection."""
-        if snapshot is None:
-            snapshot = self.take_snapshot()
-        self.baseline_snapshot = snapshot
-        logger.info(f"Set policy baseline with {len(snapshot.file_hashes)} files")
+
+        if abs_path.exists():
+            text = abs_path.read_text(encoding="utf-8", errors="replace")
+            occurrences = _extract_policy_value_occurrences(text)
+            documented_values = {
+                key: key_occurrences[-1]
+                for key, key_occurrences in occurrences.items()
+                if key_occurrences
+            }
+            result["values"] = documented_values
+            result["occurrences"] = occurrences
+        else:
+            occurrences = {key: [] for key in POLICY_KEYS}
+            documented_values = {}
+            result["occurrences"] = occurrences
+
+        comparisons: dict[str, dict[str, Any]] = {}
+        missing_keys: list[str] = []
+        for key in POLICY_KEYS:
+            checks_total += 1
+            expected = canonical[key]
+            actual = documented_values.get(key)
+            unique_values = sorted(set(occurrences.get(key, [])))
+            if len(unique_values) > 1:
+                comparisons[key] = {
+                    "expected": expected,
+                    "actual": actual,
+                    "matched": False,
+                    "conflicting_values": unique_values,
+                }
+                drift_items.append(
+                    f"{rel_posix}: conflicting declarations for {key}: {unique_values}"
+                )
+                continue
+
+            if actual is None:
+                missing_keys.append(key)
+                comparisons[key] = {
+                    "expected": expected,
+                    "actual": None,
+                    "matched": False,
+                }
+                reason = "missing file" if not abs_path.exists() else "missing declaration"
+                drift_items.append(f"{rel_posix}: {reason} for {key}")
+                continue
+
+            matched = _values_match(expected, actual)
+            comparisons[key] = {
+                "expected": expected,
+                "actual": actual,
+                "matched": matched,
+            }
+            if matched:
+                checks_passed += 1
+            else:
+                drift_items.append(f"{rel_posix}: {key} expected {expected} but found {actual}")
+
+        result["comparisons"] = comparisons
+        result["missing_keys"] = missing_keys
+        document_results[rel_posix] = result
+
+    checks_failed = checks_total - checks_passed
+    return {
+        "generated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "cohort_a_canonical": canonical,
+        "cohort_b_documents": document_results,
+        "checks_total": checks_total,
+        "checks_passed": checks_passed,
+        "checks_failed": checks_failed,
+        "match_rate": (checks_passed / checks_total) if checks_total else 1.0,
+        "drift_detected": checks_failed > 0,
+        "drift_items": drift_items,
+    }
+
+
+def write_trading_policy_ab_metrics(metrics: dict[str, Any], output_path: Path) -> None:
+    """Persist policy A/B metrics as JSON."""
+    target = output_path.resolve()
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
