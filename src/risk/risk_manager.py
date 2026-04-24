@@ -191,6 +191,66 @@ class RiskManager:
         """
         return self.portfolio_value * self.max_position_pct
 
+    def calculate_stop_based_position_size(
+        self,
+        *,
+        entry_price: float,
+        stop_price: float,
+        max_risk_pct: float | None = None,
+        max_notional_pct: float | None = None,
+        lot_size: int = 1,
+    ) -> dict[str, Any]:
+        """
+        Size a directional position from a predefined invalidation level.
+
+        This implements the standard breakout sizing formula:
+        shares = max dollar loss / abs(entry - stop), capped by notional limits.
+        """
+        if entry_price <= 0 or stop_price <= 0:
+            return {
+                "quantity": 0,
+                "notional": 0.0,
+                "max_loss": 0.0,
+                "risk_per_share": 0.0,
+                "reason": "Invalid entry or stop price",
+            }
+
+        risk_per_share = abs(entry_price - stop_price)
+        if risk_per_share <= 0:
+            return {
+                "quantity": 0,
+                "notional": 0.0,
+                "max_loss": 0.0,
+                "risk_per_share": 0.0,
+                "reason": "Entry and stop price are identical",
+            }
+
+        risk_pct = self.max_daily_loss_pct if max_risk_pct is None else max_risk_pct
+        notional_pct = self.max_position_pct if max_notional_pct is None else max_notional_pct
+        max_loss_dollars = max(0.0, self.portfolio_value * risk_pct)
+        max_notional = max(0.0, self.portfolio_value * notional_pct)
+        raw_quantity = int(max_loss_dollars // risk_per_share)
+        notional_capped_quantity = int(max_notional // entry_price)
+        quantity = min(raw_quantity, notional_capped_quantity)
+
+        if lot_size > 1:
+            quantity = (quantity // lot_size) * lot_size
+
+        quantity = max(0, quantity)
+        notional = quantity * entry_price
+        max_loss = quantity * risk_per_share
+
+        return {
+            "quantity": quantity,
+            "notional": round(notional, 2),
+            "max_loss": round(max_loss, 2),
+            "risk_per_share": round(risk_per_share, 4),
+            "reason": (
+                f"Size {quantity} shares/contracts from ${max_loss_dollars:.2f} risk "
+                f"and ${max_notional:.2f} notional cap"
+            ),
+        }
+
     def get_max_contracts(self, strike_price: float, cash_available: float) -> int:
         """
         Calculate maximum CSP contracts given capital constraints.
