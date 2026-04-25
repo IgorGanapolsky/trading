@@ -353,29 +353,9 @@ def compute_report(
         f"Keep system_state and north_star_weekly_gate fresh within {stale_threshold_hours:.0f} hours."
     )
 
-    # If a validation hypothesis is deployed and paper entries are allowed,
-    # the system is actively validating — not blocked in a way needing human action.
-    hypothesis_path = Path("data/runtime/strategy_validation_hypothesis.json")
-    hypothesis_active = False
-    if hypothesis_path.exists():
-        try:
-            hyp = json.loads(hypothesis_path.read_text(encoding="utf-8"))
-            hypothesis_active = bool(
-                isinstance(hyp, dict)
-                and hyp.get("enabled")
-                and hyp.get("changed_rules")
-                and hyp.get("kill_criteria")
-            )
-        except (OSError, ValueError, KeyError):
-            hypothesis_active = False
-
-    effectively_blocked = len(blockers) > 0 and not (
-        hypothesis_active and allow_validation_entries
-    )
-
     return {
         "generated_at_utc": _fmt_utc(now_utc),
-        "blocked": effectively_blocked,
+        "blocked": bool(blockers),
         "blockers": [asdict(item) for item in blockers],
         "warnings": [asdict(item) for item in warnings],
         "root_causes": root_causes,
