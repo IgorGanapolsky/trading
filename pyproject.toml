@@ -10,7 +10,7 @@ keywords = ["trading", "alpaca", "ai", "automation", "stocks", "options"]
 
 dependencies = [
   # Trading APIs
-  "alpaca-py>=0.43.2",
+  "alpaca-py>=0.43.3",
   "openai>=1.109.1",
   # "openai-agents>=0.6.2",  # REMOVED: Never imported (Jan 2026)
 
