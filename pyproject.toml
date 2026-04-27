@@ -49,7 +49,7 @@ dependencies = [
 
   # Deep Learning
   # "torch>=2.0.0,<3.0.0",  # REMOVED: Never imported (Jan 2026)
-  "scikit-learn>=1.3.0,<2.0.0", # Used in src/agents/rl_weight_updater.py
+  "scikit-learn>=1.8.0,<2.0.0", # Used in src/agents/rl_weight_updater.py
 
   # DeepAgents Integration (updated for deepagents 0.3.x compatibility)
   "langchain>=1.2.15",
