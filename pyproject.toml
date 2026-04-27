@@ -71,7 +71,7 @@ dev = [
   "pytest-cov>=4.1.0",
   "pytest-timeout>=2.2.0",
   "ruff>=0.15.12",
-  "mypy>=1.20.1",
+  "mypy>=1.20.2",
   "pre-commit>=3.8.0",
 ]
 
