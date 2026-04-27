@@ -16,7 +16,7 @@ dependencies = [
 
   # Data Processing
   "pandas>=2.3.3",
-  "numpy>=1.26.4,<2.0.0",     # <2.0 for langchain compatibility
+  "numpy>=2.4.4,<3.0.0",     # <2.0 for langchain compatibility
   "yfinance>=0.2.58,<0.2.66", # Stable version without websocket conflicts
   "alpha-vantage>=2.3.1",
 
