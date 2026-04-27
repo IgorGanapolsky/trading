@@ -57,7 +57,7 @@ dependencies = [
   "langchain-anthropic>=1.4.1",
   "langchain-community>=0.3.0",
   # "langgraph>=0.2.0",  # REMOVED: Never imported (Jan 2026)
-  "langsmith>=0.1.0",
+  "langsmith>=0.7.37",
 
   # Dashboard
   # "streamlit>=1.40.0",  # REMOVED: Never imported (Jan 2026)
