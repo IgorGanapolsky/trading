@@ -350,7 +350,7 @@ class TradeGateway:
         """
         return _extract_underlying_shared(symbol)
 
-    def _check_earnings_blackout(self, symbol: str) -> tuple[bool, str]:
+    def _check_earnings_blackout(self, symbol: str, as_of=None) -> tuple[bool, str]:
         """
         Check if symbol is in FOMC blackout period.
 
@@ -359,7 +359,12 @@ class TradeGateway:
         """
         from datetime import timedelta
 
-        today = datetime.now().date()
+        if as_of is None:
+            today = datetime.now().date()
+        elif hasattr(as_of, "date"):
+            today = as_of.date()
+        else:
+            today = as_of
 
         for fomc_str in self.FOMC_DATES:
             fomc_date = datetime.strptime(fomc_str, "%Y-%m-%d").date()
@@ -942,7 +947,9 @@ class TradeGateway:
         # CHECK 0.5: EARNINGS BLACKOUT (LL-190)
         # Don't open NEW positions during earnings blackout periods
         # ============================================================
-        is_blackout, blackout_reason = self._check_earnings_blackout(request.symbol)
+        is_blackout, blackout_reason = self._check_earnings_blackout(
+            request.symbol, request.request_time
+        )
         if is_blackout and request.side.lower() in ["buy", "sell"]:
             # Only block NEW positions, not closing existing ones
             rejection_reasons.append(RejectionReason.EARNINGS_BLACKOUT)

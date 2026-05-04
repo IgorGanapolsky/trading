@@ -704,7 +704,9 @@ class TestE2EPipeline:
         with patch(
             "src.utils.regime_detector.RegimeDetector.detect_live_regime_with_prediction",
             return_value=_Snapshot(),
-        ), patch.object(Path, "read_text", _patched_read):
+        ), patch.object(Path, "read_text", _patched_read), patch(
+            "scripts.ic_simple._fomc_blackout_reason", return_value=None
+        ):
             ic.main()
 
         # Verify order was submitted

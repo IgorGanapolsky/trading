@@ -72,6 +72,28 @@ SYSTEM_STATE_FILE = Path(__file__).parent.parent / "data" / "system_state.json"
 THOMPSON_MIN_CONFIDENCE = 0.40
 MIN_ACCEPTABLE_SHORT_DELTA = 0.08
 MAX_ACCEPTABLE_SHORT_DELTA = 0.22
+FOMC_DATES = [
+    "2026-01-28",
+    "2026-03-18",
+    "2026-05-06",
+    "2026-06-17",
+    "2026-07-29",
+    "2026-09-16",
+    "2026-11-04",
+    "2026-12-16",
+]
+
+
+def _fomc_blackout_reason(as_of=None) -> str | None:
+    """Return the FOMC announcement date when new entries are blocked."""
+    from datetime import timedelta
+
+    today = as_of or datetime.now().date()
+    for fomc_str in FOMC_DATES:
+        fomc_date = datetime.strptime(fomc_str, "%Y-%m-%d").date()
+        if (fomc_date - timedelta(days=2)) <= today <= (fomc_date + timedelta(days=1)):
+            return fomc_str
+    return None
 
 
 # ── Alpaca Client ────────────────────────────────────────────────────────────
@@ -1300,26 +1322,10 @@ def main():
         logger.info("\n--- ENTRY CHECK ---")
 
         # FOMC blackout check (2 days before through 1 day after)
-        from datetime import timedelta
-
-        FOMC_DATES = [
-            "2026-01-28",
-            "2026-03-18",
-            "2026-05-06",
-            "2026-06-17",
-            "2026-07-29",
-            "2026-09-16",
-            "2026-11-04",
-            "2026-12-16",
-        ]
-        today = datetime.now().date()
-        fomc_blocked = False
-        for fomc_str in FOMC_DATES:
-            fomc_date = datetime.strptime(fomc_str, "%Y-%m-%d").date()
-            if (fomc_date - timedelta(days=2)) <= today <= (fomc_date + timedelta(days=1)):
-                logger.warning(f"FOMC blackout: {fomc_str}. No entry.")
-                fomc_blocked = True
-                break
+        fomc_str = _fomc_blackout_reason()
+        fomc_blocked = fomc_str is not None
+        if fomc_str is not None:
+            logger.warning(f"FOMC blackout: {fomc_str}. No entry.")
 
         # ThumbGate pre-entry check: block patterns from past losses
         thumbgate_blocked = False

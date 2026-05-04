@@ -10,6 +10,7 @@ Tests key gateway functionality:
 These tests ensure the gateway properly rejects risky trades.
 """
 
+from datetime import datetime as real_datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -121,6 +122,7 @@ class TestTradeGatewayLiquidityCheck:
             is_spread=True,  # Mark as spread to pass checklist (debit spread)
             max_loss=200.0,  # Within 5% of $50000 equity
             dte=35,  # Within 30-45 DTE range
+            request_time=real_datetime(2026, 5, 11),
         )
         decision = gateway.evaluate(request)
 
@@ -177,6 +179,7 @@ class TestTradeGatewayIVRankCheck:
             source="test",
             strategy_type="iron_condor",
             iv_rank=60.0,
+            request_time=real_datetime(2026, 5, 11),
         )
         decision = gateway.evaluate(request)
 
@@ -198,6 +201,7 @@ class TestTradeGatewayCapitalEfficiency:
             source="test",
             strategy_type="iron_condor",
             iv_rank=50.0,
+            request_time=real_datetime(2026, 5, 11),
         )
         decision = gateway.evaluate(request)
 
@@ -216,6 +220,7 @@ class TestTradeGatewayCapitalEfficiency:
             source="test",
             strategy_type="iron_condor",
             iv_rank=50.0,
+            request_time=real_datetime(2026, 5, 11),
         )
         decision = gateway.evaluate(request)
 
@@ -303,9 +308,6 @@ class TestEarningsBlackoutEnforcement:
             mock_dt.now.return_value.date.return_value = type(
                 "Date", (), {"__le__": lambda s, o: True, "__ge__": lambda s, o: True}
             )()
-            # Use actual date parsing
-            from datetime import datetime as real_datetime
-
             mock_dt.strptime = real_datetime.strptime
             mock_dt.now.return_value = real_datetime(2026, 1, 25)  # During blackout
 
@@ -314,6 +316,7 @@ class TestEarningsBlackoutEnforcement:
                 side="buy",
                 notional=500,
                 source="test",
+                request_time=real_datetime(2026, 1, 25),
             )
             decision = gateway.evaluate(request)
 
@@ -327,8 +330,6 @@ class TestEarningsBlackoutEnforcement:
         gateway.TICKER_WHITELIST_ENABLED = False
 
         with patch("src.risk.trade_gateway.datetime") as mock_dt:
-            from datetime import datetime as real_datetime
-
             mock_dt.strptime = real_datetime.strptime
             mock_dt.now.return_value = real_datetime(2026, 1, 28)  # During blackout
 
@@ -339,6 +340,7 @@ class TestEarningsBlackoutEnforcement:
                 quantity=1,
                 source="test",
                 is_option=True,
+                request_time=real_datetime(2026, 1, 28),
             )
             decision = gateway.evaluate(request)
 
@@ -352,8 +354,6 @@ class TestEarningsBlackoutEnforcement:
         gateway.TICKER_WHITELIST_ENABLED = False
 
         with patch("src.risk.trade_gateway.datetime") as mock_dt:
-            from datetime import datetime as real_datetime
-
             mock_dt.strptime = real_datetime.strptime
             mock_dt.now.return_value = real_datetime(2026, 2, 5)  # During F blackout (Feb 3-11)
 
@@ -362,6 +362,7 @@ class TestEarningsBlackoutEnforcement:
                 side="buy",
                 notional=500,
                 source="test",
+                request_time=real_datetime(2026, 2, 5),
             )
             decision = gateway.evaluate(request)
 
@@ -378,6 +379,7 @@ class TestEarningsBlackoutEnforcement:
             side="buy",
             notional=500,
             source="test",
+            request_time=real_datetime(2026, 5, 11),
         )
         decision = gateway.evaluate(request)
 
@@ -387,14 +389,21 @@ class TestEarningsBlackoutEnforcement:
     def test_check_earnings_blackout_method(self):
         """Test the _check_earnings_blackout method directly.
 
-        SOFI/F blackout dates (Jan-Feb 2026) have passed. SPY should never be blocked.
+        SPY has no earnings, but new entries are blocked around FOMC announcements.
         """
         gateway = TradeGateway(executor=None, paper=True)
 
-        # SPY should never be in earnings blackout
-        is_blocked, reason = gateway._check_earnings_blackout("SPY")
+        is_blocked, reason = gateway._check_earnings_blackout(
+            "SPY", as_of=real_datetime(2026, 5, 11)
+        )
         assert not is_blocked
         assert reason == ""
+
+        is_blocked, reason = gateway._check_earnings_blackout(
+            "SPY", as_of=real_datetime(2026, 5, 4)
+        )
+        assert is_blocked
+        assert "FOMC blackout 2026-05-04 to 2026-05-07" in reason
 
 
 class TestEarningsPositionMonitor:
