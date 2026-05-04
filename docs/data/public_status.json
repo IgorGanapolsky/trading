@@ -1,16 +1,16 @@
 {
-  "generated_at_et": "2026-05-04T15:43:42.889540+00:00",
+  "generated_at_et": "2026-05-04T15:43:40.297046+00:00",
   "system": {
     "name": "SPY Options Validation Platform",
     "tagline": "Broker-backed scorecards, hard risk gates, paired-trade accounting, and live operator surfaces.",
     "public_status": "validation_reset"
   },
   "paper": {
-    "equity": 93576.7,
-    "total_pnl_today": -15.0,
-    "realized_pnl_today": 0.0,
-    "unrealized_pnl_today": -15.0,
-    "fills_today_count": 0,
+    "equity": 93574.7,
+    "total_pnl_today": -17.0,
+    "realized_pnl_today": null,
+    "unrealized_pnl_today": null,
+    "fills_today_count": null,
     "positions_count": 8
   },
   "live": {
@@ -26,7 +26,7 @@
     "profit_factor": 0.24,
     "total_realized_pnl": -3669.0,
     "expectancy_per_trade": -54.7612,
-    "last_updated": "2026-05-04T15:43:42.889529+00:00"
+    "last_updated": "2026-05-04T14:40:47.128299+00:00"
   },
   "gate": {
     "mode": "validation_reset",
@@ -50,7 +50,7 @@
     "lifetime_total_realized_pnl": -3669.0
   },
   "narrative": {
-    "summary": "Latest tracked broker sync shows $-15.00 today with 8 open paper positions. Use the operator scorecard for realized/unrealized and leg-level decomposition.",
+    "summary": "Latest tracked broker sync shows $-17.00 today with 8 open paper positions. Use the operator scorecard for realized/unrealized and leg-level decomposition.",
     "thesis": "This project is currently a paper-first validation platform, not a proven passive-income engine. Public surfaces should show current gate state and broker-backed evidence rather than frozen claims."
   },
   "links": {

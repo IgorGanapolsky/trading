@@ -221,6 +221,24 @@ def test_state_writer_workflows_refresh_to_latest_main_before_mutating_state():
     assert "git checkout -B main origin/main" in ic_text
 
 
+def test_pre_market_sync_commits_all_generated_surfaces_fail_closed():
+    """Pre-market sync must not leave generated public surfaces unstaged or hide push failures."""
+    workflow_text = Path(".github/workflows/pre-market-sync.yml").read_text()
+
+    assert "state-writer-{0}-{1}" in workflow_text
+    assert "cancel-in-progress: false" in workflow_text
+    assert "name: Refresh to latest main" in workflow_text
+    assert "git checkout -B main origin/main" in workflow_text
+    assert "set -euo pipefail" in workflow_text
+    assert "docs/data/public_status.json" in workflow_text
+    assert "wiki/Home.md" in workflow_text
+    assert "wiki/Progress-Dashboard.md" in workflow_text
+    assert "wiki/Development-Engine-and-Evidence.md" in workflow_text
+    assert "git pull --ff-only origin main" in workflow_text
+    assert "git push origin HEAD:main ||" not in workflow_text
+    assert "git pull --rebase origin main" not in workflow_text
+
+
 def test_public_surface_guard_workflow_exists():
     """Public-facing copy must have its own lightweight guard workflow."""
     workflow_text = Path(".github/workflows/public-surface-guard.yml").read_text()

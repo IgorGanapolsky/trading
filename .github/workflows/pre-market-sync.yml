@@ -7,8 +7,8 @@ on:
   workflow_dispatch: # Allow manual trigger
 
 concurrency:
-  group: pre-market-sync-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ format('state-writer-{0}-{1}', github.repository, github.ref_name || 'main') }}
+  cancel-in-progress: false
 
 permissions:
   contents: write # Required to push commits
@@ -26,6 +26,11 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT || github.token }}
           fetch-depth: 0
+
+      - name: Refresh to latest main
+        run: |
+          git fetch origin main
+          git checkout -B main origin/main
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -69,16 +74,18 @@ jobs:
 
       - name: Commit sync data
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/system_state.json data/heartbeat.json data/runtime/
+          git add data/system_state.json data/heartbeat.json data/runtime/ docs/data/public_status.json
+          git add -f wiki/Home.md wiki/Progress-Dashboard.md wiki/Development-Engine-and-Evidence.md
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
             git commit -m "chore: pre-market data sync $(date +%Y-%m-%d)"
-            git pull --rebase origin main || git rebase --abort
             if [ -n "${{ secrets.GH_PAT }}" ]; then
               git remote set-url origin "https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git"
             fi
-            git push origin HEAD:main || echo "Push failed (protected branch or conflict)"
+            git pull --ff-only origin main
+            git push origin HEAD:main
           fi
