@@ -85,7 +85,7 @@ rag = ["sentence-transformers>=2.7.0", "lancedb>=0.30.2", "chromadb>=0.6.3"]
 
 xai = [
   # X.ai SDK - optional due to packaging conflicts with streamlit
-  "xai-sdk>=1.11.0",
+  "xai-sdk>=1.12.1",
 ]
 
 [project.urls]
