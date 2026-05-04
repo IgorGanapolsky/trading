@@ -3,12 +3,13 @@ name: OpenRouter Price Monitor
 on:
   schedule:
     # Run daily at 6am ET (11:00 UTC) — check before market open
-    - cron: '0 11 * * *'
-  workflow_dispatch:  # Manual trigger
+    - cron: "0 11 * * *"
+  workflow_dispatch: # Manual trigger
 
 permissions:
   contents: write
   issues: write
+  pull-requests: write
 
 jobs:
   check-prices:
@@ -19,7 +20,7 @@ jobs:
 
       - uses: actions/setup-python@v6
         with:
-          python-version: '3.11'
+          python-version: "3.11"
           cache: "pip"
 
       - name: Check OpenRouter pricing
@@ -28,13 +29,22 @@ jobs:
         run: python scripts/openrouter_price_monitor.py
 
       - name: Commit updated baseline
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if git diff --quiet data/openrouter_pricing_baseline.json 2>/dev/null; then
             echo "No pricing changes to commit"
           else
+            BRANCH="chore/openrouter-pricing-baseline-${GITHUB_RUN_ID}"
+            git switch -c "$BRANCH"
             git add data/openrouter_pricing_baseline.json
             git commit -m "chore: update OpenRouter pricing baseline [auto]"
-            git push
+            git push -u origin "$BRANCH"
+            gh pr create \
+              --base main \
+              --head "$BRANCH" \
+              --title "chore: update OpenRouter pricing baseline" \
+              --body "Automated OpenRouter pricing baseline update from run ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}."
           fi
