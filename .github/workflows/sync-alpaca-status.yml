@@ -91,6 +91,11 @@ jobs:
           REQUIRE_ALPACA_KEYS: "true"
         run: |
           python3 scripts/daily_scorecard.py --repo-root .
+          # daily_scorecard.py refreshes the paired ledger by default for
+          # operator artifacts, but Sync Alpaca does not own data/trades.json.
+          # Restore it again before building committed public surfaces.
+          git restore data/trades.json
+          git diff --quiet -- data/trades.json
           python3 scripts/build_public_status.py --repo-root .
 
       # DISABLED: ic_simple.py is the sole position manager (2026-04-01)

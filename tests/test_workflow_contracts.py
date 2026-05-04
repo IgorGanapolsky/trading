@@ -183,6 +183,13 @@ def test_sync_alpaca_status_updates_public_surfaces():
     assert workflow_text.index("git restore data/trades.json") < workflow_text.index(
         "scripts/build_public_status.py --repo-root ."
     )
+    assert workflow_text.index("scripts/daily_scorecard.py --repo-root .") < workflow_text.rindex(
+        "git restore data/trades.json"
+    )
+    assert "git diff --quiet -- data/trades.json" in workflow_text
+    assert workflow_text.index("git diff --quiet -- data/trades.json") < workflow_text.index(
+        "scripts/build_public_status.py --repo-root ."
+    )
     # ML models are now owned by IC Simple, not Sync Alpaca (commit race fix)
     assert "models/ml/trade_confidence_model.json" not in workflow_text
 
