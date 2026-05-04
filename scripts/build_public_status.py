@@ -6,7 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -127,6 +127,43 @@ def _pick_first(*values: Any) -> Any:
     return None
 
 
+def _parse_iso(value: Any) -> datetime | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    raw = value.strip().replace("Z", "+00:00")
+    try:
+        parsed = datetime.fromisoformat(raw)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def _latest_timestamp(*values: Any) -> str | None:
+    ranked: list[tuple[datetime, str]] = []
+    for value in values:
+        parsed = _parse_iso(value)
+        if parsed is not None and isinstance(value, str):
+            ranked.append((parsed, value))
+    if not ranked:
+        return None
+    ranked.sort(key=lambda item: item[0])
+    return ranked[-1][1]
+
+
+def _select_latest_snapshot(*sources: tuple[str | None, dict[str, Any]]) -> dict[str, Any]:
+    ranked: list[tuple[datetime, dict[str, Any]]] = []
+    for timestamp, payload in sources:
+        parsed = _parse_iso(timestamp)
+        if parsed is not None and isinstance(payload, dict):
+            ranked.append((parsed, payload))
+    if not ranked:
+        return {}
+    ranked.sort(key=lambda item: item[0])
+    return ranked[-1][1]
+
+
 def _why_today_summary(total: Any, positions_count: Any) -> str:
     if total is not None and positions_count == 0:
         return (
@@ -154,23 +191,36 @@ def build_public_status(repo_root: Path) -> dict[str, Any]:
 
     runtime_paper = runtime.get("paper", {})
     runtime_live = runtime.get("live", {})
+    scorecard_paper = scorecard.get("paper", {})
+    scorecard_live = scorecard.get("live", {})
     weekly = state.get("north_star_weekly_gate") or {}
     cadence = weekly.get("cadence_kpi") or {}
     scaling = weekly.get("scaling_sample_gate") or {}
     stats = trades.get("stats") or {}
     congruence = assess_gate_congruence(weekly, trades)
-    paper_total_pnl_today = _pick_first(
-        runtime_paper.get("daily_change"),
-        scorecard.get("paper", {}).get("total_pnl_today"),
+    paper_snapshot = _select_latest_snapshot(
+        (runtime.get("captured_at"), runtime_paper),
+        (scorecard.get("generated_at_et"), scorecard_paper),
     )
-    generated_at_et = _pick_first(
+    live_snapshot = _select_latest_snapshot(
+        (runtime.get("captured_at"), runtime_live),
+        (scorecard.get("generated_at_et"), scorecard_live),
+    )
+    paper_total_pnl_today = _pick_first(
+        paper_snapshot.get("daily_change"),
+        paper_snapshot.get("total_pnl_today"),
+        runtime_paper.get("daily_change"),
+        scorecard_paper.get("total_pnl_today"),
+    )
+    generated_at_et = _latest_timestamp(
         runtime.get("captured_at"),
+        scorecard.get("generated_at_et"),
         state.get("last_updated"),
         stats.get("last_updated"),
         trades.get("meta", {}).get("last_sync"),
-        scorecard.get("generated_at_et"),
-        datetime.now().astimezone().isoformat(),
     )
+    if generated_at_et is None:
+        generated_at_et = datetime.now().astimezone().isoformat()
 
     closed_total = stats.get("closed_trades", scaling.get("closed_trades_observed", 0))
     total_realized = stats.get("total_realized_pnl", stats.get("total_pnl"))
@@ -189,22 +239,40 @@ def build_public_status(repo_root: Path) -> dict[str, Any]:
         },
         "paper": {
             "equity": _pick_first(
+                paper_snapshot.get("equity"),
                 runtime_paper.get("equity"),
-                scorecard.get("paper", {}).get("equity"),
+                scorecard_paper.get("equity"),
             ),
             "total_pnl_today": paper_total_pnl_today,
-            "realized_pnl_today": None,
-            "unrealized_pnl_today": None,
-            "fills_today_count": None,
-            "positions_count": runtime_paper.get("positions_count"),
+            "realized_pnl_today": _pick_first(
+                paper_snapshot.get("realized_pnl_today"),
+                scorecard_paper.get("realized_pnl_today"),
+            ),
+            "unrealized_pnl_today": _pick_first(
+                paper_snapshot.get("unrealized_pnl_today"),
+                scorecard_paper.get("unrealized_pnl_today"),
+            ),
+            "fills_today_count": _pick_first(
+                paper_snapshot.get("fills_today_count"),
+                scorecard_paper.get("fills_today_count"),
+            ),
+            "positions_count": _pick_first(
+                paper_snapshot.get("positions_count"),
+                runtime_paper.get("positions_count"),
+                scorecard_paper.get("positions_count"),
+            ),
         },
         "live": {
             "equity": _pick_first(
-                runtime_live.get("equity"), scorecard.get("live", {}).get("equity")
+                live_snapshot.get("equity"),
+                runtime_live.get("equity"),
+                scorecard_live.get("equity"),
             ),
             "total_pnl_today": _pick_first(
+                live_snapshot.get("daily_change"),
+                live_snapshot.get("total_pnl_today"),
                 runtime_live.get("daily_change"),
-                scorecard.get("live", {}).get("total_pnl_today"),
+                scorecard_live.get("total_pnl_today"),
             ),
         },
         "ledger": {
@@ -244,7 +312,11 @@ def build_public_status(repo_root: Path) -> dict[str, Any]:
         "narrative": {
             "summary": _why_today_summary(
                 paper_total_pnl_today,
-                runtime_paper.get("positions_count"),
+                _pick_first(
+                    paper_snapshot.get("positions_count"),
+                    runtime_paper.get("positions_count"),
+                    scorecard_paper.get("positions_count"),
+                ),
             ),
             "thesis": (
                 "This project is currently a paper-first validation platform, not a proven passive-income engine. "

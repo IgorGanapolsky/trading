@@ -91,7 +91,9 @@ def test_build_public_status_uses_canonical_inputs(tmp_path: Path):
 
     assert status["paper"]["equity"] == 93990.30
     assert status["paper"]["total_pnl_today"] == -14.0
-    assert status["paper"]["realized_pnl_today"] is None
+    assert status["paper"]["realized_pnl_today"] == 0.0
+    assert status["paper"]["unrealized_pnl_today"] == -14.0
+    assert status["paper"]["fills_today_count"] == 0
     assert status["ledger"]["closed_trades_total"] == 134
     assert status["gate"]["block_new_positions"] is True
     assert status["system"]["public_status"] == "halted"
@@ -140,10 +142,51 @@ def test_build_public_status_falls_back_to_tracked_runtime_without_scorecard(tmp
 
     status = build_public_status(repo)
 
-    assert status["generated_at_et"] == "2026-04-03T14:33:34+00:00"
+    assert status["generated_at_et"] == "2026-04-03T14:33:35+00:00"
     assert status["paper"]["equity"] == 93990.30
     assert status["paper"]["total_pnl_today"] == -14.0
     assert "tracked broker sync" in status["narrative"]["summary"]
+
+
+def test_build_public_status_prefers_newer_scorecard_snapshot(tmp_path: Path):
+    repo = _seed_repo(tmp_path)
+    trades = json.loads((repo / "data/trades.json").read_text(encoding="utf-8"))
+    trades["meta"]["last_sync"] = "2026-04-03T14:20:00+00:00"
+    trades["stats"]["last_updated"] = "2026-04-03T14:20:00+00:00"
+    (repo / "data/trades.json").write_text(json.dumps(trades), encoding="utf-8")
+
+    runtime = json.loads((repo / "data/runtime/intraday_pnl_latest.json").read_text(encoding="utf-8"))
+    runtime["captured_at"] = "2026-04-03T14:30:00+00:00"
+    runtime["paper"]["equity"] = 93980.30
+    runtime["paper"]["daily_change"] = -9.0
+    runtime["paper"]["positions_count"] = 1
+    (repo / "data/runtime/intraday_pnl_latest.json").write_text(
+        json.dumps(runtime), encoding="utf-8"
+    )
+
+    scorecard = json.loads(
+        (repo / "artifacts/daily_scorecard/latest_daily_scorecard.json").read_text(encoding="utf-8")
+    )
+    scorecard["generated_at_et"] = "2026-04-03T10:33:34-04:00"
+    scorecard["paper"]["equity"] = 93990.30
+    scorecard["paper"]["total_pnl_today"] = -14.0
+    scorecard["paper"]["realized_pnl_today"] = -2.0
+    scorecard["paper"]["unrealized_pnl_today"] = -12.0
+    scorecard["paper"]["fills_today_count"] = 3
+    scorecard["paper"]["positions_count"] = 4
+    (repo / "artifacts/daily_scorecard/latest_daily_scorecard.json").write_text(
+        json.dumps(scorecard), encoding="utf-8"
+    )
+
+    status = build_public_status(repo)
+
+    assert status["generated_at_et"] == "2026-04-03T10:33:34-04:00"
+    assert status["paper"]["equity"] == 93990.30
+    assert status["paper"]["total_pnl_today"] == -14.0
+    assert status["paper"]["realized_pnl_today"] == -2.0
+    assert status["paper"]["unrealized_pnl_today"] == -12.0
+    assert status["paper"]["fills_today_count"] == 3
+    assert status["paper"]["positions_count"] == 4
 
 
 def test_build_public_status_fails_closed_when_weekly_gate_and_lifetime_ledger_conflict(
