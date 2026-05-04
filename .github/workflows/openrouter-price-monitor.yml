@@ -42,9 +42,17 @@ jobs:
             git add data/openrouter_pricing_baseline.json
             git commit -m "chore: update OpenRouter pricing baseline [auto]"
             git push -u origin "$BRANCH"
-            gh pr create \
+            PR_BODY="Automated OpenRouter pricing baseline update from run ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}."
+            if gh pr create \
               --base main \
               --head "$BRANCH" \
               --title "chore: update OpenRouter pricing baseline" \
-              --body "Automated OpenRouter pricing baseline update from run ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}."
+              --body "$PR_BODY"; then
+              echo "Created pricing baseline PR for $BRANCH"
+            else
+              echo "::warning::Could not create PR with GITHUB_TOKEN; update branch pushed: $BRANCH"
+              gh issue create \
+                --title "OpenRouter pricing baseline update ready" \
+                --body "$PR_BODY"$'\n\n'"Branch: $BRANCH" || true
+            fi
           fi
