@@ -74,6 +74,14 @@ jobs:
           python3 scripts/post_market_analysis.py || echo "⚠️ Post-market analysis failed"
           python3 scripts/update_north_star_operating_plan.py || echo "⚠️ North Star operating plan update failed"
 
+      - name: Restore IC-owned ledger before public surfaces
+        run: |
+          set -euo pipefail
+          # sync_closed_positions.py may refresh data/trades.json for learning, but
+          # Sync Alpaca does not own or commit that ledger. Public surfaces must be
+          # generated from committed inputs only.
+          git restore data/trades.json
+
       - name: Build public status surfaces
         env:
           ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
