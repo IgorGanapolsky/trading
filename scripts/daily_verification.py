@@ -41,6 +41,7 @@ class DailyReport(NamedTuple):
     last_equity: float
     starting_equity: float = 100000.0
 
+
 class LatestTrade(NamedTuple):
     date: Optional[str]
     symbol: Optional[str]
@@ -116,6 +117,7 @@ def _extract_latest_trade_from_orders(client: Any) -> Optional[LatestTrade]:
     """Best-effort latest fill lookup to keep last_trade_date fresh even if sync lagged."""
     from alpaca.trading.enums import QueryOrderStatus
     from alpaca.trading.requests import GetOrdersRequest
+
     from src.utils.trade_activity import parse_trade_timestamp
 
     try:
@@ -135,7 +137,9 @@ def _extract_latest_trade_from_orders(client: Any) -> Optional[LatestTrade]:
         symbol = getattr(order, "symbol", None)
         if not symbol:
             for leg in getattr(order, "legs", None) or []:
-                leg_symbol = leg.get("symbol") if isinstance(leg, dict) else getattr(leg, "symbol", None)
+                leg_symbol = (
+                    leg.get("symbol") if isinstance(leg, dict) else getattr(leg, "symbol", None)
+                )
                 if leg_symbol:
                     symbol = str(leg_symbol)
                     break
@@ -145,7 +149,9 @@ def _extract_latest_trade_from_orders(client: Any) -> Optional[LatestTrade]:
         else:
             filled_at = filled_at.astimezone(timezone.utc)
 
-        return LatestTrade(date=filled_at.date().isoformat(), symbol=str(symbol) if symbol else None)
+        return LatestTrade(
+            date=filled_at.date().isoformat(), symbol=str(symbol) if symbol else None
+        )
 
     return None
 

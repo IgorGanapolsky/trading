@@ -343,7 +343,9 @@ class PerplexityTradingIntelRunner:
             api_status = "dry_run"
 
         risk_score = round(
-            _clamp(sum(_safe_float(item.get("risk_score")) for item in results) / max(len(results), 1)),
+            _clamp(
+                sum(_safe_float(item.get("risk_score")) for item in results) / max(len(results), 1)
+            ),
             3,
         )
         recommendation = recommendation_for(risk_score, api_status)
@@ -372,9 +374,7 @@ class PerplexityTradingIntelRunner:
 
         return payload
 
-    async def _ask(
-        self, spec: QuerySpec, mode: str, context: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _ask(self, spec: QuerySpec, mode: str, context: dict[str, Any]) -> dict[str, Any]:
         if self.dry_run:
             answer = (
                 "Dry run: Perplexity API was not called. Local context was packaged for "
@@ -424,12 +424,7 @@ class PerplexityTradingIntelRunner:
         except Exception as exc:
             return self._format_result(spec, f"Perplexity API error: {exc}", [], "error")
 
-        answer = (
-            data.get("choices", [{}])[0]
-            .get("message", {})
-            .get("content", "")
-            .strip()
-        )
+        answer = data.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
         citations = data.get("citations", [])
         return self._format_result(spec, answer, citations, "ok")
 
@@ -452,7 +447,9 @@ class PerplexityTradingIntelRunner:
 
     def _decision_reason(self, recommendation: str, risk_score: float, api_status: str) -> str:
         if recommendation == "BLOCK_NEW_IC":
-            return f"Fresh Perplexity event/regime risk score {risk_score:.2f} blocks new IC entries."
+            return (
+                f"Fresh Perplexity event/regime risk score {risk_score:.2f} blocks new IC entries."
+            )
         if recommendation == "CAUTION":
             return f"Perplexity event/regime risk score {risk_score:.2f} requires caution."
         if recommendation == "CAUTION_API_UNAVAILABLE":
@@ -556,9 +553,7 @@ def render_ml_event(payload: dict[str, Any]) -> dict[str, Any]:
         "risk_score": payload.get("risk_score"),
         "recommendation": payload.get("recommendation"),
         "confidence": payload.get("confidence"),
-        "blocks_new_iron_condors": payload.get("gate_contract", {}).get(
-            "blocks_new_iron_condors"
-        ),
+        "blocks_new_iron_condors": payload.get("gate_contract", {}).get("blocks_new_iron_condors"),
         "equity": context.get("equity"),
         "win_rate_pct": context.get("win_rate_pct"),
         "profit_factor": context.get("profit_factor"),

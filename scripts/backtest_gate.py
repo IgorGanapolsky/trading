@@ -118,14 +118,16 @@ def simulate_with_params(
                 # Would have exited earlier at proposed target
                 sim_pnl = entry_credit * proposed_target
 
-        simulated_trades.append({
-            "id": trade.get("id", "unknown"),
-            "original_outcome": trade.get("outcome"),
-            "original_pnl": realized_pnl,
-            "simulated_outcome": sim_outcome,
-            "simulated_pnl": round(sim_pnl, 2),
-            "hold_hours": round(hold_hours, 1) if hold_hours else None,
-        })
+        simulated_trades.append(
+            {
+                "id": trade.get("id", "unknown"),
+                "original_outcome": trade.get("outcome"),
+                "original_pnl": realized_pnl,
+                "simulated_outcome": sim_outcome,
+                "simulated_pnl": round(sim_pnl, 2),
+                "hold_hours": round(hold_hours, 1) if hold_hours else None,
+            }
+        )
 
     return {
         "params": {
@@ -134,10 +136,12 @@ def simulate_with_params(
             "stop_loss_mult": stop_loss_mult,
         },
         "trades": simulated_trades,
-        "metrics": compute_metrics([
-            {"outcome": t["simulated_outcome"], "realized_pnl": t["simulated_pnl"]}
-            for t in simulated_trades
-        ]),
+        "metrics": compute_metrics(
+            [
+                {"outcome": t["simulated_outcome"], "realized_pnl": t["simulated_pnl"]}
+                for t in simulated_trades
+            ]
+        ),
     }
 
 
@@ -184,7 +188,9 @@ def main():
     parser.add_argument("--check", action="store_true", help="Run gate check")
     parser.add_argument("--proposed-hold-hours", type=float, default=24)
     parser.add_argument("--proposed-profit-target", type=float, default=IC_PROFIT_TARGET_PCT)
-    parser.add_argument("--proposed-stop-loss", type=float, default=IRON_CONDOR_STOP_LOSS_MULTIPLIER)
+    parser.add_argument(
+        "--proposed-stop-loss", type=float, default=IRON_CONDOR_STOP_LOSS_MULTIPLIER
+    )
     args = parser.parse_args()
 
     if not args.check:
@@ -202,7 +208,9 @@ def main():
 
     # Current performance
     current = compute_metrics(trades)
-    logger.info(f"Current: {current['total']} trades, {current['win_rate']:.1f}% WR, ${current['total_pnl']:.2f} P&L")
+    logger.info(
+        f"Current: {current['total']} trades, {current['win_rate']:.1f}% WR, ${current['total_pnl']:.2f} P&L"
+    )
 
     # Simulated performance
     sim = simulate_with_params(
@@ -212,7 +220,9 @@ def main():
         stop_loss_mult=args.proposed_stop_loss,
     )
     proposed = sim["metrics"]
-    logger.info(f"Proposed: {proposed['total']} trades, {proposed['win_rate']:.1f}% WR, ${proposed['total_pnl']:.2f} P&L")
+    logger.info(
+        f"Proposed: {proposed['total']} trades, {proposed['win_rate']:.1f}% WR, ${proposed['total_pnl']:.2f} P&L"
+    )
 
     # Gate check
     gate = check_gate(current, proposed)

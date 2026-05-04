@@ -139,7 +139,11 @@ class IronCondorStrategy:
         try:
             state = json.loads(SYSTEM_STATE_PATH.read_text(encoding="utf-8"))
         except Exception as exc:
-            return False, f"Could not read system_state.json: {exc}", {"path": str(SYSTEM_STATE_PATH)}
+            return (
+                False,
+                f"Could not read system_state.json: {exc}",
+                {"path": str(SYSTEM_STATE_PATH)},
+            )
 
         sync_health = state.get("sync_health") if isinstance(state, dict) else {}
         if not isinstance(sync_health, dict):
@@ -147,10 +151,14 @@ class IronCondorStrategy:
         last_sync_raw = sync_health.get("last_successful_sync")
         sync_time = self._parse_iso_datetime(last_sync_raw)
         if sync_time is None:
-            return False, "sync_health.last_successful_sync missing or invalid", {
-                "path": str(SYSTEM_STATE_PATH),
-                "last_successful_sync": last_sync_raw,
-            }
+            return (
+                False,
+                "sync_health.last_successful_sync missing or invalid",
+                {
+                    "path": str(SYSTEM_STATE_PATH),
+                    "last_successful_sync": last_sync_raw,
+                },
+            )
 
         now_utc = datetime.now(timezone.utc)
         age_hours = round((now_utc - sync_time).total_seconds() / 3600, 2)
@@ -1136,9 +1144,7 @@ def main():
     parser = argparse.ArgumentParser(description="Iron Condor Trader")
     parser.add_argument("--live", action="store_true", help="Execute LIVE trades on Alpaca")
     parser.add_argument("--dry-run", action="store_true", help="Dry run (simulate only)")
-    parser.add_argument(
-        "--symbol", type=str, default=None, help="Underlying symbol override"
-    )
+    parser.add_argument("--symbol", type=str, default=None, help="Underlying symbol override")
     parser.add_argument(
         "--force",
         action="store_true",
@@ -1308,7 +1314,9 @@ def main():
                 )
                 logger.warning(msg)
                 telemetry.update_ticker_decision(
-                    ticker, gate=2, status="REJECT",
+                    ticker,
+                    gate=2,
+                    status="REJECT",
                     rejection_reason=msg,
                     indicators={"regime": "unknown", "regime_id": snapshot.regime_id},
                 )
@@ -1320,12 +1328,14 @@ def main():
                 )
                 logger.warning(msg)
                 telemetry.update_ticker_decision(
-                    ticker, gate=2, status="REJECT",
+                    ticker,
+                    gate=2,
+                    status="REJECT",
                     rejection_reason=msg,
                     indicators={"regime": snapshot.label, "regime_id": snapshot.regime_id},
                 )
                 return {"success": False, "reason": msg}
-            if hasattr(snapshot, 'transition_prediction') and snapshot.transition_prediction:
+            if hasattr(snapshot, "transition_prediction") and snapshot.transition_prediction:
                 tp = snapshot.transition_prediction
                 if tp.transition_detected and tp.predicted_regime in ("volatile", "spike"):
                     msg = (
@@ -1351,7 +1361,9 @@ def main():
                     msg = f"IV Rank {iv_rank:.1f} < 20 — premium too cheap to sell iron condors"
                     logger.warning(msg)
                     telemetry.update_ticker_decision(
-                        ticker, gate=2, status="REJECT",
+                        ticker,
+                        gate=2,
+                        status="REJECT",
                         rejection_reason=msg,
                         indicators={"iv_rank": iv_rank},
                     )

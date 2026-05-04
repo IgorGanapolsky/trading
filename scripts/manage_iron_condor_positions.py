@@ -520,9 +520,7 @@ def main(dry_run: bool = False):
                 if close_iron_condor(client, orphan, "ORPHAN_CLEANUP", dry_run):
                     record_trade_outcome(orphan, "ORPHAN_CLEANUP", won=False)
             else:
-                logger.info(
-                    f"  Holding orphan — may be partial fill (age < {MIN_HOLD_HOURS}h)"
-                )
+                logger.info(f"  Holding orphan — may be partial fill (age < {MIN_HOLD_HOURS}h)")
 
     iron_condors = valid_condors
     logger.info(f"Valid iron condors: {len(iron_condors)}")

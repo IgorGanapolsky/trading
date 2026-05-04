@@ -191,6 +191,7 @@ def main():
     # Fetch brokerage account
     print("\n📊 Fetching BROKERAGE account...")
     from src.utils.alpaca_client import get_brokerage_client
+
     brokerage_client = get_brokerage_client()
     brokerage_data = None
     brokerage_positions = []

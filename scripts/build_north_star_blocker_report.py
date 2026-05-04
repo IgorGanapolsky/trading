@@ -187,7 +187,9 @@ def compute_report(
                     ),
                 )
             )
-            root_causes.append("Legacy ledger still blocks live/scaling; paper validation reset is active.")
+            root_causes.append(
+                "Legacy ledger still blocks live/scaling; paper validation reset is active."
+            )
 
         if _to_bool(weekly_gate.get("scale_blocked_by_cadence"), default=False):
             blockers.append(
@@ -298,12 +300,8 @@ def compute_report(
     probability = _to_float(north_star.get("probability_score"))
     probability_label = str(north_star.get("probability_label") or "unknown")
     recent_history = weekly_history[-8:]
-    allow_validation_entries = _to_bool(
-        weekly_gate.get("allow_validation_entries"), default=False
-    )
-    block_live_new_positions = _to_bool(
-        weekly_gate.get("block_live_new_positions"), default=False
-    )
+    allow_validation_entries = _to_bool(weekly_gate.get("allow_validation_entries"), default=False)
+    block_live_new_positions = _to_bool(weekly_gate.get("block_live_new_positions"), default=False)
     block_new_positions = _to_bool(weekly_gate.get("block_new_positions"), default=False)
     lifetime_ledger = (
         weekly_gate.get("lifetime_ledger", {})
@@ -325,9 +323,7 @@ def compute_report(
     if block_new_positions:
         action_lane_summary = "All new risk-on entries are blocked."
     elif allow_validation_entries and block_live_new_positions:
-        action_lane_summary = (
-            "Controlled paper validation entries are allowed; live trading and scale-up remain blocked."
-        )
+        action_lane_summary = "Controlled paper validation entries are allowed; live trading and scale-up remain blocked."
     elif block_live_new_positions:
         action_lane_summary = "Live trading and scale-up remain blocked."
     else:

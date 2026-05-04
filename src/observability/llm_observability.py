@@ -64,9 +64,7 @@ class LLMObservabilityReport:
 
 def build_llm_observability_report() -> LLMObservabilityReport:
     """Summarize how this process routes OpenRouter-compatible traffic."""
-    input_output_logging_declared = _is_truthy(
-        os.getenv("OPENROUTER_INPUT_OUTPUT_LOGGING_ENABLED")
-    )
+    input_output_logging_declared = _is_truthy(os.getenv("OPENROUTER_INPUT_OUTPUT_LOGGING_ENABLED"))
     gateway_base_url = get_llm_gateway_base_url()
     gateway_api_key_present = bool(get_llm_gateway_api_key())
     openrouter_api_key_present = bool((os.getenv("OPENROUTER_API_KEY") or "").strip())
@@ -96,15 +94,11 @@ def build_llm_observability_report() -> LLMObservabilityReport:
 
     primary_base_url = primary_cfg.base_url or OPENROUTER_BASE_URL
     primary_route = (
-        "direct_openrouter"
-        if _same_base_url(primary_base_url, OPENROUTER_BASE_URL)
-        else "gateway"
+        "direct_openrouter" if _same_base_url(primary_base_url, OPENROUTER_BASE_URL) else "gateway"
     )
     fallback_base_host = _host(getattr(fallback_cfg, "base_url", None) if fallback_cfg else None)
     warnings: list[str] = []
-    notes = [
-        "Critical trade execution still routes via Anthropic and is outside OpenRouter logs."
-    ]
+    notes = ["Critical trade execution still routes via Anthropic and is outside OpenRouter logs."]
 
     if not primary_cfg.api_key:
         warnings.append("No OpenRouter-compatible API key resolved for the primary route.")
@@ -114,9 +108,7 @@ def build_llm_observability_report() -> LLMObservabilityReport:
             warnings.append(
                 "Direct OpenRouter routing is active, but OPENROUTER_INPUT_OUTPUT_LOGGING_ENABLED is not declared."
             )
-        summary = (
-            "Direct OpenRouter routing active; compatible requests can appear in OpenRouter private logs."
-        )
+        summary = "Direct OpenRouter routing active; compatible requests can appear in OpenRouter private logs."
     else:
         gateway_host = _host(primary_base_url)
         warnings.append(
@@ -131,12 +123,12 @@ def build_llm_observability_report() -> LLMObservabilityReport:
             notes.append(
                 "The OpenRouter logging declaration only applies to fallback traffic while the gateway is primary."
             )
-        summary = (
-            "Gateway routing active; OpenRouter private logs are subset-only and do not cover primary traffic."
-        )
+        summary = "Gateway routing active; OpenRouter private logs are subset-only and do not cover primary traffic."
 
     if not openrouter_api_key_present:
-        warnings.append("OPENROUTER_API_KEY is absent; direct OpenRouter fallback/logging is unavailable.")
+        warnings.append(
+            "OPENROUTER_API_KEY is absent; direct OpenRouter fallback/logging is unavailable."
+        )
 
     status = "ok" if not warnings else "warning"
     return LLMObservabilityReport(

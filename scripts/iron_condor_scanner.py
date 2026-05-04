@@ -32,6 +32,7 @@ from zoneinfo import ZoneInfo
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
+
 from src.core.trading_constants import (
     IRON_CONDOR_TARGET_DELTA,
     IRON_CONDOR_UNDERLYING,
@@ -325,8 +326,10 @@ def estimate_credit(strikes: dict) -> dict:
         from src.markets.option_chain import get_live_premium
 
         live_credit = get_live_premium(
-            strikes["short_put"], strikes["long_put"],
-            strikes["short_call"], strikes["long_call"],
+            strikes["short_put"],
+            strikes["long_put"],
+            strikes["short_call"],
+            strikes["long_call"],
         )
         if live_credit and live_credit > 0:
             max_risk = (WING_WIDTH * 100) - (live_credit * 100)

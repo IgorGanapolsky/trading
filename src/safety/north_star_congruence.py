@@ -159,11 +159,7 @@ def assess_gate_congruence(
 
     readiness_claimed = bool(
         weekly_verified
-        or (
-            block_new_positions_present
-            and not block_new_positions
-            and not validation_reset_active
-        )
+        or (block_new_positions_present and not block_new_positions and not validation_reset_active)
         or weekly_mode == "expansion_candidate"
     )
 

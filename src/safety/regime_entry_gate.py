@@ -98,7 +98,6 @@ def evaluate_regime_entry(
         allowed=True,
         level="pass",
         reason=(
-            f"REGIME PASS: {label} "
-            f"(id={regime_id}, conf={confidence:.2f}, VIX={vix_level:.1f})."
+            f"REGIME PASS: {label} (id={regime_id}, conf={confidence:.2f}, VIX={vix_level:.1f})."
         ),
     )

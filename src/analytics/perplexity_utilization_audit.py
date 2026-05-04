@@ -41,9 +41,8 @@ def _scan_file(path: Path, repo_root: Path) -> dict[str, Any] | None:
     models = sorted(set(re.findall(r"\bsonar(?:-[a-z]+)*\b", text)))
     path_label = str(path.relative_to(repo_root))
     playground_reference = (
-        ("console.perplexity.ai/group" in lowered or "agent-playground" in lowered)
-        and not path_label.endswith("perplexity_utilization_audit.py")
-    )
+        "console.perplexity.ai/group" in lowered or "agent-playground" in lowered
+    ) and not path_label.endswith("perplexity_utilization_audit.py")
 
     return {
         "path": path_label,
@@ -81,11 +80,7 @@ def build_perplexity_usage_snapshot(
     """Build a machine-readable Perplexity utilization snapshot."""
 
     root = Path.cwd().resolve() if repo_root is None else Path(repo_root).resolve()
-    matches = [
-        match
-        for path in _iter_scannable_files(root)
-        if (match := _scan_file(path, root))
-    ]
+    matches = [match for path in _iter_scannable_files(root) if (match := _scan_file(path, root))]
 
     workflow_matches = [item for item in matches if item["path"].startswith(".github/workflows/")]
     source_matches = [item for item in matches if item["path"].startswith("src/")]
@@ -97,7 +92,9 @@ def build_perplexity_usage_snapshot(
         gaps.append("local_runtime_missing_perplexity_credential")
     if missing_expected:
         gaps.append("missing_high_roi_files")
-    if not any(item["path"] == ".github/workflows/perplexity-trading-intel.yml" for item in matches):
+    if not any(
+        item["path"] == ".github/workflows/perplexity-trading-intel.yml" for item in matches
+    ):
         gaps.append("missing_24_7_trading_intel_workflow")
     if not any(item["path"] == "src/analytics/perplexity_trading_intel.py" for item in matches):
         gaps.append("missing_structured_trading_intel_engine")

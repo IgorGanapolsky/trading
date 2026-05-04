@@ -30,7 +30,8 @@ def main():
 
     # Filter validation-phase entries
     validation_entries = {
-        k: v for k, v in entries.items()
+        k: v
+        for k, v in entries.items()
         if v.get("validation_phase") or v.get("date", "") >= "2026-04-10"
     }
 
@@ -67,7 +68,11 @@ def main():
         try:
             expiry_str = key.replace("IC_", "")
             exp_date = date(2000 + int(expiry_str[:2]), int(expiry_str[2:4]), int(expiry_str[4:6]))
-            entry_dt = datetime.fromisoformat(entry_date).date() if entry_date != "unknown" else date.today()
+            entry_dt = (
+                datetime.fromisoformat(entry_date).date()
+                if entry_date != "unknown"
+                else date.today()
+            )
             dte_at_entry = (exp_date - entry_dt).days
         except (ValueError, TypeError):
             dte_at_entry = "?"
@@ -97,7 +102,9 @@ def main():
                     ).total_seconds() / 3600
                     hold_time = f"{hold_hours:.1f}h"
                     if hold_hours < 24:
-                        violations.append(f"Trade {trade_num}: held {hold_hours:.1f}h < 24h minimum")
+                        violations.append(
+                            f"Trade {trade_num}: held {hold_hours:.1f}h < 24h minimum"
+                        )
                 except (ValueError, TypeError):
                     hold_time = "?"
 
@@ -140,7 +147,8 @@ def main():
 
     # Expectancy summary for closed trades
     closed_validation = [
-        t for t in closed_trades
+        t
+        for t in closed_trades
         if t.get("validation_phase") or t.get("entry_date", "") >= "2026-04-10"
     ]
     if closed_validation:

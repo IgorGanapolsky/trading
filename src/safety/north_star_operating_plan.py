@@ -1223,7 +1223,9 @@ def compute_weekly_gate(
     for idx, row in enumerate(weekly_history):
         if str(row.get("week_start")) != week_start_iso:
             continue
-        final_unchanged = all(row.get(key) == value for key, value in final_weekly_entry_fields.items())
+        final_unchanged = all(
+            row.get(key) == value for key, value in final_weekly_entry_fields.items()
+        )
         if not final_unchanged:
             weekly_history[idx] = {
                 **row,

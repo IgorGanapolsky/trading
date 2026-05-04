@@ -209,6 +209,7 @@ class MirascopeTradingClient:
                 extra_headers = {}
                 if self.provider == LLMProvider.OPENROUTER:
                     from src.utils.llm_gateway import OPENROUTER_HEADERS
+
                     extra_headers = OPENROUTER_HEADERS
 
                 self._openai_client = OpenAI(

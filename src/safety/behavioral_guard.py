@@ -161,7 +161,9 @@ class BehavioralGuard:
         if not matching_losses:
             return None
 
-        matching_losses.sort(key=lambda row: str(row.get("exit_time") or row.get("exit_date") or ""))
+        matching_losses.sort(
+            key=lambda row: str(row.get("exit_time") or row.get("exit_date") or "")
+        )
         latest = matching_losses[-1]
         latest_exit = str(latest.get("exit_time") or latest.get("exit_date") or "unknown time")
         latest_pnl = latest.get("realized_pnl")

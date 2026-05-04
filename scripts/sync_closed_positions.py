@@ -933,7 +933,9 @@ def _normalize_entry_provenance_records(raw_entries: Any) -> list[dict[str, Any]
         record = dict(value)
         record["_key"] = str(key)
         record["signature"] = str(record.get("signature") or "").strip()
-        record["expiry"] = str(record.get("expiry") or _expiry_from_entry_key(str(key)) or "").strip()
+        record["expiry"] = str(
+            record.get("expiry") or _expiry_from_entry_key(str(key)) or ""
+        ).strip()
         entry_ts = _parse_dt(record.get("entry_time") or record.get("date"))
         record["_entry_ts"] = entry_ts
         records.append(record)

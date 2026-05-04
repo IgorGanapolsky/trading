@@ -29,9 +29,7 @@ PROJECT_DIR = Path(__file__).parent.parent.parent
 DATA_DIR = PROJECT_DIR / "data"
 WORKFLOW_STATE_DIR = DATA_DIR / "workflow_state"
 WORKFLOW_STATE_DIR.mkdir(parents=True, exist_ok=True)
-PERPLEXITY_TRADING_INTEL_PATH = (
-    DATA_DIR / "analysis" / "perplexity" / "trading_intel_latest.json"
-)
+PERPLEXITY_TRADING_INTEL_PATH = DATA_DIR / "analysis" / "perplexity" / "trading_intel_latest.json"
 
 
 @dataclass

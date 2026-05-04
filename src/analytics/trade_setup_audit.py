@@ -134,7 +134,12 @@ def _profit_factor(gross_profit: float, gross_loss: float) -> float | None:
 def _structure_family(legs: dict[str, Any]) -> str:
     puts = legs.get("put_strikes") if isinstance(legs, dict) else None
     calls = legs.get("call_strikes") if isinstance(legs, dict) else None
-    if not isinstance(puts, list) or not isinstance(calls, list) or len(puts) != 2 or len(calls) != 2:
+    if (
+        not isinstance(puts, list)
+        or not isinstance(calls, list)
+        or len(puts) != 2
+        or len(calls) != 2
+    ):
         return "unknown"
     try:
         short_put = int(max(float(puts[0]), float(puts[1])))
@@ -262,11 +267,15 @@ def _collapse_rows_into_setups(rows: list[dict[str, Any]]) -> list[dict[str, Any
     for setup_rows in grouped.values():
         entry_row = min(
             setup_rows,
-            key=lambda row: (row.get("entry_dt") or datetime.max.replace(tzinfo=timezone.utc)),
+            key=lambda row: row.get("entry_dt") or datetime.max.replace(tzinfo=timezone.utc),
         )
         exit_row = max(
             setup_rows,
-            key=lambda row: (row.get("exit_dt") or row.get("entry_dt") or datetime.min.replace(tzinfo=timezone.utc)),
+            key=lambda row: (
+                row.get("exit_dt")
+                or row.get("entry_dt")
+                or datetime.min.replace(tzinfo=timezone.utc)
+            ),
         )
         entry_dt = entry_row.get("entry_dt")
         exit_dt = exit_row.get("exit_dt") or entry_dt
@@ -346,7 +355,9 @@ def _bucketize_setups(
     return rows
 
 
-def _sort_bucket_rows(bucket_rows: list[dict[str, Any]], *, bucket_type: str) -> list[dict[str, Any]]:
+def _sort_bucket_rows(
+    bucket_rows: list[dict[str, Any]], *, bucket_type: str
+) -> list[dict[str, Any]]:
     if bucket_type == "hold_bucket":
         order = _HOLD_BUCKET_ORDER
         return sorted(bucket_rows, key=lambda row: order.get(str(row.get("bucket")), 999))
@@ -417,9 +428,15 @@ def _scan_delta_provenance(repo_root: Path, rows: list[dict[str, Any]]) -> dict[
     ledger_rows_with_selection_method = 0
     for row in rows:
         raw = row.get("raw") if isinstance(row.get("raw"), dict) else {}
-        if any(raw.get(field) not in (None, "", []) for field in ("put_delta", "call_delta", "short_delta")):
+        if any(
+            raw.get(field) not in (None, "", [])
+            for field in ("put_delta", "call_delta", "short_delta")
+        ):
             ledger_rows_with_actual_delta += 1
-        if any(raw.get(field) not in (None, "", []) for field in ("selection_method", "strike_selection_method")):
+        if any(
+            raw.get(field) not in (None, "", [])
+            for field in ("selection_method", "strike_selection_method")
+        ):
             ledger_rows_with_selection_method += 1
 
     trajectory_file = repo_root / "data" / "feedback" / "trade_trajectories.jsonl"
@@ -441,7 +458,9 @@ def _scan_delta_provenance(repo_root: Path, rows: list[dict[str, Any]]) -> dict[
                     if str(event.get("event_type") or "").lower() != "outcome":
                         continue
                     outcome_events += 1
-                    metadata = event.get("metadata") if isinstance(event.get("metadata"), dict) else {}
+                    metadata = (
+                        event.get("metadata") if isinstance(event.get("metadata"), dict) else {}
+                    )
                     if any(
                         metadata.get(field) not in (None, "", [])
                         or event.get(field) not in (None, "", [])
@@ -615,7 +634,11 @@ def build_trade_setup_audit(repo_root: Path, *, now: datetime | None = None) -> 
             if isinstance(payload.get("meta"), dict)
             else None
         )
-        or (payload.get("stats", {}).get("last_updated") if isinstance(payload.get("stats"), dict) else None),
+        or (
+            payload.get("stats", {}).get("last_updated")
+            if isinstance(payload.get("stats"), dict)
+            else None
+        ),
         "setup_key_definition": "signature + exact entry_time",
         "row_level": {
             **row_summary,
@@ -627,9 +650,13 @@ def build_trade_setup_audit(repo_root: Path, *, now: datetime | None = None) -> 
             "partial_exit_groups": partial_exit_groups,
             "partial_exit_extra_rows": partial_exit_extra_rows,
             "same_day_setups": len(same_day_setups),
-            "same_day_setup_pct": round((len(same_day_setups) / len(setups)) * 100, 2) if setups else 0.0,
+            "same_day_setup_pct": round((len(same_day_setups) / len(setups)) * 100, 2)
+            if setups
+            else 0.0,
             "under_1h_setups": len(under_1h_setups),
-            "under_1h_setup_pct": round((len(under_1h_setups) / len(setups)) * 100, 2) if setups else 0.0,
+            "under_1h_setup_pct": round((len(under_1h_setups) / len(setups)) * 100, 2)
+            if setups
+            else 0.0,
         },
         "top_findings": top_findings,
         "hold_time_breakdown": hold_rows,
@@ -642,7 +669,9 @@ def build_trade_setup_audit(repo_root: Path, *, now: datetime | None = None) -> 
         "structure_family_breakdown": family_rows[:15],
         "same_day_signature_clusters": same_day_signature_clusters[:15],
         "duplicate_setup_groups": duplicate_setup_rows,
-        "worst_setups": sorted(setups, key=lambda setup: _safe_float(setup.get("realized_pnl"), 0.0))[:10],
+        "worst_setups": sorted(
+            setups, key=lambda setup: _safe_float(setup.get("realized_pnl"), 0.0)
+        )[:10],
         "best_setups": sorted(
             setups,
             key=lambda setup: _safe_float(setup.get("realized_pnl"), 0.0),

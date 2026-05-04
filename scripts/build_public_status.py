@@ -108,9 +108,8 @@ def _blocker_reason(weekly: dict[str, Any], congruence: dict[str, Any]) -> Any:
         return quarantine.get("reason") or quarantine.get("required_action")
     if congruence["contradiction_reason"]:
         return congruence["contradiction_reason"]
-    if (
-        _weekly_claims_readiness(weekly)
-        and not bool(congruence["lifetime_ledger"]["edge_confirmed"])
+    if _weekly_claims_readiness(weekly) and not bool(
+        congruence["lifetime_ledger"]["edge_confirmed"]
     ):
         return (
             "CRITICAL: Weekly gate claims readiness before the lifetime paired-trade "

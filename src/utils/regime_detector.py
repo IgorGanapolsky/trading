@@ -292,7 +292,9 @@ class RegimeDetector:
                         "Using fresh cached regime data for missing live VIX/VVIX field(s)"
                     )
                 else:
-                    logger.warning("VIX/VVIX latest close is invalid; regime detection fails closed")
+                    logger.warning(
+                        "VIX/VVIX latest close is invalid; regime detection fails closed"
+                    )
                     return self._fallback_snapshot()
 
             if live_vix is not None and live_vvix is not None:
@@ -301,7 +303,9 @@ class RegimeDetector:
             # Calculate skew percentile (VVIX relative to VIX)
             skew_ratio = vvix / vix
             # Historical percentile of skew ratio
-            hist_skew = (closes["^VVIX"] / closes["^VIX"]).replace([np.inf, -np.inf], np.nan).dropna()
+            hist_skew = (
+                (closes["^VVIX"] / closes["^VIX"]).replace([np.inf, -np.inf], np.nan).dropna()
+            )
             if len(hist_skew) > 10:
                 skew_percentile = (hist_skew < skew_ratio).mean() * 100
             else:

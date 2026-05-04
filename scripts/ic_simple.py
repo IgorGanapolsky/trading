@@ -370,7 +370,9 @@ def check_exits(client):
                     logger.info(f"IC {expiry}: held {hours:.1f}h < {MIN_HOLD_HOURS}h. Hold.")
                     continue
             except (ValueError, TypeError):
-                logger.warning(f"IC {expiry}: unparseable entry_date '{entry_date}'. Hold (safety).")
+                logger.warning(
+                    f"IC {expiry}: unparseable entry_date '{entry_date}'. Hold (safety)."
+                )
                 continue
         else:
             # Unknown entry date — hold by default (don't exit blind)
@@ -551,6 +553,7 @@ def _record_lesson(expiry: str, credit: float, pnl: float, reason: str, dte: int
         # Refresh singleton so next query in this session sees the new lesson
         try:
             from src.rag.lessons_search import get_lessons_search
+
             get_lessons_search(refresh=True)
         except Exception:
             pass
@@ -650,9 +653,7 @@ def _load_lifetime_ledger_summary() -> dict:
     losses = _as_report_int(stats.get("losses"))
     win_rate = _as_report_float(stats.get("win_rate_pct"))
     profit_factor = _as_report_float(stats.get("profit_factor"))
-    total_realized = _as_report_float(
-        stats.get("total_realized_pnl", stats.get("total_pnl"))
-    )
+    total_realized = _as_report_float(stats.get("total_realized_pnl", stats.get("total_pnl")))
     expectancy = round(total_realized / closed, 4) if closed else 0.0
 
     return {
@@ -1083,9 +1084,7 @@ def _allows_controlled_paper_validation_entry() -> bool:
 
 def _should_skip_for_thompson(confidence: float) -> tuple[bool, str]:
     if confidence >= THOMPSON_MIN_CONFIDENCE:
-        return False, (
-            f"Thompson confidence {confidence:.3f} >= {THOMPSON_MIN_CONFIDENCE:.2f}"
-        )
+        return False, (f"Thompson confidence {confidence:.3f} >= {THOMPSON_MIN_CONFIDENCE:.2f}")
     if _allows_controlled_paper_validation_entry():
         return False, (
             f"Thompson confidence {confidence:.3f} < {THOMPSON_MIN_CONFIDENCE:.2f}, "
@@ -1389,7 +1388,7 @@ def main():
                     f"Iron condors require calm/low-trend markets."
                 )
                 regime_blocked = True
-            elif hasattr(snapshot, 'transition_prediction') and snapshot.transition_prediction:
+            elif hasattr(snapshot, "transition_prediction") and snapshot.transition_prediction:
                 tp = snapshot.transition_prediction
                 if tp.transition_detected and tp.predicted_regime in ("volatile", "spike"):
                     logger.warning(
@@ -1423,7 +1422,9 @@ def main():
         # BROKER SYNC FRESHNESS GATE: no entry if sync is stale (>2h)
         sync_blocked = False
         try:
-            ss = json.loads((Path(__file__).parent.parent / "data" / "system_state.json").read_text())
+            ss = json.loads(
+                (Path(__file__).parent.parent / "data" / "system_state.json").read_text()
+            )
             last_sync = ss.get("sync_health", {}).get("last_successful_sync", "")
             if last_sync:
                 sync_dt = datetime.fromisoformat(last_sync.replace("+00:00", ""))

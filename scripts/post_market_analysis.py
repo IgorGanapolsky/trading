@@ -118,7 +118,9 @@ def update_regime_thompson_samplers(trades_data: dict, model: dict) -> dict:
         }
 
         if total > 0:
-            logger.info(f"  {regime:10s}: {stats['wins']}W/{stats['losses']}L = {win_rate:.1f}% {'✅' if win_rate >= 50 else '❌'}")
+            logger.info(
+                f"  {regime:10s}: {stats['wins']}W/{stats['losses']}L = {win_rate:.1f}% {'✅' if win_rate >= 50 else '❌'}"
+            )
         else:
             logger.info(f"  {regime:10s}: no trades")
 
@@ -146,15 +148,21 @@ def generate_next_day_plan(model: dict, research: dict) -> dict:
         "regime_allows_trading": should_trade,
         "research_allows_trading": research_says_trade,
         "global_gate_open": global_gate_open,
-        "action": "TRADE" if (should_trade and research_says_trade and global_gate_open) else "HOLD",
+        "action": "TRADE"
+        if (should_trade and research_says_trade and global_gate_open)
+        else "HOLD",
         "suggested_delta": research.get("recommendations", {}).get("suggested_delta", 15),
-        "suggested_profit_target": research.get("recommendations", {}).get("suggested_profit_target", 0.50),
+        "suggested_profit_target": research.get("recommendations", {}).get(
+            "suggested_profit_target", 0.50
+        ),
     }
 
     if plan["action"] == "HOLD":
         reasons = []
         if not should_trade:
-            reasons.append(f"Regime '{current_regime}' win rate {win_rate:.0f}% (need 50%+, {total} trades)")
+            reasons.append(
+                f"Regime '{current_regime}' win rate {win_rate:.0f}% (need 50%+, {total} trades)"
+            )
         if not research_says_trade:
             reasons.append("Research says avoid (VIX regime unfavorable)")
         if not global_gate_open:
@@ -193,7 +201,7 @@ def main(dry_run: bool = False):
     else:
         logger.info(f"  Regime: {plan['current_regime']}")
         logger.info(f"  Delta: {plan['suggested_delta']}")
-        logger.info(f"  Profit target: {plan['suggested_profit_target']*100:.0f}%")
+        logger.info(f"  Profit target: {plan['suggested_profit_target'] * 100:.0f}%")
 
     # 4. Save
     if not dry_run:

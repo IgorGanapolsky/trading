@@ -108,8 +108,7 @@ def get_guard_context(
     state = _load_state(state_path)
     override_requested = _truthy(os.getenv("NORTH_STAR_GUARD_OVERRIDE", ""))
     override_confirmed = (
-        os.getenv("NORTH_STAR_GUARD_OVERRIDE_CONFIRM", "").strip().lower()
-        == "manual-risk-accepted"
+        os.getenv("NORTH_STAR_GUARD_OVERRIDE_CONFIRM", "").strip().lower() == "manual-risk-accepted"
     )
 
     paper_account = state.get("paper_account", {}) if isinstance(state, dict) else {}
@@ -233,7 +232,10 @@ def get_guard_context(
                 f"Weekly gate ({weekly_mode}) caps max position size at {weekly_limit * 100:.1f}%."
             )
 
-        if _to_bool(weekly_gate.get("block_new_positions"), default=False) and not validation_reset_active:
+        if (
+            _to_bool(weekly_gate.get("block_new_positions"), default=False)
+            and not validation_reset_active
+        ):
             block_new_positions = True
             weekly_reason = str(weekly_gate.get("reason") or "").strip()
             if weekly_reason:
