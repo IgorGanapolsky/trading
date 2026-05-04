@@ -26,6 +26,12 @@ def _load_json(path: Path, default: dict[str, Any] | None = None) -> dict[str, A
         return dict(default or {})
 
 
+def _load_scorecard(repo_root: Path) -> dict[str, Any]:
+    if (repo_root / ".git").exists():
+        return {}
+    return _load_json(repo_root / "artifacts/daily_scorecard/latest_daily_scorecard.json")
+
+
 def _fmt_money(value: Any) -> str:
     try:
         return f"${float(value):,.2f}"
@@ -186,7 +192,7 @@ def build_public_status(repo_root: Path) -> dict[str, Any]:
     runtime = _load_json(repo_root / "data/runtime/intraday_pnl_latest.json")
     state = _load_json(repo_root / "data/system_state.json")
     trades = _load_json(repo_root / "data/trades.json")
-    scorecard = _load_json(repo_root / "artifacts/daily_scorecard/latest_daily_scorecard.json")
+    scorecard = _load_scorecard(repo_root)
 
     runtime_paper = runtime.get("paper", {})
     runtime_live = runtime.get("live", {})

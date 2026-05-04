@@ -148,6 +148,28 @@ def test_build_public_status_falls_back_to_tracked_runtime_without_scorecard(tmp
     assert "tracked broker sync" in status["narrative"]["summary"]
 
 
+def test_build_public_status_ignores_untracked_scorecard_in_git_checkout(tmp_path: Path):
+    repo = _seed_repo(tmp_path)
+    (repo / ".gitignore").write_text("artifacts/**\n", encoding="utf-8")
+    subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+
+    scorecard_path = repo / "artifacts/daily_scorecard/latest_daily_scorecard.json"
+    scorecard = json.loads(scorecard_path.read_text(encoding="utf-8"))
+    scorecard["generated_at_et"] = "2026-04-03T11:00:00-04:00"
+    scorecard["paper"]["equity"] = 1.0
+    scorecard["paper"]["total_pnl_today"] = 2.0
+    scorecard["paper"]["realized_pnl_today"] = 3.0
+    scorecard["paper"]["fills_today_count"] = 4
+    scorecard_path.write_text(json.dumps(scorecard), encoding="utf-8")
+
+    status = build_public_status(repo)
+
+    assert status["paper"]["equity"] == 93990.30
+    assert status["paper"]["total_pnl_today"] == -14.0
+    assert status["paper"]["realized_pnl_today"] is None
+    assert status["paper"]["fills_today_count"] is None
+
+
 def test_build_public_status_prefers_newer_scorecard_snapshot(tmp_path: Path):
     repo = _seed_repo(tmp_path)
     trades = json.loads((repo / "data/trades.json").read_text(encoding="utf-8"))
