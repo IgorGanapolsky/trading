@@ -1,71 +1,54 @@
 {
-  "run_id": "pilot-20260223T033628Z",
-  "generated_at_utc": "2026-02-23T03:36:30.185201Z",
+  "run_id": "pilot-20260504T214658Z",
+  "generated_at_utc": "2026-05-04T21:46:58.698953Z",
   "tasks": [
     {
       "task_id": "gh_pages_home",
       "url": "https://igorganapolsky.github.io/trading/",
       "prompt": "Open the AI Trading Journey home page and confirm the site is reachable.",
       "expected_text": "AI Trading Journey",
-      "tags": [
-        "publishing",
-        "github-pages"
-      ]
+      "tags": ["publishing", "github-pages"]
     },
     {
       "task_id": "rag_query_page",
       "url": "https://igorganapolsky.github.io/trading/rag-query/",
       "prompt": "Open the RAG query page and verify the dashboard UI loads.",
       "expected_text": "RAG Knowledge Base",
-      "tags": [
-        "rag",
-        "dashboard"
-      ]
+      "tags": ["rag", "dashboard"]
     },
     {
       "task_id": "devto_profile",
       "url": "https://dev.to/igorganapolsky",
       "prompt": "Open the Dev.to profile feed and confirm profile content is visible.",
       "expected_text": "igorganapolsky",
-      "tags": [
-        "publishing",
-        "devto"
-      ]
+      "tags": ["publishing", "devto"]
     },
     {
       "task_id": "x_profile",
       "url": "https://x.com/IgorGanapolsky",
       "prompt": "Open the X profile page and verify profile metadata can be read.",
       "expected_text": "Igor Ganapolsky",
-      "tags": [
-        "publishing",
-        "x"
-      ]
+      "tags": ["publishing", "x"]
     },
     {
       "task_id": "linkedin_profile",
       "url": "https://www.linkedin.com/in/igorganapolsky/",
       "prompt": "Open the LinkedIn profile page and verify the profile shell is reachable.",
       "expected_text": "LinkedIn",
-      "tags": [
-        "publishing",
-        "linkedin"
-      ]
+      "tags": ["publishing", "linkedin"]
     }
   ],
-  "providers": [
-    "local"
-  ],
+  "providers": ["local"],
   "runs_per_task": 1,
   "results": [
     {
       "provider": "local",
       "task_id": "gh_pages_home",
       "run_index": 1,
-      "status": "success",
-      "detail": "HTTP fetch check passed.",
-      "started_at_utc": "2026-02-23T03:36:28.456345Z",
-      "latency_ms": 613.664,
+      "status": "failed",
+      "detail": "Expected text not found.",
+      "started_at_utc": "2026-05-04T21:46:58.072143Z",
+      "latency_ms": 110.841,
       "retries": 0,
       "http_status": 200,
       "cost_usd": 0.0
@@ -74,12 +57,12 @@
       "provider": "local",
       "task_id": "rag_query_page",
       "run_index": 1,
-      "status": "success",
-      "detail": "HTTP fetch check passed.",
-      "started_at_utc": "2026-02-23T03:36:29.070447Z",
-      "latency_ms": 100.956,
+      "status": "failed",
+      "detail": "HTTP 404",
+      "started_at_utc": "2026-05-04T21:46:58.183747Z",
+      "latency_ms": 49.66,
       "retries": 0,
-      "http_status": 200,
+      "http_status": 404,
       "cost_usd": 0.0
     },
     {
@@ -88,8 +71,8 @@
       "run_index": 1,
       "status": "success",
       "detail": "HTTP fetch check passed.",
-      "started_at_utc": "2026-02-23T03:36:29.171790Z",
-      "latency_ms": 78.249,
+      "started_at_utc": "2026-05-04T21:46:58.234273Z",
+      "latency_ms": 48.754,
       "retries": 0,
       "http_status": 200,
       "cost_usd": 0.0
@@ -98,10 +81,10 @@
       "provider": "local",
       "task_id": "x_profile",
       "run_index": 1,
-      "status": "failed",
-      "detail": "Expected text not found.",
-      "started_at_utc": "2026-02-23T03:36:29.250452Z",
-      "latency_ms": 156.684,
+      "status": "success",
+      "detail": "HTTP fetch check passed.",
+      "started_at_utc": "2026-05-04T21:46:58.283738Z",
+      "latency_ms": 234.276,
       "retries": 0,
       "http_status": 200,
       "cost_usd": 0.0
@@ -111,11 +94,11 @@
       "task_id": "linkedin_profile",
       "run_index": 1,
       "status": "failed",
-      "detail": "HTTP 999",
-      "started_at_utc": "2026-02-23T03:36:29.407545Z",
-      "latency_ms": 777.276,
+      "detail": "HTTP 404",
+      "started_at_utc": "2026-05-04T21:46:58.518961Z",
+      "latency_ms": 179.08,
       "retries": 0,
-      "http_status": 999,
+      "http_status": 404,
       "cost_usd": 0.0
     }
   ],
@@ -123,11 +106,11 @@
     "local": {
       "runs_total": 5,
       "attempted": 5,
-      "success": 3,
-      "failed": 2,
+      "success": 2,
+      "failed": 3,
       "skipped": 0,
-      "success_rate": 0.6,
-      "avg_latency_ms": 345.3658,
+      "success_rate": 0.4,
+      "avg_latency_ms": 124.5222,
       "avg_retries": 0.0,
       "cost_usd_total": 0.0,
       "cost_per_success_usd": 0.0
