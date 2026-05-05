@@ -119,6 +119,7 @@ def compute_report(
     state: dict[str, Any],
     weekly_history: list[dict[str, Any]],
     halt_exists: bool,
+    halt_reason: str = "",
     now_utc: datetime,
 ) -> dict[str, Any]:
     meta = state.get("meta", {}) if isinstance(state.get("meta"), dict) else {}
@@ -137,8 +138,36 @@ def compute_report(
     blockers: list[Blocker] = []
     warnings: list[Blocker] = []
     root_causes: list[str] = []
+    validation_reset_active = bool(
+        str(weekly_gate.get("mode") or "").strip().lower() == "validation_reset"
+        and _to_bool(weekly_gate.get("allow_validation_entries"), default=False)
+        and _to_bool(weekly_gate.get("block_live_new_positions"), default=False)
+        and not _to_bool(weekly_gate.get("block_new_positions"), default=False)
+    )
+    ml_halt_allows_validation = bool(
+        halt_exists
+        and validation_reset_active
+        and "ML GATE BLOCKED" in str(halt_reason or "").upper()
+    )
 
-    if halt_exists:
+    if ml_halt_allows_validation:
+        warnings.append(
+            Blocker(
+                id="ml_halt_validation_reset_bypass",
+                severity="warning",
+                message=(
+                    "Legacy ML halt is active, but controlled paper validation "
+                    "entries remain allowed."
+                ),
+                evidence=(
+                    "data/TRADING_HALTED contains an ML gate halt and "
+                    "north_star_weekly_gate is validation_reset with "
+                    "allow_validation_entries=true and block_live_new_positions=true."
+                ),
+            )
+        )
+        root_causes.append("Legacy ML halt still blocks live/scaling, but not paper validation.")
+    elif halt_exists:
         blockers.append(
             Blocker(
                 id="trading_halted",
@@ -524,6 +553,9 @@ def main() -> int:
         state=state,
         weekly_history=history,
         halt_exists=halt_file.exists(),
+        halt_reason=halt_file.read_text(encoding="utf-8", errors="ignore")
+        if halt_file.exists()
+        else "",
         now_utc=now_utc,
     )
     markdown = render_markdown(report)

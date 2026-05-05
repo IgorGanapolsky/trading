@@ -134,6 +134,34 @@ jobs:
 
           # Check 2: TRADING_HALTED file (LL-282 circuit breaker)
           if [ -f "data/TRADING_HALTED" ]; then
+            if python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          halt_text = Path("data/TRADING_HALTED").read_text(encoding="utf-8", errors="ignore")
+          state = json.loads(Path("data/system_state.json").read_text(encoding="utf-8"))
+          gate = state.get("north_star_weekly_gate") or {}
+
+          ml_halt = "ML GATE BLOCKED" in halt_text.upper()
+          validation_reset = str(gate.get("mode") or "").lower() == "validation_reset"
+          allow_validation = bool(gate.get("allow_validation_entries"))
+          live_blocked = bool(gate.get("block_live_new_positions"))
+          new_positions_blocked = bool(gate.get("block_new_positions"))
+
+          if ml_halt and validation_reset and allow_validation and live_blocked and not new_positions_blocked:
+              raise SystemExit(0)
+          raise SystemExit(1)
+          PY
+            then
+              echo "⚠️ Legacy ML halt is active, but validation_reset allows controlled paper validation"
+              echo "Reason:"
+              cat data/TRADING_HALTED
+              echo ""
+              echo "✅ Trading ALLOWED for controlled paper validation only; live/scaling remains blocked"
+              echo "halted=false" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+
             echo "🚨 TRADING_HALTED file exists - crisis mode active"
             echo "Reason:"
             cat data/TRADING_HALTED

@@ -218,3 +218,45 @@ def test_compute_report_marks_live_block_only_validation_reset() -> None:
         "expectancy > 0" in item and "profit factor > 1" in item
         for item in report["action_lane"]["resolution_criteria"]
     )
+
+
+def test_compute_report_treats_ml_halt_as_validation_reset_warning() -> None:
+    now = datetime(2026, 5, 5, 12, 0, tzinfo=timezone.utc)
+    state = {
+        "meta": {"last_updated": "2026-05-05T11:30:00Z"},
+        "last_updated": "2026-05-05T11:30:00Z",
+        "north_star_weekly_gate": {
+            "updated_at": "2026-05-05T11:30:00Z",
+            "mode": "validation_reset",
+            "sample_size": 0,
+            "expectancy_per_trade": 0.0,
+            "block_new_positions": False,
+            "block_live_new_positions": True,
+            "allow_validation_entries": True,
+            "validation_reset_active": True,
+            "validation_reset_reason": "Legacy lifetime ledger remains negative.",
+            "cadence_kpi": {
+                "passed": False,
+                "summary": "Cadence KPI miss",
+                "qualified_setups_observed": 0,
+                "min_qualified_setups_per_week": 1,
+                "closed_trades_observed": 0,
+                "min_closed_trades_per_week": 1,
+            },
+        },
+    }
+
+    report = compute_report(
+        state=state,
+        weekly_history=[],
+        halt_exists=True,
+        halt_reason="ML GATE BLOCKED: Win rate 23.9% < 50.0%",
+        now_utc=now,
+    )
+
+    blocker_ids = {item["id"] for item in report["blockers"]}
+    warning_ids = {item["id"] for item in report["warnings"]}
+    assert "trading_halted" not in blocker_ids
+    assert "ml_halt_validation_reset_bypass" in warning_ids
+    assert report["action_lane"]["paper_validation_allowed"] is True
+    assert report["action_lane"]["live_scaling_blocked"] is True
