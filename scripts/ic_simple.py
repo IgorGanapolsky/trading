@@ -1082,6 +1082,46 @@ def _allows_controlled_paper_validation_entry() -> bool:
     )
 
 
+def _load_losing_expiries(trades_file: Path | None = None) -> set[str]:
+    """Return IC expiries that already produced a closed loss."""
+    path = trades_file or TRADE_LEDGER_FILE
+    try:
+        trades_data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    except Exception as exc:
+        logger.debug(f"Re-entry check skipped: {exc}")
+        return set()
+
+    closed = trades_data.get("trades", []) if isinstance(trades_data, dict) else []
+    losing_expiries: set[str] = set()
+    for trade in closed:
+        if not isinstance(trade, dict):
+            continue
+
+        realized_raw = trade.get("realized_pnl", 0)
+        try:
+            realized_pnl = float(realized_raw)
+        except (TypeError, ValueError):
+            realized_pnl = 0.0
+
+        outcome = str(trade.get("outcome", "")).strip().lower()
+        if realized_pnl >= 0 and outcome != "loss":
+            continue
+
+        legs = trade.get("legs")
+        if isinstance(legs, dict):
+            expiry = str(legs.get("expiry") or "").strip()
+            if expiry:
+                losing_expiries.add(expiry)
+                continue
+
+        signature = str(trade.get("signature") or "")
+        parts = signature.split("_")
+        if len(parts) >= 2 and parts[0] == "SPY" and parts[1]:
+            losing_expiries.add(parts[1])
+
+    return losing_expiries
+
+
 def _should_skip_for_thompson(confidence: float) -> tuple[bool, str]:
     if confidence >= THOMPSON_MIN_CONFIDENCE:
         return False, (f"Thompson confidence {confidence:.3f} >= {THOMPSON_MIN_CONFIDENCE:.2f}")
@@ -1401,23 +1441,9 @@ def main():
             regime_blocked = True
 
         # SAME-EXPIRY RE-ENTRY BLOCK: no re-entry on an expiry that already lost
-        reentry_blocked = False
-        try:
-            trades_file = Path(__file__).parent.parent / "data" / "trades.json"
-            trades_data = json.loads(trades_file.read_text()) if trades_file.exists() else {}
-            closed = trades_data.get("trades", []) if isinstance(trades_data, dict) else []
-            losing_expiries = set()
-            for t in closed:
-                if t.get("realized_pnl", 0) < 0:
-                    sig = t.get("signature", "")
-                    # Extract expiry from signature like "SPY_2026-05-08_P628-638_C712-715"
-                    parts = sig.split("_")
-                    if len(parts) >= 2:
-                        losing_expiries.add(parts[1] if parts[0] == "SPY" else "")
-            if losing_expiries:
-                logger.info(f"Losing expiries (re-entry blocked): {losing_expiries}")
-        except Exception as e:
-            logger.debug(f"Re-entry check skipped: {e}")
+        losing_expiries = _load_losing_expiries()
+        if losing_expiries:
+            logger.info(f"Losing expiries (re-entry blocked): {losing_expiries}")
 
         # BROKER SYNC FRESHNESS GATE: no entry if sync is stale (>2h)
         sync_blocked = False
@@ -1481,7 +1507,7 @@ def main():
                 logger.info(f"Position limit: {ic_count}/{MAX_IC} ICs. No new entry.")
             else:
                 opp = find_opportunity(spy_price)
-                if opp and reentry_blocked and opp.get("expiry", "") in losing_expiries:
+                if opp and opp.get("expiry", "") in losing_expiries:
                     logger.warning(
                         f"RE-ENTRY BLOCKED: expiry {opp['expiry']} already had a losing trade. "
                         f"No same-expiry re-entry after loss."
