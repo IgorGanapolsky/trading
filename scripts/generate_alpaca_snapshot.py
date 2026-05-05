@@ -45,7 +45,6 @@ def fetch_paper_account() -> dict | None:
     """Fetch paper trading account data via Alpaca API."""
     try:
         from alpaca.trading.client import TradingClient
-
         from src.utils.alpaca_client import get_alpaca_credentials
 
         api_key, secret_key = get_alpaca_credentials()
@@ -83,7 +82,6 @@ def fetch_brokerage_account() -> dict | None:
     """Fetch brokerage (live) account data via Alpaca API."""
     try:
         from alpaca.trading.client import TradingClient
-
         from src.utils.alpaca_client import get_brokerage_credentials
 
         api_key, secret_key = get_brokerage_credentials()

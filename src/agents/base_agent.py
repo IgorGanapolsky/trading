@@ -13,7 +13,6 @@ from datetime import datetime
 from typing import Any
 
 from anthropic import Anthropic
-
 from src.orchestration.context_engine import (
     ContextMemory,
     MemoryTimescale,
@@ -280,7 +279,6 @@ class BaseAgent(ABC):
                     )
                     if self._openrouter_fallback_client is None:
                         from openai import OpenAI
-
                         from src.utils.llm_gateway import OPENROUTER_HEADERS
 
                         self._openrouter_fallback_client = OpenAI(

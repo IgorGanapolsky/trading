@@ -35,7 +35,6 @@ from typing import Optional
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
-
 from src.core.trading_constants import MAX_POSITIONS as MAX_OPTION_LEGS
 from src.core.trading_profiles import get_iron_condor_strategy_config
 from src.orchestrator.telemetry import OrchestratorTelemetry
@@ -229,7 +228,6 @@ class IronCondorStrategy:
         try:
             from alpaca.data.historical import StockHistoricalDataClient
             from alpaca.data.requests import StockLatestQuoteRequest
-
             from src.utils.alpaca_client import get_alpaca_credentials
 
             api_key, secret = get_alpaca_credentials()
@@ -525,7 +523,6 @@ class IronCondorStrategy:
             from alpaca.data.historical import StockHistoricalDataClient
             from alpaca.data.requests import StockBarsRequest
             from alpaca.data.timeframe import TimeFrame
-
             from src.utils.alpaca_client import get_alpaca_credentials
 
             api_key, secret = get_alpaca_credentials()
@@ -636,7 +633,6 @@ class IronCondorStrategy:
             logger.info("=" * 60)
             try:
                 from alpaca.trading.client import TradingClient
-
                 from src.utils.alpaca_client import get_alpaca_credentials
 
                 api_key, secret = get_alpaca_credentials()
@@ -850,7 +846,6 @@ class IronCondorStrategy:
                 from alpaca.trading.client import TradingClient
                 from alpaca.trading.enums import OrderClass, OrderSide
                 from alpaca.trading.requests import OptionLegRequest
-
                 from src.utils.alpaca_client import get_alpaca_credentials
 
                 api_key, secret = get_alpaca_credentials()

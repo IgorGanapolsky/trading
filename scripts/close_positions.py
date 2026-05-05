@@ -36,7 +36,6 @@ sys.path.insert(0, str(project_root))
 from alpaca.trading.client import TradingClient
 from alpaca.trading.enums import OrderSide, TimeInForce
 from alpaca.trading.requests import ClosePositionRequest, MarketOrderRequest
-
 from src.safety.mandatory_trade_gate import (  # noqa: E402
     safe_close_position,
     safe_submit_order,
