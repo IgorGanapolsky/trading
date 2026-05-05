@@ -517,9 +517,7 @@ class TestThompsonValidationResetGate:
         assert should_skip is True
         assert "skip entry" in reason
 
-    def test_low_thompson_allows_controlled_paper_validation_reset(
-        self, tmp_path, monkeypatch
-    ):
+    def test_low_thompson_allows_controlled_paper_validation_reset(self, tmp_path, monkeypatch):
         import scripts.ic_simple as ic
 
         state_file = tmp_path / "system_state.json"
@@ -544,7 +542,51 @@ class TestThompsonValidationResetGate:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# 6. Reporting: validation slice must not mask lifetime ledger
+# 6. Same-expiry re-entry loss block
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+class TestSameExpiryReentryBlock:
+    def test_load_losing_expiries_from_signature_and_legs(self, tmp_path):
+        import scripts.ic_simple as ic
+
+        trades_file = tmp_path / "trades.json"
+        trades_file.write_text(
+            json.dumps(
+                {
+                    "trades": [
+                        {
+                            "strategy": "iron_condor",
+                            "status": "closed",
+                            "realized_pnl": -42.0,
+                            "signature": "SPY_2026-05-15_P628-638_C712-715",
+                        },
+                        {
+                            "strategy": "iron_condor",
+                            "status": "closed",
+                            "outcome": "loss",
+                            "realized_pnl": "0",
+                            "legs": {"expiry": "2026-05-22"},
+                        },
+                        {
+                            "strategy": "iron_condor",
+                            "status": "closed",
+                            "realized_pnl": 31.0,
+                            "signature": "SPY_2026-05-29_P620-630_C720-730",
+                        },
+                    ]
+                }
+            )
+        )
+
+        assert ic._load_losing_expiries(trades_file) == {  # nosec B101
+            "2026-05-15",
+            "2026-05-22",
+        }
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 7. Reporting: validation slice must not mask lifetime ledger
 # ══════════════════════════════════════════════════════════════════════════════
 
 
@@ -619,7 +661,7 @@ class TestNorthStarReadinessReport:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# 7. E2E: Full pipeline mock
+# 8. E2E: Full pipeline mock
 # ══════════════════════════════════════════════════════════════════════════════
 
 
@@ -690,22 +732,26 @@ class TestE2EPipeline:
         import json
         from datetime import datetime, timezone
 
-        fresh_sync = {"sync_health": {"last_successful_sync": datetime.now(timezone.utc).isoformat()}}
+        fresh_sync = {
+            "sync_health": {"last_successful_sync": datetime.now(timezone.utc).isoformat()}
+        }
         original_read = Path.read_text
 
-        def _patched_read(self):
+        def _patched_read(self, *args, **kwargs):
             if "system_state" in str(self):
                 return json.dumps(fresh_sync)
             if "trades.json" in str(self):
                 return json.dumps({"trades": []})
-            return original_read(self)
+            return original_read(self, *args, **kwargs)
 
         sys.argv = ["ic_simple.py", "--mode", "both"]
-        with patch(
-            "src.utils.regime_detector.RegimeDetector.detect_live_regime_with_prediction",
-            return_value=_Snapshot(),
-        ), patch.object(Path, "read_text", _patched_read), patch(
-            "scripts.ic_simple._fomc_blackout_reason", return_value=None
+        with (
+            patch(
+                "src.utils.regime_detector.RegimeDetector.detect_live_regime_with_prediction",
+                return_value=_Snapshot(),
+            ),
+            patch.object(Path, "read_text", _patched_read),
+            patch("scripts.ic_simple._fomc_blackout_reason", return_value=None),
         ):
             ic.main()
 
@@ -724,6 +770,84 @@ class TestE2EPipeline:
         assert abs(limit_price) == pytest.approx(2.45, abs=0.25), (
             f"Expected ~$2.45 limit (net $2.50 - $0.05), got ${abs(limit_price):.2f}"
         )
+
+    @patch("src.safety.mandatory_trade_gate.safe_submit_order")
+    @patch("scripts.ic_simple.find_opportunity")
+    @patch("scripts.ic_simple._get_thompson_confidence", return_value=0.90)
+    @patch("scripts.ic_simple._count_open_ics", return_value=0)
+    @patch("scripts.ic_simple._cancel_stale_orders")
+    @patch("scripts.ic_simple._refresh_canonical_state")
+    @patch("scripts.ic_simple.get_spy_price", return_value=650.0)
+    @patch("scripts.ic_simple.get_client")
+    def test_same_expiry_loss_blocks_entry(
+        self,
+        mock_client_fn,
+        mock_spy,
+        mock_refresh,
+        mock_stale,
+        mock_count,
+        mock_thompson,
+        mock_opp,
+        mock_submit,
+    ):
+        mock_client_fn.return_value = MagicMock()
+        mock_opp.return_value = {
+            "expiry": "2026-05-15",
+            "long_put": 610.0,
+            "short_put": 620.0,
+            "short_call": 680.0,
+            "long_call": 690.0,
+            "est_credit": 2.50,
+            "method": "live_delta",
+        }
+
+        import scripts.ic_simple as ic
+
+        class _Snapshot:
+            label = "calm"
+            regime_id = 0
+            confidence = 0.85
+            vix_level = 18.0
+            transition_prediction = None
+
+        import json
+        from datetime import datetime, timezone
+
+        fresh_sync = {
+            "sync_health": {"last_successful_sync": datetime.now(timezone.utc).isoformat()}
+        }
+        loss_ledger = {
+            "trades": [
+                {
+                    "strategy": "iron_condor",
+                    "status": "closed",
+                    "realized_pnl": -123.0,
+                    "signature": "SPY_2026-05-15_P628-638_C712-715",
+                }
+            ]
+        }
+        original_read = Path.read_text
+
+        def _patched_read(self, *args, **kwargs):
+            if "system_state" in str(self):
+                return json.dumps(fresh_sync)
+            if "trades.json" in str(self):
+                return json.dumps(loss_ledger)
+            return original_read(self, *args, **kwargs)
+
+        sys.argv = ["ic_simple.py", "--mode", "entry"]
+        with (
+            patch(
+                "src.utils.regime_detector.RegimeDetector.detect_live_regime_with_prediction",
+                return_value=_Snapshot(),
+            ),
+            patch.object(Path, "read_text", _patched_read),
+            patch("scripts.ic_simple._fomc_blackout_reason", return_value=None),
+        ):
+            ic.main()
+
+        assert mock_opp.called  # nosec B101
+        assert not mock_submit.called  # nosec B101
 
     @patch("scripts.ic_simple._save_entries")
     @patch("scripts.ic_simple._load_entries", return_value={})
