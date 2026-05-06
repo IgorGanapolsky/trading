@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
@@ -32,6 +33,7 @@ except Exception:
 
 DEFAULT_STATE_PATH = Path("data/system_state.json")
 DEFAULT_HYPOTHESIS_PATH = Path("data/runtime/strategy_validation_hypothesis.json")
+DEFAULT_REHABILITATION_PLAN_PATH = Path("data/runtime/edge_rehabilitation_plan.json")
 DEFAULT_TARGET_MODE = "asap_monthly_income"
 DEFAULT_MONTHLY_AFTER_TAX_TARGET = NORTH_STAR_MONTHLY_AFTER_TAX
 DEFAULT_TARGET_CAPITAL = NORTH_STAR_TARGET_CAPITAL
@@ -82,6 +84,63 @@ def _load_state(path: Path = DEFAULT_STATE_PATH) -> dict[str, Any]:
             return data if isinstance(data, dict) else {}
     except Exception:
         return {}
+
+
+def _load_json_dict(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+        return payload if isinstance(payload, dict) else {}
+    except Exception:
+        return {}
+
+
+def _rehab_plan_for_hypothesis(hypothesis_path: Path) -> dict[str, Any]:
+    if hypothesis_path == DEFAULT_HYPOTHESIS_PATH:
+        return _load_json_dict(DEFAULT_REHABILITATION_PLAN_PATH)
+    return _load_json_dict(hypothesis_path.parent / "edge_rehabilitation_plan.json")
+
+
+def _rules_repeat_ten_wide_loss_cluster(rules: list[Any]) -> bool:
+    for item in rules:
+        text = str(item).lower()
+        repeats_ten_wide = bool(re.search(r"(\$?\s*10[- ]?wide|\$?\s*10\s+wings?)", text))
+        if repeats_ten_wide and not any(
+            guard in text for guard in ("reject", "quarantine", "avoid", "do not", "no ")
+        ):
+            return True
+    return False
+
+
+def _hypothesis_covers_rehabilitation_plan(hypothesis: dict[str, Any], hypothesis_path: Path) -> bool:
+    rehab = _rehab_plan_for_hypothesis(hypothesis_path)
+    if str(rehab.get("status") or "").strip().lower() != "quarantined":
+        return True
+
+    clusters = rehab.get("loss_clusters", [])
+    required = [
+        str(cluster.get("id"))
+        for cluster in clusters[:3]
+        if isinstance(cluster, dict) and str(cluster.get("id") or "").strip()
+    ]
+    if not required:
+        return True
+
+    ack = hypothesis.get("rehabilitation_plan_ack")
+    if not isinstance(ack, dict):
+        return False
+    covered = ack.get("covered_loss_clusters", [])
+    if not isinstance(covered, list):
+        return False
+    covered_set = {str(item) for item in covered}
+    if not set(required).issubset(covered_set):
+        return False
+    return not (
+        "ten_wide_wings" in required
+        and _rules_repeat_ten_wide_loss_cluster(hypothesis.get("changed_rules", []))
+    )
 
 
 def _resolve_current_day(paper_trading: dict[str, Any]) -> int:
@@ -164,6 +223,7 @@ def get_guard_context(
                 and hyp.get("enabled")
                 and hyp.get("changed_rules")
                 and hyp.get("kill_criteria")
+                and _hypothesis_covers_rehabilitation_plan(hyp, hypothesis_path)
             )
         except (OSError, ValueError, KeyError):
             hypothesis_active = False

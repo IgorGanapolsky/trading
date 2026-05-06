@@ -35,6 +35,7 @@ DEFAULT_MIN_CLOSED_TRADES_FOR_SCALING = 30
 DEFAULT_MIN_LIQUIDITY_VOLUME_RATIO = 0.20
 DEFAULT_GATE_OVERRIDES_PATH = Path("runtime/north_star_gate_overrides.json")
 DEFAULT_VALIDATION_HYPOTHESIS_PATH = Path("runtime/strategy_validation_hypothesis.json")
+DEFAULT_REHABILITATION_PLAN_PATH = Path("runtime/edge_rehabilitation_plan.json")
 DEFAULT_QUARANTINE_MIN_COHORT_TRADES = 30
 DEFAULT_QUARANTINE_MIN_PROFIT_FACTOR = 1.0
 DEFAULT_QUARANTINE_MIN_EXPECTANCY = 0.0
@@ -152,12 +153,51 @@ def _load_gate_overrides(data_dir: Path) -> dict[str, Any]:
     return payload if isinstance(payload, dict) else {}
 
 
+def _rehabilitation_plan_requirements(data_dir: Path) -> dict[str, Any]:
+    """Return extra validation requirements from the latest strategy rehab plan."""
+    path = data_dir / DEFAULT_REHABILITATION_PLAN_PATH
+    payload = _load_json_dict(path)
+    if str(payload.get("status") or "").strip().lower() != "quarantined":
+        return {
+            "active": False,
+            "path": _display_path(path),
+            "required_loss_clusters": [],
+        }
+
+    clusters = payload.get("loss_clusters", [])
+    required_loss_clusters = [
+        str(cluster.get("id"))
+        for cluster in clusters[:3]
+        if isinstance(cluster, dict) and str(cluster.get("id") or "").strip()
+    ]
+    return {
+        "active": bool(required_loss_clusters),
+        "path": _display_path(path),
+        "required_loss_clusters": required_loss_clusters,
+    }
+
+
+def _rules_repeat_ten_wide_loss_cluster(rules: list[Any]) -> bool:
+    """Detect a hypothesis that repeats the known 10-wide loss cluster."""
+    for item in rules:
+        text = str(item).lower()
+        repeats_ten_wide = bool(
+            re.search(r"(\$?\s*10[- ]?wide|\$?\s*10\s+wings?)", text)
+        )
+        if repeats_ten_wide and not any(
+            guard in text for guard in ("reject", "quarantine", "avoid", "do not", "no ")
+        ):
+            return True
+    return False
+
+
 def _validation_hypothesis_status(data_dir: Path) -> dict[str, Any]:
     """Validate the written hypothesis required to restart a losing strategy."""
     path = data_dir / DEFAULT_VALIDATION_HYPOTHESIS_PATH
     path_label = _display_path(path)
     payload = _load_json_dict(path)
     errors: list[str] = []
+    rehabilitation_plan = _rehabilitation_plan_requirements(data_dir)
 
     if not payload:
         errors.append(f"{path_label} missing or empty")
@@ -198,6 +238,49 @@ def _validation_hypothesis_status(data_dir: Path) -> dict[str, Any]:
     if min_total_pnl <= DEFAULT_QUARANTINE_MIN_REALIZED_PNL:
         errors.append("kill_criteria.min_total_realized_pnl must be > 0")
 
+    covered_loss_clusters: list[str] = []
+    if rehabilitation_plan["active"]:
+        ack = payload.get("rehabilitation_plan_ack", {})
+        if not isinstance(ack, dict):
+            ack = {}
+            errors.append("rehabilitation_plan_ack must be an object")
+
+        source_plan = str(ack.get("source_plan") or "").strip()
+        accepted_sources = {
+            str(DEFAULT_REHABILITATION_PLAN_PATH),
+            f"data/{DEFAULT_REHABILITATION_PLAN_PATH}",
+            rehabilitation_plan["path"],
+        }
+        if source_plan not in accepted_sources:
+            errors.append(
+                f"rehabilitation_plan_ack.source_plan must reference {rehabilitation_plan['path']}"
+            )
+
+        raw_covered = ack.get("covered_loss_clusters", [])
+        covered_loss_clusters = (
+            [str(item) for item in raw_covered if str(item).strip()]
+            if isinstance(raw_covered, list)
+            else []
+        )
+        missing_clusters = [
+            cluster_id
+            for cluster_id in rehabilitation_plan["required_loss_clusters"]
+            if cluster_id not in covered_loss_clusters
+        ]
+        if missing_clusters:
+            errors.append(
+                "rehabilitation_plan_ack.covered_loss_clusters missing: "
+                + ", ".join(missing_clusters)
+            )
+
+        if (
+            "ten_wide_wings" in rehabilitation_plan["required_loss_clusters"]
+            and _rules_repeat_ten_wide_loss_cluster(changed_rules)
+        ):
+            errors.append(
+                "changed_rules repeat loss cluster ten_wide_wings; reject or replace 10-wide wings"
+            )
+
     valid = not errors
     return {
         "path": path_label,
@@ -211,6 +294,12 @@ def _validation_hypothesis_status(data_dir: Path) -> dict[str, Any]:
             "min_expectancy_per_trade": min_expectancy,
             "min_profit_factor": min_profit_factor,
             "min_total_realized_pnl": min_total_pnl,
+        },
+        "rehabilitation_plan": {
+            "active": rehabilitation_plan["active"],
+            "path": rehabilitation_plan["path"],
+            "required_loss_clusters": rehabilitation_plan["required_loss_clusters"],
+            "covered_loss_clusters": covered_loss_clusters if valid else [],
         },
     }
 

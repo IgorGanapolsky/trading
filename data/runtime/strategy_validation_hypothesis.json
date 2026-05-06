@@ -1,15 +1,28 @@
 {
   "enabled": true,
   "strategy_family": "ic_simple",
-  "hypothesis": "Restart only controlled paper validation for IC Simple after the failed legacy ledger, using live-delta SPY iron condors, minimum-size validation entries, stricter credit and regime filters, and hard cohort kill criteria to test whether the changed rules can restore positive expectancy.",
+  "hypothesis": "Restart only controlled paper validation for IC Simple after the failed legacy ledger by explicitly removing the current top loss clusters: no 10-wide wings, no multi-contract sizing, and no unmanaged sub-24-hour exits. The fresh cohort tests whether narrower defined-risk wings, one-contract sizing, live-delta provenance, and fixed exits can restore positive expectancy.",
   "changed_rules": [
     "Run validation_reset as paper-only: live trading and scale-up remain blocked while the fresh validation cohort is collected.",
     "Limit validation entries to IC Simple SPY iron condors with one contract per structure, no more than one new structure per day, and no more than two concurrent iron condors.",
     "Require live-delta strike provenance; reject heuristic fallback, non-positive net credit, and net credit below $0.50 before any validation entry.",
-    "Use 30-45 DTE, target 0.15 short delta, accepted short-delta band 0.08-0.22, and $10 wings for the validation cohort.",
-    "Keep the exit plan fixed: take profit at 50% of max profit, stop at 100% of entry credit, close by 7 DTE, and require the safety gates to refresh canonical state after runs.",
+    "Use 30-45 DTE, target 0.15 short delta, accepted short-delta band 0.08-0.22, and reject 10-wide wings; the validation cohort must use narrower defined-risk wings unless a separate backtest proves wider wings first.",
+    "Keep the exit plan fixed: take profit at 50% of max profit, stop at 100% of entry credit, close by 7 DTE, and do not allow sub-24-hour discretionary exits unless a hard max-loss or broken-leg condition fires.",
     "Keep learned blockers active: FOMC blackout, ThumbGate rules, low IV percentile, unknown or volatile regime, stale broker sync, same-expiry re-entry after a loss, and Thompson confidence unless validation_reset explicitly allows controlled paper validation."
   ],
+  "rehabilitation_plan_ack": {
+    "source_plan": "data/runtime/edge_rehabilitation_plan.json",
+    "covered_loss_clusters": [
+      "ten_wide_wings",
+      "multi_contract",
+      "early_exit_lt_24h"
+    ],
+    "prohibited_rule_repeats": [
+      "Do not repeat 10-wide SPY iron condors from the failed ledger.",
+      "Do not use multi-contract sizing before the fresh cohort clears kill criteria.",
+      "Do not use unmanaged sub-24-hour exits as a discretionary management pattern."
+    ]
+  },
   "kill_criteria": {
     "min_closed_trades": 30,
     "min_expectancy_per_trade": 1.0,

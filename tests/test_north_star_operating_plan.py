@@ -39,11 +39,30 @@ def _write_valid_hypothesis(root):
     )
 
 
+def _write_rehabilitation_plan(root):
+    _write_json(
+        root / "runtime" / "edge_rehabilitation_plan.json",
+        {
+            "status": "quarantined",
+            "loss_clusters": [
+                {"id": "ten_wide_wings"},
+                {"id": "multi_contract"},
+                {"id": "early_exit_lt_24h"},
+            ],
+        },
+    )
+
+
 def test_committed_strategy_validation_hypothesis_authorizes_validation_reset(tmp_path):
     repo_root = Path(__file__).resolve().parents[1]
     hypothesis_path = repo_root / "data/runtime/strategy_validation_hypothesis.json"
     hypothesis = json.loads(hypothesis_path.read_text(encoding="utf-8"))
     assert "Example only" not in json.dumps(hypothesis)
+    assert set(hypothesis["rehabilitation_plan_ack"]["covered_loss_clusters"]) >= {  # nosec B101
+        "ten_wide_wings",
+        "multi_contract",
+        "early_exit_lt_24h",
+    }
 
     _write_json(tmp_path / "runtime" / "strategy_validation_hypothesis.json", hypothesis)
     trades_path = tmp_path / "trades.json"
@@ -87,6 +106,75 @@ def test_committed_strategy_validation_hypothesis_authorizes_validation_reset(tm
     assert gate["strategy_quarantine"]["paper_validation_allowed"] is True
     assert gate["strategy_quarantine"]["validation_hypothesis"]["valid"] is True
     assert history[-1]["mode"] == "validation_reset"
+
+
+def test_rehab_plan_rejects_hypothesis_that_repeats_top_loss_cluster(tmp_path):
+    trades_path = tmp_path / "trades.json"
+    history_path = tmp_path / "weekly_history.json"
+    today = date(2026, 4, 9)
+    _write_rehabilitation_plan(tmp_path)
+    _write_json(
+        tmp_path / "runtime" / "strategy_validation_hypothesis.json",
+        {
+            "enabled": True,
+            "strategy_family": "ic_simple",
+            "hypothesis": "Retry IC Simple with a changed thesis that still repeats the bad width.",
+            "changed_rules": [
+                "Use 30-45 DTE, target 0.15 short delta, and $10 wings for validation."
+            ],
+            "rehabilitation_plan_ack": {
+                "source_plan": "data/runtime/edge_rehabilitation_plan.json",
+                "covered_loss_clusters": [
+                    "ten_wide_wings",
+                    "multi_contract",
+                    "early_exit_lt_24h",
+                ],
+            },
+            "kill_criteria": {
+                "min_closed_trades": 30,
+                "min_expectancy_per_trade": 0.01,
+                "min_profit_factor": 1.01,
+                "min_total_realized_pnl": 0.01,
+            },
+        },
+    )
+    _write_json(
+        trades_path,
+        {
+            "stats": {
+                "closed_trades": 66,
+                "win_rate_pct": 24.24,
+                "profit_factor": 0.25,
+                "total_realized_pnl": -3402.0,
+            },
+            "trades": [
+                {
+                    "status": "closed",
+                    "strategy": "iron_condor",
+                    "realized_pnl": 96.0,
+                    "outcome": "win",
+                    "exit_date": today.isoformat(),
+                }
+            ],
+        },
+    )
+
+    gate, _history = compute_weekly_gate(
+        {
+            "paper_account": {"equity": 93838.3, "win_rate": 24.24, "win_rate_sample_size": 66},
+            "live_account": {"equity": 0.0, "positions_count": 0},
+        },
+        trades_path=trades_path,
+        weekly_history_path=history_path,
+        today=today,
+    )
+
+    assert gate["mode"] == "quarantine"  # nosec B101
+    assert gate["strategy_quarantine"]["validation_hypothesis"]["valid"] is False  # nosec B101
+    assert any(  # nosec B101
+        "ten_wide_wings" in error
+        for error in gate["strategy_quarantine"]["validation_hypothesis"]["errors"]
+    )
 
 
 def test_weekly_gate_blocks_when_recent_expectancy_negative(tmp_path):

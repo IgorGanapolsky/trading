@@ -1,5 +1,7 @@
 """Tests for North Star guard dynamic risk constraints."""
 
+import json
+
 from src.safety.north_star_guard import get_guard_context
 
 
@@ -210,8 +212,64 @@ def test_guard_blocks_quarantined_validation_reset_entries(tmp_path):
 
     # Pass a nonexistent hypothesis path to verify quarantine blocks without a hypothesis.
     guard = get_guard_context(state, hypothesis_path=tmp_path / "no_hypothesis.json")
-    assert guard["mode"] == "quarantine"
-    assert guard["block_new_positions"] is True
-    assert guard["allow_validation_entries"] is False
+    assert guard["mode"] == "quarantine"  # nosec B101
+    assert guard["block_new_positions"] is True  # nosec B101
+    assert guard["allow_validation_entries"] is False  # nosec B101
     assert guard["max_position_pct"] == 0.0
     assert "quarantine" in guard["block_reason"].lower()
+
+
+def test_guard_rejects_hypothesis_that_does_not_cover_rehab_plan(tmp_path):
+    state = tmp_path / "system_state.json"
+    state.write_text(
+        """
+{
+  "paper_account": {"equity": 93838.3, "win_rate": 24.24, "win_rate_sample_size": 66},
+  "paper_trading": {"current_day": 91, "target_duration_days": 90},
+  "north_star_weekly_gate": {
+    "mode": "quarantine",
+    "recommended_max_position_pct": 0.0,
+    "block_new_positions": true,
+    "block_live_new_positions": true,
+    "allow_validation_entries": false,
+    "strategy_quarantine": {
+      "active": true,
+      "block_new_positions": true,
+      "paper_validation_allowed": false,
+      "reason": "MATHEMATICAL QUARANTINE: negative expectancy blocks new entries."
+    }
+  }
+}
+""".strip(),
+        encoding="utf-8",
+    )
+    hypothesis = tmp_path / "strategy_validation_hypothesis.json"
+    hypothesis.write_text(
+        json.dumps(
+            {
+                "enabled": True,
+                "changed_rules": ["Use $10 wings again."],
+                "kill_criteria": {"min_closed_trades": 30},
+            }
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / "edge_rehabilitation_plan.json").write_text(
+        json.dumps(
+            {
+                "status": "quarantined",
+                "loss_clusters": [
+                    {"id": "ten_wide_wings"},
+                    {"id": "multi_contract"},
+                    {"id": "early_exit_lt_24h"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    guard = get_guard_context(state, hypothesis_path=hypothesis)
+
+    assert guard["mode"] == "quarantine"  # nosec B101
+    assert guard["block_new_positions"] is True  # nosec B101
+    assert guard["allow_validation_entries"] is False  # nosec B101
