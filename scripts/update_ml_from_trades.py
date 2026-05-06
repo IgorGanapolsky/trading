@@ -39,6 +39,8 @@ TRADES_FILE = PROJECT_ROOT / "data" / "trades.json"
 MODEL_FILE = PROJECT_ROOT / "models" / "ml" / "trade_confidence_model.json"
 LESSONS_DIR = PROJECT_ROOT / "rag_knowledge" / "lessons_learned"
 SYSTEM_STATE_FILE = PROJECT_ROOT / "data" / "system_state.json"
+REHAB_PLAN_FILE = PROJECT_ROOT / "data" / "runtime" / "edge_rehabilitation_plan.json"
+REHAB_LESSON_ID = "strategy_rehabilitation_ic_simple_current"
 
 # Thresholds
 MIN_TRADES_FOR_GATE = 30
@@ -126,6 +128,31 @@ def _trade_pnl(trade: dict) -> tuple[float, bool]:
         return 0.0, False
 
 
+def _holding_hours(trade: dict) -> float | None:
+    entry_time = trade.get("entry_time") or trade.get("opened_at")
+    exit_time = trade.get("exit_time") or trade.get("closed_at")
+    if not entry_time or not exit_time:
+        return None
+    try:
+        opened = datetime.fromisoformat(str(entry_time).replace("Z", "+00:00"))
+        closed = datetime.fromisoformat(str(exit_time).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    return max(0.0, (closed - opened).total_seconds() / 3600)
+
+
+def _wing_width(trade: dict) -> float | None:
+    legs = trade.get("legs") if isinstance(trade.get("legs"), dict) else {}
+    put_strikes = legs.get("put_strikes") or []
+    call_strikes = legs.get("call_strikes") or []
+    widths: list[float] = []
+    if len(put_strikes) >= 2:
+        widths.append(abs(_as_float(put_strikes[1]) - _as_float(put_strikes[0])))
+    if len(call_strikes) >= 2:
+        widths.append(abs(_as_float(call_strikes[1]) - _as_float(call_strikes[0])))
+    return max(widths) if widths else None
+
+
 def stats_from_trades(trades: list[dict]) -> dict:
     """Build the stats shape expected by the Thompson updater from trade rows."""
     wins: list[float] = []
@@ -188,6 +215,235 @@ def stats_from_trades(trades: list[dict]) -> dict:
         "profit_factor": _round_metric(profit_factor),
         "expectancy_per_trade": round(expectancy, 2),
     }
+
+
+def analyze_loss_clusters(trades_data: dict) -> list[dict]:
+    """Summarize recurring loss clusters so RAG/ML learns what to stop repeating."""
+    trades = [trade for trade in trades_data.get("trades", []) if isinstance(trade, dict)]
+    closed_rows: list[dict] = []
+    for trade in trades:
+        pnl, has_pnl = _trade_pnl(trade)
+        outcome = str(trade.get("outcome") or "").strip().lower()
+        if outcome not in {"win", "loss"} and not has_pnl:
+            continue
+        if outcome not in {"win", "loss"} and pnl == 0:
+            continue
+        closed_rows.append(
+            {
+                "trade": trade,
+                "pnl": pnl,
+                "is_win": outcome == "win" or pnl > 0,
+                "is_loss": outcome == "loss" or pnl < 0,
+                "holding_hours": _holding_hours(trade),
+                "wing_width": _wing_width(trade),
+                "quantity": _as_float(trade.get("quantity"), 1.0) or 1.0,
+                "source": str(trade.get("source") or ""),
+            }
+        )
+
+    total_loss_abs = abs(sum(row["pnl"] for row in closed_rows if row["pnl"] < 0))
+
+    cluster_specs = [
+        (
+            "early_exit_lt_1h",
+            "Closed in under 1 hour",
+            lambda row: row["holding_hours"] is not None and row["holding_hours"] < 1,
+            "Do not open setups whose expected management requires intraday repair; enforce a minimum hold unless a hard max-loss or broken-leg condition fires.",
+        ),
+        (
+            "early_exit_lt_24h",
+            "Closed in under 24 hours",
+            lambda row: row["holding_hours"] is not None and row["holding_hours"] < 24,
+            "Require the next validation hypothesis to prove why holding-time behavior changed before allowing another short-dated IC cohort.",
+        ),
+        (
+            "ten_wide_wings",
+            "10-wide or wider wings",
+            lambda row: row["wing_width"] is not None and row["wing_width"] >= 10,
+            "Quarantine 10-wide SPY iron condors; test narrower defined-risk structures or explicitly prove better width/risk math before re-entry.",
+        ),
+        (
+            "multi_contract",
+            "More than one contract",
+            lambda row: row["quantity"] > 1,
+            "Limit validation to one contract until the changed-rule cohort clears positive expectancy, profit factor, and realized-P/L gates.",
+        ),
+        (
+            "long_hold_ge_7d",
+            "Held 7 days or longer",
+            lambda row: row["holding_hours"] is not None and row["holding_hours"] >= 24 * 7,
+            "Add an exit/repair rule for slow-moving losers before allowing long-hold IC exposure again.",
+        ),
+        (
+            "orphan_cleanup",
+            "Orphan or leg-repair cleanup",
+            lambda row: "orphan" in row["source"].lower(),
+            "Do not trade unless entry/exit pairing is atomic and orphan cleanup cannot create unmanaged directional exposure.",
+        ),
+    ]
+
+    clusters: list[dict] = []
+    for cluster_id, label, predicate, recommendation in cluster_specs:
+        rows = [row for row in closed_rows if predicate(row)]
+        if not rows:
+            continue
+        wins = [row for row in rows if row["pnl"] > 0]
+        losses = [row for row in rows if row["pnl"] < 0]
+        total_pnl = sum(row["pnl"] for row in rows)
+        loss_abs = abs(sum(row["pnl"] for row in losses))
+        clusters.append(
+            {
+                "id": cluster_id,
+                "label": label,
+                "sample_size": len(rows),
+                "wins": len(wins),
+                "losses": len(losses),
+                "win_rate_pct": round((len(wins) / len(rows) * 100), 2),
+                "total_pnl": round(total_pnl, 2),
+                "expectancy_per_trade": round(total_pnl / len(rows), 2),
+                "loss_contribution_pct": round(
+                    (loss_abs / total_loss_abs * 100) if total_loss_abs else 0.0, 2
+                ),
+                "recommendation": recommendation,
+            }
+        )
+
+    clusters.sort(
+        key=lambda item: (
+            item["loss_contribution_pct"],
+            abs(min(item["total_pnl"], 0)),
+            item["sample_size"],
+        ),
+        reverse=True,
+    )
+    return clusters
+
+
+def build_rehabilitation_plan(trades_data: dict, gate: dict) -> dict:
+    """Build a machine-readable quarantine and validation plan from the current ledger."""
+    stats = trades_data.get("stats", {})
+    clusters = analyze_loss_clusters(trades_data)
+    top_clusters = clusters[:3]
+    changed_rules = [cluster["recommendation"] for cluster in top_clusters]
+    if not changed_rules:
+        changed_rules = [
+            "No recurring loss cluster was detected; require manual root-cause analysis before resuming validation entries."
+        ]
+
+    ledger = {
+        "closed_trades": int(stats.get("closed_trades") or gate.get("total_trades") or 0),
+        "wins": int(stats.get("wins") or 0),
+        "losses": int(stats.get("losses") or 0),
+        "win_rate_pct": _as_float(stats.get("win_rate_pct"), gate.get("win_rate", 0.0)),
+        "profit_factor": _as_float(stats.get("profit_factor"), gate.get("profit_factor", 0.0)),
+        "total_realized_pnl": _as_float(stats.get("total_realized_pnl"), stats.get("total_pnl", 0.0)),
+        "expectancy_per_trade": _as_float(
+            stats.get("expectancy_per_trade"), gate.get("expectancy_per_trade", 0.0)
+        ),
+    }
+    if not ledger["expectancy_per_trade"] and ledger["closed_trades"]:
+        ledger["expectancy_per_trade"] = round(
+            ledger["total_realized_pnl"] / ledger["closed_trades"], 4
+        )
+
+    status = "quarantined" if not gate.get("should_trade") else "eligible"
+    return {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "strategy_family": "ic_simple",
+        "status": status,
+        "profitability_objective": "Resume only after a changed-rule validation cohort proves positive expectancy, profit factor above 1.0, and positive realized P/L.",
+        "ledger": ledger,
+        "gate": {
+            "should_trade": bool(gate.get("should_trade")),
+            "block_reason": gate.get("block_reason", ""),
+            "min_trades_met": bool(gate.get("min_trades_met")),
+            "min_win_rate_met": bool(gate.get("min_win_rate_met")),
+            "positive_expectancy_met": bool(gate.get("positive_expectancy_met")),
+            "min_profit_factor_met": bool(gate.get("min_profit_factor_met")),
+        },
+        "loss_clusters": clusters,
+        "required_rule_changes": changed_rules,
+        "next_validation_hypothesis_template": {
+            "enabled": False,
+            "strategy_family": "ic_simple",
+            "hypothesis": (
+                "IC Simple remains quarantined. Enable only after replacing this text with "
+                "a concrete rule-change thesis backed by the loss clusters in edge_rehabilitation_plan.json."
+            ),
+            "changed_rules": changed_rules,
+            "kill_criteria": {
+                "min_closed_trades": MIN_TRADES_FOR_GATE,
+                "min_expectancy_per_trade": 0.01,
+                "min_profit_factor": 1.01,
+                "min_total_realized_pnl": 0.01,
+            },
+        },
+        "rag_ingestion": {
+            "lesson_id": REHAB_LESSON_ID,
+            "lesson_path": str((LESSONS_DIR / f"{REHAB_LESSON_ID}.md").relative_to(PROJECT_ROOT)),
+            "tags": ["rag", "ml", "strategy-quarantine", "profitability", "loss-clusters"],
+        },
+    }
+
+
+def write_rehabilitation_plan(plan: dict, dry_run: bool = False) -> int:
+    """Persist the strategy-level rehabilitation plan and matching RAG lesson."""
+    if dry_run:
+        logger.info(f"  [DRY RUN] Would write: {REHAB_PLAN_FILE}")
+        logger.info(f"  [DRY RUN] Would write: {LESSONS_DIR / f'{REHAB_LESSON_ID}.md'}")
+        return 2
+
+    REHAB_PLAN_FILE.parent.mkdir(parents=True, exist_ok=True)
+    REHAB_PLAN_FILE.write_text(json.dumps(plan, indent=2) + "\n")
+    LESSONS_DIR.mkdir(parents=True, exist_ok=True)
+    ledger = plan["ledger"]
+    clusters = plan.get("loss_clusters", [])[:5]
+    cluster_lines = "\n".join(
+        (
+            f"- `{cluster['id']}`: {cluster['sample_size']} trades, "
+            f"P/L ${cluster['total_pnl']:.2f}, expectancy ${cluster['expectancy_per_trade']:.2f}/trade, "
+            f"loss contribution {cluster['loss_contribution_pct']:.2f}%."
+        )
+        for cluster in clusters
+    )
+    rule_lines = "\n".join(f"- {rule}" for rule in plan.get("required_rule_changes", []))
+    lesson = f"""# IC Simple Strategy Rehabilitation Plan
+
+Tags: rag, ml, strategy-quarantine, profitability, loss-clusters
+Lifecycle: active
+Confidence: high
+
+## Ledger Evidence
+
+- Closed trades: {ledger["closed_trades"]}
+- Wins / losses: {ledger["wins"]} / {ledger["losses"]}
+- Win rate: {ledger["win_rate_pct"]:.2f}%
+- Profit factor: {ledger["profit_factor"]:.2f}
+- Total realized P/L: ${ledger["total_realized_pnl"]:.2f}
+- Expectancy: ${ledger["expectancy_per_trade"]:.2f}/trade
+
+## Decision
+
+IC Simple is not profitable yet. Do not resume autonomous entries from the current rule set. The next cohort must be a changed-rule validation experiment, not a retry of the losing ledger.
+
+## Loss Clusters
+
+{cluster_lines or "- No recurring loss cluster detected."}
+
+## Required Rule Changes Before Validation
+
+{rule_lines}
+
+## Machine-Readable Plan
+
+See `{REHAB_PLAN_FILE.relative_to(PROJECT_ROOT)}`.
+
+Generated by `update_ml_from_trades.py` on {datetime.now(timezone.utc).strftime("%Y-%m-%d")}.
+"""
+    (LESSONS_DIR / f"{REHAB_LESSON_ID}.md").write_text(lesson)
+    logger.info(f"  Wrote rehabilitation plan: {REHAB_PLAN_FILE}")
+    logger.info(f"  Wrote rehabilitation RAG lesson: {LESSONS_DIR / f'{REHAB_LESSON_ID}.md'}")
+    return 2
 
 
 def update_thompson_sampler(trades_data: dict, model: dict) -> dict:
@@ -492,6 +748,20 @@ def main(dry_run: bool = False):
     # 4. Generate post-mortem lessons
     lessons = generate_loss_postmortems(trades_data)
     logger.info(f"\nPost-mortem lessons to write: {len(lessons)}")
+    rehabilitation_plan = build_rehabilitation_plan(trades_data, gate)
+    if rehabilitation_plan["status"] == "quarantined":
+        logger.warning(
+            "  STRATEGY REHAB REQUIRED: %s",
+            rehabilitation_plan["gate"].get("block_reason", "unknown"),
+        )
+        for cluster in rehabilitation_plan.get("loss_clusters", [])[:3]:
+            logger.warning(
+                "  Loss cluster %s: %s trades, P/L $%.2f, expectancy $%.2f/trade",
+                cluster["id"],
+                cluster["sample_size"],
+                cluster["total_pnl"],
+                cluster["expectancy_per_trade"],
+            )
 
     # 5. Write everything
     if not dry_run:
@@ -535,7 +805,9 @@ def main(dry_run: bool = False):
                 logger.info("  HALT FILE REMOVED: ML gate passed")
 
     written = write_postmortem_lessons(lessons, dry_run)
+    rehab_written = write_rehabilitation_plan(rehabilitation_plan, dry_run)
     logger.info(f"Post-mortem lessons written: {written}")
+    logger.info(f"Strategy rehabilitation artifacts written: {rehab_written}")
 
     # 6. Summary
     logger.info("\n" + "=" * 70)
@@ -550,6 +822,7 @@ def main(dry_run: bool = False):
     logger.info(f"  Trading gate: {'OPEN' if gate['should_trade'] else 'BLOCKED'}")
     if not gate["should_trade"]:
         logger.info(f"  Block reason: {gate.get('block_reason', 'unknown')}")
+    logger.info(f"  Rehabilitation status: {rehabilitation_plan['status']}")
     logger.info(f"  Post-mortems: {written} new lessons")
     logger.info("=" * 70)
 

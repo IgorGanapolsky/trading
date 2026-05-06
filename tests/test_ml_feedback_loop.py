@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import scripts.update_ml_from_trades as feedback
 from scripts.update_ml_from_trades import (
+    analyze_loss_clusters,
+    build_rehabilitation_plan,
     check_trading_gate,
     generate_loss_postmortems,
     is_validation_reset_model,
@@ -128,6 +130,95 @@ def test_stats_from_trades_reports_incomplete_rows_without_counting_them_as_clos
     assert stats["ambiguous_outcome_trades"] == 1  # nosec B101
     assert stats["missing_pnl_trades"] == 2  # nosec B101
     assert stats["data_quality_score"] == 0.25  # nosec B101
+
+
+def test_loss_cluster_analysis_surfaces_repeatable_profitability_blockers():
+    """The ML loop should turn repeated losses into explicit rule-change signals."""
+    trades = {
+        "trades": [
+            {
+                "id": "fast-loss",
+                "outcome": "loss",
+                "realized_pnl": -100,
+                "entry_time": "2026-04-01T14:00:00+00:00",
+                "exit_time": "2026-04-01T14:30:00+00:00",
+                "quantity": 2,
+                "legs": {"put_strikes": [630, 640], "call_strikes": [705, 715]},
+                "source": "alpaca_parent_lot",
+            },
+            {
+                "id": "wide-loss",
+                "outcome": "loss",
+                "realized_pnl": -50,
+                "entry_time": "2026-04-02T14:00:00+00:00",
+                "exit_time": "2026-04-03T15:00:00+00:00",
+                "quantity": 1,
+                "legs": {"put_strikes": [620, 630], "call_strikes": [700, 710]},
+                "source": "alpaca_parent_lot",
+            },
+            {
+                "id": "narrow-win",
+                "outcome": "win",
+                "realized_pnl": 25,
+                "entry_time": "2026-04-04T14:00:00+00:00",
+                "exit_time": "2026-04-05T15:00:00+00:00",
+                "quantity": 1,
+                "legs": {"put_strikes": [620, 625], "call_strikes": [700, 705]},
+                "source": "alpaca_parent_lot",
+            },
+        ]
+    }
+
+    clusters = analyze_loss_clusters(trades)
+    by_id = {cluster["id"]: cluster for cluster in clusters}
+
+    assert by_id["ten_wide_wings"]["sample_size"] == 2  # nosec B101
+    assert by_id["ten_wide_wings"]["total_pnl"] == -150  # nosec B101
+    assert by_id["multi_contract"]["sample_size"] == 1  # nosec B101
+    assert by_id["early_exit_lt_1h"]["expectancy_per_trade"] == -100  # nosec B101
+
+
+def test_rehabilitation_plan_requires_changed_rule_validation_before_profit_claims():
+    """A blocked gate should produce a RAG-ingestable quarantine plan."""
+    trades = {
+        "stats": {
+            "closed_trades": 2,
+            "wins": 0,
+            "losses": 2,
+            "win_rate_pct": 0.0,
+            "profit_factor": 0.0,
+            "total_realized_pnl": -150.0,
+        },
+        "trades": [
+            {
+                "id": "fast-loss",
+                "outcome": "loss",
+                "realized_pnl": -100,
+                "entry_time": "2026-04-01T14:00:00+00:00",
+                "exit_time": "2026-04-01T14:30:00+00:00",
+                "quantity": 2,
+                "legs": {"put_strikes": [630, 640], "call_strikes": [705, 715]},
+            },
+            {
+                "id": "wide-loss",
+                "outcome": "loss",
+                "realized_pnl": -50,
+                "entry_time": "2026-04-02T14:00:00+00:00",
+                "exit_time": "2026-04-03T15:00:00+00:00",
+                "quantity": 1,
+                "legs": {"put_strikes": [620, 630], "call_strikes": [700, 710]},
+            },
+        ],
+    }
+    gate = check_trading_gate(trades["stats"])
+
+    plan = build_rehabilitation_plan(trades, gate)
+
+    assert plan["status"] == "quarantined"  # nosec B101
+    assert plan["next_validation_hypothesis_template"]["enabled"] is False  # nosec B101
+    assert plan["rag_ingestion"]["lesson_id"] == feedback.REHAB_LESSON_ID  # nosec B101
+    assert "changed-rule validation cohort" in plan["profitability_objective"]  # nosec B101
+    assert plan["required_rule_changes"]  # nosec B101
 
 
 # --- Trading Gate Tests ---

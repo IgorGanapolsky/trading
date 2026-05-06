@@ -1,0 +1,117 @@
+{
+  "generated_at": "2026-05-06T17:26:41.881633+00:00",
+  "strategy_family": "ic_simple",
+  "status": "quarantined",
+  "profitability_objective": "Resume only after a changed-rule validation cohort proves positive expectancy, profit factor above 1.0, and positive realized P/L.",
+  "ledger": {
+    "closed_trades": 69,
+    "wins": 16,
+    "losses": 52,
+    "win_rate_pct": 23.19,
+    "profit_factor": 0.22,
+    "total_realized_pnl": -3958.0,
+    "expectancy_per_trade": -57.36
+  },
+  "gate": {
+    "should_trade": false,
+    "block_reason": "Win rate 23.2% < 50.0%; Expectancy $-57.36/trade <= $0.00; Profit factor 0.22 <= 1.00",
+    "min_trades_met": true,
+    "min_win_rate_met": false,
+    "positive_expectancy_met": false,
+    "min_profit_factor_met": false
+  },
+  "loss_clusters": [
+    {
+      "id": "ten_wide_wings",
+      "label": "10-wide or wider wings",
+      "sample_size": 67,
+      "wins": 15,
+      "losses": 52,
+      "win_rate_pct": 22.39,
+      "total_pnl": -3999.0,
+      "expectancy_per_trade": -59.69,
+      "loss_contribution_pct": 100.0,
+      "recommendation": "Quarantine 10-wide SPY iron condors; test narrower defined-risk structures or explicitly prove better width/risk math before re-entry."
+    },
+    {
+      "id": "multi_contract",
+      "label": "More than one contract",
+      "sample_size": 52,
+      "wins": 11,
+      "losses": 41,
+      "win_rate_pct": 21.15,
+      "total_pnl": -3370.0,
+      "expectancy_per_trade": -64.81,
+      "loss_contribution_pct": 82.8,
+      "recommendation": "Limit validation to one contract until the changed-rule cohort clears positive expectancy, profit factor, and realized-P/L gates."
+    },
+    {
+      "id": "early_exit_lt_24h",
+      "label": "Closed in under 24 hours",
+      "sample_size": 53,
+      "wins": 12,
+      "losses": 41,
+      "win_rate_pct": 22.64,
+      "total_pnl": -1079.0,
+      "expectancy_per_trade": -20.36,
+      "loss_contribution_pct": 38.18,
+      "recommendation": "Require the next validation hypothesis to prove why holding-time behavior changed before allowing another short-dated IC cohort."
+    },
+    {
+      "id": "early_exit_lt_1h",
+      "label": "Closed in under 1 hour",
+      "sample_size": 49,
+      "wins": 9,
+      "losses": 40,
+      "win_rate_pct": 18.37,
+      "total_pnl": -1769.0,
+      "expectancy_per_trade": -36.1,
+      "loss_contribution_pct": 38.1,
+      "recommendation": "Do not open setups whose expected management requires intraday repair; enforce a minimum hold unless a hard max-loss or broken-leg condition fires."
+    },
+    {
+      "id": "long_hold_ge_7d",
+      "label": "Held 7 days or longer",
+      "sample_size": 6,
+      "wins": 2,
+      "losses": 4,
+      "win_rate_pct": 33.33,
+      "total_pnl": -540.0,
+      "expectancy_per_trade": -90.0,
+      "loss_contribution_pct": 13.31,
+      "recommendation": "Add an exit/repair rule for slow-moving losers before allowing long-hold IC exposure again."
+    }
+  ],
+  "required_rule_changes": [
+    "Quarantine 10-wide SPY iron condors; test narrower defined-risk structures or explicitly prove better width/risk math before re-entry.",
+    "Limit validation to one contract until the changed-rule cohort clears positive expectancy, profit factor, and realized-P/L gates.",
+    "Require the next validation hypothesis to prove why holding-time behavior changed before allowing another short-dated IC cohort."
+  ],
+  "next_validation_hypothesis_template": {
+    "enabled": false,
+    "strategy_family": "ic_simple",
+    "hypothesis": "IC Simple remains quarantined. Enable only after replacing this text with a concrete rule-change thesis backed by the loss clusters in edge_rehabilitation_plan.json.",
+    "changed_rules": [
+      "Quarantine 10-wide SPY iron condors; test narrower defined-risk structures or explicitly prove better width/risk math before re-entry.",
+      "Limit validation to one contract until the changed-rule cohort clears positive expectancy, profit factor, and realized-P/L gates.",
+      "Require the next validation hypothesis to prove why holding-time behavior changed before allowing another short-dated IC cohort."
+    ],
+    "kill_criteria": {
+      "min_closed_trades": 30,
+      "min_expectancy_per_trade": 0.01,
+      "min_profit_factor": 1.01,
+      "min_total_realized_pnl": 0.01
+    }
+  },
+  "rag_ingestion": {
+    "lesson_id": "strategy_rehabilitation_ic_simple_current",
+    "lesson_path": "rag_knowledge/lessons_learned/strategy_rehabilitation_ic_simple_current.md",
+    "tags": [
+      "rag",
+      "ml",
+      "strategy-quarantine",
+      "profitability",
+      "loss-clusters"
+    ]
+  }
+}
