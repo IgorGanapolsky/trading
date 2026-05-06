@@ -113,17 +113,31 @@ def _round_metric(value: float, digits: int = 2) -> float:
     return value if math.isinf(value) else round(value, digits)
 
 
+def _trade_pnl(trade: dict) -> tuple[float, bool]:
+    """Return numeric P/L and whether the row had a parseable explicit value."""
+    raw = trade.get("realized_pnl")
+    if raw is None:
+        raw = trade.get("pnl")
+    if raw is None or raw == "":
+        return 0.0, False
+    try:
+        return float(raw), True
+    except (TypeError, ValueError):
+        return 0.0, False
+
+
 def stats_from_trades(trades: list[dict]) -> dict:
     """Build the stats shape expected by the Thompson updater from trade rows."""
     wins: list[float] = []
     losses: list[float] = []
+    skipped_trades = 0
+    ambiguous_outcome_trades = 0
+    missing_pnl_trades = 0
     for trade in trades:
         outcome = str(trade.get("outcome") or "").strip().lower()
-        pnl = trade.get("realized_pnl", trade.get("pnl", 0)) or 0
-        try:
-            pnl_float = float(pnl)
-        except (TypeError, ValueError):
-            pnl_float = 0.0
+        pnl_float, has_parseable_pnl = _trade_pnl(trade)
+        if not has_parseable_pnl:
+            missing_pnl_trades += 1
 
         if outcome not in {"win", "loss"}:
             if pnl_float > 0:
@@ -131,6 +145,8 @@ def stats_from_trades(trades: list[dict]) -> dict:
             elif pnl_float < 0:
                 outcome = "loss"
             else:
+                ambiguous_outcome_trades += 1
+                skipped_trades += 1
                 continue
 
         if outcome == "win":
@@ -139,10 +155,14 @@ def stats_from_trades(trades: list[dict]) -> dict:
             losses.append(pnl_float)
 
     closed = len(wins) + len(losses)
+    input_trades = len(trades)
     win_rate = (len(wins) / closed * 100) if closed else 0.0
     gross_profit = sum(pnl for pnl in wins if pnl > 0)
     gross_loss = abs(sum(pnl for pnl in losses if pnl < 0))
     total_realized_pnl = sum(wins) + sum(losses)
+    quality_denominator = max(input_trades, 1)
+    quality_penalty = (skipped_trades + min(missing_pnl_trades, closed)) / quality_denominator
+    data_quality_score = round(max(0.0, 1.0 - quality_penalty), 3)
     if gross_loss > 0:
         profit_factor = gross_profit / gross_loss
     elif gross_profit > 0:
@@ -154,6 +174,11 @@ def stats_from_trades(trades: list[dict]) -> dict:
         "wins": len(wins),
         "losses": len(losses),
         "closed_trades": closed,
+        "input_trades": input_trades,
+        "skipped_trades": skipped_trades,
+        "ambiguous_outcome_trades": ambiguous_outcome_trades,
+        "missing_pnl_trades": missing_pnl_trades,
+        "data_quality_score": data_quality_score,
         "win_rate_pct": round(win_rate, 2),
         "avg_win": sum(wins) / len(wins) if wins else 0,
         "avg_loss": abs(sum(losses) / len(losses)) if losses else 0,

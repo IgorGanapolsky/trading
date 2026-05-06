@@ -91,6 +91,15 @@ def _extract_tags(text: str) -> list[str]:
     return []
 
 
+def _extract_frontmatter_tags(frontmatter: dict[str, str]) -> list[str]:
+    raw_tags = frontmatter.get("tags", "")
+    if not raw_tags:
+        return []
+    if raw_tags.startswith("[") and raw_tags.endswith("]"):
+        raw_tags = raw_tags[1:-1]
+    return [tag.strip().strip('"').strip("'") for tag in raw_tags.split(",") if tag.strip()]
+
+
 def _extract_summary(text: str) -> str:
     summary = _extract_field(
         re.compile(r"^##\s+Summary\s*\n(.*?)(?=\n##|\Z)", re.DOTALL | re.MULTILINE),
@@ -126,6 +135,16 @@ def _parse_date_value(raw: str) -> datetime | None:
         return None
 
 
+def _parse_utc_iso(raw: str) -> datetime | None:
+    try:
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
 def _has_explicit_time(raw: str) -> bool:
     return bool(re.search(r"(?:T|\s)\d{1,2}:\d{2}", raw))
 
@@ -136,6 +155,79 @@ def _to_utc_iso(dt: datetime) -> str:
     else:
         dt = dt.astimezone(timezone.utc)
     return dt.isoformat().replace("+00:00", "Z")
+
+
+def _source_age_days(source_dt: datetime | None, indexed_at_utc: str) -> int | None:
+    indexed_dt = _parse_utc_iso(indexed_at_utc)
+    if source_dt is None or indexed_dt is None:
+        return None
+    if source_dt.tzinfo is None:
+        source_dt = source_dt.replace(tzinfo=timezone.utc)
+    else:
+        source_dt = source_dt.astimezone(timezone.utc)
+    return max(0, (indexed_dt - source_dt).days)
+
+
+def _recency_score(age_days: int | None) -> float:
+    if age_days is None:
+        return 0.3
+    if age_days <= 1:
+        return 1.0
+    if age_days <= 7:
+        return 0.85
+    if age_days <= 30:
+        return 0.7
+    if age_days <= 90:
+        return 0.5
+    return 0.25
+
+
+def _metadata_completeness(
+    *,
+    title: str,
+    fallback_title: str,
+    date_raw: str,
+    category_label: str,
+    severity: str,
+    summary: str,
+    tags: list[str],
+) -> float:
+    checks = [
+        bool(title and title != fallback_title),
+        bool(date_raw),
+        bool(category_label),
+        bool(severity),
+        bool(summary),
+        bool(tags),
+    ]
+    return round(sum(checks) / len(checks), 3)
+
+
+def _confidence_score(
+    *,
+    metadata_completeness: float,
+    recency_score: float,
+    text: str,
+    summary: str,
+) -> float:
+    has_source_signal = bool(re.search(r"https?://|^##\s+Citations\b", text, re.MULTILINE))
+    content_score = 1.0 if len(summary) >= 80 or len(text) >= 800 else 0.55
+    citation_score = 1.0 if has_source_signal else 0.0
+    score = (
+        metadata_completeness * 0.45
+        + recency_score * 0.3
+        + citation_score * 0.15
+        + content_score * 0.1
+    )
+    return round(max(0.0, min(1.0, score)), 3)
+
+
+def _lifecycle_for_score(score: float) -> str:
+    if score >= 0.72:
+        return "active"
+    if score >= 0.45:
+        return "watch"
+    return "archive"
 
 
 def _infer_date_from_path(path: Path) -> datetime | None:
@@ -256,7 +348,25 @@ def _build_lesson_record(
     summary = _extract_summary(text)
     if not summary:
         summary = frontmatter.get("description", "")
-    tags = _extract_tags(text)
+    tags = list(dict.fromkeys([*_extract_frontmatter_tags(frontmatter), *_extract_tags(text)]))
+    age_source_dt = date_obj or _parse_utc_iso(source_mtime_utc)
+    source_age_days = _source_age_days(age_source_dt, indexed_at_utc)
+    recency_score = _recency_score(source_age_days)
+    metadata_completeness = _metadata_completeness(
+        title=title,
+        fallback_title=item_id,
+        date_raw=date_raw,
+        category_label=category_label or category,
+        severity=severity,
+        summary=summary,
+        tags=tags,
+    )
+    confidence_score = _confidence_score(
+        metadata_completeness=metadata_completeness,
+        recency_score=recency_score,
+        text=text,
+        summary=summary,
+    )
 
     return {
         "id": item_id,
@@ -270,6 +380,11 @@ def _build_lesson_record(
         "file": source_path,
         "event_timestamp_utc": event_timestamp_utc,
         "source_mtime_utc": source_mtime_utc,
+        "source_age_days": source_age_days,
+        "metadata_completeness": metadata_completeness,
+        "recency_score": recency_score,
+        "confidence_score": confidence_score,
+        "lifecycle": _lifecycle_for_score(confidence_score),
         "indexed_at_utc": indexed_at_utc,
         "_date_sort": date_obj.isoformat() if date_obj else "",
     }

@@ -64,6 +64,7 @@ def test_dry_run_writes_json_rag_and_ml_artifacts(tmp_path: Path) -> None:
         now=datetime(2026, 4, 13, 13, 30, tzinfo=timezone.utc),
     )
     payload = asyncio.run(runner.run("pre_market"))
+    duplicate_payload = asyncio.run(runner.run("pre_market"))
 
     latest = tmp_path / "data" / "analysis" / "perplexity" / "pre_market_latest.json"
     trading_latest = tmp_path / "data" / "analysis" / "perplexity" / "trading_intel_latest.json"
@@ -72,6 +73,7 @@ def test_dry_run_writes_json_rag_and_ml_artifacts(tmp_path: Path) -> None:
     ml = tmp_path / "data" / "feedback" / "perplexity_intel_events.jsonl"
 
     assert payload["api_status"] == "dry_run"
+    assert duplicate_payload["api_status"] == "dry_run"  # nosec B101
     assert latest.exists()
     assert trading_latest.exists()
     assert legacy.exists()
@@ -81,4 +83,13 @@ def test_dry_run_writes_json_rag_and_ml_artifacts(tmp_path: Path) -> None:
     saved = json.loads(latest.read_text(encoding="utf-8"))
     assert saved["trading_context"]["equity"] == 93728.02
     assert saved["gate_contract"]["source"] == "perplexity_trading_intel"
-    assert "perplexity_trading_intel" in ml.read_text(encoding="utf-8")
+
+    ml_events = [json.loads(line) for line in ml.read_text(encoding="utf-8").splitlines()]
+    assert len(ml_events) == 1  # nosec B101
+    assert ml_events[0]["event_id"].startswith("perplexity_trading_intel:")  # nosec B101
+    assert ml_events[0]["source"] == "perplexity_trading_intel"  # nosec B101
+    assert ml_events[0]["query_count"] == len(PRE_MARKET_QUERIES)  # nosec B101
+    assert ml_events[0]["citation_count"] == 0  # nosec B101
+    assert ml_events[0]["fresh_for_minutes"] == 240  # nosec B101
+    assert ml_events[0]["gate_reason"] == saved["gate_contract"]["reason"]  # nosec B101
+    assert ml_events[0]["trading_context_snapshot"]["equity"] == 93728.02  # nosec B101

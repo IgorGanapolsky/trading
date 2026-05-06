@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import hashlib
 import json
 import os
 import re
@@ -296,6 +297,38 @@ def build_paths(repo_root: Path, mode: str, now: datetime) -> IntelPaths:
     )
 
 
+def _stable_event_id(payload: dict[str, Any]) -> str:
+    event_key = {
+        "event_type": "perplexity_trading_intel",
+        "generated_at_utc": payload.get("generated_at_utc"),
+        "mode": payload.get("mode"),
+        "model": payload.get("model"),
+        "risk_score": payload.get("risk_score"),
+        "recommendation": payload.get("recommendation"),
+        "query_keys": [item.get("key") for item in payload.get("queries", [])],
+    }
+    digest = hashlib.sha256(json.dumps(event_key, sort_keys=True).encode("utf-8")).hexdigest()
+    return f"perplexity_trading_intel:{digest[:16]}"
+
+
+def _append_jsonl_once(path: Path, event: dict[str, Any], key: str = "event_id") -> bool:
+    event_key = event.get(key)
+    if event_key and path.exists():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            try:
+                existing = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if existing.get(key) == event_key:
+                return False
+
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(event, sort_keys=True) + "\n")
+    return True
+
+
 class PerplexityTradingIntelRunner:
     """Run Perplexity trading research and persist gate/RAG/ML artifacts."""
 
@@ -492,8 +525,7 @@ class PerplexityTradingIntelRunner:
             )
 
         paths.rag_lesson.write_text(render_rag_lesson(payload), encoding="utf-8")
-        with paths.ml_jsonl.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(render_ml_event(payload), sort_keys=True) + "\n")
+        _append_jsonl_once(paths.ml_jsonl, render_ml_event(payload))
 
         return paths
 
@@ -544,19 +576,34 @@ def render_ml_event(payload: dict[str, Any]) -> dict[str, Any]:
     """Return one JSONL event for downstream ML/RAG pipelines."""
 
     context = payload.get("trading_context", {})
+    queries = payload.get("queries", [])
+    unique_citations = {
+        citation
+        for item in queries
+        for citation in item.get("citations", [])
+        if isinstance(citation, str) and citation
+    }
+    gate_contract = payload.get("gate_contract", {})
     return {
+        "event_id": _stable_event_id(payload),
         "event_type": "perplexity_trading_intel",
+        "source": "perplexity_trading_intel",
         "generated_at_utc": payload.get("generated_at_utc"),
         "mode": payload.get("mode"),
         "model": payload.get("model"),
         "api_status": payload.get("api_status"),
+        "fresh_for_minutes": payload.get("fresh_for_minutes"),
+        "query_count": len(queries),
+        "citation_count": len(unique_citations),
         "risk_score": payload.get("risk_score"),
         "recommendation": payload.get("recommendation"),
         "confidence": payload.get("confidence"),
-        "blocks_new_iron_condors": payload.get("gate_contract", {}).get("blocks_new_iron_condors"),
+        "blocks_new_iron_condors": gate_contract.get("blocks_new_iron_condors"),
+        "gate_reason": gate_contract.get("reason"),
         "equity": context.get("equity"),
         "win_rate_pct": context.get("win_rate_pct"),
         "profit_factor": context.get("profit_factor"),
+        "trading_context_snapshot": context,
     }
 
 

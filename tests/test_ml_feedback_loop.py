@@ -106,6 +106,28 @@ def test_validation_phase_stats_exclude_legacy_failure_cohort():
     assert stats["total_realized_pnl"] == 21.0
     assert stats["profit_factor"] == 2.05
     assert stats["expectancy_per_trade"] == 10.5
+    assert stats["data_quality_score"] == 1.0  # nosec B101
+
+
+def test_stats_from_trades_reports_incomplete_rows_without_counting_them_as_closed():
+    """Unresolved rows should be visible instead of silently changing priors."""
+    stats = stats_from_trades(
+        [
+            {"id": "win-by-pnl", "realized_pnl": 25},
+            {"id": "loss-by-outcome", "outcome": "loss", "realized_pnl": -10},
+            {"id": "open-no-pnl", "outcome": "open"},
+            {"id": "bad-pnl", "outcome": "win", "realized_pnl": "not-a-number"},
+        ]
+    )
+
+    assert stats["input_trades"] == 4  # nosec B101
+    assert stats["closed_trades"] == 3  # nosec B101
+    assert stats["wins"] == 2  # nosec B101
+    assert stats["losses"] == 1  # nosec B101
+    assert stats["skipped_trades"] == 1  # nosec B101
+    assert stats["ambiguous_outcome_trades"] == 1  # nosec B101
+    assert stats["missing_pnl_trades"] == 2  # nosec B101
+    assert stats["data_quality_score"] == 0.25  # nosec B101
 
 
 # --- Trading Gate Tests ---

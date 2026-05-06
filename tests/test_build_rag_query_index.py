@@ -164,3 +164,51 @@ A: Equity improved.
     assert lessons[0]["category"] == "analytics"
     assert lessons[0]["severity"] == "INFO"
     assert lessons[0]["date"] == "2026-03-13T20:00:00Z"
+
+
+def test_build_index_adds_retrieval_quality_metadata(tmp_path: Path, monkeypatch) -> None:
+    rag_root = tmp_path / "rag_knowledge"
+    monkeypatch.setattr(build_rag_query_index, "RAG_ROOT", rag_root)
+    monkeypatch.setattr(build_rag_query_index, "ADDITIONAL_MARKDOWN_SOURCES", [])
+
+    _write(
+        rag_root / "lessons_learned" / "ll_quality_rich.md",
+        """---
+title: "Quality Rich Lesson"
+description: "A structured lesson with enough metadata for retrieval ranking."
+date: 2026-05-06T14:00:00Z
+severity: HIGH
+category: ingestion
+tags: [rag, ingestion]
+---
+
+# Quality Rich Lesson
+
+## Summary
+This lesson has current metadata, source tags, and enough text to be trusted by retrieval.
+
+## Citations
+- https://example.com/source
+""",
+    )
+    _write(
+        rag_root / "lessons_learned" / "ll_stale_sparse_20200101.md",
+        """# Sparse Historical Lesson
+
+Thin stale note.
+""",
+    )
+
+    lessons = {lesson["id"]: lesson for lesson in build_rag_query_index.build_index()}
+
+    rich = lessons["ll_quality_rich"]
+    assert rich["source_age_days"] is not None  # nosec B101
+    assert rich["metadata_completeness"] >= 0.8  # nosec B101
+    assert rich["confidence_score"] >= 0.72  # nosec B101
+    assert rich["lifecycle"] == "active"  # nosec B101
+    assert {"rag", "ingestion"}.issubset(set(rich["tags"]))  # nosec B101
+
+    stale = lessons["ll_stale_sparse_20200101"]
+    assert stale["source_age_days"] > 90  # nosec B101
+    assert stale["recency_score"] == 0.25  # nosec B101
+    assert stale["lifecycle"] in {"watch", "archive"}  # nosec B101
