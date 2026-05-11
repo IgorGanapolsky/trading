@@ -109,7 +109,7 @@ wheels = [
 
 [[package]]
 name = "anthropic"
-version = "0.97.0"
+version = "0.101.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -121,9 +121,9 @@ dependencies = [
     { name = "sniffio" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/14/93/f66ea8bfe39f2e6bb9da8e27fa5457ad2520e8f7612dfc547b17fad55c4d/anthropic-0.97.0.tar.gz", hash = "sha256:021e79fd8e21e90ad94dc5ba2bbbd8b1599f424f5b1fab6c06204009cab764be", size = 669502, upload-time = "2026-04-23T20:52:34.445Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b5/cb/9d0123243e749ac3a579972b2c398971bce1dc57bcc4efb08066df610360/anthropic-0.101.0.tar.gz", hash = "sha256:1116a6a87c55757e0fbe3e1ba40804fbd04de7963601a6dd6b539a889f18de3e", size = 758603, upload-time = "2026-05-11T15:46:33.944Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/53/b6/8e851369fa661ad0fef2ae6266bf3b7d52b78ccf011720058f4adaca59e2/anthropic-0.97.0-py3-none-any.whl", hash = "sha256:8a1a472dfabcfc0c52ff6a3eecf724ac7e07107a2f6e2367be55ceb42f5d5613", size = 662126, upload-time = "2026-04-23T20:52:32.377Z" },
+    { url = "https://files.pythonhosted.org/packages/f1/b2/74ff06762d005ecf1658929a292df0acb786d025f6a6c54fcb30e2dc7761/anthropic-0.101.0-py3-none-any.whl", hash = "sha256:cc3cc6576989471e2aa9132258034ad0ff0d8fe500b04ac499e4e46ed68c5ed0", size = 753594, upload-time = "2026-05-11T15:46:32.216Z" },
 ]
 
 [[package]]
@@ -2836,19 +2836,19 @@ xai = [
 requires-dist = [
     { name = "alpaca-py", specifier = ">=0.43.4" },
     { name = "alpha-vantage", specifier = ">=2.3.1" },
-    { name = "anthropic", specifier = ">=0.97.0,<1.0.0" },
+    { name = "anthropic", specifier = ">=0.100.0,<1.0.0" },
     { name = "bandit", marker = "extra == 'security'", specifier = ">=1.9.4" },
     { name = "beautifulsoup4", specifier = ">=4.14.3" },
     { name = "chromadb", marker = "extra == 'rag'", specifier = ">=0.6.3" },
     { name = "detect-secrets", marker = "extra == 'security'", specifier = ">=1.5.0" },
     { name = "google-generativeai", specifier = ">=0.8.6,<1.0.0" },
-    { name = "holidays", specifier = ">=0.95" },
+    { name = "holidays", specifier = ">=0.96" },
     { name = "lancedb", marker = "extra == 'rag'", specifier = ">=0.30.2" },
-    { name = "langchain", specifier = ">=1.2.17" },
+    { name = "langchain", specifier = ">=1.2.18" },
     { name = "langchain-anthropic", specifier = ">=1.4.3" },
     { name = "langchain-community", specifier = ">=0.3.0" },
-    { name = "langchain-core", specifier = ">=1.3.2" },
-    { name = "langsmith", specifier = ">=0.8.0" },
+    { name = "langchain-core", specifier = ">=1.3.3" },
+    { name = "langsmith", specifier = ">=0.8.3" },
     { name = "lxml", specifier = ">=6.1.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.20.2" },
     { name = "numpy", specifier = ">=2.4.4,<3.0.0" },
@@ -2856,7 +2856,7 @@ requires-dist = [
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "praw", specifier = ">=7.8.1" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.8.0" },
-    { name = "pydantic-settings", specifier = ">=2.14.0,<3.0.0" },
+    { name = "pydantic-settings", specifier = ">=2.14.1,<3.0.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.3" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.21.1" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.1.0" },
@@ -2868,7 +2868,7 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.15.12" },
     { name = "scikit-learn", specifier = ">=1.8.0,<2.0.0" },
     { name = "sentence-transformers", marker = "extra == 'rag'", specifier = ">=2.7.0" },
-    { name = "xai-sdk", marker = "extra == 'xai'", specifier = ">=1.12.1" },
+    { name = "xai-sdk", marker = "extra == 'xai'", specifier = ">=1.12.2" },
     { name = "yfinance", specifier = ">=0.2.58,<0.2.66" },
     { name = "youtube-transcript-api", specifier = ">=1.2.3" },
 ]
@@ -2997,11 +2997,11 @@ wheels = [
 
 [[package]]
 name = "urllib3"
-version = "2.6.3"
+version = "2.7.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/c7/24/5f1b3bdffd70275f6661c76461e25f024d5a38a46f04aaca912426a2b1d3/urllib3-2.6.3.tar.gz", hash = "sha256:1b62b6884944a57dbe321509ab94fd4d3b307075e0c2eae991ac71ee15ad38ed", size = 435556, upload-time = "2026-01-07T16:24:43.925Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/53/0c/06f8b233b8fd13b9e5ee11424ef85419ba0d8ba0b3138bf360be2ff56953/urllib3-2.7.0.tar.gz", hash = "sha256:231e0ec3b63ceb14667c67be60f2f2c40a518cb38b03af60abc813da26505f4c", size = 433602, upload-time = "2026-05-07T16:13:18.596Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/39/08/aaaad47bc4e9dc8c725e68f9d04865dbcb2052843ff09c97b08904852d84/urllib3-2.6.3-py3-none-any.whl", hash = "sha256:bf272323e553dfb2e87d9bfd225ca7b0f467b919d7bbd355436d3fd37cb0acd4", size = 131584, upload-time = "2026-01-07T16:24:42.685Z" },
+    { url = "https://files.pythonhosted.org/packages/7f/3e/5db95bcf282c52709639744ca2a8b149baccf648e39c8cc87553df9eae0c/urllib3-2.7.0-py3-none-any.whl", hash = "sha256:9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897", size = 131087, upload-time = "2026-05-07T16:13:17.151Z" },
 ]
 
 [[package]]
