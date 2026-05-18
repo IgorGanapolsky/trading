@@ -82,10 +82,14 @@ class TestIronCondorSuccessfulEntry:
             "unknown",
         )
 
+    @patch(
+        "scripts.iron_condor_trader._check_recent_expiry_concentration",
+        return_value=(False, ""),
+    )
     @patch("scripts.iron_condor_trader.acquire_trade_lock")
     @patch("scripts.iron_condor_trader.LessonsLearnedRAG")
     @patch("scripts.iron_condor_trader.safe_submit_order")
-    def test_full_live_flow_with_mleg(self, mock_submit, mock_rag_class, mock_lock):
+    def test_full_live_flow_with_mleg(self, mock_submit, mock_rag_class, mock_lock, _mock_ts):
         """Full live flow: position check -> RAG -> MLeg order submission."""
         from scripts.iron_condor_trader import IronCondorLegs, IronCondorStrategy
 
@@ -203,10 +207,14 @@ class TestIronCondorGateRejection:
 class TestIronCondorAPIFailure:
     """Test API failure handling."""
 
+    @patch(
+        "scripts.iron_condor_trader._check_recent_expiry_concentration",
+        return_value=(False, ""),
+    )
     @patch("scripts.iron_condor_trader.acquire_trade_lock")
     @patch("scripts.iron_condor_trader.LessonsLearnedRAG")
     @patch("scripts.iron_condor_trader.safe_submit_order")
-    def test_mleg_order_api_failure(self, mock_submit, mock_rag_class, mock_lock):
+    def test_mleg_order_api_failure(self, mock_submit, mock_rag_class, mock_lock, _mock_ts):
         """MLeg order API failure should result in LIVE_FAILED status."""
         from scripts.iron_condor_trader import IronCondorLegs, IronCondorStrategy
 
