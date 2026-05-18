@@ -560,6 +560,7 @@ class TestSameExpiryReentryBlock:
                             "status": "closed",
                             "realized_pnl": -42.0,
                             "signature": "SPY_2026-05-15_P628-638_C712-715",
+                            "exit_date": "2026-05-10",
                         },
                         {
                             "strategy": "iron_condor",
@@ -567,12 +568,14 @@ class TestSameExpiryReentryBlock:
                             "outcome": "loss",
                             "realized_pnl": "0",
                             "legs": {"expiry": "2026-05-22"},
+                            "exit_date": "2026-05-12",
                         },
                         {
                             "strategy": "iron_condor",
                             "status": "closed",
                             "realized_pnl": 31.0,
                             "signature": "SPY_2026-05-29_P620-630_C720-730",
+                            "exit_date": "2026-05-15",
                         },
                     ]
                 }
@@ -823,6 +826,7 @@ class TestE2EPipeline:
                     "status": "closed",
                     "realized_pnl": -123.0,
                     "signature": "SPY_2026-05-15_P628-638_C712-715",
+                    "exit_date": datetime.now(timezone.utc).date().isoformat(),
                 }
             ]
         }
