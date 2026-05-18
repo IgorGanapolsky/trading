@@ -1568,9 +1568,25 @@ def safe_submit_order(client, order_request, strategy: str | None = None):
             except ImportError:
                 logger.warning("MacroRiskGuard unavailable - skipping macro check.")
             except Exception as e:
+                # Fail-closed. Any unexpected error in the macro guard
+                # pipeline (data-client init, network, attribute, etc.)
+                # previously fell through and let the trade submit with
+                # NO macro validation — exactly the failure mode the guard
+                # exists to prevent. A transient data-API hiccup during a
+                # macro stress event would silently re-enable trading.
                 if "MACRO BLOCK" in str(e):
                     raise
-                logger.error(f"Macro Guard Error: {e}")
+                logger.error(
+                    f"Macro Guard Error (failing closed): {e}. "
+                    "If this fires often, fix the underlying data fetch "
+                    "or relax to fail-open with explicit operator sign-off."
+                )
+                gateway.capture_span(
+                    "macro_block",
+                    trace_id,
+                    attributes={"reason": f"guard_unavailable: {e}"},
+                )
+                raise ValueError(f"MACRO BLOCK: guard unavailable ({e})") from e
 
             # Mandatory trade gate enforcement for NEW entries.
             # This ensures intraday guardrails (daily loss, max fills/structures) apply
