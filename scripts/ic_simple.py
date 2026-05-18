@@ -1269,17 +1269,39 @@ def _thumbgate_matches(rule: dict) -> bool:
 
 
 def _load_entries() -> dict:
+    if not ENTRIES_FILE.exists():
+        return {}
     try:
-        if ENTRIES_FILE.exists():
-            return json.loads(ENTRIES_FILE.read_text())
-    except Exception:
-        pass
-    return {}
+        return json.loads(ENTRIES_FILE.read_text())
+    except json.JSONDecodeError as exc:
+        # File corruption is high-impact: a silently-empty entries dict means
+        # check_exits cannot manage live legs (no 50%/stop/7DTE close) AND the
+        # MAX_IC=2 gate counts zero, allowing a duplicate IC on top of the
+        # orphaned position. Log loudly so the operator can investigate
+        # rather than discovering corruption days later via missing exits.
+        logger.error(
+            f"ENTRIES FILE CORRUPT at {ENTRIES_FILE}: {exc}. "
+            "Treating as empty — open positions WILL NOT be tracked. "
+            "Restore from backup or re-derive from broker positions."
+        )
+        return {}
+    except OSError as exc:
+        logger.error(f"ENTRIES FILE UNREADABLE at {ENTRIES_FILE}: {exc}")
+        return {}
 
 
 def _save_entries(entries: dict):
+    # Atomic write: serialize to a sibling .tmp file, then os.replace into
+    # place. This guarantees that a SIGINT/OOM/container-kill mid-write
+    # leaves either the old file intact or the new file complete — never
+    # a truncated/half-JSON state that would silently zero out position
+    # tracking on the next _load_entries.
+    import os
+
     ENTRIES_FILE.parent.mkdir(parents=True, exist_ok=True)
-    ENTRIES_FILE.write_text(json.dumps(entries, indent=2))
+    tmp_path = ENTRIES_FILE.with_suffix(ENTRIES_FILE.suffix + ".tmp")
+    tmp_path.write_text(json.dumps(entries, indent=2))
+    os.replace(tmp_path, ENTRIES_FILE)
 
 
 def _check_recent_fills(client):
