@@ -488,3 +488,11 @@ class TestRecentExpiryConcentrationGate:
             "2026-04-02", ledger_path=tmp_path / "does_not_exist.json"
         )
         assert blocked is False
+
+    def test_canonical_module_path(self, tmp_path):
+        # Both the re-export at scripts.iron_condor_trader and the canonical
+        # src.risk.expiry_concentration export must point at the same callable.
+        from scripts.iron_condor_trader import _check_recent_expiry_concentration
+        from src.risk.expiry_concentration import check_recent_expiry_concentration
+
+        assert _check_recent_expiry_concentration is check_recent_expiry_concentration

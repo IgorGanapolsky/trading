@@ -1514,6 +1514,15 @@ def main():
                     )
                     opp = None
                 if opp:
+                    from src.risk.expiry_concentration import (
+                        check_recent_expiry_concentration,
+                    )
+
+                    blocked, ts_reason = check_recent_expiry_concentration(opp["expiry"])
+                    if blocked:
+                        logger.warning(f"RE-ENTRY BLOCKED by time-series concentration: {ts_reason}")
+                        opp = None
+                if opp:
                     should_skip, thompson_reason = _should_skip_for_thompson(thompson_conf)
                     if should_skip:
                         logger.warning(thompson_reason)

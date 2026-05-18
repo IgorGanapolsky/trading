@@ -55,69 +55,14 @@ logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).parent.parent
 SYSTEM_STATE_PATH = PROJECT_ROOT / "data" / "system_state.json"
-TRADES_LEDGER_PATH = PROJECT_ROOT / "data" / "trades.json"
 IC_ENTRIES_PATH = PROJECT_ROOT / "data" / "ic_entries.json"
 MAX_SYNC_STALENESS_HOURS = 18
-RECENT_EXPIRY_LOOKBACK = 20
 
-
-def _check_recent_expiry_concentration(
-    target_expiry: str,
-    lookback: int = RECENT_EXPIRY_LOOKBACK,
-    threshold: float | None = None,
-    ledger_path: Path | None = None,
-) -> tuple[bool, str]:
-    """Block if the prospective new IC's expiry would tip rolling concentration over threshold.
-
-    Reads the last `lookback` closed iron-condor trades from data/trades.json,
-    adds the prospective new entry, and checks the max share by entry-expiry
-    date. Catches the historical pattern of sequential entries piling up on
-    a single expiry (e.g., 35/69 trades on 2026-04-02), which the gateway's
-    concurrent-position check cannot see.
-
-    Returns (True, reason) when blocked, (False, "") otherwise.
-    """
-    if threshold is None:
-        try:
-            from src.core.trading_constants import MAX_EXPIRY_CONCENTRATION_PCT
-
-            threshold = MAX_EXPIRY_CONCENTRATION_PCT
-        except ImportError:
-            threshold = 0.40
-
-    ledger_path = ledger_path or TRADES_LEDGER_PATH
-    if not ledger_path.exists():
-        return False, ""
-
-    try:
-        ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return False, ""
-
-    closed_ics = [
-        t
-        for t in ledger.get("trades", [])
-        if t.get("status") == "closed" and t.get("strategy") == "iron_condor"
-    ]
-    recent = closed_ics[-lookback:]
-    recent_expiries = [(t.get("legs") or {}).get("expiry") for t in recent]
-    sample = [e for e in recent_expiries if e] + [target_expiry]
-    if len(sample) < 4:
-        return False, ""
-
-    from collections import Counter
-
-    counts = Counter(sample)
-    most_expiry, most_count = counts.most_common(1)[0]
-    share = most_count / len(sample)
-    if share > threshold:
-        return (
-            True,
-            f"Time-series concentration: {most_count}/{len(sample)} recent entries "
-            f"on expiry {most_expiry} ({share * 100:.0f}%) "
-            f"exceeds MAX_EXPIRY_CONCENTRATION_PCT={threshold * 100:.0f}%",
-        )
-    return False, ""
+# Re-export the time-series concentration gate so existing patches that target
+# `scripts.iron_condor_trader._check_recent_expiry_concentration` keep working.
+from src.risk.expiry_concentration import (  # noqa: E402
+    check_recent_expiry_concentration as _check_recent_expiry_concentration,
+)
 
 
 def select_strikes_by_delta(*args, **kwargs):
