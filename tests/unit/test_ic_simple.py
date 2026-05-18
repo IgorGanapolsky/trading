@@ -323,7 +323,7 @@ class TestWaitForFill:
         filled_order = MockOrder(status="OrderStatus.FILLED", filled_avg_price=2.45)
         client.get_order_by_id.return_value = filled_order
 
-        result = _wait_for_fill(client, "test-123", timeout_seconds=30, poll_interval=5)
+        result = _wait_for_fill(client, "test-123", timeout_seconds=30, poll_interval=5)[0]
         assert result is True
 
     @patch("time.sleep")
@@ -333,7 +333,7 @@ class TestWaitForFill:
         client = MagicMock()
         client.get_order_by_id.return_value = MockOrder(status="OrderStatus.EXPIRED")
 
-        result = _wait_for_fill(client, "test-123", timeout_seconds=30, poll_interval=5)
+        result = _wait_for_fill(client, "test-123", timeout_seconds=30, poll_interval=5)[0]
         assert result is False
 
     @patch("time.sleep")
@@ -343,7 +343,7 @@ class TestWaitForFill:
         client = MagicMock()
         client.get_order_by_id.return_value = MockOrder(status="OrderStatus.CANCELED")
 
-        result = _wait_for_fill(client, "test-123", timeout_seconds=30, poll_interval=5)
+        result = _wait_for_fill(client, "test-123", timeout_seconds=30, poll_interval=5)[0]
         assert result is False
 
     @patch("time.sleep")
@@ -353,7 +353,7 @@ class TestWaitForFill:
         client = MagicMock()
         client.get_order_by_id.return_value = MockOrder(status="OrderStatus.REJECTED")
 
-        result = _wait_for_fill(client, "test-123", timeout_seconds=30, poll_interval=5)
+        result = _wait_for_fill(client, "test-123", timeout_seconds=30, poll_interval=5)[0]
         assert result is False
 
     @patch("time.sleep")
@@ -364,7 +364,7 @@ class TestWaitForFill:
         # Always returns pending — never fills
         client.get_order_by_id.return_value = MockOrder(status="OrderStatus.PENDING_NEW")
 
-        result = _wait_for_fill(client, "test-123", timeout_seconds=10, poll_interval=5)
+        result = _wait_for_fill(client, "test-123", timeout_seconds=10, poll_interval=5)[0]
         assert result is False
         # Should have polled twice (0s, 5s) then timed out
         assert client.get_order_by_id.call_count == 2
@@ -380,7 +380,7 @@ class TestWaitForFill:
             MockOrder(status="OrderStatus.FILLED", filled_avg_price=2.30),
         ]
 
-        result = _wait_for_fill(client, "test-123", timeout_seconds=30, poll_interval=5)
+        result = _wait_for_fill(client, "test-123", timeout_seconds=30, poll_interval=5)[0]
         assert result is True
         assert client.get_order_by_id.call_count == 2
 
@@ -415,7 +415,7 @@ class TestPriceWalk:
         mock_order.id = "order-1"
         mock_order.status = "FILLED"
         mock_submit.return_value = mock_order
-        mock_wait.return_value = True  # Fills immediately
+        mock_wait.return_value = (True, 2.45)  # filled, fill_price
 
         result = place_ic(MagicMock(), self._make_opp(est_credit=2.50))
 
@@ -440,7 +440,7 @@ class TestPriceWalk:
         mock_submit.return_value = mock_order
 
         # Fails first 3 times, fills on 4th ($0.15 concession)
-        mock_wait.side_effect = [False, False, False, True]
+        mock_wait.side_effect = [(False, None), (False, None), (False, None), (True, 2.30)]
 
         client = MagicMock()
         place_ic(client, self._make_opp(est_credit=2.50))
@@ -459,7 +459,7 @@ class TestPriceWalk:
 
     @patch("scripts.ic_simple._save_entries")
     @patch("scripts.ic_simple._load_entries", return_value={})
-    @patch("scripts.ic_simple._wait_for_fill", return_value=False)
+    @patch("scripts.ic_simple._wait_for_fill", return_value=(False, None))
     @patch("src.safety.mandatory_trade_gate.safe_submit_order")
     def test_stops_at_max_walk(self, mock_submit, mock_wait, mock_load, mock_save):
         from scripts.ic_simple import place_ic
@@ -479,7 +479,7 @@ class TestPriceWalk:
 
     @patch("scripts.ic_simple._save_entries")
     @patch("scripts.ic_simple._load_entries", return_value={})
-    @patch("scripts.ic_simple._wait_for_fill", return_value=False)
+    @patch("scripts.ic_simple._wait_for_fill", return_value=(False, None))
     @patch("src.safety.mandatory_trade_gate.safe_submit_order")
     def test_stops_at_min_credit(self, mock_submit, mock_wait, mock_load, mock_save):
         from scripts.ic_simple import place_ic
@@ -670,7 +670,7 @@ class TestE2EPipeline:
 
     @patch("scripts.ic_simple._save_entries")
     @patch("scripts.ic_simple._load_entries", return_value={})
-    @patch("scripts.ic_simple._wait_for_fill", return_value=True)
+    @patch("scripts.ic_simple._wait_for_fill", return_value=(True, 2.45))
     @patch("src.safety.mandatory_trade_gate.safe_submit_order")
     @patch("scripts.ic_simple.find_opportunity")
     @patch("scripts.ic_simple._get_thompson_confidence", return_value=0.90)
@@ -851,7 +851,7 @@ class TestE2EPipeline:
 
     @patch("scripts.ic_simple._save_entries")
     @patch("scripts.ic_simple._load_entries", return_value={})
-    @patch("scripts.ic_simple._wait_for_fill", return_value=True)
+    @patch("scripts.ic_simple._wait_for_fill", return_value=(True, 2.45))
     @patch("src.safety.mandatory_trade_gate.safe_submit_order")
     @patch("scripts.ic_simple.find_opportunity")
     @patch("scripts.ic_simple._count_open_ics", return_value=0)
