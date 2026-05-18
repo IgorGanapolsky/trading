@@ -422,63 +422,101 @@ class TestExecute:
 
 
 class TestRecentExpiryConcentrationGate:
-    """Time-series concentration gate (prevents the historical 50.7% on single expiry pattern)."""
+    """Time-series concentration gate (prevents the historical 50.7% on single expiry pattern).
 
-    def _write_ledger(self, tmp_path: Path, expiries: list[str]) -> Path:
+    Window is calendar-time, not row-count: historical entries age out so the
+    gate never permanently deadlocks the system after a halt.
+    """
+
+    def _write_ledger(self, tmp_path: Path, rows: list[tuple[str, str]]) -> Path:
+        """rows = list of (entry_iso_datetime, expiry_iso_date)."""
         import json
 
         trades = [
-            {"status": "closed", "strategy": "iron_condor", "legs": {"expiry": e}}
-            for e in expiries
+            {
+                "status": "closed",
+                "strategy": "iron_condor",
+                "entry_time": entry_iso,
+                "legs": {"expiry": expiry},
+            }
+            for entry_iso, expiry in rows
         ]
         path = tmp_path / "trades.json"
         path.write_text(json.dumps({"trades": trades}))
         return path
 
     def test_blocks_when_target_expiry_dominates_recent(self, tmp_path):
+        from datetime import datetime, timezone
+
         from scripts.iron_condor_trader import _check_recent_expiry_concentration
 
-        ledger = self._write_ledger(
-            tmp_path,
-            ["2026-04-02"] * 15 + ["2026-04-10", "2026-04-17", "2026-04-24"],
-        )
+        now = datetime(2026, 5, 18, tzinfo=timezone.utc)
+        rows = [
+            (f"2026-05-{day:02d}T15:30:00+00:00", "2026-06-05") for day in range(1, 16)
+        ] + [
+            ("2026-05-16T15:30:00+00:00", "2026-06-12"),
+            ("2026-05-17T15:30:00+00:00", "2026-06-19"),
+            ("2026-05-18T13:00:00+00:00", "2026-06-26"),
+        ]
+        ledger = self._write_ledger(tmp_path, rows)
         blocked, reason = _check_recent_expiry_concentration(
-            "2026-04-02", ledger_path=ledger
+            "2026-06-05", ledger_path=ledger, now=now
         )
         assert blocked is True
-        assert "2026-04-02" in reason
-        assert "exceeds" in reason
+        assert "2026-06-05" in reason
 
-    def test_blocks_when_existing_ledger_concentrated_even_for_new_expiry(self, tmp_path):
+    def test_self_unblocks_when_old_entries_age_out(self, tmp_path):
+        from datetime import datetime, timezone
+
         from scripts.iron_condor_trader import _check_recent_expiry_concentration
 
-        # Time-series effect: prior concentration alone exceeds threshold,
-        # so even a diversifying new entry is blocked until old entries age out.
-        ledger = self._write_ledger(tmp_path, ["2026-04-02"] * 15 + ["2026-04-10"] * 5)
-        blocked, reason = _check_recent_expiry_concentration(
-            "2026-06-19", ledger_path=ledger
+        # All historical entries are >60 days old. Even though they were
+        # heavily concentrated, the calendar window excludes them — no deadlock.
+        now = datetime(2026, 5, 18, tzinfo=timezone.utc)
+        rows = [
+            ("2026-02-01T15:30:00+00:00", "2026-03-06") for _ in range(20)
+        ]
+        ledger = self._write_ledger(tmp_path, rows)
+        blocked, _ = _check_recent_expiry_concentration(
+            "2026-06-05", ledger_path=ledger, now=now
         )
-        assert blocked is True
+        assert blocked is False
 
-    def test_allows_diversified_history(self, tmp_path):
+    def test_allows_diversified_recent_history(self, tmp_path):
+        from datetime import datetime, timezone
+
         from scripts.iron_condor_trader import _check_recent_expiry_concentration
 
-        ledger = self._write_ledger(
-            tmp_path,
-            ["2026-04-02", "2026-04-10", "2026-04-17", "2026-04-24", "2026-05-01"],
-        )
+        now = datetime(2026, 5, 18, tzinfo=timezone.utc)
+        rows = [
+            ("2026-05-04T15:30:00+00:00", "2026-06-05"),
+            ("2026-05-06T15:30:00+00:00", "2026-06-12"),
+            ("2026-05-08T15:30:00+00:00", "2026-06-19"),
+            ("2026-05-12T15:30:00+00:00", "2026-06-26"),
+            ("2026-05-15T15:30:00+00:00", "2026-07-03"),
+        ]
+        ledger = self._write_ledger(tmp_path, rows)
         blocked, reason = _check_recent_expiry_concentration(
-            "2026-05-08", ledger_path=ledger
+            "2026-07-10", ledger_path=ledger, now=now
         )
         assert blocked is False
         assert reason == ""
 
     def test_allows_small_sample(self, tmp_path):
+        from datetime import datetime, timezone
+
         from scripts.iron_condor_trader import _check_recent_expiry_concentration
 
+        now = datetime(2026, 5, 18, tzinfo=timezone.utc)
         # <4 sample total — not enough signal to gate
-        ledger = self._write_ledger(tmp_path, ["2026-04-02", "2026-04-02"])
-        blocked, _ = _check_recent_expiry_concentration("2026-04-02", ledger_path=ledger)
+        rows = [
+            ("2026-05-15T15:30:00+00:00", "2026-06-05"),
+            ("2026-05-16T15:30:00+00:00", "2026-06-05"),
+        ]
+        ledger = self._write_ledger(tmp_path, rows)
+        blocked, _ = _check_recent_expiry_concentration(
+            "2026-06-05", ledger_path=ledger, now=now
+        )
         assert blocked is False
 
     def test_no_ledger_does_not_block(self, tmp_path):
