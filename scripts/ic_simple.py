@@ -839,15 +839,36 @@ def _adjust_strategy_params(adjustments: dict, reason: str, source: str, confide
 
     Safety: only adjusts if confidence >= 0.7 and changes are within bounds.
     """
+    # Pull canonical caps from trading_constants so ML adjustments cannot
+    # silently breach .claude/CLAUDE.md policy. Falls back to defensive
+    # defaults if the import path is broken.
+    try:
+        from src.core.trading_constants import (
+            IRON_CONDOR_STOP_LOSS_MULTIPLIER,
+            MAX_CONCURRENT_IRON_CONDORS,
+        )
+
+        canonical_max_ic = int(MAX_CONCURRENT_IRON_CONDORS)
+        canonical_stop_loss = float(IRON_CONDOR_STOP_LOSS_MULTIPLIER)
+    except ImportError:
+        canonical_max_ic = 2
+        canonical_stop_loss = 1.0
+
     BOUNDS = {
         "target_delta": (0.10, 0.25),  # Never go below 10-delta or above 25-delta
         "wing_width": (5, 15),  # $5-$15 wide
         "target_dte": (21, 60),  # 21-60 DTE
         "min_credit": (0.30, 2.00),  # Floor $0.30, cap $2.00
         "profit_target": (0.25, 0.75),  # 25-75% profit take
-        "stop_loss": (0.75, 2.0),  # 75-200% stop
+        # Stop-loss is canonical (1.0× credit). Allow a tighter stop down to
+        # 0.75× but never relax beyond canonical — looser stops would let
+        # losses run past the policy cap.
+        "stop_loss": (0.75, canonical_stop_loss),
         "exit_dte": (3, 14),  # 3-14 DTE exit
-        "max_ic": (1, 4),  # 1-4 concurrent ICs
+        # max_ic upper bound is the canonical MAX_CONCURRENT_IRON_CONDORS
+        # (currently 2). A previous bound of 4 silently allowed ML to double
+        # the capital-at-risk envelope vs .claude/CLAUDE.md policy.
+        "max_ic": (1, canonical_max_ic),
     }
 
     if confidence < 0.7:
