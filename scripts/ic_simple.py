@@ -214,6 +214,7 @@ def place_ic(client, opp: dict) -> str | None:
 
     order_id = None
     filled = False
+    fill_price: float | None = None
     walk_total = 0.0
 
     while walk_total <= MAX_WALK and not filled:
@@ -253,7 +254,7 @@ def place_ic(client, opp: dict) -> str | None:
         order_id = str(order.id)
         logger.info(f"Order {order_id}: {order.status}")
 
-        filled = _wait_for_fill(
+        filled, fill_price = _wait_for_fill(
             client, order_id, timeout_seconds=WALK_WAIT_SECONDS, poll_interval=5
         )
         if not filled:
@@ -267,11 +268,21 @@ def place_ic(client, opp: dict) -> str | None:
         logger.warning(f"Price walk exhausted (${MAX_WALK:.2f} concession). No fill.")
         return None
 
-    # Save entry data
+    # Save entry data. Persist the *actual* fill credit so downstream profit-
+    # target and stop-loss thresholds key off what the broker filled, not the
+    # pre-walk estimate. Falls back to est_credit only if the broker did not
+    # report a filled_avg_price for some reason.
+    persisted_credit = fill_price if fill_price is not None else opp["est_credit"]
+    if fill_price is not None and abs(fill_price - opp["est_credit"]) >= 0.05:
+        logger.info(
+            f"Persisted credit ${persisted_credit:.2f} differs from estimate "
+            f"${opp['est_credit']:.2f} by ${persisted_credit - opp['est_credit']:+.2f} "
+            "(price-walk concession)."
+        )
     entries = _load_entries()
     entry_key = f"IC_{expiry_yymmdd}"
     entries[entry_key] = {
-        "credit": opp["est_credit"],
+        "credit": persisted_credit,
         "date": datetime.now().isoformat(),
         "entry_time": datetime.now().isoformat(),
         "order_id": str(order.id),
@@ -1257,8 +1268,15 @@ def _cancel_stale_orders(client):
 
 def _wait_for_fill(
     client, order_id: str, timeout_seconds: int = 120, poll_interval: int = 10
-) -> bool:
-    """Poll order status until filled or timeout. Returns True if filled."""
+) -> tuple[bool, float | None]:
+    """Poll order status until filled or timeout.
+
+    Returns ``(filled, fill_price_abs)``. ``fill_price_abs`` is the absolute
+    credit per share when the MLEG order fills, or ``None`` when unavailable.
+    Downstream uses it to persist the *actual* entry credit instead of the
+    pre-walk estimate, which makes profit-target and stop-loss thresholds
+    correct.
+    """
     import time
 
     elapsed = 0
@@ -1267,23 +1285,29 @@ def _wait_for_fill(
             order = client.get_order_by_id(order_id)
             status = str(order.status)
             if "FILLED" in status.upper():
-                fill_price = getattr(order, "filled_avg_price", None)
+                raw_price = getattr(order, "filled_avg_price", None)
+                fill_price = None
+                if raw_price is not None:
+                    try:
+                        fill_price = abs(float(raw_price))
+                    except (TypeError, ValueError):
+                        fill_price = None
                 logger.info(
-                    f"Order {order_id} FILLED @ ${abs(float(fill_price)):.2f}"
-                    if fill_price
+                    f"Order {order_id} FILLED @ ${fill_price:.2f}"
+                    if fill_price is not None
                     else f"Order {order_id} FILLED"
                 )
-                return True
+                return True, fill_price
             if any(s in status.upper() for s in ["CANCELED", "CANCELLED", "EXPIRED", "REJECTED"]):
                 logger.warning(f"Order {order_id} terminal status: {status}")
-                return False
+                return False, None
             logger.info(f"Order {order_id}: {status} ({elapsed}s/{timeout_seconds}s)")
         except Exception as e:
             logger.debug(f"Fill poll error: {e}")
         time.sleep(poll_interval)
         elapsed += poll_interval
     logger.warning(f"Order {order_id} not filled after {timeout_seconds}s")
-    return False
+    return False, None
 
 
 def _count_open_ics(client) -> int:
