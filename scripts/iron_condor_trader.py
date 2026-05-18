@@ -25,7 +25,6 @@ THIS IS THE MONEY MAKER.
 import json
 import logging
 import sys
-import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -946,89 +945,13 @@ class IronCondorStrategy:
                         logger.info(f"   Status: {order.status}")
                         status = "LIVE_SUBMITTED"
 
-                        # FIX Apr 3, 2026: Place GTC 50% profit close order AFTER fill.
-                        # Data shows 90% of trades closed by manage script in < 1 hour
-                        # at 6.5% win rate. A GTC limit order on Alpaca lets theta work.
-                        # SAFETY: Must wait for entry fill — placing a close order before
-                        # the entry fills would create naked positions in the opposite direction.
-                        try:
-                            profit_target_credit = round(
-                                limit_credit * self.config["take_profit_pct"],
-                                2,
-                            )
-                            close_debit = round(limit_credit - profit_target_credit, 2)
-
-                            # Poll for entry fill (max 60 seconds)
-                            entry_filled = False
-                            for _poll in range(12):
-                                refreshed = client.get_order_by_id(order.id)
-                                if str(refreshed.status) in ("OrderStatus.FILLED", "filled"):
-                                    entry_filled = True
-                                    logger.info(
-                                        f"   Entry order FILLED at {refreshed.filled_avg_price}"
-                                    )
-                                    break
-                                if str(refreshed.status) in (
-                                    "OrderStatus.CANCELED",
-                                    "OrderStatus.EXPIRED",
-                                    "OrderStatus.REJECTED",
-                                    "canceled",
-                                    "expired",
-                                    "rejected",
-                                ):
-                                    logger.warning(
-                                        f"   Entry order {refreshed.status} — skipping close order"
-                                    )
-                                    break
-                                time.sleep(5)
-
-                            if entry_filled:
-                                close_legs = [
-                                    OptionLegRequest(
-                                        symbol=long_put_sym, side=OrderSide.SELL, ratio_qty=1
-                                    ),
-                                    OptionLegRequest(
-                                        symbol=short_put_sym, side=OrderSide.BUY, ratio_qty=1
-                                    ),
-                                    OptionLegRequest(
-                                        symbol=short_call_sym, side=OrderSide.BUY, ratio_qty=1
-                                    ),
-                                    OptionLegRequest(
-                                        symbol=long_call_sym, side=OrderSide.SELL, ratio_qty=1
-                                    ),
-                                ]
-
-                                close_order_req = LimitOrderRequest(
-                                    qty=ic_qty,
-                                    order_class=OrderClass.MLEG,
-                                    legs=close_legs,
-                                    time_in_force=TimeInForce.GTC,
-                                    limit_price=round(close_debit, 2),
-                                )
-
-                                close_order = safe_submit_order(client, close_order_req)
-                                logger.info(
-                                    f"✅ GTC 50% profit close order placed: {close_order.id}"
-                                )
-                                logger.info(
-                                    f"   Close at ${close_debit:.2f} debit (50% of ${limit_credit:.2f} credit)"
-                                )
-                                order_ids.append(
-                                    {
-                                        "order_id": str(close_order.id),
-                                        "type": "gtc_profit_target_close",
-                                        "close_debit": str(close_debit),
-                                    }
-                                )
-                            else:
-                                logger.warning(
-                                    "   Entry not filled within 60s — close order deferred to manage script"
-                                )
-                        except Exception as close_err:
-                            logger.warning(f"⚠️ Could not place GTC profit close: {close_err}")
-                            logger.warning(
-                                "   Will rely on manage_iron_condor_positions.py for exits"
-                            )
+                        # Exits are owned by iron_condor_guardian.py / ic_simple.py, which
+                        # enforce IRON_CONDOR_MIN_HOLD_HOURS (24h) before any close. Submitting
+                        # a broker-resting GTC profit-take here bypasses that gate: Alpaca
+                        # matches on intraday mean-reversion well before 24h, producing the
+                        # observed 75% <4h-hold pattern (avg win $70.50 vs avg loss -$97.81,
+                        # expectancy -$57.36 over 69 trades). Do not re-add a broker-side
+                        # close order from the entry path.
 
                         # Save entry provenance so exits and audits can trace the actual setup.
                         try:
@@ -1191,19 +1114,20 @@ def main():
         # Use ExecutionAgent to enforce Thursday-Only Alpha and Volume Throttles
         try:
             from src.agents.execution_agent import ExecutionAgent
+
             agent = ExecutionAgent()
-            
+
             # Prepare minimal data for analysis
             validation_data = {
-                "action": "BUY", # Intent to enter a new IC
+                "action": "BUY",  # Intent to enter a new IC
                 "symbol": ticker,
-                "position_size": 1.0, # Dummy size for initial gate check
-                "market_conditions": {}
+                "position_size": 1.0,  # Dummy size for initial gate check
+                "market_conditions": {},
             }
-            
+
             logger.info("🛡️ Running High-Alpha Validation (Thursday Gate, VIX, Throttle)...")
             analysis = agent.analyze(validation_data)
-            
+
             if analysis.get("action") == "CANCEL":
                 reason = analysis.get("reasoning", "Blocked by safety constraints")
                 logger.warning(f"🛑 TRADE BLOCKED BY HIGH-ALPHA GATE: {reason}")
@@ -1212,16 +1136,18 @@ def main():
                     gate=1,
                     status="REJECT",
                     rejection_reason=reason,
-                    indicators={"alpha_gate": "FAILED"}
+                    indicators={"alpha_gate": "FAILED"},
                 )
                 return {"success": False, "reason": reason}
-            
+
             logger.info("✅ High-Alpha Validation PASSED.")
-            
+
         except Exception as alpha_err:
             logger.error(f"⚠️ High-Alpha Gate Error: {alpha_err}")
             if not args.force:
-                logger.error("   Blocking execution due to safety agent failure. Use --force to bypass.")
+                logger.error(
+                    "   Blocking execution due to safety agent failure. Use --force to bypass."
+                )
                 return {"success": False, "reason": "Safety Agent Error"}
 
         try:
