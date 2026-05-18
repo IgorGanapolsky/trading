@@ -357,7 +357,8 @@ def check_exits(client):
 
         # Get entry credit
         entry_key = f"IC_{expiry}"
-        if entry_key in entries:
+        has_entry_record = entry_key in entries
+        if has_entry_record:
             entry_credit = entries[entry_key]["credit"]
             entry_date = entries[entry_key].get("date")
         else:
@@ -432,8 +433,26 @@ def check_exits(client):
         if reason:
             logger.warning(f"EXIT IC {expiry}: {reason}")
             _close_ic(client, legs, contract_count)
-            _record_lesson(expiry, entry_credit, pnl, reason, dte, contract_count)
-            _update_thompson("WIN" if pnl > 0 else "LOSS")
+            # Drop the entry record so subsequent check_exits runs (before the
+            # broker actually fills the close MLEG) don't see a stale key and
+            # re-emit duplicate _record_lesson / _update_thompson updates. If
+            # the close limit fails to fill and the position lingers, the next
+            # run hits the estimate-from-positions path which is guarded by
+            # has_entry_record below.
+            if has_entry_record:
+                entries.pop(entry_key, None)
+                _save_entries(entries)
+            # Only record a lesson + update Thompson when we had an
+            # authoritative entry record. Estimated-credit lessons would
+            # corrupt the learning signal with the wrong reference point.
+            if has_entry_record:
+                _record_lesson(expiry, entry_credit, pnl, reason, dte, contract_count)
+                _update_thompson("WIN" if pnl > 0 else "LOSS")
+            else:
+                logger.warning(
+                    f"IC {expiry}: exit triggered without entry record — "
+                    "skipping lesson/Thompson update (estimate path)."
+                )
         else:
             logger.info(
                 f"IC {expiry}: HOLD. Target=${max_profit * PROFIT_TARGET:.2f} Stop=-${max_profit * STOP_LOSS:.2f}"
