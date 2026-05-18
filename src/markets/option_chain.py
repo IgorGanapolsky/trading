@@ -278,8 +278,22 @@ def _select_from_live_chain(
     # Compute target wing strikes, then snap to nearest valid strike in the chain.
     # SPY has $1 strikes near the money but $5 increments further OTM.
     # Without snapping, 712 + 10 = 722 which doesn't exist (should be 720 or 725).
-    all_puts = [o for o in options if o["type"] == "put"]
-    all_calls = [o for o in options if o["type"] == "call"]
+    #
+    # CRITICAL: snap against the UNFILTERED chain. The `options` list above was
+    # delta-band-filtered to [DELTA_MIN, DELTA_MAX] for short-strike selection,
+    # which means the deep-OTM long-wing strikes (intentionally outside that
+    # band) are absent. Snapping against the filtered list silently collapses
+    # wings — at best to the band edge, at worst inverted. The wing-width
+    # validator (PR #3996) catches gross violations but a $5 wing where $10
+    # was requested passes the 50% MIN_WING_PCT and contaminates risk math.
+    unfiltered = provider.get_options_chain_with_greeks(
+        symbol=underlying,
+        expiration=expiry_str,
+        min_open_interest=MIN_OPEN_INTEREST,
+    )
+    snap_universe = unfiltered if unfiltered else options
+    all_puts = [o for o in snap_universe if o["type"] == "put"]
+    all_calls = [o for o in snap_universe if o["type"] == "call"]
 
     def _snap_to_chain(target: float, chain: list[dict], direction: str) -> float:
         """Find the nearest valid strike to target from the option chain."""
