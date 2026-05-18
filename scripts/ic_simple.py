@@ -1082,8 +1082,30 @@ def _allows_controlled_paper_validation_entry() -> bool:
     )
 
 
-def _load_losing_expiries(trades_file: Path | None = None) -> set[str]:
-    """Return IC expiries that already produced a closed loss."""
+LOSING_EXPIRY_LOOKBACK_DAYS = 45
+
+
+def _load_losing_expiries(
+    trades_file: Path | None = None,
+    *,
+    now: datetime | None = None,
+    lookback_days: int = LOSING_EXPIRY_LOOKBACK_DAYS,
+) -> set[str]:
+    """Return IC expiries that produced a closed loss within ``lookback_days``.
+
+    The unbounded historical version of this filter blocked any new entry
+    targeting an expiry date that had EVER produced a loss. With 30–45 DTE
+    entries on SPY weeklies, future expiry dates routinely collide with
+    expiry dates already in the historical loss set — so the rule
+    permanently starved the validation cohort instead of preventing
+    same-expiry re-entry within the active cohort. Restrict to losses
+    whose ``exit_date`` (fall back to ``entry_date``) is within the last
+    ``lookback_days`` days. Past expiries that have already passed cannot
+    collide with new 30–45 DTE candidates anyway; cohorts older than the
+    window are not "same expiry, same cohort" risk.
+    """
+    from datetime import timedelta
+
     path = trades_file or TRADE_LEDGER_FILE
     try:
         trades_data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
@@ -1092,6 +1114,7 @@ def _load_losing_expiries(trades_file: Path | None = None) -> set[str]:
         return set()
 
     closed = trades_data.get("trades", []) if isinstance(trades_data, dict) else []
+    cutoff = (now or datetime.now()).date() - timedelta(days=lookback_days)
     losing_expiries: set[str] = set()
     for trade in closed:
         if not isinstance(trade, dict):
@@ -1105,6 +1128,17 @@ def _load_losing_expiries(trades_file: Path | None = None) -> set[str]:
 
         outcome = str(trade.get("outcome", "")).strip().lower()
         if realized_pnl >= 0 and outcome != "loss":
+            continue
+
+        # Recency filter — drop losses older than the lookback window.
+        ref_raw = str(trade.get("exit_date") or trade.get("entry_date") or "").strip()
+        if not ref_raw:
+            continue
+        try:
+            ref_date = datetime.fromisoformat(ref_raw.split("T")[0]).date()
+        except ValueError:
+            continue
+        if ref_date < cutoff:
             continue
 
         legs = trade.get("legs")
