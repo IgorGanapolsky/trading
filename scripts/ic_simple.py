@@ -163,10 +163,32 @@ def find_opportunity(spy_price: float) -> dict | None:
         logger.warning(f"Credit ${est_credit:.2f} < ${MIN_CREDIT:.2f} minimum. Skip.")
         return None
 
+    # Wing-width validation. `select_strikes_by_delta` allows wings as narrow
+    # as 50% of the requested width (src/markets/option_chain.py MIN_WING_PCT
+    # = 0.5), and silently snaps to the nearest chain strike. That can produce
+    # asymmetric wings (e.g., $10 call wing + $5 put wing) which break the
+    # max-loss calculation downstream (max_loss = (wing_width - credit) × 100
+    # assumes symmetric wings) and corrupt the GRPO learning signal — wings
+    # are not persisted with the lesson so the learner conflates $5- and
+    # $10-wide trades. Per .claude/rules/kill-criteria.md the 30-trade
+    # validation cohort must use "one profile only", which means uniform
+    # WING_WIDTH. Reject any selection whose wings don't match exactly.
+    put_wing = round(selection.short_put - selection.long_put, 2)
+    call_wing = round(selection.long_call - selection.short_call, 2)
+    if put_wing != WING_WIDTH or call_wing != WING_WIDTH:
+        logger.warning(
+            f"Wing-width contract violated: put_wing=${put_wing}, "
+            f"call_wing=${call_wing}, required=${WING_WIDTH}. Skip "
+            "(asymmetric or narrow wings change the risk profile and "
+            "corrupt validation-cohort statistics)."
+        )
+        return None
+
     logger.info(
         f"Opportunity: SP={selection.short_put} SC={selection.short_call} "
         f"method={selection.method} credit=${est_credit:.2f} "
-        f"put_delta={selection.put_delta:.3f} call_delta={selection.call_delta:.3f}"
+        f"put_delta={selection.put_delta:.3f} call_delta={selection.call_delta:.3f} "
+        f"wings=${put_wing}/${call_wing}"
     )
 
     return {
@@ -175,6 +197,8 @@ def find_opportunity(spy_price: float) -> dict | None:
         "short_put": selection.short_put,
         "short_call": selection.short_call,
         "long_call": selection.long_call,
+        "put_wing": put_wing,
+        "call_wing": call_wing,
         "est_credit": est_credit,
         "method": selection.method,
         "put_delta": selection.put_delta,
