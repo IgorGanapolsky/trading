@@ -370,25 +370,39 @@ def check_exits(client):
                 logger.warning(f"IC {expiry}: non-positive credit ${entry_credit:.2f}. Skip.")
                 continue
 
-        # Minimum holding period — MUST hold to allow theta decay
-        if entry_date:
-            try:
-                entry_dt = datetime.fromisoformat(entry_date)
-                if entry_dt.tzinfo:
-                    entry_dt = entry_dt.replace(tzinfo=None)
-                hours = (datetime.now() - entry_dt).total_seconds() / 3600
-                if hours < MIN_HOLD_HOURS:
-                    logger.info(f"IC {expiry}: held {hours:.1f}h < {MIN_HOLD_HOURS}h. Hold.")
+        # Compute DTE first — the failsafe (dte <= 1) and 7DTE exits must NEVER
+        # be suppressed by the MIN_HOLD_HOURS gate. An IC opened intraday with
+        # short DTE can hit assignment risk before 24h elapse; the comment at
+        # the exit-checks block (below) explicitly promises "DTE failsafe first
+        # — always close expiring positions," so DTE-driven exits short-circuit
+        # the hold window.
+        from datetime import date as date_type
+
+        exp_date = date_type(2000 + int(expiry[:2]), int(expiry[2:4]), int(expiry[4:6]))
+        dte = (exp_date - date_type.today()).days
+        dte_forces_exit = dte <= EXIT_DTE
+
+        # Minimum holding period — MUST hold to allow theta decay, EXCEPT when
+        # the DTE failsafe or 7DTE rule would otherwise exit.
+        if not dte_forces_exit:
+            if entry_date:
+                try:
+                    entry_dt = datetime.fromisoformat(entry_date)
+                    if entry_dt.tzinfo:
+                        entry_dt = entry_dt.replace(tzinfo=None)
+                    hours = (datetime.now() - entry_dt).total_seconds() / 3600
+                    if hours < MIN_HOLD_HOURS:
+                        logger.info(f"IC {expiry}: held {hours:.1f}h < {MIN_HOLD_HOURS}h. Hold.")
+                        continue
+                except (ValueError, TypeError):
+                    logger.warning(
+                        f"IC {expiry}: unparseable entry_date '{entry_date}'. Hold (safety)."
+                    )
                     continue
-            except (ValueError, TypeError):
-                logger.warning(
-                    f"IC {expiry}: unparseable entry_date '{entry_date}'. Hold (safety)."
-                )
+            else:
+                # Unknown entry date — hold by default (don't exit blind)
+                logger.warning(f"IC {expiry}: no entry_date recorded. Hold (safety default).")
                 continue
-        else:
-            # Unknown entry date — hold by default (don't exit blind)
-            logger.warning(f"IC {expiry}: no entry_date recorded. Hold (safety default).")
-            continue
 
         # Calculate P/L
         contract_count = max(abs(leg["qty"]) for leg in legs)
@@ -398,12 +412,6 @@ def check_exits(client):
         )
         pnl = entry_credit * contract_count * 100 + current_value
         max_profit = entry_credit * contract_count * 100
-
-        # DTE
-        from datetime import date as date_type
-
-        exp_date = date_type(2000 + int(expiry[:2]), int(expiry[2:4]), int(expiry[4:6]))
-        dte = (exp_date - date_type.today()).days
 
         logger.info(
             f"IC {expiry}: DTE={dte} P/L=${pnl:+.2f} "
