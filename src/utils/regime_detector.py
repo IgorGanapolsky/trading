@@ -89,7 +89,13 @@ def _load_regime_data_cache() -> dict[str, float] | None:
         return None
 
     cached_at = _parse_cache_timestamp(payload.get("timestamp"))
-    if cached_at is None or datetime.now(timezone.utc) - cached_at > REGIME_DATA_CACHE_MAX_AGE:
+    if cached_at is None:
+        return None
+    # Reject clock-skewed or stale cache. A future cached_at (clock skew
+    # or bad write) would produce a negative `age` that always passes the
+    # MAX_AGE check, accepting a poisoned cache indefinitely.
+    age = datetime.now(timezone.utc) - cached_at
+    if age < timedelta(0) or age > REGIME_DATA_CACHE_MAX_AGE:
         return None
 
     vix = _finite_positive_float(payload.get("vix_level"))
