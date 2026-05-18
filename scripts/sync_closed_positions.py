@@ -820,6 +820,48 @@ def _trade_id(signature: str, entry_ts: datetime, exit_ts: datetime) -> str:
     )
 
 
+def _derive_exit_reason(
+    entry_net_cash: float,
+    exit_net_cash: float,
+    pnl: float,
+    exit_ts: datetime,
+    legs: dict[str, Any],
+) -> str:
+    """Derive a structured exit reason from broker-fill signals.
+
+    Replaces the historical "unknown" / "SYNC_CLOSED_POSITION" placeholder so the
+    learning loop can distinguish profit-target closes from stop-loss closes
+    from DTE-driven closes. Heuristic — fills carry no semantic tag, so we
+    reconstruct from the same signals the guardian scripts use.
+    """
+    expiry_iso = (legs or {}).get("expiry")
+    if expiry_iso:
+        try:
+            expiry_date = datetime.fromisoformat(str(expiry_iso)).date()
+        except ValueError:
+            expiry_date = None
+    else:
+        expiry_date = None
+
+    if expiry_date and exit_ts.date() >= expiry_date:
+        return "expired"
+
+    if expiry_date:
+        dte_at_exit = (expiry_date - exit_ts.date()).days
+        if 0 < dte_at_exit <= 7:
+            return "7dte"
+
+    if entry_net_cash > 0:
+        # Credit-entry IC: profit-target if we captured ≥50% of the credit;
+        # stop-loss if we paid ≥100% of the credit on the way out.
+        if pnl >= 0.5 * entry_net_cash:
+            return "profit_target"
+        if pnl <= -1.0 * entry_net_cash:
+            return "stop_loss"
+
+    return "manual_close"
+
+
 def _to_closed_trade(entry: dict[str, Any], exit_event: dict[str, Any]) -> dict[str, Any]:
     signature = str(entry["signature"])
     entry_ts = entry["timestamp"]
@@ -829,6 +871,7 @@ def _to_closed_trade(entry: dict[str, Any], exit_event: dict[str, Any]) -> dict[
     legs = _signature_to_legs(signature)
     entry_net_cash = round(_parse_float(entry.get("net_cash"), 0.0), 2)
     exit_net_cash = round(_parse_float(exit_event.get("net_cash"), 0.0), 2)
+    exit_reason = _derive_exit_reason(entry_net_cash, exit_net_cash, pnl, exit_ts, legs)
 
     return {
         "id": _trade_id(signature, entry_ts, exit_ts),
@@ -850,6 +893,7 @@ def _to_closed_trade(entry: dict[str, Any], exit_event: dict[str, Any]) -> dict[
         "exit_style": "credit" if exit_net_cash > 0 else "debit",
         "realized_pnl": pnl,
         "outcome": outcome,
+        "exit_reason": exit_reason,
         "signature": signature,
         "legs": legs,
         "source": f"{entry['source']}->{exit_event['source']}",
@@ -1146,12 +1190,14 @@ def _apply_learning_update_for_trade(
     from src.learning.rlhf_storage import store_trade_outcome
     from src.learning.trade_episode_store import TradeEpisodeStore
 
+    derived_exit_reason = str(trade.get("exit_reason") or "manual_close")
+
     outcome_label = build_outcome_label(
         {
             "symbol": symbol,
             "strategy": strategy,
             "realized_pl": pnl,
-            "exit_reason": "SYNC_CLOSED_POSITION",
+            "exit_reason": derived_exit_reason,
             "won": str(trade.get("outcome") or "").strip().lower() == "win",
             "exit_time": exit_time,
         }
@@ -1192,7 +1238,7 @@ def _apply_learning_update_for_trade(
             "lost": bool(outcome_label["lost"]),
             "outcome": outcome_label["outcome"],
             "holding_minutes": outcome_label["holding_minutes"],
-            "exit_reason": "SYNC_CLOSED_POSITION",
+            "exit_reason": derived_exit_reason,
             "expiry": expiry,
             "metadata": {
                 "source": "sync_closed_positions",
@@ -1207,7 +1253,7 @@ def _apply_learning_update_for_trade(
         strategy=strategy,
         reward=float(outcome_label["reward"]),
         won=bool(outcome_label["won"]),
-        exit_reason="SYNC_CLOSED_POSITION",
+        exit_reason=derived_exit_reason,
         expiry=expiry,
         episode_id=trade_id or event_key,
         event_key=event_key,
