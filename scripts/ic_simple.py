@@ -1652,75 +1652,94 @@ def main():
             # RAG: retrieve relevant lessons for current conditions
             _query_rag_before_entry(spy_price)
 
-            # Place ONE IC per run — safe, predictable, no runaway loops
-            # (Previous while loop opened ~80 contracts due to stale count bug)
-            ic_count = _count_open_ics(client)
-            if ic_count >= MAX_IC:
-                logger.info(f"Position limit: {ic_count}/{MAX_IC} ICs. No new entry.")
-            else:
-                opp = find_opportunity(spy_price)
-                if opp:
-                    # Daily entry limit. The controlled-experiment rule and the
-                    # docstring at the top of this file both promise "1 IC per
-                    # day". The cron schedule fires only once at 11am ET, but
-                    # workflow_dispatch + parallel automation can re-trigger
-                    # ic_simple.py within the same day. Without this guard,
-                    # nothing in the script enforces the limit beyond the
-                    # MAX_IC=2 concurrent cap.
-                    try:
-                        from src.core.trading_constants import MAX_DAILY_STRUCTURES
-                    except ImportError:
-                        MAX_DAILY_STRUCTURES = 1
-                    today_iso = datetime.now().date().isoformat()
-                    structures_today = 0
-                    if SYSTEM_STATE_FILE.exists():
-                        try:
-                            state = json.loads(SYSTEM_STATE_FILE.read_text(encoding="utf-8"))
-                            history = state.get("trade_history", []) or []
-                            structures_today = sum(
-                                1
-                                for row in history
-                                if isinstance(row, dict)
-                                and row.get("strategy") == "iron_condor"
-                                and str(row.get("entry_date", "")).startswith(today_iso)
-                            )
-                        except (OSError, ValueError):
-                            structures_today = 0
-                    if structures_today >= MAX_DAILY_STRUCTURES:
-                        logger.warning(
-                            f"DAILY ENTRY LIMIT: already opened {structures_today} "
-                            f"iron condor(s) today (max {MAX_DAILY_STRUCTURES}). Skip."
-                        )
-                        opp = None
-                if opp and opp.get("expiry", "") in losing_expiries:
-                    logger.warning(
-                        f"RE-ENTRY BLOCKED: expiry {opp['expiry']} already had a losing trade. "
-                        f"No same-expiry re-entry after loss."
-                    )
-                    opp = None
-                if opp:
-                    from src.risk.expiry_concentration import (
-                        check_recent_expiry_concentration,
-                    )
+            # Place ONE IC per run — safe, predictable, no runaway loops.
+            # Cross-process serialization (LL-281): the position-count read
+            # and the broker submission below run as a critical section so
+            # workflow_dispatch racing the 11am ET cron cannot produce two
+            # simultaneous entries that both see ic_count < MAX_IC.
+            from src.safety.trade_lock import TradeLockTimeout, acquire_trade_lock
 
-                    blocked, ts_reason = check_recent_expiry_concentration(opp["expiry"])
-                    if blocked:
-                        logger.warning(f"RE-ENTRY BLOCKED by time-series concentration: {ts_reason}")
-                        opp = None
-                if opp:
-                    should_skip, thompson_reason = _should_skip_for_thompson(thompson_conf)
-                    if should_skip:
-                        logger.warning(thompson_reason)
+            try:
+                with acquire_trade_lock(timeout=10):
+                    ic_count = _count_open_ics(client)
+                    if ic_count >= MAX_IC:
+                        logger.info(f"Position limit: {ic_count}/{MAX_IC} ICs. No new entry.")
                     else:
-                        if thompson_conf < THOMPSON_MIN_CONFIDENCE:
-                            logger.info(thompson_reason)
-                        if args.dry_run:
-                            logger.info(f"(dry run — would place IC: {opp})")
+                        opp = find_opportunity(spy_price)
+                        if opp:
+                            # Daily entry limit ("1 IC per day"). Cron fires
+                            # once at 11am ET but workflow_dispatch can re-
+                            # trigger within the same day; without this
+                            # guard, only MAX_IC=2 concurrent caps it.
+                            try:
+                                from src.core.trading_constants import MAX_DAILY_STRUCTURES
+                            except ImportError:
+                                MAX_DAILY_STRUCTURES = 1
+                            today_iso = datetime.now().date().isoformat()
+                            structures_today = 0
+                            if SYSTEM_STATE_FILE.exists():
+                                try:
+                                    state = json.loads(
+                                        SYSTEM_STATE_FILE.read_text(encoding="utf-8")
+                                    )
+                                    history = state.get("trade_history", []) or []
+                                    structures_today = sum(
+                                        1
+                                        for row in history
+                                        if isinstance(row, dict)
+                                        and row.get("strategy") == "iron_condor"
+                                        and str(row.get("entry_date", "")).startswith(
+                                            today_iso
+                                        )
+                                    )
+                                except (OSError, ValueError):
+                                    structures_today = 0
+                            if structures_today >= MAX_DAILY_STRUCTURES:
+                                logger.warning(
+                                    f"DAILY ENTRY LIMIT: already opened {structures_today} "
+                                    f"iron condor(s) today (max {MAX_DAILY_STRUCTURES}). Skip."
+                                )
+                                opp = None
+                        if opp and opp.get("expiry", "") in losing_expiries:
+                            logger.warning(
+                                f"RE-ENTRY BLOCKED: expiry {opp['expiry']} already had a losing trade. "
+                                f"No same-expiry re-entry after loss."
+                            )
+                            opp = None
+                        if opp:
+                            from src.risk.expiry_concentration import (
+                                check_recent_expiry_concentration,
+                            )
+
+                            blocked, ts_reason = check_recent_expiry_concentration(
+                                opp["expiry"]
+                            )
+                            if blocked:
+                                logger.warning(
+                                    f"RE-ENTRY BLOCKED by time-series concentration: {ts_reason}"
+                                )
+                                opp = None
+                        if opp:
+                            should_skip, thompson_reason = _should_skip_for_thompson(
+                                thompson_conf
+                            )
+                            if should_skip:
+                                logger.warning(thompson_reason)
+                            else:
+                                if thompson_conf < THOMPSON_MIN_CONFIDENCE:
+                                    logger.info(thompson_reason)
+                                if args.dry_run:
+                                    logger.info(f"(dry run — would place IC: {opp})")
+                                else:
+                                    order_id = place_ic(client, opp)
+                                    logger.info(f"Placed IC: order={order_id}")
                         else:
-                            order_id = place_ic(client, opp)
-                            logger.info(f"Placed IC: order={order_id}")
-                else:
-                    logger.info("No opportunity found.")
+                            logger.info("No opportunity found.")
+            except TradeLockTimeout as lock_err:
+                logger.warning(
+                    f"Trade lock unavailable ({lock_err}). Another ic_simple.py "
+                    "run is in the entry critical section — skipping this tick."
+                )
 
     if args.mode == "status":
         ic_count = _count_open_ics(client)
