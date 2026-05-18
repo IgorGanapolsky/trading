@@ -1507,6 +1507,39 @@ def main():
                 logger.info(f"Position limit: {ic_count}/{MAX_IC} ICs. No new entry.")
             else:
                 opp = find_opportunity(spy_price)
+                if opp:
+                    # Daily entry limit. The controlled-experiment rule and the
+                    # docstring at the top of this file both promise "1 IC per
+                    # day". The cron schedule fires only once at 11am ET, but
+                    # workflow_dispatch + parallel automation can re-trigger
+                    # ic_simple.py within the same day. Without this guard,
+                    # nothing in the script enforces the limit beyond the
+                    # MAX_IC=2 concurrent cap.
+                    try:
+                        from src.core.trading_constants import MAX_DAILY_STRUCTURES
+                    except ImportError:
+                        MAX_DAILY_STRUCTURES = 1
+                    today_iso = datetime.now().date().isoformat()
+                    structures_today = 0
+                    if SYSTEM_STATE_FILE.exists():
+                        try:
+                            state = json.loads(SYSTEM_STATE_FILE.read_text(encoding="utf-8"))
+                            history = state.get("trade_history", []) or []
+                            structures_today = sum(
+                                1
+                                for row in history
+                                if isinstance(row, dict)
+                                and row.get("strategy") == "iron_condor"
+                                and str(row.get("entry_date", "")).startswith(today_iso)
+                            )
+                        except (OSError, ValueError):
+                            structures_today = 0
+                    if structures_today >= MAX_DAILY_STRUCTURES:
+                        logger.warning(
+                            f"DAILY ENTRY LIMIT: already opened {structures_today} "
+                            f"iron condor(s) today (max {MAX_DAILY_STRUCTURES}). Skip."
+                        )
+                        opp = None
                 if opp and opp.get("expiry", "") in losing_expiries:
                     logger.warning(
                         f"RE-ENTRY BLOCKED: expiry {opp['expiry']} already had a losing trade. "
