@@ -86,12 +86,26 @@ def record_trade_result(
 
     trades.append(trade_record)
 
-    # Write updated trades
+    # Write updated trades atomically. A direct `open(..., "w")` truncates the
+    # target file immediately; a crash, OOM, or disk-full mid-json.dump leaves
+    # invalid JSON, which the next call's `except json.JSONDecodeError: trades
+    # = []` silently swallows — wiping the entire day's audit trail. Write
+    # to a sibling .tmp, fsync, then atomically replace.
+    import os
+
+    tmp_file = result_file.with_suffix(result_file.suffix + ".tmp")
     try:
-        with open(result_file, "w") as f:
+        with open(tmp_file, "w") as f:
             json.dump(trades, f, indent=2, default=str)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp_file, result_file)
     except OSError as e:
         logger.error(f"Failed to write {result_file}: {e}")
+        try:
+            tmp_file.unlink(missing_ok=True)
+        except OSError:
+            pass
         raise
 
     logger.info(f"Trade recorded to {result_file}")
