@@ -472,3 +472,55 @@ class TestEarningsPositionMonitor:
         gateway = TradeGateway(executor=None, paper=True)
         action = gateway._get_earnings_action(days_to_blackout=0, unrealized_pl=-50, symbol="SOFI")
         assert "MONITOR_CLOSELY" in action
+
+
+class TestCreditSpreadMaxLoss:
+    """Regression: credit-spread max-loss must scale with spread_width, not hardcoded $500.
+
+    Bug history: trade_gateway.py:421 used `max_loss = 500 * quantity` for any
+    credit-spread strategy_type, silently under-counting max loss by 50% on the
+    $10-wide spreads the paper account uses at >=$100K equity. A 50-contract
+    $10-wide credit spread should report $40,000 max loss (= ($10*100 - $2*100) * 50),
+    not $25,000.
+    """
+
+    def test_credit_spread_max_loss_scales_with_width(self):
+        gateway = TradeGateway(executor=None, paper=True)
+        gateway.executor = MockExecutor(account_equity=95_000)
+        request = TradeRequest(
+            symbol="SPY260618P00686000",
+            side="sell",
+            notional=10_000,
+            source="test",
+            is_option=True,
+            strategy_type="credit_spread",
+            spread_width=10.0,
+            premium_received=2.0,
+            quantity=50,
+        )
+        rejected, reason = gateway._check_position_size_risk(request, account_equity=95_000)
+        assert rejected, "50-lot $10-wide credit spread must trip 2% max-position cap"
+        # True max loss = ($10*100 - $2*100) * 50 = $40,000
+        # Buggy max loss would have been $500 * 50 = $25,000
+        assert "$40000" in reason or "40000" in reason, (
+            f"Expected max-loss of $40,000 in rejection reason, got: {reason}"
+        )
+
+    def test_credit_spread_max_loss_uses_premium(self):
+        """Premium reduces max loss: ($10*100 - $1*100) * 1 = $900 for 1-lot."""
+        gateway = TradeGateway(executor=None, paper=True)
+        gateway.executor = MockExecutor(account_equity=200_000)
+        request = TradeRequest(
+            symbol="SPY260618P00686000",
+            side="sell",
+            notional=900,
+            source="test",
+            is_option=True,
+            strategy_type="bull_put_spread",
+            spread_width=10.0,
+            premium_received=1.0,
+            quantity=1,
+        )
+        rejected, _ = gateway._check_position_size_risk(request, account_equity=200_000)
+        # 1-lot $900 max loss vs $200K equity = 0.45% << 2% -> not rejected on size
+        assert not rejected, "1-lot $10-wide spread should pass on a $200K account"

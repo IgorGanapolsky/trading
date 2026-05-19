@@ -416,9 +416,20 @@ class TradeGateway:
             strike = request.limit_price or 25  # Default assumption
             max_loss = strike * 100 * (request.quantity or 1)
         elif request.strategy_type in ["bull_put_spread", "credit_spread", "bear_call_spread"]:
-            # Max loss = spread width * 100 * quantity
-            # Typically $5 wide spreads = $500 max loss
-            max_loss = 500 * (request.quantity or 1)
+            # Max loss = (spread_width * 100 - credit * 100) * quantity
+            # Prior hardcode of $500 * quantity silently under-counted by 50%
+            # on $10-wide spreads (paper-account uses $10 wings @ >= $100K equity).
+            inferred_width = request.spread_width
+            if inferred_width is None:
+                inferred_width = 10.0 if account_equity >= 100_000 else 5.0
+            inferred_credit = (
+                request.premium_received
+                if request.premium_received is not None
+                else (0.7 if inferred_width <= 5 else 1.0)
+            )
+            max_loss = max(0.0, (inferred_width * 100) - (inferred_credit * 100)) * (
+                request.quantity or 1
+            )
         elif request.strategy_type == "iron_condor":
             # Dynamic IC profile: widen wings for larger accounts.
             inferred_width = request.spread_width
@@ -482,8 +493,12 @@ class TradeGateway:
             "bear_call_spread",
             "credit_spread",
         ]:
-            # Default $5 spread, $0.50 premium = $450 max loss per contract
-            return 450.0 * contracts
+            # Fallback when spread_width unspecified. Account-tier-aware
+            # default mirrors the iron_condor branch to avoid silent
+            # under-counting on $10-wide spreads.
+            default_width = float(os.getenv("DEFAULT_SPREAD_WIDTH", "10"))
+            default_credit = float(os.getenv("DEFAULT_SPREAD_CREDIT", "0.7"))
+            return max(0.0, (default_width * 100) - (default_credit * 100)) * contracts
         elif request.strategy_type == "iron_condor":
             default_wing = float(os.getenv("DEFAULT_IC_WING_WIDTH", "10"))
             default_credit = float(os.getenv("DEFAULT_IC_TOTAL_CREDIT", "2.0"))
