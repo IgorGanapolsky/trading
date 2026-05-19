@@ -107,7 +107,12 @@ jobs:
 
           api_key = os.environ.get('ALPACA_PAPER_TRADING_API_KEY')
           secret = os.environ.get('ALPACA_PAPER_TRADING_API_SECRET')
-          client = TradingClient(api_key, secret, paper=True)
+          # Order-submitting client routes through the mandatory trade gate.
+          from src.utils.alpaca_client import get_guarded_trading_client
+          client = get_guarded_trading_client(paper=True)
+          if client is None:
+              print("❌ ABORT: guarded TradingClient unavailable (creds?)")
+              import sys; sys.exit(1)
 
           # Validate symbols exist before submitting order
           from alpaca.data.historical.option import OptionHistoricalDataClient
@@ -129,7 +134,7 @@ jobs:
           ]
 
           # 2 contracts per IC: $1,600 max risk (well under 5% of $101K)
-          order = client.submit_order(MarketOrderRequest(  # noqa: direct-submit-order  -- TODO(security): refactor to get_guarded_trading_client() per PR-bypass-fix punch list
+          order = client.submit_order(MarketOrderRequest(  # noqa: direct-submit-order  -- client is get_guarded_trading_client() above; submit routes through mandatory trade gate
               qty=2,
               order_class=OrderClass.MLEG,
               legs=legs,

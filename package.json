@@ -14,16 +14,18 @@
     "memory:capture": "printf 'thumbs down' | python3 scripts/capture_hook_feedback.py"
   },
   "dependencies": {
-    "@trigger.dev/sdk": "^4.4.1"
+    "@trigger.dev/sdk": "^4.4.1",
+    "ws": "^8.20.1"
   },
   "overrides": {
     "systeminformation": "^5.31.6",
-    "cookie": "0.7.0"
+    "cookie": "0.7.0",
+    "ws": "^8.20.1"
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
     "typescript": "^5.7.0",
-    "vitest": "^3.0.0",
-    "@types/node": "^22.0.0"
+    "vitest": "^3.0.0"
   },
   "engines": {
     "node": ">=20.0.0"
