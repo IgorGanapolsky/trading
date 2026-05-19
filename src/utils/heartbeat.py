@@ -26,7 +26,7 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -76,7 +76,12 @@ def record_heartbeat(
     except (json.JSONDecodeError, Exception):
         data = {"heartbeats": [], "workflows": {}}
 
-    now = datetime.now()
+    # Always write tz-aware UTC. Mixed writers (CI in UTC vs developer host
+    # in local TZ) produced timestamps that, after the reader's
+    # `.replace(tzinfo=None)` strip, were silently off by the host offset —
+    # `hours_since` could go negative, masking a dead system as alive, or
+    # falsely trip the staleness gate on a healthy system.
+    now = datetime.now(timezone.utc)
     timestamp = now.isoformat()
 
     # Record this heartbeat
@@ -97,8 +102,17 @@ def record_heartbeat(
         "total_runs": data.get("workflows", {}).get(workflow_name, {}).get("total_runs", 0) + 1,
     }
 
-    # Write atomically
-    HEARTBEAT_FILE.write_text(json.dumps(data, indent=2))
+    # Write atomically. The previous direct write_text was non-atomic; a
+    # crash mid-write zeros the file and the next read hits JSONDecodeError,
+    # losing all heartbeat history. Write to .tmp then os.replace.
+    import os
+
+    tmp_path = HEARTBEAT_FILE.with_suffix(HEARTBEAT_FILE.suffix + ".tmp")
+    with open(tmp_path, "w") as f:
+        json.dump(data, f, indent=2)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp_path, HEARTBEAT_FILE)
     logger.info(f"💓 Heartbeat recorded: {workflow_name} ({status})")
 
 
@@ -158,10 +172,15 @@ def check_heartbeat(
             message="⛔ INVALID HEARTBEAT - No timestamp",
         )
 
-    # Parse and calculate age
+    # Parse and calculate age. Use tz-aware UTC arithmetic so writers in
+    # different timezones (e.g., GitHub Actions UTC vs developer host local)
+    # compare correctly. Naive legacy timestamps are interpreted as UTC.
     try:
         heartbeat_dt = datetime.fromisoformat(last_heartbeat.replace("Z", "+00:00"))
-        heartbeat_dt = heartbeat_dt.replace(tzinfo=None)  # Remove tz for comparison
+        if heartbeat_dt.tzinfo is None:
+            heartbeat_dt = heartbeat_dt.replace(tzinfo=timezone.utc)
+        else:
+            heartbeat_dt = heartbeat_dt.astimezone(timezone.utc)
     except ValueError:
         return HeartbeatStatus(
             is_alive=False,
@@ -171,7 +190,7 @@ def check_heartbeat(
             message=f"⛔ INVALID TIMESTAMP: {last_heartbeat}",
         )
 
-    age = datetime.now() - heartbeat_dt
+    age = datetime.now(timezone.utc) - heartbeat_dt
     hours_since = age.total_seconds() / 3600
 
     if hours_since > max_age_hours:
