@@ -234,6 +234,8 @@ def _log_crisis(conditions: list[CrisisCondition]) -> None:
 def monitor_and_halt_if_needed(
     positions: list[dict[str, Any]],
     account_equity: float,
+    *,
+    positions_synced: bool = False,
 ) -> tuple[bool, list[CrisisCondition]]:
     """
     Main entry point: Check conditions and trigger halt if needed.
@@ -243,15 +245,30 @@ def monitor_and_halt_if_needed(
     Args:
         positions: List of current positions
         account_equity: Current account equity
+        positions_synced: Caller must explicitly confirm that ``positions``
+            came from a successful broker fetch. An empty list from a failed
+            or skipped sync must NOT trigger auto-clear of TRADING_HALTED —
+            that would silently re-enable trading on a transient API error.
 
     Returns:
         (was_halted, conditions)
     """
-    # Auto-clear: if halted but no open positions, the crisis resolved itself
+    # Auto-clear: ONLY when the caller confirmed positions are fresh.
+    # Without this guard, an empty `[]` from a failed broker fetch silently
+    # re-enabled trading mid-incident.
     option_positions = [p for p in positions if len(p.get("symbol", "")) > 10]
-    if TRADING_HALTED_FILE.exists() and len(option_positions) == 0:
+    if (
+        TRADING_HALTED_FILE.exists()
+        and positions_synced
+        and len(option_positions) == 0
+    ):
         logger.info("✅ No open positions — auto-clearing stale TRADING_HALTED")
         clear_crisis_mode(reason="Auto-clear: no open positions remain")
+    elif TRADING_HALTED_FILE.exists() and not positions_synced and len(positions) == 0:
+        logger.warning(
+            "TRADING_HALTED present and positions list empty, but positions_synced=False — "
+            "auto-clear suppressed (treat empty list as untrusted)."
+        )
 
     conditions = check_crisis_conditions(positions, account_equity)
 
