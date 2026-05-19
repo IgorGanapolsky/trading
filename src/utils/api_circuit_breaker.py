@@ -186,13 +186,31 @@ class APICircuitBreaker:
             logger.error(f"Failed to send circuit breaker alert: {e}")
 
     def _load_state(self) -> None:
-        """Load persisted state."""
+        """Load persisted state.
+
+        The consecutive_failures counter is session-scoped — persisting it
+        across process restarts produces spurious trips. A counter
+        accumulated days ago, from unrelated issues now fixed, would trip
+        on the first new failure of a fresh session. Discard the counter
+        if last_failure_time is older than the cooldown window.
+        """
         if STATE_FILE.exists():
             try:
                 with open(STATE_FILE) as f:
                     state = json.load(f)
                     self.consecutive_failures = state.get("consecutive_failures", 0)
                     self.trip_count = state.get("trip_count", 0)
+                    last_failure_raw = state.get("last_failure_time")
+                    if last_failure_raw:
+                        try:
+                            self.last_failure_time = datetime.fromisoformat(last_failure_raw)
+                            staleness = datetime.now() - self.last_failure_time
+                            if staleness.total_seconds() > COOLDOWN_SECONDS:
+                                # Ancient failures — reset the counter so a
+                                # fresh session does not trip on stale state.
+                                self.consecutive_failures = 0
+                        except ValueError:
+                            self.last_failure_time = None
                     if state.get("trip_time"):
                         self.trip_time = datetime.fromisoformat(state["trip_time"])
                         # Check if still in cooldown
