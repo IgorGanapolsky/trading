@@ -7,7 +7,11 @@ import logging
 from typing import Any
 
 from src.constants.trading_thresholds import RiskThresholds
-from src.core.trading_constants import MAX_POSITIONS
+from src.core.trading_constants import (
+    MAX_CONTRACTS_PER_TRADE,
+    MAX_POSITION_PCT,
+    MAX_POSITIONS,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +61,44 @@ class IronCondorRisk:
 
         logger.info(f"Position check OK: {current_ic_count}/{self.max_positions} ICs")
         return True
+
+    def calculate_quantity(
+        self,
+        equity: float,
+        wing_width: float,
+        credit_per_contract: float,
+        max_risk_pct: float | None = None,
+        hard_cap: int | None = None,
+    ) -> int:
+        """Compute the largest legal iron-condor quantity.
+
+        Caps quantity by the strictest of three constraints:
+        1. max_risk_pct of equity per trade (default: MAX_POSITION_PCT from
+           trading_constants)
+        2. hard_cap (default: MAX_CONTRACTS_PER_TRADE from active profile;
+           controlled-experiment.md currently mandates 1)
+        3. >= 0 (returns 0 on invalid inputs rather than negative)
+
+        Per-IC max loss = (wing_width * 100 - credit_per_contract * 100).
+        That assumes equal-width wings on both sides; the risk surface is
+        symmetric so we size against one side.
+
+        Returns 0 if equity <= 0, wing_width <= 0, or credit >= wing_width
+        (would imply zero or negative max loss, which is non-physical).
+        """
+        if equity <= 0 or wing_width <= 0:
+            return 0
+        per_contract_max_loss = (wing_width - credit_per_contract) * 100
+        if per_contract_max_loss <= 0:
+            return 0
+
+        risk_pct = max_risk_pct if max_risk_pct is not None else MAX_POSITION_PCT
+        risk_dollars = equity * risk_pct
+        qty_from_risk = int(risk_dollars // per_contract_max_loss)
+
+        cap = hard_cap if hard_cap is not None else MAX_CONTRACTS_PER_TRADE
+        qty = min(qty_from_risk, cap)
+        return max(0, qty)
 
     def get_stop_prices(
         self, credit_received: float, short_put: float, short_call: float
