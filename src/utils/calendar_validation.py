@@ -64,7 +64,12 @@ def get_next_trading_day(from_date: Optional[datetime] = None) -> datetime:
         Next valid trading day as datetime, preserving the input's tz-naivety.
     """
     if from_date is None:
-        from_date = _now_et().replace(tzinfo=None)
+        # Preserve naive-host-time semantics for the default. The ET
+        # correctness sits inside is_trading_day(), which translates the
+        # input to ET before querying the Alpaca calendar — so we don't
+        # need to shift the returned datetime here, only ensure the
+        # internal lookup uses ET dates.
+        from_date = datetime.now()
 
     check_date = from_date
     max_days = 10  # Safety limit
