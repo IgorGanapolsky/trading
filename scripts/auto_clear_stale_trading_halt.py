@@ -61,10 +61,14 @@ def _count_option_positions_from_state(state: dict[str, Any]) -> int | None:
     if top_level_count is None and not summary_seen:
         return None
     if top_level_count is None:
+        # summary_count counts ALL positions (equity + options). Pessimistic
+        # fallback only when there's no positions array we can filter from.
         return summary_count
-    if not summary_seen:
-        return top_level_count
-    return max(top_level_count, summary_count)
+    # Trust the option-filtered count from the positions array. The previous
+    # max(top_level_count, summary_count) could return the unfiltered total
+    # (e.g., equity holdings counted as 1+) and falsely retain TRADING_HALTED
+    # even when no option positions remained.
+    return top_level_count
 
 
 def _count_option_positions_from_alpaca(*, paper: bool, key: str, secret: str) -> int | None:
