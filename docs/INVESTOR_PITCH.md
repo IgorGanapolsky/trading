@@ -1,13 +1,16 @@
 # INVESTOR DUE DILIGENCE: SPY Options Validation System
 
-## 1. Executive Summary: The "High-Alpha" Thesis
+## 1. Executive Summary — current honest state (2026-05-19)
 
-Most algorithmic trading systems fail because they over-trade low-probability regimes. Our system is built on **Evidence-Backed Exclusion**. Following an audit of 69 paired trades, we discovered a significant "Thursday Alpha" anomaly:
+This deck has been updated to reflect a re-audit of the same 69-paired-trade dataset under proper multi-comparison statistics. The earlier "Thursday Alpha ~60%" framing did not survive Bonferroni correction (K=14 stratifications tested, adjusted p=0.190; full audit in `docs/research/2026-05-19-edge-analysis.md`).
 
-- **Thursday Win Rate**: ~60%
-- **Mon/Tue/Fri Win Rate**: <20%
+What the data actually says:
 
-**The Pivot**: The system is now restricted to high-alpha Thursday windows, backed by deterministic safety gates that eliminate gamma risk (7 DTE exit mandate).
+- **Cohort baseline (n=69 closed ICs):** 23.19% win rate, profit factor **0.22**, expectancy **-$58.78/trade**, total realized **-$3,958**.
+- **The only stratification slice with a statistically meaningful signal is *negative*:** Tuesday entries (n=17) won 1/17 (5.9%) and account for 73% of total losses. "Avoid Tuesday" is the only data-supported filter.
+- **The strategy collected no theta:** 77% of trades closed in <24h; expectancy -$20.36/trade in that bucket. The hold-time fix in `ic_simple.py` (24h minimum) is exactly the correct response and is now enforced.
+
+**Current posture:** new entries pause until the next 30-trade validation cohort (with the 24h-hold + 1-lot + no-same-expiry-re-entry rules from `.claude/rules/controlled-experiment.md`) produces realized expectancy > 0. No claim of edge is made until that cohort closes. No capital additions until then.
 
 ## 2. Competitive Edge: RAG-to-ML Feedback Loop
 
