@@ -62,9 +62,19 @@ class ConstraintEngine:
         else:
             out_metadata["weekday_gate"] = "PASSED"
 
-        # 3. DTE Entry Gate (P0 Win Rate Driver - LL-268)
-        dte = trade_meta.get("dte", 30)  # Default to safe if not provided
-        if dte < self.MIN_ENTRY_DTE:
+        # 3. DTE Entry Gate (P0 Win Rate Driver - LL-268).
+        # FAIL CLOSED on missing dte. The previous `get("dte", 30)` silently
+        # passed any caller that omitted the field (refactor, typo, new
+        # path) — a deterministic safety gate that defaults a missing
+        # required field to a passing value is the exact fail-open pattern
+        # this engine exists to prevent.
+        dte = trade_meta.get("dte")
+        if dte is None:
+            violations.append(
+                "DTE missing from trade metadata (deterministic gate requires explicit DTE)."
+            )
+            out_metadata["dte_gate"] = "FAILED"
+        elif dte < self.MIN_ENTRY_DTE:
             violations.append(
                 f"DTE {dte} too low for entry. Minimum is {self.MIN_ENTRY_DTE} (Gamma Risk protection)."
             )
