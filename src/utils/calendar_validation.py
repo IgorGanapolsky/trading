@@ -29,25 +29,28 @@ def is_trading_day(target_date: datetime) -> bool:
     Check if a date is a valid trading day using Alpaca calendar API.
 
     Args:
-        target_date: The date to check (naive datetimes are treated as ET)
+        target_date: The date to check (naive datetimes are interpreted as ET)
 
     Returns:
         True if market is open on that day, False otherwise
     """
+    # Resolve the calendar-day string in ET — the exchange day is keyed to
+    # America/New_York, not the host's local timezone. We do NOT mutate the
+    # caller's datetime; we only translate it for the API query.
     if target_date.tzinfo is None:
-        target_date = target_date.replace(tzinfo=ET)
+        et_view = target_date.replace(tzinfo=ET)
     else:
-        target_date = target_date.astimezone(ET)
+        et_view = target_date.astimezone(ET)
     try:
         paper = os.environ.get("PAPER_TRADING", "true").lower() == "true"
         client = get_alpaca_client(paper=paper)
-        date_str = target_date.strftime("%Y-%m-%d")
+        date_str = et_view.strftime("%Y-%m-%d")
         calendar = client.get_calendar(start=date_str, end=date_str)
         return len(calendar) > 0
     except Exception as e:
         print(f"⚠️ Calendar API error: {e}")
         # Fallback: assume weekends are closed (in ET).
-        return target_date.weekday() < 5  # Mon-Fri
+        return et_view.weekday() < 5  # Mon-Fri
 
 
 def get_next_trading_day(from_date: Optional[datetime] = None) -> datetime:
@@ -58,12 +61,10 @@ def get_next_trading_day(from_date: Optional[datetime] = None) -> datetime:
         from_date: Starting date (defaults to today in ET)
 
     Returns:
-        Next valid trading day as datetime
+        Next valid trading day as datetime, preserving the input's tz-naivety.
     """
     if from_date is None:
-        from_date = _now_et()
-    elif from_date.tzinfo is None:
-        from_date = from_date.replace(tzinfo=ET)
+        from_date = _now_et().replace(tzinfo=None)
 
     check_date = from_date
     max_days = 10  # Safety limit
