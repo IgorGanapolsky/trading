@@ -8,8 +8,20 @@ Add this to your src/utils/ and import before any scheduling logic.
 import os
 from datetime import datetime, timedelta
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 from src.utils.alpaca_client import get_alpaca_client
+
+# Use Eastern Time everywhere — the NYSE/Alpaca calendar is keyed to ET, not
+# the host's local timezone. A naive `datetime.now()` on a Pacific host at
+# 23:00 ET Sunday returns Sunday's local date and either rolls Monday-the-
+# trading-day forward by mistake or shifts strftime("%Y-%m-%d") off the
+# exchange day.
+ET = ZoneInfo("America/New_York")
+
+
+def _now_et() -> datetime:
+    return datetime.now(tz=ET)
 
 
 def is_trading_day(target_date: datetime) -> bool:
@@ -17,11 +29,15 @@ def is_trading_day(target_date: datetime) -> bool:
     Check if a date is a valid trading day using Alpaca calendar API.
 
     Args:
-        target_date: The date to check
+        target_date: The date to check (naive datetimes are treated as ET)
 
     Returns:
         True if market is open on that day, False otherwise
     """
+    if target_date.tzinfo is None:
+        target_date = target_date.replace(tzinfo=ET)
+    else:
+        target_date = target_date.astimezone(ET)
     try:
         paper = os.environ.get("PAPER_TRADING", "true").lower() == "true"
         client = get_alpaca_client(paper=paper)
@@ -30,7 +46,7 @@ def is_trading_day(target_date: datetime) -> bool:
         return len(calendar) > 0
     except Exception as e:
         print(f"⚠️ Calendar API error: {e}")
-        # Fallback: assume weekends are closed
+        # Fallback: assume weekends are closed (in ET).
         return target_date.weekday() < 5  # Mon-Fri
 
 
@@ -39,13 +55,15 @@ def get_next_trading_day(from_date: Optional[datetime] = None) -> datetime:
     Get the next valid trading day.
 
     Args:
-        from_date: Starting date (defaults to today)
+        from_date: Starting date (defaults to today in ET)
 
     Returns:
         Next valid trading day as datetime
     """
     if from_date is None:
-        from_date = datetime.now()
+        from_date = _now_et()
+    elif from_date.tzinfo is None:
+        from_date = from_date.replace(tzinfo=ET)
 
     check_date = from_date
     max_days = 10  # Safety limit
