@@ -763,7 +763,7 @@ jobs:
                   print(f"  Closing {symbol}: {order_side.value} {order_qty}")
 
               try:
-                  order = client.submit_order(MarketOrderRequest(
+                  order = client.submit_order(MarketOrderRequest(  # noqa: direct-submit-order  -- audited self-heal close
                       symbol=symbol,
                       qty=order_qty,
                       side=order_side,

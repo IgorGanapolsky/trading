@@ -170,6 +170,120 @@ class TestDotenvDiscovery:
         assert worktree_repo / ".env.local" in candidates
 
 
+class TestGuardedTradingClient:
+    """Test that get_guarded_trading_client() forces submit_order through the gate.
+
+    Context: On May 19, 2026 a 50-lot SPY 2026-06-18 iron condor was opened
+    by three GitHub workflows calling ``client.submit_order(...)`` directly,  # noqa: direct-submit-order
+    bypassing the 5%-per-trade position cap. The guarded factory routes every
+    ``submit_order`` call through ``safe_submit_order`` →
+    ``validate_trade_mandatory``, so even a script that forgets to use the
+    safe wrapper still gets gated.
+    """
+
+    def _build_50_lot_ic_request(self):
+        """Mimic the 50-lot $10-wide SPY IC order that triggered the incident."""
+        # Use SimpleNamespace to avoid importing alpaca-py just for a fixture.
+        from types import SimpleNamespace
+
+        # SPY ~$590 spot, 2026-06-18 expiry. $10-wide wings on both sides.
+        # Symbols encoded in OCC format (YYMMDD + C/P + 8-digit strike).
+        long_put = SimpleNamespace(symbol="SPY260618P00570000", side="BUY", ratio_qty=1)
+        short_put = SimpleNamespace(symbol="SPY260618P00580000", side="SELL", ratio_qty=1)
+        short_call = SimpleNamespace(symbol="SPY260618C00600000", side="SELL", ratio_qty=1)
+        long_call = SimpleNamespace(symbol="SPY260618C00610000", side="BUY", ratio_qty=1)
+        return SimpleNamespace(
+            symbol=None,
+            qty=50,
+            side="SELL",
+            legs=[long_put, short_put, short_call, long_call],
+            order_class="mleg",
+            limit_price=-1.45,
+        )
+
+    def test_guarded_client_rejects_50_lot_iron_condor(self):
+        """A 50-lot $10-wide IC ($50,000 max loss = ~52% of $95K equity) MUST be rejected."""
+        from unittest.mock import MagicMock, patch
+
+        from src.utils.alpaca_client import get_guarded_trading_client
+
+        # Mock account: $95,000 equity (close to today's ledger value).
+        mock_account = MagicMock()
+        mock_account.equity = "95000.00"
+        mock_account.portfolio_value = "95000.00"
+        mock_account.cash = "95000.00"
+
+        # Return at least one position so _get_positions_qty_map() returns a
+        # non-empty dict; without that, _infer_is_closing_order returns None
+        # and safe_submit_order's gate-enforcement branch (only entered when
+        # is_closing is explicitly False) is skipped.
+        unrelated_pos = MagicMock()
+        unrelated_pos.symbol = "SPY"
+        unrelated_pos.qty = "0"
+
+        mock_underlying_client = MagicMock()
+        mock_underlying_client.get_account.return_value = mock_account
+        mock_underlying_client.get_all_positions.return_value = [unrelated_pos]
+        mock_underlying_client.paper = True
+
+        # Patch the unsafe factory so we never touch a real network client.
+        with patch(
+            "src.utils.alpaca_client._get_alpaca_client_unsafe",
+            return_value=mock_underlying_client,
+        ):
+            guarded = get_guarded_trading_client(paper=True)
+
+        assert guarded is mock_underlying_client, (
+            "Guarded factory should return the same client object with submit_order patched."
+        )
+        assert guarded.submit_order is not mock_underlying_client.get_account, (
+            "Sanity: submit_order should be replaced."
+        )
+
+        # Build the 50-lot IC and confirm the gate rejects it.
+        request = self._build_50_lot_ic_request()
+
+        with pytest.raises(ValueError) as exc_info:
+            guarded.submit_order(request, strategy="iron_condor")
+
+        # The gate's rejection message can come from several layers (size, gate, juror).
+        # What matters is that ValueError was raised BEFORE the underlying broker
+        # was ever called.
+        assert "BLOCKED" in str(exc_info.value) or "FAILED" in str(exc_info.value) or (
+            "MANDATORY" in str(exc_info.value)
+        ), f"Unexpected rejection message: {exc_info.value!r}"
+
+    def test_guarded_client_returns_none_when_credentials_missing(self):
+        """If the unsafe factory cannot create a client, the guarded one returns None too."""
+        from unittest.mock import patch
+
+        from src.utils.alpaca_client import get_guarded_trading_client
+
+        with patch(
+            "src.utils.alpaca_client._get_alpaca_client_unsafe",
+            return_value=None,
+        ):
+            assert get_guarded_trading_client(paper=True) is None
+
+    def test_guarded_client_rejects_extra_args_no_silent_bypass(self):
+        """Extra positional/keyword args must raise TypeError, not silently bypass the gate."""
+        from unittest.mock import MagicMock, patch
+
+        from src.utils.alpaca_client import get_guarded_trading_client
+
+        mock_client = MagicMock()
+        mock_client.submit_order = MagicMock(return_value="should not be reached")
+
+        with patch(
+            "src.utils.alpaca_client._get_alpaca_client_unsafe",
+            return_value=mock_client,
+        ):
+            guarded = get_guarded_trading_client(paper=True)
+
+        with pytest.raises(TypeError, match="Refusing to bypass the gate"):
+            guarded.submit_order(MagicMock(), "some_extra_positional_arg")
+
+
 # =============================================================================
 # Run Tests
 # =============================================================================

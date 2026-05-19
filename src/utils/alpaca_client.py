@@ -214,6 +214,71 @@ def get_alpaca_client(paper: bool = True):
         return None
 
 
+# Private alias. External callers must use ``get_guarded_trading_client``;
+# the unsafe factory is preserved only for use inside this module and the
+# safety layer (which performs its own gate enforcement).
+_get_alpaca_client_unsafe = get_alpaca_client
+
+
+def get_guarded_trading_client(paper: bool = True):
+    """
+    Get an Alpaca TradingClient whose ``submit_order`` is forced through
+    ``safe_submit_order`` → ``validate_trade_mandatory``.
+
+    This is the ONLY supported way for scripts and workflows to acquire a
+    TradingClient. The raw ``submit_order`` from alpaca-py bypasses every
+    risk gate (position sizing, max-concurrent-IC, ticker whitelist, daily
+    loss cap, etc.). On May 19, 2026 a 50-lot SPY 2026-06-18 iron condor
+    was opened by direct ``client.submit_order(...)`` calls in three GitHub
+    workflows — far above the 5%-per-trade cap. This factory closes that gap
+    at the runtime level: even if a script calls ``submit_order`` directly,
+    the patched method routes through the mandatory trade gate first.
+
+    Args:
+        paper: If True (default), use paper trading. Live trading requires
+            explicit confirmation upstream.
+
+    Returns:
+        TradingClient with monkey-patched ``submit_order`` or None if
+        creation fails.
+
+    Raises (on a later submit_order call):
+        ValueError / TradeBlockedError if the gate rejects the order.
+    """
+    client = _get_alpaca_client_unsafe(paper=paper)
+    if client is None:
+        return None
+
+    # Late import to avoid a circular import at module load time.
+    from src.safety.mandatory_trade_gate import safe_submit_order
+
+    original_submit_order = client.submit_order
+
+    def _guarded_submit_order(order_request, *args, strategy: str | None = None, **kwargs):
+        """Patched submit_order: routes every call through the mandatory gate.
+
+        Positional/keyword args after ``order_request`` are not forwarded to
+        ``safe_submit_order`` (it does not accept them); they are kept in the
+        signature only so callers that incorrectly pass extras get a clear
+        TypeError instead of a silent bypass.
+        """
+        if args or kwargs:
+            raise TypeError(
+                "guarded submit_order only accepts (order_request, strategy=...); "
+                f"received extra args={args!r} kwargs={kwargs!r}. Refusing to bypass the gate."
+            )
+        # Temporarily restore the original so safe_submit_order's internal
+        # call to client.submit_order() does not recurse into the guard.
+        client.submit_order = original_submit_order
+        try:
+            return safe_submit_order(client, order_request, strategy=strategy)
+        finally:
+            client.submit_order = _guarded_submit_order
+
+    client.submit_order = _guarded_submit_order
+    return client
+
+
 def get_options_client(paper: bool = True):
     """
     Get Alpaca options client.

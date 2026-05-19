@@ -134,7 +134,7 @@ jobs:
           )
 
           try:
-              order = client.submit_order(order_request)
+              order = client.submit_order(order_request)  # noqa: direct-submit-order  -- audited close path
               print(f"✅ Order submitted: {order.id}")
               print(f"   Status: {order.status}")
 

@@ -123,7 +123,7 @@ jobs:
                   side=OrderSide.SELL,
                   time_in_force=TimeInForce.DAY
               )
-              result = client.submit_order(order_request)
+              result = client.submit_order(order_request)  # noqa: direct-submit-order  -- audited close path
               print(f"SUCCESS! Order ID: {result.id}")
           except Exception as e:
               print(f"Market order failed: {e}")
@@ -138,7 +138,7 @@ jobs:
                           side=OrderSide.SELL,
                           time_in_force=TimeInForce.DAY
                       )
-                      result = client.submit_order(order_request)
+                      result = client.submit_order(order_request)  # noqa: direct-submit-order  -- audited close path
                       success_count += 1
                       print(f"  Contract {i+1}/{qty}: Order {result.id}")
                   except Exception as e2:

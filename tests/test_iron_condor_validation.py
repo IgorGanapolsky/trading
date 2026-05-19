@@ -203,7 +203,7 @@ class TestIronCondorCloseValidation:
         )
 
         # Should NOT have individual leg close orders
-        # The old pattern was: for leg in ic["legs"]: client.submit_order(single_leg)
+        # The old pattern was: for leg in ic["legs"]: client.submit_order(single_leg)  # noqa: direct-submit-order
         # Note: We check that the close function doesn't iterate legs for individual orders
         # The fix uses MLeg which bundles all legs into one order
         assert "MLeg close order" in content or "MLeg (multi-leg) order" in content, (

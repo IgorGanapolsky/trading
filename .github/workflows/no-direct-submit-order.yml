@@ -1,0 +1,69 @@
+name: no-direct-submit-order
+
+# Grep guard: refuse PRs that introduce raw client.submit_order(...) calls
+# outside the safety layer.
+#
+# Context: on 2026-05-19 a 50-lot SPY 2026-06-18 iron condor was opened by
+# three GitHub workflows calling client.submit_order(...) directly,
+# bypassing the 5%-per-trade position cap. The runtime fix is
+# get_guarded_trading_client() in src/utils/alpaca_client.py — this CI guard
+# is the prevention layer that stops the regression from ever shipping.
+#
+# Allowed call sites (the safety layer + the one place that creates the
+# guarded client) are listed in ALLOWLIST below. Anything else fails CI
+# with the offending path + line number.
+#
+# Per-line opt-out: append `# noqa: direct-submit-order` to a line that
+# MUST keep a raw submit_order (e.g. an audited self-heal close). Use
+# sparingly — each opt-out is a future incident waiting to happen.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  grep-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reject raw client.submit_order(...) outside the safety layer
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ALLOWLIST=(
+            "src/utils/alpaca_client.py"
+            "src/safety/mandatory_trade_gate.py"
+            "src/risk/trade_gateway.py"
+            ".github/workflows/no-direct-submit-order.yml"
+          )
+
+          EXCLUDE_ARGS=()
+          for p in "${ALLOWLIST[@]}"; do
+            EXCLUDE_ARGS+=(-e "^${p}:")
+          done
+
+          MATCHES="$(git grep -n -E 'client\.submit_order\(' -- \
+            ':!*.md' ':!*.txt' ':!*.json' ':!*.jsonl' ':!*.html' \
+            ':!data/**' ':!docs/**' ':!rag_knowledge/**' \
+            ':!.thumbgate/**' ':!.claude/logs/**' \
+            | { grep -v "${EXCLUDE_ARGS[@]}" || true; } \
+            | { grep -v 'noqa: direct-submit-order' || true; })"
+
+          if [[ -n "${MATCHES}" ]]; then
+            echo "============================================================"
+            echo "BLOCKED: direct client.submit_order(...) calls found."
+            echo "These bypass the mandatory trade gate (LL/incident 2026-05-19)."
+            echo "Use get_guarded_trading_client() from src/utils/alpaca_client.py"
+            echo "or call safe_submit_order() from src/safety/mandatory_trade_gate.py."
+            echo "============================================================"
+            echo "${MATCHES}"
+            echo "============================================================"
+            exit 1
+          fi
+
+          echo "OK: no raw client.submit_order(...) call sites outside the safety layer."
