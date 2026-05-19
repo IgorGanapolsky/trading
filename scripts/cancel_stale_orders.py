@@ -85,7 +85,11 @@ def main() -> int:
         logger.info(f"  Created: {order.created_at}")
         logger.info(f"  Age: {age_hours:.1f} hours")
 
-        if created_at < stale_threshold:
+        # Honor a "cancel ALL" policy (MAX_ORDER_AGE_HOURS <= 0) even when
+        # the broker reports a future-dated created_at (clock skew across
+        # services). The plain `created_at < stale_threshold` comparison
+        # silently skipped such orders.
+        if MAX_ORDER_AGE_HOURS <= 0 or created_at < stale_threshold:
             logger.warning("  ⚠️ STALE ORDER - Cancelling...")
             try:
                 client.cancel_order_by_id(order.id)
