@@ -17,7 +17,7 @@
     "@trigger.dev/sdk": "^4.4.1"
   },
   "overrides": {
-    "systeminformation": "5.31.0",
+    "systeminformation": "^5.31.6",
     "cookie": "0.7.0"
   },
   "devDependencies": {

@@ -22,3 +22,25 @@ updates:
           - "*"
         update-types:
           - "security"
+
+  # Enable version updates for npm (Node.js / Trigger.dev)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      time: "09:00"
+    open-pull-requests-limit: 20
+    reviewers:
+      - "IgorGanapolsky"
+    labels:
+      - "dependencies"
+      - "security"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    groups:
+      security-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "security"

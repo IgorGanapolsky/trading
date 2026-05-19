@@ -35,7 +35,7 @@ dependencies = [
   "youtube-transcript-api>=1.2.3",
 
   # Configuration
-  "python-dotenv>=1.2.1",
+  "python-dotenv>=1.2.2",
   "pydantic-settings>=2.14.1,<3.0.0",
   "PyYAML>=6.0.3,<8.0.0",
 
