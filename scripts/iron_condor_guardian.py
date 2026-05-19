@@ -13,13 +13,14 @@ This script should run every 30 minutes during market hours.
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from alpaca.trading.client import TradingClient
 from alpaca.trading.enums import OrderSide, TimeInForce
 from alpaca.trading.requests import MarketOrderRequest
+
 from src.core.trading_constants import (
     IC_PROFIT_TARGET_PCT,
     IRON_CONDOR_EXIT_DTE,
@@ -358,9 +359,12 @@ def run_guardian():
                 )
                 continue
 
+            # Persist as offset-aware UTC. Mixed writers (this script and
+            # ic_simple.py PR #4008) must agree or hold-time math drifts
+            # by the host's tz offset.
             entries[entry_key] = {
                 "credit": entry_credit,
-                "date": datetime.now().isoformat(),
+                "date": datetime.now(timezone.utc).isoformat(),
             }
             save_ic_entries(entries)
             logger.info(f"  Estimated entry credit: ${entry_credit:.2f}")
@@ -381,15 +385,18 @@ def run_guardian():
         # Entry date from ic_entries.json or default to now (skip if unknown)
         entry_date_str = entries.get(entry_key, {}).get("date")
         if entry_date_str:
-            from datetime import datetime as dt
-
             try:
-                entry_dt = dt.fromisoformat(entry_date_str)
-                # Normalize both to naive UTC to avoid naive/aware comparison
-                if entry_dt.tzinfo is not None:
-                    entry_dt = entry_dt.replace(tzinfo=None)
-                now = dt.now()
-                hours_held = (now - entry_dt).total_seconds() / 3600
+                entry_dt = datetime.fromisoformat(entry_date_str)
+                # Use tz-aware UTC throughout. The previous code stripped
+                # tzinfo from offset-aware entries (e.g., written by
+                # ic_simple.py after PR #4008) and compared against naive
+                # datetime.now(), producing hours_held off by the host's
+                # tz offset — silently violating MIN_HOLD_HOURS=24.
+                if entry_dt.tzinfo is None:
+                    entry_dt = entry_dt.astimezone(timezone.utc)
+                else:
+                    entry_dt = entry_dt.astimezone(timezone.utc)
+                hours_held = (datetime.now(timezone.utc) - entry_dt).total_seconds() / 3600
                 if hours_held < MIN_HOLD_HOURS:
                     logger.info(
                         f"  Position held {hours_held:.1f}h < {MIN_HOLD_HOURS}h minimum. "
