@@ -199,8 +199,12 @@ class BehavioralGuard:
                 "timestamp": datetime.now().isoformat(),
             }
         )
-        # Prune entries older than 48h
-        cutoff = datetime.now() - timedelta(hours=48)
+        # Prune entries older than the cooling window (never tighter than 48h).
+        # A hardcoded 48h prune silently dropped cooling records before the
+        # actual cooling window expired whenever STOP_LOSS_COOLING_HOURS was
+        # configured above 48 — defeating the cooling guard.
+        prune_hours = max(STOP_LOSS_COOLING_HOURS, 48)
+        cutoff = datetime.now() - timedelta(hours=prune_hours)
         exits = [e for e in exits if datetime.fromisoformat(e["timestamp"]) > cutoff]
         state["stop_loss_exits"] = exits
         BehavioralGuard._save_state(state)
