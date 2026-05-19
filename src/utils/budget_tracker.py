@@ -9,6 +9,7 @@ Reference: https://arxiv.org/abs/2511.17006
 
 from __future__ import annotations
 
+import calendar
 import json
 import logging
 from dataclasses import dataclass
@@ -151,7 +152,13 @@ class BudgetTracker:
         """Get comprehensive budget status."""
         remaining = MONTHLY_BUDGET - self.data["spent_this_month"]
         now = datetime.now()
-        days_left = 32 - now.day  # Approximate days left in month
+        # Use the actual month length. The previous `32 - now.day`
+        # over-counted by 1 day in 30-day months and by up to 4 days in
+        # February, which inflated daily_average_remaining and weakened
+        # the BATS budget gate — letting high-tier model calls slip
+        # through "caution" mode longer than the budget allowed.
+        days_in_month = calendar.monthrange(now.year, now.month)[1]
+        days_left = max(days_in_month - now.day, 0)
 
         return BudgetStatus(
             monthly_budget=MONTHLY_BUDGET,
