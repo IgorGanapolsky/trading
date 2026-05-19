@@ -137,9 +137,19 @@ def count_completed_iron_condors(orders: list) -> int:
             spy_option_groups[created] = []
         spy_option_groups[created].append(symbol)
 
-    # Count groups with exactly 4 legs (iron condor)
-    condor_count = sum(1 for legs in spy_option_groups.values() if len(legs) == 4)
-    return condor_count
+    # A completed iron condor requires BOTH an opening 4-leg group AND a
+    # closing 4-leg group — so the number of *completed* condors is
+    # (qualifying 4-leg groups) // 2. Requiring 4 distinct symbols filters
+    # out a 4-fill single-leg split or two 2-leg verticals that happen to
+    # share the same minute timestamp.
+    # Previously this returned the raw 4-leg group count, double-counting
+    # opens and closes. `can_project` then unlocked the 30-trade projection
+    # gate at ~15 actual completed condors, violating .claude/CLAUDE.md's
+    # "0 trades = 0 projections" mandate.
+    qualifying_groups = sum(
+        1 for legs in spy_option_groups.values() if len(legs) == 4 and len(set(legs)) == 4
+    )
+    return qualifying_groups // 2
 
 
 def validate_pl_report(

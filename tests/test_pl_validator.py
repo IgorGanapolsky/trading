@@ -166,7 +166,9 @@ class TestClassifyOrder:
 
 
 class TestCountCompletedIronCondors:
-    def test_four_legs_same_minute_is_condor(self):
+    def test_four_legs_open_only_is_not_completed(self):
+        # A condor that is OPENED but not yet CLOSED is not "completed."
+        # Per the docstring: "A completed iron condor = opened AND closed."
         orders = [
             {
                 "symbol": "SPY260220P00660000",
@@ -192,6 +194,23 @@ class TestCountCompletedIronCondors:
                 "created_at": "2026-02-06T18:48",
                 "status": "filled",
             },
+        ]
+        assert count_completed_iron_condors(orders) == 0
+
+    def test_open_and_close_groups_is_one_condor(self):
+        # Open (4 distinct legs) + close (same 4 legs at a later minute) = 1 completed.
+        legs = [
+            "SPY260220P00660000",
+            "SPY260220P00655000",
+            "SPY260220C00725000",
+            "SPY260220C00720000",
+        ]
+        orders = [
+            {"symbol": s, "side": "sell", "created_at": "2026-02-06T18:48", "status": "filled"}
+            for s in legs
+        ] + [
+            {"symbol": s, "side": "buy", "created_at": "2026-02-13T19:00", "status": "filled"}
+            for s in legs
         ]
         assert count_completed_iron_condors(orders) == 1
 
@@ -310,9 +329,10 @@ class TestValidatePLReport:
         assert report.can_project is False
 
     def test_projection_blocked_under_30_trades(self):
-        # 2 iron condors = 8 legs, but only 2 completed condors
+        # 2 *completed* iron condors require 4 distinct minute-buckets:
+        # open T1 + close T2 = condor #1, open T3 + close T4 = condor #2.
         orders = []
-        for minute in ["18:48", "19:00"]:
+        for minute in ["18:48", "19:00", "19:30", "20:00"]:
             orders.extend(
                 [
                     {
