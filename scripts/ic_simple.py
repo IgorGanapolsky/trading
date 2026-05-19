@@ -17,7 +17,7 @@ iron_condor_scanner.py, manage_iron_condor_positions.py, and 6 workflows.
 import json
 import logging
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -305,10 +305,16 @@ def place_ic(client, opp: dict) -> str | None:
         )
     entries = _load_entries()
     entry_key = f"IC_{expiry_yymmdd}"
+    # Persist entry timestamps as offset-aware UTC ISO strings. Naive local-
+    # time writes produced mixed tz formats in data/ic_entries.json. The
+    # reader's `.replace(tzinfo=None)` discarded (not converted) the offset,
+    # so hold-time math drifted by the host-vs-entry tz offset (hours),
+    # silently violating MIN_HOLD_HOURS=24.
+    _now_utc_iso = datetime.now(timezone.utc).isoformat()
     entries[entry_key] = {
         "credit": persisted_credit,
-        "date": datetime.now().isoformat(),
-        "entry_time": datetime.now().isoformat(),
+        "date": _now_utc_iso,
+        "entry_time": _now_utc_iso,
         "order_id": str(order.id),
         "signature": (
             f"SPY_{opp['expiry']}_"
@@ -408,14 +414,19 @@ def check_exits(client):
         dte_forces_exit = dte <= EXIT_DTE
 
         # Minimum holding period — MUST hold to allow theta decay, EXCEPT when
-        # the DTE failsafe or 7DTE rule would otherwise exit.
+        # the DTE failsafe or 7DTE rule would otherwise exit. Use tz-aware
+        # UTC arithmetic so an offset-aware writer + naive-local reader can't
+        # silently produce a multi-hour skew. Legacy naive entries are
+        # normalized to UTC; new writes are already offset-aware UTC.
         if not dte_forces_exit:
             if entry_date:
                 try:
                     entry_dt = datetime.fromisoformat(entry_date)
-                    if entry_dt.tzinfo:
-                        entry_dt = entry_dt.replace(tzinfo=None)
-                    hours = (datetime.now() - entry_dt).total_seconds() / 3600
+                    if entry_dt.tzinfo is None:
+                        entry_dt = entry_dt.astimezone(timezone.utc)
+                    else:
+                        entry_dt = entry_dt.astimezone(timezone.utc)
+                    hours = (datetime.now(timezone.utc) - entry_dt).total_seconds() / 3600
                     if hours < MIN_HOLD_HOURS:
                         logger.info(f"IC {expiry}: held {hours:.1f}h < {MIN_HOLD_HOURS}h. Hold.")
                         continue
