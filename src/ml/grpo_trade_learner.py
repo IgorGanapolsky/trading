@@ -38,6 +38,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 import numpy as np
+
 from src.analytics.alpha_metrics_tracker import AlphaMetricsTracker
 from src.rag.lessons_learned_rag import LessonsLearnedRAG
 
@@ -728,17 +729,19 @@ class GRPOTradeLearner:
         """Calculate penalty for violating historical RAG lessons."""
         penalty = 0.0
 
-        # 1. Day of Week Penalty (P0 Win Rate Driver)
-        # Thursday=3. Mon=0, Tue=1, Wed=2, Fri=4
-        if record.features.day_of_week * 4 < 3:  # Before Thursday
-            penalty -= 100.0  # Significant penalty for early-week entries
+        # Day-of-week penalty was removed 2026-05-20: the prior -$100 reward
+        # penalty on Mon/Tue/Wed entries enforced the same Thursday-only
+        # hypothesis that docs/research/2026-05-19-edge-analysis.md disproved
+        # at Bonferroni adj_p=0.190. Training a policy against a refuted
+        # hypothesis biases it toward false confidence on Thursday entries.
 
-        # 2. DTE Penalty (Gamma Risk protection)
+        # DTE penalty (Gamma Risk protection)
         if record.params.dte < 14:
-            penalty -= 50.0  # Penalty for entering late-cycle trades
+            penalty -= 50.0
 
-        # 3. Dynamic RAG Query (Check for specific failure patterns)
-        query = f"Iron Condor trade on weekday {record.features.day_of_week * 4} with {record.params.dte} DTE"
+        # Dynamic RAG query for known critical failure patterns.
+        weekday_int = round(record.features.day_of_week * 4)
+        query = f"Iron Condor trade on weekday {weekday_int} with {record.params.dte} DTE"
         lessons = self.rag.query(query, top_k=2, severity_filter="CRITICAL")
 
         for lesson in lessons:
