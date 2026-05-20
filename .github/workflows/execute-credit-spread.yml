@@ -23,6 +23,9 @@ on:
         required: true
         default: "1"
 
+permissions:
+  contents: read
+
 # CRITICAL: Global trade concurrency - prevents race conditions (LL-281)
 concurrency:
   group: global-trade-execution

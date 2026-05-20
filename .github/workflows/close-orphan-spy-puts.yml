@@ -8,6 +8,9 @@ on:
         required: true
         default: ""
 
+permissions:
+  contents: read
+
 # Prevent concurrent trade execution (LL-281 race condition fix)
 concurrency:
   group: global-trade-execution

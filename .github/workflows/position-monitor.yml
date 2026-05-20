@@ -3,8 +3,11 @@ name: Position Monitor
 on:
   schedule:
     # Every 30 minutes during market hours (9:30 AM - 4:00 PM ET = 14:30 - 21:00 UTC), Mon-Fri
-    - cron: '0,30 14-20 * * 1-5'
+    - cron: "0,30 14-20 * * 1-5"
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 concurrency:
   group: position-monitor-${{ github.ref }}
@@ -23,7 +26,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.11'
+          python-version: "3.11"
           cache: "pip"
 
       - name: Install dependencies

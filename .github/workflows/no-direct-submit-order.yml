@@ -23,6 +23,9 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   grep-guard:
     runs-on: ubuntu-latest

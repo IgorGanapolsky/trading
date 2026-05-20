@@ -78,6 +78,14 @@ jobs:
     name: Trunk Check
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    # checks/pull-requests write are required for trunk-io/trunk-action to
+    # post annotations to the PR. Without them the action returns exit 1 with
+    # "Resource not accessible by integration" 403 (recurring noise on every
+    # recent PR). Job-level permissions narrow the broader workflow scope.
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6

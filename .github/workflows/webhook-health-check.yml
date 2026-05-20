@@ -10,6 +10,9 @@ on:
   #   - cron: '0 15 * * 1-5'  # 10 AM ET on trading days
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 env:
   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
   SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}

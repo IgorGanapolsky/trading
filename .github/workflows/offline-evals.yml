@@ -17,6 +17,10 @@ on:
       - "tests/evals/**"
   workflow_dispatch:
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   offline-evals:
     runs-on: ubuntu-latest

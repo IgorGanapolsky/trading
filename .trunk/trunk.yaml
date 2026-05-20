@@ -1,13 +1,18 @@
 # This file controls the behavior of Trunk: https://docs.trunk.io/cli
 # To learn more about the format of this file, see https://docs.trunk.io/reference/trunk-yaml
 version: 0.1
+# Required statuses must match the GitHub check-context names emitted by
+# .github/workflows/ci.yml — names not in that workflow have no enforcement.
+# Audit 2026-05-20: prior list named "Lint & Format / Type Check / Security
+# Scan / Smoke Test" — none of those job names exist in ci.yml, so the gate
+# was advisory-only even before branch protection was disabled.
 merge:
   required_statuses:
-    - "Lint & Format"
-    - "Type Check"
-    - "Security Scan"
-    - "Run All Tests"
-    - "Smoke Test"
+    - Detect Changed Paths
+    - Run All Tests
+    - Validate Workflows
+    - CodeQL
+    - Analyze (python)
 cli:
   version: 1.25.0
 # Trunk provides extensibility via plugins. (https://docs.trunk.io/plugins)
@@ -27,6 +32,10 @@ lint:
   disabled:
     - mypy
     - black # CI uses ruff format, not black
+    - isort # ruff handles import sorting (rule I001); isort and ruff
+      # actively conflict on the third-party-vs-local group split in
+      # src/ml/grpo_trade_learner.py. Keeping ruff as the single
+      # source of truth per CLAUDE.md.
   enabled:
     - gofmt@1.20.4
     - golangci-lint2@2.11.4
@@ -36,7 +45,6 @@ lint:
     - checkov@3.2.513
     - git-diff-check
     - hadolint@2.14.0
-    - isort@8.0.1
     - markdownlint@0.48.0
     - osv-scanner@2.3.5
     - prettier@3.8.1

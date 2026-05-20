@@ -40,6 +40,11 @@ on:
         default: ""
         type: string
 
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
 env:
   PYTHON_VERSION: "3.11"
 
@@ -225,7 +230,7 @@ jobs:
           pip install -q -r requirements.txt || true
 
       - name: Query RAG for lessons
-        continue-on-error: true  # Non-critical: RAG context is advisory, AI loop works without it
+        continue-on-error: true # Non-critical: RAG context is advisory, AI loop works without it
         run: |
           echo "=== Querying local LanceDB RAG for recent lessons ==="
           python3 - << 'PY'
