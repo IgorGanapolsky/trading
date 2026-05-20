@@ -524,3 +524,68 @@ class TestCreditSpreadMaxLoss:
         rejected, _ = gateway._check_position_size_risk(request, account_equity=200_000)
         # 1-lot $900 max loss vs $200K equity = 0.45% << 2% -> not rejected on size
         assert not rejected, "1-lot $10-wide spread should pass on a $200K account"
+
+
+class TestTradeGatewayLotSizeCap:
+    """Regression: per-trade contract count must be capped at MAX_CONTRACTS_PER_TRADE.
+
+    The 50/51-lot SPY 2026-06-18 IC violated controlled-experiment.md (1-lot only)
+    because no structural cap existed in the gateway. Reference:
+    .claude/rules/cto-decision-2026-05-19.md §3.1.
+    """
+
+    def _make_gateway(self, positions=None):
+        gw = TradeGateway(executor=None, paper=True)
+        gw.executor = MockExecutor(account_equity=100_000, positions=positions or [])
+        return gw
+
+    def test_open_request_above_lot_cap_is_rejected(self):
+        gateway = self._make_gateway()
+        request = TradeRequest(
+            symbol="SPY260618P00686000",
+            side="sell",
+            quantity=50,
+            source="test",
+            is_option=True,
+            strategy_type="bull_put_spread",
+            spread_width=10.0,
+            premium_received=2.0,
+        )
+        decision = gateway.evaluate(request)
+        assert not decision.approved
+        assert RejectionReason.LOT_SIZE_EXCEEDED in decision.rejection_reasons
+        assert decision.metadata.get("lot_size_cap") == gateway.MAX_CONTRACTS_PER_TRADE
+        assert decision.metadata.get("requested_quantity") == 50
+
+    def test_open_request_at_lot_cap_passes_lot_check(self):
+        gateway = self._make_gateway()
+        request = TradeRequest(
+            symbol="SPY260618P00686000",
+            side="sell",
+            quantity=1,
+            source="test",
+            is_option=True,
+            strategy_type="bull_put_spread",
+            spread_width=10.0,
+            premium_received=2.0,
+        )
+        decision = gateway.evaluate(request)
+        assert RejectionReason.LOT_SIZE_EXCEEDED not in decision.rejection_reasons
+
+    def test_close_path_allowed_above_lot_cap(self):
+        # Closing a pre-existing 50-lot position must remain possible — the cap
+        # only applies when the symbol has no existing position to close.
+        symbol = "SPY260618P00686000"
+        gateway = self._make_gateway(
+            positions=[{"symbol": symbol, "qty": -50, "unrealized_pl": 0}]
+        )
+        request = TradeRequest(
+            symbol=symbol,
+            side="buy",  # buy-to-close a short put
+            quantity=50,
+            source="test",
+            is_option=True,
+            strategy_type="bull_put_spread",
+        )
+        decision = gateway.evaluate(request)
+        assert RejectionReason.LOT_SIZE_EXCEEDED not in decision.rejection_reasons

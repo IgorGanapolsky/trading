@@ -34,6 +34,9 @@ try:
         MAX_CONCURRENT_IRON_CONDORS as _MAX_CONCURRENT_IRON_CONDORS,
     )
     from src.core.trading_constants import (
+        MAX_CONTRACTS_PER_TRADE as _MAX_CONTRACTS_PER_TRADE,
+    )
+    from src.core.trading_constants import (
         MAX_CUMULATIVE_RISK_PCT as _MAX_CUMULATIVE_RISK_PCT,
     )
     from src.core.trading_constants import MAX_POSITION_PCT as _MAX_POSITION_PCT
@@ -43,6 +46,7 @@ try:
 except ImportError:
     _MAX_POSITION_PCT = 0.05
     _MAX_CONCURRENT_IRON_CONDORS = 2
+    _MAX_CONTRACTS_PER_TRADE = 1
     _MAX_CUMULATIVE_RISK_PCT = _MAX_POSITION_PCT * _MAX_CONCURRENT_IRON_CONDORS
 
     def _extract_underlying_shared(symbol: str) -> str:  # type: ignore[misc]
@@ -107,6 +111,10 @@ class RejectionReason(Enum):
     CUMULATIVE_RISK_TOO_HIGH = "Cumulative position risk exceeds configured limit"
     MAX_IRON_CONDORS_EXCEEDED = f"Max {MAX_CONCURRENT_ICS} iron condors at a time"
     EXPIRY_CONCENTRATION_TOO_HIGH = "Too many ICs in same expiry week (>40%)"
+    LOT_SIZE_EXCEEDED = (
+        f"Per-trade contracts exceed MAX_CONTRACTS_PER_TRADE={_MAX_CONTRACTS_PER_TRADE} "
+        f"(controlled-experiment.md: 1-lot only)"
+    )
     BEHAVIORAL_GUARD_BLOCKED = "Behavioral guard blocked trade (FOMO/cooling/blacklist)"
 
 
@@ -245,6 +253,7 @@ class TradeGateway:
     MAX_CONCURRENT_ICS = MAX_CONCURRENT_ICS
     MAX_OPTION_LEGS_OPEN = MAX_CONCURRENT_ICS * 4
     MAX_CUMULATIVE_RISK_PCT = _MAX_CUMULATIVE_RISK_PCT
+    MAX_CONTRACTS_PER_TRADE = _MAX_CONTRACTS_PER_TRADE
 
     # Earnings blackout: SPY is an ETF — no earnings.
     # Individual stocks are blacklisted (CLAUDE.md: SPY ONLY).
@@ -785,6 +794,35 @@ class TradeGateway:
                         "action": "Close bleeding positions before opening new ones",
                     },
                 )
+
+            # Check 2b: MAX_CONTRACTS_PER_TRADE — 1-lot only per controlled-experiment.md
+            # The 50-lot SPY 2026-06-18 IC was opened before this check existed (CTO
+            # decision 2026-05-19). The leg-quantity cap is the structural fix so a
+            # bug or stray script cannot replicate it. Closing existing positions is
+            # exempt: a >1-lot close path must remain available to wind down legacy
+            # positions opened before this gate was in force.
+            requested_qty = abs(float(request.quantity or 0))
+            if requested_qty > self.MAX_CONTRACTS_PER_TRADE:
+                already_open = any(
+                    p.get("symbol") == request.symbol for p in positions
+                )
+                if not already_open:
+                    logger.error(
+                        f"🚨 LOT-SIZE CAP: {request.symbol} qty={requested_qty} "
+                        f"exceeds MAX_CONTRACTS_PER_TRADE={self.MAX_CONTRACTS_PER_TRADE}. "
+                        f"NO NEW POSITIONS."
+                    )
+                    return GatewayDecision(
+                        approved=False,
+                        request=request,
+                        rejection_reasons=[RejectionReason.LOT_SIZE_EXCEEDED],
+                        risk_score=1.0,
+                        metadata={
+                            "lot_size_cap": self.MAX_CONTRACTS_PER_TRADE,
+                            "requested_quantity": requested_qty,
+                            "rule": "controlled-experiment.md: 1-lot only",
+                        },
+                    )
 
             # Check 3: Too many option positions for configured IC concurrency.
             max_option_positions = self.MAX_OPTION_LEGS_OPEN
