@@ -27,6 +27,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import uuid
 from dataclasses import dataclass, field
 
 try:
@@ -678,11 +679,15 @@ class TradeGateway:
 
         return False, ""
 
+    DECISION_LOG_PATH = Path("data/gateway_decisions.jsonl")
+
     def evaluate(self, request: TradeRequest) -> GatewayDecision:
         """
         Evaluate a trade request against all risk rules.
 
         This is the MANDATORY checkpoint. No trade can bypass this.
+        Every decision (approve OR reject) is durably appended to
+        ``data/gateway_decisions.jsonl`` for audit + product analytics.
 
         Args:
             request: The trade request from the AI
@@ -690,19 +695,22 @@ class TradeGateway:
         Returns:
             GatewayDecision with approval status and reasons
         """
+        request_id = uuid.uuid4().hex
         logger.info(
-            f"🔒 Gateway evaluating: {request.side.upper()} {request.symbol} "
+            f"🔒 Gateway evaluating [{request_id[:8]}]: {request.side.upper()} {request.symbol} "
             f"(qty={request.quantity}, notional={request.notional})"
         )
 
-        # ============================================================
-        # TRADE LOCK - Prevents race conditions (LL-281, Jan 22, 2026)
+        decision = self._evaluate_protected(request)
+        self._emit_decision(request, decision, request_id)
+        return decision
+
+    def _evaluate_protected(self, request: TradeRequest) -> GatewayDecision:
+        # TRADE LOCK - Prevents race conditions (LL-281, Jan 22, 2026).
         # Multiple trades were passing position checks simultaneously
         # resulting in 8 contracts instead of max 4.
-        # ============================================================
         if SAFETY_FEATURES_AVAILABLE:
             try:
-                # Use context manager for automatic lock release
                 with acquire_trade_lock(timeout=30):
                     return self._evaluate_with_lock(request)
             except TradeLockTimeout as e:
@@ -714,9 +722,45 @@ class TradeGateway:
                     risk_score=1.0,
                     metadata={"error": "Trade lock timeout - another trade in progress"},
                 )
-        else:
-            # Fallback if safety features not available
-            return self._evaluate_with_lock(request)
+        return self._evaluate_with_lock(request)
+
+    def _emit_decision(
+        self,
+        request: TradeRequest,
+        decision: GatewayDecision,
+        request_id: str,
+    ) -> None:
+        # Append-only JSONL audit trail of every gate decision. Telemetry failure
+        # must never break a trading decision — exceptions are swallowed and logged.
+        try:
+            path = self.DECISION_LOG_PATH
+            path.parent.mkdir(parents=True, exist_ok=True)
+            record = {
+                "ts": datetime.utcnow().isoformat() + "Z",
+                "request_id": request_id,
+                "source": request.source,
+                "symbol": request.symbol,
+                "side": request.side,
+                "qty": request.quantity,
+                "notional": request.notional,
+                "strategy_type": request.strategy_type,
+                "is_option": request.is_option,
+                "approved": decision.approved,
+                "rejection_reasons": [r.name for r in decision.rejection_reasons],
+                "risk_score": decision.risk_score,
+                "adjusted_quantity": decision.adjusted_quantity,
+                "metadata": decision.metadata,
+            }
+            line = json.dumps(record, default=str) + "\n"
+            with open(path, "a", encoding="utf-8") as f:
+                f.write(line)
+                f.flush()
+                try:
+                    os.fsync(f.fileno())
+                except OSError:
+                    pass
+        except Exception as exc:  # noqa: BLE001 — telemetry must never break trading
+            logger.warning(f"gateway decision telemetry write failed: {exc}")
 
     def _evaluate_with_lock(self, request: TradeRequest) -> GatewayDecision:
         """Internal evaluation method called while holding trade lock."""

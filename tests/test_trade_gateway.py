@@ -589,3 +589,89 @@ class TestTradeGatewayLotSizeCap:
         )
         decision = gateway.evaluate(request)
         assert RejectionReason.LOT_SIZE_EXCEEDED not in decision.rejection_reasons
+
+
+class TestTradeGatewayDecisionTelemetry:
+    """Every gate decision must be durably persisted to JSONL for audit + analytics.
+
+    This is the B2B-guardrail-SaaS productization seed: external buyers need an
+    audit log of every guardrail decision their autonomous agent triggered.
+    """
+
+    def _make_gateway(self, tmp_path):
+        gateway = TradeGateway(executor=None, paper=True)
+        gateway.executor = MockExecutor(account_equity=100_000)
+        gateway.DECISION_LOG_PATH = tmp_path / "gateway_decisions.jsonl"
+        return gateway
+
+    def test_decision_telemetry_logs_approved_trade(self, tmp_path):
+        import json as _json
+
+        gateway = self._make_gateway(tmp_path)
+        request = TradeRequest(
+            symbol="SPY",
+            side="buy",
+            notional=500,
+            source="test_approved",
+            is_option=False,
+        )
+        decision = gateway.evaluate(request)
+
+        log_path = gateway.DECISION_LOG_PATH
+        assert log_path.exists(), "telemetry file must be created"
+        lines = log_path.read_text().strip().splitlines()
+        assert len(lines) == 1
+        record = _json.loads(lines[0])
+        assert record["source"] == "test_approved"
+        assert record["symbol"] == "SPY"
+        assert record["approved"] == decision.approved
+        assert "ts" in record and record["ts"].endswith("Z")
+        assert "request_id" in record and len(record["request_id"]) == 32
+
+    def test_decision_telemetry_logs_rejected_trade(self, tmp_path):
+        import json as _json
+
+        gateway = self._make_gateway(tmp_path)
+        request = TradeRequest(
+            symbol="SPY240315C00500000",
+            side="buy",
+            notional=500,
+            source="test_rejected",
+            is_option=True,
+            bid_price=1.70,
+            ask_price=2.00,  # 15% spread -> ILLIQUID
+        )
+        decision = gateway.evaluate(request)
+        assert not decision.approved
+
+        record = _json.loads(gateway.DECISION_LOG_PATH.read_text().strip().splitlines()[-1])
+        assert record["approved"] is False
+        assert "ILLIQUID_OPTION" in record["rejection_reasons"]
+
+    def test_decision_telemetry_failure_does_not_break_trading(self, tmp_path, monkeypatch):
+        # If the log path is unwriteable, the gateway must still return a decision.
+        gateway = self._make_gateway(tmp_path)
+        gateway.DECISION_LOG_PATH = tmp_path / "nonexistent" / "ro" / "decisions.jsonl"
+
+        def boom(*a, **kw):
+            raise OSError("simulated filesystem failure")
+
+        monkeypatch.setattr("builtins.open", boom)
+
+        request = TradeRequest(
+            symbol="SPY", side="buy", notional=500, source="test_telemetry_fail"
+        )
+        decision = gateway.evaluate(request)  # must not raise
+        assert decision is not None
+        assert isinstance(decision.approved, bool)
+
+    def test_decision_telemetry_appends_multiple(self, tmp_path):
+        gateway = self._make_gateway(tmp_path)
+        for i in range(3):
+            gateway.evaluate(
+                TradeRequest(symbol="SPY", side="buy", notional=100, source=f"r{i}")
+            )
+        lines = gateway.DECISION_LOG_PATH.read_text().strip().splitlines()
+        assert len(lines) == 3
+        sources = [__import__("json").loads(line)["source"] for line in lines]
+        assert sources == ["r0", "r1", "r2"]
