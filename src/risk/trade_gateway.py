@@ -34,6 +34,9 @@ try:
         MAX_CONCURRENT_IRON_CONDORS as _MAX_CONCURRENT_IRON_CONDORS,
     )
     from src.core.trading_constants import (
+        MAX_CONTRACTS_PER_TRADE as _MAX_CONTRACTS_PER_TRADE,
+    )
+    from src.core.trading_constants import (
         MAX_CUMULATIVE_RISK_PCT as _MAX_CUMULATIVE_RISK_PCT,
     )
     from src.core.trading_constants import MAX_POSITION_PCT as _MAX_POSITION_PCT
@@ -43,6 +46,7 @@ try:
 except ImportError:
     _MAX_POSITION_PCT = 0.05
     _MAX_CONCURRENT_IRON_CONDORS = 2
+    _MAX_CONTRACTS_PER_TRADE = 1
     _MAX_CUMULATIVE_RISK_PCT = _MAX_POSITION_PCT * _MAX_CONCURRENT_IRON_CONDORS
 
     def _extract_underlying_shared(symbol: str) -> str:  # type: ignore[misc]
@@ -108,6 +112,7 @@ class RejectionReason(Enum):
     MAX_IRON_CONDORS_EXCEEDED = f"Max {MAX_CONCURRENT_ICS} iron condors at a time"
     EXPIRY_CONCENTRATION_TOO_HIGH = "Too many ICs in same expiry week (>40%)"
     BEHAVIORAL_GUARD_BLOCKED = "Behavioral guard blocked trade (FOMO/cooling/blacklist)"
+    CONTRACT_QUANTITY_EXCEEDED = "Contract quantity exceeds the per-trade lot cap"
 
 
 @dataclass
@@ -244,6 +249,9 @@ class TradeGateway:
     MAX_BID_ASK_SPREAD_PCT = 0.05  # 5% maximum bid-ask spread
     MAX_CONCURRENT_ICS = MAX_CONCURRENT_ICS
     MAX_OPTION_LEGS_OPEN = MAX_CONCURRENT_ICS * 4
+    # Per-entry contract cap. controlled-experiment.md mandates 1-lot during
+    # the validation cohort; the canonical value lives in the active profile.
+    MAX_CONTRACTS_PER_TRADE = _MAX_CONTRACTS_PER_TRADE
     MAX_CUMULATIVE_RISK_PCT = _MAX_CUMULATIVE_RISK_PCT
 
     # Earnings blackout: SPY is an ETF — no earnings.
@@ -807,6 +815,37 @@ class TradeGateway:
                         "action": f"Close excess positions (limit: {self.MAX_CONCURRENT_ICS} ICs)",
                     },
                 )
+
+        # ============================================================
+        # CONTRACT-LOT GUARDRAIL (May 19, 2026)
+        # The sizing helper caps lot size, but a caller can build a
+        # TradeRequest with an arbitrary quantity and reach the broker
+        # directly. The mandatory gateway must reject oversized option
+        # entries so a hallucinated/misconfigured signal cannot replicate
+        # the 50-lot 06-18 IC. See .claude/rules/cto-decision-2026-05-19.md
+        # ============================================================
+        is_options_contract_trade = request.is_option or (
+            request.strategy_type in self.CREDIT_STRATEGIES
+        )
+        if (
+            is_position_opening
+            and is_options_contract_trade
+            and request.quantity is not None
+            and request.quantity > self.MAX_CONTRACTS_PER_TRADE
+        ):
+            rejection_reasons.append(RejectionReason.CONTRACT_QUANTITY_EXCEEDED)
+            risk_score += 1.0
+            logger.error(
+                "🛑 LOT GUARDRAIL: %s contracts requested, cap is %s. "
+                "Blocking oversized entry (Phil Town Rule #1).",
+                request.quantity,
+                self.MAX_CONTRACTS_PER_TRADE,
+            )
+            metadata["contract_quantity_breach"] = {
+                "requested_quantity": request.quantity,
+                "max_contracts_per_trade": self.MAX_CONTRACTS_PER_TRADE,
+                "rule": "controlled-experiment.md: 1-lot only during validation",
+            }
 
         # ============================================================
         # CHECK 0: DAILY LOSS LIMIT - Block trading when daily loss exceeds 5%

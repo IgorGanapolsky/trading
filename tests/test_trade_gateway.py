@@ -524,3 +524,98 @@ class TestCreditSpreadMaxLoss:
         rejected, _ = gateway._check_position_size_risk(request, account_equity=200_000)
         # 1-lot $900 max loss vs $200K equity = 0.45% << 2% -> not rejected on size
         assert not rejected, "1-lot $10-wide spread should pass on a $200K account"
+
+
+class TestTradeGatewayContractLotGuardrail:
+    """Test the per-trade contract-lot guardrail.
+
+    Regression: the 2026-06-18 IC was opened at 50-lot, violating the 1-lot
+    controlled-experiment rule. The sizing helper caps lot size, but a caller
+    can build a TradeRequest with an arbitrary quantity and reach the broker
+    directly. The mandatory gateway must reject oversized option entries.
+    See .claude/rules/cto-decision-2026-05-19.md.
+    """
+
+    def test_oversized_iron_condor_rejected(self):
+        """A multi-lot iron condor entry is blocked by the gateway."""
+        gateway = TradeGateway(executor=None, paper=True)
+        gateway.executor = MockExecutor(account_equity=95_000)
+        oversized = gateway.MAX_CONTRACTS_PER_TRADE + 49
+
+        request = TradeRequest(
+            symbol="SPY",
+            side="buy",
+            notional=10_000,
+            source="test",
+            is_option=True,
+            strategy_type="iron_condor",
+            iv_rank=60.0,
+            quantity=oversized,
+            request_time=real_datetime(2026, 5, 11),
+        )
+        decision = gateway.evaluate(request)
+
+        assert not decision.approved
+        assert RejectionReason.CONTRACT_QUANTITY_EXCEEDED in decision.rejection_reasons
+        breach = decision.metadata.get("contract_quantity_breach")
+        assert breach is not None
+        assert breach["requested_quantity"] == oversized
+        assert breach["max_contracts_per_trade"] == gateway.MAX_CONTRACTS_PER_TRADE
+
+    def test_oversized_credit_spread_rejected_by_strategy_type(self):
+        """The cap fires on credit-strategy requests even without is_option set."""
+        gateway = TradeGateway(executor=None, paper=True)
+        gateway.executor = MockExecutor(account_equity=95_000)
+
+        request = TradeRequest(
+            symbol="SPY",
+            side="buy",
+            notional=5_000,
+            source="test",
+            is_option=False,
+            strategy_type="credit_spread",
+            quantity=gateway.MAX_CONTRACTS_PER_TRADE + 9,
+            request_time=real_datetime(2026, 5, 11),
+        )
+        decision = gateway.evaluate(request)
+
+        assert not decision.approved
+        assert RejectionReason.CONTRACT_QUANTITY_EXCEEDED in decision.rejection_reasons
+
+    def test_at_cap_iron_condor_not_rejected_for_quantity(self):
+        """An entry at the lot cap is not rejected by the contract guardrail."""
+        gateway = TradeGateway(executor=None, paper=True)
+        gateway.executor = MockExecutor(account_equity=95_000)
+
+        request = TradeRequest(
+            symbol="SPY",
+            side="buy",
+            notional=900,
+            source="test",
+            is_option=True,
+            strategy_type="iron_condor",
+            iv_rank=60.0,
+            quantity=gateway.MAX_CONTRACTS_PER_TRADE,
+            request_time=real_datetime(2026, 5, 11),
+        )
+        decision = gateway.evaluate(request)
+
+        assert RejectionReason.CONTRACT_QUANTITY_EXCEEDED not in decision.rejection_reasons
+
+    def test_oversized_equity_trade_not_lot_capped(self):
+        """Equity share quantity is not an options-contract count - never capped."""
+        gateway = TradeGateway(executor=None, paper=True)
+        gateway.executor = MockExecutor(account_equity=95_000)
+
+        request = TradeRequest(
+            symbol="SPY",
+            side="buy",
+            notional=5_000,
+            source="test",
+            is_option=False,
+            quantity=100,
+            request_time=real_datetime(2026, 5, 11),
+        )
+        decision = gateway.evaluate(request)
+
+        assert RejectionReason.CONTRACT_QUANTITY_EXCEEDED not in decision.rejection_reasons
