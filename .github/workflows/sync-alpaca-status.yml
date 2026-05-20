@@ -74,15 +74,14 @@ jobs:
           python3 scripts/post_market_analysis.py || echo "⚠️ Post-market analysis failed"
           python3 scripts/update_north_star_operating_plan.py || echo "⚠️ North Star operating plan update failed"
 
-      - name: Restore IC-owned ledger before public surfaces
+      - name: Restore IC-owned ledger after learning refresh
         run: |
           set -euo pipefail
           # sync_closed_positions.py may refresh data/trades.json for learning, but
-          # Sync Alpaca does not own or commit that ledger. Public surfaces must be
-          # generated from committed inputs only.
+          # Sync Alpaca does not own or commit that ledger.
           git restore data/trades.json
 
-      - name: Build public status surfaces
+      - name: Refresh paired ledger (operator artifacts only)
         env:
           ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
           ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
@@ -93,10 +92,8 @@ jobs:
           python3 scripts/daily_scorecard.py --repo-root .
           # daily_scorecard.py refreshes the paired ledger by default for
           # operator artifacts, but Sync Alpaca does not own data/trades.json.
-          # Restore it again before building committed public surfaces.
           git restore data/trades.json
           git diff --quiet -- data/trades.json
-          python3 scripts/build_public_status.py --repo-root .
 
       # DISABLED: ic_simple.py is the sole position manager (2026-04-01)
       # manage_iron_condor_positions.py was closing positions via individual legs
@@ -126,7 +123,6 @@ jobs:
             data/system_state.json \
             data/runtime/intraday_pnl_history.json \
             data/runtime/intraday_pnl_latest.json \
-            docs/data/public_status.json \
             || true
 
           git add data/system_state.json
@@ -134,8 +130,6 @@ jobs:
           git add data/runtime/intraday_pnl_latest.json 2>/dev/null || true
           git add -f data/north_star_weekly_history.json 2>/dev/null || true
           git add data/runtime/north_star_gate_overrides.json 2>/dev/null || true
-          git add docs/data/public_status.json 2>/dev/null || true
-          git add wiki/Home.md wiki/Progress-Dashboard.md wiki/Development-Engine-and-Evidence.md 2>/dev/null || true
           git add data/TRADING_HALTED 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "No state changes to commit"
@@ -151,31 +145,6 @@ jobs:
           git pull --ff-only origin main
           git push origin HEAD:main
 
-      - name: Sync public wiki and repo metadata
-        if: always()
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
-        run: |
-          set -euo pipefail
-
-          description="$(tr '\n' ' ' < .github/public/about.txt | sed 's/[[:space:]]\\+/ /g' | sed 's/^ //; s/ $//')"
-          gh repo edit "${{ github.repository }}" --description "$description"
-
-          tmp_dir="$(mktemp -d)"
-          git clone "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.wiki.git" "$tmp_dir/wiki"
-          cp wiki/Home.md "$tmp_dir/wiki/Home.md"
-          cp wiki/Progress-Dashboard.md "$tmp_dir/wiki/Progress-Dashboard.md"
-          cp wiki/Development-Engine-and-Evidence.md "$tmp_dir/wiki/Development-Engine-and-Evidence.md"
-          cd "$tmp_dir/wiki"
-          git config user.name "GitHub Actions Bot"
-          git config user.email "actions@github.com"
-          git add Home.md Progress-Dashboard.md Development-Engine-and-Evidence.md
-          if git diff --staged --quiet; then
-            echo "No wiki or metadata changes to publish"
-            exit 0
-          fi
-          git commit -m "chore: sync public wiki surfaces [auto]"
-          git push origin HEAD
 
       - name: Notify on Failure
         if: failure()

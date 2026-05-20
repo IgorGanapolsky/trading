@@ -139,7 +139,8 @@ def test_manage_script_credential_lookup_uses_canonical():
 def test_gate_scale_allowed_requires_win_rate_and_sample():
     """scale_allowed should require >= 50% win rate AND 30+ trades."""
 
-    # Simulate the logic from build_public_status.py
+    # Gate congruency rule (formerly enforced by the removed publishing-surface
+    # generator; the underlying gate semantics still apply downstream).
     def compute_scale_allowed(block_new_positions, win_rate_pct, closed_total):
         return not bool(block_new_positions) and (win_rate_pct or 0) >= 50 and closed_total >= 30
 

@@ -167,33 +167,28 @@ def test_main_ci_fast_paths_workflow_docs_config_changes():
 
 
 def test_sync_alpaca_status_updates_public_surfaces():
-    """Alpaca sync must regenerate the public bundle and wiki surfaces.
+    """Alpaca sync owns broker state, pnl, and halt artifacts only.
 
-    Note: Sync Alpaca only commits its own files (broker state, pnl, public status, wiki).
-    ML models, trade data, and RAG lessons are owned by IC Simple.
+    Public publishing surfaces (wiki, public_status, build_public_status) were
+    removed in the publishing-surface rip-out (north-star pivot, May 2026).
+    Sync Alpaca no longer commits public copy; the wiki/dashboard regenerator
+    is gone. ML models, trade data, and RAG lessons are owned by IC Simple.
     """
     workflow_text = Path(".github/workflows/sync-alpaca-status.yml").read_text()
 
     assert "npx --yes prettier@3.6.2 --write" in workflow_text
     assert "scripts/daily_scorecard.py --repo-root ." in workflow_text
-    assert "scripts/build_public_status.py --repo-root ." in workflow_text
-    assert "docs/data/public_status.json" in workflow_text
-    assert "wiki/Progress-Dashboard.md" in workflow_text
-    assert "gh repo edit" in workflow_text
-    assert "name: Restore IC-owned ledger before public surfaces" in workflow_text
     assert "git restore data/trades.json" in workflow_text
-    assert workflow_text.index("git restore data/trades.json") < workflow_text.index(
-        "scripts/build_public_status.py --repo-root ."
-    )
     assert workflow_text.index("scripts/daily_scorecard.py --repo-root .") < workflow_text.rindex(
         "git restore data/trades.json"
     )
     assert "git diff --quiet -- data/trades.json" in workflow_text
-    assert workflow_text.index("git diff --quiet -- data/trades.json") < workflow_text.index(
-        "scripts/build_public_status.py --repo-root ."
-    )
-    # ML models are now owned by IC Simple, not Sync Alpaca (commit race fix)
+    # ML models are owned by IC Simple, not Sync Alpaca (commit race fix)
     assert "models/ml/trade_confidence_model.json" not in workflow_text
+    # Publishing-surface rip-out: these must be gone.
+    assert "scripts/build_public_status.py" not in workflow_text
+    assert "wiki/" not in workflow_text
+    assert "docs/data/public_status.json" not in workflow_text
 
 
 def test_state_writer_workflows_share_a_single_queue():
@@ -235,8 +230,12 @@ def test_state_writer_workflows_refresh_to_latest_main_before_mutating_state():
     assert "git checkout -B main origin/main" in ic_text
 
 
-def test_pre_market_sync_commits_all_generated_surfaces_fail_closed():
-    """Pre-market sync must not leave generated public surfaces unstaged or hide push failures."""
+def test_pre_market_sync_commits_canonical_state_fail_closed():
+    """Pre-market sync must serialize state writes and fail closed on push errors.
+
+    Public publishing surfaces (wiki, docs/data/public_status.json) were removed
+    in the publishing-surface rip-out (north-star pivot, May 2026).
+    """
     workflow_text = Path(".github/workflows/pre-market-sync.yml").read_text()
 
     assert "state-writer-{0}-{1}" in workflow_text
@@ -244,22 +243,12 @@ def test_pre_market_sync_commits_all_generated_surfaces_fail_closed():
     assert "name: Refresh to latest main" in workflow_text
     assert "git checkout -B main origin/main" in workflow_text
     assert "set -euo pipefail" in workflow_text
-    assert "docs/data/public_status.json" in workflow_text
-    assert "wiki/Home.md" in workflow_text
-    assert "wiki/Progress-Dashboard.md" in workflow_text
-    assert "wiki/Development-Engine-and-Evidence.md" in workflow_text
     assert "git pull --ff-only origin main" in workflow_text
     assert "git push origin HEAD:main ||" not in workflow_text
     assert "git pull --rebase origin main" not in workflow_text
-
-
-def test_public_surface_guard_workflow_exists():
-    """Public-facing copy must have its own lightweight guard workflow."""
-    workflow_text = Path(".github/workflows/public-surface-guard.yml").read_text()
-
-    assert "scripts/build_public_status.py --repo-root . --check" in workflow_text
-    assert "scripts/check_public_copy_freshness.py --repo-root ." in workflow_text
-    assert "tests/test_build_public_status.py" in workflow_text
+    # Publishing-surface rip-out: these must be gone.
+    assert "wiki/" not in workflow_text
+    assert "docs/data/public_status.json" not in workflow_text
 
 
 def test_ic_simple_workflow_commits_canonical_state_outputs():

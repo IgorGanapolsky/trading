@@ -77,8 +77,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/system_state.json data/heartbeat.json data/runtime/ docs/data/public_status.json
-          git add -f wiki/Home.md wiki/Progress-Dashboard.md wiki/Development-Engine-and-Evidence.md
+          git add data/system_state.json data/heartbeat.json data/runtime/
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
