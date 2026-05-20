@@ -1,38 +1,38 @@
 <div align="center">
 
-# Systematic SPY Options Alpha: RAG-Governed Algotrading Lab
+# Systematic SPY Options Lab — Guardrail-First Autonomous Trading
 
-### High-Alpha Thursday Discovery | RAG-ML Safety Governance | Broker-Backed Evidence
+### Autonomous-Agent Safety Layer | RAG Memory | Broker-Backed Audit Trail
 
-**Transforming discretionary options trading into a disciplined, data-driven, and autonomous asset.**
+**An honest validation platform: deterministic guardrails on top of a still-unproven SPY iron-condor signal. Trading is the lab; the safety layer is the product.**
 
-[Public Status](https://igorganapolsky.github.io/trading/) | [Investor Pitch](docs/INVESTOR_PITCH.md) | [Operator Dashboard](https://igorganapolsky.github.io/trading/rag-query/) | [Live Strategy Spec](docs/LIVE_STRATEGY.md)
+[Investor Pitch](docs/INVESTOR_PITCH.md) | [Live Strategy Spec](docs/LIVE_STRATEGY.md) | [Edge Audit (2026-05-19)](docs/research/2026-05-19-edge-analysis.md)
 
 </div>
 
 ---
 
-## 🚀 The Thesis: Evidence-Backed Exclusion
+## 🚀 The Thesis: Operational Excellence, Not Prediction
 
-Most algorithmic trading systems fail due to "over-trading" in low-probability regimes. Our lab is built on a single, verified discovery: **The Thursday Alpha Anomaly.**
+Most algorithmic trading systems fail because they bet on a directional edge that adapts away. This lab inverts that: it bets on **operational guardrails** — deterministic, broker-side, agent-bypass-proof — and uses iron condors only as the in-house workload that proves the safety layer in production.
 
-Following a quantitative audit of 69 paired trades, we identified a **60% win-rate window on Thursdays**, contrasted against a <20% win rate on other weekdays. This repo is the technical implementation of that edge.
+The earlier framing of this repo (a "60% Thursday win-rate anomaly") **was retracted** on 2026-05-20: the apparent effect did not survive Bonferroni correction across the 14 buckets examined (adj_p = 0.190 vs α=0.05). See `docs/research/2026-05-19-edge-analysis.md` for the full audit. The Thursday-only entry gate has been removed from the code; entries are no longer filtered by weekday.
 
-## 🧠 The Edge: RAG-Governed Machine Learning
+## 🧠 What This Lab Builds
 
-We solve the "Black Box" problem of ML through a unique **RAG-to-ML Feedback Loop**:
-
-- **Semantic RAG (LanceDB)**: 249 historical lessons act as a real-time safety "governor."
-- **GRPO Policy Optimization**: Our ML model is penalized during training for violating documented RAG lessons.
-- **Deterministic Hard-Gating**: 7-DTE exit mandates and 14-DTE entry buffers are enforced at the code level to eliminate gamma risk.
+- **`TradeGateway` (`src/risk/trade_gateway.py`)**: the mandatory pre-broker checkpoint. Lot-size cap, IV-rank floor, daily-loss circuit breaker, drawdown circuit breaker, position-count cap, illiquid-option rejection, FOMC blackout, magic-word override, RAG-lesson-driven blocks. **Every decision is appended to `data/gateway_decisions.jsonl`** for audit and product analytics.
+- **`TRADING_HALTED` kill-switch (`src/safety/crisis_monitor.py`)**: file-flag global halt; auto-armed when position count, unrealized loss, or single-position loss cross thresholds.
+- **Lessons-Learned RAG (`src/rag/lessons_learned_rag.py`)**: 249 audited prior incidents — gateway queries this before approving credit strategies.
+- **Iron-condor execution loop (`scripts/iron_condor_trader.py`)**: 1-lot, 30-45 DTE, 15-20 delta, defined-risk-both-sides, 7 DTE / 50% profit exits.
 
 ## 📊 Performance & Operational Truth
 
-This is not a "get rich quick" bot. It is a **validation infrastructure** that prioritizes broker-backed proof over marketing claims:
+This is **not** a profitable system today. Honest current state (verifiable in `data/system_state.json`):
 
-- **North Star**: Target `$6,000/month` yield on a `$300,000` capital base.
-- **Reliability Score**: **100% recent safety approval rate** with 72 repeat mistakes prevented.
-- **Verification**: Fully auditable via Alpaca broker syncs and daily scorecards.
+- **North Star**: $6,000/mo after-tax — currently unrealized. No proven edge yet (PF 0.22, 23.2% win rate over 69 closed trades).
+- **Validation cohort**: 3 / 30 trades under `.claude/rules/controlled-experiment.md`. Too small to claim anything.
+- **Paper equity drawdown**: ~5% from $100K start. Auto-kill floor at $84,351 per `.claude/rules/kill-criteria.md`.
+- **Live brokerage equity**: $0 (inactive). No customer capital. No real money at risk.
 
 But the repo should be understood for what it actually is today:
 

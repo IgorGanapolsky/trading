@@ -7,7 +7,7 @@ This document describes the current validated playbook surface, not a promise of
 - Underlying: `SPY`
 - Structure family: defined-risk options premium structures
 - Primary template: iron-condor style entries
-- **Entry Window**: Thursdays ONLY (Weekday 3) — optimized for 60% historical win rate.
+- **Entry Window**: any weekday (Thursday-only gate retired 2026-05-20 — the "60% Thursday" claim did not survive Bonferroni correction at α=0.05; see `docs/research/2026-05-19-edge-analysis.md`).
 - **Entry Buffer**: Minimum `14 DTE` required for all new positions.
 - **Exit Discipline**:
   - Profit Target: `15%` to `20%` of credit received (May 2026 Defensive Regime).
@@ -19,8 +19,6 @@ This document describes the current validated playbook surface, not a promise of
 
 Current operating truth should be pulled from the canonical ledgers and public dashboard:
 
-- [Public status bundle](data/public_status.json)
-- [Operator dashboard](https://github.com/IgorGanapolsky/trading/wiki/Progress-Dashboard)
 - [System state](../data/system_state.json)
 - [Paired-trade ledger](../data/trades.json)
 

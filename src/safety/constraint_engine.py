@@ -21,12 +21,17 @@ class ConstraintEngine:
     max_trades_per_day: int = 5
 
     def __post_init__(self):
-        # Win Rate Optimization Constants (Verified via empirical audit)
         self.VIX_MAX_GATE = 25.0
         self.MIN_LEG_WIDTH = 10.0
-        self.ALLOWED_WEEKDAYS = [3]  # Thursday is 3. Achieves 60% win rate in backtest.
-        self.MIN_ENTRY_DTE = 14  # Prevent entering late-cycle trades with high gamma risk
-        self.MANDATORY_EXIT_DTE = 7  # Lesson LL-268: Exit at 7 DTE for 80%+ win rate
+        # ALLOWED_WEEKDAYS: empty list = no weekday restriction. The prior value
+        # `[3]` (Thursday-only) was retired 2026-05-20 because
+        # docs/research/2026-05-19-edge-analysis.md showed the "60% Thursday"
+        # claim does not survive Bonferroni correction (adj_p = 0.190 at α=0.05,
+        # n=10). Enforcing it silently blocked Mon/Tue/Wed/Fri entries on bad
+        # evidence. Re-enable only with a fresh, statistically valid hypothesis.
+        self.ALLOWED_WEEKDAYS: list[int] = []
+        self.MIN_ENTRY_DTE = 14
+        self.MANDATORY_EXIT_DTE = 7  # LL-268
 
     def validate_trade(
         self,
@@ -51,16 +56,20 @@ class ConstraintEngine:
         else:
             out_metadata["vix_gate"] = "PASSED"
 
-        # 2. Weekday Gate (P0 Win Rate Driver)
-        current_weekday = trade_meta.get("weekday", -1)
-        if current_weekday not in self.ALLOWED_WEEKDAYS:
-            violations.append(
-                f"Weekday {current_weekday} not in allowed list {self.ALLOWED_WEEKDAYS}. "
-                "Win rate optimization blocks non-Thursday entries."
-            )
-            out_metadata["weekday_gate"] = "FAILED"
+        # 2. Weekday Gate — only enforced when ALLOWED_WEEKDAYS is non-empty.
+        # The prior Thursday-only restriction was removed 2026-05-20 (see
+        # docs/research/2026-05-19-edge-analysis.md: Bonferroni adj_p = 0.190).
+        if self.ALLOWED_WEEKDAYS:
+            current_weekday = trade_meta.get("weekday", -1)
+            if current_weekday not in self.ALLOWED_WEEKDAYS:
+                violations.append(
+                    f"Weekday {current_weekday} not in allowed list {self.ALLOWED_WEEKDAYS}."
+                )
+                out_metadata["weekday_gate"] = "FAILED"
+            else:
+                out_metadata["weekday_gate"] = "PASSED"
         else:
-            out_metadata["weekday_gate"] = "PASSED"
+            out_metadata["weekday_gate"] = "DISABLED"
 
         # 3. DTE Entry Gate (P0 Win Rate Driver - LL-268).
         # FAIL CLOSED on missing dte. The previous `get("dte", 30)` silently
