@@ -1,0 +1,59 @@
+name: AI PR Review
+
+# Provider-agnostic AI code review. Default provider is OpenRouter with
+# a free model (deepseek/deepseek-v4-flash:free) so reviews cost $0
+# unless explicitly overridden. The script tries keys in this order:
+# OPENROUTER_API_KEY -> LLM_GATEWAY_API_KEY -> ANTHROPIC_API_KEY ->
+# GOOGLE_API_KEY. Override with AI_REVIEW_PROVIDER + AI_REVIEW_MODEL.
+#
+# Triggers on PR open / reopen / ready_for_review. Skips drafts, bot
+# authors, and deterministic-fix branches (dependabot, auto/ruff-format,
+# auto/lint) — those are handled by the deterministic-fix auto-merger.
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ai-pr-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: |
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.user.type != 'Bot' &&
+      !startsWith(github.event.pull_request.head.ref, 'dependabot/') &&
+      !startsWith(github.event.pull_request.head.ref, 'auto/ruff-format') &&
+      !startsWith(github.event.pull_request.head.ref, 'auto/lint')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.11"
+
+      - name: Run AI PR review
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          LLM_GATEWAY_API_KEY: ${{ secrets.LLM_GATEWAY_API_KEY }}
+          LLM_GATEWAY_BASE_URL: ${{ secrets.LLM_GATEWAY_BASE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python3 scripts/ci/ai_pr_review.py

@@ -1,0 +1,57 @@
+name: SonarCloud
+
+# Static analysis + code-quality + coverage gating via SonarCloud
+# (free tier for public repos). Complements the AI PR review workflow
+# (semantic review) and OpenSSF Scorecard (supply-chain). Requires the
+# SONAR_TOKEN secret — generate at https://sonarcloud.io and add via
+# repo Settings → Secrets and variables → Actions.
+#
+# If SONAR_TOKEN is not set, the scan job no-ops cleanly so the workflow
+# is non-blocking. CEO action to enable: (1) sign up SonarCloud free,
+# (2) bind the org "igorganapolsky" to the repo, (3) set SONAR_TOKEN.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, reopened, ready_for_review, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: sonarcloud-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scan:
+    name: SonarCloud Scan
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft != true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0 # full history for blame-based new-code analysis
+
+      - name: Skip if no token
+        id: token_check
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          if [ -z "${SONAR_TOKEN:-}" ]; then
+            echo "no_token=true" >> "$GITHUB_OUTPUT"
+            echo "SONAR_TOKEN not set; skipping SonarCloud scan (non-blocking)."
+            echo "## SonarCloud" >> "$GITHUB_STEP_SUMMARY"
+            echo "Skipped: SONAR_TOKEN not set. Add it at repo Settings → Secrets → Actions to enable." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "no_token=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: SonarCloud Scan
+        if: steps.token_check.outputs.no_token != 'true'
+        uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602 # v6
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
