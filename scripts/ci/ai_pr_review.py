@@ -31,8 +31,14 @@ MAX_DIFF_BYTES = 200_000
 MAX_RULES_BYTES = 60_000
 COMMENT_MARKER = "<!-- ai-pr-review:v2 -->"
 
+# Default OpenRouter model is `x-ai/grok-4.3` because the OPENROUTER_API_KEY
+# in this repo's secrets is provider-restricted to `xai`. Free models like
+# `deepseek/*:free` are served by `crucible` and would 404 with that key.
+# Grok-4.3 at ~$0.003/PR ($1.25e-6 prompt / $2.5e-6 completion) ≈ $0.01/month
+# at 10 PRs/week — effectively free. The model is also high-quality for
+# code review (1M ctx).
 DEFAULT_MODELS = {
-    "openrouter": "deepseek/deepseek-v4-flash:free",
+    "openrouter": "x-ai/grok-4.3",
     "anthropic": "claude-sonnet-4-6",
     "google": "gemini-2.5-flash",
     "llm_gateway": "default",
@@ -162,6 +168,10 @@ def call_openrouter(model: str, key: str, system: str, user: str) -> str:
             {"role": "user", "content": user},
         ],
         "max_tokens": 2048,
+        # Allow fallback providers in case the model is served by a
+        # provider that the account's default policy filters out.
+        # Belt-and-suspenders alongside the xai-default model choice.
+        "provider": {"allow_fallbacks": True},
     }
     headers = {
         "authorization": f"Bearer {key}",
