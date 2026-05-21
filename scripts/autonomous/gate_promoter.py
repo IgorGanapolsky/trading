@@ -13,7 +13,7 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -34,7 +34,7 @@ class GatePromoter:
         self.engine = ConstraintEngine()
         self.promotions = self._load_promotions()
 
-    def _load_promotions(self) -> List[Dict[str, Any]]:
+    def _load_promotions(self) -> list[dict[str, Any]]:
         if PROMOTION_LOG_PATH.exists():
             try:
                 return json.loads(PROMOTION_LOG_PATH.read_text())
@@ -42,13 +42,13 @@ class GatePromoter:
                 return []
         return []
 
-    def _save_promotion(self, promotion: Dict[str, Any]):
+    def _save_promotion(self, promotion: dict[str, Any]):
         self.promotions.append(promotion)
         PROMOTION_LOG_PATH.write_text(json.dumps(self.promotions, indent=2))
 
     def scan_and_promote(self):
         logger.info("Starting Gate Promotion scan...")
-        
+
         # 1. Identify Critical Patterns from RAG
         critical_lessons = self.rag.get_critical_lessons()
         logger.info(f"Analyzing {len(critical_lessons)} critical lessons...")

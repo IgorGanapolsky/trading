@@ -234,7 +234,6 @@ def _fetch_broker_trade_history(limit: int = DEFAULT_BROKER_ORDER_LIMIT) -> list
         from alpaca.trading.client import TradingClient
         from alpaca.trading.enums import QueryOrderStatus
         from alpaca.trading.requests import GetOrdersRequest
-
         from src.utils.alpaca_client import get_alpaca_credentials
     except Exception as exc:
         logger.info("Broker trade-history sync unavailable: %s", exc)

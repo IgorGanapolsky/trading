@@ -20,7 +20,6 @@ from zoneinfo import ZoneInfo
 from alpaca.trading.client import TradingClient
 from alpaca.trading.enums import OrderSide, TimeInForce
 from alpaca.trading.requests import MarketOrderRequest
-
 from src.core.trading_constants import (
     IC_PROFIT_TARGET_PCT,
     IRON_CONDOR_EXIT_DTE,
