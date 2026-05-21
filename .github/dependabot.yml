@@ -15,13 +15,16 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
-    # Group security updates together
+    # Group security advisories together. Dependabot opens security PRs
+    # regardless of the `update-types` filter — `applies-to:
+    # security-updates` is the correct schema to group security advisories
+    # (the prior `update-types: [security]` failed schema validation
+    # because Dependabot only accepts major/minor/patch for that field).
     groups:
       security-updates:
+        applies-to: security-updates
         patterns:
           - "*"
-        update-types:
-          - "security"
 
   # Enable version updates for npm (Node.js / Trigger.dev)
   - package-ecosystem: "npm"
