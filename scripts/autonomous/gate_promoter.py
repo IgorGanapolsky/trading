@@ -28,6 +28,7 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent
 CONSTRAINT_ENGINE_PATH = PROJECT_ROOT / "src" / "safety" / "constraint_engine.py"
 PROMOTION_LOG_PATH = PROJECT_ROOT / "data" / "gate_promotions.json"
 
+
 class GatePromoter:
     def __init__(self):
         self.rag = LessonsLearnedRAG()
@@ -57,43 +58,45 @@ class GatePromoter:
 
         # 2. Heuristic Pattern Matching
         for lesson in critical_lessons:
-            content = lesson['content'].lower()
-            lesson_id = lesson['id']
+            content = lesson["content"].lower()
+            lesson_id = lesson["id"]
 
             # Check if this lesson has already been promoted
-            if any(p['lesson_id'] == lesson_id for p in self.promotions):
+            if any(p["lesson_id"] == lesson_id for p in self.promotions):
                 continue
 
             # Pattern: DTE related failures
             if "dte" in content and ("exit" in content or "entry" in content):
                 if "7 dte" in content or "7-dte" in content:
-                    proposals.append({
-                        "lesson_id": lesson_id,
-                        "gate_type": "DTE_GATE",
-                        "description": "Enforce 7 DTE exit and 14 DTE entry buffer",
-                        "status": "IMPLEMENTED" # Already done by CTO manually
-                    })
+                    proposals.append(
+                        {
+                            "lesson_id": lesson_id,
+                            "gate_type": "DTE_GATE",
+                            "description": "Enforce 7 DTE exit and 14 DTE entry buffer",
+                            "status": "IMPLEMENTED",  # Already done by CTO manually
+                        }
+                    )
 
             # Pattern: Weekday related failures
             if "weekday" in content or "monday" in content or "tuesday" in content:
                 if "thursday" in content and "win rate" in content:
-                    proposals.append({
-                        "lesson_id": lesson_id,
-                        "gate_type": "WEEKDAY_GATE",
-                        "description": "Restrict entries to Thursdays only",
-                        "status": "IMPLEMENTED" # Already done by CTO manually
-                    })
+                    proposals.append(
+                        {
+                            "lesson_id": lesson_id,
+                            "gate_type": "WEEKDAY_GATE",
+                            "description": "Restrict entries to Thursdays only",
+                            "status": "IMPLEMENTED",  # Already done by CTO manually
+                        }
+                    )
 
         # 3. Report Results
         if proposals:
             for p in proposals:
                 logger.info(f"PROPOSAL: {p['description']} (from {p['lesson_id']})")
-                self._save_promotion({
-                    "timestamp": datetime.now().isoformat(),
-                    **p
-                })
+                self._save_promotion({"timestamp": datetime.now().isoformat(), **p})
         else:
             logger.info("No new gates to promote at this time.")
+
 
 if __name__ == "__main__":
     promoter = GatePromoter()

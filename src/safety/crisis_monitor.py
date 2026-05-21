@@ -257,11 +257,7 @@ def monitor_and_halt_if_needed(
     # Without this guard, an empty `[]` from a failed broker fetch silently
     # re-enabled trading mid-incident.
     option_positions = [p for p in positions if len(p.get("symbol", "")) > 10]
-    if (
-        TRADING_HALTED_FILE.exists()
-        and positions_synced
-        and len(option_positions) == 0
-    ):
+    if TRADING_HALTED_FILE.exists() and positions_synced and len(option_positions) == 0:
         logger.info("✅ No open positions — auto-clearing stale TRADING_HALTED")
         clear_crisis_mode(reason="Auto-clear: no open positions remain")
     elif TRADING_HALTED_FILE.exists() and not positions_synced and len(positions) == 0:

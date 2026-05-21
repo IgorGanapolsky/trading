@@ -74,7 +74,9 @@ def test_check_vector_db_reports_broken_on_empty_index(monkeypatch):
 
 
 def test_check_vector_db_is_non_blocking_in_bounded_mode_for_missing_path(monkeypatch):
-    monkeypatch.setattr(sh, "_probe_vector_index", lambda: (False, "LanceDB path missing: /tmp/foo"))
+    monkeypatch.setattr(
+        sh, "_probe_vector_index", lambda: (False, "LanceDB path missing: /tmp/foo")
+    )
     monkeypatch.setenv("SYSTEM_HEALTH_BOUNDED", "1")
 
     result = sh.check_vector_db()

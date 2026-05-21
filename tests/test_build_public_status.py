@@ -177,7 +177,9 @@ def test_build_public_status_prefers_newer_scorecard_snapshot(tmp_path: Path):
     trades["stats"]["last_updated"] = "2026-04-03T14:20:00+00:00"
     (repo / "data/trades.json").write_text(json.dumps(trades), encoding="utf-8")
 
-    runtime = json.loads((repo / "data/runtime/intraday_pnl_latest.json").read_text(encoding="utf-8"))
+    runtime = json.loads(
+        (repo / "data/runtime/intraday_pnl_latest.json").read_text(encoding="utf-8")
+    )
     runtime["captured_at"] = "2026-04-03T14:30:00+00:00"
     runtime["paper"]["equity"] = 93980.30
     runtime["paper"]["daily_change"] = -9.0

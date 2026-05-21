@@ -55,7 +55,7 @@ def test_audit_agent_perform_audit(mock_trade_logs):
 
     agent = AuditAgent()
     agent.log_dir = Path(log_dir)  # Point to mock dir
-    agent.audit_graph = AuditGraph(data_dir=audit_dir) # Point to mock graph dir
+    agent.audit_graph = AuditGraph(data_dir=audit_dir)  # Point to mock graph dir
 
     report = agent.perform_audit(date_str)
 

@@ -336,7 +336,9 @@ def build_rehabilitation_plan(trades_data: dict, gate: dict) -> dict:
         "losses": int(stats.get("losses") or 0),
         "win_rate_pct": _as_float(stats.get("win_rate_pct"), gate.get("win_rate", 0.0)),
         "profit_factor": _as_float(stats.get("profit_factor"), gate.get("profit_factor", 0.0)),
-        "total_realized_pnl": _as_float(stats.get("total_realized_pnl"), stats.get("total_pnl", 0.0)),
+        "total_realized_pnl": _as_float(
+            stats.get("total_realized_pnl"), stats.get("total_pnl", 0.0)
+        ),
         "expectancy_per_trade": _as_float(
             stats.get("expectancy_per_trade"), gate.get("expectancy_per_trade", 0.0)
         ),

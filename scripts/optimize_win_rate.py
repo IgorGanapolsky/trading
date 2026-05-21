@@ -5,6 +5,7 @@ from pathlib import Path
 # In a real run, this would query the DataProvider
 VIX_DANGER_ZONE = 25.0
 
+
 def analyze_trade_survivability():
     """
     Analyzes historical trades against volatility regimes to find
@@ -24,7 +25,7 @@ def analyze_trade_survivability():
 
     print("--- Historical Performance Analysis ---")
     print(f"Total Trades: {len(trades)}")
-    print(f"Current Win Rate: {(len(wins)/len(trades)*100):.2f}%")
+    print(f"Current Win Rate: {(len(wins) / len(trades) * 100):.2f}%")
 
     # Hypothesis: Narrow Iron Condors (Width < 10) in High VIX (> 25) drive losses.
     # Let's check the leg widths of losses.
@@ -48,11 +49,8 @@ def analyze_trade_survivability():
     print("2. Adding MIN_LEG_WIDTH: 10.0")
     print("3. Adding MIN_DTE: 30")
 
-    return {
-        "vix_max": 25.0,
-        "min_width": 10.0,
-        "min_dte": 30
-    }
+    return {"vix_max": 25.0, "min_width": 10.0, "min_dte": 30}
+
 
 if __name__ == "__main__":
     analyze_trade_survivability()
