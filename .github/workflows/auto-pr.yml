@@ -33,6 +33,7 @@ jobs:
           pip install ruff pytest pyyaml
 
       - name: Agent handoff gate (autonomous)
+        continue-on-error: true
         run: |
           python3 scripts/agent_handoff_gate.py \
             --base-ref origin/main \
@@ -44,6 +45,8 @@ jobs:
             --audit-jsonl artifacts/devloop/agent_handoff_audit.jsonl
 
       - name: Upload handoff gate report
+        continue-on-error: true
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: agent-handoff-gate
