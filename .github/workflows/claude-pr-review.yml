@@ -1,0 +1,60 @@
+name: Claude PR Review
+
+# In-repo equivalent of Sonar/Gitar AI code review. Triggers on every
+# PR open / reopen / ready_for_review. Reads the diff + CLAUDE.md +
+# .claude/rules and posts a single rolling review comment with a
+# deterministic marker so subsequent runs replace the prior comment
+# instead of stacking.
+#
+# Skips on draft PRs and PRs authored by bots (dependabot/auto-format
+# etc.) — those are handled by the deterministic-fix auto-merger.
+# Triggers only on opened/reopened/ready_for_review (NOT synchronize)
+# to avoid re-reviewing every push within a PR; reviewers can re-trigger
+# manually via workflow_dispatch.
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+  # Manual re-trigger: close + reopen the PR. The workflow_dispatch
+  # input form was removed because checkov/CKV_GHA_7 requires
+  # workflow_dispatch inputs to be empty for supply-chain hardening.
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: claude-pr-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: |
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.user.type != 'Bot' &&
+      !startsWith(github.event.pull_request.head.ref, 'dependabot/') &&
+      !startsWith(github.event.pull_request.head.ref, 'auto/ruff-format') &&
+      !startsWith(github.event.pull_request.head.ref, 'auto/lint')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.11"
+
+      - name: Run Claude PR review
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python3 scripts/ci/claude_pr_review.py
