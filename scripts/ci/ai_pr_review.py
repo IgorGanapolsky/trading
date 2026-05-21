@@ -5,13 +5,15 @@ configured LLM provider for a focused review against this repo's risk
 mandates, and posts the result as a single rolling PR comment.
 
 Provider chain (first non-empty key wins, in order):
-    1. OPENROUTER_API_KEY    -> default model `deepseek/deepseek-v4-flash:free` ($0)
-    2. LLM_GATEWAY_API_KEY   -> internal gateway at LLM_GATEWAY_BASE_URL
+    1. LLM_GATEWAY_API_KEY   -> internal gateway at LLM_GATEWAY_BASE_URL ($0 internal)
+    2. GOOGLE_API_KEY        -> gemini-2.5-flash via Google AI Studio (free tier)
     3. ANTHROPIC_API_KEY     -> claude-sonnet-4-6 (paid; ~$0.02/PR)
-    4. GOOGLE_API_KEY        -> gemini-2.5-flash via Google AI Studio (free tier)
+    4. OPENROUTER_API_KEY    -> claude-sonnet-4-6 routed (last resort; the
+                                repo's key is xai-restricted, so this only
+                                works with explicit AI_REVIEW_MODEL override)
 
 Override the default model with AI_REVIEW_MODEL. Override the provider
-with AI_REVIEW_PROVIDER (one of: openrouter, llm_gateway, anthropic, google).
+with AI_REVIEW_PROVIDER (one of: llm_gateway, google, anthropic, openrouter).
 
 Comment is identified by a deterministic HTML marker so subsequent runs
 PATCH the prior comment instead of stacking.
@@ -32,10 +34,10 @@ MAX_RULES_BYTES = 60_000
 COMMENT_MARKER = "<!-- ai-pr-review:v2 -->"
 
 DEFAULT_MODELS = {
-    "openrouter": "deepseek/deepseek-v4-flash:free",
-    "anthropic": "claude-sonnet-4-6",
-    "google": "gemini-2.5-flash",
     "llm_gateway": "default",
+    "google": "gemini-2.5-flash",
+    "anthropic": "claude-sonnet-4-6",
+    "openrouter": "anthropic/claude-sonnet-4-6",
 }
 
 REVIEW_SYSTEM_PROMPT = """You are reviewing a pull request against the
@@ -94,13 +96,19 @@ def run(cmd: list[str], check: bool = True) -> str:
 
 
 def select_provider() -> tuple[str, str, str | None]:
-    """Return (provider, model, api_key). Picks first non-empty key in order."""
+    """Return (provider, model, api_key). Picks first non-empty key in order.
+
+    Order (2026-05-21): internal gateway first (zero marginal cost,
+    routed), then Google Gemini free tier, then Anthropic (paid), then
+    OpenRouter (last resort because this repo's key is provider-
+    restricted to xai which 404s most non-xai models).
+    """
     forced = os.environ.get("AI_REVIEW_PROVIDER", "").strip().lower()
     candidates = (
-        ("openrouter", "OPENROUTER_API_KEY"),
         ("llm_gateway", "LLM_GATEWAY_API_KEY"),
-        ("anthropic", "ANTHROPIC_API_KEY"),
         ("google", "GOOGLE_API_KEY"),
+        ("anthropic", "ANTHROPIC_API_KEY"),
+        ("openrouter", "OPENROUTER_API_KEY"),
     )
     if forced:
         candidates = tuple(c for c in candidates if c[0] == forced)
