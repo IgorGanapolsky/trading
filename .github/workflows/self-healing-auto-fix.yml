@@ -198,17 +198,35 @@ jobs:
         run: |
           echo "## Auto-Merge" >> $GITHUB_STEP_SUMMARY
 
+          # Scope-limited 2026-05-21: only deterministic-fix branches are
+          # auto-mergeable. Test-failure-fix PRs from agents are NOT
+          # auto-merged because LLM failures are systematic (arXiv "SelfHeal"
+          # research, 2026): a self-healer can amplify a wrong belief by
+          # auto-merging code that "passes" a flawed fix-the-test pattern.
+          # Allowed prefixes: claude/auto-format, claude/ruff-fix, auto/lint,
+          # auto/ruff-format, auto/dependabot, dependabot/.
+          ALLOWED_RE='^(claude/auto-format|claude/ruff-fix|auto/lint|auto/ruff-format|auto/dependabot|dependabot/)'
+
           merged=0
-          for pr in $(gh pr list --state open --json number,headRefName --jq '.[] | select(.headRefName | startswith("claude/") or startswith("auto/")) | .number'); do
-            status=$(gh pr view $pr --json mergeStateStatus --jq '.mergeStateStatus')
+          skipped=0
+          for pr in $(gh pr list --state open --json number,headRefName --jq '.[] | "\(.number)|\(.headRefName)"'); do
+            num="${pr%%|*}"
+            branch="${pr##*|}"
+            if ! [[ "$branch" =~ $ALLOWED_RE ]]; then
+              echo "Skipping #$num ($branch): not a deterministic-fix branch"
+              ((skipped++)) || true
+              continue
+            fi
+            status=$(gh pr view "$num" --json mergeStateStatus --jq '.mergeStateStatus')
             if [ "$status" == "CLEAN" ]; then
-              echo "Merging PR #$pr"
-              gh pr merge $pr --squash --delete-branch || true
+              echo "Merging PR #$num ($branch)"
+              gh pr merge "$num" --squash --delete-branch || true
               ((merged++)) || true
             fi
           done
 
           echo "| PRs merged | $merged |" >> $GITHUB_STEP_SUMMARY
+          echo "| PRs skipped (out of auto-merge scope) | $skipped |" >> $GITHUB_STEP_SUMMARY
 
   # Job 5: Update system state and generate summary
   update-state:

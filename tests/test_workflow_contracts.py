@@ -267,7 +267,11 @@ def test_auto_format_uses_repo_token_not_pat_checkout():
     """Auto-format must use the repository token path that works on default-branch pushes."""
     workflow_text = Path(".github/workflows/auto-format.yml").read_text()
 
-    assert "actions/checkout@v6" in workflow_text
+    # Accept either tag form (@v6) or SHA-pinned form (@<sha> # v6).
+    # Post-CVE-2025-30066 audit pinned all actions to full SHAs.
+    assert "actions/checkout@v6" in workflow_text or (
+        "actions/checkout@" in workflow_text and "# v6" in workflow_text
+    )
     assert "secrets.GH_PAT" not in workflow_text
 
 
