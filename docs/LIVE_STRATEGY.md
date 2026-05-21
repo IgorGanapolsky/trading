@@ -1,13 +1,13 @@
 # Live Strategy Spec
 
-This document describes the current validated playbook surface, not a promise of current profitability.
+This document describes the current playbook surface. It is not a validated edge and not a promise of profitability — see [`docs/research/2026-05-19-edge-analysis.md`](research/2026-05-19-edge-analysis.md).
 
 ## Baseline Playbook
 
 - Underlying: `SPY`
 - Structure family: defined-risk options premium structures
 - Primary template: iron-condor style entries
-- **Entry Window**: Thursdays ONLY (Weekday 3) — optimized for 60% historical win rate.
+- **Entry Window**: one structure per day maximum. Entries are **not** pre-conditioned on day-of-week — the "Thursday ~60%" slice failed multiple-comparison correction (Bonferroni adj_p = 0.190) and is not a validated edge. During the validation cohort, **Tuesday entries are avoided** (the only descriptively data-supported filter: Tuesday n=17 won 1, expectancy −$170.65).
 - **Entry Buffer**: Minimum `14 DTE` required for all new positions.
 - **Exit Discipline**:
   - Profit Target: `15%` to `20%` of credit received (May 2026 Defensive Regime).

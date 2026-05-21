@@ -2,7 +2,7 @@
 
 # Systematic SPY Options Alpha: RAG-Governed Algotrading Lab
 
-### High-Alpha Thursday Discovery | RAG-ML Safety Governance | Broker-Backed Evidence
+### Paper-First Validation | RAG-ML Safety Governance | Broker-Backed Evidence
 
 **Transforming discretionary options trading into a disciplined, data-driven, and autonomous asset.**
 
@@ -12,13 +12,13 @@
 
 ---
 
-## 🚀 The Thesis: Evidence-Backed Exclusion
+## 🚀 The Thesis: Prove an Edge Before Claiming One
 
-Most algorithmic trading systems fail due to "over-trading" in low-probability regimes. Our lab is built on a single, verified discovery: **The Thursday Alpha Anomaly.**
+Most algorithmic trading systems fail because they trade a backtested pattern that was never real. This lab is built to avoid that failure mode: no edge is claimed until a fresh, pre-registered sample proves it.
 
-Following a quantitative audit of 69 paired trades, we identified a **60% win-rate window on Thursdays**, contrasted against a <20% win rate on other weekdays. This repo is the technical implementation of that edge.
+A quantitative audit of the first 69 paired trades ([docs/research/2026-05-19-edge-analysis.md](docs/research/2026-05-19-edge-analysis.md)) found **no statistically robust edge** — cohort win rate 23.2%, profit factor 0.22, realized **−$3,958**. A "60% win rate on Thursdays" slice looked promising but **failed multiple-comparison correction** (Bonferroni adj_p = 0.190 across K=39 buckets) and its point estimate sits below the strategy's own break-even win rate. The repo treats that as a hypothesis to disprove, not an edge to sell.
 
-## 🧠 The Edge: RAG-Governed Machine Learning
+## 🧠 Design: RAG-Governed Machine Learning
 
 We solve the "Black Box" problem of ML through a unique **RAG-to-ML Feedback Loop**:
 
@@ -30,8 +30,8 @@ We solve the "Black Box" problem of ML through a unique **RAG-to-ML Feedback Loo
 
 This is not a "get rich quick" bot. It is a **validation infrastructure** that prioritizes broker-backed proof over marketing claims:
 
-- **North Star**: Target `$6,000/month` yield on a `$300,000` capital base.
-- **Reliability Score**: **100% recent safety approval rate** with 72 repeat mistakes prevented.
+- **North Star**: Target `$6,000/month` yield on a `$300,000` capital base — a target, not a result.
+- **Safety governor**: pre-trade gates plus RAG lessons block known-bad setups before they reach the broker; live approval/blocked counts are in the generated status bundle, not in this README.
 - **Verification**: Fully auditable via Alpaca broker syncs and daily scorecards.
 
 But the repo should be understood for what it actually is today:
@@ -42,9 +42,9 @@ But the repo should be understood for what it actually is today:
 
 Current gate state and evidence live in the canonical ledgers and generated public bundle, not in this README:
 
-- [docs/data/public_status.json](/Users/igorganapolsky/workspace/git/igor/trading/.worktrees/gsd-learning-freshness-guard/docs/data/public_status.json)
-- [data/system_state.json](/Users/igorganapolsky/workspace/git/igor/trading/.worktrees/gsd-learning-freshness-guard/data/system_state.json)
-- [data/trades.json](/Users/igorganapolsky/workspace/git/igor/trading/.worktrees/gsd-learning-freshness-guard/data/trades.json)
+- [docs/data/public_status.json](docs/data/public_status.json)
+- [data/system_state.json](data/system_state.json)
+- [data/trades.json](data/trades.json)
 
 ---
 
@@ -98,7 +98,7 @@ The core architecture is built around five layers:
 The active scope is intentionally narrow:
 
 - **Underlying**: SPY
-- **Structure family**: defined-risk options income structures, with iron condors as the primary validated playbook
+- **Structure family**: defined-risk options income structures, with iron condors as the primary playbook under validation
 - **Typical DTE band**: 30-45 days
 - **Short strike target**: around 15 delta when the gate path allows it
 - **Exit discipline**: profit-taking, stop-loss, and time-based exits enforced through the strategy stack
@@ -107,7 +107,7 @@ Whether that playbook is currently allowed to open new risk is determined by the
 
 The exact active operating spec lives here:
 
-- [docs/LIVE_STRATEGY.md](/Users/igorganapolsky/workspace/git/igor/trading/.worktrees/gsd-learning-freshness-guard/docs/LIVE_STRATEGY.md)
+- [docs/LIVE_STRATEGY.md](docs/LIVE_STRATEGY.md)
 
 ---
 

@@ -33,7 +33,7 @@ Formal kill gate has not fired (sample too small). All-time data (n=69) however 
 - **Block any *new* iron-condor entries** until a written hypothesis change is committed (see `.claude/rules/controlled-experiment.md`: "No same-expiry re-entry after a loss" + "Pass only if realized expectancy > 0").
 - **Keep existing positions running to natural exit.** Closing positions outside the guardian workflow is a hard-block per `.claude/rules/boundary-policy.md`; we do not touch them.
 - **Add `MAX_LOT_SIZE = 1` enforcement** to `src/risk/trade_gateway.py` so the next entry cannot replicate the 50-lot 06-18 IC. The 50-lot exists from before the controlled-experiment rule was in force; we let it expire / be managed but never repeat it.
-- **Write a new hypothesis** before un-blocking entries. Candidate (from prior RAG lesson): *Thursday-only entries showed historical 60% win rate vs <20% Mon/Tue/Fri across 69 trades. Restart 30-trade validation with Thursday-only entries.* This is a hypothesis, not a claim of edge.
+- **Write a new hypothesis** before un-blocking entries. ~~Candidate (from prior RAG lesson): *Thursday-only entries showed historical 60% win rate vs <20% Mon/Tue/Fri across 69 trades. Restart 30-trade validation with Thursday-only entries.*~~ **SUPERSEDED (2026-05-20):** the rigorous audit in `docs/research/2026-05-19-edge-analysis.md` (and its deeper companion) shows the Thursday slice fails Bonferroni correction (adj_p = 0.190 across K=39 buckets) and its point estimate (~55.6%) sits below the ~58.1% break-even win rate. Do **not** pre-condition the next cohort on day-of-week — that is reading randomness as signal. Honest hypothesis: structural redesign; run the 30-trade validation per `controlled-experiment.md` with Tuesday entries avoided (the only descriptively data-supported filter) and no day-of-week edge claim.
 
 ### 3.2 SaaS revenue — consolidate to ONE repo, archive 31
 
@@ -85,7 +85,7 @@ Cost: ~2 hours of focused work. Do not skip — without this, the 0% close rate 
 
 Required: $6,000/mo after-tax on ~$300K @ 2.0% monthly. Current equity is $94,966, **70%** of the way to the *capital* benchmark and **0%** of the way to the *edge* benchmark. The binding constraint is **edge**, not capital — adding capital to a PF-0.22 strategy compounds losses faster.
 
-Sequence: **prove edge on Thursday-only hypothesis → 30 clean trades → if expectancy > 0, scale capital, not before.** Anything else is theater.
+Sequence: **structural redesign → 30 clean validation trades (no day-of-week pre-conditioning; Tuesday entries avoided) → if expectancy > 0, scale capital, not before.** The Thursday-only framing in §3.1 is superseded — see `docs/research/2026-05-19-edge-analysis.md`. Anything else is theater.
 
 ## 5. Pending CEO sign-offs (irreversible actions)
 
