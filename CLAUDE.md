@@ -6,7 +6,7 @@ Project instructions live in `.claude/CLAUDE.md`. Rules auto-load from `.claude/
 
 - **The Lab ($100K Paper)**: Formulation and GRPO self-training.
 - **The Field (Live)**: $0 equity. Inactive — no capital deployed.
-- **North Star**: $6,000/month after-tax passive income.
+- **North Star**: $6,000/month after-tax — a blend of trading income and open-core product revenue (dual-track; see `.claude/rules/cto-decision-2026-05-21-go-to-market.md` §7).
 
 ## Active Operating Scope
 

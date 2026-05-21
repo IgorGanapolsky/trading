@@ -5,7 +5,9 @@ CTO: Claude | CEO: Igor Ganapolsky
 ## North Star
 
 $6,000/month after-tax = FINANCIAL INDEPENDENCE, reached as fast as safely possible (no fixed date).
-Required benchmark: ~$300K capital @ 2.0% monthly return.
+Reached as a **blend** of trading income and open-core product revenue — not trading alone.
+See `.claude/rules/cto-decision-2026-05-21-go-to-market.md` §7 for the dual-track decision.
+Trading-only benchmark (one revenue line): ~$300K capital @ 2.0% monthly return.
 
 ## Canonical Policy Constants
 

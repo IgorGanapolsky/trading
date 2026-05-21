@@ -123,3 +123,73 @@ current −$3,958 and $0 revenue.
 This is not a go-to-market plan. It is the recognition that the go-to-market
 question is downstream of, and contingent on, an experiment that has not yet
 returned. Resolve the experiment first.
+
+## 7. Revision — dual-track decision (CEO direction, 2026-05-21)
+
+§3 ("do not launch a SaaS") and §6's REJECT of Path B are **superseded**. The
+CEO directed that both a profitable trading system *and* a SaaS business are
+wanted, and on re-examination the §3/§6 framing was wrong in two ways:
+
+1. **Conflation.** "Sell the strategy" (impossible — it loses money) was treated
+   as the same thing as "sell the infrastructure." They are not. The disciplined
+   governance/validation layer — risk gates, the lot-size guardrail, paired-trade
+   accounting, the kill-criteria + controlled-experiment methodology — has value
+   that **does not depend on the strategy being profitable**.
+2. **False rivalry.** Trading and product were scored as competitors for
+   attention. Architected correctly they are one asset: every guardrail built to
+   protect the paper account is a product feature; every validation trade is
+   build-in-public content. They compound.
+
+### Corrected model — one asset, two revenue lines
+
+- **The asset**: this repo — a broker-backed, autonomously-governed SPY options
+  system *and* the honest paper-first validation methodology around it.
+- **Revenue line 1 — trading**: run it on own capital; income once an edge is
+  proven (slow, regulated to scale, uncertain — §4 still holds for this line).
+- **Revenue line 2 — open-core product**: productize the governance + validation
+  layer. Open-core is a proven solo-founder model (GitHub Sponsors, dual
+  licensing, hosted layer, $500–5k/yr seats à la Metabase/Budibase; documented
+  solo range $2–8k/mo for the ones that work). **Low** regulatory friction;
+  available *before* the trading edge is proven.
+
+### The wedge (the honest, narrow part)
+
+NOT "another AI trading framework" — that space is taken (TradingAgents,
+NautilusTrader, QuantConnect). The wedge is what this repo already is and few
+others are: a **radically honest, broker-backed validation discipline** —
+evidence-or-silence, no overclaiming, a public losing scorecard. The product is
+the *discipline + tooling*; the distribution is *build-in-public* (the honest
+scorecard is the marketing). Cold outbound already failed 0/14 — distribution
+must be audience-led, not cold.
+
+### How this avoids "both halfway = $0" (the real risk)
+
+That failure mode is the current state: 32 `ai_revenue` repos, $0. The dual-track
+avoids it by being **one repo, one product**:
+
+- The trading validation stays the substance — without it there is nothing to
+  productize. It remains the core work in Phase 1.
+- Productization is a *thin* layer on the same repo: honest open-core packaging,
+  ONE landing page, a build-in-public cadence, GitHub Sponsors enabled. No
+  separate SaaS app, no second repo. The repo *is* the product.
+- One product, one audience. If effort fragments across repos again, that is the
+  kill signal.
+
+### Revised North Star
+
+$6,000/month after-tax — figure unchanged — reached as a **blend** of trading
+income and open-core product revenue, not trading income alone. This is *more*
+realistic: product revenue does not require the ~$300k capital base a
+trading-only path needs at 2%/mo.
+
+### Sequencing
+
+1. **Now → Phase 1**: trading validation primary (the 30-trade cohort) + thin
+   productization (open-core restructure, one landing page, build-in-public,
+   GitHub Sponsors).
+2. **Phase 2** (edge proven OR real audience traction): add a paid open-core
+   tier / hosted layer; if the edge is proven, the audited track record becomes
+   a second, higher-value product.
+3. **Kill signals**: effort fragments across more than one product/repo again;
+   or 6 months of build-in-public with zero audience traction *and* the
+   validation killed.
