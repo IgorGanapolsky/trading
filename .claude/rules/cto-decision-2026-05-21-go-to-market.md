@@ -59,3 +59,67 @@ clear, will people pay?" Source data and market research are cited; no projectio
 - **Is the copy clear?** No — and fixing the copy is not the binding constraint.
 - **Will people pay?** The data says no ($0 external revenue, 0/14 close). People
   pay for a *proven track record*, which we do not yet have.
+
+## 6. A/B + pressure test of the two paths (2026-05-21)
+
+CEO requested a head-to-head stress test of the candidate paths.
+
+- **Path A — Prove the trading edge.** Run the 30-trade validation; if expectancy
+  turns positive, monetize a verified track record.
+- **Path B — Guardrail / agent-governance SaaS.** Productize the risk-gate layer.
+
+### Pressure test — Path A
+
+- Structural tailwind exists: retail research shows option *selling* (net-credit)
+  is the structurally profitable side — naked sales ≈ +20% avg return, option
+  *buying* ≈ −4%. Iron condors are net-credit premium selling, so the strategy
+  family is on the right side.
+- ...but this implementation has destroyed that tailwind: 69 trades, 23.2% win
+  rate, −$3,958. The edge has to be rebuilt, not just resumed.
+- Base rate is low: ~9% of retail F&O participants are profitable over a full
+  year (India regulator data); single-digit to low-double-digit across studies.
+  Prior P(durable edge exists) ≈ 10–15%.
+- Monetization friction is HIGH at the revenue stage: managing outside money or
+  advertising performance triggers the Investment Advisers Act, the SEC Marketing
+  Rule (performance must be substantiated, net-of-fees, non-misleading), fiduciary
+  duty, Reg BI — registration and ~12–24 months before a dollar.
+- BUT the *next step* — the paper validation — has ~$0 cost, zero regulatory
+  friction, and a defined kill gate. Failure is cheap and contained.
+
+### Pressure test — Path B
+
+- The category is real and hot but commoditized and capitalized simultaneously:
+  Galileo open-sourced an agent-guardrails control plane (free competitor),
+  WitnessAI raised $58M (funded competitor), OpenAI is absorbing Promptfoo.
+- A solo operator with a PUBLIC repo and a commodity capability has no wedge and
+  no moat. The buyer pool for trading-agent-specific guardrails is tiny.
+- Failure mode: build and market a product, nobody pays → months of effort sunk.
+  Expensive and uncontained.
+
+### Scorecard
+
+| Dimension | Path A (prove edge) | Path B (guardrail SaaS) |
+|---|---|---|
+| Core assumption supported | Weak but testable | No — incumbents own it |
+| Cost of the next step | ~$0 (paper + time) | High (build + market) |
+| Resolves the central uncertainty | Yes — binary kill gate | No |
+| Moat if it works | Yes — audited track record | None — public, commodity |
+| Failure cost | Low / contained | High / sunk |
+| Regulatory friction at revenue | High, but downstream | Low |
+| Verdict | **PURSUE (next step only)** | **REJECT** |
+
+### Best path — verdict
+
+**Path A, scoped strictly to: run the 30-trade validation to its
+`kill-criteria.md` decision gate, and spend nothing on monetization, product, or
+marketing until it returns.**
+
+The validation is a cheap option that resolves the one question gating
+everything — "is there an edge at all?" — at near-zero cost and zero regulatory
+friction. Path B demands expensive, irreversible commitment into a market with no
+wedge: negative expected value. Doing both halfway is exactly what produced the
+current −$3,958 and $0 revenue.
+
+This is not a go-to-market plan. It is the recognition that the go-to-market
+question is downstream of, and contingent on, an experiment that has not yet
+returned. Resolve the experiment first.
