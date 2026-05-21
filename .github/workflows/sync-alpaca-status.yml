@@ -38,7 +38,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           token: ${{ secrets.GH_PAT || github.token }}
           fetch-depth: 0
@@ -49,7 +49,7 @@ jobs:
           git checkout -B main origin/main
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.11"
           cache: "pip"
@@ -144,7 +144,6 @@ jobs:
 
           git pull --ff-only origin main
           git push origin HEAD:main
-
 
       - name: Notify on Failure
         if: failure()

@@ -54,7 +54,7 @@ jobs:
       trading_halted: ${{ steps.check.outputs.halted }}
     steps:
       - name: Checkout for halt file check
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           sparse-checkout: |
             data/TRADING_HALTED
@@ -193,14 +193,14 @@ jobs:
       secrets_valid: ${{ steps.validate_secrets.outputs.secrets_valid }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 1
 
       # Note: pip cache is disabled to avoid large post-job tar uploads that
       # were cancelling runs on GitHub-hosted runners.
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.11"
           cache: "pip"
@@ -303,12 +303,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           token: ${{ secrets.GH_PAT || github.token }}
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.12"
           cache: "pip"
@@ -364,7 +364,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           # Use the ref that triggered the workflow (branch or main)
           fetch-depth: 1
@@ -415,7 +415,7 @@ jobs:
           echo "✅ MCP server started on 127.0.0.1:8801 (mode: $MCP_MODE)"
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.11"
           cache: "pip"
@@ -438,7 +438,7 @@ jobs:
           python3 -m pip install --no-cache-dir -r requirements-minimal.txt
 
       - name: Set up Go for ADK orchestrator
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
         with:
           go-version: "1.23"
           cache-dependency-path: go/adk_trading/go.sum
@@ -447,7 +447,7 @@ jobs:
 
       - name: Restore ADK build cache
         if: env.ADK_ENABLED != '0'
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: /tmp/adk_build
           key: adk-build-${{ hashFiles('go/adk_trading/**') }}
@@ -1731,7 +1731,7 @@ jobs:
       - name: Upload execution logs
         if: always()
         continue-on-error: true # Non-critical: artifact upload failure shouldn't mask trading results
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: trading-logs-${{ github.run_id }}
           path: |
@@ -1745,7 +1745,7 @@ jobs:
       - name: Upload logs on failure (early)
         if: failure() || cancelled()
         continue-on-error: true # Non-critical: artifact upload failure shouldn't mask the actual failure
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: failure-logs-${{ github.run_id }}
           path: |
