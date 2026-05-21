@@ -198,6 +198,15 @@ class IronCondorStrategy:
             except Exception:
                 ic_entries = {}
 
+        # Audit-driven ledger enrichment (2026-05-21 — see
+        # docs/research/2026-05-21-hypothesis-change.md). The May-19 audit
+        # could not find a defensible edge slice in the 69-trade ledger
+        # because the factors most likely to discriminate winners (VIX
+        # regime, IV rank, recent momentum) were never recorded at entry.
+        # Capturing them prospectively so the next 30-trade validation
+        # cohort can be analyzed on richer features.
+        snapshot = self._capture_market_snapshot()
+
         ic_entries[entry_key] = {
             "credit": ic.credit_received,
             "date": entry_timestamp,
@@ -221,9 +230,66 @@ class IronCondorStrategy:
                 "long_put": ic.long_put,
                 "long_call": ic.long_call,
             },
+            # Enriched factor snapshot at entry — used by future audits.
+            "market_snapshot": snapshot,
         }
         IC_ENTRIES_PATH.parent.mkdir(parents=True, exist_ok=True)
         IC_ENTRIES_PATH.write_text(json.dumps(ic_entries, indent=2) + "\n", encoding="utf-8")
+
+    def _capture_market_snapshot(self) -> dict:
+        """Capture the factor snapshot used by future audits.
+
+        Records VIX (level + 3-day MA + percentile if available), an IV-rank
+        proxy, SPY 5d/20d momentum, weekday, and minutes since open. Best-
+        effort: each block is wrapped so a single failure does not block
+        ledger persistence. Missing fields are recorded explicitly as None
+        rather than silently omitted — auditors can filter on completeness.
+        """
+        snap: dict = {
+            "captured_at": datetime.now(timezone.utc).isoformat(),
+            "vix_level": None,
+            "vix_3day_ma": None,
+            "vix_percentile": None,
+            "iv_rank_proxy": None,
+            "spy_price": None,
+            "spy_5d_return": None,
+            "spy_20d_return": None,
+            "weekday": datetime.now(timezone.utc).weekday(),
+        }
+        try:
+            from src.signals.vix_mean_reversion_signal import VIXMeanReversionSignal
+
+            vix_signal = VIXMeanReversionSignal()
+            sig = vix_signal.calculate_signal()
+            snap["vix_level"] = getattr(sig, "current_vix", None)
+            snap["vix_3day_ma"] = getattr(sig, "vix_3day_ma", None)
+            snap["vix_percentile"] = getattr(sig, "vix_percentile", None)
+        except Exception as exc:  # noqa: BLE001 - snapshot best-effort
+            logger.debug(f"snapshot: VIX signal unavailable: {exc}")
+
+        try:
+            spy_price = self.get_underlying_price()
+            snap["spy_price"] = spy_price
+        except Exception as exc:  # noqa: BLE001
+            logger.debug(f"snapshot: SPY price unavailable: {exc}")
+
+        try:
+            from src.markets.spy_momentum import compute_returns
+
+            r5, r20 = compute_returns(window_short=5, window_long=20)
+            snap["spy_5d_return"] = r5
+            snap["spy_20d_return"] = r20
+        except Exception as exc:  # noqa: BLE001
+            logger.debug(f"snapshot: SPY momentum unavailable: {exc}")
+
+        try:
+            from src.markets.iv_rank import current_iv_rank_proxy
+
+            snap["iv_rank_proxy"] = current_iv_rank_proxy(self.config.get("underlying", "SPY"))
+        except Exception as exc:  # noqa: BLE001
+            logger.debug(f"snapshot: IV rank proxy unavailable: {exc}")
+
+        return snap
 
     def get_underlying_price(self) -> float:
         """Get current price of the configured underlying from Alpaca."""
