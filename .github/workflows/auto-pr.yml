@@ -55,20 +55,21 @@ jobs:
             artifacts/devloop/agent_handoff_audit.jsonl
 
       - name: Create Pull Request
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           # Check if PR already exists
           EXISTING_PR=$(gh pr list --head "${{ github.ref_name }}" --json number --jq '.[0].number' 2>/dev/null || echo "")
 
-          if [ -z "$EXISTING_PR" ]; then
+          if [ -z "$EXISTING_PR" ] || [ "$EXISTING_PR" = "null" ]; then
             # Get branch name and latest commit message for dynamic title
             BRANCH_NAME="${{ github.ref_name }}"
             COMMIT_MSG=$(git log -1 --format=%s)
 
             # Create PR with dynamic title from commit message
             GATE_SUMMARY=$(cat artifacts/devloop/agent_handoff_gate.md 2>/dev/null || echo "Gate report unavailable.")
-            gh pr create \
+            if gh pr create \
               --title "$COMMIT_MSG" \
               --body "## Summary
           Auto-generated PR from branch: \`$BRANCH_NAME\`
@@ -84,17 +85,23 @@ jobs:
           \`\`\`markdown
           $GATE_SUMMARY
           \`\`\`" \
-              --base main
-            echo "PR created successfully"
+              --base main; then
+              echo "PR created successfully"
+            else
+              echo "PR create skipped (a PR for this branch may already exist)"
+            fi
           else
             echo "PR #$EXISTING_PR already exists"
           fi
 
       - name: Auto-merge if tests pass
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
-          PR_NUMBER=$(gh pr list --head "${{ github.ref_name }}" --json number --jq '.[0].number')
-          if [ -n "$PR_NUMBER" ]; then
-            gh pr merge "$PR_NUMBER" --squash --auto --delete-branch || echo "Auto-merge enabled"
+          PR_NUMBER=$(gh pr list --head "${{ github.ref_name }}" --json number --jq '.[0].number' 2>/dev/null || echo "")
+          if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
+            gh pr merge "$PR_NUMBER" --squash --auto --delete-branch || echo "Auto-merge not applied (draft, conflicts, or already merged)"
+          else
+            echo "No open PR for ${{ github.ref_name }} - skipping auto-merge"
           fi
