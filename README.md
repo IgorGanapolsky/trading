@@ -18,6 +18,33 @@ Most algorithmic trading systems fail because they trade a backtested pattern th
 
 A quantitative audit of the first 69 paired trades ([docs/research/2026-05-19-edge-analysis.md](docs/research/2026-05-19-edge-analysis.md)) found **no statistically robust edge** — cohort win rate 23.2%, profit factor 0.22, realized **−$3,958**. A "60% win rate on Thursdays" slice looked promising but **failed multiple-comparison correction** (Bonferroni adj_p = 0.190 across K=39 buckets) and its point estimate sits below the strategy's own break-even win rate. The repo treats that as a hypothesis to disprove, not an edge to sell.
 
+## 👥 Who This Is For — and the Open-Core Model
+
+This repo is for developers and quant-minded operators building or running their
+own **autonomous trading agents** who want governance and validation discipline
+rather than hype — "how do I stop my own agent from placing a stupid trade, and
+how do I know whether the strategy actually has an edge?"
+
+**Open core — free, MIT, everything in this repository today:**
+
+- the mandatory risk gateway and deterministic hard risk gates
+- paired-trade accounting that separates raw fills from real closed-trade P/L
+- the kill-criteria + controlled-experiment validation methodology
+- broker-backed daily scorecards, including the honest (currently negative) ledger
+
+**Planned paid layer — not built yet, do not expect it today:**
+
+- a hosted/managed tier of the governance + validation tooling
+- if and when the 30-trade validation completes with a proven edge, the audited
+  track record becomes a separate, higher-value offering
+
+There is **no paid product and no revenue yet** — the paid layer is contingent on
+the validation. The dual-track plan is in
+[`.claude/rules/cto-decision-2026-05-21-go-to-market.md`](.claude/rules/cto-decision-2026-05-21-go-to-market.md).
+
+**Build-in-public:** the scorecard is public and currently shows a loss. That
+transparency is the point — it is the difference between this and a marketing bot.
+
 ## 🧠 Design: RAG-Governed Machine Learning
 
 We solve the "Black Box" problem of ML through a unique **RAG-to-ML Feedback Loop**:
