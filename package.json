@@ -14,7 +14,7 @@
     "memory:capture": "printf 'thumbs down' | python3 scripts/capture_hook_feedback.py"
   },
   "dependencies": {
-    "@trigger.dev/sdk": "^4.4.1",
+    "@trigger.dev/sdk": "^4.4.6",
     "ws": "^8.20.1"
   },
   "overrides": {
