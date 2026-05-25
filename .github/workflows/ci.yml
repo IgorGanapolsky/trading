@@ -98,7 +98,7 @@ jobs:
             ${{ runner.os }}-trunk-${{ github.ref_name }}-
             ${{ runner.os }}-trunk-
       - name: Trunk Check
-        uses: trunk-io/trunk-action@75699af9e26881e564e9d832ef7dc3af25ec031b # v1
+        uses: trunk-io/trunk-action@04ba50e7658c81db7356da96657e6e77f220bfa3 # v1.3.1
         with:
           trunk-token: ${{ secrets.TRUNK_API_TOKEN }}
           cache: "false"
