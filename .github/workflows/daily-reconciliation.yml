@@ -1,0 +1,106 @@
+name: Daily Broker-vs-Paired Reconciliation
+
+# LL-354 prevention layer: each weekday after market close, diff broker truth
+# (data/system_state.json trade_history fills) against the paired ledger
+# (data/trades.json stats.total_pnl + stats.unpaired_realized_pnl). Sentry-alert
+# and fail the workflow if |delta| > $150.
+
+on:
+  schedule:
+    - cron: "0 21 * * 1-5" # 4 PM ET weekdays (post-close)
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ format('daily-reconciliation-{0}-{1}', github.repository, github.ref_name || 'main') }}
+  cancel-in-progress: false
+
+env:
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+
+jobs:
+  reconcile:
+    name: Reconcile broker vs paired
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          token: ${{ secrets.GH_PAT || github.token }}
+          fetch-depth: 0
+
+      - name: Refresh to latest main
+        run: |
+          git fetch origin main
+          git checkout -B main origin/main
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install -q -r requirements-minimal.txt || pip install -q alpaca-py requests python-dotenv
+          pip install -q sentry-sdk || echo "sentry-sdk install failed - reconciler will log CRITICAL instead of capturing"
+
+      - name: Refresh broker state
+        env:
+          ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          ALPACA_BROKERAGE_TRADING_API_KEY: ${{ secrets.ALPACA_BROKERAGE_TRADING_API_KEY }}
+          ALPACA_BROKERAGE_TRADING_API_SECRET: ${{ secrets.ALPACA_BROKERAGE_TRADING_API_SECRET }}
+          REQUIRE_ALPACA_KEYS: "true"
+        run: python3 scripts/sync_alpaca_state.py
+
+      - name: Refresh paired ledger
+        env:
+          ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          ALPACA_BROKERAGE_TRADING_API_KEY: ${{ secrets.ALPACA_BROKERAGE_TRADING_API_KEY }}
+          ALPACA_BROKERAGE_TRADING_API_SECRET: ${{ secrets.ALPACA_BROKERAGE_TRADING_API_SECRET }}
+          REQUIRE_ALPACA_KEYS: "true"
+        run: python3 scripts/sync_closed_positions.py
+
+      - name: Run reconciliation
+        id: reconcile
+        continue-on-error: true
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+        run: |
+          set +e
+          python3 scripts/reconcile_broker_vs_paired.py
+          echo "reconcile_exit=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Commit reconciliation report
+        run: |
+          set -euo pipefail
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+
+          git add data/reports/reconciliation_*.json 2>/dev/null || true
+          if git diff --staged --quiet; then
+            echo "No reconciliation report changes to commit"
+            exit 0
+          fi
+          git commit -m "chore: daily reconciliation [auto]"
+
+          if [ -n "${{ secrets.GH_PAT }}" ]; then
+            git remote set-url origin "https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git"
+          fi
+          git pull --ff-only origin main
+          git push origin HEAD:main
+
+      - name: Fail workflow if reconciliation alerted
+        run: |
+          rc="${{ steps.reconcile.outputs.reconcile_exit }}"
+          echo "reconcile exit code: $rc"
+          if [ "$rc" != "0" ]; then
+            echo "::error::Broker-vs-paired reconciliation breach (exit $rc). See data/reports/reconciliation_*.json."
+            exit 1
+          fi
