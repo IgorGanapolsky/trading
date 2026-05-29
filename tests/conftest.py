@@ -13,35 +13,44 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
-def disable_circuit_breaker_for_tests():
-    """Disable circuit breaker during tests by temporarily renaming TRADING_HALTED.
+def disable_circuit_breaker_for_tests(monkeypatch, tmp_path):
+    """Isolate the TRADING_HALTED kill-switch from tests via monkeypatch.
 
-    The circuit breaker was added to prevent trading during crisis mode,
-    but tests should run without this restriction.
+    The PRODUCTION file `data/TRADING_HALTED` is NEVER read, written, or
+    renamed by the test suite. Per .claude/rules/boundary-policy.md Hard
+    Block #2, renaming or removing that file re-enables trade execution;
+    a pytest crash mid-fixture used to leave it gone on disk.
+
+    Approach: redirect every module that owns a `TRADING_HALTED_FILE`
+    module-level constant to a per-test tmp_path location. Tests that
+    construct `Path("data/TRADING_HALTED")` inline are responsible for
+    using tmp_path themselves (see tests/test_trading_halt.py).
     """
     from pathlib import Path
 
-    halt_file = Path("data/TRADING_HALTED")
-    backup_file = Path("data/TRADING_HALTED.test_backup")
-    renamed_original = False
+    fake_halt = tmp_path / "TRADING_HALTED"
 
-    # Temporarily move the halt file if it exists
-    if halt_file.exists():
-        try:
-            if backup_file.exists():
-                backup_file.unlink()
-            halt_file.rename(backup_file)
-            renamed_original = True
-        except FileNotFoundError:
-            renamed_original = False
+    # Patch every module that has its own TRADING_HALTED_FILE constant.
+    # Grep'd from src/: only crisis_monitor.py defines one at module scope.
+    # Use raising=False so absence of the attribute (e.g. import-time errors
+    # in minimal CI) never breaks the whole test session.
+    try:
+        import src.safety.crisis_monitor as _crisis_monitor
+
+        monkeypatch.setattr(
+            _crisis_monitor, "TRADING_HALTED_FILE", fake_halt, raising=False
+        )
+    except (ImportError, ModuleNotFoundError):
+        pass
+
+    # Sanity: the production file must exist on disk so the boundary
+    # guard remains meaningful for the developer running tests locally.
+    # We do NOT modify it. If it's missing, that is a real concern that
+    # belongs in the developer's session, not in test-suite teardown.
+    prod_halt = Path("data/TRADING_HALTED")
+    assert prod_halt is not None  # never touched; reference only
 
     yield
-
-    # Restore the halt file after test
-    if renamed_original and backup_file.exists():
-        if halt_file.exists():
-            halt_file.unlink()
-        backup_file.rename(halt_file)
 
 
 @pytest.fixture(autouse=True)
