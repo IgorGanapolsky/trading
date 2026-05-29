@@ -499,20 +499,47 @@ def update_thompson_sampler(trades_data: dict, model: dict) -> dict:
 
 
 def check_trading_gate(stats: dict) -> dict:
-    """Check if trading should be allowed based on empirical performance."""
+    """Check if trading should be allowed based on empirical performance.
+
+    Folds `unpaired_in_cohort_pnl` (post-cohort singleton legs that never paired
+    into a closed iron condor) into the expectancy denominator and profit-factor
+    gross-loss denominator so the gate sees broker truth, not paired-only truth.
+
+    Win rate is NOT adjusted: singleton orphan legs do not carry a meaningful
+    win/loss flag — counting them as losses would double-count and counting
+    them as wins would be dishonest. The paired-trade win-rate is the cleanest
+    available signal.
+    """
     total = stats.get("closed_trades", 0)
     win_rate = _as_float(stats.get("win_rate_pct"), 0.0)
     avg_win = _as_float(stats.get("avg_win"), 0.0)
     avg_loss = _as_float(stats.get("avg_loss"), 0.0)
 
+    # Singleton (unpaired-in-cohort) adjustment from PR #4076 surface.
+    # Negative number = singleton legs net to a loss inside the validation cohort.
+    singleton_pnl = _as_float(stats.get("unpaired_in_cohort_pnl"), 0.0)
+    singleton_order_count = int(_as_float(stats.get("unpaired_order_count"), 0.0))
+    cohort_start = str(stats.get("unpaired_cohort_start") or "")
+
+    paired_realized_pnl = _as_float(
+        stats.get("total_realized_pnl"), _as_float(stats.get("total_pnl"), 0.0)
+    )
+    realized_pnl_including_singletons = paired_realized_pnl + singleton_pnl
+
     if "expectancy_per_trade" in stats:
-        expectancy = _as_float(stats.get("expectancy_per_trade"), 0.0)
-    elif "total_realized_pnl" in stats and total > 0:
-        expectancy = _as_float(stats.get("total_realized_pnl"), 0.0) / total
+        paired_expectancy = _as_float(stats.get("expectancy_per_trade"), 0.0)
     elif total > 0:
-        expectancy = (win_rate / 100 * avg_win) - ((100 - win_rate) / 100 * avg_loss)
+        paired_expectancy = paired_realized_pnl / total
     else:
-        expectancy = 0.0
+        paired_expectancy = 0.0
+
+    # Broker-truth expectancy folds singleton P/L into the same denominator.
+    # Keeping denominator = paired closed_trades avoids double-counting singleton
+    # orders (which were never paired and so are not in `total`).
+    if total > 0:
+        expectancy = realized_pnl_including_singletons / total
+    else:
+        expectancy = paired_expectancy
 
     profit_factor_raw = stats.get("profit_factor")
     if profit_factor_raw is None:
@@ -522,13 +549,25 @@ def check_trading_gate(stats: dict) -> dict:
             gross_profit = (win_rate / 100) * total * avg_win
         if gross_loss <= 0 and avg_loss > 0 and total > 0:
             gross_loss = ((100 - win_rate) / 100) * total * avg_loss
+    else:
+        gross_profit = _as_float(stats.get("gross_profit"), 0.0)
+        gross_loss = _as_float(stats.get("gross_loss"), 0.0)
+        if gross_profit <= 0 and avg_win > 0 and total > 0:
+            gross_profit = (win_rate / 100) * total * avg_win
+        if gross_loss <= 0 and avg_loss > 0 and total > 0:
+            gross_loss = ((100 - win_rate) / 100) * total * avg_loss
 
-        if gross_loss > 0:
-            profit_factor = gross_profit / gross_loss
-        elif gross_profit > 0:
-            profit_factor = math.inf
-        else:
-            profit_factor = 0.0
+    # Fold negative singleton P/L into gross_loss (broker-truth PF denominator).
+    # Positive singleton P/L (rare) is added to gross_profit.
+    if singleton_pnl < 0:
+        gross_loss = gross_loss + abs(singleton_pnl)
+    elif singleton_pnl > 0:
+        gross_profit = gross_profit + singleton_pnl
+
+    if gross_loss > 0:
+        profit_factor = gross_profit / gross_loss
+    elif gross_profit > 0:
+        profit_factor = math.inf
     else:
         profit_factor = _as_float(profit_factor_raw, 0.0)
 
@@ -550,6 +589,11 @@ def check_trading_gate(stats: dict) -> dict:
         "min_win_rate_met": win_rate >= MIN_WIN_RATE_TO_TRADE,
         "positive_expectancy_met": positive_expectancy_met,
         "min_profit_factor_met": min_profit_factor_met,
+        "realized_pnl_paired": round(paired_realized_pnl, 2),
+        "realized_pnl_including_singletons": round(realized_pnl_including_singletons, 2),
+        "singleton_adjustment": round(singleton_pnl, 2),
+        "singleton_order_count": singleton_order_count,
+        "singleton_cohort_start": cohort_start,
     }
 
     if not gate["should_trade"]:
@@ -786,11 +830,22 @@ def main(dry_run: bool = False):
         # See .claude/rules/controlled-experiment.md
         halt_file = PROJECT_ROOT / "data" / "TRADING_HALTED"
         if not gate["should_trade"] and not validation_reset:
+            paired_pnl = gate.get("realized_pnl_paired", 0.0)
+            broker_truth_pnl = gate.get("realized_pnl_including_singletons", paired_pnl)
+            singleton_adj = gate.get("singleton_adjustment", 0.0)
+            singleton_orders = gate.get("singleton_order_count", 0)
+            cohort_start = gate.get("singleton_cohort_start", "")
             halt_file.write_text(
                 f"ML GATE BLOCKED: {gate.get('block_reason', 'unknown')}\n"
                 f"Updated: {datetime.now(timezone.utc).isoformat()}\n"
-                f"Win rate: {stats.get('win_rate_pct', 0):.1f}% | Trades: {stats.get('closed_trades', 0)}\n"
-                f"Unblock: improve win rate above {MIN_WIN_RATE_TO_TRADE}% over {MIN_TRADES_FOR_GATE}+ trades"
+                f"Win rate: {stats.get('win_rate_pct', 0):.1f}% | "
+                f"Paired trades: {stats.get('closed_trades', 0)}\n"
+                f"Realized P/L (paired): ${paired_pnl:.2f}\n"
+                f"Realized P/L (broker-truth): ${broker_truth_pnl:.2f}\n"
+                f"Singleton adjustment: ${singleton_adj:.2f} over "
+                f"{singleton_orders} orders since {cohort_start or 'n/a'}\n"
+                f"Unblock: improve win rate above {MIN_WIN_RATE_TO_TRADE}% "
+                f"over {MIN_TRADES_FOR_GATE}+ trades"
             )
             logger.warning(f"  HALT FILE WRITTEN: {halt_file}")
         elif not gate["should_trade"] and validation_reset:

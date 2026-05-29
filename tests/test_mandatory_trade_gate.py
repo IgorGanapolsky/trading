@@ -629,3 +629,33 @@ class TestTradeBlockedError:
         error = TradeBlockedError(gate_result)
         assert error.gate_result is gate_result
         assert "Test block" in str(error)
+
+
+class TestMlGateHaltMatcher:
+    """Halt-file matcher must accept the broker-truth multi-line format (LL-354)."""
+
+    def test_multiline_broker_truth_format_matches(self):
+        from src.safety.mandatory_trade_gate import _is_ml_gate_halt_reason
+
+        # Mirrors the new format written by scripts/update_ml_from_trades.py
+        reason = (
+            "ML GATE BLOCKED: Win rate 11.7% < 50.0%\n"
+            "Updated: 2026-05-29T19:00:00+00:00\n"
+            "Win rate: 11.7% | Paired trades: 163\n"
+            "Realized P/L (paired): $-8033.00\n"
+            "Realized P/L (broker-truth): $-8160.00\n"
+            "Singleton adjustment: $-127.00 over 7 orders since 2026-04-09\n"
+            "Unblock: improve win rate above 50.0% over 30+ trades"
+        )
+        assert _is_ml_gate_halt_reason(reason) is True
+
+    def test_legacy_single_line_format_still_matches(self):
+        from src.safety.mandatory_trade_gate import _is_ml_gate_halt_reason
+
+        assert _is_ml_gate_halt_reason("ML GATE BLOCKED: Win rate 24.2% < 50.0%") is True
+
+    def test_unrelated_halt_reasons_do_not_match(self):
+        from src.safety.mandatory_trade_gate import _is_ml_gate_halt_reason
+
+        assert _is_ml_gate_halt_reason("Manual halt by operator") is False
+        assert _is_ml_gate_halt_reason("ML GATE BLOCKED") is False  # no "WIN RATE" token
