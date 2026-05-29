@@ -162,6 +162,37 @@ def _field(source: Any, key: str) -> Any:
     return getattr(source, key, None)
 
 
+# LL-354: leg_tag -> close action. Short legs are bought back to close;
+# long legs are sold to close.
+_LEG_TAG_TO_CLOSE_ACTION = {
+    "SP": "BUY_TO_CLOSE",   # short put
+    "SC": "BUY_TO_CLOSE",   # short call
+    "LP": "SELL_TO_CLOSE",  # long put
+    "LC": "SELL_TO_CLOSE",  # long call
+}
+
+
+def _intent_from_stamped_cid(client_order_id: Any) -> str | None:
+    """If WE stamped the order at submission, derive the close action
+    directly from `client_order_id`. Returns None for legacy / non-IC
+    orders (which fall through to the reverse-lookup heuristic)."""
+    try:
+        from src.utils.order_intent import parse_client_order_id
+    except Exception:  # pragma: no cover - import safety
+        return None
+    parsed = parse_client_order_id(
+        client_order_id if isinstance(client_order_id, str) else None
+    )
+    if parsed is None or parsed["role"] != "CLOSE":
+        return None
+    leg_tag = parsed.get("leg_tag")
+    if not leg_tag:
+        # CLOSE-IC parent: leg-level rows are handled separately in the
+        # MLEG branch of _close_inventory; nothing to do here.
+        return None
+    return _LEG_TAG_TO_CLOSE_ACTION.get(leg_tag)
+
+
 def _serialize_leg(leg: Any) -> dict[str, Any]:
     return {
         "id": str(_field(leg, "id") or ""),
@@ -172,6 +203,7 @@ def _serialize_leg(leg: Any) -> dict[str, Any]:
         "filled_avg_price": str(_field(leg, "filled_avg_price") or ""),
         "position_intent": str(_field(leg, "position_intent") or ""),
         "status": str(_field(leg, "status") or ""),
+        "client_order_id": str(_field(leg, "client_order_id") or ""),
     }
 
 
@@ -188,6 +220,7 @@ def _serialize_order(order: Any) -> dict[str, Any]:
         "status": str(_field(order, "status") or ""),
         "order_class": str(_field(order, "order_class") or ""),
         "position_intent": str(_field(order, "position_intent") or ""),
+        "client_order_id": str(_field(order, "client_order_id") or ""),
         "legs": legs,
     }
 
@@ -234,7 +267,6 @@ def _fetch_broker_trade_history(limit: int = DEFAULT_BROKER_ORDER_LIMIT) -> list
         from alpaca.trading.client import TradingClient
         from alpaca.trading.enums import QueryOrderStatus
         from alpaca.trading.requests import GetOrdersRequest
-
         from src.utils.alpaca_client import get_alpaca_credentials
     except Exception as exc:
         logger.info("Broker trade-history sync unavailable: %s", exc)
@@ -682,6 +714,15 @@ def _close_inventory(
             continue
 
         source_tag = "alpaca_simple_close"
+        # LL-354: authoritative path — if WE stamped client_order_id at
+        # submission, the intent is self-describing and beats both
+        # broker position_intent and the reverse-lookup heuristic.
+        if action is None or "CLOSE" not in action:
+            stamped = _intent_from_stamped_cid(row.get("client_order_id"))
+            if stamped is not None:
+                action = stamped
+                source_tag = "alpaca_simple_close_client_order_id"
+
         # Reverse-lookup fallback: position_intent missing on the broker row,
         # but the symbol+side matches an open parent-lot's expected-close leg.
         # Without this, singleton SIMPLE closes never enter the paired ledger

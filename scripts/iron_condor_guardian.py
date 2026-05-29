@@ -28,6 +28,16 @@ from src.core.trading_constants import (
     IRON_CONDOR_STOP_LOSS_MULTIPLIER,
 )
 from src.safety.mandatory_trade_gate import safe_submit_order
+from src.utils.order_intent import build_client_order_id
+
+
+def _guardian_leg_intent_tag(symbol: str, qty: int) -> tuple[str, str]:
+    """LL-354: map a leg about to be CLOSED to (INTENT, LEG_TAG)."""
+    opt_type = symbol[-9] if len(symbol) >= 9 else "P"
+    is_short = qty < 0
+    if opt_type == "P":
+        return ("BPS", "SP") if is_short else ("BPL", "LP")
+    return ("BCS", "SC") if is_short else ("BCL", "LC")
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -276,6 +286,7 @@ def close_iron_condor(client, ic_data: dict, reason: str, expiry: str, pnl: floa
                 legs=[OptionLegRequest(**leg) for leg in option_legs],
                 time_in_force=TimeInForce.DAY,
                 limit_price=round(limit_debit, 2),
+                client_order_id=build_client_order_id("CLOSE", "IC"),
             )
             order = safe_submit_order(client, mleg_order)
             logger.info(f"  MLEG close submitted: {order.id} status={order.status}")
@@ -292,6 +303,11 @@ def close_iron_condor(client, ic_data: dict, reason: str, expiry: str, pnl: floa
         qty = abs(pos["qty"])
 
         try:
+            # LL-354: every singleton SIMPLE close from the guardian fallback
+            # was the silent contributor to the $2.6K paired-ledger gap.
+            # Stamp role/intent/leg so sync_closed_positions can pair it
+            # without reverse-lookup.
+            intent, tag = _guardian_leg_intent_tag(str(pos["symbol"]), int(pos["qty"]))
             order = safe_submit_order(
                 client,
                 MarketOrderRequest(
@@ -299,6 +315,7 @@ def close_iron_condor(client, ic_data: dict, reason: str, expiry: str, pnl: floa
                     qty=qty,
                     side=side,
                     time_in_force=TimeInForce.DAY,
+                    client_order_id=build_client_order_id("CLOSE", intent, tag),
                 ),
             )
             logger.info(f"  Closed {pos['symbol']}: {side.value} {qty} - {order.status}")

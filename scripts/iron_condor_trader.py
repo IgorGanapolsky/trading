@@ -936,6 +936,7 @@ class IronCondorStrategy:
                 from alpaca.trading.enums import OrderClass, OrderSide
                 from alpaca.trading.requests import OptionLegRequest
                 from src.utils.alpaca_client import get_alpaca_credentials
+                from src.utils.order_intent import build_client_order_id
 
                 api_key, secret = get_alpaca_credentials()
 
@@ -1002,12 +1003,16 @@ class IronCondorStrategy:
                         logger.info(f"   Limit price: -${limit_credit:.2f} (credit per contract)")
                         logger.info(f"   Total credit target: ~${limit_credit * ic_qty * 100:.0f}")
 
+                        # LL-354: stamp OPEN intent on the combo parent so
+                        # downstream pairing can identify our orders even if
+                        # the broker returns position_intent=None.
                         order_req = LimitOrderRequest(
                             qty=ic_qty,
                             order_class=OrderClass.MLEG,
                             legs=option_legs,
                             time_in_force=TimeInForce.DAY,
                             limit_price=round(-limit_credit, 2),  # Negative = credit
+                            client_order_id=build_client_order_id("OPEN", "IC"),
                         )
 
                         logger.info("🚀 Submitting MLeg iron condor order...")

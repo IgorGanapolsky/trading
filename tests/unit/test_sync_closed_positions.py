@@ -215,7 +215,8 @@ def test_reverse_lookup_promotes_singleton_when_open_lot_matches():
 
 
 def _make_singleton_close_for_symbol(
-    filled_at: str, *, symbol: str, order_id: str, side: str, qty: int, price: float
+    filled_at: str, *, symbol: str, order_id: str, side: str, qty: int, price: float,
+    client_order_id: str = "",
 ) -> dict:
     return {
         "id": order_id,
@@ -227,5 +228,84 @@ def _make_singleton_close_for_symbol(
         "status": "filled",
         "order_class": "simple",
         "position_intent": "",
+        "client_order_id": client_order_id,
         "legs": [],
     }
+
+
+def test_stamped_client_order_id_pairs_without_reverse_lookup():
+    """LL-354 contract test: when WE stamp `client_order_id=IC-CLOSE-*-*`
+    at submission time, `_close_inventory` must promote SIMPLE singleton
+    rows BEFORE the reverse-lookup fallback fires, and tag them with
+    `alpaca_simple_close_client_order_id`. Crucially, the pairing must
+    succeed even with NO `expected_close_index` (i.e. without the
+    reverse-lookup heuristic having anything to match against).
+    """
+    expiry = "260516"
+    open_row = _make_parent_open(
+        "2026-04-15T14:00:00Z", expiry, order_id="parent-open-stamp"
+    )
+    # All 4 closes carry our stamped client_order_id. Intents:
+    #   SP=short put close -> BPS, LP=long put close -> BPL
+    #   SC=short call close -> BCS, LC=long call close -> BCL
+    singleton_closes = [
+        _make_singleton_close_for_symbol(
+            "2026-04-16T15:00:00Z",
+            symbol=_option_symbol(expiry, "P", 540),
+            order_id="stamp-p540",
+            side="buy",
+            qty=1,
+            price=1.00,
+            client_order_id="IC-CLOSE-BPS-SP-1748549812345678901",
+        ),
+        _make_singleton_close_for_symbol(
+            "2026-04-16T15:00:01Z",
+            symbol=_option_symbol(expiry, "P", 530),
+            order_id="stamp-p530",
+            side="sell",
+            qty=1,
+            price=0.50,
+            client_order_id="IC-CLOSE-BPL-LP-1748549812345678902",
+        ),
+        _make_singleton_close_for_symbol(
+            "2026-04-16T15:00:02Z",
+            symbol=_option_symbol(expiry, "C", 600),
+            order_id="stamp-c600",
+            side="buy",
+            qty=1,
+            price=1.00,
+            client_order_id="IC-CLOSE-BCS-SC-1748549812345678903",
+        ),
+        _make_singleton_close_for_symbol(
+            "2026-04-16T15:00:03Z",
+            symbol=_option_symbol(expiry, "C", 610),
+            order_id="stamp-c610",
+            side="sell",
+            qty=1,
+            price=0.50,
+            client_order_id="IC-CLOSE-BCL-LC-1748549812345678904",
+        ),
+    ]
+    trade_history = [open_row, *singleton_closes]
+
+    # Call _close_inventory WITHOUT expected_close_index so we prove the
+    # client_order_id path is what's doing the work — not reverse-lookup.
+    inventory = scp._close_inventory(trade_history, expected_close_index=None)
+
+    # All 4 singleton closes must land in the inventory, each tagged with
+    # the stamped-CID source.
+    sources = [
+        fill["source"]
+        for fills in inventory.values()
+        for fill in fills
+        if "alpaca" in fill.get("source", "")
+    ]
+    assert sources, f"no inventory rows produced: {inventory}"
+    assert all(
+        s == "alpaca_simple_close_client_order_id" for s in sources
+    ), f"expected all closes to be stamped-CID sourced, got {sources}"
+    assert len(sources) == 4, sources
+
+    # End-to-end: the full pairing pipeline yields exactly one paired IC.
+    paired = scp._pair_closed_trades_from_inventory(trade_history)
+    assert len(paired) == 1, paired

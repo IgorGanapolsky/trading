@@ -213,6 +213,7 @@ def place_ic(client, opp: dict) -> str | None:
     from alpaca.trading.requests import LimitOrderRequest, OptionLegRequest
 
     from src.safety.mandatory_trade_gate import safe_submit_order
+    from src.utils.order_intent import build_client_order_id
 
     expiry_yymmdd = opp["expiry"].replace("-", "")[2:]
 
@@ -250,6 +251,8 @@ def place_ic(client, opp: dict) -> str | None:
         logger.info(f"MLEG limit order: credit >= ${current_credit:.2f} (walk ${walk_total:.2f})")
 
         try:
+            # LL-354: stamp OPEN-IC on the parent so the paired ledger can
+            # identify it without relying on broker position_intent.
             order = safe_submit_order(
                 client,
                 LimitOrderRequest(
@@ -258,6 +261,7 @@ def place_ic(client, opp: dict) -> str | None:
                     legs=legs,
                     time_in_force=TimeInForce.DAY,
                     limit_price=round(-current_credit, 2),
+                    client_order_id=build_client_order_id("OPEN", "IC"),
                 ),
                 strategy="iron_condor",
             )
@@ -504,6 +508,18 @@ def _close_ic(client, legs: list[dict], qty: int):
     )
 
     from src.safety.mandatory_trade_gate import safe_submit_order
+    from src.utils.order_intent import build_client_order_id
+
+    def _leg_intent_tag(symbol: str, qty: int) -> tuple[str, str]:
+        """LL-354: map a leg about to be CLOSED to (INTENT, LEG_TAG).
+        BPS/BPL = bull put short/long; BCS/BCL = bear call short/long."""
+        # OCC: SPY{YYMMDD}{C|P}{NNNNNNNN}. C/P sits at index -9 (one char
+        # before the 8-digit strike). Default to "P" if we can't read it.
+        opt_type = symbol[-9] if len(symbol) >= 9 else "P"
+        is_short = qty < 0
+        if opt_type == "P":
+            return ("BPS", "SP") if is_short else ("BPL", "LP")
+        return ("BCS", "SC") if is_short else ("BCL", "LC")
 
     # Calculate current debit
     current_debit = abs(sum(leg["current"] * (1 if leg["qty"] < 0 else -1) for leg in legs))
@@ -527,6 +543,7 @@ def _close_ic(client, legs: list[dict], qty: int):
                 legs=option_legs,
                 time_in_force=TimeInForce.DAY,
                 limit_price=round(limit_debit, 2),
+                client_order_id=build_client_order_id("CLOSE", "IC"),
             ),
             strategy="iron_condor",
         )
@@ -536,6 +553,10 @@ def _close_ic(client, legs: list[dict], qty: int):
         for leg in legs:
             try:
                 side = OrderSide.BUY if leg["qty"] < 0 else OrderSide.SELL
+                # LL-354: this is the singleton-SIMPLE-close path that the
+                # paired ledger used to lose. Stamp role+intent+leg so
+                # sync_closed_positions can pair authoritatively.
+                intent, tag = _leg_intent_tag(str(leg["symbol"]), int(leg["qty"]))
                 safe_submit_order(
                     client,
                     MarketOrderRequest(
@@ -543,6 +564,7 @@ def _close_ic(client, legs: list[dict], qty: int):
                         qty=abs(leg["qty"]),
                         side=side,
                         time_in_force=TimeInForce.DAY,
+                        client_order_id=build_client_order_id("CLOSE", intent, tag),
                     ),
                     strategy="iron_condor",
                 )
