@@ -611,8 +611,34 @@ def _open_parent_lots(trade_history: list[dict[str, Any]]) -> list[dict[str, Any
     return lots
 
 
+def _expected_close_index(
+    open_lots: list[dict[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
+    """Index of `symbol -> [expected close-leg specs]` from open parent lots.
+
+    Used to back-fill `position_intent` on SIMPLE close rows when the broker
+    fill never carried the intent tag. Without this, singleton SIMPLE closes
+    against an open IC lot are silently dropped and the realized P/L
+    under-reports the true loss.
+    """
+    index: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for lot in open_lots:
+        lot_ts = lot.get("timestamp")
+        for leg in lot.get("expected_close_legs") or []:
+            index[str(leg.get("symbol"))].append(
+                {
+                    "close_action": leg.get("close_action"),
+                    "quantity": _parse_float(leg.get("quantity"), 0.0),
+                    "lot_timestamp": lot_ts,
+                }
+            )
+    return index
+
+
 def _close_inventory(
     trade_history: list[dict[str, Any]],
+    *,
+    expected_close_index: dict[str, list[dict[str, Any]]] | None = None,
 ) -> dict[tuple[str, str], list[dict[str, Any]]]:
     inventory: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     sorted_rows = sorted(
@@ -649,20 +675,57 @@ def _close_inventory(
         if parsed is None:
             continue
         action = _parse_position_intent(row.get("position_intent"))
-        if action is None or "CLOSE" not in action:
-            continue
+        side = _parse_side(row.get("side"))
         quantity = _parse_float(row.get("qty"), 0.0)
         price = _parse_float(row.get("price"), 0.0)
         if quantity <= 0 or price <= 0:
+            continue
+
+        source_tag = "alpaca_simple_close"
+        # Reverse-lookup fallback: position_intent missing on the broker row,
+        # but the symbol+side matches an open parent-lot's expected-close leg.
+        # Without this, singleton SIMPLE closes never enter the paired ledger
+        # and the kill-criteria expectancy math under-reports realized loss.
+        if (action is None or "CLOSE" not in action) and expected_close_index is not None:
+            candidates = expected_close_index.get(parsed["symbol"], [])
+            inferred_action: str | None = None
+            for candidate in candidates:
+                cand_action = str(candidate.get("close_action") or "")
+                if not cand_action:
+                    continue
+                if cand_action == "BUY_TO_CLOSE" and side != "BUY":
+                    continue
+                if cand_action == "SELL_TO_CLOSE" and side != "SELL":
+                    continue
+                cand_ts = candidate.get("lot_timestamp")
+                if isinstance(cand_ts, datetime) and filled_dt < cand_ts:
+                    continue
+                inferred_action = cand_action
+                break
+            if inferred_action is not None:
+                action = inferred_action
+                source_tag = "alpaca_simple_close_reverse_lookup"
+
+        if action is None or "CLOSE" not in action:
+            if parsed["underlying"] == "SPY":
+                logger.debug(
+                    "Singleton close bucketed (no intent, no open-lot match): "
+                    "order_id=%s symbol=%s side=%s qty=%s price=%s",
+                    row.get("id"),
+                    parsed["symbol"],
+                    side,
+                    quantity,
+                    price,
+                )
             continue
         inventory[(parsed["symbol"], action)].append(
             {
                 "timestamp": filled_dt,
                 "remaining_qty": quantity,
                 "price": price,
-                "side": _parse_side(row.get("side")),
+                "side": side,
                 "order_id": str(row.get("id") or ""),
-                "source": "alpaca_simple_close",
+                "source": source_tag,
             }
         )
     return inventory
@@ -775,7 +838,10 @@ def _pair_closed_trades_from_inventory(trade_history: list[dict[str, Any]]) -> l
     if not lots:
         return []
 
-    inventory = _close_inventory(trade_history)
+    inventory = _close_inventory(
+        trade_history,
+        expected_close_index=_expected_close_index(lots),
+    )
     closed: list[dict[str, Any]] = []
     for lot in lots:
         matched_legs = []
@@ -1146,6 +1212,77 @@ def _compute_stats(trades: list[dict[str, Any]], paper_phase_start: str) -> dict
     }
 
 
+COHORT_START_DATE = "2026-04-09"
+
+
+def _compute_unpaired_singleton_pnl(
+    trade_history: list[dict[str, Any]],
+    paired_trades: list[dict[str, Any]],
+    *,
+    cohort_start: str = COHORT_START_DATE,
+) -> dict[str, Any]:
+    """Surface SPY-option SIMPLE fills whose order_id never appears in any
+    paired trade's exit order_ids.
+
+    Returns:
+      - unpaired_realized_pnl: signed_cash sum of all unpaired SPY-option
+        SIMPLE fills (all-time).
+      - unpaired_in_cohort_pnl: same, but filtered to filled_at >= cohort_start.
+        THIS is the figure that feeds `.claude/rules/kill-criteria.md` math.
+      - unpaired_order_count: count of dropped orders.
+
+    NOTE: cohort math itself is NOT modified here — this only makes the gap
+    visible. Changing the math is a CTO-CEO decision in a follow-up.
+    """
+    paired_exit_ids: set[str] = set()
+    for trade in paired_trades:
+        order_ids = trade.get("order_ids")
+        if isinstance(order_ids, dict):
+            for oid in order_ids.get("exit") or []:
+                if oid:
+                    paired_exit_ids.add(str(oid))
+
+    try:
+        cohort_dt = datetime.fromisoformat(cohort_start).replace(tzinfo=timezone.utc)
+    except ValueError:
+        cohort_dt = None
+
+    unpaired_all = 0.0
+    unpaired_cohort = 0.0
+    unpaired_count = 0
+    for row in trade_history:
+        if not isinstance(row, dict):
+            continue
+        order_id = str(row.get("id") or "")
+        if not order_id or order_id in paired_exit_ids:
+            continue
+        # Parent orders carry legs — skip; SIMPLE rows have no legs
+        raw_legs = row.get("legs") if isinstance(row.get("legs"), list) else []
+        if raw_legs:
+            continue
+        parsed = _parse_option_symbol(row.get("symbol"))
+        if parsed is None or parsed["underlying"] != "SPY":
+            continue
+        filled_dt = _parse_dt(row.get("filled_at"))
+        side = _parse_side(row.get("side"))
+        qty = _parse_float(row.get("qty"), 0.0)
+        price = _parse_float(row.get("price"), 0.0)
+        if filled_dt is None or side is None or qty <= 0 or price <= 0:
+            continue
+        cash = _signed_cash(side, qty, price)
+        unpaired_all += cash
+        unpaired_count += 1
+        if cohort_dt is not None and filled_dt >= cohort_dt:
+            unpaired_cohort += cash
+
+    return {
+        "unpaired_realized_pnl": round(unpaired_all, 2),
+        "unpaired_in_cohort_pnl": round(unpaired_cohort, 2),
+        "unpaired_order_count": unpaired_count,
+        "unpaired_cohort_start": cohort_start,
+    }
+
+
 def _learning_event_key(trade: dict[str, Any]) -> str:
     trade_id = str(trade.get("id") or "unknown")
     return f"closed_trade_sync::{trade_id}"
@@ -1323,6 +1460,8 @@ def sync_closed_positions(dry_run: bool = False) -> dict[str, Any]:
         or "2026-01-22"
     )
     ledger["stats"] = _compute_stats(ledger["trades"], paper_phase_start)
+    unpaired_stats = _compute_unpaired_singleton_pnl(trade_history, ledger["trades"])
+    ledger["stats"].update(unpaired_stats)
     ledger["meta"]["paper_phase_start"] = paper_phase_start
     ledger["meta"]["last_sync"] = datetime.now(timezone.utc).isoformat()
     ledger["meta"]["sync_source"] = "sync_closed_positions.py"
