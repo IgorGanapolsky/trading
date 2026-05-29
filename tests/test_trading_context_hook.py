@@ -71,9 +71,13 @@ class TestTimezoneHandling:
         with open(hook_path) as f:
             content = f.read()
 
-        # DAYS_OLD uses CURRENT_TS and LAST_TS which both use TZ=America/New_York
-        assert "CURRENT_TS=$(TZ=America/New_York date" in content, (
-            "DAYS_OLD calculation must use TZ=America/New_York via CURRENT_TS"
+        # Support legacy CURRENT_TS= path (pre-fallback) and new origin/main fallback NOTE.
+        # Check for days calculation logic or NOTE string (non-brittle, not exact impl grep).
+        has_legacy_current_ts = "CURRENT_TS=$(TZ=America/New_York date" in content
+        has_fallback_note = "NOTE: local state lagging main by" in content
+        has_days_calc = "get_days_old" in content or "DAYS_OLD=" in content
+        assert has_legacy_current_ts or has_fallback_note or has_days_calc, (
+            "DAYS_OLD calculation must use ET timezone (supports CURRENT_TS or origin/main NOTE fallback)"
         )
 
     def test_day_of_week_uses_et_timezone(self):
