@@ -34,7 +34,16 @@ def _write_state(path: Path, fills: list[dict]) -> None:
 
 
 def _write_trades(path: Path, total_pnl: float, unpaired: float | None,
-                  closed: int = 0, unpaired_orders: int = 0) -> None:
+                  closed: int = 0, unpaired_orders: int = 0,
+                  trades: list | None = None) -> None:
+    """Write a synthetic trades.json.
+
+    If ``trades`` is supplied it is written verbatim and stats.total_pnl is
+    treated as the sum of those trades' realized_pnl (caller's responsibility).
+    If ``trades`` is None we synthesize a single closed trade with
+    realized_pnl == total_pnl and exit_time inside the broker window used by
+    the existing scenarios (2026-05-20..2026-05-29).
+    """
     stats: dict = {
         "total_pnl": total_pnl,
         "closed_trades": closed,
@@ -42,7 +51,17 @@ def _write_trades(path: Path, total_pnl: float, unpaired: float | None,
     }
     if unpaired is not None:
         stats["unpaired_realized_pnl"] = unpaired
-    path.write_text(json.dumps({"stats": stats, "trades": []}))
+    if trades is None:
+        trades = []
+        if closed > 0:
+            trades = [{
+                "id": f"synth_{i}",
+                "status": "closed",
+                "entry_time": "2026-05-21 12:00:00+00:00",
+                "exit_time": "2026-05-28 12:00:00+00:00",
+                "realized_pnl": (total_pnl / closed) if closed else 0.0,
+            } for i in range(closed)]
+    path.write_text(json.dumps({"stats": stats, "trades": trades}))
 
 
 def test_within_threshold_exit_zero(tmp_path: Path, recon_mod, monkeypatch):
@@ -212,7 +231,12 @@ def test_open_positions_excluded_from_broker_realized(recon_mod):
          "legs": ["X1", "X2", "X3", "X4"]},
     ]
 
-    broker_realized, closed_count = recon_mod.compute_broker_realized(
+    # Stamp every fill with a timestamp so the window-extraction code path
+    # is also covered by this scenario.
+    for i, row in enumerate(fills):
+        row.setdefault("filled_at", f"2026-04-{1 + (i % 28):02d} 15:00:00+00:00")
+
+    broker_realized, closed_count, win_start, win_end = recon_mod.compute_broker_realized(
         {"trade_history": fills}
     )
 
@@ -220,6 +244,11 @@ def test_open_positions_excluded_from_broker_realized(recon_mod):
     assert broker_realized == 800.0
     # 3 closed leg-groups; the 2 open ones contribute $0
     assert closed_count == 3
+    # Window spans only the closed-group timestamps (open-group fills are
+    # excluded — even though we still appended their timestamps to their own
+    # group buckets, those groups never got selected as "closed").
+    assert win_start is not None and win_end is not None
+    assert win_start <= win_end
 
 
 def test_missing_unpaired_field_is_tolerated(tmp_path: Path, recon_mod, monkeypatch):
@@ -242,3 +271,133 @@ def test_missing_unpaired_field_is_tolerated(tmp_path: Path, recon_mod, monkeypa
     report = json.loads((reports / "reconciliation_2026-05-29.json").read_text())
     assert report["paired_realized_pnl"] == 0.0
     assert report["delta_dollars"] == 0.0
+
+
+def _mleg_fills(legs: list[str], open_price: float, close_price: float,
+                open_ts: str, close_ts: str, qty: int = 1) -> list[dict]:
+    return [
+        {"id": "open", "symbol": None, "side": "None", "qty": str(qty),
+         "price": f"{open_price:.2f}", "filled_at": open_ts,
+         "status": "OrderStatus.FILLED", "order_class": "OrderClass.MLEG",
+         "legs": legs},
+        {"id": "close", "symbol": None, "side": "None", "qty": str(qty),
+         "price": f"{close_price:.2f}", "filled_at": close_ts,
+         "status": "OrderStatus.FILLED", "order_class": "OrderClass.MLEG",
+         "legs": legs},
+    ]
+
+
+def test_paired_window_clip_excludes_out_of_window(tmp_path: Path, recon_mod,
+                                                    monkeypatch):
+    """Paired ledger has 5 closed trades: 2 outside broker window, 3 inside.
+    Only the 3 inside count toward delta. broker_realized is +$200, the 3 in
+    window paired trades sum to +$210 (delta -$10 < $150)."""
+    state = tmp_path / "system_state.json"
+    trades_path = tmp_path / "trades.json"
+    reports = tmp_path / "reports"
+
+    # Broker: one closed MLEG, +$3 credit -> -$1 debit = +$200, window
+    # 2026-05-20..2026-05-29. (Close-side price must be NEGATIVE so the
+    # MLEG signed_qty convention nets to zero.)
+    fills = _mleg_fills(
+        legs=["A", "B", "C", "D"],
+        open_price=3.0,
+        close_price=-1.0,
+        open_ts="2026-05-20 19:00:00+00:00",
+        close_ts="2026-05-29 19:00:00+00:00",
+    )
+    _write_state(state, fills)
+
+    # Paired: 3 inside (sum +$210), 2 outside (sum +$5000 — must be ignored).
+    paired_trades = [
+        {"id": "in1", "status": "closed", "entry_time": "2026-05-21T10:00:00+00:00",
+         "exit_time": "2026-05-22T10:00:00+00:00", "realized_pnl": 70.0},
+        {"id": "in2", "status": "closed", "entry_time": "2026-05-23T10:00:00+00:00",
+         "exit_time": "2026-05-24T10:00:00+00:00", "realized_pnl": 70.0},
+        {"id": "in3", "status": "closed", "entry_time": "2026-05-25T10:00:00+00:00",
+         "exit_time": "2026-05-26T10:00:00+00:00", "realized_pnl": 70.0},
+        {"id": "out_before", "status": "closed", "entry_time": "2026-01-10T10:00:00+00:00",
+         "exit_time": "2026-01-20T10:00:00+00:00", "realized_pnl": 2500.0},
+        {"id": "out_after", "status": "closed", "entry_time": "2026-06-10T10:00:00+00:00",
+         "exit_time": "2026-06-20T10:00:00+00:00", "realized_pnl": 2500.0},
+    ]
+    # stats.total_pnl is the FULL-history paired number (pre-clip). We must
+    # demonstrate the clip ignores it in favor of per-trade exit-time filter.
+    trades_path.write_text(json.dumps({
+        "stats": {"total_pnl": 5210.0, "closed_trades": 5,
+                  "unpaired_realized_pnl": 0.0, "unpaired_order_count": 0},
+        "trades": paired_trades,
+    }))
+
+    monkeypatch.delenv("SENTRY_DSN", raising=False)
+    code = recon_mod.main([
+        "--system-state", str(state),
+        "--trades", str(trades_path),
+        "--report-dir", str(reports),
+        "--date", "2026-05-29",
+    ])
+    assert code == 0  # delta = 200 - 210 = -10, within threshold
+
+    report = json.loads((reports / "reconciliation_2026-05-29.json").read_text())
+    assert report["broker_realized_pnl"] == 200.0
+    assert report["paired_realized_in_window"] == 210.0
+    assert report["paired_realized_outside_window"] == 5000.0
+    assert report["paired_trade_count_in_window"] == 3
+    assert report["paired_trade_count_outside_window"] == 2
+    assert report["delta_dollars"] == -10.0
+    assert report["alert_fired"] is False
+    assert report["window_clipped"] is True
+    assert report["window_start"] is not None
+    assert report["window_end"] is not None
+
+
+def test_paired_entirely_outside_window(tmp_path: Path, recon_mod, monkeypatch):
+    """All paired trades exit before broker window opens. paired_in_window=0,
+    delta = broker_realized alone. Broker +$500 > $150 -> alert fires."""
+    state = tmp_path / "system_state.json"
+    trades_path = tmp_path / "trades.json"
+    reports = tmp_path / "reports"
+
+    # Broker: +$500 net realized inside the window. Close price negative
+    # so MLEG net_qty hits zero (the IC is fully unwound).
+    fills = _mleg_fills(
+        legs=["W", "X", "Y", "Z"],
+        open_price=6.0,
+        close_price=-1.0,
+        open_ts="2026-05-20 18:00:00+00:00",
+        close_ts="2026-05-29 18:00:00+00:00",
+    )
+    _write_state(state, fills)
+
+    # Every paired trade exited BEFORE the broker window opened.
+    paired_trades = [
+        {"id": f"old{i}", "status": "closed",
+         "entry_time": "2026-01-05T10:00:00+00:00",
+         "exit_time": "2026-01-15T10:00:00+00:00",
+         "realized_pnl": 100.0}
+        for i in range(4)
+    ]
+    trades_path.write_text(json.dumps({
+        "stats": {"total_pnl": 400.0, "closed_trades": 4,
+                  "unpaired_realized_pnl": 0.0, "unpaired_order_count": 0},
+        "trades": paired_trades,
+    }))
+
+    monkeypatch.delenv("SENTRY_DSN", raising=False)
+    code = recon_mod.main([
+        "--system-state", str(state),
+        "--trades", str(trades_path),
+        "--report-dir", str(reports),
+        "--date", "2026-05-29",
+    ])
+    # broker $500, paired_in $0 -> delta $500 > $150 -> alert -> exit 2.
+    assert code == 2
+
+    report = json.loads((reports / "reconciliation_2026-05-29.json").read_text())
+    assert report["broker_realized_pnl"] == 500.0
+    assert report["paired_realized_in_window"] == 0.0
+    assert report["paired_trade_count_in_window"] == 0
+    assert report["paired_realized_outside_window"] == 400.0
+    assert report["paired_trade_count_outside_window"] == 4
+    assert report["delta_dollars"] == 500.0
+    assert report["alert_fired"] is True
