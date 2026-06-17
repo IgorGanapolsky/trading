@@ -1,0 +1,19 @@
+{
+  "alert_fired": true,
+  "broker_fill_count": 5,
+  "broker_realized_pnl": 163.0,
+  "date": "2026-06-12",
+  "delta_dollars": 12833.0,
+  "notes": "broker_realized = sum(signed_cash) over FILLED rows grouped by leg-key (SIMPLE: OCC symbol; MLEG: sorted tuple of leg symbols) where net signed_qty == 0 (position fully closed). Open positions contribute $0 so entry cash is not mistaken for realized P/L. paired_realized_in_window = sum(trades[].realized_pnl) where exit_time in [window_start, window_end] + trades.stats.unpaired_realized_pnl. The window is the min/max filled_at across closed broker leg-groups, so the rolling ~60d broker history is not diff'd against the full paired ledger. Threshold $150 sits above the ~$103 fee/spread noise floor (LL-354 prevention layer).",
+  "paired_realized_in_window": -12670.0,
+  "paired_realized_outside_window": -3398.0,
+  "paired_realized_pnl": -12670.0,
+  "paired_trade_count": 99,
+  "paired_trade_count_in_window": 99,
+  "paired_trade_count_outside_window": 65,
+  "paired_unpaired_order_count": 6,
+  "threshold_dollars": 150.0,
+  "window_clipped": true,
+  "window_end": "2026-06-03 16:39:17.451554+00:00",
+  "window_start": "2026-03-23 14:31:07.158086+00:00"
+}
