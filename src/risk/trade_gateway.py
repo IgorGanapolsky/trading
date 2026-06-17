@@ -680,6 +680,7 @@ class TradeGateway:
         return False, ""
 
     DECISION_LOG_PATH = Path("data/gateway_decisions.jsonl")
+    TRADING_HALTED_FILE = Path("data/TRADING_HALTED")
 
     def evaluate(self, request: TradeRequest) -> GatewayDecision:
         """
@@ -799,7 +800,7 @@ class TradeGateway:
 
         if is_position_opening:
             # Check 1: TRADING_HALTED flag file
-            halt_file = Path("data/TRADING_HALTED")
+            halt_file = self.TRADING_HALTED_FILE
             if halt_file.exists():
                 halt_reason = halt_file.read_text().strip() or "Manual trading halt"
                 logger.error(f"🚨 CIRCUIT BREAKER: Trading halted - {halt_reason}")

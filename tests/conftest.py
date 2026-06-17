@@ -30,8 +30,7 @@ def disable_circuit_breaker_for_tests(monkeypatch, tmp_path):
 
     fake_halt = tmp_path / "TRADING_HALTED"
 
-    # Patch every module that has its own TRADING_HALTED_FILE constant.
-    # Grep'd from src/: only crisis_monitor.py defines one at module scope.
+    # Patch every module/class that owns a TRADING_HALTED_FILE path.
     # Use raising=False so absence of the attribute (e.g. import-time errors
     # in minimal CI) never breaks the whole test session.
     try:
@@ -39,6 +38,18 @@ def disable_circuit_breaker_for_tests(monkeypatch, tmp_path):
 
         monkeypatch.setattr(
             _crisis_monitor, "TRADING_HALTED_FILE", fake_halt, raising=False
+        )
+    except (ImportError, ModuleNotFoundError):
+        pass
+
+    try:
+        import src.risk.trade_gateway as _trade_gateway
+
+        monkeypatch.setattr(
+            _trade_gateway.TradeGateway,
+            "TRADING_HALTED_FILE",
+            fake_halt,
+            raising=False,
         )
     except (ImportError, ModuleNotFoundError):
         pass

@@ -242,7 +242,13 @@ def test_gate_blocks_insufficient_trades():
 
 def test_gate_allows_good_performance():
     """Enough trades with positive expectancy and profit factor should allow."""
-    stats = {"closed_trades": 50, "win_rate_pct": 75.0, "avg_win": 100, "avg_loss": 80}
+    stats = {
+        "closed_trades": 50,
+        "win_rate_pct": 75.0,
+        "avg_win": 100,
+        "avg_loss": 80,
+        "total_realized_pnl": 1775.0,
+    }
     gate = check_trading_gate(stats)
     assert gate["should_trade"]
     assert gate["expectancy_per_trade"] > 0
@@ -272,7 +278,13 @@ def test_gate_blocks_breakeven_profit_factor():
 
 def test_gate_calculates_expectancy():
     """Expectancy = (win_rate * avg_win) - (loss_rate * avg_loss)."""
-    stats = {"closed_trades": 100, "win_rate_pct": 80.0, "avg_win": 100, "avg_loss": 200}
+    stats = {
+        "closed_trades": 100,
+        "win_rate_pct": 80.0,
+        "avg_win": 100,
+        "avg_loss": 200,
+        "total_realized_pnl": 4000.0,
+    }
     gate = check_trading_gate(stats)
     # Expected: 0.8 * 100 - 0.2 * 200 = 80 - 40 = 40
     assert gate["expectancy_per_trade"] == 40.0
