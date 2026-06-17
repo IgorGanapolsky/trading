@@ -14,6 +14,7 @@ Project instructions live in `.claude/CLAUDE.md`. Rules auto-load from `.claude/
 - Canonical ledgers: `data/system_state.json` and `data/trades.json`
 - Archived from the default operating path: blog/wiki/dashboard/pages publishing and discovery marketing workflows
 - Never describe the system as profitable or validated unless current ledger data proves it
+- Use Data Science, ML evidence, and Agentic RAG lessons to prioritize trading, CI, and PR-management decisions.
 
 ## Session Directive: PR Management & System Hygiene
 
@@ -25,6 +26,7 @@ Project instructions live in `.claude/CLAUDE.md`. Rules auto-load from `.claude/
 - Keep branch hygiene: remove stale/orphan branches after merges.
 - Run operational readiness checks (CI on `main` plus local dry-run health checks) before declaring completion.
 - Record lessons learned in RAG after task completion and log any execution mistake there as well.
+- Never persist action-time secrets or GitHub tokens in directives, RAG, logs, commits, or generated artifacts.
 - When status is not yet proven, say "I believe this is done, verifying now..." instead of claiming completion.
 - Do not claim the workflow complete until all of the following are true:
   - open PRs are reviewed and every merge-ready PR is merged or explicitly blocked with evidence

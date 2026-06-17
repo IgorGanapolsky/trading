@@ -35,6 +35,8 @@ Always tell the user 100% truth. Never fabricate, hide, or misrepresent status, 
 - Verify `main` after merges using GitHub CI and a local dry-run or operational readiness command.
 - Record lessons and mistakes in RAG at the end of PR-management work.
 - Never store secrets, tokens, passwords, or pasted credentials in directive files, logs, commits, or RAG entries.
+- Use current CI data, local RAG lessons, and branch/worktree inventories to drive merge and cleanup decisions; do not merge on intuition.
+- If a GitHub token is provided in chat, use existing authenticated tooling or an action-time environment variable only; never persist the token.
 
 ## Secrets / Keys
 
