@@ -1201,7 +1201,11 @@ def _normalize_existing_trade_ids(trades: list[dict[str, Any]]) -> int:
     return normalized
 
 
-def _compute_stats(trades: list[dict[str, Any]], paper_phase_start: str) -> dict[str, Any]:
+def _compute_stats(
+    trades: list[dict[str, Any]],
+    paper_phase_start: str,
+    unpaired_stats: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     closed = [
         row
         for row in trades
@@ -1227,6 +1231,29 @@ def _compute_stats(trades: list[dict[str, Any]], paper_phase_start: str) -> dict
     total_losses = sum(loss_amounts)
     total_pnl = round(sum(_parse_float(row.get("realized_pnl"), 0.0) for row in closed), 2)
 
+    # Fold unpaired singletons directly into all-time metrics if present
+    u_wins = unpaired_stats.get("unpaired_wins", 0) if unpaired_stats else 0
+    u_losses = unpaired_stats.get("unpaired_losses", 0) if unpaired_stats else 0
+    u_breakeven = unpaired_stats.get("unpaired_breakeven", 0) if unpaired_stats else 0
+    u_gross_profit = unpaired_stats.get("unpaired_gross_profit", 0.0) if unpaired_stats else 0.0
+    u_gross_loss = unpaired_stats.get("unpaired_gross_loss", 0.0) if unpaired_stats else 0.0
+    u_pnl = unpaired_stats.get("unpaired_realized_pnl", 0.0) if unpaired_stats else 0.0
+
+    wins_folded = len(wins) + u_wins
+    losses_folded = len(losses) + u_losses
+    breakeven_folded = len(breakeven) + u_breakeven
+    closed_folded = len(closed) + u_wins + u_losses + u_breakeven
+
+    total_wins_folded = total_wins + u_gross_profit
+    total_losses_folded = total_losses + u_gross_loss
+    total_pnl_folded = round(total_pnl + u_pnl, 2)
+
+    win_rate_pct = round((wins_folded / closed_folded) * 100.0, 2) if closed_folded else None
+    avg_win = round(total_wins_folded / wins_folded, 2) if wins_folded else None
+    avg_loss = round(total_losses_folded / losses_folded, 2) if losses_folded else None
+    profit_factor = round(total_wins_folded / total_losses_folded, 2) if total_losses_folded > 0 else None
+    expectancy = round(total_pnl_folded / closed_folded, 2) if closed_folded else None
+
     paper_days = 0
     try:
         start = datetime.fromisoformat(paper_phase_start).date()
@@ -1235,18 +1262,19 @@ def _compute_stats(trades: list[dict[str, Any]], paper_phase_start: str) -> dict
         pass
 
     return {
-        "total_trades": len(closed) + len(open_trades),
-        "closed_trades": len(closed),
+        "total_trades": closed_folded + len(open_trades),
+        "closed_trades": closed_folded,
         "open_trades": len(open_trades),
-        "wins": len(wins),
-        "losses": len(losses),
-        "breakeven": len(breakeven),
-        "win_rate_pct": round((len(wins) / len(closed)) * 100.0, 2) if closed else None,
-        "avg_win": round(total_wins / len(wins), 2) if wins else None,
-        "avg_loss": round(total_losses / len(losses), 2) if losses else None,
-        "profit_factor": round(total_wins / total_losses, 2) if total_losses > 0 else None,
-        "total_pnl": total_pnl,
-        "total_realized_pnl": total_pnl,
+        "wins": wins_folded,
+        "losses": losses_folded,
+        "breakeven": breakeven_folded,
+        "win_rate_pct": win_rate_pct,
+        "avg_win": avg_win,
+        "avg_loss": avg_loss,
+        "profit_factor": profit_factor,
+        "expectancy": expectancy,
+        "total_pnl": total_pnl_folded,
+        "total_realized_pnl": total_pnl_folded,
         "paper_phase_start": paper_phase_start,
         "paper_phase_days": paper_days,
         "last_updated": datetime.now(timezone.utc).isoformat(),
@@ -1261,6 +1289,7 @@ def _compute_unpaired_singleton_pnl(
     paired_trades: list[dict[str, Any]],
     *,
     cohort_start: str = COHORT_START_DATE,
+    open_symbols: set[str] | None = None,
 ) -> dict[str, Any]:
     """Surface SPY-option SIMPLE fills whose order_id never appears in any
     paired trade's exit order_ids.
@@ -1271,15 +1300,13 @@ def _compute_unpaired_singleton_pnl(
       - unpaired_in_cohort_pnl: same, but filtered to filled_at >= cohort_start.
         THIS is the figure that feeds `.claude/rules/kill-criteria.md` math.
       - unpaired_order_count: count of dropped orders.
-
-    NOTE: cohort math itself is NOT modified here — this only makes the gap
-    visible. Changing the math is a CTO-CEO decision in a follow-up.
     """
     paired_exit_ids: set[str] = set()
     for trade in paired_trades:
         order_ids = trade.get("order_ids")
         if isinstance(order_ids, dict):
-            for oid in order_ids.get("exit") or []:
+            # Include both entry and exit IDs to prevent double-counting
+            for oid in (order_ids.get("entry") or []) + (order_ids.get("exit") or []):
                 if oid:
                     paired_exit_ids.add(str(oid))
 
@@ -1291,36 +1318,106 @@ def _compute_unpaired_singleton_pnl(
     unpaired_all = 0.0
     unpaired_cohort = 0.0
     unpaired_count = 0
+
+    unpaired_wins_count = 0
+    unpaired_losses_count = 0
+    unpaired_breakeven_count = 0
+    unpaired_gross_profit = 0.0
+    unpaired_gross_loss = 0.0
+
+    unpaired_cohort_wins_count = 0
+    unpaired_cohort_losses_count = 0
+    unpaired_cohort_breakeven_count = 0
+    unpaired_cohort_gross_profit = 0.0
+    unpaired_cohort_gross_loss = 0.0
+
     for row in trade_history:
         if not isinstance(row, dict):
             continue
         order_id = str(row.get("id") or "")
         if not order_id or order_id in paired_exit_ids:
             continue
-        # Parent orders carry legs — skip; SIMPLE rows have no legs
-        raw_legs = row.get("legs") if isinstance(row.get("legs"), list) else []
-        if raw_legs:
+        # Check if SPY option (handling MLEG with legs and SIMPLE symbols)
+        symbol = str(row.get("symbol") or "")
+        order_class = str(row.get("order_class") or "")
+        raw_legs = row.get("legs") or []
+        leg_symbols = []
+        for leg in raw_legs:
+            if isinstance(leg, dict) and leg.get("symbol"):
+                leg_symbols.append(leg["symbol"])
+            elif isinstance(leg, str):
+                leg_symbols.append(leg)
+
+        # Exclude open positions
+        if open_symbols:
+            if symbol in open_symbols:
+                continue
+            if any(ls in open_symbols for ls in leg_symbols):
+                continue
+
+        is_spy_opt = False
+        if "MLEG" in order_class:
+            if leg_symbols and all(ls.startswith("SPY") and len(ls) > 5 for ls in leg_symbols):
+                is_spy_opt = True
+        else:
+            if symbol and symbol.startswith("SPY") and len(symbol) > 5:
+                is_spy_opt = True
+
+        if not is_spy_opt:
             continue
-        parsed = _parse_option_symbol(row.get("symbol"))
-        if parsed is None or parsed["underlying"] != "SPY":
-            continue
+
         filled_dt = _parse_dt(row.get("filled_at"))
-        side = _parse_side(row.get("side"))
         qty = _parse_float(row.get("qty"), 0.0)
         price = _parse_float(row.get("price"), 0.0)
-        if filled_dt is None or side is None or qty <= 0 or price <= 0:
+        if filled_dt is None or qty <= 0:
             continue
-        cash = _signed_cash(side, qty, price)
+
+        # Cash flow calculation
+        if "MLEG" in order_class:
+            cash = -qty * price * 100.0
+        else:
+            side = _parse_side(row.get("side"))
+            if side is None or price <= 0:
+                continue
+            cash = _signed_cash(side, qty, price)
         unpaired_all += cash
         unpaired_count += 1
+
+        if cash > 0:
+            unpaired_wins_count += 1
+            unpaired_gross_profit += cash
+        elif cash < 0:
+            unpaired_losses_count += 1
+            unpaired_gross_loss += abs(cash)
+        else:
+            unpaired_breakeven_count += 1
+
         if cohort_dt is not None and filled_dt >= cohort_dt:
             unpaired_cohort += cash
+            if cash > 0:
+                unpaired_cohort_wins_count += 1
+                unpaired_cohort_gross_profit += cash
+            elif cash < 0:
+                unpaired_cohort_losses_count += 1
+                unpaired_cohort_gross_loss += abs(cash)
+            else:
+                unpaired_cohort_breakeven_count += 1
 
     return {
         "unpaired_realized_pnl": round(unpaired_all, 2),
         "unpaired_in_cohort_pnl": round(unpaired_cohort, 2),
         "unpaired_order_count": unpaired_count,
         "unpaired_cohort_start": cohort_start,
+        "unpaired_wins": unpaired_wins_count,
+        "unpaired_losses": unpaired_losses_count,
+        "unpaired_breakeven": unpaired_breakeven_count,
+        "unpaired_gross_profit": round(unpaired_gross_profit, 2),
+        "unpaired_gross_loss": round(unpaired_gross_loss, 2),
+        "unpaired_cohort_wins": unpaired_cohort_wins_count,
+        "unpaired_cohort_losses": unpaired_cohort_losses_count,
+        "unpaired_cohort_breakeven": unpaired_cohort_breakeven_count,
+        "unpaired_cohort_gross_profit": round(unpaired_cohort_gross_profit, 2),
+        "unpaired_cohort_gross_loss": round(unpaired_cohort_gross_loss, 2),
     }
 
 
@@ -1500,8 +1597,15 @@ def sync_closed_positions(dry_run: bool = False) -> dict[str, Any]:
         or str(ledger.get("stats", {}).get("paper_phase_start"))
         or "2026-01-22"
     )
-    ledger["stats"] = _compute_stats(ledger["trades"], paper_phase_start)
-    unpaired_stats = _compute_unpaired_singleton_pnl(trade_history, ledger["trades"])
+    system_state = _load_system_state()
+    positions = system_state.get("positions") or []
+    open_symbols = {p["symbol"] for p in positions if isinstance(p, dict) and p.get("symbol")}
+    unpaired_stats = _compute_unpaired_singleton_pnl(
+        trade_history,
+        ledger["trades"],
+        open_symbols=open_symbols,
+    )
+    ledger["stats"] = _compute_stats(ledger["trades"], paper_phase_start, unpaired_stats)
     ledger["stats"].update(unpaired_stats)
     ledger["meta"]["paper_phase_start"] = paper_phase_start
     ledger["meta"]["last_sync"] = datetime.now(timezone.utc).isoformat()
