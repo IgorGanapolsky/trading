@@ -15,17 +15,21 @@
   },
   "dependencies": {
     "@trigger.dev/sdk": "^4.4.6",
-    "ws": "^8.20.1"
+    "ws": "^8.21.0"
   },
   "overrides": {
+    "@opentelemetry/core": "2.8.0",
+    "esbuild": "0.28.1",
+    "protobufjs": "8.6.4",
     "systeminformation": "^5.31.6",
     "cookie": "0.7.0",
-    "ws": "^8.20.1"
+    "vite": "8.0.16",
+    "ws": "$ws"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "typescript": "^5.7.0",
-    "vitest": "^3.0.0"
+    "vitest": "^4.1.9"
   },
   "engines": {
     "node": ">=20.0.0"

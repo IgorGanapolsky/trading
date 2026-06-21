@@ -34,7 +34,7 @@ MAX_RULES_BYTES = 60_000
 COMMENT_MARKER = "<!-- ai-pr-review:v2 -->"
 
 DEFAULT_MODELS = {
-    "llm_gateway": "default",
+    "llm_gateway": "gpt-4o-mini",
     "google": "gemini-2.5-flash",
     "anthropic": "claude-sonnet-4-6",
     "openrouter": "anthropic/claude-sonnet-4-6",
