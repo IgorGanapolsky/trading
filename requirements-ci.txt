@@ -1,4 +1,4 @@
 -r requirements-minimal.txt
-coverage>=7.14.0
+coverage>=7.14.2
 pytest-cov>=6.2.0
 PyYAML>=6.0.0
