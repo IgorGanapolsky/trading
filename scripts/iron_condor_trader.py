@@ -73,6 +73,53 @@ def select_strikes_by_delta(*args, **kwargs):
     return select_strikes_by_delta_impl(*args, **kwargs)
 
 
+def make_alpaca_trading_client(api_key: str, secret: str):
+    """Construct the Alpaca trading client lazily so missing SDKs fail closed."""
+    from alpaca.trading.client import TradingClient
+
+    return TradingClient(api_key, secret, paper=True)
+
+
+def _script_level_ml_halt_allows_validation(*, halt_reason: str, explicit_live: bool) -> bool:
+    """Mirror the mandatory gate's narrow ML-halt override for paper validation.
+
+    The script checks data/TRADING_HALTED before the order-level mandatory gate.
+    This helper prevents that early check from deadlocking the controlled one-lot
+    paper validation cohort while still blocking explicit live runs.
+    """
+    if explicit_live:
+        return False
+
+    normalized_reason = str(halt_reason or "").upper()
+    if "ML GATE BLOCKED" not in normalized_reason or "WIN RATE" not in normalized_reason:
+        return False
+
+    try:
+        state = json.loads(SYSTEM_STATE_PATH.read_text(encoding="utf-8"))
+    except Exception as exc:
+        logger.warning("Validation reset unavailable; failed to read system state: %s", exc)
+        return False
+
+    gate = state.get("north_star_weekly_gate", {}) if isinstance(state, dict) else {}
+    if not isinstance(gate, dict):
+        return False
+
+    quarantine = gate.get("strategy_quarantine", {})
+    if isinstance(quarantine, dict):
+        if bool(quarantine.get("block_new_positions")):
+            return False
+        if bool(quarantine.get("active")) and not bool(
+            quarantine.get("paper_validation_allowed")
+        ):
+            return False
+
+    return (
+        str(gate.get("mode") or "").strip().lower() == "validation_reset"
+        and bool(gate.get("allow_validation_entries"))
+        and bool(gate.get("block_live_new_positions"))
+    )
+
+
 @dataclass
 class IronCondorLegs:
     """Iron condor position legs."""
@@ -679,6 +726,30 @@ class IronCondorStrategy:
             live: If True, execute on Alpaca. If False, simulate only.
             entry_reason: Why this trade was entered (for decision trace).
         """
+        def blocked_trade(status: str, reason: str, **extra) -> dict:
+            payload = {
+                "timestamp": datetime.now().isoformat(),
+                "strategy": "iron_condor",
+                "underlying": ic.underlying,
+                "symbol": ic.underlying,
+                "expiry": ic.expiry,
+                "dte": ic.dte,
+                "legs": {
+                    "long_put": ic.long_put,
+                    "short_put": ic.short_put,
+                    "short_call": ic.short_call,
+                    "long_call": ic.long_call,
+                },
+                "credit": ic.credit_received,
+                "max_profit": ic.max_profit,
+                "max_risk": ic.max_risk,
+                "status": status,
+                "reason": reason,
+                "order_ids": [],
+            }
+            payload.update(extra)
+            return payload
+
         # POSITION CHECK FIRST - Prevent race conditions from parallel workflow runs
         # FIX Jan 22, 2026: Move position check to VERY START before any other logic
         # ROOT CAUSE: Multiple workflow runs could race past position check if it ran late
@@ -691,24 +762,20 @@ class IronCondorStrategy:
                 logger.error(sync_reason)
                 logger.error(sync_details)
                 logger.error("=" * 60)
-                return {
-                    "timestamp": datetime.now().isoformat(),
-                    "strategy": "iron_condor",
-                    "underlying": ic.underlying,
-                    "status": "BLOCKED_STALE_SYNC",
-                    "reason": sync_reason,
-                    "sync_health": sync_details,
-                }
+                return blocked_trade(
+                    "BLOCKED_STALE_SYNC",
+                    sync_reason,
+                    sync_health=sync_details,
+                )
             logger.info("=" * 60)
             logger.info("POSITION CHECK (MANDATORY FIRST STEP)")
             logger.info("=" * 60)
             try:
-                from alpaca.trading.client import TradingClient
                 from src.utils.alpaca_client import get_alpaca_credentials
 
                 api_key, secret = get_alpaca_credentials()
                 if api_key and secret:
-                    client = TradingClient(api_key, secret, paper=True)
+                    client = make_alpaca_trading_client(api_key, secret)
                     positions = client.get_all_positions()
 
                     underlying = ic.underlying
@@ -754,16 +821,13 @@ class IronCondorStrategy:
 
                         logger.warning("=" * 60)
 
-                        return {
-                            "timestamp": datetime.now().isoformat(),
-                            "strategy": "iron_condor",
-                            "underlying": ic.underlying,
-                            "status": "SKIPPED_POSITION_LIMIT",
-                            "reason": f"Already have {current_ic_count}/{max_ic} iron condors ({total_contracts} contracts)",
-                            "existing_positions": [
+                        return blocked_trade(
+                            "SKIPPED_POSITION_LIMIT",
+                            f"Already have {current_ic_count}/{max_ic} iron condors ({total_contracts} contracts)",
+                            existing_positions=[
                                 {"symbol": p.symbol, "qty": p.qty} for p in spy_option_positions
                             ],
-                        }
+                        )
                     else:
                         logger.info(
                             f"Position check OK: {current_ic_count}/{max_ic} iron condors - room for new entry"
@@ -779,13 +843,10 @@ class IronCondorStrategy:
 
                     if target_expiry in existing_expiries:
                         logger.warning(f"BLOCKED: Already have positions at expiry {ic.expiry}")
-                        return {
-                            "timestamp": datetime.now().isoformat(),
-                            "strategy": "iron_condor",
-                            "underlying": ic.underlying,
-                            "status": "BLOCKED_DUPLICATE_EXPIRY",
-                            "reason": f"Already holding legs at expiry {ic.expiry}",
-                        }
+                        return blocked_trade(
+                            "BLOCKED_DUPLICATE_EXPIRY",
+                            f"Already holding legs at expiry {ic.expiry}",
+                        )
 
                     # Time-series concentration check. The historical 50.7%
                     # concentration (35/69 closed trades on 2026-04-02) was a
@@ -797,13 +858,10 @@ class IronCondorStrategy:
                     blocked, ts_reason = _check_recent_expiry_concentration(ic.expiry)
                     if blocked:
                         logger.warning(f"BLOCKED by time-series concentration: {ts_reason}")
-                        return {
-                            "timestamp": datetime.now().isoformat(),
-                            "strategy": "iron_condor",
-                            "underlying": ic.underlying,
-                            "status": "BLOCKED_TIME_SERIES_EXPIRY_CONCENTRATION",
-                            "reason": ts_reason,
-                        }
+                        return blocked_trade(
+                            "BLOCKED_TIME_SERIES_EXPIRY_CONCENTRATION",
+                            ts_reason,
+                        )
             except Exception as pos_err:
                 # CRITICAL: If we can't verify positions, BLOCK the trade
                 # This prevents placing duplicate trades when Alpaca API fails
@@ -814,13 +872,10 @@ class IronCondorStrategy:
                 logger.error("REASON: Cannot verify current positions")
                 logger.error("ACTION: Trade blocked to prevent position accumulation")
                 logger.error("=" * 60)
-                return {
-                    "timestamp": datetime.now().isoformat(),
-                    "strategy": "iron_condor",
-                    "underlying": ic.underlying,
-                    "status": "BLOCKED_POSITION_CHECK_FAILED",
-                    "reason": f"Position check failed: {pos_err}",
-                }
+                return blocked_trade(
+                    "BLOCKED_POSITION_CHECK_FAILED",
+                    f"Position check failed: {pos_err}",
+                )
 
         # Query RAG for lessons before trading
         logger.info("Checking RAG lessons before execution...")
@@ -854,13 +909,11 @@ class IronCondorStrategy:
             if lesson.severity == "CRITICAL" and "iron condor" in lesson.title.lower():
                 logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
                 logger.error(f"Prevention: {lesson.prevention}")
-                return {
-                    "timestamp": datetime.now().isoformat(),
-                    "strategy": "iron_condor",
-                    "status": "BLOCKED_BY_RAG",
-                    "reason": f"Critical lesson: {lesson.title}",
-                    "lesson_id": lesson.id,
-                }
+                return blocked_trade(
+                    "BLOCKED_BY_RAG",
+                    f"Critical lesson: {lesson.title}",
+                    lesson_id=lesson.id,
+                )
 
         # Check for ticker-specific failures
         ticker_lessons = rag.search(f"{ic.underlying} trading failures options losses", top_k=3)
@@ -873,14 +926,11 @@ class IronCondorStrategy:
             if lesson.severity == "CRITICAL" and ic.underlying.lower() in lesson.title.lower():
                 logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
                 logger.error(f"Prevention: {lesson.prevention}")
-                return {
-                    "timestamp": datetime.now().isoformat(),
-                    "strategy": "iron_condor",
-                    "underlying": ic.underlying,
-                    "status": "BLOCKED_BY_RAG",
-                    "reason": f"Critical lesson for {ic.underlying}: {lesson.title}",
-                    "lesson_id": lesson.id,
-                }
+                return blocked_trade(
+                    "BLOCKED_BY_RAG",
+                    f"Critical lesson for {ic.underlying}: {lesson.title}",
+                    lesson_id=lesson.id,
+                )
 
         logger.info("RAG checks passed - proceeding with execution")
 
@@ -896,15 +946,12 @@ class IronCondorStrategy:
                 if not guard_result.passed:
                     reason = "; ".join(guard_result.rejections) or "behavioral guard rejection"
                     logger.warning("BLOCKED by behavioral guard: %s", reason)
-                    return {
-                        "timestamp": datetime.now().isoformat(),
-                        "strategy": "iron_condor",
-                        "underlying": ic.underlying,
-                        "status": "BLOCKED_BEHAVIORAL_GUARD",
-                        "reason": reason,
-                        "checks_run": guard_result.checks_run,
-                        "warnings": guard_result.warnings,
-                    }
+                    return blocked_trade(
+                        "BLOCKED_BEHAVIORAL_GUARD",
+                        reason,
+                        checks_run=guard_result.checks_run,
+                        warnings=guard_result.warnings,
+                    )
             except Exception as guard_err:
                 logger.warning(f"Behavioral guard check skipped due to error: {guard_err}")
 
@@ -932,7 +979,6 @@ class IronCondorStrategy:
         if live:
             logger.info("Entering LIVE execution block...")
             try:
-                from alpaca.trading.client import TradingClient
                 from alpaca.trading.enums import OrderClass, OrderSide
                 from alpaca.trading.requests import OptionLegRequest
                 from src.utils.alpaca_client import get_alpaca_credentials
@@ -948,7 +994,7 @@ class IronCondorStrategy:
                     logger.info(f"  api_key length: {len(api_key)}, starts with: {api_key[:4]}...")
 
                 if api_key and secret:
-                    client = TradingClient(api_key, secret, paper=True)
+                    client = make_alpaca_trading_client(api_key, secret)
 
                     # Build option symbols (OCC format: SPY251229P00580000)
                     exp_formatted = ic.expiry.replace("-", "")[2:]  # YYMMDD
@@ -1185,20 +1231,43 @@ def main():
     try:
         halt_state = get_trading_halt_state()
         if halt_state.active:
-            logger.warning("=" * 60)
-            logger.warning("TRADING HALTED - execution blocked")
-            logger.warning("=" * 60)
-            logger.warning(halt_state.reason)
-            logger.warning(f"Active halt file: {halt_state.path}")
-            logger.warning("=" * 60)
-            telemetry.update_ticker_decision(
-                ticker,
-                gate=0,
-                status="REJECT",
-                rejection_reason=f"Trading halted - {halt_state.kind}",
-                indicators={"halt_file": halt_state.path, "halt_kind": halt_state.kind},
-            )
-            return {"success": False, "reason": halt_state.reason}
+            if _script_level_ml_halt_allows_validation(
+                halt_reason=halt_state.reason,
+                explicit_live=args.live,
+            ):
+                logger.warning("=" * 60)
+                logger.warning(
+                    "LEGACY ML HALT BYPASSED FOR CONTROLLED PAPER VALIDATION"
+                )
+                logger.warning(halt_state.reason)
+                logger.warning("Live/scaling remains blocked; mandatory gate still applies.")
+                logger.warning("=" * 60)
+                telemetry.update_ticker_decision(
+                    ticker,
+                    gate=0,
+                    status="WARN",
+                    rejection_reason="Legacy ML halt bypassed for validation_reset paper entry",
+                    indicators={
+                        "halt_file": halt_state.path,
+                        "halt_kind": halt_state.kind,
+                        "validation_reset": True,
+                    },
+                )
+            else:
+                logger.warning("=" * 60)
+                logger.warning("TRADING HALTED - execution blocked")
+                logger.warning("=" * 60)
+                logger.warning(halt_state.reason)
+                logger.warning(f"Active halt file: {halt_state.path}")
+                logger.warning("=" * 60)
+                telemetry.update_ticker_decision(
+                    ticker,
+                    gate=0,
+                    status="REJECT",
+                    rejection_reason=f"Trading halted - {halt_state.kind}",
+                    indicators={"halt_file": halt_state.path, "halt_kind": halt_state.kind},
+                )
+                return {"success": False, "reason": halt_state.reason}
 
         # ExecutionAgent enforces VIX gate, DTE gate, and daily throttle.
         # Thursday-only gate was removed 2026-05-20 (Bonferroni adj_p=0.190).
@@ -1212,6 +1281,8 @@ def main():
                 "action": "BUY",  # Intent to enter a new IC
                 "symbol": ticker,
                 "position_size": 1.0,  # Dummy size for initial gate check
+                "dte": strategy.config["target_dte"],
+                "wing_width": strategy.config["wing_width"],
                 "market_conditions": {},
             }
 

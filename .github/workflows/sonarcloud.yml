@@ -30,6 +30,29 @@ jobs:
         with:
           fetch-depth: 0 # full history for blame-based new-code analysis
 
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-sonar-3.11-${{ hashFiles('requirements-ci.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-sonar-3.11-
+
+      - name: Generate coverage report
+        env:
+          PYTHON_BIN: python
+          REPORT_DIR: artifacts/test-reports
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-ci.txt
+          chmod +x scripts/ci/run_all_tests.sh
+          bash scripts/ci/run_all_tests.sh
+
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@713881670b6b3676cda39549040e2d88c70d582e # v8.2.0
         env:

@@ -47,7 +47,10 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from src.utils.staleness_guard import check_context_freshness
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from src.utils.staleness_guard import check_context_freshness  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -85,6 +88,42 @@ def _parse_lesson_date(value: str) -> datetime | None:
             return datetime.strptime(iso_match.group(0), "%Y-%m-%d")
         except ValueError:
             return None
+    month_match = re.search(
+        r"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4}\b",
+        text,
+        flags=re.I,
+    )
+    if month_match:
+        normalized = month_match.group(0).replace("Sept", "Sep")
+        for fmt in ("%B %d, %Y", "%b %d, %Y", "%B %d %Y", "%b %d %Y"):
+            try:
+                return datetime.strptime(normalized, fmt)
+            except ValueError:
+                continue
+    return None
+
+
+def _extract_lesson_date(content: str, lesson_file: Path) -> datetime | None:
+    """Extract the lesson's authored date before falling back to filesystem metadata."""
+    lines = content.splitlines()
+
+    # Prefer explicit Date metadata.
+    for line in lines:
+        if "date" not in line.lower():
+            continue
+        after_colon = line.split(":", 1)[1] if ":" in line else line
+        parsed = _parse_lesson_date(after_colon)
+        if parsed:
+            return parsed
+
+    # Many older lessons put the date in the title or filename instead of a
+    # Date field. RAG/index refreshes can update mtime and make those old
+    # lessons look recent, so parse headings and filenames before mtime.
+    for candidate in [*lines[:5], lesson_file.stem.replace("_", " ").replace("-", " ")]:
+        parsed = _parse_lesson_date(candidate)
+        if parsed:
+            return parsed
+
     return None
 
 
@@ -120,16 +159,7 @@ def check_recent_critical_lessons(days_back: int = 7, include_high: bool = False
 
             severity_level = "CRITICAL" if is_critical else "HIGH"
 
-            # Try to extract date from content
-            lesson_date = None
-            for line in content.split("\n"):
-                if "date" not in line.lower():
-                    continue
-                after_colon = line.split(":", 1)[1] if ":" in line else line
-                parsed = _parse_lesson_date(after_colon)
-                if parsed:
-                    lesson_date = parsed
-                    break
+            lesson_date = _extract_lesson_date(content, lesson_file)
 
             # Also check file modification time as fallback
             file_mtime = datetime.fromtimestamp(lesson_file.stat().st_mtime)

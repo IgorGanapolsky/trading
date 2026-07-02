@@ -27,7 +27,12 @@ pytest.importorskip("dotenv")
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from scripts.iron_condor_trader import IronCondorLegs, IronCondorStrategy
+from scripts.iron_condor_trader import (
+    IronCondorLegs,
+    IronCondorStrategy,
+    _script_level_ml_halt_allows_validation,
+)
+import scripts.iron_condor_trader as trader_mod
 from src.core.trading_constants import MAX_POSITION_PCT, MAX_POSITIONS
 
 
@@ -81,6 +86,79 @@ class TestIronCondorLegs:
         assert legs.long_put < legs.short_put
         assert legs.short_put < legs.short_call
         assert legs.short_call < legs.long_call
+
+
+class TestScriptLevelTradingHalt:
+    """Script-level halt handling must match the mandatory trade gate."""
+
+    def test_ml_halt_allows_validation_reset_paper_entry(self, monkeypatch, tmp_path):
+        import json
+
+        state_file = tmp_path / "system_state.json"
+        state_file.write_text(
+            json.dumps(
+                {
+                    "north_star_weekly_gate": {
+                        "mode": "validation_reset",
+                        "allow_validation_entries": True,
+                        "block_live_new_positions": True,
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(trader_mod, "SYSTEM_STATE_PATH", state_file)
+
+        assert _script_level_ml_halt_allows_validation(
+            halt_reason="ML GATE BLOCKED: Win rate 24.2% < 50.0%",
+            explicit_live=False,
+        )
+
+    def test_ml_halt_still_blocks_explicit_live_entry(self, monkeypatch, tmp_path):
+        import json
+
+        state_file = tmp_path / "system_state.json"
+        state_file.write_text(
+            json.dumps(
+                {
+                    "north_star_weekly_gate": {
+                        "mode": "validation_reset",
+                        "allow_validation_entries": True,
+                        "block_live_new_positions": True,
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(trader_mod, "SYSTEM_STATE_PATH", state_file)
+
+        assert not _script_level_ml_halt_allows_validation(
+            halt_reason="ML GATE BLOCKED: Win rate 24.2% < 50.0%",
+            explicit_live=True,
+        )
+
+    def test_non_ml_halt_still_blocks_validation_reset(self, monkeypatch, tmp_path):
+        import json
+
+        state_file = tmp_path / "system_state.json"
+        state_file.write_text(
+            json.dumps(
+                {
+                    "north_star_weekly_gate": {
+                        "mode": "validation_reset",
+                        "allow_validation_entries": True,
+                        "block_live_new_positions": True,
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(trader_mod, "SYSTEM_STATE_PATH", state_file)
+
+        assert not _script_level_ml_halt_allows_validation(
+            halt_reason="Manual operator halt for review.",
+            explicit_live=False,
+        )
 
 
 class TestCalculateStrikes:
@@ -356,7 +434,7 @@ class TestExecute:
 
         with (
             patch.object(strategy, "_validate_sync_freshness", return_value=(True, "", {})),
-            patch("alpaca.trading.client.TradingClient", return_value=mock_client),
+            patch("scripts.iron_condor_trader.make_alpaca_trading_client", return_value=mock_client),
             patch(
                 "src.utils.alpaca_client.get_alpaca_credentials",
                 return_value=("test_key", "test_secret"),
@@ -377,7 +455,7 @@ class TestExecute:
 
         with (
             patch.object(strategy, "_validate_sync_freshness", return_value=(True, "", {})),
-            patch("alpaca.trading.client.TradingClient", return_value=mock_client),
+            patch("scripts.iron_condor_trader.make_alpaca_trading_client", return_value=mock_client),
             patch(
                 "src.utils.alpaca_client.get_alpaca_credentials",
                 return_value=("test_key", "test_secret"),

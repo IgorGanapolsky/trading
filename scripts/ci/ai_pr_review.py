@@ -95,8 +95,8 @@ def run(cmd: list[str], check: bool = True) -> str:
     return result.stdout
 
 
-def select_provider() -> tuple[str, str, str | None]:
-    """Return (provider, model, api_key). Picks first non-empty key in order.
+def select_providers() -> list[tuple[str, str, str]]:
+    """Return available (provider, model, api_key) candidates in fallback order.
 
     Order (2026-05-21): internal gateway first (zero marginal cost,
     routed), then Google Gemini free tier, then Anthropic (paid), then
@@ -112,12 +112,13 @@ def select_provider() -> tuple[str, str, str | None]:
     )
     if forced:
         candidates = tuple(c for c in candidates if c[0] == forced)
+    available: list[tuple[str, str, str]] = []
     for provider, env in candidates:
         key = os.environ.get(env)
         if key:
             model = os.environ.get("AI_REVIEW_MODEL", DEFAULT_MODELS[provider])
-            return provider, model, key
-    return "none", "", None
+            available.append((provider, model, key))
+    return available
 
 
 def load_context() -> str:
@@ -243,21 +244,31 @@ PROVIDER_DISPATCH = {
 
 
 def call_review(system: str, user: str) -> tuple[str, str, str]:
-    provider, model, key = select_provider()
-    if provider == "none" or not key:
+    providers = select_providers()
+    if not providers:
         sys.stderr.write(
             "no LLM provider key in env. set one of OPENROUTER_API_KEY, "
             "LLM_GATEWAY_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY.\n"
         )
-        sys.exit(2)
-    print(f"using provider={provider} model={model}", file=sys.stderr)
-    try:
-        text = PROVIDER_DISPATCH[provider](model, key, system, user)
-    except urllib.error.HTTPError as e:
-        msg = e.read().decode("utf-8", errors="replace")
-        sys.stderr.write(f"{provider} api error {e.code}: {msg}\n")
-        sys.exit(2)
-    return provider, model, text
+        return "none", "", ""
+
+    failures: list[str] = []
+    for provider, model, key in providers:
+        print(f"using provider={provider} model={model}", file=sys.stderr)
+        try:
+            text = PROVIDER_DISPATCH[provider](model, key, system, user)
+        except urllib.error.HTTPError as e:
+            msg = e.read().decode("utf-8", errors="replace")
+            failures.append(f"{provider} api error {e.code}: {msg}")
+            sys.stderr.write(f"{failures[-1]}\n")
+            continue
+        if text:
+            return provider, model, text
+        failures.append(f"{provider} returned empty review")
+        sys.stderr.write(f"{failures[-1]}\n")
+
+    sys.stderr.write("all AI review providers failed:\n" + "\n".join(failures) + "\n")
+    return "none", "", ""
 
 
 def find_existing_comment(repo: str, pr: str) -> int | None:
