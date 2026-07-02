@@ -51,7 +51,10 @@ _BASELINE_IRON_CONDOR_PROFILE = IronCondorProfile(
     short_delta=0.15,
     delta_band_min=0.10,
     delta_band_max=0.22,
-    wing_width=10.0,
+    # Validation hypothesis (data/runtime/strategy_validation_hypothesis.json)
+    # rejects 10-wide wings from the failed 144-trade ledger; the fresh cohort
+    # must use narrower defined-risk wings until kill criteria are cleared.
+    wing_width=5.0,
     take_profit_pct=0.50,
     stop_loss_pct=1.0,
     exit_dte=7,
