@@ -200,7 +200,7 @@ jobs:
       # Note: pip cache is disabled to avoid large post-job tar uploads that
       # were cancelling runs on GitHub-hosted runners.
       - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.11"
           cache: "pip"
@@ -308,7 +308,7 @@ jobs:
           token: ${{ secrets.GH_PAT || github.token }}
 
       - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.12"
           cache: "pip"
@@ -415,7 +415,7 @@ jobs:
           echo "✅ MCP server started on 127.0.0.1:8801 (mode: $MCP_MODE)"
 
       - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.11"
           cache: "pip"
