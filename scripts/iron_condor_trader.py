@@ -80,6 +80,46 @@ def make_alpaca_trading_client(api_key: str, secret: str):
     return TradingClient(api_key, secret, paper=True)
 
 
+def _script_level_ml_halt_allows_validation(*, halt_reason: str, explicit_live: bool) -> bool:
+    """Mirror the mandatory gate's narrow ML-halt override for paper validation.
+
+    The script checks data/TRADING_HALTED before the order-level mandatory gate.
+    This helper prevents that early check from deadlocking the controlled one-lot
+    paper validation cohort while still blocking explicit live runs.
+    """
+    if explicit_live:
+        return False
+
+    normalized_reason = str(halt_reason or "").upper()
+    if "ML GATE BLOCKED" not in normalized_reason or "WIN RATE" not in normalized_reason:
+        return False
+
+    try:
+        state = json.loads(SYSTEM_STATE_PATH.read_text(encoding="utf-8"))
+    except Exception as exc:
+        logger.warning("Validation reset unavailable; failed to read system state: %s", exc)
+        return False
+
+    gate = state.get("north_star_weekly_gate", {}) if isinstance(state, dict) else {}
+    if not isinstance(gate, dict):
+        return False
+
+    quarantine = gate.get("strategy_quarantine", {})
+    if isinstance(quarantine, dict):
+        if bool(quarantine.get("block_new_positions")):
+            return False
+        if bool(quarantine.get("active")) and not bool(
+            quarantine.get("paper_validation_allowed")
+        ):
+            return False
+
+    return (
+        str(gate.get("mode") or "").strip().lower() == "validation_reset"
+        and bool(gate.get("allow_validation_entries"))
+        and bool(gate.get("block_live_new_positions"))
+    )
+
+
 @dataclass
 class IronCondorLegs:
     """Iron condor position legs."""
@@ -1191,20 +1231,43 @@ def main():
     try:
         halt_state = get_trading_halt_state()
         if halt_state.active:
-            logger.warning("=" * 60)
-            logger.warning("TRADING HALTED - execution blocked")
-            logger.warning("=" * 60)
-            logger.warning(halt_state.reason)
-            logger.warning(f"Active halt file: {halt_state.path}")
-            logger.warning("=" * 60)
-            telemetry.update_ticker_decision(
-                ticker,
-                gate=0,
-                status="REJECT",
-                rejection_reason=f"Trading halted - {halt_state.kind}",
-                indicators={"halt_file": halt_state.path, "halt_kind": halt_state.kind},
-            )
-            return {"success": False, "reason": halt_state.reason}
+            if _script_level_ml_halt_allows_validation(
+                halt_reason=halt_state.reason,
+                explicit_live=args.live,
+            ):
+                logger.warning("=" * 60)
+                logger.warning(
+                    "LEGACY ML HALT BYPASSED FOR CONTROLLED PAPER VALIDATION"
+                )
+                logger.warning(halt_state.reason)
+                logger.warning("Live/scaling remains blocked; mandatory gate still applies.")
+                logger.warning("=" * 60)
+                telemetry.update_ticker_decision(
+                    ticker,
+                    gate=0,
+                    status="WARN",
+                    rejection_reason="Legacy ML halt bypassed for validation_reset paper entry",
+                    indicators={
+                        "halt_file": halt_state.path,
+                        "halt_kind": halt_state.kind,
+                        "validation_reset": True,
+                    },
+                )
+            else:
+                logger.warning("=" * 60)
+                logger.warning("TRADING HALTED - execution blocked")
+                logger.warning("=" * 60)
+                logger.warning(halt_state.reason)
+                logger.warning(f"Active halt file: {halt_state.path}")
+                logger.warning("=" * 60)
+                telemetry.update_ticker_decision(
+                    ticker,
+                    gate=0,
+                    status="REJECT",
+                    rejection_reason=f"Trading halted - {halt_state.kind}",
+                    indicators={"halt_file": halt_state.path, "halt_kind": halt_state.kind},
+                )
+                return {"success": False, "reason": halt_state.reason}
 
         # ExecutionAgent enforces VIX gate, DTE gate, and daily throttle.
         # Thursday-only gate was removed 2026-05-20 (Bonferroni adj_p=0.190).
@@ -1218,6 +1281,8 @@ def main():
                 "action": "BUY",  # Intent to enter a new IC
                 "symbol": ticker,
                 "position_size": 1.0,  # Dummy size for initial gate check
+                "dte": strategy.config["target_dte"],
+                "wing_width": strategy.config["wing_width"],
                 "market_conditions": {},
             }
 

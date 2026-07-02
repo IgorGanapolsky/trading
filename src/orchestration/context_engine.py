@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
@@ -36,10 +36,16 @@ class ContextMemory:
     value: Any
     timescale: MemoryTimescale
     timestamp: datetime = None
+    content: dict[str, Any] = field(default_factory=dict)
+    outcome_pl: float = 0.0
+    importance_score: float = 0.0
+    tags: set[str] = field(default_factory=set)
 
     def __post_init__(self):
         if self.timestamp is None:
             self.timestamp = datetime.now()
+        if not self.content and isinstance(self.value, dict):
+            self.content = self.value
 
 
 def get_context_engine() -> ContextEngine:
@@ -90,6 +96,7 @@ class ContextEngine:
         self.audit_dir = self.base_dir / "audit"
         self.market_data_dir = self.base_dir / "market_data"
         self.agent_decisions_dir = self.base_dir / "decisions"
+        self.memory_dir = self.base_dir / "memories"
 
         # Create directories
         for dir_path in [
@@ -98,10 +105,95 @@ class ContextEngine:
             self.audit_dir,
             self.market_data_dir,
             self.agent_decisions_dir,
+            self.memory_dir,
         ]:
             dir_path.mkdir(parents=True, exist_ok=True)
 
         logger.info(f"✅ Context Engine initialized: {self.base_dir}")
+
+    def store_memory(
+        self,
+        *,
+        agent_id: str,
+        content: dict[str, Any],
+        tags: set[str] | list[str] | None = None,
+        timescale: MemoryTimescale = MemoryTimescale.DAILY,
+        outcome_pl: float = 0.0,
+        importance_score: float | None = None,
+    ) -> ContextMemory:
+        """Store an agent memory using the multi-timescale API expected by BaseAgent."""
+        timestamp = datetime.now()
+        safe_agent = "".join(ch if ch.isalnum() or ch in {"-", "_"} else "_" for ch in agent_id)
+        key = f"{safe_agent}_{timescale.value}_{timestamp.strftime('%Y%m%d_%H%M%S_%f')}"
+        memory = ContextMemory(
+            key=key,
+            value=content,
+            timescale=timescale,
+            timestamp=timestamp,
+            content=content,
+            outcome_pl=float(outcome_pl or 0.0),
+            importance_score=(
+                float(importance_score)
+                if importance_score is not None
+                else min(1.0, abs(float(outcome_pl or 0.0)) / 1000.0)
+            ),
+            tags=set(tags or []),
+        )
+        payload = {
+            "agent_id": agent_id,
+            "key": memory.key,
+            "content": memory.content,
+            "timescale": memory.timescale.value,
+            "timestamp": memory.timestamp.isoformat(),
+            "outcome_pl": memory.outcome_pl,
+            "importance_score": memory.importance_score,
+            "tags": sorted(memory.tags),
+        }
+        (self.memory_dir / f"{key}.json").write_text(
+            json.dumps(payload, indent=2, default=str),
+            encoding="utf-8",
+        )
+        return memory
+
+    def retrieve_memories(
+        self,
+        *,
+        agent_id: str,
+        limit: int = 10,
+        timescales: list[MemoryTimescale] | None = None,
+        use_multi_timescale: bool = True,
+    ) -> list[ContextMemory]:
+        """Retrieve recent agent memories for BaseAgent prompt context."""
+        del use_multi_timescale
+        allowed = {timescale.value for timescale in timescales} if timescales else None
+        memories: list[ContextMemory] = []
+        safe_agent = "".join(ch if ch.isalnum() or ch in {"-", "_"} else "_" for ch in agent_id)
+
+        for filepath in self.memory_dir.glob(f"{safe_agent}_*.json"):
+            try:
+                payload = json.loads(filepath.read_text(encoding="utf-8"))
+                timescale_value = str(payload.get("timescale") or MemoryTimescale.DAILY.value)
+                if allowed is not None and timescale_value not in allowed:
+                    continue
+                timescale = MemoryTimescale(timescale_value)
+                timestamp = datetime.fromisoformat(payload["timestamp"])
+                memories.append(
+                    ContextMemory(
+                        key=str(payload.get("key") or filepath.stem),
+                        value=payload.get("content") or {},
+                        timescale=timescale,
+                        timestamp=timestamp,
+                        content=payload.get("content") or {},
+                        outcome_pl=float(payload.get("outcome_pl") or 0.0),
+                        importance_score=float(payload.get("importance_score") or 0.0),
+                        tags=set(payload.get("tags") or []),
+                    )
+                )
+            except Exception as exc:
+                logger.warning("Error loading memory %s: %s", filepath, exc)
+
+        memories.sort(key=lambda memory: memory.timestamp, reverse=True)
+        return memories[:limit]
 
     def save_trade_log(self, trade_data: dict[str, Any]) -> str:
         """

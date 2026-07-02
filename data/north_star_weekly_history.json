@@ -202,9 +202,9 @@
     "sample_size": 0,
     "win_rate_pct": 0.0,
     "expectancy_per_trade": 0.0,
-    "mode": "quarantine",
-    "qualified_setups": 0,
+    "mode": "validation_reset",
+    "qualified_setups": 1,
     "cadence_passed": false,
-    "updated_at": "2026-07-02T17:18:17.886409+00:00"
+    "updated_at": "2026-07-02T17:21:49.465065+00:00"
   }
 ]
