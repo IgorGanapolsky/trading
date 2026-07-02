@@ -55,7 +55,7 @@ pytest-timeout>=2.0.0
 # beautifulsoup4==4.12.2         # Never imported - HTML parsing not used
 # lxml==4.9.3                    # Never imported - XML parsing not used
 fastapi==0.139.0                # MCP server for component manifest
-uvicorn==0.48.0                 # ASGI server for MCP
+uvicorn==0.49.0                 # ASGI server for MCP
 httpx==0.28.1                   # TestClient compatibility with fastapi/starlette
 aiohttp==3.14.1                 # xai-sdk transitive dependency security floor
 # scikit-learn==1.5.0            # Never imported - ML models not implemented
