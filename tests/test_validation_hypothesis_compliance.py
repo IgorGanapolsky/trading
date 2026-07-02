@@ -65,3 +65,21 @@ def test_prohibited_loss_clusters_are_acknowledged(hypothesis: dict) -> None:
     ack = hypothesis.get("rehabilitation_plan_ack", {})
     covered = set(ack.get("covered_loss_clusters", []))
     assert {"ten_wide_wings", "multi_contract"} <= covered
+
+
+def test_hypothesis_unblocks_quarantined_entries(hypothesis: dict) -> None:
+    """Mirror north_star_guard's gate: the committed hypothesis must cover the
+    rehab plan's top-3 loss clusters, or every entry attempt is silently
+    quarantined (Jun 18 – Jul 2 2026 outage: plan added long_hold_ge_7d,
+    hypothesis never acknowledged it, zero entries for two weeks)."""
+    if not hypothesis.get("enabled"):
+        pytest.skip("validation hypothesis disabled")
+
+    from src.safety.north_star_guard import _hypothesis_covers_rehabilitation_plan
+
+    assert hypothesis.get("changed_rules"), "guard requires changed_rules"
+    assert hypothesis.get("kill_criteria"), "guard requires kill_criteria"
+    assert _hypothesis_covers_rehabilitation_plan(hypothesis, HYPOTHESIS_PATH), (
+        "hypothesis does not cover the rehab plan's top loss clusters; "
+        "north_star_guard will quarantine ALL new validation entries"
+    )
