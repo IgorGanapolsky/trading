@@ -356,7 +356,7 @@ class TestExecute:
 
         with (
             patch.object(strategy, "_validate_sync_freshness", return_value=(True, "", {})),
-            patch("alpaca.trading.client.TradingClient", return_value=mock_client),
+            patch("scripts.iron_condor_trader.make_alpaca_trading_client", return_value=mock_client),
             patch(
                 "src.utils.alpaca_client.get_alpaca_credentials",
                 return_value=("test_key", "test_secret"),
@@ -377,7 +377,7 @@ class TestExecute:
 
         with (
             patch.object(strategy, "_validate_sync_freshness", return_value=(True, "", {})),
-            patch("alpaca.trading.client.TradingClient", return_value=mock_client),
+            patch("scripts.iron_condor_trader.make_alpaca_trading_client", return_value=mock_client),
             patch(
                 "src.utils.alpaca_client.get_alpaca_credentials",
                 return_value=("test_key", "test_secret"),

@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import os
+import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
 
+from scripts import pre_session_rag_check as pre
 from src.utils.staleness_guard import ContextFreshnessResult
 
 
@@ -21,8 +25,6 @@ class _Source:
 
 
 def test_pre_session_blocks_on_stale_context(monkeypatch):
-    import scripts.pre_session_rag_check as module
-
     monkeypatch.setenv("PRE_SESSION_AUTO_REFRESH_CONTEXT", "0")
     stale = ContextFreshnessResult(
         is_stale=True,
@@ -33,20 +35,18 @@ def test_pre_session_blocks_on_stale_context(monkeypatch):
         reason="Stale context indexes detected: rag_query_index",
     )
 
-    monkeypatch.setattr(module, "check_context_freshness", lambda is_market_day=True: stale)
-    monkeypatch.setattr(module, "check_recent_critical_lessons", lambda **_: [])
-    monkeypatch.setattr(module, "query_rag_for_operational_failures", lambda: [])
-    monkeypatch.setattr(module.sys, "argv", ["pre_session_rag_check.py"])
+    monkeypatch.setattr(pre, "check_context_freshness", lambda is_market_day=True: stale)
+    monkeypatch.setattr(pre, "check_recent_critical_lessons", lambda **_: [])
+    monkeypatch.setattr(pre, "query_rag_for_operational_failures", lambda: [])
+    monkeypatch.setattr(pre.sys, "argv", ["pre_session_rag_check.py"])
 
-    with patch.object(module.sys, "exit") as exit_mock:
-        module.main()
+    with patch.object(pre.sys, "exit") as exit_mock:
+        pre.main()
 
     exit_mock.assert_called_once_with(1)
 
 
 def test_pre_session_allows_when_context_fresh_and_no_recent_lessons(monkeypatch):
-    import scripts.pre_session_rag_check as module
-
     monkeypatch.setenv("PRE_SESSION_AUTO_REFRESH_CONTEXT", "0")
     fresh = ContextFreshnessResult(
         is_stale=False,
@@ -57,19 +57,17 @@ def test_pre_session_allows_when_context_fresh_and_no_recent_lessons(monkeypatch
         reason="Context freshness check passed",
     )
 
-    monkeypatch.setattr(module, "check_context_freshness", lambda is_market_day=True: fresh)
-    monkeypatch.setattr(module, "check_recent_critical_lessons", lambda **_: [])
-    monkeypatch.setattr(module, "query_rag_for_operational_failures", lambda: [])
-    monkeypatch.setattr(module.sys, "argv", ["pre_session_rag_check.py", "--allow-warnings"])
+    monkeypatch.setattr(pre, "check_context_freshness", lambda is_market_day=True: fresh)
+    monkeypatch.setattr(pre, "check_recent_critical_lessons", lambda **_: [])
+    monkeypatch.setattr(pre, "query_rag_for_operational_failures", lambda: [])
+    monkeypatch.setattr(pre.sys, "argv", ["pre_session_rag_check.py", "--allow-warnings"])
 
-    assert module.main() == 0
+    assert pre.main() == 0
 
 
 def test_check_recent_lessons_parses_markdown_severity_and_month_name_date(
     tmp_path: Path, monkeypatch
 ):
-    import scripts.pre_session_rag_check as module
-
     lessons_dir = tmp_path / "rag_knowledge" / "lessons_learned"
     lessons_dir.mkdir(parents=True)
     lesson = lessons_dir / "ll_parser_case.md"
@@ -79,9 +77,38 @@ def test_check_recent_lessons_parses_markdown_severity_and_month_name_date(
     )
 
     monkeypatch.chdir(tmp_path)
-    results = module.check_recent_critical_lessons(days_back=400, include_high=True)
+    results = pre.check_recent_critical_lessons(days_back=400, include_high=True)
     hit = next((row for row in results if row["file"] == "ll_parser_case.md"), None)
 
     assert hit is not None
     assert hit["severity"] == "HIGH"
     assert hit["date"] == datetime(2026, 1, 22)
+
+
+def test_script_help_runs_without_pythonpath() -> None:
+    env = os.environ.copy()
+    env.pop("PYTHONPATH", None)
+
+    result = subprocess.run(
+        [sys.executable, "scripts/pre_session_rag_check.py", "--help"],
+        cwd=Path(__file__).resolve().parents[1],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert "Pre-session RAG check" in result.stdout
+
+
+def test_extract_lesson_date_from_title_before_file_mtime() -> None:
+    content = """# LL-250: Trading Crisis - System Stuck for 7 Days (Jan 20, 2026)
+
+## Severity: CRITICAL
+"""
+
+    parsed = pre._extract_lesson_date(content, Path("ll_250_trading_crisis_jan20_2026.md"))
+
+    assert parsed is not None
+    assert parsed.strftime("%Y-%m-%d") == "2026-01-20"
