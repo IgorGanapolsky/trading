@@ -38,8 +38,8 @@ def _load_strategy_params() -> dict:
         "min_dte": 30,  # CLAUDE.md mandate: 30 DTE minimum
         "max_dte": 45,
         "min_credit": 0.50,
-        "profit_target": 0.50,
-        "stop_loss": 1.0,
+        "profit_target": 0.25,  # CEO-approved 2026-07-02
+        "stop_loss": 2.0,  # CEO-approved 2026-07-02
         "exit_dte": 7,
         "max_ic": 2,  # CLAUDE.md mandate: 2 ICs max
     }

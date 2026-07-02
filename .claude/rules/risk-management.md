@@ -2,7 +2,7 @@
 
 ## Canonical Policy Constants
 
-- IRON_CONDOR_STOP_LOSS_MULTIPLIER: 1.0
+- IRON_CONDOR_STOP_LOSS_MULTIPLIER: 2.0 (CEO-approved 2026-07-02, validation cohort; was 1.0)
 - NORTH_STAR_MONTHLY_AFTER_TAX: 6000
 - MAX_POSITIONS: 8
 
@@ -16,13 +16,13 @@
 
 ### Stop-Loss (MANDATORY)
 
-- Close if one side reaches 100% of credit — NO EXCEPTIONS
+- Close if total loss reaches 200% of credit (CEO-approved 2026-07-02; was 100%) — NO EXCEPTIONS
 - If tested, roll untested side closer for additional credit
 - Exit at 7 DTE to avoid gamma risk (changed from 21 DTE per LL-268)
 
 ### Exit Rules
 
-- Close at 50% max profit OR 7 DTE (whichever first)
+- Close at 25% max profit OR 7 DTE (whichever first; CEO-approved 2026-07-02, was 50%)
 - PDT NOTE: $100K > $25K = no PDT restrictions
 
 ### Financial Independence Path

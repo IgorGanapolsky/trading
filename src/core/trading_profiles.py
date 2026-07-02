@@ -55,8 +55,12 @@ _BASELINE_IRON_CONDOR_PROFILE = IronCondorProfile(
     # rejects 10-wide wings from the failed 144-trade ledger; the fresh cohort
     # must use narrower defined-risk wings until kill criteria are cleared.
     wing_width=5.0,
-    take_profit_pct=0.50,
-    stop_loss_pct=1.0,
+    # CEO-approved 2026-07-02: 25% TP + 200% stop validation package.
+    # Evidence: 138/144 failed-ledger losses stopped out <1h at the 100%
+    # multiplier; avg win captured only 22% of premium. Kill criteria in
+    # data/runtime/strategy_validation_hypothesis.json remain binding.
+    take_profit_pct=0.25,
+    stop_loss_pct=2.0,
     exit_dte=7,
     min_hold_hours=24,
     position_size_pct=0.02,  # 2% — industry standard for defined risk (was 5% scaling, 1% validation)

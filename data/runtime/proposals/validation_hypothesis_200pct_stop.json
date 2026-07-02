@@ -1,5 +1,5 @@
 {
-  "status": "PENDING_CEO_APPROVAL",
+  "status": "APPROVED_2026-07-02",
   "reason_blocked": "Widening stop-loss from 100% to 200% of credit conflicts with the pinned canonical constant IRON_CONDOR_STOP_LOSS_MULTIPLIER=1.0 (.claude/CLAUDE.md, .claude/rules/risk-management.md, boundary-policy.md hard block #3). Requires explicit CEO sign-off before it can replace the active hypothesis.",
   "found": "2026-07-02: discovered as an uncommitted local edit to data/runtime/strategy_validation_hypothesis.json authored by a prior session; preserved here instead of being silently adopted or lost.",
   "proposed_hypothesis": {
@@ -39,5 +39,6 @@
       "min_profit_factor": 1.05,
       "min_total_realized_pnl": 1.0
     }
-  }
+  },
+  "resolution": "CEO approved 2026-07-02 (explicit sign-off in session). Implemented with 2-concurrent kept (proposal had 1-concurrent; throughput retained per committed hypothesis)."
 }

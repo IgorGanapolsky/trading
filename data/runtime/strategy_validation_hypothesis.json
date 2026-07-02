@@ -1,14 +1,14 @@
 {
   "enabled": true,
   "strategy_family": "ic_simple",
-  "hypothesis": "Restart only controlled paper validation for IC Simple after the failed legacy ledger by explicitly removing the current top loss clusters: no 10-wide wings, no multi-contract sizing, no unmanaged sub-24-hour exits, and no unmanaged long holds past 7 DTE. The fresh cohort tests whether narrower defined-risk wings, one-contract sizing, live-delta provenance, and fixed exits can restore positive expectancy.",
+  "hypothesis": "Restart only controlled paper validation for IC Simple after the failed legacy ledger by explicitly removing the current top loss clusters: no 10-wide wings, no multi-contract sizing, no unmanaged sub-24-hour exits, and no unmanaged long holds past 7 DTE. The fresh cohort tests whether narrower defined-risk wings, one-contract sizing, live-delta provenance, a wider 200%-of-credit stop (prevents noise stop-outs), and faster 25% profit-taking can restore positive expectancy.",
   "changed_rules": [
     "Run validation_reset as paper-only: live trading and scale-up remain blocked while the fresh validation cohort is collected.",
     "Limit validation entries to IC Simple SPY iron condors with one contract per structure, no more than one new structure per day, and no more than two concurrent iron condors.",
     "Require live-delta strike provenance; reject heuristic fallback, non-positive net credit, and net credit below $0.50 before any validation entry.",
     "Use 30-45 DTE, target 0.15 short delta, accepted short-delta band 0.08-0.22, and reject 10-wide wings; the validation cohort must use narrower defined-risk wings unless a separate backtest proves wider wings first.",
     "Add explicit slow-loser repair discipline: positions held 7 days or longer must be managed only by the fixed exit/repair plan, with no discretionary hold-and-hope extension beyond the close-by-7-DTE rule.",
-    "Keep the exit plan fixed: take profit at 50% of max profit, stop at 100% of entry credit, close by 7 DTE, and do not allow sub-24-hour discretionary exits unless a hard max-loss or broken-leg condition fires.",
+    "Exit plan (CEO-approved 2026-07-02): take profit at 25% of max profit, stop at 200% of entry credit (explicit override of the 100% canonical multiplier; 138/144 failed-ledger losses were stopped out in under 1 hour), close by 7 DTE, and do not allow sub-24-hour discretionary exits unless a hard max-loss or broken-leg condition fires.",
     "Do not hold iron condors past 7 DTE: enforce a managed exit or repair by 7 DTE so the long_hold_ge_7d loss cluster cannot repeat.",
     "Keep learned blockers active: FOMC blackout, ThumbGate rules, low IV percentile, unknown or volatile regime, stale broker sync, same-expiry re-entry after a loss, and Thompson confidence unless validation_reset explicitly allows controlled paper validation."
   ],
@@ -33,5 +33,11 @@
     "min_expectancy_per_trade": 1.0,
     "min_profit_factor": 1.05,
     "min_total_realized_pnl": 1.0
+  },
+  "approval_record": {
+    "approved_by": "CEO (Igor Ganapolsky)",
+    "approved_at": "2026-07-02",
+    "scope": "paper validation cohort only; live trading remains blocked",
+    "source_proposal": "data/runtime/proposals/validation_hypothesis_200pct_stop.json"
   }
 }

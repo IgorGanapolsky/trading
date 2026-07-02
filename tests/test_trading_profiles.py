@@ -21,8 +21,8 @@ def test_default_iron_condor_profile_values():
     assert profile.delta_band_min == 0.10
     assert profile.delta_band_max == 0.22
     assert profile.wing_width == 5.0  # validation hypothesis: no 10-wide wings
-    assert profile.take_profit_pct == 0.50
-    assert profile.stop_loss_pct == 1.0
+    assert profile.take_profit_pct == 0.25  # CEO-approved 2026-07-02
+    assert profile.stop_loss_pct == 2.0  # CEO-approved 2026-07-02
     assert profile.exit_dte == 7
     assert profile.min_hold_hours == 24
     assert profile.position_size_pct == trading_constants.MAX_POSITION_PCT
@@ -40,8 +40,8 @@ def test_strategy_config_bridge_matches_profile():
     assert config["max_dte"] == 45
     assert config["short_delta"] == 0.15
     assert config["wing_width"] == 5.0  # validation hypothesis: no 10-wide wings
-    assert config["take_profit_pct"] == 0.50
-    assert config["stop_loss_pct"] == 1.0
+    assert config["take_profit_pct"] == 0.25
+    assert config["stop_loss_pct"] == 2.0
     assert config["exit_dte"] == 7
     assert config["min_hold_hours"] == 24
     assert config["position_size_pct"] == trading_constants.MAX_POSITION_PCT

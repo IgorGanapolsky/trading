@@ -2,7 +2,7 @@
 
 ## Canonical Policy Constants
 
-- IRON_CONDOR_STOP_LOSS_MULTIPLIER: 1.0
+- IRON_CONDOR_STOP_LOSS_MULTIPLIER: 2.0 (CEO-approved 2026-07-02, validation cohort; was 1.0)
 - NORTH_STAR_MONTHLY_AFTER_TAX: 6000
 - MAX_POSITIONS: 8
 
@@ -21,8 +21,8 @@
 3. [ ] Iron condor (4-leg, defined risk on BOTH sides)
 4. [ ] Short strikes at 15-20 delta
 5. [ ] 30-45 DTE expiration
-6. [ ] Stop-loss at 100% of credit defined
-7. [ ] Exit plan: 50% profit OR 7 DTE (LL-268)
+6. [ ] Stop-loss at 200% of credit defined (CEO-approved 2026-07-02)
+7. [ ] Exit plan: 25% profit OR 7 DTE (CEO-approved 2026-07-02; LL-268)
 
 ## Ticker Selection
 

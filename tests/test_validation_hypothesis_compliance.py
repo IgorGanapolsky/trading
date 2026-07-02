@@ -97,7 +97,7 @@ def test_ic_simple_strategy_params_honor_hypothesis(hypothesis: dict) -> None:
     params = json.loads(params_path.read_text())["params"]
 
     assert params["wing_width"] < 10, "ten_wide_wings loss cluster repeated"
-    assert params["stop_loss"] == 1.0, "pinned canonical constant"
-    assert params["profit_target"] == 0.50, "fixed exit plan per hypothesis"
+    assert params["stop_loss"] == 2.0, "CEO-approved 2026-07-02 validation package"
+    assert params["profit_target"] == 0.25, "CEO-approved 2026-07-02 validation package"
     assert params["max_ic"] <= 2
     assert params["exit_dte"] >= 7
