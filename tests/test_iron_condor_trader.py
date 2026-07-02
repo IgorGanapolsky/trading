@@ -189,10 +189,10 @@ class TestStrategyConfig:
         strategy = IronCondorStrategy()
         assert strategy.config["exit_dte"] == 7
 
-    def test_wing_width_is_10(self):
-        """Per CLAUDE.md: $10-wide wings."""
+    def test_wing_width_is_5(self):
+        """Validation hypothesis rejects 10-wide wings; cohort trades $5-wide."""
         strategy = IronCondorStrategy()
-        assert strategy.config["wing_width"] == 10
+        assert strategy.config["wing_width"] == 5
 
 
 class TestFindTrade:
