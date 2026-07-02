@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -11,6 +12,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTEST_DIR = ROOT / "contest" / "itstoday-media"
+PAGES_DIR = ROOT / "docs" / "contest" / "itstoday-media"
 
 
 def load_json(path: Path, default: Any) -> Any:
@@ -86,7 +88,28 @@ def main() -> None:
         build_registration_answer(),
         encoding="utf-8",
     )
-    print(json.dumps({"wrote": 2, "contest_dir": str(CONTEST_DIR)}, indent=2))
+
+    if PAGES_DIR.exists():
+        shutil.rmtree(PAGES_DIR)
+    shutil.copytree(
+        CONTEST_DIR,
+        PAGES_DIR,
+        ignore=shutil.ignore_patterns("README.md", "*.test.js"),
+    )
+
+    print(
+        json.dumps(
+            {
+                "wrote": 2,
+                "contest_dir": str(CONTEST_DIR),
+                "pages_dir": str(PAGES_DIR),
+                "pages_url_after_main_deploy": (
+                    "https://igorganapolsky.github.io/trading/contest/itstoday-media/"
+                ),
+            },
+            indent=2,
+        )
+    )
 
 
 if __name__ == "__main__":
