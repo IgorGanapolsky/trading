@@ -125,6 +125,18 @@ class TestExecutionAgentValidation:
         assert status["status"] == "CLOSED"
         assert status["is_open"] is False
 
+    def test_market_status_accepts_naive_datetime_as_eastern(self):
+        pytest.importorskip("anthropic")
+        from datetime import datetime
+
+        from src.agents.execution_agent import ExecutionAgent
+
+        agent = ExecutionAgent(alpaca_api=MagicMock(), paper=True)
+        status = agent._check_market_status(datetime(2026, 7, 2, 10, 0))
+
+        assert status["status"] == "OPEN"
+        assert status["timezone"] == "America/New_York"
+
     def test_parse_execution_response_extracts_recommendation(self):
         pytest.importorskip("anthropic")
         from src.agents.execution_agent import ExecutionAgent
@@ -150,6 +162,28 @@ class TestExecutionAgentValidation:
         assert parsed["confidence"] == 0.0
         assert parsed["timing"] == "N/A"
 
+    def test_parse_execution_response_fails_closed_on_empty_text(self):
+        pytest.importorskip("anthropic")
+        from src.agents.execution_agent import ExecutionAgent
+
+        agent = ExecutionAgent(alpaca_api=MagicMock(), paper=True)
+        parsed = agent._parse_execution_response("")
+
+        assert parsed["action"] == "CANCEL"
+        assert parsed["reasoning"] == "Empty execution response"
+
+    def test_parse_execution_response_fails_closed_on_unknown_recommendation(self):
+        pytest.importorskip("anthropic")
+        from src.agents.execution_agent import ExecutionAgent
+
+        agent = ExecutionAgent(alpaca_api=MagicMock(), paper=True)
+        parsed = agent._parse_execution_response(
+            "TIMING: NEXT_OPEN\nCONFIDENCE: 1.7\nRECOMMENDATION: IGNORE"
+        )
+
+        assert parsed["action"] == "CANCEL"
+        assert parsed["confidence"] == 1.0
+
     def test_latest_close_scalar_handles_regular_close_column(self):
         pytest.importorskip("anthropic")
         pd = pytest.importorskip("pandas")
@@ -167,6 +201,15 @@ class TestExecutionAgentValidation:
         frame = pd.DataFrame({"Close": [pd.Series({"^VIX": 18.0})]})
 
         assert ExecutionAgent._latest_close_scalar(frame) == 18.0
+
+    def test_latest_close_scalar_returns_none_for_bad_close_data(self):
+        pytest.importorskip("anthropic")
+        pd = pytest.importorskip("pandas")
+        from src.agents.execution_agent import ExecutionAgent
+
+        frame = pd.DataFrame({"Close": ["not-a-number"]})
+
+        assert ExecutionAgent._latest_close_scalar(frame) is None
 
     def test_analyze_handles_gate_result_contract(self):
         pytest.importorskip("anthropic")
@@ -204,6 +247,7 @@ class TestExecutionAgentValidation:
 
     def test_analyze_forwards_dte_and_wing_width_to_constraints(self):
         pytest.importorskip("anthropic")
+        pd = pytest.importorskip("pandas")
         from src.agents.execution_agent import ExecutionAgent
         from src.safety.mandatory_trade_gate import GateResult
 
@@ -218,7 +262,7 @@ class TestExecutionAgentValidation:
             }
         )
         agent.data_provider.get_daily_bars = MagicMock(
-            return_value=SimpleNamespace(data=MagicMock(empty=True))
+            return_value=SimpleNamespace(data=pd.DataFrame({"Close": [21.1]}))
         )
         agent.constraint_engine.validate_trade = MagicMock(
             return_value=GateResult(approved=True, reason="Approved")
@@ -238,6 +282,7 @@ class TestExecutionAgentValidation:
         metadata = agent.constraint_engine.validate_trade.call_args.kwargs["metadata"]
         assert metadata["dte"] == 30
         assert metadata["wing_width"] == 10
+        assert metadata["vix"] == 21.1
         assert result["action"] == "EXECUTE"
 
     def test_paper_analyze_uses_deterministic_fallback_when_llm_unavailable(self):

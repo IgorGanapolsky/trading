@@ -1,6 +1,17 @@
 from __future__ import annotations
 
-from src.orchestration.context_engine import ContextEngine, MemoryTimescale
+from src.orchestration.context_engine import ContextMemory, ContextEngine, MemoryTimescale
+
+
+
+def test_context_memory_uses_dict_value_as_content():
+    memory = ContextMemory(
+        key="m1",
+        value={"result": "WIN"},
+        timescale=MemoryTimescale.DAILY,
+    )
+
+    assert memory.content == {"result": "WIN"}
 
 
 def test_context_engine_stores_and_retrieves_agent_memories(tmp_path):
@@ -27,3 +38,28 @@ def test_context_engine_stores_and_retrieves_agent_memories(tmp_path):
     assert memories[0].content["outcome"]["result"] == "WIN"
     assert memories[0].outcome_pl == 42.0
     assert memories[0].timescale == MemoryTimescale.DAILY
+
+
+def test_context_engine_filters_timescales_and_skips_corrupt_memories(tmp_path):
+    engine = ContextEngine(base_dir=tmp_path / "agent_context")
+    engine.store_memory(
+        agent_id="ExecutionAgent",
+        content={"result": "daily"},
+        timescale=MemoryTimescale.DAILY,
+    )
+    engine.store_memory(
+        agent_id="ExecutionAgent",
+        content={"result": "semantic"},
+        timescale=MemoryTimescale.SEMANTIC,
+    )
+    (engine.memory_dir / "ExecutionAgent_bad.json").write_text(
+        "{not-valid-json",
+        encoding="utf-8",
+    )
+
+    memories = engine.retrieve_memories(
+        agent_id="ExecutionAgent",
+        timescales=[MemoryTimescale.SEMANTIC],
+    )
+
+    assert [memory.content["result"] for memory in memories] == ["semantic"]

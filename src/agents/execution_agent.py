@@ -396,16 +396,10 @@ RECOMMENDATION: [EXECUTE/DELAY/CANCEL]"""
 
         timing = (extract(r"^\s*TIMING\s*:\s*([A-Z0-9_/.-]+)") or "N/A").upper()
         confidence_raw = extract(r"^\s*CONFIDENCE\s*:\s*([0-9]*\.?[0-9]+)")
-        try:
-            confidence = max(0.0, min(1.0, float(confidence_raw or 0.0)))
-        except ValueError:
-            confidence = 0.0
+        confidence = max(0.0, min(1.0, float(confidence_raw or 0.0)))
 
         slippage_raw = extract(r"^\s*SLIPPAGE\s*:\s*([0-9]*\.?[0-9]+)")
-        try:
-            slippage_pct = float(slippage_raw) if slippage_raw is not None else None
-        except ValueError:
-            slippage_pct = None
+        slippage_pct = float(slippage_raw) if slippage_raw is not None else None
 
         return {
             "action": recommendation,
