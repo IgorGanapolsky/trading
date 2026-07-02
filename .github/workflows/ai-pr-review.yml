@@ -6,13 +6,13 @@ name: AI PR Review
 # OPENROUTER_API_KEY -> LLM_GATEWAY_API_KEY -> ANTHROPIC_API_KEY ->
 # GOOGLE_API_KEY. Override with AI_REVIEW_PROVIDER + AI_REVIEW_MODEL.
 #
-# Triggers on PR open / reopen / ready_for_review. Skips drafts, bot
+# Triggers on PR open / reopen / ready_for_review / synchronize. Skips drafts, bot
 # authors, and deterministic-fix branches (dependabot, auto/ruff-format,
 # auto/lint) — those are handled by the deterministic-fix auto-merger.
 
 on:
   pull_request:
-    types: [opened, reopened, ready_for_review]
+    types: [opened, reopened, ready_for_review, synchronize]
 
 permissions:
   contents: read
