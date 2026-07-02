@@ -230,10 +230,11 @@ class TestFindOpportunity:
 
     def _mock_selection(self, net_credit_val, method="live_delta", put_delta=0.15, call_delta=0.15):
         sel = StrikeSelection(
+            # 5-wide wings per validation hypothesis (WING_WIDTH contract)
             short_put=620.0,
-            long_put=610.0,
+            long_put=615.0,
             short_call=680.0,
-            long_call=690.0,
+            long_call=685.0,
             put_delta=put_delta,
             call_delta=call_delta,
             method=method,

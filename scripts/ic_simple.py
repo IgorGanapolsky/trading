@@ -33,7 +33,7 @@ def _load_strategy_params() -> dict:
     """Load strategy params from ML-writable config. Falls back to defaults."""
     defaults = {
         "target_delta": 0.15,
-        "wing_width": 10,
+        "wing_width": 5,  # validation hypothesis: no 10-wide wings
         "target_dte": 30,
         "min_dte": 30,  # CLAUDE.md mandate: 30 DTE minimum
         "max_dte": 45,

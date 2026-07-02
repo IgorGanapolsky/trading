@@ -83,3 +83,21 @@ def test_hypothesis_unblocks_quarantined_entries(hypothesis: dict) -> None:
         "hypothesis does not cover the rehab plan's top loss clusters; "
         "north_star_guard will quarantine ALL new validation entries"
     )
+
+
+def test_ic_simple_strategy_params_honor_hypothesis(hypothesis: dict) -> None:
+    """scripts/ic_simple.py reads data/strategy_params.json (ML-writable), a
+    second config source that bypasses trading_profiles. The 2026-07-02 dry
+    run proved it can propose 10-wide entries after the profile was fixed —
+    guard both sources."""
+    if not hypothesis.get("enabled"):
+        pytest.skip("validation hypothesis disabled")
+
+    params_path = HYPOTHESIS_PATH.parents[1] / "strategy_params.json"
+    params = json.loads(params_path.read_text())["params"]
+
+    assert params["wing_width"] < 10, "ten_wide_wings loss cluster repeated"
+    assert params["stop_loss"] == 1.0, "pinned canonical constant"
+    assert params["profit_target"] == 0.50, "fixed exit plan per hypothesis"
+    assert params["max_ic"] <= 2
+    assert params["exit_dte"] >= 7
