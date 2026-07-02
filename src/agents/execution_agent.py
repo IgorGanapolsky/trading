@@ -15,8 +15,11 @@ from __future__ import annotations
 import datetime
 import json
 import logging
+import math
+import re
 import uuid
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from alpaca.trading.client import TradingClient
 
@@ -180,6 +183,9 @@ RECOMMENDATION: [EXECUTE/DELAY/CANCEL]"""
 
         # Parse response
         analysis = self._parse_execution_response(response["reasoning"])
+        llm_unavailable = str(response.get("reasoning") or "").strip().lower().startswith(
+            "error:"
+        )
         analysis["market_status"] = market_status
         analysis["full_reasoning"] = response["reasoning"]
         analysis["trace_id"] = trace_id
@@ -219,7 +225,7 @@ RECOMMENDATION: [EXECUTE/DELAY/CANCEL]"""
         try:
             vix_hist = self.data_provider.get_daily_bars("^VIX", lookback_days=1)
             if not vix_hist.data.empty:
-                vix_val = vix_hist.data["Close"].iloc[-1]
+                vix_val = self._latest_close_scalar(vix_hist.data) or 0.0
         except Exception:  # nosec
             pass
 
@@ -241,6 +247,8 @@ RECOMMENDATION: [EXECUTE/DELAY/CANCEL]"""
             trades_today=trades_today,
             metadata={
                 "vix": vix_val,
+                "dte": data.get("dte"),
+                "wing_width": data.get("wing_width"),
                 "width": width_val,
                 "weekday": datetime.datetime.now().weekday(),
             },
@@ -257,10 +265,37 @@ RECOMMENDATION: [EXECUTE/DELAY/CANCEL]"""
             )
         )
 
-        if not constraint_result.passed:
-            logger.warning(f"Trade blocked by constraints: {constraint_result.violations}")
+        constraint_passed = bool(
+            getattr(
+                constraint_result,
+                "passed",
+                getattr(constraint_result, "approved", False),
+            )
+        )
+        constraint_reason = str(
+            getattr(
+                constraint_result,
+                "reason",
+                getattr(constraint_result, "violations", "Unknown constraint violation"),
+            )
+        )
+
+        if not constraint_passed:
+            logger.warning(f"Trade blocked by constraints: {constraint_reason}")
             analysis["action"] = "CANCEL"
-            analysis["reasoning"] = f"BLOCKED: {constraint_result.violations}"
+            analysis["reasoning"] = f"BLOCKED: {constraint_reason}"
+        elif llm_unavailable and self.paper:
+            analysis.update(
+                {
+                    "action": "EXECUTE",
+                    "timing": "IMMEDIATE",
+                    "confidence": 0.5,
+                    "reasoning": (
+                        "DETERMINISTIC_FALLBACK: execution LLM unavailable; "
+                        "paper-mode deterministic constraints passed."
+                    ),
+                }
+            )
 
         # Execute if recommended and passed constraints
         if analysis["action"] == "EXECUTE" and self.alpaca_api:
@@ -287,6 +322,92 @@ RECOMMENDATION: [EXECUTE/DELAY/CANCEL]"""
         self.log_decision(analysis)
 
         return analysis
+
+    @staticmethod
+    def _latest_close_scalar(frame: Any) -> float | None:
+        """Return the latest close as a finite float from pandas-like data."""
+        try:
+            latest = frame["Close"].iloc[-1]
+            while hasattr(latest, "iloc"):
+                latest = latest.iloc[-1]
+            value = float(latest)
+        except Exception:
+            return None
+        return value if math.isfinite(value) else None
+
+    def _check_market_status(
+        self, now: datetime.datetime | None = None
+    ) -> dict[str, Any]:
+        """Return regular-session US equity market status.
+
+        The execution prompt needs this as timing context. Keep it deterministic
+        and local so a market-data outage cannot crash the safety agent.
+        """
+        eastern = ZoneInfo("America/New_York")
+        current = now or datetime.datetime.now(tz=eastern)
+        if current.tzinfo is None:
+            current = current.replace(tzinfo=eastern)
+        current = current.astimezone(eastern)
+
+        market_open = current.replace(hour=9, minute=30, second=0, microsecond=0)
+        market_close = current.replace(hour=16, minute=0, second=0, microsecond=0)
+        is_weekday = current.weekday() < 5
+        is_open = is_weekday and market_open <= current < market_close
+
+        return {
+            "status": "OPEN" if is_open else "CLOSED",
+            "is_open": is_open,
+            "checked_at": current.isoformat(),
+            "timezone": "America/New_York",
+            "regular_session": {
+                "open": market_open.time().isoformat(timespec="minutes"),
+                "close": market_close.time().isoformat(timespec="minutes"),
+            },
+        }
+
+    def _parse_execution_response(self, response_text: str) -> dict[str, Any]:
+        """Parse the execution LLM response into a fail-closed action payload."""
+        text = str(response_text or "").strip()
+        if not text:
+            return {
+                "action": "CANCEL",
+                "timing": "N/A",
+                "slippage_pct": None,
+                "confidence": 0.0,
+                "reasoning": "Empty execution response",
+            }
+
+        if text.lower().startswith("error:"):
+            return {
+                "action": "CANCEL",
+                "timing": "N/A",
+                "slippage_pct": None,
+                "confidence": 0.0,
+                "reasoning": text,
+            }
+
+        def extract(pattern: str) -> str | None:
+            match = re.search(pattern, text, flags=re.IGNORECASE | re.MULTILINE)
+            return match.group(1).strip() if match else None
+
+        recommendation = (extract(r"^\s*RECOMMENDATION\s*:\s*([A-Z_]+)") or "").upper()
+        if recommendation not in {"EXECUTE", "DELAY", "CANCEL"}:
+            recommendation = "CANCEL"
+
+        timing = (extract(r"^\s*TIMING\s*:\s*([A-Z0-9_/.-]+)") or "N/A").upper()
+        confidence_raw = extract(r"^\s*CONFIDENCE\s*:\s*([0-9]*\.?[0-9]+)")
+        confidence = max(0.0, min(1.0, float(confidence_raw or 0.0)))
+
+        slippage_raw = extract(r"^\s*SLIPPAGE\s*:\s*([0-9]*\.?[0-9]+)")
+        slippage_pct = float(slippage_raw) if slippage_raw is not None else None
+
+        return {
+            "action": recommendation,
+            "timing": timing,
+            "slippage_pct": slippage_pct,
+            "confidence": confidence,
+            "reasoning": text,
+        }
 
     def _execute_order(self, symbol: str, action: str, position_size: float) -> dict[str, Any]:
         """Execute an equity order via Alpaca. SPY-only per policy."""

@@ -186,3 +186,7 @@ rag_knowledge/
 
 # ThumbGate local state
 .thumbgate/
+
+# Agent-generated local state
+.agents/
+.codex/

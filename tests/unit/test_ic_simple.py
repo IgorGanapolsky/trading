@@ -8,6 +8,7 @@ import json
 import logging
 import sys
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any, cast
@@ -229,10 +230,11 @@ class TestFindOpportunity:
 
     def _mock_selection(self, net_credit_val, method="live_delta", put_delta=0.15, call_delta=0.15):
         sel = StrikeSelection(
+            # 5-wide wings per validation hypothesis (WING_WIDTH contract)
             short_put=620.0,
-            long_put=610.0,
+            long_put=615.0,
             short_call=680.0,
-            long_call=690.0,
+            long_call=685.0,
             put_delta=put_delta,
             call_delta=call_delta,
             method=method,
@@ -582,7 +584,9 @@ class TestSameExpiryReentryBlock:
             )
         )
 
-        assert ic._load_losing_expiries(trades_file) == {  # nosec B101
+        assert ic._load_losing_expiries(  # nosec B101
+            trades_file, now=datetime(2026, 5, 20)
+        ) == {
             "2026-05-15",
             "2026-05-22",
         }

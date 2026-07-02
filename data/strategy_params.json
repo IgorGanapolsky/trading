@@ -1,10 +1,10 @@
 {
-  "version": 1,
-  "updated_at": "2026-03-30T20:30:00Z",
-  "updated_by": "seed",
+  "version": 2,
+  "updated_at": "2026-07-02T18:00:00Z",
+  "updated_by": "validation_cohort_1",
   "params": {
     "target_delta": 0.15,
-    "wing_width": 10,
+    "wing_width": 5,
     "target_dte": 30,
     "min_dte": 30,
     "max_dte": 45,
@@ -16,5 +16,5 @@
   },
   "adjustments": [],
   "confidence": 0.0,
-  "note": "Seed values from CLAUDE.md trading rules. ML pipeline will adjust params when confidence > 0.7 and trade_count >= 10."
+  "note": "Validation cohort 1 params. Change from seed: wing_width 10->5 (rehab plan loss cluster ten_wide_wings; hypothesis rejects 10-wide wings). profit_target and stop_loss unchanged \u2014 pinned canonical constants; the 25%/200% redesign is PENDING_CEO_APPROVAL in data/runtime/proposals/validation_hypothesis_200pct_stop.json."
 }

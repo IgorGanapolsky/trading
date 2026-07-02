@@ -195,26 +195,16 @@
     "mode": "quarantine",
     "qualified_setups": 0,
     "cadence_passed": false,
-    "updated_at": "2026-06-21T15:33:11.872418+00:00"
-  },
-  {
-    "week_start": "2026-06-22",
-    "sample_size": 0,
-    "win_rate_pct": 0.0,
-    "expectancy_per_trade": 0.0,
-    "mode": "quarantine",
-    "qualified_setups": 0,
-    "cadence_passed": false,
-    "updated_at": "2026-06-28T15:26:37.704428+00:00"
+    "updated_at": "2026-06-18T02:18:21.487739+00:00"
   },
   {
     "week_start": "2026-06-29",
     "sample_size": 0,
     "win_rate_pct": 0.0,
     "expectancy_per_trade": 0.0,
-    "mode": "quarantine",
-    "qualified_setups": 0,
+    "mode": "validation_reset",
+    "qualified_setups": 1,
     "cadence_passed": false,
-    "updated_at": "2026-07-01T19:10:33.892924+00:00"
+    "updated_at": "2026-07-02T17:21:49.465065+00:00"
   }
 ]

@@ -6,7 +6,17 @@ import pytest
 # Skip all tests if anthropic is not available
 pytest.importorskip("anthropic")
 
+import src.orchestrator.main as orch_main
 from src.orchestrator.main import TradingOrchestrator
+from src.utils.staleness_guard import ContextFreshnessResult, StalenessResult
+
+# A fresh (non-stale) result so the staleness guard doesn't block tests.
+_FRESH_STALENESS = StalenessResult(
+    is_stale=False, blocking=False, reason="fresh", hours_old=0.1, last_updated="2026-07-01T15:00:00Z"
+)
+_FRESH_CONTEXT = ContextFreshnessResult(
+    is_stale=False, blocking=False, checked_at="2026-07-01T15:00:00Z", stale_sources=[], sources=[], reason="fresh"
+)
 
 
 class TestOrchestratorHardening:
@@ -17,6 +27,9 @@ class TestOrchestratorHardening:
         """Initialize TradingOrchestrator with mocked dependencies."""
         monkeypatch.setenv("RAG_QUERY_INDEX_MAX_AGE_MINUTES", "999999")
         monkeypatch.setenv("CONTEXT_INDEX_MAX_AGE_MINUTES", "999999")
+        # Patch staleness guards via monkeypatch so they persist through run()
+        monkeypatch.setattr(orch_main, "check_data_staleness", lambda **kw: _FRESH_STALENESS)
+        monkeypatch.setattr(orch_main, "check_context_freshness", lambda **kw: _FRESH_CONTEXT)
         with (
             patch("src.orchestrator.main.AlpacaExecutor"),
             patch("src.orchestrator.main.MomentumAgent"),

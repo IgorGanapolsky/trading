@@ -38,7 +38,6 @@ from pathlib import Path
 from typing import Any, Optional
 
 import numpy as np
-
 from src.analytics.alpha_metrics_tracker import AlphaMetricsTracker
 from src.rag.lessons_learned_rag import LessonsLearnedRAG
 

@@ -16,6 +16,14 @@ def _write_json(path, payload):
     path.write_text(json.dumps(payload), encoding="utf-8")
 
 
+def _required_loss_cluster_ids(rehabilitation_plan):
+    return [
+        str(cluster["id"])
+        for cluster in rehabilitation_plan["loss_clusters"][:3]
+        if isinstance(cluster, dict) and str(cluster.get("id") or "").strip()
+    ]
+
+
 def _write_valid_hypothesis(root):
     _write_json(
         root / "runtime" / "strategy_validation_hypothesis.json",
@@ -47,6 +55,7 @@ def _write_rehabilitation_plan(root):
             "loss_clusters": [
                 {"id": "ten_wide_wings"},
                 {"id": "multi_contract"},
+                {"id": "long_hold_ge_7d"},
                 {"id": "early_exit_lt_24h"},
             ],
         },
@@ -56,13 +65,13 @@ def _write_rehabilitation_plan(root):
 def test_committed_strategy_validation_hypothesis_authorizes_validation_reset(tmp_path):
     repo_root = Path(__file__).resolve().parents[1]
     hypothesis_path = repo_root / "data/runtime/strategy_validation_hypothesis.json"
+    rehabilitation_plan_path = repo_root / "data/runtime/edge_rehabilitation_plan.json"
     hypothesis = json.loads(hypothesis_path.read_text(encoding="utf-8"))
+    rehabilitation_plan = json.loads(rehabilitation_plan_path.read_text(encoding="utf-8"))
     assert "Example only" not in json.dumps(hypothesis)
-    assert set(hypothesis["rehabilitation_plan_ack"]["covered_loss_clusters"]) >= {  # nosec B101
-        "ten_wide_wings",
-        "multi_contract",
-        "early_exit_lt_24h",
-    }
+    assert set(hypothesis["rehabilitation_plan_ack"]["covered_loss_clusters"]) >= set(  # nosec B101
+        _required_loss_cluster_ids(rehabilitation_plan)
+    )
 
     _write_json(tmp_path / "runtime" / "strategy_validation_hypothesis.json", hypothesis)
     trades_path = tmp_path / "trades.json"
@@ -127,7 +136,7 @@ def test_rehab_plan_rejects_hypothesis_that_repeats_top_loss_cluster(tmp_path):
                 "covered_loss_clusters": [
                     "ten_wide_wings",
                     "multi_contract",
-                    "early_exit_lt_24h",
+                    "long_hold_ge_7d",
                 ],
             },
             "kill_criteria": {
