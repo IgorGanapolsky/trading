@@ -42,7 +42,7 @@ dependencies = [
   # Utilities
   "python-dateutil>=2.9.0",
   # "pytz>=2023.3",  # REMOVED: Never imported (Jan 2026)
-  "holidays>=0.97", # Market holiday detection (Critical for calendar awareness - LL-051)
+  "holidays>=0.99", # Market holiday detection (Critical for calendar awareness - LL-051)
   # "loguru>=0.7.2",  # REMOVED: Never imported (Jan 2026)
   "anthropic>=0.109.1,<1.0.0",
   "google-generativeai>=0.8.6,<1.0.0",
