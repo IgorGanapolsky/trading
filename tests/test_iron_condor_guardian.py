@@ -319,13 +319,13 @@ class TestExitConditions:
         """Position at exactly 7 DTE should trigger exit."""
         assert guardian.MIN_DTE == 7
 
-    def test_stop_loss_at_100pct(self, guardian):
-        """Stop loss multiplier should be 1.0 (100% of credit)."""
-        assert guardian.STOP_LOSS_MULTIPLIER == 1.0
+    def test_stop_loss_at_200pct(self, guardian):
+        """Stop loss multiplier should be 2.0 (200% of credit)."""
+        assert guardian.STOP_LOSS_MULTIPLIER == 2.0
 
-    def test_profit_take_at_50pct(self, guardian):
-        """Profit target should be 50% of max profit."""
-        assert guardian.PROFIT_TAKE_PCT == 0.50
+    def test_profit_take_at_25pct(self, guardian):
+        """Profit target should be 25% of max profit."""
+        assert guardian.PROFIT_TAKE_PCT == 0.25
 
     def test_min_hold_is_24_hours(self, guardian):
         """Guardian should align with the 24h minimum-hold policy."""
@@ -334,19 +334,21 @@ class TestExitConditions:
     def test_stop_loss_triggers_correctly(self, guardian):
         """Stop loss: when P/L < -(credit * multiplier * 100)."""
         entry_credit = 2.04
-        stop_loss = entry_credit * guardian.STOP_LOSS_MULTIPLIER * 100  # $204
-        # P/L of -$250 should trigger (below -$204)
-        assert -stop_loss > -250
-        # P/L of -$100 should NOT trigger (above -$204)
+        stop_loss = entry_credit * guardian.STOP_LOSS_MULTIPLIER * 100  # $408
+        # P/L of -$450 should trigger (below -$408)
+        assert -stop_loss > -450
+        # P/L of -$250 should NOT trigger (above -$408)
+        assert not (-stop_loss > -250)
+        # P/L of -$100 should NOT trigger (above -$408)
         assert not (-stop_loss > -100)
 
     def test_profit_target_triggers_correctly(self, guardian):
-        """Profit target: when P/L >= (credit * 100 * 0.50)."""
+        """Profit target: when P/L >= (credit * 100 * 0.25)."""
         entry_credit = 2.04
         max_profit = entry_credit * 100  # $204
-        profit_target = max_profit * guardian.PROFIT_TAKE_PCT  # $102
-        # P/L of $120 should trigger (above $102)
-        assert profit_target <= 120
+        profit_target = max_profit * guardian.PROFIT_TAKE_PCT  # $51
+        # P/L of $60 should trigger (above $51)
+        assert profit_target <= 60
         # P/L of $50 should NOT trigger (below $102)
         assert not (profit_target <= 50)
 
@@ -356,7 +358,7 @@ class TestExitConditions:
         stop_loss = entry_credit * guardian.STOP_LOSS_MULTIPLIER * 100
         max_profit = entry_credit * 100
         profit_target = max_profit * guardian.PROFIT_TAKE_PCT
-        pnl = 50.0  # Between -204 and +102
+        pnl = 50.0  # Between -408 and +51
         dte = 30
         assert pnl > -stop_loss  # Not stopped out
         assert pnl < profit_target  # Not at target

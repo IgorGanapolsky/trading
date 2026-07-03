@@ -113,11 +113,11 @@ class TestExitConditions:
         assert should_exit is True
         assert reason == "DTE_EXIT"
 
-    def test_exit_at_50_percent_profit(self):
-        """Should exit when profit >= 50% of credit."""
+    def test_exit_at_25_percent_profit(self):
+        """Should exit when profit >= 25% of credit."""
         ic = {
             "expiry": datetime.now() + timedelta(days=30),  # Not near expiry
-            "total_pl": 110,  # 55% profit (above 50% target)
+            "total_pl": 60,  # 30% profit (above 25% target)
             "credit_received": 200,
             "entry_date": (datetime.now() - timedelta(days=2)).isoformat(),  # held 2 days
         }
@@ -125,11 +125,11 @@ class TestExitConditions:
         assert should_exit is True
         assert reason == "PROFIT_TARGET"
 
-    def test_exit_at_100_percent_loss(self):
-        """Should exit when loss >= 100% of credit per canonical config."""
+    def test_exit_at_200_percent_loss(self):
+        """Should exit when loss >= 200% of credit per canonical config."""
         ic = {
             "expiry": datetime.now() + timedelta(days=30),
-            "total_pl": -220,  # 110% loss (above 100% stop)
+            "total_pl": -420,  # 210% loss (above 200% stop)
             "credit_received": 200,
             "entry_date": (datetime.now() - timedelta(days=2)).isoformat(),  # held 2 days
         }
@@ -151,8 +151,8 @@ class TestExitConditions:
 
     def test_config_values_aligned_with_strategy(self):
         """Verify config matches CLAUDE.md strategy."""
-        assert IC_EXIT_CONFIG["profit_target_pct"] == 0.50  # 50% profit per LL-268
-        assert IC_EXIT_CONFIG["stop_loss_pct"] == 1.00  # 100% stop per canonical constant
+        assert IC_EXIT_CONFIG["profit_target_pct"] == 0.25
+        assert IC_EXIT_CONFIG["stop_loss_pct"] == 2.00
         assert IC_EXIT_CONFIG["exit_dte"] == 7  # 7 DTE per LL-268
 
     def test_zero_credit_returns_hold(self):

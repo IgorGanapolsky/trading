@@ -45,7 +45,7 @@ def test_hold_period_allows_exit_after_24h():
     }
     should_exit, reason, details = check_exit_conditions(ic)
     # Should evaluate (may or may not exit depending on P/L)
-    # 60% profit > 50% target -> should exit
+    # 60% profit > 25% target -> should exit
     assert should_exit
     assert reason == "PROFIT_TARGET"
 
@@ -56,7 +56,7 @@ def test_hold_period_allows_stop_loss_after_24h():
 
     ic = {
         "expiry": (datetime.now() + timedelta(days=30)),
-        "total_pl": -110.0,
+        "total_pl": -210.0,
         "credit_received": 100.0,
         "entry_date": (datetime.now() - timedelta(hours=25)).isoformat(),
     }
