@@ -157,8 +157,8 @@ class TestCheckStopExists:
         result = check_stop_exists("SOFI260206P00024000", orders)
         assert result is not None
 
-    def test_returns_none_when_no_stop(self):
-        """Should return None when no stop exists."""
+    def test_finds_protective_buy_limit_order(self):
+        """Should recognize BUY-to-close limit orders as option protection."""
         from scripts.verify_stops_in_place import check_stop_exists
 
         orders = [
@@ -166,12 +166,50 @@ class TestCheckStopExists:
                 "id": "order-111",
                 "symbol": "SOFI260206P00024000",
                 "side": "buy",
-                "type": "limit",  # Not a stop order
+                "type": "limit",
                 "stop_price": None,
+                "limit_price": 1.50,
                 "qty": 2.0,
             }
         ]
-        result = check_stop_exists("SOFI260206P00024000", orders)
+        result = check_stop_exists("SOFI260206P00024000", orders, required_qty=2.0)
+        assert result is not None
+        assert result["protection_type"] == "buy_to_close_limit"
+
+    def test_returns_none_when_limit_is_not_protective(self):
+        """SELL limit orders increase short exposure and are not protection."""
+        from scripts.verify_stops_in_place import check_stop_exists
+
+        orders = [
+            {
+                "id": "order-111",
+                "symbol": "SOFI260206P00024000",
+                "side": "sell",
+                "type": "limit",
+                "stop_price": None,
+                "limit_price": 1.50,
+                "qty": 2.0,
+            }
+        ]
+        result = check_stop_exists("SOFI260206P00024000", orders, required_qty=2.0)
+        assert result is None
+
+    def test_returns_none_when_protective_qty_is_too_small(self):
+        """Protective orders must cover the short position quantity."""
+        from scripts.verify_stops_in_place import check_stop_exists
+
+        orders = [
+            {
+                "id": "order-111",
+                "symbol": "SOFI260206P00024000",
+                "side": "buy",
+                "type": "limit",
+                "stop_price": None,
+                "limit_price": 1.50,
+                "qty": 1.0,
+            }
+        ]
+        result = check_stop_exists("SOFI260206P00024000", orders, required_qty=2.0)
         assert result is None
 
     def test_returns_none_wrong_symbol(self):
@@ -245,6 +283,39 @@ class TestVerifyAllStops:
         assert result["status"] == "MISSING_STOPS"
         assert len(result["missing_stops"]) == 1
         assert len(result["verified_stops"]) == 0
+
+    def test_buy_to_close_limit_covers_short_option(self):
+        """GTC BUY limit protection should satisfy the short option gate."""
+        from scripts.verify_stops_in_place import verify_all_stops
+
+        positions = [
+            {
+                "symbol": "SOFI260206P00024000",
+                "qty": -2.0,
+                "side": "short",
+                "asset_class": "option",
+                "unrealized_pl": -7.0,
+                "current_price": 0.67,
+            },
+        ]
+        orders = [
+            {
+                "id": "limit-1",
+                "symbol": "SOFI260206P00024000",
+                "side": "buy",
+                "type": "limit",
+                "stop_price": None,
+                "limit_price": 1.50,
+                "qty": 2.0,
+            },
+        ]
+
+        result = verify_all_stops(positions, orders)
+        assert result["status"] == "OK"
+        assert len(result["verified_stops"]) == 1
+        assert result["verified_stops"][0]["stop_order"]["protection_type"] == (
+            "buy_to_close_limit"
+        )
 
     def test_partial_stops(self):
         """Partial coverage should return MISSING_STOPS."""

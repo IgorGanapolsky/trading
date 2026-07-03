@@ -77,6 +77,7 @@ def get_open_orders(client) -> list[dict]:
                 "side": o.side.value if hasattr(o.side, "value") else str(o.side),
                 "type": o.type.value if hasattr(o.type, "value") else str(o.type),
                 "stop_price": float(o.stop_price) if o.stop_price else None,
+                "limit_price": float(o.limit_price) if o.limit_price else None,
                 "qty": float(o.qty) if o.qty else None,
             }
             for o in orders
@@ -100,14 +101,30 @@ def identify_short_options(positions: list[dict]) -> list[dict]:
     return short_options
 
 
-def check_stop_exists(symbol: str, orders: list[dict]) -> dict | None:
-    """Check if a stop-loss order exists for this symbol."""
+def check_stop_exists(
+    symbol: str, orders: list[dict], required_qty: float | None = None
+) -> dict | None:
+    """Check if a broker-side protective order exists for this short option symbol."""
+    required = abs(float(required_qty or 0))
     for order in orders:
-        if order["symbol"] == symbol and order["type"] in [
-            "stop",
-            "stop_limit",
-            "trailing_stop",
-        ]:
+        if order["symbol"] != symbol:
+            continue
+
+        side = str(order.get("side") or "").lower()
+        order_type = str(order.get("type") or "").lower()
+        qty = abs(float(order.get("qty") or 0))
+        if required and qty + 1e-9 < required:
+            continue
+
+        if order_type in ["stop", "stop_limit", "trailing_stop"]:
+            order["protection_type"] = order_type
+            return order
+
+        # Alpaca does not support true stop orders for options in this system's
+        # protection path. cancel_and_protect.py places GTC BUY-to-close limit
+        # orders at the max-loss price, so recognize those as protective.
+        if order_type == "limit" and side == "buy" and order.get("limit_price"):
+            order["protection_type"] = "buy_to_close_limit"
             return order
     return None
 
@@ -134,7 +151,7 @@ def verify_all_stops(positions: list[dict], orders: list[dict]) -> dict:
     verified_stops = []
 
     for pos in short_options:
-        stop_order = check_stop_exists(pos["symbol"], orders)
+        stop_order = check_stop_exists(pos["symbol"], orders, required_qty=abs(pos["qty"]))
         if stop_order:
             verified_stops.append(
                 {
@@ -269,11 +286,13 @@ def main():
             print("!" * 60)
 
         if result.get("verified_stops"):
-            print("\nVerified Stop-Loss Orders:")
+            print("\nVerified Protective Orders:")
             for item in result["verified_stops"]:
                 pos = item["position"]
                 stop = item["stop_order"]
-                print(f"  - {pos['symbol']}: Stop @ ${stop.get('stop_price', 'N/A')}")
+                price = stop.get("stop_price") or stop.get("limit_price") or "N/A"
+                protection_type = stop.get("protection_type", stop.get("type", "order"))
+                print(f"  - {pos['symbol']}: {protection_type} @ ${price}")
 
     # Exit code logic
     if result["status"] == "MISSING_STOPS":

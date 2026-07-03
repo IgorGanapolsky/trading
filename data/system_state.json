@@ -3464,10 +3464,10 @@
     }
   },
   "stop_verification": {
-    "last_check": "2026-02-26T14:59:10.982347",
-    "status": "MISSING_STOPS",
-    "verified_count": 0,
-    "missing_count": 2
+    "last_check": "2026-07-03T14:41:24.358570",
+    "status": "OK",
+    "verified_count": 2,
+    "missing_count": 0
   },
   "options": {
     "last_theta_harvest": "2026-02-27T14:56:38.756465Z",
