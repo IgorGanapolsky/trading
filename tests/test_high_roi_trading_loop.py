@@ -42,7 +42,7 @@ def make_ic(total_pl=120.0, credit_received=200.0):
     }
 
 
-def make_ic_without_entry_date(total_pl=-240.0, credit_received=200.0, days_to_expiry=30):
+def make_ic_without_entry_date(total_pl=-420.0, credit_received=200.0, days_to_expiry=30):
     ic = make_ic(total_pl=total_pl, credit_received=credit_received)
     ic["expiry"] = datetime.now() + timedelta(days=days_to_expiry)
     ic["expiry_str"] = ic["expiry"].strftime("%Y-%m-%d")
@@ -182,7 +182,7 @@ def test_run_once_hold_records_evidence_without_exit(monkeypatch, tmp_path):
 
 
 def test_missing_entry_date_does_not_block_stop_loss_exit():
-    decision = loop.build_exit_decision(make_ic_without_entry_date(total_pl=-240.0))
+    decision = loop.build_exit_decision(make_ic_without_entry_date(total_pl=-420.0))
 
     assert decision["should_exit"] is True
     assert decision["exit_reason"] == "STOP_LOSS"
