@@ -22,6 +22,8 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 DATA_DIR = PROJECT_ROOT / "data"
 SYSTEM_STATE_FILE = DATA_DIR / "system_state.json"
 TRADES_FILE = DATA_DIR / "trades.json"
