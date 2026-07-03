@@ -68,13 +68,22 @@ def analyze_vix_regime(vix_data: dict | None) -> dict:
     if not vix_data:
         return {"regime": "unknown", "vix": None, "guidance": "VIX data unavailable"}
 
+    def close_value(row: object) -> float:
+        if isinstance(row, dict):
+            raw = row.get("close") or row.get("last") or row.get("value")
+        elif isinstance(row, (list, tuple)) and len(row) > 1:
+            raw = row[1]
+        else:
+            raise ValueError(f"Unsupported VIX row shape: {row!r}")
+        return float(raw)
+
     try:
         # CBOE delayed quotes format
         data_points = vix_data.get("data", [])
         if not data_points:
             return {"regime": "unknown", "vix": None, "guidance": "No VIX data points"}
 
-        current_vix = float(data_points[-1][1]) if data_points[-1] else None
+        current_vix = close_value(data_points[-1]) if data_points[-1] else None
         if current_vix is None:
             return {"regime": "unknown", "vix": None, "guidance": "Could not parse VIX"}
 
@@ -114,9 +123,9 @@ def analyze_vix_regime(vix_data: dict | None) -> dict:
             "regime": regime,
             "vix": current_vix,
             "guidance": guidance,
-            "vix_5d_ago": float(data_points[-5][1]) if len(data_points) >= 5 else None,
+            "vix_5d_ago": close_value(data_points[-5]) if len(data_points) >= 5 else None,
             "vix_trend": "rising"
-            if len(data_points) >= 5 and current_vix > float(data_points[-5][1])
+            if len(data_points) >= 5 and current_vix > close_value(data_points[-5])
             else "falling",
         }
     except Exception as e:

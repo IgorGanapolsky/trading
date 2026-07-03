@@ -83,6 +83,23 @@ def test_vix_trend_falling():
     assert result["vix_trend"] == "falling"
 
 
+def test_vix_regime_cboe_dict_rows():
+    data = {
+        "data": [
+            {"date": "2026-06-29", "close": "19.5"},
+            {"date": "2026-06-30", "close": "18.0"},
+            {"date": "2026-07-01", "close": "17.0"},
+            {"date": "2026-07-02", "close": "16.0"},
+            {"date": "2026-07-03", "close": "14.0"},
+        ]
+    }
+    result = analyze_vix_regime(data)
+    assert result["regime"] == "calm"
+    assert result["vix"] == 14.0
+    assert result["vix_5d_ago"] == 19.5
+    assert result["vix_trend"] == "falling"
+
+
 # --- SPY Options Chain Analysis ---
 
 
