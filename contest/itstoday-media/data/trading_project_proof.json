@@ -1,0 +1,30 @@
+{
+  "contest_positioning": "The demo adapts this repo's strongest proven pattern: risk gates, audit trails, and stop-loss discipline. It does not claim the trading strategy is profitable.",
+  "demo_files": [
+    "contest/itstoday-media/index.html",
+    "contest/itstoday-media/src/profitGate.js",
+    "contest/itstoday-media/src/profitGate.test.js",
+    "contest/itstoday-media/README.md"
+  ],
+  "generated_at": "2026-07-02T21:03:44.228232Z",
+  "source_repo": "IgorGanapolsky/trading",
+  "strategy_guardrails": {
+    "exit_dte": 7,
+    "max_dte": 45,
+    "min_dte": 30,
+    "profit_target": 0.5,
+    "stop_loss": 1.0,
+    "target_delta": 0.15
+  },
+  "trading_truth": {
+    "closed_trades": 179,
+    "expectancy": -32.21,
+    "paper_equity": 94005.11,
+    "paper_total_pl": -5994.889999999999,
+    "paper_total_pl_pct": -5.994889999999999,
+    "positions_count": 4,
+    "profit_factor": 0.7,
+    "total_realized_pnl": -5766.0,
+    "win_rate_pct": 16.76
+  }
+}

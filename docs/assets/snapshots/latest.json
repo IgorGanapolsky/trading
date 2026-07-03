@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-07-01T18:25:50.892888-04:00",
+  "generated_at": "2026-07-02T18:20:38.224807-04:00",
   "accounts": [
     {
       "account_type": "paper",
-      "equity": 93983.11,
+      "equity": 94006.11,
       "cash": 94139.11,
       "buying_power": 372556.44,
       "starting_capital": 100000.0,
@@ -12,29 +12,29 @@
         {
           "symbol": "SPY260731C00775000",
           "qty": -1.0,
-          "market_value": -174.0,
-          "unrealized_pl": 53.0
+          "market_value": -131.0,
+          "unrealized_pl": 96.0
         },
         {
           "symbol": "SPY260731C00785000",
           "qty": 1.0,
-          "market_value": 65.0,
-          "unrealized_pl": -39.0
+          "market_value": 45.0,
+          "unrealized_pl": -59.0
         },
         {
           "symbol": "SPY260731P00684000",
           "qty": 1.0,
-          "market_value": 142.0,
-          "unrealized_pl": -165.0
+          "market_value": 129.0,
+          "unrealized_pl": -178.0
         },
         {
           "symbol": "SPY260731P00694000",
           "qty": -1.0,
-          "market_value": -189.0,
-          "unrealized_pl": 200.0
+          "market_value": -176.0,
+          "unrealized_pl": 213.0
         }
       ],
-      "chart": "docs/assets/snapshots/paper_20260701.png"
+      "chart": "docs/assets/snapshots/paper_20260702.png"
     },
     {
       "account_type": "brokerage",
@@ -44,7 +44,7 @@
       "starting_capital": 5000.0,
       "position_count": 0,
       "positions": [],
-      "chart": "docs/assets/snapshots/brokerage_20260701.png"
+      "chart": "docs/assets/snapshots/brokerage_20260702.png"
     }
   ]
 }

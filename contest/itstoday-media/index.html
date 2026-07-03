@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Profit Gate - Media Buying Decision Agent</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f7f8f4;
+        --ink: #17201c;
+        --muted: #5a665f;
+        --line: #cbd5ce;
+        --panel: #ffffff;
+        --good: #0f7b5f;
+        --warn: #a15d00;
+        --bad: #b53232;
+        --accent: #315fd6;
+        --accent-soft: #e6ecff;
+        --shadow: 0 16px 40px rgba(23, 32, 28, 0.1);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+      }
+
+      button,
+      input,
+      textarea,
+      select {
+        font: inherit;
+      }
+
+      .app {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: minmax(320px, 430px) minmax(0, 1fr);
+      }
+
+      aside {
+        background: #111816;
+        color: #f5f7f4;
+        padding: 24px;
+        overflow: auto;
+      }
+
+      main {
+        padding: 24px;
+        overflow: auto;
+      }
+
+      h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+        line-height: 1.1;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        margin: 0;
+        font-size: 16px;
+        letter-spacing: 0;
+      }
+
+      p {
+        margin: 0;
+      }
+
+      .subhead {
+        color: #c8d2cd;
+        font-size: 14px;
+        line-height: 1.45;
+        margin-bottom: 22px;
+      }
+
+      .field {
+        display: grid;
+        gap: 6px;
+        margin-bottom: 14px;
+      }
+
+      label {
+        color: #dce5e0;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: rgba(255, 255, 255, 0.08);
+        color: #ffffff;
+        border-radius: 6px;
+        padding: 10px 11px;
+        outline: none;
+      }
+
+      textarea {
+        min-height: 72px;
+        resize: vertical;
+      }
+
+      input:focus,
+      textarea:focus {
+        border-color: #8eb4ff;
+        box-shadow: 0 0 0 3px rgba(49, 95, 214, 0.25);
+      }
+
+      .grid2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .checks {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin: 12px 0 18px;
+      }
+
+      .check {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        color: #f5f7f4;
+        font-size: 13px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 6px;
+        padding: 9px;
+      }
+
+      .check input {
+        width: 16px;
+        height: 16px;
+        padding: 0;
+      }
+
+      .buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 6px;
+        padding: 10px 12px;
+        cursor: pointer;
+        font-weight: 800;
+      }
+
+      .primary {
+        background: #8eb4ff;
+        color: #0d1420;
+      }
+
+      .ghost {
+        background: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 116px;
+        min-height: 34px;
+        padding: 7px 11px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 900;
+        color: #ffffff;
+      }
+
+      .badge.scale {
+        background: var(--good);
+      }
+
+      .badge.test {
+        background: var(--warn);
+      }
+
+      .badge.hold {
+        background: var(--bad);
+      }
+
+      .dashboard {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(140px, 1fr));
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .card,
+      .wide {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+      }
+
+      .card {
+        padding: 16px;
+        min-height: 116px;
+      }
+
+      .card span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .metric {
+        margin-top: 10px;
+        font-size: 26px;
+        line-height: 1;
+        font-weight: 900;
+      }
+
+      .wide {
+        padding: 18px;
+        margin-top: 14px;
+      }
+
+      .decision {
+        display: grid;
+        grid-template-columns: 160px minmax(0, 1fr);
+        gap: 18px;
+        align-items: center;
+      }
+
+      .meter {
+        width: 148px;
+        height: 148px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background:
+          radial-gradient(circle at center, #fff 0 56%, transparent 57%),
+          conic-gradient(var(--accent) calc(var(--score) * 1%), #d8ded9 0);
+        border: 1px solid var(--line);
+      }
+
+      .meter strong {
+        font-size: 30px;
+      }
+
+      .rows {
+        display: grid;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .row {
+        border-left: 4px solid var(--line);
+        padding: 8px 10px;
+        background: #f9fbf8;
+        border-radius: 4px;
+        color: var(--muted);
+        line-height: 1.35;
+      }
+
+      .row.good {
+        border-color: var(--good);
+      }
+
+      .row.warn {
+        border-color: var(--warn);
+      }
+
+      .row.bad {
+        border-color: var(--bad);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+        table-layout: fixed;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid var(--line);
+        padding: 11px 8px;
+        text-align: left;
+        vertical-align: top;
+        line-height: 1.35;
+      }
+
+      th {
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .export {
+        width: 100%;
+        min-height: 180px;
+        margin-top: 12px;
+        color: var(--ink);
+        background: #f9fbf8;
+        border-color: var(--line);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 12px;
+      }
+
+      .note {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+        margin-top: 10px;
+      }
+
+      @media (max-width: 980px) {
+        .app {
+          grid-template-columns: 1fr;
+        }
+
+        aside,
+        main {
+          overflow: visible;
+        }
+
+        .dashboard {
+          grid-template-columns: repeat(2, minmax(140px, 1fr));
+        }
+      }
+
+      @media (max-width: 560px) {
+        aside,
+        main {
+          padding: 16px;
+        }
+
+        .grid2,
+        .checks,
+        .dashboard,
+        .decision {
+          grid-template-columns: 1fr;
+        }
+
+        .topbar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        table {
+          display: block;
+          overflow-x: auto;
+          min-width: 720px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside>
+        <h1>Profit Gate</h1>
+        <p class="subhead">
+          Media-buying decision agent for offer math, launch gates, and creative
+          briefs.
+        </p>
+
+        <form id="campaign-form">
+          <div class="field">
+            <label for="offer">Offer</label>
+            <input
+              id="offer"
+              name="offer"
+              value="AI lead qualification for high-intent insurance buyers"
+            />
+          </div>
+          <div class="field">
+            <label for="audience">Audience</label>
+            <input
+              id="audience"
+              name="audience"
+              value="independent insurance agencies buying paid leads"
+            />
+          </div>
+          <div class="field">
+            <label for="pain">Pain</label>
+            <textarea id="pain" name="pain">
+Lead forms waste budget when quote intent and tracking quality are unknown.</textarea
+            >
+          </div>
+
+          <div class="grid2">
+            <div class="field">
+              <label for="payout">Payout</label>
+              <input
+                id="payout"
+                name="payout"
+                type="number"
+                min="0"
+                step="1"
+                value="240"
+              />
+            </div>
+            <div class="field">
+              <label for="grossMargin">Margin %</label>
+              <input
+                id="grossMargin"
+                name="grossMargin"
+                type="number"
+                min="0"
+                max="100"
+                step="1"
+                value="80"
+              />
+            </div>
+            <div class="field">
+              <label for="refundRate">Refund %</label>
+              <input
+                id="refundRate"
+                name="refundRate"
+                type="number"
+                min="0"
+                max="100"
+                step="1"
+                value="3"
+              />
+            </div>
+            <div class="field">
+              <label for="cpc">CPC</label>
+              <input
+                id="cpc"
+                name="cpc"
+                type="number"
+                min="0.01"
+                step="0.01"
+                value="3.50"
+              />
+            </div>
+            <div class="field">
+              <label for="landingPageCvr">LP CVR %</label>
+              <input
+                id="landingPageCvr"
+                name="landingPageCvr"
+                type="number"
+                min="0"
+                max="100"
+                step="0.1"
+                value="18"
+              />
+            </div>
+            <div class="field">
+              <label for="leadToSale">Lead-to-sale %</label>
+              <input
+                id="leadToSale"
+                name="leadToSale"
+                type="number"
+                min="0"
+                max="100"
+                step="0.1"
+                value="22"
+              />
+            </div>
+            <div class="field">
+              <label for="dailyBudget">Daily budget</label>
+              <input
+                id="dailyBudget"
+                name="dailyBudget"
+                type="number"
+                min="0"
+                step="10"
+                value="500"
+              />
+            </div>
+            <div class="field">
+              <label for="testDays">Test days</label>
+              <input
+                id="testDays"
+                name="testDays"
+                type="number"
+                min="1"
+                step="1"
+                value="3"
+              />
+            </div>
+          </div>
+
+          <div class="checks">
+            <label class="check"
+              ><input
+                id="trackingReady"
+                name="trackingReady"
+                type="checkbox"
+                checked
+              />
+              Tracking ready</label
+            >
+            <label class="check"
+              ><input
+                id="complianceReady"
+                name="complianceReady"
+                type="checkbox"
+                checked
+              />
+              Compliance ready</label
+            >
+          </div>
+
+          <div class="buttons">
+            <button class="primary" type="submit">Run Gate</button>
+            <button class="ghost" type="button" id="load-risky">
+              Risky Scenario
+            </button>
+            <button class="ghost" type="button" id="copy-json">
+              Copy JSON
+            </button>
+          </div>
+        </form>
+      </aside>
+
+      <main>
+        <div class="topbar">
+          <div>
+            <h2>Campaign Readout</h2>
+            <p class="note" id="next-action"></p>
+          </div>
+          <div class="badge" id="status-badge">Controlled Test</div>
+        </div>
+
+        <section class="dashboard" aria-label="Campaign economics">
+          <div class="card">
+            <span>Break-even CPC</span>
+            <div class="metric" id="breakeven">$0.00</div>
+          </div>
+          <div class="card">
+            <span>ROAS</span>
+            <div class="metric" id="roas">0.00x</div>
+          </div>
+          <div class="card">
+            <span>Expected Profit</span>
+            <div class="metric" id="profit">$0</div>
+          </div>
+          <div class="card">
+            <span>Stop-Loss Cap</span>
+            <div class="metric" id="stop">$0</div>
+          </div>
+        </section>
+
+        <section class="wide decision">
+          <div class="meter" id="meter" style="--score: 0">
+            <strong id="score">0</strong>
+          </div>
+          <div>
+            <h2>Gate Evidence</h2>
+            <div class="rows" id="evidence"></div>
+          </div>
+        </section>
+
+        <section class="wide">
+          <h2>Ad Angles And Landing Briefs</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Channel</th>
+                <th>Angle</th>
+                <th>Hook</th>
+                <th>Landing Page</th>
+                <th>Proof</th>
+              </tr>
+            </thead>
+            <tbody id="angles"></tbody>
+          </table>
+        </section>
+
+        <section class="wide">
+          <h2>Export</h2>
+          <textarea class="export" id="export" readonly></textarea>
+        </section>
+      </main>
+    </div>
+
+    <script type="module">
+      import { buildCampaignBrief } from "./src/profitGate.js";
+
+      const form = document.querySelector("#campaign-form");
+      const badge = document.querySelector("#status-badge");
+      const evidence = document.querySelector("#evidence");
+      const angles = document.querySelector("#angles");
+      const exportBox = document.querySelector("#export");
+      const meter = document.querySelector("#meter");
+      const score = document.querySelector("#score");
+      let latestBrief = null;
+
+      function dollars(value) {
+        return new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+          maximumFractionDigits: Math.abs(value) < 10 ? 2 : 0,
+        }).format(value);
+      }
+
+      function readForm() {
+        return {
+          offer: form.offer.value,
+          audience: form.audience.value,
+          pain: form.pain.value,
+          payout: form.payout.value,
+          grossMargin: form.grossMargin.value,
+          refundRate: form.refundRate.value,
+          cpc: form.cpc.value,
+          landingPageCvr: form.landingPageCvr.value,
+          leadToSale: form.leadToSale.value,
+          dailyBudget: form.dailyBudget.value,
+          testDays: form.testDays.value,
+          trackingReady: form.trackingReady.checked,
+          complianceReady: form.complianceReady.checked,
+          channels: ["google", "meta", "tiktok", "taboola"],
+        };
+      }
+
+      function renderRows(items, type) {
+        return items
+          .map((item) => `<div class="row ${type}">${item}</div>`)
+          .join("");
+      }
+
+      function render(brief) {
+        latestBrief = brief;
+        const { economics, gate } = brief;
+        badge.className = `badge ${gate.status}`;
+        badge.textContent = gate.label;
+        document.querySelector("#next-action").textContent = gate.nextAction;
+        document.querySelector("#breakeven").textContent = dollars(
+          economics.breakevenCpc,
+        );
+        document.querySelector("#roas").textContent =
+          `${economics.roas.toFixed(2)}x`;
+        document.querySelector("#profit").textContent = dollars(
+          economics.expectedProfit,
+        );
+        document.querySelector("#stop").textContent = dollars(
+          economics.stopLossBudget,
+        );
+        meter.style.setProperty("--score", gate.score);
+        score.textContent = gate.score;
+
+        evidence.innerHTML =
+          [
+            renderRows(gate.wins, "good"),
+            renderRows(gate.warnings, "warn"),
+            renderRows(gate.blockers, "bad"),
+          ].join("") || '<div class="row good">No blockers found.</div>';
+
+        angles.innerHTML = brief.angles
+          .map(
+            (angle) => `<tr>
+              <td>${angle.channel}</td>
+              <td>${angle.angle}</td>
+              <td>${angle.hook}</td>
+              <td>${angle.landingPage}</td>
+              <td>${angle.proofNeeded}</td>
+            </tr>`,
+          )
+          .join("");
+
+        exportBox.value = JSON.stringify(brief, null, 2);
+      }
+
+      function run() {
+        render(buildCampaignBrief(readForm()));
+      }
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        run();
+      });
+
+      document.querySelector("#load-risky").addEventListener("click", () => {
+        form.offer.value = "Broad consumer finance lead";
+        form.audience.value = "cold traffic with unclear purchase intent";
+        form.pain.value =
+          "Audience wants help but the offer has weak intent matching and high refund risk.";
+        form.payout.value = "80";
+        form.grossMargin.value = "55";
+        form.refundRate.value = "12";
+        form.cpc.value = "4.25";
+        form.landingPageCvr.value = "4";
+        form.leadToSale.value = "9";
+        form.dailyBudget.value = "300";
+        form.testDays.value = "3";
+        form.trackingReady.checked = false;
+        form.complianceReady.checked = false;
+        run();
+      });
+
+      document
+        .querySelector("#copy-json")
+        .addEventListener("click", async () => {
+          if (!latestBrief) run();
+          await navigator.clipboard.writeText(
+            JSON.stringify(latestBrief, null, 2),
+          );
+        });
+
+      run();
+    </script>
+  </body>
+</html>
