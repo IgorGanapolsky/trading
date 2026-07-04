@@ -15,10 +15,10 @@ from typing import Any
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.learning.distributed_feedback import LocalBackend, aggregate_feedback
+from src.learning.distributed_feedback import LocalBackend, aggregate_feedback  # noqa: E402
 
-from scripts.build_rag_query_index import main as rebuild_rag_query_index
-from scripts.train_from_feedback import recompute_from_history
+from scripts.build_rag_query_index import main as rebuild_rag_query_index  # noqa: E402
+from scripts.train_from_feedback import recompute_from_history  # noqa: E402
 
 
 def _load_json(path: Path) -> dict[str, Any]:
