@@ -101,13 +101,12 @@ def build_entry_gate_summary(repo_root: Path = PROJECT_ROOT) -> dict[str, Any]:
 
     system_state = load_json(state_path, {})
     weekly_gate = (
-        system_state.get("north_star_weekly_gate", {})
-        if isinstance(system_state, dict)
-        else {}
+        system_state.get("north_star_weekly_gate", {}) if isinstance(system_state, dict) else {}
     )
     quarantine = (
         weekly_gate.get("strategy_quarantine", {})
-        if isinstance(weekly_gate, dict) and isinstance(weekly_gate.get("strategy_quarantine"), dict)
+        if isinstance(weekly_gate, dict)
+        and isinstance(weekly_gate.get("strategy_quarantine"), dict)
         else {}
     )
 
@@ -199,11 +198,7 @@ def build_exit_decision(ic: dict[str, Any]) -> dict[str, Any]:
     # holds by default when entry_date is absent to avoid same-day churn; this
     # operator preserves that for profit-taking but still protects stop-loss
     # and 7-DTE exits.
-    if (
-        not should_exit
-        and credit > 0
-        and str(details).lower().startswith("no entry_date recorded")
-    ):
+    if not should_exit and credit > 0 and str(details).lower().startswith("no entry_date recorded"):
         if dte <= IC_EXIT_CONFIG["exit_dte"]:
             should_exit = True
             reason = "DTE_EXIT"
@@ -297,7 +292,9 @@ def run_once(
             exits_triggered += 1
             action = "would_close"
             if execute:
-                close_result = bool(close_iron_condor(client, ic, decision["exit_reason"], dry_run=False))
+                close_result = bool(
+                    close_iron_condor(client, ic, decision["exit_reason"], dry_run=False)
+                )
                 if close_result:
                     exits_submitted += 1
                     action = "closed"
@@ -369,7 +366,9 @@ def run_loop(
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run exit-only high-ROI trading loop")
     mode = parser.add_mutually_exclusive_group()
-    mode.add_argument("--dry-run", action="store_true", help="Preview exits without submitting orders")
+    mode.add_argument(
+        "--dry-run", action="store_true", help="Preview exits without submitting orders"
+    )
     mode.add_argument("--execute", action="store_true", help="Submit eligible exit orders only")
     parser.add_argument("--loop", action="store_true", help="Run continuously")
     parser.add_argument(

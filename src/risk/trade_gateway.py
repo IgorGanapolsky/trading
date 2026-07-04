@@ -848,9 +848,7 @@ class TradeGateway:
             # positions opened before this gate was in force.
             requested_qty = abs(float(request.quantity or 0))
             if requested_qty > self.MAX_CONTRACTS_PER_TRADE:
-                already_open = any(
-                    p.get("symbol") == request.symbol for p in positions
-                )
+                already_open = any(p.get("symbol") == request.symbol for p in positions)
                 if not already_open:
                     logger.error(
                         f"🚨 LOT-SIZE CAP: {request.symbol} qty={requested_qty} "

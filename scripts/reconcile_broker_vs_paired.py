@@ -297,9 +297,9 @@ def compute_unconsumed_paired_cash(
     window_end: str | None = None,
 ) -> float:
     """Calculate remaining fill cash for partially-paired orders in the window."""
-    return compute_partial_consumption_diagnostics(
-        trades, system_state, window_start, window_end
-    )["unconsumed_cash"]
+    return compute_partial_consumption_diagnostics(trades, system_state, window_start, window_end)[
+        "unconsumed_cash"
+    ]
 
 
 def compute_partial_consumption_diagnostics(
@@ -583,16 +583,20 @@ def build_payload(
         "notes": notes,
     }
     if partial_consumption is not None:
-        payload.update({
-            "paired_partial_unconsumed_cash": partial_consumption["unconsumed_cash"],
-            "paired_underconsumed_order_count": partial_consumption["underconsumed_order_count"],
-            "paired_underconsumed_qty": partial_consumption["underconsumed_qty"],
-            "paired_overconsumed_order_count": partial_consumption["overconsumed_order_count"],
-            "paired_overconsumed_qty": partial_consumption["overconsumed_qty"],
-            "paired_overconsumed_cash_reference": partial_consumption[
-                "overconsumed_cash_reference"
-            ],
-        })
+        payload.update(
+            {
+                "paired_partial_unconsumed_cash": partial_consumption["unconsumed_cash"],
+                "paired_underconsumed_order_count": partial_consumption[
+                    "underconsumed_order_count"
+                ],
+                "paired_underconsumed_qty": partial_consumption["underconsumed_qty"],
+                "paired_overconsumed_order_count": partial_consumption["overconsumed_order_count"],
+                "paired_overconsumed_qty": partial_consumption["overconsumed_qty"],
+                "paired_overconsumed_cash_reference": partial_consumption[
+                    "overconsumed_cash_reference"
+                ],
+            }
+        )
     return payload
 
 
@@ -601,8 +605,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--system-state", type=Path, default=DEFAULT_SYSTEM_STATE)
     parser.add_argument("--trades", type=Path, default=DEFAULT_TRADES)
     parser.add_argument("--report-dir", type=Path, default=DEFAULT_REPORT_DIR)
-    parser.add_argument("--date", type=str, default=None,
-                        help="Override report date (YYYY-MM-DD). Default = today UTC.")
+    parser.add_argument(
+        "--date",
+        type=str,
+        default=None,
+        help="Override report date (YYYY-MM-DD). Default = today UTC.",
+    )
     args = parser.parse_args(argv)
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")

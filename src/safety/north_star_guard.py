@@ -114,7 +114,9 @@ def _rules_repeat_ten_wide_loss_cluster(rules: list[Any]) -> bool:
     return False
 
 
-def _hypothesis_covers_rehabilitation_plan(hypothesis: dict[str, Any], hypothesis_path: Path) -> bool:
+def _hypothesis_covers_rehabilitation_plan(
+    hypothesis: dict[str, Any], hypothesis_path: Path
+) -> bool:
     rehab = _rehab_plan_for_hypothesis(hypothesis_path)
     if str(rehab.get("status") or "").strip().lower() != "quarantined":
         return True

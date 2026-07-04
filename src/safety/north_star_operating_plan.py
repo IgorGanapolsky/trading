@@ -181,9 +181,7 @@ def _rules_repeat_ten_wide_loss_cluster(rules: list[Any]) -> bool:
     """Detect a hypothesis that repeats the known 10-wide loss cluster."""
     for item in rules:
         text = str(item).lower()
-        repeats_ten_wide = bool(
-            re.search(r"(\$?\s*10[- ]?wide|\$?\s*10\s+wings?)", text)
-        )
+        repeats_ten_wide = bool(re.search(r"(\$?\s*10[- ]?wide|\$?\s*10\s+wings?)", text))
         if repeats_ten_wide and not any(
             guard in text for guard in ("reject", "quarantine", "avoid", "do not", "no ")
         ):
@@ -273,10 +271,9 @@ def _validation_hypothesis_status(data_dir: Path) -> dict[str, Any]:
                 + ", ".join(missing_clusters)
             )
 
-        if (
-            "ten_wide_wings" in rehabilitation_plan["required_loss_clusters"]
-            and _rules_repeat_ten_wide_loss_cluster(changed_rules)
-        ):
+        if "ten_wide_wings" in rehabilitation_plan[
+            "required_loss_clusters"
+        ] and _rules_repeat_ten_wide_loss_cluster(changed_rules):
             errors.append(
                 "changed_rules repeat loss cluster ten_wide_wings; reject or replace 10-wide wings"
             )

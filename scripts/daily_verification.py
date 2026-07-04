@@ -117,7 +117,6 @@ def _extract_latest_trade_from_orders(client: Any) -> Optional[LatestTrade]:
     """Best-effort latest fill lookup to keep last_trade_date fresh even if sync lagged."""
     from alpaca.trading.enums import QueryOrderStatus
     from alpaca.trading.requests import GetOrdersRequest
-
     from src.utils.trade_activity import parse_trade_timestamp
 
     try:

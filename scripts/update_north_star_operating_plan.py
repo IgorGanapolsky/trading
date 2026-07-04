@@ -14,7 +14,6 @@ from typing import Any
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from scripts.build_north_star_blocker_report import compute_report
 from src.safety.milestone_controller import (
     apply_snapshot_to_state as apply_milestone_snapshot_to_state,
 )
@@ -30,6 +29,8 @@ from src.safety.north_star_autopilot import (
     write_gate_overrides,
 )
 from src.safety.north_star_operating_plan import apply_operating_plan_to_state
+
+from scripts.build_north_star_blocker_report import compute_report
 
 STATE_PATH = PROJECT_ROOT / "data" / "system_state.json"
 TRADES_PATH = PROJECT_ROOT / "data" / "trades.json"

@@ -27,7 +27,6 @@ from typing import Optional
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
-
 from src.core.trading_constants import MAX_POSITIONS
 from src.rag.lessons_learned_rag import LessonsLearnedRAG
 from src.safety.mandatory_trade_gate import safe_submit_order
@@ -260,7 +259,6 @@ def execute_cash_secured_put(client, option: dict, config: dict) -> Optional[dic
             # Get options chain to find real contract
             from alpaca.data.historical.option import OptionHistoricalDataClient
             from alpaca.data.requests import OptionChainRequest
-
             from src.utils.alpaca_client import get_alpaca_credentials
 
             api_key, secret_key = get_alpaca_credentials()

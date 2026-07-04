@@ -221,7 +221,9 @@ def call_anthropic(model: str, key: str, system: str, user: str) -> str:
 
 
 def call_google(model: str, key: str, system: str, user: str) -> str:
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
+    url = (
+        f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
+    )
     body = {
         "system_instruction": {"parts": [{"text": system}]},
         "contents": [{"parts": [{"text": user}]}],

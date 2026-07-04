@@ -32,7 +32,6 @@ from zoneinfo import ZoneInfo
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
-
 from src.core.trading_constants import (
     IRON_CONDOR_TARGET_DELTA,
     IRON_CONDOR_UNDERLYING,

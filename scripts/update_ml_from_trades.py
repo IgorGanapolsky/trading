@@ -183,10 +183,22 @@ def stats_from_trades(trades: list[dict], cohort_unpaired_stats: dict | None = N
 
     # Fold unpaired singletons if provided
     u_wins = cohort_unpaired_stats.get("unpaired_cohort_wins", 0) if cohort_unpaired_stats else 0
-    u_losses = cohort_unpaired_stats.get("unpaired_cohort_losses", 0) if cohort_unpaired_stats else 0
-    u_gross_profit = cohort_unpaired_stats.get("unpaired_cohort_gross_profit", 0.0) if cohort_unpaired_stats else 0.0
-    u_gross_loss = cohort_unpaired_stats.get("unpaired_cohort_gross_loss", 0.0) if cohort_unpaired_stats else 0.0
-    u_pnl = cohort_unpaired_stats.get("unpaired_in_cohort_pnl", 0.0) if cohort_unpaired_stats else 0.0
+    u_losses = (
+        cohort_unpaired_stats.get("unpaired_cohort_losses", 0) if cohort_unpaired_stats else 0
+    )
+    u_gross_profit = (
+        cohort_unpaired_stats.get("unpaired_cohort_gross_profit", 0.0)
+        if cohort_unpaired_stats
+        else 0.0
+    )
+    u_gross_loss = (
+        cohort_unpaired_stats.get("unpaired_cohort_gross_loss", 0.0)
+        if cohort_unpaired_stats
+        else 0.0
+    )
+    u_pnl = (
+        cohort_unpaired_stats.get("unpaired_in_cohort_pnl", 0.0) if cohort_unpaired_stats else 0.0
+    )
 
     wins_folded = len(wins) + u_wins
     losses_folded = len(losses) + u_losses
@@ -198,7 +210,9 @@ def stats_from_trades(trades: list[dict], cohort_unpaired_stats: dict | None = N
     gross_loss_folded = abs(sum(pnl for pnl in losses if pnl < 0)) + u_gross_loss
     total_realized_pnl_folded = sum(wins) + sum(losses) + u_pnl
     quality_denominator = max(input_trades, 1)
-    quality_penalty = (skipped_trades + min(missing_pnl_trades, closed_folded)) / quality_denominator
+    quality_penalty = (
+        skipped_trades + min(missing_pnl_trades, closed_folded)
+    ) / quality_denominator
     data_quality_score = round(max(0.0, 1.0 - quality_penalty), 3)
 
     if gross_loss_folded > 0:
@@ -349,7 +363,9 @@ def build_rehabilitation_plan(trades_data: dict, gate: dict) -> dict:
         "losses": int(stats.get("losses") or 0),
         "win_rate_pct": _as_float(stats.get("win_rate_pct"), gate.get("win_rate", 0.0)),
         "profit_factor": _as_float(stats.get("profit_factor"), gate.get("profit_factor", 0.0)),
-        "total_realized_pnl": _as_float(stats.get("total_realized_pnl"), stats.get("total_pnl", 0.0)),
+        "total_realized_pnl": _as_float(
+            stats.get("total_realized_pnl"), stats.get("total_pnl", 0.0)
+        ),
         "expectancy_per_trade": _as_float(
             stats.get("expectancy_per_trade"), gate.get("expectancy_per_trade", 0.0)
         ),

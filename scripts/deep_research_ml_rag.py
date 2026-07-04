@@ -240,9 +240,7 @@ def build_packet(today: date | None = None) -> dict[str, Any]:
     if not gate.get("should_trade"):
         blockers.append(gate.get("block_reason") or "ML profitability gate is blocked")
     if validation["expectancy_per_trade"] <= 0:
-        blockers.append(
-            f"Validation expectancy is ${validation['expectancy_per_trade']:.2f}/trade"
-        )
+        blockers.append(f"Validation expectancy is ${validation['expectancy_per_trade']:.2f}/trade")
     if validation["remaining_for_30_trade_gate"] > 0:
         blockers.append(
             f"Validation sample incomplete: {validation['closed_trades']}/30 closed trades"
@@ -341,11 +339,11 @@ def render_markdown(packet: dict[str, Any]) -> str:
         f"- [{ref['title']}]({ref['url']}): {ref['takeaway']}"
         for ref in packet["research_references"]
     )
-    return f"""# Deep Research ML RAG Packet - {packet['date']}
+    return f"""# Deep Research ML RAG Packet - {packet["date"]}
 
 ## Decision
 
-`{packet['decision']}` - {packet['profit_claim']}
+`{packet["decision"]}` - {packet["profit_claim"]}
 
 ## Blockers
 
@@ -353,42 +351,42 @@ def render_markdown(packet: dict[str, Any]) -> str:
 
 ## Ledger Evidence
 
-- Closed trades: `{ledger['closed_trades']}`
-- Wins / losses: `{ledger['wins']} / {ledger['losses']}`
-- Win rate: `{ledger['win_rate_pct']:.2f}%`
-- Profit factor: `{ledger['profit_factor']:.2f}`
-- Expectancy: `${ledger['expectancy_per_trade']:.2f}/trade`
-- Total realized P/L: `${ledger['total_realized_pnl']:.2f}`
+- Closed trades: `{ledger["closed_trades"]}`
+- Wins / losses: `{ledger["wins"]} / {ledger["losses"]}`
+- Win rate: `{ledger["win_rate_pct"]:.2f}%`
+- Profit factor: `{ledger["profit_factor"]:.2f}`
+- Expectancy: `${ledger["expectancy_per_trade"]:.2f}/trade`
+- Total realized P/L: `${ledger["total_realized_pnl"]:.2f}`
 
 ## Validation Cohort
 
-- Validation entries: `{validation['entries']}`
-- Closed validation trades: `{validation['closed_trades']}/30`
-- Validation expectancy: `${validation['expectancy_per_trade']:.2f}/trade`
-- Validation profit factor: `{validation['profit_factor']}`
-- Protocol violations: `{len(validation['protocol_violations'])}`
+- Validation entries: `{validation["entries"]}`
+- Closed validation trades: `{validation["closed_trades"]}/30`
+- Validation expectancy: `${validation["expectancy_per_trade"]:.2f}/trade`
+- Validation profit factor: `{validation["profit_factor"]}`
+- Protocol violations: `{len(validation["protocol_violations"])}`
 
 ## ML Drift
 
-- Model expected win rate: `{drift['model_expected_win_rate_pct']:.2f}%`
-- Realized win rate: `{drift['realized_win_rate_pct']:.2f}%`
-- Drift: `{drift['drift_pct']:.2f}%`
-- Empirical Thompson priors should be: `alpha={drift['empirical_alpha']}`, `beta={drift['empirical_beta']}`
+- Model expected win rate: `{drift["model_expected_win_rate_pct"]:.2f}%`
+- Realized win rate: `{drift["realized_win_rate_pct"]:.2f}%`
+- Drift: `{drift["drift_pct"]:.2f}%`
+- Empirical Thompson priors should be: `alpha={drift["empirical_alpha"]}`, `beta={drift["empirical_beta"]}`
 
 ## Reconciliation
 
-- Latest report: `{reconciliation.get('path', 'missing')}`
-- Alert fired: `{reconciliation.get('alert_fired')}`
-- Delta: `${reconciliation.get('delta_dollars', 0.0):.2f}`
-- Threshold: `${reconciliation.get('threshold_dollars', 0.0):.2f}`
+- Latest report: `{reconciliation.get("path", "missing")}`
+- Alert fired: `{reconciliation.get("alert_fired")}`
+- Delta: `${reconciliation.get("delta_dollars", 0.0):.2f}`
+- Threshold: `${reconciliation.get("threshold_dollars", 0.0):.2f}`
 
 ## Live Market Research
 
-- VIX source: `{market_research.get('source', 'unknown')}`
-- VIX: `{vix.get('vix', 'unknown')}`
-- VIX regime: `{vix.get('regime', 'unknown')}`
-- VIX trend: `{vix.get('vix_trend', 'unknown')}`
-- Implication: {market_research.get('trade_implication', 'No implication available.')}
+- VIX source: `{market_research.get("source", "unknown")}`
+- VIX: `{vix.get("vix", "unknown")}`
+- VIX regime: `{vix.get("regime", "unknown")}`
+- VIX trend: `{vix.get("vix_trend", "unknown")}`
+- Implication: {market_research.get("trade_implication", "No implication available.")}
 
 ## Loss Clusters
 
@@ -396,8 +394,8 @@ def render_markdown(packet: dict[str, Any]) -> str:
 
 ## Agentic RAG Retrieval
 
-- Query: `{packet['rag']['query']}`
-- Lessons loaded: `{packet['rag']['lesson_count']}`
+- Query: `{packet["rag"]["query"]}`
+- Lessons loaded: `{packet["rag"]["lesson_count"]}`
 
 {rag_matches or "- No matches"}
 

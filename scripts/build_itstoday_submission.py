@@ -9,7 +9,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-
 ROOT = Path(__file__).resolve().parents[1]
 CONTEST_DIR = ROOT / "contest" / "itstoday-media"
 PAGES_DIR = ROOT / "docs" / "contest" / "itstoday-media"

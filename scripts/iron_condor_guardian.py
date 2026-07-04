@@ -20,7 +20,6 @@ from zoneinfo import ZoneInfo
 from alpaca.trading.client import TradingClient
 from alpaca.trading.enums import OrderSide, TimeInForce
 from alpaca.trading.requests import MarketOrderRequest
-
 from src.core.trading_constants import (
     IC_PROFIT_TARGET_PCT,
     IRON_CONDOR_EXIT_DTE,
@@ -38,6 +37,7 @@ def _guardian_leg_intent_tag(symbol: str, qty: int) -> tuple[str, str]:
     if opt_type == "P":
         return ("BPS", "SP") if is_short else ("BPL", "LP")
     return ("BCS", "SC") if is_short else ("BCL", "LC")
+
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)

@@ -1721,9 +1721,7 @@ def main():
                                         for row in history
                                         if isinstance(row, dict)
                                         and row.get("strategy") == "iron_condor"
-                                        and str(row.get("entry_date", "")).startswith(
-                                            today_iso
-                                        )
+                                        and str(row.get("entry_date", "")).startswith(today_iso)
                                     )
                                 except (OSError, ValueError):
                                     structures_today = 0
@@ -1744,18 +1742,14 @@ def main():
                                 check_recent_expiry_concentration,
                             )
 
-                            blocked, ts_reason = check_recent_expiry_concentration(
-                                opp["expiry"]
-                            )
+                            blocked, ts_reason = check_recent_expiry_concentration(opp["expiry"])
                             if blocked:
                                 logger.warning(
                                     f"RE-ENTRY BLOCKED by time-series concentration: {ts_reason}"
                                 )
                                 opp = None
                         if opp:
-                            should_skip, thompson_reason = _should_skip_for_thompson(
-                                thompson_conf
-                            )
+                            should_skip, thompson_reason = _should_skip_for_thompson(thompson_conf)
                             if should_skip:
                                 logger.warning(thompson_reason)
                             else:

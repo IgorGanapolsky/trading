@@ -183,9 +183,7 @@ RECOMMENDATION: [EXECUTE/DELAY/CANCEL]"""
 
         # Parse response
         analysis = self._parse_execution_response(response["reasoning"])
-        llm_unavailable = str(response.get("reasoning") or "").strip().lower().startswith(
-            "error:"
-        )
+        llm_unavailable = str(response.get("reasoning") or "").strip().lower().startswith("error:")
         analysis["market_status"] = market_status
         analysis["full_reasoning"] = response["reasoning"]
         analysis["trace_id"] = trace_id
@@ -335,9 +333,7 @@ RECOMMENDATION: [EXECUTE/DELAY/CANCEL]"""
             return None
         return value if math.isfinite(value) else None
 
-    def _check_market_status(
-        self, now: datetime.datetime | None = None
-    ) -> dict[str, Any]:
+    def _check_market_status(self, now: datetime.datetime | None = None) -> dict[str, Any]:
         """Return regular-session US equity market status.
 
         The execution prompt needs this as timing context. Keep it deterministic

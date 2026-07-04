@@ -108,9 +108,7 @@ def _script_level_ml_halt_allows_validation(*, halt_reason: str, explicit_live: 
     if isinstance(quarantine, dict):
         if bool(quarantine.get("block_new_positions")):
             return False
-        if bool(quarantine.get("active")) and not bool(
-            quarantine.get("paper_validation_allowed")
-        ):
+        if bool(quarantine.get("active")) and not bool(quarantine.get("paper_validation_allowed")):
             return False
 
     return (
@@ -726,6 +724,7 @@ class IronCondorStrategy:
             live: If True, execute on Alpaca. If False, simulate only.
             entry_reason: Why this trade was entered (for decision trace).
         """
+
         def blocked_trade(status: str, reason: str, **extra) -> dict:
             payload = {
                 "timestamp": datetime.now().isoformat(),
@@ -1236,9 +1235,7 @@ def main():
                 explicit_live=args.live,
             ):
                 logger.warning("=" * 60)
-                logger.warning(
-                    "LEGACY ML HALT BYPASSED FOR CONTROLLED PAPER VALIDATION"
-                )
+                logger.warning("LEGACY ML HALT BYPASSED FOR CONTROLLED PAPER VALIDATION")
                 logger.warning(halt_state.reason)
                 logger.warning("Live/scaling remains blocked; mandatory gate still applies.")
                 logger.warning("=" * 60)

@@ -38,19 +38,13 @@ _COUNTER_LOCK = threading.Lock()
 MAX_CLIENT_ORDER_ID_LEN: Final[int] = 128
 
 VALID_ROLES: Final[frozenset[str]] = frozenset({"OPEN", "CLOSE"})
-VALID_INTENTS: Final[frozenset[str]] = frozenset(
-    {"BPS", "BPL", "BCS", "BCL", "IC"}
-)
+VALID_INTENTS: Final[frozenset[str]] = frozenset({"BPS", "BPL", "BCS", "BCL", "IC"})
 VALID_LEG_TAGS: Final[frozenset[str]] = frozenset({"SP", "LP", "SC", "LC"})
 
-_PATTERN = re.compile(
-    r"^IC-(OPEN|CLOSE)-(BPS|BPL|BCS|BCL|IC)-([A-Z]{0,4})-(\d+)$"
-)
+_PATTERN = re.compile(r"^IC-(OPEN|CLOSE)-(BPS|BPL|BCS|BCL|IC)-([A-Z]{0,4})-(\d+)$")
 
 
-def build_client_order_id(
-    role: str, intent: str, leg_tag: str | None = None
-) -> str:
+def build_client_order_id(role: str, intent: str, leg_tag: str | None = None) -> str:
     """Build an `IC-{ROLE}-{INTENT}-{LEGTAG}-{NANOS}` client_order_id.
 
     ``leg_tag`` is optional (empty for the 4-leg combo parent). Guaranteed
@@ -60,14 +54,10 @@ def build_client_order_id(
     if role not in VALID_ROLES:
         raise ValueError(f"role must be one of {sorted(VALID_ROLES)}, got {role!r}")
     if intent not in VALID_INTENTS:
-        raise ValueError(
-            f"intent must be one of {sorted(VALID_INTENTS)}, got {intent!r}"
-        )
+        raise ValueError(f"intent must be one of {sorted(VALID_INTENTS)}, got {intent!r}")
     tag = leg_tag or ""
     if tag and tag not in VALID_LEG_TAGS:
-        raise ValueError(
-            f"leg_tag must be one of {sorted(VALID_LEG_TAGS)} or None, got {tag!r}"
-        )
+        raise ValueError(f"leg_tag must be one of {sorted(VALID_LEG_TAGS)} or None, got {tag!r}")
     # nanos suffix: time_ns()*1000 + monotonic counter. time_ns() alone has
     # microsecond resolution on macOS, so a tight loop collides; counter
     # guarantees uniqueness without changing the digits-only suffix shape.

@@ -65,7 +65,9 @@ class AuditGraph:
         self.index[event.trace_id].append(event.event_id)
         self._save_index()
 
-        logger.info(f"Audit event emitted: {event.event_type.value} | {event.event_id} | trace={event.trace_id}")
+        logger.info(
+            f"Audit event emitted: {event.event_type.value} | {event.event_id} | trace={event.trace_id}"
+        )
 
     def get_trace(self, trace_id: str) -> list[dict[str, Any]]:
         """Retrieve all events linked to a specific trace_id."""
@@ -89,9 +91,7 @@ class AuditGraph:
 
             # Simple mismatch detection
             if "decision" in types and "execution" not in types:
-                mismatches.append({
-                    "trace_id": trace_id,
-                    "issue": "DECISION_WITHOUT_EXECUTION",
-                    "events": types
-                })
+                mismatches.append(
+                    {"trace_id": trace_id, "issue": "DECISION_WITHOUT_EXECUTION", "events": types}
+                )
         return mismatches
