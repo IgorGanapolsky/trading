@@ -296,9 +296,31 @@ def compute_unconsumed_paired_cash(
     window_start: str | None = None,
     window_end: str | None = None,
 ) -> float:
-    """Calculate the cash flow of the unconsumed portions of partially-paired orders within the window.
+    """Calculate remaining fill cash for partially-paired orders in the window."""
+    return compute_partial_consumption_diagnostics(
+        trades, system_state, window_start, window_end
+    )["unconsumed_cash"]
+
+
+def compute_partial_consumption_diagnostics(
+    trades: dict[str, Any],
+    system_state: dict[str, Any],
+    window_start: str | None = None,
+    window_end: str | None = None,
+) -> dict[str, Any]:
+    """Return diagnostics for partially consumed paired order IDs.
+
+    A fill can be under-consumed when it represents a larger broker fill than
+    the paired trade quantities currently account for. That remaining fraction
+    is cash that the paired ledger has not consumed yet.
+
+    A fill can also be over-consumed when the same order ID is referenced by
+    more paired trade quantity than the broker fill contains. That is a ledger
+    integrity diagnostic, not negative unconsumed cash, so it is reported but
+    excluded from P/L reconciliation.
     """
     from collections import defaultdict
+
     history = system_state.get("trade_history") or []
     open_symbols = _get_open_symbols(system_state)
 
@@ -367,16 +389,39 @@ def compute_unconsumed_paired_cash(
             order_consumed_qty[oid] += qty
 
     total_unconsumed_cash = 0.0
+    overconsumed_cash_reference = 0.0
+    underconsumed_order_count = 0
+    overconsumed_order_count = 0
+    underconsumed_qty = 0.0
+    overconsumed_qty = 0.0
     for oid, consumed in order_consumed_qty.items():
         row = fills_map.get(oid)
         if row:
             filled_qty = _to_float(row.get("qty"))
-            if filled_qty > 0 and abs(filled_qty - consumed) > 0.01:
+            if filled_qty <= 0:
+                continue
+            remaining_qty = filled_qty - consumed
+            if remaining_qty > 0.01:
                 total_cash = _fill_signed_cash(row)
-                unconsumed_fraction = (filled_qty - consumed) / filled_qty
+                unconsumed_fraction = remaining_qty / filled_qty
                 total_unconsumed_cash += total_cash * unconsumed_fraction
+                underconsumed_order_count += 1
+                underconsumed_qty += remaining_qty
+            elif remaining_qty < -0.01:
+                total_cash = _fill_signed_cash(row)
+                overconsumed_fraction = abs(remaining_qty) / filled_qty
+                overconsumed_cash_reference += total_cash * overconsumed_fraction
+                overconsumed_order_count += 1
+                overconsumed_qty += abs(remaining_qty)
 
-    return round(total_unconsumed_cash, 2)
+    return {
+        "unconsumed_cash": round(total_unconsumed_cash, 2),
+        "underconsumed_order_count": underconsumed_order_count,
+        "underconsumed_qty": round(underconsumed_qty, 4),
+        "overconsumed_order_count": overconsumed_order_count,
+        "overconsumed_qty": round(overconsumed_qty, 4),
+        "overconsumed_cash_reference": round(overconsumed_cash_reference, 2),
+    }
 
 
 def compute_paired_realized(
@@ -510,11 +555,12 @@ def build_payload(
     window_start: str | None,
     window_end: str | None,
     notes: str,
+    partial_consumption: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     paired_in = paired["paired_realized_in_window"]
     delta = compute_delta(broker_realized, paired_in)
     alert_fired = abs(delta) > THRESHOLD_DOLLARS
-    return {
+    payload = {
         "date": date_str,
         "broker_realized_pnl": broker_realized,
         # Back-compat: keep paired_realized_pnl == in-window so any
@@ -536,6 +582,18 @@ def build_payload(
         "paired_unpaired_order_count": paired["unpaired_order_count"],
         "notes": notes,
     }
+    if partial_consumption is not None:
+        payload.update({
+            "paired_partial_unconsumed_cash": partial_consumption["unconsumed_cash"],
+            "paired_underconsumed_order_count": partial_consumption["underconsumed_order_count"],
+            "paired_underconsumed_qty": partial_consumption["underconsumed_qty"],
+            "paired_overconsumed_order_count": partial_consumption["overconsumed_order_count"],
+            "paired_overconsumed_qty": partial_consumption["overconsumed_qty"],
+            "paired_overconsumed_cash_reference": partial_consumption[
+                "overconsumed_cash_reference"
+            ],
+        })
+    return payload
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -566,8 +624,12 @@ def main(argv: list[str] | None = None) -> int:
         window_end,
     ) = compute_broker_realized(system_state)
     paired = compute_paired_realized(trades, window_start, window_end)
-    unconsumed_cash = compute_unconsumed_paired_cash(trades, system_state, window_start, window_end)
-    paired["paired_realized_in_window"] = round(paired["paired_realized_in_window"] + unconsumed_cash, 2)
+    partial_consumption = compute_partial_consumption_diagnostics(
+        trades, system_state, window_start, window_end
+    )
+    paired["paired_realized_in_window"] = round(
+        paired["paired_realized_in_window"] + partial_consumption["unconsumed_cash"], 2
+    )
 
     date_str = args.date or _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%d")
     notes = (
@@ -577,7 +639,10 @@ def main(argv: list[str] | None = None) -> int:
         "contribute $0 so entry cash is not mistaken for realized P/L. "
         "paired_realized_in_window = sum(trades[].realized_pnl) where "
         "exit_time in [window_start, window_end] + "
-        "trades.stats.unpaired_realized_pnl. The window is the min/max "
+        "trades.stats.unpaired_realized_pnl + under-consumed paired fill cash. "
+        "Over-consumed paired fill references are reported as diagnostics and "
+        "excluded from P/L because they are duplicate/ledger-integrity signals, "
+        "not real cash. The window is the min/max "
         "filled_at across closed broker leg-groups, so the rolling ~60d "
         "broker history is not diff'd against the full paired ledger. "
         "Threshold $150 sits above the ~$103 fee/spread noise floor "
@@ -592,6 +657,7 @@ def main(argv: list[str] | None = None) -> int:
         window_start=window_start,
         window_end=window_end,
         notes=notes,
+        partial_consumption=partial_consumption,
     )
 
     report_path = write_report(args.report_dir, payload)

@@ -401,3 +401,93 @@ def test_paired_entirely_outside_window(tmp_path: Path, recon_mod, monkeypatch):
     assert report["paired_trade_count_outside_window"] == 4
     assert report["delta_dollars"] == 500.0
     assert report["alert_fired"] is True
+
+
+def test_overconsumed_paired_fill_is_diagnostic_not_negative_unconsumed_cash(recon_mod):
+    """Duplicate order references must not become fake negative unconsumed cash."""
+    fill = {
+        "id": "shared_fill",
+        "symbol": "SPY260618C00500000",
+        "side": "OrderSide.SELL",
+        "qty": "1",
+        "price": "2.00",
+        "filled_at": "2026-05-20 18:00:00+00:00",
+        "status": "OrderStatus.FILLED",
+        "order_class": "OrderClass.SIMPLE",
+        "legs": [],
+    }
+    trades = {
+        "stats": {"total_pnl": 0.0, "closed_trades": 2},
+        "trades": [
+            {
+                "id": "t1",
+                "status": "closed",
+                "exit_time": "2026-05-21 10:00:00+00:00",
+                "quantity": 1,
+                "order_ids": {"entry": [], "exit": ["shared_fill"]},
+                "realized_pnl": 0.0,
+            },
+            {
+                "id": "t2",
+                "status": "closed",
+                "exit_time": "2026-05-22 10:00:00+00:00",
+                "quantity": 1,
+                "order_ids": {"entry": [], "exit": ["shared_fill"]},
+                "realized_pnl": 0.0,
+            },
+        ],
+    }
+
+    diagnostics = recon_mod.compute_partial_consumption_diagnostics(
+        trades,
+        {"positions": [{"symbol": "UNRELATED"}], "trade_history": [fill]},
+        "2026-05-20 00:00:00+00:00",
+        "2026-05-30 00:00:00+00:00",
+    )
+
+    assert diagnostics["unconsumed_cash"] == 0.0
+    assert diagnostics["underconsumed_order_count"] == 0
+    assert diagnostics["overconsumed_order_count"] == 1
+    assert diagnostics["overconsumed_qty"] == 1.0
+    assert diagnostics["overconsumed_cash_reference"] == 200.0
+
+
+def test_underconsumed_paired_fill_cash_is_reported(recon_mod):
+    """A partially consumed larger broker fill contributes only remaining cash."""
+    fill = {
+        "id": "partial_fill",
+        "symbol": "SPY260618P00500000",
+        "side": "OrderSide.BUY",
+        "qty": "4",
+        "price": "1.50",
+        "filled_at": "2026-05-20 18:00:00+00:00",
+        "status": "OrderStatus.FILLED",
+        "order_class": "OrderClass.SIMPLE",
+        "legs": [],
+    }
+    trades = {
+        "stats": {"total_pnl": 0.0, "closed_trades": 1},
+        "trades": [
+            {
+                "id": "t1",
+                "status": "closed",
+                "exit_time": "2026-05-21 10:00:00+00:00",
+                "quantity": 1,
+                "order_ids": {"entry": [], "exit": ["partial_fill"]},
+                "realized_pnl": 0.0,
+            },
+        ],
+    }
+
+    diagnostics = recon_mod.compute_partial_consumption_diagnostics(
+        trades,
+        {"positions": [{"symbol": "UNRELATED"}], "trade_history": [fill]},
+        "2026-05-20 00:00:00+00:00",
+        "2026-05-30 00:00:00+00:00",
+    )
+
+    assert diagnostics["unconsumed_cash"] == -450.0
+    assert diagnostics["underconsumed_order_count"] == 1
+    assert diagnostics["underconsumed_qty"] == 3.0
+    assert diagnostics["overconsumed_order_count"] == 0
+    assert diagnostics["overconsumed_cash_reference"] == 0.0
