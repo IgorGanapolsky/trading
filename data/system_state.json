@@ -1,15 +1,10 @@
 {
-  "last_updated": "2026-07-06T18:45:34.143110+00:00",
+  "last_updated": "2026-07-06T19:08:31.270646+00:00",
   "sync_health": {
-    "last_successful_sync": "2026-07-06T18:45:33.734299+00:00",
-    "sync_source": "daily_verification.py",
-    "sync_count_today": 9,
+    "last_successful_sync": "2026-07-06T19:08:31.270646+00:00",
+    "sync_source": "sync_alpaca_state.py",
+    "sync_count_today": 10,
     "history": [
-      {
-        "timestamp": "2026-07-03T15:47:30.886644+00:00",
-        "equity": 94006.11,
-        "success": true
-      },
       {
         "timestamp": "2026-07-03T16:15:33.067142+00:00",
         "equity": 94006.11,
@@ -124,9 +119,14 @@
         "timestamp": "2026-07-06T18:45:33.734299+00:00",
         "equity": 93991.03,
         "success": true
+      },
+      {
+        "timestamp": "2026-07-06T19:08:31.270646+00:00",
+        "equity": 93991.03,
+        "success": true
       }
     ],
-    "last_attempt": "2026-07-06T18:45:34.143110+00:00"
+    "last_attempt": "2026-07-06T19:08:31.270646+00:00"
   },
   "portfolio": {
     "equity": 93991.03,
@@ -2433,13 +2433,9 @@
   "trades_loaded": 161,
   "trades": {
     "last_trade_date": "2026-07-06",
-    "today_trades": 4,
-    "total_trades_today": 4,
-    "last_trade_symbol": "SPY260731C00775000",
-    "metrics_date": "2026-07-06",
-    "orders_today": 1,
-    "structures_today": 0,
-    "fills_today": 4
+    "today_trades": 1,
+    "total_trades_today": 1,
+    "last_trade_symbol": "SPY260618P00696000"
   },
   "risk": {
     "status": "WARNING - NEGATIVE P/L",
@@ -2469,13 +2465,13 @@
     "buying_power": 375964.12
   },
   "meta": {
-    "last_updated": "2026-07-06T18:45:34.143110+00:00",
+    "last_updated": "2026-07-06T19:08:31.270646+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5,
-    "last_sync_attempt": "2026-07-06T18:45:33.734299+00:00",
+    "last_sync_attempt": "2026-07-06T19:08:31.270646+00:00",
     "alpaca_keys_present": true,
-    "last_sync": "2026-07-06T18:45:33.732688",
-    "sync_mode": "paper",
+    "last_sync": "2026-07-06T19:08:31.078403",
+    "sync_mode": "paper+live",
     "last_daily_verification_at": "2026-07-06T18:45:34.143110+00:00",
     "verification_source": "daily_verification.py"
   },
@@ -2498,11 +2494,11 @@
     "starting_balance": 20.0,
     "total_pl": -20.0,
     "total_pl_pct": -100.0,
-    "synced_at": "2026-07-06T18:16:01.452028"
+    "synced_at": "2026-07-06T19:08:31.268114"
   },
   "strategy_milestones": {
     "enabled": true,
-    "generated_at": "2026-07-06T18:45:33.757523Z",
+    "generated_at": "2026-07-06T19:08:33.601706Z",
     "primary_family": "options_income",
     "rolling_window": 50,
     "paused_families": ["equity_momentum", "alternatives", "other"],
@@ -2600,7 +2596,7 @@
     "estimated_cagr_from_expectancy": -0.0388,
     "target_capital": 300000.0,
     "target_date": null,
-    "updated_at": "2026-07-06T18:45:33.757523Z",
+    "updated_at": "2026-07-06T19:08:33.601706Z",
     "target_mode": "asap_monthly_income",
     "monthly_after_tax_target": 6000.0,
     "estimated_monthly_after_tax_from_expectancy": 0.0,
@@ -2811,9 +2807,9 @@
       "gate_block_counts": {},
       "top_rejection_reasons": [],
       "summary": "Closed trades exist in lookback window; no-trade root cause not currently active.",
-      "updated_at": "2026-07-06T18:45:33.750449+00:00"
+      "updated_at": "2026-07-06T19:08:33.590691+00:00"
     },
-    "updated_at": "2026-07-06T18:45:33.751006+00:00"
+    "updated_at": "2026-07-06T19:08:33.598328+00:00"
   },
   "north_star_contributions": {
     "enabled": true,
@@ -2843,7 +2839,7 @@
     "estimated_live_contribution_this_month": 0.0,
     "contribution_estimate_confidence": "medium",
     "inference_note": "Live account has no open positions; live equity change is treated as estimated contribution.",
-    "updated_at": "2026-07-06T18:45:33.751150+00:00"
+    "updated_at": "2026-07-06T19:08:33.598599+00:00"
   },
   "ic_position_management": {
     "last_run": "2026-06-18T09:30:40.322213",
@@ -3381,7 +3377,7 @@
   "position_entries": {},
   "position_entry_features": {},
   "north_star_autopilot": {
-    "generated_at_utc": "2026-07-06T18:16:03.513875Z",
+    "generated_at_utc": "2026-07-06T19:08:33.598830Z",
     "cadence_optimizer": {
       "decision": "hold",
       "reason": "Liquidity floor unchanged.",
@@ -3472,7 +3468,7 @@
       "changed": false,
       "payload": {
         "min_liquidity_volume_ratio": 0.2,
-        "updated_at": "2026-07-06T18:16:03.513875+00:00",
+        "updated_at": "2026-07-06T19:08:33.598830+00:00",
         "source": "north_star_autopilot"
       }
     }
