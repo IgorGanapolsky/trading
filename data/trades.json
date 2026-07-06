@@ -12,26 +12,26 @@
       "min_trades_for_decision": 30
     },
     "notes": "CLEANED Jan 27, 2026 - Removed pre-Jan-22 garbage (SOFI trades, stock DCA). Fresh start per $30K account reset.",
-    "last_sync": "2026-07-03T20:01:51.672663+00:00",
+    "last_sync": "2026-07-06T16:11:58.524101+00:00",
     "sync_source": "sync_closed_positions.py"
   },
   "stats": {
-    "total_trades": 179,
-    "closed_trades": 179,
+    "total_trades": 180,
+    "closed_trades": 180,
     "open_trades": 0,
-    "wins": 30,
+    "wins": 31,
     "losses": 148,
     "breakeven": 1,
-    "win_rate_pct": 16.76,
-    "avg_win": 442.67,
+    "win_rate_pct": 17.22,
+    "avg_win": 430.23,
     "avg_loss": 128.69,
     "profit_factor": 0.7,
-    "expectancy": -32.21,
-    "total_pnl": -5766.0,
-    "total_realized_pnl": -5766.0,
+    "expectancy": -31.72,
+    "total_pnl": -5709.0,
+    "total_realized_pnl": -5709.0,
     "paper_phase_start": "2026-01-22",
-    "paper_phase_days": 162,
-    "last_updated": "2026-07-03T20:01:51.672656+00:00",
+    "paper_phase_days": 165,
+    "last_updated": "2026-07-06T16:11:58.524092+00:00",
     "unpaired_realized_pnl": 2167.0,
     "unpaired_in_cohort_pnl": 409.0,
     "unpaired_order_count": 15,
@@ -6428,6 +6428,40 @@
       "call_delta": 0.1591,
       "profile_name": "spy-core",
       "validation_phase": true
+    },
+    {
+      "id": "IC_SPY_2026_07_31_P684_694_C775_785_20260624155254_20260706161157",
+      "symbol": "SPY",
+      "type": "option",
+      "strategy": "iron_condor",
+      "status": "closed",
+      "entry_date": "2026-06-24",
+      "exit_date": "2026-07-06",
+      "entry_time": "2026-06-24T15:52:54.718598+00:00",
+      "exit_time": "2026-07-06T16:11:57.192693+00:00",
+      "entry_net_cash": 205.0,
+      "entry_credit": 205.0,
+      "entry_debit": 0.0,
+      "entry_style": "credit",
+      "exit_net_cash": -148.0,
+      "exit_credit": 0.0,
+      "exit_debit": 148.0,
+      "exit_style": "debit",
+      "realized_pnl": 57.0,
+      "outcome": "win",
+      "signature": "SPY_2026-07-31_P684-694_C775-785",
+      "legs": {
+        "underlying": "SPY",
+        "expiry": "2026-07-31",
+        "put_strikes": [684.0, 694.0],
+        "call_strikes": [775.0, 785.0]
+      },
+      "quantity": 1.0,
+      "source": "alpaca_parent_lot->alpaca_close_inventory",
+      "order_ids": {
+        "entry": ["8f3615f3-6ff1-4a58-a316-b4c7b63059d9"],
+        "exit": ["e09efc17-8cb3-4c3c-932f-fceffce2d21c"]
+      }
     }
   ]
 }
