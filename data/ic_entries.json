@@ -94,5 +94,26 @@
       "long_call": 735.0
     },
     "fill_confirmed": true
+  },
+  "IC_260807": {
+    "credit": 1.09,
+    "date": "2026-07-07T16:00:22.859855+00:00",
+    "entry_time": "2026-07-07T16:00:22.859855+00:00",
+    "order_id": "f1c1edbf-0756-43db-953d-8b2a90e4fb99",
+    "signature": "SPY_2026-08-07_P706-711_C776-781",
+    "selection_method": "live_delta",
+    "strike_selection_method": "live_delta",
+    "put_delta": 0.1492,
+    "call_delta": 0.1514,
+    "target_delta": 0.15,
+    "validation_phase": true,
+    "profile_name": "spy-core",
+    "quantity": 1,
+    "strikes": {
+      "short_put": 711.0,
+      "short_call": 776.0,
+      "long_put": 706.0,
+      "long_call": 781.0
+    }
   }
 }
