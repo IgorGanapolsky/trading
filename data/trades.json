@@ -1,49 +1,38 @@
 {
   "meta": {
-    "version": "2.0",
-    "created": "2026-01-27T18:40:00Z",
-    "purpose": "Master ledger for iron condor win rate tracking per CLAUDE.md",
+    "version": "1.1",
+    "created": "2026-07-07T21:32:24.241944+00:00",
+    "purpose": "Master ledger for closed iron condor tracking",
     "paper_phase_start": "2026-01-22",
-    "paper_phase_days_required": 90,
-    "decision_thresholds": {
-      "reassess_below": 75,
-      "marginal_range": [
-        75,
-        80
-      ],
-      "profitable_above": 80,
-      "min_trades_for_decision": 30
-    },
-    "notes": "CLEANED Jan 27, 2026 - Removed pre-Jan-22 garbage (SOFI trades, stock DCA). Fresh start per $30K account reset.",
-    "last_sync": "2026-07-07T21:29:20.594110+00:00",
+    "last_sync": "2026-07-07T21:32:24.242525+00:00",
     "sync_source": "sync_closed_positions.py"
   },
   "stats": {
-    "total_trades": 180,
-    "closed_trades": 180,
+    "total_trades": 176,
+    "closed_trades": 176,
     "open_trades": 0,
-    "wins": 31,
-    "losses": 148,
+    "wins": 30,
+    "losses": 145,
     "breakeven": 1,
-    "win_rate_pct": 17.22,
-    "avg_win": 430.23,
-    "avg_loss": 128.69,
+    "win_rate_pct": 17.05,
+    "avg_win": 473.13,
+    "avg_loss": 140.5,
     "profit_factor": 0.7,
-    "expectancy": -31.72,
-    "total_pnl": -5709.0,
-    "total_realized_pnl": -5709.0,
+    "expectancy": -35.11,
+    "total_pnl": -6179.0,
+    "total_realized_pnl": -6179.0,
     "paper_phase_start": "2026-01-22",
     "paper_phase_days": 166,
-    "last_updated": "2026-07-07T21:29:20.594103+00:00",
-    "unpaired_realized_pnl": 2167.0,
+    "last_updated": "2026-07-07T21:32:24.242521+00:00",
+    "unpaired_realized_pnl": 1609.0,
     "unpaired_in_cohort_pnl": 409.0,
-    "unpaired_order_count": 15,
+    "unpaired_order_count": 19,
     "unpaired_cohort_start": "2026-04-09",
-    "unpaired_wins": 10,
-    "unpaired_losses": 5,
+    "unpaired_wins": 12,
+    "unpaired_losses": 7,
     "unpaired_breakeven": 0,
-    "unpaired_gross_profit": 11819.0,
-    "unpaired_gross_loss": 9652.0,
+    "unpaired_gross_profit": 12783.0,
+    "unpaired_gross_loss": 11174.0,
     "unpaired_cohort_wins": 2,
     "unpaired_cohort_losses": 4,
     "unpaired_cohort_breakeven": 0,
@@ -51,378 +40,6 @@
     "unpaired_cohort_gross_loss": 9255.0
   },
   "trades": [
-    {
-      "id": "IC_SPY_2026_02_20_P655_660_C720_725_20260122174841_20260206184836",
-      "symbol": "SPY",
-      "type": "option",
-      "strategy": "iron_condor",
-      "status": "closed",
-      "entry_date": "2026-01-22",
-      "exit_date": "2026-02-06",
-      "entry_time": "2026-01-22T17:48:41.448722+00:00",
-      "exit_time": "2026-02-06T18:48:36.298501+00:00",
-      "entry_credit": 81.0,
-      "exit_debit": 40.0,
-      "realized_pnl": 41.0,
-      "outcome": "win",
-      "signature": "SPY_2026-02-20_P655-660_C720-725",
-      "legs": {
-        "underlying": "SPY",
-        "expiry": "2026-02-20",
-        "put_strikes": [
-          655.0,
-          660.0
-        ],
-        "call_strikes": [
-          720.0,
-          725.0
-        ]
-      },
-      "source": "alpaca_leg_cluster->alpaca_leg_cluster",
-      "order_ids": {
-        "entry": [
-          "130b8632-7e3c-4679-bd60-8625f745248f",
-          "355a94b8-6972-46a1-ae7a-8fce87bbc682",
-          "dac555e2-ce3d-4411-8845-34d1e1b2ede0",
-          "40432d54-df5c-433b-bf80-34688c729582"
-        ],
-        "exit": [
-          "1d3416ad-f32b-4057-9ed3-2604641b3f5c",
-          "2f1425ea-4623-4429-bcaa-b444745c08b5",
-          "4fb2f9f4-1508-4032-b887-6054abd2208b",
-          "c8d42c17-0a38-4bce-a14e-916a8a3dc038"
-        ]
-      }
-    },
-    {
-      "id": "IC_SPY_2026_03_20_P640_650_C720_730_20260220183550_20260220191848",
-      "symbol": "SPY",
-      "type": "option",
-      "strategy": "iron_condor",
-      "status": "closed",
-      "entry_date": "2026-02-20",
-      "exit_date": "2026-02-20",
-      "entry_time": "2026-02-20T18:35:50.481373+00:00",
-      "exit_time": "2026-02-20T19:18:48.981802+00:00",
-      "entry_net_cash": 288.0,
-      "entry_credit": 288.0,
-      "entry_debit": 0.0,
-      "entry_style": "credit",
-      "exit_net_cash": -282.0,
-      "exit_credit": 0.0,
-      "exit_debit": 282.0,
-      "exit_style": "debit",
-      "realized_pnl": 6.0,
-      "outcome": "win",
-      "signature": "SPY_2026-03-20_P640-650_C720-730",
-      "legs": {
-        "underlying": "SPY",
-        "expiry": "2026-03-20",
-        "put_strikes": [
-          640.0,
-          650.0
-        ],
-        "call_strikes": [
-          720.0,
-          730.0
-        ]
-      },
-      "quantity": 2.0,
-      "source": "alpaca_parent_lot->alpaca_close_inventory",
-      "order_ids": {
-        "entry": [
-          "aea7e57b-7a7d-4701-9896-508247d5fa51"
-        ],
-        "exit": [
-          "317bd9bf-62ff-4884-ad29-10d33cb87b32",
-          "7321d611-a6d0-415f-a9f7-a8392ae0093b",
-          "f8771539-bddf-4c46-a03b-2405936f4e2a",
-          "f95fbb10-6daa-4e3a-bcf6-3ed23ad9a3fe"
-        ]
-      }
-    },
-    {
-      "id": "IC_SPY_2026_03_20_P645_655_C725_735_20260220191958_20260220201020",
-      "symbol": "SPY",
-      "type": "option",
-      "strategy": "iron_condor",
-      "status": "closed",
-      "entry_date": "2026-02-20",
-      "exit_date": "2026-02-20",
-      "entry_time": "2026-02-20T19:19:58.783219+00:00",
-      "exit_time": "2026-02-20T20:10:20.521243+00:00",
-      "entry_net_cash": 264.0,
-      "entry_credit": 264.0,
-      "entry_debit": 0.0,
-      "entry_style": "credit",
-      "exit_net_cash": -306.0,
-      "exit_credit": 0.0,
-      "exit_debit": 306.0,
-      "exit_style": "debit",
-      "realized_pnl": -42.0,
-      "outcome": "loss",
-      "signature": "SPY_2026-03-20_P645-655_C725-735",
-      "legs": {
-        "underlying": "SPY",
-        "expiry": "2026-03-20",
-        "put_strikes": [
-          645.0,
-          655.0
-        ],
-        "call_strikes": [
-          725.0,
-          735.0
-        ]
-      },
-      "quantity": 2.0,
-      "source": "alpaca_parent_lot->alpaca_close_inventory",
-      "order_ids": {
-        "entry": [
-          "f9b61ad8-7b2a-4859-903f-ab255e209cbe"
-        ],
-        "exit": [
-          "14635dd3-897f-4dc2-a2cd-c0af55b2e7d6",
-          "8372ab77-2aa1-4d99-adc4-280217bb73bb",
-          "b8607fb8-5453-4072-9728-0b273a6580a4",
-          "f820b819-c4d3-4f38-9184-c85dfad266ee"
-        ]
-      }
-    },
-    {
-      "id": "IC_SPY_2026_03_27_P640_650_C720_730_20260220174338_20260223152131",
-      "symbol": "SPY",
-      "type": "option",
-      "strategy": "iron_condor",
-      "status": "closed",
-      "entry_date": "2026-02-20",
-      "exit_date": "2026-02-23",
-      "entry_time": "2026-02-20T17:43:38.908006+00:00",
-      "exit_time": "2026-02-23T15:21:31.867780+00:00",
-      "entry_net_cash": 187.0,
-      "entry_credit": 187.0,
-      "entry_debit": 0.0,
-      "entry_style": "credit",
-      "exit_net_cash": -203.0,
-      "exit_credit": 0.0,
-      "exit_debit": 203.0,
-      "exit_style": "debit",
-      "realized_pnl": -16.0,
-      "outcome": "loss",
-      "signature": "SPY_2026-03-27_P640-650_C720-730",
-      "legs": {
-        "underlying": "SPY",
-        "expiry": "2026-03-27",
-        "put_strikes": [
-          640.0,
-          650.0
-        ],
-        "call_strikes": [
-          720.0,
-          730.0
-        ]
-      },
-      "quantity": 1.0,
-      "source": "alpaca_parent_lot->alpaca_close_inventory",
-      "order_ids": {
-        "entry": [
-          "49506fda-c2d4-41be-bfd7-27e84356416e"
-        ],
-        "exit": [
-          "461308e2-a900-4e26-a768-0c3e2f14701c",
-          "59a1d7dc-3efe-4050-847f-bb46312e85bc",
-          "a01eb711-d37b-4302-9afa-0473cb7cf08a",
-          "c02c6f46-4653-4496-8490-c0e8476d584b"
-        ]
-      }
-    },
-    {
-      "id": "IC_SPY_2026_03_27_P640_650_C720_730_20260220181851_20260223152131",
-      "symbol": "SPY",
-      "type": "option",
-      "strategy": "iron_condor",
-      "status": "closed",
-      "entry_date": "2026-02-20",
-      "exit_date": "2026-02-23",
-      "entry_time": "2026-02-20T18:18:51.736145+00:00",
-      "exit_time": "2026-02-23T15:21:31.867780+00:00",
-      "entry_net_cash": 184.0,
-      "entry_credit": 184.0,
-      "entry_debit": 0.0,
-      "entry_style": "credit",
-      "exit_net_cash": -203.0,
-      "exit_credit": 0.0,
-      "exit_debit": 203.0,
-      "exit_style": "debit",
-      "realized_pnl": -19.0,
-      "outcome": "loss",
-      "signature": "SPY_2026-03-27_P640-650_C720-730",
-      "legs": {
-        "underlying": "SPY",
-        "expiry": "2026-03-27",
-        "put_strikes": [
-          640.0,
-          650.0
-        ],
-        "call_strikes": [
-          720.0,
-          730.0
-        ]
-      },
-      "quantity": 1.0,
-      "source": "alpaca_parent_lot->alpaca_close_inventory",
-      "order_ids": {
-        "entry": [
-          "d6ab7175-466a-4b28-b9d9-4aeb1f74f120"
-        ],
-        "exit": [
-          "461308e2-a900-4e26-a768-0c3e2f14701c",
-          "59a1d7dc-3efe-4050-847f-bb46312e85bc",
-          "a01eb711-d37b-4302-9afa-0473cb7cf08a",
-          "c02c6f46-4653-4496-8490-c0e8476d584b"
-        ]
-      }
-    },
-    {
-      "id": "IC_SPY_2026_03_27_P645_655_C720_730_20260220170408_20260223154820",
-      "symbol": "SPY",
-      "type": "option",
-      "strategy": "iron_condor",
-      "status": "closed",
-      "entry_date": "2026-02-20",
-      "exit_date": "2026-02-23",
-      "entry_time": "2026-02-20T17:04:08.932880+00:00",
-      "exit_time": "2026-02-23T15:48:20.737082+00:00",
-      "entry_net_cash": 199.0,
-      "entry_credit": 199.0,
-      "entry_debit": 0.0,
-      "entry_style": "credit",
-      "exit_net_cash": -139.0,
-      "exit_credit": 0.0,
-      "exit_debit": 139.0,
-      "exit_style": "debit",
-      "realized_pnl": 60.0,
-      "outcome": "win",
-      "signature": "SPY_2026-03-27_P645-655_C720-730",
-      "legs": {
-        "underlying": "SPY",
-        "expiry": "2026-03-27",
-        "put_strikes": [
-          645.0,
-          655.0
-        ],
-        "call_strikes": [
-          720.0,
-          730.0
-        ]
-      },
-      "quantity": 1.0,
-      "source": "alpaca_parent_lot->alpaca_close_inventory",
-      "order_ids": {
-        "entry": [
-          "de61cc10-3b9c-48e6-8585-58ef1048aa25"
-        ],
-        "exit": [
-          "11982fbe-d78c-49aa-bed6-b0a8bfacd044",
-          "59a1d7dc-3efe-4050-847f-bb46312e85bc",
-          "b861e365-1535-4303-af95-3e44603a7d60",
-          "c02c6f46-4653-4496-8490-c0e8476d584b"
-        ]
-      }
-    },
-    {
-      "id": "IC_SPY_2026_03_27_P640_650_C715_725_20260223164740_20260223172841",
-      "symbol": "SPY",
-      "type": "option",
-      "strategy": "iron_condor",
-      "status": "closed",
-      "entry_date": "2026-02-23",
-      "exit_date": "2026-02-23",
-      "entry_time": "2026-02-23T16:47:40.020235+00:00",
-      "exit_time": "2026-02-23T17:28:41.835541+00:00",
-      "entry_net_cash": 436.0,
-      "entry_credit": 436.0,
-      "entry_debit": 0.0,
-      "entry_style": "credit",
-      "exit_net_cash": -442.0,
-      "exit_credit": 0.0,
-      "exit_debit": 442.0,
-      "exit_style": "debit",
-      "realized_pnl": -6.0,
-      "outcome": "loss",
-      "signature": "SPY_2026-03-27_P640-650_C715-725",
-      "legs": {
-        "underlying": "SPY",
-        "expiry": "2026-03-27",
-        "put_strikes": [
-          640.0,
-          650.0
-        ],
-        "call_strikes": [
-          715.0,
-          725.0
-        ]
-      },
-      "quantity": 2.0,
-      "source": "alpaca_parent_lot->alpaca_close_inventory",
-      "order_ids": {
-        "entry": [
-          "f7f66942-7d6f-47e8-b557-166dff880075"
-        ],
-        "exit": [
-          "1a715f0d-2c56-42d0-8649-d82a24a43f62",
-          "4eef42cf-ee11-48dc-a8b4-5a5e579612ca",
-          "5a3dad9e-1349-4960-8a2b-08bf38c1b11a",
-          "edc0cbe8-e2d5-4ca8-9db7-6ddfddd8f7dc"
-        ]
-      }
-    },
-    {
-      "id": "IC_SPY_2026_03_31_P635_645_C715_725_20260223175003_20260223182732",
-      "symbol": "SPY",
-      "type": "option",
-      "strategy": "iron_condor",
-      "status": "closed",
-      "entry_date": "2026-02-23",
-      "exit_date": "2026-02-23",
-      "entry_time": "2026-02-23T17:50:03.004270+00:00",
-      "exit_time": "2026-02-23T18:27:32.000015+00:00",
-      "entry_net_cash": 446.0,
-      "entry_credit": 446.0,
-      "entry_debit": 0.0,
-      "entry_style": "credit",
-      "exit_net_cash": -558.0,
-      "exit_credit": 0.0,
-      "exit_debit": 558.0,
-      "exit_style": "debit",
-      "realized_pnl": -112.0,
-      "outcome": "loss",
-      "signature": "SPY_2026-03-31_P635-645_C715-725",
-      "legs": {
-        "underlying": "SPY",
-        "expiry": "2026-03-31",
-        "put_strikes": [
-          635.0,
-          645.0
-        ],
-        "call_strikes": [
-          715.0,
-          725.0
-        ]
-      },
-      "quantity": 2.0,
-      "source": "alpaca_parent_lot->alpaca_close_inventory",
-      "order_ids": {
-        "entry": [
-          "2de9a812-64d2-4358-a63f-bedffbb18def"
-        ],
-        "exit": [
-          "46976cab-d2a6-43c7-9dd3-0c5cc1a2de3b",
-          "573af003-9a02-4977-886d-5ece5195a67b",
-          "6c51e91f-939b-44a6-8f59-0ab343ea2fb6",
-          "af9de8bb-b715-48ca-8bbe-17c945f92490"
-        ]
-      }
-    },
     {
       "id": "IC_SPY_2026_03_31_P635_645_C715_725_20260223192944_20260223201747",
       "symbol": "SPY",
@@ -1759,6 +1376,7 @@
       "exit_style": "debit",
       "realized_pnl": 22.0,
       "outcome": "win",
+      "exit_reason": "manual_close",
       "signature": "SPY_2026-03-27_P635-645_C715-725",
       "legs": {
         "underlying": "SPY",
@@ -2275,6 +1893,7 @@
       "exit_style": "debit",
       "realized_pnl": -8.0,
       "outcome": "loss",
+      "exit_reason": "manual_close",
       "signature": "SPY_2026-04-02_P630-640_C705-715",
       "legs": {
         "underlying": "SPY",
@@ -2462,6 +2081,7 @@
       "exit_style": "debit",
       "realized_pnl": 68.0,
       "outcome": "win",
+      "exit_reason": "manual_close",
       "signature": "SPY_2026-04-02_P630-640_C705-715",
       "legs": {
         "underlying": "SPY",
@@ -2555,6 +2175,7 @@
       "exit_style": "debit",
       "realized_pnl": -34.0,
       "outcome": "loss",
+      "exit_reason": "manual_close",
       "signature": "SPY_2026-04-02_P625-635_C700-710",
       "legs": {
         "underlying": "SPY",
@@ -2648,6 +2269,7 @@
       "exit_style": "debit",
       "realized_pnl": -83.0,
       "outcome": "loss",
+      "exit_reason": "manual_close",
       "signature": "SPY_2026-04-02_P630-640_C710-720",
       "legs": {
         "underlying": "SPY",
@@ -2965,7 +2587,7 @@
       "entry_date": "2026-03-11",
       "exit_date": "2026-03-11",
       "entry_time": "2026-03-11T16:46:37.486083+00:00",
-      "exit_time": "2026-03-11T16:49:07.067144+00:00",
+      "exit_time": "2026-03-11T16:49:07.445081+00:00",
       "entry_net_cash": 314.0,
       "entry_credit": 314.0,
       "entry_debit": 0.0,
@@ -2989,16 +2611,17 @@
           720.0
         ]
       },
-      "source": "alpaca_parent->alpaca_leg_cluster",
+      "quantity": 2.0,
+      "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
         "entry": [
           "bbaf3f31-197d-4b08-aab4-29ede024d87c"
         ],
         "exit": [
-          "78cfca9e-547b-42b8-8e85-d5d1846c9be5",
-          "9e7408e5-6b48-4dab-8e09-14ae99f9b825",
           "2f2118dd-4905-47d3-900b-988e52170536",
-          "7da4aed5-b1db-4234-b39c-0a521de3a486"
+          "78cfca9e-547b-42b8-8e85-d5d1846c9be5",
+          "7da4aed5-b1db-4234-b39c-0a521de3a486",
+          "9e7408e5-6b48-4dab-8e09-14ae99f9b825"
         ]
       }
     },
@@ -3011,7 +2634,7 @@
       "entry_date": "2026-03-11",
       "exit_date": "2026-03-11",
       "entry_time": "2026-03-11T19:22:27.293859+00:00",
-      "exit_time": "2026-03-11T19:46:08.735429+00:00",
+      "exit_time": "2026-03-11T19:46:08.964319+00:00",
       "entry_net_cash": 314.0,
       "entry_credit": 314.0,
       "entry_debit": 0.0,
@@ -3035,256 +2658,19 @@
           720.0
         ]
       },
-      "source": "alpaca_parent->alpaca_leg_cluster",
+      "quantity": 2.0,
+      "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
         "entry": [
           "9486e79a-4cf4-4971-9586-5f21a8a16726"
         ],
         "exit": [
           "55834021-5609-4f86-bc23-a6c7762abacf",
-          "6e8e1a2b-155d-485b-bb4b-53a16e42493f",
           "637fe285-eaed-46f3-bc85-d98d06fa9ad8",
+          "6e8e1a2b-155d-485b-bb4b-53a16e42493f",
           "ee4180b1-95e9-4dd2-bf47-7fc15953f47c"
         ]
       }
-    },
-    {
-      "id": "IC_SPY_2026_04_24_P615_625_C690_700_20260323180807_20260325140456",
-      "symbol": "SPY",
-      "type": "option",
-      "strategy": "iron_condor",
-      "status": "closed",
-      "entry_date": "2026-03-23",
-      "exit_date": "2026-03-25",
-      "entry_time": "2026-03-23T18:08:07.284091+00:00",
-      "exit_time": "2026-03-25T14:04:56.116982+00:00",
-      "entry_net_cash": 309.0,
-      "entry_credit": 309.0,
-      "entry_debit": 0.0,
-      "entry_style": "credit",
-      "exit_net_cash": -309.0,
-      "exit_credit": 0.0,
-      "exit_debit": 309.0,
-      "exit_style": "debit",
-      "realized_pnl": 0.0,
-      "outcome": "breakeven",
-      "signature": "SPY_2026-04-24_P615-625_C690-700",
-      "legs": {
-        "underlying": "SPY",
-        "expiry": "2026-04-24",
-        "put_strikes": [
-          615.0,
-          625.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
-      },
-      "source": "alpaca_parent->alpaca_leg_cluster",
-      "order_ids": {
-        "entry": [
-          "d0d364cf-0412-4f4e-aee8-64c9f169a8ca"
-        ],
-        "exit": [
-          "36fb8155-ce45-4f6c-8568-5a80b1c0fdd0",
-          "aea9266a-586e-49a2-9c35-c37ec8ec0071",
-          "fe1bd3bb-309a-4c0e-bc5a-1cf41fcf8a2f",
-          "9b838d6a-d015-4494-afb1-933069b13446"
-        ]
-      }
-    },
-    {
-      "id": "IC_SPY_2026_04_24_P615_625_C690_700_20260325160942_20260402150145",
-      "symbol": "SPY",
-      "type": "option",
-      "strategy": "iron_condor",
-      "status": "closed",
-      "entry_date": "2026-03-25",
-      "exit_date": "2026-04-02",
-      "entry_time": "2026-03-25T16:09:42.584005+00:00",
-      "exit_time": "2026-04-02T15:01:45.331221+00:00",
-      "entry_net_cash": 298.0,
-      "entry_credit": 298.0,
-      "entry_debit": 0.0,
-      "entry_style": "credit",
-      "exit_net_cash": -202.0,
-      "exit_credit": 0.0,
-      "exit_debit": 202.0,
-      "exit_style": "debit",
-      "realized_pnl": 96.0,
-      "outcome": "win",
-      "signature": "SPY_2026-04-24_P615-625_C690-700",
-      "legs": {
-        "underlying": "SPY",
-        "expiry": "2026-04-24",
-        "put_strikes": [
-          615.0,
-          625.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
-      },
-      "source": "alpaca_parent->alpaca_leg_cluster",
-      "order_ids": {
-        "entry": [
-          "2204e552-57fd-40c0-83a4-aefe5498f75e"
-        ],
-        "exit": [
-          "bc303074-9c9b-41a1-9023-5cbb6751831e",
-          "1cd1bb51-6cdd-46fc-8ed8-062c00b53266",
-          "61b7b2bf-32c5-4e38-aaac-d12d3a3027cf",
-          "9b68a161-3e3b-45fa-8b4d-6df5088ca186"
-        ]
-      }
-    },
-    {
-      "id": "IC_SPY_2026_05_08_P590_600_C690_700_20260402144706_20260413195552",
-      "symbol": "SPY",
-      "type": "option",
-      "strategy": "iron_condor",
-      "status": "closed",
-      "entry_date": "2026-04-02",
-      "exit_date": "2026-04-13",
-      "entry_time": "2026-04-02T14:47:06.670449+00:00",
-      "exit_time": "2026-04-13T19:55:52.087311+00:00",
-      "entry_net_cash": 236.0,
-      "entry_credit": 236.0,
-      "entry_debit": 0.0,
-      "entry_style": "credit",
-      "exit_net_cash": -503.0,
-      "exit_credit": 0.0,
-      "exit_debit": 503.0,
-      "exit_style": "debit",
-      "realized_pnl": -267.0,
-      "outcome": "loss",
-      "signature": "SPY_2026-05-08_P590-600_C690-700",
-      "legs": {
-        "underlying": "SPY",
-        "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
-      },
-      "quantity": 1.0,
-      "source": "alpaca_parent_lot->alpaca_close_inventory",
-      "order_ids": {
-        "entry": [
-          "e0449e4b-394f-48ee-bc3b-d0c6199140cc"
-        ],
-        "exit": [
-          "b0ce5191-a895-4453-9fb8-514750b0a442"
-        ]
-      }
-    },
-    {
-      "id": "IC_SPY_2026_05_15_P628_638_C712_715_20260410152940_20260505185045",
-      "symbol": "SPY",
-      "type": "option",
-      "strategy": "iron_condor",
-      "status": "closed",
-      "entry_date": "2026-04-10",
-      "exit_date": "2026-05-05",
-      "entry_time": "2026-04-10T15:29:40.533965+00:00",
-      "exit_time": "2026-05-05T18:50:45.184106+00:00",
-      "entry_net_cash": 126.0,
-      "entry_credit": 126.0,
-      "entry_debit": 0.0,
-      "entry_style": "credit",
-      "exit_net_cash": -252.0,
-      "exit_credit": 0.0,
-      "exit_debit": 252.0,
-      "exit_style": "debit",
-      "realized_pnl": -126.0,
-      "outcome": "loss",
-      "signature": "SPY_2026-05-15_P628-638_C712-715",
-      "legs": {
-        "underlying": "SPY",
-        "expiry": "2026-05-15",
-        "put_strikes": [
-          628.0,
-          638.0
-        ],
-        "call_strikes": [
-          712.0,
-          715.0
-        ]
-      },
-      "quantity": 1.0,
-      "source": "alpaca_parent_lot->alpaca_close_inventory",
-      "order_ids": {
-        "entry": [
-          "733c5a22-4c8d-470f-9c1f-0a51ea7fef79"
-        ],
-        "exit": [
-          "480686f6-b9a1-4668-b511-1940ec9b1b8a"
-        ]
-      },
-      "selection_method": "live_delta",
-      "strike_selection_method": "live_delta",
-      "target_delta": 0.15,
-      "put_delta": 0.1514,
-      "call_delta": 0.1499,
-      "profile_name": "spy-core",
-      "validation_phase": true
-    },
-    {
-      "id": "IC_SPY_2026_05_22_P644_654_C730_735_20260415153630_20260506155459",
-      "symbol": "SPY",
-      "type": "option",
-      "strategy": "iron_condor",
-      "status": "closed",
-      "entry_date": "2026-04-15",
-      "exit_date": "2026-05-06",
-      "entry_time": "2026-04-15T15:36:30.685426+00:00",
-      "exit_time": "2026-05-06T15:54:59.512969+00:00",
-      "entry_net_cash": 147.0,
-      "entry_credit": 147.0,
-      "entry_debit": 0.0,
-      "entry_style": "credit",
-      "exit_net_cash": -310.0,
-      "exit_credit": 0.0,
-      "exit_debit": 310.0,
-      "exit_style": "debit",
-      "realized_pnl": -163.0,
-      "outcome": "loss",
-      "signature": "SPY_2026-05-22_P644-654_C730-735",
-      "legs": {
-        "underlying": "SPY",
-        "expiry": "2026-05-22",
-        "put_strikes": [
-          644.0,
-          654.0
-        ],
-        "call_strikes": [
-          730.0,
-          735.0
-        ]
-      },
-      "quantity": 1.0,
-      "source": "alpaca_parent_lot->alpaca_close_inventory",
-      "order_ids": {
-        "entry": [
-          "7e0f64e5-1b92-46e6-b5ff-b8a53038b108"
-        ],
-        "exit": [
-          "749f06a4-2347-461a-9466-5bb545410986"
-        ]
-      },
-      "selection_method": "live_delta",
-      "strike_selection_method": "live_delta",
-      "target_delta": 0.15,
-      "put_delta": 0.1508,
-      "call_delta": 0.1497,
-      "profile_name": "spy-core",
-      "validation_phase": true
     },
     {
       "id": "IC_SPY_2026_04_10_P630_640_C710_720_20260305193313_20260323143107",
@@ -3757,6 +3143,53 @@
       }
     },
     {
+      "id": "IC_SPY_2026_04_24_P615_625_C690_700_20260323180807_20260325140456",
+      "symbol": "SPY",
+      "type": "option",
+      "strategy": "iron_condor",
+      "status": "closed",
+      "entry_date": "2026-03-23",
+      "exit_date": "2026-03-25",
+      "entry_time": "2026-03-23T18:08:07.284091+00:00",
+      "exit_time": "2026-03-25T14:04:56.464076+00:00",
+      "entry_net_cash": 309.0,
+      "entry_credit": 309.0,
+      "entry_debit": 0.0,
+      "entry_style": "credit",
+      "exit_net_cash": -309.0,
+      "exit_credit": 0.0,
+      "exit_debit": 309.0,
+      "exit_style": "debit",
+      "realized_pnl": 0.0,
+      "outcome": "breakeven",
+      "signature": "SPY_2026-04-24_P615-625_C690-700",
+      "legs": {
+        "underlying": "SPY",
+        "expiry": "2026-04-24",
+        "put_strikes": [
+          615.0,
+          625.0
+        ],
+        "call_strikes": [
+          690.0,
+          700.0
+        ]
+      },
+      "quantity": 1.0,
+      "source": "alpaca_parent_lot->alpaca_close_inventory",
+      "order_ids": {
+        "entry": [
+          "d0d364cf-0412-4f4e-aee8-64c9f169a8ca"
+        ],
+        "exit": [
+          "36fb8155-ce45-4f6c-8568-5a80b1c0fdd0",
+          "9b838d6a-d015-4494-afb1-933069b13446",
+          "aea9266a-586e-49a2-9c35-c37ec8ec0071",
+          "fe1bd3bb-309a-4c0e-bc5a-1cf41fcf8a2f"
+        ]
+      }
+    },
+    {
       "id": "IC_SPY_2026_04_30_P615_625_C690_700_20260325165039_20260325172722",
       "symbol": "SPY",
       "type": "option",
@@ -3988,6 +3421,53 @@
           "64dd0cb8-dd67-40dd-8907-f9eaf7d98afc",
           "71c8e69a-3d5c-4cd0-a614-1a2c48f409af",
           "f37b5e0d-eb45-4320-a404-b9872a3b2c63"
+        ]
+      }
+    },
+    {
+      "id": "IC_SPY_2026_04_24_P615_625_C690_700_20260325160942_20260402150145",
+      "symbol": "SPY",
+      "type": "option",
+      "strategy": "iron_condor",
+      "status": "closed",
+      "entry_date": "2026-03-25",
+      "exit_date": "2026-04-02",
+      "entry_time": "2026-03-25T16:09:42.584005+00:00",
+      "exit_time": "2026-04-02T15:01:45.331221+00:00",
+      "entry_net_cash": 298.0,
+      "entry_credit": 298.0,
+      "entry_debit": 0.0,
+      "entry_style": "credit",
+      "exit_net_cash": -202.0,
+      "exit_credit": 0.0,
+      "exit_debit": 202.0,
+      "exit_style": "debit",
+      "realized_pnl": 96.0,
+      "outcome": "win",
+      "exit_reason": "manual_close",
+      "signature": "SPY_2026-04-24_P615-625_C690-700",
+      "legs": {
+        "underlying": "SPY",
+        "expiry": "2026-04-24",
+        "put_strikes": [
+          615.0,
+          625.0
+        ],
+        "call_strikes": [
+          690.0,
+          700.0
+        ]
+      },
+      "source": "alpaca_parent->alpaca_leg_cluster",
+      "order_ids": {
+        "entry": [
+          "2204e552-57fd-40c0-83a4-aefe5498f75e"
+        ],
+        "exit": [
+          "bc303074-9c9b-41a1-9023-5cbb6751831e",
+          "1cd1bb51-6cdd-46fc-8ed8-062c00b53266",
+          "61b7b2bf-32c5-4e38-aaac-d12d3a3027cf",
+          "9b68a161-3e3b-45fa-8b4d-6df5088ca186"
         ]
       }
     },
@@ -7702,6 +7182,152 @@
       }
     },
     {
+      "id": "IC_SPY_2026_05_08_P590_600_C690_700_20260402144706_20260413195552",
+      "symbol": "SPY",
+      "type": "option",
+      "strategy": "iron_condor",
+      "status": "closed",
+      "entry_date": "2026-04-02",
+      "exit_date": "2026-04-13",
+      "entry_time": "2026-04-02T14:47:06.670449+00:00",
+      "exit_time": "2026-04-13T19:55:52.087311+00:00",
+      "entry_net_cash": 236.0,
+      "entry_credit": 236.0,
+      "entry_debit": 0.0,
+      "entry_style": "credit",
+      "exit_net_cash": -503.0,
+      "exit_credit": 0.0,
+      "exit_debit": 503.0,
+      "exit_style": "debit",
+      "realized_pnl": -267.0,
+      "outcome": "loss",
+      "exit_reason": "stop_loss",
+      "signature": "SPY_2026-05-08_P590-600_C690-700",
+      "legs": {
+        "underlying": "SPY",
+        "expiry": "2026-05-08",
+        "put_strikes": [
+          590.0,
+          600.0
+        ],
+        "call_strikes": [
+          690.0,
+          700.0
+        ]
+      },
+      "source": "alpaca_parent->alpaca_parent",
+      "order_ids": {
+        "entry": [
+          "e0449e4b-394f-48ee-bc3b-d0c6199140cc"
+        ],
+        "exit": [
+          "b0ce5191-a895-4453-9fb8-514750b0a442"
+        ]
+      }
+    },
+    {
+      "id": "IC_SPY_2026_05_15_P628_638_C712_715_20260410152940_20260505185045",
+      "symbol": "SPY",
+      "type": "option",
+      "strategy": "iron_condor",
+      "status": "closed",
+      "entry_date": "2026-04-10",
+      "exit_date": "2026-05-05",
+      "entry_time": "2026-04-10T15:29:40.533965+00:00",
+      "exit_time": "2026-05-05T18:50:45.184107+00:00",
+      "entry_net_cash": 126.0,
+      "entry_credit": 126.0,
+      "entry_debit": 0.0,
+      "entry_style": "credit",
+      "exit_net_cash": -252.0,
+      "exit_credit": 0.0,
+      "exit_debit": 252.0,
+      "exit_style": "debit",
+      "realized_pnl": -126.0,
+      "outcome": "loss",
+      "signature": "SPY_2026-05-15_P628-638_C712-715",
+      "legs": {
+        "underlying": "SPY",
+        "expiry": "2026-05-15",
+        "put_strikes": [
+          628.0,
+          638.0
+        ],
+        "call_strikes": [
+          712.0,
+          715.0
+        ]
+      },
+      "quantity": 1.0,
+      "source": "alpaca_parent_lot->alpaca_close_inventory",
+      "order_ids": {
+        "entry": [
+          "733c5a22-4c8d-470f-9c1f-0a51ea7fef79"
+        ],
+        "exit": [
+          "480686f6-b9a1-4668-b511-1940ec9b1b8a"
+        ]
+      },
+      "selection_method": "live_delta",
+      "strike_selection_method": "live_delta",
+      "target_delta": 0.15,
+      "put_delta": 0.1514,
+      "call_delta": 0.1499,
+      "profile_name": "spy-core",
+      "validation_phase": true
+    },
+    {
+      "id": "IC_SPY_2026_05_22_P644_654_C730_735_20260415153630_20260506155459",
+      "symbol": "SPY",
+      "type": "option",
+      "strategy": "iron_condor",
+      "status": "closed",
+      "entry_date": "2026-04-15",
+      "exit_date": "2026-05-06",
+      "entry_time": "2026-04-15T15:36:30.685426+00:00",
+      "exit_time": "2026-05-06T15:54:59.512970+00:00",
+      "entry_net_cash": 147.0,
+      "entry_credit": 147.0,
+      "entry_debit": 0.0,
+      "entry_style": "credit",
+      "exit_net_cash": -310.0,
+      "exit_credit": 0.0,
+      "exit_debit": 310.0,
+      "exit_style": "debit",
+      "realized_pnl": -163.0,
+      "outcome": "loss",
+      "signature": "SPY_2026-05-22_P644-654_C730-735",
+      "legs": {
+        "underlying": "SPY",
+        "expiry": "2026-05-22",
+        "put_strikes": [
+          644.0,
+          654.0
+        ],
+        "call_strikes": [
+          730.0,
+          735.0
+        ]
+      },
+      "quantity": 1.0,
+      "source": "alpaca_parent_lot->alpaca_close_inventory",
+      "order_ids": {
+        "entry": [
+          "7e0f64e5-1b92-46e6-b5ff-b8a53038b108"
+        ],
+        "exit": [
+          "749f06a4-2347-461a-9466-5bb545410986"
+        ]
+      },
+      "selection_method": "live_delta",
+      "strike_selection_method": "live_delta",
+      "target_delta": 0.15,
+      "put_delta": 0.1508,
+      "call_delta": 0.1497,
+      "profile_name": "spy-core",
+      "validation_phase": true
+    },
+    {
       "id": "IC_SPY_2026_06_12_P686_696_C770_775_20260508154138_20260603163917",
       "symbol": "SPY",
       "type": "option",
@@ -7743,14 +7369,7 @@
         "exit": [
           "8ace0441-9d7e-4208-8792-b51dc40c4b3b"
         ]
-      },
-      "selection_method": "live_delta",
-      "strike_selection_method": "live_delta",
-      "target_delta": 0.15,
-      "put_delta": 0.1491,
-      "call_delta": 0.1591,
-      "profile_name": "spy-core",
-      "validation_phase": true
+      }
     },
     {
       "id": "IC_SPY_2026_07_31_P684_694_C775_785_20260624155254_20260706161157",
