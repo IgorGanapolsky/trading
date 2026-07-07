@@ -2773,3 +2773,2642 @@ ReferenceError: require is not defined in ES module scope, you can use import in
 [2026-07-01T19:22:02Z] [pre_tool_use] pipeline complete
 [2026-07-01T19:22:11Z] [pre_tool_use] pipeline start
 [2026-07-01T19:22:12Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:31:32Z] [session_start] pipeline start
+[2026-07-02T16:31:34Z] [session_start] pipeline complete
+[2026-07-02T16:32:01Z] [session_start] pipeline start
+[2026-07-02T16:32:05Z] [session_start] pipeline complete
+[2026-07-02T16:32:05Z] [user_prompt_submit] pipeline start
+[2026-07-02T16:32:05Z] [user_prompt_submit] pipeline complete
+[2026-07-02T16:32:14Z] [user_prompt_submit] pipeline start
+[2026-07-02T16:32:15Z] [user_prompt_submit] pipeline complete
+[2026-07-02T16:32:25Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:32:25Z] [pre_tool_use] pipeline start
+[2026-07-02T16:32:25Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:32:25Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:32:25Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:32:27Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:32:35Z] [pre_tool_use] pipeline start
+[2026-07-02T16:32:38Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:32:39Z] [pre_tool_use] pipeline start
+[2026-07-02T16:32:39Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:32:39Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:32:39Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:32:40Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:32:49Z] [pre_tool_use] pipeline start
+[2026-07-02T16:32:49Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:32:49Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:32:49Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:32:50Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:32:52Z] [pre_tool_use] pipeline start
+[2026-07-02T16:32:53Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:32:56Z] [pre_tool_use] pipeline start
+[2026-07-02T16:32:57Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:33:11Z] [pre_tool_use] pipeline start
+[2026-07-02T16:33:12Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:33:13Z] [pre_tool_use] pipeline start
+[2026-07-02T16:33:14Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:33:18Z] [pre_tool_use] pipeline start
+[2026-07-02T16:33:18Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:33:18Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:33:18Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:33:18Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:33:19Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:33:25Z] [pre_tool_use] pipeline start
+[2026-07-02T16:33:26Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:33:26Z] [pre_tool_use] pipeline start
+[2026-07-02T16:33:27Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:33:32Z] [pre_tool_use] pipeline start
+[2026-07-02T16:33:32Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:33:32Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:33:32Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:33:33Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:33:39Z] [pre_tool_use] pipeline start
+[2026-07-02T16:33:40Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:33:45Z] [pre_tool_use] pipeline start
+[2026-07-02T16:33:45Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:33:45Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:33:45Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:33:45Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:33:47Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:33:52Z] [pre_tool_use] pipeline start
+[2026-07-02T16:33:53Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:33:55Z] [pre_tool_use] pipeline start
+[2026-07-02T16:33:56Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:34:06Z] [pre_tool_use] pipeline start
+[2026-07-02T16:34:07Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:34:14Z] [pre_tool_use] pipeline start
+[2026-07-02T16:34:16Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:34:28Z] [pre_tool_use] pipeline start
+[2026-07-02T16:34:28Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:34:28Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:34:28Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:34:29Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:34:44Z] [pre_tool_use] pipeline start
+[2026-07-02T16:34:44Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:34:44Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:34:44Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:34:45Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:34:51Z] [pre_tool_use] pipeline start
+[2026-07-02T16:34:52Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:34:56Z] [pre_tool_use] pipeline start
+[2026-07-02T16:34:57Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:34:57Z] [pre_tool_use] pipeline start
+[2026-07-02T16:34:59Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:35:07Z] [pre_tool_use] pipeline start
+[2026-07-02T16:35:07Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:35:07Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:35:07Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:35:09Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:35:11Z] [pre_tool_use] pipeline start
+[2026-07-02T16:35:12Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:35:12Z] [pre_tool_use] pipeline start
+[2026-07-02T16:35:14Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:35:22Z] [pre_tool_use] pipeline start
+[2026-07-02T16:35:24Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:35:24Z] [pre_tool_use] pipeline start
+[2026-07-02T16:35:25Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:35:25Z] [pre_tool_use] pipeline start
+[2026-07-02T16:35:26Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:35:35Z] [pre_tool_use] pipeline start
+[2026-07-02T16:35:36Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:35:54Z] [pre_tool_use] pipeline start
+[2026-07-02T16:35:56Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:36:01Z] [pre_tool_use] pipeline start
+[2026-07-02T16:36:02Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:36:07Z] [pre_tool_use] pipeline start
+[2026-07-02T16:36:08Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:36:19Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:36:19Z] [pre_tool_use] pipeline start
+[2026-07-02T16:36:19Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:36:20Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:36:31Z] [pre_tool_use] pipeline start
+[2026-07-02T16:36:32Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:36:39Z] [pre_tool_use] pipeline start
+[2026-07-02T16:36:41Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:36:52Z] [pre_tool_use] pipeline start
+[2026-07-02T16:36:52Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:36:53Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:37:16Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:37:16Z] [pre_tool_use] pipeline start
+[2026-07-02T16:37:16Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:37:17Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:37:37Z] [pre_tool_use] pipeline start
+[2026-07-02T16:37:37Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:37:37Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:37:37Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:37:38Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:37:40Z] [pre_tool_use] pipeline start
+[2026-07-02T16:37:41Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:37:50Z] [pre_tool_use] pipeline start
+[2026-07-02T16:37:51Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:37:51Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:38:21Z] [pre_tool_use] pipeline start
+[2026-07-02T16:38:21Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:38:21Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:38:23Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:38:26Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:38:30Z] [pre_tool_use] pipeline start
+[2026-07-02T16:38:35Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:38:40Z] [pre_tool_use] pipeline start
+[2026-07-02T16:38:41Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:38:58Z] [pre_tool_use] pipeline start
+[2026-07-02T16:38:58Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:38:58Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:38:59Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:39:08Z] [pre_tool_use] pipeline start
+[2026-07-02T16:39:09Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:39:12Z] [pre_tool_use] pipeline start
+[2026-07-02T16:39:14Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:39:15Z] [pre_tool_use] pipeline start
+[2026-07-02T16:39:16Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:39:27Z] [pre_tool_use] pipeline start
+[2026-07-02T16:39:27Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:39:27Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:39:27Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:39:29Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:39:33Z] [pre_tool_use] pipeline start
+[2026-07-02T16:39:34Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:39:37Z] [pre_tool_use] pipeline start
+[2026-07-02T16:39:38Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:39:56Z] [pre_tool_use] pipeline start
+[2026-07-02T16:39:56Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:39:57Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:40:01Z] [pre_tool_use] pipeline start
+[2026-07-02T16:40:02Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:40:03Z] [pre_tool_use] pipeline start
+[2026-07-02T16:40:04Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:40:13Z] [pre_tool_use] pipeline start
+[2026-07-02T16:40:13Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:40:14Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:40:26Z] [pre_tool_use] pipeline start
+[2026-07-02T16:40:26Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:40:27Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:40:28Z] [pre_tool_use] pipeline start
+[2026-07-02T16:40:32Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:40:36Z] [pre_tool_use] pipeline start
+[2026-07-02T16:40:36Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:40:36Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:40:36Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:40:38Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:40:45Z] [pre_tool_use] pipeline start
+[2026-07-02T16:40:46Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:40:55Z] [pre_tool_use] pipeline start
+[2026-07-02T16:40:56Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:41:06Z] [pre_tool_use] pipeline start
+[2026-07-02T16:41:07Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:41:16Z] [pre_tool_use] pipeline start
+[2026-07-02T16:41:17Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:41:18Z] [pre_tool_use] pipeline start
+[2026-07-02T16:41:18Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:41:18Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:41:19Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:41:22Z] [pre_tool_use] pipeline start
+[2026-07-02T16:41:23Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:41:25Z] [pre_tool_use] pipeline start
+[2026-07-02T16:41:26Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:41:30Z] [pre_tool_use] pipeline start
+[2026-07-02T16:41:33Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:41:40Z] [pre_tool_use] pipeline start
+[2026-07-02T16:42:00Z] [pre_tool_use] pipeline start
+[2026-07-02T16:42:01Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:42:26Z] [pre_tool_use] pipeline start
+[2026-07-02T16:42:27Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:42:38Z] [pre_tool_use] pipeline start
+[2026-07-02T16:42:41Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:42:51Z] [pre_tool_use] pipeline start
+[2026-07-02T16:42:52Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:43:03Z] [pre_tool_use] pipeline start
+[2026-07-02T16:43:04Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:43:23Z] [pre_tool_use] pipeline start
+[2026-07-02T16:43:24Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:43:40Z] [pre_tool_use] pipeline start
+[2026-07-02T16:43:41Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:43:56Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:43:56Z] [pre_tool_use] pipeline start
+[2026-07-02T16:43:57Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:43:58Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:44:01Z] [pre_tool_use] pipeline start
+[2026-07-02T16:44:03Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:44:23Z] [pre_tool_use] pipeline start
+[2026-07-02T16:44:24Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:44:42Z] [pre_tool_use] pipeline start
+[2026-07-02T16:44:43Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:45:14Z] [user_prompt_submit] pipeline start
+[2026-07-02T16:45:14Z] [user_prompt_submit] pipeline complete
+[2026-07-02T16:45:20Z] [pre_tool_use] pipeline start
+[2026-07-02T16:45:21Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:45:36Z] [pre_tool_use] pipeline start
+[2026-07-02T16:45:37Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:45:47Z] [pre_tool_use] pipeline start
+[2026-07-02T16:45:49Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:46:10Z] [pre_tool_use] pipeline start
+[2026-07-02T16:46:11Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:46:32Z] [pre_tool_use] pipeline start
+[2026-07-02T16:46:33Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:46:43Z] [pre_tool_use] pipeline start
+[2026-07-02T16:46:44Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:47:09Z] [user_prompt_submit] pipeline start
+[2026-07-02T16:47:10Z] [user_prompt_submit] pipeline complete
+[2026-07-02T16:47:21Z] [pre_tool_use] pipeline start
+[2026-07-02T16:47:22Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:47:55Z] [user_prompt_submit] pipeline start
+[2026-07-02T16:47:55Z] [user_prompt_submit] pipeline complete
+[2026-07-02T16:48:05Z] [pre_tool_use] pipeline start
+[2026-07-02T16:48:06Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:48:40Z] [user_prompt_submit] pipeline start
+[2026-07-02T16:48:41Z] [user_prompt_submit] pipeline complete
+[2026-07-02T16:48:50Z] [pre_tool_use] pipeline start
+[2026-07-02T16:48:51Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:49:03Z] [pre_tool_use] pipeline start
+[2026-07-02T16:49:04Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:49:18Z] [user_prompt_submit] pipeline start
+[2026-07-02T16:49:19Z] [user_prompt_submit] pipeline complete
+[2026-07-02T16:49:30Z] [pre_tool_use] pipeline start
+[2026-07-02T16:49:31Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:49:50Z] [pre_tool_use] pipeline start
+[2026-07-02T16:49:51Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:49:51Z] [pre_tool_use] pipeline start
+[2026-07-02T16:49:52Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:49:59Z] [pre_tool_use] pipeline start
+[2026-07-02T16:50:00Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:52:38Z] [user_prompt_submit] pipeline start
+[2026-07-02T16:52:39Z] [user_prompt_submit] pipeline complete
+[2026-07-02T16:52:51Z] [user_prompt_submit] pipeline start
+[2026-07-02T16:52:53Z] [user_prompt_submit] pipeline complete
+[2026-07-02T16:52:59Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:52:59Z] [pre_tool_use] pipeline start
+[2026-07-02T16:52:59Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:52:59Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:53:01Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:53:02Z] [user_prompt_submit] pipeline start
+[2026-07-02T16:53:02Z] [user_prompt_submit] pipeline complete
+[2026-07-02T16:53:15Z] [pre_tool_use] pipeline start
+[2026-07-02T16:53:19Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:53:20Z] [pre_tool_use] pipeline start
+[2026-07-02T16:53:20Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:53:20Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:53:20Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:53:21Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:53:24Z] [pre_tool_use] pipeline start
+[2026-07-02T16:53:25Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:53:26Z] [pre_tool_use] pipeline start
+[2026-07-02T16:53:27Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:53:32Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:53:32Z] [pre_tool_use] pipeline start
+[2026-07-02T16:53:32Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:53:32Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:53:33Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:53:33Z] [user_prompt_submit] pipeline start
+[2026-07-02T16:53:34Z] [user_prompt_submit] pipeline complete
+[2026-07-02T16:53:49Z] [pre_tool_use] pipeline start
+[2026-07-02T16:53:50Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:53:57Z] [pre_tool_use] pipeline start
+[2026-07-02T16:53:59Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:54:04Z] [pre_tool_use] pipeline start
+[2026-07-02T16:54:04Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:54:04Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:54:04Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:54:05Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:54:09Z] [pre_tool_use] pipeline start
+[2026-07-02T16:54:10Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:54:19Z] [pre_tool_use] pipeline start
+[2026-07-02T16:54:19Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:54:19Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:54:19Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:54:20Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:54:31Z] [pre_tool_use] pipeline start
+[2026-07-02T16:54:31Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:54:32Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:54:32Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:54:39Z] [pre_tool_use] pipeline start
+[2026-07-02T16:54:40Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:55:00Z] [pre_tool_use] pipeline start
+[2026-07-02T16:55:00Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:55:00Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:55:00Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:55:03Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:55:13Z] [pre_tool_use] pipeline start
+[2026-07-02T16:55:14Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:55:32Z] [pre_tool_use] pipeline start
+[2026-07-02T16:55:33Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:55:33Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:55:33Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:55:33Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:55:33Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:55:45Z] [pre_tool_use] pipeline start
+[2026-07-02T16:55:46Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:55:49Z] [pre_tool_use] pipeline start
+[2026-07-02T16:55:49Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:55:49Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:55:50Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:55:56Z] [pre_tool_use] pipeline start
+[2026-07-02T16:55:57Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:55:57Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:56:02Z] [pre_tool_use] pipeline start
+[2026-07-02T16:56:03Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:56:08Z] [pre_tool_use] pipeline start
+[2026-07-02T16:56:09Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:56:23Z] [pre_tool_use] pipeline start
+[2026-07-02T16:56:23Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:56:23Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:56:23Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:56:24Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:56:24Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:56:28Z] [pre_tool_use] pipeline start
+[2026-07-02T16:56:29Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:56:41Z] [pre_tool_use] pipeline start
+[2026-07-02T16:56:41Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:56:42Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:56:42Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:56:49Z] [pre_tool_use] pipeline start
+[2026-07-02T16:56:50Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:57:01Z] [pre_tool_use] pipeline start
+[2026-07-02T16:57:01Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:57:01Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:57:02Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:57:08Z] [pre_tool_use] pipeline start
+[2026-07-02T16:57:09Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:57:12Z] [pre_tool_use] pipeline start
+[2026-07-02T16:57:14Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:57:16Z] [pre_tool_use] pipeline start
+[2026-07-02T16:57:17Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:57:27Z] [pre_tool_use] pipeline start
+[2026-07-02T16:57:27Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:57:28Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:57:38Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:57:38Z] [pre_tool_use] pipeline start
+[2026-07-02T16:57:38Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:57:39Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:57:46Z] [pre_tool_use] pipeline start
+[2026-07-02T16:57:47Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:57:54Z] [pre_tool_use] pipeline start
+[2026-07-02T16:57:54Z] [user_prompt_submit] pipeline start
+[2026-07-02T16:57:55Z] [user_prompt_submit] pipeline complete
+[2026-07-02T16:57:55Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:58:03Z] [pre_tool_use] pipeline start
+[2026-07-02T16:58:04Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:58:04Z] [pre_tool_use] pipeline start
+[2026-07-02T16:58:04Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:58:04Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:58:05Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:58:28Z] [pre_tool_use] pipeline start
+[2026-07-02T16:58:28Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:58:28Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:58:29Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:58:40Z] [user_prompt_submit] pipeline start
+[2026-07-02T16:58:41Z] [user_prompt_submit] pipeline complete
+[2026-07-02T16:58:48Z] [pre_tool_use] pipeline start
+[2026-07-02T16:58:50Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:58:51Z] [pre_tool_use] pipeline start
+[2026-07-02T16:58:51Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:58:51Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:58:56Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:59:03Z] [pre_tool_use] pipeline start
+[2026-07-02T16:59:05Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:59:19Z] [pre_tool_use] pipeline start
+[2026-07-02T16:59:19Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:59:19Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:59:19Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:59:20Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:59:26Z] [user_prompt_submit] pipeline start
+[2026-07-02T16:59:27Z] [user_prompt_submit] pipeline complete
+[2026-07-02T16:59:35Z] [pre_tool_use] pipeline start
+[2026-07-02T16:59:36Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:59:39Z] [pre_tool_use] pipeline start
+[2026-07-02T16:59:40Z] [pre_tool_use] pipeline complete
+[2026-07-02T16:59:51Z] [pre_tool_use] pipeline start
+[2026-07-02T16:59:51Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T16:59:52Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:00:06Z] [pre_tool_use] pipeline start
+[2026-07-02T17:00:06Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:00:06Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:00:07Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:00:15Z] [pre_tool_use] pipeline start
+[2026-07-02T17:00:19Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:04:45Z] [pre_tool_use] pipeline start
+[2026-07-02T17:04:45Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:04:46Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:04:56Z] [pre_tool_use] pipeline start
+[2026-07-02T17:04:58Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:05:08Z] [pre_tool_use] pipeline start
+[2026-07-02T17:05:08Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:05:08Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:05:09Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:05:21Z] [pre_tool_use] pipeline start
+[2026-07-02T17:05:21Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:05:21Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:05:21Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:05:22Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:05:36Z] [pre_tool_use] pipeline start
+[2026-07-02T17:05:36Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:05:36Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:05:36Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:05:37Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:05:48Z] [pre_tool_use] pipeline start
+[2026-07-02T17:05:48Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:05:48Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:05:48Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:05:49Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:05:53Z] [pre_tool_use] pipeline start
+[2026-07-02T17:05:54Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:06:00Z] [pre_tool_use] pipeline start
+[2026-07-02T17:06:01Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:06:06Z] [pre_tool_use] pipeline start
+[2026-07-02T17:06:07Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:06:11Z] [pre_tool_use] pipeline start
+[2026-07-02T17:06:13Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:06:17Z] [pre_tool_use] pipeline start
+[2026-07-02T17:06:18Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:06:37Z] [pre_tool_use] pipeline start
+[2026-07-02T17:06:38Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:07:20Z] [pre_tool_use] pipeline start
+[2026-07-02T17:07:20Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:07:21Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:07:39Z] [pre_tool_use] pipeline start
+[2026-07-02T17:07:41Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:07:46Z] [pre_tool_use] pipeline start
+[2026-07-02T17:07:47Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:08:03Z] [pre_tool_use] pipeline start
+[2026-07-02T17:08:04Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:08:11Z] [pre_tool_use] pipeline start
+[2026-07-02T17:08:11Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:08:12Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:08:17Z] [pre_tool_use] pipeline start
+[2026-07-02T17:08:18Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:08:27Z] [pre_tool_use] pipeline start
+[2026-07-02T17:08:27Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:08:27Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:08:28Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:08:34Z] [pre_tool_use] pipeline start
+[2026-07-02T17:08:35Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:09:04Z] [pre_tool_use] pipeline start
+[2026-07-02T17:09:04Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:09:05Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:09:26Z] [pre_tool_use] pipeline start
+[2026-07-02T17:09:27Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:09:37Z] [pre_tool_use] pipeline start
+[2026-07-02T17:09:37Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:09:37Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:09:38Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:09:41Z] [pre_tool_use] pipeline start
+[2026-07-02T17:09:42Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:09:46Z] [pre_tool_use] pipeline start
+[2026-07-02T17:09:48Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:09:53Z] [pre_tool_use] pipeline start
+[2026-07-02T17:09:55Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:10:34Z] [pre_tool_use] pipeline start
+[2026-07-02T17:10:35Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:10:52Z] [pre_tool_use] pipeline start
+[2026-07-02T17:10:52Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:10:53Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:11:10Z] [pre_tool_use] pipeline start
+[2026-07-02T17:11:11Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:11:20Z] [pre_tool_use] pipeline start
+[2026-07-02T17:11:20Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:11:21Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:11:59Z] [pre_tool_use] pipeline start
+[2026-07-02T17:11:59Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:12:00Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:12:20Z] [pre_tool_use] pipeline start
+[2026-07-02T17:12:21Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:12:41Z] [pre_tool_use] pipeline start
+[2026-07-02T17:12:41Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:12:41Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:12:42Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:13:11Z] [pre_tool_use] pipeline start
+[2026-07-02T17:13:11Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:13:12Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:13:17Z] [user_prompt_submit] pipeline start
+[2026-07-02T17:13:17Z] [user_prompt_submit] pipeline complete
+[2026-07-02T17:13:17Z] [user_prompt_submit] pipeline start
+[2026-07-02T17:13:18Z] [user_prompt_submit] pipeline complete
+[2026-07-02T17:13:26Z] [pre_tool_use] pipeline start
+[2026-07-02T17:13:27Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:13:31Z] [pre_tool_use] pipeline start
+[2026-07-02T17:13:32Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:13:41Z] [pre_tool_use] pipeline start
+[2026-07-02T17:13:42Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:13:46Z] [pre_tool_use] pipeline start
+[2026-07-02T17:13:47Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:13:51Z] [pre_tool_use] pipeline start
+[2026-07-02T17:13:52Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:14:04Z] [pre_tool_use] pipeline start
+[2026-07-02T17:14:05Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:14:15Z] [pre_tool_use] pipeline start
+[2026-07-02T17:14:15Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:14:16Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:14:25Z] [pre_tool_use] pipeline start
+[2026-07-02T17:14:26Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:14:40Z] [pre_tool_use] pipeline start
+[2026-07-02T17:14:41Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:14:53Z] [pre_tool_use] pipeline start
+[2026-07-02T17:14:53Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:14:54Z] [user_prompt_submit] pipeline start
+[2026-07-02T17:14:54Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:14:55Z] [user_prompt_submit] pipeline complete
+[2026-07-02T17:15:04Z] [pre_tool_use] pipeline start
+[2026-07-02T17:15:05Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:15:15Z] [pre_tool_use] pipeline start
+[2026-07-02T17:15:16Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:15:33Z] [pre_tool_use] pipeline start
+[2026-07-02T17:15:34Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:15:35Z] [user_prompt_submit] pipeline start
+[2026-07-02T17:15:35Z] [user_prompt_submit] pipeline complete
+[2026-07-02T17:16:10Z] [pre_tool_use] pipeline start
+[2026-07-02T17:16:10Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:16:11Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:16:21Z] [user_prompt_submit] pipeline start
+[2026-07-02T17:16:21Z] [user_prompt_submit] pipeline complete
+[2026-07-02T17:16:29Z] [pre_tool_use] pipeline start
+[2026-07-02T17:16:30Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:17:07Z] [user_prompt_submit] pipeline start
+[2026-07-02T17:17:07Z] [user_prompt_submit] pipeline complete
+[2026-07-02T17:17:26Z] [pre_tool_use] pipeline start
+[2026-07-02T17:17:26Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:17:28Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:17:49Z] [pre_tool_use] pipeline start
+[2026-07-02T17:17:50Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:18:13Z] [pre_tool_use] pipeline start
+[2026-07-02T17:18:13Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:18:13Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:18:16Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:18:25Z] [pre_tool_use] pipeline start
+[2026-07-02T17:18:25Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:18:25Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:18:26Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:18:41Z] [pre_tool_use] pipeline start
+[2026-07-02T17:18:41Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:18:42Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:18:52Z] [pre_tool_use] pipeline start
+[2026-07-02T17:18:52Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:18:52Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:18:53Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:19:01Z] [pre_tool_use] pipeline start
+[2026-07-02T17:19:02Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:19:11Z] [pre_tool_use] pipeline start
+[2026-07-02T17:19:11Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:19:13Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:19:20Z] [pre_tool_use] pipeline start
+[2026-07-02T17:19:21Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:19:31Z] [pre_tool_use] pipeline start
+[2026-07-02T17:19:32Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:19:42Z] [pre_tool_use] pipeline start
+[2026-07-02T17:19:43Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:19:56Z] [pre_tool_use] pipeline start
+[2026-07-02T17:19:56Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:19:57Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:20:02Z] [pre_tool_use] pipeline start
+[2026-07-02T17:20:03Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:20:15Z] [pre_tool_use] pipeline start
+[2026-07-02T17:20:16Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:21:03Z] [pre_tool_use] pipeline start
+[2026-07-02T17:21:03Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:21:04Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:21:12Z] [pre_tool_use] pipeline start
+[2026-07-02T17:21:13Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:21:22Z] [pre_tool_use] pipeline start
+[2026-07-02T17:21:24Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:21:40Z] [pre_tool_use] pipeline start
+[2026-07-02T17:21:40Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:21:40Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:21:41Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:21:48Z] [pre_tool_use] pipeline start
+[2026-07-02T17:21:49Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:21:58Z] [pre_tool_use] pipeline start
+[2026-07-02T17:21:59Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:22:41Z] [pre_tool_use] pipeline start
+[2026-07-02T17:22:42Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:22:48Z] [pre_tool_use] pipeline start
+[2026-07-02T17:22:49Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:23:00Z] [pre_tool_use] pipeline start
+[2026-07-02T17:23:00Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:23:00Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:23:01Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:23:21Z] [pre_tool_use] pipeline start
+[2026-07-02T17:23:22Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:23:41Z] [pre_tool_use] pipeline start
+[2026-07-02T17:23:41Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:23:42Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:23:48Z] [pre_tool_use] pipeline start
+[2026-07-02T17:23:48Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:23:49Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:23:55Z] [pre_tool_use] pipeline start
+[2026-07-02T17:23:55Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:23:56Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:24:01Z] [pre_tool_use] pipeline start
+[2026-07-02T17:24:02Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:26:13Z] [pre_tool_use] pipeline start
+[2026-07-02T17:26:14Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:26:23Z] [pre_tool_use] pipeline start
+[2026-07-02T17:26:24Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:26:44Z] [pre_tool_use] pipeline start
+[2026-07-02T17:26:46Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:27:06Z] [pre_tool_use] pipeline start
+[2026-07-02T17:27:06Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:27:06Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:27:07Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:27:24Z] [pre_tool_use] pipeline start
+[2026-07-02T17:27:24Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:27:25Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:27:46Z] [pre_tool_use] pipeline start
+[2026-07-02T17:27:48Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:27:56Z] [pre_tool_use] pipeline start
+[2026-07-02T17:27:56Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:27:57Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:28:02Z] [pre_tool_use] pipeline start
+[2026-07-02T17:28:03Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:28:12Z] [pre_tool_use] pipeline start
+[2026-07-02T17:28:12Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:28:13Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:28:19Z] [pre_tool_use] pipeline start
+[2026-07-02T17:28:20Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:28:46Z] [pre_tool_use] pipeline start
+[2026-07-02T17:28:47Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:32:52Z] [pre_tool_use] pipeline start
+[2026-07-02T17:32:52Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:32:53Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:33:32Z] [pre_tool_use] pipeline start
+[2026-07-02T17:33:33Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:34:47Z] [pre_tool_use] pipeline start
+[2026-07-02T17:34:47Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:34:48Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:34:53Z] [pre_tool_use] pipeline start
+[2026-07-02T17:34:54Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:34:56Z] [pre_tool_use] pipeline start
+[2026-07-02T17:34:57Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:37:03Z] [user_prompt_submit] pipeline start
+[2026-07-02T17:37:03Z] [user_prompt_submit] pipeline complete
+[2026-07-02T17:37:03Z] [user_prompt_submit] pipeline start
+[2026-07-02T17:37:03Z] [user_prompt_submit] pipeline complete
+[2026-07-02T17:37:10Z] [pre_tool_use] pipeline start
+[2026-07-02T17:37:11Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:37:21Z] [pre_tool_use] pipeline start
+[2026-07-02T17:37:23Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:37:42Z] [pre_tool_use] pipeline start
+[2026-07-02T17:37:43Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:37:45Z] [pre_tool_use] pipeline start
+[2026-07-02T17:37:46Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:38:01Z] [pre_tool_use] pipeline start
+[2026-07-02T17:38:02Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:38:13Z] [pre_tool_use] pipeline start
+[2026-07-02T17:38:14Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:38:41Z] [pre_tool_use] pipeline start
+[2026-07-02T17:38:42Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:39:05Z] [pre_tool_use] pipeline start
+[2026-07-02T17:39:06Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:39:07Z] [pre_tool_use] pipeline start
+[2026-07-02T17:39:08Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:39:25Z] [pre_tool_use] pipeline start
+[2026-07-02T17:39:26Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:39:40Z] [pre_tool_use] pipeline start
+[2026-07-02T17:39:41Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:39:58Z] [pre_tool_use] pipeline start
+[2026-07-02T17:39:59Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:40:23Z] [pre_tool_use] pipeline start
+[2026-07-02T17:40:24Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:42:40Z] [pre_tool_use] pipeline start
+[2026-07-02T17:42:41Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:43:06Z] [user_prompt_submit] pipeline start
+[2026-07-02T17:43:06Z] [user_prompt_submit] pipeline complete
+[2026-07-02T17:43:13Z] [pre_tool_use] pipeline start
+[2026-07-02T17:43:14Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:43:28Z] [pre_tool_use] pipeline start
+[2026-07-02T17:43:29Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:43:34Z] [pre_tool_use] pipeline start
+[2026-07-02T17:43:35Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:43:47Z] [pre_tool_use] pipeline start
+[2026-07-02T17:43:48Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:44:07Z] [pre_tool_use] pipeline start
+[2026-07-02T17:44:08Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:44:21Z] [pre_tool_use] pipeline start
+[2026-07-02T17:44:22Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:44:35Z] [pre_tool_use] pipeline start
+[2026-07-02T17:44:36Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:44:46Z] [pre_tool_use] pipeline start
+[2026-07-02T17:44:47Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:44:48Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:44:56Z] [pre_tool_use] pipeline start
+[2026-07-02T17:44:57Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:44:59Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:44:59Z] [pre_tool_use] pipeline start
+[2026-07-02T17:44:59Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:45:00Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:45:08Z] [pre_tool_use] pipeline start
+[2026-07-02T17:45:08Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:45:08Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:45:09Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:45:12Z] [pre_tool_use] pipeline start
+[2026-07-02T17:45:13Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:45:16Z] [pre_tool_use] pipeline start
+[2026-07-02T17:45:17Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:45:22Z] [pre_tool_use] pipeline start
+[2026-07-02T17:45:23Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:45:49Z] [pre_tool_use] pipeline start
+[2026-07-02T17:45:49Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:45:50Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:45:55Z] [pre_tool_use] pipeline start
+[2026-07-02T17:45:56Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:45:56Z] [pre_tool_use] pipeline start
+[2026-07-02T17:45:57Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:46:07Z] [pre_tool_use] pipeline start
+[2026-07-02T17:46:08Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:46:16Z] [pre_tool_use] pipeline start
+[2026-07-02T17:46:17Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:46:22Z] [pre_tool_use] pipeline start
+[2026-07-02T17:46:22Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:46:23Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:46:27Z] [pre_tool_use] pipeline start
+[2026-07-02T17:46:28Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:46:32Z] [pre_tool_use] pipeline start
+[2026-07-02T17:46:33Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:46:36Z] [pre_tool_use] pipeline start
+[2026-07-02T17:46:38Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:46:44Z] [pre_tool_use] pipeline start
+[2026-07-02T17:46:44Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:46:45Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:46:53Z] [pre_tool_use] pipeline start
+[2026-07-02T17:46:54Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:47:06Z] [pre_tool_use] pipeline start
+[2026-07-02T17:47:06Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:47:07Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:47:11Z] [pre_tool_use] pipeline start
+[2026-07-02T17:47:13Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:47:22Z] [pre_tool_use] pipeline start
+[2026-07-02T17:47:22Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:47:22Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:47:23Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:47:23Z] [pre_tool_use] pipeline start
+[2026-07-02T17:47:24Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:47:37Z] [pre_tool_use] pipeline start
+[2026-07-02T17:47:38Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:47:47Z] [pre_tool_use] pipeline start
+[2026-07-02T17:47:47Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:47:47Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T17:47:48Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:47:59Z] [user_prompt_submit] pipeline start
+[2026-07-02T17:47:59Z] [user_prompt_submit] pipeline complete
+[2026-07-02T17:48:07Z] [pre_tool_use] pipeline start
+[2026-07-02T17:48:08Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:48:10Z] [pre_tool_use] pipeline start
+[2026-07-02T17:48:11Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:48:17Z] [pre_tool_use] pipeline start
+[2026-07-02T17:48:19Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:48:35Z] [pre_tool_use] pipeline start
+[2026-07-02T17:48:36Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:49:42Z] [pre_tool_use] pipeline start
+[2026-07-02T17:49:43Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:51:49Z] [pre_tool_use] pipeline start
+[2026-07-02T17:51:51Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:54:56Z] [pre_tool_use] pipeline start
+[2026-07-02T17:54:58Z] [pre_tool_use] pipeline complete
+[2026-07-02T17:59:04Z] [pre_tool_use] pipeline start
+[2026-07-02T17:59:05Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:04:44Z] [pre_tool_use] pipeline start
+[2026-07-02T18:04:44Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:04:45Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:04:51Z] [pre_tool_use] pipeline start
+[2026-07-02T18:04:53Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:05:03Z] [pre_tool_use] pipeline start
+[2026-07-02T18:05:03Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:05:03Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:05:04Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:05:09Z] [pre_tool_use] pipeline start
+[2026-07-02T18:05:10Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:05:20Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:05:20Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:05:20Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:05:21Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:05:29Z] [pre_tool_use] pipeline start
+[2026-07-02T18:05:30Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:05:42Z] [pre_tool_use] pipeline start
+[2026-07-02T18:05:43Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:05:57Z] [pre_tool_use] pipeline start
+[2026-07-02T18:05:58Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:06:09Z] [pre_tool_use] pipeline start
+[2026-07-02T18:06:10Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:06:30Z] [pre_tool_use] pipeline start
+[2026-07-02T18:06:31Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:06:38Z] [pre_tool_use] pipeline start
+[2026-07-02T18:06:39Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:07:21Z] [pre_tool_use] pipeline start
+[2026-07-02T18:07:21Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:07:22Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:07:35Z] [pre_tool_use] pipeline start
+[2026-07-02T18:07:35Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:07:36Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:07:45Z] [pre_tool_use] pipeline start
+[2026-07-02T18:07:45Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:07:45Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:07:47Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:07:52Z] [pre_tool_use] pipeline start
+[2026-07-02T18:07:54Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:08:44Z] [pre_tool_use] pipeline start
+[2026-07-02T18:08:44Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:08:44Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:08:44Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:08:45Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:09:03Z] [pre_tool_use] pipeline start
+[2026-07-02T18:09:04Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:09:17Z] [pre_tool_use] pipeline start
+[2026-07-02T18:09:18Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:09:47Z] [pre_tool_use] pipeline start
+[2026-07-02T18:09:47Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:09:48Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:09:55Z] [pre_tool_use] pipeline start
+[2026-07-02T18:09:56Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:10:07Z] [pre_tool_use] pipeline start
+[2026-07-02T18:10:08Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:10:30Z] [pre_tool_use] pipeline start
+[2026-07-02T18:10:31Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:11:13Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:11:14Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:11:21Z] [pre_tool_use] pipeline start
+[2026-07-02T18:11:22Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:11:32Z] [pre_tool_use] pipeline start
+[2026-07-02T18:11:33Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:12:37Z] [pre_tool_use] pipeline start
+[2026-07-02T18:12:39Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:12:59Z] [pre_tool_use] pipeline start
+[2026-07-02T18:12:59Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:13:00Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:13:05Z] [pre_tool_use] pipeline start
+[2026-07-02T18:13:06Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:13:17Z] [pre_tool_use] pipeline start
+[2026-07-02T18:13:18Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:13:44Z] [pre_tool_use] pipeline start
+[2026-07-02T18:13:47Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:15:57Z] [pre_tool_use] pipeline start
+[2026-07-02T18:15:58Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:16:39Z] [pre_tool_use] pipeline start
+[2026-07-02T18:16:40Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:19:46Z] [pre_tool_use] pipeline start
+[2026-07-02T18:19:47Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:23:11Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:23:12Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:23:12Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:23:12Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:23:21Z] [pre_tool_use] pipeline start
+[2026-07-02T18:23:22Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:23:40Z] [pre_tool_use] pipeline start
+[2026-07-02T18:23:41Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:24:06Z] [pre_tool_use] pipeline start
+[2026-07-02T18:24:07Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:24:20Z] [pre_tool_use] pipeline start
+[2026-07-02T18:24:23Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:24:32Z] [pre_tool_use] pipeline start
+[2026-07-02T18:24:34Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:24:42Z] [pre_tool_use] pipeline start
+[2026-07-02T18:25:06Z] [pre_tool_use] pipeline start
+[2026-07-02T18:25:08Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:25:23Z] [pre_tool_use] pipeline start
+[2026-07-02T18:25:24Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:25:54Z] [pre_tool_use] pipeline start
+[2026-07-02T18:25:55Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:26:10Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:26:11Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:26:11Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:26:12Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:26:12Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:26:12Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:26:12Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:26:13Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:26:13Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:26:13Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:26:13Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:26:14Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:26:14Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:26:14Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:26:14Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:26:15Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:26:15Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:26:15Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:26:15Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:26:16Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:26:16Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:26:16Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:26:16Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:26:16Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:26:16Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:26:17Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:26:17Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:26:17Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:26:31Z] [pre_tool_use] pipeline start
+[2026-07-02T18:26:32Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:26:44Z] [pre_tool_use] pipeline start
+[2026-07-02T18:26:45Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:27:08Z] [pre_tool_use] pipeline start
+[2026-07-02T18:27:10Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:30:31Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:30:32Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:31:02Z] [pre_tool_use] pipeline start
+[2026-07-02T18:31:04Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:36:16Z] [pre_tool_use] pipeline start
+[2026-07-02T18:36:16Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:36:17Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:36:32Z] [pre_tool_use] pipeline start
+[2026-07-02T18:36:33Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:37:06Z] [pre_tool_use] pipeline start
+[2026-07-02T18:37:07Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:37:16Z] [pre_tool_use] pipeline start
+[2026-07-02T18:37:16Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:37:17Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:37:18Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:37:26Z] [pre_tool_use] pipeline start
+[2026-07-02T18:37:27Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:37:57Z] [pre_tool_use] pipeline start
+[2026-07-02T18:37:57Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:37:58Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:38:07Z] [pre_tool_use] pipeline start
+[2026-07-02T18:38:08Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:38:22Z] [pre_tool_use] pipeline start
+[2026-07-02T18:38:22Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:38:23Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:38:40Z] [pre_tool_use] pipeline start
+[2026-07-02T18:38:41Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:39:12Z] [pre_tool_use] pipeline start
+[2026-07-02T18:39:12Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:39:13Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:39:35Z] [pre_tool_use] pipeline start
+[2026-07-02T18:39:35Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:39:36Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:39:54Z] [pre_tool_use] pipeline start
+[2026-07-02T18:39:55Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:40:30Z] [pre_tool_use] pipeline start
+[2026-07-02T18:40:30Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:40:31Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:40:36Z] [pre_tool_use] pipeline start
+[2026-07-02T18:40:37Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:40:43Z] [pre_tool_use] pipeline start
+[2026-07-02T18:40:44Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:40:52Z] [pre_tool_use] pipeline start
+[2026-07-02T18:40:53Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:41:14Z] [pre_tool_use] pipeline start
+[2026-07-02T18:41:15Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:42:22Z] [pre_tool_use] pipeline start
+[2026-07-02T18:42:25Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:42:33Z] [pre_tool_use] pipeline start
+[2026-07-02T18:42:35Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:42:44Z] [pre_tool_use] pipeline start
+[2026-07-02T18:42:44Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:42:44Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:42:45Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:43:31Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:43:32Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:43:39Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:43:40Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:43:40Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:43:40Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:43:40Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:43:41Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:44:00Z] [pre_tool_use] pipeline start
+[2026-07-02T18:44:00Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:44:00Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:44:01Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:44:11Z] [pre_tool_use] pipeline start
+[2026-07-02T18:44:11Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:44:12Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:44:20Z] [pre_tool_use] pipeline start
+[2026-07-02T18:44:20Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:44:20Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:44:21Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:44:31Z] [pre_tool_use] pipeline start
+[2026-07-02T18:44:31Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:44:32Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:44:38Z] [pre_tool_use] pipeline start
+[2026-07-02T18:44:38Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:44:39Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:44:43Z] [pre_tool_use] pipeline start
+[2026-07-02T18:44:44Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:44:55Z] [pre_tool_use] pipeline start
+[2026-07-02T18:44:55Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:44:55Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:44:55Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:44:56Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:45:20Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:45:20Z] [pre_tool_use] pipeline start
+[2026-07-02T18:45:20Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:45:22Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:45:28Z] [pre_tool_use] pipeline start
+[2026-07-02T18:45:28Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:45:29Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:45:33Z] [pre_tool_use] pipeline start
+[2026-07-02T18:45:34Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:45:41Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:45:41Z] [pre_tool_use] pipeline start
+[2026-07-02T18:45:42Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:46:43Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:46:43Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:46:53Z] [pre_tool_use] pipeline start
+[2026-07-02T18:46:55Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:47:12Z] [pre_tool_use] pipeline start
+[2026-07-02T18:47:13Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:47:34Z] [pre_tool_use] pipeline start
+[2026-07-02T18:47:35Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:47:47Z] [pre_tool_use] pipeline start
+[2026-07-02T18:47:48Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:47:55Z] [pre_tool_use] pipeline start
+[2026-07-02T18:47:56Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:48:10Z] [pre_tool_use] pipeline start
+[2026-07-02T18:48:10Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:49:44Z] [pre_tool_use] pipeline start
+[2026-07-02T18:49:44Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:49:44Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:49:45Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:49:51Z] [pre_tool_use] pipeline start
+[2026-07-02T18:49:51Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:49:52Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:50:33Z] [pre_tool_use] pipeline start
+[2026-07-02T18:50:33Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:50:33Z] [user_prompt_submit] pipeline start
+[2026-07-02T18:50:34Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:50:34Z] [user_prompt_submit] pipeline complete
+[2026-07-02T18:50:51Z] [pre_tool_use] pipeline start
+[2026-07-02T18:50:52Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:51:09Z] [pre_tool_use] pipeline start
+[2026-07-02T18:51:10Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:51:24Z] [pre_tool_use] pipeline start
+[2026-07-02T18:51:25Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:51:42Z] [pre_tool_use] pipeline start
+[2026-07-02T18:51:42Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:51:43Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:53:21Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:53:21Z] [pre_tool_use] pipeline start
+[2026-07-02T18:53:23Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:53:31Z] [pre_tool_use] pipeline start
+[2026-07-02T18:53:31Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:53:32Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:55:40Z] [pre_tool_use] pipeline start
+[2026-07-02T18:55:40Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:55:40Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:55:41Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:55:47Z] [pre_tool_use] pipeline start
+[2026-07-02T18:55:47Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T18:55:48Z] [pre_tool_use] pipeline complete
+[2026-07-02T18:58:56Z] [pre_tool_use] pipeline start
+[2026-07-02T18:58:57Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:00:03Z] [pre_tool_use] pipeline start
+[2026-07-02T19:00:04Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:01:11Z] [pre_tool_use] pipeline start
+[2026-07-02T19:01:12Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:01:52Z] [user_prompt_submit] pipeline start
+[2026-07-02T19:01:53Z] [user_prompt_submit] pipeline complete
+[2026-07-02T19:02:06Z] [pre_tool_use] pipeline start
+[2026-07-02T19:02:07Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:02:54Z] [user_prompt_submit] pipeline start
+[2026-07-02T19:02:56Z] [user_prompt_submit] pipeline complete
+[2026-07-02T19:02:58Z] [pre_tool_use] pipeline start
+[2026-07-02T19:02:58Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T19:03:00Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:04:02Z] [pre_tool_use] pipeline start
+[2026-07-02T19:04:03Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:04:12Z] [pre_tool_use] pipeline start
+[2026-07-02T19:04:12Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T19:04:13Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:04:52Z] [pre_tool_use] pipeline start
+[2026-07-02T19:04:52Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T19:04:54Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:05:01Z] [pre_tool_use] pipeline start
+[2026-07-02T19:05:01Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T19:05:02Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:05:50Z] [pre_tool_use] pipeline start
+[2026-07-02T19:05:51Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:06:00Z] [pre_tool_use] pipeline start
+[2026-07-02T19:06:00Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T19:06:02Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:06:45Z] [pre_tool_use] pipeline start
+[2026-07-02T19:06:45Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T19:06:47Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:06:58Z] [pre_tool_use] pipeline start
+[2026-07-02T19:07:00Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:07:11Z] [pre_tool_use] pipeline start
+[2026-07-02T19:07:11Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T19:07:13Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:07:26Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T19:07:26Z] [pre_tool_use] pipeline start
+[2026-07-02T19:07:28Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:07:40Z] [pre_tool_use] pipeline start
+[2026-07-02T19:07:40Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T19:07:41Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:08:23Z] [user_prompt_submit] pipeline start
+[2026-07-02T19:08:24Z] [user_prompt_submit] pipeline complete
+[2026-07-02T19:08:24Z] [user_prompt_submit] pipeline start
+[2026-07-02T19:08:24Z] [user_prompt_submit] pipeline complete
+[2026-07-02T19:08:39Z] [pre_tool_use] pipeline start
+[2026-07-02T19:08:40Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:08:54Z] [pre_tool_use] pipeline start
+[2026-07-02T19:08:54Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T19:08:54Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T19:08:57Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:09:04Z] [pre_tool_use] pipeline start
+[2026-07-02T19:09:05Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:09:09Z] [pre_tool_use] pipeline start
+[2026-07-02T19:09:09Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T19:09:10Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:09:23Z] [pre_tool_use] pipeline start
+[2026-07-02T19:09:24Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:09:39Z] [pre_tool_use] pipeline start
+[2026-07-02T19:09:40Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:09:58Z] [pre_tool_use] pipeline start
+[2026-07-02T19:09:59Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:10:12Z] [pre_tool_use] pipeline start
+[2026-07-02T19:10:13Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:10:23Z] [pre_tool_use] pipeline start
+[2026-07-02T19:10:24Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:10:33Z] [pre_tool_use] pipeline start
+[2026-07-02T19:10:34Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:14:20Z] [pre_tool_use] pipeline start
+[2026-07-02T19:14:20Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T19:14:22Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:24:33Z] [pre_tool_use] pipeline start
+[2026-07-02T19:24:33Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T19:24:34Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:28:40Z] [pre_tool_use] pipeline start
+[2026-07-02T19:28:42Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:31:32Z] [user_prompt_submit] pipeline start
+[2026-07-02T19:31:32Z] [user_prompt_submit] pipeline complete
+[2026-07-02T19:31:32Z] [user_prompt_submit] pipeline start
+[2026-07-02T19:31:33Z] [user_prompt_submit] pipeline complete
+[2026-07-02T19:35:58Z] [pre_tool_use] pipeline start
+[2026-07-02T19:35:58Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T19:35:58Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T19:35:59Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:36:09Z] [pre_tool_use] pipeline start
+[2026-07-02T19:36:11Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:36:21Z] [pre_tool_use] pipeline start
+[2026-07-02T19:36:21Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T19:36:22Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:38:35Z] [pre_tool_use] pipeline start
+[2026-07-02T19:38:35Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T19:38:35Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T19:38:36Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:38:42Z] [pre_tool_use] pipeline start
+[2026-07-02T19:38:43Z] [pre_tool_use] pipeline complete
+[2026-07-02T19:38:56Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T19:38:56Z] [pre_tool_use] pipeline start
+[2026-07-02T19:38:56Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T19:38:57Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:06:03Z] [session_start] pipeline start
+[2026-07-02T20:06:05Z] [user_prompt_submit] pipeline start
+[2026-07-02T20:06:05Z] [session_start] pipeline complete
+[2026-07-02T20:06:05Z] [user_prompt_submit] pipeline complete
+[2026-07-02T20:06:05Z] [session_start] pipeline start
+[2026-07-02T20:06:07Z] [session_start] pipeline complete
+[2026-07-02T20:06:07Z] [session_start] pipeline start
+[2026-07-02T20:06:09Z] [session_start] pipeline complete
+[2026-07-02T20:06:09Z] [user_prompt_submit] pipeline start
+[2026-07-02T20:06:10Z] [user_prompt_submit] pipeline complete
+[2026-07-02T20:06:19Z] [pre_tool_use] pipeline start
+[2026-07-02T20:06:20Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:06:20Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:06:20Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:06:20Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:06:43Z] [pre_tool_use] pipeline start
+[2026-07-02T20:06:45Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:06:55Z] [pre_tool_use] pipeline start
+[2026-07-02T20:06:56Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:07:11Z] [pre_tool_use] pipeline start
+[2026-07-02T20:07:13Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:16:15Z] [user_prompt_submit] pipeline start
+[2026-07-02T20:16:16Z] [user_prompt_submit] pipeline complete
+[2026-07-02T20:16:23Z] [user_prompt_submit] pipeline start
+[2026-07-02T20:16:23Z] [user_prompt_submit] pipeline complete
+[2026-07-02T20:16:34Z] [pre_tool_use] pipeline start
+[2026-07-02T20:16:34Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:16:35Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:16:36Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:16:44Z] [pre_tool_use] pipeline start
+[2026-07-02T20:16:45Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:16:59Z] [pre_tool_use] pipeline start
+[2026-07-02T20:17:01Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:17:02Z] [pre_tool_use] pipeline start
+[2026-07-02T20:17:02Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:17:02Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:17:02Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:17:04Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:17:06Z] [pre_tool_use] pipeline start
+[2026-07-02T20:17:08Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:17:19Z] [pre_tool_use] pipeline start
+[2026-07-02T20:17:19Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:17:19Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:17:21Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:17:31Z] [pre_tool_use] pipeline start
+[2026-07-02T20:17:33Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:17:49Z] [pre_tool_use] pipeline start
+[2026-07-02T20:17:50Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:18:04Z] [pre_tool_use] pipeline start
+[2026-07-02T20:18:05Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:18:13Z] [pre_tool_use] pipeline start
+[2026-07-02T20:18:14Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:18:20Z] [pre_tool_use] pipeline start
+[2026-07-02T20:18:20Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:18:20Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:18:21Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:18:43Z] [pre_tool_use] pipeline start
+[2026-07-02T20:18:43Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:18:43Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:18:43Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:18:44Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:18:58Z] [pre_tool_use] pipeline start
+[2026-07-02T20:18:59Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:19:05Z] [pre_tool_use] pipeline start
+[2026-07-02T20:19:06Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:19:27Z] [pre_tool_use] pipeline start
+[2026-07-02T20:19:29Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:21:00Z] [user_prompt_submit] pipeline start
+[2026-07-02T20:21:00Z] [user_prompt_submit] pipeline complete
+[2026-07-02T20:21:00Z] [user_prompt_submit] pipeline start
+[2026-07-02T20:21:01Z] [user_prompt_submit] pipeline complete
+[2026-07-02T20:29:13Z] [user_prompt_submit] pipeline start
+[2026-07-02T20:29:14Z] [user_prompt_submit] pipeline complete
+[2026-07-02T20:30:32Z] [pre_tool_use] pipeline start
+[2026-07-02T20:30:34Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:30:44Z] [pre_tool_use] pipeline start
+[2026-07-02T20:30:45Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:31:32Z] [session_start] pipeline start
+[2026-07-02T20:31:35Z] [session_start] pipeline complete
+[2026-07-02T20:31:35Z] [user_prompt_submit] pipeline start
+[2026-07-02T20:31:36Z] [user_prompt_submit] pipeline complete
+[2026-07-02T20:31:39Z] [pre_tool_use] pipeline start
+[2026-07-02T20:31:41Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:31:50Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:31:50Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:31:50Z] [pre_tool_use] pipeline start
+[2026-07-02T20:31:50Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:31:52Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:32:01Z] [pre_tool_use] pipeline start
+[2026-07-02T20:32:02Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:32:02Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:32:02Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:32:02Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:32:03Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:32:14Z] [pre_tool_use] pipeline start
+[2026-07-02T20:32:15Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:32:25Z] [pre_tool_use] pipeline start
+[2026-07-02T20:32:25Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:32:26Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:32:26Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:32:26Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:32:26Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:32:35Z] [pre_tool_use] pipeline start
+[2026-07-02T20:32:37Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:32:40Z] [pre_tool_use] pipeline start
+[2026-07-02T20:32:40Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:32:40Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:32:40Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:32:42Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:32:51Z] [pre_tool_use] pipeline start
+[2026-07-02T20:32:53Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:33:07Z] [pre_tool_use] pipeline start
+[2026-07-02T20:33:10Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:36:07Z] [user_prompt_submit] pipeline start
+[2026-07-02T20:36:07Z] [user_prompt_submit] pipeline complete
+[2026-07-02T20:36:12Z] [user_prompt_submit] pipeline start
+[2026-07-02T20:36:13Z] [user_prompt_submit] pipeline complete
+[2026-07-02T20:36:24Z] [pre_tool_use] pipeline start
+[2026-07-02T20:36:24Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:36:24Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:36:26Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:37:20Z] [pre_tool_use] pipeline start
+[2026-07-02T20:37:20Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:37:22Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:37:35Z] [pre_tool_use] pipeline start
+[2026-07-02T20:37:37Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:37:47Z] [pre_tool_use] pipeline start
+[2026-07-02T20:37:49Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:37:49Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:37:49Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:37:49Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:38:01Z] [pre_tool_use] pipeline start
+[2026-07-02T20:38:04Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:38:10Z] [pre_tool_use] pipeline start
+[2026-07-02T20:38:10Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:38:11Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:38:14Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:38:17Z] [pre_tool_use] pipeline start
+[2026-07-02T20:38:18Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:38:19Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:38:27Z] [pre_tool_use] pipeline start
+[2026-07-02T20:38:28Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:38:28Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:38:28Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:38:29Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:38:36Z] [pre_tool_use] pipeline start
+[2026-07-02T20:38:39Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:38:45Z] [pre_tool_use] pipeline start
+[2026-07-02T20:38:47Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:38:48Z] [pre_tool_use] pipeline start
+[2026-07-02T20:38:48Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:38:48Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:38:50Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:39:04Z] [pre_tool_use] pipeline start
+[2026-07-02T20:39:04Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:39:05Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:39:09Z] [pre_tool_use] pipeline start
+[2026-07-02T20:39:12Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:39:16Z] [pre_tool_use] pipeline start
+[2026-07-02T20:39:17Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:39:18Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:39:29Z] [pre_tool_use] pipeline start
+[2026-07-02T20:39:30Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:39:36Z] [pre_tool_use] pipeline start
+[2026-07-02T20:39:38Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:39:50Z] [pre_tool_use] pipeline start
+[2026-07-02T20:39:50Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:39:50Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:39:50Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:39:52Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:40:01Z] [pre_tool_use] pipeline start
+[2026-07-02T20:40:01Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:40:12Z] [pre_tool_use] pipeline start
+[2026-07-02T20:40:14Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:40:20Z] [pre_tool_use] pipeline start
+[2026-07-02T20:40:20Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:40:23Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:40:37Z] [pre_tool_use] pipeline start
+[2026-07-02T20:40:38Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:40:38Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:40:38Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:40:45Z] [pre_tool_use] pipeline start
+[2026-07-02T20:40:47Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:40:56Z] [pre_tool_use] pipeline start
+[2026-07-02T20:40:56Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:40:56Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:41:01Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:41:09Z] [pre_tool_use] pipeline start
+[2026-07-02T20:41:11Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:41:11Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:41:20Z] [pre_tool_use] pipeline start
+[2026-07-02T20:41:22Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:41:30Z] [pre_tool_use] pipeline start
+[2026-07-02T20:41:32Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:41:32Z] [pre_tool_use] pipeline start
+[2026-07-02T20:41:32Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:41:33Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:41:46Z] [pre_tool_use] pipeline start
+[2026-07-02T20:41:46Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:41:46Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:41:46Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T20:41:49Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:43:04Z] [pre_tool_use] pipeline start
+[2026-07-02T20:43:07Z] [pre_tool_use] pipeline complete
+[2026-07-02T20:43:32Z] [pre_tool_use] pipeline start
+[2026-07-02T20:43:34Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:02:30Z] [user_prompt_submit] pipeline start
+[2026-07-02T21:02:31Z] [user_prompt_submit] pipeline complete
+[2026-07-02T21:02:52Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:02:52Z] [pre_tool_use] pipeline start
+[2026-07-02T21:02:52Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:02:52Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:02:54Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:03:04Z] [pre_tool_use] pipeline start
+[2026-07-02T21:03:04Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:03:04Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:03:11Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:03:42Z] [pre_tool_use] pipeline start
+[2026-07-02T21:03:42Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:03:42Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:03:44Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:03:54Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:03:54Z] [pre_tool_use] pipeline start
+[2026-07-02T21:03:54Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:03:56Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:04:01Z] [pre_tool_use] pipeline start
+[2026-07-02T21:04:03Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:04:13Z] [pre_tool_use] pipeline start
+[2026-07-02T21:04:13Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:04:13Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:04:17Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:04:23Z] [pre_tool_use] pipeline start
+[2026-07-02T21:04:24Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:04:33Z] [pre_tool_use] pipeline start
+[2026-07-02T21:04:34Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:04:48Z] [pre_tool_use] pipeline start
+[2026-07-02T21:04:48Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:04:50Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:04:59Z] [pre_tool_use] pipeline start
+[2026-07-02T21:04:59Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:05:00Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:05:23Z] [pre_tool_use] pipeline start
+[2026-07-02T21:05:24Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:05:24Z] [pre_tool_use] pipeline start
+[2026-07-02T21:05:26Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:05:46Z] [pre_tool_use] pipeline start
+[2026-07-02T21:05:48Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:05:55Z] [pre_tool_use] pipeline start
+[2026-07-02T21:05:56Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:06:01Z] [pre_tool_use] pipeline start
+[2026-07-02T21:06:07Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:09:03Z] [pre_tool_use] pipeline start
+[2026-07-02T21:09:03Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:09:05Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:12:54Z] [pre_tool_use] pipeline start
+[2026-07-02T21:12:54Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:12:56Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:15:13Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:15:13Z] [pre_tool_use] pipeline start
+[2026-07-02T21:15:13Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:15:14Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:17:35Z] [pre_tool_use] pipeline start
+[2026-07-02T21:17:42Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:17:54Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:17:54Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:17:54Z] [pre_tool_use] pipeline start
+[2026-07-02T21:17:58Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:28:31Z] [user_prompt_submit] pipeline start
+[2026-07-02T21:28:35Z] [user_prompt_submit] pipeline complete
+[2026-07-02T21:28:48Z] [pre_tool_use] pipeline start
+[2026-07-02T21:28:48Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:28:48Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:28:51Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:29:02Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:29:02Z] [pre_tool_use] pipeline start
+[2026-07-02T21:29:02Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:29:06Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:29:25Z] [pre_tool_use] pipeline start
+[2026-07-02T21:29:25Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:29:25Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:29:26Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:29:30Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:29:41Z] [pre_tool_use] pipeline start
+[2026-07-02T21:29:41Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:29:41Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:29:48Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:30:01Z] [pre_tool_use] pipeline start
+[2026-07-02T21:30:01Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:30:04Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:30:14Z] [pre_tool_use] pipeline start
+[2026-07-02T21:30:19Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:30:45Z] [pre_tool_use] pipeline start
+[2026-07-02T21:30:45Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:30:45Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:31:08Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:31:21Z] [pre_tool_use] pipeline start
+[2026-07-02T21:31:21Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:31:21Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:31:42Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:31:55Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:31:55Z] [pre_tool_use] pipeline start
+[2026-07-02T21:32:03Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:32:16Z] [pre_tool_use] pipeline start
+[2026-07-02T21:32:21Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:32:37Z] [pre_tool_use] pipeline start
+[2026-07-02T21:32:39Z] [pre_tool_use] pipeline complete
+[2026-07-02T21:33:28Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:33:28Z] [pre_tool_use] pipeline start
+[2026-07-02T21:33:28Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T21:33:30Z] [pre_tool_use] pipeline complete
+[2026-07-02T22:12:46Z] [user_prompt_submit] pipeline start
+[2026-07-02T22:12:50Z] [user_prompt_submit] pipeline complete
+[2026-07-02T22:13:08Z] [pre_tool_use] pipeline start
+[2026-07-02T22:13:08Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T22:13:08Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T22:13:08Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T22:13:09Z] [pre_tool_use] pipeline complete
+[2026-07-02T22:13:22Z] [pre_tool_use] pipeline start
+[2026-07-02T22:13:22Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T22:13:22Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T22:13:22Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T22:13:25Z] [pre_tool_use] pipeline complete
+[2026-07-02T22:16:58Z] [user_prompt_submit] pipeline start
+[2026-07-02T22:16:59Z] [user_prompt_submit] pipeline complete
+[2026-07-02T22:17:14Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T22:17:14Z] [pre_tool_use] pipeline start
+[2026-07-02T22:17:14Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-02T22:17:17Z] [pre_tool_use] pipeline complete
+[2026-07-02T22:17:28Z] [pre_tool_use] pipeline start
+[2026-07-02T22:17:30Z] [pre_tool_use] pipeline complete
+[2026-07-02T22:22:21Z] [user_prompt_submit] pipeline start
+[2026-07-02T22:22:25Z] [user_prompt_submit] pipeline complete
+[2026-07-02T22:23:53Z] [pre_tool_use] pipeline start
+[2026-07-02T22:23:53Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:23:09Z] [session_start] pipeline start
+[2026-07-03T18:23:12Z] [session_start] pipeline complete
+[2026-07-03T18:23:12Z] [user_prompt_submit] pipeline start
+[2026-07-03T18:23:12Z] [user_prompt_submit] pipeline complete
+[2026-07-03T18:23:31Z] [pre_tool_use] pipeline start
+[2026-07-03T18:23:31Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:23:31Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:23:31Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:23:34Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:23:47Z] [pre_tool_use] pipeline start
+[2026-07-03T18:23:47Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:23:47Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:23:47Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:23:50Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:24:16Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:24:16Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:24:16Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:24:16Z] [pre_tool_use] pipeline start
+[2026-07-03T18:24:19Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:24:26Z] [pre_tool_use] pipeline start
+[2026-07-03T18:24:29Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:24:49Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:24:49Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:24:49Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:24:49Z] [pre_tool_use] pipeline start
+[2026-07-03T18:24:53Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:25:03Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:25:03Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:25:03Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:25:03Z] [pre_tool_use] pipeline start
+[2026-07-03T18:25:05Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:25:13Z] [pre_tool_use] pipeline start
+[2026-07-03T18:25:18Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:25:31Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:25:31Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:25:31Z] [pre_tool_use] pipeline start
+[2026-07-03T18:25:31Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:25:34Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:25:49Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:25:49Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:25:49Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:25:49Z] [pre_tool_use] pipeline start
+[2026-07-03T18:25:52Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:26:02Z] [pre_tool_use] pipeline start
+[2026-07-03T18:26:05Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:26:43Z] [pre_tool_use] pipeline start
+[2026-07-03T18:26:43Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:26:43Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:26:43Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:26:46Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:27:08Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:27:08Z] [pre_tool_use] pipeline start
+[2026-07-03T18:27:08Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:27:08Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:27:09Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:27:18Z] [pre_tool_use] pipeline start
+[2026-07-03T18:27:19Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:27:27Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:27:27Z] [pre_tool_use] pipeline start
+[2026-07-03T18:27:27Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:27:28Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:27:42Z] [pre_tool_use] pipeline start
+[2026-07-03T18:27:44Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:28:17Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:28:17Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:28:17Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:28:17Z] [pre_tool_use] pipeline start
+[2026-07-03T18:28:19Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:28:37Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:28:37Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:28:37Z] [pre_tool_use] pipeline start
+[2026-07-03T18:28:37Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:28:39Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:28:46Z] [pre_tool_use] pipeline start
+[2026-07-03T18:28:47Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:28:58Z] [pre_tool_use] pipeline start
+[2026-07-03T18:29:01Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:29:15Z] [pre_tool_use] pipeline start
+[2026-07-03T18:29:16Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:29:35Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:29:35Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:29:35Z] [pre_tool_use] pipeline start
+[2026-07-03T18:29:35Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:29:37Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:29:46Z] [pre_tool_use] pipeline start
+[2026-07-03T18:29:49Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:29:54Z] [pre_tool_use] pipeline start
+[2026-07-03T18:29:56Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:30:03Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:30:03Z] [pre_tool_use] pipeline start
+[2026-07-03T18:30:05Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:30:13Z] [pre_tool_use] pipeline start
+[2026-07-03T18:30:13Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:30:16Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:31:13Z] [pre_tool_use] pipeline start
+[2026-07-03T18:31:13Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:31:15Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:32:31Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:32:31Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:32:31Z] [pre_tool_use] pipeline start
+[2026-07-03T18:32:32Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:32:46Z] [pre_tool_use] pipeline start
+[2026-07-03T18:32:46Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:32:46Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:32:46Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:32:47Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:32:59Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:32:59Z] [pre_tool_use] pipeline start
+[2026-07-03T18:32:59Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:32:59Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:33:00Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:33:19Z] [pre_tool_use] pipeline start
+[2026-07-03T18:33:19Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:33:19Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:33:20Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:33:43Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:33:43Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:33:43Z] [pre_tool_use] pipeline start
+[2026-07-03T18:33:44Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:33:51Z] [pre_tool_use] pipeline start
+[2026-07-03T18:33:52Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:34:02Z] [pre_tool_use] pipeline start
+[2026-07-03T18:34:03Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:34:11Z] [pre_tool_use] pipeline start
+[2026-07-03T18:34:11Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:34:11Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:34:12Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:34:18Z] [pre_tool_use] pipeline start
+[2026-07-03T18:34:19Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:34:33Z] [pre_tool_use] pipeline start
+[2026-07-03T18:34:34Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:34:48Z] [pre_tool_use] pipeline start
+[2026-07-03T18:34:49Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:34:50Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:34:52Z] [pre_tool_use] pipeline start
+[2026-07-03T18:34:53Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:35:05Z] [pre_tool_use] pipeline start
+[2026-07-03T18:35:05Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:35:06Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:35:23Z] [pre_tool_use] pipeline start
+[2026-07-03T18:35:24Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:35:31Z] [pre_tool_use] pipeline start
+[2026-07-03T18:35:31Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:35:34Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:35:40Z] [pre_tool_use] pipeline start
+[2026-07-03T18:35:41Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:40:16Z] [pre_tool_use] pipeline start
+[2026-07-03T18:40:16Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:40:16Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:40:18Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:40:25Z] [pre_tool_use] pipeline start
+[2026-07-03T18:40:25Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:40:26Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:40:30Z] [pre_tool_use] pipeline start
+[2026-07-03T18:40:31Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:40:37Z] [pre_tool_use] pipeline start
+[2026-07-03T18:40:37Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:40:38Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:40:46Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:40:46Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:40:46Z] [pre_tool_use] pipeline start
+[2026-07-03T18:40:46Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:40:47Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:41:09Z] [pre_tool_use] pipeline start
+[2026-07-03T18:41:09Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:41:10Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:41:14Z] [pre_tool_use] pipeline start
+[2026-07-03T18:41:15Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:41:23Z] [pre_tool_use] pipeline start
+[2026-07-03T18:41:23Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:41:24Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:41:30Z] [pre_tool_use] pipeline start
+[2026-07-03T18:41:31Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:41:38Z] [pre_tool_use] pipeline start
+[2026-07-03T18:41:38Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:41:39Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:41:43Z] [pre_tool_use] pipeline start
+[2026-07-03T18:41:44Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:41:50Z] [pre_tool_use] pipeline start
+[2026-07-03T18:41:50Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:41:51Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:41:56Z] [pre_tool_use] pipeline start
+[2026-07-03T18:41:57Z] [pre_tool_use] pipeline complete
+[2026-07-03T18:45:31Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:45:31Z] [pre_tool_use] pipeline start
+[2026-07-03T18:45:31Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T18:45:33Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:07:08Z] [session_start] pipeline start
+[2026-07-03T20:07:14Z] [session_start] pipeline complete
+[2026-07-03T20:07:14Z] [user_prompt_submit] pipeline start
+[2026-07-03T20:07:14Z] [user_prompt_submit] pipeline complete
+[2026-07-03T20:07:31Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:07:31Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:07:31Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:07:31Z] [pre_tool_use] pipeline start
+[2026-07-03T20:07:33Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:07:40Z] [pre_tool_use] pipeline start
+[2026-07-03T20:07:40Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:07:42Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:07:47Z] [pre_tool_use] pipeline start
+[2026-07-03T20:08:19Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:08:19Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:08:19Z] [pre_tool_use] pipeline start
+[2026-07-03T20:08:19Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:08:21Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:08:31Z] [pre_tool_use] pipeline start
+[2026-07-03T20:08:31Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:08:31Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:08:31Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:08:33Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:08:44Z] [pre_tool_use] pipeline start
+[2026-07-03T20:08:44Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:08:44Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:08:44Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:08:48Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:08:58Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:08:58Z] [pre_tool_use] pipeline start
+[2026-07-03T20:08:58Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:08:58Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:09:03Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:09:11Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:09:11Z] [pre_tool_use] pipeline start
+[2026-07-03T20:09:11Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:09:11Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:09:14Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:09:22Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:09:22Z] [pre_tool_use] pipeline start
+[2026-07-03T20:09:22Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:09:24Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:09:36Z] [pre_tool_use] pipeline start
+[2026-07-03T20:09:54Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:09:54Z] [pre_tool_use] pipeline start
+[2026-07-03T20:09:57Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:12:37Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:12:37Z] [pre_tool_use] pipeline start
+[2026-07-03T20:12:40Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:12:59Z] [pre_tool_use] pipeline start
+[2026-07-03T20:12:59Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:12:59Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:13:01Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:13:09Z] [pre_tool_use] pipeline start
+[2026-07-03T20:13:11Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:13:20Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:13:20Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:13:20Z] [pre_tool_use] pipeline start
+[2026-07-03T20:13:24Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:13:51Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:13:51Z] [pre_tool_use] pipeline start
+[2026-07-03T20:13:55Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:14:06Z] [pre_tool_use] pipeline start
+[2026-07-03T20:14:06Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:14:06Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:14:06Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:14:08Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:14:18Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:14:18Z] [pre_tool_use] pipeline start
+[2026-07-03T20:14:18Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:14:20Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:14:31Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:14:31Z] [pre_tool_use] pipeline start
+[2026-07-03T20:14:35Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:14:42Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:14:42Z] [pre_tool_use] pipeline start
+[2026-07-03T20:14:46Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:14:54Z] [pre_tool_use] pipeline start
+[2026-07-03T20:14:58Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:15:06Z] [pre_tool_use] pipeline start
+[2026-07-03T20:15:06Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:15:08Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:15:13Z] [pre_tool_use] pipeline start
+[2026-07-03T20:15:37Z] [pre_tool_use] pipeline start
+[2026-07-03T20:15:37Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:15:40Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:15:45Z] [pre_tool_use] pipeline start
+[2026-07-03T20:16:07Z] [pre_tool_use] pipeline start
+[2026-07-03T20:16:09Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:16:17Z] [pre_tool_use] pipeline start
+[2026-07-03T20:16:17Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:16:29Z] [pre_tool_use] pipeline start
+[2026-07-03T20:16:31Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:18:58Z] [pre_tool_use] pipeline start
+[2026-07-03T20:18:58Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:19:00Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:21:12Z] [user_prompt_submit] pipeline start
+[2026-07-03T20:21:16Z] [user_prompt_submit] pipeline complete
+[2026-07-03T20:21:31Z] [pre_tool_use] pipeline start
+[2026-07-03T20:21:31Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:21:31Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:21:33Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:21:47Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:21:47Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:21:47Z] [pre_tool_use] pipeline start
+[2026-07-03T20:21:47Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:21:48Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:21:49Z] [user_prompt_submit] pipeline start
+[2026-07-03T20:21:51Z] [user_prompt_submit] pipeline complete
+[2026-07-03T20:22:08Z] [pre_tool_use] pipeline start
+[2026-07-03T20:22:08Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:22:08Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:22:08Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:22:27Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:22:27Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:22:27Z] [pre_tool_use] pipeline start
+[2026-07-03T20:22:27Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:22:29Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:22:46Z] [pre_tool_use] pipeline start
+[2026-07-03T20:22:46Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:22:46Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:22:46Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:22:50Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:24:03Z] [pre_tool_use] pipeline start
+[2026-07-03T20:24:03Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:24:03Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:24:03Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:24:03Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:24:05Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:24:11Z] [pre_tool_use] pipeline start
+[2026-07-03T20:24:15Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:24:20Z] [pre_tool_use] pipeline start
+[2026-07-03T20:24:25Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:24:33Z] [pre_tool_use] pipeline start
+[2026-07-03T20:24:35Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:24:42Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:24:42Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:24:42Z] [pre_tool_use] pipeline start
+[2026-07-03T20:24:46Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:25:03Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:25:03Z] [pre_tool_use] pipeline start
+[2026-07-03T20:25:03Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:25:03Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:25:04Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:25:20Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:25:20Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:25:20Z] [pre_tool_use] pipeline start
+[2026-07-03T20:25:20Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:25:22Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:25:37Z] [pre_tool_use] pipeline start
+[2026-07-03T20:25:39Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:25:51Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:25:51Z] [pre_tool_use] pipeline start
+[2026-07-03T20:25:51Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:26:10Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:26:10Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:26:10Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:26:10Z] [pre_tool_use] pipeline start
+[2026-07-03T20:26:10Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:26:26Z] [pre_tool_use] pipeline start
+[2026-07-03T20:26:30Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:27:39Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:27:39Z] [pre_tool_use] pipeline start
+[2026-07-03T20:27:59Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:27:59Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:27:59Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:27:59Z] [pre_tool_use] pipeline start
+[2026-07-03T20:28:03Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:28:14Z] [pre_tool_use] pipeline start
+[2026-07-03T20:28:17Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:28:22Z] [pre_tool_use] pipeline start
+[2026-07-03T20:28:24Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:28:35Z] [pre_tool_use] pipeline start
+[2026-07-03T20:29:30Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:29:30Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:29:30Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:29:30Z] [pre_tool_use] pipeline start
+[2026-07-03T20:29:49Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:30:02Z] [pre_tool_use] pipeline start
+[2026-07-03T20:30:35Z] [pre_tool_use] pipeline start
+[2026-07-03T20:31:10Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:31:10Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:31:10Z] [pre_tool_use] pipeline start
+[2026-07-03T20:31:10Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:31:31Z] [pre_tool_use] pipeline start
+[2026-07-03T20:31:57Z] [pre_tool_use] pipeline start
+[2026-07-03T20:32:19Z] [pre_tool_use] pipeline start
+[2026-07-03T20:32:24Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:32:39Z] [pre_tool_use] pipeline start
+[2026-07-03T20:32:39Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:32:39Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:32:39Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:32:43Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:32:55Z] [pre_tool_use] pipeline start
+[2026-07-03T20:32:55Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:32:55Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:32:59Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:33:53Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:33:53Z] [pre_tool_use] pipeline start
+[2026-07-03T20:33:53Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:33:56Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:35:17Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:35:17Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:35:17Z] [pre_tool_use] pipeline start
+[2026-07-03T20:35:17Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:35:41Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:35:41Z] [pre_tool_use] pipeline start
+[2026-07-03T20:35:41Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:36:54Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:36:54Z] [pre_tool_use] pipeline start
+[2026-07-03T20:36:54Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:36:57Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:37:04Z] [pre_tool_use] pipeline start
+[2026-07-03T20:37:27Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:37:27Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:37:27Z] [pre_tool_use] pipeline start
+[2026-07-03T20:38:57Z] [pre_tool_use] pipeline start
+[2026-07-03T20:38:57Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:38:57Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:39:38Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:39:38Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:39:38Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:39:38Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:39:53Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:39:53Z] [pre_tool_use] pipeline start
+[2026-07-03T20:39:53Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:41:26Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:41:26Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:41:26Z] [pre_tool_use] pipeline start
+[2026-07-03T20:41:26Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:42:00Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:43:11Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:43:11Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:43:11Z] [pre_tool_use] pipeline start
+[2026-07-03T20:43:11Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:45:30Z] [pre_tool_use] pipeline start
+[2026-07-03T20:47:40Z] [pre_tool_use] pipeline start
+[2026-07-03T20:47:40Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:47:40Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:47:40Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:48:05Z] [pre_tool_use] pipeline start
+[2026-07-03T20:48:05Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:48:05Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:48:28Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:48:28Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:48:28Z] [pre_tool_use] pipeline start
+[2026-07-03T20:48:52Z] [pre_tool_use] pipeline start
+[2026-07-03T20:49:41Z] [pre_tool_use] pipeline start
+[2026-07-03T20:49:41Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:49:41Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:50:16Z] [pre_tool_use] pipeline start
+[2026-07-03T20:50:16Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:50:16Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:51:03Z] [pre_tool_use] pipeline start
+[2026-07-03T20:54:29Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:54:29Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:54:29Z] [pre_tool_use] pipeline start
+[2026-07-03T20:54:33Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:54:45Z] [pre_tool_use] pipeline start
+[2026-07-03T20:54:46Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:55:01Z] [pre_tool_use] pipeline start
+[2026-07-03T20:55:02Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:55:12Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:55:12Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:55:12Z] [pre_tool_use] pipeline start
+[2026-07-03T20:55:14Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:55:26Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:55:26Z] [pre_tool_use] pipeline start
+[2026-07-03T20:55:26Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:55:29Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:58:02Z] [pre_tool_use] pipeline start
+[2026-07-03T20:58:02Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:58:02Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:58:05Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:58:17Z] [pre_tool_use] pipeline start
+[2026-07-03T20:58:18Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:59:18Z] [pre_tool_use] pipeline start
+[2026-07-03T20:59:18Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:59:18Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:59:18Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:59:20Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:59:42Z] [pre_tool_use] pipeline start
+[2026-07-03T20:59:42Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:59:42Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:59:45Z] [pre_tool_use] pipeline complete
+[2026-07-03T20:59:58Z] [pre_tool_use] pipeline start
+[2026-07-03T20:59:58Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T20:59:58Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:00:00Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:00:12Z] [pre_tool_use] pipeline start
+[2026-07-03T21:00:13Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:00:31Z] [pre_tool_use] pipeline start
+[2026-07-03T21:00:32Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:00:38Z] [pre_tool_use] pipeline start
+[2026-07-03T21:00:39Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:00:44Z] [pre_tool_use] pipeline start
+[2026-07-03T21:00:47Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:00:53Z] [pre_tool_use] pipeline start
+[2026-07-03T21:00:54Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:01:01Z] [pre_tool_use] pipeline start
+[2026-07-03T21:01:01Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:01:01Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:01:02Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:01:22Z] [pre_tool_use] pipeline start
+[2026-07-03T21:01:23Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:01:36Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:01:36Z] [pre_tool_use] pipeline start
+[2026-07-03T21:01:36Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:01:36Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:01:37Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:01:47Z] [pre_tool_use] pipeline start
+[2026-07-03T21:01:47Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:01:47Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:01:48Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:02:08Z] [pre_tool_use] pipeline start
+[2026-07-03T21:02:09Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:03:20Z] [pre_tool_use] pipeline start
+[2026-07-03T21:03:20Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:03:20Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:03:21Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:03:32Z] [pre_tool_use] pipeline start
+[2026-07-03T21:03:32Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:03:32Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:03:33Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:03:44Z] [pre_tool_use] pipeline start
+[2026-07-03T21:03:46Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:05:30Z] [pre_tool_use] pipeline start
+[2026-07-03T21:05:32Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:08:44Z] [pre_tool_use] pipeline start
+[2026-07-03T21:08:45Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:08:58Z] [pre_tool_use] pipeline start
+[2026-07-03T21:08:58Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:08:58Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:09:02Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:09:11Z] [pre_tool_use] pipeline start
+[2026-07-03T21:09:14Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:09:21Z] [pre_tool_use] pipeline start
+[2026-07-03T21:09:22Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:09:33Z] [pre_tool_use] pipeline start
+[2026-07-03T21:09:33Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:09:33Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:09:35Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:09:44Z] [pre_tool_use] pipeline start
+[2026-07-03T21:09:46Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:11:22Z] [user_prompt_submit] pipeline start
+[2026-07-03T21:11:24Z] [user_prompt_submit] pipeline complete
+[2026-07-03T21:12:57Z] [pre_tool_use] pipeline start
+[2026-07-03T21:12:58Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:15:08Z] [pre_tool_use] pipeline start
+[2026-07-03T21:15:12Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:15:34Z] [pre_tool_use] pipeline start
+[2026-07-03T21:15:34Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:15:34Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:15:34Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:15:35Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:15:49Z] [pre_tool_use] pipeline start
+[2026-07-03T21:15:51Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:15:58Z] [pre_tool_use] pipeline start
+[2026-07-03T21:15:59Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:16:10Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:16:10Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:16:10Z] [pre_tool_use] pipeline start
+[2026-07-03T21:16:12Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:16:25Z] [pre_tool_use] pipeline start
+[2026-07-03T21:16:25Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:16:25Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:16:25Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:16:27Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:16:42Z] [pre_tool_use] pipeline start
+[2026-07-03T21:16:43Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:16:54Z] [pre_tool_use] pipeline start
+[2026-07-03T21:16:54Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:16:54Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:16:56Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:17:08Z] [pre_tool_use] pipeline start
+[2026-07-03T21:17:10Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:17:13Z] [pre_tool_use] pipeline start
+[2026-07-03T21:17:14Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:17:18Z] [pre_tool_use] pipeline start
+[2026-07-03T21:17:21Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:17:24Z] [pre_tool_use] pipeline start
+[2026-07-03T21:17:25Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:17:32Z] [pre_tool_use] pipeline start
+[2026-07-03T21:17:33Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:20:48Z] [pre_tool_use] pipeline start
+[2026-07-03T21:20:48Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:20:48Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:20:48Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:20:50Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:21:06Z] [pre_tool_use] pipeline start
+[2026-07-03T21:21:10Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:25:23Z] [pre_tool_use] pipeline start
+[2026-07-03T21:25:24Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:25:53Z] [pre_tool_use] pipeline start
+[2026-07-03T21:25:54Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:29:13Z] [pre_tool_use] pipeline start
+[2026-07-03T21:29:15Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:34:02Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:34:02Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:34:02Z] [pre_tool_use] pipeline start
+[2026-07-03T21:34:03Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:34:04Z] [pre_tool_use] pipeline start
+[2026-07-03T21:34:06Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:34:41Z] [pre_tool_use] pipeline start
+[2026-07-03T21:34:42Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:34:59Z] [pre_tool_use] pipeline start
+[2026-07-03T21:34:59Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:34:59Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:35:00Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:35:16Z] [pre_tool_use] pipeline start
+[2026-07-03T21:35:17Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:35:48Z] [pre_tool_use] pipeline start
+[2026-07-03T21:35:50Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:36:01Z] [pre_tool_use] pipeline start
+[2026-07-03T21:36:02Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:40:24Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:40:24Z] [pre_tool_use] pipeline start
+[2026-07-03T21:40:24Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:40:28Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:40:34Z] [pre_tool_use] pipeline start
+[2026-07-03T21:40:36Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:40:39Z] [pre_tool_use] pipeline start
+[2026-07-03T21:40:40Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:40:47Z] [pre_tool_use] pipeline start
+[2026-07-03T21:40:48Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:40:58Z] [pre_tool_use] pipeline start
+[2026-07-03T21:40:59Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:41:15Z] [pre_tool_use] pipeline start
+[2026-07-03T21:41:15Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:41:15Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:41:16Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:41:22Z] [pre_tool_use] pipeline start
+[2026-07-03T21:41:24Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:41:38Z] [pre_tool_use] pipeline start
+[2026-07-03T21:41:39Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:42:01Z] [pre_tool_use] pipeline start
+[2026-07-03T21:42:01Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:42:01Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T21:42:02Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:42:18Z] [pre_tool_use] pipeline start
+[2026-07-03T21:42:19Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:45:32Z] [pre_tool_use] pipeline start
+[2026-07-03T21:45:35Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:49:44Z] [pre_tool_use] pipeline start
+[2026-07-03T21:49:46Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:54:18Z] [pre_tool_use] pipeline start
+[2026-07-03T21:54:20Z] [pre_tool_use] pipeline complete
+[2026-07-03T21:58:27Z] [pre_tool_use] pipeline start
+[2026-07-03T21:58:28Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:01:35Z] [pre_tool_use] pipeline start
+[2026-07-03T22:01:36Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:01:51Z] [pre_tool_use] pipeline start
+[2026-07-03T22:01:52Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:02:13Z] [pre_tool_use] pipeline start
+[2026-07-03T22:02:13Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:02:13Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:02:14Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:02:24Z] [pre_tool_use] pipeline start
+[2026-07-03T22:02:25Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:06:41Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:06:41Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:06:41Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:06:41Z] [pre_tool_use] pipeline start
+[2026-07-03T22:06:42Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:06:56Z] [pre_tool_use] pipeline start
+[2026-07-03T22:06:57Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:07:33Z] [pre_tool_use] pipeline start
+[2026-07-03T22:07:34Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:11:50Z] [pre_tool_use] pipeline start
+[2026-07-03T22:11:50Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:11:50Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:11:51Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:11:58Z] [pre_tool_use] pipeline start
+[2026-07-03T22:11:59Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:12:08Z] [pre_tool_use] pipeline start
+[2026-07-03T22:12:09Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:13:52Z] [pre_tool_use] pipeline start
+[2026-07-03T22:13:54Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:13:58Z] [pre_tool_use] pipeline start
+[2026-07-03T22:13:59Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:14:07Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:14:07Z] [pre_tool_use] pipeline start
+[2026-07-03T22:14:07Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:14:07Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:14:09Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:14:21Z] [pre_tool_use] pipeline start
+[2026-07-03T22:14:21Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:14:21Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:14:22Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:14:32Z] [pre_tool_use] pipeline start
+[2026-07-03T22:14:32Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:14:32Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:14:33Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:14:33Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:14:40Z] [pre_tool_use] pipeline start
+[2026-07-03T22:14:40Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:14:41Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:14:48Z] [pre_tool_use] pipeline start
+[2026-07-03T22:14:49Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:14:52Z] [pre_tool_use] pipeline start
+[2026-07-03T22:14:53Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:15:11Z] [pre_tool_use] pipeline start
+[2026-07-03T22:15:11Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:15:11Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:15:13Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:15:29Z] [pre_tool_use] pipeline start
+[2026-07-03T22:15:29Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:15:29Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:15:30Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:15:36Z] [pre_tool_use] pipeline start
+[2026-07-03T22:15:37Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:16:01Z] [pre_tool_use] pipeline start
+[2026-07-03T22:16:01Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:16:01Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:16:02Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:16:15Z] [pre_tool_use] pipeline start
+[2026-07-03T22:16:15Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:16:15Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:16:15Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:16:16Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:16:21Z] [pre_tool_use] pipeline start
+[2026-07-03T22:16:23Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:16:28Z] [pre_tool_use] pipeline start
+[2026-07-03T22:16:28Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:16:28Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:16:29Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:16:33Z] [pre_tool_use] pipeline start
+[2026-07-03T22:16:34Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:16:41Z] [pre_tool_use] pipeline start
+[2026-07-03T22:16:42Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:16:49Z] [pre_tool_use] pipeline start
+[2026-07-03T22:16:50Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:16:59Z] [pre_tool_use] pipeline start
+[2026-07-03T22:17:01Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:17:11Z] [pre_tool_use] pipeline start
+[2026-07-03T22:17:11Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:17:11Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:17:12Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:17:18Z] [pre_tool_use] pipeline start
+[2026-07-03T22:17:19Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:17:28Z] [pre_tool_use] pipeline start
+[2026-07-03T22:17:28Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:17:28Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:17:29Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:17:41Z] [pre_tool_use] pipeline start
+[2026-07-03T22:17:42Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:20:38Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:20:38Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:20:38Z] [pre_tool_use] pipeline start
+[2026-07-03T22:20:39Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:20:48Z] [pre_tool_use] pipeline start
+[2026-07-03T22:20:49Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:23:05Z] [pre_tool_use] pipeline start
+[2026-07-03T22:23:07Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:23:48Z] [pre_tool_use] pipeline start
+[2026-07-03T22:23:48Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:23:49Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:24:04Z] [pre_tool_use] pipeline start
+[2026-07-03T22:24:04Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:24:04Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:24:04Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:24:05Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:24:17Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:24:17Z] [pre_tool_use] pipeline start
+[2026-07-03T22:24:17Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:24:17Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:24:18Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:24:22Z] [pre_tool_use] pipeline start
+[2026-07-03T22:24:23Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:24:28Z] [pre_tool_use] pipeline start
+[2026-07-03T22:24:29Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:24:36Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:24:36Z] [pre_tool_use] pipeline start
+[2026-07-03T22:24:36Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:24:36Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:24:37Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:24:42Z] [pre_tool_use] pipeline start
+[2026-07-03T22:24:43Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:26:29Z] [pre_tool_use] pipeline start
+[2026-07-03T22:26:30Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:32:51Z] [pre_tool_use] pipeline start
+[2026-07-03T22:32:52Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:35:47Z] [pre_tool_use] pipeline start
+[2026-07-03T22:35:48Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:36:00Z] [pre_tool_use] pipeline start
+[2026-07-03T22:36:01Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:36:06Z] [pre_tool_use] pipeline start
+[2026-07-03T22:36:07Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:40:29Z] [pre_tool_use] pipeline start
+[2026-07-03T22:40:31Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:40:43Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:40:43Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:40:43Z] [pre_tool_use] pipeline start
+[2026-07-03T22:40:43Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:40:44Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:40:55Z] [pre_tool_use] pipeline start
+[2026-07-03T22:40:55Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:40:56Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:40:57Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:41:05Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:41:05Z] [pre_tool_use] pipeline start
+[2026-07-03T22:41:05Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:41:06Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:41:14Z] [pre_tool_use] pipeline start
+[2026-07-03T22:41:14Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:41:14Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:41:14Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:41:16Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:41:25Z] [pre_tool_use] pipeline start
+[2026-07-03T22:41:25Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:41:25Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:41:25Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:41:26Z] [pre_tool_use] pipeline complete
+[2026-07-03T22:41:36Z] [pre_tool_use] pipeline start
+[2026-07-03T22:41:36Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:41:36Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-03T22:41:37Z] [pre_tool_use] pipeline complete
+[2026-07-04T16:58:33Z] [session_start] pipeline start
+[2026-07-04T16:58:35Z] [session_start] pipeline complete
+[2026-07-04T16:58:35Z] [session_start] pipeline start
+[2026-07-04T16:58:37Z] [session_start] pipeline complete
+[2026-07-04T16:58:37Z] [session_start] pipeline start
+[2026-07-04T16:58:39Z] [session_start] pipeline complete
+[2026-07-04T16:58:39Z] [user_prompt_submit] pipeline start
+[2026-07-04T16:58:40Z] [user_prompt_submit] pipeline complete
+[2026-07-04T16:58:55Z] [pre_tool_use] pipeline start
+[2026-07-04T16:58:57Z] [pre_tool_use] pipeline complete
+[2026-07-04T16:59:06Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T16:59:06Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T16:59:06Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T16:59:06Z] [pre_tool_use] pipeline start
+[2026-07-04T16:59:08Z] [pre_tool_use] pipeline complete
+[2026-07-04T16:59:23Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T16:59:23Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T16:59:23Z] [pre_tool_use] pipeline start
+[2026-07-04T16:59:23Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T16:59:24Z] [pre_tool_use] pipeline complete
+[2026-07-04T16:59:25Z] [user_prompt_submit] pipeline start
+[2026-07-04T16:59:25Z] [user_prompt_submit] pipeline complete
+[2026-07-04T16:59:49Z] [pre_tool_use] pipeline start
+[2026-07-04T16:59:49Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T16:59:49Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T16:59:49Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T16:59:51Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:00:06Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:00:06Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:00:06Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:00:06Z] [pre_tool_use] pipeline start
+[2026-07-04T17:00:08Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:00:21Z] [pre_tool_use] pipeline start
+[2026-07-04T17:00:21Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:00:21Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:00:21Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:00:23Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:00:37Z] [pre_tool_use] pipeline start
+[2026-07-04T17:00:37Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:00:37Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:00:37Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:00:39Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:01:03Z] [pre_tool_use] pipeline start
+[2026-07-04T17:01:05Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:01:26Z] [pre_tool_use] pipeline start
+[2026-07-04T17:01:28Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:01:40Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:01:40Z] [pre_tool_use] pipeline start
+[2026-07-04T17:01:40Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:01:41Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:01:52Z] [pre_tool_use] pipeline start
+[2026-07-04T17:01:52Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:01:52Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:01:55Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:03:06Z] [pre_tool_use] pipeline start
+[2026-07-04T17:03:06Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:03:06Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:03:06Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:03:08Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:03:28Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:03:28Z] [pre_tool_use] pipeline start
+[2026-07-04T17:03:28Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:03:28Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:03:29Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:03:43Z] [pre_tool_use] pipeline start
+[2026-07-04T17:03:43Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:03:43Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:03:43Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:03:44Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:04:00Z] [pre_tool_use] pipeline start
+[2026-07-04T17:04:00Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:04:00Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:04:01Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:04:22Z] [pre_tool_use] pipeline start
+[2026-07-04T17:04:24Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:04:46Z] [pre_tool_use] pipeline start
+[2026-07-04T17:04:47Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:04:47Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:04:47Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:04:48Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:04:59Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:04:59Z] [pre_tool_use] pipeline start
+[2026-07-04T17:04:59Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:04:59Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:05:00Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:05:09Z] [pre_tool_use] pipeline start
+[2026-07-04T17:05:11Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:05:22Z] [pre_tool_use] pipeline start
+[2026-07-04T17:05:22Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:05:22Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:05:22Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:05:23Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:05:28Z] [pre_tool_use] pipeline start
+[2026-07-04T17:05:30Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:05:43Z] [pre_tool_use] pipeline start
+[2026-07-04T17:05:45Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:05:54Z] [pre_tool_use] pipeline start
+[2026-07-04T17:05:55Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:06:14Z] [pre_tool_use] pipeline start
+[2026-07-04T17:06:16Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:06:27Z] [pre_tool_use] pipeline start
+[2026-07-04T17:06:27Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:06:27Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:06:29Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:06:36Z] [pre_tool_use] pipeline start
+[2026-07-04T17:06:37Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:10:42Z] [pre_tool_use] pipeline start
+[2026-07-04T17:10:43Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:12:01Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:12:01Z] [pre_tool_use] pipeline start
+[2026-07-04T17:12:01Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:12:03Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:15:38Z] [pre_tool_use] pipeline start
+[2026-07-04T17:15:38Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:15:38Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:15:40Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:18:46Z] [pre_tool_use] pipeline start
+[2026-07-04T17:18:46Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:18:46Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:18:47Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:22:36Z] [pre_tool_use] pipeline start
+[2026-07-04T17:22:36Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:22:36Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:22:38Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:22:46Z] [pre_tool_use] pipeline start
+[2026-07-04T17:22:46Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:22:46Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:22:48Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:22:59Z] [pre_tool_use] pipeline start
+[2026-07-04T17:22:59Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:22:59Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:22:59Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:23:00Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:23:10Z] [pre_tool_use] pipeline start
+[2026-07-04T17:23:10Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:23:10Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:23:10Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:23:11Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:23:22Z] [pre_tool_use] pipeline start
+[2026-07-04T17:23:22Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:23:22Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:23:22Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:23:23Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:23:34Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:23:34Z] [pre_tool_use] pipeline start
+[2026-07-04T17:23:34Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:23:34Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:23:35Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:23:49Z] [pre_tool_use] pipeline start
+[2026-07-04T17:23:49Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:23:49Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:23:51Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:26:34Z] [pre_tool_use] pipeline start
+[2026-07-04T17:26:35Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:26:48Z] [pre_tool_use] pipeline start
+[2026-07-04T17:26:48Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:26:48Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:26:49Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:40:09Z] [pre_tool_use] pipeline start
+[2026-07-04T17:40:09Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:40:09Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:40:09Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:40:10Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:40:31Z] [pre_tool_use] pipeline start
+[2026-07-04T17:40:32Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:40:40Z] [pre_tool_use] pipeline start
+[2026-07-04T17:40:40Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:40:42Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:40:50Z] [pre_tool_use] pipeline start
+[2026-07-04T17:40:52Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:41:28Z] [pre_tool_use] pipeline start
+[2026-07-04T17:41:28Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:41:29Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:42:14Z] [pre_tool_use] pipeline start
+[2026-07-04T17:42:14Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:42:15Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:42:22Z] [pre_tool_use] pipeline start
+[2026-07-04T17:42:22Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:42:23Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:42:35Z] [pre_tool_use] pipeline start
+[2026-07-04T17:42:35Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:42:36Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:42:43Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:42:43Z] [pre_tool_use] pipeline start
+[2026-07-04T17:42:45Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:42:51Z] [pre_tool_use] pipeline start
+[2026-07-04T17:42:52Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:42:53Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:43:07Z] [pre_tool_use] pipeline start
+[2026-07-04T17:43:07Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:43:07Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:43:09Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:43:18Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:43:18Z] [pre_tool_use] pipeline start
+[2026-07-04T17:43:18Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:43:19Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:43:22Z] [pre_tool_use] pipeline start
+[2026-07-04T17:43:23Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:43:32Z] [pre_tool_use] pipeline start
+[2026-07-04T17:43:32Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:43:33Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:43:42Z] [pre_tool_use] pipeline start
+[2026-07-04T17:43:43Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:43:51Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:43:51Z] [pre_tool_use] pipeline start
+[2026-07-04T17:43:53Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:44:06Z] [pre_tool_use] pipeline start
+[2026-07-04T17:44:07Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:48:10Z] [pre_tool_use] pipeline start
+[2026-07-04T17:48:10Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:48:10Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:48:11Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:48:25Z] [pre_tool_use] pipeline start
+[2026-07-04T17:48:25Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:48:25Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:48:27Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:48:39Z] [pre_tool_use] pipeline start
+[2026-07-04T17:48:39Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:48:39Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:48:39Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:48:40Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:49:15Z] [pre_tool_use] pipeline start
+[2026-07-04T17:49:17Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:49:24Z] [pre_tool_use] pipeline start
+[2026-07-04T17:49:25Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:51:32Z] [pre_tool_use] pipeline start
+[2026-07-04T17:51:33Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:51:44Z] [pre_tool_use] pipeline start
+[2026-07-04T17:51:44Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:51:44Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T17:51:46Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:52:53Z] [pre_tool_use] pipeline start
+[2026-07-04T17:52:54Z] [pre_tool_use] pipeline complete
+[2026-07-04T17:55:06Z] [pre_tool_use] pipeline start
+[2026-07-04T17:55:07Z] [pre_tool_use] pipeline complete
+[2026-07-04T18:01:51Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T18:01:51Z] [pre_tool_use] pipeline start
+[2026-07-04T18:01:53Z] [pre_tool_use] pipeline complete
+[2026-07-04T18:02:31Z] [pre_tool_use] pipeline start
+[2026-07-04T18:02:33Z] [pre_tool_use] pipeline complete
+[2026-07-04T18:03:28Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T18:03:28Z] [pre_tool_use] pipeline start
+[2026-07-04T18:03:28Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T18:03:28Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T18:03:30Z] [pre_tool_use] pipeline complete
+[2026-07-04T18:03:38Z] [pre_tool_use] pipeline start
+[2026-07-04T18:03:38Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T18:03:39Z] [pre_tool_use] pipeline complete
+[2026-07-04T18:03:46Z] [pre_tool_use] pipeline start
+[2026-07-04T18:03:46Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T18:03:46Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T18:03:47Z] [pre_tool_use] pipeline complete
+[2026-07-04T18:03:55Z] [pre_tool_use] pipeline start
+[2026-07-04T18:03:55Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T18:03:56Z] [pre_tool_use] pipeline complete
+[2026-07-04T18:04:05Z] [pre_tool_use] pipeline start
+[2026-07-04T18:04:05Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T18:04:05Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T18:04:05Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T18:04:07Z] [pre_tool_use] pipeline complete
+[2026-07-04T18:04:17Z] [pre_tool_use] pipeline start
+[2026-07-04T18:04:17Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T18:04:17Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T18:04:17Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T18:04:18Z] [pre_tool_use] pipeline complete
+[2026-07-04T18:04:33Z] [pre_tool_use] pipeline start
+[2026-07-04T18:04:35Z] [pre_tool_use] pipeline complete
+[2026-07-04T18:04:50Z] [pre_tool_use] pipeline start
+[2026-07-04T18:04:50Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T18:04:50Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T18:04:50Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T18:04:51Z] [pre_tool_use] pipeline complete
+[2026-07-04T18:05:00Z] [pre_tool_use] pipeline start
+[2026-07-04T18:05:02Z] [pre_tool_use] pipeline complete
+[2026-07-04T18:05:12Z] [pre_tool_use] pipeline start
+[2026-07-04T18:05:12Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T18:05:12Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T18:05:12Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T18:05:13Z] [pre_tool_use] pipeline complete
+[2026-07-04T18:05:25Z] [pre_tool_use] pipeline start
+[2026-07-04T18:05:25Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T18:05:25Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T18:05:26Z] [pre_tool_use] pipeline complete
+[2026-07-04T18:05:33Z] [pre_tool_use] pipeline start
+[2026-07-04T18:05:34Z] [pre_tool_use] pipeline complete
+[2026-07-04T18:05:43Z] [pre_tool_use] pipeline start
+[2026-07-04T18:05:43Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T18:05:43Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T18:05:43Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-04T18:05:44Z] [pre_tool_use] pipeline complete
+[2026-07-04T23:04:37Z] [session_start] pipeline start
+[2026-07-04T23:04:39Z] [session_start] pipeline complete
+[2026-07-04T23:04:39Z] [user_prompt_submit] pipeline start
+[2026-07-04T23:04:41Z] [user_prompt_submit] pipeline complete
+[2026-07-04T23:13:49Z] [user_prompt_submit] pipeline start
+[2026-07-04T23:13:51Z] [user_prompt_submit] pipeline complete
+[2026-07-07T21:21:16Z] [session_start] pipeline start
+[2026-07-07T21:21:29Z] [session_start] pipeline complete
+[2026-07-07T21:21:33Z] [user_prompt_submit] pipeline start
+[2026-07-07T21:21:33Z] [user_prompt_submit] pipeline complete
+[2026-07-07T21:21:56Z] [pre_tool_use] pipeline start
+[2026-07-07T21:21:58Z] [pre_tool_use] pipeline complete
+[2026-07-07T21:22:07Z] [pre_tool_use] pipeline start
+[2026-07-07T21:22:09Z] [pre_tool_use] pipeline complete
+[2026-07-07T21:22:14Z] [pre_tool_use] pipeline start
+[2026-07-07T21:22:15Z] [pre_tool_use] pipeline complete
+[2026-07-07T21:22:32Z] [pre_tool_use] pipeline start
+[2026-07-07T21:22:34Z] [pre_tool_use] pipeline complete
+[2026-07-07T21:22:39Z] [pre_tool_use] pipeline start
+[2026-07-07T21:22:40Z] [pre_tool_use] pipeline complete
+[2026-07-07T21:25:20Z] [user_prompt_submit] pipeline start
+[2026-07-07T21:25:20Z] [user_prompt_submit] pipeline complete
+[2026-07-07T21:25:50Z] [pre_tool_use] pipeline start
+[2026-07-07T21:25:53Z] [pre_tool_use] pipeline complete
+[2026-07-07T21:25:53Z] [pre_tool_use] pipeline start
+[2026-07-07T21:25:54Z] [pre_tool_use] pipeline complete
+[2026-07-07T21:25:54Z] [pre_tool_use] pipeline start
+[2026-07-07T21:25:55Z] [pre_tool_use] pipeline complete
+[2026-07-07T21:27:39Z] [pre_tool_use] pipeline start
+[2026-07-07T21:27:41Z] [pre_tool_use] pipeline complete
+[2026-07-07T21:27:42Z] [pre_tool_use] pipeline start
+[2026-07-07T21:27:45Z] [pre_tool_use] pipeline complete
+[2026-07-07T21:28:05Z] [pre_tool_use] pipeline start
+[2026-07-07T21:28:06Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-07T21:28:06Z] [pre_tool_use] pipeline complete
+[2026-07-07T21:28:07Z] [pre_tool_use] pipeline start
+[2026-07-07T21:28:08Z] [pre_tool_use] pipeline complete

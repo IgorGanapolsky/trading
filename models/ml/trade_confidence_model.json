@@ -1,15 +1,15 @@
 {
   "iron_condor": {
-    "alpha": 86.0,
-    "beta": 15.0,
-    "wins": 0,
-    "losses": 1
+    "alpha": 32.0,
+    "beta": 149.0,
+    "wins": 31,
+    "losses": 148
   },
   "spy_specific": {
-    "alpha": 86.0,
-    "beta": 15.0,
-    "wins": 0,
-    "losses": 1
+    "alpha": 32.0,
+    "beta": 149.0,
+    "wins": 31,
+    "losses": 148
   },
   "regime_adjustments": {
     "calm": 1.1,
@@ -17,5 +17,18 @@
     "volatile": 0.8,
     "spike": 0.5
   },
-  "last_updated": "2026-06-21T14:03:27.852168"
+  "last_updated": "2026-07-07T21:30:32.767321+00:00",
+  "feedback_source": "canonical_trades_json",
+  "gate": {
+    "should_trade": false,
+    "total_trades": 180,
+    "win_rate": 17.22,
+    "expectancy_per_trade": -31.72,
+    "profit_factor": 0.7,
+    "min_trades_met": true,
+    "min_win_rate_met": false,
+    "positive_expectancy_met": false,
+    "min_profit_factor_met": false,
+    "block_reason": "Win rate 17.2% < 50.0%; Expectancy $-31.72/trade <= $0.00; Profit factor 0.70 <= 1.00"
+  }
 }
