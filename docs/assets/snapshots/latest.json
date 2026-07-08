@@ -1,40 +1,64 @@
 {
-  "generated_at": "2026-07-07T18:22:59.214914-04:00",
+  "generated_at": "2026-07-08T18:19:20.172853-04:00",
   "accounts": [
     {
       "account_type": "paper",
-      "equity": 93982.87,
-      "cash": 94099.87,
-      "buying_power": 374399.48,
+      "equity": 93980.71,
+      "cash": 94210.71,
+      "buying_power": 372842.84,
       "starting_capital": 100000.0,
-      "position_count": 4,
+      "position_count": 8,
       "positions": [
         {
           "symbol": "SPY260807C00776000",
           "qty": -1.0,
-          "market_value": -183.0,
-          "unrealized_pl": 6.0
+          "market_value": -137.0,
+          "unrealized_pl": 52.0
         },
         {
           "symbol": "SPY260807C00781000",
           "qty": 1.0,
-          "market_value": 112.0,
-          "unrealized_pl": -9.0
+          "market_value": 81.0,
+          "unrealized_pl": -40.0
         },
         {
           "symbol": "SPY260807P00706000",
           "qty": 1.0,
-          "market_value": 262.0,
-          "unrealized_pl": -3.0
+          "market_value": 293.0,
+          "unrealized_pl": 28.0
         },
         {
           "symbol": "SPY260807P00711000",
           "qty": -1.0,
-          "market_value": -308.0,
-          "unrealized_pl": -2.0
+          "market_value": -343.0,
+          "unrealized_pl": -37.0
+        },
+        {
+          "symbol": "SPY260814C00774000",
+          "qty": -1.0,
+          "market_value": -261.0,
+          "unrealized_pl": -49.0
+        },
+        {
+          "symbol": "SPY260814C00779000",
+          "qty": 1.0,
+          "market_value": 171.0,
+          "unrealized_pl": 29.0
+        },
+        {
+          "symbol": "SPY260814P00690000",
+          "qty": 1.0,
+          "market_value": 252.0,
+          "unrealized_pl": -99.0
+        },
+        {
+          "symbol": "SPY260814P00695000",
+          "qty": -1.0,
+          "market_value": -286.0,
+          "unrealized_pl": 106.0
         }
       ],
-      "chart": "docs/assets/snapshots/paper_20260707.png"
+      "chart": "docs/assets/snapshots/paper_20260708.png"
     },
     {
       "account_type": "brokerage",
@@ -44,7 +68,7 @@
       "starting_capital": 5000.0,
       "position_count": 0,
       "positions": [],
-      "chart": "docs/assets/snapshots/brokerage_20260707.png"
+      "chart": "docs/assets/snapshots/brokerage_20260708.png"
     }
   ]
 }
