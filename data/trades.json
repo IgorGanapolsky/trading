@@ -4,35 +4,35 @@
     "created": "2026-07-07T21:32:24.241944+00:00",
     "purpose": "Master ledger for closed iron condor tracking",
     "paper_phase_start": "2026-01-22",
-    "last_sync": "2026-07-07T21:32:24.242525+00:00",
+    "last_sync": "2026-07-08T15:52:42.574122+00:00",
     "sync_source": "sync_closed_positions.py"
   },
   "stats": {
-    "total_trades": 176,
-    "closed_trades": 176,
+    "total_trades": 175,
+    "closed_trades": 175,
     "open_trades": 0,
     "wins": 30,
-    "losses": 145,
+    "losses": 144,
     "breakeven": 1,
-    "win_rate_pct": 17.05,
+    "win_rate_pct": 17.14,
     "avg_win": 473.13,
-    "avg_loss": 140.5,
-    "profit_factor": 0.7,
-    "expectancy": -35.11,
-    "total_pnl": -6179.0,
-    "total_realized_pnl": -6179.0,
+    "avg_loss": 139.27,
+    "profit_factor": 0.71,
+    "expectancy": -33.49,
+    "total_pnl": -5861.0,
+    "total_realized_pnl": -5861.0,
     "paper_phase_start": "2026-01-22",
-    "paper_phase_days": 166,
-    "last_updated": "2026-07-07T21:32:24.242521+00:00",
-    "unpaired_realized_pnl": 1609.0,
+    "paper_phase_days": 167,
+    "last_updated": "2026-07-08T15:52:42.574113+00:00",
+    "unpaired_realized_pnl": 1927.0,
     "unpaired_in_cohort_pnl": 409.0,
-    "unpaired_order_count": 19,
+    "unpaired_order_count": 18,
     "unpaired_cohort_start": "2026-04-09",
     "unpaired_wins": 12,
-    "unpaired_losses": 7,
+    "unpaired_losses": 6,
     "unpaired_breakeven": 0,
     "unpaired_gross_profit": 12783.0,
-    "unpaired_gross_loss": 11174.0,
+    "unpaired_gross_loss": 10856.0,
     "unpaired_cohort_wins": 2,
     "unpaired_cohort_losses": 4,
     "unpaired_cohort_breakeven": 0,
@@ -64,21 +64,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-03-31",
-        "put_strikes": [
-          635.0,
-          645.0
-        ],
-        "call_strikes": [
-          715.0,
-          725.0
-        ]
+        "put_strikes": [635.0, 645.0],
+        "call_strikes": [715.0, 725.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "33f342b4-545e-4732-9c0f-65d4c653e444"
-        ],
+        "entry": ["33f342b4-545e-4732-9c0f-65d4c653e444"],
         "exit": [
           "851f8265-2cdc-4427-919e-4abce7e4f461",
           "8dbf8d08-ed0d-4fad-87ef-360e17481082",
@@ -111,21 +103,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-03-31",
-        "put_strikes": [
-          640.0,
-          650.0
-        ],
-        "call_strikes": [
-          715.0,
-          725.0
-        ]
+        "put_strikes": [640.0, 650.0],
+        "call_strikes": [715.0, 725.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "56c0a0a5-e347-42be-8b55-d8cdd2a7f457"
-        ],
+        "entry": ["56c0a0a5-e347-42be-8b55-d8cdd2a7f457"],
         "exit": [
           "3f82fbcb-b324-4f7d-9168-ad663984baf7",
           "6d7f96a8-dc4d-42cd-aaf5-470ea5607dfd",
@@ -158,21 +142,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          640.0,
-          650.0
-        ],
-        "call_strikes": [
-          715.0,
-          725.0
-        ]
+        "put_strikes": [640.0, 650.0],
+        "call_strikes": [715.0, 725.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "bae07bba-e9ec-45a3-aef3-dc455b3028ee"
-        ],
+        "entry": ["bae07bba-e9ec-45a3-aef3-dc455b3028ee"],
         "exit": [
           "12671978-b7e1-4c82-af49-f5993f600446",
           "3934ddb6-03d4-46a4-b7cd-a0a7a47f58ff",
@@ -205,21 +181,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          640.0,
-          650.0
-        ],
-        "call_strikes": [
-          720.0,
-          730.0
-        ]
+        "put_strikes": [640.0, 650.0],
+        "call_strikes": [720.0, 730.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "282a984f-decf-4162-b0eb-de2826770c9f"
-        ],
+        "entry": ["282a984f-decf-4162-b0eb-de2826770c9f"],
         "exit": [
           "246043f9-b42e-41e2-aee6-ecc1d3631e25",
           "34059bdc-12b3-4191-bf0a-cd4e947ed4a0",
@@ -252,21 +220,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-03-31",
-        "put_strikes": [
-          645.0,
-          655.0
-        ],
-        "call_strikes": [
-          720.0,
-          730.0
-        ]
+        "put_strikes": [645.0, 655.0],
+        "call_strikes": [720.0, 730.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "02686c08-c637-4cac-9df3-7e105a4c16db"
-        ],
+        "entry": ["02686c08-c637-4cac-9df3-7e105a4c16db"],
         "exit": [
           "65492fb0-9dd7-4f8b-be14-cbffa3d04d35",
           "670e5640-50d5-4e92-9bef-64d6dd6c20d7",
@@ -299,21 +259,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-03-20",
-        "put_strikes": [
-          640.0,
-          650.0
-        ],
-        "call_strikes": [
-          720.0,
-          730.0
-        ]
+        "put_strikes": [640.0, 650.0],
+        "call_strikes": [720.0, 730.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "73738da9-f190-445d-a959-c18209714968"
-        ],
+        "entry": ["73738da9-f190-445d-a959-c18209714968"],
         "exit": [
           "3b5144d9-adeb-4c3d-ab01-39983605329c",
           "959cc0f2-6080-4c81-952b-f5f6a3ffd186",
@@ -346,21 +298,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-03-31",
-        "put_strikes": [
-          640.0,
-          650.0
-        ],
-        "call_strikes": [
-          720.0,
-          730.0
-        ]
+        "put_strikes": [640.0, 650.0],
+        "call_strikes": [720.0, 730.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "5d52bc63-9681-4087-b694-eba49ee530de"
-        ],
+        "entry": ["5d52bc63-9681-4087-b694-eba49ee530de"],
         "exit": [
           "696b3474-af66-40b4-a18d-398a4a4676ff",
           "98e750b9-1511-4489-9393-00c6795967ab",
@@ -393,21 +337,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          640.0,
-          650.0
-        ],
-        "call_strikes": [
-          720.0,
-          730.0
-        ]
+        "put_strikes": [640.0, 650.0],
+        "call_strikes": [720.0, 730.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "34aba289-05a2-4542-9192-294252f03752"
-        ],
+        "entry": ["34aba289-05a2-4542-9192-294252f03752"],
         "exit": [
           "10f7a8ed-9186-4ab3-9f22-21cb4c965322",
           "841128ba-fad2-462b-8fba-53d7c601a986",
@@ -440,21 +376,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-03-31",
-        "put_strikes": [
-          645.0,
-          655.0
-        ],
-        "call_strikes": [
-          725.0,
-          735.0
-        ]
+        "put_strikes": [645.0, 655.0],
+        "call_strikes": [725.0, 735.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "23b1ca07-1855-4aa3-a3b4-31234dab5950"
-        ],
+        "entry": ["23b1ca07-1855-4aa3-a3b4-31234dab5950"],
         "exit": [
           "524c9ad3-e5b2-426a-a11f-37a0b5caf170",
           "5c77008b-394f-438f-882a-e7207abec901",
@@ -487,21 +415,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          645.0,
-          655.0
-        ],
-        "call_strikes": [
-          725.0,
-          735.0
-        ]
+        "put_strikes": [645.0, 655.0],
+        "call_strikes": [725.0, 735.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "b9522ac9-5786-4757-910e-becd0678010f"
-        ],
+        "entry": ["b9522ac9-5786-4757-910e-becd0678010f"],
         "exit": [
           "1d949eab-b76e-4b3d-b102-cb3150feba04",
           "87f3ffc5-52c4-42d5-82c4-934831b93d00",
@@ -534,21 +454,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          645.0,
-          655.0
-        ],
-        "call_strikes": [
-          725.0,
-          735.0
-        ]
+        "put_strikes": [645.0, 655.0],
+        "call_strikes": [725.0, 735.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "938644b7-83c5-47b6-a0df-cb1a1ed16519"
-        ],
+        "entry": ["938644b7-83c5-47b6-a0df-cb1a1ed16519"],
         "exit": [
           "43ddc461-3558-465f-85a9-1ff3014c4d8a",
           "7439f760-37d5-4870-beac-8abdc9d0c1d6",
@@ -581,21 +493,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          645.0,
-          655.0
-        ],
-        "call_strikes": [
-          725.0,
-          735.0
-        ]
+        "put_strikes": [645.0, 655.0],
+        "call_strikes": [725.0, 735.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "77e48c2a-0761-4e8f-b31a-4ec5eeb38d4d"
-        ],
+        "entry": ["77e48c2a-0761-4e8f-b31a-4ec5eeb38d4d"],
         "exit": [
           "9587c056-89df-4d26-88af-d2022657bc46",
           "c6c66382-0460-4fb7-bf85-8001d0deffee",
@@ -628,21 +532,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          645.0,
-          655.0
-        ],
-        "call_strikes": [
-          725.0,
-          735.0
-        ]
+        "put_strikes": [645.0, 655.0],
+        "call_strikes": [725.0, 735.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "e7ca38e7-721c-410a-97d9-82cb7407c7d5"
-        ],
+        "entry": ["e7ca38e7-721c-410a-97d9-82cb7407c7d5"],
         "exit": [
           "52074f6b-a11b-443d-9547-da47b73893f9",
           "71f9625a-1bd4-4312-a20d-ecbd7e3d9bff",
@@ -675,21 +571,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-03-31",
-        "put_strikes": [
-          645.0,
-          655.0
-        ],
-        "call_strikes": [
-          725.0,
-          735.0
-        ]
+        "put_strikes": [645.0, 655.0],
+        "call_strikes": [725.0, 735.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "651061dc-e5a0-4f18-b957-bfb2faea6e6d"
-        ],
+        "entry": ["651061dc-e5a0-4f18-b957-bfb2faea6e6d"],
         "exit": [
           "27770843-f6b0-4f17-b1db-983c1e95981e",
           "4389f93a-3bf1-41e3-bc6f-23ea0c220f08",
@@ -722,21 +610,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          645.0,
-          655.0
-        ],
-        "call_strikes": [
-          725.0,
-          735.0
-        ]
+        "put_strikes": [645.0, 655.0],
+        "call_strikes": [725.0, 735.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "7ee4e05f-cdd6-42eb-a58b-dcb893b2aaa1"
-        ],
+        "entry": ["7ee4e05f-cdd6-42eb-a58b-dcb893b2aaa1"],
         "exit": [
           "46818556-4068-46b4-8970-11f540103f9b",
           "5c8edcee-cfe7-47bf-9bac-c2b6ddb2c662",
@@ -769,21 +649,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          640.0,
-          650.0
-        ],
-        "call_strikes": [
-          720.0,
-          730.0
-        ]
+        "put_strikes": [640.0, 650.0],
+        "call_strikes": [720.0, 730.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "77accce9-319f-467f-b525-fea714f04367"
-        ],
+        "entry": ["77accce9-319f-467f-b525-fea714f04367"],
         "exit": [
           "2aabbf8a-a167-4200-89c1-95aa71385829",
           "8fb88765-209d-428a-a869-66fb773a2977",
@@ -816,21 +688,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          640.0,
-          650.0
-        ],
-        "call_strikes": [
-          720.0,
-          730.0
-        ]
+        "put_strikes": [640.0, 650.0],
+        "call_strikes": [720.0, 730.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "0206d84d-ccc6-4ef9-9a7c-51938221193f"
-        ],
+        "entry": ["0206d84d-ccc6-4ef9-9a7c-51938221193f"],
         "exit": [
           "67cc5eec-bc94-4288-81d7-45364f7366fb",
           "82c75086-febe-4e4e-a012-cf71204ad73a",
@@ -863,21 +727,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          645.0,
-          655.0
-        ],
-        "call_strikes": [
-          725.0,
-          735.0
-        ]
+        "put_strikes": [645.0, 655.0],
+        "call_strikes": [725.0, 735.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "374044d5-9ad0-452f-8835-b637ed76675a"
-        ],
+        "entry": ["374044d5-9ad0-452f-8835-b637ed76675a"],
         "exit": [
           "5a383f27-9e2e-49d2-a4e7-23886b2d29be",
           "73790e69-61d8-450c-878e-a3b715579e57",
@@ -910,21 +766,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-03-31",
-        "put_strikes": [
-          650.0,
-          660.0
-        ],
-        "call_strikes": [
-          730.0,
-          740.0
-        ]
+        "put_strikes": [650.0, 660.0],
+        "call_strikes": [730.0, 740.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "7dafbea8-6444-40d4-8c9c-42c4d6d7faaa"
-        ],
+        "entry": ["7dafbea8-6444-40d4-8c9c-42c4d6d7faaa"],
         "exit": [
           "2c52548b-142d-4584-a81e-4733f2c0700c",
           "5121b99c-f937-4ab4-9060-5beec306f0cd",
@@ -957,21 +805,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          640.0,
-          650.0
-        ],
-        "call_strikes": [
-          715.0,
-          725.0
-        ]
+        "put_strikes": [640.0, 650.0],
+        "call_strikes": [715.0, 725.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "9ebab858-0f8c-4a41-adc1-e21e05d05d16"
-        ],
+        "entry": ["9ebab858-0f8c-4a41-adc1-e21e05d05d16"],
         "exit": [
           "3cb229da-bf28-4558-9227-3df804b09b7b",
           "671d1f60-57b3-4b1a-931f-54313d8960e2",
@@ -1004,21 +844,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          640.0,
-          650.0
-        ],
-        "call_strikes": [
-          720.0,
-          730.0
-        ]
+        "put_strikes": [640.0, 650.0],
+        "call_strikes": [720.0, 730.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "7a2ea23e-df8e-4485-9aa4-05d2a030b794"
-        ],
+        "entry": ["7a2ea23e-df8e-4485-9aa4-05d2a030b794"],
         "exit": [
           "302ef8e0-225a-41b0-9ca1-f13f689e7134",
           "8c955c0c-4e4e-46de-a4fa-7a0eeaeb66a3",
@@ -1051,21 +883,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          640.0,
-          650.0
-        ],
-        "call_strikes": [
-          720.0,
-          730.0
-        ]
+        "put_strikes": [640.0, 650.0],
+        "call_strikes": [720.0, 730.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "0c43414b-0279-42e6-904b-4b37c1ede2ec"
-        ],
+        "entry": ["0c43414b-0279-42e6-904b-4b37c1ede2ec"],
         "exit": [
           "17272f1c-c92c-4821-84dd-f7f95a9c1774",
           "39e2d99a-6390-4a39-bf51-7f068d40939a",
@@ -1098,21 +922,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          640.0,
-          650.0
-        ],
-        "call_strikes": [
-          720.0,
-          730.0
-        ]
+        "put_strikes": [640.0, 650.0],
+        "call_strikes": [720.0, 730.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "fcbfd8c5-3ba0-4553-a2e2-3dcac3399f90"
-        ],
+        "entry": ["fcbfd8c5-3ba0-4553-a2e2-3dcac3399f90"],
         "exit": [
           "58303481-dde1-4bca-a60b-4b1478a41f3a",
           "b4a5cf32-87bb-4b6c-98be-fc541bb66a6a",
@@ -1145,21 +961,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          640.0,
-          650.0
-        ],
-        "call_strikes": [
-          715.0,
-          725.0
-        ]
+        "put_strikes": [640.0, 650.0],
+        "call_strikes": [715.0, 725.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "59ed3363-0b40-459a-b32e-9b17ba5f99db"
-        ],
+        "entry": ["59ed3363-0b40-459a-b32e-9b17ba5f99db"],
         "exit": [
           "373e72ab-7132-41d0-9ac5-91810c26f22f",
           "84f1c2e7-0e23-41d7-b784-3e8d831758aa",
@@ -1192,21 +1000,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-10",
-        "put_strikes": [
-          640.0,
-          650.0
-        ],
-        "call_strikes": [
-          715.0,
-          725.0
-        ]
+        "put_strikes": [640.0, 650.0],
+        "call_strikes": [715.0, 725.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "2b5a7ebd-58ac-4320-a945-0f37f2c6f736"
-        ],
+        "entry": ["2b5a7ebd-58ac-4320-a945-0f37f2c6f736"],
         "exit": [
           "1e5bddca-d348-4295-8eba-4fd208299498",
           "41475d0f-182d-4683-bee9-c44af2c32884",
@@ -1239,21 +1039,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-10",
-        "put_strikes": [
-          640.0,
-          650.0
-        ],
-        "call_strikes": [
-          720.0,
-          730.0
-        ]
+        "put_strikes": [640.0, 650.0],
+        "call_strikes": [720.0, 730.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "dd060a64-3988-45e4-b901-628325da79eb"
-        ],
+        "entry": ["dd060a64-3988-45e4-b901-628325da79eb"],
         "exit": [
           "1b3f79ae-1fef-42be-8a3d-8e42f850d634",
           "7a7d202d-c095-4119-ac1a-534b72e6660e",
@@ -1286,21 +1078,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-10",
-        "put_strikes": [
-          640.0,
-          650.0
-        ],
-        "call_strikes": [
-          720.0,
-          730.0
-        ]
+        "put_strikes": [640.0, 650.0],
+        "call_strikes": [720.0, 730.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "e7891b47-ad49-43dd-820f-1c92c967de89"
-        ],
+        "entry": ["e7891b47-ad49-43dd-820f-1c92c967de89"],
         "exit": [
           "5b25a551-aa9f-47fb-9472-e35b6aa05eb0",
           "6db16017-045a-4c0d-aba5-a66de95fe69d",
@@ -1333,21 +1117,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-10",
-        "put_strikes": [
-          645.0,
-          655.0
-        ],
-        "call_strikes": [
-          720.0,
-          730.0
-        ]
+        "put_strikes": [645.0, 655.0],
+        "call_strikes": [720.0, 730.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "1875bbcb-4025-4791-8c20-9e6361bdbe2d"
-        ],
+        "entry": ["1875bbcb-4025-4791-8c20-9e6361bdbe2d"],
         "exit": [
           "8c1ffcfd-2941-4e71-b20b-9ebb248341b1",
           "db6b9bcc-26f7-465c-a623-e73a3f33267a",
@@ -1381,20 +1157,12 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-03-27",
-        "put_strikes": [
-          635.0,
-          645.0
-        ],
-        "call_strikes": [
-          715.0,
-          725.0
-        ]
+        "put_strikes": [635.0, 645.0],
+        "call_strikes": [715.0, 725.0]
       },
       "source": "alpaca_parent->alpaca_leg_cluster",
       "order_ids": {
-        "entry": [
-          "05a6a938-519d-4644-b5dd-6f2d1821a0b6"
-        ],
+        "entry": ["05a6a938-519d-4644-b5dd-6f2d1821a0b6"],
         "exit": [
           "63ff9758-aeb7-4d1a-95a9-37b8496ea592",
           "868eb04c-0ace-479e-ad91-98df4bc88d8e",
@@ -1427,21 +1195,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-03-27",
-        "put_strikes": [
-          640.0,
-          650.0
-        ],
-        "call_strikes": [
-          715.0,
-          725.0
-        ]
+        "put_strikes": [640.0, 650.0],
+        "call_strikes": [715.0, 725.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "4aa0c68b-5277-493e-9537-727c1966ed63"
-        ],
+        "entry": ["4aa0c68b-5277-493e-9537-727c1966ed63"],
         "exit": [
           "51e1715b-4df8-4754-9570-1b25bb29c752",
           "868eb04c-0ace-479e-ad91-98df4bc88d8e",
@@ -1474,21 +1234,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-10",
-        "put_strikes": [
-          630.0,
-          640.0
-        ],
-        "call_strikes": [
-          705.0,
-          715.0
-        ]
+        "put_strikes": [630.0, 640.0],
+        "call_strikes": [705.0, 715.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "280ed107-e412-401d-bc90-8848fdbecaac"
-        ],
+        "entry": ["280ed107-e412-401d-bc90-8848fdbecaac"],
         "exit": [
           "1cb199e7-c9c7-461c-b0b9-10fedca58d23",
           "2ba88f78-05d4-4df2-af26-02cba66ab62b",
@@ -1521,21 +1273,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-03-31",
-        "put_strikes": [
-          635.0,
-          645.0
-        ],
-        "call_strikes": [
-          710.0,
-          720.0
-        ]
+        "put_strikes": [635.0, 645.0],
+        "call_strikes": [710.0, 720.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "e41c95a9-3782-4a9f-80e4-d993f535c83f"
-        ],
+        "entry": ["e41c95a9-3782-4a9f-80e4-d993f535c83f"],
         "exit": [
           "3b075280-6c6f-44df-8c9a-e3d9b1257c0f",
           "5fb14a5a-3a2b-4d45-8d95-9e0c4458d13f",
@@ -1568,21 +1312,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          630.0,
-          640.0
-        ],
-        "call_strikes": [
-          705.0,
-          715.0
-        ]
+        "put_strikes": [630.0, 640.0],
+        "call_strikes": [705.0, 715.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "5ed965e1-511c-4c3b-aa9f-963c97596037"
-        ],
+        "entry": ["5ed965e1-511c-4c3b-aa9f-963c97596037"],
         "exit": [
           "1e9dea22-11d3-46b8-b6f1-146c6fc1c826",
           "96755fa2-9838-46c6-a05b-ef0668b69599",
@@ -1615,21 +1351,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-17",
-        "put_strikes": [
-          635.0,
-          645.0
-        ],
-        "call_strikes": [
-          710.0,
-          720.0
-        ]
+        "put_strikes": [635.0, 645.0],
+        "call_strikes": [710.0, 720.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "06a1df6a-b8f7-446b-be1d-2ca19fc733be"
-        ],
+        "entry": ["06a1df6a-b8f7-446b-be1d-2ca19fc733be"],
         "exit": [
           "22926c14-1368-485b-8a9f-bb252d880460",
           "2fe07a78-b769-443d-ba0f-477b7f9f16c3",
@@ -1662,21 +1390,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-10",
-        "put_strikes": [
-          640.0,
-          650.0
-        ],
-        "call_strikes": [
-          720.0,
-          730.0
-        ]
+        "put_strikes": [640.0, 650.0],
+        "call_strikes": [720.0, 730.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "c1e649ab-7ddf-4c01-9ee6-b0492c544006"
-        ],
+        "entry": ["c1e649ab-7ddf-4c01-9ee6-b0492c544006"],
         "exit": [
           "4a92b2a1-7547-429e-be71-2bdcf55fde12",
           "7f40fe3a-7bc5-4512-a1a2-1209e56dfa96",
@@ -1709,21 +1429,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-17",
-        "put_strikes": [
-          640.0,
-          650.0
-        ],
-        "call_strikes": [
-          720.0,
-          730.0
-        ]
+        "put_strikes": [640.0, 650.0],
+        "call_strikes": [720.0, 730.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "e647ae44-76a6-4828-8569-1aedd93191a1"
-        ],
+        "entry": ["e647ae44-76a6-4828-8569-1aedd93191a1"],
         "exit": [
           "1835bc0f-122c-4e7b-8f94-5a806f6f8356",
           "2336dda6-33da-450c-9ec8-4db4a6c592ee",
@@ -1756,21 +1468,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-10",
-        "put_strikes": [
-          635.0,
-          645.0
-        ],
-        "call_strikes": [
-          710.0,
-          720.0
-        ]
+        "put_strikes": [635.0, 645.0],
+        "call_strikes": [710.0, 720.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "5d13a608-8ad4-4b0f-99eb-145c5ceb0b8f"
-        ],
+        "entry": ["5d13a608-8ad4-4b0f-99eb-145c5ceb0b8f"],
         "exit": [
           "524fa483-3ed1-4e3c-a200-dfe6a1e2580c",
           "9d21c745-0363-4ad3-b6bf-15ae306dc945",
@@ -1803,21 +1507,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-03-31",
-        "put_strikes": [
-          630.0,
-          640.0
-        ],
-        "call_strikes": [
-          710.0,
-          720.0
-        ]
+        "put_strikes": [630.0, 640.0],
+        "call_strikes": [710.0, 720.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "9bd47d7b-93ab-40c5-9823-f085e6832f2e"
-        ],
+        "entry": ["9bd47d7b-93ab-40c5-9823-f085e6832f2e"],
         "exit": [
           "239696a0-750e-4eda-ac10-5b886352c053",
           "4e4af256-ff0a-4073-af9b-95716fa5b21f",
@@ -1850,21 +1546,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          625.0,
-          635.0
-        ],
-        "call_strikes": [
-          705.0,
-          715.0
-        ]
+        "put_strikes": [625.0, 635.0],
+        "call_strikes": [705.0, 715.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "8f8c8ffe-7920-4036-87eb-a37248dd9f24"
-        ],
+        "entry": ["8f8c8ffe-7920-4036-87eb-a37248dd9f24"],
         "exit": [
           "601cfef5-87bf-464b-ac1b-43b3bf8339c1",
           "6664d5fa-a42b-4f0b-9029-227b6b0d88a0",
@@ -1898,20 +1586,12 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          630.0,
-          640.0
-        ],
-        "call_strikes": [
-          705.0,
-          715.0
-        ]
+        "put_strikes": [630.0, 640.0],
+        "call_strikes": [705.0, 715.0]
       },
       "source": "alpaca_parent->alpaca_leg_cluster",
       "order_ids": {
-        "entry": [
-          "5ed965e1-511c-4c3b-aa9f-963c97596037"
-        ],
+        "entry": ["5ed965e1-511c-4c3b-aa9f-963c97596037"],
         "exit": [
           "c0af65f1-d17b-462a-b8a9-13b91ca7a4aa",
           "339e3dab-40da-486e-a547-000c8c43169b",
@@ -1944,21 +1624,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          630.0,
-          640.0
-        ],
-        "call_strikes": [
-          705.0,
-          715.0
-        ]
+        "put_strikes": [630.0, 640.0],
+        "call_strikes": [705.0, 715.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "afd4d1ac-dd50-48e9-96b5-58f61b883ccd"
-        ],
+        "entry": ["afd4d1ac-dd50-48e9-96b5-58f61b883ccd"],
         "exit": [
           "339e3dab-40da-486e-a547-000c8c43169b",
           "5b04225c-e844-4322-a384-58a17b85b240",
@@ -1991,21 +1663,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          630.0,
-          640.0
-        ],
-        "call_strikes": [
-          710.0,
-          720.0
-        ]
+        "put_strikes": [630.0, 640.0],
+        "call_strikes": [710.0, 720.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "9f941eeb-8dd3-4ace-be5f-fdd6280f0868"
-        ],
+        "entry": ["9f941eeb-8dd3-4ace-be5f-fdd6280f0868"],
         "exit": [
           "271c4d21-00f1-4dd4-9888-8e2390a0b5a9",
           "53b08aaa-a211-4549-b8e1-d962d50d60a3",
@@ -2038,21 +1702,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          625.0,
-          635.0
-        ],
-        "call_strikes": [
-          700.0,
-          710.0
-        ]
+        "put_strikes": [625.0, 635.0],
+        "call_strikes": [700.0, 710.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "8d50d2df-57af-42f5-805e-6b5cbd891352"
-        ],
+        "entry": ["8d50d2df-57af-42f5-805e-6b5cbd891352"],
         "exit": [
           "24242eba-ddab-4e97-bbd9-1d3d541c62b8",
           "75557aa0-8d27-42f6-8a03-f0088b39b19a",
@@ -2086,20 +1742,12 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          630.0,
-          640.0
-        ],
-        "call_strikes": [
-          705.0,
-          715.0
-        ]
+        "put_strikes": [630.0, 640.0],
+        "call_strikes": [705.0, 715.0]
       },
       "source": "alpaca_parent->alpaca_leg_cluster",
       "order_ids": {
-        "entry": [
-          "afd4d1ac-dd50-48e9-96b5-58f61b883ccd"
-        ],
+        "entry": ["afd4d1ac-dd50-48e9-96b5-58f61b883ccd"],
         "exit": [
           "1b25b680-42f9-48fc-8a2f-637a2abc933e",
           "38581e76-c259-403b-a22d-8f656d327f74",
@@ -2132,21 +1780,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          630.0,
-          640.0
-        ],
-        "call_strikes": [
-          705.0,
-          715.0
-        ]
+        "put_strikes": [630.0, 640.0],
+        "call_strikes": [705.0, 715.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "415970ad-3791-4366-b873-571f0f43eb50"
-        ],
+        "entry": ["415970ad-3791-4366-b873-571f0f43eb50"],
         "exit": [
           "1b25b680-42f9-48fc-8a2f-637a2abc933e",
           "38581e76-c259-403b-a22d-8f656d327f74",
@@ -2180,20 +1820,12 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          625.0,
-          635.0
-        ],
-        "call_strikes": [
-          700.0,
-          710.0
-        ]
+        "put_strikes": [625.0, 635.0],
+        "call_strikes": [700.0, 710.0]
       },
       "source": "alpaca_parent->alpaca_leg_cluster",
       "order_ids": {
-        "entry": [
-          "a919dae7-8c48-4c48-9c89-16edff69eb06"
-        ],
+        "entry": ["a919dae7-8c48-4c48-9c89-16edff69eb06"],
         "exit": [
           "2b5dd1b8-2dd3-4cf9-806d-0ded362ac593",
           "37536828-86b8-4e3d-86e2-fe367fc598e7",
@@ -2226,21 +1858,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          625.0,
-          635.0
-        ],
-        "call_strikes": [
-          700.0,
-          710.0
-        ]
+        "put_strikes": [625.0, 635.0],
+        "call_strikes": [700.0, 710.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "a919dae7-8c48-4c48-9c89-16edff69eb06"
-        ],
+        "entry": ["a919dae7-8c48-4c48-9c89-16edff69eb06"],
         "exit": [
           "21258e14-8d1c-43ac-ad3e-6572ff8a65c7",
           "2b5dd1b8-2dd3-4cf9-806d-0ded362ac593",
@@ -2274,20 +1898,12 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          630.0,
-          640.0
-        ],
-        "call_strikes": [
-          710.0,
-          720.0
-        ]
+        "put_strikes": [630.0, 640.0],
+        "call_strikes": [710.0, 720.0]
       },
       "source": "alpaca_parent->alpaca_leg_cluster",
       "order_ids": {
-        "entry": [
-          "ea5c44f9-30e1-4e30-a23c-a7194894b565"
-        ],
+        "entry": ["ea5c44f9-30e1-4e30-a23c-a7194894b565"],
         "exit": [
           "2e3de4da-c349-4f8e-9488-169835d01190",
           "6ec27d0e-8918-4efe-972a-33b8030a57c1",
@@ -2320,21 +1936,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          630.0,
-          640.0
-        ],
-        "call_strikes": [
-          710.0,
-          720.0
-        ]
+        "put_strikes": [630.0, 640.0],
+        "call_strikes": [710.0, 720.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "ea5c44f9-30e1-4e30-a23c-a7194894b565"
-        ],
+        "entry": ["ea5c44f9-30e1-4e30-a23c-a7194894b565"],
         "exit": [
           "2e3de4da-c349-4f8e-9488-169835d01190",
           "417c814f-f343-4694-98a6-a852a0354354",
@@ -2367,21 +1975,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          635.0,
-          645.0
-        ],
-        "call_strikes": [
-          715.0,
-          725.0
-        ]
+        "put_strikes": [635.0, 645.0],
+        "call_strikes": [715.0, 725.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "63c8cacc-e595-4c7d-b601-22877d6d3a60"
-        ],
+        "entry": ["63c8cacc-e595-4c7d-b601-22877d6d3a60"],
         "exit": [
           "16a76315-c11d-4162-b738-0b786bb12cb5",
           "8fd431d1-6ebd-4c83-bb13-8cedc46e8dfa",
@@ -2414,21 +2014,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          635.0,
-          645.0
-        ],
-        "call_strikes": [
-          715.0,
-          725.0
-        ]
+        "put_strikes": [635.0, 645.0],
+        "call_strikes": [715.0, 725.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "b98069cf-b618-40b6-b7f9-aa4549dcfd2f"
-        ],
+        "entry": ["b98069cf-b618-40b6-b7f9-aa4549dcfd2f"],
         "exit": [
           "346e0c0e-36fe-4ae4-a0b1-eb0ded0176f4",
           "923ce06a-afdb-4734-8cb7-a396ec285ec4",
@@ -2461,21 +2053,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          635.0,
-          645.0
-        ],
-        "call_strikes": [
-          715.0,
-          725.0
-        ]
+        "put_strikes": [635.0, 645.0],
+        "call_strikes": [715.0, 725.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "bd9e0a42-aea2-48f1-b4cd-d6757ac43d97"
-        ],
+        "entry": ["bd9e0a42-aea2-48f1-b4cd-d6757ac43d97"],
         "exit": [
           "5a4138d4-0962-4f01-a96a-44fce7b467b5",
           "974e14d6-7f7a-4eee-a350-da257cac5f6b",
@@ -2508,21 +2092,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          635.0,
-          645.0
-        ],
-        "call_strikes": [
-          715.0,
-          725.0
-        ]
+        "put_strikes": [635.0, 645.0],
+        "call_strikes": [715.0, 725.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "90373833-a186-4ece-ac47-310cae6f94b0"
-        ],
+        "entry": ["90373833-a186-4ece-ac47-310cae6f94b0"],
         "exit": [
           "4882972c-8143-4a18-b143-740c5e131f14",
           "536c9db5-e3f2-41aa-9586-d2248ccaf771",
@@ -2555,21 +2131,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          635.0,
-          645.0
-        ],
-        "call_strikes": [
-          710.0,
-          720.0
-        ]
+        "put_strikes": [635.0, 645.0],
+        "call_strikes": [710.0, 720.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "2b958a95-2a34-4c5f-9bf3-12cdc2187e89"
-        ],
+        "entry": ["2b958a95-2a34-4c5f-9bf3-12cdc2187e89"],
         "exit": [
           "6ce4bb3b-3b57-40f8-8655-90c39cfcce25",
           "a1f23347-2f98-4e79-983a-5618ed1b6b96",
@@ -2602,21 +2170,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          630.0,
-          640.0
-        ],
-        "call_strikes": [
-          710.0,
-          720.0
-        ]
+        "put_strikes": [630.0, 640.0],
+        "call_strikes": [710.0, 720.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "bbaf3f31-197d-4b08-aab4-29ede024d87c"
-        ],
+        "entry": ["bbaf3f31-197d-4b08-aab4-29ede024d87c"],
         "exit": [
           "2f2118dd-4905-47d3-900b-988e52170536",
           "78cfca9e-547b-42b8-8e85-d5d1846c9be5",
@@ -2649,21 +2209,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-02",
-        "put_strikes": [
-          630.0,
-          640.0
-        ],
-        "call_strikes": [
-          710.0,
-          720.0
-        ]
+        "put_strikes": [630.0, 640.0],
+        "call_strikes": [710.0, 720.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "9486e79a-4cf4-4971-9586-5f21a8a16726"
-        ],
+        "entry": ["9486e79a-4cf4-4971-9586-5f21a8a16726"],
         "exit": [
           "55834021-5609-4f86-bc23-a6c7762abacf",
           "637fe285-eaed-46f3-bc85-d98d06fa9ad8",
@@ -2696,21 +2248,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-10",
-        "put_strikes": [
-          630.0,
-          640.0
-        ],
-        "call_strikes": [
-          710.0,
-          720.0
-        ]
+        "put_strikes": [630.0, 640.0],
+        "call_strikes": [710.0, 720.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "146bb806-b620-4cd5-8fa6-fad67eee42cc"
-        ],
+        "entry": ["146bb806-b620-4cd5-8fa6-fad67eee42cc"],
         "exit": [
           "747a32e4-c4aa-4ce0-aa31-3b97bcf80c85",
           "8482b7a8-883b-47d9-822e-473ea83bd46e",
@@ -2743,21 +2287,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-24",
-        "put_strikes": [
-          625.0,
-          635.0
-        ],
-        "call_strikes": [
-          700.0,
-          710.0
-        ]
+        "put_strikes": [625.0, 635.0],
+        "call_strikes": [700.0, 710.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "e6f1cba8-ac88-4ddd-8f12-4e858a8bca8b"
-        ],
+        "entry": ["e6f1cba8-ac88-4ddd-8f12-4e858a8bca8b"],
         "exit": [
           "2e1cb944-6a56-4da0-a378-9fe64adc5e11",
           "4a6d2b35-5ae7-4e5e-9460-261b005f6a74",
@@ -2790,21 +2326,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-30",
-        "put_strikes": [
-          630.0,
-          640.0
-        ],
-        "call_strikes": [
-          710.0,
-          720.0
-        ]
+        "put_strikes": [630.0, 640.0],
+        "call_strikes": [710.0, 720.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "3e3e6886-2738-429d-acd8-c9a6b5175d19"
-        ],
+        "entry": ["3e3e6886-2738-429d-acd8-c9a6b5175d19"],
         "exit": [
           "4564edae-ad2d-4674-871d-5aa851b02239",
           "47cdf3de-6b56-4f01-b8e1-fbf00ab1aa1d",
@@ -2837,21 +2365,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-17",
-        "put_strikes": [
-          625.0,
-          635.0
-        ],
-        "call_strikes": [
-          705.0,
-          715.0
-        ]
+        "put_strikes": [625.0, 635.0],
+        "call_strikes": [705.0, 715.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "dc29059a-06a7-4388-92f6-d8e1160723e2"
-        ],
+        "entry": ["dc29059a-06a7-4388-92f6-d8e1160723e2"],
         "exit": [
           "706dd5c5-cb85-4367-850f-4d9db38b70d2",
           "8eb04bf9-b313-46e8-93e2-90dada59f36b",
@@ -2884,21 +2404,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-01",
-        "put_strikes": [
-          620.0,
-          630.0
-        ],
-        "call_strikes": [
-          700.0,
-          710.0
-        ]
+        "put_strikes": [620.0, 630.0],
+        "call_strikes": [700.0, 710.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "1de67370-7d82-4b9f-aef5-ebf9730480a1"
-        ],
+        "entry": ["1de67370-7d82-4b9f-aef5-ebf9730480a1"],
         "exit": [
           "28c1ecdb-702b-4ddb-9bd2-7e5f5cf94789",
           "2a355059-5928-47c6-b09b-436a4763be90",
@@ -2931,21 +2443,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-30",
-        "put_strikes": [
-          620.0,
-          630.0
-        ],
-        "call_strikes": [
-          695.0,
-          705.0
-        ]
+        "put_strikes": [620.0, 630.0],
+        "call_strikes": [695.0, 705.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "354f43ee-e41f-448c-bd38-93ccdb273c1b"
-        ],
+        "entry": ["354f43ee-e41f-448c-bd38-93ccdb273c1b"],
         "exit": [
           "3cba031b-d892-409f-b988-d66aca79f58c",
           "6ff1ad67-76f5-4332-87df-eb69c4f1df83",
@@ -2978,21 +2482,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-01",
-        "put_strikes": [
-          620.0,
-          630.0
-        ],
-        "call_strikes": [
-          695.0,
-          705.0
-        ]
+        "put_strikes": [620.0, 630.0],
+        "call_strikes": [695.0, 705.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "ea931b94-aa86-4103-82bd-5138ff0bab70"
-        ],
+        "entry": ["ea931b94-aa86-4103-82bd-5138ff0bab70"],
         "exit": [
           "190e4dea-259e-4696-b52b-7eb0c1c060c8",
           "84e002ac-3f36-4e90-9bd0-b5b2c9a3d5a3",
@@ -3025,21 +2521,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-30",
-        "put_strikes": [
-          615.0,
-          625.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [615.0, 625.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "54a11bb3-e6b1-412e-86af-904fd7efc835"
-        ],
+        "entry": ["54a11bb3-e6b1-412e-86af-904fd7efc835"],
         "exit": [
           "1f6407eb-2087-4ffa-9a4b-c1fd7e9a422d",
           "3d47d054-3132-4dd1-a424-9ec98e4b17d8",
@@ -3072,21 +2560,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-30",
-        "put_strikes": [
-          615.0,
-          625.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [615.0, 625.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "be479ce3-3be5-46b7-920d-b6800ef3dc46"
-        ],
+        "entry": ["be479ce3-3be5-46b7-920d-b6800ef3dc46"],
         "exit": [
           "338f4fcc-cf26-4986-9534-04f7c150b657",
           "42178f71-93d1-4de0-8932-79b5c89071b5",
@@ -3119,21 +2599,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-30",
-        "put_strikes": [
-          615.0,
-          625.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [615.0, 625.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "77709a51-8a47-4cb9-9e1f-c7511e22c40a"
-        ],
+        "entry": ["77709a51-8a47-4cb9-9e1f-c7511e22c40a"],
         "exit": [
           "3f5f3987-9969-4e07-bcaf-1a82b3f23419",
           "7fd85c66-f031-48ad-b3c0-4af01805eb6b",
@@ -3166,21 +2638,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-24",
-        "put_strikes": [
-          615.0,
-          625.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [615.0, 625.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "d0d364cf-0412-4f4e-aee8-64c9f169a8ca"
-        ],
+        "entry": ["d0d364cf-0412-4f4e-aee8-64c9f169a8ca"],
         "exit": [
           "36fb8155-ce45-4f6c-8568-5a80b1c0fdd0",
           "9b838d6a-d015-4494-afb1-933069b13446",
@@ -3213,21 +2677,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-30",
-        "put_strikes": [
-          615.0,
-          625.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [615.0, 625.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "fbe05c15-26d4-4a43-a9be-aafa4271be7b"
-        ],
+        "entry": ["fbe05c15-26d4-4a43-a9be-aafa4271be7b"],
         "exit": [
           "26b2670b-5453-445d-9dd2-4438010fb929",
           "6f16f642-3b28-4b75-bafc-6e478424d100",
@@ -3260,21 +2716,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-30",
-        "put_strikes": [
-          615.0,
-          625.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [615.0, 625.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "fe6455f0-4672-4c24-b0f3-21f365054405"
-        ],
+        "entry": ["fe6455f0-4672-4c24-b0f3-21f365054405"],
         "exit": [
           "25403905-6435-49aa-bb65-956985873453",
           "2b296b06-a7e7-427a-b860-ceae8880f982",
@@ -3307,21 +2755,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-30",
-        "put_strikes": [
-          615.0,
-          625.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [615.0, 625.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 2.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "076e24f6-5da9-4547-bf55-791762f39e4c"
-        ],
+        "entry": ["076e24f6-5da9-4547-bf55-791762f39e4c"],
         "exit": [
           "445785b2-f37b-4226-a308-354ee4f5de4e",
           "6d870ce7-8ba6-4309-b816-650e37ffd7ee",
@@ -3354,21 +2794,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-01",
-        "put_strikes": [
-          580.0,
-          590.0
-        ],
-        "call_strikes": [
-          680.0,
-          690.0
-        ]
+        "put_strikes": [580.0, 590.0],
+        "call_strikes": [680.0, 690.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "808b46f3-1388-4de3-846a-719d9c45bbc2"
-        ],
+        "entry": ["808b46f3-1388-4de3-846a-719d9c45bbc2"],
         "exit": [
           "50a5936f-db54-4672-83c8-4cfd2774f4aa",
           "96b0249f-b6ea-4e62-85dd-6ddd98ae2e04",
@@ -3401,21 +2833,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-01",
-        "put_strikes": [
-          600.0,
-          610.0
-        ],
-        "call_strikes": [
-          688.0,
-          698.0
-        ]
+        "put_strikes": [600.0, 610.0],
+        "call_strikes": [688.0, 698.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "86ce433e-3688-4a23-86d4-de51d0fc5e1d"
-        ],
+        "entry": ["86ce433e-3688-4a23-86d4-de51d0fc5e1d"],
         "exit": [
           "347499e8-8076-40cb-b027-7087e055ad59",
           "64dd0cb8-dd67-40dd-8907-f9eaf7d98afc",
@@ -3449,20 +2873,12 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-24",
-        "put_strikes": [
-          615.0,
-          625.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [615.0, 625.0],
+        "call_strikes": [690.0, 700.0]
       },
       "source": "alpaca_parent->alpaca_leg_cluster",
       "order_ids": {
-        "entry": [
-          "2204e552-57fd-40c0-83a4-aefe5498f75e"
-        ],
+        "entry": ["2204e552-57fd-40c0-83a4-aefe5498f75e"],
         "exit": [
           "bc303074-9c9b-41a1-9023-5cbb6751831e",
           "1cd1bb51-6cdd-46fc-8ed8-062c00b53266",
@@ -3495,21 +2911,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-04-24",
-        "put_strikes": [
-          615.0,
-          625.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [615.0, 625.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "2204e552-57fd-40c0-83a4-aefe5498f75e"
-        ],
+        "entry": ["2204e552-57fd-40c0-83a4-aefe5498f75e"],
         "exit": [
           "1cd1bb51-6cdd-46fc-8ed8-062c00b53266",
           "61b7b2bf-32c5-4e38-aaac-d12d3a3027cf",
@@ -3542,21 +2950,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          595.0,
-          605.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [595.0, 605.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "efe13b1c-9242-4c38-ac35-d5f195cf098d"
-        ],
+        "entry": ["efe13b1c-9242-4c38-ac35-d5f195cf098d"],
         "exit": [
           "814c5352-29b8-4531-bfb6-9ad174db7035",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -3589,21 +2989,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          595.0,
-          605.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [595.0, 605.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "ba537c5a-1b5f-47ab-a60d-0d50ef112e6e"
-        ],
+        "entry": ["ba537c5a-1b5f-47ab-a60d-0d50ef112e6e"],
         "exit": [
           "814c5352-29b8-4531-bfb6-9ad174db7035",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -3636,21 +3028,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          595.0,
-          605.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [595.0, 605.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "92f0f755-2faa-4488-94d9-301addaf25f1"
-        ],
+        "entry": ["92f0f755-2faa-4488-94d9-301addaf25f1"],
         "exit": [
           "814c5352-29b8-4531-bfb6-9ad174db7035",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -3683,21 +3067,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          595.0,
-          605.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [595.0, 605.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "895be684-d53f-43b6-bbcd-769f6ee16045"
-        ],
+        "entry": ["895be684-d53f-43b6-bbcd-769f6ee16045"],
         "exit": [
           "814c5352-29b8-4531-bfb6-9ad174db7035",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -3730,21 +3106,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          595.0,
-          605.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [595.0, 605.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "d88baf31-b504-42b7-ad11-96fe1ce40401"
-        ],
+        "entry": ["d88baf31-b504-42b7-ad11-96fe1ce40401"],
         "exit": [
           "814c5352-29b8-4531-bfb6-9ad174db7035",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -3777,21 +3145,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          595.0,
-          605.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [595.0, 605.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "9e9d32d5-138b-49a9-b67f-7b09826a15f8"
-        ],
+        "entry": ["9e9d32d5-138b-49a9-b67f-7b09826a15f8"],
         "exit": [
           "814c5352-29b8-4531-bfb6-9ad174db7035",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -3824,21 +3184,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          595.0,
-          605.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [595.0, 605.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "87e72773-27f4-44c0-8336-d47b70ba68a5"
-        ],
+        "entry": ["87e72773-27f4-44c0-8336-d47b70ba68a5"],
         "exit": [
           "814c5352-29b8-4531-bfb6-9ad174db7035",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -3871,21 +3223,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          595.0,
-          605.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [595.0, 605.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "c7d1964b-8d2d-4c63-8dc9-58949272f2bc"
-        ],
+        "entry": ["c7d1964b-8d2d-4c63-8dc9-58949272f2bc"],
         "exit": [
           "814c5352-29b8-4531-bfb6-9ad174db7035",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -3918,21 +3262,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          595.0,
-          605.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [595.0, 605.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "fcd2e53b-0059-4603-a5d3-fb65bdb360e6"
-        ],
+        "entry": ["fcd2e53b-0059-4603-a5d3-fb65bdb360e6"],
         "exit": [
           "814c5352-29b8-4531-bfb6-9ad174db7035",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -3965,21 +3301,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          595.0,
-          605.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [595.0, 605.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "0a6c2394-4a46-4d45-9b9f-1551f3d4bc95"
-        ],
+        "entry": ["0a6c2394-4a46-4d45-9b9f-1551f3d4bc95"],
         "exit": [
           "814c5352-29b8-4531-bfb6-9ad174db7035",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -4012,21 +3340,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          595.0,
-          605.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [595.0, 605.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "2e05accd-a998-44fd-b48e-1f93b5e8c2c8"
-        ],
+        "entry": ["2e05accd-a998-44fd-b48e-1f93b5e8c2c8"],
         "exit": [
           "814c5352-29b8-4531-bfb6-9ad174db7035",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -4059,21 +3379,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "e0449e4b-394f-48ee-bc3b-d0c6199140cc"
-        ],
+        "entry": ["e0449e4b-394f-48ee-bc3b-d0c6199140cc"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -4106,21 +3418,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "1214f31b-4085-4cf7-80cf-7695858b646f"
-        ],
+        "entry": ["1214f31b-4085-4cf7-80cf-7695858b646f"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -4153,21 +3457,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "21e76a1c-7e87-49cd-96b3-744fb9e00d0d"
-        ],
+        "entry": ["21e76a1c-7e87-49cd-96b3-744fb9e00d0d"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -4200,21 +3496,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "9d0eed00-f68f-42bf-83ef-fed925da2453"
-        ],
+        "entry": ["9d0eed00-f68f-42bf-83ef-fed925da2453"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -4247,21 +3535,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "e66ee224-29e0-4a34-8fd9-07951056bdfb"
-        ],
+        "entry": ["e66ee224-29e0-4a34-8fd9-07951056bdfb"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -4294,21 +3574,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "de695982-0bd3-4695-aebf-bc32ce5e90df"
-        ],
+        "entry": ["de695982-0bd3-4695-aebf-bc32ce5e90df"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -4341,21 +3613,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "ac37a906-1115-4c4a-a2b4-ff3f85370c2d"
-        ],
+        "entry": ["ac37a906-1115-4c4a-a2b4-ff3f85370c2d"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -4388,21 +3652,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "f54f3ab1-6df9-4cc2-8c68-f37e0ad7c74d"
-        ],
+        "entry": ["f54f3ab1-6df9-4cc2-8c68-f37e0ad7c74d"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -4435,21 +3691,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "4bff7750-7152-4f09-95fc-1f9540366f72"
-        ],
+        "entry": ["4bff7750-7152-4f09-95fc-1f9540366f72"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -4482,21 +3730,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "0541dc5e-5fcb-48bc-bbd7-11865a484ed8"
-        ],
+        "entry": ["0541dc5e-5fcb-48bc-bbd7-11865a484ed8"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -4529,21 +3769,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "bf7376d9-626e-46ee-b8ed-ae0741d317b0"
-        ],
+        "entry": ["bf7376d9-626e-46ee-b8ed-ae0741d317b0"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -4576,21 +3808,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "4e0fcfee-d39d-4fe1-8c3f-2f3da91959ef"
-        ],
+        "entry": ["4e0fcfee-d39d-4fe1-8c3f-2f3da91959ef"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -4623,21 +3847,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "3ede77ec-91c0-4529-8c15-02fdac4aac7f"
-        ],
+        "entry": ["3ede77ec-91c0-4529-8c15-02fdac4aac7f"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -4670,21 +3886,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "7079a0a7-9f55-4009-aefc-1ab3c51a075c"
-        ],
+        "entry": ["7079a0a7-9f55-4009-aefc-1ab3c51a075c"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -4717,21 +3925,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "5048d38c-9228-4470-aa1c-4e45ad0289ee"
-        ],
+        "entry": ["5048d38c-9228-4470-aa1c-4e45ad0289ee"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -4764,21 +3964,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "df36de6b-d7ef-453d-9eb4-205b20c7cb63"
-        ],
+        "entry": ["df36de6b-d7ef-453d-9eb4-205b20c7cb63"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -4811,21 +4003,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "12d02f9f-69b1-41af-bd9d-fce14979c24d"
-        ],
+        "entry": ["12d02f9f-69b1-41af-bd9d-fce14979c24d"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -4858,21 +4042,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "5998c77f-74d5-424f-ac22-a39c592c2434"
-        ],
+        "entry": ["5998c77f-74d5-424f-ac22-a39c592c2434"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -4905,21 +4081,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "8d93cc43-bc6f-424f-b237-e6f1db63da3b"
-        ],
+        "entry": ["8d93cc43-bc6f-424f-b237-e6f1db63da3b"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -4952,21 +4120,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "a72d4ffd-272d-4cd4-8117-c670869c01bf"
-        ],
+        "entry": ["a72d4ffd-272d-4cd4-8117-c670869c01bf"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -4999,21 +4159,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "6b2ab574-d509-42b8-884f-cb888dfed8d3"
-        ],
+        "entry": ["6b2ab574-d509-42b8-884f-cb888dfed8d3"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -5046,21 +4198,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "9b62c439-cbe5-4755-a9f3-3a6a5a06816a"
-        ],
+        "entry": ["9b62c439-cbe5-4755-a9f3-3a6a5a06816a"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -5093,21 +4237,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "d00d630b-a5f8-474d-8b50-0447fcc5a704"
-        ],
+        "entry": ["d00d630b-a5f8-474d-8b50-0447fcc5a704"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -5140,21 +4276,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "1cbdf716-1dfe-4b7c-aa4c-ec57e8c3c6a4"
-        ],
+        "entry": ["1cbdf716-1dfe-4b7c-aa4c-ec57e8c3c6a4"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -5187,21 +4315,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "b1f9bb25-c32c-42e0-b7a8-84dd9f269c12"
-        ],
+        "entry": ["b1f9bb25-c32c-42e0-b7a8-84dd9f269c12"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -5234,21 +4354,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "67a6ffe7-4aa6-4558-abb1-10ff5f2dd080"
-        ],
+        "entry": ["67a6ffe7-4aa6-4558-abb1-10ff5f2dd080"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -5281,21 +4393,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "b51c2973-ff2f-4dee-acfd-fe0a2f84046c"
-        ],
+        "entry": ["b51c2973-ff2f-4dee-acfd-fe0a2f84046c"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -5328,21 +4432,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "508d274e-64e1-4af2-bb63-36b460fffc1e"
-        ],
+        "entry": ["508d274e-64e1-4af2-bb63-36b460fffc1e"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -5375,21 +4471,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "dd636c57-2814-4e6f-ad9b-2a6c4d4b519d"
-        ],
+        "entry": ["dd636c57-2814-4e6f-ad9b-2a6c4d4b519d"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -5422,21 +4510,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "b2ae3815-5fba-4872-869b-f5efbb88fa0b"
-        ],
+        "entry": ["b2ae3815-5fba-4872-869b-f5efbb88fa0b"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -5469,21 +4549,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "d5a6538b-830a-434a-a274-9821cdcb14f7"
-        ],
+        "entry": ["d5a6538b-830a-434a-a274-9821cdcb14f7"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -5516,21 +4588,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "999c2586-92ef-4dc3-8b00-7569281ffdc4"
-        ],
+        "entry": ["999c2586-92ef-4dc3-8b00-7569281ffdc4"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -5563,21 +4627,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "73f2b58e-a994-4026-8056-ee683c049e41"
-        ],
+        "entry": ["73f2b58e-a994-4026-8056-ee683c049e41"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -5610,21 +4666,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "d0763ff2-665e-4bdf-97c7-a042fcdb4258"
-        ],
+        "entry": ["d0763ff2-665e-4bdf-97c7-a042fcdb4258"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -5657,21 +4705,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "8320ce38-f3c0-42c9-a466-62d3c12fbcd8"
-        ],
+        "entry": ["8320ce38-f3c0-42c9-a466-62d3c12fbcd8"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -5704,21 +4744,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "59cf0dad-23b1-41be-8997-5cab195bc27c"
-        ],
+        "entry": ["59cf0dad-23b1-41be-8997-5cab195bc27c"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -5751,21 +4783,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "b1143f5d-1681-4685-a5ef-b2d980f79a3c"
-        ],
+        "entry": ["b1143f5d-1681-4685-a5ef-b2d980f79a3c"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -5798,21 +4822,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "7cb48b6a-0d53-4900-9fcc-7d78e9fe2978"
-        ],
+        "entry": ["7cb48b6a-0d53-4900-9fcc-7d78e9fe2978"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -5845,21 +4861,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "60c4c3ca-eb64-4920-b402-42456c19f720"
-        ],
+        "entry": ["60c4c3ca-eb64-4920-b402-42456c19f720"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -5892,21 +4900,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "7cc4b686-fe0f-41c7-907d-2b2d1f6d81c2"
-        ],
+        "entry": ["7cc4b686-fe0f-41c7-907d-2b2d1f6d81c2"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -5939,21 +4939,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "a7a673ad-0872-43e9-8b5a-df458f0e628c"
-        ],
+        "entry": ["a7a673ad-0872-43e9-8b5a-df458f0e628c"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -5986,21 +4978,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "f9645153-2023-4f92-95d1-8c5806670f22"
-        ],
+        "entry": ["f9645153-2023-4f92-95d1-8c5806670f22"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -6033,21 +5017,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "059f265d-3cdb-4dcc-a3b7-9a814e64525e"
-        ],
+        "entry": ["059f265d-3cdb-4dcc-a3b7-9a814e64525e"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -6080,21 +5056,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "518b8de7-8f08-44bc-9c5b-f0d8a4ff397f"
-        ],
+        "entry": ["518b8de7-8f08-44bc-9c5b-f0d8a4ff397f"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -6127,21 +5095,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "192235d7-d84f-4be1-83ce-71fce70f979d"
-        ],
+        "entry": ["192235d7-d84f-4be1-83ce-71fce70f979d"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -6174,21 +5134,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "bbb1a926-5498-4120-b6c2-7f28a64411c9"
-        ],
+        "entry": ["bbb1a926-5498-4120-b6c2-7f28a64411c9"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -6221,21 +5173,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "fdd7e454-a801-4e36-be3b-bbb3c147ff84"
-        ],
+        "entry": ["fdd7e454-a801-4e36-be3b-bbb3c147ff84"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -6268,21 +5212,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "208f054a-8f25-499e-a0b8-f1929371325d"
-        ],
+        "entry": ["208f054a-8f25-499e-a0b8-f1929371325d"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -6315,21 +5251,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "54327d46-5878-4ff4-931e-7459e91fd7e0"
-        ],
+        "entry": ["54327d46-5878-4ff4-931e-7459e91fd7e0"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -6362,21 +5290,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "c849ac88-364a-4b84-a765-2c17d310d80d"
-        ],
+        "entry": ["c849ac88-364a-4b84-a765-2c17d310d80d"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -6409,21 +5329,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "07d419d9-34c6-41f5-8e81-71d7c07bb393"
-        ],
+        "entry": ["07d419d9-34c6-41f5-8e81-71d7c07bb393"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -6456,21 +5368,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "38202dde-64d8-4b94-bc9d-50b1cdf304bc"
-        ],
+        "entry": ["38202dde-64d8-4b94-bc9d-50b1cdf304bc"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -6503,21 +5407,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "c1267f37-b5ce-4812-a928-c10f3b6b9628"
-        ],
+        "entry": ["c1267f37-b5ce-4812-a928-c10f3b6b9628"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -6550,21 +5446,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "90b78830-3128-4e96-8876-6d7bcb88128e"
-        ],
+        "entry": ["90b78830-3128-4e96-8876-6d7bcb88128e"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -6597,21 +5485,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "c2e70b03-3179-4d77-94b5-b3465ac48fb0"
-        ],
+        "entry": ["c2e70b03-3179-4d77-94b5-b3465ac48fb0"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -6644,21 +5524,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "9e100ddf-0563-49b3-a450-d1e3dc44e3d9"
-        ],
+        "entry": ["9e100ddf-0563-49b3-a450-d1e3dc44e3d9"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -6691,21 +5563,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "98058b47-d6c2-400a-afb7-0ccb656c7a9f"
-        ],
+        "entry": ["98058b47-d6c2-400a-afb7-0ccb656c7a9f"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -6738,21 +5602,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "c8fadfd2-3dcb-4a81-9742-f9b07ae89e83"
-        ],
+        "entry": ["c8fadfd2-3dcb-4a81-9742-f9b07ae89e83"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -6785,21 +5641,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "7409ff00-4b6b-43fa-bd4d-3f99c6248973"
-        ],
+        "entry": ["7409ff00-4b6b-43fa-bd4d-3f99c6248973"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -6832,21 +5680,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "4f74276f-7a10-48e5-973c-078300582013"
-        ],
+        "entry": ["4f74276f-7a10-48e5-973c-078300582013"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -6879,21 +5719,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "ae977998-055a-4f98-a7cf-d4c6945cd62c"
-        ],
+        "entry": ["ae977998-055a-4f98-a7cf-d4c6945cd62c"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -6926,21 +5758,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "0982860f-45d2-4568-869c-fe942d0fff04"
-        ],
+        "entry": ["0982860f-45d2-4568-869c-fe942d0fff04"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -6973,21 +5797,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "b7ca86d6-4a0c-4b7a-b260-6fa6376cbd1a"
-        ],
+        "entry": ["b7ca86d6-4a0c-4b7a-b260-6fa6376cbd1a"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -7020,21 +5836,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "57fb265a-7df8-4c05-af40-b235b1026c2f"
-        ],
+        "entry": ["57fb265a-7df8-4c05-af40-b235b1026c2f"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -7067,21 +5875,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "6575b789-40b5-42f3-83c1-828ba9d62f70"
-        ],
+        "entry": ["6575b789-40b5-42f3-83c1-828ba9d62f70"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -7114,21 +5914,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "1af6de33-b5c5-40c2-8ce1-d888db99d128"
-        ],
+        "entry": ["1af6de33-b5c5-40c2-8ce1-d888db99d128"],
         "exit": [
           "5c767be5-5c3e-4e3e-865f-2c209d9ea81f",
           "aaee1d76-ab6e-45b5-b15a-b656d9909af5",
@@ -7161,24 +5953,14 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "551dac61-fa74-45aa-98f3-13f11b93cb7a"
-        ],
-        "exit": [
-          "b0ce5191-a895-4453-9fb8-514750b0a442"
-        ]
+        "entry": ["551dac61-fa74-45aa-98f3-13f11b93cb7a"],
+        "exit": ["b0ce5191-a895-4453-9fb8-514750b0a442"]
       }
     },
     {
@@ -7206,23 +5988,13 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-08",
-        "put_strikes": [
-          590.0,
-          600.0
-        ],
-        "call_strikes": [
-          690.0,
-          700.0
-        ]
+        "put_strikes": [590.0, 600.0],
+        "call_strikes": [690.0, 700.0]
       },
       "source": "alpaca_parent->alpaca_parent",
       "order_ids": {
-        "entry": [
-          "e0449e4b-394f-48ee-bc3b-d0c6199140cc"
-        ],
-        "exit": [
-          "b0ce5191-a895-4453-9fb8-514750b0a442"
-        ]
+        "entry": ["e0449e4b-394f-48ee-bc3b-d0c6199140cc"],
+        "exit": ["b0ce5191-a895-4453-9fb8-514750b0a442"]
       }
     },
     {
@@ -7249,24 +6021,14 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-15",
-        "put_strikes": [
-          628.0,
-          638.0
-        ],
-        "call_strikes": [
-          712.0,
-          715.0
-        ]
+        "put_strikes": [628.0, 638.0],
+        "call_strikes": [712.0, 715.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "733c5a22-4c8d-470f-9c1f-0a51ea7fef79"
-        ],
-        "exit": [
-          "480686f6-b9a1-4668-b511-1940ec9b1b8a"
-        ]
+        "entry": ["733c5a22-4c8d-470f-9c1f-0a51ea7fef79"],
+        "exit": ["480686f6-b9a1-4668-b511-1940ec9b1b8a"]
       },
       "selection_method": "live_delta",
       "strike_selection_method": "live_delta",
@@ -7300,24 +6062,14 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-05-22",
-        "put_strikes": [
-          644.0,
-          654.0
-        ],
-        "call_strikes": [
-          730.0,
-          735.0
-        ]
+        "put_strikes": [644.0, 654.0],
+        "call_strikes": [730.0, 735.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "7e0f64e5-1b92-46e6-b5ff-b8a53038b108"
-        ],
-        "exit": [
-          "749f06a4-2347-461a-9466-5bb545410986"
-        ]
+        "entry": ["7e0f64e5-1b92-46e6-b5ff-b8a53038b108"],
+        "exit": ["749f06a4-2347-461a-9466-5bb545410986"]
       },
       "selection_method": "live_delta",
       "strike_selection_method": "live_delta",
@@ -7351,24 +6103,14 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-06-12",
-        "put_strikes": [
-          686.0,
-          696.0
-        ],
-        "call_strikes": [
-          770.0,
-          775.0
-        ]
+        "put_strikes": [686.0, 696.0],
+        "call_strikes": [770.0, 775.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "ccd2722e-b02f-4821-b8ac-27bdf3220e9f"
-        ],
-        "exit": [
-          "8ace0441-9d7e-4208-8792-b51dc40c4b3b"
-        ]
+        "entry": ["ccd2722e-b02f-4821-b8ac-27bdf3220e9f"],
+        "exit": ["8ace0441-9d7e-4208-8792-b51dc40c4b3b"]
       }
     },
     {
@@ -7395,24 +6137,14 @@
       "legs": {
         "underlying": "SPY",
         "expiry": "2026-07-31",
-        "put_strikes": [
-          684.0,
-          694.0
-        ],
-        "call_strikes": [
-          775.0,
-          785.0
-        ]
+        "put_strikes": [684.0, 694.0],
+        "call_strikes": [775.0, 785.0]
       },
       "quantity": 1.0,
       "source": "alpaca_parent_lot->alpaca_close_inventory",
       "order_ids": {
-        "entry": [
-          "8f3615f3-6ff1-4a58-a316-b4c7b63059d9"
-        ],
-        "exit": [
-          "e09efc17-8cb3-4c3c-932f-fceffce2d21c"
-        ]
+        "entry": ["8f3615f3-6ff1-4a58-a316-b4c7b63059d9"],
+        "exit": ["e09efc17-8cb3-4c3c-932f-fceffce2d21c"]
       }
     }
   ]
