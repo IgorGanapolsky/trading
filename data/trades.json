@@ -4,7 +4,7 @@
     "created": "2026-07-07T21:32:24.241944+00:00",
     "purpose": "Master ledger for closed iron condor tracking",
     "paper_phase_start": "2026-01-22",
-    "last_sync": "2026-07-14T19:57:18.371702+00:00",
+    "last_sync": "2026-07-15T15:35:43.586436+00:00",
     "sync_source": "sync_closed_positions.py"
   },
   "stats": {
@@ -22,8 +22,8 @@
     "total_pnl": -5861.0,
     "total_realized_pnl": -5861.0,
     "paper_phase_start": "2026-01-22",
-    "paper_phase_days": 173,
-    "last_updated": "2026-07-14T19:57:18.371682+00:00",
+    "paper_phase_days": 174,
+    "last_updated": "2026-07-15T15:35:43.586425+00:00",
     "unpaired_realized_pnl": 1927.0,
     "unpaired_in_cohort_pnl": 409.0,
     "unpaired_order_count": 18,
