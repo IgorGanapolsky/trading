@@ -1,21 +1,5 @@
 [
   {
-    "captured_at": "2026-05-15T20:04:06.085966+00:00",
-    "sync_mode": "paper",
-    "paper": {
-      "equity": 93750.31,
-      "daily_change": 977.0,
-      "positions_count": 8,
-      "synced_at": null
-    },
-    "live": {
-      "equity": 0.0,
-      "daily_change": 0.0,
-      "positions_count": 0,
-      "synced_at": "2026-05-15T19:52:32.992798"
-    }
-  },
-  {
     "captured_at": "2026-05-15T20:24:55.173133+00:00",
     "sync_mode": "paper+live",
     "paper": {
@@ -7997,6 +7981,22 @@
       "daily_change": 0.0,
       "positions_count": 0,
       "synced_at": "2026-07-17T15:29:45.667710"
+    }
+  },
+  {
+    "captured_at": "2026-07-17T16:01:52.584330+00:00",
+    "sync_mode": "paper+live",
+    "paper": {
+      "equity": 94008.47,
+      "daily_change": 21.84,
+      "positions_count": 8,
+      "synced_at": null
+    },
+    "live": {
+      "equity": 0.0,
+      "daily_change": 0.0,
+      "positions_count": 0,
+      "synced_at": "2026-07-17T16:01:52.581632"
     }
   }
 ]
