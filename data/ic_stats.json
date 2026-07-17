@@ -1,12 +1,12 @@
 {
-  "total": 7,
-  "wins": 3,
+  "total": 8,
+  "wins": 4,
   "losses": 4,
-  "total_pnl": -824.6,
-  "avg_win": 65.67,
+  "total_pnl": -796.6,
+  "avg_win": 56.25,
   "avg_loss": -255.4,
-  "win_rate": 42.9,
-  "profit_factor": 0.19,
-  "win_pnls": [41.0, 99.0, 57.0],
+  "win_rate": 50.0,
+  "profit_factor": 0.22,
+  "win_pnls": [41.0, 99.0, 57.0, 28.0],
   "loss_pnls": [-255.6, -126.0, -162.0, -478.0]
 }
