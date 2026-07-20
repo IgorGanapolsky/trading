@@ -95,28 +95,6 @@
     },
     "fill_confirmed": true
   },
-  "IC_260814": {
-    "credit": 1.11,
-    "date": "2026-07-08T15:52:42.025088+00:00",
-    "entry_time": "2026-07-08T15:52:42.025088+00:00",
-    "order_id": "f15a662a-cb5d-4383-87c1-fac146082f64",
-    "signature": "SPY_2026-08-14_P690-695_C774-779",
-    "selection_method": "live_delta",
-    "strike_selection_method": "live_delta",
-    "put_delta": 0.15,
-    "call_delta": 0.1471,
-    "target_delta": 0.15,
-    "validation_phase": true,
-    "profile_name": "spy-core",
-    "quantity": 1,
-    "strikes": {
-      "short_put": 695.0,
-      "short_call": 774.0,
-      "long_put": 690.0,
-      "long_call": 779.0
-    },
-    "fill_confirmed": true
-  },
   "IC_260821": {
     "credit": 1.12,
     "date": "2026-07-17T15:36:25.539126+00:00",

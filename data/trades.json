@@ -4,7 +4,7 @@
     "created": "2026-07-07T21:32:24.241944+00:00",
     "purpose": "Master ledger for closed iron condor tracking",
     "paper_phase_start": "2026-01-22",
-    "last_sync": "2026-07-20T16:35:01.727003+00:00",
+    "last_sync": "2026-07-20T18:44:42.377809+00:00",
     "sync_source": "sync_closed_positions.py"
   },
   "stats": {
@@ -15,23 +15,23 @@
     "losses": 143,
     "breakeven": 1,
     "win_rate_pct": 17.24,
-    "avg_win": 470.3,
+    "avg_win": 442.9,
     "avg_loss": 131.83,
-    "profit_factor": 0.75,
-    "expectancy": -27.25,
-    "total_pnl": -4742.0,
-    "total_realized_pnl": -4742.0,
+    "profit_factor": 0.7,
+    "expectancy": -31.98,
+    "total_pnl": -5564.0,
+    "total_realized_pnl": -5564.0,
     "paper_phase_start": "2026-01-22",
     "paper_phase_days": 179,
-    "last_updated": "2026-07-20T16:35:01.726993+00:00",
-    "unpaired_realized_pnl": 3019.0,
+    "last_updated": "2026-07-20T18:44:42.377798+00:00",
+    "unpaired_realized_pnl": 2167.0,
     "unpaired_in_cohort_pnl": 409.0,
-    "unpaired_order_count": 16,
+    "unpaired_order_count": 15,
     "unpaired_cohort_start": "2026-04-09",
-    "unpaired_wins": 11,
+    "unpaired_wins": 10,
     "unpaired_losses": 5,
     "unpaired_breakeven": 0,
-    "unpaired_gross_profit": 12671.0,
+    "unpaired_gross_profit": 11819.0,
     "unpaired_gross_loss": 9652.0,
     "unpaired_cohort_wins": 2,
     "unpaired_cohort_losses": 4,
@@ -6179,6 +6179,40 @@
       "order_ids": {
         "entry": ["f1c1edbf-0756-43db-953d-8b2a90e4fb99"],
         "exit": ["dd31d138-6831-4130-84b4-fca17fe64b51"]
+      }
+    },
+    {
+      "id": "IC_SPY_2026_08_14_P690_695_C774_779_20260708155237_20260720184441",
+      "symbol": "SPY",
+      "type": "option",
+      "strategy": "iron_condor",
+      "status": "closed",
+      "entry_date": "2026-07-08",
+      "exit_date": "2026-07-20",
+      "entry_time": "2026-07-08T15:52:37.043305+00:00",
+      "exit_time": "2026-07-20T18:44:41.099213+00:00",
+      "entry_net_cash": 111.0,
+      "entry_credit": 111.0,
+      "entry_debit": 0.0,
+      "entry_style": "credit",
+      "exit_net_cash": -81.0,
+      "exit_credit": 0.0,
+      "exit_debit": 81.0,
+      "exit_style": "debit",
+      "realized_pnl": 30.0,
+      "outcome": "win",
+      "signature": "SPY_2026-08-14_P690-695_C774-779",
+      "legs": {
+        "underlying": "SPY",
+        "expiry": "2026-08-14",
+        "put_strikes": [690.0, 695.0],
+        "call_strikes": [774.0, 779.0]
+      },
+      "quantity": 1.0,
+      "source": "alpaca_parent_lot->alpaca_close_inventory",
+      "order_ids": {
+        "entry": ["f15a662a-cb5d-4383-87c1-fac146082f64"],
+        "exit": ["557cf7f1-5968-435d-9b01-b015bce1a00b"]
       }
     }
   ]
