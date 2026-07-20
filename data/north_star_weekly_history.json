@@ -229,12 +229,12 @@
   },
   {
     "week_start": "2026-07-20",
-    "sample_size": 1,
+    "sample_size": 2,
     "win_rate_pct": 100.0,
-    "expectancy_per_trade": 27.0,
+    "expectancy_per_trade": 28.5,
     "mode": "validation_reset",
     "qualified_setups": 0,
     "cadence_passed": false,
-    "updated_at": "2026-07-20T18:40:23.133496+00:00"
+    "updated_at": "2026-07-20T19:17:26.213445+00:00"
   }
 ]
