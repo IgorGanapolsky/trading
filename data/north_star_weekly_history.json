@@ -226,5 +226,15 @@
     "qualified_setups": 0,
     "cadence_passed": false,
     "updated_at": "2026-07-19T15:19:49.074003+00:00"
+  },
+  {
+    "week_start": "2026-07-20",
+    "sample_size": 1,
+    "win_rate_pct": 100.0,
+    "expectancy_per_trade": 27.0,
+    "mode": "validation_reset",
+    "qualified_setups": 0,
+    "cadence_passed": false,
+    "updated_at": "2026-07-20T14:32:27.531577+00:00"
   }
 ]
