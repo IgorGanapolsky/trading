@@ -129,6 +129,32 @@ def test_two_distinct_one_lot_put_credits_may_share_expiry():
     assert result.clean is True
 
 
+def test_closed_put_credit_is_excluded_from_same_expiry_expectations():
+    positions = [
+        {"symbol": "SPY260821P00690000", "qty": -1},
+        {"symbol": "SPY260821P00685000", "qty": 1},
+    ]
+    pcs_entries = {
+        "PCS_260821_closed": {
+            "status": "closed",
+            "expiry": "2026-08-21",
+            "quantity": 1,
+            "strikes": {"short_put": 700.0, "long_put": 695.0},
+        },
+        "PCS_260821_open": {
+            "status": "open",
+            "expiry": "2026-08-21",
+            "quantity": 1,
+            "strikes": {"short_put": 690.0, "long_put": 685.0},
+        },
+    }
+
+    result = audit_open_inventory(positions, {}, pcs_entries)
+
+    assert result.clean is True
+    assert result.block_reasons() == []
+
+
 def test_audit_from_files_on_repo_fixture(tmp_path: Path):
     data = tmp_path / "data"
     data.mkdir()

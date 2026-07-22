@@ -6,6 +6,7 @@ import pytest
 
 from scripts.reconcile_open_inventory import (
     _expected_from_ic_entries,
+    _expected_from_put_credit,
     broker_confirmed_expected,
     plan_reductions,
 )
@@ -115,3 +116,27 @@ def test_broker_authority_fails_closed_on_pending_option_order():
     )
     with pytest.raises(RuntimeError, match="pending option orders"):
         broker_confirmed_expected([], [], [pending], {})
+
+
+def test_reconcile_pcs_expectations_use_unique_key_and_ignore_closed_rows():
+    entries = {
+        "PCS_260821_order1": {
+            "status": "open",
+            "expiry": "2026-08-21",
+            "quantity": 1,
+            "strikes": {"short_put": 700.0, "long_put": 695.0},
+        },
+        "PCS_260821_order2": {
+            "status": "closed",
+            "expiry": "2026-08-21",
+            "quantity": 1,
+            "strikes": {"short_put": 690.0, "long_put": 685.0},
+        },
+    }
+
+    expected = _expected_from_put_credit(entries)
+
+    assert expected == {
+        "SPY260821P00700000": -1.0,
+        "SPY260821P00695000": 1.0,
+    }

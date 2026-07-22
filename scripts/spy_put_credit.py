@@ -345,7 +345,7 @@ def _submit_spread_close(client, entry: dict[str, Any], decision: dict[str, Any]
     profile = _load_profile()
     limit_debit = min(
         profile.wing_width,
-        round(float(decision["current_debit"]) + 0.05, 2),
+        max(0.01, round(float(decision["current_debit"]) + 0.05, 2)),
     )
     return safe_submit_order(
         client,

@@ -4,8 +4,11 @@ from types import SimpleNamespace
 from scripts.residual_ic_manager import (
     _close_signature,
     _order_signature,
+    active_pcs_expected,
     evaluate_residual_exit,
+    manage_residual_ics,
     recover_active_structures,
+    unresolved_after_pcs,
 )
 
 
@@ -70,6 +73,57 @@ def test_recovery_reports_unexplained_live_leg():
     recovered, unresolved = recover_active_structures(positions, [])
     assert recovered == []
     assert unresolved == {"SPY260821P00695000": 1.0}
+
+
+def test_active_pcs_legs_are_not_residual_ic_breakage():
+    entries = {
+        "PCS_260821_open": {
+            "status": "open",
+            "expiry": "2026-08-21",
+            "quantity": 1,
+            "strikes": {"short_put": 700.0, "long_put": 695.0},
+        },
+        "PCS_260821_closed": {
+            "status": "closed",
+            "expiry": "2026-08-21",
+            "quantity": 1,
+            "strikes": {"short_put": 690.0, "long_put": 685.0},
+        },
+    }
+    expected = active_pcs_expected(entries)
+    unresolved = {
+        "SPY260821P00700000": -1.0,
+        "SPY260821P00695000": 1.0,
+    }
+
+    unexplained, matched = unresolved_after_pcs(unresolved, expected)
+
+    assert unexplained == {}
+    assert matched == unresolved
+    assert "SPY260821P00690000" not in expected
+
+
+def test_residual_manager_allows_active_pcs_inventory(tmp_path, monkeypatch):
+    import scripts.residual_ic_manager as manager
+
+    positions = [
+        _position("SPY260821P00700000", -1, 1.0),
+        _position("SPY260821P00695000", 1, 0.2),
+    ]
+    expected = {
+        "SPY260821P00700000": -1.0,
+        "SPY260821P00695000": 1.0,
+    }
+    client = SimpleNamespace(get_all_positions=lambda: positions)
+    monkeypatch.setattr(manager, "AUDIT_PATH", tmp_path / "residual.json")
+    monkeypatch.setattr(manager, "_get_orders", lambda *args, **kwargs: [])
+    monkeypatch.setattr(manager, "_load_active_pcs_expected", lambda: expected)
+
+    report = manage_residual_ics(client, dry_run=True)
+
+    assert report["broken"] == 0
+    assert report["unresolved"] == {}
+    assert report["pcs_inventory_excluded"] == expected
 
 
 def test_exit_rules_respect_hold_and_trigger_profit_after_24h():

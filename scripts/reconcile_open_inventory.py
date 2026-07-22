@@ -85,27 +85,9 @@ def _expected_from_ic_entries(entries: dict) -> dict[str, float]:
 
 
 def _expected_from_put_credit(entries: dict) -> dict[str, float]:
-    expected: dict[str, float] = {}
-    for key, entry in entries.items():
-        if not isinstance(entry, dict) or not key.startswith("PCS_"):
-            continue
-        strikes = entry.get("strikes") or {}
-        try:
-            qty = abs(float(entry.get("quantity") or 1))
-            sp = float(strikes["short_put"])
-            lp = float(strikes["long_put"])
-        except (KeyError, TypeError, ValueError):
-            continue
-        ymd = key.replace("PCS_", "")
-        if len(ymd) != 6:
-            continue
+    from scripts.residual_ic_manager import active_pcs_expected
 
-        def occ(right: str, strike: float) -> str:
-            return f"SPY{ymd}{right}{int(strike * 1000):08d}"
-
-        expected[occ("P", sp)] = expected.get(occ("P", sp), 0.0) - qty
-        expected[occ("P", lp)] = expected.get(occ("P", lp), 0.0) + qty
-    return expected
+    return active_pcs_expected(entries)
 
 
 def plan_reductions(actual_legs: list[dict], expected: dict[str, float]) -> list[dict]:

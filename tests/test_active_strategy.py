@@ -304,6 +304,27 @@ def test_put_credit_exit_manager_dry_run_never_submits(tmp_path, monkeypatch):
     assert report["submitted"] == 0
 
 
+def test_put_credit_spread_close_never_uses_zero_debit(monkeypatch):
+    from scripts import spy_put_credit as pcs
+
+    captured = {}
+
+    def fake_submit(client, request, strategy=None):
+        captured["request"] = request
+        return SimpleNamespace(id="close-1")
+
+    monkeypatch.setattr("src.safety.mandatory_trade_gate.safe_submit_order", fake_submit)
+    entry = {
+        "expiry": "2026-08-21",
+        "quantity": 1,
+        "strikes": {"short_put": 700.0, "long_put": 695.0},
+    }
+
+    pcs._submit_spread_close(object(), entry, {"current_debit": -0.05})
+
+    assert float(captured["request"].limit_price) == 0.01
+
+
 def test_put_credit_exit_manager_distinguishes_pending_entry_from_broken(tmp_path, monkeypatch):
     from scripts import spy_put_credit as pcs
 

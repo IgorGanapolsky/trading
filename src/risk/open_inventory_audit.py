@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any
 
 OPTION_OCC = re.compile(r"^([A-Z]+)(\d{6})([CP])(\d{8})$")
+INACTIVE_PCS_STATES = {"closed", "cancelled", "rejected"}
 
 
 @dataclass(frozen=True)
@@ -213,6 +214,8 @@ def audit_open_inventory(
         for pcs_key, pcs_entry in pcs_entries.items():
             if (
                 isinstance(pcs_entry, dict)
+                and str(pcs_entry.get("status") or "open").strip().lower()
+                not in INACTIVE_PCS_STATES
                 and _put_credit_expiry(str(pcs_key), pcs_entry) == expiry_ymd
             ):
                 journaled.append((str(pcs_key), pcs_entry, "spy_put_credit"))

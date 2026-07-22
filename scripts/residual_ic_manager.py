@@ -27,6 +27,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 AUDIT_PATH = ROOT / "data" / "audit" / "residual_ic_latest.json"
+PCS_ENTRIES_PATH = ROOT / "data" / "put_credit_entries.json"
+CLOSED_PCS_STATES = {"closed", "cancelled", "rejected"}
 EASTERN = ZoneInfo("America/New_York")
 logger = logging.getLogger("residual_ic_manager")
 
@@ -172,6 +174,74 @@ def recover_active_structures(
     return recovered, unresolved
 
 
+def active_pcs_expected(entries: dict[str, Any]) -> dict[str, float]:
+    """Aggregate active successor legs that the PCS manager owns."""
+
+    expected: dict[str, float] = {}
+    for key, entry in entries.items():
+        if not isinstance(entry, dict) or not str(key).startswith("PCS_"):
+            continue
+        status = str(entry.get("status") or "open").strip().lower()
+        if status in CLOSED_PCS_STATES:
+            continue
+        expiry = str(entry.get("expiry") or "").replace("-", "")
+        if len(expiry) == 8 and expiry.startswith("20"):
+            expiry = expiry[2:]
+        if len(expiry) != 6 or not expiry.isdigit():
+            match = str(key).split("_", 2)
+            expiry = match[1] if len(match) > 1 else ""
+        strikes = entry.get("strikes") or {}
+        try:
+            quantity = abs(_number(entry.get("quantity"), 1))
+            short = float(strikes["short_put"])
+            long = float(strikes["long_put"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if quantity <= 0 or len(expiry) != 6:
+            continue
+        short_symbol = f"SPY{expiry}P{int(short * 1000):08d}"
+        long_symbol = f"SPY{expiry}P{int(long * 1000):08d}"
+        expected[short_symbol] = expected.get(short_symbol, 0.0) - quantity
+        expected[long_symbol] = expected.get(long_symbol, 0.0) + quantity
+    return expected
+
+
+def unresolved_after_pcs(
+    unresolved: dict[str, float], pcs_expected: dict[str, float]
+) -> tuple[dict[str, float], dict[str, float]]:
+    """Subtract live quantities explainable by active PCS journal records.
+
+    Missing PCS legs remain the PCS manager's responsibility; only broker
+    quantities beyond (or opposite to) the active PCS journal are residual-IC
+    inventory failures.
+    """
+
+    unexplained: dict[str, float] = {}
+    matched: dict[str, float] = {}
+    for symbol, actual in unresolved.items():
+        expected = pcs_expected.get(symbol, 0.0)
+        if actual * expected > 0:
+            magnitude = min(abs(actual), abs(expected))
+            matched[symbol] = magnitude if actual > 0 else -magnitude
+            remainder = abs(actual) - magnitude
+            if remainder > 1e-9:
+                unexplained[symbol] = remainder if actual > 0 else -remainder
+        else:
+            unexplained[symbol] = actual
+    return unexplained, matched
+
+
+def _load_active_pcs_expected() -> dict[str, float]:
+    if not PCS_ENTRIES_PATH.exists():
+        return {}
+    try:
+        payload = json.loads(PCS_ENTRIES_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        logger.error("Could not read PCS journal: %s", exc)
+        return {}
+    return active_pcs_expected(payload if isinstance(payload, dict) else {})
+
+
 def evaluate_residual_exit(
     structure: dict[str, Any], *, now: datetime | None = None
 ) -> dict[str, Any]:
@@ -304,18 +374,20 @@ def manage_residual_ics(client: Any, *, dry_run: bool = False) -> dict[str, Any]
     option_positions = [pos for pos in positions if _is_option(str(getattr(pos, "symbol", "")))]
     all_orders = _get_orders(client)
     structures, unresolved = recover_active_structures(option_positions, all_orders)
+    unexplained, pcs_matched = unresolved_after_pcs(unresolved, _load_active_pcs_expected())
     pending_signatures = {_order_signature(order) for order in _get_orders(client, open_only=True)}
     report: dict[str, Any] = {
         "audited_at": datetime.now(timezone.utc).isoformat(),
         "dry_run": dry_run,
         "reconciled": len(structures),
-        "unresolved": unresolved,
+        "unresolved": unexplained,
+        "pcs_inventory_excluded": pcs_matched,
         "checked": 0,
         "holds": 0,
         "would_exit": 0,
         "submitted": 0,
         "pending": 0,
-        "broken": 1 if unresolved else 0,
+        "broken": 1 if unexplained else 0,
         "details": [],
     }
 
