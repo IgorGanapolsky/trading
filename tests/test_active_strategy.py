@@ -90,6 +90,34 @@ def test_put_credit_profile_is_one_lot_spy():
     assert cfg["structure"] == "bull_put_credit"
 
 
+def test_find_put_credit_uses_put_side_only(monkeypatch):
+    from scripts import spy_put_credit as pcs
+
+    class Sel:
+        method = "live_delta"
+        put_delta = 0.15
+        short_put = 700.0
+        long_put = 695.0
+        put_bid = 1.20
+        long_put_ask = 0.40
+        expiry = "2026-08-21"
+
+    monkeypatch.setattr(
+        "src.markets.option_chain.select_strikes_by_delta",
+        lambda **kwargs: Sel(),
+    )
+    # ensure import path inside function sees the patch
+    import src.markets.option_chain as oc
+
+    monkeypatch.setattr(oc, "select_strikes_by_delta", lambda **kwargs: Sel())
+    opp = pcs.find_put_credit_opportunity(747.0)
+    assert opp is not None
+    assert opp["short_put"] == 700.0
+    assert opp["long_put"] == 695.0
+    assert opp["est_credit"] == 0.80
+    assert "short_call" not in opp
+
+
 def test_repo_kill_switch_file_present():
     root = Path(__file__).resolve().parents[1]
     path = root / "data" / "runtime" / "strategy_kill_switch.json"
