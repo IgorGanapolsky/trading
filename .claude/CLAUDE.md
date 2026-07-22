@@ -17,8 +17,15 @@ Source of truth: `src/core/trading_constants.py`
 
 ## Dual-Track Mandate
 
-1. **The Lab (Paper Account `PA3C5AG0CECQ`)**: ~$100,000. Strategy formulation + GRPO self-training. Up to 2 concurrent SPY Iron Condors (8 legs max).
-2. **The Field (Live Account `979807421`)**: $0 equity (started $20, lost 100%). Inactive — no capital deployed.
+1. **The Lab (Paper Account `PA3C5AG0CECQ`)**: ~$100,000. Active validation: **`spy_put_credit`** (1-lot SPY bull put, max 2 concurrent). Iron condor / `ic_simple` **new entries KILLED** (see `data/runtime/strategy_kill_switch.json`). Residual IC legs: exit-only via guardian/`ic_simple.py --mode exit`.
+2. **The Field (Live Account `979807421`)**: $0 equity (started $20, lost 100%). Inactive — no capital deployed. Live blocked until put-credit kill criteria clear (n≥30, expectancy>0, PF>1).
+
+## Active Strategy (post IC kill, 2026-07-22)
+
+- Primary entry: `scripts/spy_put_credit.py` (paper only)
+- Kill switch: `src/core/active_strategy.py` + `data/runtime/strategy_kill_switch.json`
+- Inventory must be clean before new risk: `scripts/audit_open_inventory.py`
+- Do **not** claim put credit is profitable until cohort evidence exists
 
 ## AI-Native Strategy (GRPO)
 
@@ -36,7 +43,10 @@ printf 'thumbs down' | python3 scripts/capture_hook_feedback.py
 python scripts/sync_alpaca_state.py          # refresh broker snapshot
 python scripts/sync_closed_positions.py      # refresh paired trade ledger
 python scripts/system_health_check.py        # verify protected systems before trading
-python src/orchestration/daggr_workflow.py   # run full trading session
+.venv/bin/python scripts/spy_put_credit.py --status   # active strategy status
+.venv/bin/python scripts/spy_put_credit.py --dry-run  # plan put credit (no order)
+.venv/bin/python scripts/audit_open_inventory.py      # inventory hygiene (exit 2 if unclean)
+.venv/bin/python scripts/ic_simple.py --mode exit     # residual IC exit only
 ```
 
 ## Simplification Mandate
