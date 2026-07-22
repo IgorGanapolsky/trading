@@ -3,9 +3,7 @@
   "audited_at": "2026-07-22T21:04:14.937829+00:00",
   "option_leg_count": 6,
   "max_abs_qty": 2.0,
-  "expiries": [
-    "260821"
-  ],
+  "expiries": ["260821"],
   "findings": [
     {
       "code": "LOT_SIZE_EXCEEDED",
