@@ -254,8 +254,8 @@ def _confirm_entry_credit(client, entry: dict[str, Any], short_pos: Any, long_po
                 entry["fill_confirmed_at"] = datetime.now(timezone.utc).isoformat()
                 entry["status"] = "open"
                 return True
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning("Could not confirm put-credit fill from order %s: %s", order_id, exc)
     short_entry = float(getattr(short_pos, "avg_entry_price", 0.0) or 0.0)
     long_entry = float(getattr(long_pos, "avg_entry_price", 0.0) or 0.0)
     derived = short_entry - long_entry

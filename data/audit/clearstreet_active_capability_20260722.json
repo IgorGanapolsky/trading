@@ -19,10 +19,7 @@
     "single_leg_options": true,
     "multi_leg_options": false,
     "paper_trading_verified": false,
-    "documented_api_options_levels": [
-      1,
-      2
-    ]
+    "documented_api_options_levels": [1, 2]
   },
   "decision": {
     "current_role": "RESEARCH_ONLY",
