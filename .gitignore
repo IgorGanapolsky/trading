@@ -60,9 +60,11 @@ data/market_cache/
 # Docker
 *.pid
 
-# Core dumps (prevent accidental commits from crashes)
-core
-core.*
+# Core dumps (prevent accidental commits from crashes).
+# IMPORTANT: patterns must be root-anchored — bare "core" also matched the
+# src/core/ package directory and silently blocked new strategy modules.
+/core
+/core.*
 *.core
 
 # Secrets

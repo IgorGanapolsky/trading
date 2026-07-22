@@ -1,20 +1,23 @@
 {
-  "generated_at": "2026-07-07T21:36:14.149878+00:00",
+  "generated_at": "2026-07-22T21:00:00Z",
   "strategy_family": "ic_simple",
-  "status": "quarantined",
-  "profitability_objective": "Resume only after a changed-rule validation cohort proves positive expectancy, profit factor above 1.0, and positive realized P/L.",
+  "status": "killed",
+  "killed_at": "2026-07-22T21:00:00Z",
+  "successor_strategy_family": "spy_put_credit",
+  "profitability_objective": "IC Simple is removed as a North Star candidate. New paper validation only under spy_put_credit with positive expectancy, PF>1, and positive realized P/L over >=30 trades.",
   "ledger": {
-    "closed_trades": 176,
+    "closed_trades": 174,
     "wins": 30,
-    "losses": 145,
-    "win_rate_pct": 17.05,
+    "losses": 143,
+    "win_rate_pct": 17.24,
     "profit_factor": 0.7,
-    "total_realized_pnl": -6179.0,
-    "expectancy_per_trade": -35.11
+    "total_realized_pnl": -5564.0,
+    "expectancy_per_trade": -31.98,
+    "note": "Canonical trades.json stats at kill decision; list pairing may differ slightly."
   },
   "gate": {
     "should_trade": false,
-    "block_reason": "Win rate 17.1% < 50.0%; Expectancy $-35.11/trade <= $0.00; Profit factor 0.70 <= 1.00",
+    "block_reason": "STRATEGY_KILLED: IC Simple removed. Use spy_put_credit for new paper validation only.",
     "min_trades_met": true,
     "min_win_rate_met": false,
     "positive_expectancy_met": false,
@@ -25,93 +28,52 @@
       "id": "ten_wide_wings",
       "label": "10-wide or wider wings",
       "sample_size": 156,
-      "wins": 18,
-      "losses": 138,
-      "win_rate_pct": 11.54,
       "total_pnl": -7788.0,
       "expectancy_per_trade": -49.92,
-      "loss_contribution_pct": 100.0,
-      "recommendation": "Quarantine 10-wide SPY iron condors; test narrower defined-risk structures or explicitly prove better width/risk math before re-entry."
+      "recommendation": "Never reintroduce 10-wide IC wings."
     },
     {
       "id": "multi_contract",
       "label": "More than one contract",
       "sample_size": 63,
-      "wins": 12,
-      "losses": 51,
-      "win_rate_pct": 19.05,
       "total_pnl": -5798.0,
       "expectancy_per_trade": -92.03,
-      "loss_contribution_pct": 73.59,
-      "recommendation": "Limit validation to one contract until the changed-rule cohort clears positive expectancy, profit factor, and realized-P/L gates."
+      "recommendation": "1-lot only for successor validation."
     },
     {
-      "id": "long_hold_ge_7d",
-      "label": "Held 7 days or longer",
-      "sample_size": 14,
-      "wins": 4,
-      "losses": 10,
-      "win_rate_pct": 28.57,
-      "total_pnl": -3114.0,
-      "expectancy_per_trade": -222.43,
-      "loss_contribution_pct": 37.65,
-      "recommendation": "Add an exit/repair rule for slow-moving losers before allowing long-hold IC exposure again."
+      "id": "four_leg_complexity",
+      "label": "4-leg IC inventory / orphan risk",
+      "sample_size": null,
+      "total_pnl": null,
+      "expectancy_per_trade": null,
+      "recommendation": "Successor uses 2-leg put credit only to eliminate dual-side orphans and call-side lot mismatches (SPY 2026-08-21 incident)."
     },
     {
       "id": "early_exit_lt_24h",
       "label": "Closed in under 24 hours",
       "sample_size": 135,
-      "wins": 13,
-      "losses": 122,
-      "win_rate_pct": 9.63,
       "total_pnl": -2243.0,
       "expectancy_per_trade": -16.61,
-      "loss_contribution_pct": 35.19,
-      "recommendation": "Require the next validation hypothesis to prove why holding-time behavior changed before allowing another short-dated IC cohort."
+      "recommendation": "Successor enforces min 24h hold except hard stop."
     },
     {
-      "id": "early_exit_lt_1h",
-      "label": "Closed in under 1 hour",
-      "sample_size": 129,
-      "wins": 9,
-      "losses": 120,
-      "win_rate_pct": 6.98,
-      "total_pnl": -3011.0,
-      "expectancy_per_trade": -23.34,
-      "loss_contribution_pct": 34.94,
-      "recommendation": "Do not open setups whose expected management requires intraday repair; enforce a minimum hold unless a hard max-loss or broken-leg condition fires."
+      "id": "long_hold_ge_7d",
+      "label": "Held past 7 DTE / slow losers",
+      "sample_size": 14,
+      "total_pnl": -3114.0,
+      "expectancy_per_trade": -222.43,
+      "recommendation": "Successor force-exit by 7 DTE."
     }
   ],
-  "required_rule_changes": [
-    "Quarantine 10-wide SPY iron condors; test narrower defined-risk structures or explicitly prove better width/risk math before re-entry.",
-    "Limit validation to one contract until the changed-rule cohort clears positive expectancy, profit factor, and realized-P/L gates.",
-    "Add an exit/repair rule for slow-moving losers before allowing long-hold IC exposure again."
-  ],
-  "next_validation_hypothesis_template": {
-    "enabled": false,
-    "strategy_family": "ic_simple",
-    "hypothesis": "IC Simple remains quarantined. Enable only after replacing this text with a concrete rule-change thesis backed by the loss clusters in edge_rehabilitation_plan.json.",
-    "changed_rules": [
-      "Quarantine 10-wide SPY iron condors; test narrower defined-risk structures or explicitly prove better width/risk math before re-entry.",
-      "Limit validation to one contract until the changed-rule cohort clears positive expectancy, profit factor, and realized-P/L gates.",
-      "Add an exit/repair rule for slow-moving losers before allowing long-hold IC exposure again."
+  "kill_decision": {
+    "decision": "KILL",
+    "not_rehab": true,
+    "rationale": [
+      "Lifetime expectancy and PF fail hard with large sample — not a small-sample fluke.",
+      "Rehab IC cohort n=4 is insufficient to reverse a 170+ trade failure.",
+      "Structural complexity of 4-leg ICs produced unclean inventory and unlearnable exits.",
+      "CEO authorized scrap-and-rebuild for a better system (2026-07-22)."
     ],
-    "kill_criteria": {
-      "min_closed_trades": 30,
-      "min_expectancy_per_trade": 0.01,
-      "min_profit_factor": 1.01,
-      "min_total_realized_pnl": 0.01
-    }
-  },
-  "rag_ingestion": {
-    "lesson_id": "strategy_rehabilitation_ic_simple_current",
-    "lesson_path": "rag_knowledge/lessons_learned/strategy_rehabilitation_ic_simple_current.md",
-    "tags": [
-      "rag",
-      "ml",
-      "strategy-quarantine",
-      "profitability",
-      "loss-clusters"
-    ]
+    "successor": "spy_put_credit"
   }
 }
