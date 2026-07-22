@@ -89,6 +89,39 @@ def test_put_credit_profile_is_one_lot_spy():
     assert cfg["structure"] == "bull_put_credit"
 
 
+def test_put_credit_inventory_gate_uses_broker_reconstruction(monkeypatch):
+    from scripts import spy_put_credit as pcs
+
+    clean = {
+        "broken": 0,
+        "reconciled": 2,
+        "unresolved": {},
+        "pcs_inventory_excluded": {},
+    }
+    manage = MagicMock(return_value=clean)
+    monkeypatch.setattr("scripts.residual_ic_manager.manage_residual_ics", manage)
+    client = object()
+
+    assert pcs._inventory_ok(client) is True
+    manage.assert_called_once_with(client, dry_run=True)
+
+
+def test_put_credit_inventory_gate_fails_closed_on_unexplained_leg(monkeypatch):
+    from scripts import spy_put_credit as pcs
+
+    broken = {
+        "broken": 1,
+        "reconciled": 2,
+        "unresolved": {"SPY260821P00695000": 1.0},
+        "pcs_inventory_excluded": {},
+    }
+    monkeypatch.setattr(
+        "scripts.residual_ic_manager.manage_residual_ics", MagicMock(return_value=broken)
+    )
+
+    assert pcs._inventory_ok(object()) is False
+
+
 def test_find_put_credit_uses_put_side_only(monkeypatch):
     from scripts import spy_put_credit as pcs
 

@@ -51,29 +51,27 @@ def _assert_active() -> None:
         logger.info("Live capital blocked by kill switch (paper validation only).")
 
 
-def _inventory_ok() -> bool:
-    try:
-        from src.core.trading_constants import (
-            MAX_CONCURRENT_IRON_CONDORS,
-            MAX_CONTRACTS_PER_TRADE,
-        )
-        from src.risk.open_inventory_audit import audit_from_files, write_audit_report
-    except ImportError:
-        logger.warning("open_inventory_audit not available; treating inventory as clean")
-        return True
+def _inventory_ok(client: Any | None = None) -> bool:
+    """Require broker-order reconstruction to explain every live option leg."""
 
-    result = audit_from_files(
-        ROOT,
-        max_contracts_per_trade=float(MAX_CONTRACTS_PER_TRADE),
-        max_concurrent_iron_condors=int(MAX_CONCURRENT_IRON_CONDORS),
-    )
-    AUDIT_DIR.mkdir(parents=True, exist_ok=True)
-    write_audit_report(result, AUDIT_DIR / "open_inventory_latest.json")
-    if not result.clean:
-        logger.error("UNCLEAN_INVENTORY — clean residual IC/orphan legs before put-credit entry")
-        for reason in result.block_reasons()[:5]:
-            logger.error("  - %s", reason)
+    try:
+        from scripts.residual_ic_manager import manage_residual_ics
+
+        broker = client or _get_paper_client()
+        result = manage_residual_ics(broker, dry_run=True)
+    except Exception as exc:  # noqa: BLE001
+        logger.error("BROKER_INVENTORY_UNVERIFIED — put-credit entry blocked: %s", exc)
         return False
+    if result["broken"]:
+        logger.error("UNCLEAN_INVENTORY — broker reconstruction has unexplained option legs")
+        if result.get("unresolved"):
+            logger.error("  - unresolved=%s", result["unresolved"])
+        return False
+    logger.info(
+        "Broker inventory verified: residual_ics=%s pcs_legs=%s unresolved=0",
+        result["reconciled"],
+        len(result.get("pcs_inventory_excluded") or {}),
+    )
     return True
 
 
@@ -817,7 +815,7 @@ def main() -> int:
 
     try:
         with acquire_trade_lock(timeout=10):
-            if not _inventory_ok():
+            if not _inventory_ok(client):
                 return 2
             limit_report = evaluate_entry_limits(_load_entries(), candidate_signature=signature)
             if not limit_report["allowed"]:
