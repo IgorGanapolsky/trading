@@ -1,9 +1,9 @@
 {
-  "captured_at": "2026-07-22T16:35:59.977494+00:00",
-  "sync_mode": "paper",
+  "captured_at": "2026-07-22T16:48:06.786792+00:00",
+  "sync_mode": "paper+live",
   "paper": {
-    "equity": 94043.0,
-    "daily_change": 8.0,
+    "equity": 94046.0,
+    "daily_change": 11.0,
     "positions_count": 6,
     "synced_at": null
   },
@@ -11,6 +11,6 @@
     "equity": 0.0,
     "daily_change": 0.0,
     "positions_count": 0,
-    "synced_at": "2026-07-22T16:12:10.826534"
+    "synced_at": "2026-07-22T16:48:06.783715"
   }
 }
