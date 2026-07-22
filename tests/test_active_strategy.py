@@ -358,6 +358,76 @@ def test_put_credit_spread_close_never_uses_zero_debit(monkeypatch):
     assert float(captured["request"].limit_price) == 0.01
 
 
+def test_partial_exit_fill_remains_managed_as_pending():
+    from scripts import spy_put_credit as pcs
+
+    entry = {"status": "exit_pending", "exit_order_id": "close-1"}
+    client = MagicMock()
+    client.get_order_by_id.return_value = SimpleNamespace(status="PARTIALLY_FILLED")
+
+    assert pcs._pending_exit_is_active(client, entry) is True
+    assert entry["status"] == "exit_pending"
+    assert "exit_filled_at" not in entry
+
+    client.get_order_by_id.return_value = SimpleNamespace(status="FILLED")
+    assert pcs._pending_exit_is_active(client, entry) is True
+    assert entry["status"] == "closed"
+    assert entry["exit_filled_at"]
+
+
+def test_submitted_exit_is_saved_before_later_entry_failure(tmp_path, monkeypatch):
+    from scripts import spy_put_credit as pcs
+
+    now = datetime.now(timezone.utc)
+    entries_path = tmp_path / "put_credit_entries.json"
+    entries_path.write_text(
+        json.dumps(
+            {
+                "PCS_260821_first": {
+                    "status": "open",
+                    "expiry": "2026-08-21",
+                    "entry_time": (now - timedelta(days=2)).isoformat(),
+                    "credit": 1.0,
+                    "credit_source": "broker_fill",
+                    "quantity": 1,
+                    "strikes": {"short_put": 700.0, "long_put": 695.0},
+                },
+                "PCS_260821_second": {
+                    "status": "open",
+                    "expiry": "2026-08-21",
+                    "entry_time": (now - timedelta(days=2)).isoformat(),
+                    "credit": 1.0,
+                    "credit_source": "broker_fill",
+                    "quantity": 1,
+                    "strikes": {"short_put": 690.0, "long_put": 685.0},
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(pcs, "ENTRIES_FILE", entries_path)
+    client = MagicMock()
+    client.get_all_positions.return_value = [
+        SimpleNamespace(symbol="SPY260821P00700000", qty="-1", current_price="0.60"),
+        SimpleNamespace(symbol="SPY260821P00695000", qty="1", current_price="0.10"),
+        SimpleNamespace(symbol="SPY260821P00690000", qty="-1", current_price="0.60"),
+        SimpleNamespace(symbol="SPY260821P00685000", qty="1", current_price="0.10"),
+    ]
+    monkeypatch.setattr(
+        pcs,
+        "_submit_spread_close",
+        MagicMock(side_effect=[SimpleNamespace(id="close-first"), RuntimeError("later failure")]),
+    )
+
+    with pytest.raises(RuntimeError, match="later failure"):
+        pcs.manage_put_credit_exits(client, dry_run=False)
+
+    saved = json.loads(entries_path.read_text(encoding="utf-8"))
+    assert saved["PCS_260821_first"]["status"] == "exit_pending"
+    assert saved["PCS_260821_first"]["exit_order_id"] == "close-first"
+    assert saved["PCS_260821_second"]["status"] == "open"
+
+
 def test_put_credit_exit_manager_distinguishes_pending_entry_from_broken(tmp_path, monkeypatch):
     from scripts import spy_put_credit as pcs
 

@@ -97,7 +97,9 @@ def _load_entries() -> dict[str, dict[str, Any]]:
 
 def _save_entries(entries: dict[str, dict[str, Any]]) -> None:
     ENTRIES_FILE.parent.mkdir(parents=True, exist_ok=True)
-    ENTRIES_FILE.write_text(json.dumps(entries, indent=2) + "\n", encoding="utf-8")
+    temporary = ENTRIES_FILE.with_suffix(f"{ENTRIES_FILE.suffix}.tmp")
+    temporary.write_text(json.dumps(entries, indent=2) + "\n", encoding="utf-8")
+    temporary.replace(ENTRIES_FILE)
 
 
 def _is_active_entry(entry: dict[str, Any]) -> bool:
@@ -238,6 +240,10 @@ def _position_qty(position: Any) -> float:
     return float(getattr(position, "qty", 0.0) or 0.0)
 
 
+def _order_status_name(value: Any) -> str:
+    return str(value or "").rsplit(".", 1)[-1].upper()
+
+
 def _confirm_entry_credit(client, entry: dict[str, Any], short_pos: Any, long_pos: Any) -> bool:
     if entry.get("credit_source") == "broker_fill":
         return False
@@ -272,14 +278,14 @@ def _pending_exit_is_active(client, entry: dict[str, Any]) -> bool:
         return False
     try:
         order = client.get_order_by_id(exit_order_id)
-        status = str(getattr(order, "status", "") or "").upper()
+        status = _order_status_name(getattr(order, "status", ""))
     except Exception:
         return True
-    if "FILL" in status:
+    if status == "FILLED":
         entry["status"] = "closed"
         entry["exit_filled_at"] = datetime.now(timezone.utc).isoformat()
         return True
-    if any(terminal in status for terminal in ("CANCEL", "REJECT", "EXPIRE")):
+    if status in {"CANCELED", "CANCELLED", "REJECTED", "EXPIRED"}:
         entry["status"] = "open"
         entry.pop("exit_order_id", None)
         return False
@@ -294,7 +300,7 @@ def _entry_order_status(client, entry: dict[str, Any]) -> str:
         order = client.get_order_by_id(order_id)
     except Exception:
         return "UNKNOWN"
-    return str(getattr(order, "status", "") or "").upper()
+    return _order_status_name(getattr(order, "status", ""))
 
 
 def _submit_orphan_close(client, position: Any):
@@ -438,6 +444,7 @@ def manage_put_credit_exits(client, *, dry_run: bool = False) -> dict[str, Any]:
                 entry["exit_reason"] = "orphan_cleanup"
                 entry["exit_order_id"] = str(order.id)
                 entry["exit_submitted_at"] = datetime.now(timezone.utc).isoformat()
+                _save_entries(entries)
                 report["submitted"] += 1
                 report["details"].append(
                     {
@@ -480,6 +487,7 @@ def manage_put_credit_exits(client, *, dry_run: bool = False) -> dict[str, Any]:
         entry["exit_submitted_at"] = datetime.now(timezone.utc).isoformat()
         entry["estimated_exit_debit"] = decision["current_debit"]
         entry["estimated_exit_pnl"] = decision["estimated_pnl"]
+        _save_entries(entries)
         changed = True
         report["submitted"] += 1
         detail["status"] = "exit_submitted"
@@ -599,10 +607,10 @@ def place_put_credit(client, opp: dict) -> str | None:
         time.sleep(3)
         try:
             refreshed = client.get_order_by_id(order_id)
-            status = str(getattr(refreshed, "status", "") or "")
-            if "FILL" in status.upper() or "FILLED" in status.upper():
+            status = _order_status_name(getattr(refreshed, "status", ""))
+            if status == "FILLED":
                 break
-            if "CANCEL" in status.upper() or "REJECT" in status.upper():
+            if status in {"CANCELED", "CANCELLED", "REJECTED", "EXPIRED"}:
                 walk += 0.05
                 continue
             # accepted / new — stop walking
