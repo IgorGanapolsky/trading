@@ -176,3 +176,51 @@ def test_report_stays_exit_only_until_a_candidate_passes() -> None:
     assert report["incumbent"]["decision"]["status"] == "RETIRE_NEW_ENTRIES"
     assert report["candidates"][0]["decision"]["status"] == "PAPER_VALIDATION_ONLY"
     assert report["broker"]["current_role"] == "RESEARCH_ONLY"
+
+
+def test_report_runs_successor_cohort_when_broker_inventory_is_reconstructed() -> None:
+    tournament = {
+        "incumbent_strategy_id": "ic_simple",
+        "active_paper_candidate_id": "spy_put_credit",
+        "promotion_thresholds": {},
+        "candidates": [
+            {
+                "strategy_id": "spy_put_credit",
+                "hypothesis": "test",
+                "rules": {},
+                "broker_requirements": {
+                    "asset_class": "option",
+                    "legs": 2,
+                    "minimum_options_level": 3,
+                    "requires_paper_trading": True,
+                },
+                "evidence": {
+                    "closed_trades": 0,
+                    "expectancy_per_trade": 0,
+                    "profit_factor": 0,
+                    "total_realized_pnl": 0,
+                    "ledger_clean": True,
+                },
+            }
+        ],
+    }
+    inventory = {
+        "clean": True,
+        "authority": "broker_filled_mleg_orders",
+        "audited_at": "2026-07-22T21:39:36+00:00",
+        "reconstruction": {
+            "recovered_ic_structures": 2,
+            "unresolved": {},
+            "pending_option_orders": 0,
+        },
+    }
+
+    report = build_pivot_report(
+        _state(), _trades(), {"IC_260821": {}}, tournament, _broker(), inventory
+    )
+
+    assert report["system_action"] == "RETIRE_INCUMBENT_PAPER_VALIDATE_SUCCESSOR"
+    assert report["research_action"] == "RUN_ACTIVE_SUCCESSOR_PAPER_COHORT"
+    assert report["operational_inventory"]["clean"] is True
+    assert report["incumbent"]["ledger_audit"]["clean"] is False
+    assert report["north_star"]["on_course"] is False

@@ -15,6 +15,7 @@ DEFAULT_TRADES = Path("data/trades.json")
 DEFAULT_ENTRIES = Path("data/ic_entries.json")
 DEFAULT_TOURNAMENT = Path("config/strategy_candidate_tournament.json")
 DEFAULT_BROKER = Path("data/audit/clearstreet_active_capability_20260722.json")
+DEFAULT_INVENTORY = Path("data/audit/open_inventory_latest.json")
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -34,6 +35,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--entries", type=Path, default=DEFAULT_ENTRIES)
     parser.add_argument("--tournament", type=Path, default=DEFAULT_TOURNAMENT)
     parser.add_argument("--broker", type=Path, default=DEFAULT_BROKER)
+    parser.add_argument("--inventory-audit", type=Path, default=DEFAULT_INVENTORY)
     parser.add_argument("--json", action="store_true", help="Print the complete JSON report.")
     return parser.parse_args()
 
@@ -44,6 +46,7 @@ def _print_human(report: dict[str, Any]) -> None:
     decision = incumbent["decision"]
     audit = incumbent["ledger_audit"]
     broker = report["broker"]
+    inventory = report["operational_inventory"]
 
     print("STRATEGY PIVOT GATE")
     print(f"System action: {report['system_action']}")
@@ -57,6 +60,10 @@ def _print_human(report: dict[str, Any]) -> None:
     print(f"May open new positions: {decision['may_open_new_positions']}")
     print(f"May manage existing positions: {decision['may_manage_existing_positions']}")
     print(f"Ledger clean: {audit['clean']}")
+    print(
+        f"Operational broker inventory clean: {inventory['clean']} "
+        f"(authority={inventory['authority']})"
+    )
     for reason in decision["reasons"]:
         print(f"  - {reason}")
     print(f"Clear Street role: {broker['current_role']}")
@@ -81,6 +88,7 @@ def main() -> int:
         _load_json(args.entries),
         _load_json(args.tournament),
         _load_json(args.broker),
+        _load_json(args.inventory_audit),
     )
     if args.json:
         print(json.dumps(report, indent=2, sort_keys=True))

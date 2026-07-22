@@ -345,6 +345,7 @@ def build_pivot_report(
     ic_entries: dict[str, Any],
     tournament: dict[str, Any],
     broker_payload: dict[str, Any],
+    inventory_payload: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build the auditable North Star and strategy-tournament decision."""
 
@@ -353,6 +354,15 @@ def build_pivot_report(
     evidence = incumbent_evidence(system_state, trades_data)
     incumbent = evaluate_strategy(evidence, audit, thresholds)
     broker = BrokerSnapshot.from_payload(broker_payload)
+    inventory_evidence = inventory_payload if isinstance(inventory_payload, dict) else {}
+    reconstruction = inventory_evidence.get("reconstruction", {})
+    operational_inventory_clean = bool(
+        inventory_evidence.get("clean") is True
+        and inventory_evidence.get("authority") == "broker_filled_mleg_orders"
+        and isinstance(reconstruction, dict)
+        and not reconstruction.get("unresolved")
+        and _as_int(reconstruction.get("pending_option_orders"), -1) == 0
+    )
 
     candidates: list[dict[str, Any]] = []
     any_validated_candidate = False
@@ -406,9 +416,9 @@ def build_pivot_report(
     active_paper_candidate = next(
         (candidate for candidate in candidates if candidate["active_paper_candidate"]), None
     )
-    if not audit.open_inventory_clean:
+    if not operational_inventory_clean:
         system_action = "RECONCILE_INVENTORY_MANAGE_EXITS_ONLY"
-        research_action = "PAPER_VALIDATE_SUCCESSOR_AFTER_INVENTORY_CLEAN"
+        research_action = "PAPER_VALIDATE_SUCCESSOR_AFTER_BROKER_INVENTORY_CLEAN"
     elif any_validated_candidate:
         system_action = "PAPER_TRADE_VALIDATED_CANDIDATE"
         research_action = "CONTINUE_CONTROLLED_PAPER_VALIDATION"
@@ -440,6 +450,16 @@ def build_pivot_report(
             "evidence": asdict(evidence),
             "ledger_audit": asdict(audit),
             "decision": asdict(incumbent),
+        },
+        "operational_inventory": {
+            "clean": operational_inventory_clean,
+            "authority": inventory_evidence.get("authority", "unverified"),
+            "audited_at": inventory_evidence.get("audited_at"),
+            "reconstruction": reconstruction if isinstance(reconstruction, dict) else {},
+            "note": (
+                "Broker inventory can be operationally clean while the legacy journal and "
+                "performance attribution remain unclean."
+            ),
         },
         "broker": {
             "snapshot": asdict(broker),
