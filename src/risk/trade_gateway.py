@@ -892,12 +892,9 @@ class TradeGateway:
                 ),
                 0.0,
             )
-            is_reducing = (
-                existing_qty != 0.0
-                and (
-                    (request.side.lower() == "buy" and existing_qty < 0)
-                    or (request.side.lower() == "sell" and existing_qty > 0)
-                )
+            is_reducing = existing_qty != 0.0 and (
+                (request.side.lower() == "buy" and existing_qty < 0)
+                or (request.side.lower() == "sell" and existing_qty > 0)
             )
             if not is_reducing:
                 try:
@@ -909,9 +906,16 @@ class TradeGateway:
                         raw_entries = json.loads(entries_path.read_text(encoding="utf-8"))
                         if isinstance(raw_entries, dict):
                             ic_entries = raw_entries
+                    put_credit_entries: dict[str, Any] = {}
+                    pcs_path = Path("data/put_credit_entries.json")
+                    if pcs_path.exists():
+                        raw_pcs = json.loads(pcs_path.read_text(encoding="utf-8"))
+                        if isinstance(raw_pcs, dict):
+                            put_credit_entries = raw_pcs
                     inventory = audit_open_inventory(
                         positions,
                         ic_entries,
+                        put_credit_entries,
                         max_contracts_per_trade=float(self.MAX_CONTRACTS_PER_TRADE),
                         max_concurrent_iron_condors=int(self.MAX_CONCURRENT_ICS),
                     )

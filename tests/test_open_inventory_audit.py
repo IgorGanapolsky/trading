@@ -73,7 +73,9 @@ def test_detects_two_lot_call_and_extra_put_vertical():
     assert "LOT_SIZE_EXCEEDED" in codes
     assert "EXTRA_LEGS" in codes or "QTY_MISMATCH" in codes
     assert "SAME_EXPIRY_OVERSTACK" in codes
-    assert any("776" in r or "lot" in r.lower() or "extra" in r.lower() for r in result.block_reasons())
+    assert any(
+        "776" in r or "lot" in r.lower() or "extra" in r.lower() for r in result.block_reasons()
+    )
 
 
 def test_unjournaled_expiry_blocks():
@@ -81,6 +83,50 @@ def test_unjournaled_expiry_blocks():
     result = audit_open_inventory(positions, {})
     assert result.clean is False
     assert any(f.code == "UNJOURNALED_EXPIRY" for f in result.findings)
+
+
+def test_clean_put_credit_is_explained_by_pcs_journal():
+    positions = [
+        {"symbol": "SPY260821P00700000", "qty": -1},
+        {"symbol": "SPY260821P00695000", "qty": 1},
+    ]
+    pcs_entries = {
+        "PCS_260821_order1": {
+            "expiry": "2026-08-21",
+            "quantity": 1,
+            "strikes": {"short_put": 700.0, "long_put": 695.0},
+        }
+    }
+
+    result = audit_open_inventory(positions, {}, pcs_entries)
+
+    assert result.clean is True
+    assert result.block_reasons() == []
+
+
+def test_two_distinct_one_lot_put_credits_may_share_expiry():
+    positions = [
+        {"symbol": "SPY260821P00700000", "qty": -1},
+        {"symbol": "SPY260821P00695000", "qty": 1},
+        {"symbol": "SPY260821P00690000", "qty": -1},
+        {"symbol": "SPY260821P00685000", "qty": 1},
+    ]
+    pcs_entries = {
+        "PCS_260821_order1": {
+            "expiry": "2026-08-21",
+            "quantity": 1,
+            "strikes": {"short_put": 700.0, "long_put": 695.0},
+        },
+        "PCS_260821_order2": {
+            "expiry": "2026-08-21",
+            "quantity": 1,
+            "strikes": {"short_put": 690.0, "long_put": 685.0},
+        },
+    }
+
+    result = audit_open_inventory(positions, {}, pcs_entries)
+
+    assert result.clean is True
 
 
 def test_audit_from_files_on_repo_fixture(tmp_path: Path):
