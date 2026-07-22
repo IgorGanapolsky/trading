@@ -1,0 +1,41 @@
+{
+  "as_of": "2026-07-22T20:45:00Z",
+  "role": "CTO autonomous under CEO delegation",
+  "north_star": {
+    "target_monthly_after_tax": 6000,
+    "on_track": false,
+    "reason": "No proven edge. Paper equity ~$94.1k. Live $0. Income progress 0%."
+  },
+  "strategy": {
+    "ic_simple": "KILLED",
+    "active": "spy_put_credit",
+    "paper_only": true,
+    "live_blocked": true,
+    "merged_prs": ["#4247", "#4248"],
+    "closed_as_superseded": ["#4246"]
+  },
+  "ledger": {
+    "paper_equity": 94062.0,
+    "closed_trades": 174,
+    "win_rate_pct": 17.24,
+    "profit_factor": 0.7,
+    "expectancy": -31.98,
+    "total_realized_pnl": -5564.0
+  },
+  "open_risk": {
+    "option_legs": 6,
+    "expiry": "2026-08-21",
+    "inventory_clean": false,
+    "unrealized_approx": 15.0,
+    "issue": "Journaled 1-lot IC_260821 but broker has 2-lot call vertical + orphan put 695/700",
+    "action": "Exit-manage residual via ic_simple --mode exit / guardian only; no freehand close; block new put-credit until clean"
+  },
+  "next_actions": [
+    "Keep IC entry paths killed",
+    "Manage residual Aug-21 inventory via exit workflow",
+    "When inventory clean, collect spy_put_credit paper cohort n->30",
+    "Do not scale or go live without kill-criteria pass",
+    "Do not migrate to Clear Street until paper edge proven"
+  ],
+  "truth": "System is operationally redirected off IC. Not yet a profitable trading machine."
+}
