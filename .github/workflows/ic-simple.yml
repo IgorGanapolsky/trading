@@ -1,8 +1,13 @@
-name: IC Simple
+name: IC Simple / Put Credit Validation
+
+# IC Simple NEW ENTRIES are KILLED (2026-07-22). This workflow:
+# - always runs ic_simple.py exit management for residual open IC legs
+# - runs spy_put_credit.py for paper entry on the 11:00 ET slot only
+# - weekend learn mode unchanged
 
 on:
   schedule:
-    - cron: "0 15 * * 1-5" # Entry + exit: 11:00 AM ET (research: tighter spreads than 10 AM)
+    - cron: "0 15 * * 1-5" # 11:00 AM ET — exit residual IC + put-credit entry attempt
     - cron: 0 16 * * 1-5 # Exit check: 12:00 PM ET
     - cron: "0 18 * * 1-5" # Exit check: 2:00 PM ET
     - cron: "30 19 * * 1-5" # EOD exit: 3:30 PM ET
@@ -10,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "entry, exit, both, or status"
+        description: "entry, exit, both, or status (entry = put-credit only)"
         required: false
         default: "both"
       dry_run:
@@ -58,20 +63,29 @@ jobs:
           DRY="${{ github.event.inputs.dry_run || 'false' }}"
           HOUR=$(date -u +%H)
           DOW=$(date -u +%u)
+          RUN_PUT_CREDIT=false
           if [ "${{ github.event_name }}" = "schedule" ]; then
             if [ "$DOW" = "6" ]; then
               MODE="learn"
             elif [ "$HOUR" = "15" ]; then
-              MODE="both"  # 11:00 AM ET (15:00 UTC) — entry + exit
+              MODE="both"  # residual IC exit + put-credit entry attempt
+              RUN_PUT_CREDIT=true
             else
               MODE="exit"
+            fi
+          else
+            # manual dispatch: entry/both includes put-credit
+            if [ "$MODE" = "entry" ] || [ "$MODE" = "both" ]; then
+              RUN_PUT_CREDIT=true
             fi
           fi
           echo "mode=$MODE" >> $GITHUB_OUTPUT
           echo "dry_run=$DRY" >> $GITHUB_OUTPUT
-          echo "Mode: $MODE, Dry run: $DRY"
+          echo "run_put_credit=$RUN_PUT_CREDIT" >> $GITHUB_OUTPUT
+          echo "Mode: $MODE, Dry run: $DRY, Put credit: $RUN_PUT_CREDIT"
 
-      - name: Run IC Simple
+      - name: Manage residual IC positions (exit only — entries killed)
+        if: steps.mode.outputs.mode != 'learn' && steps.mode.outputs.mode != 'status'
         env:
           ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
           ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
@@ -80,11 +94,45 @@ jobs:
           CONTEXT_INDEX_MAX_AGE_MINUTES: "999999"
           PYTHONPATH: ${{ github.workspace }}
         run: |
+          # IC new entries are STRATEGY_KILLED. Always run exit management only
+          # so residual open IC legs still get stop/target/DTE handling.
+          FLAGS="--mode exit"
+          if [ "${{ steps.mode.outputs.dry_run }}" = "true" ]; then
+            FLAGS="$FLAGS --dry-run"
+          fi
+          python3 scripts/ic_simple.py $FLAGS
+
+      - name: Run spy_put_credit paper entry (successor strategy)
+        if: steps.mode.outputs.run_put_credit == 'true' && steps.mode.outputs.mode != 'learn'
+        env:
+          ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          if [ "${{ steps.mode.outputs.dry_run }}" = "true" ]; then
+            python3 scripts/spy_put_credit.py --dry-run
+          else
+            # Paper MLEG only — live blocked by strategy_kill_switch.json
+            python3 scripts/spy_put_credit.py --execute-paper || {
+              echo "Put-credit entry skipped or no opportunity (exit 0 so workflow continues)"
+              true
+            }
+          fi
+
+      - name: Status / learn modes
+        if: steps.mode.outputs.mode == 'status' || steps.mode.outputs.mode == 'learn'
+        env:
+          ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
           FLAGS="--mode ${{ steps.mode.outputs.mode }}"
           if [ "${{ steps.mode.outputs.dry_run }}" = "true" ]; then
             FLAGS="$FLAGS --dry-run"
           fi
           python3 scripts/ic_simple.py $FLAGS
+          python3 scripts/spy_put_credit.py --status || true
 
       - name: Retrain GRPO model
         if: steps.mode.outputs.mode != 'status' && steps.mode.outputs.dry_run != 'true'
@@ -102,6 +150,7 @@ jobs:
 
           npx --yes prettier@3.6.2 --write \
             data/ic_entries.json \
+            data/put_credit_entries.json \
             data/ic_stats.json \
             data/system_state.json \
             data/trades.json \
@@ -111,9 +160,11 @@ jobs:
             models/ml/grpo_trade_metadata.json \
             || true
 
-          git add -f data/ic_entries.json data/ic_stats.json data/trade_journal.jsonl 2>/dev/null || true
+          git add -f data/ic_entries.json data/put_credit_entries.json data/ic_stats.json data/trade_journal.jsonl 2>/dev/null || true
           git add -f data/system_state.json data/trades.json data/verification_reports.json 2>/dev/null || true
           git add -f data/runtime/intraday_pnl_latest.json data/runtime/intraday_pnl_history.json 2>/dev/null || true
+          git add -f data/runtime/strategy_kill_switch.json 2>/dev/null || true
+          git add -f data/audit/ 2>/dev/null || true
           git add -f rag_knowledge/lessons_learned/ 2>/dev/null || true
           git add -f data/strategy_params.json 2>/dev/null || true
           git add -f models/ml/grpo_trade_policy.pt models/ml/grpo_trade_metadata.json 2>/dev/null || true
@@ -121,7 +172,7 @@ jobs:
           if git diff --staged --quiet; then
             echo "No trade data changes"
           else
-            git commit -m "chore: IC Simple trade data [auto]"
+            git commit -m "chore: put-credit / residual IC trade data [auto]"
             git pull --ff-only origin main
             git push origin HEAD:main
           fi

@@ -1,133 +1,31 @@
-name: Force Iron Condor Execution
+name: Force Iron Condor Execution (DISABLED)
 
-# EMERGENCY WORKFLOW - Bypasses all checks
-# Created Jan 23, 2026 after daily-trading.yml checks blocked execution
+# KILLED 2026-07-22 with IC Simple. Do not re-enable.
+# Successor: scripts/spy_put_credit.py (paper only).
+# See data/runtime/strategy_kill_switch.json
 
 on:
-  push:
-    branches:
-      - main
-      - "claude/**"
-    paths:
-      - "FORCE_IRON_CONDOR.md"
   workflow_dispatch:
+    inputs:
+      acknowledge_killed:
+        description: "Type STRATEGY_KILLED to acknowledge this workflow is a no-op"
+        required: true
+        default: ""
 
 permissions:
-  contents: write
-
-env:
-  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+  contents: read
 
 jobs:
-  execute-iron-condor:
+  refuse:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-
-      - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
-        with:
-          python-version: "3.11"
-          cache: "pip"
-
-      - name: Install dependencies
+      - name: Refuse iron condor force execution
         run: |
-          pip install alpaca-py python-dotenv yfinance pytz
-
-      - name: Execute Iron Condor NOW
-        env:
-          # FIX: Use 30K secret names (actual GitHub secrets per screenshot Jan 26, 2026)
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
-          ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
-          # Also set 5K names for backwards compatibility with scripts
-          ALPACA_PAPER_TRADING_5K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_PAPER_TRADING_5K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
-          PYTHONPATH: ${{ github.workspace }}
-        run: |
-          echo "🚀 FORCE IRON CONDOR EXECUTION"
-          echo "=============================="
-          echo "Date: $(date)"
-          echo "Mode: LIVE with --force --live flags"
-          echo ""
-
-          # DEBUG: Verify credentials are set
-          echo "Checking credentials..."
-          if [ -n "$ALPACA_API_KEY" ]; then
-            echo "✅ ALPACA_API_KEY is set (length: ${#ALPACA_API_KEY})"
-          else
-            echo "❌ ALPACA_API_KEY is NOT SET!"
+          echo "STRATEGY_KILLED: iron_condor / ic_simple new entries are forbidden."
+          echo "This emergency workflow previously ran: iron_condor_trader.py --force --live"
+          echo "Successor: python3 scripts/spy_put_credit.py --dry-run  (paper only)"
+          echo "Kill switch: data/runtime/strategy_kill_switch.json"
+          if [ "${{ github.event.inputs.acknowledge_killed }}" != "STRATEGY_KILLED" ]; then
+            echo "Set acknowledge_killed=STRATEGY_KILLED if you only wanted to confirm the kill."
           fi
-          if [ -n "$ALPACA_PAPER_TRADING_API_KEY" ]; then
-            echo "✅ ALPACA_PAPER_TRADING_API_KEY is set (length: ${#ALPACA_PAPER_TRADING_API_KEY})"
-          else
-            echo "❌ ALPACA_PAPER_TRADING_API_KEY is NOT SET!"
-          fi
-
-          # Run iron condor trader with --force --live to ensure live execution
-          # Capture FULL output to debug file
-          python3 scripts/iron_condor_trader.py --force --live --symbol SPY 2>&1 | tee /tmp/ic_output.txt || {
-            echo "⚠️ Iron condor returned non-zero"
-          }
-
-          # Save debug output to repo
-          mkdir -p data/debug
-          cp /tmp/ic_output.txt data/debug/iron_condor_$(date +%Y%m%d_%H%M%S).txt
-
-          echo ""
-          echo "✅ Execution complete"
-
-      - name: Verify positions
-        env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
-        run: |
-          echo "📊 Verifying positions..."
-          python3 -c "
-          import os
-          from alpaca.trading.client import TradingClient
-
-          client = TradingClient(
-              os.environ['ALPACA_API_KEY'],
-              os.environ['ALPACA_SECRET_KEY'],
-              paper=True
-          )
-
-          positions = client.get_all_positions()
-          print(f'Total positions: {len(positions)}')
-
-          for p in positions:
-              is_option = len(p.symbol) > 10
-              opt_type = 'OPTION' if is_option else 'STOCK'
-              print(f'  {p.symbol}: {p.qty} ({opt_type})')
-
-          # Count option positions
-          opts = [p for p in positions if len(p.symbol) > 10]
-          if len(opts) >= 4:
-              print('\\n✅ Iron condor appears active (4+ option positions)')
-          elif len(opts) > 0:
-              print(f'\\n⚠️ Partial iron condor: {len(opts)} option positions')
-          else:
-              print('\\n❌ No option positions')
-          "
-
-      - name: Commit trade results and debug output
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Add debug output and canonical state files
-          git add data/debug/*.txt 2>/dev/null || true
-          git add data/system_state.json 2>/dev/null || true
-
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "chore: Record iron condor execution debug output [auto]"
-            git push
-          fi
+          exit 1
