@@ -195,6 +195,22 @@ def calculate_stale_hours(system_state: dict[str, Any]) -> float | None:
     return age_hours
 
 
+def evaluate_staleness(
+    system_state: dict[str, Any], stale_threshold_hours: float
+) -> tuple[float | None, list[str]]:
+    """Fail closed when performance evidence is missing or stale."""
+
+    stale_hours = calculate_stale_hours(system_state)
+    if stale_hours is None:
+        return None, ["System-state timestamp is missing or invalid; freshness cannot be verified."]
+    if stale_hours >= stale_threshold_hours:
+        return stale_hours, [
+            f"System state is stale ({stale_hours:.1f}h >= {stale_threshold_hours:.1f}h); "
+            "refresh evidence before promotion."
+        ]
+    return stale_hours, []
+
+
 def build_json_result(
     status: str,
     deficits: list[str],
@@ -300,10 +316,9 @@ def main() -> None:
             sys.exit(0)
         raise
 
-    stale_hours = calculate_stale_hours(system_state)
-    stale_override = stale_hours is not None and stale_hours >= args.stale_threshold_hours
-
+    stale_hours, stale_deficits = evaluate_staleness(system_state, args.stale_threshold_hours)
     deficits = evaluate_gate(system_state, backtest_summary, args)
+    deficits.extend(stale_deficits)
 
     # Collect metrics for JSON output
     metrics = {
@@ -327,7 +342,7 @@ def main() -> None:
         "min_profitable_days": args.min_profitable_days,
     }
 
-    gate_passed = not deficits or override_flag or stale_override
+    gate_passed = not deficits or override_flag
     status = "passed" if gate_passed else "blocked"
 
     # JSON output mode
@@ -337,7 +352,7 @@ def main() -> None:
             deficits=deficits,
             metrics=metrics,
             thresholds=thresholds,
-            override_active=override_flag or stale_override,
+            override_active=override_flag,
             stale_hours=stale_hours,
         )
         json_str = json.dumps(json_result, indent=2)
@@ -349,12 +364,7 @@ def main() -> None:
             sys.exit(0 if gate_passed else 1)
 
     # Human-readable output
-    if stale_override and not args.json:
-        print(
-            f"⚠️  Skipping promotion gate: system_state.json is {stale_hours:.1f}h old (threshold {args.stale_threshold_hours}h)."
-        )
-
-    if deficits and not (override_flag or stale_override):
+    if deficits and not override_flag:
         print("❌ Promotion gate failed. Reasons:")
         for item in deficits:
             print(f"  - {item}")
@@ -365,11 +375,11 @@ def main() -> None:
         sys.exit(1)
 
     print("✅ Promotion gate satisfied. System may proceed to next stage.")
-    if override_flag or stale_override:
+    if override_flag:
         print("⚠️  Proceeding under manual override flag.")
 
     # Emit capital scaling plan if gate passed (without overrides) and enabled
-    if args.emit_scaling_plan and not deficits and not (override_flag or stale_override):
+    if args.emit_scaling_plan and not deficits and not override_flag:
         scaling_plan = calculate_scaling_recommendation(
             metrics=metrics,
             thresholds=thresholds,

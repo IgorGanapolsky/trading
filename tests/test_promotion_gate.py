@@ -2,7 +2,7 @@ import json
 from argparse import Namespace
 from pathlib import Path
 
-from scripts.enforce_promotion_gate import evaluate_gate
+from scripts.enforce_promotion_gate import evaluate_gate, evaluate_staleness
 
 FIXTURES = Path("tests/fixtures")
 
@@ -36,3 +36,18 @@ def test_promotion_gate_flags_low_win_rate():
     summary = load_fixture("backtest_summary_sample.json")
     deficits = evaluate_gate(state, summary, base_args())
     assert any("Win rate" in item for item in deficits)
+
+
+def test_promotion_gate_fails_closed_when_timestamp_is_missing():
+    stale_hours, deficits = evaluate_staleness({}, 48.0)
+
+    assert stale_hours is None
+    assert any("freshness cannot be verified" in item for item in deficits)
+
+
+def test_promotion_gate_fails_closed_when_state_is_stale():
+    state = {"meta": {"last_updated": "2020-01-01T00:00:00Z"}}
+    stale_hours, deficits = evaluate_staleness(state, 48.0)
+
+    assert stale_hours is not None and stale_hours > 48.0
+    assert any("refresh evidence before promotion" in item for item in deficits)
