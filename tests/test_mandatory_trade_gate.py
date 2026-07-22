@@ -298,9 +298,7 @@ class TestValidateTradeMandatory:
         assert "rebuild in progress" in result.reason.lower()
         assert any("trading_halt: BLOCKED" in check for check in result.checks_performed)
 
-    def test_ml_halt_allows_controlled_paper_validation_reset(
-        self, monkeypatch, tmp_path
-    ):
+    def test_ml_halt_allows_controlled_paper_validation_reset(self, monkeypatch, tmp_path):
         """Validation reset can collect new one-lot paper evidence despite legacy ML halt."""
         import json
 
@@ -349,14 +347,27 @@ class TestValidateTradeMandatory:
 
         assert result.approved is True
         assert any(
-            "ML_HALT_BYPASSED_VALIDATION_RESET" in check
-            for check in result.checks_performed
+            "ML_HALT_BYPASSED_VALIDATION_RESET" in check for check in result.checks_performed
         )
         assert any("legacy ML halt bypassed" in warning for warning in result.rag_warnings)
 
-    def test_ml_halt_still_blocks_live_or_scaling_entries(
-        self, monkeypatch, tmp_path
-    ):
+    def test_successor_put_credit_is_an_allowed_controlled_paper_family(self, monkeypatch):
+        import src.safety.mandatory_trade_gate as gate_mod
+
+        monkeypatch.setattr(gate_mod, "_weekly_gate_allows_validation_entries", lambda: True)
+
+        allowed = gate_mod._is_controlled_paper_validation_context(
+            strategy="spy_put_credit",
+            context={
+                "paper_trading": True,
+                "controlled_paper_validation_entry": True,
+                "validation_entry_quantity": 1,
+            },
+        )
+
+        assert allowed is True
+
+    def test_ml_halt_still_blocks_live_or_scaling_entries(self, monkeypatch, tmp_path):
         """Validation reset must not become a live/scaling bypass."""
         import json
 
@@ -405,9 +416,7 @@ class TestValidateTradeMandatory:
         assert "ml gate blocked" in result.reason.lower()
         assert any("trading_halt: BLOCKED" in check for check in result.checks_performed)
 
-    def test_validation_reset_does_not_bypass_manual_halt(
-        self, monkeypatch, tmp_path
-    ):
+    def test_validation_reset_does_not_bypass_manual_halt(self, monkeypatch, tmp_path):
         """Only the legacy ML win-rate sentinel is bypassable."""
         import json
 

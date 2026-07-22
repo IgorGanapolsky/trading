@@ -104,6 +104,9 @@ def resolve_strategy_family(strategy: str) -> str:
     options_tokens = (
         "iron_condor",
         "credit_spread",
+        "spy_put_credit",
+        "put_credit",
+        "bull_put",
         "put_spread",
         "call_spread",
         "vertical_spread",

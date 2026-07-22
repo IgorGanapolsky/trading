@@ -1,0 +1,66 @@
+{
+  "clean": true,
+  "audited_at": "2026-07-22T21:39:36.917553+00:00",
+  "authority": "broker_filled_mleg_orders",
+  "option_leg_count": 6,
+  "max_abs_qty": 2.0,
+  "expiries": ["260821"],
+  "findings": [],
+  "legs": [
+    {
+      "symbol": "SPY260821C00776000",
+      "root": "SPY",
+      "expiry_ymd": "260821",
+      "right": "C",
+      "strike": 776.0,
+      "qty": -2.0
+    },
+    {
+      "symbol": "SPY260821C00781000",
+      "root": "SPY",
+      "expiry_ymd": "260821",
+      "right": "C",
+      "strike": 781.0,
+      "qty": 2.0
+    },
+    {
+      "symbol": "SPY260821P00695000",
+      "root": "SPY",
+      "expiry_ymd": "260821",
+      "right": "P",
+      "strike": 695.0,
+      "qty": 1.0
+    },
+    {
+      "symbol": "SPY260821P00700000",
+      "root": "SPY",
+      "expiry_ymd": "260821",
+      "right": "P",
+      "strike": 700.0,
+      "qty": -1.0
+    },
+    {
+      "symbol": "SPY260821P00703000",
+      "root": "SPY",
+      "expiry_ymd": "260821",
+      "right": "P",
+      "strike": 703.0,
+      "qty": 1.0
+    },
+    {
+      "symbol": "SPY260821P00708000",
+      "root": "SPY",
+      "expiry_ymd": "260821",
+      "right": "P",
+      "strike": 708.0,
+      "qty": -1.0
+    }
+  ],
+  "block_reasons": [],
+  "reconstruction": {
+    "recovered_ic_structures": 2,
+    "unresolved": {},
+    "pending_option_orders": 0,
+    "status": "manage_exits_only"
+  }
+}

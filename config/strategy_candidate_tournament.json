@@ -1,0 +1,39 @@
+{
+  "incumbent_strategy_id": "ic_simple_spy_15_delta",
+  "active_paper_candidate_id": "spy_put_credit",
+  "promotion_thresholds": {
+    "min_closed_trades": 30,
+    "min_expectancy_per_trade": 1.0,
+    "min_profit_factor": 1.05,
+    "min_total_realized_pnl": 1.0,
+    "max_drawdown_pct": 10.0
+  },
+  "default_when_no_candidate_passes": "RETIRE_INCUMBENT_PAPER_VALIDATE_SUCCESSOR",
+  "candidates": [
+    {
+      "strategy_id": "spy_put_credit",
+      "hypothesis": "Replacing the failed four-leg SPY iron condor with one defined-risk bull put credit may retain the long-term equity-drift thesis while halving leg complexity and removing the losing call side.",
+      "rules": {
+        "universe": "SPY put options",
+        "entry": "Sell one 30-45 DTE SPY put at 0.15 target delta (0.10-0.22 band) and buy one put exactly $5 lower; live-delta provenance and at least $0.50 net credit are required.",
+        "exit": "Take profit at 25% of credit, stop when loss reaches 200% of entry credit, force exit by 7 DTE, and allow no discretionary exit before 24 hours.",
+        "risk": "One contract per structure, at most one new structure per day, at most two concurrent structures, paper only, and block unless filled broker orders plus active successor journals explain every live option leg.",
+        "regime": "Validation hypothesis only; no edge or North Star contribution is claimed before the clean promotion gate passes."
+      },
+      "broker_requirements": {
+        "asset_class": "option",
+        "legs": 2,
+        "minimum_options_level": 3,
+        "requires_paper_trading": true
+      },
+      "evidence": {
+        "closed_trades": 0,
+        "expectancy_per_trade": 0.0,
+        "profit_factor": 0.0,
+        "total_realized_pnl": 0.0,
+        "max_drawdown_pct": null,
+        "ledger_clean": true
+      }
+    }
+  ]
+}

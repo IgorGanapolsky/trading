@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Surgically reduce open option inventory to match journaled IC entries.
+"""Surgically reduce broker-confirmed excess option inventory.
 
-Unlike close_orphan_legs.py (which closes ALL legs when len!=4), this only
-closes *excess* vs data/ic_entries.json:
+Execution reconstructs active iron condors from filled MLEG opening orders.
+This matters when two valid structures share an expiry or vertical: the legacy
+``data/ic_entries.json`` key can represent only one structure per expiry and
+must never be the authority for a destructive close.  Any unexplained live leg
+or pending option order blocks execution.
 
-- Extra contracts beyond journaled qty (e.g. call short -2 when journal says 1)
-- Entire verticals not in the journal (e.g. orphan put 695/700)
-
-Keeps the journaled 1-lot structure so residual IC can still be managed.
+Journal/state comparison remains available as a non-authoritative dry-run.
 
 Usage:
   .venv/bin/python scripts/reconcile_open_inventory.py --dry-run
@@ -23,6 +23,7 @@ import re
 import sys
 from collections import defaultdict
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -84,27 +85,9 @@ def _expected_from_ic_entries(entries: dict) -> dict[str, float]:
 
 
 def _expected_from_put_credit(entries: dict) -> dict[str, float]:
-    expected: dict[str, float] = {}
-    for key, entry in entries.items():
-        if not isinstance(entry, dict) or not key.startswith("PCS_"):
-            continue
-        strikes = entry.get("strikes") or {}
-        try:
-            qty = abs(float(entry.get("quantity") or 1))
-            sp = float(strikes["short_put"])
-            lp = float(strikes["long_put"])
-        except (KeyError, TypeError, ValueError):
-            continue
-        ymd = key.replace("PCS_", "")
-        if len(ymd) != 6:
-            continue
+    from scripts.residual_ic_manager import active_pcs_expected
 
-        def occ(right: str, strike: float) -> str:
-            return f"SPY{ymd}{right}{int(strike * 1000):08d}"
-
-        expected[occ("P", sp)] = expected.get(occ("P", sp), 0.0) - qty
-        expected[occ("P", lp)] = expected.get(occ("P", lp), 0.0) + qty
-    return expected
+    return active_pcs_expected(entries)
 
 
 def plan_reductions(actual_legs: list[dict], expected: dict[str, float]) -> list[dict]:
@@ -169,7 +152,7 @@ def load_legs_from_state() -> list[dict]:
     return legs
 
 
-def load_legs_from_broker():
+def load_legs_from_broker() -> tuple[Any, list[dict], list[Any]]:
     from alpaca.trading.client import TradingClient
     from src.utils.alpaca_client import get_alpaca_credentials
 
@@ -177,12 +160,83 @@ def load_legs_from_broker():
     if not key or not secret:
         raise RuntimeError("Alpaca credentials missing")
     client = TradingClient(key, secret, paper=True)
+    positions = list(client.get_all_positions())
     legs = []
-    for p in client.get_all_positions():
+    for p in positions:
         parsed = _parse(str(p.symbol), float(p.qty))
         if parsed:
             legs.append(parsed)
-    return client, legs
+    return client, legs, positions
+
+
+def _expected_from_recovered_structures(structures: list[dict[str, Any]]) -> dict[str, float]:
+    """Aggregate signed quantities from broker-confirmed opening structures."""
+
+    expected: dict[str, float] = defaultdict(float)
+    for structure in structures:
+        for leg in structure.get("legs") or []:
+            symbol = str(leg.get("symbol") or "")
+            if symbol:
+                expected[symbol] += float(leg.get("qty") or 0)
+    return dict(expected)
+
+
+def _is_option_order(order: Any) -> bool:
+    symbols = [str(getattr(leg, "symbol", "") or "") for leg in getattr(order, "legs", None) or []]
+    parent_symbol = str(getattr(order, "symbol", "") or "")
+    if parent_symbol:
+        symbols.append(parent_symbol)
+    return any(_parse(symbol, 0) is not None for symbol in symbols)
+
+
+def broker_confirmed_expected(
+    positions: list[Any],
+    all_orders: list[Any],
+    open_orders: list[Any],
+    pcs_expected: dict[str, float],
+) -> tuple[dict[str, float], dict[str, Any]]:
+    """Resolve execution authority or raise instead of guessing.
+
+    Filled IC opening orders explain the legacy inventory.  Remaining position
+    quantities must exactly match the independent put-credit journal.  A
+    pending option order makes the position snapshot unstable, so execution is
+    blocked until the broker settles or cancels it.
+    """
+
+    from scripts.residual_ic_manager import recover_active_structures
+
+    pending = [
+        str(getattr(order, "id", "") or getattr(order, "client_order_id", "") or "unknown")
+        for order in open_orders
+        if _is_option_order(order)
+    ]
+    if pending:
+        raise RuntimeError(f"pending option orders make inventory unstable: {pending}")
+
+    structures, unresolved = recover_active_structures(positions, all_orders)
+    symbols = set(unresolved) | set(pcs_expected)
+    mismatches = {
+        symbol: {
+            "unresolved_broker_qty": float(unresolved.get(symbol, 0.0)),
+            "journaled_pcs_qty": float(pcs_expected.get(symbol, 0.0)),
+        }
+        for symbol in sorted(symbols)
+        if abs(float(unresolved.get(symbol, 0.0)) - float(pcs_expected.get(symbol, 0.0)))
+        > 1e-9
+    }
+    if mismatches:
+        raise RuntimeError(f"unexplained broker inventory: {mismatches}")
+
+    expected = _expected_from_recovered_structures(structures)
+    for symbol, qty in pcs_expected.items():
+        expected[symbol] = expected.get(symbol, 0.0) + qty
+    evidence = {
+        "source": "broker_filled_orders_plus_pcs_journal",
+        "recovered_ic_structures": len(structures),
+        "unresolved_matched_to_pcs": unresolved,
+        "pending_option_orders": [],
+    }
+    return expected, evidence
 
 
 def _quote_limit(client, symbol: str, side: str) -> float | None:
@@ -362,25 +416,53 @@ def main() -> int:
     args = parser.parse_args()
     dry = not args.execute_paper
 
+    if args.execute_paper and args.from_state:
+        logger.error("Execution requires live broker positions and filled-order reconstruction")
+        return 2
+
     entries: dict = {}
     if ENTRIES.exists():
         entries = json.loads(ENTRIES.read_text(encoding="utf-8"))
-    expected = _expected_from_ic_entries(entries if isinstance(entries, dict) else {})
+    journal_expected = _expected_from_ic_entries(entries if isinstance(entries, dict) else {})
+    pcs_expected: dict[str, float] = {}
     if PCS_ENTRIES.exists():
         pcs = json.loads(PCS_ENTRIES.read_text(encoding="utf-8"))
         if isinstance(pcs, dict):
-            for k, v in _expected_from_put_credit(pcs).items():
-                expected[k] = expected.get(k, 0.0) + v
+            pcs_expected = _expected_from_put_credit(pcs)
+            for k, v in pcs_expected.items():
+                journal_expected[k] = journal_expected.get(k, 0.0) + v
 
     client = None
+    evidence: dict[str, Any] = {"source": "journal_state_dry_run"}
     if args.from_state:
         legs = load_legs_from_state()
+        expected = journal_expected
     else:
         try:
-            client, legs = load_legs_from_broker()
+            client, legs, positions = load_legs_from_broker()
         except Exception as exc:
-            logger.warning("Broker load failed (%s); falling back to system_state", exc)
+            if args.execute_paper:
+                logger.error("Live broker inventory unavailable; execution blocked: %s", exc)
+                return 2
+            logger.warning(
+                "Broker load failed (%s); using untrusted state for dry-run only", exc
+            )
             legs = load_legs_from_state()
+            expected = journal_expected
+            evidence = {"source": "journal_state_fallback", "broker_error": str(exc)}
+        else:
+            from scripts.residual_ic_manager import _get_orders
+
+            try:
+                expected, evidence = broker_confirmed_expected(
+                    positions,
+                    _get_orders(client),
+                    _get_orders(client, open_only=True),
+                    pcs_expected,
+                )
+            except RuntimeError as exc:
+                logger.error("Broker-confirmed reconciliation blocked: %s", exc)
+                return 2
 
     if not legs:
         logger.info("No open option legs")
@@ -397,7 +479,7 @@ def main() -> int:
 
     actions = plan_reductions(legs, expected)
     if not actions:
-        logger.info("Already matches journal — no reductions needed")
+        logger.info("Inventory matches %s — no reductions needed", evidence["source"])
         return 0
 
     logger.info("Planned reductions: %s", len(actions))
@@ -406,15 +488,15 @@ def main() -> int:
 
     out = ROOT / "data" / "audit" / "inventory_reconcile_plan.json"
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps({"actions": actions, "dry_run": dry}, indent=2) + "\n")
+    out.write_text(
+        json.dumps({"actions": actions, "dry_run": dry, "evidence": evidence}, indent=2) + "\n"
+    )
     logger.info("Plan written %s", out)
 
     if dry:
         logger.info("DRY RUN — no orders (pass --execute-paper to submit paper closes)")
         return 0
 
-    if client is None:
-        client, _ = load_legs_from_broker()
     n = execute_actions(client, actions, dry_run=False)
     logger.info("Submitted %s close orders", n)
     return 0 if n else 1
