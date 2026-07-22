@@ -1266,6 +1266,54 @@ def main():
                 )
                 return {"success": False, "reason": halt_state.reason}
 
+        # Open-inventory hygiene before any new risk (1-lot / journal match).
+        # Dirty books (e.g. SPY 2026-08-21 2-lot call + orphan put) must not get
+        # additional structures stacked on top during validation_reset.
+        try:
+            from src.core.trading_constants import (
+                MAX_CONCURRENT_IRON_CONDORS,
+                MAX_CONTRACTS_PER_TRADE,
+            )
+            from src.risk.open_inventory_audit import (
+                audit_from_files,
+                write_audit_report,
+            )
+
+            inventory = audit_from_files(
+                PROJECT_ROOT,
+                max_contracts_per_trade=float(MAX_CONTRACTS_PER_TRADE),
+                max_concurrent_iron_condors=int(MAX_CONCURRENT_IRON_CONDORS),
+            )
+            report_path = PROJECT_ROOT / "data" / "audit" / "open_inventory_latest.json"
+            write_audit_report(inventory, report_path)
+            if not inventory.clean:
+                reason = (
+                    "UNCLEAN_INVENTORY: "
+                    + "; ".join(inventory.block_reasons()[:3])
+                )
+                logger.error("🛑 %s", reason)
+                logger.error("   Audit report: %s", report_path)
+                telemetry.update_ticker_decision(
+                    ticker,
+                    gate=0,
+                    status="REJECT",
+                    rejection_reason=reason,
+                    indicators={
+                        "inventory_clean": False,
+                        "findings": [f.code for f in inventory.findings],
+                    },
+                )
+                return {"success": False, "reason": reason}
+            logger.info(
+                "✅ Open inventory clean (legs=%s expiries=%s)",
+                inventory.option_leg_count,
+                inventory.expiries,
+            )
+        except Exception as inv_err:
+            logger.error("⚠️ Inventory audit error (fail closed): %s", inv_err)
+            if not args.force:
+                return {"success": False, "reason": f"Inventory audit error: {inv_err}"}
+
         # ExecutionAgent enforces VIX gate, DTE gate, and daily throttle.
         # Thursday-only gate was removed 2026-05-20 (Bonferroni adj_p=0.190).
         try:
@@ -1300,6 +1348,20 @@ def main():
 
             logger.info("✅ High-Alpha Validation PASSED.")
 
+        except ModuleNotFoundError as alpha_err:
+            # Common when operators run system python instead of .venv (alpaca-py).
+            venv_py = PROJECT_ROOT / ".venv" / "bin" / "python"
+            logger.error(f"⚠️ High-Alpha Gate Error: {alpha_err}")
+            logger.error(
+                "   Missing dependency in %s. Prefer: %s scripts/iron_condor_trader.py --dry-run",
+                sys.executable,
+                venv_py if venv_py.exists() else ".venv/bin/python",
+            )
+            if not args.force:
+                return {
+                    "success": False,
+                    "reason": f"Safety Agent Error: {alpha_err}",
+                }
         except Exception as alpha_err:
             logger.error(f"⚠️ High-Alpha Gate Error: {alpha_err}")
             if not args.force:
