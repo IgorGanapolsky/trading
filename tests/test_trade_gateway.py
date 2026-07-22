@@ -10,6 +10,7 @@ Tests key gateway functionality:
 These tests ensure the gateway properly rejects risky trades.
 """
 
+import json
 from datetime import datetime as real_datetime
 from unittest.mock import MagicMock, patch
 
@@ -589,6 +590,75 @@ class TestTradeGatewayLotSizeCap:
         )
         decision = gateway.evaluate(request)
         assert RejectionReason.LOT_SIZE_EXCEEDED not in decision.rejection_reasons
+
+
+class TestTradeGatewayUncleanInventory:
+    """Block new risk when broker book does not match journaled 1-lot IC."""
+
+    def _make_gateway(self, positions=None):
+        gw = TradeGateway(executor=None, paper=True)
+        gw.executor = MockExecutor(account_equity=100_000, positions=positions or [])
+        return gw
+
+    def test_new_entry_blocked_on_dirty_open_book(self, tmp_path, monkeypatch):
+        dirty = [
+            {"symbol": "SPY260821C00776000", "qty": -2, "unrealized_pl": 0},
+            {"symbol": "SPY260821C00781000", "qty": 2, "unrealized_pl": 0},
+            {"symbol": "SPY260821P00703000", "qty": 1, "unrealized_pl": 0},
+            {"symbol": "SPY260821P00708000", "qty": -1, "unrealized_pl": 0},
+            {"symbol": "SPY260821P00695000", "qty": 1, "unrealized_pl": 0},
+            {"symbol": "SPY260821P00700000", "qty": -1, "unrealized_pl": 0},
+        ]
+        gateway = self._make_gateway(positions=dirty)
+        entries = {
+            "IC_260821": {
+                "quantity": 1,
+                "strikes": {
+                    "short_put": 708.0,
+                    "long_put": 703.0,
+                    "short_call": 776.0,
+                    "long_call": 781.0,
+                },
+            }
+        }
+        entries_path = tmp_path / "ic_entries.json"
+        entries_path.write_text(json.dumps(entries), encoding="utf-8")
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "data").mkdir()
+        (tmp_path / "data" / "ic_entries.json").write_text(json.dumps(entries), encoding="utf-8")
+
+        request = TradeRequest(
+            symbol="SPY",
+            side="sell",
+            quantity=1,
+            source="test",
+            is_option=True,
+            strategy_type="iron_condor",
+        )
+        decision = gateway.evaluate(request)
+        assert not decision.approved
+        assert RejectionReason.UNCLEAN_INVENTORY in decision.rejection_reasons
+
+    def test_buy_to_close_allowed_when_inventory_dirty(self, tmp_path, monkeypatch):
+        symbol = "SPY260821C00776000"
+        dirty = [
+            {"symbol": symbol, "qty": -2, "unrealized_pl": 0},
+            {"symbol": "SPY260821C00781000", "qty": 2, "unrealized_pl": 0},
+        ]
+        gateway = self._make_gateway(positions=dirty)
+        (tmp_path / "data").mkdir()
+        (tmp_path / "data" / "ic_entries.json").write_text("{}", encoding="utf-8")
+        monkeypatch.chdir(tmp_path)
+
+        request = TradeRequest(
+            symbol=symbol,
+            side="buy",  # buy-to-close excess short
+            quantity=1,
+            source="test",
+            is_option=True,
+        )
+        decision = gateway.evaluate(request)
+        assert RejectionReason.UNCLEAN_INVENTORY not in decision.rejection_reasons
 
 
 class TestTradeGatewayDecisionTelemetry:

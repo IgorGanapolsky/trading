@@ -116,6 +116,10 @@ class RejectionReason(Enum):
         f"Per-trade contracts exceed MAX_CONTRACTS_PER_TRADE={_MAX_CONTRACTS_PER_TRADE} "
         f"(controlled-experiment.md: 1-lot only)"
     )
+    UNCLEAN_INVENTORY = (
+        "Open option inventory is unclean (lot/orphan/journal mismatch) — "
+        "reconcile broker book before new entries"
+    )
     BEHAVIORAL_GUARD_BLOCKED = "Behavioral guard blocked trade (FOMO/cooling/blacklist)"
 
 
@@ -864,6 +868,83 @@ class TradeGateway:
                             "lot_size_cap": self.MAX_CONTRACTS_PER_TRADE,
                             "requested_quantity": requested_qty,
                             "rule": "controlled-experiment.md: 1-lot only",
+                        },
+                    )
+
+            # Check 2c: Open inventory must match journaled 1-lot ICs before any
+            # new risk is added. SPY 2026-08-21 had journal qty=1 but broker showed
+            # 2-lot calls + an orphan put vertical — validation would keep stacking
+            # on garbage without this gate.
+            #
+            # Closing / reducing existing legs is ALWAYS allowed so the guardian
+            # can clean a dirty book (buy-to-close short, sell-to-close long).
+            def _pos_qty(row: dict[str, Any]) -> float:
+                try:
+                    return float(row.get("qty", row.get("quantity", 0)) or 0)
+                except (TypeError, ValueError):
+                    return 0.0
+
+            existing_qty = next(
+                (
+                    _pos_qty(p)
+                    for p in positions
+                    if p.get("symbol") == request.symbol and abs(_pos_qty(p)) > 1e-9
+                ),
+                0.0,
+            )
+            is_reducing = (
+                existing_qty != 0.0
+                and (
+                    (request.side.lower() == "buy" and existing_qty < 0)
+                    or (request.side.lower() == "sell" and existing_qty > 0)
+                )
+            )
+            if not is_reducing:
+                try:
+                    from src.risk.open_inventory_audit import audit_open_inventory
+
+                    ic_entries: dict[str, Any] = {}
+                    entries_path = Path("data/ic_entries.json")
+                    if entries_path.exists():
+                        raw_entries = json.loads(entries_path.read_text(encoding="utf-8"))
+                        if isinstance(raw_entries, dict):
+                            ic_entries = raw_entries
+                    inventory = audit_open_inventory(
+                        positions,
+                        ic_entries,
+                        max_contracts_per_trade=float(self.MAX_CONTRACTS_PER_TRADE),
+                        max_concurrent_iron_condors=int(self.MAX_CONCURRENT_ICS),
+                    )
+                    if not inventory.clean:
+                        logger.error(
+                            "🚨 UNCLEAN INVENTORY: %s",
+                            "; ".join(inventory.block_reasons()[:3]),
+                        )
+                        return GatewayDecision(
+                            approved=False,
+                            request=request,
+                            rejection_reasons=[RejectionReason.UNCLEAN_INVENTORY],
+                            risk_score=1.0,
+                            metadata={
+                                "circuit_breaker": "UNCLEAN_INVENTORY",
+                                "block_reasons": inventory.block_reasons(),
+                                "findings": [f.code for f in inventory.findings],
+                                "action": (
+                                    "Reconcile broker book to ic_entries (1-lot IC only) "
+                                    "via guardian/orphan path before new entries"
+                                ),
+                            },
+                        )
+                except Exception as inv_exc:  # noqa: BLE001 — fail closed on audit errors
+                    logger.error("🚨 Inventory audit failed closed: %s", inv_exc)
+                    return GatewayDecision(
+                        approved=False,
+                        request=request,
+                        rejection_reasons=[RejectionReason.UNCLEAN_INVENTORY],
+                        risk_score=1.0,
+                        metadata={
+                            "circuit_breaker": "UNCLEAN_INVENTORY",
+                            "error": str(inv_exc),
                         },
                     )
 
