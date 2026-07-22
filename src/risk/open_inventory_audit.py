@@ -138,9 +138,40 @@ def _expected_structure_qty_map(entry: dict[str, Any]) -> dict[tuple[str, float]
     return mapping
 
 
+def _expected_put_credit_qty_map(entry: dict[str, Any]) -> dict[tuple[str, float], float]:
+    """Map (right, strike) -> signed qty from a journaled bull-put credit."""
+
+    strikes = entry.get("strikes") or {}
+    try:
+        qty = abs(float(entry.get("quantity") or 1))
+        short_put = float(strikes["short_put"])
+        long_put = float(strikes["long_put"])
+    except (KeyError, TypeError, ValueError):
+        return {}
+    if qty <= 0:
+        qty = 1.0
+    return {("P", short_put): -qty, ("P", long_put): qty}
+
+
+def _normalize_expiry_ymd(value: Any) -> str:
+    text = str(value or "").strip().replace("-", "")
+    if len(text) == 8 and text.startswith("20"):
+        return text[2:]
+    return text if len(text) == 6 and text.isdigit() else ""
+
+
+def _put_credit_expiry(key: str, entry: dict[str, Any]) -> str:
+    explicit = _normalize_expiry_ymd(entry.get("expiry"))
+    if explicit:
+        return explicit
+    match = re.match(r"^PCS_(\d{6})(?:_|$)", str(key))
+    return match.group(1) if match else ""
+
+
 def audit_open_inventory(
     positions: list[dict[str, Any]] | None,
     ic_entries: dict[str, Any] | None,
+    put_credit_entries: dict[str, Any] | None = None,
     *,
     max_contracts_per_trade: float = 1.0,
     max_concurrent_iron_condors: int = 2,
@@ -149,28 +180,10 @@ def audit_open_inventory(
     legs = normalize_positions(positions)
     findings: list[InventoryFinding] = []
     entries = ic_entries if isinstance(ic_entries, dict) else {}
+    pcs_entries = put_credit_entries if isinstance(put_credit_entries, dict) else {}
 
     max_abs = max((abs(leg.qty) for leg in legs), default=0.0)
     expiries = sorted({leg.expiry_ymd for leg in legs})
-
-    # Global lot-size rule: any open leg above 1-lot violates validation hygiene.
-    if max_abs > max_contracts_per_trade + 1e-9:
-        offenders = [
-            {"symbol": leg.symbol, "qty": leg.qty}
-            for leg in legs
-            if abs(leg.qty) > max_contracts_per_trade + 1e-9
-        ]
-        findings.append(
-            InventoryFinding(
-                code="LOT_SIZE_EXCEEDED",
-                severity="block",
-                message=(
-                    f"Open option leg qty exceeds max_contracts_per_trade="
-                    f"{max_contracts_per_trade} (max_abs_qty={max_abs})"
-                ),
-                details={"offenders": offenders, "max_abs_qty": max_abs},
-            )
-        )
 
     # Too many distinct expiries with structures can still be OK (max concurrent ICs),
     # but > max concurrent expiries is a block for new entries.
@@ -193,17 +206,25 @@ def audit_open_inventory(
 
     for expiry_ymd, exp_legs in sorted(by_expiry.items()):
         key = _ic_key(expiry_ymd)
+        journaled: list[tuple[str, dict[str, Any], str]] = []
         entry = entries.get(key)
-        if not isinstance(entry, dict):
-            # Legacy keys sometimes used IC_YYYYMMDD — try nothing else; CI already
-            # covers missing keys. Treat as block for new entries (exit loop blind).
+        if isinstance(entry, dict):
+            journaled.append((key, entry, "iron_condor"))
+        for pcs_key, pcs_entry in pcs_entries.items():
+            if (
+                isinstance(pcs_entry, dict)
+                and _put_credit_expiry(str(pcs_key), pcs_entry) == expiry_ymd
+            ):
+                journaled.append((str(pcs_key), pcs_entry, "spy_put_credit"))
+
+        if not journaled:
             findings.append(
                 InventoryFinding(
                     code="UNJOURNALED_EXPIRY",
                     severity="block",
                     message=(
-                        f"Open option expiry {expiry_ymd} has no {key} record in "
-                        "ic_entries.json — exit loop cannot evaluate stop/target"
+                        f"Open option expiry {expiry_ymd} has no IC or PCS journal record — "
+                        "exit managers cannot evaluate stop/target"
                     ),
                     expiry_ymd=expiry_ymd,
                     details={"leg_symbols": [leg.symbol for leg in exp_legs]},
@@ -211,7 +232,35 @@ def audit_open_inventory(
             )
             continue
 
-        expected = _expected_structure_qty_map(entry)
+        expected: dict[tuple[str, float], float] = {}
+        journal_keys: list[str] = []
+        for journal_key, journal_entry, family in journaled:
+            journal_keys.append(journal_key)
+            try:
+                entry_qty = abs(float(journal_entry.get("quantity") or 1))
+            except (TypeError, ValueError):
+                entry_qty = 1.0
+            if entry_qty > max_contracts_per_trade + 1e-9:
+                findings.append(
+                    InventoryFinding(
+                        code="LOT_SIZE_EXCEEDED",
+                        severity="block",
+                        message=(
+                            f"{journal_key} quantity={entry_qty} exceeds "
+                            f"max_contracts_per_trade={max_contracts_per_trade}"
+                        ),
+                        expiry_ymd=expiry_ymd,
+                        details={"journal_key": journal_key, "quantity": entry_qty},
+                    )
+                )
+            mapping = (
+                _expected_put_credit_qty_map(journal_entry)
+                if family == "spy_put_credit"
+                else _expected_structure_qty_map(journal_entry)
+            )
+            for leg_key, qty in mapping.items():
+                expected[leg_key] = expected.get(leg_key, 0.0) + qty
+
         actual: dict[tuple[str, float], float] = {}
         for leg in exp_legs:
             k = (leg.right, leg.strike)
@@ -222,12 +271,40 @@ def audit_open_inventory(
                 InventoryFinding(
                     code="JOURNAL_STRIKES_INCOMPLETE",
                     severity="block",
-                    message=f"{key} exists but strikes are incomplete",
+                    message=f"Expiry {expiry_ymd} journal records have incomplete strikes",
                     expiry_ymd=expiry_ymd,
-                    details={"entry_keys": sorted(entry.keys())},
+                    details={"journal_keys": journal_keys},
                 )
             )
             continue
+
+        # Aggregated broker quantities above one lot are valid only when the
+        # journal contains enough distinct one-lot structures to explain them.
+        lot_offenders = []
+        for leg_key, actual_qty in actual.items():
+            explained_qty = abs(expected.get(leg_key, 0.0))
+            if abs(actual_qty) > max(max_contracts_per_trade, explained_qty) + 1e-9:
+                lot_offenders.append(
+                    {
+                        "right": leg_key[0],
+                        "strike": leg_key[1],
+                        "actual_qty": actual_qty,
+                        "journal_qty": expected.get(leg_key, 0.0),
+                    }
+                )
+        if lot_offenders:
+            findings.append(
+                InventoryFinding(
+                    code="LOT_SIZE_EXCEEDED",
+                    severity="block",
+                    message=(
+                        f"Expiry {expiry_ymd} has aggregated leg quantity not explained "
+                        "by distinct one-lot journal records"
+                    ),
+                    expiry_ymd=expiry_ymd,
+                    details={"offenders": lot_offenders},
+                )
+            )
 
         # Qty / composition mismatch vs journaled 4-leg structure
         extras = []
@@ -241,7 +318,7 @@ def audit_open_inventory(
                         code="QTY_MISMATCH",
                         severity="block",
                         message=(
-                            f"{key}: {k[0]}{k[1]:g} qty={qty} does not match "
+                            f"Expiry {expiry_ymd}: {k[0]}{k[1]:g} qty={qty} does not match "
                             f"journaled qty={exp_qty}"
                         ),
                         expiry_ymd=expiry_ymd,
@@ -265,7 +342,7 @@ def audit_open_inventory(
                     code="EXTRA_LEGS",
                     severity="block",
                     message=(
-                        f"{key}: {len(extras)} open leg(s) not in journaled structure "
+                        f"Expiry {expiry_ymd}: {len(extras)} open leg(s) not in journaled structure "
                         f"(orphan verticals or residual risk)"
                     ),
                     expiry_ymd=expiry_ymd,
@@ -277,23 +354,24 @@ def audit_open_inventory(
                 InventoryFinding(
                     code="MISSING_LEGS",
                     severity="block",
-                    message=f"{key}: journaled legs missing from broker book",
+                    message=f"Expiry {expiry_ymd}: journaled legs missing from broker book",
                     expiry_ymd=expiry_ymd,
                     details={"missing": missing},
                 )
             )
 
-        # Same-expiry multi-structure signal: more than 4 legs or extra shorts
+        # Same-expiry overstack is based on journaled structure quantity, not
+        # symbol count; valid PCS/IC structures may share an expiry.
         short_units = sum(abs(leg.qty) for leg in exp_legs if leg.qty < 0)
-        if short_units > max_contracts_per_trade * 2 + 1e-9:
-            # One IC has 2 short legs (put+call) * qty
+        expected_short_units = sum(abs(qty) for qty in expected.values() if qty < 0)
+        if short_units > expected_short_units + 1e-9:
             findings.append(
                 InventoryFinding(
                     code="SAME_EXPIRY_OVERSTACK",
                     severity="block",
                     message=(
                         f"Expiry {expiry_ymd}: short-leg units={short_units} exceed "
-                        f"one 1-lot iron condor (expected <= {max_contracts_per_trade * 2})"
+                        f"journaled units={expected_short_units}"
                     ),
                     expiry_ymd=expiry_ymd,
                     details={"short_units": short_units, "leg_count": len(exp_legs)},
@@ -345,9 +423,17 @@ def audit_from_files(
         if isinstance(raw, dict):
             entries = raw
 
+    put_credit_entries: dict[str, Any] = {}
+    put_credit_path = root / "data" / "put_credit_entries.json"
+    if put_credit_path.exists():
+        raw = json.loads(put_credit_path.read_text(encoding="utf-8"))
+        if isinstance(raw, dict):
+            put_credit_entries = raw
+
     return audit_open_inventory(
         positions,
         entries,
+        put_credit_entries,
         max_contracts_per_trade=max_contracts_per_trade,
         max_concurrent_iron_condors=max_concurrent_iron_condors,
     )

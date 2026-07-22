@@ -757,6 +757,9 @@ class TestE2EPipeline:
                 "src.utils.regime_detector.RegimeDetector.detect_live_regime_with_prediction",
                 return_value=_Snapshot(),
             ),
+            # This legacy pipeline test exercises credit construction directly;
+            # production remains killed by separate active-strategy tests.
+            patch("src.core.active_strategy.entry_block_message", return_value=None),
             patch.object(Path, "read_text", _patched_read),
             patch("scripts.ic_simple._fomc_blackout_reason", return_value=None),
         ):
@@ -849,6 +852,8 @@ class TestE2EPipeline:
                 "src.utils.regime_detector.RegimeDetector.detect_live_regime_with_prediction",
                 return_value=_Snapshot(),
             ),
+            # Isolate the same-expiry gate even though production IC entry is killed.
+            patch("src.core.active_strategy.entry_block_message", return_value=None),
             patch.object(Path, "read_text", _patched_read),
             patch("scripts.ic_simple._fomc_blackout_reason", return_value=None),
         ):

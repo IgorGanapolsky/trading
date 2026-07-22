@@ -1,0 +1,144 @@
+{
+  "clean": false,
+  "audited_at": "2026-07-22T21:04:14.937829+00:00",
+  "option_leg_count": 6,
+  "max_abs_qty": 2.0,
+  "expiries": [
+    "260821"
+  ],
+  "findings": [
+    {
+      "code": "LOT_SIZE_EXCEEDED",
+      "severity": "block",
+      "message": "Expiry 260821 has aggregated leg quantity not explained by distinct one-lot journal records",
+      "expiry_ymd": "260821",
+      "details": {
+        "offenders": [
+          {
+            "right": "C",
+            "strike": 776.0,
+            "actual_qty": -2.0,
+            "journal_qty": -1.0
+          },
+          {
+            "right": "C",
+            "strike": 781.0,
+            "actual_qty": 2.0,
+            "journal_qty": 1.0
+          }
+        ]
+      }
+    },
+    {
+      "code": "QTY_MISMATCH",
+      "severity": "block",
+      "message": "Expiry 260821: C776 qty=-2.0 does not match journaled qty=-1.0",
+      "expiry_ymd": "260821",
+      "details": {
+        "right": "C",
+        "strike": 776.0,
+        "actual_qty": -2.0,
+        "journal_qty": -1.0
+      }
+    },
+    {
+      "code": "QTY_MISMATCH",
+      "severity": "block",
+      "message": "Expiry 260821: C781 qty=2.0 does not match journaled qty=1.0",
+      "expiry_ymd": "260821",
+      "details": {
+        "right": "C",
+        "strike": 781.0,
+        "actual_qty": 2.0,
+        "journal_qty": 1.0
+      }
+    },
+    {
+      "code": "EXTRA_LEGS",
+      "severity": "block",
+      "message": "Expiry 260821: 2 open leg(s) not in journaled structure (orphan verticals or residual risk)",
+      "expiry_ymd": "260821",
+      "details": {
+        "extras": [
+          {
+            "right": "P",
+            "strike": 695.0,
+            "qty": 1.0
+          },
+          {
+            "right": "P",
+            "strike": 700.0,
+            "qty": -1.0
+          }
+        ]
+      }
+    },
+    {
+      "code": "SAME_EXPIRY_OVERSTACK",
+      "severity": "block",
+      "message": "Expiry 260821: short-leg units=4.0 exceed journaled units=2.0",
+      "expiry_ymd": "260821",
+      "details": {
+        "short_units": 4.0,
+        "leg_count": 6
+      }
+    }
+  ],
+  "legs": [
+    {
+      "symbol": "SPY260821C00776000",
+      "root": "SPY",
+      "expiry_ymd": "260821",
+      "right": "C",
+      "strike": 776.0,
+      "qty": -2.0
+    },
+    {
+      "symbol": "SPY260821C00781000",
+      "root": "SPY",
+      "expiry_ymd": "260821",
+      "right": "C",
+      "strike": 781.0,
+      "qty": 2.0
+    },
+    {
+      "symbol": "SPY260821P00695000",
+      "root": "SPY",
+      "expiry_ymd": "260821",
+      "right": "P",
+      "strike": 695.0,
+      "qty": 1.0
+    },
+    {
+      "symbol": "SPY260821P00700000",
+      "root": "SPY",
+      "expiry_ymd": "260821",
+      "right": "P",
+      "strike": 700.0,
+      "qty": -1.0
+    },
+    {
+      "symbol": "SPY260821P00703000",
+      "root": "SPY",
+      "expiry_ymd": "260821",
+      "right": "P",
+      "strike": 703.0,
+      "qty": 1.0
+    },
+    {
+      "symbol": "SPY260821P00708000",
+      "root": "SPY",
+      "expiry_ymd": "260821",
+      "right": "P",
+      "strike": 708.0,
+      "qty": -1.0
+    }
+  ],
+  "block_reasons": [
+    "Expiry 260821 has aggregated leg quantity not explained by distinct one-lot journal records",
+    "Expiry 260821: C776 qty=-2.0 does not match journaled qty=-1.0",
+    "Expiry 260821: C781 qty=2.0 does not match journaled qty=1.0",
+    "Expiry 260821: 2 open leg(s) not in journaled structure (orphan verticals or residual risk)",
+    "Expiry 260821: short-leg units=4.0 exceed journaled units=2.0"
+  ]
+}

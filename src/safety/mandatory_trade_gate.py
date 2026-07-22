@@ -120,7 +120,12 @@ _POLICY_METADATA_PATH = (
 _DEFAULT_POLICY_MAX_AGE_DAYS = 7
 _DEFAULT_POLICY_MIN_TRADE_COUNT = 30
 _VALIDATION_ENTRY_MAX_QTY = 1
-_VALIDATION_STRATEGIES = {"iron_condor", "ic_simple", "options_income"}
+_VALIDATION_STRATEGIES = {
+    "iron_condor",
+    "ic_simple",
+    "options_income",
+    "spy_put_credit",
+}
 
 
 def _load_north_star_weekly_gate() -> dict[str, Any]:
