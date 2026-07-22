@@ -1,0 +1,25 @@
+{
+  "updated_at": "2026-07-22T21:00:00Z",
+  "updated_by": "CTO (autonomous) under CEO scrap-and-rebuild directive",
+  "active_family": "spy_put_credit",
+  "successor_family": "spy_put_credit",
+  "killed_families": ["ic_simple", "iron_condor"],
+  "paper_only": true,
+  "live_blocked": true,
+  "reason": "IC Simple is KILLED as a North Star candidate. Lifetime paired ledger: ~174 closed, win rate ~17%, profit factor 0.70, expectancy about -$32/trade, total realized about -$5.6k. Loss clusters: 10-wide wings, multi-lot, sub-24h churn, dual-side inventory orphans. The post-rehab 1-lot IC sample (n=4 wins) is too small to claim edge and does not overturn the lifetime failure. Successor is spy_put_credit: 2-leg SPY bull put credit only.",
+  "evidence": {
+    "source": "data/trades.json stats + data/runtime/edge_rehabilitation_plan.json",
+    "closed_trades": 174,
+    "win_rate_pct": 17.24,
+    "profit_factor": 0.7,
+    "expectancy": -31.98,
+    "total_realized_pnl": -5564.0
+  },
+  "operator_rules": [
+    "Do not open new iron condors via ic_simple.py or iron_condor_trader.py.",
+    "Exit/management of already-open IC legs remains allowed via guardian workflows only.",
+    "New paper validation entries must use spy_put_credit (1-lot SPY bull put, $5 wide).",
+    "Live capital and scale-up remain blocked until put-credit cohort clears kill criteria (n>=30, expectancy>0, PF>1, total P/L>0).",
+    "Clear Street or any other broker is not a substitute for edge; venue migration waits until paper edge is proven."
+  ]
+}

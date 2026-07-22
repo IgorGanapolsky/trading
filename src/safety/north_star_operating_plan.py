@@ -203,8 +203,18 @@ def _validation_hypothesis_status(data_dir: Path) -> dict[str, Any]:
         errors.append("enabled must be true")
 
     strategy_family = str(payload.get("strategy_family") or "").strip().lower()
-    if strategy_family not in {"iron_condor", "ic_simple", "options_income"}:
-        errors.append("strategy_family must be iron_condor, ic_simple, or options_income")
+    if strategy_family not in {
+        "iron_condor",
+        "ic_simple",
+        "options_income",
+        "spy_put_credit",
+        "bull_put",
+        "put_credit",
+    }:
+        errors.append(
+            "strategy_family must be iron_condor, ic_simple, options_income, "
+            "or spy_put_credit (successor after IC kill)"
+        )
 
     hypothesis = str(payload.get("hypothesis") or "").strip()
     if len(hypothesis) < 25:

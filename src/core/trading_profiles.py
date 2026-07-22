@@ -97,3 +97,86 @@ def get_iron_condor_profile(
 def get_iron_condor_strategy_config(underlying: str | None = None) -> dict[str, Any]:
     """Compatibility helper for dict-based scripts."""
     return get_iron_condor_profile(underlying=underlying).as_strategy_config()
+
+
+@dataclass(frozen=True)
+class PutCreditProfile:
+    """Canonical SPY bull-put (credit vertical) policy — successor to killed IC Simple."""
+
+    name: str
+    underlying: str
+    target_dte: int
+    min_dte: int
+    max_dte: int
+    short_delta: float
+    delta_band_min: float
+    delta_band_max: float
+    wing_width: float
+    take_profit_pct: float
+    stop_loss_pct: float
+    exit_dte: int
+    min_hold_hours: int
+    position_size_pct: float
+    max_contracts_per_trade: int
+    max_concurrent_positions: int
+    max_daily_structures: int
+    min_credit: float
+
+    def as_strategy_config(self) -> dict[str, Any]:
+        data = asdict(self)
+        data["underlying"] = self.underlying.upper()
+        data["max_positions"] = self.max_concurrent_positions
+        data["strategy_family"] = "spy_put_credit"
+        data["structure"] = "bull_put_credit"
+        return data
+
+
+_BASELINE_PUT_CREDIT_PROFILE = PutCreditProfile(
+    name="spy-put-credit",
+    underlying="SPY",
+    target_dte=30,
+    min_dte=30,
+    max_dte=45,
+    short_delta=0.15,
+    delta_band_min=0.10,
+    delta_band_max=0.22,
+    wing_width=5.0,
+    take_profit_pct=0.25,
+    stop_loss_pct=2.0,
+    exit_dte=7,
+    min_hold_hours=24,
+    position_size_pct=0.02,
+    max_contracts_per_trade=1,
+    max_concurrent_positions=2,
+    max_daily_structures=1,
+    min_credit=0.50,
+)
+
+PUT_CREDIT_PROFILE_REGISTRY: dict[str, PutCreditProfile] = {
+    "spy-put-credit": _BASELINE_PUT_CREDIT_PROFILE,
+}
+
+DEFAULT_PUT_CREDIT_PROFILE_NAME = "spy-put-credit"
+
+
+@cache
+def get_put_credit_profile(profile_name: str | None = None) -> PutCreditProfile:
+    resolved = (
+        profile_name
+        or os.getenv("PUT_CREDIT_PROFILE")
+        or DEFAULT_PUT_CREDIT_PROFILE_NAME
+    ).lower()
+    return PUT_CREDIT_PROFILE_REGISTRY.get(resolved, _BASELINE_PUT_CREDIT_PROFILE)
+
+
+def get_active_strategy_config() -> dict[str, Any]:
+    """Config for the active validation family (post IC kill: put credit)."""
+    try:
+        from src.core.active_strategy import load_kill_state
+
+        state = load_kill_state()
+        if state.active_family in {"spy_put_credit", "bull_put", "put_credit"}:
+            return get_put_credit_profile().as_strategy_config()
+    except Exception:
+        pass
+    return get_put_credit_profile().as_strategy_config()

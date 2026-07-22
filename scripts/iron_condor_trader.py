@@ -1227,6 +1227,27 @@ def main():
     logger.info(f"Mode: {'LIVE' if live_mode else 'SIMULATED'}")
     logger.info(f"Symbol: {ticker}")
 
+    # IC / iron_condor entry path KILLED 2026-07-22 (successor: spy_put_credit).
+    try:
+        from src.core.active_strategy import entry_block_message
+
+        _kill_msg = entry_block_message("iron_condor") or entry_block_message("ic_simple")
+    except Exception as _kill_exc:  # noqa: BLE001
+        _kill_msg = f"STRATEGY_KILLED: iron_condor entry blocked ({_kill_exc})"
+    if _kill_msg:
+        logger.error(_kill_msg)
+        logger.error(
+            "Successor: .venv/bin/python scripts/spy_put_credit.py --dry-run"
+        )
+        telemetry.update_ticker_decision(
+            ticker,
+            gate=0,
+            status="REJECT",
+            rejection_reason=_kill_msg,
+            indicators={"strategy_killed": True, "successor": "spy_put_credit"},
+        )
+        return {"success": False, "reason": _kill_msg}
+
     try:
         halt_state = get_trading_halt_state()
         if halt_state.active:

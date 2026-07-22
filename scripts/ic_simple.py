@@ -1545,15 +1545,35 @@ def main():
     if args.mode in ("entry", "both"):
         logger.info("\n--- ENTRY CHECK ---")
 
+        # IC Simple KILLED 2026-07-22 — no new iron condors (successor: spy_put_credit).
+        try:
+            from src.core.active_strategy import entry_block_message
+
+            _ic_kill = entry_block_message("ic_simple")
+        except Exception as _kill_exc:  # noqa: BLE001
+            _ic_kill = f"STRATEGY_KILLED: ic_simple entry blocked ({_kill_exc})"
+        if _ic_kill:
+            logger.error(_ic_kill)
+            logger.error(
+                "Use: .venv/bin/python scripts/spy_put_credit.py --dry-run "
+                "(then paper entry when inventory clean). Exit mode still runs for open legs."
+            )
+            if args.mode == "entry":
+                logger.info("\nDone.")
+                return
+            logger.warning("Skipping IC entry section (strategy killed).")
+
         # FOMC blackout check (2 days before through 1 day after)
-        fomc_str = _fomc_blackout_reason()
-        fomc_blocked = fomc_str is not None
+        fomc_str = None if _ic_kill else _fomc_blackout_reason()
+        fomc_blocked = bool(_ic_kill) or (fomc_str is not None)
         if fomc_str is not None:
             logger.warning(f"FOMC blackout: {fomc_str}. No entry.")
 
         # ThumbGate pre-entry check: block patterns from past losses
-        thumbgate_blocked = False
+        thumbgate_blocked = bool(_ic_kill)
         try:
+            if _ic_kill:
+                raise RuntimeError("skip_thumbgate_after_strategy_kill")
             gate_file = Path(__file__).parent.parent / "data" / "thumbgate_rules.json"
             if gate_file.exists():
                 rules = json.loads(gate_file.read_text())

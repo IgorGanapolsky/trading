@@ -1,39 +1,48 @@
-# Kill Criteria — IC Simple Validation
+# Kill Criteria — Strategy Lifecycle
 
-## Status — ACTIVE as of April 14, 2026
+## IC Simple — KILLED (2026-07-22)
 
-## Hypothesis
+**Status: KILLED** as a North Star candidate.
 
-With execution fixes applied (hold period, position limits, single exit system,
-regime gate, delta verification), the 15-delta SPY iron condor strategy will
-produce positive expectancy over 30 clean trades.
+| Metric (lifetime paired ledger) | Value |
+|----------------------------------|-------|
+| Closed trades | ~174 |
+| Win rate | ~17% |
+| Profit factor | 0.70 |
+| Expectancy | ~−$32 / trade |
+| Realized P/L | ~−$5.6k |
 
-## Kill Conditions (ANY triggers removal)
+**Do not reopen IC Simple entries.** Exit/manage existing legs only via guardian.
 
-1. **Expectancy ≤ 0** after 30 closed validation trades
+Successor: **`spy_put_credit`** (see `data/runtime/strategy_kill_switch.json`).
+
+---
+
+## Active: SPY Put Credit Validation
+
+### Hypothesis
+
+2-leg SPY bull put credit (1-lot, $5 wide, 15Δ short, 30–45 DTE, 25% TP / 200% stop / 7 DTE exit)
+can produce **expectancy > 0** and **PF > 1** over **30** clean paper trades — without the
+4-leg inventory failure modes of iron condors.
+
+### Kill Conditions (ANY triggers removal of put-credit as North Star candidate)
+
+1. **Expectancy ≤ 0** after 30 closed validation trades (put-credit cohort only)
 2. **Profit factor ≤ 1.0** after 30 closed validation trades
-3. **Win rate below break-even level** (given realized avg win/loss ratio)
-4. **3 consecutive max-loss stops** in the validation cohort
-5. **Account drawdown exceeds 10%** from validation start ($93,723 → below $84,351)
+3. **Win rate below break-even** given realized avg win/loss
+4. **3 consecutive max-loss stops** in the cohort
+5. **Account drawdown > 10%** from validation start equity at cohort begin
 
-## If killed
+### If killed
 
-- IC Simple is removed as a North Star candidate
-- Strategy redesign required with a new written hypothesis
-- No "just keep trading" — a specific changed rule must be tested
+- `spy_put_credit` removed as North Star candidate
+- New written hypothesis required (do not silently resume IC)
+- No "just keep trading"
 
-## Audit of failed 67 trades (evidence)
+### Hard constraints while validating
 
-- 79% held < 4 hours (no theta decay)
-- 35 trades on single expiry (concentrated risk)
-- 100% exit reasons "unknown" (no learning)
-- Avg win $70.50, avg loss -$95.94 (inverted risk/reward)
-- Total P/L: -$3,669
-
-## What the fixes changed
-
-- 24h minimum hold (was: hours)
-- 1 trade/day max (was: 82/day)
-- Same-expiry re-entry blocked (was: unlimited)
-- Exit reasons recorded (was: unknown)
-- Single exit system (was: 2 competing)
+- Paper only; live blocked
+- SPY only; 1-lot; max 1 structure/day; max 2 concurrent
+- No 10-wide wings; no naked options; no multi-name underlyings
+- Unclean open inventory blocks new entries
