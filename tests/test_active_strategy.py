@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from contextlib import nullcontext
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
@@ -506,3 +507,178 @@ def test_schedule_manages_put_credit_exits_every_weekday_slot():
     ).read_text(encoding="utf-8")
     assert "Manage put-credit exits" in workflow
     assert "--manage-exits" in workflow
+
+
+def test_put_credit_inventory_gate_fails_closed_on_broker_exception(monkeypatch):
+    from scripts import spy_put_credit as pcs
+
+    monkeypatch.setattr(
+        pcs, "_get_paper_client", MagicMock(side_effect=RuntimeError("broker offline"))
+    )
+    assert pcs._inventory_ok() is False
+
+
+def test_put_credit_parsing_and_credit_confirmation_failure_paths(tmp_path, monkeypatch):
+    from scripts import spy_put_credit as pcs
+
+    entries = tmp_path / "put_credit_entries.json"
+    entries.write_text("[]\n", encoding="utf-8")
+    monkeypatch.setattr(pcs, "ENTRIES_FILE", entries)
+    with pytest.raises(ValueError, match="Expected object"):
+        pcs._load_entries()
+
+    assert pcs._parse_timestamp(None) is None
+    assert pcs._parse_timestamp("not-a-timestamp") is None
+    assert pcs._parse_timestamp("2026-07-22T12:00:00").tzinfo == timezone.utc
+    assert pcs._expiry_yymmdd({"expiry": "260821"}) == "260821"
+    assert (
+        pcs._expiry_yymmdd({"signature": "SPY_2026-08-21_P695-700"}) == "260821"
+    )
+    assert pcs._expiry_yymmdd({}) == ""
+
+    with pytest.raises(ValueError, match="no parseable expiry"):
+        pcs.evaluate_put_credit_exit({}, short_price=1.0, long_price=0.5)
+    assignment = pcs.evaluate_put_credit_exit(
+        {
+            "expiry": "2026-07-23",
+            "entry_time": "2026-07-20T12:00:00+00:00",
+            "credit": 1.0,
+        },
+        short_price=1.0,
+        long_price=0.5,
+        now=datetime(2026, 7, 22, 12, 0),
+    )
+    assert assignment["exit_reason"] == "assignment_failsafe"
+
+    short = SimpleNamespace(avg_entry_price="1.20")
+    long = SimpleNamespace(avg_entry_price="0.20")
+    filled = {"order_id": "entry-1"}
+    client = MagicMock()
+    client.get_order_by_id.return_value = SimpleNamespace(filled_avg_price="0.95")
+    assert pcs._confirm_entry_credit(client, filled, short, long) is True
+    assert filled["credit_source"] == "broker_fill"
+
+    derived = {"order_id": "entry-2"}
+    client.get_order_by_id.side_effect = RuntimeError("lookup failed")
+    assert pcs._confirm_entry_credit(client, derived, short, long) is True
+    assert derived["credit_source"] == "broker_position_derived"
+    assert (
+        pcs._confirm_entry_credit(
+            client,
+            {"order_id": "entry-3"},
+            SimpleNamespace(avg_entry_price="0.10"),
+            SimpleNamespace(avg_entry_price="0.20"),
+        )
+        is False
+    )
+
+
+def test_put_credit_pending_and_entry_status_failure_paths():
+    from scripts import spy_put_credit as pcs
+
+    client = MagicMock()
+    assert pcs._pending_exit_is_active(client, {}) is False
+    client.get_order_by_id.side_effect = RuntimeError("temporarily unavailable")
+    assert pcs._pending_exit_is_active(client, {"exit_order_id": "close-1"}) is True
+
+    cancelled = {"status": "exit_pending", "exit_order_id": "close-2"}
+    client.get_order_by_id.side_effect = None
+    client.get_order_by_id.return_value = SimpleNamespace(status="CANCELED")
+    assert pcs._pending_exit_is_active(client, cancelled) is False
+    assert cancelled == {"status": "open"}
+
+    assert pcs._entry_order_status(client, {}) == "UNKNOWN"
+    client.get_order_by_id.side_effect = RuntimeError("lookup failed")
+    assert pcs._entry_order_status(client, {"order_id": "entry-1"}) == "UNKNOWN"
+
+
+def _patch_put_credit_cli_basics(pcs, monkeypatch):
+    state = SimpleNamespace(
+        active_family="spy_put_credit",
+        killed_families=("ic_simple",),
+        live_blocked=True,
+    )
+    monkeypatch.setattr("src.core.active_strategy.load_kill_state", lambda: state)
+    monkeypatch.setattr(pcs, "_assert_active", lambda: None)
+    return state
+
+
+def test_put_credit_main_manage_exit_client_failure(monkeypatch):
+    from scripts import spy_put_credit as pcs
+
+    _patch_put_credit_cli_basics(pcs, monkeypatch)
+    monkeypatch.setattr("sys.argv", ["spy_put_credit.py", "--manage-exits"])
+    monkeypatch.setattr(
+        pcs, "_get_paper_client", MagicMock(side_effect=RuntimeError("client failed"))
+    )
+    assert pcs.main() == 1
+
+
+def test_put_credit_main_manage_exit_reports_broken(monkeypatch, capsys):
+    from scripts import spy_put_credit as pcs
+
+    _patch_put_credit_cli_basics(pcs, monkeypatch)
+    monkeypatch.setattr("sys.argv", ["spy_put_credit.py", "--manage-exits", "--dry-run"])
+    monkeypatch.setattr(pcs, "_get_paper_client", lambda: object())
+    monkeypatch.setattr(
+        pcs, "manage_put_credit_exits", lambda client, dry_run: {"broken": 1}
+    )
+    assert pcs.main() == 2
+    assert '"broken": 1' in capsys.readouterr().out
+
+
+def test_put_credit_main_blocks_at_initial_entry_limit(monkeypatch, capsys):
+    from scripts import spy_put_credit as pcs
+
+    _patch_put_credit_cli_basics(pcs, monkeypatch)
+    monkeypatch.setattr("sys.argv", ["spy_put_credit.py", "--dry-run"])
+    monkeypatch.setattr(pcs, "_inventory_ok", lambda *_args: True)
+    monkeypatch.setattr(pcs, "_load_entries", lambda: {})
+    monkeypatch.setattr(
+        pcs,
+        "evaluate_entry_limits",
+        lambda *_args, **_kwargs: {"allowed": False, "blockers": ["daily cap"]},
+    )
+    assert pcs.main() == 2
+    assert "daily cap" in capsys.readouterr().out
+
+
+def test_put_credit_main_blocks_duplicate_after_selection(tmp_path, monkeypatch, capsys):
+    from scripts import spy_put_credit as pcs
+
+    _patch_put_credit_cli_basics(pcs, monkeypatch)
+    monkeypatch.setattr("sys.argv", ["spy_put_credit.py", "--dry-run"])
+    monkeypatch.setattr(pcs, "AUDIT_DIR", tmp_path)
+    monkeypatch.setattr(pcs, "_inventory_ok", lambda *_args: True)
+    monkeypatch.setattr(pcs, "_load_entries", lambda: {})
+    monkeypatch.setattr("src.utils.options_analysis.get_underlying_price", lambda _: 747.0)
+    monkeypatch.setattr(pcs, "find_put_credit_opportunity", lambda _: _put_credit_opp())
+    allowed = {"allowed": True, "blockers": []}
+    blocked = {"allowed": False, "blockers": ["duplicate signature"]}
+    monkeypatch.setattr(
+        pcs, "evaluate_entry_limits", MagicMock(side_effect=[allowed, blocked])
+    )
+
+    assert pcs.main() == 2
+    assert "duplicate signature" in capsys.readouterr().out
+
+
+def test_put_credit_main_rechecks_limits_inside_trade_lock(tmp_path, monkeypatch):
+    from scripts import spy_put_credit as pcs
+
+    _patch_put_credit_cli_basics(pcs, monkeypatch)
+    monkeypatch.setattr("sys.argv", ["spy_put_credit.py", "--execute-paper"])
+    monkeypatch.setattr(pcs, "AUDIT_DIR", tmp_path)
+    monkeypatch.setattr(pcs, "_inventory_ok", lambda *_args: True)
+    monkeypatch.setattr(pcs, "_load_entries", lambda: {})
+    monkeypatch.setattr("src.utils.options_analysis.get_underlying_price", lambda _: 747.0)
+    monkeypatch.setattr(pcs, "find_put_credit_opportunity", lambda _: _put_credit_opp())
+    monkeypatch.setattr(pcs, "_get_paper_client", lambda: object())
+    monkeypatch.setattr("src.safety.trade_lock.acquire_trade_lock", lambda **_: nullcontext())
+    allowed = {"allowed": True, "blockers": []}
+    blocked = {"allowed": False, "blockers": ["concurrent cap"]}
+    monkeypatch.setattr(
+        pcs, "evaluate_entry_limits", MagicMock(side_effect=[allowed, allowed, blocked])
+    )
+
+    assert pcs.main() == 2

@@ -1,5 +1,8 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
+from unittest.mock import MagicMock
+
+import pytest
 
 from scripts.residual_ic_manager import (
     _close_signature,
@@ -115,6 +118,7 @@ def test_residual_manager_allows_active_pcs_inventory(tmp_path, monkeypatch):
         "SPY260821P00695000": 1.0,
     }
     client = SimpleNamespace(get_all_positions=lambda: positions)
+    monkeypatch.setattr(manager, "ROOT", tmp_path)
     monkeypatch.setattr(manager, "AUDIT_PATH", tmp_path / "residual.json")
     monkeypatch.setattr(manager, "_get_orders", lambda *args, **kwargs: [])
     monkeypatch.setattr(manager, "_load_active_pcs_expected", lambda: expected)
@@ -168,3 +172,164 @@ def test_pending_close_signature_matches_structure():
         ]
     )
     assert _close_signature(structure) == _order_signature(order)
+
+
+def _residual_structure(entry_order_id: str) -> dict:
+    return {
+        "entry_order_id": entry_order_id,
+        "expiry_yymmdd": "260821",
+        "entry_time": (datetime.now(timezone.utc) - timedelta(days=2)).isoformat(),
+        "credit": 1.0,
+        "quantity": 1,
+        "legs": [
+            {"symbol": "SPY260821P00700000", "qty": -1, "current_price": 0.6},
+            {"symbol": "SPY260821P00695000", "qty": 1, "current_price": 0.1},
+            {"symbol": "SPY260821C00776000", "qty": -1, "current_price": 0.4},
+            {"symbol": "SPY260821C00781000", "qty": 1, "current_price": 0.1},
+        ],
+    }
+
+
+def test_manager_covers_hold_pending_submit_and_submit_failure(tmp_path, monkeypatch):
+    import scripts.residual_ic_manager as manager
+
+    structures = [
+        _residual_structure("hold"),
+        _residual_structure("pending"),
+        _residual_structure("submit"),
+        _residual_structure("fail"),
+    ]
+    structures[2]["legs"][0]["symbol"] = "SPY260821P00690000"
+    structures[3]["legs"][0]["symbol"] = "SPY260821P00680000"
+    pending_order = SimpleNamespace(
+        legs=[
+            SimpleNamespace(
+                symbol=leg["symbol"], side="BUY" if leg["qty"] < 0 else "SELL"
+            )
+            for leg in structures[1]["legs"]
+        ]
+    )
+    client = SimpleNamespace(get_all_positions=lambda: [])
+    monkeypatch.setattr(manager, "ROOT", tmp_path)
+    monkeypatch.setattr(manager, "AUDIT_PATH", tmp_path / "residual.json")
+    monkeypatch.setattr(
+        manager, "_get_orders", lambda _client, open_only=False: [pending_order] if open_only else []
+    )
+    monkeypatch.setattr(manager, "recover_active_structures", lambda *_: (structures, {}))
+    monkeypatch.setattr(manager, "_load_active_pcs_expected", lambda: {})
+    monkeypatch.setattr(
+        manager,
+        "evaluate_residual_exit",
+        lambda structure: {
+            "should_exit": structure["entry_order_id"] != "hold",
+            "exit_reason": "profit_target",
+            "current_debit": 0.2,
+        },
+    )
+
+    def submit(_client, structure, _decision):
+        if structure["entry_order_id"] == "fail":
+            raise RuntimeError("broker rejected close")
+        return SimpleNamespace(id="close-submit")
+
+    monkeypatch.setattr(manager, "_submit_close", submit)
+
+    report = manager.manage_residual_ics(client, dry_run=False)
+
+    assert report["holds"] == 1
+    assert report["pending"] == 1
+    assert report["submitted"] == 1
+    assert report["broken"] == 1
+    assert [detail["status"] for detail in report["details"]] == [
+        "hold",
+        "exit_pending",
+        "exit_submitted",
+        "exit_submit_failed",
+    ]
+
+
+def test_manager_dry_run_records_exit_without_submit(tmp_path, monkeypatch):
+    import scripts.residual_ic_manager as manager
+
+    structure = _residual_structure("dry")
+    client = SimpleNamespace(get_all_positions=lambda: [])
+    monkeypatch.setattr(manager, "ROOT", tmp_path)
+    monkeypatch.setattr(manager, "AUDIT_PATH", tmp_path / "residual.json")
+    monkeypatch.setattr(manager, "_get_orders", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(manager, "recover_active_structures", lambda *_: ([structure], {}))
+    monkeypatch.setattr(manager, "_load_active_pcs_expected", lambda: {})
+    monkeypatch.setattr(
+        manager,
+        "evaluate_residual_exit",
+        lambda *_: {"should_exit": True, "exit_reason": "dte_exit", "current_debit": 0.5},
+    )
+    monkeypatch.setattr(
+        manager, "_submit_close", MagicMock(side_effect=AssertionError("dry run submitted"))
+    )
+
+    report = manager.manage_residual_ics(client, dry_run=True)
+
+    assert report["would_exit"] == 1
+    assert report["details"][0]["status"] == "would_exit"
+
+
+def test_manager_rejects_audit_write_outside_root(tmp_path, monkeypatch):
+    import scripts.residual_ic_manager as manager
+
+    monkeypatch.setattr(manager, "ROOT", tmp_path / "root")
+    monkeypatch.setattr(manager, "AUDIT_PATH", tmp_path / "outside.json")
+    monkeypatch.setattr(manager, "_get_orders", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(manager, "recover_active_structures", lambda *_: ([], {}))
+    monkeypatch.setattr(manager, "_load_active_pcs_expected", lambda: {})
+    client = SimpleNamespace(get_all_positions=lambda: [])
+
+    with pytest.raises(ValueError, match="inside repository root"):
+        manager.manage_residual_ics(client, dry_run=True)
+
+
+@pytest.mark.parametrize(("broken", "expected"), [(0, 0), (1, 2)])
+def test_residual_manager_main_returns_broker_health(monkeypatch, capsys, broken, expected):
+    import scripts.residual_ic_manager as manager
+
+    monkeypatch.setattr("sys.argv", ["residual_ic_manager.py", "--dry-run"])
+    monkeypatch.setattr(manager, "_client", lambda: object())
+    monkeypatch.setattr(
+        manager,
+        "manage_residual_ics",
+        lambda client, dry_run: {"broken": broken, "dry_run": dry_run},
+    )
+
+    assert manager.main() == expected
+    assert f'"broken": {broken}' in capsys.readouterr().out
+
+
+def test_residual_client_requires_paper_credentials(monkeypatch):
+    import scripts.residual_ic_manager as manager
+
+    monkeypatch.setattr(
+        "src.utils.alpaca_client.get_alpaca_credentials", lambda: (None, None)
+    )
+    with pytest.raises(RuntimeError, match="credentials missing"):
+        manager._client()
+
+
+def test_residual_helpers_cover_invalid_pcs_and_urgent_exit_rules():
+    entries = {
+        "not-pcs": {},
+        "PCS_bad_expiry": {"expiry": "bad", "strikes": {}},
+        "PCS_zero": {
+            "expiry": "260821",
+            "quantity": 0,
+            "strikes": {"short_put": 700, "long_put": 695},
+        },
+    }
+    assert active_pcs_expected(entries) == {}
+
+    now = datetime(2026, 8, 20, 12, 0)
+    structure = _residual_structure("urgent")
+    assignment = evaluate_residual_exit(structure, now=now)
+    assert assignment["exit_reason"] == "assignment_failsafe"
+
+    structure["expiry_yymmdd"] = "260825"
+    dte = evaluate_residual_exit(structure, now=datetime(2026, 8, 18, 12, 0, tzinfo=timezone.utc))
+    assert dte["exit_reason"] == "dte_exit"

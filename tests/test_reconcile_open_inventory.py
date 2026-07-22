@@ -140,3 +140,87 @@ def test_reconcile_pcs_expectations_use_unique_key_and_ignore_closed_rows():
         "SPY260821P00700000": -1.0,
         "SPY260821P00695000": 1.0,
     }
+
+
+def _isolate_reconcile_files(module, tmp_path, monkeypatch):
+    monkeypatch.setattr(module, "ROOT", tmp_path)
+    monkeypatch.setattr(module, "ENTRIES", tmp_path / "ic_entries.json")
+    monkeypatch.setattr(module, "PCS_ENTRIES", tmp_path / "put_credit_entries.json")
+
+
+def test_main_rejects_execution_from_untrusted_state(monkeypatch):
+    from scripts import reconcile_open_inventory as reconcile
+
+    monkeypatch.setattr(
+        "sys.argv", ["reconcile_open_inventory.py", "--execute-paper", "--from-state"]
+    )
+    assert reconcile.main() == 2
+
+
+def test_main_from_state_with_no_legs_is_clean(tmp_path, monkeypatch):
+    from scripts import reconcile_open_inventory as reconcile
+
+    _isolate_reconcile_files(reconcile, tmp_path, monkeypatch)
+    monkeypatch.setattr("sys.argv", ["reconcile_open_inventory.py", "--from-state"])
+    monkeypatch.setattr(reconcile, "load_legs_from_state", lambda: [])
+
+    assert reconcile.main() == 0
+
+
+def test_main_broker_failure_falls_back_only_for_dry_run(tmp_path, monkeypatch):
+    from scripts import reconcile_open_inventory as reconcile
+
+    _isolate_reconcile_files(reconcile, tmp_path, monkeypatch)
+    monkeypatch.setattr("sys.argv", ["reconcile_open_inventory.py", "--dry-run"])
+    monkeypatch.setattr(
+        reconcile,
+        "load_legs_from_broker",
+        lambda: (_ for _ in ()).throw(RuntimeError("broker unavailable")),
+    )
+    monkeypatch.setattr(
+        reconcile,
+        "load_legs_from_state",
+        lambda: [{"symbol": "SPY260821P00700000", "qty": -1.0}],
+    )
+
+    assert reconcile.main() == 0
+    assert (tmp_path / "data" / "audit" / "inventory_reconcile_plan.json").exists()
+
+
+def test_main_broker_failure_blocks_execution(tmp_path, monkeypatch):
+    from scripts import reconcile_open_inventory as reconcile
+
+    _isolate_reconcile_files(reconcile, tmp_path, monkeypatch)
+    monkeypatch.setattr("sys.argv", ["reconcile_open_inventory.py", "--execute-paper"])
+    monkeypatch.setattr(
+        reconcile,
+        "load_legs_from_broker",
+        lambda: (_ for _ in ()).throw(RuntimeError("broker unavailable")),
+    )
+
+    assert reconcile.main() == 2
+
+
+def test_main_blocks_when_broker_reconstruction_is_unexplained(tmp_path, monkeypatch):
+    from scripts import reconcile_open_inventory as reconcile
+    from scripts import residual_ic_manager
+
+    _isolate_reconcile_files(reconcile, tmp_path, monkeypatch)
+    monkeypatch.setattr("sys.argv", ["reconcile_open_inventory.py", "--dry-run"])
+    monkeypatch.setattr(
+        reconcile,
+        "load_legs_from_broker",
+        lambda: (
+            object(),
+            [{"symbol": "SPY260821P00700000", "qty": -1.0}],
+            [SimpleNamespace(symbol="SPY260821P00700000", qty="-1")],
+        ),
+    )
+    monkeypatch.setattr(residual_ic_manager, "_get_orders", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(
+        reconcile,
+        "broker_confirmed_expected",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("unexplained")),
+    )
+
+    assert reconcile.main() == 2

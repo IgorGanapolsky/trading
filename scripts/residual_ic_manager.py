@@ -422,8 +422,13 @@ def manage_residual_ics(client: Any, *, dry_run: bool = False) -> dict[str, Any]
                 detail["error"] = str(exc)
         report["details"].append(detail)
 
-    AUDIT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    AUDIT_PATH.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    audit_path = AUDIT_PATH.resolve()
+    try:
+        audit_path.relative_to(ROOT.resolve())
+    except ValueError as exc:
+        raise ValueError(f"Audit path must remain inside repository root: {AUDIT_PATH}") from exc
+    audit_path.parent.mkdir(parents=True, exist_ok=True)
+    audit_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     return report
 
 

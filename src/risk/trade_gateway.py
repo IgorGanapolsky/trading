@@ -892,7 +892,7 @@ class TradeGateway:
                 ),
                 0.0,
             )
-            is_reducing = existing_qty != 0.0 and (
+            is_reducing = abs(existing_qty) > 1e-9 and (
                 (request.side.lower() == "buy" and existing_qty < 0)
                 or (request.side.lower() == "sell" and existing_qty > 0)
             )

@@ -10,19 +10,26 @@ from typing import Any
 
 from src.safety.strategy_pivot import build_pivot_report
 
-DEFAULT_STATE = Path("data/system_state.json")
-DEFAULT_TRADES = Path("data/trades.json")
-DEFAULT_ENTRIES = Path("data/ic_entries.json")
-DEFAULT_TOURNAMENT = Path("config/strategy_candidate_tournament.json")
-DEFAULT_BROKER = Path("data/audit/clearstreet_active_capability_20260722.json")
-DEFAULT_INVENTORY = Path("data/audit/open_inventory_latest.json")
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_STATE = ROOT / "data/system_state.json"
+DEFAULT_TRADES = ROOT / "data/trades.json"
+DEFAULT_ENTRIES = ROOT / "data/ic_entries.json"
+DEFAULT_TOURNAMENT = ROOT / "config/strategy_candidate_tournament.json"
+DEFAULT_BROKER = ROOT / "data/audit/clearstreet_active_capability_20260722.json"
+DEFAULT_INVENTORY = ROOT / "data/audit/open_inventory_latest.json"
 
 
 def _load_json(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as handle:
+    candidate = path if path.is_absolute() else ROOT / path
+    resolved = candidate.resolve()
+    try:
+        resolved.relative_to(ROOT.resolve())
+    except ValueError as exc:
+        raise ValueError(f"Input must remain inside repository root: {path}") from exc
+    with resolved.open("r", encoding="utf-8") as handle:
         payload = json.load(handle)
     if not isinstance(payload, dict):
-        raise ValueError(f"Expected JSON object in {path}")
+        raise ValueError(f"Expected JSON object in {resolved}")
     return payload
 
 
