@@ -1,0 +1,20 @@
+{
+  "account": "PA3C5AG0CECQ",
+  "environment": "paper",
+  "reason": "Journal-only reconciliation misclassified a broker-confirmed overlapping iron condor as excess inventory.",
+  "orders": [
+    {
+      "id": "58a03332-96e0-4894-ba91-b12b75bf2045",
+      "status": "CANCELED",
+      "filled_qty": 0,
+      "legs": ["SELL SPY260821P00695000", "BUY SPY260821P00700000"]
+    },
+    {
+      "id": "adcf7d0a-d267-449d-a119-5771b48d2aa0",
+      "status": "CANCELED",
+      "filled_qty": 0,
+      "legs": ["BUY SPY260821C00776000", "SELL SPY260821C00781000"]
+    }
+  ],
+  "open_orders_after": 0
+}
