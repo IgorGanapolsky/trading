@@ -244,6 +244,21 @@ def test_reconcile_put_credit_entries_recovers_exact_filled_structure(tmp_path, 
             "opportunity": None,
         }
     )
+    pcs.write_plan(
+        {
+            "dry_run": False,
+            "planned_at": "2026-07-23T15:47:08.050702+00:00",
+            "opportunity": {
+                "expiry": "2026-08-28",
+                "short_put": 696.0,
+                "long_put": 691.0,
+                "est_credit": 0.80,
+                "put_delta": 0.2999,
+                "method": "later_execution_attempt",
+                "spy_price": 735.0,
+            },
+        }
+    )
     order = SimpleNamespace(
         id="4fc04e47-a2da-4fe9-ab28-14cdad69ab44",
         client_order_id="IC-OPEN-BPS--1784821027308661000000",

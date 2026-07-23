@@ -256,7 +256,7 @@ def _matching_plan_snapshot(
     expiry: str,
     long_put: float,
     short_put: float,
-    filled_at: datetime,
+    order_time: datetime,
 ) -> dict[str, Any]:
     """Return exact pre-submit selection evidence when it matches the broker fill."""
 
@@ -283,7 +283,7 @@ def _matching_plan_snapshot(
         if (
             not exact_structure
             or planned_at is None
-            or abs((filled_at - planned_at).total_seconds()) > 30 * 60
+            or not 0 <= (order_time - planned_at).total_seconds() <= 30 * 60
         ):
             continue
         return {
@@ -362,11 +362,12 @@ def _recovered_put_credit_entry(order: Any) -> tuple[str, dict[str, Any]]:
     signature = f"SPY_{expiry}_P{int(long_put)}-{int(short_put)}"
     safe_order_id = re.sub(r"[^A-Za-z0-9]", "", order_id) or "unknown"
     key = f"PCS_{expiry_yymmdd}_{safe_order_id}"
+    submitted_at = _parse_timestamp(getattr(order, "submitted_at", None))
     plan = _matching_plan_snapshot(
         expiry=expiry,
         long_put=long_put,
         short_put=short_put,
-        filled_at=filled_at,
+        order_time=submitted_at or filled_at,
     )
     if not plan:
         plan = {
@@ -375,7 +376,6 @@ def _recovered_put_credit_entry(order: Any) -> tuple[str, dict[str, Any]]:
             "selection_method": "broker_reconstructed_unverified",
         }
 
-    submitted_at = _parse_timestamp(getattr(order, "submitted_at", None))
     limit_price = getattr(order, "limit_price", None)
     try:
         limit_credit = abs(float(limit_price)) if limit_price not in (None, "") else None
