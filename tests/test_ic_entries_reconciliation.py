@@ -1,11 +1,9 @@
-"""Guard: every open option structure must have an ic_entries.json record.
+"""Guard: every open option structure must have an active strategy journal.
 
-The exit loop in scripts/ic_simple.py holds a position blind (no
-profit-target, no stop evaluation — only the 7-DTE failsafe) when
-IC_<expiry> is missing from data/ic_entries.json. The SPY 2026-07-31 IC
-sat unmanaged from Jun 24 to Jul 2 2026 this way. Both files are
-committed by the sync workflows, so CI can catch the gap within one
-sync cycle.
+An IC needs an ``IC_<expiry>[_suffix]`` record, while the successor bull-put
+spread needs an active ``PCS_<expiry>_*`` record. Without either owner, no
+strategy exit loop can evaluate profit targets or stops. The journal files are
+committed by the sync workflow, so CI catches the gap within one sync cycle.
 """
 
 from __future__ import annotations
@@ -26,6 +24,8 @@ def test_open_option_positions_have_entry_records() -> None:
 
     positions = json.loads(state_path.read_text()).get("positions", [])
     entries = json.loads(entries_path.read_text())
+    pcs_path = DATA_DIR / "put_credit_entries.json"
+    pcs_entries = json.loads(pcs_path.read_text()) if pcs_path.exists() else {}
 
     expiries = set()
     for pos in positions:
@@ -33,10 +33,22 @@ def test_open_option_positions_have_entry_records() -> None:
         if m:
             expiries.add(m.group(1))
 
-    missing = sorted(e for e in expiries if f"IC_{e}" not in entries)
+    def has_owner(expiry: str) -> bool:
+        ic_prefix = f"IC_{expiry}"
+        if any(key == ic_prefix or key.startswith(f"{ic_prefix}_") for key in entries):
+            return True
+        pcs_prefix = f"PCS_{expiry}_"
+        return any(
+            key.startswith(pcs_prefix)
+            and isinstance(entry, dict)
+            and str(entry.get("status") or "open").lower()
+            not in {"closed", "cancelled", "rejected"}
+            for key, entry in pcs_entries.items()
+        )
+
+    missing = sorted(expiry for expiry in expiries if not has_owner(expiry))
     assert not missing, (
-        f"open option positions with no ic_entries.json record: {missing} — "
-        "the ic_simple exit loop cannot evaluate profit-target or stop-loss "
-        "for these (holds blind until 7-DTE failsafe). Backfill from broker "
-        "order history (see IC_260731 backfill, 2026-07-02)."
+        f"open option positions with no active IC or PCS journal owner: {missing} — "
+        "the strategy exit managers cannot evaluate profit-target or stop-loss. "
+        "Backfill the journal from broker order history."
     )
