@@ -280,6 +280,7 @@ def test_main_head_verification_runs_bounded_health_mode():
     workflow_text = Path(".github/workflows/main-head-verification.yml").read_text()
 
     assert 'SYSTEM_HEALTH_BOUNDED: "1"' in workflow_text
+    assert "- data/TRADING_HALTED" in workflow_text
 
 
 def test_auto_format_opens_pr_instead_of_pushing_main():

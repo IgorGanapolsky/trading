@@ -100,6 +100,73 @@ def _bounded_mode_enabled() -> bool:
     return os.getenv("SYSTEM_HEALTH_BOUNDED", "").strip().lower() in {"1", "true", "yes", "on"}
 
 
+RECONCILABLE_INVENTORY_CODES = {
+    "QTY_MISMATCH",
+    "EXTRA_LEGS",
+    "MISSING_LEGS",
+    "SAME_EXPIRY_OVERSTACK",
+}
+
+
+def _reconciliation_only_findings(inventory) -> tuple[bool, str]:
+    """Accept only broker-vs-journal composition findings.
+
+    Policy, capacity, missing-journal, and malformed-journal failures remain
+    blocking even when a canonical halt file exists.
+    """
+    blockers = [
+        finding
+        for finding in getattr(inventory, "findings", [])
+        if getattr(finding, "severity", "") == "block"
+    ]
+    if not blockers:
+        return False, "inventory audit has no structured blocking findings"
+
+    for finding in blockers:
+        code = str(getattr(finding, "code", "UNKNOWN"))
+        details = getattr(finding, "details", {})
+        if code in RECONCILABLE_INVENTORY_CODES:
+            continue
+        if (
+            code == "LOT_SIZE_EXCEEDED"
+            and isinstance(details, dict)
+            and bool(details.get("offenders"))
+        ):
+            continue
+        return False, f"inventory blocker {code} is not journal-reconciliation-only"
+
+    return True, "all inventory blockers are broker-vs-journal reconciliation findings"
+
+
+def _controlled_inventory_halt(inventory, root: Path | None = None) -> tuple[bool, str]:
+    """Verify that an inventory mismatch is explicitly fail-closed.
+
+    Bounded CI verifies committed generated state, not trading readiness. It may
+    accept a defined-risk inventory mismatch only when the canonical gateway
+    halt is present and preserves exit/risk-reduction access.
+    """
+    reconciliation_only, detail = _reconciliation_only_findings(inventory)
+    if not reconciliation_only:
+        return False, detail
+
+    halt_path = (root or Path.cwd()) / "data" / "TRADING_HALTED"
+    try:
+        halt_text = halt_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        return False, f"{halt_path} unavailable: {exc}"
+
+    required_lines = (
+        "INVENTORY RECONCILIATION REQUIRED",
+        "Reason: broker inventory does not match journaled structures",
+        "Policy: new entries blocked; exits and risk reduction remain allowed",
+    )
+    missing = [line for line in required_lines if line not in halt_text]
+    if missing:
+        return False, f"{halt_path} is missing controlled-halt contract fields"
+
+    return True, "canonical inventory halt blocks entries and preserves risk reduction"
+
+
 def _parse_option_symbol(symbol: str) -> tuple[str, str] | None:
     """Return (expiry, option_type) for OCC-style option symbols."""
     match = OPTION_SYMBOL_RE.match(symbol)
@@ -309,14 +376,89 @@ def check_llm_observability():
     return results
 
 
-def check_position_completeness():
-    """Verify options structures keep any short exposure defined-risk.
+def _positions_by_expiry(positions: list[dict]) -> dict[str, list[dict]]:
+    """Group OCC option positions by expiry and ignore non-option rows."""
+    by_expiry: dict[str, list[dict]] = {}
+    for position in positions:
+        parsed = _parse_option_symbol(str(position.get("symbol", "")))
+        if parsed is None:
+            continue
+        expiry, _option_type = parsed
+        by_expiry.setdefault(expiry, []).append(position)
+    return by_expiry
 
-    Added Jan 27, 2026: Caught incomplete IC with only 3 legs.
-    Updated Mar 23, 2026: do not assume every expiry is a 4-leg iron condor.
-    Long-only structures are already defined-risk; any short exposure must have
-    protective long legs on the same side.
-    """
+
+def _expiry_side_counts(legs: list[dict]) -> dict[tuple[str, str], int]:
+    """Count long/short put/call legs for one expiry."""
+    counts: dict[tuple[str, str], int] = {}
+    for leg in legs:
+        parsed = _parse_option_symbol(str(leg.get("symbol", "")))
+        if parsed is None:
+            continue
+        _expiry, option_type = parsed
+        qty = float(leg.get("qty", 0))
+        if qty == 0:
+            continue
+        direction = "long" if qty > 0 else "short"
+        key = (option_type, direction)
+        counts[key] = counts.get(key, 0) + 1
+    return counts
+
+
+def _expiry_protection(expiry: str, legs: list[dict]) -> tuple[bool, list[str]]:
+    """Return defined-risk status and display details for one expiry."""
+    counts = _expiry_side_counts(legs)
+    has_short_puts = counts.get(("P", "short"), 0) > 0
+    has_short_calls = counts.get(("C", "short"), 0) > 0
+    has_long_puts = counts.get(("P", "long"), 0) > 0
+    has_long_calls = counts.get(("C", "long"), 0) > 0
+
+    if not has_short_puts and not has_short_calls:
+        return True, [f"✓ Expiry {expiry}: Long-only defined-risk structure ({len(legs)} legs)"]
+
+    missing = []
+    if has_short_puts and not has_long_puts:
+        missing.append("long put hedge")
+    if has_short_calls and not has_long_calls:
+        missing.append("long call hedge")
+    if missing:
+        return False, [
+            f"✗ Expiry {expiry}: Unhedged short exposure - missing {', '.join(missing)}",
+            f"  Current legs: {len(legs)}",
+        ]
+
+    if has_short_puts and has_short_calls:
+        detail = f"✓ Expiry {expiry}: Defined-risk put/call exposure ({len(legs)} broker legs)"
+    elif has_short_puts:
+        detail = f"✓ Expiry {expiry}: Protected put-side spread ({len(legs)} legs)"
+    else:
+        detail = f"✓ Expiry {expiry}: Protected call-side spread ({len(legs)} legs)"
+    return True, [detail]
+
+
+def _inventory_audit_status() -> tuple[str, list[str]]:
+    """Return journal-reconciliation health after structural hedge checks."""
+    from src.risk.open_inventory_audit import audit_from_files
+
+    inventory = audit_from_files(Path.cwd())
+    if inventory.clean:
+        return "OK", [f"✓ All {inventory.option_leg_count} option legs match journal quantities"]
+
+    details = ["✗ Defined-risk is not enough: broker inventory does not match journals"]
+    details.extend(f"✗ {reason}" for reason in inventory.block_reasons())
+    if not _bounded_mode_enabled():
+        return "BROKEN", details
+
+    controlled_halt, halt_detail = _controlled_inventory_halt(inventory)
+    if controlled_halt:
+        details.append(f"✓ {halt_detail}")
+        return "HALTED", details
+    details.append(f"✗ Controlled safety halt invalid: {halt_detail}")
+    return "BROKEN", details
+
+
+def check_position_completeness():
+    """Verify option hedges and broker inventory against strategy journals."""
     results = {
         "name": "Position Protection (Options)",
         "status": "UNKNOWN",
@@ -324,116 +466,37 @@ def check_position_completeness():
     }
 
     try:
-        import json
-        from pathlib import Path
-
         state_file = Path("data/system_state.json")
         if not state_file.exists():
-            results["status"] = "BROKEN"
-            results["details"].append("✗ system_state.json not found")
-            return results
+            return {
+                **results,
+                "status": "BROKEN",
+                "details": ["✗ system_state.json not found"],
+            }
 
-        state = json.loads(state_file.read_text())
-        positions = state.get("positions", [])
-
+        positions = json.loads(state_file.read_text(encoding="utf-8")).get("positions", [])
         if not positions:
-            results["status"] = "OK"
-            results["details"].append("✓ No open positions")
+            return {
+                **results,
+                "status": "OK",
+                "details": ["✓ No open positions"],
+            }
+
+        all_expiries_protected = True
+        for expiry, legs in _positions_by_expiry(positions).items():
+            protected, details = _expiry_protection(expiry, legs)
+            results["details"].extend(details)
+            all_expiries_protected = all_expiries_protected and protected
+
+        if not all_expiries_protected:
+            results["status"] = "BROKEN"
             return results
 
-        # Group by expiration
-        from collections import defaultdict
-
-        by_expiry = defaultdict(list)
-        for p in positions:
-            symbol = p.get("symbol", "")
-            parsed = _parse_option_symbol(symbol)
-            if parsed is not None:
-                expiry, _option_type = parsed
-                by_expiry[expiry].append(p)
-
-        # Check each expiry group for defined-risk protection.
-        for expiry, legs in by_expiry.items():
-            long_puts = []
-            short_puts = []
-            long_calls = []
-            short_calls = []
-
-            for leg in legs:
-                parsed = _parse_option_symbol(leg.get("symbol", ""))
-                if parsed is None:
-                    continue
-                _expiry, option_type = parsed
-                qty = leg.get("qty", 0)
-                if option_type == "P":
-                    if qty > 0:
-                        long_puts.append(leg)
-                    elif qty < 0:
-                        short_puts.append(leg)
-                elif option_type == "C":
-                    if qty > 0:
-                        long_calls.append(leg)
-                    elif qty < 0:
-                        short_calls.append(leg)
-
-            has_short_puts = len(short_puts) >= 1
-            has_short_calls = len(short_calls) >= 1
-            has_long_puts = len(long_puts) >= 1
-            has_long_calls = len(long_calls) >= 1
-
-            if not has_short_puts and not has_short_calls:
-                results["details"].append(
-                    f"✓ Expiry {expiry}: Long-only defined-risk structure ({len(legs)} legs)"
-                )
-                continue
-
-            missing = []
-            if has_short_puts and not has_long_puts:
-                missing.append("long put hedge")
-            if has_short_calls and not has_long_calls:
-                missing.append("long call hedge")
-
-            if missing:
-                results["status"] = "BROKEN"
-                results["details"].append(
-                    f"✗ Expiry {expiry}: Unhedged short exposure - missing {', '.join(missing)}"
-                )
-                results["details"].append(f"  Current legs: {len(legs)}")
-                continue
-
-            if has_short_puts and has_short_calls:
-                results["details"].append(
-                    f"✓ Expiry {expiry}: Defined-risk put/call exposure ({len(legs)} broker legs)"
-                )
-            elif has_short_puts:
-                results["details"].append(
-                    f"✓ Expiry {expiry}: Protected put-side spread ({len(legs)} legs)"
-                )
-            else:
-                results["details"].append(
-                    f"✓ Expiry {expiry}: Protected call-side spread ({len(legs)} legs)"
-                )
-
-        if results["status"] != "BROKEN":
-            from src.risk.open_inventory_audit import audit_from_files
-
-            inventory = audit_from_files(Path.cwd())
-            if inventory.clean:
-                results["status"] = "OK"
-                results["details"].append(
-                    f"✓ All {inventory.option_leg_count} option legs match journal quantities"
-                )
-            else:
-                results["status"] = "BROKEN"
-                results["details"].append(
-                    "✗ Defined-risk is not enough: broker inventory does not match journals"
-                )
-                for reason in inventory.block_reasons():
-                    results["details"].append(f"✗ {reason}")
-
-    except Exception as e:
+        results["status"], inventory_details = _inventory_audit_status()
+        results["details"].extend(inventory_details)
+    except Exception as exc:
         results["status"] = "BROKEN"
-        results["details"].append(f"✗ Error: {e}")
+        results["details"].append(f"✗ Error: {exc}")
 
     return results
 
@@ -648,12 +711,14 @@ def main():
     ]
 
     all_ok = True
+    safety_halted = False
     for check in checks:
         result = check()
         status_icon = {
             "OK": "✅",
             "STUB": "⚠️",
             "WARNING": "⚠️",
+            "HALTED": "🛑",
             "BROKEN": "❌",
             "UNKNOWN": "❓",
         }
@@ -665,10 +730,15 @@ def main():
 
         if result["status"] in ["BROKEN"]:
             all_ok = False
+        elif result["status"] == "HALTED":
+            safety_halted = True
 
     print("\n" + "=" * 60)
     if all_ok:
-        print("✅ ALL CHECKS PASSED")
+        if safety_halted:
+            print("🛑 CHECKS PASSED WITH CONTROLLED SAFETY HALT - NEW ENTRIES BLOCKED")
+        else:
+            print("✅ ALL CHECKS PASSED")
         return 0
     else:
         print("❌ SOME CHECKS FAILED - FIX BEFORE TRADING")

@@ -209,3 +209,286 @@ def test_check_position_completeness_accepts_protected_four_leg_structure(monkey
 
     assert result["status"] == "OK"
     assert any("Defined-risk put/call exposure" in detail for detail in result["details"])
+
+
+def test_position_helpers_ignore_non_options_invalid_legs_and_zero_quantity():
+    grouped = sh._positions_by_expiry(
+        [
+            {"symbol": "SPY", "qty": 10},
+            {"symbol": "SPY260821P00700000", "qty": -1},
+        ]
+    )
+    assert set(grouped) == {"260821"}
+
+    counts = sh._expiry_side_counts(
+        [
+            {"symbol": "not-an-option", "qty": -1},
+            {"symbol": "SPY260821P00700000", "qty": 0},
+            {"symbol": "SPY260821C00781000", "qty": 1},
+        ]
+    )
+    assert counts == {("C", "long"): 1}
+
+
+def test_expiry_protection_covers_call_spread_and_missing_call_hedge():
+    protected, details = sh._expiry_protection(
+        "260821",
+        [
+            {"symbol": "SPY260821C00776000", "qty": -1},
+            {"symbol": "SPY260821C00781000", "qty": 1},
+        ],
+    )
+    assert protected is True
+    assert any("Protected call-side spread" in detail for detail in details)
+
+    protected, details = sh._expiry_protection(
+        "260821",
+        [{"symbol": "SPY260821C00776000", "qty": -1}],
+    )
+    assert protected is False
+    assert any("long call hedge" in detail for detail in details)
+
+
+def test_position_completeness_handles_missing_empty_and_invalid_state(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+
+    missing = sh.check_position_completeness()
+    assert missing["status"] == "BROKEN"
+    assert any("not found" in detail for detail in missing["details"])
+
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    state_path = data_dir / "system_state.json"
+    state_path.write_text(json.dumps({"positions": []}))
+    empty = sh.check_position_completeness()
+    assert empty["status"] == "OK"
+    assert any("No open positions" in detail for detail in empty["details"])
+
+    state_path.write_text("{invalid")
+    invalid = sh.check_position_completeness()
+    assert invalid["status"] == "BROKEN"
+    assert any("Error:" in detail for detail in invalid["details"])
+
+
+def _write_defined_risk_inventory_mismatch(root, *finding_codes):
+    data_dir = root / "data"
+    data_dir.mkdir()
+    (data_dir / "system_state.json").write_text(
+        json.dumps(
+            {
+                "positions": [
+                    {"symbol": "SPY260821P00703000", "qty": 1},
+                    {"symbol": "SPY260821P00708000", "qty": -1},
+                ]
+            }
+        )
+    )
+    codes = finding_codes or ("QTY_MISMATCH",)
+    findings = []
+    for code in codes:
+        details = {"offenders": [{"right": "P", "strike": 708.0}]} if code == "LOT_SIZE_EXCEEDED" else {}
+        findings.append(
+            SimpleNamespace(
+                code=code,
+                severity="block",
+                details=details,
+            )
+        )
+    return SimpleNamespace(
+        clean=False,
+        option_leg_count=2,
+        findings=findings,
+        block_reasons=lambda: ["Expiry 260821 has journal quantity mismatch"],
+    )
+
+
+def test_bounded_health_accepts_only_canonical_controlled_inventory_halt(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    inventory = _write_defined_risk_inventory_mismatch(tmp_path)
+    (tmp_path / "data" / "TRADING_HALTED").write_text(
+        "\n".join(
+            [
+                "INVENTORY RECONCILIATION REQUIRED",
+                "Reason: broker inventory does not match journaled structures for SPY 2026-08-21",
+                "Policy: new entries blocked; exits and risk reduction remain allowed",
+            ]
+        )
+    )
+    monkeypatch.setattr(
+        "src.risk.open_inventory_audit.audit_from_files",
+        lambda _root: inventory,
+    )
+    monkeypatch.setenv("SYSTEM_HEALTH_BOUNDED", "1")
+
+    result = sh.check_position_completeness()
+
+    assert result["status"] == "HALTED"
+    assert any("canonical inventory halt" in detail for detail in result["details"])
+
+
+def test_bounded_health_rejects_inventory_mismatch_without_valid_halt(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    inventory = _write_defined_risk_inventory_mismatch(tmp_path)
+    (tmp_path / "data" / "TRADING_HALTED").write_text("generic halt")
+    monkeypatch.setattr(
+        "src.risk.open_inventory_audit.audit_from_files",
+        lambda _root: inventory,
+    )
+    monkeypatch.setenv("SYSTEM_HEALTH_BOUNDED", "1")
+
+    result = sh.check_position_completeness()
+
+    assert result["status"] == "BROKEN"
+    assert any("Controlled safety halt invalid" in detail for detail in result["details"])
+
+
+def test_controlled_halt_requires_structured_findings_and_halt_file(tmp_path):
+    no_findings = SimpleNamespace(findings=[])
+    valid, detail = sh._controlled_inventory_halt(no_findings, root=tmp_path)
+    assert valid is False
+    assert "no structured blocking findings" in detail
+
+    inventory = SimpleNamespace(
+        findings=[
+            SimpleNamespace(
+                code="QTY_MISMATCH",
+                severity="block",
+                details={},
+            )
+        ]
+    )
+    valid, detail = sh._controlled_inventory_halt(inventory, root=tmp_path)
+    assert valid is False
+    assert "unavailable" in detail
+
+
+def test_bounded_health_rejects_unrelated_inventory_blocker_with_canonical_halt(
+    monkeypatch, tmp_path
+):
+    monkeypatch.chdir(tmp_path)
+    inventory = _write_defined_risk_inventory_mismatch(tmp_path, "TOO_MANY_EXPIRIES")
+    (tmp_path / "data" / "TRADING_HALTED").write_text(
+        "\n".join(
+            [
+                "INVENTORY RECONCILIATION REQUIRED",
+                "Reason: broker inventory does not match journaled structures",
+                "Policy: new entries blocked; exits and risk reduction remain allowed",
+            ]
+        )
+    )
+    monkeypatch.setattr(
+        "src.risk.open_inventory_audit.audit_from_files",
+        lambda _root: inventory,
+    )
+    monkeypatch.setenv("SYSTEM_HEALTH_BOUNDED", "1")
+
+    result = sh.check_position_completeness()
+
+    assert result["status"] == "BROKEN"
+    assert any("TOO_MANY_EXPIRIES" in detail for detail in result["details"])
+
+
+def test_bounded_health_rejects_mixed_reconciliation_and_policy_blockers(
+    monkeypatch, tmp_path
+):
+    monkeypatch.chdir(tmp_path)
+    inventory = _write_defined_risk_inventory_mismatch(
+        tmp_path,
+        "QTY_MISMATCH",
+        "JOURNAL_STRIKES_INCOMPLETE",
+    )
+    (tmp_path / "data" / "TRADING_HALTED").write_text(
+        "\n".join(
+            [
+                "INVENTORY RECONCILIATION REQUIRED",
+                "Reason: broker inventory does not match journaled structures",
+                "Policy: new entries blocked; exits and risk reduction remain allowed",
+            ]
+        )
+    )
+    monkeypatch.setattr(
+        "src.risk.open_inventory_audit.audit_from_files",
+        lambda _root: inventory,
+    )
+    monkeypatch.setenv("SYSTEM_HEALTH_BOUNDED", "1")
+
+    result = sh.check_position_completeness()
+
+    assert result["status"] == "BROKEN"
+    assert any("JOURNAL_STRIKES_INCOMPLETE" in detail for detail in result["details"])
+
+
+def test_bounded_health_accepts_only_broker_lot_offenders(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    inventory = _write_defined_risk_inventory_mismatch(tmp_path, "LOT_SIZE_EXCEEDED")
+    (tmp_path / "data" / "TRADING_HALTED").write_text(
+        "\n".join(
+            [
+                "INVENTORY RECONCILIATION REQUIRED",
+                "Reason: broker inventory does not match journaled structures",
+                "Policy: new entries blocked; exits and risk reduction remain allowed",
+            ]
+        )
+    )
+    monkeypatch.setattr(
+        "src.risk.open_inventory_audit.audit_from_files",
+        lambda _root: inventory,
+    )
+    monkeypatch.setenv("SYSTEM_HEALTH_BOUNDED", "1")
+
+    result = sh.check_position_completeness()
+
+    assert result["status"] == "HALTED"
+
+
+def test_bounded_health_rejects_journal_lot_policy_violation(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    inventory = _write_defined_risk_inventory_mismatch(tmp_path)
+    inventory.findings = [
+        SimpleNamespace(
+            code="LOT_SIZE_EXCEEDED",
+            severity="block",
+            details={"journal_key": "IC_260821", "quantity": 2},
+        )
+    ]
+    (tmp_path / "data" / "TRADING_HALTED").write_text(
+        "\n".join(
+            [
+                "INVENTORY RECONCILIATION REQUIRED",
+                "Reason: broker inventory does not match journaled structures",
+                "Policy: new entries blocked; exits and risk reduction remain allowed",
+            ]
+        )
+    )
+    monkeypatch.setattr(
+        "src.risk.open_inventory_audit.audit_from_files",
+        lambda _root: inventory,
+    )
+    monkeypatch.setenv("SYSTEM_HEALTH_BOUNDED", "1")
+
+    result = sh.check_position_completeness()
+
+    assert result["status"] == "BROKEN"
+    assert any("LOT_SIZE_EXCEEDED" in detail for detail in result["details"])
+
+
+def test_live_health_keeps_controlled_inventory_halt_nonzero(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    inventory = _write_defined_risk_inventory_mismatch(tmp_path)
+    (tmp_path / "data" / "TRADING_HALTED").write_text(
+        "\n".join(
+            [
+                "INVENTORY RECONCILIATION REQUIRED",
+                "Reason: broker inventory does not match journaled structures",
+                "Policy: new entries blocked; exits and risk reduction remain allowed",
+            ]
+        )
+    )
+    monkeypatch.setattr(
+        "src.risk.open_inventory_audit.audit_from_files",
+        lambda _root: inventory,
+    )
+
+    result = sh.check_position_completeness()
+
+    assert result["status"] == "BROKEN"

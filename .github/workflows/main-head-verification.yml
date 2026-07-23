@@ -6,6 +6,7 @@ on:
     paths:
       - "data/system_state.json"
       - "data/trades.json"
+      - data/TRADING_HALTED
       - "data/runtime/**"
       - "data/north_star_weekly_history.json"
       - "data/feedback/trade_trajectories.jsonl"
