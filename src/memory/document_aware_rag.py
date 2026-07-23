@@ -195,7 +195,13 @@ class DocumentAwareRAG:
         try:
             import os
 
+            # LanceDB's sentence-transformer wrapper is lazy: creating the
+            # embedding function can succeed even when the installed backend is
+            # unusable. Import it once here so query-time retry loops do not turn
+            # a recoverable dependency mismatch into a multi-minute health-check
+            # hang. The caller will fall back to keyword/FTS retrieval.
             import lancedb
+            import sentence_transformers  # noqa: F401
             from lancedb.embeddings import get_registry
 
             self.lancedb_path.mkdir(parents=True, exist_ok=True)

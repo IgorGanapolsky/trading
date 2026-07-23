@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import builtins
+
 from src.memory.document_aware_rag import DocumentAwareRAG, FTS_COLUMNS
 
 
@@ -27,3 +29,19 @@ def test_existing_single_field_indexes_are_idempotent() -> None:
 
     rag = DocumentAwareRAG()
     rag._ensure_fts_index(Table())
+
+
+def test_embedding_runtime_failure_disables_lancedb_without_retry_loop(monkeypatch) -> None:
+    original_import = builtins.__import__
+
+    def fail_sentence_transformers(name, *args, **kwargs):
+        if name == "sentence_transformers":
+            raise ValueError("incompatible embedding runtime")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fail_sentence_transformers)
+
+    rag = DocumentAwareRAG()
+
+    assert rag._init_lancedb() is False
+    assert rag._initialized is False
