@@ -249,8 +249,10 @@ class TestGuardedTradingClient:
         # The gate's rejection message can come from several layers (size, gate, juror).
         # What matters is that ValueError was raised BEFORE the underlying broker
         # was ever called.
-        assert "BLOCKED" in str(exc_info.value) or "FAILED" in str(exc_info.value) or (
-            "MANDATORY" in str(exc_info.value)
+        assert (
+            "BLOCKED" in str(exc_info.value)
+            or "FAILED" in str(exc_info.value)
+            or ("MANDATORY" in str(exc_info.value))
         ), f"Unexpected rejection message: {exc_info.value!r}"
 
     def test_guarded_client_returns_none_when_credentials_missing(self):

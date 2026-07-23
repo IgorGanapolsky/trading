@@ -221,8 +221,7 @@ class TestExecutionAgentValidation:
         agent.reason_with_llm = MagicMock(
             return_value={
                 "reasoning": (
-                    "TIMING: IMMEDIATE\nSLIPPAGE: 0.05%\n"
-                    "CONFIDENCE: 0.92\nRECOMMENDATION: EXECUTE"
+                    "TIMING: IMMEDIATE\nSLIPPAGE: 0.05%\nCONFIDENCE: 0.92\nRECOMMENDATION: EXECUTE"
                 )
             }
         )
@@ -256,8 +255,7 @@ class TestExecutionAgentValidation:
         agent.reason_with_llm = MagicMock(
             return_value={
                 "reasoning": (
-                    "TIMING: IMMEDIATE\nSLIPPAGE: 0.05%\n"
-                    "CONFIDENCE: 0.92\nRECOMMENDATION: EXECUTE"
+                    "TIMING: IMMEDIATE\nSLIPPAGE: 0.05%\nCONFIDENCE: 0.92\nRECOMMENDATION: EXECUTE"
                 )
             }
         )

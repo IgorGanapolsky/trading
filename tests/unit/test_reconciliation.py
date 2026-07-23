@@ -33,9 +33,14 @@ def _write_state(path: Path, fills: list[dict]) -> None:
     path.write_text(json.dumps({"trade_history": fills}))
 
 
-def _write_trades(path: Path, total_pnl: float, unpaired: float | None,
-                  closed: int = 0, unpaired_orders: int = 0,
-                  trades: list | None = None) -> None:
+def _write_trades(
+    path: Path,
+    total_pnl: float,
+    unpaired: float | None,
+    closed: int = 0,
+    unpaired_orders: int = 0,
+    trades: list | None = None,
+) -> None:
     """Write a synthetic trades.json.
 
     If ``trades`` is supplied it is written verbatim and stats.total_pnl is
@@ -54,13 +59,16 @@ def _write_trades(path: Path, total_pnl: float, unpaired: float | None,
     if trades is None:
         trades = []
         if closed > 0:
-            trades = [{
-                "id": f"synth_{i}",
-                "status": "closed",
-                "entry_time": "2026-05-21 12:00:00+00:00",
-                "exit_time": "2026-05-28 12:00:00+00:00",
-                "realized_pnl": (total_pnl / closed) if closed else 0.0,
-            } for i in range(closed)]
+            trades = [
+                {
+                    "id": f"synth_{i}",
+                    "status": "closed",
+                    "entry_time": "2026-05-21 12:00:00+00:00",
+                    "exit_time": "2026-05-28 12:00:00+00:00",
+                    "realized_pnl": (total_pnl / closed) if closed else 0.0,
+                }
+                for i in range(closed)
+            ]
     path.write_text(json.dumps({"stats": stats, "trades": trades}))
 
 
@@ -104,12 +112,18 @@ def test_within_threshold_exit_zero(tmp_path: Path, recon_mod, monkeypatch):
 
     monkeypatch.delenv("SENTRY_DSN", raising=False)
 
-    code = recon_mod.main([
-        "--system-state", str(state),
-        "--trades", str(trades),
-        "--report-dir", str(reports),
-        "--date", "2026-05-29",
-    ])
+    code = recon_mod.main(
+        [
+            "--system-state",
+            str(state),
+            "--trades",
+            str(trades),
+            "--report-dir",
+            str(reports),
+            "--date",
+            "2026-05-29",
+        ]
+    )
     assert code == 0
 
     report = json.loads((reports / "reconciliation_2026-05-29.json").read_text())
@@ -123,8 +137,7 @@ def test_within_threshold_exit_zero(tmp_path: Path, recon_mod, monkeypatch):
     assert report["paired_trade_count"] == 1
 
 
-def test_breach_threshold_exit_two_alert_fired(tmp_path: Path, recon_mod,
-                                                monkeypatch, caplog):
+def test_breach_threshold_exit_two_alert_fired(tmp_path: Path, recon_mod, monkeypatch, caplog):
     """Closed single-leg short: SELL 1 @ $5.00 then BUY 1 @ $0.00 to close.
     Net realized = +$500. Paired reports +$200. Delta $300 > $150 -> alert."""
     state = tmp_path / "system_state.json"
@@ -163,12 +176,18 @@ def test_breach_threshold_exit_two_alert_fired(tmp_path: Path, recon_mod,
     monkeypatch.delenv("SENTRY_DSN", raising=False)
     caplog.set_level("CRITICAL")
 
-    code = recon_mod.main([
-        "--system-state", str(state),
-        "--trades", str(trades),
-        "--report-dir", str(reports),
-        "--date", "2026-05-29",
-    ])
+    code = recon_mod.main(
+        [
+            "--system-state",
+            str(state),
+            "--trades",
+            str(trades),
+            "--report-dir",
+            str(reports),
+            "--date",
+            "2026-05-29",
+        ]
+    )
     assert code == 2
 
     report = json.loads((reports / "reconciliation_2026-05-29.json").read_text())
@@ -191,44 +210,99 @@ def test_open_positions_excluded_from_broker_realized(recon_mod):
 
     # Closed group 1: SIMPLE leg, SELL 1@$3 then BUY 1@$1 -> net +$200
     fills += [
-        {"id": "c1o", "symbol": "S1", "side": "OrderSide.SELL", "qty": "1",
-         "price": "3.00", "status": "OrderStatus.FILLED",
-         "order_class": "OrderClass.SIMPLE", "legs": []},
-        {"id": "c1c", "symbol": "S1", "side": "OrderSide.BUY", "qty": "1",
-         "price": "1.00", "status": "OrderStatus.FILLED",
-         "order_class": "OrderClass.SIMPLE", "legs": []},
+        {
+            "id": "c1o",
+            "symbol": "S1",
+            "side": "OrderSide.SELL",
+            "qty": "1",
+            "price": "3.00",
+            "status": "OrderStatus.FILLED",
+            "order_class": "OrderClass.SIMPLE",
+            "legs": [],
+        },
+        {
+            "id": "c1c",
+            "symbol": "S1",
+            "side": "OrderSide.BUY",
+            "qty": "1",
+            "price": "1.00",
+            "status": "OrderStatus.FILLED",
+            "order_class": "OrderClass.SIMPLE",
+            "legs": [],
+        },
     ]
     # Closed group 2: SIMPLE leg, SELL 2@$4 then BUY 2@$2 -> net +$400
     fills += [
-        {"id": "c2o", "symbol": "S2", "side": "OrderSide.SELL", "qty": "2",
-         "price": "4.00", "status": "OrderStatus.FILLED",
-         "order_class": "OrderClass.SIMPLE", "legs": []},
-        {"id": "c2c", "symbol": "S2", "side": "OrderSide.BUY", "qty": "2",
-         "price": "2.00", "status": "OrderStatus.FILLED",
-         "order_class": "OrderClass.SIMPLE", "legs": []},
+        {
+            "id": "c2o",
+            "symbol": "S2",
+            "side": "OrderSide.SELL",
+            "qty": "2",
+            "price": "4.00",
+            "status": "OrderStatus.FILLED",
+            "order_class": "OrderClass.SIMPLE",
+            "legs": [],
+        },
+        {
+            "id": "c2c",
+            "symbol": "S2",
+            "side": "OrderSide.BUY",
+            "qty": "2",
+            "price": "2.00",
+            "status": "OrderStatus.FILLED",
+            "order_class": "OrderClass.SIMPLE",
+            "legs": [],
+        },
     ]
     # Closed group 3: MLEG IC, open +$10 credit then close -$8 debit -> net +$200
     legs = ["L1", "L2", "L3", "L4"]
     fills += [
-        {"id": "c3o", "symbol": None, "side": "None", "qty": "1",
-         "price": "10.00", "status": "OrderStatus.FILLED",
-         "order_class": "OrderClass.MLEG", "legs": legs},
-        {"id": "c3c", "symbol": None, "side": "None", "qty": "1",
-         "price": "-8.00", "status": "OrderStatus.FILLED",
-         "order_class": "OrderClass.MLEG", "legs": legs},
+        {
+            "id": "c3o",
+            "symbol": None,
+            "side": "None",
+            "qty": "1",
+            "price": "10.00",
+            "status": "OrderStatus.FILLED",
+            "order_class": "OrderClass.MLEG",
+            "legs": legs,
+        },
+        {
+            "id": "c3c",
+            "symbol": None,
+            "side": "None",
+            "qty": "1",
+            "price": "-8.00",
+            "status": "OrderStatus.FILLED",
+            "order_class": "OrderClass.MLEG",
+            "legs": legs,
+        },
     ]
     # Open group A: SIMPLE leg still short, SELL 5@$100 = +$50,000 entry cash
     fills += [
-        {"id": "oA", "symbol": "OPEN1", "side": "OrderSide.SELL", "qty": "5",
-         "price": "100.00", "status": "OrderStatus.FILLED",
-         "order_class": "OrderClass.SIMPLE", "legs": []},
+        {
+            "id": "oA",
+            "symbol": "OPEN1",
+            "side": "OrderSide.SELL",
+            "qty": "5",
+            "price": "100.00",
+            "status": "OrderStatus.FILLED",
+            "order_class": "OrderClass.SIMPLE",
+            "legs": [],
+        },
     ]
     # Open group B: MLEG IC still on, opened for +$20 credit x 10 = +$20,000
     fills += [
-        {"id": "oB", "symbol": None, "side": "None", "qty": "10",
-         "price": "20.00", "status": "OrderStatus.FILLED",
-         "order_class": "OrderClass.MLEG",
-         "legs": ["X1", "X2", "X3", "X4"]},
+        {
+            "id": "oB",
+            "symbol": None,
+            "side": "None",
+            "qty": "10",
+            "price": "20.00",
+            "status": "OrderStatus.FILLED",
+            "order_class": "OrderClass.MLEG",
+            "legs": ["X1", "X2", "X3", "X4"],
+        },
     ]
 
     # Stamp every fill with a timestamp so the window-extraction code path
@@ -261,34 +335,59 @@ def test_missing_unpaired_field_is_tolerated(tmp_path: Path, recon_mod, monkeypa
     _write_trades(trades, total_pnl=0.0, unpaired=None, closed=0)
 
     monkeypatch.delenv("SENTRY_DSN", raising=False)
-    code = recon_mod.main([
-        "--system-state", str(state),
-        "--trades", str(trades),
-        "--report-dir", str(reports),
-        "--date", "2026-05-29",
-    ])
+    code = recon_mod.main(
+        [
+            "--system-state",
+            str(state),
+            "--trades",
+            str(trades),
+            "--report-dir",
+            str(reports),
+            "--date",
+            "2026-05-29",
+        ]
+    )
     assert code == 0
     report = json.loads((reports / "reconciliation_2026-05-29.json").read_text())
     assert report["paired_realized_pnl"] == 0.0
     assert report["delta_dollars"] == 0.0
 
 
-def _mleg_fills(legs: list[str], open_price: float, close_price: float,
-                open_ts: str, close_ts: str, qty: int = 1) -> list[dict]:
+def _mleg_fills(
+    legs: list[str],
+    open_price: float,
+    close_price: float,
+    open_ts: str,
+    close_ts: str,
+    qty: int = 1,
+) -> list[dict]:
     return [
-        {"id": "open", "symbol": None, "side": "None", "qty": str(qty),
-         "price": f"{open_price:.2f}", "filled_at": open_ts,
-         "status": "OrderStatus.FILLED", "order_class": "OrderClass.MLEG",
-         "legs": legs},
-        {"id": "close", "symbol": None, "side": "None", "qty": str(qty),
-         "price": f"{close_price:.2f}", "filled_at": close_ts,
-         "status": "OrderStatus.FILLED", "order_class": "OrderClass.MLEG",
-         "legs": legs},
+        {
+            "id": "open",
+            "symbol": None,
+            "side": "None",
+            "qty": str(qty),
+            "price": f"{open_price:.2f}",
+            "filled_at": open_ts,
+            "status": "OrderStatus.FILLED",
+            "order_class": "OrderClass.MLEG",
+            "legs": legs,
+        },
+        {
+            "id": "close",
+            "symbol": None,
+            "side": "None",
+            "qty": str(qty),
+            "price": f"{close_price:.2f}",
+            "filled_at": close_ts,
+            "status": "OrderStatus.FILLED",
+            "order_class": "OrderClass.MLEG",
+            "legs": legs,
+        },
     ]
 
 
-def test_paired_window_clip_excludes_out_of_window(tmp_path: Path, recon_mod,
-                                                    monkeypatch):
+def test_paired_window_clip_excludes_out_of_window(tmp_path: Path, recon_mod, monkeypatch):
     """Paired ledger has 5 closed trades: 2 outside broker window, 3 inside.
     Only the 3 inside count toward delta. broker_realized is +$200, the 3 in
     window paired trades sum to +$210 (delta -$10 < $150)."""
@@ -310,32 +409,71 @@ def test_paired_window_clip_excludes_out_of_window(tmp_path: Path, recon_mod,
 
     # Paired: 3 inside (sum +$210), 2 outside (sum +$5000 — must be ignored).
     paired_trades = [
-        {"id": "in1", "status": "closed", "entry_time": "2026-05-21T10:00:00+00:00",
-         "exit_time": "2026-05-22T10:00:00+00:00", "realized_pnl": 70.0},
-        {"id": "in2", "status": "closed", "entry_time": "2026-05-23T10:00:00+00:00",
-         "exit_time": "2026-05-24T10:00:00+00:00", "realized_pnl": 70.0},
-        {"id": "in3", "status": "closed", "entry_time": "2026-05-25T10:00:00+00:00",
-         "exit_time": "2026-05-26T10:00:00+00:00", "realized_pnl": 70.0},
-        {"id": "out_before", "status": "closed", "entry_time": "2026-01-10T10:00:00+00:00",
-         "exit_time": "2026-01-20T10:00:00+00:00", "realized_pnl": 2500.0},
-        {"id": "out_after", "status": "closed", "entry_time": "2026-06-10T10:00:00+00:00",
-         "exit_time": "2026-06-20T10:00:00+00:00", "realized_pnl": 2500.0},
+        {
+            "id": "in1",
+            "status": "closed",
+            "entry_time": "2026-05-21T10:00:00+00:00",
+            "exit_time": "2026-05-22T10:00:00+00:00",
+            "realized_pnl": 70.0,
+        },
+        {
+            "id": "in2",
+            "status": "closed",
+            "entry_time": "2026-05-23T10:00:00+00:00",
+            "exit_time": "2026-05-24T10:00:00+00:00",
+            "realized_pnl": 70.0,
+        },
+        {
+            "id": "in3",
+            "status": "closed",
+            "entry_time": "2026-05-25T10:00:00+00:00",
+            "exit_time": "2026-05-26T10:00:00+00:00",
+            "realized_pnl": 70.0,
+        },
+        {
+            "id": "out_before",
+            "status": "closed",
+            "entry_time": "2026-01-10T10:00:00+00:00",
+            "exit_time": "2026-01-20T10:00:00+00:00",
+            "realized_pnl": 2500.0,
+        },
+        {
+            "id": "out_after",
+            "status": "closed",
+            "entry_time": "2026-06-10T10:00:00+00:00",
+            "exit_time": "2026-06-20T10:00:00+00:00",
+            "realized_pnl": 2500.0,
+        },
     ]
     # stats.total_pnl is the FULL-history paired number (pre-clip). We must
     # demonstrate the clip ignores it in favor of per-trade exit-time filter.
-    trades_path.write_text(json.dumps({
-        "stats": {"total_pnl": 5210.0, "closed_trades": 5,
-                  "unpaired_realized_pnl": 0.0, "unpaired_order_count": 0},
-        "trades": paired_trades,
-    }))
+    trades_path.write_text(
+        json.dumps(
+            {
+                "stats": {
+                    "total_pnl": 5210.0,
+                    "closed_trades": 5,
+                    "unpaired_realized_pnl": 0.0,
+                    "unpaired_order_count": 0,
+                },
+                "trades": paired_trades,
+            }
+        )
+    )
 
     monkeypatch.delenv("SENTRY_DSN", raising=False)
-    code = recon_mod.main([
-        "--system-state", str(state),
-        "--trades", str(trades_path),
-        "--report-dir", str(reports),
-        "--date", "2026-05-29",
-    ])
+    code = recon_mod.main(
+        [
+            "--system-state",
+            str(state),
+            "--trades",
+            str(trades_path),
+            "--report-dir",
+            str(reports),
+            "--date",
+            "2026-05-29",
+        ]
+    )
     assert code == 0  # delta = 200 - 210 = -10, within threshold
 
     report = json.loads((reports / "reconciliation_2026-05-29.json").read_text())
@@ -371,25 +509,42 @@ def test_paired_entirely_outside_window(tmp_path: Path, recon_mod, monkeypatch):
 
     # Every paired trade exited BEFORE the broker window opened.
     paired_trades = [
-        {"id": f"old{i}", "status": "closed",
-         "entry_time": "2026-01-05T10:00:00+00:00",
-         "exit_time": "2026-01-15T10:00:00+00:00",
-         "realized_pnl": 100.0}
+        {
+            "id": f"old{i}",
+            "status": "closed",
+            "entry_time": "2026-01-05T10:00:00+00:00",
+            "exit_time": "2026-01-15T10:00:00+00:00",
+            "realized_pnl": 100.0,
+        }
         for i in range(4)
     ]
-    trades_path.write_text(json.dumps({
-        "stats": {"total_pnl": 400.0, "closed_trades": 4,
-                  "unpaired_realized_pnl": 0.0, "unpaired_order_count": 0},
-        "trades": paired_trades,
-    }))
+    trades_path.write_text(
+        json.dumps(
+            {
+                "stats": {
+                    "total_pnl": 400.0,
+                    "closed_trades": 4,
+                    "unpaired_realized_pnl": 0.0,
+                    "unpaired_order_count": 0,
+                },
+                "trades": paired_trades,
+            }
+        )
+    )
 
     monkeypatch.delenv("SENTRY_DSN", raising=False)
-    code = recon_mod.main([
-        "--system-state", str(state),
-        "--trades", str(trades_path),
-        "--report-dir", str(reports),
-        "--date", "2026-05-29",
-    ])
+    code = recon_mod.main(
+        [
+            "--system-state",
+            str(state),
+            "--trades",
+            str(trades_path),
+            "--report-dir",
+            str(reports),
+            "--date",
+            "2026-05-29",
+        ]
+    )
     # broker $500, paired_in $0 -> delta $500 > $150 -> alert -> exit 2.
     assert code == 2
 

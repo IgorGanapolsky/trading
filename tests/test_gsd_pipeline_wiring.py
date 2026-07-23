@@ -65,8 +65,8 @@ def test_memory_gateway_normalizes_legacy_thumbgate_json(tmp_path):
         "#!/usr/bin/env bash\n"
         "cat >/dev/null\n"
         "printf '%s\\n' "
-        "'{\"hookSpecificOutput\":{\"additionalContext\":\"verified warning\"},"
-        "\"systemReminder\":\"unsupported legacy field\"}'\n"
+        '\'{"hookSpecificOutput":{"additionalContext":"verified warning"},'
+        '"systemReminder":"unsupported legacy field"}\'\n'
     )
     fake_npx.chmod(0o755)
     env = os.environ.copy()

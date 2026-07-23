@@ -218,7 +218,14 @@ class TestGetAgentStats:
 class TestGetSummary:
     def test_summary_keys_present(self, tmp_monitor):
         summary = tmp_monitor.get_summary()
-        for key in ("timestamp", "session_start", "session", "daily", "thresholds", "recommendations"):
+        for key in (
+            "timestamp",
+            "session_start",
+            "session",
+            "daily",
+            "thresholds",
+            "recommendations",
+        ):
             assert key in summary
 
     def test_session_section_has_required_keys(self, tmp_monitor):

@@ -3,7 +3,6 @@ from __future__ import annotations
 from src.orchestration.context_engine import ContextMemory, ContextEngine, MemoryTimescale
 
 
-
 def test_context_memory_uses_dict_value_as_content():
     memory = ContextMemory(
         key="m1",

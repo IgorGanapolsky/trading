@@ -216,8 +216,10 @@ class TestPerAttemptTimeout:
         def slow_func():
             pass
 
-        with patch("src.utils.retry_decorator.ThreadPoolExecutor", return_value=executor_instance), \
-             patch("src.utils.retry_decorator.time.sleep"):
+        with (
+            patch("src.utils.retry_decorator.ThreadPoolExecutor", return_value=executor_instance),
+            patch("src.utils.retry_decorator.time.sleep"),
+        ):
             with pytest.raises(TimeoutException):
                 slow_func()
 
@@ -248,8 +250,12 @@ class TestPerAttemptTimeout:
         def slow_func():
             pass  # body never reached — executor is mocked
 
-        with patch("src.utils.retry_decorator.ThreadPoolExecutor", executor_cls), \
-             patch("src.utils.retry_decorator.time.sleep", side_effect=lambda d: sleep_calls.append(d)):
+        with (
+            patch("src.utils.retry_decorator.ThreadPoolExecutor", executor_cls),
+            patch(
+                "src.utils.retry_decorator.time.sleep", side_effect=lambda d: sleep_calls.append(d)
+            ),
+        ):
             with pytest.raises(TimeoutException):
                 slow_func()
 

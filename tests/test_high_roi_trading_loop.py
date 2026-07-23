@@ -34,10 +34,34 @@ def make_ic(total_pl=120.0, credit_received=200.0):
         "credit_received": credit_received,
         "entry_date": (datetime.now() - timedelta(days=3)).isoformat(),
         "legs": [
-            {"symbol": "SPY260731P00684000", "qty": 1, "type": "P", "strike": 684, "unrealized_pl": -5},
-            {"symbol": "SPY260731P00694000", "qty": -1, "type": "P", "strike": 694, "unrealized_pl": 75},
-            {"symbol": "SPY260731C00775000", "qty": -1, "type": "C", "strike": 775, "unrealized_pl": 80},
-            {"symbol": "SPY260731C00785000", "qty": 1, "type": "C", "strike": 785, "unrealized_pl": -30},
+            {
+                "symbol": "SPY260731P00684000",
+                "qty": 1,
+                "type": "P",
+                "strike": 684,
+                "unrealized_pl": -5,
+            },
+            {
+                "symbol": "SPY260731P00694000",
+                "qty": -1,
+                "type": "P",
+                "strike": 694,
+                "unrealized_pl": 75,
+            },
+            {
+                "symbol": "SPY260731C00775000",
+                "qty": -1,
+                "type": "C",
+                "strike": 775,
+                "unrealized_pl": 80,
+            },
+            {
+                "symbol": "SPY260731C00785000",
+                "qty": 1,
+                "type": "C",
+                "strike": 785,
+                "unrealized_pl": -30,
+            },
         ],
     }
 
@@ -190,9 +214,7 @@ def test_missing_entry_date_does_not_block_stop_loss_exit():
 
 
 def test_missing_entry_date_does_not_block_dte_exit():
-    decision = loop.build_exit_decision(
-        make_ic_without_entry_date(total_pl=20.0, days_to_expiry=5)
-    )
+    decision = loop.build_exit_decision(make_ic_without_entry_date(total_pl=20.0, days_to_expiry=5))
 
     assert decision["should_exit"] is True
     assert decision["exit_reason"] == "DTE_EXIT"

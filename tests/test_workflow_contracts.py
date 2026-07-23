@@ -112,7 +112,10 @@ def test_daily_trading_workflow_checks_both_halt_sentinels():
     assert "data/TRADING_HALTED" in workflow_text
     assert "data/trading_halt.txt" in workflow_text
     assert "TRADING_HALTED file exists - crisis mode active" in workflow_text
-    assert "Legacy ML halt is active, but validation_reset allows controlled paper validation" in workflow_text
+    assert (
+        "Legacy ML halt is active, but validation_reset allows controlled paper validation"
+        in workflow_text
+    )
     assert "Trading ALLOWED for controlled paper validation only" in workflow_text
     assert "manual halt active" in workflow_text
 

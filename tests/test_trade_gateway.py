@@ -577,9 +577,7 @@ class TestTradeGatewayLotSizeCap:
         # Closing a pre-existing 50-lot position must remain possible — the cap
         # only applies when the symbol has no existing position to close.
         symbol = "SPY260618P00686000"
-        gateway = self._make_gateway(
-            positions=[{"symbol": symbol, "qty": -50, "unrealized_pl": 0}]
-        )
+        gateway = self._make_gateway(positions=[{"symbol": symbol, "qty": -50, "unrealized_pl": 0}])
         request = TradeRequest(
             symbol=symbol,
             side="buy",  # buy-to-close a short put
@@ -728,9 +726,7 @@ class TestTradeGatewayDecisionTelemetry:
 
         monkeypatch.setattr("builtins.open", boom)
 
-        request = TradeRequest(
-            symbol="SPY", side="buy", notional=500, source="test_telemetry_fail"
-        )
+        request = TradeRequest(symbol="SPY", side="buy", notional=500, source="test_telemetry_fail")
         decision = gateway.evaluate(request)  # must not raise
         assert decision is not None
         assert isinstance(decision.approved, bool)
@@ -738,9 +734,7 @@ class TestTradeGatewayDecisionTelemetry:
     def test_decision_telemetry_appends_multiple(self, tmp_path):
         gateway = self._make_gateway(tmp_path)
         for i in range(3):
-            gateway.evaluate(
-                TradeRequest(symbol="SPY", side="buy", notional=100, source=f"r{i}")
-            )
+            gateway.evaluate(TradeRequest(symbol="SPY", side="buy", notional=100, source=f"r{i}"))
         lines = gateway.DECISION_LOG_PATH.read_text().strip().splitlines()
         assert len(lines) == 3
         sources = [__import__("json").loads(line)["source"] for line in lines]
