@@ -472,6 +472,26 @@ def build_system_diagnosis(
         gl = abs(sum(r["pnl"] for r in rows if r["pnl"] < 0))
         pf = (gp / gl) if gl else (math.inf if gp else 0.0)
 
+    # Explicit stats-vs-list reconciliation (paired rows + unpaired fold)
+    list_pnl = sum(r["pnl"] for r in rows)
+    unpaired_pnl = as_float(stats.get("unpaired_realized_pnl"), 0.0)
+    unpaired_n = int(stats.get("unpaired_order_count") or 0)
+    ledger_views = {
+        "stats_closed_trades": closed,
+        "paired_list_rows": len(rows),
+        "unpaired_order_count": unpaired_n,
+        "stats_total_realized_pnl": round(total_pnl, 2),
+        "paired_list_pnl": round(list_pnl, 2),
+        "unpaired_realized_pnl": round(unpaired_pnl, 2),
+        "list_plus_unpaired_pnl": round(list_pnl + unpaired_pnl, 2),
+        "reconciles": abs((list_pnl + unpaired_pnl) - total_pnl) < 1.0
+        or (closed == len(rows) + unpaired_n),
+        "note": (
+            "Canonical headline metrics use stats (paired + unpaired fold). "
+            "Loss clusters walk the paired list only."
+        ),
+    }
+
     north_star = {
         "monthly_after_tax_target": 6000.0,
         "target_capital": 300000.0,
@@ -505,6 +525,7 @@ def build_system_diagnosis(
             "expectancy_per_trade": round(expectancy, 2),
             "total_realized_pnl": round(total_pnl, 2),
             "active_family": active_family,
+            "views": ledger_views,
         },
         "families": families,
         "loss_clusters": clusters,
