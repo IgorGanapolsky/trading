@@ -99,6 +99,7 @@ jobs:
           echo "Mode: $MODE, Dry run: $DRY, Put credit: $RUN_PUT_CREDIT"
 
       - name: Reconcile filled put-credit journals
+        # Runs before residual IC so PCS legs are journal-owned
         if: steps.mode.outputs.mode != 'learn' && steps.mode.outputs.mode != 'status'
         env:
           ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
