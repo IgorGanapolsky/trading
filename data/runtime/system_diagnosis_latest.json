@@ -1,0 +1,388 @@
+{
+  "generated_at": "2026-07-23T12:17:23.051656+00:00",
+  "diagnosis_version": "1.0",
+  "headline": "System is miserable because the iron-condor process lost money at scale (~17% WR, PF<1, negative expectancy), scaled width/size before edge, churned sub-24h, and has not yet produced a put-credit validation sample.",
+  "ledger": {
+    "closed_trades": 174,
+    "win_rate_pct": 17.24,
+    "profit_factor": 0.7,
+    "expectancy_per_trade": -31.98,
+    "total_realized_pnl": -5564.0,
+    "active_family": "spy_put_credit"
+  },
+  "families": {
+    "iron_condor": {
+      "sample_size": 158,
+      "wins": 20,
+      "losses": 138,
+      "win_rate_pct": 12.66,
+      "total_pnl": -7731.0,
+      "expectancy_per_trade": -48.93,
+      "loss_contribution_pct": 100.0
+    }
+  },
+  "loss_clusters": [
+    {
+      "id": "ten_wide_wings",
+      "label": "10-wide or wider wings",
+      "recommendation": "Never reintroduce 10-wide SPY wings in validation; max risk per structure is too large for the observed win rate.",
+      "sample_size": 156,
+      "wins": 18,
+      "losses": 138,
+      "win_rate_pct": 11.54,
+      "total_pnl": -7788.0,
+      "expectancy_per_trade": -49.92,
+      "loss_contribution_pct": 100.0
+    },
+    {
+      "id": "iron_condor_family",
+      "label": "Iron condor / IC Simple family",
+      "recommendation": "IC family is killed as North Star candidate; do not reopen entries.",
+      "sample_size": 158,
+      "wins": 20,
+      "losses": 138,
+      "win_rate_pct": 12.66,
+      "total_pnl": -7731.0,
+      "expectancy_per_trade": -48.93,
+      "loss_contribution_pct": 100.0
+    },
+    {
+      "id": "multi_contract",
+      "label": "More than one contract",
+      "recommendation": "1-lot only until positive expectancy, PF>1, and positive total P/L clear on the successor cohort.",
+      "sample_size": 63,
+      "wins": 12,
+      "losses": 51,
+      "win_rate_pct": 19.05,
+      "total_pnl": -5798.0,
+      "expectancy_per_trade": -92.03,
+      "loss_contribution_pct": 73.59
+    },
+    {
+      "id": "long_hold_ge_7d",
+      "label": "Held 7 days or longer",
+      "recommendation": "Force-exit by 7 DTE; slow losers dominate dollar damage even when rare.",
+      "sample_size": 16,
+      "wins": 6,
+      "losses": 10,
+      "win_rate_pct": 37.5,
+      "total_pnl": -3057.0,
+      "expectancy_per_trade": -191.06,
+      "loss_contribution_pct": 37.65
+    },
+    {
+      "id": "early_exit_lt_24h",
+      "label": "Closed in under 24 hours",
+      "recommendation": "Require min 24h hold except hard stop; theta strategies die under sub-day churn.",
+      "sample_size": 135,
+      "wins": 13,
+      "losses": 122,
+      "win_rate_pct": 9.63,
+      "total_pnl": -2243.0,
+      "expectancy_per_trade": -16.61,
+      "loss_contribution_pct": 35.19
+    },
+    {
+      "id": "early_exit_lt_1h",
+      "label": "Closed in under 1 hour",
+      "recommendation": "Do not open setups whose expected management requires intraday repair; enforce a minimum hold unless a hard max-loss fires.",
+      "sample_size": 129,
+      "wins": 9,
+      "losses": 120,
+      "win_rate_pct": 6.98,
+      "total_pnl": -3011.0,
+      "expectancy_per_trade": -23.34,
+      "loss_contribution_pct": 34.94
+    },
+    {
+      "id": "five_wide_or_less",
+      "label": "5-wide or narrower wings",
+      "recommendation": "Keep successor structures at $5 wings until n>=30 proves edge.",
+      "sample_size": 2,
+      "wins": 2,
+      "losses": 0,
+      "win_rate_pct": 100.0,
+      "total_pnl": 57.0,
+      "expectancy_per_trade": 28.5,
+      "loss_contribution_pct": 0.0
+    }
+  ],
+  "monthly_attribution": [
+    {
+      "month": "2026-02",
+      "sample_size": 24,
+      "total_pnl": -1136.0,
+      "win_rate_pct": 25.0,
+      "expectancy_per_trade": -47.33
+    },
+    {
+      "month": "2026-03",
+      "sample_size": 48,
+      "total_pnl": -4693.0,
+      "win_rate_pct": 20.83,
+      "expectancy_per_trade": -97.77
+    },
+    {
+      "month": "2026-04",
+      "sample_size": 82,
+      "total_pnl": -2116.0,
+      "win_rate_pct": 0.0,
+      "expectancy_per_trade": -25.8
+    },
+    {
+      "month": "2026-05",
+      "sample_size": 1,
+      "total_pnl": 100.0,
+      "win_rate_pct": 100.0,
+      "expectancy_per_trade": 100.0
+    },
+    {
+      "month": "2026-06",
+      "sample_size": 1,
+      "total_pnl": 57.0,
+      "win_rate_pct": 100.0,
+      "expectancy_per_trade": 57.0
+    },
+    {
+      "month": "2026-07",
+      "sample_size": 2,
+      "total_pnl": 57.0,
+      "win_rate_pct": 100.0,
+      "expectancy_per_trade": 28.5
+    }
+  ],
+  "root_causes": [
+    {
+      "id": "wrong_strategy_family",
+      "severity": "CRITICAL",
+      "title": "Primary strategy family has negative expectancy at large sample",
+      "evidence": {
+        "sample_size": 158,
+        "wins": 20,
+        "losses": 138,
+        "win_rate_pct": 12.66,
+        "total_pnl": -7731.0,
+        "expectancy_per_trade": -48.93,
+        "loss_contribution_pct": 100.0
+      },
+      "explanation": "Iron condors were the only closed family. Lifetime expectancy and profit factor fail kill criteria \u2014 this is not a small-sample fluke."
+    },
+    {
+      "id": "ten_wide_wings",
+      "severity": "CRITICAL",
+      "title": "10-wide wings dominate dollar losses",
+      "evidence": {
+        "id": "ten_wide_wings",
+        "label": "10-wide or wider wings",
+        "recommendation": "Never reintroduce 10-wide SPY wings in validation; max risk per structure is too large for the observed win rate.",
+        "sample_size": 156,
+        "wins": 18,
+        "losses": 138,
+        "win_rate_pct": 11.54,
+        "total_pnl": -7788.0,
+        "expectancy_per_trade": -49.92,
+        "loss_contribution_pct": 100.0
+      },
+      "explanation": "Most closed structures used ~$10 wings. Max loss per lot is roughly 10x credit room vs $5 wings, and the observed win rate cannot pay for that risk."
+    },
+    {
+      "id": "multi_lot_scaling_before_edge",
+      "severity": "CRITICAL",
+      "title": "Scaled lot size before proving edge",
+      "evidence": {
+        "id": "multi_contract",
+        "label": "More than one contract",
+        "recommendation": "1-lot only until positive expectancy, PF>1, and positive total P/L clear on the successor cohort.",
+        "sample_size": 63,
+        "wins": 12,
+        "losses": 51,
+        "win_rate_pct": 19.05,
+        "total_pnl": -5798.0,
+        "expectancy_per_trade": -92.03,
+        "loss_contribution_pct": 73.59
+      },
+      "explanation": "Multi-lot trades show worse expectancy than 1-lot. Size amplified a negative process."
+    },
+    {
+      "id": "sub_24h_churn",
+      "severity": "HIGH",
+      "title": "Mass sub-24h exits destroyed theta edge",
+      "evidence": {
+        "id": "early_exit_lt_24h",
+        "label": "Closed in under 24 hours",
+        "recommendation": "Require min 24h hold except hard stop; theta strategies die under sub-day churn.",
+        "sample_size": 135,
+        "wins": 13,
+        "losses": 122,
+        "win_rate_pct": 9.63,
+        "total_pnl": -2243.0,
+        "expectancy_per_trade": -16.61,
+        "loss_contribution_pct": 35.19
+      },
+      "explanation": "A large share of trades closed in under a day. Credit-spread edge needs time; churn converts the book into fee/slippage + stop hunting."
+    },
+    {
+      "id": "slow_loser_tails",
+      "severity": "HIGH",
+      "title": "Long-hold losers dominate residual P/L damage",
+      "evidence": {
+        "id": "long_hold_ge_7d",
+        "label": "Held 7 days or longer",
+        "recommendation": "Force-exit by 7 DTE; slow losers dominate dollar damage even when rare.",
+        "sample_size": 16,
+        "wins": 6,
+        "losses": 10,
+        "win_rate_pct": 37.5,
+        "total_pnl": -3057.0,
+        "expectancy_per_trade": -191.06,
+        "loss_contribution_pct": 37.65
+      },
+      "explanation": "Fewer long holds still account for large absolute losses \u2014 missing 7-DTE force exit or stop discipline on tested structures."
+    },
+    {
+      "id": "successor_not_sampled",
+      "severity": "HIGH",
+      "title": "Successor put-credit cohort has zero closed trades",
+      "evidence": {},
+      "explanation": "IC was killed and put-credit is active on paper, but the ledger has no put-credit closed sample. Automation without a clean successor sample is not an edge."
+    },
+    {
+      "id": "ml_prior_mismatch",
+      "severity": "HIGH",
+      "title": "ML priors assumed ~86% IC win rate; realized ~17%",
+      "evidence": {
+        "assumed_prior_win_rate_pct": 86.0,
+        "realized_ic_win_rate_pct": 12.66,
+        "note": "Thompson model eventually updated, but for months decisions optimized against fantasy priors."
+      },
+      "explanation": "Research priors (Tastytrade 15\u0394 IC) were used as if they were this system's edge. Agentic RAG/ML then optimized around a false baseline until empirical feedback caught up."
+    },
+    {
+      "id": "complexity_over_edge",
+      "severity": "MEDIUM",
+      "title": "System complexity outran process control",
+      "evidence": {
+        "symptoms": [
+          "4-leg inventory orphans / lot mismatches",
+          "global TRADING_HALTED driven by killed family metrics",
+          "automation heartbeats without profitable cohort"
+        ]
+      },
+      "explanation": "Self-healing workflows, GRPO, and multi-agent orchestration cannot create expectancy. They can only amplify whatever entry/exit rules exist \u2014 and those rules lost money."
+    }
+  ],
+  "primary_root_causes": [
+    {
+      "id": "wrong_strategy_family",
+      "severity": "CRITICAL",
+      "title": "Primary strategy family has negative expectancy at large sample",
+      "evidence": {
+        "sample_size": 158,
+        "wins": 20,
+        "losses": 138,
+        "win_rate_pct": 12.66,
+        "total_pnl": -7731.0,
+        "expectancy_per_trade": -48.93,
+        "loss_contribution_pct": 100.0
+      },
+      "explanation": "Iron condors were the only closed family. Lifetime expectancy and profit factor fail kill criteria \u2014 this is not a small-sample fluke."
+    },
+    {
+      "id": "ten_wide_wings",
+      "severity": "CRITICAL",
+      "title": "10-wide wings dominate dollar losses",
+      "evidence": {
+        "id": "ten_wide_wings",
+        "label": "10-wide or wider wings",
+        "recommendation": "Never reintroduce 10-wide SPY wings in validation; max risk per structure is too large for the observed win rate.",
+        "sample_size": 156,
+        "wins": 18,
+        "losses": 138,
+        "win_rate_pct": 11.54,
+        "total_pnl": -7788.0,
+        "expectancy_per_trade": -49.92,
+        "loss_contribution_pct": 100.0
+      },
+      "explanation": "Most closed structures used ~$10 wings. Max loss per lot is roughly 10x credit room vs $5 wings, and the observed win rate cannot pay for that risk."
+    },
+    {
+      "id": "multi_lot_scaling_before_edge",
+      "severity": "CRITICAL",
+      "title": "Scaled lot size before proving edge",
+      "evidence": {
+        "id": "multi_contract",
+        "label": "More than one contract",
+        "recommendation": "1-lot only until positive expectancy, PF>1, and positive total P/L clear on the successor cohort.",
+        "sample_size": 63,
+        "wins": 12,
+        "losses": 51,
+        "win_rate_pct": 19.05,
+        "total_pnl": -5798.0,
+        "expectancy_per_trade": -92.03,
+        "loss_contribution_pct": 73.59
+      },
+      "explanation": "Multi-lot trades show worse expectancy than 1-lot. Size amplified a negative process."
+    },
+    {
+      "id": "sub_24h_churn",
+      "severity": "HIGH",
+      "title": "Mass sub-24h exits destroyed theta edge",
+      "evidence": {
+        "id": "early_exit_lt_24h",
+        "label": "Closed in under 24 hours",
+        "recommendation": "Require min 24h hold except hard stop; theta strategies die under sub-day churn.",
+        "sample_size": 135,
+        "wins": 13,
+        "losses": 122,
+        "win_rate_pct": 9.63,
+        "total_pnl": -2243.0,
+        "expectancy_per_trade": -16.61,
+        "loss_contribution_pct": 35.19
+      },
+      "explanation": "A large share of trades closed in under a day. Credit-spread edge needs time; churn converts the book into fee/slippage + stop hunting."
+    },
+    {
+      "id": "slow_loser_tails",
+      "severity": "HIGH",
+      "title": "Long-hold losers dominate residual P/L damage",
+      "evidence": {
+        "id": "long_hold_ge_7d",
+        "label": "Held 7 days or longer",
+        "recommendation": "Force-exit by 7 DTE; slow losers dominate dollar damage even when rare.",
+        "sample_size": 16,
+        "wins": 6,
+        "losses": 10,
+        "win_rate_pct": 37.5,
+        "total_pnl": -3057.0,
+        "expectancy_per_trade": -191.06,
+        "loss_contribution_pct": 37.65
+      },
+      "explanation": "Fewer long holds still account for large absolute losses \u2014 missing 7-DTE force exit or stop discipline on tested structures."
+    }
+  ],
+  "north_star": {
+    "monthly_after_tax_target": 6000.0,
+    "target_capital": 300000.0,
+    "current_equity": 94062.0,
+    "starting_equity": 100000.0,
+    "estimated_monthly_from_expectancy": 0.0,
+    "on_track": false,
+    "blockers": [
+      "negative_expectancy",
+      "profit_factor_le_1",
+      "successor_n_zero"
+    ]
+  },
+  "operator_actions": [
+    "Do not reopen IC / ic_simple entries.",
+    "Keep paper-only put-credit validation: 1-lot, $5 wide, min 24h hold, max 2 concurrent.",
+    "Clear unclean open inventory before new risk.",
+    "Gate on put-credit cohort metrics only (n>=30, expectancy>0, PF>1) \u2014 not IC lifetime.",
+    "Treat GRPO/Thompson as advisory until successor sample exists; never as proof of edge."
+  ],
+  "not_the_reason": [
+    "Lack of workflows or heartbeats (ops automation is present).",
+    "Lack of lessons files (RAG corpus is large but was not binding process control).",
+    "Need for more model complexity before process control."
+  ]
+}

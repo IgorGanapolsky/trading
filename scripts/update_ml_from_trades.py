@@ -31,6 +31,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from src.analytics.loss_forensics import (  # noqa: E402
+    analyze_loss_clusters as forensics_analyze_loss_clusters,
+    build_system_diagnosis,
+    diagnosis_to_markdown,
+    strategy_family,
+    wing_width as forensics_wing_width,
+)
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -40,7 +48,12 @@ MODEL_FILE = PROJECT_ROOT / "models" / "ml" / "trade_confidence_model.json"
 LESSONS_DIR = PROJECT_ROOT / "rag_knowledge" / "lessons_learned"
 SYSTEM_STATE_FILE = PROJECT_ROOT / "data" / "system_state.json"
 REHAB_PLAN_FILE = PROJECT_ROOT / "data" / "runtime" / "edge_rehabilitation_plan.json"
+DIAGNOSIS_FILE = PROJECT_ROOT / "data" / "runtime" / "system_diagnosis_latest.json"
+DIAGNOSIS_LESSON_ID = "system_misery_diagnosis_current"
+KILL_SWITCH_FILE = PROJECT_ROOT / "data" / "runtime" / "strategy_kill_switch.json"
 REHAB_LESSON_ID = "strategy_rehabilitation_ic_simple_current"
+SUCCESSOR_FAMILY = "spy_put_credit"
+KILLED_FAMILIES = frozenset({"ic_simple", "iron_condor"})
 
 # Thresholds
 MIN_TRADES_FOR_GATE = 30
@@ -142,15 +155,8 @@ def _holding_hours(trade: dict) -> float | None:
 
 
 def _wing_width(trade: dict) -> float | None:
-    legs = trade.get("legs") if isinstance(trade.get("legs"), dict) else {}
-    put_strikes = legs.get("put_strikes") or []
-    call_strikes = legs.get("call_strikes") or []
-    widths: list[float] = []
-    if len(put_strikes) >= 2:
-        widths.append(abs(_as_float(put_strikes[1]) - _as_float(put_strikes[0])))
-    if len(call_strikes) >= 2:
-        widths.append(abs(_as_float(call_strikes[1]) - _as_float(call_strikes[0])))
-    return max(widths) if widths else None
+    """Wing width via shared forensics (structured legs, trade id, OCC symbols)."""
+    return forensics_wing_width(trade)
 
 
 def stats_from_trades(trades: list[dict], cohort_unpaired_stats: dict | None = None) -> dict:
@@ -246,104 +252,36 @@ def stats_from_trades(trades: list[dict], cohort_unpaired_stats: dict | None = N
 
 def analyze_loss_clusters(trades_data: dict) -> list[dict]:
     """Summarize recurring loss clusters so RAG/ML learns what to stop repeating."""
-    trades = [trade for trade in trades_data.get("trades", []) if isinstance(trade, dict)]
-    closed_rows: list[dict] = []
-    for trade in trades:
-        pnl, has_pnl = _trade_pnl(trade)
-        outcome = str(trade.get("outcome") or "").strip().lower()
-        if outcome not in {"win", "loss"} and not has_pnl:
+    return forensics_analyze_loss_clusters(trades_data)
+
+
+def trades_for_family(trades_data: dict, family: str) -> list[dict]:
+    """Filter closed-trade rows belonging to a strategy family."""
+    wanted = family.strip().lower().replace(" ", "_")
+    out: list[dict] = []
+    for trade in trades_data.get("trades", []):
+        if not isinstance(trade, dict):
             continue
-        if outcome not in {"win", "loss"} and pnl == 0:
-            continue
-        closed_rows.append(
-            {
-                "trade": trade,
-                "pnl": pnl,
-                "is_win": outcome == "win" or pnl > 0,
-                "is_loss": outcome == "loss" or pnl < 0,
-                "holding_hours": _holding_hours(trade),
-                "wing_width": _wing_width(trade),
-                "quantity": _as_float(trade.get("quantity"), 1.0) or 1.0,
-                "source": str(trade.get("source") or ""),
-            }
-        )
+        fam = strategy_family(trade)
+        if wanted in {"iron_condor", "ic_simple"} and fam == "iron_condor":
+            out.append(trade)
+        elif wanted in {"spy_put_credit", "put_credit", "bull_put"} and fam == "spy_put_credit":
+            out.append(trade)
+        elif fam == wanted:
+            out.append(trade)
+    return out
 
-    total_loss_abs = abs(sum(row["pnl"] for row in closed_rows if row["pnl"] < 0))
 
-    cluster_specs = [
-        (
-            "early_exit_lt_1h",
-            "Closed in under 1 hour",
-            lambda row: row["holding_hours"] is not None and row["holding_hours"] < 1,
-            "Do not open setups whose expected management requires intraday repair; enforce a minimum hold unless a hard max-loss or broken-leg condition fires.",
-        ),
-        (
-            "early_exit_lt_24h",
-            "Closed in under 24 hours",
-            lambda row: row["holding_hours"] is not None and row["holding_hours"] < 24,
-            "Require the next validation hypothesis to prove why holding-time behavior changed before allowing another short-dated IC cohort.",
-        ),
-        (
-            "ten_wide_wings",
-            "10-wide or wider wings",
-            lambda row: row["wing_width"] is not None and row["wing_width"] >= 10,
-            "Quarantine 10-wide SPY iron condors; test narrower defined-risk structures or explicitly prove better width/risk math before re-entry.",
-        ),
-        (
-            "multi_contract",
-            "More than one contract",
-            lambda row: row["quantity"] > 1,
-            "Limit validation to one contract until the changed-rule cohort clears positive expectancy, profit factor, and realized-P/L gates.",
-        ),
-        (
-            "long_hold_ge_7d",
-            "Held 7 days or longer",
-            lambda row: row["holding_hours"] is not None and row["holding_hours"] >= 24 * 7,
-            "Add an exit/repair rule for slow-moving losers before allowing long-hold IC exposure again.",
-        ),
-        (
-            "orphan_cleanup",
-            "Orphan or leg-repair cleanup",
-            lambda row: "orphan" in row["source"].lower(),
-            "Do not trade unless entry/exit pairing is atomic and orphan cleanup cannot create unmanaged directional exposure.",
-        ),
-    ]
-
-    clusters: list[dict] = []
-    for cluster_id, label, predicate, recommendation in cluster_specs:
-        rows = [row for row in closed_rows if predicate(row)]
-        if not rows:
-            continue
-        wins = [row for row in rows if row["pnl"] > 0]
-        losses = [row for row in rows if row["pnl"] < 0]
-        total_pnl = sum(row["pnl"] for row in rows)
-        loss_abs = abs(sum(row["pnl"] for row in losses))
-        clusters.append(
-            {
-                "id": cluster_id,
-                "label": label,
-                "sample_size": len(rows),
-                "wins": len(wins),
-                "losses": len(losses),
-                "win_rate_pct": round((len(wins) / len(rows) * 100), 2),
-                "total_pnl": round(total_pnl, 2),
-                "expectancy_per_trade": round(total_pnl / len(rows), 2),
-                "loss_contribution_pct": round(
-                    (loss_abs / total_loss_abs * 100) if total_loss_abs else 0.0, 2
-                ),
-                "recommendation": recommendation,
-            }
-        )
-
-    clusters.sort(
-        key=lambda item: (
-            item["loss_contribution_pct"],
-            abs(min(item["total_pnl"], 0)),
-            item["sample_size"],
-        ),
-        reverse=True,
-    )
-    return clusters
+def load_active_family() -> str:
+    if KILL_SWITCH_FILE.exists():
+        try:
+            payload = json.loads(KILL_SWITCH_FILE.read_text())
+            family = str(payload.get("active_family") or SUCCESSOR_FAMILY)
+            if family:
+                return family
+        except (OSError, json.JSONDecodeError, TypeError):
+            pass
+    return SUCCESSOR_FAMILY
 
 
 def build_rehabilitation_plan(trades_data: dict, gate: dict) -> dict:
@@ -375,16 +313,31 @@ def build_rehabilitation_plan(trades_data: dict, gate: dict) -> dict:
             ledger["total_realized_pnl"] / ledger["closed_trades"], 4
         )
 
-    status = "quarantined" if not gate.get("should_trade") else "eligible"
+    active_family = load_active_family()
+    ic_killed = active_family in {SUCCESSOR_FAMILY, "spy_put_credit"} or True
+    # IC is always treated as killed once successor is active; rehab plan records that fact.
+    status = "killed" if active_family == SUCCESSOR_FAMILY else (
+        "quarantined" if not gate.get("should_trade") else "eligible"
+    )
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "strategy_family": "ic_simple",
         "status": status,
-        "profitability_objective": "Resume only after a changed-rule validation cohort proves positive expectancy, profit factor above 1.0, and positive realized P/L.",
+        "killed_at": datetime.now(timezone.utc).isoformat() if status == "killed" else None,
+        "successor_strategy_family": SUCCESSOR_FAMILY,
+        "profitability_objective": (
+            "IC Simple is removed as a North Star candidate. New paper validation only under "
+            f"{SUCCESSOR_FAMILY} with positive expectancy, PF>1, and positive realized P/L over "
+            f">={MIN_TRADES_FOR_GATE} trades."
+        ),
         "ledger": ledger,
         "gate": {
-            "should_trade": bool(gate.get("should_trade")),
-            "block_reason": gate.get("block_reason", ""),
+            "should_trade": False if status == "killed" else bool(gate.get("should_trade")),
+            "block_reason": (
+                f"STRATEGY_KILLED: IC Simple removed. Use {SUCCESSOR_FAMILY} for new paper validation only."
+                if status == "killed"
+                else gate.get("block_reason", "")
+            ),
             "min_trades_met": bool(gate.get("min_trades_met")),
             "min_win_rate_met": bool(gate.get("min_win_rate_met")),
             "positive_expectancy_met": bool(gate.get("positive_expectancy_met")),
@@ -393,11 +346,11 @@ def build_rehabilitation_plan(trades_data: dict, gate: dict) -> dict:
         "loss_clusters": clusters,
         "required_rule_changes": changed_rules,
         "next_validation_hypothesis_template": {
-            "enabled": False,
-            "strategy_family": "ic_simple",
+            "enabled": active_family == SUCCESSOR_FAMILY,
+            "strategy_family": SUCCESSOR_FAMILY,
             "hypothesis": (
-                "IC Simple remains quarantined. Enable only after replacing this text with "
-                "a concrete rule-change thesis backed by the loss clusters in edge_rehabilitation_plan.json."
+                "2-leg SPY bull put credit (1-lot, $5 wide, 15Δ short, 30–45 DTE, 25% TP / 200% stop / "
+                "7 DTE exit, min 24h hold) can produce expectancy>0 and PF>1 over 30 clean paper trades."
             ),
             "changed_rules": changed_rules,
             "kill_criteria": {
@@ -412,6 +365,7 @@ def build_rehabilitation_plan(trades_data: dict, gate: dict) -> dict:
             "lesson_path": str((LESSONS_DIR / f"{REHAB_LESSON_ID}.md").relative_to(PROJECT_ROOT)),
             "tags": ["rag", "ml", "strategy-quarantine", "profitability", "loss-clusters"],
         },
+        "ic_killed": ic_killed,
     }
 
 
@@ -475,11 +429,24 @@ Generated by `update_ml_from_trades.py` on {datetime.now(timezone.utc).strftime(
     return 2
 
 
+def _bucket_from_stats(stats: dict) -> dict:
+    wins = int(stats.get("wins", 0) or 0)
+    losses = int(stats.get("losses", 0) or 0)
+    return {
+        "alpha": float(wins + 1),
+        "beta": float(losses + 1),
+        "wins": wins,
+        "losses": losses,
+    }
+
+
 def update_thompson_sampler(trades_data: dict, model: dict) -> dict:
     """Update Thompson Sampler with empirical win/loss from canonical ledger.
 
-    Replaces stale Tastytrade priors with actual trade data.
-    Uses alpha = wins + 1, beta = losses + 1 (Bayesian uniform prior).
+    Family-aware:
+    - iron_condor / spy_specific reflect IC lifetime (killed family evidence)
+    - spy_put_credit is a separate bucket; cold-start weak prior until cohort data exists
+    Never copies IC 86% research priors onto the put-credit successor.
     """
     stats = trades_data.get("stats", {})
     wins = stats.get("wins", 0)
@@ -487,37 +454,76 @@ def update_thompson_sampler(trades_data: dict, model: dict) -> dict:
     total = stats.get("closed_trades", 0)
     win_rate = stats.get("win_rate_pct", 0)
 
-    # Empirical priors: alpha = wins + 1, beta = losses + 1
-    alpha = wins + 1
-    beta_val = losses + 1
-
     old_alpha = model.get("iron_condor", {}).get("alpha", 0)
     old_beta = model.get("iron_condor", {}).get("beta", 0)
     old_expected = old_alpha / (old_alpha + old_beta) * 100 if (old_alpha + old_beta) > 0 else 0
 
-    model["iron_condor"] = {
-        "alpha": float(alpha),
-        "beta": float(beta_val),
-        "wins": wins,
-        "losses": losses,
-    }
-    model["spy_specific"] = {
-        "alpha": float(alpha),
-        "beta": float(beta_val),
-        "wins": wins,
-        "losses": losses,
+    ic_trades = trades_for_family(trades_data, "iron_condor")
+    put_trades = trades_for_family(trades_data, SUCCESSOR_FAMILY)
+    ic_stats = stats_from_trades(ic_trades) if ic_trades else stats_from_trades(
+        [t for t in trades_data.get("trades", []) if isinstance(t, dict)]
+    )
+    # If ledger is still 100% IC-labeled, ic_stats ~= overall stats
+    if not ic_trades and not put_trades:
+        ic_stats = {
+            "wins": wins,
+            "losses": losses,
+            "closed_trades": total,
+            "win_rate_pct": win_rate,
+        }
+
+    put_stats = stats_from_trades(put_trades) if put_trades else {
+        "wins": 0,
+        "losses": 0,
+        "closed_trades": 0,
+        "win_rate_pct": 0.0,
     }
 
-    logger.info("=" * 60)
-    logger.info("THOMPSON SAMPLER UPDATE")
-    logger.info("=" * 60)
-    logger.info(f"  Trades: {total} closed ({wins}W / {losses}L)")
-    logger.info(f"  Win rate: {win_rate:.1f}%")
-    logger.info(f"  Old priors: alpha={old_alpha}, beta={old_beta} (expected {old_expected:.1f}%)")
-    logger.info(f"  New priors: alpha={alpha}, beta={beta_val} (expected {win_rate:.1f}%)")
+    model["iron_condor"] = _bucket_from_stats(ic_stats)
+    # spy_specific tracks SPY IC history for diagnostics — NOT the active successor prior
+    model["spy_specific"] = dict(model["iron_condor"])
+    model["spy_specific"]["note"] = "SPY iron_condor history only; do not use for put-credit entry"
 
-    # Drift detection
-    drift = abs(old_expected - win_rate)
+    if put_stats.get("closed_trades", 0) > 0:
+        model[SUCCESSOR_FAMILY] = _bucket_from_stats(put_stats)
+        model[SUCCESSOR_FAMILY]["prior_source"] = "put_credit_cohort"
+    else:
+        # Weak neutral prior — NOT the 86% IC research fantasy
+        model[SUCCESSOR_FAMILY] = {
+            "alpha": 1.0,
+            "beta": 1.0,
+            "wins": 0,
+            "losses": 0,
+            "prior_source": "weak_neutral_cold_start",
+            "note": "No closed put-credit trades yet; refuse 86% IC prior inheritance",
+        }
+
+    model["families"] = {
+        "iron_condor": model["iron_condor"],
+        SUCCESSOR_FAMILY: model[SUCCESSOR_FAMILY],
+    }
+    model["active_family"] = load_active_family()
+
+    logger.info("=" * 60)
+    logger.info("THOMPSON SAMPLER UPDATE (family-aware)")
+    logger.info("=" * 60)
+    logger.info(f"  Overall trades: {total} closed ({wins}W / {losses}L) WR={win_rate:.1f}%")
+    logger.info(
+        "  IC bucket: alpha=%s beta=%s (wins=%s losses=%s)",
+        model["iron_condor"]["alpha"],
+        model["iron_condor"]["beta"],
+        model["iron_condor"]["wins"],
+        model["iron_condor"]["losses"],
+    )
+    logger.info(
+        "  Put-credit bucket: alpha=%s beta=%s prior=%s",
+        model[SUCCESSOR_FAMILY]["alpha"],
+        model[SUCCESSOR_FAMILY]["beta"],
+        model[SUCCESSOR_FAMILY].get("prior_source"),
+    )
+    logger.info(f"  Old IC expected: {old_expected:.1f}%")
+
+    drift = abs(old_expected - float(win_rate or 0))
     if drift > DRIFT_ALERT_THRESHOLD:
         logger.warning(
             f"  DRIFT ALERT: Model expected {old_expected:.1f}% but realized {win_rate:.1f}% ({drift:.1f}% drift)"
@@ -525,6 +531,44 @@ def update_thompson_sampler(trades_data: dict, model: dict) -> dict:
 
     logger.info("=" * 60)
     return model
+
+
+def check_family_trading_gate(
+    family: str,
+    family_stats: dict,
+    *,
+    family_killed: bool = False,
+) -> dict:
+    """Gate a single strategy family. Killed families never open."""
+    if family_killed or family in KILLED_FAMILIES:
+        return {
+            "family": family,
+            "should_trade": False,
+            "allow_paper_validation": False,
+            "total_trades": int(family_stats.get("closed_trades", 0) or 0),
+            "win_rate": _as_float(family_stats.get("win_rate_pct"), 0.0),
+            "expectancy_per_trade": _as_float(
+                family_stats.get("expectancy_per_trade"), 0.0
+            ),
+            "profit_factor": _as_float(family_stats.get("profit_factor"), 0.0),
+            "block_reason": f"STRATEGY_KILLED: {family}",
+            "min_trades_met": False,
+            "min_win_rate_met": False,
+            "positive_expectancy_met": False,
+            "min_profit_factor_met": False,
+        }
+
+    gate = check_trading_gate(family_stats)
+    gate["family"] = family
+    n = int(family_stats.get("closed_trades", 0) or 0)
+    # Successor may paper-validate while n < min trades; live still blocked elsewhere.
+    gate["allow_paper_validation"] = n < MIN_TRADES_FOR_GATE or bool(gate.get("should_trade"))
+    if n < MIN_TRADES_FOR_GATE:
+        gate["block_reason"] = (
+            f"Validation cohort incomplete: {n}/{MIN_TRADES_FOR_GATE} closed {family} trades"
+        )
+        gate["should_trade"] = False  # not "proven"; paper path uses allow_paper_validation
+    return gate
 
 
 def check_trading_gate(stats: dict) -> dict:
@@ -730,6 +774,37 @@ def _prevention_for_cause(root_cause: str) -> str:
     return "Investigate trade logs for execution details."
 
 
+def write_system_diagnosis(trades_data: dict, dry_run: bool = False) -> int:
+    """Persist DS root-cause diagnosis + RAG lesson (agentic memory)."""
+    state: dict = {}
+    if SYSTEM_STATE_FILE.exists():
+        try:
+            state = json.loads(SYSTEM_STATE_FILE.read_text())
+        except (OSError, json.JSONDecodeError):
+            state = {}
+    paper = state.get("paper_account") or state.get("account") or {}
+    equity = paper.get("current_equity") or paper.get("equity")
+    starting = paper.get("starting_balance")
+    diagnosis = build_system_diagnosis(
+        trades_data,
+        equity=float(equity) if equity is not None else None,
+        starting_equity=float(starting) if starting is not None else None,
+        active_family=load_active_family(),
+    )
+    md = diagnosis_to_markdown(diagnosis)
+    if dry_run:
+        logger.info("  [DRY RUN] Would write: %s", DIAGNOSIS_FILE)
+        logger.info("  [DRY RUN] Would write: %s", LESSONS_DIR / f"{DIAGNOSIS_LESSON_ID}.md")
+        return 0
+    DIAGNOSIS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    DIAGNOSIS_FILE.write_text(json.dumps(diagnosis, indent=2) + "\n")
+    LESSONS_DIR.mkdir(parents=True, exist_ok=True)
+    (LESSONS_DIR / f"{DIAGNOSIS_LESSON_ID}.md").write_text(md)
+    logger.info("  Wrote system diagnosis: %s", DIAGNOSIS_FILE)
+    logger.info("  Wrote diagnosis RAG lesson: %s", DIAGNOSIS_LESSON_ID)
+    return 1
+
+
 def main(dry_run: bool = False):
     """Main feedback loop update."""
     logger.info("=" * 70)
@@ -744,6 +819,7 @@ def main(dry_run: bool = False):
     stats = trades_data.get("stats", {})
     validation_reset = is_validation_reset_model(model)
     validation_stats: dict | None = None
+    active_family = load_active_family()
 
     if not stats.get("closed_trades"):
         logger.warning("No closed trades found — nothing to update")
@@ -770,12 +846,39 @@ def main(dry_run: bool = False):
             )
         else:
             logger.info("Thompson update skipped: no validation-phase closed trades yet")
+            # Still ensure put-credit cold-start bucket exists
+            model = update_thompson_sampler(trades_data, model)
     else:
         model = update_thompson_sampler(trades_data, model)
 
-    # 3. Check trading gate
+    # 3. Family-aware trading gates
+    # Lifetime IC stats must NOT globally halt the put-credit paper successor.
+    ic_stats = stats_from_trades(trades_for_family(trades_data, "iron_condor"))
+    if ic_stats.get("closed_trades", 0) == 0:
+        # Ledger may still be 100% IC under strategy=iron_condor
+        ic_stats = stats if stats else ic_stats
+    put_stats = stats_from_trades(trades_for_family(trades_data, SUCCESSOR_FAMILY))
+
+    ic_gate = check_family_trading_gate("iron_condor", ic_stats, family_killed=True)
+    put_gate = check_family_trading_gate(SUCCESSOR_FAMILY, put_stats, family_killed=False)
+
     gate_stats = validation_stats if validation_reset and validation_stats is not None else stats
+    # Legacy aggregate gate retained for diagnostics only
     gate = check_trading_gate(gate_stats)
+    gate["legacy_aggregate"] = True
+    gate["active_family"] = active_family
+    gate["family_gates"] = {
+        "iron_condor": ic_gate,
+        SUCCESSOR_FAMILY: put_gate,
+    }
+    # Effective entry policy follows active family
+    if active_family == SUCCESSOR_FAMILY:
+        gate["should_trade"] = bool(put_gate.get("should_trade"))
+        gate["allow_paper_validation"] = bool(put_gate.get("allow_paper_validation"))
+        gate["block_reason"] = put_gate.get("block_reason", gate.get("block_reason"))
+        gate["block_live_new_positions"] = True
+    else:
+        gate["allow_paper_validation"] = False
     if validation_reset:
         gate["validation_reset_active"] = True
         gate["allow_validation_entries"] = True
@@ -784,10 +887,10 @@ def main(dry_run: bool = False):
     # 4. Generate post-mortem lessons
     lessons = generate_loss_postmortems(trades_data)
     logger.info(f"\nPost-mortem lessons to write: {len(lessons)}")
-    rehabilitation_plan = build_rehabilitation_plan(trades_data, gate)
-    if rehabilitation_plan["status"] == "quarantined":
+    rehabilitation_plan = build_rehabilitation_plan(trades_data, ic_gate)
+    if rehabilitation_plan["status"] in {"quarantined", "killed"}:
         logger.warning(
-            "  STRATEGY REHAB REQUIRED: %s",
+            "  STRATEGY REHAB / KILL: %s",
             rehabilitation_plan["gate"].get("block_reason", "unknown"),
         )
         for cluster in rehabilitation_plan.get("loss_clusters", [])[:3]:
@@ -810,18 +913,45 @@ def main(dry_run: bool = False):
                 else "validation_reset"
             )
         else:
-            model["feedback_source"] = "canonical_trades_json"
+            model["feedback_source"] = "canonical_trades_json_family_aware"
         model["gate"] = gate
+        model["active_family"] = active_family
+        MODEL_FILE.parent.mkdir(parents=True, exist_ok=True)
         MODEL_FILE.write_text(json.dumps(model, indent=2))
         logger.info(f"Updated {MODEL_FILE}")
 
-        # Enforce ML gate via trading halt file (hard gate)
-        # BYPASS during validation phase: the model was reset for the controlled
-        # experiment (Apr 2026). The old 66-trade data produces should_trade=false
-        # but we need to allow paper validation entries to prove edge.
-        # See .claude/rules/controlled-experiment.md
+        # Family-aware halt policy:
+        # - Never use killed IC lifetime metrics to block put-credit paper validation.
+        # - Halt successor only after its own n>=30 cohort fails gates.
+        # - Always keep live blocked (enforced by kill switch + allow flags).
         halt_file = PROJECT_ROOT / "data" / "TRADING_HALTED"
-        if not gate["should_trade"] and not validation_reset:
+        put_n = int(put_stats.get("closed_trades", 0) or 0)
+        put_failed_after_sample = (
+            put_n >= MIN_TRADES_FOR_GATE and not put_gate.get("should_trade")
+        )
+        if active_family == SUCCESSOR_FAMILY and put_gate.get("allow_paper_validation") and not put_failed_after_sample:
+            if halt_file.exists():
+                content = halt_file.read_text()
+                # Clear ML halts that were written from IC aggregate metrics
+                if "ML GATE BLOCKED" in content:
+                    halt_file.unlink()
+                    logger.info(
+                        "  HALT FILE REMOVED: IC aggregate ML halt must not block put-credit paper validation"
+                    )
+            logger.info(
+                "  Put-credit paper validation allowed (n=%s/%s). Live remains blocked by kill switch.",
+                put_n,
+                MIN_TRADES_FOR_GATE,
+            )
+        elif put_failed_after_sample:
+            halt_file.write_text(
+                f"ML GATE BLOCKED (spy_put_credit cohort): {put_gate.get('block_reason', 'unknown')}\n"
+                f"Updated: {datetime.now(timezone.utc).isoformat()}\n"
+                f"Win rate: {put_stats.get('win_rate_pct', 0):.1f}% | Trades: {put_n}\n"
+                f"Family: {SUCCESSOR_FAMILY} | Live blocked | Paper blocked after failed cohort\n"
+            )
+            logger.warning("  HALT FILE WRITTEN for failed put-credit cohort: %s", halt_file)
+        elif not gate["should_trade"] and not validation_reset and active_family != SUCCESSOR_FAMILY:
             halt_file.write_text(
                 f"ML GATE BLOCKED: {gate.get('block_reason', 'unknown')}\n"
                 f"Updated: {datetime.now(timezone.utc).isoformat()}\n"
@@ -833,8 +963,7 @@ def main(dry_run: bool = False):
             logger.info(
                 "  ML gate would halt, but validation_reset active — allowing paper validation entries"
             )
-        elif halt_file.exists():
-            # Only remove halt if it was set by ML gate (not manual)
+        elif halt_file.exists() and gate.get("should_trade"):
             content = halt_file.read_text()
             if "ML GATE BLOCKED" in content:
                 halt_file.unlink()
@@ -842,20 +971,34 @@ def main(dry_run: bool = False):
 
     written = write_postmortem_lessons(lessons, dry_run)
     rehab_written = write_rehabilitation_plan(rehabilitation_plan, dry_run)
+    diagnosis_written = write_system_diagnosis(trades_data, dry_run)
     logger.info(f"Post-mortem lessons written: {written}")
     logger.info(f"Strategy rehabilitation artifacts written: {rehab_written}")
+    logger.info(f"System diagnosis artifacts written: {diagnosis_written}")
 
     # 6. Summary
     logger.info("\n" + "=" * 70)
     logger.info("SUMMARY")
     logger.info(
-        f"  Thompson Sampler: alpha={model['iron_condor']['alpha']}, beta={model['iron_condor']['beta']}"
+        f"  Thompson IC: alpha={model['iron_condor']['alpha']}, beta={model['iron_condor']['beta']}"
     )
+    pc = model.get(SUCCESSOR_FAMILY, {})
+    logger.info(
+        "  Thompson put-credit: alpha=%s beta=%s prior=%s",
+        pc.get("alpha"),
+        pc.get("beta"),
+        pc.get("prior_source"),
+    )
+    logger.info(f"  Active family: {active_family}")
     if validation_reset:
         logger.info(f"  Legacy win rate: {stats.get('win_rate_pct', 0):.1f}%")
         logger.info(f"  Gate cohort: validation_phase ({gate.get('total_trades', 0)} trades)")
-    logger.info(f"  Gate win rate: {gate.get('win_rate', 0):.1f}%")
-    logger.info(f"  Trading gate: {'OPEN' if gate['should_trade'] else 'BLOCKED'}")
+    logger.info(f"  Aggregate gate win rate: {gate.get('win_rate', 0):.1f}%")
+    logger.info(
+        "  Put-credit paper validation: %s",
+        "ALLOWED" if gate.get("allow_paper_validation") else "BLOCKED",
+    )
+    logger.info(f"  Proven edge gate: {'OPEN' if gate['should_trade'] else 'BLOCKED'}")
     if not gate["should_trade"]:
         logger.info(f"  Block reason: {gate.get('block_reason', 'unknown')}")
     logger.info(f"  Rehabilitation status: {rehabilitation_plan['status']}")
