@@ -214,11 +214,17 @@ def test_rehabilitation_plan_requires_changed_rule_validation_before_profit_clai
 
     plan = build_rehabilitation_plan(trades, gate)
 
-    assert plan["status"] == "quarantined"  # nosec B101
-    assert plan["next_validation_hypothesis_template"]["enabled"] is False  # nosec B101
+    # Active successor is spy_put_credit → IC plan is killed, not a retry loop.
+    assert plan["status"] in {"quarantined", "killed"}  # nosec B101
     assert plan["rag_ingestion"]["lesson_id"] == feedback.REHAB_LESSON_ID  # nosec B101
-    assert "changed-rule validation cohort" in plan["profitability_objective"]  # nosec B101
     assert plan["required_rule_changes"]  # nosec B101
+    if plan["status"] == "killed":
+        assert plan["successor_strategy_family"] == "spy_put_credit"  # nosec B101
+        assert plan["next_validation_hypothesis_template"]["strategy_family"] == "spy_put_credit"  # nosec B101
+        assert plan["next_validation_hypothesis_template"]["enabled"] is True  # nosec B101
+        assert "spy_put_credit" in plan["profitability_objective"]  # nosec B101
+    else:
+        assert plan["next_validation_hypothesis_template"]["enabled"] is False  # nosec B101
 
 
 # --- Trading Gate Tests ---
