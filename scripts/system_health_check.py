@@ -8,6 +8,7 @@ Usage: python3 scripts/system_health_check.py
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import sys
@@ -225,24 +226,63 @@ def check_rl_system():
 
 
 def check_ml_pipeline():
-    """Verify ML/Gemini Deep Research works.
-
-    Fixed Dec 30, 2025: Was checking phantom MLPredictor module.
-    Now checks actual Gemini integration.
-    """
+    """Verify research dependencies and active-policy evidence eligibility."""
     results = {"name": "ML Pipeline", "status": "UNKNOWN", "details": []}
 
     try:
+        from src.analytics.trade_evidence import (
+            active_strategy_family,
+            build_trade_evidence,
+        )
         from src.ml import GENAI_AVAILABLE
 
         if GENAI_AVAILABLE:
-            results["details"].append("✓ Gemini API available")
+            results["details"].append("✓ Gemini research package available")
         else:
-            results["details"].append("⚠️ Gemini API not available (missing google.genai)")
+            results["details"].append("⚠️ Gemini research package unavailable")
 
-        # Verify class can be instantiated (graceful degradation)
-        results["details"].append("✓ GeminiDeepResearch class available")
-        results["status"] = "OK"
+        root = Path.cwd()
+        family = active_strategy_family(root)
+        payload = json.loads((root / "data" / "trades.json").read_text(encoding="utf-8"))
+        evidence = build_trade_evidence(
+            payload,
+            strategy_family=family,
+            require_protocol_fields=family == "spy_put_credit",
+        )
+        metadata_path = root / "models" / "ml" / "grpo_trade_metadata.json"
+        metadata = (
+            json.loads(metadata_path.read_text(encoding="utf-8"))
+            if metadata_path.exists()
+            else {}
+        )
+        lineage = (
+            metadata.get("evidence_lineage")
+            if isinstance(metadata.get("evidence_lineage"), dict)
+            else {}
+        )
+        eligible = bool(
+            metadata.get("policy_eligible") is True
+            and metadata.get("strategy_family") == family
+            and lineage.get("dataset_sha256") == evidence.dataset_sha256
+            and len(evidence.rows) >= 30
+            and evidence.learning_ready
+        )
+        if eligible:
+            results["status"] = "OK"
+            results["details"].append(
+                f"✓ GRPO policy eligible for {family}: "
+                f"{len(evidence.rows)} verified outcomes, lineage current"
+            )
+        else:
+            results["status"] = "STUB"
+            results["details"].append(
+                f"⚠️ GRPO inference quarantined for {family}: "
+                f"{len(evidence.rows)}/30 verified outcomes; fixed profile remains active"
+            )
+            if evidence.issues:
+                results["details"].append(
+                    f"⚠️ Evidence issues: {'; '.join(evidence.issues)}"
+                )
 
     except Exception as e:
         results["status"] = "BROKEN"
@@ -363,7 +403,7 @@ def check_position_completeness():
 
             if has_short_puts and has_short_calls:
                 results["details"].append(
-                    f"✓ Expiry {expiry}: Protected 4-leg structure ({len(legs)} legs)"
+                    f"✓ Expiry {expiry}: Defined-risk put/call exposure ({len(legs)} broker legs)"
                 )
             elif has_short_puts:
                 results["details"].append(
@@ -375,7 +415,21 @@ def check_position_completeness():
                 )
 
         if results["status"] != "BROKEN":
-            results["status"] = "OK"
+            from src.risk.open_inventory_audit import audit_from_files
+
+            inventory = audit_from_files(Path.cwd())
+            if inventory.clean:
+                results["status"] = "OK"
+                results["details"].append(
+                    f"✓ All {inventory.option_leg_count} option legs match journal quantities"
+                )
+            else:
+                results["status"] = "BROKEN"
+                results["details"].append(
+                    "✗ Defined-risk is not enough: broker inventory does not match journals"
+                )
+                for reason in inventory.block_reasons():
+                    results["details"].append(f"✗ {reason}")
 
     except Exception as e:
         results["status"] = "BROKEN"
@@ -459,16 +513,8 @@ def check_feedback_freshness():
 
 
 def check_win_rate_validity():
-    """Verify win rate tracking is working from trades.json ledger.
-
-    Added Jan 27, 2026: Win rate showed 0% despite 61 Alpaca fills.
-    Fixed Jan 27, 2026: Use trades.json (paired trades) not system_state.json (raw fills).
-
-    Data architecture:
-    - system_state.json.trade_history: Raw Alpaca order fills (not paired)
-    - trades.json: Paired trades with status/outcome for win rate calculation
-    """
-    results = {"name": "Win Rate Tracking", "status": "UNKNOWN", "details": []}
+    """Verify performance and active learning use row-derived paired evidence."""
+    results = {"name": "Verified Trade Evidence", "status": "UNKNOWN", "details": []}
 
     try:
         import json
@@ -482,31 +528,35 @@ def check_win_rate_validity():
             return results
 
         trades_data = json.loads(trades_file.read_text())
-        trades = trades_data.get("trades", [])
-        stats = trades_data.get("stats", {})
+        from src.analytics.trade_evidence import (
+            active_strategy_family,
+            build_trade_evidence,
+        )
 
-        total_trades = len(trades)
-        closed_trades = stats.get("closed_trades", 0)
-        win_rate = stats.get("win_rate_pct")
-
-        # Also check system_state for Alpaca fill count (informational)
-        state_file = Path("data/system_state.json")
-        alpaca_fills = 0
-        if state_file.exists():
-            state = json.loads(state_file.read_text())
-            alpaca_fills = state.get("trades_loaded", 0)
-
-        if closed_trades > 0 and win_rate is not None:
-            results["status"] = "OK"
-            results["details"].append(f"✓ Win rate: {win_rate}% from {closed_trades} closed trades")
-        elif total_trades > 0:
-            results["status"] = "OK"
-            results["details"].append(f"✓ {total_trades} trades tracked, {closed_trades} closed")
-            results["details"].append(f"  (Alpaca has {alpaca_fills} raw fills)")
-        else:
-            results["status"] = "OK"
-            results["details"].append(f"✓ No trades in ledger yet ({alpaca_fills} Alpaca fills)")
-            results["details"].append("  Add trades via: scripts/calculate_win_rate.py add_trade()")
+        paired = build_trade_evidence(trades_data)
+        family = active_strategy_family(Path.cwd())
+        active = build_trade_evidence(
+            trades_data,
+            strategy_family=family,
+            require_protocol_fields=family == "spy_put_credit",
+        )
+        metrics = paired.metrics
+        results["details"].append(
+            f"Paired rows: {metrics.closed_trades}, P/L ${metrics.total_realized_pnl:.2f}, "
+            f"expectancy {metrics.expectancy_per_trade}, PF {metrics.profit_factor}"
+        )
+        results["details"].append(
+            f"Active {family} verified cohort: {len(active.rows)} "
+            f"(dataset {active.dataset_sha256[:12]})"
+        )
+        for issue in paired.issues:
+            results["details"].append(f"✗ {issue}")
+        for issue in active.issues:
+            if issue not in paired.issues:
+                results["details"].append(f"✗ {issue}")
+        results["status"] = "BROKEN" if paired.issues or active.issues else "OK"
+        if not active.rows and results["status"] == "OK":
+            results["details"].append("⚠️ Active cohort has no verified closed outcomes yet")
 
     except Exception as e:
         results["status"] = "BROKEN"
@@ -521,9 +571,10 @@ def check_execution_scope():
 
     try:
         required_paths = [
-            Path("scripts/iron_condor_trader.py"),
+            Path("scripts/spy_put_credit.py"),
             Path("scripts/sync_alpaca_state.py"),
             Path("scripts/sync_closed_positions.py"),
+            Path("src/core/active_strategy.py"),
             Path("src/safety/mandatory_trade_gate.py"),
             Path("data/system_state.json"),
             Path("data/trades.json"),

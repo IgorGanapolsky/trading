@@ -1,79 +1,159 @@
 {
-  "generated_at": "2026-07-22T21:00:00Z",
+  "generated_at": "2026-07-23T13:33:31.563253+00:00",
   "strategy_family": "ic_simple",
   "status": "killed",
-  "killed_at": "2026-07-22T21:00:00Z",
   "successor_strategy_family": "spy_put_credit",
-  "profitability_objective": "IC Simple is removed as a North Star candidate. New paper validation only under spy_put_credit with positive expectancy, PF>1, and positive realized P/L over >=30 trades.",
+  "profitability_objective": "Iron-condor entries remain killed. Validate only the active successor on paired, protocol-compliant paper outcomes.",
   "ledger": {
-    "closed_trades": 174,
-    "wins": 30,
-    "losses": 143,
-    "win_rate_pct": 17.24,
-    "profit_factor": 0.7,
-    "total_realized_pnl": -5564.0,
-    "expectancy_per_trade": -31.98,
-    "note": "Canonical trades.json stats at kill decision; list pairing may differ slightly."
+    "closed_trades": 159,
+    "wins": 20,
+    "losses": 138,
+    "breakeven": 1,
+    "win_rate_pct": 12.58,
+    "profit_factor": 0.1596,
+    "total_realized_pnl": -7731.0,
+    "expectancy_per_trade": -48.62,
+    "metric_unit": "paired_closed_structure",
+    "dataset_sha256": "1e78ddd28e022f447b7c12b4c7207d6cf19ce83e4e1f37cdd2def79f6b12863d",
+    "evidence_issues": []
   },
   "gate": {
     "should_trade": false,
-    "block_reason": "STRATEGY_KILLED: IC Simple removed. Use spy_put_credit for new paper validation only.",
-    "min_trades_met": true,
-    "min_win_rate_met": false,
-    "positive_expectancy_met": false,
-    "min_profit_factor_met": false
+    "block_reason": "STRATEGY_KILLED: iron-condor entries are retired; paper validation belongs to spy_put_credit",
+    "active_successor_gate": {
+      "should_trade": false,
+      "total_trades": 0,
+      "win_rate": 0.0,
+      "expectancy_per_trade": 0.0,
+      "profit_factor": 0.0,
+      "min_trades_met": false,
+      "min_win_rate_met": false,
+      "positive_expectancy_met": false,
+      "min_profit_factor_met": false,
+      "block_reason": "Only 0/30 trades; Win rate 0.0% < 50.0%; Expectancy $0.00/trade <= $0.00; Profit factor 0.00 <= 1.00",
+      "validation_reset_active": true,
+      "allow_validation_entries": true,
+      "block_live_new_positions": true,
+      "active_strategy_family": "spy_put_credit",
+      "evidence_dataset_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "evidence_verified_rows": 0,
+      "evidence_issues": [],
+      "cohort_mature": false,
+      "allow_paper_validation": true,
+      "hard_halt_required": false
+    }
   },
   "loss_clusters": [
     {
       "id": "ten_wide_wings",
       "label": "10-wide or wider wings",
+      "recommendation": "Never reintroduce 10-wide SPY wings in validation; max risk per structure is too large for the observed win rate.",
       "sample_size": 156,
+      "wins": 18,
+      "losses": 138,
+      "win_rate_pct": 11.54,
       "total_pnl": -7788.0,
       "expectancy_per_trade": -49.92,
-      "recommendation": "Never reintroduce 10-wide IC wings."
+      "loss_contribution_pct": 100.0
+    },
+    {
+      "id": "iron_condor_family",
+      "label": "Iron condor / IC Simple family",
+      "recommendation": "IC family is killed as North Star candidate; do not reopen entries.",
+      "sample_size": 158,
+      "wins": 20,
+      "losses": 138,
+      "win_rate_pct": 12.66,
+      "total_pnl": -7731.0,
+      "expectancy_per_trade": -48.93,
+      "loss_contribution_pct": 100.0
     },
     {
       "id": "multi_contract",
       "label": "More than one contract",
+      "recommendation": "1-lot only until positive expectancy, PF>1, and positive total P/L clear on the successor cohort.",
       "sample_size": 63,
+      "wins": 12,
+      "losses": 51,
+      "win_rate_pct": 19.05,
       "total_pnl": -5798.0,
       "expectancy_per_trade": -92.03,
-      "recommendation": "1-lot only for successor validation."
+      "loss_contribution_pct": 73.59
     },
     {
-      "id": "four_leg_complexity",
-      "label": "4-leg IC inventory / orphan risk",
-      "sample_size": null,
-      "total_pnl": null,
-      "expectancy_per_trade": null,
-      "recommendation": "Successor uses 2-leg put credit only to eliminate dual-side orphans and call-side lot mismatches (SPY 2026-08-21 incident)."
+      "id": "long_hold_ge_7d",
+      "label": "Held 7 days or longer",
+      "recommendation": "Force-exit by 7 DTE; slow losers dominate dollar damage even when rare.",
+      "sample_size": 16,
+      "wins": 6,
+      "losses": 10,
+      "win_rate_pct": 37.5,
+      "total_pnl": -3057.0,
+      "expectancy_per_trade": -191.06,
+      "loss_contribution_pct": 37.65
     },
     {
       "id": "early_exit_lt_24h",
       "label": "Closed in under 24 hours",
+      "recommendation": "Require min 24h hold except hard stop; theta strategies die under sub-day churn.",
       "sample_size": 135,
+      "wins": 13,
+      "losses": 122,
+      "win_rate_pct": 9.63,
       "total_pnl": -2243.0,
       "expectancy_per_trade": -16.61,
-      "recommendation": "Successor enforces min 24h hold except hard stop."
+      "loss_contribution_pct": 35.19
     },
     {
-      "id": "long_hold_ge_7d",
-      "label": "Held past 7 DTE / slow losers",
-      "sample_size": 14,
-      "total_pnl": -3114.0,
-      "expectancy_per_trade": -222.43,
-      "recommendation": "Successor force-exit by 7 DTE."
+      "id": "early_exit_lt_1h",
+      "label": "Closed in under 1 hour",
+      "recommendation": "Do not open setups whose expected management requires intraday repair; enforce a minimum hold unless a hard max-loss fires.",
+      "sample_size": 129,
+      "wins": 9,
+      "losses": 120,
+      "win_rate_pct": 6.98,
+      "total_pnl": -3011.0,
+      "expectancy_per_trade": -23.34,
+      "loss_contribution_pct": 34.94
+    },
+    {
+      "id": "five_wide_or_less",
+      "label": "5-wide or narrower wings",
+      "recommendation": "Keep successor structures at $5 wings until n>=30 proves edge.",
+      "sample_size": 2,
+      "wins": 2,
+      "losses": 0,
+      "win_rate_pct": 100.0,
+      "total_pnl": 57.0,
+      "expectancy_per_trade": 28.5,
+      "loss_contribution_pct": 0.0
     }
   ],
-  "kill_decision": {
-    "decision": "KILL",
-    "not_rehab": true,
-    "rationale": [
-      "Lifetime expectancy and PF fail hard with large sample — not a small-sample fluke.",
-      "Rehab IC cohort n=4 is insufficient to reverse a 170+ trade failure.",
-      "Structural complexity of 4-leg ICs produced unclean inventory and unlearnable exits.",
-      "CEO authorized scrap-and-rebuild for a better system (2026-07-22)."
-    ],
-    "successor": "spy_put_credit"
+  "retirement_reasons": [
+    "Never reintroduce 10-wide SPY wings in validation; max risk per structure is too large for the observed win rate.",
+    "IC family is killed as North Star candidate; do not reopen entries.",
+    "1-lot only until positive expectancy, PF>1, and positive total P/L clear on the successor cohort."
+  ],
+  "successor_validation": {
+    "enabled": false,
+    "strategy_family": "spy_put_credit",
+    "hypothesis": "Collect only protocol-compliant successor outcomes. ML and RAG stay advisory until the cohort clears every kill criterion.",
+    "kill_criteria": {
+      "min_closed_trades": 30,
+      "min_expectancy_per_trade": 0.01,
+      "min_profit_factor": 1.01,
+      "min_total_realized_pnl": 0.01
+    }
+  },
+  "rag_ingestion": {
+    "lesson_id": "strategy_rehabilitation_ic_simple_current",
+    "lesson_path": "rag_knowledge/lessons_learned/strategy_rehabilitation_ic_simple_current.md",
+    "tags": [
+      "rag",
+      "ml",
+      "strategy-killed",
+      "successor-validation",
+      "paired-evidence"
+    ]
   }
 }

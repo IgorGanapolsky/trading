@@ -34,10 +34,14 @@ class TestTradeConfidenceModel:
 class TestRegimeAdjustments:
     """Test regime-based confidence adjustments."""
 
-    def test_spike_regime_reduces_confidence(self):
+    def test_spike_regime_reduces_confidence(self, monkeypatch):
         """Test that spike regime reduces confidence (adjustment = 0.5)."""
         from src.ml.trade_confidence import TradeConfidenceModel
 
+        monkeypatch.setattr(
+            "src.ml.trade_confidence.random.betavariate",
+            lambda _alpha, _beta: 0.6,
+        )
         model = TradeConfidenceModel()
         spike_conf = model.sample_confidence("iron_condor", "SPY", "spike")
         calm_conf = model.sample_confidence("iron_condor", "SPY", "calm")
@@ -122,6 +126,42 @@ class TestTradeConfidenceResult:
         assert result["total_trades"] == 9
         assert result["sample_gate_passed"] is True
 
+    def test_spy_put_credit_never_inherits_iron_condor_bucket(self):
+        """The active successor must not use legacy SPY iron-condor evidence."""
+        from src.ml.trade_confidence import TradeConfidenceModel
+
+        model = TradeConfidenceModel()
+        model.model = {
+            "iron_condor": {"alpha": 2.0, "beta": 20.0, "wins": 1, "losses": 19},
+            "spy_specific": {"alpha": 31.0, "beta": 146.0, "wins": 30, "losses": 145},
+            "regime_adjustments": {},
+        }
+
+        result = model.get_trade_confidence("spy_put_credit", "SPY")
+
+        assert result["posterior_mean"] == 0.5
+        assert result["wins"] == 0
+        assert result["losses"] == 0
+        assert result["recommendation"] == "AVOID"
+
+    def test_spy_put_credit_alias_uses_successor_bucket(self):
+        from src.ml.trade_confidence import TradeConfidenceModel
+
+        model = TradeConfidenceModel()
+        model.model = model._default_model()
+        model.model["spy_put_credit"] = {
+            "alpha": 8.0,
+            "beta": 4.0,
+            "wins": 7,
+            "losses": 3,
+        }
+
+        result = model.get_trade_confidence("bull_put_credit", "SPY")
+
+        assert result["posterior_mean"] == 0.667
+        assert result["wins"] == 7
+        assert result["losses"] == 3
+
 
 class TestSingletonAccess:
     """Test singleton pattern and quick access functions."""
@@ -170,3 +210,20 @@ class TestOutcomeRecording:
         model.model["iron_condor"]["losses"] += 1
 
         assert model.model["iron_condor"]["beta"] == initial_beta + 1.0
+
+    def test_put_credit_outcome_does_not_mutate_spy_ic_bucket(self, monkeypatch):
+        from src.ml.trade_confidence import TradeConfidenceModel
+
+        model = TradeConfidenceModel()
+        model.model = model._default_model()
+        spy_before = dict(model.model["spy_specific"])
+        monkeypatch.setattr(model, "_save_model", lambda: None)
+
+        model.record_trade_outcome(
+            success=True,
+            strategy="put_credit_spread",
+            ticker="SPY",
+        )
+
+        assert model.model["spy_put_credit"]["wins"] == 1
+        assert model.model["spy_specific"] == spy_before

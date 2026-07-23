@@ -1,4 +1,6 @@
-ML GATE BLOCKED: Win rate 17.2% < 50.0%; Expectancy $-31.98/trade <= $0.00; Profit factor 0.70 <= 1.00
-Updated: 2026-07-22T20:49:33.315896+00:00
-Win rate: 17.2% | Trades: 174
-Unblock: improve win rate above 50.0% over 30+ trades
+INVENTORY RECONCILIATION REQUIRED
+Reason: broker inventory does not match journaled structures for SPY 2026-08-21
+Evidence: 6 broker legs; C776=-2 and C781=+2 versus journaled -1/+1; 2 legs are not journal-attributed
+Policy: new entries blocked; exits and risk reduction remain allowed
+Unblock: reconcile residual/orphan verticals and rerun system_health_check.py
+Updated: 2026-07-23T13:33:31+00:00

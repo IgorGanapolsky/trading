@@ -102,6 +102,9 @@ def test_build_system_diagnosis_headline_and_successor_gap():
     cause_ids = {c["id"] for c in diagnosis["root_causes"]}
     assert "successor_not_sampled" in cause_ids
     assert diagnosis["north_star"]["on_track"] is False
+    assert diagnosis["ledger"]["views"]["reconciles"] is True
+    assert "paired closed structures only" in diagnosis["ledger"]["views"]["note"]
+    assert "paired + unpaired fold" not in diagnosis["ledger"]["views"]["note"]
     assert any("put-credit" in a.lower() or "spy_put_credit" in a for a in diagnosis["operator_actions"])
 
 

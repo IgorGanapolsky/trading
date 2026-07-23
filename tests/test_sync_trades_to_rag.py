@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from scripts.sync_trades_to_rag import (
     format_trade_document,
     load_todays_trades,
+    main,
 )
 
 
@@ -154,6 +155,52 @@ class TestFormatTradeDocument:
         assert "unknown" in doc.lower()
 
     # Note: LanceDB RAG sync tests are skipped when the local index is unavailable
+
+
+def test_main_writes_empty_quarantine_packet_for_mixed_units(tmp_path, monkeypatch):
+    ledger = tmp_path / "trades.json"
+    output = tmp_path / "rag.json"
+    ledger.write_text(
+        json.dumps(
+            {
+                "trades": [
+                    {
+                        "id": "IC_1",
+                        "status": "closed",
+                        "strategy": "iron_condor",
+                        "entry_time": "2026-01-22T14:30:00Z",
+                        "exit_time": "2026-02-06T14:30:00Z",
+                        "realized_pnl": 41,
+                        "outcome": "win",
+                    }
+                ],
+                "stats": {
+                    "closed_trades": 2,
+                    "total_realized_pnl": 91,
+                    "unpaired_order_count": 1,
+                    "unpaired_realized_pnl": 50,
+                },
+            }
+        )
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "sync_trades_to_rag.py",
+            "--ledger",
+            str(ledger),
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert main() == 1
+    packet = json.loads(output.read_text())
+    assert packet["publication_status"] == "quarantined"
+    assert packet["verified_row_count"] == 1
+    assert packet["rows"] == []
+    assert packet["issues"]
 
 
 if __name__ == "__main__":

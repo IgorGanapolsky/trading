@@ -11,12 +11,13 @@ logger = logging.getLogger(__name__)
 
 
 class TradeVerifier:
-    def __init__(self, threshold: float = 0.75):
+    def __init__(self, threshold: float = 0.75, fail_closed: bool = True):
         """
         Initialize the verifier with a similarity threshold.
         If a past failure similarity score > threshold, trade is blocked.
         """
         self.threshold = threshold
+        self.fail_closed = fail_closed
         self.rag_available = False
         self.rag_engine = None
 
@@ -28,7 +29,7 @@ class TradeVerifier:
             logger.info("TradeVerifier: RAG Engine initialized successfully.")
         except Exception as e:
             logger.warning(
-                f"TradeVerifier: RAG Engine failed to initialize: {e}. Defaulting to Pass-Through."
+                f"TradeVerifier: RAG Engine failed to initialize: {e}."
             )
 
     def verify_entry(self, symbol: str, strategy: str, setup_context: str) -> tuple[bool, str]:
@@ -39,7 +40,9 @@ class TradeVerifier:
             (is_approved, reason)
         """
         if not self.rag_available or not self.rag_engine:
-            return True, "RAG unavailable; verifier in pass-through mode."
+            if self.fail_closed:
+                return False, "RAG unavailable; new entry blocked until retrieval is healthy."
+            return True, "RAG unavailable; verifier explicitly configured advisory-only."
 
         query = f"Trading disaster or mistake involving {symbol} {strategy} {setup_context}"
         logger.info(f"RAG Verifier: Checking past disasters for: {query}")
@@ -70,8 +73,10 @@ class TradeVerifier:
 
         except Exception as e:
             logger.error(f"TradeVerifier: RAG search failed: {e}")
-            return True, f"Error during RAG verification: {e}. Failing open."
+            if self.fail_closed:
+                return False, f"RAG verification error: {e}. New entry blocked."
+            return True, f"RAG verification error: {e}. Advisory-only mode."
 
 
-def get_trade_verifier(threshold: float = 0.75) -> TradeVerifier:
-    return TradeVerifier(threshold)
+def get_trade_verifier(threshold: float = 0.75, fail_closed: bool = True) -> TradeVerifier:
+    return TradeVerifier(threshold, fail_closed=fail_closed)

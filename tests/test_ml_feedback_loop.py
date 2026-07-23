@@ -178,8 +178,8 @@ def test_loss_cluster_analysis_surfaces_repeatable_profitability_blockers():
     assert by_id["early_exit_lt_1h"]["expectancy_per_trade"] == -100  # nosec B101
 
 
-def test_rehabilitation_plan_requires_changed_rule_validation_before_profit_claims():
-    """A blocked gate should produce a RAG-ingestable quarantine plan."""
+def test_rehabilitation_plan_keeps_ic_killed_and_routes_successor_validation():
+    """A blocked legacy gate must not turn IC retirement into re-entry advice."""
     trades = {
         "stats": {
             "closed_trades": 2,
@@ -192,6 +192,7 @@ def test_rehabilitation_plan_requires_changed_rule_validation_before_profit_clai
         "trades": [
             {
                 "id": "fast-loss",
+                "strategy": "iron_condor",
                 "outcome": "loss",
                 "realized_pnl": -100,
                 "entry_time": "2026-04-01T14:00:00+00:00",
@@ -201,6 +202,7 @@ def test_rehabilitation_plan_requires_changed_rule_validation_before_profit_clai
             },
             {
                 "id": "wide-loss",
+                "strategy": "iron_condor",
                 "outcome": "loss",
                 "realized_pnl": -50,
                 "entry_time": "2026-04-02T14:00:00+00:00",
@@ -214,17 +216,13 @@ def test_rehabilitation_plan_requires_changed_rule_validation_before_profit_clai
 
     plan = build_rehabilitation_plan(trades, gate)
 
-    # Active successor is spy_put_credit → IC plan is killed, not a retry loop.
-    assert plan["status"] in {"quarantined", "killed"}  # nosec B101
+    assert plan["status"] == "killed"  # nosec B101
+    assert plan["successor_validation"]["enabled"] is False  # nosec B101
+    assert plan["successor_strategy_family"] == "spy_put_credit"  # nosec B101
     assert plan["rag_ingestion"]["lesson_id"] == feedback.REHAB_LESSON_ID  # nosec B101
-    assert plan["required_rule_changes"]  # nosec B101
-    if plan["status"] == "killed":
-        assert plan["successor_strategy_family"] == "spy_put_credit"  # nosec B101
-        assert plan["next_validation_hypothesis_template"]["strategy_family"] == "spy_put_credit"  # nosec B101
-        assert plan["next_validation_hypothesis_template"]["enabled"] is True  # nosec B101
-        assert "spy_put_credit" in plan["profitability_objective"]  # nosec B101
-    else:
-        assert plan["next_validation_hypothesis_template"]["enabled"] is False  # nosec B101
+    assert "remain killed" in plan["profitability_objective"]  # nosec B101
+    assert plan["retirement_reasons"]  # nosec B101
+    assert plan["ledger"]["metric_unit"] == "paired_closed_structure"  # nosec B101
 
 
 # --- Trading Gate Tests ---

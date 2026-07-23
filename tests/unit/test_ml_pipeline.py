@@ -111,9 +111,13 @@ class TestThompsonSampling:
         # Weak Beta(1,1) samples cluster near 0.5, not the old 0.86 fantasy prior
         assert 0.35 <= avg <= 0.65
 
-    def test_regime_spike_reduces_confidence(self):
+    def test_regime_spike_reduces_confidence(self, monkeypatch):
         from src.ml.trade_confidence import TradeConfidenceModel
 
+        monkeypatch.setattr(
+            "src.ml.trade_confidence.random.betavariate",
+            lambda _alpha, _beta: 0.6,
+        )
         model = TradeConfidenceModel()
         model.model = model._default_model()
         normal = model.sample_confidence("iron_condor", "SPY")
@@ -121,21 +125,23 @@ class TestThompsonSampling:
         # Spike multiplier is 0.5, so spike should be roughly half
         assert spike <= normal
 
-    def test_update_after_win_increases_alpha(self):
+    def test_update_after_win_increases_alpha(self, monkeypatch):
         from src.ml.trade_confidence import TradeConfidenceModel
 
         model = TradeConfidenceModel()
         model.model = model._default_model()
+        monkeypatch.setattr(model, "_save_model", lambda: None)
         old_alpha = model.model["iron_condor"]["alpha"]
         model.record_trade_outcome(success=True, strategy="iron_condor", ticker="SPY")
         assert model.model["iron_condor"]["alpha"] == old_alpha + 1
         assert model.model["iron_condor"]["wins"] == 1
 
-    def test_update_after_loss_increases_beta(self):
+    def test_update_after_loss_increases_beta(self, monkeypatch):
         from src.ml.trade_confidence import TradeConfidenceModel
 
         model = TradeConfidenceModel()
         model.model = model._default_model()
+        monkeypatch.setattr(model, "_save_model", lambda: None)
         old_beta = model.model["iron_condor"]["beta"]
         model.record_trade_outcome(success=False, strategy="iron_condor", ticker="SPY")
         assert model.model["iron_condor"]["beta"] == old_beta + 1

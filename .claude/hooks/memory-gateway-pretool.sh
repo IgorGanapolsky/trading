@@ -58,9 +58,61 @@ if [[ -z ${RESULT} || ${RESULT} == "{}" ]]; then
 	exit 0
 fi
 
-printf '%s\n' "${RESULT}"
+NORMALIZED="$(
+	printf '%s' "${RESULT}" | python3 -c '
+import json
+import sys
 
-if printf '%s' "${RESULT}" | grep -q '"permissionDecision"[[:space:]]*:[[:space:]]*"deny"'; then
+try:
+    value = json.load(sys.stdin)
+except (json.JSONDecodeError, TypeError):
+    print("{}")
+    raise SystemExit(0)
+
+specific = value.get("hookSpecificOutput")
+if not isinstance(specific, dict):
+    specific = {}
+
+output = {"hookEventName": "PreToolUse"}
+context = (
+    specific.get("additionalContext")
+    or value.get("additionalContext")
+    or value.get("systemReminder")
+    or value.get("thumbgateSystemReminder")
+)
+decision = specific.get("permissionDecision") or value.get("permissionDecision")
+legacy = str(value.get("decision") or "").lower()
+if not decision:
+    decision = {
+        "approve": "allow",
+        "allow": "allow",
+        "block": "deny",
+        "deny": "deny",
+        "ask": "ask",
+    }.get(legacy)
+if decision in {"allow", "deny", "ask", "defer"}:
+    output["permissionDecision"] = decision
+reason = (
+    specific.get("permissionDecisionReason")
+    or value.get("permissionDecisionReason")
+    or value.get("reason")
+)
+if reason:
+    output["permissionDecisionReason"] = str(reason)
+if context:
+    output["additionalContext"] = str(context)
+if isinstance(specific.get("updatedInput"), dict):
+    output["updatedInput"] = specific["updatedInput"]
+
+print(json.dumps({"hookSpecificOutput": output} if len(output) > 1 else {}))
+'
+)"
+
+if [[ ${NORMALIZED} != "{}" ]]; then
+	printf '%s\n' "${NORMALIZED}"
+fi
+
+if printf '%s' "${NORMALIZED}" | grep -q '"permissionDecision"[[:space:]]*:[[:space:]]*"deny"'; then
 	exit 2
 fi
 

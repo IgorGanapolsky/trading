@@ -244,6 +244,42 @@ class TestBuildIndex:
         stats = s.build_index()
         assert stats["lessons"] > 0
 
+    def test_contaminated_trade_ledger_is_not_indexed(self, tmp_path, monkeypatch):
+        import src.rag.unified_search as mod
+
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        row = {
+            "id": "IC_1",
+            "symbol": "SPY",
+            "strategy": "iron_condor",
+            "status": "closed",
+            "entry_date": "2026-01-22",
+            "exit_date": "2026-02-06",
+            "realized_pnl": 41,
+            "outcome": "win",
+        }
+        (data_dir / "trades.json").write_text(
+            json.dumps(
+                {
+                    "trades": [row],
+                    "stats": {
+                        "closed_trades": 2,
+                        "total_realized_pnl": 91,
+                        "unpaired_order_count": 1,
+                        "unpaired_realized_pnl": 50,
+                    },
+                }
+            )
+        )
+        monkeypatch.setattr(mod, "DATA_DIR", data_dir)
+
+        search = UnifiedSearch()
+        docs = search._load_trades()
+
+        assert docs == []
+        assert search._last_trade_evidence["issues"]
+
 
 class TestBM25Scoring:
     """Tests for BM25 keyword scoring."""

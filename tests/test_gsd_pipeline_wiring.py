@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -54,6 +55,54 @@ def test_memory_gateway_pretool_script_exists_and_is_valid_bash():
         text=True,
     )
     assert result.returncode == 0, result.stderr
+
+
+def test_memory_gateway_normalizes_legacy_thumbgate_json(tmp_path):
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    fake_npx = bin_dir / "npx"
+    fake_npx.write_text(
+        "#!/usr/bin/env bash\n"
+        "cat >/dev/null\n"
+        "printf '%s\\n' "
+        "'{\"hookSpecificOutput\":{\"additionalContext\":\"verified warning\"},"
+        "\"systemReminder\":\"unsupported legacy field\"}'\n"
+    )
+    fake_npx.chmod(0o755)
+    env = os.environ.copy()
+    env["PATH"] = f"{bin_dir}:{env['PATH']}"
+    env["CLAUDE_PROJECT_DIR"] = str(PROJECT_ROOT)
+
+    result = subprocess.run(
+        ["bash", str(PRETOOL_HOOK_PATH), "pwd"],
+        capture_output=True,
+        text=True,
+        env=env,
+        timeout=10,
+    )
+
+    assert result.returncode == 0, result.stderr
+    output = json.loads(result.stdout)
+    assert set(output) == {"hookSpecificOutput"}
+    specific = output["hookSpecificOutput"]
+    assert specific["hookEventName"] == "PreToolUse"
+    assert specific["additionalContext"] == "verified warning"
+    assert "systemReminder" not in output
+
+
+def test_position_close_guard_blocks_with_stderr_not_invalid_json():
+    guard = PROJECT_ROOT / ".claude" / "hooks" / "block_position_close.sh"
+
+    result = subprocess.run(
+        ["bash", str(guard), '{"command":"close_position SPY"}'],
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "HARD BLOCK" in result.stderr
 
 
 def test_project_mcp_config_registers_gateway_server():

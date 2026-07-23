@@ -16,6 +16,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from src.analytics.trade_evidence import canonical_strategy
+
 logger = logging.getLogger(__name__)
 
 MODEL_PATH = Path(__file__).parent.parent.parent / "models" / "ml" / "trade_confidence_model.json"
@@ -51,18 +53,14 @@ class TradeConfidenceModel:
             return self._default_model()
 
     def _default_model(self) -> dict:
-        """Return default model buckets.
+        """Return family-isolated weak priors.
 
-        Historical note: this used Beta(86,14) from Tastytrade 15Δ IC research.
-        Realized IC paper ledger (~17% WR) falsified that prior for *this* system.
-        Iron condor remains as a diagnostic bucket only (family killed).
-
-        Active successor `spy_put_credit` starts with a weak neutral prior — never
-        inherits the IC research fantasy. Empirical updates come from
-        `scripts/update_ml_from_trades.py`.
+        External research is context, not this system's observed edge. Every
+        family therefore starts from Beta(1, 1) and becomes reliable only after
+        verified paired outcomes update its own bucket. The killed iron-condor
+        family remains diagnostic-only; the put-credit successor never inherits it.
         """
         return {
-            # Diagnostic-only: do not treat as entry authority for killed IC family
             "iron_condor": {
                 "alpha": 1.0,
                 "beta": 1.0,
@@ -75,21 +73,22 @@ class TradeConfidenceModel:
                 "beta": 1.0,
                 "wins": 0,
                 "losses": 0,
-                "note": "legacy_spy_ic_bucket_not_put_credit",
+                "note": "legacy_spy_iron_condor_bucket",
             },
             "spy_put_credit": {
                 "alpha": 1.0,
                 "beta": 1.0,
                 "wins": 0,
                 "losses": 0,
+                "metric_unit": "paired_closed_structure",
                 "prior_source": "weak_neutral_cold_start",
             },
-            "active_family": "spy_put_credit",
+            "active_strategy_family": "spy_put_credit",
             "regime_adjustments": {
                 "calm": 1.1,  # Low VIX: slightly boost confidence
-                "trending": 0.9,  # Trending market: reduce (short premium)
-                "volatile": 0.8,  # High VIX: reduce
-                "spike": 0.5,  # VIX spike: strongly reduce
+                "trending": 0.9,
+                "volatile": 0.8,
+                "spike": 0.5,
             },
         }
 
@@ -103,58 +102,28 @@ class TradeConfidenceModel:
         except Exception as e:
             logger.error(f"Failed to save trade confidence model: {e}")
 
-    @staticmethod
-    def _is_put_credit_strategy(strategy_key: str) -> bool:
-        put_aliases = {
-            "spy_put_credit",
-            "put_credit",
-            "bull_put",
-            "bull_put_credit",
-            "put_credit_spread",
-        }
-        if strategy_key in put_aliases:
-            return True
-        # Match put_credit family names without stealing unrelated buckets
-        # like bull_put_spread used in unit tests / other underlyings.
-        if "put_credit" in strategy_key:
-            return True
-        if strategy_key.startswith("bull_put_") and strategy_key.endswith("_credit"):
-            return True
-        return False
-
     def _resolve_params(self, strategy: str = "iron_condor", ticker: str = "SPY") -> dict:
-        """Resolve the most relevant parameter bucket for the requested trade.
+        """Resolve one exact family bucket without cross-strategy leakage."""
+        strategy_key = canonical_strategy(strategy)
 
-        Family isolation: put-credit strategies never fall through to IC /
-        spy_specific buckets (that was poisoning successor confidence with
-        the killed family's ~17% realized history or 86% research priors).
-        """
-        strategy_key = strategy.lower().replace(" ", "_").replace("-", "_")
-        if self._is_put_credit_strategy(strategy_key):
-            if "spy_put_credit" in self.model:
-                return self.model["spy_put_credit"]
-            return {"alpha": 1.0, "beta": 1.0, "wins": 0, "losses": 0}
+        # The successor must never inherit killed iron-condor SPY history.  Old
+        # model files may not have this bucket yet, so fail to a neutral prior.
+        if strategy_key == "spy_put_credit":
+            return self.model.get(
+                "spy_put_credit",
+                {"alpha": 1.0, "beta": 1.0, "wins": 0, "losses": 0},
+            )
 
-        # Legacy SPY path: IC diagnostics use spy_specific when present
-        if ticker.upper() == "SPY" and "spy_specific" in self.model and strategy_key in {
-            "iron_condor",
-            "ic_simple",
-            "ic",
-            "spy_specific",
-            "",
-        }:
+        if (
+            strategy_key == "iron_condor"
+            and ticker.upper() == "SPY"
+            and "spy_specific" in self.model
+        ):
             return self.model["spy_specific"]
 
         if strategy_key in self.model:
             return self.model[strategy_key]
-        if strategy.lower() in self.model:
-            return self.model[strategy.lower()]
-
-        # Unknown non-put strategy on SPY still hits spy_specific for back-compat
-        if ticker.upper() == "SPY" and "spy_specific" in self.model:
-            return self.model["spy_specific"]
-
-        return self.model.get("iron_condor", {"alpha": 1.0, "beta": 1.0, "wins": 0, "losses": 0})
+        return {"alpha": 1.0, "beta": 1.0, "wins": 0, "losses": 0}
 
     def get_posterior_mean(self, strategy: str = "iron_condor", ticker: str = "SPY") -> float:
         """
@@ -258,7 +227,7 @@ class TradeConfidenceModel:
             ticker: Ticker symbol
         """
         # Update strategy-specific model
-        strategy_key = strategy.lower().replace(" ", "_")
+        strategy_key = canonical_strategy(strategy)
         if strategy_key not in self.model:
             self.model[strategy_key] = {
                 "alpha": 1.0,
@@ -274,32 +243,20 @@ class TradeConfidenceModel:
             self.model[strategy_key]["beta"] += 1.0
             self.model[strategy_key]["losses"] += 1
 
-        # Update SPY IC diagnostic bucket only for IC-family outcomes
-        is_put = self._is_put_credit_strategy(strategy_key)
-        if ticker.upper() == "SPY" and "spy_specific" in self.model and not is_put:
+        # SPY-specific is a legacy iron-condor diagnostic bucket.  Never write
+        # put-credit or unknown-family outcomes into it.
+        if (
+            strategy_key == "iron_condor"
+            and ticker.upper() == "SPY"
+            and "spy_specific" in self.model
+            and self.model["spy_specific"] is not self.model[strategy_key]
+        ):
             if success:
                 self.model["spy_specific"]["alpha"] += 1.0
                 self.model["spy_specific"]["wins"] += 1
             else:
                 self.model["spy_specific"]["beta"] += 1.0
                 self.model["spy_specific"]["losses"] += 1
-
-        # Always keep put-credit bucket in sync when that family is recorded
-        if is_put:
-            if "spy_put_credit" not in self.model:
-                self.model["spy_put_credit"] = {
-                    "alpha": 1.0,
-                    "beta": 1.0,
-                    "wins": 0,
-                    "losses": 0,
-                }
-            if strategy_key != "spy_put_credit":
-                if success:
-                    self.model["spy_put_credit"]["alpha"] += 1.0
-                    self.model["spy_put_credit"]["wins"] += 1
-                else:
-                    self.model["spy_put_credit"]["beta"] += 1.0
-                    self.model["spy_put_credit"]["losses"] += 1
 
         logger.info(
             f"Trade outcome recorded: {'WIN' if success else 'LOSS'} for {strategy} on {ticker}"

@@ -11,6 +11,7 @@ in turn corrupts the win-rate / expectancy / PF inputs that feed
 from __future__ import annotations
 
 import sys
+from copy import deepcopy
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -160,6 +161,240 @@ def test_unpaired_singletons_surface_in_stats_with_cohort_filter():
     # Only the post-cohort singleton should appear in unpaired_in_cohort_pnl
     assert unpaired["unpaired_in_cohort_pnl"] == -75.0, unpaired
     assert unpaired["unpaired_cohort_start"] == "2026-04-09"
+
+
+def test_broker_fills_pair_closed_put_credit_and_remove_orders_from_unpaired() -> None:
+    trade_history = [
+        {
+            "id": "pcs-entry",
+            "symbol": "SPY",
+            "qty": "1",
+            "price": "-1.25",
+            "filled_at": "2026-07-01T14:30:00Z",
+            "status": "filled",
+            "order_class": "mleg",
+            "legs": [
+                _make_leg(
+                    _option_symbol("260807", "P", 695),
+                    "BUY",
+                    1,
+                    1.0,
+                    "buy_to_open",
+                ),
+                _make_leg(
+                    _option_symbol("260807", "P", 700),
+                    "SELL",
+                    1,
+                    2.25,
+                    "sell_to_open",
+                ),
+            ],
+        },
+        {
+            "id": "pcs-exit",
+            "symbol": "SPY",
+            "qty": "1",
+            "price": "0.45",
+            "filled_at": "2026-07-03T15:30:00Z",
+            "status": "filled",
+            "order_class": "mleg",
+            "legs": [
+                _make_leg(
+                    _option_symbol("260807", "P", 700),
+                    "BUY",
+                    1,
+                    1.0,
+                    "buy_to_close",
+                ),
+                _make_leg(
+                    _option_symbol("260807", "P", 695),
+                    "SELL",
+                    1,
+                    0.55,
+                    "sell_to_close",
+                ),
+            ],
+        },
+    ]
+    entries = {
+        "PCS_260807_pcsentry": {
+            "order_id": "pcs-entry",
+            "exit_order_id": "pcs-exit",
+            "expiry": "2026-08-07",
+            "quantity": 1,
+            "put_delta": 0.15,
+            "selection_method": "live_delta",
+            "profile_name": "spy-put-credit",
+            "validation_phase": True,
+            "exit_reason": "profit_target",
+            "strikes": {"long_put": 695, "short_put": 700},
+        }
+    }
+
+    paired = scp._pair_closed_put_credits(trade_history, entries)
+
+    assert len(paired) == 1
+    trade = paired[0]
+    assert trade["strategy_family"] == "spy_put_credit"
+    assert trade["entry_credit"] == 125.0
+    assert trade["exit_debit"] == 45.0
+    assert trade["realized_pnl"] == 80.0
+    assert trade["outcome"] == "win"
+    assert trade["order_ids"] == {
+        "entry": ["pcs-entry"],
+        "exit": ["pcs-exit"],
+    }
+    unpaired = scp._compute_unpaired_singleton_pnl(trade_history, paired)
+    assert unpaired["unpaired_order_count"] == 0
+    assert unpaired["unpaired_realized_pnl"] == 0
+
+
+def test_put_credit_pairing_requires_two_distinct_broker_fills() -> None:
+    entries = {
+        "PCS_260807_missing": {
+            "order_id": "entry-only",
+            "exit_order_id": "exit-missing",
+            "expiry": "2026-08-07",
+            "strikes": {"long_put": 695, "short_put": 700},
+        }
+    }
+    trade_history = [
+        {
+            "id": "entry-only",
+            "qty": "1",
+            "price": "-1.25",
+            "filled_at": "2026-07-01T14:30:00Z",
+            "status": "filled",
+        }
+    ]
+
+    assert scp._pair_closed_put_credits(trade_history, entries) == []
+
+
+def _valid_put_credit_pair() -> tuple[list[dict], dict]:
+    trade_history = [
+        {
+            "id": "pcs-entry",
+            "symbol": "SPY",
+            "qty": "1",
+            "price": "-1.25",
+            "filled_at": "2026-07-01T14:30:00Z",
+            "status": "filled",
+            "order_class": "OrderClass.MLEG",
+            "legs": [
+                _make_leg(
+                    _option_symbol("260807", "P", 695),
+                    "BUY",
+                    1,
+                    1.0,
+                    "PositionIntent.BUY_TO_OPEN",
+                ),
+                _make_leg(
+                    _option_symbol("260807", "P", 700),
+                    "SELL",
+                    1,
+                    2.25,
+                    "PositionIntent.SELL_TO_OPEN",
+                ),
+            ],
+        },
+        {
+            "id": "pcs-exit",
+            "symbol": "SPY",
+            "qty": "1",
+            "price": "0.45",
+            "filled_at": "2026-07-03T15:30:00Z",
+            "status": "filled",
+            "order_class": "OrderClass.MLEG",
+            "legs": [
+                _make_leg(
+                    _option_symbol("260807", "P", 700),
+                    "BUY",
+                    1,
+                    1.0,
+                    "PositionIntent.BUY_TO_CLOSE",
+                ),
+                _make_leg(
+                    _option_symbol("260807", "P", 695),
+                    "SELL",
+                    1,
+                    0.55,
+                    "PositionIntent.SELL_TO_CLOSE",
+                ),
+            ],
+        },
+    ]
+    entries = {
+        "PCS_260807_pcsentry": {
+            "order_id": "pcs-entry",
+            "exit_order_id": "pcs-exit",
+            "expiry": "2026-08-07",
+            "quantity": 1,
+            "strikes": {"long_put": 695, "short_put": 700},
+        }
+    }
+    return trade_history, entries
+
+
+def test_put_credit_pairing_rejects_wrong_broker_strike() -> None:
+    trade_history, entries = _valid_put_credit_pair()
+    trade_history[0]["legs"][0]["symbol"] = _option_symbol("260807", "P", 690)
+
+    assert scp._pair_closed_put_credits(trade_history, entries) == []
+
+
+def test_put_credit_pairing_rejects_wrong_exit_intent() -> None:
+    trade_history, entries = _valid_put_credit_pair()
+    trade_history[1]["legs"][0]["position_intent"] = "buy_to_open"
+
+    assert scp._pair_closed_put_credits(trade_history, entries) == []
+
+
+def test_put_credit_pairing_rejects_simple_parent_order() -> None:
+    trade_history, entries = _valid_put_credit_pair()
+    trade_history[0]["order_class"] = "simple"
+
+    assert scp._pair_closed_put_credits(trade_history, entries) == []
+
+
+def test_put_credit_pairing_rejects_quantity_mismatch() -> None:
+    trade_history, entries = _valid_put_credit_pair()
+    mutated_entries = deepcopy(entries)
+    mutated_entries["PCS_260807_pcsentry"]["quantity"] = 2
+
+    assert scp._pair_closed_put_credits(trade_history, mutated_entries) == []
+
+
+def test_stats_report_global_and_strategy_specific_paired_metrics() -> None:
+    trades = [
+        {
+            "status": "closed",
+            "strategy": "iron_condor",
+            "entry_time": "2026-06-01T14:30:00Z",
+            "exit_time": "2026-06-02T14:30:00Z",
+            "realized_pnl": -100,
+        },
+        {
+            "status": "closed",
+            "strategy": "spy_put_credit",
+            "strategy_family": "spy_put_credit",
+            "entry_time": "2026-07-01T14:30:00Z",
+            "exit_time": "2026-07-03T14:30:00Z",
+            "realized_pnl": 80,
+        },
+    ]
+
+    stats = scp._compute_stats(
+        trades,
+        "2026-01-22",
+        {"unpaired_realized_pnl": 50},
+    )
+
+    assert stats["closed_trades"] == 2
+    assert stats["total_realized_pnl"] == -20
+    assert stats["reconciliation_total_cash"] == 30
+    assert stats["by_strategy"]["iron_condor"]["total_realized_pnl"] == -100
+    assert stats["by_strategy"]["spy_put_credit"]["total_realized_pnl"] == 80
 
 
 def test_reverse_lookup_promotes_singleton_when_open_lot_matches():

@@ -195,7 +195,13 @@ class DocumentAwareRAG:
         try:
             import os
 
+            # LanceDB's sentence-transformer wrapper is lazy: creating the
+            # embedding function can succeed even when the installed backend is
+            # unusable. Import it once here so query-time retry loops do not turn
+            # a recoverable dependency mismatch into a multi-minute health-check
+            # hang. The caller will fall back to keyword/FTS retrieval.
             import lancedb
+            import sentence_transformers  # noqa: F401
             from lancedb.embeddings import get_registry
 
             self.lancedb_path.mkdir(parents=True, exist_ok=True)
@@ -743,27 +749,25 @@ class DocumentAwareRAG:
         if not self._hybrid_enabled:
             return
 
-        try:
-            table.create_fts_index(FTS_COLUMNS, replace=False)
-            logger.info("✅ FTS index ensured for hybrid retrieval")
-        except Exception as e:
-            msg = str(e).lower()
-            if "already exists" in msg or "exists" in msg:
-                logger.debug("FTS index already exists")
-                return
-            if "field_names must be a string" in msg:
-                try:
-                    table.create_fts_index("text", replace=False)
-                    logger.info("✅ FTS index ensured for hybrid retrieval (text-only fallback)")
-                    return
-                except Exception as fallback_error:
-                    fallback_msg = str(fallback_error).lower()
-                    if "already exists" in fallback_msg or "exists" in fallback_msg:
-                        logger.debug("FTS index already exists (text-only fallback)")
-                        return
-                    logger.warning(f"FTS index fallback failed: {fallback_error}")
-                    return
-            logger.warning(f"FTS index creation failed: {e}")
+        created: list[str] = []
+        failures: list[str] = []
+        # Current LanceDB native FTS accepts one field per index creation call.
+        # Passing the full list caused every process startup to log a failure
+        # and silently lose hybrid retrieval. Separate indexes keep all intended
+        # fields searchable across LanceDB versions.
+        for column in FTS_COLUMNS:
+            try:
+                table.create_fts_index(column, replace=False)
+                created.append(column)
+            except Exception as exc:
+                msg = str(exc).lower()
+                if "already exists" in msg or "exists" in msg:
+                    continue
+                failures.append(f"{column}: {exc}")
+        if created:
+            logger.info("✅ FTS indexes ensured for hybrid retrieval: %s", ", ".join(created))
+        if failures:
+            logger.warning("FTS index creation failed: %s", "; ".join(failures))
 
     def ensure_index(self, sources: Optional[list[str]] = None) -> dict:
         """

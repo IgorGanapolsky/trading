@@ -31,7 +31,6 @@ def main() -> int:
         from src.ml.grpo_trade_learner import (
             TORCH_AVAILABLE,
             GRPOTradeLearner,
-            get_optimal_trade_params,
         )
     except ImportError as exc:
         print(f"ERROR: Could not import GRPOTradeLearner: {exc}")
@@ -58,9 +57,17 @@ def main() -> int:
     print(f"Trades loaded: {n_trades}")
 
     if n_trades == 0:
-        print("No trade history found. Skipping training (nothing to learn from).")
-        print("\nOptimal Parameters (defaults — no training data):")
-        params = get_optimal_trade_params()
+        evidence = learner.evidence_report or {}
+        issues = evidence.get("issues") or []
+        if issues:
+            print("Active-strategy evidence is quarantined. Training and inference blocked.")
+            for issue in issues:
+                print(f"  - {issue}")
+            print("\nDone. Exit 2 (evidence quarantine).")
+            return 2
+        print("No verified active-strategy outcomes. Skipping training.")
+        print("\nFixed validation profile (not an ML prediction):")
+        params = learner.predict_optimal_params()
         print(json.dumps(params.to_dict(), indent=2))
         print("\nDone. Exit 0 (no training performed).")
         return 0
@@ -72,8 +79,8 @@ def main() -> int:
             f"{learner.batch_size} required (batch_size)."
         )
         print("Skipping training. Accumulate more closed trades and re-run.")
-        print("\nOptimal Parameters (defaults — insufficient data):")
-        params = get_optimal_trade_params()
+        print("\nFixed validation profile (ML inference remains ineligible):")
+        params = learner.predict_optimal_params()
         print(json.dumps(params.to_dict(), indent=2))
         print("\nDone. Exit 0 (no training performed).")
         return 0
@@ -115,7 +122,7 @@ def main() -> int:
     print("OPTIMAL PARAMETERS")
     print("=" * 60)
     try:
-        params = get_optimal_trade_params()
+        params = learner.predict_optimal_params()
         print(json.dumps(params.to_dict(), indent=2))
     except Exception as exc:
         print(f"WARNING: Could not compute optimal parameters: {exc}")
