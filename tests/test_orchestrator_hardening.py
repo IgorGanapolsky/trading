@@ -12,10 +12,19 @@ from src.utils.staleness_guard import ContextFreshnessResult, StalenessResult
 
 # A fresh (non-stale) result so the staleness guard doesn't block tests.
 _FRESH_STALENESS = StalenessResult(
-    is_stale=False, blocking=False, reason="fresh", hours_old=0.1, last_updated="2026-07-01T15:00:00Z"
+    is_stale=False,
+    blocking=False,
+    reason="fresh",
+    hours_old=0.1,
+    last_updated="2026-07-01T15:00:00Z",
 )
 _FRESH_CONTEXT = ContextFreshnessResult(
-    is_stale=False, blocking=False, checked_at="2026-07-01T15:00:00Z", stale_sources=[], sources=[], reason="fresh"
+    is_stale=False,
+    blocking=False,
+    checked_at="2026-07-01T15:00:00Z",
+    stale_sources=[],
+    sources=[],
+    reason="fresh",
 )
 
 

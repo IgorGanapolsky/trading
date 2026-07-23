@@ -46,8 +46,10 @@ class TestIronCondorSuccessfulEntry:
         strategy = IronCondorStrategy()
 
         # Step 1: Find trade (mock price + strikes to bypass live chain)
-        with patch.object(strategy, "get_underlying_price", return_value=690.0), \
-             patch.object(strategy, "calculate_strikes", return_value=(645.0, 655.0, 725.0, 735.0)):
+        with (
+            patch.object(strategy, "get_underlying_price", return_value=690.0),
+            patch.object(strategy, "calculate_strikes", return_value=(645.0, 655.0, 725.0, 735.0)),
+        ):
             ic = strategy.find_trade()
 
         assert ic is not None

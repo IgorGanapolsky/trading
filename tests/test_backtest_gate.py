@@ -13,8 +13,9 @@ from __future__ import annotations
 from scripts.backtest_gate import check_gate, compute_metrics, simulate_with_params
 
 
-def _make_trade(outcome: str, pnl: float, entry_credit: float = 200,
-                hold_hours: float = 2.0) -> dict:
+def _make_trade(
+    outcome: str, pnl: float, entry_credit: float = 200, hold_hours: float = 2.0
+) -> dict:
     """Helper to create test trades."""
     from datetime import datetime, timedelta, timezone
 
@@ -33,6 +34,7 @@ def _make_trade(outcome: str, pnl: float, entry_credit: float = 200,
 
 
 # --- Metrics ---
+
 
 def test_compute_metrics_basic():
     trades = [
@@ -62,6 +64,7 @@ def test_compute_metrics_all_losses():
 
 
 # --- Simulation ---
+
 
 def test_simulation_short_hold_loss_recovers():
     """Trades held < min_hold_hours that lost small amounts should partially recover."""
@@ -96,6 +99,7 @@ def test_simulation_different_profit_target():
 
 
 # --- Gate ---
+
 
 def test_gate_passes_on_improvement():
     current = {"win_rate": 24.0, "total_pnl": -3402}

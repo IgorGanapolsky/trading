@@ -36,9 +36,7 @@ def disable_circuit_breaker_for_tests(monkeypatch, tmp_path):
     try:
         import src.safety.crisis_monitor as _crisis_monitor
 
-        monkeypatch.setattr(
-            _crisis_monitor, "TRADING_HALTED_FILE", fake_halt, raising=False
-        )
+        monkeypatch.setattr(_crisis_monitor, "TRADING_HALTED_FILE", fake_halt, raising=False)
     except (ImportError, ModuleNotFoundError):
         pass
 

@@ -105,7 +105,9 @@ def test_build_system_diagnosis_headline_and_successor_gap():
     assert diagnosis["ledger"]["views"]["reconciles"] is True
     assert "paired closed structures only" in diagnosis["ledger"]["views"]["note"]
     assert "paired + unpaired fold" not in diagnosis["ledger"]["views"]["note"]
-    assert any("put-credit" in a.lower() or "spy_put_credit" in a for a in diagnosis["operator_actions"])
+    assert any(
+        "put-credit" in a.lower() or "spy_put_credit" in a for a in diagnosis["operator_actions"]
+    )
 
 
 def test_put_credit_confidence_not_poisoned_by_ic_spy_specific():

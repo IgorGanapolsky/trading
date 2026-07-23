@@ -35,6 +35,7 @@ from src.utils.technical_indicators import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_ohlcv(n: int = 250, start: float = 400.0, trend: float = 0.1) -> pd.DataFrame:
     """Return a minimal OHLCV DataFrame with uppercase columns (yfinance style)."""
     close = [start + trend * i for i in range(n)]
@@ -56,6 +57,7 @@ def _make_prices(n: int = 50, start: float = 100.0, step: float = 0.5) -> pd.Ser
 # ---------------------------------------------------------------------------
 # _get_scalar — lines 47-54
 # ---------------------------------------------------------------------------
+
 
 class TestGetScalar:
     def test_numpy_scalar_via_item(self):
@@ -98,6 +100,7 @@ class TestGetScalar:
 # calculate_macd — lines 89-93 (insufficient data branch)
 # ---------------------------------------------------------------------------
 
+
 class TestCalculateMACDEdgeCases:
     def test_insufficient_data_returns_zeros(self):
         # lines 89-93: len < slow_period + signal_period  →  (0, 0, 0)
@@ -120,6 +123,7 @@ class TestCalculateMACDEdgeCases:
 # ---------------------------------------------------------------------------
 # calculate_rsi — lines 136-139 (insufficient data) and line 161 (Series branch)
 # ---------------------------------------------------------------------------
+
 
 class TestCalculateRSIEdgeCases:
     def test_insufficient_data_returns_neutral(self):
@@ -150,6 +154,7 @@ class TestCalculateRSIEdgeCases:
 # ---------------------------------------------------------------------------
 # calculate_volume_ratio — lines 185-188, 191-192, 199, 201, 204
 # ---------------------------------------------------------------------------
+
 
 class TestCalculateVolumeRatioEdgeCases:
     def test_insufficient_data_returns_one(self):
@@ -194,6 +199,7 @@ class TestCalculateVolumeRatioEdgeCases:
 # calculate_technical_score — lines 234-235, 248, 250-251, 274-275, 278-279, 282-283
 # ---------------------------------------------------------------------------
 
+
 class TestCalculateTechnicalScoreEdgeCases:
     def test_empty_dataframe_returns_zero(self):
         # line 234-235: hist.empty → (0.0, {})
@@ -223,9 +229,7 @@ class TestCalculateTechnicalScoreEdgeCases:
             }
         )
         # Force rejection by setting threshold very high
-        score, indicators = calculate_technical_score(
-            hist, symbol="TEST", macd_threshold=999.0
-        )
+        score, indicators = calculate_technical_score(hist, symbol="TEST", macd_threshold=999.0)
         assert score == 0.0
         assert "macd_histogram" in indicators
 
@@ -242,9 +246,7 @@ class TestCalculateTechnicalScoreEdgeCases:
             }
         )
         # Force rejection with very low RSI threshold
-        score, indicators = calculate_technical_score(
-            hist, symbol="TEST", rsi_overbought=0.1
-        )
+        score, indicators = calculate_technical_score(hist, symbol="TEST", rsi_overbought=0.1)
         assert score == 0.0
         assert "rsi" in indicators
 
@@ -282,6 +284,7 @@ class TestCalculateTechnicalScoreEdgeCases:
 # ---------------------------------------------------------------------------
 # calculate_atr — lines 320-323, 350, 353
 # ---------------------------------------------------------------------------
+
 
 class TestCalculateATREdgeCases:
     def test_insufficient_data_returns_zero(self):
@@ -334,6 +337,7 @@ class TestCalculateATREdgeCases:
 # calculate_atr_stop_loss — lines 382-396
 # ---------------------------------------------------------------------------
 
+
 class TestCalculateATRStopLoss:
     def test_long_with_valid_atr(self):
         # line 391-392
@@ -342,7 +346,9 @@ class TestCalculateATRStopLoss:
 
     def test_short_with_valid_atr(self):
         # lines 393-394
-        stop = calculate_atr_stop_loss(entry_price=400.0, atr=2.0, multiplier=2.0, direction="short")
+        stop = calculate_atr_stop_loss(
+            entry_price=400.0, atr=2.0, multiplier=2.0, direction="short"
+        )
         assert stop == pytest.approx(404.0)
 
     def test_zero_atr_long_fallback(self):
@@ -361,7 +367,9 @@ class TestCalculateATRStopLoss:
 
     def test_stop_non_negative(self):
         # line 396: max(0.0, stop_price)
-        stop = calculate_atr_stop_loss(entry_price=1.0, atr=100.0, multiplier=10.0, direction="long")
+        stop = calculate_atr_stop_loss(
+            entry_price=1.0, atr=100.0, multiplier=10.0, direction="long"
+        )
         assert stop == pytest.approx(0.0)
 
     def test_custom_multiplier(self):
@@ -372,6 +380,7 @@ class TestCalculateATRStopLoss:
 # ---------------------------------------------------------------------------
 # calculate_bollinger_bands — lines 423-443
 # ---------------------------------------------------------------------------
+
 
 class TestCalculateBollingerBands:
     def test_insufficient_data_returns_current_price_triple(self):
@@ -425,6 +434,7 @@ class TestCalculateBollingerBands:
 # calculate_adx — lines 471-509
 # ---------------------------------------------------------------------------
 
+
 class TestCalculateADX:
     def test_insufficient_data_returns_zeros(self):
         # lines 471-473: len < period+1 → (0.0, 0.0, 0.0)
@@ -477,6 +487,7 @@ class TestCalculateADX:
 # calculate_all_features — lines 537-658
 # ---------------------------------------------------------------------------
 
+
 class TestCalculateAllFeatures:
     def test_insufficient_data_returns_empty(self):
         # lines 537-539: len < 200 → {}
@@ -504,18 +515,41 @@ class TestCalculateAllFeatures:
         assert len(result) > 0
 
         expected_keys = [
-            "close", "open", "high", "low",
-            "return_1d", "return_5d", "return_20d",
+            "close",
+            "open",
+            "high",
+            "low",
+            "return_1d",
+            "return_5d",
+            "return_20d",
             "volatility_20d",
-            "ma_20", "ma_50", "ma_200",
-            "price_vs_ma20", "price_vs_ma50", "price_vs_ma200",
-            "macd", "macd_signal", "macd_histogram",
-            "adx", "plus_di", "minus_di",
-            "rsi", "roc_10", "roc_20",
-            "bb_upper", "bb_middle", "bb_lower", "bb_width", "bb_position",
-            "atr", "atr_pct",
-            "volume", "volume_ratio",
-            "obv", "obv_ma", "volume_roc",
+            "ma_20",
+            "ma_50",
+            "ma_200",
+            "price_vs_ma20",
+            "price_vs_ma50",
+            "price_vs_ma200",
+            "macd",
+            "macd_signal",
+            "macd_histogram",
+            "adx",
+            "plus_di",
+            "minus_di",
+            "rsi",
+            "roc_10",
+            "roc_20",
+            "bb_upper",
+            "bb_middle",
+            "bb_lower",
+            "bb_width",
+            "bb_position",
+            "atr",
+            "atr_pct",
+            "volume",
+            "volume_ratio",
+            "obv",
+            "obv_ma",
+            "volume_roc",
         ]
         for key in expected_keys:
             assert key in result, f"Missing feature: {key}"
@@ -593,6 +627,7 @@ class TestCalculateAllFeatures:
 
     def test_symbol_logged(self, caplog):
         import logging
+
         hist = _make_ohlcv(250)
         with caplog.at_level(logging.DEBUG, logger="src.utils.technical_indicators"):
             result = calculate_all_features(hist, symbol="MYSYM")
@@ -604,6 +639,7 @@ class TestCalculateAllFeatures:
 # 48, 161, 199, 201, 248, 250-251, 350
 # ---------------------------------------------------------------------------
 
+
 class TestGetScalarSeriesBranch:
     """Line 48: _get_scalar with a pd.Series that lacks .item() attribute."""
 
@@ -612,6 +648,7 @@ class TestGetScalarSeriesBranch:
 
         class NoItemSeries(pd.Series):
             """Override item as non-callable so hasattr returns True but code path differs."""
+
             pass
 
         # Create a single-element series subclass.
@@ -634,6 +671,7 @@ class TestGetScalarSeriesBranch:
 
     def test_custom_object_float_conversion(self):
         """Object with __float__ but no .item → hits float(val) path at line 51."""
+
         class Floatable:
             def __float__(self):
                 return 99.0
@@ -844,6 +882,7 @@ class TestATRLine350:
 # Integration: verify all indicators work end-to-end with realistic SPY data
 # ---------------------------------------------------------------------------
 
+
 class TestEndToEnd:
     def test_full_pipeline_spy_like(self):
         rng = np.random.default_rng(42)
@@ -863,7 +902,11 @@ class TestEndToEnd:
         assert len(features) > 30
 
         score, indicators = calculate_technical_score(
-            hist.iloc[:50], symbol="SPY", macd_threshold=-999.0, rsi_overbought=100.0, volume_min=0.0
+            hist.iloc[:50],
+            symbol="SPY",
+            macd_threshold=-999.0,
+            rsi_overbought=100.0,
+            volume_min=0.0,
         )
         assert isinstance(score, float)
 

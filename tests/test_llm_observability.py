@@ -43,7 +43,10 @@ def test_gateway_route_warns_that_openrouter_logs_are_subset_only(monkeypatch) -
     assert report.primary_route == "gateway"
     assert report.openrouter_private_logs_cover_primary is False
     assert report.openrouter_private_logs_cover_fallback is True
-    assert any("Primary OpenRouter-compatible traffic routes through" in warning for warning in report.warnings)
+    assert any(
+        "Primary OpenRouter-compatible traffic routes through" in warning
+        for warning in report.warnings
+    )
 
 
 def test_direct_openrouter_without_logging_declaration_warns(monkeypatch) -> None:

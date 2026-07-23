@@ -203,9 +203,7 @@ def test_manager_covers_hold_pending_submit_and_submit_failure(tmp_path, monkeyp
     structures[3]["legs"][0]["symbol"] = "SPY260821P00680000"
     pending_order = SimpleNamespace(
         legs=[
-            SimpleNamespace(
-                symbol=leg["symbol"], side="BUY" if leg["qty"] < 0 else "SELL"
-            )
+            SimpleNamespace(symbol=leg["symbol"], side="BUY" if leg["qty"] < 0 else "SELL")
             for leg in structures[1]["legs"]
         ]
     )
@@ -213,7 +211,9 @@ def test_manager_covers_hold_pending_submit_and_submit_failure(tmp_path, monkeyp
     monkeypatch.setattr(manager, "ROOT", tmp_path)
     monkeypatch.setattr(manager, "AUDIT_PATH", tmp_path / "residual.json")
     monkeypatch.setattr(
-        manager, "_get_orders", lambda _client, open_only=False: [pending_order] if open_only else []
+        manager,
+        "_get_orders",
+        lambda _client, open_only=False: [pending_order] if open_only else [],
     )
     monkeypatch.setattr(manager, "recover_active_structures", lambda *_: (structures, {}))
     monkeypatch.setattr(manager, "_load_active_pcs_expected", lambda: {})
@@ -306,9 +306,7 @@ def test_residual_manager_main_returns_broker_health(monkeypatch, capsys, broken
 def test_residual_client_requires_paper_credentials(monkeypatch):
     import scripts.residual_ic_manager as manager
 
-    monkeypatch.setattr(
-        "src.utils.alpaca_client.get_alpaca_credentials", lambda: (None, None)
-    )
+    monkeypatch.setattr("src.utils.alpaca_client.get_alpaca_credentials", lambda: (None, None))
     with pytest.raises(RuntimeError, match="credentials missing"):
         manager._client()
 

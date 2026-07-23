@@ -199,7 +199,5 @@ def test_get_next_trading_day_holiday_on_friday(mock_is_td):
     assert result == expected_monday
 
 
-
-
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])
