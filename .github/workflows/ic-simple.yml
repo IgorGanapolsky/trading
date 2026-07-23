@@ -58,13 +58,25 @@ jobs:
 
       - name: Determine mode
         id: mode
+        env:
+          INPUT_MODE: ${{ github.event.inputs.mode || 'both' }}
+          INPUT_DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
-          MODE="${{ github.event.inputs.mode || 'both' }}"
-          DRY="${{ github.event.inputs.dry_run || 'false' }}"
+          MODE="$INPUT_MODE"
+          DRY="$INPUT_DRY_RUN"
+          case "$MODE" in
+            entry|exit|both|status) ;;
+            *) echo "Invalid mode: $MODE"; exit 2 ;;
+          esac
+          case "$DRY" in
+            true|false) ;;
+            *) echo "Invalid dry_run: $DRY"; exit 2 ;;
+          esac
           HOUR=$(date -u +%H)
           DOW=$(date -u +%u)
           RUN_PUT_CREDIT=false
-          if [ "${{ github.event_name }}" = "schedule" ]; then
+          if [ "$EVENT_NAME" = "schedule" ]; then
             if [ "$DOW" = "6" ]; then
               MODE="learn"
             elif [ "$HOUR" = "15" ]; then
@@ -91,10 +103,11 @@ jobs:
         env:
           ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
           ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
           PYTHONPATH: ${{ github.workspace }}
         run: |
           FLAGS=(--reconcile-entries)
-          if [ "${{ steps.mode.outputs.dry_run }}" = "true" ]; then
+          if [ "$DRY_RUN" = "true" ]; then
             FLAGS+=(--dry-run)
           fi
           # Repair the crash window between a broker fill and local journal write
@@ -111,12 +124,13 @@ jobs:
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
           RAG_QUERY_INDEX_MAX_AGE_MINUTES: "999999"
           CONTEXT_INDEX_MAX_AGE_MINUTES: "999999"
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
           PYTHONPATH: ${{ github.workspace }}
         run: |
           # Recover each open structure from its filled MLEG order. This remains
           # correct when multiple ICs share strikes and broker quantities aggregate.
           FLAGS=()
-          if [ "${{ steps.mode.outputs.dry_run }}" = "true" ]; then
+          if [ "$DRY_RUN" = "true" ]; then
             FLAGS+=(--dry-run)
           fi
           python3 scripts/residual_ic_manager.py "${FLAGS[@]}"
@@ -126,10 +140,11 @@ jobs:
         env:
           ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
           ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
           PYTHONPATH: ${{ github.workspace }}
         run: |
           FLAGS=(--manage-exits)
-          if [ "${{ steps.mode.outputs.dry_run }}" = "true" ]; then
+          if [ "$DRY_RUN" = "true" ]; then
             FLAGS+=(--dry-run)
           fi
           # Every weekday slot evaluates fixed TP, stop, and DTE exits.
@@ -154,9 +169,10 @@ jobs:
         env:
           ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
           ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          if [ "${{ steps.mode.outputs.dry_run }}" = "true" ]; then
+          if [ "$DRY_RUN" = "true" ]; then
             python3 scripts/spy_put_credit.py --dry-run
           else
             # Paper MLEG only — live blocked by strategy_kill_switch.json
@@ -172,10 +188,12 @@ jobs:
           ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
           ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
+          RUN_MODE: ${{ steps.mode.outputs.mode }}
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          FLAGS=(--mode "${{ steps.mode.outputs.mode }}")
-          if [ "${{ steps.mode.outputs.dry_run }}" = "true" ]; then
+          FLAGS=(--mode "$RUN_MODE")
+          if [ "$DRY_RUN" = "true" ]; then
             FLAGS+=(--dry-run)
           fi
           python3 scripts/ic_simple.py "${FLAGS[@]}"

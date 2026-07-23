@@ -260,35 +260,41 @@ def _matching_plan_snapshot(
 ) -> dict[str, Any]:
     """Return exact pre-submit selection evidence when it matches the broker fill."""
 
-    path = AUDIT_DIR / "spy_put_credit_latest_plan.json"
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return {}
-    opportunity = payload.get("opportunity")
-    if not isinstance(opportunity, dict):
-        return {}
-    try:
-        exact_structure = (
-            str(opportunity.get("expiry")) == expiry
-            and float(opportunity.get("long_put")) == long_put
-            and float(opportunity.get("short_put")) == short_put
-        )
-    except (TypeError, ValueError):
-        return {}
-    planned_at = _parse_timestamp(payload.get("planned_at"))
-    if not exact_structure or planned_at is None:
-        return {}
-    if abs((filled_at - planned_at).total_seconds()) > 30 * 60:
-        return {}
-    return {
-        "put_delta": opportunity.get("put_delta"),
-        "put_delta_source": "execution_plan_snapshot",
-        "selection_method": opportunity.get("method"),
-        "selection_snapshot_planned_at": planned_at.isoformat(),
-        "planned_credit": opportunity.get("est_credit"),
-        "underlying_price_at_scan": opportunity.get("spy_price"),
-    }
+    snapshot_dir = AUDIT_DIR / "put_credit_plans"
+    paths = sorted(snapshot_dir.glob("*.json"), reverse=True) if snapshot_dir.exists() else []
+    paths.append(AUDIT_DIR / "spy_put_credit_latest_plan.json")
+    for path in paths:
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        opportunity = payload.get("opportunity")
+        if not isinstance(opportunity, dict):
+            continue
+        try:
+            exact_structure = (
+                str(opportunity.get("expiry")) == expiry
+                and float(opportunity.get("long_put")) == long_put
+                and float(opportunity.get("short_put")) == short_put
+            )
+        except (TypeError, ValueError):
+            continue
+        planned_at = _parse_timestamp(payload.get("planned_at"))
+        if (
+            not exact_structure
+            or planned_at is None
+            or abs((filled_at - planned_at).total_seconds()) > 30 * 60
+        ):
+            continue
+        return {
+            "put_delta": opportunity.get("put_delta"),
+            "put_delta_source": "execution_plan_snapshot",
+            "selection_method": opportunity.get("method"),
+            "selection_snapshot_planned_at": planned_at.isoformat(),
+            "planned_credit": opportunity.get("est_credit"),
+            "underlying_price_at_scan": opportunity.get("spy_price"),
+        }
+    return {}
 
 
 def _filled_bps_legs(order_id: str, order: Any) -> tuple[Any, Any, str, float, float]:
@@ -447,6 +453,7 @@ def reconcile_put_credit_entries(client: Any, *, dry_run: bool = False) -> dict[
         "matched_filled_orders": 0,
         "existing": 0,
         "inactive_filled_orders": 0,
+        "invalid_filled_orders": 0,
         "recovered": 0,
         "would_recover": 0,
         "broken": 0,
@@ -470,7 +477,7 @@ def reconcile_put_credit_entries(client: Any, *, dry_run: bool = False) -> dict[
         try:
             key, entry = _recovered_put_credit_entry(order)
         except ValueError as exc:
-            report["broken"] += 1
+            report["invalid_filled_orders"] += 1
             report["details"].append({"order_id": order_id, "status": "invalid", "error": str(exc)})
             continue
         if not _entry_has_open_broker_legs(entry, positions):
@@ -936,7 +943,20 @@ def plan_structure(dry_run: bool = True, opp: dict | None = None) -> dict:
 def write_plan(plan: dict) -> Path:
     AUDIT_DIR.mkdir(parents=True, exist_ok=True)
     path = AUDIT_DIR / "spy_put_credit_latest_plan.json"
-    path.write_text(json.dumps(plan, indent=2, default=str) + "\n", encoding="utf-8")
+    serialized = json.dumps(plan, indent=2, default=str) + "\n"
+    path.write_text(serialized, encoding="utf-8")
+    opportunity = plan.get("opportunity")
+    if plan.get("dry_run") is False and isinstance(opportunity, dict):
+        planned_at = str(plan.get("planned_at") or datetime.now(timezone.utc).isoformat())
+        timestamp = re.sub(r"[^0-9]", "", planned_at)[:20] or str(time.time_ns())
+        expiry = re.sub(r"[^0-9]", "", str(opportunity.get("expiry") or "unknown"))
+        long_put = re.sub(r"[^0-9]", "", str(opportunity.get("long_put") or "unknown"))
+        short_put = re.sub(r"[^0-9]", "", str(opportunity.get("short_put") or "unknown"))
+        snapshot_dir = AUDIT_DIR / "put_credit_plans"
+        snapshot_dir.mkdir(parents=True, exist_ok=True)
+        snapshot = snapshot_dir / f"{timestamp}_SPY_{expiry}_P{long_put}-{short_put}.json"
+        if not snapshot.exists():
+            snapshot.write_text(serialized, encoding="utf-8")
     return path
 
 

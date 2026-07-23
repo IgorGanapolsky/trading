@@ -203,26 +203,30 @@ def test_reconcile_put_credit_entries_recovers_exact_filled_structure(tmp_path, 
 
     entries_path = tmp_path / "put_credit_entries.json"
     audit_dir = tmp_path / "audit"
-    audit_dir.mkdir()
-    (audit_dir / "spy_put_credit_latest_plan.json").write_text(
-        json.dumps(
-            {
-                "planned_at": "2026-07-23T15:37:05.285607+00:00",
-                "opportunity": {
-                    "expiry": "2026-08-28",
-                    "short_put": 696.0,
-                    "long_put": 691.0,
-                    "est_credit": 0.54,
-                    "put_delta": 0.1843,
-                    "method": "live_delta_band_scan",
-                    "spy_price": 736.6,
-                },
-            }
-        ),
-        encoding="utf-8",
-    )
     monkeypatch.setattr(pcs, "ENTRIES_FILE", entries_path)
     monkeypatch.setattr(pcs, "AUDIT_DIR", audit_dir)
+    pcs.write_plan(
+        {
+            "dry_run": False,
+            "planned_at": "2026-07-23T15:37:05.285607+00:00",
+            "opportunity": {
+                "expiry": "2026-08-28",
+                "short_put": 696.0,
+                "long_put": 691.0,
+                "est_credit": 0.54,
+                "put_delta": 0.1843,
+                "method": "live_delta_band_scan",
+                "spy_price": 736.6,
+            },
+        }
+    )
+    pcs.write_plan(
+        {
+            "dry_run": True,
+            "planned_at": "2026-07-23T16:00:00+00:00",
+            "opportunity": None,
+        }
+    )
     order = SimpleNamespace(
         id="4fc04e47-a2da-4fe9-ab28-14cdad69ab44",
         client_order_id="IC-OPEN-BPS--1784821027308661000000",
@@ -314,6 +318,28 @@ def test_reconcile_put_credit_entries_keeps_unknown_selection_unverified(tmp_pat
     assert inactive["inactive_filled_orders"] == 1
     assert inactive["recovered"] == 0
     assert not closed_path.exists()
+
+
+def test_malformed_historical_put_credit_does_not_block_exit_workflow(tmp_path, monkeypatch):
+    from scripts import spy_put_credit as pcs
+
+    monkeypatch.setattr(pcs, "ENTRIES_FILE", tmp_path / "put_credit_entries.json")
+    malformed = SimpleNamespace(
+        id="malformed-history",
+        client_order_id="IC-OPEN-BPS--1784821027308661000002",
+        status="FILLED",
+        filled_at=datetime.fromisoformat("2026-07-20T15:37:09+00:00"),
+        legs=[],
+    )
+    client = MagicMock()
+    client.get_orders.return_value = [malformed]
+    client.get_all_positions.return_value = []
+
+    report = pcs.reconcile_put_credit_entries(client)
+
+    assert report["invalid_filled_orders"] == 1
+    assert report["broken"] == 0
+    assert report["recovered"] == 0
 
 
 def test_put_credit_entry_builds_supported_bull_put_order_id(tmp_path, monkeypatch):
@@ -627,6 +653,8 @@ def test_schedule_manages_put_credit_exits_every_weekday_slot():
     assert "--manage-exits" in workflow
     assert "--reconcile-entries" in workflow
     assert workflow.index("--reconcile-entries") < workflow.index("residual_ic_manager.py")
+    assert '"${{ steps.mode.outputs.dry_run }}"' not in workflow
+    assert 'MODE="${{ github.event.inputs.mode' not in workflow
 
 
 def test_put_credit_inventory_gate_fails_closed_on_broker_exception(monkeypatch):
