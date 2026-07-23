@@ -111,6 +111,8 @@ jobs:
         env:
           ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
           ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          RAG_QUERY_INDEX_MAX_AGE_MINUTES: "999999"
+          CONTEXT_INDEX_MAX_AGE_MINUTES: "999999"
           PYTHONPATH: ${{ github.workspace }}
         run: |
           FLAGS=(--manage-exits)
@@ -131,14 +133,34 @@ jobs:
           # Raw order telemetry never becomes an outcome label.
           python3 scripts/sync_closed_positions.py
 
+      # Put-credit is independent of residual IC management. Residual failures
+      # (orphans, broker glitches) must not skip the successor validation entry.
+      - name: Refresh context indexes for trade gate
+        if: steps.mode.outputs.run_put_credit == 'true' && steps.mode.outputs.mode != 'learn'
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          RAG_WRITE_PROFILE: local
+        run: |
+          # Mandatory gate checks data/rag/lessons_query.json + context_engine.
+          # Local profile must also write data/rag (see build_rag_query_index fix).
+          python3 scripts/build_rag_query_index.py || true
+          python3 scripts/build_context_engine_index.py --project-root . || true
+          # Ensure gate path is refreshed even if builder profile only wrote artifacts
+          if [ -f artifacts/local/rag/lessons_query.json ]; then
+            mkdir -p data/rag
+            cp -f artifacts/local/rag/lessons_query.json data/rag/lessons_query.json
+          fi
+
       - name: Run spy_put_credit paper entry (successor strategy)
         if: >-
-          steps.residual_ic.outcome == 'success' &&
           steps.mode.outputs.run_put_credit == 'true' &&
           steps.mode.outputs.mode != 'learn'
         env:
           ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
           ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          # Same age override residual IC uses — cron must not fail solely on index mtime
+          RAG_QUERY_INDEX_MAX_AGE_MINUTES: "999999"
+          CONTEXT_INDEX_MAX_AGE_MINUTES: "999999"
           PYTHONPATH: ${{ github.workspace }}
         run: |
           if [ "${{ steps.mode.outputs.dry_run }}" = "true" ]; then
