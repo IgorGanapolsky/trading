@@ -18,11 +18,13 @@
     "source_plan": "data/runtime/edge_rehabilitation_plan.json",
     "covered_loss_clusters": [
       "ten_wide_wings",
+      "iron_condor_family",
       "multi_contract",
       "four_leg_complexity",
       "long_hold_ge_7d",
       "early_exit_lt_24h",
-      "early_exit_lt_1h"
+      "early_exit_lt_1h",
+      "five_wide_or_less"
     ],
     "prohibited_rule_repeats": [
       "Do not reopen 10-wide SPY iron condors.",
