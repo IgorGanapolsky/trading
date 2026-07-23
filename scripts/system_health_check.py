@@ -251,9 +251,7 @@ def check_ml_pipeline():
         )
         metadata_path = root / "models" / "ml" / "grpo_trade_metadata.json"
         metadata = (
-            json.loads(metadata_path.read_text(encoding="utf-8"))
-            if metadata_path.exists()
-            else {}
+            json.loads(metadata_path.read_text(encoding="utf-8")) if metadata_path.exists() else {}
         )
         lineage = (
             metadata.get("evidence_lineage")
@@ -280,9 +278,7 @@ def check_ml_pipeline():
                 f"{len(evidence.rows)}/30 verified outcomes; fixed profile remains active"
             )
             if evidence.issues:
-                results["details"].append(
-                    f"⚠️ Evidence issues: {'; '.join(evidence.issues)}"
-                )
+                results["details"].append(f"⚠️ Evidence issues: {'; '.join(evidence.issues)}")
 
     except Exception as e:
         results["status"] = "BROKEN"

@@ -779,10 +779,7 @@ class GRPOTradeLearner:
         # Dynamic RAG query for known critical failure patterns.
         weekday_int = round(record.features.day_of_week * 4)
         strategy_text = record.strategy_family.replace("_", " ")
-        query = (
-            f"{strategy_text} trade on weekday {weekday_int} "
-            f"with {record.params.dte} DTE"
-        )
+        query = f"{strategy_text} trade on weekday {weekday_int} with {record.params.dte} DTE"
         lessons = self.rag.query(query, top_k=2, severity_filter="CRITICAL")
 
         for lesson in lessons:

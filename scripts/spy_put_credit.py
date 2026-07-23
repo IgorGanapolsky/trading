@@ -352,9 +352,7 @@ def _recovered_put_credit_entry(order: Any) -> tuple[str, dict[str, Any]]:
     if not order_id or filled_at is None:
         raise ValueError("filled BPS order is missing order_id or filled_at")
 
-    long_leg, short_leg, expiry_yymmdd, long_put, short_put = _filled_bps_legs(
-        order_id, order
-    )
+    long_leg, short_leg, expiry_yymmdd, long_put, short_put = _filled_bps_legs(order_id, order)
     quantity = _filled_bps_quantity(order_id, order)
     credit = _filled_bps_credit(order_id, order, long_leg, short_leg)
 

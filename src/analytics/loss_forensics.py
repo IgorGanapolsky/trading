@@ -148,7 +148,9 @@ def _summarize_rows(rows: list[dict[str, Any]], total_loss_abs: float) -> dict[s
         "win_rate_pct": round(len(wins) / len(rows) * 100, 2),
         "total_pnl": round(total_pnl, 2),
         "expectancy_per_trade": round(total_pnl / len(rows), 2),
-        "loss_contribution_pct": round((loss_abs / total_loss_abs * 100) if total_loss_abs else 0.0, 2),
+        "loss_contribution_pct": round(
+            (loss_abs / total_loss_abs * 100) if total_loss_abs else 0.0, 2
+        ),
     }
 
 
@@ -301,10 +303,15 @@ def family_stats(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     for row in rows:
         by_family[row["family"]].append(row)
     total_loss_abs = abs(sum(row["pnl"] for row in rows if row["pnl"] < 0))
-    return {family: _summarize_rows(family_rows, total_loss_abs) for family, family_rows in by_family.items()}
+    return {
+        family: _summarize_rows(family_rows, total_loss_abs)
+        for family, family_rows in by_family.items()
+    }
 
 
-def synthesize_root_causes(clusters: list[dict[str, Any]], families: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+def synthesize_root_causes(
+    clusters: list[dict[str, Any]], families: dict[str, dict[str, Any]]
+) -> list[dict[str, Any]]:
     """Human-readable ranked causes with evidence thresholds."""
     causes: list[dict[str, Any]] = []
     by_id = {c["id"]: c for c in clusters}
@@ -506,7 +513,9 @@ def build_system_diagnosis(
         "blockers": [
             "negative_expectancy" if expectancy <= 0 else None,
             "profit_factor_le_1" if as_float(pf, 0.0) <= 1.0 else None,
-            "successor_n_zero" if (families.get("spy_put_credit") or {}).get("sample_size", 0) == 0 else None,
+            "successor_n_zero"
+            if (families.get("spy_put_credit") or {}).get("sample_size", 0) == 0
+            else None,
             "unclean_inventory" if unclean_inventory else None,
         ],
     }
@@ -526,7 +535,11 @@ def build_system_diagnosis(
         "ledger": {
             "closed_trades": closed,
             "win_rate_pct": round(win_rate, 2),
-            "profit_factor": pf if isinstance(pf, str) else round(as_float(pf), 3) if pf is not None else None,
+            "profit_factor": pf
+            if isinstance(pf, str)
+            else round(as_float(pf), 3)
+            if pf is not None
+            else None,
             "expectancy_per_trade": round(expectancy, 2),
             "total_realized_pnl": round(total_pnl, 2),
             "active_family": active_family,

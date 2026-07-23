@@ -30,7 +30,9 @@ TRADES_FILE = PROJECT_ROOT / "data" / "trades.json"
 SYSTEM_STATE = PROJECT_ROOT / "data" / "system_state.json"
 KILL_SWITCH = PROJECT_ROOT / "data" / "runtime" / "strategy_kill_switch.json"
 OUT_JSON = PROJECT_ROOT / "data" / "runtime" / "system_diagnosis_latest.json"
-OUT_LESSON = PROJECT_ROOT / "rag_knowledge" / "lessons_learned" / "system_misery_diagnosis_current.md"
+OUT_LESSON = (
+    PROJECT_ROOT / "rag_knowledge" / "lessons_learned" / "system_misery_diagnosis_current.md"
+)
 INVENTORY_AUDIT = PROJECT_ROOT / "data" / "audit" / "open_inventory_latest.json"
 
 

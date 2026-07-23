@@ -219,7 +219,9 @@ def stats_from_trades(trades: list[dict], cohort_unpaired_stats: dict | None = N
     gross_loss = abs(sum(pnl for pnl in losses if pnl < 0))
     total_realized_pnl = sum(wins) + sum(losses)
     quality_denominator = max(input_trades, 1)
-    quality_penalty = (skipped_trades + min(missing_pnl_trades, closed_trades)) / quality_denominator
+    quality_penalty = (
+        skipped_trades + min(missing_pnl_trades, closed_trades)
+    ) / quality_denominator
     data_quality_score = round(max(0.0, 1.0 - quality_penalty), 3)
 
     if gross_loss > 0:
@@ -253,15 +255,14 @@ def stats_from_trades(trades: list[dict], cohort_unpaired_stats: dict | None = N
         "unpaired_attribution_status": "quarantined_not_learning_eligible",
         "quarantined_unpaired_wins": int(unpaired.get("unpaired_cohort_wins", 0) or 0),
         "quarantined_unpaired_losses": int(unpaired.get("unpaired_cohort_losses", 0) or 0),
-        "quarantined_unpaired_pnl": _as_float(
-            unpaired.get("unpaired_in_cohort_pnl"), 0.0
-        ),
+        "quarantined_unpaired_pnl": _as_float(unpaired.get("unpaired_in_cohort_pnl"), 0.0),
     }
 
 
 def analyze_loss_clusters(trades_data: dict) -> list[dict]:
     """Summarize recurring loss clusters so RAG/ML learns what to stop repeating."""
     return forensics_analyze_loss_clusters(trades_data)
+
 
 def build_rehabilitation_plan(trades_data: dict, gate: dict) -> dict:
     """Build a machine-readable retirement and successor-validation plan."""
@@ -288,12 +289,8 @@ def build_rehabilitation_plan(trades_data: dict, gate: dict) -> dict:
         - int(legacy_stats.get("losses") or 0),
         "win_rate_pct": _as_float(legacy_stats.get("win_rate_pct"), 0.0),
         "profit_factor": _as_float(legacy_stats.get("profit_factor"), 0.0),
-        "total_realized_pnl": _as_float(
-            legacy_stats.get("total_realized_pnl"), 0.0
-        ),
-        "expectancy_per_trade": _as_float(
-            legacy_stats.get("expectancy_per_trade"), 0.0
-        ),
+        "total_realized_pnl": _as_float(legacy_stats.get("total_realized_pnl"), 0.0),
+        "expectancy_per_trade": _as_float(legacy_stats.get("expectancy_per_trade"), 0.0),
         "metric_unit": "paired_closed_structure",
         "dataset_sha256": legacy_evidence.dataset_sha256,
         "evidence_issues": list(legacy_evidence.issues),
@@ -566,9 +563,7 @@ def apply_active_cohort_policy(
     is_successor_reset = active_family == SUCCESSOR_FAMILY and validation_reset
     cohort_mature = is_successor_reset and verified >= MIN_TRADES_FOR_GATE
     immature_validation_allowed = (
-        is_successor_reset
-        and clean_evidence
-        and verified < MIN_TRADES_FOR_GATE
+        is_successor_reset and clean_evidence and verified < MIN_TRADES_FOR_GATE
     )
     passed_mature_gate = bool(result.get("should_trade"))
     validation_allowed = bool(
@@ -580,13 +575,9 @@ def apply_active_cohort_policy(
     result["cohort_mature"] = cohort_mature
     result["allow_validation_entries"] = validation_allowed
     result["allow_paper_validation"] = bool(
-        validation_reset
-        and clean_evidence
-        and (immature_validation_allowed or passed_mature_gate)
+        validation_reset and clean_evidence and (immature_validation_allowed or passed_mature_gate)
     )
-    result["hard_halt_required"] = bool(
-        is_successor_reset and not result["allow_paper_validation"]
-    )
+    result["hard_halt_required"] = bool(is_successor_reset and not result["allow_paper_validation"])
     return result
 
 
@@ -886,9 +877,7 @@ def main(dry_run: bool = False):
         # Family-aware: IC lifetime failure must not block put-credit paper validation.
         # Still never clear non-ML / crisis halt files.
         put_n = (
-            int(gate_stats.get("closed_trades", 0) or 0)
-            if active_family == SUCCESSOR_FAMILY
-            else 0
+            int(gate_stats.get("closed_trades", 0) or 0) if active_family == SUCCESSOR_FAMILY else 0
         )
         allow_put_paper = bool(
             active_family == SUCCESSOR_FAMILY
@@ -903,9 +892,7 @@ def main(dry_run: bool = False):
                     active_family,
                 )
             else:
-                logger.warning(
-                    "  HALT FILE PRESERVED: an existing non-cohort halt has priority"
-                )
+                logger.warning("  HALT FILE PRESERVED: an existing non-cohort halt has priority")
         elif allow_put_paper:
             if halt_file.exists():
                 content = halt_file.read_text(encoding="utf-8", errors="ignore")

@@ -443,8 +443,7 @@ class SelfHealer:
                 name="inventory_attribution",
                 status=HealthStatus.UNHEALTHY,
                 message=(
-                    f"Open inventory is not journal-clean: "
-                    f"{len(result.block_reasons())} blocker(s)"
+                    f"Open inventory is not journal-clean: {len(result.block_reasons())} blocker(s)"
                 ),
                 details=result.to_dict(),
             )

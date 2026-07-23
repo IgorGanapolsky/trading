@@ -1133,11 +1133,7 @@ def _put_credit_order_validation_errors(
         if parsed is None:
             errors.append(f"leg {index} has an invalid option symbol")
             continue
-        if (
-            parsed["underlying"] != "SPY"
-            or parsed["expiry"] != expiry
-            or parsed["kind"] != "P"
-        ):
+        if parsed["underlying"] != "SPY" or parsed["expiry"] != expiry or parsed["kind"] != "P":
             errors.append(f"leg {index} does not match SPY put expiry {expiry}")
 
         strike = float(parsed["strike"])
@@ -1269,11 +1265,7 @@ def _pair_closed_put_credits(
                 "strategy": "spy_put_credit",
                 "strategy_family": "spy_put_credit",
                 "symbol": "SPY",
-                "signature": (
-                    f"SPY_{expiry}_P"
-                    f"{_strike_text(long_put)}-"
-                    f"{_strike_text(short_put)}"
-                ),
+                "signature": (f"SPY_{expiry}_P{_strike_text(long_put)}-{_strike_text(short_put)}"),
                 "journal_signature": str(entry.get("signature") or ""),
                 "entry_time": entry_time.astimezone(timezone.utc).isoformat(),
                 "exit_time": exit_time.astimezone(timezone.utc).isoformat(),
@@ -1285,11 +1277,7 @@ def _pair_closed_put_credits(
                 "exit_debit_per_share": exit_price,
                 "realized_pnl": realized_pnl,
                 "outcome": (
-                    "win"
-                    if realized_pnl > 0
-                    else "loss"
-                    if realized_pnl < 0
-                    else "breakeven"
+                    "win" if realized_pnl > 0 else "loss" if realized_pnl < 0 else "breakeven"
                 ),
                 "exit_reason": entry.get("exit_reason"),
                 "hold_hours": hold_hours,
@@ -1486,8 +1474,7 @@ def _compute_stats(
     open_trades = [
         row
         for row in trades
-        if isinstance(row, dict)
-        and str(row.get("status", "")).lower() == "open"
+        if isinstance(row, dict) and str(row.get("status", "")).lower() == "open"
     ]
 
     wins = [row for row in closed if _parse_float(row.get("realized_pnl"), 0.0) > 0]
@@ -1540,18 +1527,12 @@ def _compute_stats(
             "losses": len(family_losses),
             "breakeven": len(family_rows) - len(family_wins) - len(family_losses),
             "win_rate_pct": (
-                round(len(family_wins) / len(family_rows) * 100.0, 2)
-                if family_rows
-                else None
+                round(len(family_wins) / len(family_rows) * 100.0, 2) if family_rows else None
             ),
             "profit_factor": (
-                round(family_gross_profit / family_gross_loss, 2)
-                if family_gross_loss
-                else None
+                round(family_gross_profit / family_gross_loss, 2) if family_gross_loss else None
             ),
-            "expectancy": (
-                round(sum(family_pnls) / len(family_rows), 2) if family_rows else None
-            ),
+            "expectancy": (round(sum(family_pnls) / len(family_rows), 2) if family_rows else None),
             "total_realized_pnl": round(sum(family_pnls), 2),
         }
 

@@ -48,6 +48,7 @@ FORBIDDEN_STRATEGIES: set[str] = {"naked_put", "naked_call", "short_straddle", "
 
 _OCC_PATTERN = re.compile(r"^([A-Z]{1,6})(\d{6})[PC](\d{8})$")
 
+
 def extract_underlying(symbol: str) -> str:
     symbol = symbol.strip().upper()
     if len(symbol) <= 6:

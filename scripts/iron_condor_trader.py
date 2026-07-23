@@ -1236,9 +1236,7 @@ def main():
         _kill_msg = f"STRATEGY_KILLED: iron_condor entry blocked ({_kill_exc})"
     if _kill_msg:
         logger.error(_kill_msg)
-        logger.error(
-            "Successor: .venv/bin/python scripts/spy_put_credit.py --dry-run"
-        )
+        logger.error("Successor: .venv/bin/python scripts/spy_put_credit.py --dry-run")
         telemetry.update_ticker_decision(
             ticker,
             gate=0,
