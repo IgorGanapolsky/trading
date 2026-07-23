@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-23T12:58:01.965148+00:00",
+  "generated_at": "2026-07-23T13:33:31.563253+00:00",
   "strategy_family": "ic_simple",
   "status": "killed",
   "successor_strategy_family": "spy_put_credit",
@@ -37,75 +37,102 @@
       "active_strategy_family": "spy_put_credit",
       "evidence_dataset_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
       "evidence_verified_rows": 0,
-      "evidence_issues": []
+      "evidence_issues": [],
+      "cohort_mature": false,
+      "allow_paper_validation": true,
+      "hard_halt_required": false
     }
   },
   "loss_clusters": [
     {
       "id": "ten_wide_wings",
       "label": "10-wide or wider wings",
+      "recommendation": "Never reintroduce 10-wide SPY wings in validation; max risk per structure is too large for the observed win rate.",
       "sample_size": 156,
       "wins": 18,
       "losses": 138,
       "win_rate_pct": 11.54,
       "total_pnl": -7788.0,
       "expectancy_per_trade": -49.92,
-      "loss_contribution_pct": 100.0,
-      "recommendation": "Quarantine 10-wide SPY iron condors; test narrower defined-risk structures or explicitly prove better width/risk math before re-entry."
+      "loss_contribution_pct": 100.0
+    },
+    {
+      "id": "iron_condor_family",
+      "label": "Iron condor / IC Simple family",
+      "recommendation": "IC family is killed as North Star candidate; do not reopen entries.",
+      "sample_size": 158,
+      "wins": 20,
+      "losses": 138,
+      "win_rate_pct": 12.66,
+      "total_pnl": -7731.0,
+      "expectancy_per_trade": -48.93,
+      "loss_contribution_pct": 100.0
     },
     {
       "id": "multi_contract",
       "label": "More than one contract",
+      "recommendation": "1-lot only until positive expectancy, PF>1, and positive total P/L clear on the successor cohort.",
       "sample_size": 63,
       "wins": 12,
       "losses": 51,
       "win_rate_pct": 19.05,
       "total_pnl": -5798.0,
       "expectancy_per_trade": -92.03,
-      "loss_contribution_pct": 73.59,
-      "recommendation": "Limit validation to one contract until the changed-rule cohort clears positive expectancy, profit factor, and realized-P/L gates."
+      "loss_contribution_pct": 73.59
     },
     {
       "id": "long_hold_ge_7d",
       "label": "Held 7 days or longer",
+      "recommendation": "Force-exit by 7 DTE; slow losers dominate dollar damage even when rare.",
       "sample_size": 16,
       "wins": 6,
       "losses": 10,
       "win_rate_pct": 37.5,
       "total_pnl": -3057.0,
       "expectancy_per_trade": -191.06,
-      "loss_contribution_pct": 37.65,
-      "recommendation": "Add an exit/repair rule for slow-moving losers before allowing long-hold IC exposure again."
+      "loss_contribution_pct": 37.65
     },
     {
       "id": "early_exit_lt_24h",
       "label": "Closed in under 24 hours",
+      "recommendation": "Require min 24h hold except hard stop; theta strategies die under sub-day churn.",
       "sample_size": 135,
       "wins": 13,
       "losses": 122,
       "win_rate_pct": 9.63,
       "total_pnl": -2243.0,
       "expectancy_per_trade": -16.61,
-      "loss_contribution_pct": 35.19,
-      "recommendation": "Require the next validation hypothesis to prove why holding-time behavior changed before allowing another short-dated IC cohort."
+      "loss_contribution_pct": 35.19
     },
     {
       "id": "early_exit_lt_1h",
       "label": "Closed in under 1 hour",
+      "recommendation": "Do not open setups whose expected management requires intraday repair; enforce a minimum hold unless a hard max-loss fires.",
       "sample_size": 129,
       "wins": 9,
       "losses": 120,
       "win_rate_pct": 6.98,
       "total_pnl": -3011.0,
       "expectancy_per_trade": -23.34,
-      "loss_contribution_pct": 34.94,
-      "recommendation": "Do not open setups whose expected management requires intraday repair; enforce a minimum hold unless a hard max-loss or broken-leg condition fires."
+      "loss_contribution_pct": 34.94
+    },
+    {
+      "id": "five_wide_or_less",
+      "label": "5-wide or narrower wings",
+      "recommendation": "Keep successor structures at $5 wings until n>=30 proves edge.",
+      "sample_size": 2,
+      "wins": 2,
+      "losses": 0,
+      "win_rate_pct": 100.0,
+      "total_pnl": 57.0,
+      "expectancy_per_trade": 28.5,
+      "loss_contribution_pct": 0.0
     }
   ],
   "retirement_reasons": [
-    "Quarantine 10-wide SPY iron condors; test narrower defined-risk structures or explicitly prove better width/risk math before re-entry.",
-    "Limit validation to one contract until the changed-rule cohort clears positive expectancy, profit factor, and realized-P/L gates.",
-    "Add an exit/repair rule for slow-moving losers before allowing long-hold IC exposure again."
+    "Never reintroduce 10-wide SPY wings in validation; max risk per structure is too large for the observed win rate.",
+    "IC family is killed as North Star candidate; do not reopen entries.",
+    "1-lot only until positive expectancy, PF>1, and positive total P/L clear on the successor cohort."
   ],
   "successor_validation": {
     "enabled": false,

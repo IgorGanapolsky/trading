@@ -1,14 +1,25 @@
 {
-  "generated_at": "2026-07-23T12:17:23.051656+00:00",
+  "generated_at": "2026-07-23T13:33:31.565210+00:00",
   "diagnosis_version": "1.0",
-  "headline": "System is miserable because the iron-condor process lost money at scale (~17% WR, PF<1, negative expectancy), scaled width/size before edge, churned sub-24h, and has not yet produced a put-credit validation sample.",
+  "headline": "System is miserable because the iron-condor process lost money at scale (12.6% WR, PF 0.16, $-48.62/trade expectancy), scaled width/size before edge, churned sub-24h, and has not yet produced a put-credit validation sample.",
   "ledger": {
-    "closed_trades": 174,
-    "win_rate_pct": 17.24,
-    "profit_factor": 0.7,
-    "expectancy_per_trade": -31.98,
-    "total_realized_pnl": -5564.0,
-    "active_family": "spy_put_credit"
+    "closed_trades": 159,
+    "win_rate_pct": 12.58,
+    "profit_factor": 0.16,
+    "expectancy_per_trade": -48.62,
+    "total_realized_pnl": -7731.0,
+    "active_family": "spy_put_credit",
+    "views": {
+      "stats_closed_trades": 159,
+      "paired_list_rows": 158,
+      "unpaired_order_count": 15,
+      "stats_total_realized_pnl": -7731.0,
+      "paired_list_pnl": -7731.0,
+      "unpaired_realized_pnl": 2167.0,
+      "list_plus_unpaired_pnl": -5564.0,
+      "reconciles": true,
+      "note": "Canonical headline metrics use paired closed structures only. Unmatched orders are quarantined diagnostics; loss clusters walk the normalized paired list."
+    }
   },
   "families": {
     "iron_condor": {
@@ -249,7 +260,7 @@
     {
       "id": "ml_prior_mismatch",
       "severity": "HIGH",
-      "title": "ML priors assumed ~86% IC win rate; realized ~17%",
+      "title": "ML priors assumed ~86% IC win rate; realized 12.7%",
       "evidence": {
         "assumed_prior_win_rate_pct": 86.0,
         "realized_ic_win_rate_pct": 12.66,

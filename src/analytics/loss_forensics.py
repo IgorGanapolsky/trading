@@ -402,7 +402,10 @@ def synthesize_root_causes(clusters: list[dict[str, Any]], families: dict[str, d
         {
             "id": "ml_prior_mismatch",
             "severity": "HIGH",
-            "title": "ML priors assumed ~86% IC win rate; realized ~17%",
+            "title": (
+                "ML priors assumed ~86% IC win rate; realized "
+                f"{as_float(ic.get('win_rate_pct'), 0.0):.1f}%"
+            ),
             "evidence": {
                 "assumed_prior_win_rate_pct": 86.0,
                 "realized_ic_win_rate_pct": ic.get("win_rate_pct"),
@@ -472,7 +475,8 @@ def build_system_diagnosis(
         gl = abs(sum(r["pnl"] for r in rows if r["pnl"] < 0))
         pf = (gp / gl) if gl else (math.inf if gp else 0.0)
 
-    # Explicit stats-vs-list reconciliation (paired rows + unpaired fold)
+    # Explicit paired-ledger reconciliation. Unmatched orders remain diagnostic
+    # cash flow and must never be folded into completed-structure edge metrics.
     list_pnl = sum(r["pnl"] for r in rows)
     unpaired_pnl = as_float(stats.get("unpaired_realized_pnl"), 0.0)
     unpaired_n = int(stats.get("unpaired_order_count") or 0)
@@ -484,11 +488,11 @@ def build_system_diagnosis(
         "paired_list_pnl": round(list_pnl, 2),
         "unpaired_realized_pnl": round(unpaired_pnl, 2),
         "list_plus_unpaired_pnl": round(list_pnl + unpaired_pnl, 2),
-        "reconciles": abs((list_pnl + unpaired_pnl) - total_pnl) < 1.0
-        or (closed == len(rows) + unpaired_n),
+        "reconciles": abs(list_pnl - total_pnl) < 1.0 or closed == len(rows),
         "note": (
-            "Canonical headline metrics use stats (paired + unpaired fold). "
-            "Loss clusters walk the paired list only."
+            "Canonical headline metrics use paired closed structures only. "
+            "Unmatched orders are quarantined diagnostics; loss clusters walk "
+            "the normalized paired list."
         ),
     }
 
@@ -515,8 +519,9 @@ def build_system_diagnosis(
         "diagnosis_version": "1.0",
         "headline": (
             "System is miserable because the iron-condor process lost money at scale "
-            "(~17% WR, PF<1, negative expectancy), scaled width/size before edge, churned "
-            "sub-24h, and has not yet produced a put-credit validation sample."
+            f"({win_rate:.1f}% WR, PF {as_float(pf, 0.0):.2f}, "
+            f"${expectancy:.2f}/trade expectancy), scaled width/size before edge, "
+            "churned sub-24h, and has not yet produced a put-credit validation sample."
         ),
         "ledger": {
             "closed_trades": closed,

@@ -28,7 +28,7 @@
     "volatile": 0.8,
     "spike": 0.5
   },
-  "last_updated": "2026-07-23T12:58:01.965212+00:00",
+  "last_updated": "2026-07-23T13:33:31.563359+00:00",
   "validation_reset": "2026-04-10: Reset for controlled paper validation. Legacy 66-trade data came from the broken pre-fix system and must not overwrite validation priors.",
   "feedback_source": "validation_reset",
   "gate": {
@@ -48,7 +48,10 @@
     "active_strategy_family": "spy_put_credit",
     "evidence_dataset_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
     "evidence_verified_rows": 0,
-    "evidence_issues": []
+    "evidence_issues": [],
+    "cohort_mature": false,
+    "allow_paper_validation": true,
+    "hard_halt_required": false
   },
   "evidence_lineage": {
     "strategy_family": "spy_put_credit",

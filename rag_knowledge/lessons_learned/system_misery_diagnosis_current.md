@@ -4,19 +4,19 @@ Tags: rag, ml, data-science, root-cause, north-star, loss-clusters
 Lifecycle: active
 Severity: CRITICAL
 Confidence: high
-Generated: 2026-07-23T12:17:23.051656+00:00
+Generated: 2026-07-23T13:33:31.565210+00:00
 
 ## Headline
 
-System is miserable because the iron-condor process lost money at scale (~17% WR, PF<1, negative expectancy), scaled width/size before edge, churned sub-24h, and has not yet produced a put-credit validation sample.
+System is miserable because the iron-condor process lost money at scale (12.6% WR, PF 0.16, $-48.62/trade expectancy), scaled width/size before edge, churned sub-24h, and has not yet produced a put-credit validation sample.
 
 ## Ledger
 
-- Closed trades: 174
-- Win rate: 17.24%
-- Profit factor: 0.7
-- Expectancy: $-31.98/trade
-- Total realized P/L: $-5564.0
+- Closed trades: 159
+- Win rate: 12.58%
+- Profit factor: 0.16
+- Expectancy: $-48.62/trade
+- Total realized P/L: $-7731.0
 - Active family: spy_put_credit
 
 ## Primary Root Causes
