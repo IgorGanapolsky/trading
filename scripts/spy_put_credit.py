@@ -151,7 +151,6 @@ def place_put_credit(client, opp: dict) -> str | None:
     """Submit 2-leg MLEG limit order for the bull put (paper client)."""
     from alpaca.trading.enums import OrderClass, OrderSide, TimeInForce
     from alpaca.trading.requests import LimitOrderRequest, OptionLegRequest
-
     from src.safety.mandatory_trade_gate import safe_submit_order
     from src.utils.order_intent import build_client_order_id
 
@@ -245,6 +244,205 @@ def _record_entry(opp: dict, order_id: str) -> None:
     logger.info("Recorded %s in %s", key, ENTRIES_FILE)
 
 
+def check_put_credit_exits(client, dry_run: bool = False) -> None:
+    """Check open 2-leg SPY put-credit positions for exit conditions.
+
+    IC Simple's check_exits()/iron_condor_guardian.py both hard-require a
+    4-leg (2P+2C) shape and will silently skip a 2-leg put-credit position
+    (see .claude/CLAUDE.md Active Strategy). This is the put-credit-native
+    equivalent, using the same DTE-failsafe/min-hold/TP/SL mechanics.
+    """
+    from datetime import date as date_type
+
+    profile = _load_profile()
+    cfg = profile.as_strategy_config()
+    take_profit_pct = cfg["take_profit_pct"]
+    stop_loss_pct = cfg["stop_loss_pct"]
+    exit_dte = cfg["exit_dte"]
+    min_hold_hours = cfg["min_hold_hours"]
+
+    positions = client.get_all_positions()
+    if not positions:
+        logger.info("No positions.")
+        return
+
+    by_expiry: dict[str, list[dict]] = {}
+    for pos in positions:
+        sym = pos.symbol
+        if len(sym) <= 10 or sym[9:10] != "P":
+            continue
+        expiry = sym[3:9]
+        by_expiry.setdefault(expiry, []).append(
+            {
+                "symbol": sym,
+                "qty": int(float(pos.qty)),
+                "entry": float(pos.avg_entry_price),
+                "current": float(pos.current_price)
+                if hasattr(pos, "current_price")
+                else float(pos.avg_entry_price),
+            }
+        )
+
+    entries: dict = {}
+    if ENTRIES_FILE.exists():
+        try:
+            entries = json.loads(ENTRIES_FILE.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            entries = {}
+
+    for expiry, legs in by_expiry.items():
+        n_short = sum(1 for leg in legs if leg["qty"] < 0)
+        n_long = sum(1 for leg in legs if leg["qty"] > 0)
+        if not (len(legs) == 2 and n_short == 1 and n_long == 1):
+            logger.warning(
+                "PutCredit %s: not a clean 2-leg put credit (%dS %dL legs=%d). Skip.",
+                expiry,
+                n_short,
+                n_long,
+                len(legs),
+            )
+            continue
+
+        entry_key = f"PCS_{expiry}"
+        has_entry_record = entry_key in entries
+        if has_entry_record:
+            entry_credit = entries[entry_key]["credit"]
+            entry_date = entries[entry_key].get("entry_time")
+        else:
+            short_prem = sum(leg["entry"] for leg in legs if leg["qty"] < 0)
+            long_prem = sum(leg["entry"] for leg in legs if leg["qty"] > 0)
+            entry_credit = short_prem - long_prem
+            entry_date = None
+            if entry_credit <= 0:
+                logger.warning(
+                    "PutCredit %s: non-positive credit $%.2f. Skip.", expiry, entry_credit
+                )
+                continue
+
+        exp_date = date_type(2000 + int(expiry[:2]), int(expiry[2:4]), int(expiry[4:6]))
+        dte = (exp_date - date_type.today()).days
+        dte_forces_exit = dte <= exit_dte
+
+        if not dte_forces_exit:
+            if entry_date:
+                try:
+                    entry_dt = datetime.fromisoformat(entry_date)
+                    entry_dt = entry_dt.astimezone(timezone.utc)
+                    hours = (datetime.now(timezone.utc) - entry_dt).total_seconds() / 3600
+                    if hours < min_hold_hours:
+                        logger.info(
+                            "PutCredit %s: held %.1fh < %sh. Hold.", expiry, hours, min_hold_hours
+                        )
+                        continue
+                except (ValueError, TypeError):
+                    logger.warning(
+                        "PutCredit %s: unparseable entry_time. Hold (safety).", expiry
+                    )
+                    continue
+            else:
+                logger.warning("PutCredit %s: no entry record. Hold (safety default).", expiry)
+                continue
+
+        contract_count = max(abs(leg["qty"]) for leg in legs)
+        current_value = sum(
+            (-leg["current"] if leg["qty"] < 0 else leg["current"]) * abs(leg["qty"]) * 100
+            for leg in legs
+        )
+        pnl = entry_credit * contract_count * 100 + current_value
+        max_profit = entry_credit * contract_count * 100
+
+        logger.info(
+            "PutCredit %s: DTE=%d P/L=$%+.2f (credit=$%.2fx%d max=$%.2f)",
+            expiry,
+            dte,
+            pnl,
+            entry_credit,
+            contract_count,
+            max_profit,
+        )
+
+        reason = None
+        if dte <= 1:
+            reason = f"FAILSAFE: DTE={dte} (expiring — assignment risk)"
+        elif dte <= exit_dte:
+            reason = f"DTE={dte} <= {exit_dte}"
+        elif pnl >= max_profit * take_profit_pct:
+            reason = f"PROFIT: ${pnl:.2f} >= ${max_profit * take_profit_pct:.2f}"
+        elif pnl <= -(max_profit * stop_loss_pct):
+            reason = f"STOP: ${pnl:.2f} <= -${max_profit * stop_loss_pct:.2f}"
+
+        if reason:
+            logger.warning("EXIT PutCredit %s: %s", expiry, reason)
+            if dry_run:
+                logger.info("DRY RUN — would close PutCredit %s (%s)", expiry, reason)
+                continue
+            _close_put_credit(client, legs, contract_count)
+            if has_entry_record:
+                entries.pop(entry_key, None)
+                ENTRIES_FILE.write_text(json.dumps(entries, indent=2) + "\n", encoding="utf-8")
+        else:
+            logger.info(
+                "PutCredit %s: HOLD. Target=$%.2f Stop=-$%.2f",
+                expiry,
+                max_profit * take_profit_pct,
+                max_profit * stop_loss_pct,
+            )
+
+
+def _close_put_credit(client, legs: list[dict], qty: int) -> None:
+    """Close a 2-leg put credit with an MLEG limit order; fall back to individual legs."""
+    from alpaca.trading.enums import OrderClass, OrderSide, TimeInForce
+    from alpaca.trading.requests import LimitOrderRequest, MarketOrderRequest, OptionLegRequest
+    from src.safety.mandatory_trade_gate import safe_submit_order
+    from src.utils.order_intent import build_client_order_id
+
+    current_debit = abs(sum(leg["current"] * (1 if leg["qty"] < 0 else -1) for leg in legs))
+    limit_debit = round(current_debit + 0.10, 2)
+
+    option_legs = [
+        OptionLegRequest(
+            symbol=leg["symbol"],
+            side=OrderSide.BUY if leg["qty"] < 0 else OrderSide.SELL,
+            ratio_qty=1,
+        )
+        for leg in legs
+    ]
+
+    try:
+        order = safe_submit_order(
+            client,
+            LimitOrderRequest(
+                qty=qty,
+                order_class=OrderClass.MLEG,
+                legs=option_legs,
+                time_in_force=TimeInForce.DAY,
+                limit_price=round(limit_debit, 2),
+                client_order_id=build_client_order_id("CLOSE", "PCS"),
+            ),
+            strategy="spy_put_credit",
+        )
+        logger.info("MLEG close: %s @ $%.2f debit", order.id, limit_debit)
+    except Exception as e:  # noqa: BLE001
+        logger.warning("MLEG close failed (%s). Individual leg fallback.", e)
+        for leg in legs:
+            try:
+                side = OrderSide.BUY if leg["qty"] < 0 else OrderSide.SELL
+                tag = "SP" if leg["qty"] < 0 else "LP"
+                safe_submit_order(
+                    client,
+                    MarketOrderRequest(
+                        symbol=leg["symbol"],
+                        qty=abs(leg["qty"]),
+                        side=side,
+                        time_in_force=TimeInForce.DAY,
+                        client_order_id=build_client_order_id("CLOSE", "PCS", tag),
+                    ),
+                    strategy="spy_put_credit",
+                )
+            except Exception as le:  # noqa: BLE001
+                logger.error("Failed to close %s: %s", leg["symbol"], le)
+
+
 def plan_structure(dry_run: bool = True, opp: dict | None = None) -> dict:
     profile = _load_profile()
     cfg = profile.as_strategy_config()
@@ -288,6 +486,11 @@ def main() -> int:
         help="Submit paper MLEG put credit via TradeGateway",
     )
     parser.add_argument("--status", action="store_true")
+    parser.add_argument(
+        "--check-exits",
+        action="store_true",
+        help="Check open put-credit positions for TP/SL/DTE exit and close if triggered",
+    )
     parser.add_argument("--live", action="store_true", help="Always rejected while live_blocked")
     args = parser.parse_args()
 
@@ -302,6 +505,17 @@ def main() -> int:
         list(state.killed_families),
     )
     logger.info("=" * 60)
+
+    if args.check_exits:
+        # Exit management must run regardless of entry kill-switch state —
+        # mirrors ic_simple.py's exit mode being independent of entry gating.
+        try:
+            client = _get_paper_client()
+        except Exception as exc:
+            logger.error("Paper client failed: %s", exc)
+            return 1
+        check_put_credit_exits(client, dry_run=args.dry_run)
+        return 0
 
     if args.live:
         logger.error("LIVE BLOCKED until put-credit cohort clears kill criteria")

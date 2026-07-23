@@ -675,6 +675,7 @@ class TestNorthStarReadinessReport:
 class TestE2EPipeline:
     """End-to-end: mock Alpaca, run entry flow, verify correct credit in order."""
 
+    @patch("src.core.active_strategy.entry_block_message", return_value=None)
     @patch("scripts.ic_simple._save_entries")
     @patch("scripts.ic_simple._load_entries", return_value={})
     @patch("scripts.ic_simple._wait_for_fill", return_value=(True, 2.45))
@@ -703,9 +704,16 @@ class TestE2EPipeline:
         mock_wait,
         mock_load,
         mock_save,
+        mock_kill,
     ):
         """The single most important test: verify the limit price sent to Alpaca
-        is based on NET credit (~$2-3), not GROSS short bids (~$7-8)."""
+        is based on NET credit (~$2-3), not GROSS short bids (~$7-8).
+
+        IC Simple's entry path is gated by a 2026-07-22 strategy kill-switch
+        (successor: spy_put_credit) — entry_block_message is mocked to None
+        here so this test keeps exercising the underlying limit-price/entry
+        mechanics rather than asserting on the (separately tested) kill gate.
+        """
         mock_client = MagicMock()
         mock_client_fn.return_value = mock_client
 
@@ -778,6 +786,7 @@ class TestE2EPipeline:
             f"Expected ~$2.45 limit (net $2.50 - $0.05), got ${abs(limit_price):.2f}"
         )
 
+    @patch("src.core.active_strategy.entry_block_message", return_value=None)
     @patch("src.safety.mandatory_trade_gate.safe_submit_order")
     @patch("scripts.ic_simple.find_opportunity")
     @patch("scripts.ic_simple._get_thompson_confidence", return_value=0.90)
@@ -796,7 +805,11 @@ class TestE2EPipeline:
         mock_thompson,
         mock_opp,
         mock_submit,
+        mock_kill,
     ):
+        # entry_block_message mocked to None: the 2026-07-22 kill-switch gates
+        # entry before same-expiry-loss logic runs, so bypass it to keep
+        # testing the reentry block itself.
         mock_client_fn.return_value = MagicMock()
         mock_opp.return_value = {
             "expiry": "2026-05-15",

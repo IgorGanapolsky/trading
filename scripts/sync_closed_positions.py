@@ -825,6 +825,7 @@ def _to_closed_trade_from_inventory(
     outcome = "win" if pnl > 0 else "loss" if pnl < 0 else "breakeven"
     legs = _signature_to_legs(signature)
     entry_net_cash = round(_parse_float(lot.get("net_cash"), 0.0), 2)
+    exit_reason = _derive_exit_reason(entry_net_cash, exit_net_cash, pnl, exit_ts, legs)
     order_ids = sorted(
         {
             str(order_id)
@@ -859,6 +860,7 @@ def _to_closed_trade_from_inventory(
         "exit_style": "credit" if exit_net_cash > 0 else "debit",
         "realized_pnl": pnl,
         "outcome": outcome,
+        "exit_reason": exit_reason,
         "signature": signature,
         "legs": legs,
         "quantity": lot.get("quantity"),

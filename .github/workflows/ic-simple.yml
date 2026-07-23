@@ -102,6 +102,19 @@ jobs:
           fi
           python3 scripts/ic_simple.py $FLAGS
 
+      - name: Manage put-credit exits (spy_put_credit has no exit path of its own)
+        if: steps.mode.outputs.mode != 'learn' && steps.mode.outputs.mode != 'status'
+        env:
+          ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          FLAGS="--check-exits"
+          if [ "${{ steps.mode.outputs.dry_run }}" = "true" ]; then
+            FLAGS="$FLAGS --dry-run"
+          fi
+          python3 scripts/spy_put_credit.py $FLAGS
+
       - name: Run spy_put_credit paper entry (successor strategy)
         if: steps.mode.outputs.run_put_credit == 'true' && steps.mode.outputs.mode != 'learn'
         env:
