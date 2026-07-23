@@ -1,13 +1,13 @@
 {
   "blocker_reason": null,
-  "last_heartbeat_utc": "2026-05-08T19:06:34.050475Z",
+  "last_heartbeat_utc": "2026-07-22T21:19:34.963835Z",
   "metadata": {
     "source_control_plane": "orchestrator.telemetry"
   },
   "phase": "telemetry.init",
   "retry_count": 0,
-  "run_id": "20260508T190634",
-  "session_id": "20260508T190634",
+  "run_id": "20260722T211934",
+  "session_id": "20260722T211934",
   "status": "running",
-  "updated_at_utc": "2026-05-08T19:06:34.050475Z"
+  "updated_at_utc": "2026-07-22T21:19:34.963835Z"
 }

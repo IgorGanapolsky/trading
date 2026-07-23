@@ -9,13 +9,37 @@
   },
   "IC_260320": {
     "credit": 2.0,
-    "date": "2026-03-26T09:56:10.142865",
+    "date": "2026-07-22T21:18:34.913333+00:00",
+    "entry_time": "2026-07-22T21:18:34.913333+00:00",
     "order_id": "mleg-order-001",
+    "underlying": "SPY",
+    "expiry": "2026-03-20",
+    "signature": "SPY_2026-03-20_P645-655_C725-735",
+    "quantity": 1,
+    "profile_name": "spy-core",
+    "validation_phase": true,
+    "entry_reason": "",
+    "target_delta": 0.15,
+    "selection_method": "unknown",
+    "strike_selection_method": "unknown",
+    "put_delta": null,
+    "call_delta": null,
     "strikes": {
       "short_put": 655.0,
       "short_call": 725.0,
       "long_put": 645.0,
       "long_call": 735.0
+    },
+    "market_snapshot": {
+      "captured_at": "2026-07-22T21:18:34.913595+00:00",
+      "vix_level": 16.639999389648438,
+      "vix_3day_ma": 17.446666081746418,
+      "vix_percentile": null,
+      "iv_rank_proxy": null,
+      "spy_price": null,
+      "spy_5d_return": null,
+      "spy_20d_return": null,
+      "weekday": 2
     }
   },
   "IC_20260320": {

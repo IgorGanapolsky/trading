@@ -132,6 +132,8 @@ TRIGGER_SYNC_NOW
 reports/*.txt
 reports/**/*.json
 data/audit_trail/
+data/audit/
+.tmp_gate_venv/
 data/sentiment/
 data/bronze/
 data/silver/
