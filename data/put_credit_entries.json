@@ -28,6 +28,12 @@
     "validation_phase": true,
     "profile_name": "spy-put-credit",
     "status": "open",
+    "fill_confirmed": true,
+    "filled_avg_price": -0.53,
+    "legs": {
+      "short": "SPY260828P00696000",
+      "long": "SPY260828P00691000"
+    },
     "reconciled_at": "2026-07-23T15:55:08+00:00",
     "reconstruction_reason": "filled_broker_order_missing_durable_strategy_journal"
   }

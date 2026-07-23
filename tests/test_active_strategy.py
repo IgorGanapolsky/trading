@@ -124,30 +124,47 @@ def test_put_credit_inventory_gate_fails_closed_on_unexplained_leg(monkeypatch):
 
 
 def test_find_put_credit_uses_put_side_only(monkeypatch):
+    import sys
+    import types
+
     from scripts import spy_put_credit as pcs
 
-    class Sel:
-        method = "live_delta"
-        put_delta = 0.15
-        short_put = 700.0
-        long_put = 695.0
-        put_bid = 1.20
-        long_put_ask = 0.40
-        expiry = "2026-08-21"
+    expiry = "2026-08-21"
+    # Band-scan uses IVDataProvider put chain only (no call side).
+    short = {
+        "type": "put",
+        "strike": 700.0,
+        "delta": -0.15,
+        "bid": 1.20,
+        "ask": 1.25,
+    }
+    long = {
+        "type": "put",
+        "strike": 695.0,
+        "delta": -0.10,
+        "bid": 0.35,
+        "ask": 0.40,
+    }
 
-    monkeypatch.setattr(
-        "src.markets.option_chain.select_strikes_by_delta",
-        lambda **kwargs: Sel(),
-    )
-    # ensure import path inside function sees the patch
-    import src.markets.option_chain as oc
+    class FakeProvider:
+        def get_options_chain_with_greeks(self, **kwargs):
+            # First call is delta-band filtered shorts; second is full put book.
+            if kwargs.get("min_delta") is not None:
+                return [short]
+            return [short, long]
 
-    monkeypatch.setattr(oc, "select_strikes_by_delta", lambda **kwargs: Sel())
+    # Inject a stub module so the late import inside find_put_credit_opportunity
+    # does not pull real pandas/alpaca deps in unit tests.
+    stub = types.ModuleType("src.data.iv_data_provider")
+    stub.IVDataProvider = FakeProvider
+    monkeypatch.setitem(sys.modules, "src.data.iv_data_provider", stub)
+    monkeypatch.setattr(pcs, "_friday_expiries", lambda *a, **k: [expiry])
     opp = pcs.find_put_credit_opportunity(747.0)
     assert opp is not None
     assert opp["short_put"] == 700.0
     assert opp["long_put"] == 695.0
     assert opp["est_credit"] == 0.80
+    assert opp["method"] == "live_delta_band_scan"
     assert "short_call" not in opp
 
 
