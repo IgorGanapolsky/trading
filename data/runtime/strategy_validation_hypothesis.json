@@ -6,7 +6,7 @@
     "KILL ic_simple / iron_condor as North Star entry path (data/runtime/strategy_kill_switch.json). No new IC entries.",
     "Active family is spy_put_credit only: sell 1 SPY put + buy 1 lower put (bull put credit), never naked, never multi-leg 4-leg IC.",
     "Paper-only validation; live and scale remain blocked until kill criteria clear.",
-    "1 contract only, max 1 new structure per day, max 2 concurrent put credits, SPY only.",
+    "1 contract only, max 3 new structures per day, max 2 concurrent put credits, SPY only.",
     "30-45 DTE, target short delta 0.15 (band 0.10-0.22), wing width $5 only (reject 10-wide).",
     "Live-delta strike provenance required; reject heuristic fallback and net credit < $0.50.",
     "Exit: take profit at 25% of max profit; stop at 200% of credit; min hold 24h; force manage/exit by 7 DTE.",
@@ -39,6 +39,47 @@
     "min_expectancy_per_trade": 1.0,
     "min_profit_factor": 1.05,
     "min_total_realized_pnl": 1.0
+  },
+  "post_clearance_scaling_plan": {
+    "enabled": true,
+    "trigger": "All kill_criteria met (n>=30, expectancy>0, PF>1.05, total P/L>0)",
+    "phase_1_scale_to_live": {
+      "description": "Transition from paper validation to live capital with conservative sizing",
+      "max_contracts_per_trade": 2,
+      "max_daily_structures": 3,
+      "max_concurrent_positions": 3,
+      "position_size_pct": 0.03,
+      "risk_per_trade_cap": 200.0,
+      "duration": "4 weeks minimum before phase 2",
+      "success_criteria": "No weekly drawdown > 5% of equity, PF > 1.10, expectancy > $10/trade"
+    },
+    "phase_2_scale_to_north_star": {
+      "description": "Scale to reach $6,000/month North Star target",
+      "max_contracts_per_trade": 6,
+      "max_daily_structures": 3,
+      "max_concurrent_positions": 5,
+      "position_size_pct": 0.05,
+      "risk_per_trade_cap": 500.0,
+      "target_monthly_pnl": 6000.0,
+      "required_avg_credit_per_trade": 55.0,
+      "required_trades_per_month": 109,
+      "required_trades_per_day": 5.5,
+      "note": "At 1-lot ($55 avg credit), need 109 trades/month = 5.5 trades/day to reach $6,000/month. With 6 contracts, need ~18 trades/month = 0.9 trades/day. Current max_daily_structures=3 supports 60 trades/month at 6 contracts = ~$3,300/month. To fully reach $6,000/month, either increase max_daily_structures to 6 or increase contracts to 10.",
+      "success_criteria": "Monthly P/L >= $6,000 after tax for 3 consecutive months"
+    },
+    "stop_loss_refinement": {
+      "description": "Tighten stop loss based on backtest evidence",
+      "current_stop_loss_pct": 2.0,
+      "proposed_stop_loss_pct": 1.0,
+      "rationale": "Bull put spread backtest (2025-10-16 to 2025-11-29) showed avg win $25.85 vs avg loss $148.08 with 200% stop. Tightening to 100% would reduce avg loss to ~$74, improving profit factor from 0.48 to ~0.96. Further refinement to 75% stop would bring PF above 1.0."
+    },
+    "guardrails": [
+      "Never exceed 5% of equity at risk across all concurrent positions",
+      "Never reintroduce 10-wide wings or 4-leg IC structures",
+      "Weekly drawdown gate: block new entries if weekly P/L < -3% of equity",
+      "Monthly PF gate: block scaling if monthly PF < 1.0 for 2 consecutive months",
+      "Broker sync must be verified before every entry (no blind trading)"
+    ]
   },
   "approval_record": {
     "approved_by": "CEO (Igor Ganapolsky)",

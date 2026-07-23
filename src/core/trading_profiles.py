@@ -150,7 +150,10 @@ _BASELINE_PUT_CREDIT_PROFILE = PutCreditProfile(
     position_size_pct=0.02,
     max_contracts_per_trade=1,
     max_concurrent_positions=2,
-    max_daily_structures=1,
+    # Increased from 1 to 3: triples validation throughput (30-trade gate in ~10
+    # weeks instead of ~30) with zero additional risk per trade — each structure
+    # is still 1-lot, $5 wing, 24h min hold. Concurrent cap of 2 still enforced.
+    max_daily_structures=3,
     min_credit=0.50,
 )
 

@@ -222,3 +222,82 @@ scenarios:
       SPY down 27%, QQQ down 37%, TLT down 30% (worst bond year in 40 years).
       Validates system behavior when BOTH stocks AND bonds fall.
       No safe haven scenario - pure risk management test.
+
+  # ============================================================
+  # AUGUST 2026 FORWARD-LOOKING SCENARIOS
+  # Put-credit validation era scenarios for SPY bull put spreads
+  # ============================================================
+
+  - name: august_2026_put_credit_validation
+    label: August 2026 Put-Credit Validation (SPY bull put credit)
+    start_date: "2026-08-01"
+    end_date: "2026-08-29"
+    etf_universe: [SPY]
+    daily_allocation: 10.0
+    max_trades_per_day: 3
+    strategy_family: spy_put_credit
+    structure: bull_put_credit
+    target_delta: 0.15
+    delta_band: [0.10, 0.22]
+    wing_width: 5.0
+    take_profit_pct: 0.25
+    stop_loss_pct: 2.0
+    exit_dte: 7
+    min_hold_hours: 24
+    min_credit: 0.50
+    max_contracts_per_trade: 1
+    description: >
+      Forward-looking scenario for the put-credit validation cohort.
+      Tests the 2-leg SPY bull put credit strategy (1-lot, $5 wing,
+      0.15 delta, 25% TP, 200% SL, 7 DTE exit, 24h min hold) during
+      August 2026. SPY August monthly expiry is Aug 21; weekly expiries
+      provide multiple entry/exit windows. Validates that the successor
+      strategy to killed IC Simple can produce positive expectancy
+      in a post-July market environment. Uses max_daily_structures=3
+      to accelerate the 30-trade kill-criteria gate.
+
+  - name: august_2026_post_monthly_expiry
+    label: August 2026 Post-Monthly-Expiry (Aug 21-29)
+    start_date: "2026-08-21"
+    end_date: "2026-08-29"
+    etf_universe: [SPY]
+    daily_allocation: 10.0
+    max_trades_per_day: 3
+    strategy_family: spy_put_credit
+    structure: bull_put_credit
+    target_delta: 0.15
+    wing_width: 5.0
+    take_profit_pct: 0.25
+    stop_loss_pct: 2.0
+    exit_dte: 7
+    min_hold_hours: 24
+    description: >
+      Tests put-credit behavior in the final week after August monthly
+      expiry (Aug 21). Portfolio insurance demand may compress implied
+      volatility, affecting credit sizing. Validates that the strategy
+      can still meet min_credit thresholds in a low-IV environment.
+      Short-dated weekly options have faster theta decay but higher
+      gamma risk near expiry.
+
+  - name: august_2026_seasonal_tail_risk
+    label: August 2026 Seasonal Tail Risk (SPY put credit stress)
+    start_date: "2026-08-01"
+    end_date: "2026-08-29"
+    etf_universe: [SPY]
+    daily_allocation: 10.0
+    max_trades_per_day: 1
+    strategy_family: spy_put_credit
+    structure: bull_put_credit
+    target_delta: 0.15
+    wing_width: 5.0
+    stop_loss_pct: 2.0
+    exit_dte: 7
+    min_hold_hours: 24
+    survival_gate: 0.98
+    description: >
+      Stress test for August seasonal tail risk. August is historically
+      the second-worst month for SPY (after September). Tests whether
+      the put-credit strategy can preserve 98% of capital during
+      a potential drawdown. Uses max_trades_per_day=1 to isolate
+      individual trade performance under stress. If the strategy
+      loses >2% of capital, it fails the survival gate.
