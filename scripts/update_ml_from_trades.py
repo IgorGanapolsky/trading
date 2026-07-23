@@ -36,8 +36,12 @@ logger = logging.getLogger(__name__)
 
 from src.analytics.loss_forensics import (  # noqa: E402
     analyze_loss_clusters as forensics_analyze_loss_clusters,
+)
+from src.analytics.loss_forensics import (  # noqa: E402
     build_system_diagnosis,
     diagnosis_to_markdown,
+)
+from src.analytics.loss_forensics import (  # noqa: E402
     wing_width as forensics_wing_width,
 )
 from src.analytics.trade_evidence import (  # noqa: E402
@@ -547,6 +551,73 @@ def check_trading_gate(stats: dict) -> dict:
     return gate
 
 
+def apply_active_cohort_policy(
+    gate: dict,
+    *,
+    active_family: str,
+    validation_reset: bool,
+    evidence_issues: list[str],
+) -> dict:
+    """Make the validation exception expire at the mature cohort boundary."""
+
+    result = dict(gate)
+    verified = int(result.get("total_trades", 0) or 0)
+    clean_evidence = not evidence_issues
+    is_successor_reset = active_family == SUCCESSOR_FAMILY and validation_reset
+    cohort_mature = is_successor_reset and verified >= MIN_TRADES_FOR_GATE
+    immature_validation_allowed = (
+        is_successor_reset
+        and clean_evidence
+        and verified < MIN_TRADES_FOR_GATE
+    )
+    passed_mature_gate = bool(result.get("should_trade"))
+    validation_allowed = bool(
+        validation_reset
+        and clean_evidence
+        and (not is_successor_reset or immature_validation_allowed or passed_mature_gate)
+    )
+
+    result["cohort_mature"] = cohort_mature
+    result["allow_validation_entries"] = validation_allowed
+    result["allow_paper_validation"] = bool(
+        validation_reset
+        and clean_evidence
+        and (immature_validation_allowed or passed_mature_gate)
+    )
+    result["hard_halt_required"] = bool(
+        is_successor_reset and not result["allow_paper_validation"]
+    )
+    return result
+
+
+def _write_active_cohort_halt(
+    halt_file: Path,
+    gate: dict,
+    *,
+    now: datetime | None = None,
+) -> bool:
+    """Write the non-bypassable active-cohort halt without replacing crisis halts."""
+
+    if halt_file.exists():
+        current = halt_file.read_text(encoding="utf-8", errors="ignore")
+        if not current.startswith("ACTIVE COHORT GATE BLOCKED:"):
+            return False
+
+    timestamp = now or datetime.now(timezone.utc)
+    family = str(gate.get("active_strategy_family") or SUCCESSOR_FAMILY)
+    reason = str(gate.get("block_reason") or "verified cohort failed performance gate")
+    halt_file.parent.mkdir(parents=True, exist_ok=True)
+    halt_file.write_text(
+        f"ACTIVE COHORT GATE BLOCKED: {family}\n"
+        f"Reason: {reason}\n"
+        f"Verified trades: {int(gate.get('total_trades', 0) or 0)}\n"
+        f"Evidence: {str(gate.get('evidence_dataset_sha256') or 'unknown')}\n"
+        f"Updated: {timestamp.isoformat()}\n",
+        encoding="utf-8",
+    )
+    return True
+
+
 def generate_loss_postmortems(trades_data: dict, max_lessons: int = 5) -> list[dict]:
     """Generate post-mortem lessons from the biggest losing trades.
 
@@ -763,6 +834,12 @@ def main(dry_run: bool = False):
     gate["evidence_dataset_sha256"] = evidence.dataset_sha256
     gate["evidence_verified_rows"] = len(evidence.rows)
     gate["evidence_issues"] = list(evidence.issues)
+    gate = apply_active_cohort_policy(
+        gate,
+        active_family=active_family,
+        validation_reset=validation_reset,
+        evidence_issues=list(evidence.issues),
+    )
 
     # 4. Generate post-mortem lessons
     lessons = generate_loss_postmortems(trades_data)
@@ -808,17 +885,30 @@ def main(dry_run: bool = False):
         halt_file = PROJECT_ROOT / "data" / "TRADING_HALTED"
         # Family-aware: IC lifetime failure must not block put-credit paper validation.
         # Still never clear non-ML / crisis halt files.
-        put_n = int(gate_stats.get("closed_trades", 0) or 0) if active_family == SUCCESSOR_FAMILY else 0
-        allow_put_paper = (
+        put_n = (
+            int(gate_stats.get("closed_trades", 0) or 0)
+            if active_family == SUCCESSOR_FAMILY
+            else 0
+        )
+        allow_put_paper = bool(
             active_family == SUCCESSOR_FAMILY
             and validation_reset
-            and not evidence.issues
+            and gate.get("allow_paper_validation")
             and put_n < MIN_TRADES_FOR_GATE
         )
-        gate["allow_paper_validation"] = bool(allow_put_paper or gate.get("should_trade"))
-        if allow_put_paper:
+        if gate.get("hard_halt_required"):
+            if _write_active_cohort_halt(halt_file, gate):
+                logger.warning(
+                    "  ACTIVE COHORT HALT WRITTEN: %s failed verified gate",
+                    active_family,
+                )
+            else:
+                logger.warning(
+                    "  HALT FILE PRESERVED: an existing non-cohort halt has priority"
+                )
+        elif allow_put_paper:
             if halt_file.exists():
-                content = halt_file.read_text()
+                content = halt_file.read_text(encoding="utf-8", errors="ignore")
                 if "ML GATE BLOCKED" in content and "spy_put_credit cohort" not in content:
                     halt_file.unlink()
                     logger.info(
@@ -842,8 +932,11 @@ def main(dry_run: bool = False):
             )
             logger.warning(f"  HALT FILE WRITTEN: {halt_file}")
         elif not gate["should_trade"] and validation_reset:
-            logger.info(
-                "  ML gate would halt, but validation_reset active — allowing paper validation entries"
+            logger.warning(
+                "  Validation reset is not entry-authoritative "
+                "(allow_paper_validation=%s, evidence_issues=%s)",
+                gate.get("allow_paper_validation"),
+                len(evidence.issues),
             )
         elif halt_file.exists():
             # Crisis / operator halt clearing belongs to crisis_monitor after flat book.

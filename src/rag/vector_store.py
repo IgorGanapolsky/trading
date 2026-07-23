@@ -40,8 +40,15 @@ class TradeRAG:
             self._embedder = SentenceTransformer("BAAI/bge-base-en-v1.5")
             self._use_faiss = True
             logger.info("RAG: Using BGE-base-en-v1.5 embeddings + FAISS")
-        except ImportError:
-            logger.info("RAG: sentence-transformers not available, using TF-IDF fallback")
+        except Exception as exc:
+            # A present package is not necessarily a usable runtime: incompatible
+            # transitive versions, a corrupt model cache, or an unavailable model
+            # must degrade to the local lexical backend instead of crashing RAG.
+            logger.warning(
+                "RAG: semantic embedder unavailable (%s); using TF-IDF fallback",
+                type(exc).__name__,
+            )
+            self._embedder = None
             self._use_faiss = False
 
     def build_index(self):
