@@ -4,13 +4,13 @@
 
 **Status: KILLED** as a North Star candidate.
 
-| Metric (lifetime paired ledger) | Value |
-|----------------------------------|-------|
-| Closed trades | ~174 |
-| Win rate | ~17% |
-| Profit factor | 0.70 |
-| Expectancy | ~−$32 / trade |
-| Realized P/L | ~−$5.6k |
+| Metric (lifetime paired ledger) | Value         |
+| ------------------------------- | ------------- |
+| Closed trades                   | ~174          |
+| Win rate                        | ~17%          |
+| Profit factor                   | 0.70          |
+| Expectancy                      | ~−$32 / trade |
+| Realized P/L                    | ~−$5.6k       |
 
 **Do not reopen IC Simple entries.** Exit/manage existing legs only via guardian.
 
@@ -43,6 +43,6 @@ can produce **expectancy > 0** and **PF > 1** over **30** clean paper trades —
 ### Hard constraints while validating
 
 - Paper only; live blocked
-- SPY only; 1-lot; max 1 structure/day; max 2 concurrent
+- SPY only; 1-lot; max 3 structures/day (`max_daily_structures=3`, #4274); max 2 concurrent
 - No 10-wide wings; no naked options; no multi-name underlyings
 - Unclean open inventory blocks new entries
