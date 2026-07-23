@@ -291,14 +291,7 @@ def _matching_plan_snapshot(
     }
 
 
-def _recovered_put_credit_entry(order: Any) -> tuple[str, dict[str, Any]]:
-    """Build a durable PCS entry from one authoritative filled parent order."""
-
-    order_id = str(getattr(order, "id", "") or "")
-    filled_at = _parse_timestamp(getattr(order, "filled_at", None))
-    if not order_id or filled_at is None:
-        raise ValueError("filled BPS order is missing order_id or filled_at")
-
+def _filled_bps_legs(order_id: str, order: Any) -> tuple[Any, Any, str, float, float]:
     legs = list(getattr(order, "legs", None) or [])
     buys = [leg for leg in legs if _order_status_name(getattr(leg, "side", None)) == "BUY"]
     sells = [leg for leg in legs if _order_status_name(getattr(leg, "side", None)) == "SELL"]
@@ -313,14 +306,20 @@ def _recovered_put_credit_entry(order: Any) -> tuple[str, dict[str, Any]]:
     _, short_put = short_parts
     if long_put >= short_put:
         raise ValueError(f"{order_id}: filled BPS strike direction is invalid")
+    return buys[0], sells[0], expiry_yymmdd, long_put, short_put
 
+
+def _filled_bps_quantity(order_id: str, order: Any) -> int:
     try:
         quantity = abs(int(float(getattr(order, "filled_qty", None) or order.qty)))
     except (AttributeError, TypeError, ValueError) as exc:
         raise ValueError(f"{order_id}: filled BPS quantity is invalid") from exc
     if quantity <= 0:
         raise ValueError(f"{order_id}: filled BPS quantity must be positive")
+    return quantity
 
+
+def _filled_bps_credit(order_id: str, order: Any, long_leg: Any, short_leg: Any) -> float:
     raw_fill = getattr(order, "filled_avg_price", None)
     try:
         parent_fill = float(raw_fill)
@@ -328,14 +327,30 @@ def _recovered_put_credit_entry(order: Any) -> tuple[str, dict[str, Any]]:
         parent_fill = 0.0
     if raw_fill not in (None, "") and parent_fill >= 0:
         raise ValueError(f"{order_id}: filled BPS parent is not a net credit")
-    credit = abs(parent_fill)
-    if credit <= 0:
-        try:
-            credit = float(sells[0].filled_avg_price) - float(buys[0].filled_avg_price)
-        except (AttributeError, TypeError, ValueError):
-            credit = 0.0
+    if parent_fill < 0:
+        return abs(parent_fill)
+    try:
+        credit = float(short_leg.filled_avg_price) - float(long_leg.filled_avg_price)
+    except (AttributeError, TypeError, ValueError):
+        credit = 0.0
     if credit <= 0:
         raise ValueError(f"{order_id}: filled BPS credit is unavailable")
+    return credit
+
+
+def _recovered_put_credit_entry(order: Any) -> tuple[str, dict[str, Any]]:
+    """Build a durable PCS entry from one authoritative filled parent order."""
+
+    order_id = str(getattr(order, "id", "") or "")
+    filled_at = _parse_timestamp(getattr(order, "filled_at", None))
+    if not order_id or filled_at is None:
+        raise ValueError("filled BPS order is missing order_id or filled_at")
+
+    long_leg, short_leg, expiry_yymmdd, long_put, short_put = _filled_bps_legs(
+        order_id, order
+    )
+    quantity = _filled_bps_quantity(order_id, order)
+    credit = _filled_bps_credit(order_id, order, long_leg, short_leg)
 
     expiry = datetime.strptime(expiry_yymmdd, "%y%m%d").date().isoformat()
     signature = f"SPY_{expiry}_P{int(long_put)}-{int(short_put)}"
