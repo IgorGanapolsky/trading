@@ -1079,6 +1079,102 @@ def _filled_order_by_id(trade_history: list[dict[str, Any]]) -> dict[str, dict[s
     return indexed
 
 
+def _put_credit_order_validation_errors(
+    order: dict[str, Any],
+    *,
+    expiry: str,
+    long_put: float,
+    short_put: float,
+    quantity: float,
+    phase: str,
+) -> list[str]:
+    """Validate that a broker fill is the exact journaled put-credit structure."""
+
+    errors: list[str] = []
+    order_class = str(order.get("order_class") or "").upper().split(".")[-1]
+    if order_class != "MLEG":
+        errors.append("parent order is not MLEG")
+
+    parent_quantity = abs(_parse_float(order.get("qty"), 0.0))
+    if parent_quantity <= 0 or abs(parent_quantity - quantity) > 1e-9:
+        errors.append("parent quantity does not match journal quantity")
+
+    parent_price = _parse_float(order.get("price"), 0.0)
+    if phase == "entry" and parent_price >= 0:
+        errors.append("entry is not a net credit")
+    elif phase == "exit" and parent_price <= 0:
+        errors.append("exit is not a net debit")
+
+    legs = order.get("legs") if isinstance(order.get("legs"), list) else []
+    if len(legs) != 2:
+        errors.append("parent order does not contain exactly two legs")
+        return errors
+
+    if phase == "entry":
+        expected = {
+            long_put: ("BUY", "BUY_TO_OPEN"),
+            short_put: ("SELL", "SELL_TO_OPEN"),
+        }
+    elif phase == "exit":
+        expected = {
+            long_put: ("SELL", "SELL_TO_CLOSE"),
+            short_put: ("BUY", "BUY_TO_CLOSE"),
+        }
+    else:  # pragma: no cover - internal programming error
+        raise ValueError(f"unsupported put-credit phase: {phase}")
+
+    seen_strikes: set[float] = set()
+    for index, leg in enumerate(legs):
+        if not isinstance(leg, dict):
+            errors.append(f"leg {index} is not structured broker data")
+            continue
+
+        parsed = _parse_option_symbol(leg.get("symbol"))
+        if parsed is None:
+            errors.append(f"leg {index} has an invalid option symbol")
+            continue
+        if (
+            parsed["underlying"] != "SPY"
+            or parsed["expiry"] != expiry
+            or parsed["kind"] != "P"
+        ):
+            errors.append(f"leg {index} does not match SPY put expiry {expiry}")
+
+        strike = float(parsed["strike"])
+        if strike not in expected:
+            errors.append(f"leg {index} has unexpected strike {_strike_text(strike)}")
+            continue
+        if strike in seen_strikes:
+            errors.append(f"duplicate strike {_strike_text(strike)}")
+            continue
+        seen_strikes.add(strike)
+
+        status = str(leg.get("status") or "").upper().split(".")[-1]
+        if status != "FILLED":
+            errors.append(f"leg {_strike_text(strike)} is not filled")
+
+        leg_quantity = abs(_parse_float(leg.get("qty"), 0.0))
+        filled_quantity = abs(_parse_float(leg.get("filled_qty"), 0.0))
+        if (
+            leg_quantity <= 0
+            or filled_quantity <= 0
+            or abs(leg_quantity - quantity) > 1e-9
+            or abs(filled_quantity - quantity) > 1e-9
+        ):
+            errors.append(f"leg {_strike_text(strike)} quantity does not match journal")
+
+        expected_side, expected_intent = expected[strike]
+        if _parse_side(leg.get("side")) != expected_side:
+            errors.append(f"leg {_strike_text(strike)} has wrong side for {phase}")
+        if _parse_position_intent(leg.get("position_intent")) != expected_intent:
+            errors.append(f"leg {_strike_text(strike)} has wrong position intent for {phase}")
+
+    missing_strikes = set(expected) - seen_strikes
+    for strike in sorted(missing_strikes):
+        errors.append(f"missing strike {_strike_text(strike)}")
+    return errors
+
+
 def _pair_closed_put_credits(
     trade_history: list[dict[str, Any]],
     raw_entries: Any,
@@ -1106,19 +1202,6 @@ def _pair_closed_put_credits(
         exit_time = _parse_dt(exit_order.get("filled_at"))
         if entry_time is None or exit_time is None or exit_time <= entry_time:
             continue
-        entry_price = abs(_parse_float(entry_order.get("price"), 0.0))
-        exit_price = abs(_parse_float(exit_order.get("price"), 0.0))
-        quantity = abs(
-            _parse_float(
-                entry_order.get("qty"),
-                _parse_float(entry.get("quantity"), 1.0),
-            )
-        )
-        exit_quantity = abs(_parse_float(exit_order.get("qty"), quantity))
-        if entry_price <= 0 or exit_price < 0 or quantity <= 0:
-            continue
-        if abs(exit_quantity - quantity) > 1e-9:
-            continue
 
         strikes = entry.get("strikes") if isinstance(entry.get("strikes"), dict) else {}
         try:
@@ -1126,10 +1209,49 @@ def _pair_closed_put_credits(
             long_put = float(strikes["long_put"])
         except (KeyError, TypeError, ValueError):
             continue
+        if short_put <= long_put:
+            continue
         expiry = str(entry.get("expiry") or "").strip()
         if not expiry:
             continue
 
+        quantity = abs(_parse_float(entry.get("quantity"), 0.0))
+        if quantity <= 0:
+            continue
+        validation_errors = [
+            *(
+                f"entry: {error}"
+                for error in _put_credit_order_validation_errors(
+                    entry_order,
+                    expiry=expiry,
+                    long_put=long_put,
+                    short_put=short_put,
+                    quantity=quantity,
+                    phase="entry",
+                )
+            ),
+            *(
+                f"exit: {error}"
+                for error in _put_credit_order_validation_errors(
+                    exit_order,
+                    expiry=expiry,
+                    long_put=long_put,
+                    short_put=short_put,
+                    quantity=quantity,
+                    phase="exit",
+                )
+            ),
+        ]
+        if validation_errors:
+            logger.warning(
+                "Rejecting put-credit journal %s: %s",
+                journal_key,
+                "; ".join(validation_errors),
+            )
+            continue
+
+        entry_price = abs(_parse_float(entry_order.get("price"), 0.0))
+        exit_price = abs(_parse_float(exit_order.get("price"), 0.0))
         entry_credit = round(entry_price * quantity * 100.0, 2)
         exit_debit = round(exit_price * quantity * 100.0, 2)
         realized_pnl = round(entry_credit - exit_debit, 2)
@@ -1147,14 +1269,12 @@ def _pair_closed_put_credits(
                 "strategy": "spy_put_credit",
                 "strategy_family": "spy_put_credit",
                 "symbol": "SPY",
-                "signature": str(
-                    entry.get("signature")
-                    or (
-                        f"SPY_{expiry}_P"
-                        f"{_strike_text(min(long_put, short_put))}-"
-                        f"{_strike_text(max(long_put, short_put))}"
-                    )
+                "signature": (
+                    f"SPY_{expiry}_P"
+                    f"{_strike_text(long_put)}-"
+                    f"{_strike_text(short_put)}"
                 ),
+                "journal_signature": str(entry.get("signature") or ""),
                 "entry_time": entry_time.astimezone(timezone.utc).isoformat(),
                 "exit_time": exit_time.astimezone(timezone.utc).isoformat(),
                 "expiry": expiry,
