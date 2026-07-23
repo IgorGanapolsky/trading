@@ -1,0 +1,25 @@
+{
+  "strategy_family": "spy_put_credit",
+  "structure": "bull_put_credit",
+  "underlying": "SPY",
+  "quantity": 1,
+  "wing_width": 5.0,
+  "target_dte": 30,
+  "min_dte": 30,
+  "max_dte": 45,
+  "short_delta": 0.15,
+  "delta_band": [
+    0.1,
+    0.22
+  ],
+  "take_profit_pct": 0.25,
+  "stop_loss_pct": 2.0,
+  "exit_dte": 7,
+  "min_hold_hours": 24,
+  "min_credit": 0.5,
+  "dry_run": false,
+  "planned_at": "2026-07-23T15:34:30.047260+00:00",
+  "status": "planned",
+  "opportunity": null,
+  "spy_price": 736.2550048828125
+}
