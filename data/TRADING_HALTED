@@ -1,6 +1,0 @@
-INVENTORY RECONCILIATION REQUIRED
-Reason: broker inventory does not match journaled structures for SPY 2026-08-21
-Evidence: 6 broker legs; C776=-2 and C781=+2 versus journaled -1/+1; 2 legs are not journal-attributed
-Policy: new entries blocked; exits and risk reduction remain allowed
-Unblock: reconcile residual/orphan verticals and rerun system_health_check.py
-Updated: 2026-07-23T13:33:31+00:00

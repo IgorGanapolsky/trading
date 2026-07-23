@@ -206,11 +206,13 @@ def audit_open_inventory(
         by_expiry.setdefault(leg.expiry_ymd, []).append(leg)
 
     for expiry_ymd, exp_legs in sorted(by_expiry.items()):
-        key = _ic_key(expiry_ymd)
+        ic_prefix = _ic_key(expiry_ymd)
         journaled: list[tuple[str, dict[str, Any], str]] = []
-        entry = entries.get(key)
-        if isinstance(entry, dict):
-            journaled.append((key, entry, "iron_condor"))
+        for ic_key, ic_entry in entries.items():
+            if not isinstance(ic_entry, dict):
+                continue
+            if ic_key == ic_prefix or ic_key.startswith(f"{ic_prefix}_"):
+                journaled.append((ic_key, ic_entry, "iron_condor"))
         for pcs_key, pcs_entry in pcs_entries.items():
             if (
                 isinstance(pcs_entry, dict)
