@@ -58,21 +58,35 @@ jobs:
 
       - name: Determine mode
         id: mode
+        env:
+          INPUT_MODE: ${{ github.event.inputs.mode || 'both' }}
+          INPUT_DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          EVENT_NAME: ${{ github.event_name }}
+          SCHEDULE_EXPRESSION: ${{ github.event.schedule || '' }}
         run: |
-          MODE="${{ github.event.inputs.mode || 'both' }}"
-          DRY="${{ github.event.inputs.dry_run || 'false' }}"
-          HOUR=$(date -u +%H)
-          DOW=$(date -u +%u)
+          MODE="$INPUT_MODE"
+          DRY="$INPUT_DRY_RUN"
+          case "$MODE" in
+            entry|exit|both|status) ;;
+            *) echo "Invalid mode: $MODE"; exit 2 ;;
+          esac
+          case "$DRY" in
+            true|false) ;;
+            *) echo "Invalid dry_run: $DRY"; exit 2 ;;
+          esac
           RUN_PUT_CREDIT=false
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            if [ "$DOW" = "6" ]; then
-              MODE="learn"
-            elif [ "$HOUR" = "15" ]; then
-              MODE="both"  # residual IC exit + put-credit entry attempt
-              RUN_PUT_CREDIT=true
-            else
-              MODE="exit"
-            fi
+          if [ "$EVENT_NAME" = "schedule" ]; then
+            # GitHub can deliver scheduled jobs late. Preserve the intent of the
+            # triggering cron expression instead of reclassifying by wall clock.
+            case "$SCHEDULE_EXPRESSION" in
+              "0 14 * * 6") MODE="learn" ;;
+              "0 15 * * 1-5")
+                MODE="both"
+                RUN_PUT_CREDIT=true
+                ;;
+              "0 16 * * 1-5"|"0 18 * * 1-5"|"30 19 * * 1-5") MODE="exit" ;;
+              *) echo "Unknown schedule expression: $SCHEDULE_EXPRESSION"; exit 2 ;;
+            esac
           else
             # manual dispatch: entry/both includes put-credit
             if [ "$MODE" = "entry" ] || [ "$MODE" = "both" ]; then
@@ -86,6 +100,22 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           echo "Mode: $MODE, Dry run: $DRY, Put credit: $RUN_PUT_CREDIT"
 
+      - name: Reconcile filled put-credit journals
+        if: steps.mode.outputs.mode != 'learn' && steps.mode.outputs.mode != 'status'
+        env:
+          ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          FLAGS=(--reconcile-entries)
+          if [ "$DRY_RUN" = "true" ]; then
+            FLAGS+=(--dry-run)
+          fi
+          # Repair the crash window between a broker fill and local journal write
+          # before either inventory owner evaluates the live option legs.
+          python3 scripts/spy_put_credit.py "${FLAGS[@]}"
+
       - name: Manage residual IC positions (broker-reconciled exits only)
         id: residual_ic
         continue-on-error: true
@@ -96,12 +126,13 @@ jobs:
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
           RAG_QUERY_INDEX_MAX_AGE_MINUTES: "999999"
           CONTEXT_INDEX_MAX_AGE_MINUTES: "999999"
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
           PYTHONPATH: ${{ github.workspace }}
         run: |
           # Recover each open structure from its filled MLEG order. This remains
           # correct when multiple ICs share strikes and broker quantities aggregate.
           FLAGS=()
-          if [ "${{ steps.mode.outputs.dry_run }}" = "true" ]; then
+          if [ "$DRY_RUN" = "true" ]; then
             FLAGS+=(--dry-run)
           fi
           python3 scripts/residual_ic_manager.py "${FLAGS[@]}"
@@ -111,10 +142,11 @@ jobs:
         env:
           ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
           ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
           PYTHONPATH: ${{ github.workspace }}
         run: |
           FLAGS=(--manage-exits)
-          if [ "${{ steps.mode.outputs.dry_run }}" = "true" ]; then
+          if [ "$DRY_RUN" = "true" ]; then
             FLAGS+=(--dry-run)
           fi
           # Every weekday slot evaluates fixed TP, stop, and DTE exits.
@@ -139,9 +171,10 @@ jobs:
         env:
           ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
           ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          if [ "${{ steps.mode.outputs.dry_run }}" = "true" ]; then
+          if [ "$DRY_RUN" = "true" ]; then
             python3 scripts/spy_put_credit.py --dry-run
           else
             # Paper MLEG only — live blocked by strategy_kill_switch.json
@@ -157,10 +190,12 @@ jobs:
           ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
           ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
+          RUN_MODE: ${{ steps.mode.outputs.mode }}
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          FLAGS=(--mode "${{ steps.mode.outputs.mode }}")
-          if [ "${{ steps.mode.outputs.dry_run }}" = "true" ]; then
+          FLAGS=(--mode "$RUN_MODE")
+          if [ "$DRY_RUN" = "true" ]; then
             FLAGS+=(--dry-run)
           fi
           python3 scripts/ic_simple.py "${FLAGS[@]}"

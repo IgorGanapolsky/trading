@@ -215,6 +215,165 @@ def test_put_credit_journal_uses_unique_order_identity(tmp_path, monkeypatch):
     assert entries["PCS_260821_order2"]["expiry"] == "2026-08-21"
 
 
+def test_reconcile_put_credit_entries_recovers_exact_filled_structure(tmp_path, monkeypatch):
+    from scripts import spy_put_credit as pcs
+
+    entries_path = tmp_path / "put_credit_entries.json"
+    audit_dir = tmp_path / "audit"
+    monkeypatch.setattr(pcs, "ENTRIES_FILE", entries_path)
+    monkeypatch.setattr(pcs, "AUDIT_DIR", audit_dir)
+    pcs.write_plan(
+        {
+            "dry_run": False,
+            "planned_at": "2026-07-23T15:37:05.285607+00:00",
+            "opportunity": {
+                "expiry": "2026-08-28",
+                "short_put": 696.0,
+                "long_put": 691.0,
+                "est_credit": 0.54,
+                "put_delta": 0.1843,
+                "method": "live_delta_band_scan",
+                "spy_price": 736.6,
+            },
+        }
+    )
+    pcs.write_plan(
+        {
+            "dry_run": True,
+            "planned_at": "2026-07-23T16:00:00+00:00",
+            "opportunity": None,
+        }
+    )
+    pcs.write_plan(
+        {
+            "dry_run": False,
+            "planned_at": "2026-07-23T15:47:08.050702+00:00",
+            "opportunity": {
+                "expiry": "2026-08-28",
+                "short_put": 696.0,
+                "long_put": 691.0,
+                "est_credit": 0.80,
+                "put_delta": 0.2999,
+                "method": "later_execution_attempt",
+                "spy_price": 735.0,
+            },
+        }
+    )
+    order = SimpleNamespace(
+        id="4fc04e47-a2da-4fe9-ab28-14cdad69ab44",
+        client_order_id="IC-OPEN-BPS--1784821027308661000000",
+        status="FILLED",
+        qty="1",
+        filled_qty="1",
+        filled_avg_price="-0.53",
+        limit_price="-0.50",
+        submitted_at=datetime.fromisoformat("2026-07-23T15:37:08.002050+00:00"),
+        filled_at=datetime.fromisoformat("2026-07-23T15:37:08.050702+00:00"),
+        legs=[
+            SimpleNamespace(
+                symbol="SPY260828P00691000",
+                side="BUY",
+                filled_avg_price="4.68",
+            ),
+            SimpleNamespace(
+                symbol="SPY260828P00696000",
+                side="SELL",
+                filled_avg_price="5.21",
+            ),
+        ],
+    )
+    client = MagicMock()
+    client.get_orders.return_value = [order]
+    client.get_all_positions.return_value = [
+        SimpleNamespace(symbol="SPY260828P00691000", qty="1"),
+        SimpleNamespace(symbol="SPY260828P00696000", qty="-1"),
+    ]
+
+    report = pcs.reconcile_put_credit_entries(client)
+
+    assert report["recovered"] == 1
+    assert report["broken"] == 0
+    saved = json.loads(entries_path.read_text(encoding="utf-8"))
+    entry = saved["PCS_260828_4fc04e47a2da4fe9ab2814cdad69ab44"]
+    assert entry["credit"] == 0.53
+    assert entry["limit_credit"] == 0.5
+    assert entry["put_delta"] == 0.1843
+    assert entry["put_delta_source"] == "execution_plan_snapshot"
+    assert entry["selection_method"] == "live_delta_band_scan"
+    assert entry["strikes"] == {"short_put": 696.0, "long_put": 691.0}
+    assert entry["status"] == "open"
+
+    second = pcs.reconcile_put_credit_entries(client)
+    assert second["existing"] == 1
+    assert second["recovered"] == 0
+
+
+def test_reconcile_put_credit_entries_keeps_unknown_selection_unverified(tmp_path, monkeypatch):
+    from scripts import spy_put_credit as pcs
+
+    monkeypatch.setattr(pcs, "ENTRIES_FILE", tmp_path / "put_credit_entries.json")
+    monkeypatch.setattr(pcs, "AUDIT_DIR", tmp_path / "missing-audit")
+    order = SimpleNamespace(
+        id="order-no-plan",
+        client_order_id="IC-OPEN-BPS--1784821027308661000001",
+        status="FILLED",
+        qty="1",
+        filled_qty="1",
+        filled_avg_price="-0.60",
+        limit_price="-0.55",
+        submitted_at=datetime.fromisoformat("2026-07-23T15:37:08+00:00"),
+        filled_at=datetime.fromisoformat("2026-07-23T15:37:09+00:00"),
+        legs=[
+            SimpleNamespace(symbol="SPY260828P00690000", side="BUY", filled_avg_price="4.60"),
+            SimpleNamespace(symbol="SPY260828P00695000", side="SELL", filled_avg_price="5.20"),
+        ],
+    )
+    client = MagicMock()
+    client.get_orders.return_value = [order]
+    client.get_all_positions.return_value = [
+        SimpleNamespace(symbol="SPY260828P00690000", qty="1"),
+        SimpleNamespace(symbol="SPY260828P00695000", qty="-1"),
+    ]
+
+    report = pcs.reconcile_put_credit_entries(client)
+
+    assert report["recovered"] == 1
+    entry = next(iter(json.loads(pcs.ENTRIES_FILE.read_text(encoding="utf-8")).values()))
+    assert entry["put_delta"] is None
+    assert entry["put_delta_source"] == "unavailable_after_broker_reconstruction"
+    assert entry["selection_method"] == "broker_reconstructed_unverified"
+
+    closed_path = tmp_path / "closed_put_credit_entries.json"
+    monkeypatch.setattr(pcs, "ENTRIES_FILE", closed_path)
+    client.get_all_positions.return_value = []
+    inactive = pcs.reconcile_put_credit_entries(client)
+    assert inactive["inactive_filled_orders"] == 1
+    assert inactive["recovered"] == 0
+    assert not closed_path.exists()
+
+
+def test_malformed_historical_put_credit_does_not_block_exit_workflow(tmp_path, monkeypatch):
+    from scripts import spy_put_credit as pcs
+
+    monkeypatch.setattr(pcs, "ENTRIES_FILE", tmp_path / "put_credit_entries.json")
+    malformed = SimpleNamespace(
+        id="malformed-history",
+        client_order_id="IC-OPEN-BPS--1784821027308661000002",
+        status="FILLED",
+        filled_at=datetime.fromisoformat("2026-07-20T15:37:09+00:00"),
+        legs=[],
+    )
+    client = MagicMock()
+    client.get_orders.return_value = [malformed]
+    client.get_all_positions.return_value = []
+
+    report = pcs.reconcile_put_credit_entries(client)
+
+    assert report["invalid_filled_orders"] == 1
+    assert report["broken"] == 0
+    assert report["recovered"] == 0
+
+
 def test_put_credit_entry_builds_supported_bull_put_order_id(tmp_path, monkeypatch):
     from scripts import spy_put_credit as pcs
     from src.utils.order_intent import parse_client_order_id
@@ -524,6 +683,26 @@ def test_schedule_manages_put_credit_exits_every_weekday_slot():
     ).read_text(encoding="utf-8")
     assert "Manage put-credit exits" in workflow
     assert "--manage-exits" in workflow
+    assert "--reconcile-entries" in workflow
+    assert workflow.index("--reconcile-entries") < workflow.index("residual_ic_manager.py")
+    assert '"${{ steps.mode.outputs.dry_run }}"' not in workflow
+    assert 'MODE="${{ github.event.inputs.mode' not in workflow
+
+
+def test_schedule_preserves_trigger_intent_when_github_delivers_late():
+    workflow = (
+        Path(__file__).resolve().parents[1] / ".github" / "workflows" / "ic-simple.yml"
+    ).read_text(encoding="utf-8")
+    determine_mode = workflow.split("- name: Determine mode", 1)[1].split(
+        "- name: Reconcile filled put-credit journals", 1
+    )[0]
+
+    assert "SCHEDULE_EXPRESSION: ${{ github.event.schedule || '' }}" in determine_mode
+    assert 'case "$SCHEDULE_EXPRESSION" in' in determine_mode
+    assert '"0 15 * * 1-5")' in determine_mode
+    assert "RUN_PUT_CREDIT=true" in determine_mode
+    assert "date -u +%H" not in determine_mode
+    assert "date -u +%u" not in determine_mode
 
 
 def test_put_credit_inventory_gate_fails_closed_on_broker_exception(monkeypatch):
@@ -548,9 +727,7 @@ def test_put_credit_parsing_and_credit_confirmation_failure_paths(tmp_path, monk
     assert pcs._parse_timestamp("not-a-timestamp") is None
     assert pcs._parse_timestamp("2026-07-22T12:00:00").tzinfo == timezone.utc
     assert pcs._expiry_yymmdd({"expiry": "260821"}) == "260821"
-    assert (
-        pcs._expiry_yymmdd({"signature": "SPY_2026-08-21_P695-700"}) == "260821"
-    )
+    assert pcs._expiry_yymmdd({"signature": "SPY_2026-08-21_P695-700"}) == "260821"
     assert pcs._expiry_yymmdd({}) == ""
 
     with pytest.raises(ValueError, match="no parseable expiry"):
@@ -637,9 +814,7 @@ def test_put_credit_main_manage_exit_reports_broken(monkeypatch, capsys):
     _patch_put_credit_cli_basics(pcs, monkeypatch)
     monkeypatch.setattr("sys.argv", ["spy_put_credit.py", "--manage-exits", "--dry-run"])
     monkeypatch.setattr(pcs, "_get_paper_client", lambda: object())
-    monkeypatch.setattr(
-        pcs, "manage_put_credit_exits", lambda client, dry_run: {"broken": 1}
-    )
+    monkeypatch.setattr(pcs, "manage_put_credit_exits", lambda client, dry_run: {"broken": 1})
     assert pcs.main() == 2
     assert '"broken": 1' in capsys.readouterr().out
 
@@ -672,9 +847,7 @@ def test_put_credit_main_blocks_duplicate_after_selection(tmp_path, monkeypatch,
     monkeypatch.setattr(pcs, "find_put_credit_opportunity", lambda _: _put_credit_opp())
     allowed = {"allowed": True, "blockers": []}
     blocked = {"allowed": False, "blockers": ["duplicate signature"]}
-    monkeypatch.setattr(
-        pcs, "evaluate_entry_limits", MagicMock(side_effect=[allowed, blocked])
-    )
+    monkeypatch.setattr(pcs, "evaluate_entry_limits", MagicMock(side_effect=[allowed, blocked]))
 
     assert pcs.main() == 2
     assert "duplicate signature" in capsys.readouterr().out
