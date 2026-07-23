@@ -401,6 +401,23 @@ def _recovered_put_credit_entry(order: Any) -> tuple[str, dict[str, Any]]:
     }
 
 
+def _entry_has_open_broker_legs(entry: dict[str, Any], positions: dict[str, Any]) -> bool:
+    expiry = _expiry_yymmdd(entry)
+    strikes = entry.get("strikes") or {}
+    try:
+        short = positions.get(_option_symbol(expiry, float(strikes["short_put"])))
+        long = positions.get(_option_symbol(expiry, float(strikes["long_put"])))
+        quantity = abs(float(entry.get("quantity") or 1))
+    except (KeyError, TypeError, ValueError):
+        return False
+    return (
+        short is not None
+        and long is not None
+        and _position_qty(short) <= -quantity
+        and _position_qty(long) >= quantity
+    )
+
+
 def reconcile_put_credit_entries(client: Any, *, dry_run: bool = False) -> dict[str, Any]:
     """Recover missing PCS journals from our filled paper BPS parent orders."""
 
@@ -414,6 +431,7 @@ def reconcile_put_credit_entries(client: Any, *, dry_run: bool = False) -> dict[
         for entry in entries.values()
         if isinstance(entry, dict) and entry.get("order_id")
     }
+    positions = _position_map(client)
     orders = list(
         client.get_orders(
             filter=GetOrdersRequest(
@@ -428,6 +446,7 @@ def reconcile_put_credit_entries(client: Any, *, dry_run: bool = False) -> dict[
         "dry_run": dry_run,
         "matched_filled_orders": 0,
         "existing": 0,
+        "inactive_filled_orders": 0,
         "recovered": 0,
         "would_recover": 0,
         "broken": 0,
@@ -453,6 +472,12 @@ def reconcile_put_credit_entries(client: Any, *, dry_run: bool = False) -> dict[
         except ValueError as exc:
             report["broken"] += 1
             report["details"].append({"order_id": order_id, "status": "invalid", "error": str(exc)})
+            continue
+        if not _entry_has_open_broker_legs(entry, positions):
+            report["inactive_filled_orders"] += 1
+            report["details"].append(
+                {"order_id": order_id, "key": key, "status": "no_open_broker_structure"}
+            )
             continue
         if dry_run:
             report["would_recover"] += 1

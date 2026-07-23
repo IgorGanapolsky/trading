@@ -248,6 +248,10 @@ def test_reconcile_put_credit_entries_recovers_exact_filled_structure(tmp_path, 
     )
     client = MagicMock()
     client.get_orders.return_value = [order]
+    client.get_all_positions.return_value = [
+        SimpleNamespace(symbol="SPY260828P00691000", qty="1"),
+        SimpleNamespace(symbol="SPY260828P00696000", qty="-1"),
+    ]
 
     report = pcs.reconcile_put_credit_entries(client)
 
@@ -290,6 +294,10 @@ def test_reconcile_put_credit_entries_keeps_unknown_selection_unverified(tmp_pat
     )
     client = MagicMock()
     client.get_orders.return_value = [order]
+    client.get_all_positions.return_value = [
+        SimpleNamespace(symbol="SPY260828P00690000", qty="1"),
+        SimpleNamespace(symbol="SPY260828P00695000", qty="-1"),
+    ]
 
     report = pcs.reconcile_put_credit_entries(client)
 
@@ -298,6 +306,14 @@ def test_reconcile_put_credit_entries_keeps_unknown_selection_unverified(tmp_pat
     assert entry["put_delta"] is None
     assert entry["put_delta_source"] == "unavailable_after_broker_reconstruction"
     assert entry["selection_method"] == "broker_reconstructed_unverified"
+
+    closed_path = tmp_path / "closed_put_credit_entries.json"
+    monkeypatch.setattr(pcs, "ENTRIES_FILE", closed_path)
+    client.get_all_positions.return_value = []
+    inactive = pcs.reconcile_put_credit_entries(client)
+    assert inactive["inactive_filled_orders"] == 1
+    assert inactive["recovered"] == 0
+    assert not closed_path.exists()
 
 
 def test_put_credit_entry_builds_supported_bull_put_order_id(tmp_path, monkeypatch):
