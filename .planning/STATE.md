@@ -1,24 +1,36 @@
 ---
-milestone: "v1.0"
-current_phase: 2
+milestone: "v2.0-put-credit-edge"
+current_phase: 1
 status: "executing"
 ---
 
-# Project State
+# Project State — Put Credit Edge OS
 
-Last activity: 2026-03-23 - Hard reset: delete dead strategies, fix trading bugs
+Last activity: 2026-07-23 — GSD roadmap reset to put-credit validation; cohort scorecard + Ralph tick
 
 ### Current Phase
-Phase 2: Codebase Cleanup — dead strategies deleted, orphan detection added, trading halted for validation
 
-### Blockers/Concerns
-- TRADING_HALTED active — validating fixes before resuming
-- 6 orphan option legs to be closed at next market open
-- GRPO needs 30+ trades to override defaults (currently 11)
+Phase 1: Cohort Truth Loop
 
-### Quick Tasks Completed
+### Active strategy
 
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 1 | Implement consensus layer SEO: schema markup, 71K trade study blog post, llms.txt update | 2026-03-23 | 32a922cad | [1-implement-consensus-layer-seo-schema-mar](./quick/1-implement-consensus-layer-seo-schema-mar/) |
-| 2 | Hard reset: delete dead strategy files, enforce single IC execution path | 2026-03-23 | f1d8544a5 | [2-hard-reset-delete-dead-strategy-files-en](./quick/2-hard-reset-delete-dead-strategy-files-en/) |
+- Family: `spy_put_credit` only
+- Paper-only; live_blocked
+- Profile: 1-lot, max_daily=3, max_concurrent=2, min_credit=$0.50
+
+### Reality (do not inflate)
+
+- Closed put-credit cohort: **0** (all `trades.json` rows still iron_condor)
+- 1 open PCS holding (min 24h not met)
+- Residual ICs exit-only
+- Profitability: **unproven**
+
+### Blockers
+
+- Need closed put-credit sample n≥30 before edge judgment
+- Live capital blocked by design
+
+### Ralph loop
+
+- Tick: `scripts/ralph_gsd_profit_tick.sh`
+- State: `.claude/ralph/state.json`

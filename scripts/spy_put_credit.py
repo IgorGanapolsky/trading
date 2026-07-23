@@ -1064,6 +1064,11 @@ def main() -> int:
     )
     parser.add_argument("--status", action="store_true")
     parser.add_argument(
+        "--cohort",
+        action="store_true",
+        help="Print put-credit validation cohort scorecard (edge truth)",
+    )
+    parser.add_argument(
         "--manage-exits",
         action="store_true",
         help="Evaluate and submit paper exits for open put credits.",
@@ -1108,6 +1113,13 @@ def main() -> int:
         print(json.dumps(report, indent=2, default=str))
         return 2 if report["broken"] else 0
 
+    if args.cohort:
+        from scripts.put_credit_cohort_scorecard import build_scorecard
+
+        card = build_scorecard()
+        print(json.dumps(card, indent=2, default=str))
+        return 0
+
     if args.status:
         try:
             price = get_underlying_price("SPY")
@@ -1116,9 +1128,20 @@ def main() -> int:
         plan = plan_structure(dry_run=True)
         plan["spy_price"] = price
         path = write_plan(plan)
+        try:
+            from scripts.put_credit_cohort_scorecard import build_scorecard
+
+            cohort = build_scorecard()
+        except Exception as exc:  # noqa: BLE001
+            cohort = {"error": str(exc)}
         print(
             json.dumps(
-                {"kill_state": state.__dict__, "plan": plan, "plan_path": str(path)},
+                {
+                    "kill_state": state.__dict__,
+                    "plan": plan,
+                    "plan_path": str(path),
+                    "cohort": cohort,
+                },
                 indent=2,
                 default=str,
             )
