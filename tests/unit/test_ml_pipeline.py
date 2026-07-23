@@ -70,27 +70,35 @@ from src.rag.vector_store import TradeRAG
 class TestThompsonSampling:
     """Verify Thompson priors, confidence sampling, and Bayesian updates."""
 
-    def test_default_priors_are_informative(self):
-        """Beta(86,14) not Beta(1,1) — cold-start fix."""
+    def test_default_priors_are_weak_neutral_not_fantasy_ic(self):
+        """Killed IC family no longer ships Beta(86,14) research fantasy priors.
+
+        Realized IC paper ledger (~17% WR) falsified Tastytrade cold-start.
+        Defaults are weak neutral; put-credit is isolated from IC buckets.
+        """
         from src.ml.trade_confidence import TradeConfidenceModel
 
         model = TradeConfidenceModel()
         defaults = model._default_model()
-        assert defaults["iron_condor"]["alpha"] == 86.0
-        assert defaults["iron_condor"]["beta"] == 14.0
-        # Posterior mean should be ~0.86
+        assert defaults["iron_condor"]["alpha"] == 1.0
+        assert defaults["iron_condor"]["beta"] == 1.0
+        assert defaults["spy_put_credit"]["alpha"] == 1.0
+        assert defaults["spy_put_credit"]["beta"] == 1.0
         mean = defaults["iron_condor"]["alpha"] / (
             defaults["iron_condor"]["alpha"] + defaults["iron_condor"]["beta"]
         )
-        assert 0.84 <= mean <= 0.88
+        assert abs(mean - 0.5) < 1e-9
 
     def test_posterior_mean_matches_expected(self):
         from src.ml.trade_confidence import TradeConfidenceModel
 
         model = TradeConfidenceModel()
         model.model = model._default_model()
+        # Default IC/SPY diagnostic bucket is weak neutral (0.5), not 0.86
         mean = model.get_posterior_mean("iron_condor", "SPY")
-        assert 0.84 <= mean <= 0.88
+        assert abs(mean - 0.5) < 1e-9
+        put_mean = model.get_posterior_mean("spy_put_credit", "SPY")
+        assert abs(put_mean - 0.5) < 1e-9
 
     def test_sample_confidence_in_valid_range(self):
         from src.ml.trade_confidence import TradeConfidenceModel
@@ -100,7 +108,8 @@ class TestThompsonSampling:
         samples = [model.sample_confidence("iron_condor", "SPY") for _ in range(100)]
         assert all(0 <= s <= 1 for s in samples)
         avg = sum(samples) / len(samples)
-        assert 0.75 <= avg <= 0.95  # Should cluster around 0.86
+        # Weak Beta(1,1) samples cluster near 0.5, not the old 0.86 fantasy prior
+        assert 0.35 <= avg <= 0.65
 
     def test_regime_spike_reduces_confidence(self):
         from src.ml.trade_confidence import TradeConfidenceModel

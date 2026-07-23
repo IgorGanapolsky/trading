@@ -6,9 +6,11 @@ from importlib import import_module
 from typing import Any
 
 __all__ = [
+    "analyze_loss_clusters",
     "build_analytics_artifacts",
     "build_local_ops_snapshot",
     "build_perplexity_usage_snapshot",
+    "build_system_diagnosis",
     "build_trade_setup_audit",
     "recommend_provider",
     "render_local_ops_markdown",
@@ -59,6 +61,14 @@ def __getattr__(name: str) -> Any:
         "write_trade_setup_audit_artifacts": (
             "src.analytics.trade_setup_audit",
             "write_trade_setup_audit_artifacts",
+        ),
+        "analyze_loss_clusters": (
+            "src.analytics.loss_forensics",
+            "analyze_loss_clusters",
+        ),
+        "build_system_diagnosis": (
+            "src.analytics.loss_forensics",
+            "build_system_diagnosis",
         ),
     }
     if name not in module_map:

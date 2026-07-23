@@ -34,6 +34,12 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
+from src.analytics.loss_forensics import (  # noqa: E402
+    analyze_loss_clusters as forensics_analyze_loss_clusters,
+    build_system_diagnosis,
+    diagnosis_to_markdown,
+    wing_width as forensics_wing_width,
+)
 from src.analytics.trade_evidence import (  # noqa: E402
     active_strategy_family,
     build_trade_evidence,
@@ -47,7 +53,10 @@ MODEL_FILE = PROJECT_ROOT / "models" / "ml" / "trade_confidence_model.json"
 LESSONS_DIR = PROJECT_ROOT / "rag_knowledge" / "lessons_learned"
 SYSTEM_STATE_FILE = PROJECT_ROOT / "data" / "system_state.json"
 REHAB_PLAN_FILE = PROJECT_ROOT / "data" / "runtime" / "edge_rehabilitation_plan.json"
+DIAGNOSIS_FILE = PROJECT_ROOT / "data" / "runtime" / "system_diagnosis_latest.json"
+DIAGNOSIS_LESSON_ID = "system_misery_diagnosis_current"
 REHAB_LESSON_ID = "strategy_rehabilitation_ic_simple_current"
+SUCCESSOR_FAMILY = "spy_put_credit"
 
 # Thresholds
 MIN_TRADES_FOR_GATE = 30
@@ -162,15 +171,8 @@ def _holding_hours(trade: dict) -> float | None:
 
 
 def _wing_width(trade: dict) -> float | None:
-    legs = trade.get("legs") if isinstance(trade.get("legs"), dict) else {}
-    put_strikes = legs.get("put_strikes") or []
-    call_strikes = legs.get("call_strikes") or []
-    widths: list[float] = []
-    if len(put_strikes) >= 2:
-        widths.append(abs(_as_float(put_strikes[1]) - _as_float(put_strikes[0])))
-    if len(call_strikes) >= 2:
-        widths.append(abs(_as_float(call_strikes[1]) - _as_float(call_strikes[0])))
-    return max(widths) if widths else None
+    """Wing width via shared forensics (structured legs, trade id, OCC symbols)."""
+    return forensics_wing_width(trade)
 
 
 def stats_from_trades(trades: list[dict], cohort_unpaired_stats: dict | None = None) -> dict:
@@ -255,105 +257,7 @@ def stats_from_trades(trades: list[dict], cohort_unpaired_stats: dict | None = N
 
 def analyze_loss_clusters(trades_data: dict) -> list[dict]:
     """Summarize recurring loss clusters so RAG/ML learns what to stop repeating."""
-    trades = [trade for trade in trades_data.get("trades", []) if isinstance(trade, dict)]
-    closed_rows: list[dict] = []
-    for trade in trades:
-        pnl, has_pnl = _trade_pnl(trade)
-        outcome = str(trade.get("outcome") or "").strip().lower()
-        if outcome not in {"win", "loss"} and not has_pnl:
-            continue
-        if outcome not in {"win", "loss"} and pnl == 0:
-            continue
-        closed_rows.append(
-            {
-                "trade": trade,
-                "pnl": pnl,
-                "is_win": outcome == "win" or pnl > 0,
-                "is_loss": outcome == "loss" or pnl < 0,
-                "holding_hours": _holding_hours(trade),
-                "wing_width": _wing_width(trade),
-                "quantity": _as_float(trade.get("quantity"), 1.0) or 1.0,
-                "source": str(trade.get("source") or ""),
-            }
-        )
-
-    total_loss_abs = abs(sum(row["pnl"] for row in closed_rows if row["pnl"] < 0))
-
-    cluster_specs = [
-        (
-            "early_exit_lt_1h",
-            "Closed in under 1 hour",
-            lambda row: row["holding_hours"] is not None and row["holding_hours"] < 1,
-            "Do not open setups whose expected management requires intraday repair; enforce a minimum hold unless a hard max-loss or broken-leg condition fires.",
-        ),
-        (
-            "early_exit_lt_24h",
-            "Closed in under 24 hours",
-            lambda row: row["holding_hours"] is not None and row["holding_hours"] < 24,
-            "Require the next validation hypothesis to prove why holding-time behavior changed before allowing another short-dated IC cohort.",
-        ),
-        (
-            "ten_wide_wings",
-            "10-wide or wider wings",
-            lambda row: row["wing_width"] is not None and row["wing_width"] >= 10,
-            "Quarantine 10-wide SPY iron condors; test narrower defined-risk structures or explicitly prove better width/risk math before re-entry.",
-        ),
-        (
-            "multi_contract",
-            "More than one contract",
-            lambda row: row["quantity"] > 1,
-            "Limit validation to one contract until the changed-rule cohort clears positive expectancy, profit factor, and realized-P/L gates.",
-        ),
-        (
-            "long_hold_ge_7d",
-            "Held 7 days or longer",
-            lambda row: row["holding_hours"] is not None and row["holding_hours"] >= 24 * 7,
-            "Add an exit/repair rule for slow-moving losers before allowing long-hold IC exposure again.",
-        ),
-        (
-            "orphan_cleanup",
-            "Orphan or leg-repair cleanup",
-            lambda row: "orphan" in row["source"].lower(),
-            "Do not trade unless entry/exit pairing is atomic and orphan cleanup cannot create unmanaged directional exposure.",
-        ),
-    ]
-
-    clusters: list[dict] = []
-    for cluster_id, label, predicate, recommendation in cluster_specs:
-        rows = [row for row in closed_rows if predicate(row)]
-        if not rows:
-            continue
-        wins = [row for row in rows if row["pnl"] > 0]
-        losses = [row for row in rows if row["pnl"] < 0]
-        total_pnl = sum(row["pnl"] for row in rows)
-        loss_abs = abs(sum(row["pnl"] for row in losses))
-        clusters.append(
-            {
-                "id": cluster_id,
-                "label": label,
-                "sample_size": len(rows),
-                "wins": len(wins),
-                "losses": len(losses),
-                "win_rate_pct": round((len(wins) / len(rows) * 100), 2),
-                "total_pnl": round(total_pnl, 2),
-                "expectancy_per_trade": round(total_pnl / len(rows), 2),
-                "loss_contribution_pct": round(
-                    (loss_abs / total_loss_abs * 100) if total_loss_abs else 0.0, 2
-                ),
-                "recommendation": recommendation,
-            }
-        )
-
-    clusters.sort(
-        key=lambda item: (
-            item["loss_contribution_pct"],
-            abs(min(item["total_pnl"], 0)),
-            item["sample_size"],
-        ),
-        reverse=True,
-    )
-    return clusters
-
+    return forensics_analyze_loss_clusters(trades_data)
 
 def build_rehabilitation_plan(trades_data: dict, gate: dict) -> dict:
     """Build a machine-readable quarantine and validation plan from the current ledger."""
@@ -791,8 +695,18 @@ def main(dry_run: bool = False):
     else:
         model.setdefault(
             active_family,
-            {"alpha": 1.0, "beta": 1.0, "wins": 0, "losses": 0},
+            {
+                "alpha": 1.0,
+                "beta": 1.0,
+                "wins": 0,
+                "losses": 0,
+                "prior_source": "weak_neutral_cold_start",
+                "note": "No verified active-family closed trades yet",
+            },
         )
+        # Never leave put-credit inheriting IC posterior via missing key
+        if active_family == SUCCESSOR_FAMILY and SUCCESSOR_FAMILY not in model:
+            model[SUCCESSOR_FAMILY] = dict(model[active_family])
         logger.info(
             "Thompson update skipped: active evidence is empty or quarantined "
             "(verified=%s, issues=%s)",
@@ -853,7 +767,34 @@ def main(dry_run: bool = False):
         # but we need to allow paper validation entries to prove edge.
         # See .claude/rules/controlled-experiment.md
         halt_file = PROJECT_ROOT / "data" / "TRADING_HALTED"
-        if not gate["should_trade"] and not validation_reset:
+        # Family-aware: IC lifetime failure must not block put-credit paper validation.
+        # Still never clear non-ML / crisis halt files.
+        put_n = int(gate_stats.get("closed_trades", 0) or 0) if active_family == SUCCESSOR_FAMILY else 0
+        allow_put_paper = (
+            active_family == SUCCESSOR_FAMILY
+            and validation_reset
+            and not evidence.issues
+            and put_n < MIN_TRADES_FOR_GATE
+        )
+        gate["allow_paper_validation"] = bool(allow_put_paper or gate.get("should_trade"))
+        if allow_put_paper:
+            if halt_file.exists():
+                content = halt_file.read_text()
+                if "ML GATE BLOCKED" in content and "spy_put_credit cohort" not in content:
+                    halt_file.unlink()
+                    logger.info(
+                        "  HALT FILE REMOVED: IC aggregate ML halt must not block put-credit paper validation"
+                    )
+                else:
+                    logger.warning(
+                        "  HALT FILE PRESERVED: non-ML or put-credit-cohort halt remains"
+                    )
+            logger.info(
+                "  Put-credit paper validation allowed (n=%s/%s). Live remains blocked by kill switch.",
+                put_n,
+                MIN_TRADES_FOR_GATE,
+            )
+        elif not gate["should_trade"] and not validation_reset:
             halt_file.write_text(
                 f"ML GATE BLOCKED: {gate.get('block_reason', 'unknown')}\n"
                 f"Updated: {datetime.now(timezone.utc).isoformat()}\n"
@@ -866,17 +807,39 @@ def main(dry_run: bool = False):
                 "  ML gate would halt, but validation_reset active — allowing paper validation entries"
             )
         elif halt_file.exists():
-            # Kill-switch clearing belongs exclusively to crisis_monitor.py
-            # after broker inventory is flat.  A model update may report a
-            # passing gate, but must never delete a safety boundary.
+            # Crisis / operator halt clearing belongs to crisis_monitor after flat book.
             logger.warning(
-                "  HALT FILE PRESERVED: ML feedback is not authorized to clear kill switches"
+                "  HALT FILE PRESERVED: ML feedback is not authorized to clear non-ML kill switches"
             )
 
     written = write_postmortem_lessons(lessons, dry_run)
     rehab_written = write_rehabilitation_plan(rehabilitation_plan, dry_run)
+    diagnosis_written = 0
+    if not dry_run:
+        state: dict = {}
+        if SYSTEM_STATE_FILE.exists():
+            try:
+                state = json.loads(SYSTEM_STATE_FILE.read_text())
+            except (OSError, json.JSONDecodeError):
+                state = {}
+        paper = state.get("paper_account") or state.get("account") or {}
+        equity = paper.get("current_equity") or paper.get("equity")
+        starting = paper.get("starting_balance")
+        diagnosis = build_system_diagnosis(
+            trades_data,
+            equity=float(equity) if equity is not None else None,
+            starting_equity=float(starting) if starting is not None else None,
+            active_family=active_family,
+        )
+        DIAGNOSIS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        DIAGNOSIS_FILE.write_text(json.dumps(diagnosis, indent=2) + "\n")
+        LESSONS_DIR.mkdir(parents=True, exist_ok=True)
+        (LESSONS_DIR / f"{DIAGNOSIS_LESSON_ID}.md").write_text(diagnosis_to_markdown(diagnosis))
+        diagnosis_written = 1
+        logger.info("  Wrote system diagnosis: %s", DIAGNOSIS_FILE)
     logger.info(f"Post-mortem lessons written: {written}")
     logger.info(f"Strategy rehabilitation artifacts written: {rehab_written}")
+    logger.info(f"System diagnosis artifacts written: {diagnosis_written}")
 
     # 6. Summary
     logger.info("\n" + "=" * 70)

@@ -231,6 +231,87 @@ def _keyword_score(text: str, query_terms: Iterable[str]) -> float:
     return hits / max(len(list(query_terms)), 1)
 
 
+# Queries about performance / failure should surface kill decisions and loss forensics.
+_MISERY_QUERY_TERMS = frozenset(
+    {
+        "lose",
+        "losing",
+        "loss",
+        "losses",
+        "miserable",
+        "misery",
+        "why",
+        "fail",
+        "failed",
+        "failure",
+        "broke",
+        "broken",
+        "drawdown",
+        "expectancy",
+        "profit",
+        "profitable",
+        "north",
+        "star",
+        "kill",
+        "killed",
+        "quarantine",
+        "edge",
+        "money",
+        "pnl",
+        "p/l",
+        "underwater",
+        "root",
+        "cause",
+    }
+)
+_FORENSICS_DOC_MARKERS = (
+    "system_misery",
+    "loss cluster",
+    "loss_clusters",
+    "strategy_rehabilitation",
+    "ic_simple_killed",
+    "put_credit",
+    "expectancy",
+    "profit factor",
+    "root cause",
+    "north star",
+    "kill criteria",
+    "ten_wide",
+    "multi_contract",
+    "sub-24h",
+    "early_exit",
+)
+
+
+def _misery_forensics_bonus(query: str, text: str, lesson_id: str = "") -> float:
+    """Boost diagnosis / kill-switch lessons when the user asks why we lose money."""
+    q_terms = set(_tokenize(query))
+    if not q_terms & _MISERY_QUERY_TERMS:
+        return 0.0
+    lowered = (text or "").lower()
+    lid = (lesson_id or "").lower()
+    hits = sum(1 for marker in _FORENSICS_DOC_MARKERS if marker in lowered or marker in lid)
+    # Canonical diagnosis / kill docs get a hard boost so agents don't bury them
+    # under older narrative crisis write-ups.
+    if "system_misery" in lid:
+        return 1.5
+    if any(
+        key in lid
+        for key in (
+            "strategy_rehabilitation",
+            "ic_simple_killed",
+            "put_credit_successor",
+            "edge_rehabilitation",
+            "ll-360",
+            "ll_360",
+        )
+    ):
+        hits += 5
+    if hits <= 0:
+        return 0.0
+    return min(1.0, 0.12 * hits)
+
+
 def reposition_lessons(query: str, lessons: list[dict], top_k: int) -> list[dict]:
     """Re-rank lessons to prioritize relevance and reduce duplication.
 
@@ -270,8 +351,16 @@ def reposition_lessons(query: str, lessons: list[dict], top_k: int) -> list[dict
         severity_weight = _severity_weight(lesson.get("severity", ""))
         structure = _structure_bonus(content)
         recency = _recency_bonus(_extract_date(lesson), query_terms)
+        forensics = _misery_forensics_bonus(query, text, str(lesson.get("id") or ""))
 
-        score = (base * 0.55) + (keyword * 0.9) + phrase_bonus + structure + recency
+        score = (
+            (base * 0.55)
+            + (keyword * 0.9)
+            + phrase_bonus
+            + structure
+            + recency
+            + forensics
+        )
         score *= severity_weight
 
         token_source = " ".join([title, str(lesson.get("id", ""))])
