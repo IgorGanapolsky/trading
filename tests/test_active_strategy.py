@@ -124,6 +124,9 @@ def test_put_credit_inventory_gate_fails_closed_on_unexplained_leg(monkeypatch):
 
 
 def test_find_put_credit_uses_put_side_only(monkeypatch):
+    import sys
+    import types
+
     from scripts import spy_put_credit as pcs
 
     expiry = "2026-08-21"
@@ -150,11 +153,12 @@ def test_find_put_credit_uses_put_side_only(monkeypatch):
                 return [short]
             return [short, long]
 
+    # Inject a stub module so the late import inside find_put_credit_opportunity
+    # does not pull real pandas/alpaca deps in unit tests.
+    stub = types.ModuleType("src.data.iv_data_provider")
+    stub.IVDataProvider = FakeProvider
+    monkeypatch.setitem(sys.modules, "src.data.iv_data_provider", stub)
     monkeypatch.setattr(pcs, "_friday_expiries", lambda *a, **k: [expiry])
-    monkeypatch.setattr(
-        "src.data.iv_data_provider.IVDataProvider",
-        FakeProvider,
-    )
     opp = pcs.find_put_credit_opportunity(747.0)
     assert opp is not None
     assert opp["short_put"] == 700.0
