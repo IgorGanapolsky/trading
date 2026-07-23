@@ -219,6 +219,15 @@ class TestGetStalenessWarning:
 
 
 class TestContextFreshness:
+    def test_local_rag_build_refreshes_trade_gate_index(self):
+        from scripts import build_rag_query_index as builder
+
+        output_paths, page_path = builder._resolve_output_targets("local")
+
+        assert builder.LOCAL_OUTPUT_PATHS[0] in output_paths
+        assert builder.REPO_OUTPUT_PATHS[0] in output_paths
+        assert page_path == builder.LOCAL_LESSONS_PAGE_PATH
+
     def test_resolve_rag_query_index_path_prefers_local_profile(self, tmp_path, monkeypatch):
         repo_path = tmp_path / "repo_lessons_query.json"
         local_path = tmp_path / "local_lessons_query.json"
