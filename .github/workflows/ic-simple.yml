@@ -62,6 +62,7 @@ jobs:
           INPUT_MODE: ${{ github.event.inputs.mode || 'both' }}
           INPUT_DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
           EVENT_NAME: ${{ github.event_name }}
+          SCHEDULE_EXPRESSION: ${{ github.event.schedule || '' }}
         run: |
           MODE="$INPUT_MODE"
           DRY="$INPUT_DRY_RUN"
@@ -73,18 +74,19 @@ jobs:
             true|false) ;;
             *) echo "Invalid dry_run: $DRY"; exit 2 ;;
           esac
-          HOUR=$(date -u +%H)
-          DOW=$(date -u +%u)
           RUN_PUT_CREDIT=false
           if [ "$EVENT_NAME" = "schedule" ]; then
-            if [ "$DOW" = "6" ]; then
-              MODE="learn"
-            elif [ "$HOUR" = "15" ]; then
-              MODE="both"  # residual IC exit + put-credit entry attempt
-              RUN_PUT_CREDIT=true
-            else
-              MODE="exit"
-            fi
+            # GitHub can deliver scheduled jobs late. Preserve the intent of the
+            # triggering cron expression instead of reclassifying by wall clock.
+            case "$SCHEDULE_EXPRESSION" in
+              "0 14 * * 6") MODE="learn" ;;
+              "0 15 * * 1-5")
+                MODE="both"
+                RUN_PUT_CREDIT=true
+                ;;
+              "0 16 * * 1-5"|"0 18 * * 1-5"|"30 19 * * 1-5") MODE="exit" ;;
+              *) echo "Unknown schedule expression: $SCHEDULE_EXPRESSION"; exit 2 ;;
+            esac
           else
             # manual dispatch: entry/both includes put-credit
             if [ "$MODE" = "entry" ] || [ "$MODE" = "both" ]; then

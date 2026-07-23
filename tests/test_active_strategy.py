@@ -674,6 +674,22 @@ def test_schedule_manages_put_credit_exits_every_weekday_slot():
     assert 'MODE="${{ github.event.inputs.mode' not in workflow
 
 
+def test_schedule_preserves_trigger_intent_when_github_delivers_late():
+    workflow = (
+        Path(__file__).resolve().parents[1] / ".github" / "workflows" / "ic-simple.yml"
+    ).read_text(encoding="utf-8")
+    determine_mode = workflow.split("- name: Determine mode", 1)[1].split(
+        "- name: Reconcile filled put-credit journals", 1
+    )[0]
+
+    assert "SCHEDULE_EXPRESSION: ${{ github.event.schedule || '' }}" in determine_mode
+    assert 'case "$SCHEDULE_EXPRESSION" in' in determine_mode
+    assert '"0 15 * * 1-5")' in determine_mode
+    assert "RUN_PUT_CREDIT=true" in determine_mode
+    assert "date -u +%H" not in determine_mode
+    assert "date -u +%u" not in determine_mode
+
+
 def test_put_credit_inventory_gate_fails_closed_on_broker_exception(monkeypatch):
     from scripts import spy_put_credit as pcs
 
