@@ -1,9 +1,9 @@
-"""Guard: every open option structure must have a journal record.
+"""Guard: every open option structure must have an active strategy journal.
 
-IC residual legs need `data/ic_entries.json` (IC_<YYMMDD> or IC_<YYMMDD>_*).
-Put-credit legs need `data/put_credit_entries.json` (open PCS with matching
-expiry). Residual IC manager and put-credit exit manager both fail closed
-without that mapping.
+An IC needs an ``IC_<expiry>[_suffix]`` record, while the successor bull-put
+spread needs an active ``PCS_<expiry>_*`` record. Without either owner, no
+strategy exit loop can evaluate profit targets or stops. The journal files are
+committed by the sync workflow, so CI catches the gap within one sync cycle.
 """
 
 from __future__ import annotations
@@ -25,12 +25,10 @@ def _pcs_expiries(pcs: dict) -> set[str]:
         if str(entry.get("status") or "open").strip().lower() in INACTIVE:
             continue
         exp = str(entry.get("expiry") or "")
-        # expiry may be YYYY-MM-DD
         if len(exp) >= 10 and exp[4] == "-":
             y, m, d = exp[:10].split("-")
             out.add(f"{y[2:]}{m}{d}")
             continue
-        # key like PCS_260828_...
         m = re.search(r"(\d{6})", key)
         if m:
             out.add(m.group(1))
@@ -42,7 +40,6 @@ def _ic_expiries(entries: dict) -> set[str]:
     for key in entries:
         if not str(key).startswith("IC_"):
             continue
-        # IC_260821 or IC_260821_2
         m = re.match(r"IC_(\d{6})", str(key))
         if m:
             out.add(m.group(1))
@@ -59,10 +56,9 @@ def test_open_option_positions_have_entry_records() -> None:
     positions = json.loads(state_path.read_text()).get("positions", [])
     entries = json.loads(entries_path.read_text())
     pcs = json.loads(pcs_path.read_text()) if pcs_path.exists() else {}
-
     covered = _ic_expiries(entries) | _pcs_expiries(pcs if isinstance(pcs, dict) else {})
 
-    expiries = set()
+    expiries: set[str] = set()
     for pos in positions:
         m = OPTION_SYMBOL.match(str(pos.get("symbol", "")))
         if m:
@@ -70,7 +66,7 @@ def test_open_option_positions_have_entry_records() -> None:
 
     missing = sorted(e for e in expiries if e not in covered)
     assert not missing, (
-        f"open option positions with no IC or put-credit journal record: {missing} — "
+        f"open option positions with no active IC or PCS journal owner: {missing} — "
         "exit managers cannot evaluate profit-target/stop without a journal map. "
         "Backfill ic_entries.json (IC_*) or put_credit_entries.json (PCS)."
     )

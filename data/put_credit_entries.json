@@ -1,29 +1,40 @@
 {
   "PCS_260828_4fc04e47a2da4fe9ab2814cdad69ab44": {
     "strategy_family": "spy_put_credit",
+    "structure": "bull_put_credit",
+    "account_mode": "paper",
     "order_id": "4fc04e47-a2da-4fe9-ab28-14cdad69ab44",
-    "entry_time": "2026-07-23T15:37:11.214734+00:00",
+    "client_order_id": "IC-OPEN-BPS--1784821027308661000000",
+    "entry_time": "2026-07-23T15:37:08.050702+00:00",
+    "submitted_at": "2026-07-23T15:37:08.002050+00:00",
+    "filled_at": "2026-07-23T15:37:08.050702+00:00",
     "expiry": "2026-08-28",
     "quantity": 1,
     "credit": 0.53,
-    "limit_credit": 0.54,
+    "limit_credit": 0.5,
     "credit_source": "broker_fill",
+    "fill_confirmed": true,
+    "fill_confirmed_at": "2026-07-23T15:37:08.050702+00:00",
+    "filled_avg_price": -0.53,
     "put_delta": 0.1843,
+    "put_delta_source": "execution_plan_snapshot",
     "selection_method": "live_delta_band_scan",
+    "selection_snapshot_planned_at": "2026-07-23T15:37:05.285607+00:00",
+    "planned_credit": 0.54,
+    "underlying_price_at_scan": 736.5999755859375,
     "strikes": {
       "short_put": 696.0,
       "long_put": 691.0
+    },
+    "legs": {
+      "short": "SPY260828P00696000",
+      "long": "SPY260828P00691000"
     },
     "signature": "SPY_2026-08-28_P691-696",
     "validation_phase": true,
     "profile_name": "spy-put-credit",
     "status": "open",
-    "fill_confirmed": true,
-    "filled_avg_price": -0.53,
-    "filled_at": "2026-07-23T15:37:37.054945+00:00",
-    "legs": {
-      "short": "SPY260828P00696000",
-      "long": "SPY260828P00691000"
-    }
+    "reconciled_at": "2026-07-23T16:00:00+00:00",
+    "reconstruction_reason": "filled_broker_order_missing_durable_strategy_journal"
   }
 }
