@@ -28,9 +28,7 @@ class TradeVerifier:
             self.rag_available = True
             logger.info("TradeVerifier: RAG Engine initialized successfully.")
         except Exception as e:
-            logger.warning(
-                f"TradeVerifier: RAG Engine failed to initialize: {e}."
-            )
+            logger.warning(f"TradeVerifier: RAG Engine failed to initialize: {e}.")
 
     def verify_entry(self, symbol: str, strategy: str, setup_context: str) -> tuple[bool, str]:
         """

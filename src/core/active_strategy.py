@@ -68,11 +68,7 @@ def load_kill_state() -> StrategyKillState:
     active = (
         os.getenv("ACTIVE_STRATEGY_FAMILY")
         or payload.get("active_family")
-        or (
-            hypothesis.get("strategy_family")
-            if hypothesis.get("enabled") is True
-            else None
-        )
+        or (hypothesis.get("strategy_family") if hypothesis.get("enabled") is True else None)
         or DEFAULT_ACTIVE_FAMILY
     )
     active = str(active).strip().lower()

@@ -221,8 +221,7 @@ def broker_confirmed_expected(
             "journaled_pcs_qty": float(pcs_expected.get(symbol, 0.0)),
         }
         for symbol in sorted(symbols)
-        if abs(float(unresolved.get(symbol, 0.0)) - float(pcs_expected.get(symbol, 0.0)))
-        > 1e-9
+        if abs(float(unresolved.get(symbol, 0.0)) - float(pcs_expected.get(symbol, 0.0))) > 1e-9
     }
     if mismatches:
         raise RuntimeError(f"unexplained broker inventory: {mismatches}")
@@ -330,9 +329,7 @@ def execute_actions(client, actions: list[dict], dry_run: bool) -> int:
             legs = []
             for act in (a, b):
                 side = OrderSide.BUY if act["side"] == "buy" else OrderSide.SELL
-                legs.append(
-                    OptionLegRequest(symbol=act["symbol"], side=side, ratio_qty=1)
-                )
+                legs.append(OptionLegRequest(symbol=act["symbol"], side=side, ratio_qty=1))
             # Net limit: buy-side pays ask, sell-side receives bid → debit positive
             buy = next(x for x in (a, b) if x["side"] == "buy")
             sell = next(x for x in (a, b) if x["side"] == "sell")
@@ -444,9 +441,7 @@ def main() -> int:
             if args.execute_paper:
                 logger.error("Live broker inventory unavailable; execution blocked: %s", exc)
                 return 2
-            logger.warning(
-                "Broker load failed (%s); using untrusted state for dry-run only", exc
-            )
+            logger.warning("Broker load failed (%s); using untrusted state for dry-run only", exc)
             legs = load_legs_from_state()
             expected = journal_expected
             evidence = {"source": "journal_state_fallback", "broker_error": str(exc)}

@@ -87,7 +87,9 @@ def get_iron_condor_profile(
     underlying: str | None = None,
 ) -> IronCondorProfile:
     """Return the active iron-condor profile, optionally routed to another symbol."""
-    resolved_name = (profile_name or os.getenv("IRON_CONDOR_PROFILE") or DEFAULT_IRON_CONDOR_PROFILE_NAME).lower()
+    resolved_name = (
+        profile_name or os.getenv("IRON_CONDOR_PROFILE") or DEFAULT_IRON_CONDOR_PROFILE_NAME
+    ).lower()
     profile = IRON_CONDOR_PROFILE_REGISTRY.get(resolved_name, _BASELINE_IRON_CONDOR_PROFILE)
     if underlying:
         return profile.with_underlying(underlying)
@@ -162,9 +164,7 @@ DEFAULT_PUT_CREDIT_PROFILE_NAME = "spy-put-credit"
 @cache
 def get_put_credit_profile(profile_name: str | None = None) -> PutCreditProfile:
     resolved = (
-        profile_name
-        or os.getenv("PUT_CREDIT_PROFILE")
-        or DEFAULT_PUT_CREDIT_PROFILE_NAME
+        profile_name or os.getenv("PUT_CREDIT_PROFILE") or DEFAULT_PUT_CREDIT_PROFILE_NAME
     ).lower()
     return PUT_CREDIT_PROFILE_REGISTRY.get(resolved, _BASELINE_PUT_CREDIT_PROFILE)
 
