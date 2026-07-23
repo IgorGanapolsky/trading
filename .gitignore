@@ -38,6 +38,7 @@ data/trading_halt.txt
 !data/system_state.json
 !data/trades.json
 !data/ic_entries.json
+!data/put_credit_entries.json
 !data/thumbgate_rules.json
 !data/strategy_params.json
 !data/ic_stats.json
