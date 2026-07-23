@@ -6,7 +6,7 @@
 
 1. **Paper only.** No new live capital. No Clear Street / venue migration until edge proven.
 2. **Active family: spy_put_credit only.** Iron condor / ic_simple **new entries forbidden**.
-3. **1 structure max per day.** 1-lot only. Max 2 concurrent put credits.
+3. **Max 3 structures per day** (profile `max_daily_structures=3`, landed #4274). 1-lot only. Max 2 concurrent put credits.
 4. **No same-expiry re-entry after a loss.**
 5. **Minimum 24h hold** (except hard stop).
 6. **One profile only** (`spy-put-credit`). No parameter drift mid-cohort.
