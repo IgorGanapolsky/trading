@@ -104,6 +104,44 @@ def test_clean_put_credit_is_explained_by_pcs_journal():
     assert result.block_reasons() == []
 
 
+def test_two_distinct_one_lot_ics_may_share_expiry_with_shared_call_vertical():
+    # Real broker scenario (SPY 2026-08-21): two 1-lot ICs filled on different
+    # days share the same call vertical (776/781); only the put side differs.
+    # A single `entries.get("IC_260821")` lookup can only see one of them.
+    positions = [
+        {"symbol": "SPY260821C00776000", "qty": -2},
+        {"symbol": "SPY260821C00781000", "qty": 2},
+        {"symbol": "SPY260821P00703000", "qty": 1},
+        {"symbol": "SPY260821P00708000", "qty": -1},
+        {"symbol": "SPY260821P00695000", "qty": 1},
+        {"symbol": "SPY260821P00700000", "qty": -1},
+    ]
+    entries = {
+        "IC_260821": {
+            "quantity": 1,
+            "strikes": {
+                "short_put": 708.0,
+                "long_put": 703.0,
+                "short_call": 776.0,
+                "long_call": 781.0,
+            },
+        },
+        "IC_260821_2": {
+            "quantity": 1,
+            "strikes": {
+                "short_put": 700.0,
+                "long_put": 695.0,
+                "short_call": 776.0,
+                "long_call": 781.0,
+            },
+        },
+    }
+
+    result = audit_open_inventory(positions, entries, {})
+
+    assert result.clean is True, result.block_reasons()
+
+
 def test_two_distinct_one_lot_put_credits_may_share_expiry():
     positions = [
         {"symbol": "SPY260821P00700000", "qty": -1},

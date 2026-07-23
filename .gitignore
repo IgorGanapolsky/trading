@@ -30,6 +30,10 @@ __pycache__/
 # Data
 data/*.csv
 data/*.json
+# Runtime kill-switch / halt flags — local only (must never be resurrected by checkout)
+data/TRADING_HALTED
+data/SYSTEM_HALTED
+data/trading_halt.txt
 # Whitelist canonical trade data files
 !data/system_state.json
 !data/trades.json

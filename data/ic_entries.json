@@ -116,5 +116,21 @@
       "long_call": 781.0
     },
     "fill_confirmed": true
+  },
+  "IC_260821_2": {
+    "quantity": 1,
+    "strikes": {
+      "short_put": 700.0,
+      "long_put": 695.0,
+      "short_call": 776.0,
+      "long_call": 781.0
+    },
+    "signature": "SPY_2026-08-21_P695-700_C776-781",
+    "validation_phase": true,
+    "profile_name": "spy-core",
+    "fill_confirmed": true,
+    "journaled_at": "2026-07-23T14:33:25.736107+00:00",
+    "journal_source": "broker_inventory_reconcile",
+    "note": "Second concurrent 1-lot IC on 2026-08-21 sharing call vertical C776/C781. Broker book had put vertical 695/700 plus 2-lot call vertical while only IC_260821 (P703-708/C776-781) was journaled \u2014 audit blocked new risk."
   }
 }
