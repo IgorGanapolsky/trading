@@ -86,6 +86,21 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           echo "Mode: $MODE, Dry run: $DRY, Put credit: $RUN_PUT_CREDIT"
 
+      - name: Reconcile filled put-credit journals
+        if: steps.mode.outputs.mode != 'learn' && steps.mode.outputs.mode != 'status'
+        env:
+          ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          FLAGS=(--reconcile-entries)
+          if [ "${{ steps.mode.outputs.dry_run }}" = "true" ]; then
+            FLAGS+=(--dry-run)
+          fi
+          # Repair the crash window between a broker fill and local journal write
+          # before either inventory owner evaluates the live option legs.
+          python3 scripts/spy_put_credit.py "${FLAGS[@]}"
+
       - name: Manage residual IC positions (broker-reconciled exits only)
         id: residual_ic
         continue-on-error: true

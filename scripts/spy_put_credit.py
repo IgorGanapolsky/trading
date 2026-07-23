@@ -18,7 +18,7 @@ import logging
 import re
 import sys
 import time
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -242,6 +242,216 @@ def _position_qty(position: Any) -> float:
 
 def _order_status_name(value: Any) -> str:
     return str(value or "").rsplit(".", 1)[-1].upper()
+
+
+def _put_symbol_parts(symbol: Any) -> tuple[str, float] | None:
+    match = re.fullmatch(r"SPY(\d{6})P(\d{8})", str(symbol or ""))
+    if not match:
+        return None
+    return match.group(1), int(match.group(2)) / 1000
+
+
+def _matching_plan_snapshot(
+    *,
+    expiry: str,
+    long_put: float,
+    short_put: float,
+    filled_at: datetime,
+) -> dict[str, Any]:
+    """Return exact pre-submit selection evidence when it matches the broker fill."""
+
+    path = AUDIT_DIR / "spy_put_credit_latest_plan.json"
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    opportunity = payload.get("opportunity")
+    if not isinstance(opportunity, dict):
+        return {}
+    try:
+        exact_structure = (
+            str(opportunity.get("expiry")) == expiry
+            and float(opportunity.get("long_put")) == long_put
+            and float(opportunity.get("short_put")) == short_put
+        )
+    except (TypeError, ValueError):
+        return {}
+    planned_at = _parse_timestamp(payload.get("planned_at"))
+    if not exact_structure or planned_at is None:
+        return {}
+    if abs((filled_at - planned_at).total_seconds()) > 30 * 60:
+        return {}
+    return {
+        "put_delta": opportunity.get("put_delta"),
+        "put_delta_source": "execution_plan_snapshot",
+        "selection_method": opportunity.get("method"),
+        "selection_snapshot_planned_at": planned_at.isoformat(),
+        "planned_credit": opportunity.get("est_credit"),
+        "underlying_price_at_scan": opportunity.get("spy_price"),
+    }
+
+
+def _recovered_put_credit_entry(order: Any) -> tuple[str, dict[str, Any]]:
+    """Build a durable PCS entry from one authoritative filled parent order."""
+
+    order_id = str(getattr(order, "id", "") or "")
+    filled_at = _parse_timestamp(getattr(order, "filled_at", None))
+    if not order_id or filled_at is None:
+        raise ValueError("filled BPS order is missing order_id or filled_at")
+
+    legs = list(getattr(order, "legs", None) or [])
+    buys = [leg for leg in legs if _order_status_name(getattr(leg, "side", None)) == "BUY"]
+    sells = [leg for leg in legs if _order_status_name(getattr(leg, "side", None)) == "SELL"]
+    if len(legs) != 2 or len(buys) != 1 or len(sells) != 1:
+        raise ValueError(f"{order_id}: filled BPS parent is not one buy plus one sell")
+
+    long_parts = _put_symbol_parts(getattr(buys[0], "symbol", None))
+    short_parts = _put_symbol_parts(getattr(sells[0], "symbol", None))
+    if long_parts is None or short_parts is None or long_parts[0] != short_parts[0]:
+        raise ValueError(f"{order_id}: filled BPS legs are not same-expiry SPY puts")
+    expiry_yymmdd, long_put = long_parts
+    _, short_put = short_parts
+    if long_put >= short_put:
+        raise ValueError(f"{order_id}: filled BPS strike direction is invalid")
+
+    try:
+        quantity = abs(int(float(getattr(order, "filled_qty", None) or order.qty)))
+    except (AttributeError, TypeError, ValueError) as exc:
+        raise ValueError(f"{order_id}: filled BPS quantity is invalid") from exc
+    if quantity <= 0:
+        raise ValueError(f"{order_id}: filled BPS quantity must be positive")
+
+    raw_fill = getattr(order, "filled_avg_price", None)
+    try:
+        parent_fill = float(raw_fill)
+    except (TypeError, ValueError):
+        parent_fill = 0.0
+    if raw_fill not in (None, "") and parent_fill >= 0:
+        raise ValueError(f"{order_id}: filled BPS parent is not a net credit")
+    credit = abs(parent_fill)
+    if credit <= 0:
+        try:
+            credit = float(sells[0].filled_avg_price) - float(buys[0].filled_avg_price)
+        except (AttributeError, TypeError, ValueError):
+            credit = 0.0
+    if credit <= 0:
+        raise ValueError(f"{order_id}: filled BPS credit is unavailable")
+
+    expiry = datetime.strptime(expiry_yymmdd, "%y%m%d").date().isoformat()
+    signature = f"SPY_{expiry}_P{int(long_put)}-{int(short_put)}"
+    safe_order_id = re.sub(r"[^A-Za-z0-9]", "", order_id) or "unknown"
+    key = f"PCS_{expiry_yymmdd}_{safe_order_id}"
+    plan = _matching_plan_snapshot(
+        expiry=expiry,
+        long_put=long_put,
+        short_put=short_put,
+        filled_at=filled_at,
+    )
+    if not plan:
+        plan = {
+            "put_delta": None,
+            "put_delta_source": "unavailable_after_broker_reconstruction",
+            "selection_method": "broker_reconstructed_unverified",
+        }
+
+    submitted_at = _parse_timestamp(getattr(order, "submitted_at", None))
+    limit_price = getattr(order, "limit_price", None)
+    try:
+        limit_credit = abs(float(limit_price)) if limit_price not in (None, "") else None
+    except (TypeError, ValueError):
+        limit_credit = None
+    return key, {
+        "strategy_family": "spy_put_credit",
+        "structure": "bull_put_credit",
+        "account_mode": "paper",
+        "order_id": order_id,
+        "client_order_id": str(getattr(order, "client_order_id", "") or ""),
+        "entry_time": filled_at.isoformat(),
+        "submitted_at": submitted_at.isoformat() if submitted_at else None,
+        "filled_at": filled_at.isoformat(),
+        "expiry": expiry,
+        "quantity": quantity,
+        "credit": round(credit, 4),
+        "limit_credit": round(limit_credit, 4) if limit_credit is not None else None,
+        "credit_source": "broker_fill",
+        "fill_confirmed_at": filled_at.isoformat(),
+        **plan,
+        "strikes": {"short_put": short_put, "long_put": long_put},
+        "signature": signature,
+        "validation_phase": True,
+        "profile_name": "spy-put-credit",
+        "status": "open",
+        "reconciled_at": datetime.now(timezone.utc).isoformat(),
+        "reconstruction_reason": "filled_broker_order_missing_durable_strategy_journal",
+    }
+
+
+def reconcile_put_credit_entries(client: Any, *, dry_run: bool = False) -> dict[str, Any]:
+    """Recover missing PCS journals from our filled paper BPS parent orders."""
+
+    from alpaca.trading.enums import QueryOrderStatus
+    from alpaca.trading.requests import GetOrdersRequest
+    from src.utils.order_intent import parse_client_order_id
+
+    entries = _load_entries()
+    existing_order_ids = {
+        str(entry.get("order_id") or "")
+        for entry in entries.values()
+        if isinstance(entry, dict) and entry.get("order_id")
+    }
+    orders = list(
+        client.get_orders(
+            filter=GetOrdersRequest(
+                status=QueryOrderStatus.ALL,
+                nested=True,
+                after=datetime.now(timezone.utc) - timedelta(days=120),
+                limit=500,
+            )
+        )
+    )
+    report: dict[str, Any] = {
+        "dry_run": dry_run,
+        "matched_filled_orders": 0,
+        "existing": 0,
+        "recovered": 0,
+        "would_recover": 0,
+        "broken": 0,
+        "details": [],
+    }
+    changed = False
+    for order in orders:
+        parsed = parse_client_order_id(str(getattr(order, "client_order_id", "") or ""))
+        if (
+            not parsed
+            or parsed["role"] != "OPEN"
+            or parsed["intent"] != "BPS"
+            or _order_status_name(getattr(order, "status", None)) != "FILLED"
+        ):
+            continue
+        report["matched_filled_orders"] += 1
+        order_id = str(getattr(order, "id", "") or "")
+        if order_id in existing_order_ids:
+            report["existing"] += 1
+            continue
+        try:
+            key, entry = _recovered_put_credit_entry(order)
+        except ValueError as exc:
+            report["broken"] += 1
+            report["details"].append({"order_id": order_id, "status": "invalid", "error": str(exc)})
+            continue
+        if dry_run:
+            report["would_recover"] += 1
+            report["details"].append({"order_id": order_id, "key": key, "status": "would_recover"})
+            continue
+        entries[key] = entry
+        existing_order_ids.add(order_id)
+        changed = True
+        report["recovered"] += 1
+        report["details"].append({"order_id": order_id, "key": key, "status": "recovered"})
+
+    if changed:
+        _save_entries(entries)
+    return report
 
 
 def _confirm_entry_credit(client, entry: dict[str, Any], short_pos: Any, long_pos: Any) -> bool:
@@ -704,6 +914,11 @@ def main() -> int:
         action="store_true",
         help="Evaluate and submit paper exits for open put credits.",
     )
+    parser.add_argument(
+        "--reconcile-entries",
+        action="store_true",
+        help="Recover missing PCS journals from filled paper BPS orders.",
+    )
     parser.add_argument("--live", action="store_true", help="Always rejected while live_blocked")
     args = parser.parse_args()
 
@@ -728,6 +943,16 @@ def main() -> int:
     except RuntimeError as exc:
         logger.error("%s", exc)
         return 2
+
+    if args.reconcile_entries:
+        try:
+            client = _get_paper_client()
+        except Exception as exc:
+            logger.error("Paper client failed: %s", exc)
+            return 1
+        report = reconcile_put_credit_entries(client, dry_run=args.dry_run)
+        print(json.dumps(report, indent=2, default=str))
+        return 2 if report["broken"] else 0
 
     if args.status:
         try:

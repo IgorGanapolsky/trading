@@ -151,10 +151,8 @@ def _put_credit_protocol_reasons(row: dict[str, Any]) -> list[str]:
         reasons.append("not_validation_phase")
     if str(row.get("profile_name") or "") != "spy-put-credit":
         reasons.append("wrong_profile")
-    selection = str(
-        row.get("selection_method") or row.get("strike_selection_method") or ""
-    ).lower()
-    if selection != "live_delta":
+    selection = str(row.get("selection_method") or row.get("strike_selection_method") or "").lower()
+    if selection not in {"live_delta", "live_delta_band_scan"}:
         reasons.append("unverified_strike_selection")
 
     delta = _as_float(row.get("put_delta", row.get("short_delta")))
@@ -165,12 +163,8 @@ def _put_credit_protocol_reasons(row: dict[str, Any]) -> list[str]:
     if quantity is None or abs(quantity - 1.0) > 1e-9:
         reasons.append("quantity_outside_protocol")
 
-    entry = _parse_timestamp(
-        row.get("entry_time") or row.get("opened_at") or row.get("entry_date")
-    )
-    exit_at = _parse_timestamp(
-        row.get("exit_time") or row.get("closed_at") or row.get("exit_date")
-    )
+    entry = _parse_timestamp(row.get("entry_time") or row.get("opened_at") or row.get("entry_date"))
+    exit_at = _parse_timestamp(row.get("exit_time") or row.get("closed_at") or row.get("exit_date"))
     expiry = _extract_expiry(row)
     if entry is None or exit_at is None or expiry is None:
         reasons.append("missing_protocol_timestamps")
@@ -358,12 +352,11 @@ def build_trade_evidence(
                 "reported closed_trades does not reconcile with physical closed rows "
                 f"({reported_closed} != {physical_metrics.closed_trades})"
             )
-    if reported_total is not None and abs(
-        reported_total - physical_metrics.total_realized_pnl
-    ) > 0.01:
-        if abs(
-            reported_total - (physical_metrics.total_realized_pnl + unpaired_cash)
-        ) <= 0.01:
+    if (
+        reported_total is not None
+        and abs(reported_total - physical_metrics.total_realized_pnl) > 0.01
+    ):
+        if abs(reported_total - (physical_metrics.total_realized_pnl + unpaired_cash)) <= 0.01:
             issues.append("reported total_realized_pnl mixes paired P/L with unmatched cash")
         else:
             issues.append(
@@ -372,9 +365,7 @@ def build_trade_evidence(
             )
 
     if not verified_rows:
-        warnings.append(
-            f"no verified closed rows for {target or 'any strategy'}"
-        )
+        warnings.append(f"no verified closed rows for {target or 'any strategy'}")
 
     serialized = json.dumps(
         verified_rows,

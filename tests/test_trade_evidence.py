@@ -100,6 +100,22 @@ def test_active_strategy_scope_excludes_killed_family() -> None:
     assert evidence.learning_ready
 
 
+def test_live_delta_band_scan_is_verified_protocol_evidence() -> None:
+    payload = {
+        "trades": [_put_credit_row(selection_method="live_delta_band_scan", put_delta=0.1843)],
+        "stats": {"closed_trades": 1, "total_realized_pnl": 75},
+    }
+
+    evidence = build_trade_evidence(
+        payload,
+        strategy_family="spy_put_credit",
+        require_protocol_fields=True,
+    )
+
+    assert [row["id"] for row in evidence.rows] == ["PCS-entry-exit"]
+    assert "unverified_strike_selection" not in evidence.rejected_by_reason
+
+
 def test_invalid_protocol_row_is_quarantined_and_blocks_learning() -> None:
     payload = {
         "trades": [
