@@ -508,23 +508,33 @@ def test_put_credit_entry_limits_enforce_daily_concurrent_and_signature():
             "status": "open",
             "entry_time": now.isoformat(),
             "signature": "same",
-        }
+        },
+        "PCS_2": {
+            "status": "open",
+            "entry_time": now.isoformat(),
+            "signature": "same2",
+        },
+        "PCS_3": {
+            "status": "open",
+            "entry_time": now.isoformat(),
+            "signature": "same3",
+        },
     }
 
     report = pcs.evaluate_entry_limits(entries, candidate_signature="same", now=now)
 
     assert report["allowed"] is False
-    assert report["today_count"] == 1
+    assert report["today_count"] == 3
     assert any("Daily" in blocker for blocker in report["blockers"])
     assert any("signature" in blocker for blocker in report["blockers"])
 
-    entries["PCS_2"] = {
+    entries["PCS_4"] = {
         "status": "open",
         "entry_time": (now - timedelta(days=1)).isoformat(),
         "signature": "different",
     }
     report = pcs.evaluate_entry_limits(entries, now=now)
-    assert report["active_count"] == 2
+    assert report["active_count"] == 4
     assert any("Concurrent" in blocker for blocker in report["blockers"])
 
 
