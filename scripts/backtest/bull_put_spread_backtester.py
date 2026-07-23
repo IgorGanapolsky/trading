@@ -277,7 +277,9 @@ class BullPutSpreadBacktester:
         long_put = black_scholes_put(underlying_price, strike_long, dte, vol)
         return max(0.0, short_put - long_put)
 
-    def _find_entry_strike(self, spot: float, dte: int, vol: float) -> tuple[float, float, float, float]:
+    def _find_entry_strike(
+        self, spot: float, dte: int, vol: float
+    ) -> tuple[float, float, float, float]:
         """Find short and long strikes for the target delta and wing width.
 
         Returns: (short_strike, long_strike, short_delta, short_put_price)
@@ -307,7 +309,9 @@ class BullPutSpreadBacktester:
             day = prices[i]
             spot = day["close"]
             # Recalculate remaining DTE from the original entry DTE
-            original_dte = (trade.entry_date + timedelta(days=self.config.max_dte) - trade.entry_date).days
+            original_dte = (
+                trade.entry_date + timedelta(days=self.config.max_dte) - trade.entry_date
+            ).days
             remaining_dte = original_dte - (day["date"] - trade.entry_date).days
 
             if remaining_dte <= 0:
@@ -319,7 +323,9 @@ class BullPutSpreadBacktester:
                 trade.exit_reason = "expiry"
                 trade.exit_price = current_debit
                 trade.held_days = (day["date"] - trade.entry_date).days
-                trade.exit_delta = calculate_put_delta(spot, trade.short_strike, max(1, remaining_dte), vol)
+                trade.exit_delta = calculate_put_delta(
+                    spot, trade.short_strike, max(1, remaining_dte), vol
+                )
                 return trade
 
             # Calculate current spread value
@@ -337,14 +343,18 @@ class BullPutSpreadBacktester:
                     trade.exit_reason = "profit_target"
                     trade.exit_price = current_debit
                     trade.held_days = held_days
-                    trade.exit_delta = calculate_put_delta(spot, trade.short_strike, remaining_dte, vol)
+                    trade.exit_delta = calculate_put_delta(
+                        spot, trade.short_strike, remaining_dte, vol
+                    )
                     return trade
                 if current_pnl <= stop_loss:
                     trade.pnl = current_pnl
                     trade.exit_reason = "stop_loss"
                     trade.exit_price = current_debit
                     trade.held_days = held_days
-                    trade.exit_delta = calculate_put_delta(spot, trade.short_strike, remaining_dte, vol)
+                    trade.exit_delta = calculate_put_delta(
+                        spot, trade.short_strike, remaining_dte, vol
+                    )
                     return trade
 
             # DTE force exit
@@ -359,7 +369,9 @@ class BullPutSpreadBacktester:
         # If no exit triggered, close at last available price
         day = prices[-1]
         spot = day["close"]
-        remaining_dte = max(1, (trade.entry_date + timedelta(days=self.config.max_dte) - day["date"]).days)
+        remaining_dte = max(
+            1, (trade.entry_date + timedelta(days=self.config.max_dte) - day["date"]).days
+        )
         short_put = black_scholes_put(spot, trade.short_strike, remaining_dte, vol)
         long_put = black_scholes_put(spot, trade.long_strike, remaining_dte, vol)
         current_debit = max(0.0, short_put - long_put)
@@ -591,13 +603,15 @@ def main():
     results = backtester.backtest_strategy(args.start, args.end)
 
     if args.verbose:
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Bull Put Credit Spread Backtest: {args.start} to {args.end}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Volatility used: {results.get('volatility_used', 'N/A')}")
         print("\nSummary:")
         print(f"  Total trades: {results['total_trades']}")
-        print(f"  Wins: {results['wins']}, Losses: {results['losses']}, Breakevens: {results['breakevens']}")
+        print(
+            f"  Wins: {results['wins']}, Losses: {results['losses']}, Breakevens: {results['breakevens']}"
+        )
         print(f"  Win rate: {results['win_rate']}%")
         print(f"  Avg win: ${results['avg_win']}")
         print(f"  Avg loss: ${results['avg_loss']}")
@@ -610,8 +624,10 @@ def main():
         print(f"\n  Exit reasons: {results['exit_reasons']}")
         print("\n  Trades:")
         for t in results.get("trades", []):
-            print(f"    {t['entry_date']}: credit=${t['credit']}, pnl=${t['pnl']}, "
-                  f"exit={t['exit_reason']}, held={t['held_days']}d, delta={t['entry_delta']}")
+            print(
+                f"    {t['entry_date']}: credit=${t['credit']}, pnl=${t['pnl']}, "
+                f"exit={t['exit_reason']}, held={t['held_days']}d, delta={t['entry_delta']}"
+            )
 
     output = json.dumps(results, indent=2, default=str)
     if args.output:
