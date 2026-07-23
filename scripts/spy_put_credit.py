@@ -18,7 +18,7 @@ import logging
 import re
 import sys
 import time
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -499,62 +499,145 @@ def manage_put_credit_exits(client, *, dry_run: bool = False) -> dict[str, Any]:
     return report
 
 
+def _friday_expiries(min_dte: int, max_dte: int, target_dte: int) -> list[str]:
+    """Candidate Friday expiries in [min_dte, max_dte], target first."""
+    today = datetime.now(timezone.utc).date()
+    fridays: list[tuple[int, str]] = []
+    # walk ~10 weeks forward
+    d = today
+    for _ in range(80):
+        d = d + timedelta(days=1)
+        if d.weekday() != 4:  # Friday
+            continue
+        dte = (d - today).days
+        if dte < min_dte:
+            continue
+        if dte > max_dte:
+            break
+        fridays.append((abs(dte - target_dte), d.isoformat()))
+    fridays.sort(key=lambda x: x[0])
+    return [exp for _, exp in fridays]
+
+
 def find_put_credit_opportunity(spy_price: float) -> dict | None:
-    """Select put vertical via live delta; ignore call side of IC selector."""
-    from src.markets.option_chain import select_strikes_by_delta
+    """Scan live put chain for $5-wide bull put credits in the policy delta band.
+
+    Unlike the IC dual-side selector (which often yields thin put-only credits at
+    exactly 15Δ), this searches the full put delta band and prefers candidates
+    that clear min_credit, then closest to target_delta, then higher credit.
+    """
+    from src.data.iv_data_provider import IVDataProvider
 
     profile = _load_profile()
-    selection = select_strikes_by_delta(
-        underlying_price=spy_price,
-        wing_width=profile.wing_width,
-        target_delta=profile.short_delta,
-        target_dte=profile.target_dte,
-        min_dte=profile.min_dte,
-        max_dte=profile.max_dte,
-    )
-    if selection.method != "live_delta":
-        logger.warning("Strike method %r is not live_delta — skip", selection.method)
+    provider = IVDataProvider()
+    wing = float(profile.wing_width)
+    band_lo = float(profile.delta_band_min)
+    band_hi = float(profile.delta_band_max)
+    target_delta = float(profile.short_delta)
+    min_credit = float(profile.min_credit)
+
+    candidates: list[dict] = []
+    best_sub_min: dict | None = None
+
+    for expiry in _friday_expiries(profile.min_dte, profile.max_dte, profile.target_dte):
+        try:
+            # Short candidates inside delta band; long wings are outside band.
+            shorts = provider.get_options_chain_with_greeks(
+                symbol=profile.underlying,
+                expiration=expiry,
+                min_delta=band_lo,
+                max_delta=band_hi,
+                min_open_interest=0,
+            )
+            all_puts = provider.get_options_chain_with_greeks(
+                symbol=profile.underlying,
+                expiration=expiry,
+                min_open_interest=0,
+            )
+        except Exception as exc:
+            logger.warning("Chain fetch failed for %s: %s", expiry, exc)
+            continue
+
+        puts_short = [
+            o
+            for o in shorts
+            if o.get("type") == "put"
+            and o.get("bid", 0) and float(o.get("bid") or 0) >= 0.05
+            and o.get("delta") is not None
+        ]
+        puts_all = {float(o["strike"]): o for o in all_puts if o.get("type") == "put"}
+        if not puts_short or not puts_all:
+            continue
+
+        for short in puts_short:
+            put_delta = abs(float(short["delta"]))
+            if not (band_lo <= put_delta <= band_hi):
+                continue
+            short_strike = float(short["strike"])
+            long_strike = round(short_strike - wing, 2)
+            # snap long to nearest available strike <= target wing
+            long_candidates = [s for s in puts_all if s <= long_strike + 1e-9]
+            if not long_candidates:
+                continue
+            long_strike = max(long_candidates)
+            put_wing = round(short_strike - long_strike, 2)
+            # require exact wing width for controlled experiment ($5)
+            if abs(put_wing - wing) > 1e-6:
+                continue
+            long_opt = puts_all.get(long_strike)
+            if not long_opt:
+                continue
+            long_ask = float(long_opt.get("ask") or 0.0)
+            short_bid = float(short.get("bid") or 0.0)
+            if long_ask <= 0 or short_bid <= 0:
+                continue
+            est_credit = round(short_bid - long_ask, 2)
+            if est_credit <= 0:
+                continue
+            row = {
+                "expiry": expiry,
+                "short_put": short_strike,
+                "long_put": long_strike,
+                "put_wing": put_wing,
+                "est_credit": est_credit,
+                "put_delta": put_delta,
+                "method": "live_delta_band_scan",
+                "quantity": profile.max_contracts_per_trade,
+                "spy_price": spy_price,
+                "delta_distance": abs(put_delta - target_delta),
+            }
+            if est_credit >= min_credit:
+                candidates.append(row)
+            elif best_sub_min is None or est_credit > best_sub_min["est_credit"]:
+                best_sub_min = row
+
+    if not candidates:
+        if best_sub_min:
+            logger.warning(
+                "Best put credit in band $%.2f < min $%.2f (short=%.0f Δ=%.3f exp=%s) — skip",
+                best_sub_min["est_credit"],
+                min_credit,
+                best_sub_min["short_put"],
+                best_sub_min["put_delta"],
+                best_sub_min["expiry"],
+            )
+        else:
+            logger.warning("No put verticals found in delta band %.2f-%.2f", band_lo, band_hi)
         return None
 
-    put_delta = abs(float(selection.put_delta or 0.0))
-    if not (profile.delta_band_min <= put_delta <= profile.delta_band_max):
-        logger.warning(
-            "Put delta %.3f outside band %.2f-%.2f — skip",
-            put_delta,
-            profile.delta_band_min,
-            profile.delta_band_max,
-        )
-        return None
-
-    put_wing = round(float(selection.short_put) - float(selection.long_put), 2)
-    if put_wing != profile.wing_width:
-        logger.warning("Put wing $%s != required $%s — skip", put_wing, profile.wing_width)
-        return None
-
-    # Put-side credit only (not full IC net credit)
-    est_credit = round(float(selection.put_bid) - float(selection.long_put_ask), 2)
-    if est_credit < profile.min_credit:
-        logger.warning("Put credit $%.2f < min $%.2f — skip", est_credit, profile.min_credit)
-        return None
-
-    opp = {
-        "expiry": selection.expiry,
-        "short_put": float(selection.short_put),
-        "long_put": float(selection.long_put),
-        "put_wing": put_wing,
-        "est_credit": est_credit,
-        "put_delta": put_delta,
-        "method": selection.method,
-        "quantity": profile.max_contracts_per_trade,
-        "spy_price": spy_price,
-    }
+    # Prefer closer to target delta, then higher credit, then nearer target DTE already ordered
+    candidates.sort(key=lambda r: (r["delta_distance"], -r["est_credit"]))
+    opp = candidates[0]
+    opp.pop("delta_distance", None)
     logger.info(
-        "Opportunity: SPY put credit short=%.0f long=%.0f credit=$%.2f delta=%.3f exp=%s",
+        "Opportunity: SPY put credit short=%.0f long=%.0f credit=$%.2f delta=%.3f exp=%s "
+        "(scanned %d band-qualified)",
         opp["short_put"],
         opp["long_put"],
         opp["est_credit"],
         opp["put_delta"],
         opp["expiry"],
+        len(candidates),
     )
     return opp
 

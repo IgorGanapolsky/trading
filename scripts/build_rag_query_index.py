@@ -81,7 +81,9 @@ def _resolve_write_profile() -> str:
 def _resolve_output_targets(profile: str) -> tuple[list[Path], Path]:
     if profile == "repo":
         return REPO_OUTPUT_PATHS, REPO_LESSONS_PAGE_PATH
-    return LOCAL_OUTPUT_PATHS, LOCAL_LESSONS_PAGE_PATH
+    # Always refresh data/rag/lessons_query.json — mandatory trade gate reads this
+    # path for staleness. Local profile also writes artifacts for HTML browsing.
+    return LOCAL_OUTPUT_PATHS + REPO_OUTPUT_PATHS, LOCAL_LESSONS_PAGE_PATH
 
 
 def _extract_tags(text: str) -> list[str]:
