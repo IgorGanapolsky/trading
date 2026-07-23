@@ -519,6 +519,67 @@ def _friday_expiries(min_dte: int, max_dte: int, target_dte: int) -> list[str]:
     return [exp for _, exp in fridays]
 
 
+def _as_float(value: Any) -> float | None:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _scan_put_credit_candidates(
+    expiry: str,
+    options: list[dict[str, Any]],
+    profile: Any,
+) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
+    """Return policy-qualified candidates and the best sub-minimum candidate."""
+    puts: dict[float, dict[str, Any]] = {}
+    for option in options:
+        if option.get("type") != "put" or option.get("expiration") != expiry:
+            continue
+        strike = _as_float(option.get("strike"))
+        if strike is not None:
+            puts[strike] = option
+
+    candidates: list[dict[str, Any]] = []
+    best_sub_min: dict[str, Any] | None = None
+    for short_strike, short in puts.items():
+        delta = _as_float(short.get("delta"))
+        short_bid = _as_float(short.get("bid"))
+        if delta is None or short_bid is None or short_bid < 0.05:
+            continue
+
+        put_delta = abs(delta)
+        if not (profile.delta_band_min <= put_delta <= profile.delta_band_max):
+            continue
+
+        long_strike = round(short_strike - float(profile.wing_width), 2)
+        long_option = puts.get(long_strike)
+        long_ask = _as_float(long_option.get("ask")) if long_option else None
+        if long_ask is None or long_ask <= 0:
+            continue
+
+        est_credit = round(short_bid - long_ask, 2)
+        if est_credit <= 0:
+            continue
+        row = {
+            "expiry": expiry,
+            "short_put": short_strike,
+            "long_put": long_strike,
+            "put_wing": float(profile.wing_width),
+            "est_credit": est_credit,
+            "put_delta": put_delta,
+            "method": "live_delta_band_scan",
+            "quantity": profile.max_contracts_per_trade,
+            "spy_price": None,
+            "delta_distance": abs(put_delta - float(profile.short_delta)),
+        }
+        if est_credit >= profile.min_credit:
+            candidates.append(row)
+        elif best_sub_min is None or est_credit > best_sub_min["est_credit"]:
+            best_sub_min = row
+    return candidates, best_sub_min
+
+
 def find_put_credit_opportunity(spy_price: float) -> dict | None:
     """Scan live put chain for $5-wide bull put credits in the policy delta band.
 
@@ -530,86 +591,38 @@ def find_put_credit_opportunity(spy_price: float) -> dict | None:
 
     profile = _load_profile()
     provider = IVDataProvider()
-    wing = float(profile.wing_width)
     band_lo = float(profile.delta_band_min)
     band_hi = float(profile.delta_band_max)
-    target_delta = float(profile.short_delta)
     min_credit = float(profile.min_credit)
 
     candidates: list[dict] = []
     best_sub_min: dict | None = None
+    try:
+        # IVDataProvider currently fetches the complete Alpaca chain before
+        # filtering. Fetch once, then partition locally instead of repeating the
+        # same network request for every expiry and delta slice.
+        options = provider.get_options_chain_with_greeks(
+            symbol=profile.underlying,
+            min_open_interest=0,
+        )
+    except Exception as exc:
+        logger.warning("Chain fetch failed: %s", exc)
+        return None
 
     for expiry in _friday_expiries(profile.min_dte, profile.max_dte, profile.target_dte):
-        try:
-            # Short candidates inside delta band; long wings are outside band.
-            shorts = provider.get_options_chain_with_greeks(
-                symbol=profile.underlying,
-                expiration=expiry,
-                min_delta=band_lo,
-                max_delta=band_hi,
-                min_open_interest=0,
-            )
-            all_puts = provider.get_options_chain_with_greeks(
-                symbol=profile.underlying,
-                expiration=expiry,
-                min_open_interest=0,
-            )
-        except Exception as exc:
-            logger.warning("Chain fetch failed for %s: %s", expiry, exc)
-            continue
-
-        puts_short = [
-            o
-            for o in shorts
-            if o.get("type") == "put"
-            and o.get("bid", 0) and float(o.get("bid") or 0) >= 0.05
-            and o.get("delta") is not None
-        ]
-        puts_all = {float(o["strike"]): o for o in all_puts if o.get("type") == "put"}
-        if not puts_short or not puts_all:
-            continue
-
-        for short in puts_short:
-            put_delta = abs(float(short["delta"]))
-            if not (band_lo <= put_delta <= band_hi):
-                continue
-            short_strike = float(short["strike"])
-            long_strike = round(short_strike - wing, 2)
-            # snap long to nearest available strike <= target wing
-            long_candidates = [s for s in puts_all if s <= long_strike + 1e-9]
-            if not long_candidates:
-                continue
-            long_strike = max(long_candidates)
-            put_wing = round(short_strike - long_strike, 2)
-            # require exact wing width for controlled experiment ($5)
-            if abs(put_wing - wing) > 1e-6:
-                continue
-            long_opt = puts_all.get(long_strike)
-            if not long_opt:
-                continue
-            long_ask = float(long_opt.get("ask") or 0.0)
-            short_bid = float(short.get("bid") or 0.0)
-            if long_ask <= 0 or short_bid <= 0:
-                continue
-            est_credit = round(short_bid - long_ask, 2)
-            if est_credit <= 0:
-                continue
-            row = {
-                "expiry": expiry,
-                "short_put": short_strike,
-                "long_put": long_strike,
-                "put_wing": put_wing,
-                "est_credit": est_credit,
-                "put_delta": put_delta,
-                "method": "live_delta_band_scan",
-                "quantity": profile.max_contracts_per_trade,
-                "spy_price": spy_price,
-                "delta_distance": abs(put_delta - target_delta),
-            }
-            if est_credit >= min_credit:
-                candidates.append(row)
-            elif best_sub_min is None or est_credit > best_sub_min["est_credit"]:
-                best_sub_min = row
+        expiry_candidates, expiry_sub_min = _scan_put_credit_candidates(
+            expiry,
+            options,
+            profile,
+        )
+        for row in expiry_candidates:
+            row["spy_price"] = spy_price
+        candidates.extend(expiry_candidates)
+        if expiry_sub_min and (
+            best_sub_min is None or expiry_sub_min["est_credit"] > best_sub_min["est_credit"]
+        ):
+            expiry_sub_min["spy_price"] = spy_price
+            best_sub_min = expiry_sub_min
 
     if not candidates:
         if best_sub_min:

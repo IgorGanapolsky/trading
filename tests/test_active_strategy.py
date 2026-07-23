@@ -123,49 +123,140 @@ def test_put_credit_inventory_gate_fails_closed_on_unexplained_leg(monkeypatch):
     assert pcs._inventory_ok(object()) is False
 
 
-def test_find_put_credit_uses_put_side_only(monkeypatch):
+def test_find_put_credit_scans_chain_once_and_uses_put_side_only(monkeypatch):
     import sys
     import types
 
     from scripts import spy_put_credit as pcs
 
-    expiry = "2026-08-21"
-    # Band-scan uses IVDataProvider put chain only (no call side).
-    short = {
-        "type": "put",
-        "strike": 700.0,
-        "delta": -0.15,
-        "bid": 1.20,
-        "ask": 1.25,
-    }
-    long = {
-        "type": "put",
-        "strike": 695.0,
-        "delta": -0.10,
-        "bid": 0.35,
-        "ask": 0.40,
-    }
-
-    class FakeProvider:
-        def get_options_chain_with_greeks(self, **kwargs):
-            # First call is delta-band filtered shorts; second is full put book.
-            if kwargs.get("min_delta") is not None:
-                return [short]
-            return [short, long]
+    expiry = "2026-08-28"
+    chain = [
+        {
+            "expiration": expiry,
+            "type": "put",
+            "strike": 700.0,
+            "bid": 1.20,
+            "ask": 1.25,
+            "delta": -0.15,
+        },
+        {
+            "expiration": expiry,
+            "type": "put",
+            "strike": 695.0,
+            "bid": 0.35,
+            "ask": 0.40,
+            "delta": -0.12,
+        },
+        {
+            "expiration": expiry,
+            "type": "call",
+            "strike": 800.0,
+            "bid": 3.00,
+            "ask": 3.10,
+            "delta": 0.15,
+        },
+    ]
+    provider = MagicMock()
+    provider.get_options_chain_with_greeks.return_value = chain
 
     # Inject a stub module so the late import inside find_put_credit_opportunity
     # does not pull real pandas/alpaca deps in unit tests.
     stub = types.ModuleType("src.data.iv_data_provider")
-    stub.IVDataProvider = FakeProvider
+    stub.IVDataProvider = lambda: provider
     monkeypatch.setitem(sys.modules, "src.data.iv_data_provider", stub)
-    monkeypatch.setattr(pcs, "_friday_expiries", lambda *a, **k: [expiry])
+    monkeypatch.setattr(pcs, "_friday_expiries", lambda *_: [expiry])
     opp = pcs.find_put_credit_opportunity(747.0)
+
     assert opp is not None
     assert opp["short_put"] == 700.0
     assert opp["long_put"] == 695.0
     assert opp["est_credit"] == 0.80
     assert opp["method"] == "live_delta_band_scan"
     assert "short_call" not in opp
+    provider.get_options_chain_with_greeks.assert_called_once_with(
+        symbol="SPY",
+        min_open_interest=0,
+    )
+
+
+def test_find_put_credit_prefers_target_delta_over_higher_credit(monkeypatch):
+    from scripts import spy_put_credit as pcs
+
+    expiry = "2026-08-28"
+    chain = [
+        {
+            "expiration": expiry,
+            "type": "put",
+            "strike": 700.0,
+            "bid": 1.10,
+            "ask": 1.20,
+            "delta": -0.15,
+        },
+        {
+            "expiration": expiry,
+            "type": "put",
+            "strike": 695.0,
+            "bid": 0.40,
+            "ask": 0.50,
+            "delta": -0.12,
+        },
+        {
+            "expiration": expiry,
+            "type": "put",
+            "strike": 690.0,
+            "bid": 1.50,
+            "ask": 1.60,
+            "delta": -0.19,
+        },
+        {
+            "expiration": expiry,
+            "type": "put",
+            "strike": 685.0,
+            "bid": 0.25,
+            "ask": 0.30,
+            "delta": -0.16,
+        },
+    ]
+    provider = MagicMock()
+    provider.get_options_chain_with_greeks.return_value = chain
+    monkeypatch.setattr("src.data.iv_data_provider.IVDataProvider", lambda: provider)
+    monkeypatch.setattr(pcs, "_friday_expiries", lambda *_: [expiry])
+
+    opp = pcs.find_put_credit_opportunity(747.0)
+
+    assert opp is not None
+    assert opp["short_put"] == 700.0
+    assert opp["put_delta"] == 0.15
+    assert opp["est_credit"] == 0.60
+
+
+def test_find_put_credit_keeps_minimum_credit_fail_closed(monkeypatch):
+    from scripts import spy_put_credit as pcs
+
+    expiry = "2026-08-28"
+    provider = MagicMock()
+    provider.get_options_chain_with_greeks.return_value = [
+        {
+            "expiration": expiry,
+            "type": "put",
+            "strike": 700.0,
+            "bid": 0.80,
+            "ask": 0.85,
+            "delta": -0.15,
+        },
+        {
+            "expiration": expiry,
+            "type": "put",
+            "strike": 695.0,
+            "bid": 0.40,
+            "ask": 0.45,
+            "delta": -0.12,
+        },
+    ]
+    monkeypatch.setattr("src.data.iv_data_provider.IVDataProvider", lambda: provider)
+    monkeypatch.setattr(pcs, "_friday_expiries", lambda *_: [expiry])
+
+    assert pcs.find_put_credit_opportunity(747.0) is None
 
 
 def test_repo_kill_switch_file_present():
@@ -548,9 +639,7 @@ def test_put_credit_parsing_and_credit_confirmation_failure_paths(tmp_path, monk
     assert pcs._parse_timestamp("not-a-timestamp") is None
     assert pcs._parse_timestamp("2026-07-22T12:00:00").tzinfo == timezone.utc
     assert pcs._expiry_yymmdd({"expiry": "260821"}) == "260821"
-    assert (
-        pcs._expiry_yymmdd({"signature": "SPY_2026-08-21_P695-700"}) == "260821"
-    )
+    assert pcs._expiry_yymmdd({"signature": "SPY_2026-08-21_P695-700"}) == "260821"
     assert pcs._expiry_yymmdd({}) == ""
 
     with pytest.raises(ValueError, match="no parseable expiry"):
@@ -637,9 +726,7 @@ def test_put_credit_main_manage_exit_reports_broken(monkeypatch, capsys):
     _patch_put_credit_cli_basics(pcs, monkeypatch)
     monkeypatch.setattr("sys.argv", ["spy_put_credit.py", "--manage-exits", "--dry-run"])
     monkeypatch.setattr(pcs, "_get_paper_client", lambda: object())
-    monkeypatch.setattr(
-        pcs, "manage_put_credit_exits", lambda client, dry_run: {"broken": 1}
-    )
+    monkeypatch.setattr(pcs, "manage_put_credit_exits", lambda client, dry_run: {"broken": 1})
     assert pcs.main() == 2
     assert '"broken": 1' in capsys.readouterr().out
 
@@ -672,9 +759,7 @@ def test_put_credit_main_blocks_duplicate_after_selection(tmp_path, monkeypatch,
     monkeypatch.setattr(pcs, "find_put_credit_opportunity", lambda _: _put_credit_opp())
     allowed = {"allowed": True, "blockers": []}
     blocked = {"allowed": False, "blockers": ["duplicate signature"]}
-    monkeypatch.setattr(
-        pcs, "evaluate_entry_limits", MagicMock(side_effect=[allowed, blocked])
-    )
+    monkeypatch.setattr(pcs, "evaluate_entry_limits", MagicMock(side_effect=[allowed, blocked]))
 
     assert pcs.main() == 2
     assert "duplicate signature" in capsys.readouterr().out
