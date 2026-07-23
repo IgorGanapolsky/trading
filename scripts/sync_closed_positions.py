@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Sync closed iron condor trades into data/trades.json.
+Sync broker-paired closed option structures into data/trades.json.
 
 This script consumes Alpaca fills from data/system_state.json::trade_history and
-builds closed SPY iron condor round-trips for win-rate tracking.
+builds closed SPY iron-condor and put-credit round-trips for evidence tracking.
 """
 
 from __future__ import annotations
@@ -28,6 +28,7 @@ DATA_DIR = PROJECT_ROOT / "data"
 SYSTEM_STATE_FILE = DATA_DIR / "system_state.json"
 TRADES_FILE = DATA_DIR / "trades.json"
 IC_ENTRIES_FILE = DATA_DIR / "ic_entries.json"
+PUT_CREDIT_ENTRIES_FILE = DATA_DIR / "put_credit_entries.json"
 DEFAULT_BROKER_ORDER_LIMIT = 1000
 OPTION_SYMBOL_RE = re.compile(
     r"^(?P<underlying>[A-Z]{1,8})(?P<yy>\d{2})(?P<mm>\d{2})(?P<dd>\d{2})(?P<kind>[CP])(?P<strike>\d{8})$"
@@ -1057,6 +1058,145 @@ def _load_ic_entries() -> dict[str, Any]:
     return _load_json(IC_ENTRIES_FILE, {})
 
 
+def _load_put_credit_entries() -> dict[str, Any]:
+    return _load_json(PUT_CREDIT_ENTRIES_FILE, {})
+
+
+def _filled_order_by_id(trade_history: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """Index authoritative filled parent orders by broker order ID."""
+
+    indexed: dict[str, dict[str, Any]] = {}
+    for row in trade_history:
+        if not isinstance(row, dict):
+            continue
+        order_id = str(row.get("id") or "").strip()
+        status = str(row.get("status") or "").upper()
+        if not order_id or "FILLED" not in status:
+            continue
+        if _parse_dt(row.get("filled_at")) is None:
+            continue
+        indexed[order_id] = row
+    return indexed
+
+
+def _pair_closed_put_credits(
+    trade_history: list[dict[str, Any]],
+    raw_entries: Any,
+) -> list[dict[str, Any]]:
+    """Pair a journaled put-credit entry and exit from broker-confirmed fills."""
+
+    if not isinstance(raw_entries, dict):
+        return []
+    orders = _filled_order_by_id(trade_history)
+    paired: list[dict[str, Any]] = []
+
+    for journal_key, entry in raw_entries.items():
+        if not isinstance(entry, dict):
+            continue
+        entry_order_id = str(entry.get("order_id") or "").strip()
+        exit_order_id = str(entry.get("exit_order_id") or "").strip()
+        if not entry_order_id or not exit_order_id or entry_order_id == exit_order_id:
+            continue
+        entry_order = orders.get(entry_order_id)
+        exit_order = orders.get(exit_order_id)
+        if entry_order is None or exit_order is None:
+            continue
+
+        entry_time = _parse_dt(entry_order.get("filled_at"))
+        exit_time = _parse_dt(exit_order.get("filled_at"))
+        if entry_time is None or exit_time is None or exit_time <= entry_time:
+            continue
+        entry_price = abs(_parse_float(entry_order.get("price"), 0.0))
+        exit_price = abs(_parse_float(exit_order.get("price"), 0.0))
+        quantity = abs(
+            _parse_float(
+                entry_order.get("qty"),
+                _parse_float(entry.get("quantity"), 1.0),
+            )
+        )
+        exit_quantity = abs(_parse_float(exit_order.get("qty"), quantity))
+        if entry_price <= 0 or exit_price < 0 or quantity <= 0:
+            continue
+        if abs(exit_quantity - quantity) > 1e-9:
+            continue
+
+        strikes = entry.get("strikes") if isinstance(entry.get("strikes"), dict) else {}
+        try:
+            short_put = float(strikes["short_put"])
+            long_put = float(strikes["long_put"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        expiry = str(entry.get("expiry") or "").strip()
+        if not expiry:
+            continue
+
+        entry_credit = round(entry_price * quantity * 100.0, 2)
+        exit_debit = round(exit_price * quantity * 100.0, 2)
+        realized_pnl = round(entry_credit - exit_debit, 2)
+        hold_hours = round((exit_time - entry_time).total_seconds() / 3600.0, 2)
+        try:
+            expiry_date = datetime.fromisoformat(expiry).date()
+            entry_dte = (expiry_date - entry_time.date()).days
+        except ValueError:
+            entry_dte = None
+
+        paired.append(
+            {
+                "id": f"PCS_{entry_order_id}_{exit_order_id}",
+                "status": "closed",
+                "strategy": "spy_put_credit",
+                "strategy_family": "spy_put_credit",
+                "symbol": "SPY",
+                "signature": str(
+                    entry.get("signature")
+                    or (
+                        f"SPY_{expiry}_P"
+                        f"{_strike_text(min(long_put, short_put))}-"
+                        f"{_strike_text(max(long_put, short_put))}"
+                    )
+                ),
+                "entry_time": entry_time.astimezone(timezone.utc).isoformat(),
+                "exit_time": exit_time.astimezone(timezone.utc).isoformat(),
+                "expiry": expiry,
+                "quantity": quantity,
+                "entry_credit": entry_credit,
+                "entry_credit_per_share": entry_price,
+                "exit_debit": exit_debit,
+                "exit_debit_per_share": exit_price,
+                "realized_pnl": realized_pnl,
+                "outcome": (
+                    "win"
+                    if realized_pnl > 0
+                    else "loss"
+                    if realized_pnl < 0
+                    else "breakeven"
+                ),
+                "exit_reason": entry.get("exit_reason"),
+                "hold_hours": hold_hours,
+                "dte": entry_dte,
+                "put_delta": entry.get("put_delta"),
+                "selection_method": entry.get("selection_method"),
+                "profile_name": entry.get("profile_name"),
+                "validation_phase": entry.get("validation_phase") is True,
+                "strikes": {"short_put": short_put, "long_put": long_put},
+                "legs": {
+                    "underlying": "SPY",
+                    "expiry": expiry,
+                    "put_strikes": sorted([long_put, short_put]),
+                    "call_strikes": [],
+                },
+                "order_ids": {
+                    "entry": [entry_order_id],
+                    "exit": [exit_order_id],
+                },
+                "journal_key": str(journal_key),
+                "evidence_source": "broker_paired_put_credit_journal",
+            }
+        )
+
+    return paired
+
+
 def _expiry_from_entry_key(key: str) -> str | None:
     raw = str(key or "").strip()
     if not raw.startswith("IC_"):
@@ -1166,7 +1306,7 @@ def _empty_ledger() -> dict[str, Any]:
         "meta": {
             "version": "1.1",
             "created": now_iso,
-            "purpose": "Master ledger for closed iron condor tracking",
+            "purpose": "Master ledger for broker-paired closed option structures",
             "paper_phase_start": "2026-01-22",
             "last_sync": now_iso,
             "sync_source": "sync_closed_positions.py",
@@ -1206,19 +1346,28 @@ def _compute_stats(
     paper_phase_start: str,
     unpaired_stats: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """Compute edge metrics from paired closed structures only.
+
+    Unmatched broker orders are reconciliation evidence, not completed trades.
+    Older versions folded their cash and win/loss signs into expectancy, profit
+    factor, and sample size.  That mixed two statistical units (structures and
+    orders) and could manufacture a false edge.  Callers still receive the
+    unmatched totals through the dedicated ``unpaired_*`` fields added below,
+    but promotion and learning metrics are derived exclusively from ``trades``.
+    """
     closed = [
         row
         for row in trades
         if isinstance(row, dict)
         and str(row.get("status", "")).lower() == "closed"
-        and str(row.get("strategy", "")).lower() == "iron_condor"
+        and _parse_dt(row.get("entry_time")) is not None
+        and _parse_dt(row.get("exit_time")) is not None
     ]
     open_trades = [
         row
         for row in trades
         if isinstance(row, dict)
         and str(row.get("status", "")).lower() == "open"
-        and str(row.get("strategy", "")).lower() == "iron_condor"
     ]
 
     wins = [row for row in closed if _parse_float(row.get("realized_pnl"), 0.0) > 0]
@@ -1231,30 +1380,17 @@ def _compute_stats(
     total_losses = sum(loss_amounts)
     total_pnl = round(sum(_parse_float(row.get("realized_pnl"), 0.0) for row in closed), 2)
 
-    # Fold unpaired singletons directly into all-time metrics if present
-    u_wins = unpaired_stats.get("unpaired_wins", 0) if unpaired_stats else 0
-    u_losses = unpaired_stats.get("unpaired_losses", 0) if unpaired_stats else 0
-    u_breakeven = unpaired_stats.get("unpaired_breakeven", 0) if unpaired_stats else 0
-    u_gross_profit = unpaired_stats.get("unpaired_gross_profit", 0.0) if unpaired_stats else 0.0
-    u_gross_loss = unpaired_stats.get("unpaired_gross_loss", 0.0) if unpaired_stats else 0.0
-    u_pnl = unpaired_stats.get("unpaired_realized_pnl", 0.0) if unpaired_stats else 0.0
-
-    wins_folded = len(wins) + u_wins
-    losses_folded = len(losses) + u_losses
-    breakeven_folded = len(breakeven) + u_breakeven
-    closed_folded = len(closed) + u_wins + u_losses + u_breakeven
-
-    total_wins_folded = total_wins + u_gross_profit
-    total_losses_folded = total_losses + u_gross_loss
-    total_pnl_folded = round(total_pnl + u_pnl, 2)
-
-    win_rate_pct = round((wins_folded / closed_folded) * 100.0, 2) if closed_folded else None
-    avg_win = round(total_wins_folded / wins_folded, 2) if wins_folded else None
-    avg_loss = round(total_losses_folded / losses_folded, 2) if losses_folded else None
-    profit_factor = (
-        round(total_wins_folded / total_losses_folded, 2) if total_losses_folded > 0 else None
+    closed_count = len(closed)
+    win_rate_pct = round((len(wins) / closed_count) * 100.0, 2) if closed_count else None
+    avg_win = round(total_wins / len(wins), 2) if wins else None
+    avg_loss = round(total_losses / len(losses), 2) if losses else None
+    profit_factor = round(total_wins / total_losses, 2) if total_losses > 0 else None
+    expectancy = round(total_pnl / closed_count, 2) if closed_count else None
+    unpaired_cash = (
+        _parse_float((unpaired_stats or {}).get("unpaired_realized_pnl"), 0.0)
+        if unpaired_stats
+        else 0.0
     )
-    expectancy = round(total_pnl_folded / closed_folded, 2) if closed_folded else None
 
     paper_days = 0
     try:
@@ -1263,20 +1399,60 @@ def _compute_stats(
     except Exception:
         pass
 
+    by_strategy: dict[str, dict[str, Any]] = {}
+    strategy_names = sorted(
+        {str(row.get("strategy_family") or row.get("strategy") or "unknown") for row in closed}
+    )
+    for strategy in strategy_names:
+        family_rows = [
+            row
+            for row in closed
+            if str(row.get("strategy_family") or row.get("strategy") or "unknown") == strategy
+        ]
+        family_pnls = [_parse_float(row.get("realized_pnl"), 0.0) for row in family_rows]
+        family_wins = [pnl for pnl in family_pnls if pnl > 0]
+        family_losses = [pnl for pnl in family_pnls if pnl < 0]
+        family_gross_profit = sum(family_wins)
+        family_gross_loss = abs(sum(family_losses))
+        by_strategy[strategy] = {
+            "closed_trades": len(family_rows),
+            "wins": len(family_wins),
+            "losses": len(family_losses),
+            "breakeven": len(family_rows) - len(family_wins) - len(family_losses),
+            "win_rate_pct": (
+                round(len(family_wins) / len(family_rows) * 100.0, 2)
+                if family_rows
+                else None
+            ),
+            "profit_factor": (
+                round(family_gross_profit / family_gross_loss, 2)
+                if family_gross_loss
+                else None
+            ),
+            "expectancy": (
+                round(sum(family_pnls) / len(family_rows), 2) if family_rows else None
+            ),
+            "total_realized_pnl": round(sum(family_pnls), 2),
+        }
+
     return {
-        "total_trades": closed_folded + len(open_trades),
-        "closed_trades": closed_folded,
+        "total_trades": closed_count + len(open_trades),
+        "closed_trades": closed_count,
         "open_trades": len(open_trades),
-        "wins": wins_folded,
-        "losses": losses_folded,
-        "breakeven": breakeven_folded,
+        "wins": len(wins),
+        "losses": len(losses),
+        "breakeven": len(breakeven),
         "win_rate_pct": win_rate_pct,
         "avg_win": avg_win,
         "avg_loss": avg_loss,
         "profit_factor": profit_factor,
         "expectancy": expectancy,
-        "total_pnl": total_pnl_folded,
-        "total_realized_pnl": total_pnl_folded,
+        "total_pnl": total_pnl,
+        "total_realized_pnl": total_pnl,
+        "edge_metric_unit": "paired_closed_structure",
+        "unpaired_attribution_status": "quarantined_not_edge_eligible",
+        "reconciliation_total_cash": round(total_pnl + unpaired_cash, 2),
+        "by_strategy": by_strategy,
         "paper_phase_start": paper_phase_start,
         "paper_phase_days": paper_days,
         "last_updated": datetime.now(timezone.utc).isoformat(),
@@ -1561,9 +1737,15 @@ def sync_closed_positions(dry_run: bool = False) -> dict[str, Any]:
     inventory_candidates = _pair_closed_trades_from_inventory(trade_history)
     legacy_candidates = _pair_closed_trades(events)
     raw_ic_entries = _load_ic_entries()
+    raw_put_credit_entries = _load_put_credit_entries()
+    put_credit_candidates = _pair_closed_put_credits(
+        trade_history,
+        raw_put_credit_entries,
+    )
     deduped_candidates: dict[str, dict[str, Any]] = {}
-    for row in inventory_candidates + legacy_candidates:
-        row = _merge_entry_provenance(row, raw_ic_entries)
+    for row in inventory_candidates + legacy_candidates + put_credit_candidates:
+        if str(row.get("strategy") or "").lower() == "iron_condor":
+            row = _merge_entry_provenance(row, raw_ic_entries)
         row_id = str(row.get("id") or "")
         if row_id and row_id not in deduped_candidates:
             deduped_candidates[row_id] = row
@@ -1572,10 +1754,12 @@ def sync_closed_positions(dry_run: bool = False) -> dict[str, Any]:
         key=lambda row: row.get("exit_time") or "",
     )
     logger.info(
-        "Trade history source: %s | Events detected: %s | Inventory candidates: %s | Closed candidates: %s",
+        "Trade history source: %s | Events detected: %s | Inventory candidates: %s | "
+        "Put-credit candidates: %s | Closed candidates: %s",
         trade_history_source,
         len(events),
         len(inventory_candidates),
+        len(put_credit_candidates),
         len(closed_candidates),
     )
 
@@ -1610,6 +1794,7 @@ def sync_closed_positions(dry_run: bool = False) -> dict[str, Any]:
     ledger["stats"] = _compute_stats(ledger["trades"], paper_phase_start, unpaired_stats)
     ledger["stats"].update(unpaired_stats)
     ledger["meta"]["paper_phase_start"] = paper_phase_start
+    ledger["meta"]["purpose"] = "Master ledger for broker-paired closed option structures"
     ledger["meta"]["last_sync"] = datetime.now(timezone.utc).isoformat()
     ledger["meta"]["sync_source"] = "sync_closed_positions.py"
 
@@ -1681,7 +1866,9 @@ def sync_closed_positions(dry_run: bool = False) -> dict[str, Any]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Sync closed iron condor trades into trades.json")
+    parser = argparse.ArgumentParser(
+        description="Sync broker-paired closed option structures into trades.json"
+    )
     parser.add_argument("--dry-run", action="store_true", help="Show changes without writing")
     args = parser.parse_args()
 

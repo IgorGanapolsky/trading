@@ -569,9 +569,10 @@ class TestSelfHealerChecks:
         with patch.dict(
             os.environ,
             {
-                "ALPACA_PAPER_TRADING_5K_API_KEY": "test_key",
-                "ALPACA_PAPER_TRADING_5K_API_SECRET": "test_secret",
+                "ALPACA_PAPER_TRADING_API_KEY": "test_key",
+                "ALPACA_PAPER_TRADING_API_SECRET": "test_secret",
             },
+            clear=True,
         ):
             healer = SelfHealer(project_root=temp_project)
             check = healer._check_env_vars()
@@ -585,7 +586,7 @@ class TestSelfHealerChecks:
             check = healer._check_env_vars()
 
             assert check.status == HealthStatus.DEGRADED
-            assert "Missing env vars" in check.message
+            assert "credentials are unavailable" in check.message
 
     def test_check_claude_md_healthy(self, temp_project):
         """Valid CLAUDE.md passes check."""
@@ -593,8 +594,9 @@ class TestSelfHealerChecks:
         claude_md.write_text(
             """
 # AI Trading System
-## Strategy
-Iron condor strategy on SPY
+## Active Strategy
+spy_put_credit
+Iron-condor new entries killed
         """
         )
 
@@ -715,20 +717,23 @@ class TestSelfHealerRunAll:
                 )
             )
 
-            (project / ".claude" / "CLAUDE.md").write_text("## Strategy\nIron condor on SPY")
+            (project / ".claude" / "CLAUDE.md").write_text(
+                "## Active Strategy\nspy_put_credit\nIron-condor new entries killed"
+            )
 
             healer = SelfHealer(project_root=project)
             checks = healer.run_all_checks()
 
-            # Should have run 6 checks
-            assert len(checks) == 6
+            assert len(checks) == 8
             check_names = [c.name for c in checks]
             assert "system_state" in check_names
             assert "json_files" in check_names
+            assert "trade_evidence" in check_names
             assert "env_vars" in check_names
             assert "claude_md" in check_names
             assert "data_freshness" in check_names
             assert "position_compliance" in check_names
+            assert "inventory_attribution" in check_names
 
 
 class TestSelfHealerSummary:

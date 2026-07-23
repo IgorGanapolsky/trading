@@ -46,7 +46,7 @@ jobs:
 
           # Extract status for job output
           STATUS=$(python3 -c "import json; print(json.load(open('health_report.json'))['overall_status'])")
-          echo "status=$STATUS" >> $GITHUB_OUTPUT
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
 
           # Display report
           python3 scripts/self_healing_check.py
@@ -129,8 +129,15 @@ jobs:
             }
 
       - name: Upload Health Report
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: health-report
           path: health_report.json
           retention-days: 7
+
+      - name: Fail closed when semantic health is unhealthy
+        if: always() && steps.health_check.outputs.status == 'unhealthy'
+        run: |
+          echo "::error::Semantic trading health is unhealthy; see health-report artifact."
+          exit 1

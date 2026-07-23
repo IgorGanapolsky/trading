@@ -39,6 +39,12 @@ from typing import Any, Optional
 
 import numpy as np
 from src.analytics.alpha_metrics_tracker import AlphaMetricsTracker
+from src.analytics.trade_evidence import (
+    active_strategy_family,
+    build_trade_evidence,
+    canonical_strategy,
+    row_strategy,
+)
 from src.rag.lessons_learned_rag import LessonsLearnedRAG
 
 # Optional PyTorch import for neural network
@@ -146,6 +152,7 @@ class TradeRecord:
     pnl_pct: float  # P/L as percentage of credit
     outcome: str  # "win" or "loss"
     timestamp: datetime
+    strategy_family: str = "unknown"
 
     def to_dict(self) -> dict:
         return {
@@ -164,6 +171,7 @@ class TradeRecord:
             "pnl_pct": self.pnl_pct,
             "outcome": self.outcome,
             "timestamp": self.timestamp.isoformat(),
+            "strategy_family": self.strategy_family,
         }
 
 
@@ -260,6 +268,7 @@ class GRPOTradeLearner:
         batch_size: int = 16,
         gamma: float = 0.99,
         group_size: int = 8,
+        strategy_family: str | None = None,
     ):
         """
         Initialize GRPO learner.
@@ -274,6 +283,12 @@ class GRPOTradeLearner:
         self.batch_size = batch_size
         self.gamma = gamma
         self.group_size = group_size
+        self.strategy_family = (
+            canonical_strategy(strategy_family)
+            if strategy_family
+            else active_strategy_family(PROJECT_DIR)
+        )
+        self.evidence_report: dict[str, Any] | None = None
 
         # RAG Integration for lesson-based penalties
         try:
@@ -309,7 +324,7 @@ class GRPOTradeLearner:
             confidence=0.5,
         )
 
-        self._load_model()
+        self.model_loaded = self._load_model()
 
     def load_trade_history(self, file_path: Optional[Path] = None) -> int:
         """
@@ -322,7 +337,8 @@ class GRPOTradeLearner:
         Returns:
             Number of trades loaded
         """
-        if file_path is None:
+        active_scope = file_path is None
+        if active_scope:
             file_path = TRADE_LEDGER_PATH if TRADE_LEDGER_PATH.exists() else SYSTEM_STATE_PATH
 
         if not file_path.exists():
@@ -335,14 +351,34 @@ class GRPOTradeLearner:
 
             closed_trades = payload.get("trades", []) if isinstance(payload, dict) else []
             if isinstance(closed_trades, list):
+                if active_scope:
+                    evidence = build_trade_evidence(
+                        payload,
+                        strategy_family=self.strategy_family,
+                        require_protocol_fields=self.strategy_family == "spy_put_credit",
+                    )
+                    self.evidence_report = evidence.to_dict()
+                    if not evidence.learning_ready:
+                        self.trade_history = []
+                        logger.warning(
+                            "GRPO evidence quarantined for %s: verified=%d issues=%s",
+                            self.strategy_family,
+                            len(evidence.rows),
+                            evidence.issues,
+                        )
+                        return 0
+                    closed_trades = evidence.rows
                 self.trade_history = self._process_closed_trades(closed_trades)
                 if self.trade_history:
                     logger.info(
-                        "Loaded %d paired closed trades from %s",
+                        "Loaded %d verified paired closed %s trades from %s",
                         len(self.trade_history),
+                        self.strategy_family if active_scope else "explicit",
                         file_path,
                     )
                     return len(self.trade_history)
+                if active_scope:
+                    return 0
 
             raw_trades = payload.get("trade_history", []) if isinstance(payload, dict) else []
             self.trade_history = self._process_raw_trades(raw_trades)
@@ -401,6 +437,7 @@ class GRPOTradeLearner:
                 pnl_pct=(pnl / basis) if basis > 0 else 0.0,
                 outcome=outcome,
                 timestamp=timestamp,
+                strategy_family=row_strategy(trade) or "unknown",
             )
             processed.append(record)
 
@@ -479,6 +516,7 @@ class GRPOTradeLearner:
                 pnl_pct=pnl_pct,
                 outcome=outcome,
                 timestamp=timestamp,
+                strategy_family="legacy_raw_fills",
             )
             processed.append(record)
 
@@ -740,7 +778,11 @@ class GRPOTradeLearner:
 
         # Dynamic RAG query for known critical failure patterns.
         weekday_int = round(record.features.day_of_week * 4)
-        query = f"Iron Condor trade on weekday {weekday_int} with {record.params.dte} DTE"
+        strategy_text = record.strategy_family.replace("_", " ")
+        query = (
+            f"{strategy_text} trade on weekday {weekday_int} "
+            f"with {record.params.dte} DTE"
+        )
         lessons = self.rag.query(query, top_k=2, severity_filter="CRITICAL")
 
         for lesson in lessons:
@@ -783,6 +825,9 @@ class GRPOTradeLearner:
         # Prepare training data
         features = [t.features.to_tensor() for t in self.trade_history]
         features_tensor = torch.stack(features)
+        target_params_tensor = torch.stack(
+            [self._normalized_params_tensor(t.params) for t in self.trade_history]
+        )
 
         rewards_tensor = torch.tensor(rewards, dtype=torch.float32)
 
@@ -808,6 +853,7 @@ class GRPOTradeLearner:
 
                 batch_features = features_tensor[batch_indices]
                 batch_rewards = rewards_tensor[batch_indices]
+                batch_targets = target_params_tensor[batch_indices]
 
                 # Group-relative advantage within batch
                 batch_mean = batch_rewards.mean()
@@ -821,9 +867,15 @@ class GRPOTradeLearner:
                 # GRPO loss: advantage-weighted MSE for continuous parameter prediction.
                 # Old log_softmax loss caused divergence because it treats
                 # continuous outputs as categorical probabilities.
-                target_params = batch_features[:, :4]
                 adv_weight = advantages.unsqueeze(1).expand_as(outputs).detach()
-                mse = (outputs - target_params) ** 2
+                # The policy emits raw logits which ``get_params`` bounds with
+                # sigmoid.  Train against the parameters actually taken, also
+                # normalized to [0, 1].  The previous target used the first four
+                # market features (VIX, percentile, term structure, momentum),
+                # which has no statistical relationship to delta/DTE/timing/
+                # exit settings and therefore could not learn a policy.
+                bounded_outputs = torch.sigmoid(outputs)
+                mse = (bounded_outputs - batch_targets) ** 2
                 loss = torch.mean(mse * (1.0 - adv_weight.clamp(-1, 1)))
 
                 reg_loss = 0.01 * torch.mean(outputs**2)
@@ -867,7 +919,25 @@ class GRPOTradeLearner:
             "trades_used": len(self.trade_history),
             "win_rate": sum(1 for t in self.trade_history if t.outcome == "win")
             / len(self.trade_history),
+            "strategy_family": self.strategy_family,
+            "evidence_dataset_sha256": (self.evidence_report or {}).get("dataset_sha256"),
         }
+
+    @staticmethod
+    def _normalized_params_tensor(params: TradeParams) -> torch.Tensor:
+        """Normalize an observed action to the policy's four bounded outputs."""
+
+        if not TORCH_AVAILABLE:
+            raise RuntimeError("PyTorch not available")
+        return torch.tensor(
+            [
+                max(0.0, min(1.0, (params.delta - 0.10) / (0.25 - 0.10))),
+                max(0.0, min(1.0, (params.dte - 21) / (60 - 21))),
+                max(0.0, min(1.0, params.entry_hour)),
+                max(0.0, min(1.0, (params.exit_profit_pct - 0.25) / (0.75 - 0.25))),
+            ],
+            dtype=torch.float32,
+        )
 
     def predict_optimal_params(self, features: Optional[TradeFeatures] = None) -> TradeParams:
         """
@@ -882,8 +952,8 @@ class GRPOTradeLearner:
         if features is None:
             features = self._get_default_features()
 
-        if not TORCH_AVAILABLE or self.policy is None:
-            logger.warning("Using fallback parameters (PyTorch not available)")
+        if not TORCH_AVAILABLE or self.policy is None or not self.model_loaded:
+            logger.warning("Using fixed profile parameters (no eligible active-strategy model)")
             return self._fallback_params
 
         self.policy.eval()
@@ -952,10 +1022,24 @@ class GRPOTradeLearner:
             )
 
         # Save metadata
+        lineage = self.evidence_report or {}
+        metrics = lineage.get("metrics") if isinstance(lineage.get("metrics"), dict) else {}
+        policy_eligible = bool(
+            lineage.get("learning_ready")
+            and len(self.trade_history) >= 30
+            and float(metrics.get("expectancy_per_trade") or 0.0) > 0
+            and float(metrics.get("profit_factor") or 0.0) > 1.0
+        )
         metadata = {
             "updated_at": datetime.now().isoformat(),
             "torch_available": TORCH_AVAILABLE,
             "trades_trained_on": len(self.trade_history),
+            "strategy_family": self.strategy_family,
+            "evidence_verified": bool(
+                self.evidence_report and self.evidence_report.get("learning_ready")
+            ),
+            "evidence_lineage": self.evidence_report,
+            "policy_eligible": policy_eligible,
             "training_stats": self.training_stats,
             "fallback_params": self._fallback_params.to_dict(),
             "config": {
@@ -966,9 +1050,40 @@ class GRPOTradeLearner:
             },
         }
         METADATA_PATH.write_text(json.dumps(metadata, indent=2))
+        self.model_loaded = policy_eligible
 
         logger.info(f"Model saved to {MODEL_PATH}")
         return MODEL_PATH
+
+    def _eligible_model_metadata(self) -> bool:
+        """Require an active-family, current-lineage, positive-edge model."""
+
+        try:
+            metadata = json.loads(METADATA_PATH.read_text(encoding="utf-8"))
+            payload = json.loads(TRADE_LEDGER_PATH.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return False
+        if metadata.get("policy_eligible") is not True:
+            return False
+        if canonical_strategy(metadata.get("strategy_family")) != self.strategy_family:
+            return False
+        lineage = metadata.get("evidence_lineage")
+        if not isinstance(lineage, dict):
+            return False
+        current = build_trade_evidence(
+            payload,
+            strategy_family=self.strategy_family,
+            require_protocol_fields=self.strategy_family == "spy_put_credit",
+        )
+        return bool(
+            current.learning_ready
+            and len(current.rows) >= 30
+            and current.metrics.expectancy_per_trade is not None
+            and current.metrics.expectancy_per_trade > 0
+            and current.metrics.profit_factor is not None
+            and current.metrics.profit_factor > 1.0
+            and lineage.get("dataset_sha256") == current.dataset_sha256
+        )
 
     def _load_model(self) -> bool:
         """
@@ -983,6 +1098,12 @@ class GRPOTradeLearner:
 
         if not TORCH_AVAILABLE:
             logger.warning("PyTorch not available. Cannot load model.")
+            return False
+        if not self._eligible_model_metadata():
+            logger.warning(
+                "Existing GRPO model is quarantined: active strategy, evidence lineage, "
+                "sample size, or positive-edge requirements are not satisfied."
+            )
             return False
 
         try:
@@ -1056,7 +1177,9 @@ def get_optimal_trade_params(features: Optional[TradeFeatures] = None) -> TradeP
     """
     Quick access to get optimal trade parameters.
 
-    This is the main entry point for the trading workflow.
+    A saved policy is used only when its active-strategy evidence lineage is
+    current, has at least 30 trades, and shows positive expectancy/PF. Otherwise
+    the fixed controlled-experiment profile is returned.
     """
     learner = GRPOTradeLearner()
     return learner.predict_optimal_params(features)

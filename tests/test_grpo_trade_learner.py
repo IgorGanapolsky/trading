@@ -582,6 +582,30 @@ class TestModelPersistence:
             result = learner.load_model()
             assert result is False
 
+    def test_legacy_model_without_evidence_lineage_is_quarantined(self, tmp_path):
+        model_path = tmp_path / "model.pt"
+        metadata_path = tmp_path / "metadata.json"
+        ledger_path = tmp_path / "trades.json"
+        model_path.touch()
+        metadata_path.write_text(
+            json.dumps(
+                {
+                    "trades_trained_on": 159,
+                    "strategy_family": "iron_condor",
+                }
+            )
+        )
+        ledger_path.write_text(json.dumps({"trades": []}))
+        with (
+            patch("src.ml.grpo_trade_learner.MODEL_PATH", model_path),
+            patch("src.ml.grpo_trade_learner.METADATA_PATH", metadata_path),
+            patch("src.ml.grpo_trade_learner.TRADE_LEDGER_PATH", ledger_path),
+        ):
+            learner = GRPOTradeLearner(strategy_family="spy_put_credit")
+
+        assert learner.model_loaded is False
+        assert learner.predict_optimal_params() == learner._fallback_params
+
 
 # ---------------------------------------------------------------------------
 # get_optimal_trade_params (module-level helper)

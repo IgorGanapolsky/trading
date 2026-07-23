@@ -81,6 +81,7 @@ class SelfHealer:
         # Data integrity checks
         self.checks.append(self._check_system_state())
         self.checks.append(self._check_json_files())
+        self.checks.append(self._check_trade_evidence())
 
         # Configuration checks
         self.checks.append(self._check_env_vars())
@@ -91,6 +92,7 @@ class SelfHealer:
 
         # Compliance checks
         self.checks.append(self._check_position_compliance())
+        self.checks.append(self._check_inventory_attribution())
 
         return self.checks
 
@@ -173,29 +175,29 @@ class SelfHealer:
 
     def _check_env_vars(self) -> HealthCheck:
         """Check critical environment variables."""
-        required = [
-            "ALPACA_PAPER_TRADING_5K_API_KEY",
-            "ALPACA_PAPER_TRADING_5K_API_SECRET",
-        ]
+        import sys
 
-        # Check in .env file or environment
-        missing = []
-        for var in required:
-            if not os.getenv(var):
-                missing.append(var)
+        sys.path.insert(0, str(self.project_root))
+        from src.utils.alpaca_client import get_alpaca_credentials
 
-        if missing:
+        key, secret = get_alpaca_credentials()
+        if not key or not secret:
             return HealthCheck(
                 name="env_vars",
                 status=HealthStatus.DEGRADED,
-                message=f"Missing env vars: {missing}",
-                details={"missing": missing},
+                message="Current Alpaca paper credentials are unavailable",
+                details={
+                    "accepted_pairs": [
+                        "ALPACA_PAPER_TRADING_API_KEY/ALPACA_PAPER_TRADING_API_SECRET",
+                        "ALPACA_API_KEY/ALPACA_SECRET_KEY",
+                    ]
+                },
             )
 
         return HealthCheck(
             name="env_vars",
             status=HealthStatus.HEALTHY,
-            message="All required environment variables set",
+            message="Current Alpaca paper credentials resolved",
         )
 
     def _check_claude_md(self) -> HealthCheck:
@@ -210,7 +212,7 @@ class SelfHealer:
             )
 
         content = claude_md.read_text()
-        required_sections = ["## Strategy", "iron condor", "SPY"]
+        required_sections = ["## Active Strategy", "spy_put_credit", "new entries killed"]
 
         missing = [s for s in required_sections if s.lower() not in content.lower()]
 
@@ -290,6 +292,61 @@ class SelfHealer:
                 message=f"Could not check freshness: {e}",
             )
 
+    def _check_trade_evidence(self) -> HealthCheck:
+        """Require row-derived, strategy-scoped evidence for ML and RAG."""
+
+        trades_path = self.project_root / "data" / "trades.json"
+        try:
+            import sys
+
+            sys.path.insert(0, str(self.project_root))
+            from src.analytics.trade_evidence import (
+                active_strategy_family,
+                build_trade_evidence,
+            )
+
+            payload = json.loads(trades_path.read_text(encoding="utf-8"))
+            family = active_strategy_family(self.project_root)
+            evidence = build_trade_evidence(
+                payload,
+                strategy_family=family,
+                require_protocol_fields=family == "spy_put_credit",
+            )
+        except Exception as exc:
+            return HealthCheck(
+                name="trade_evidence",
+                status=HealthStatus.UNHEALTHY,
+                message=f"Could not audit trade evidence: {exc}",
+            )
+
+        details = evidence.to_dict()
+        if evidence.issues:
+            return HealthCheck(
+                name="trade_evidence",
+                status=HealthStatus.UNHEALTHY,
+                message=(
+                    f"Trade evidence quarantined: {len(evidence.issues)} issue(s), "
+                    f"{len(evidence.rows)} verified {family} row(s)"
+                ),
+                details=details,
+            )
+        if not evidence.rows:
+            return HealthCheck(
+                name="trade_evidence",
+                status=HealthStatus.DEGRADED,
+                message=f"No verified closed {family} cohort rows yet",
+                details=details,
+            )
+        return HealthCheck(
+            name="trade_evidence",
+            status=HealthStatus.HEALTHY,
+            message=(
+                f"{len(evidence.rows)} verified closed {family} row(s); "
+                f"dataset={evidence.dataset_sha256[:12]}"
+            ),
+            details=details,
+        )
+
     def _check_position_compliance(self) -> HealthCheck:
         """Check positions comply with CLAUDE.md rules."""
         state_file = self.project_root / "data" / "system_state.json"
@@ -363,6 +420,40 @@ class SelfHealer:
                 status=HealthStatus.DEGRADED,
                 message=f"Could not check compliance: {e}",
             )
+
+    def _check_inventory_attribution(self) -> HealthCheck:
+        """Verify every open option leg and quantity matches a journal row."""
+
+        try:
+            import sys
+
+            sys.path.insert(0, str(self.project_root))
+            from src.risk.open_inventory_audit import audit_from_files
+
+            result = audit_from_files(self.project_root)
+        except Exception as exc:
+            return HealthCheck(
+                name="inventory_attribution",
+                status=HealthStatus.UNHEALTHY,
+                message=f"Could not audit open inventory: {exc}",
+            )
+
+        if not result.clean:
+            return HealthCheck(
+                name="inventory_attribution",
+                status=HealthStatus.UNHEALTHY,
+                message=(
+                    f"Open inventory is not journal-clean: "
+                    f"{len(result.block_reasons())} blocker(s)"
+                ),
+                details=result.to_dict(),
+            )
+        return HealthCheck(
+            name="inventory_attribution",
+            status=HealthStatus.HEALTHY,
+            message=f"Open inventory matches journals ({result.option_leg_count} option legs)",
+            details=result.to_dict(),
+        )
 
     def _heal_corrupt_json(self) -> bool:
         """Attempt to heal corrupt JSON by restoring from backup."""

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Sync today's trade files to local ledgers used by RAG/Webhook readers.
+"""Publish a verified trade-evidence snapshot for RAG/Webhook readers.
 
-This script runs post-trade to ensure:
-1. Trades from daily trade files are consolidated into the master ledger (`data/trades.json`)
-2. Local JSON backup (`data/trades_backup.json`) is maintained for compatibility
-3. Legacy trade readers stay in sync while `data/system_state.json` remains authoritative
+Daily order files are raw execution telemetry.  They must not be promoted into
+the paired outcome ledger or RAG grounding.  This command audits
+``data/trades.json`` and publishes only verified paired closed rows, together
+with a deterministic dataset hash and explicit rejection reasons.
 
 Usage:
     python3 scripts/sync_trades_to_rag.py
@@ -19,8 +19,14 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
+from src.analytics.trade_evidence import build_trade_evidence  # noqa: E402
 
 
 def load_todays_trades(date_str: str | None = None) -> list[dict]:
@@ -254,33 +260,65 @@ Strategy: {strategy}
 
 
 def main():
-    """Main entry point for RAG sync."""
+    """Audit the paired ledger and publish the RAG evidence packet."""
     import argparse
 
-    parser = argparse.ArgumentParser(description="Sync trades to local records")
-    parser.add_argument("--date", help="Date to sync (YYYY-MM-DD), defaults to today")
+    parser = argparse.ArgumentParser(description="Publish verified trade evidence for RAG")
+    parser.add_argument(
+        "--date",
+        help="Deprecated compatibility option; raw daily orders are never promoted.",
+    )
+    parser.add_argument("--ledger", default="data/trades.json")
+    parser.add_argument("--output", default="data/rag/verified_trade_evidence.json")
     args = parser.parse_args()
 
     logger.info("=" * 60)
     logger.info("POST-TRADE SYNC")
     logger.info("=" * 60)
 
-    # Load trades
-    trades = load_todays_trades(args.date)
-    if not trades:
-        logger.info("No trades to sync")
-        return 0
-
-    # Sync to master ledger (win rate) and local JSON backup
-    ledger_ok = sync_to_master_ledger(trades)
-    local_ok = sync_to_local_json(trades)
-
-    if ledger_ok or local_ok:
-        logger.info("✅ Trade sync completed successfully")
-        return 0
-    else:
-        logger.warning("⚠️ Trade sync failed - check logs")
+    ledger_path = Path(args.ledger)
+    try:
+        payload = json.loads(ledger_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        logger.error("Cannot read paired ledger %s: %s", ledger_path, exc)
         return 1
+
+    evidence = build_trade_evidence(payload)
+    output_path = Path(args.output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    quarantined = bool(evidence.issues)
+    evidence_payload = evidence.to_dict(include_rows=not quarantined)
+    if quarantined:
+        # Do not leave a consumable row set behind when the ledger does not
+        # reconcile. The audit metadata remains available for diagnosis.
+        evidence_payload["rows"] = []
+    packet = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "source": str(ledger_path),
+        "authority": "verified_paired_closed_trade_rows",
+        "publication_status": "quarantined" if quarantined else "published",
+        **evidence_payload,
+    }
+    temporary = output_path.with_suffix(f"{output_path.suffix}.tmp")
+    temporary.write_text(json.dumps(packet, indent=2, default=str) + "\n", encoding="utf-8")
+    temporary.replace(output_path)
+
+    if evidence.issues:
+        logger.error(
+            "Quarantined RAG packet at %s; published rows=0 (candidate hash=%s)",
+            output_path,
+            evidence.dataset_sha256,
+        )
+        for issue in evidence.issues:
+            logger.error("Evidence quarantine: %s", issue)
+        return 1
+    logger.info(
+        "Published %s verified rows to %s (sha256=%s)",
+        len(evidence.rows),
+        output_path,
+        evidence.dataset_sha256,
+    )
+    return 0
 
 
 if __name__ == "__main__":

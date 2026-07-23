@@ -15,6 +15,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
+from src.analytics.trade_evidence import build_trade_evidence
+
 logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -156,6 +158,7 @@ class UnifiedSearch:
         self._idf: dict[str, float] = {}
         self._avgdl: float = 0.0
         self._source_weights: dict[str, float] = {}
+        self._last_trade_evidence: dict = {}
 
     def build_index(self) -> dict:
         """Load all data sources and build the BM25 index."""
@@ -176,6 +179,7 @@ class UnifiedSearch:
             "market_signals": len(market_signals),
             "bm25_vocabulary": len(self._idf),
             "avg_doc_length": round(self._avgdl, 1),
+            "trade_evidence": dict(self._last_trade_evidence),
         }
         logger.info("Unified search index built: %s", stats)
         return stats
@@ -385,7 +389,12 @@ class UnifiedSearch:
         return docs
 
     def _load_trades(self) -> list[SearchDocument]:
-        """Load trades from trades.json and spread_performance.json."""
+        """Load only verified paired closed trades.
+
+        Raw fills and legacy spread summaries are useful diagnostics, but they
+        are not ground-truth outcomes and must not be retrieved by an agent as
+        if they were completed trades.
+        """
         docs: list[SearchDocument] = []
 
         # trades.json
@@ -393,7 +402,10 @@ class UnifiedSearch:
         if trades_path.exists():
             try:
                 data = json.loads(trades_path.read_text(encoding="utf-8"))
-                for trade in data.get("trades", []):
+                evidence = build_trade_evidence(data)
+                self._last_trade_evidence = evidence.to_dict()
+                rows = [] if evidence.issues else evidence.rows
+                for trade in rows:
                     tid = trade.get("id", "unknown")
                     symbol = trade.get("symbol", "")
                     strategy = trade.get("strategy", "")
@@ -441,18 +453,24 @@ class UnifiedSearch:
                                 "strategy": strategy,
                                 "pnl": pnl,
                                 "outcome": outcome,
+                                "evidence_status": trade["evidence_status"],
+                                "dataset_sha256": evidence.dataset_sha256,
                             },
                         )
                     )
             except Exception as exc:
                 logger.warning("Failed to load trades.json: %s", exc)
 
-        # spread_performance.json
+        # Legacy spread summaries are indexed only when a producer explicitly
+        # marks each row as broker-paired and verified.  Existing unlabelled
+        # rows remain available on disk for diagnostics, not agent grounding.
         spread_path = DATA_DIR / "spread_performance.json"
         if spread_path.exists():
             try:
                 data = json.loads(spread_path.read_text(encoding="utf-8"))
                 for trade in data.get("trades", []):
+                    if trade.get("evidence_status") != "verified_paired_closed_trade":
+                        continue
                     date_str = trade.get("date", "")
                     symbol = trade.get("symbol", "")
                     premium = trade.get("premium", 0)
@@ -492,6 +510,7 @@ class UnifiedSearch:
                                 "premium": premium,
                                 "pnl": pnl,
                                 "is_win": is_win,
+                                "evidence_status": trade["evidence_status"],
                             },
                         )
                     )

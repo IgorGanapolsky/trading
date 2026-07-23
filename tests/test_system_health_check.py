@@ -114,6 +114,29 @@ def test_check_llm_observability_surfaces_warning_without_failing(monkeypatch):
     assert any("subset-only" in detail for detail in result["details"])
 
 
+def test_check_ml_pipeline_reports_ineligible_policy_as_stub(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    data_dir = tmp_path / "data"
+    model_dir = tmp_path / "models" / "ml"
+    runtime_dir = data_dir / "runtime"
+    data_dir.mkdir()
+    model_dir.mkdir(parents=True)
+    runtime_dir.mkdir()
+    (runtime_dir / "strategy_kill_switch.json").write_text(
+        json.dumps({"active_family": "spy_put_credit"})
+    )
+    (data_dir / "trades.json").write_text(json.dumps({"trades": []}))
+    (model_dir / "grpo_trade_metadata.json").write_text(
+        json.dumps({"trades_trained_on": 159, "strategy_family": "iron_condor"})
+    )
+
+    result = sh.check_ml_pipeline()
+
+    assert result["status"] == "STUB"
+    assert any("quarantined" in detail for detail in result["details"])
+    assert any("0/30" in detail for detail in result["details"])
+
+
 def test_check_position_completeness_allows_long_only_defined_risk_structure(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     data_dir = tmp_path / "data"
@@ -127,6 +150,10 @@ def test_check_position_completeness_allows_long_only_defined_risk_structure(mon
                 ]
             }
         )
+    )
+    monkeypatch.setattr(
+        "src.risk.open_inventory_audit.audit_from_files",
+        lambda _root: SimpleNamespace(clean=True, option_leg_count=2),
     )
 
     result = sh.check_position_completeness()
@@ -173,8 +200,12 @@ def test_check_position_completeness_accepts_protected_four_leg_structure(monkey
             }
         )
     )
+    monkeypatch.setattr(
+        "src.risk.open_inventory_audit.audit_from_files",
+        lambda _root: SimpleNamespace(clean=True, option_leg_count=4),
+    )
 
     result = sh.check_position_completeness()
 
     assert result["status"] == "OK"
-    assert any("Protected 4-leg structure" in detail for detail in result["details"])
+    assert any("Defined-risk put/call exposure" in detail for detail in result["details"])

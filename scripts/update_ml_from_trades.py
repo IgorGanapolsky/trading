@@ -34,6 +34,13 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
+from src.analytics.trade_evidence import (  # noqa: E402
+    active_strategy_family,
+    build_trade_evidence,
+    canonical_strategy,
+    row_strategy,
+)
+
 PROJECT_ROOT = Path(__file__).parent.parent
 TRADES_FILE = PROJECT_ROOT / "data" / "trades.json"
 MODEL_FILE = PROJECT_ROOT / "models" / "ml" / "trade_confidence_model.json"
@@ -96,11 +103,24 @@ def _is_validation_phase_trade(trade: dict) -> bool:
     return str(entry_date)[:10] >= VALIDATION_PHASE_START_DATE
 
 
-def validation_phase_trades(trades_data: dict) -> list[dict]:
-    """Return only validation-phase trades; excludes legacy failure cohort."""
+def validation_phase_trades(
+    trades_data: dict,
+    strategy_family: str | None = None,
+) -> list[dict]:
+    """Return validation rows for one exact strategy family.
+
+    A date alone is not a cohort definition.  After a strategy pivot, mixing
+    later iron-condor rows into a put-credit posterior is target leakage.
+    """
+
     trades = trades_data.get("trades", [])
+    target = canonical_strategy(strategy_family) if strategy_family else None
     return [
-        trade for trade in trades if isinstance(trade, dict) and _is_validation_phase_trade(trade)
+        trade
+        for trade in trades
+        if isinstance(trade, dict)
+        and _is_validation_phase_trade(trade)
+        and (target is None or row_strategy(trade) == target)
     ]
 
 
@@ -154,7 +174,12 @@ def _wing_width(trade: dict) -> float | None:
 
 
 def stats_from_trades(trades: list[dict], cohort_unpaired_stats: dict | None = None) -> dict:
-    """Build the stats shape expected by the Thompson updater from trade rows."""
+    """Build Thompson inputs from paired closed structures only.
+
+    ``cohort_unpaired_stats`` is retained for API compatibility and surfaced as
+    quarantined diagnostics.  Unmatched order cash must never become wins,
+    losses, sample size, expectancy, or Bayesian posterior updates.
+    """
     wins: list[float] = []
     losses: list[float] = []
     skipped_trades = 0
@@ -181,66 +206,50 @@ def stats_from_trades(trades: list[dict], cohort_unpaired_stats: dict | None = N
         elif outcome == "loss":
             losses.append(pnl_float)
 
-    # Fold unpaired singletons if provided
-    u_wins = cohort_unpaired_stats.get("unpaired_cohort_wins", 0) if cohort_unpaired_stats else 0
-    u_losses = (
-        cohort_unpaired_stats.get("unpaired_cohort_losses", 0) if cohort_unpaired_stats else 0
-    )
-    u_gross_profit = (
-        cohort_unpaired_stats.get("unpaired_cohort_gross_profit", 0.0)
-        if cohort_unpaired_stats
-        else 0.0
-    )
-    u_gross_loss = (
-        cohort_unpaired_stats.get("unpaired_cohort_gross_loss", 0.0)
-        if cohort_unpaired_stats
-        else 0.0
-    )
-    u_pnl = (
-        cohort_unpaired_stats.get("unpaired_in_cohort_pnl", 0.0) if cohort_unpaired_stats else 0.0
-    )
-
-    wins_folded = len(wins) + u_wins
-    losses_folded = len(losses) + u_losses
-    closed_folded = wins_folded + losses_folded
-
     input_trades = len(trades)
-    win_rate = (wins_folded / closed_folded * 100) if closed_folded else 0.0
-    gross_profit_folded = sum(pnl for pnl in wins if pnl > 0) + u_gross_profit
-    gross_loss_folded = abs(sum(pnl for pnl in losses if pnl < 0)) + u_gross_loss
-    total_realized_pnl_folded = sum(wins) + sum(losses) + u_pnl
+    closed_trades = len(wins) + len(losses)
+    win_rate = (len(wins) / closed_trades * 100) if closed_trades else 0.0
+    gross_profit = sum(pnl for pnl in wins if pnl > 0)
+    gross_loss = abs(sum(pnl for pnl in losses if pnl < 0))
+    total_realized_pnl = sum(wins) + sum(losses)
     quality_denominator = max(input_trades, 1)
-    quality_penalty = (
-        skipped_trades + min(missing_pnl_trades, closed_folded)
-    ) / quality_denominator
+    quality_penalty = (skipped_trades + min(missing_pnl_trades, closed_trades)) / quality_denominator
     data_quality_score = round(max(0.0, 1.0 - quality_penalty), 3)
 
-    if gross_loss_folded > 0:
-        profit_factor = gross_profit_folded / gross_loss_folded
-    elif gross_profit_folded > 0:
+    if gross_loss > 0:
+        profit_factor = gross_profit / gross_loss
+    elif gross_profit > 0:
         profit_factor = math.inf
     else:
         profit_factor = 0.0
 
-    expectancy = total_realized_pnl_folded / closed_folded if closed_folded else 0.0
+    expectancy = total_realized_pnl / closed_trades if closed_trades else 0.0
+    unpaired = cohort_unpaired_stats or {}
 
     return {
-        "wins": wins_folded,
-        "losses": losses_folded,
-        "closed_trades": closed_folded,
+        "wins": len(wins),
+        "losses": len(losses),
+        "closed_trades": closed_trades,
         "input_trades": input_trades,
         "skipped_trades": skipped_trades,
         "ambiguous_outcome_trades": ambiguous_outcome_trades,
         "missing_pnl_trades": missing_pnl_trades,
         "data_quality_score": data_quality_score,
         "win_rate_pct": round(win_rate, 2),
-        "avg_win": gross_profit_folded / wins_folded if wins_folded else 0,
-        "avg_loss": gross_loss_folded / losses_folded if losses_folded else 0,
-        "gross_profit": round(gross_profit_folded, 2),
-        "gross_loss": round(gross_loss_folded, 2),
-        "total_realized_pnl": round(total_realized_pnl_folded, 2),
+        "avg_win": gross_profit / len(wins) if wins else 0,
+        "avg_loss": gross_loss / len(losses) if losses else 0,
+        "gross_profit": round(gross_profit, 2),
+        "gross_loss": round(gross_loss, 2),
+        "total_realized_pnl": round(total_realized_pnl, 2),
         "profit_factor": _round_metric(profit_factor),
         "expectancy_per_trade": round(expectancy, 2),
+        "metric_unit": "paired_closed_structure",
+        "unpaired_attribution_status": "quarantined_not_learning_eligible",
+        "quarantined_unpaired_wins": int(unpaired.get("unpaired_cohort_wins", 0) or 0),
+        "quarantined_unpaired_losses": int(unpaired.get("unpaired_cohort_losses", 0) or 0),
+        "quarantined_unpaired_pnl": _as_float(
+            unpaired.get("unpaired_in_cohort_pnl"), 0.0
+        ),
     }
 
 
@@ -475,7 +484,11 @@ Generated by `update_ml_from_trades.py` on {datetime.now(timezone.utc).strftime(
     return 2
 
 
-def update_thompson_sampler(trades_data: dict, model: dict) -> dict:
+def update_thompson_sampler(
+    trades_data: dict,
+    model: dict,
+    strategy_family: str = "iron_condor",
+) -> dict:
     """Update Thompson Sampler with empirical win/loss from canonical ledger.
 
     Replaces stale Tastytrade priors with actual trade data.
@@ -491,25 +504,26 @@ def update_thompson_sampler(trades_data: dict, model: dict) -> dict:
     alpha = wins + 1
     beta_val = losses + 1
 
-    old_alpha = model.get("iron_condor", {}).get("alpha", 0)
-    old_beta = model.get("iron_condor", {}).get("beta", 0)
+    family = canonical_strategy(strategy_family) or "iron_condor"
+    old_alpha = model.get(family, {}).get("alpha", 0)
+    old_beta = model.get(family, {}).get("beta", 0)
     old_expected = old_alpha / (old_alpha + old_beta) * 100 if (old_alpha + old_beta) > 0 else 0
 
-    model["iron_condor"] = {
+    model[family] = {
         "alpha": float(alpha),
         "beta": float(beta_val),
         "wins": wins,
         "losses": losses,
+        "metric_unit": "paired_closed_structure",
     }
-    model["spy_specific"] = {
-        "alpha": float(alpha),
-        "beta": float(beta_val),
-        "wins": wins,
-        "losses": losses,
-    }
+    # ``spy_specific`` historically mixed unrelated strategy families.  Keep
+    # it aligned only for the legacy iron-condor model; successor strategies
+    # use their own posterior bucket.
+    if family == "iron_condor":
+        model["spy_specific"] = dict(model[family])
 
     logger.info("=" * 60)
-    logger.info("THOMPSON SAMPLER UPDATE")
+    logger.info("THOMPSON SAMPLER UPDATE — %s", family)
     logger.info("=" * 60)
     logger.info(f"  Trades: {total} closed ({wins}W / {losses}L)")
     logger.info(f"  Win rate: {win_rate:.1f}%")
@@ -742,44 +756,60 @@ def main(dry_run: bool = False):
     trades_data = load_trades()
     model = load_model()
     stats = trades_data.get("stats", {})
-    validation_reset = is_validation_reset_model(model)
-    validation_stats: dict | None = None
-
-    if not stats.get("closed_trades"):
-        logger.warning("No closed trades found — nothing to update")
-        return
+    active_family = active_strategy_family(PROJECT_ROOT)
+    validation_reset = active_family != "iron_condor" or is_validation_reset_model(model)
+    evidence = build_trade_evidence(
+        trades_data,
+        strategy_family=active_family,
+        require_protocol_fields=active_family == "spy_put_credit",
+    )
+    validation_stats = stats_from_trades(evidence.rows)
+    logger.info(
+        "Active evidence: family=%s verified=%s raw=%s hash=%s",
+        active_family,
+        len(evidence.rows),
+        evidence.raw_row_count,
+        evidence.dataset_sha256[:12],
+    )
+    for issue in evidence.issues:
+        logger.warning("EVIDENCE QUARANTINE: %s", issue)
 
     # 2. Update Thompson Sampler with real data
-    # SKIP during validation phase: the old 66-trade data would overwrite
-    # the Beta(86,14) prior reset. Only update from validation-phase trades.
-    if validation_reset:
-        validation_trades = validation_phase_trades(trades_data)
-        cohort_unpaired = {
-            "unpaired_cohort_wins": stats.get("unpaired_cohort_wins", 0),
-            "unpaired_cohort_losses": stats.get("unpaired_cohort_losses", 0),
-            "unpaired_cohort_gross_profit": stats.get("unpaired_cohort_gross_profit", 0.0),
-            "unpaired_cohort_gross_loss": stats.get("unpaired_cohort_gross_loss", 0.0),
-            "unpaired_in_cohort_pnl": stats.get("unpaired_in_cohort_pnl", 0.0),
-        }
-        validation_stats = stats_from_trades(validation_trades, cohort_unpaired)
-        closed_validation_trades = validation_stats["closed_trades"]
-        if closed_validation_trades:
-            logger.info(f"Updating Thompson from {closed_validation_trades} validation trades only")
-            model = update_thompson_sampler(
-                {"stats": validation_stats, "trades": validation_trades}, model
-            )
-        else:
-            logger.info("Thompson update skipped: no validation-phase closed trades yet")
+    # Never let a killed family or unmatched orders update the active model.
+    closed_validation_trades = validation_stats["closed_trades"]
+    if closed_validation_trades and evidence.learning_ready:
+        logger.info(
+            "Updating %s Thompson posterior from %s verified trades",
+            active_family,
+            closed_validation_trades,
+        )
+        model = update_thompson_sampler(
+            {"stats": validation_stats, "trades": evidence.rows},
+            model,
+            strategy_family=active_family,
+        )
     else:
-        model = update_thompson_sampler(trades_data, model)
+        model.setdefault(
+            active_family,
+            {"alpha": 1.0, "beta": 1.0, "wins": 0, "losses": 0},
+        )
+        logger.info(
+            "Thompson update skipped: active evidence is empty or quarantined "
+            "(verified=%s, issues=%s)",
+            closed_validation_trades,
+            len(evidence.issues),
+        )
 
     # 3. Check trading gate
-    gate_stats = validation_stats if validation_reset and validation_stats is not None else stats
+    gate_stats = validation_stats
     gate = check_trading_gate(gate_stats)
-    if validation_reset:
-        gate["validation_reset_active"] = True
-        gate["allow_validation_entries"] = True
-        gate["block_live_new_positions"] = True
+    gate["validation_reset_active"] = validation_reset
+    gate["allow_validation_entries"] = bool(validation_reset and not evidence.issues)
+    gate["block_live_new_positions"] = True
+    gate["active_strategy_family"] = active_family
+    gate["evidence_dataset_sha256"] = evidence.dataset_sha256
+    gate["evidence_verified_rows"] = len(evidence.rows)
+    gate["evidence_issues"] = list(evidence.issues)
 
     # 4. Generate post-mortem lessons
     lessons = generate_loss_postmortems(trades_data)
@@ -805,13 +835,15 @@ def main(dry_run: bool = False):
         if validation_reset:
             model.setdefault("validation_reset", VALIDATION_RESET_NOTE)
             model["feedback_source"] = (
-                "validation_trades"
+                f"verified_{active_family}_trades"
                 if gate_stats.get("closed_trades", 0) > 0
                 else "validation_reset"
             )
         else:
             model["feedback_source"] = "canonical_trades_json"
         model["gate"] = gate
+        model["active_strategy_family"] = active_family
+        model["evidence_lineage"] = evidence.to_dict()
         MODEL_FILE.write_text(json.dumps(model, indent=2))
         logger.info(f"Updated {MODEL_FILE}")
 
@@ -834,11 +866,12 @@ def main(dry_run: bool = False):
                 "  ML gate would halt, but validation_reset active — allowing paper validation entries"
             )
         elif halt_file.exists():
-            # Only remove halt if it was set by ML gate (not manual)
-            content = halt_file.read_text()
-            if "ML GATE BLOCKED" in content:
-                halt_file.unlink()
-                logger.info("  HALT FILE REMOVED: ML gate passed")
+            # Kill-switch clearing belongs exclusively to crisis_monitor.py
+            # after broker inventory is flat.  A model update may report a
+            # passing gate, but must never delete a safety boundary.
+            logger.warning(
+                "  HALT FILE PRESERVED: ML feedback is not authorized to clear kill switches"
+            )
 
     written = write_postmortem_lessons(lessons, dry_run)
     rehab_written = write_rehabilitation_plan(rehabilitation_plan, dry_run)
@@ -848,8 +881,12 @@ def main(dry_run: bool = False):
     # 6. Summary
     logger.info("\n" + "=" * 70)
     logger.info("SUMMARY")
+    active_posterior = model.get(active_family, {})
     logger.info(
-        f"  Thompson Sampler: alpha={model['iron_condor']['alpha']}, beta={model['iron_condor']['beta']}"
+        "  Thompson Sampler (%s): alpha=%s, beta=%s",
+        active_family,
+        active_posterior.get("alpha", 1.0),
+        active_posterior.get("beta", 1.0),
     )
     if validation_reset:
         logger.info(f"  Legacy win rate: {stats.get('win_rate_pct', 0):.1f}%")
