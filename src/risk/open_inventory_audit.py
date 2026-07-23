@@ -169,6 +169,267 @@ def _put_credit_expiry(key: str, entry: dict[str, Any]) -> str:
     return match.group(1) if match else ""
 
 
+JournalRecord = tuple[str, dict[str, Any], str]
+LegKey = tuple[str, float]
+
+
+def _group_legs_by_expiry(legs: list[ParsedLeg]) -> dict[str, list[ParsedLeg]]:
+    grouped: dict[str, list[ParsedLeg]] = {}
+    for leg in legs:
+        grouped.setdefault(leg.expiry_ymd, []).append(leg)
+    return grouped
+
+
+def _journaled_structures(
+    expiry_ymd: str,
+    entries: dict[str, Any],
+    pcs_entries: dict[str, Any],
+) -> list[JournalRecord]:
+    ic_prefix = _ic_key(expiry_ymd)
+    journaled: list[JournalRecord] = [
+        (str(key), entry, "iron_condor")
+        for key, entry in entries.items()
+        if isinstance(entry, dict)
+        and (str(key) == ic_prefix or str(key).startswith(f"{ic_prefix}_"))
+    ]
+    for key, entry in pcs_entries.items():
+        if not isinstance(entry, dict):
+            continue
+        status = str(entry.get("status") or "open").strip().lower()
+        if status in INACTIVE_PCS_STATES:
+            continue
+        if _put_credit_expiry(str(key), entry) == expiry_ymd:
+            journaled.append((str(key), entry, "spy_put_credit"))
+    return journaled
+
+
+def _entry_quantity(entry: dict[str, Any]) -> float:
+    try:
+        return abs(float(entry.get("quantity") or 1))
+    except (TypeError, ValueError):
+        return 1.0
+
+
+def _expected_from_journal(
+    expiry_ymd: str,
+    journaled: list[JournalRecord],
+    max_contracts_per_trade: float,
+) -> tuple[dict[LegKey, float], list[str], list[InventoryFinding]]:
+    expected: dict[LegKey, float] = {}
+    journal_keys: list[str] = []
+    findings: list[InventoryFinding] = []
+    for journal_key, journal_entry, family in journaled:
+        journal_keys.append(journal_key)
+        entry_qty = _entry_quantity(journal_entry)
+        if entry_qty > max_contracts_per_trade + 1e-9:
+            findings.append(
+                InventoryFinding(
+                    code="LOT_SIZE_EXCEEDED",
+                    severity="block",
+                    message=(
+                        f"{journal_key} quantity={entry_qty} exceeds "
+                        f"max_contracts_per_trade={max_contracts_per_trade}"
+                    ),
+                    expiry_ymd=expiry_ymd,
+                    details={"journal_key": journal_key, "quantity": entry_qty},
+                )
+            )
+        mapping = (
+            _expected_put_credit_qty_map(journal_entry)
+            if family == "spy_put_credit"
+            else _expected_structure_qty_map(journal_entry)
+        )
+        for leg_key, qty in mapping.items():
+            expected[leg_key] = expected.get(leg_key, 0.0) + qty
+    return expected, journal_keys, findings
+
+
+def _actual_qty_map(exp_legs: list[ParsedLeg]) -> dict[LegKey, float]:
+    actual: dict[LegKey, float] = {}
+    for leg in exp_legs:
+        key = (leg.right, leg.strike)
+        actual[key] = actual.get(key, 0.0) + leg.qty
+    return actual
+
+
+def _lot_size_finding(
+    expiry_ymd: str,
+    actual: dict[LegKey, float],
+    expected: dict[LegKey, float],
+    max_contracts_per_trade: float,
+) -> InventoryFinding | None:
+    offenders = [
+        {
+            "right": leg_key[0],
+            "strike": leg_key[1],
+            "actual_qty": actual_qty,
+            "journal_qty": expected.get(leg_key, 0.0),
+        }
+        for leg_key, actual_qty in actual.items()
+        if abs(actual_qty) > max(max_contracts_per_trade, abs(expected.get(leg_key, 0.0))) + 1e-9
+    ]
+    if not offenders:
+        return None
+    return InventoryFinding(
+        code="LOT_SIZE_EXCEEDED",
+        severity="block",
+        message=(
+            f"Expiry {expiry_ymd} has aggregated leg quantity not explained "
+            "by distinct one-lot journal records"
+        ),
+        expiry_ymd=expiry_ymd,
+        details={"offenders": offenders},
+    )
+
+
+def _quantity_mismatch_findings(
+    expiry_ymd: str,
+    actual: dict[LegKey, float],
+    expected: dict[LegKey, float],
+) -> list[InventoryFinding]:
+    findings: list[InventoryFinding] = []
+    for key, qty in actual.items():
+        expected_qty = expected.get(key)
+        if expected_qty is None or abs(qty - expected_qty) <= 1e-9:
+            continue
+        findings.append(
+            InventoryFinding(
+                code="QTY_MISMATCH",
+                severity="block",
+                message=(
+                    f"Expiry {expiry_ymd}: {key[0]}{key[1]:g} qty={qty} does not match "
+                    f"journaled qty={expected_qty}"
+                ),
+                expiry_ymd=expiry_ymd,
+                details={
+                    "right": key[0],
+                    "strike": key[1],
+                    "actual_qty": qty,
+                    "journal_qty": expected_qty,
+                },
+            )
+        )
+    return findings
+
+
+def _composition_findings(
+    expiry_ymd: str,
+    actual: dict[LegKey, float],
+    expected: dict[LegKey, float],
+) -> list[InventoryFinding]:
+    extras = [
+        {"right": key[0], "strike": key[1], "qty": qty}
+        for key, qty in actual.items()
+        if key not in expected
+    ]
+    missing = [
+        {"right": key[0], "strike": key[1], "journal_qty": qty}
+        for key, qty in expected.items()
+        if key not in actual
+    ]
+    findings = _quantity_mismatch_findings(expiry_ymd, actual, expected)
+    if extras:
+        findings.append(
+            InventoryFinding(
+                code="EXTRA_LEGS",
+                severity="block",
+                message=(
+                    f"Expiry {expiry_ymd}: {len(extras)} open leg(s) not in journaled structure "
+                    f"(orphan verticals or residual risk)"
+                ),
+                expiry_ymd=expiry_ymd,
+                details={"extras": extras},
+            )
+        )
+    if missing:
+        findings.append(
+            InventoryFinding(
+                code="MISSING_LEGS",
+                severity="block",
+                message=f"Expiry {expiry_ymd}: journaled legs missing from broker book",
+                expiry_ymd=expiry_ymd,
+                details={"missing": missing},
+            )
+        )
+    return findings
+
+
+def _overstack_finding(
+    expiry_ymd: str,
+    exp_legs: list[ParsedLeg],
+    expected: dict[LegKey, float],
+) -> InventoryFinding | None:
+    short_units = sum(abs(leg.qty) for leg in exp_legs if leg.qty < 0)
+    expected_short_units = sum(abs(qty) for qty in expected.values() if qty < 0)
+    if short_units <= expected_short_units + 1e-9:
+        return None
+    return InventoryFinding(
+        code="SAME_EXPIRY_OVERSTACK",
+        severity="block",
+        message=(
+            f"Expiry {expiry_ymd}: short-leg units={short_units} exceed "
+            f"journaled units={expected_short_units}"
+        ),
+        expiry_ymd=expiry_ymd,
+        details={"short_units": short_units, "leg_count": len(exp_legs)},
+    )
+
+
+def _audit_expiry(
+    expiry_ymd: str,
+    exp_legs: list[ParsedLeg],
+    entries: dict[str, Any],
+    pcs_entries: dict[str, Any],
+    max_contracts_per_trade: float,
+) -> list[InventoryFinding]:
+    journaled = _journaled_structures(expiry_ymd, entries, pcs_entries)
+    if not journaled:
+        return [
+            InventoryFinding(
+                code="UNJOURNALED_EXPIRY",
+                severity="block",
+                message=(
+                    f"Open option expiry {expiry_ymd} has no IC or PCS journal record — "
+                    "exit managers cannot evaluate stop/target"
+                ),
+                expiry_ymd=expiry_ymd,
+                details={"leg_symbols": [leg.symbol for leg in exp_legs]},
+            )
+        ]
+
+    expected, journal_keys, findings = _expected_from_journal(
+        expiry_ymd,
+        journaled,
+        max_contracts_per_trade,
+    )
+    if not expected:
+        findings.append(
+            InventoryFinding(
+                code="JOURNAL_STRIKES_INCOMPLETE",
+                severity="block",
+                message=f"Expiry {expiry_ymd} journal records have incomplete strikes",
+                expiry_ymd=expiry_ymd,
+                details={"journal_keys": journal_keys},
+            )
+        )
+        return findings
+
+    actual = _actual_qty_map(exp_legs)
+    lot_size = _lot_size_finding(
+        expiry_ymd,
+        actual,
+        expected,
+        max_contracts_per_trade,
+    )
+    if lot_size:
+        findings.append(lot_size)
+    findings.extend(_composition_findings(expiry_ymd, actual, expected))
+    overstack = _overstack_finding(expiry_ymd, exp_legs, expected)
+    if overstack:
+        findings.append(overstack)
+    return findings
+
+
 def audit_open_inventory(
     positions: list[dict[str, Any]] | None,
     ic_entries: dict[str, Any] | None,
@@ -201,187 +462,16 @@ def audit_open_inventory(
             )
         )
 
-    by_expiry: dict[str, list[ParsedLeg]] = {}
-    for leg in legs:
-        by_expiry.setdefault(leg.expiry_ymd, []).append(leg)
-
-    for expiry_ymd, exp_legs in sorted(by_expiry.items()):
-        ic_prefix = _ic_key(expiry_ymd)
-        journaled: list[tuple[str, dict[str, Any], str]] = []
-        for ic_key, ic_entry in entries.items():
-            if not isinstance(ic_entry, dict):
-                continue
-            if ic_key == ic_prefix or ic_key.startswith(f"{ic_prefix}_"):
-                journaled.append((ic_key, ic_entry, "iron_condor"))
-        for pcs_key, pcs_entry in pcs_entries.items():
-            if (
-                isinstance(pcs_entry, dict)
-                and str(pcs_entry.get("status") or "open").strip().lower()
-                not in INACTIVE_PCS_STATES
-                and _put_credit_expiry(str(pcs_key), pcs_entry) == expiry_ymd
-            ):
-                journaled.append((str(pcs_key), pcs_entry, "spy_put_credit"))
-
-        if not journaled:
-            findings.append(
-                InventoryFinding(
-                    code="UNJOURNALED_EXPIRY",
-                    severity="block",
-                    message=(
-                        f"Open option expiry {expiry_ymd} has no IC or PCS journal record — "
-                        "exit managers cannot evaluate stop/target"
-                    ),
-                    expiry_ymd=expiry_ymd,
-                    details={"leg_symbols": [leg.symbol for leg in exp_legs]},
-                )
+    for expiry_ymd, exp_legs in sorted(_group_legs_by_expiry(legs).items()):
+        findings.extend(
+            _audit_expiry(
+                expiry_ymd,
+                exp_legs,
+                entries,
+                pcs_entries,
+                max_contracts_per_trade,
             )
-            continue
-
-        expected: dict[tuple[str, float], float] = {}
-        journal_keys: list[str] = []
-        for journal_key, journal_entry, family in journaled:
-            journal_keys.append(journal_key)
-            try:
-                entry_qty = abs(float(journal_entry.get("quantity") or 1))
-            except (TypeError, ValueError):
-                entry_qty = 1.0
-            if entry_qty > max_contracts_per_trade + 1e-9:
-                findings.append(
-                    InventoryFinding(
-                        code="LOT_SIZE_EXCEEDED",
-                        severity="block",
-                        message=(
-                            f"{journal_key} quantity={entry_qty} exceeds "
-                            f"max_contracts_per_trade={max_contracts_per_trade}"
-                        ),
-                        expiry_ymd=expiry_ymd,
-                        details={"journal_key": journal_key, "quantity": entry_qty},
-                    )
-                )
-            mapping = (
-                _expected_put_credit_qty_map(journal_entry)
-                if family == "spy_put_credit"
-                else _expected_structure_qty_map(journal_entry)
-            )
-            for leg_key, qty in mapping.items():
-                expected[leg_key] = expected.get(leg_key, 0.0) + qty
-
-        actual: dict[tuple[str, float], float] = {}
-        for leg in exp_legs:
-            k = (leg.right, leg.strike)
-            actual[k] = actual.get(k, 0.0) + leg.qty
-
-        if not expected:
-            findings.append(
-                InventoryFinding(
-                    code="JOURNAL_STRIKES_INCOMPLETE",
-                    severity="block",
-                    message=f"Expiry {expiry_ymd} journal records have incomplete strikes",
-                    expiry_ymd=expiry_ymd,
-                    details={"journal_keys": journal_keys},
-                )
-            )
-            continue
-
-        # Aggregated broker quantities above one lot are valid only when the
-        # journal contains enough distinct one-lot structures to explain them.
-        lot_offenders = []
-        for leg_key, actual_qty in actual.items():
-            explained_qty = abs(expected.get(leg_key, 0.0))
-            if abs(actual_qty) > max(max_contracts_per_trade, explained_qty) + 1e-9:
-                lot_offenders.append(
-                    {
-                        "right": leg_key[0],
-                        "strike": leg_key[1],
-                        "actual_qty": actual_qty,
-                        "journal_qty": expected.get(leg_key, 0.0),
-                    }
-                )
-        if lot_offenders:
-            findings.append(
-                InventoryFinding(
-                    code="LOT_SIZE_EXCEEDED",
-                    severity="block",
-                    message=(
-                        f"Expiry {expiry_ymd} has aggregated leg quantity not explained "
-                        "by distinct one-lot journal records"
-                    ),
-                    expiry_ymd=expiry_ymd,
-                    details={"offenders": lot_offenders},
-                )
-            )
-
-        # Qty / composition mismatch vs journaled 4-leg structure
-        extras = []
-        for k, qty in actual.items():
-            exp_qty = expected.get(k)
-            if exp_qty is None:
-                extras.append({"right": k[0], "strike": k[1], "qty": qty})
-            elif abs(qty - exp_qty) > 1e-9:
-                findings.append(
-                    InventoryFinding(
-                        code="QTY_MISMATCH",
-                        severity="block",
-                        message=(
-                            f"Expiry {expiry_ymd}: {k[0]}{k[1]:g} qty={qty} does not match "
-                            f"journaled qty={exp_qty}"
-                        ),
-                        expiry_ymd=expiry_ymd,
-                        details={
-                            "right": k[0],
-                            "strike": k[1],
-                            "actual_qty": qty,
-                            "journal_qty": exp_qty,
-                        },
-                    )
-                )
-
-        missing = []
-        for k, exp_qty in expected.items():
-            if k not in actual:
-                missing.append({"right": k[0], "strike": k[1], "journal_qty": exp_qty})
-
-        if extras:
-            findings.append(
-                InventoryFinding(
-                    code="EXTRA_LEGS",
-                    severity="block",
-                    message=(
-                        f"Expiry {expiry_ymd}: {len(extras)} open leg(s) not in journaled structure "
-                        f"(orphan verticals or residual risk)"
-                    ),
-                    expiry_ymd=expiry_ymd,
-                    details={"extras": extras},
-                )
-            )
-        if missing:
-            findings.append(
-                InventoryFinding(
-                    code="MISSING_LEGS",
-                    severity="block",
-                    message=f"Expiry {expiry_ymd}: journaled legs missing from broker book",
-                    expiry_ymd=expiry_ymd,
-                    details={"missing": missing},
-                )
-            )
-
-        # Same-expiry overstack is based on journaled structure quantity, not
-        # symbol count; valid PCS/IC structures may share an expiry.
-        short_units = sum(abs(leg.qty) for leg in exp_legs if leg.qty < 0)
-        expected_short_units = sum(abs(qty) for qty in expected.values() if qty < 0)
-        if short_units > expected_short_units + 1e-9:
-            findings.append(
-                InventoryFinding(
-                    code="SAME_EXPIRY_OVERSTACK",
-                    severity="block",
-                    message=(
-                        f"Expiry {expiry_ymd}: short-leg units={short_units} exceed "
-                        f"journaled units={expected_short_units}"
-                    ),
-                    expiry_ymd=expiry_ymd,
-                    details={"short_units": short_units, "leg_count": len(exp_legs)},
-                )
-            )
+        )
 
     clean = not any(f.severity == "block" for f in findings)
     return InventoryAuditResult(
