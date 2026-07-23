@@ -22,10 +22,13 @@ from pathlib import Path
 from typing import Any
 
 STRATEGY_ALIASES = {
+    "bull_put": "spy_put_credit",
     "bull_put_credit": "spy_put_credit",
     "put_credit": "spy_put_credit",
+    "put_credit_spread": "spy_put_credit",
     "spy_bull_put_credit": "spy_put_credit",
     "spy_put_credit": "spy_put_credit",
+    "ic": "iron_condor",
     "ic_simple": "iron_condor",
     "iron_condor": "iron_condor",
 }

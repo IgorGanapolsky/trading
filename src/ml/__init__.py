@@ -7,11 +7,13 @@ Provides:
 - MarketRegimeClassifier for unsupervised regime detection
 """
 
-try:
-    import google.generativeai  # noqa: F401 - import used for availability check
+from importlib.util import find_spec
 
-    GENAI_AVAILABLE = True
-except ImportError:
+try:
+    # Availability checks must not import the deprecated SDK, emit warnings,
+    # initialize clients, or create any other package side effects.
+    GENAI_AVAILABLE = find_spec("google.generativeai") is not None
+except (ImportError, ModuleNotFoundError, ValueError):
     GENAI_AVAILABLE = False
 
 # GRPO Trade Learning

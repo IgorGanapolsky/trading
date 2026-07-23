@@ -312,6 +312,57 @@ def _misery_forensics_bonus(query: str, text: str, lesson_id: str = "") -> float
     return min(1.0, 0.12 * hits)
 
 
+_PERFORMANCE_QUERY_TERMS = frozenset(
+    {
+        "edge",
+        "expectancy",
+        "fail",
+        "failure",
+        "loss",
+        "losses",
+        "miserable",
+        "money",
+        "north",
+        "pnl",
+        "profit",
+        "profitable",
+        "star",
+        "underwater",
+        "why",
+    }
+)
+_VERIFIED_EVIDENCE_MARKERS = (
+    "paired_closed_structure",
+    "strategy_kill_switch",
+    "trade_evidence",
+    "verified trade evidence",
+    "verified_trade_evidence",
+    "inventory attribution",
+    "profit factor",
+    "expectancy",
+)
+
+
+def _verified_performance_bonus(query_terms: set[str], text: str, lesson_id: str) -> float:
+    """Prefer audited evidence and kill decisions for performance questions."""
+
+    if not query_terms & _PERFORMANCE_QUERY_TERMS:
+        return 0.0
+    haystack = f"{lesson_id} {text}".lower()
+    marker_hits = sum(marker in haystack for marker in _VERIFIED_EVIDENCE_MARKERS)
+    if marker_hits == 0:
+        return 0.0
+    canonical = any(
+        marker in haystack
+        for marker in (
+            "verified_trade_evidence",
+            "strategy_kill_switch",
+            "paired_closed_structure",
+        )
+    )
+    return 1.5 if canonical else min(0.9, marker_hits * 0.18)
+
+
 def reposition_lessons(query: str, lessons: list[dict], top_k: int) -> list[dict]:
     """Re-rank lessons to prioritize relevance and reduce duplication.
 
@@ -352,6 +403,11 @@ def reposition_lessons(query: str, lessons: list[dict], top_k: int) -> list[dict
         structure = _structure_bonus(content)
         recency = _recency_bonus(_extract_date(lesson), query_terms)
         forensics = _misery_forensics_bonus(query, text, str(lesson.get("id") or ""))
+        evidence = _verified_performance_bonus(
+            query_terms,
+            text,
+            str(lesson.get("id") or ""),
+        )
 
         score = (
             (base * 0.55)
@@ -360,6 +416,7 @@ def reposition_lessons(query: str, lessons: list[dict], top_k: int) -> list[dict
             + structure
             + recency
             + forensics
+            + evidence
         )
         score *= severity_weight
 

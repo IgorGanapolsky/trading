@@ -260,59 +260,68 @@ def analyze_loss_clusters(trades_data: dict) -> list[dict]:
     return forensics_analyze_loss_clusters(trades_data)
 
 def build_rehabilitation_plan(trades_data: dict, gate: dict) -> dict:
-    """Build a machine-readable quarantine and validation plan from the current ledger."""
-    stats = trades_data.get("stats", {})
-    clusters = analyze_loss_clusters(trades_data)
+    """Build a machine-readable retirement and successor-validation plan."""
+
+    legacy_evidence = build_trade_evidence(
+        trades_data,
+        strategy_family="iron_condor",
+    )
+    legacy_stats = legacy_evidence.to_dict()["metrics"]
+    clusters = analyze_loss_clusters({"trades": legacy_evidence.rows})
     top_clusters = clusters[:3]
     changed_rules = [cluster["recommendation"] for cluster in top_clusters]
     if not changed_rules:
         changed_rules = [
-            "No recurring loss cluster was detected; require manual root-cause analysis before resuming validation entries."
+            "Keep iron-condor entries killed; validate only the active successor family."
         ]
 
     ledger = {
-        "closed_trades": int(stats.get("closed_trades") or gate.get("total_trades") or 0),
-        "wins": int(stats.get("wins") or 0),
-        "losses": int(stats.get("losses") or 0),
-        "win_rate_pct": _as_float(stats.get("win_rate_pct"), gate.get("win_rate", 0.0)),
-        "profit_factor": _as_float(stats.get("profit_factor"), gate.get("profit_factor", 0.0)),
+        "closed_trades": int(legacy_stats.get("closed_trades") or 0),
+        "wins": int(legacy_stats.get("wins") or 0),
+        "losses": int(legacy_stats.get("losses") or 0),
+        "breakeven": int(legacy_stats.get("closed_trades") or 0)
+        - int(legacy_stats.get("wins") or 0)
+        - int(legacy_stats.get("losses") or 0),
+        "win_rate_pct": _as_float(legacy_stats.get("win_rate_pct"), 0.0),
+        "profit_factor": _as_float(legacy_stats.get("profit_factor"), 0.0),
         "total_realized_pnl": _as_float(
-            stats.get("total_realized_pnl"), stats.get("total_pnl", 0.0)
+            legacy_stats.get("total_realized_pnl"), 0.0
         ),
         "expectancy_per_trade": _as_float(
-            stats.get("expectancy_per_trade"), gate.get("expectancy_per_trade", 0.0)
+            legacy_stats.get("expectancy_per_trade"), 0.0
         ),
+        "metric_unit": "paired_closed_structure",
+        "dataset_sha256": legacy_evidence.dataset_sha256,
+        "evidence_issues": list(legacy_evidence.issues),
     }
-    if not ledger["expectancy_per_trade"] and ledger["closed_trades"]:
-        ledger["expectancy_per_trade"] = round(
-            ledger["total_realized_pnl"] / ledger["closed_trades"], 4
-        )
-
-    status = "quarantined" if not gate.get("should_trade") else "eligible"
+    active_family = active_strategy_family(PROJECT_ROOT)
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "strategy_family": "ic_simple",
-        "status": status,
-        "profitability_objective": "Resume only after a changed-rule validation cohort proves positive expectancy, profit factor above 1.0, and positive realized P/L.",
+        "status": "killed",
+        "successor_strategy_family": active_family,
+        "profitability_objective": (
+            "Iron-condor entries remain killed. Validate only the active successor "
+            "on paired, protocol-compliant paper outcomes."
+        ),
         "ledger": ledger,
         "gate": {
-            "should_trade": bool(gate.get("should_trade")),
-            "block_reason": gate.get("block_reason", ""),
-            "min_trades_met": bool(gate.get("min_trades_met")),
-            "min_win_rate_met": bool(gate.get("min_win_rate_met")),
-            "positive_expectancy_met": bool(gate.get("positive_expectancy_met")),
-            "min_profit_factor_met": bool(gate.get("min_profit_factor_met")),
+            "should_trade": False,
+            "block_reason": (
+                "STRATEGY_KILLED: iron-condor entries are retired; "
+                f"paper validation belongs to {active_family}"
+            ),
+            "active_successor_gate": gate,
         },
         "loss_clusters": clusters,
-        "required_rule_changes": changed_rules,
-        "next_validation_hypothesis_template": {
+        "retirement_reasons": changed_rules,
+        "successor_validation": {
             "enabled": False,
-            "strategy_family": "ic_simple",
+            "strategy_family": active_family,
             "hypothesis": (
-                "IC Simple remains quarantined. Enable only after replacing this text with "
-                "a concrete rule-change thesis backed by the loss clusters in edge_rehabilitation_plan.json."
+                "Collect only protocol-compliant successor outcomes. ML and RAG stay "
+                "advisory until the cohort clears every kill criterion."
             ),
-            "changed_rules": changed_rules,
             "kill_criteria": {
                 "min_closed_trades": MIN_TRADES_FOR_GATE,
                 "min_expectancy_per_trade": 0.01,
@@ -323,7 +332,13 @@ def build_rehabilitation_plan(trades_data: dict, gate: dict) -> dict:
         "rag_ingestion": {
             "lesson_id": REHAB_LESSON_ID,
             "lesson_path": str((LESSONS_DIR / f"{REHAB_LESSON_ID}.md").relative_to(PROJECT_ROOT)),
-            "tags": ["rag", "ml", "strategy-quarantine", "profitability", "loss-clusters"],
+            "tags": [
+                "rag",
+                "ml",
+                "strategy-killed",
+                "successor-validation",
+                "paired-evidence",
+            ],
         },
     }
 
@@ -348,33 +363,43 @@ def write_rehabilitation_plan(plan: dict, dry_run: bool = False) -> int:
         )
         for cluster in clusters
     )
-    rule_lines = "\n".join(f"- {rule}" for rule in plan.get("required_rule_changes", []))
-    lesson = f"""# IC Simple Strategy Rehabilitation Plan
+    rule_lines = "\n".join(f"- {rule}" for rule in plan.get("retirement_reasons", []))
+    successor = plan.get("successor_strategy_family", "spy_put_credit")
+    lesson = f"""# Iron-Condor Retirement and Successor Validation
 
-Tags: rag, ml, strategy-quarantine, profitability, loss-clusters
+Tags: rag, ml, strategy-killed, successor-validation, paired-evidence
 Lifecycle: active
 Confidence: high
 
 ## Ledger Evidence
 
 - Closed trades: {ledger["closed_trades"]}
-- Wins / losses: {ledger["wins"]} / {ledger["losses"]}
+- Wins / losses / breakeven: {ledger["wins"]} / {ledger["losses"]} / {ledger["breakeven"]}
 - Win rate: {ledger["win_rate_pct"]:.2f}%
 - Profit factor: {ledger["profit_factor"]:.2f}
 - Total realized P/L: ${ledger["total_realized_pnl"]:.2f}
 - Expectancy: ${ledger["expectancy_per_trade"]:.2f}/trade
+- Metric unit: {ledger["metric_unit"]}
+- Evidence lineage: `{ledger["dataset_sha256"]}`
 
 ## Decision
 
-IC Simple is not profitable yet. Do not resume autonomous entries from the current rule set. The next cohort must be a changed-rule validation experiment, not a retry of the losing ledger.
+Iron-condor entries are killed. Do not reinterpret this document as permission
+to rehabilitate or reopen them. The only validation family is `{successor}`.
 
 ## Loss Clusters
 
 {cluster_lines or "- No recurring loss cluster detected."}
 
-## Required Rule Changes Before Validation
+## Retirement Reasons
 
 {rule_lines}
+
+## Successor Gate
+
+`{successor}` remains paper-only and unproven until at least 30 verified,
+paired outcomes show positive expectancy, profit factor above 1.0, and
+positive total realized P/L.
 
 ## Machine-Readable Plan
 
@@ -667,7 +692,7 @@ def main(dry_run: bool = False):
         strategy_family=active_family,
         require_protocol_fields=active_family == "spy_put_credit",
     )
-    validation_stats = stats_from_trades(evidence.rows)
+    validation_stats = evidence.to_dict()["metrics"]
     logger.info(
         "Active evidence: family=%s verified=%s raw=%s hash=%s",
         active_family,
@@ -680,6 +705,20 @@ def main(dry_run: bool = False):
 
     # 2. Update Thompson Sampler with real data
     # Never let a killed family or unmatched orders update the active model.
+    legacy_evidence = build_trade_evidence(
+        trades_data,
+        strategy_family="iron_condor",
+    )
+    if legacy_evidence.learning_ready:
+        model = update_thompson_sampler(
+            {
+                "stats": legacy_evidence.to_dict()["metrics"],
+                "trades": legacy_evidence.rows,
+            },
+            model,
+            strategy_family="iron_condor",
+        )
+
     closed_validation_trades = validation_stats["closed_trades"]
     if closed_validation_trades and evidence.learning_ready:
         logger.info(
@@ -729,9 +768,9 @@ def main(dry_run: bool = False):
     lessons = generate_loss_postmortems(trades_data)
     logger.info(f"\nPost-mortem lessons to write: {len(lessons)}")
     rehabilitation_plan = build_rehabilitation_plan(trades_data, gate)
-    if rehabilitation_plan["status"] == "quarantined":
+    if rehabilitation_plan["status"] != "eligible":
         logger.warning(
-            "  STRATEGY REHAB REQUIRED: %s",
+            "  STRATEGY RETIRED: %s",
             rehabilitation_plan["gate"].get("block_reason", "unknown"),
         )
         for cluster in rehabilitation_plan.get("loss_clusters", [])[:3]:

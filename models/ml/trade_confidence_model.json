@@ -1,34 +1,83 @@
 {
   "iron_condor": {
-    "alpha": 31.0,
-    "beta": 146.0,
-    "wins": 30,
-    "losses": 145
+    "alpha": 21.0,
+    "beta": 139.0,
+    "wins": 20,
+    "losses": 138,
+    "metric_unit": "paired_closed_structure"
   },
   "spy_specific": {
-    "alpha": 31.0,
-    "beta": 146.0,
-    "wins": 30,
-    "losses": 145
+    "alpha": 21.0,
+    "beta": 139.0,
+    "wins": 20,
+    "losses": 138,
+    "metric_unit": "paired_closed_structure"
   },
+  "spy_put_credit": {
+    "alpha": 1.0,
+    "beta": 1.0,
+    "wins": 0,
+    "losses": 0,
+    "metric_unit": "paired_closed_structure",
+    "prior_source": "weak_neutral_cold_start"
+  },
+  "active_strategy_family": "spy_put_credit",
   "regime_adjustments": {
     "calm": 1.1,
     "trending": 0.9,
     "volatile": 0.8,
     "spike": 0.5
   },
-  "last_updated": "2026-07-07T21:36:14.149991+00:00",
-  "feedback_source": "canonical_trades_json",
+  "last_updated": "2026-07-23T12:58:01.965212+00:00",
+  "validation_reset": "2026-04-10: Reset for controlled paper validation. Legacy 66-trade data came from the broken pre-fix system and must not overwrite validation priors.",
+  "feedback_source": "validation_reset",
   "gate": {
     "should_trade": false,
-    "total_trades": 176,
-    "win_rate": 17.05,
-    "expectancy_per_trade": -35.11,
-    "profit_factor": 0.7,
-    "min_trades_met": true,
+    "total_trades": 0,
+    "win_rate": 0.0,
+    "expectancy_per_trade": 0.0,
+    "profit_factor": 0.0,
+    "min_trades_met": false,
     "min_win_rate_met": false,
     "positive_expectancy_met": false,
     "min_profit_factor_met": false,
-    "block_reason": "Win rate 17.1% < 50.0%; Expectancy $-35.11/trade <= $0.00; Profit factor 0.70 <= 1.00"
+    "block_reason": "Only 0/30 trades; Win rate 0.0% < 50.0%; Expectancy $0.00/trade <= $0.00; Profit factor 0.00 <= 1.00",
+    "validation_reset_active": true,
+    "allow_validation_entries": true,
+    "block_live_new_positions": true,
+    "active_strategy_family": "spy_put_credit",
+    "evidence_dataset_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "evidence_verified_rows": 0,
+    "evidence_issues": []
+  },
+  "evidence_lineage": {
+    "strategy_family": "spy_put_credit",
+    "metrics": {
+      "closed_trades": 0,
+      "wins": 0,
+      "losses": 0,
+      "breakeven": 0,
+      "win_rate_pct": null,
+      "gross_profit": 0,
+      "gross_loss": 0,
+      "total_realized_pnl": 0,
+      "expectancy_per_trade": null,
+      "profit_factor": null
+    },
+    "raw_row_count": 159,
+    "verified_row_count": 0,
+    "rejected_by_reason": {
+      "different_strategy_family": 159
+    },
+    "issues": [],
+    "warnings": [
+      "15 unmatched orders are quarantined from edge and learning metrics",
+      "no verified closed rows for spy_put_credit"
+    ],
+    "quarantined_unpaired_orders": 15,
+    "quarantined_unpaired_cash": 2167.0,
+    "dataset_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "protocol_fields_required": true,
+    "learning_ready": false
   }
 }
