@@ -1,5 +1,5 @@
 {
-  "audited_at": "2026-07-23T18:34:25.396765+00:00",
+  "audited_at": "2026-07-23T19:59:29.940396+00:00",
   "dry_run": false,
   "reconciled": 2,
   "unresolved": {},
@@ -27,10 +27,12 @@
       "should_exit": false,
       "exit_reason": null,
       "dte": 29,
-      "hold_hours": 50.89534484694444,
-      "current_debit": 1.04,
-      "pnl": 7.0,
+      "hold_hours": 52.313273501388885,
+      "current_debit": 1.01,
+      "pnl": 10.0,
       "max_profit": 111.0,
+      "profit_pct_of_max": 0.0901,
+      "profit_target_pct": 0.25,
       "status": "hold"
     },
     {
@@ -46,10 +48,12 @@
       "should_exit": false,
       "exit_reason": null,
       "dte": 29,
-      "hold_hours": 146.96803799222224,
-      "current_debit": 0.89,
-      "pnl": 23.0,
+      "hold_hours": 148.38596664611111,
+      "current_debit": 0.86,
+      "pnl": 26.0,
       "max_profit": 112.0,
+      "profit_pct_of_max": 0.2321,
+      "profit_target_pct": 0.25,
       "status": "hold"
     }
   ]
