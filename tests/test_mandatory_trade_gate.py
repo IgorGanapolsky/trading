@@ -668,3 +668,58 @@ class TestMlGateHaltMatcher:
 
         assert _is_ml_gate_halt_reason("Manual halt by operator") is False
         assert _is_ml_gate_halt_reason("ML GATE BLOCKED") is False  # no "WIN RATE" token
+
+
+class TestPutCreditDailyStructureGate:
+    """Active put-credit family must use profile max_daily=3, not IC max=1."""
+
+    def test_max_daily_structures_uses_put_credit_profile(self, monkeypatch):
+        import src.safety.mandatory_trade_gate as gate_mod
+        from src.core.trading_profiles import get_put_credit_profile
+
+        monkeypatch.setattr(gate_mod, "_active_strategy_family", lambda: "spy_put_credit")
+        assert gate_mod._max_daily_structures_for_gate() == get_put_credit_profile().max_daily_structures
+        assert gate_mod._max_daily_structures_for_gate() == 3
+
+    def test_max_daily_structures_ic_family_uses_constant(self, monkeypatch):
+        import src.safety.mandatory_trade_gate as gate_mod
+
+        monkeypatch.setattr(gate_mod, "_active_strategy_family", lambda: "iron_condor")
+        assert gate_mod._max_daily_structures_for_gate() == gate_mod.MAX_DAILY_STRUCTURES
+
+    def test_put_credit_intraday_guardrail_allows_under_three(self, monkeypatch):
+        import src.safety.mandatory_trade_gate as gate_mod
+
+        monkeypatch.setattr(gate_mod, "_active_strategy_family", lambda: "spy_put_credit")
+        ok, reason = gate_mod._enforce_intraday_guardrails(
+            equity=100_000.0,
+            is_opening=True,
+            checks_performed=[],
+            context={
+                "intraday_metrics": {
+                    "daily_pnl": 0.0,
+                    "fills_today": 0,
+                    "structures_today": 1,
+                }
+            },
+        )
+        assert ok is True, reason
+
+    def test_put_credit_intraday_guardrail_blocks_at_three(self, monkeypatch):
+        import src.safety.mandatory_trade_gate as gate_mod
+
+        monkeypatch.setattr(gate_mod, "_active_strategy_family", lambda: "spy_put_credit")
+        ok, reason = gate_mod._enforce_intraday_guardrails(
+            equity=100_000.0,
+            is_opening=True,
+            checks_performed=[],
+            context={
+                "intraday_metrics": {
+                    "daily_pnl": 0.0,
+                    "fills_today": 0,
+                    "structures_today": 3,
+                }
+            },
+        )
+        assert ok is False
+        assert "3/3" in reason
