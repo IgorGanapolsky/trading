@@ -63,6 +63,32 @@ def disable_circuit_breaker_for_tests(monkeypatch, tmp_path):
 
 
 @pytest.fixture(autouse=True)
+def isolate_audit_graph_from_tests(monkeypatch, tmp_path):
+    """Redirect AuditGraph's default data_dir away from the real data/audit/.
+
+    `ExecutionAgent.__init__` hardcodes `self.audit_graph = AuditGraph()`
+    with no constructor parameter to inject a path. Any test that
+    instantiates `ExecutionAgent()` (or `AuditGraph()` directly, without
+    `data_dir=`) writes real UUID-named event files and `graph_index.json`
+    straight into the tracked production `data/audit/` directory.
+    `tests/test_audit_agent.py` already does this correctly via
+    `data_dir=tmp_path`; this fixture protects every other test that
+    doesn't, by redirecting the default itself.
+    """
+    try:
+        import src.resilience.audit_graph as _audit_graph_mod
+
+        fake_audit_dir = str(tmp_path / "audit")
+        monkeypatch.setattr(
+            _audit_graph_mod.AuditGraph.__init__,
+            "__defaults__",
+            (fake_audit_dir,),
+        )
+    except (ImportError, ModuleNotFoundError):
+        pass
+
+
+@pytest.fixture(autouse=True)
 def mock_trade_gateway_rag():
     """Global mock for TradeGateway's LessonsLearnedRAG.
 
