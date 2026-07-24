@@ -36,5 +36,34 @@
     },
     "reconciled_at": "2026-07-23T15:55:08+00:00",
     "reconstruction_reason": "filled_broker_order_missing_durable_strategy_journal"
+  },
+  "PCS_260828_fb85cfe193c14511868bd0e1b0a59220": {
+    "strategy_family": "spy_put_credit",
+    "structure": "bull_put_credit",
+    "account_mode": "paper",
+    "order_id": "fb85cfe1-93c1-4511-868b-d0e1b0a59220",
+    "client_order_id": "IC-OPEN-BPS--1784912299288979000003",
+    "entry_time": "2026-07-24T16:58:19.813683+00:00",
+    "submitted_at": "2026-07-24T16:58:19.748755+00:00",
+    "filled_at": "2026-07-24T16:58:19.813683+00:00",
+    "expiry": "2026-08-28",
+    "quantity": 1,
+    "credit": 0.65,
+    "limit_credit": 0.61,
+    "credit_source": "broker_fill",
+    "fill_confirmed_at": "2026-07-24T16:58:19.813683+00:00",
+    "put_delta": null,
+    "put_delta_source": "unavailable_after_broker_reconstruction",
+    "selection_method": "broker_reconstructed_unverified",
+    "strikes": {
+      "short_put": 712.0,
+      "long_put": 707.0
+    },
+    "signature": "SPY_2026-08-28_P707-712",
+    "validation_phase": true,
+    "profile_name": "spy-put-credit",
+    "status": "open",
+    "reconciled_at": "2026-07-24T18:37:43.170953+00:00",
+    "reconstruction_reason": "filled_broker_order_missing_durable_strategy_journal"
   }
 }
