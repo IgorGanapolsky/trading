@@ -4,41 +4,41 @@
     "created": "2026-07-07T21:32:24.241944+00:00",
     "purpose": "Master ledger for broker-paired closed option structures",
     "paper_phase_start": "2026-01-22",
-    "last_sync": "2026-07-23T19:59:31.540958+00:00",
+    "last_sync": "2026-07-24T15:34:22.970998+00:00",
     "sync_source": "sync_closed_positions.py"
   },
   "stats": {
-    "total_trades": 159,
-    "closed_trades": 159,
+    "total_trades": 160,
+    "closed_trades": 160,
     "open_trades": 0,
-    "wins": 20,
+    "wins": 21,
     "losses": 138,
     "breakeven": 1,
-    "win_rate_pct": 12.58,
-    "avg_win": 73.4,
+    "win_rate_pct": 13.12,
+    "avg_win": 71.57,
     "avg_loss": 66.66,
     "profit_factor": 0.16,
-    "expectancy": -48.62,
-    "total_pnl": -7731.0,
-    "total_realized_pnl": -7731.0,
+    "expectancy": -48.1,
+    "total_pnl": -7696.0,
+    "total_realized_pnl": -7696.0,
     "edge_metric_unit": "paired_closed_structure",
     "unpaired_attribution_status": "quarantined_not_edge_eligible",
-    "reconciliation_total_cash": -5564.0,
+    "reconciliation_total_cash": -5529.0,
     "by_strategy": {
       "iron_condor": {
-        "closed_trades": 159,
-        "wins": 20,
+        "closed_trades": 160,
+        "wins": 21,
         "losses": 138,
         "breakeven": 1,
-        "win_rate_pct": 12.58,
+        "win_rate_pct": 13.12,
         "profit_factor": 0.16,
-        "expectancy": -48.62,
-        "total_realized_pnl": -7731.0
+        "expectancy": -48.1,
+        "total_realized_pnl": -7696.0
       }
     },
     "paper_phase_start": "2026-01-22",
-    "paper_phase_days": 182,
-    "last_updated": "2026-07-23T19:59:31.540946+00:00",
+    "paper_phase_days": 183,
+    "last_updated": "2026-07-24T15:34:22.970985+00:00",
     "unpaired_realized_pnl": 2167.0,
     "unpaired_in_cohort_pnl": 409.0,
     "unpaired_order_count": 15,
@@ -6229,6 +6229,42 @@
         "entry": ["f15a662a-cb5d-4383-87c1-fac146082f64"],
         "exit": ["557cf7f1-5968-435d-9b01-b015bce1a00b"]
       }
+    },
+    {
+      "id": "IC_SPY_2026_08_21_P695_700_C776_781_20260717153620_20260724143344",
+      "symbol": "SPY",
+      "type": "option",
+      "strategy": "iron_condor",
+      "status": "closed",
+      "entry_date": "2026-07-17",
+      "exit_date": "2026-07-24",
+      "entry_time": "2026-07-17T15:36:20.465067+00:00",
+      "exit_time": "2026-07-24T14:33:44.354676+00:00",
+      "entry_net_cash": 112.0,
+      "entry_credit": 112.0,
+      "entry_debit": 0.0,
+      "entry_style": "credit",
+      "exit_net_cash": -77.0,
+      "exit_credit": 0.0,
+      "exit_debit": 77.0,
+      "exit_style": "debit",
+      "realized_pnl": 35.0,
+      "outcome": "win",
+      "signature": "SPY_2026-08-21_P695-700_C776-781",
+      "legs": {
+        "underlying": "SPY",
+        "expiry": "2026-08-21",
+        "put_strikes": [695.0, 700.0],
+        "call_strikes": [776.0, 781.0]
+      },
+      "quantity": 1.0,
+      "source": "alpaca_parent_lot->alpaca_close_inventory",
+      "order_ids": {
+        "entry": ["38126b75-50dd-49e5-932f-8939f332a0c2"],
+        "exit": ["fcfdc5c5-be14-42b4-a539-237c85a8f1a8"]
+      },
+      "profile_name": "spy-core",
+      "validation_phase": true
     }
   ]
 }
