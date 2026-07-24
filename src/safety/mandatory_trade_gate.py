@@ -107,11 +107,94 @@ except ImportError:
 
 MIN_TRADE_AMOUNT = float(os.environ.get("MIN_TRADE_AMOUNT", "1.0"))
 
+# ML consensus (ModelSelector/Juror) only after verified active-strategy edge sample.
+ML_CONSENSUS_MIN_CLOSED_TRADES = 30
+
 # Track daily losses (reset daily in production)
 # SECURITY FIX (Jan 19, 2026): Added thread lock to prevent race condition
 # where concurrent trades could bypass daily loss limit
 _daily_loss_lock = threading.Lock()
 _daily_loss_tracker: dict[str, float] = {"total": 0.0, "date": ""}
+
+
+def _protocol_reasoning_for_strategy(strategy: str) -> str:
+    """Deterministic protocol text for groundedness checks (not free-form LLM prose)."""
+    family = (strategy or "").strip().lower()
+    if family in {"spy_put_credit", "bull_put", "bull_put_credit", "credit_spread", "put_credit"}:
+        return (
+            "Phil Town Rule #1: don't lose money. SPY-only 1-lot $5-wide bull put credit. "
+            "Target ~15-delta short put in the 0.10-0.22 band, 30-45 DTE. "
+            "Defined risk stop-loss at 200% of credit (2.0x), take profit 25% of max credit, "
+            "exit by 7 DTE; min hold 24h except hard stop. Paper validation only while live blocked."
+        )
+    return (
+        "Phil Town Rule #1: don't lose money. SPY defined-risk options only. "
+        "Use 15-delta shorts, check VIX regime, mandatory stop-loss, "
+        "take profit toward 50% profit of max credit or exit by 7 DTE. No naked options."
+    )
+
+
+def _active_strategy_ml_ready(project_root: Path | None = None) -> tuple[bool, dict[str, Any]]:
+    """True only when active-family verified closed n>=30, learning_ready, positive expectancy.
+
+    Prevents attaching ModelSelector/Juror "agreement" to fills during cold validation.
+    """
+    root = project_root or Path(__file__).resolve().parents[2]
+    meta: dict[str, Any] = {
+        "family": None,
+        "n": 0,
+        "learning_ready": False,
+        "expectancy": None,
+        "profit_factor": None,
+        "detail": "",
+    }
+    try:
+        from src.analytics.trade_evidence import active_strategy_family, build_trade_evidence
+
+        trades_path = root / "data" / "trades.json"
+        if not trades_path.exists():
+            meta["detail"] = "trades.json missing"
+            return False, meta
+        payload = json.loads(trades_path.read_text(encoding="utf-8"))
+        family = active_strategy_family(root)
+        meta["family"] = family
+        require_protocol = family == "spy_put_credit"
+        evidence = build_trade_evidence(
+            payload,
+            strategy_family=family,
+            require_protocol_fields=require_protocol,
+        )
+        n = int(evidence.metrics.closed_trades or 0)
+        exp = evidence.metrics.expectancy_per_trade
+        pf = evidence.metrics.profit_factor
+        meta.update(
+            {
+                "n": n,
+                "learning_ready": bool(evidence.learning_ready),
+                "expectancy": exp,
+                "profit_factor": pf,
+                "issues": list(evidence.issues),
+            }
+        )
+        ready = (
+            bool(evidence.learning_ready)
+            and n >= ML_CONSENSUS_MIN_CLOSED_TRADES
+            and exp is not None
+            and float(exp) > 0.0
+            and pf is not None
+            and float(pf) > 1.0
+        )
+        if not ready:
+            meta["detail"] = (
+                f"need learning_ready + n>={ML_CONSENSUS_MIN_CLOSED_TRADES} "
+                f"+ expectancy>0 + PF>1 (have n={n}, exp={exp}, pf={pf}, "
+                f"learning_ready={evidence.learning_ready})"
+            )
+        return ready, meta
+    except Exception as exc:
+        meta["error"] = str(exc)
+        meta["detail"] = f"ml_ready_check_failed: {exc}"
+        return False, meta
 
 _SYSTEM_STATE_PATH = Path(__file__).parent.parent.parent / "data" / "system_state.json"
 _POLICY_METADATA_PATH = (
@@ -1819,75 +1902,131 @@ def safe_submit_order(client, order_request, strategy: str | None = None):
                 option_symbols = [str(symbol)]
             option_symbols = [s for s in option_symbols if _looks_like_option_symbol(s)]
 
-            # =================================================================
-            # MULTI-MODEL CONSENSUS (Jan 25, 2026 - 'Exclusivity is Dead')
-            # =================================================================
-            try:
-                from src.safety.multi_model_juror import MultiModelJuror
+            proposal = {
+                "symbol": symbol,
+                "strategy": strategy,
+                "legs": option_symbols,
+                "amount": est_amount,
+            }
+            protocol_reasoning = _protocol_reasoning_for_strategy(str(strategy or ""))
 
-                juror = MultiModelJuror()
-                proposal = {
-                    "symbol": symbol,
-                    "strategy": strategy,
-                    "legs": option_symbols,
-                    "amount": est_amount,
-                }
-                if not juror.get_consensus(proposal, primary_reasoning="System trade logic entry"):
-                    raise ValueError(
-                        "MULTI-MODEL CONSENSUS FAILED: Juror detected a risk violation."
+            # =================================================================
+            # MULTI-MODEL CONSENSUS — only after learning_ready n>=30 with edge
+            # Never log fake ModelSelector/Juror "AGREE" during cold validation.
+            # =================================================================
+            ml_ready, ml_meta = _active_strategy_ml_ready()
+            if not ml_ready:
+                logger.info(
+                    "ML consensus deferred (no edge sample): family=%s n=%s learning_ready=%s detail=%s",
+                    ml_meta.get("family"),
+                    ml_meta.get("n"),
+                    ml_meta.get("learning_ready"),
+                    ml_meta.get("detail") or ml_meta.get("error") or "",
+                )
+                gateway.capture_span(
+                    "juror_consensus",
+                    trace_id,
+                    attributes={
+                        "status": "DEFERRED_NO_EDGE",
+                        "family": str(ml_meta.get("family") or ""),
+                        "n": int(ml_meta.get("n") or 0),
+                    },
+                )
+            else:
+                try:
+                    from src.safety.multi_model_juror import MultiModelJuror
+
+                    juror = MultiModelJuror()
+                    if not juror.get_consensus(
+                        proposal, primary_reasoning=protocol_reasoning
+                    ):
+                        raise ValueError(
+                            "MULTI-MODEL CONSENSUS FAILED: Juror detected a risk violation."
+                        )
+                    gateway.capture_span(
+                        "juror_consensus", trace_id, attributes={"status": "AGREE"}
                     )
-                gateway.capture_span("juror_consensus", trace_id, attributes={"status": "AGREE"})
-            except ImportError:
-                logger.warning("MultiModelJuror unavailable - proceeding with standard safety.")
-            except Exception as e:
-                logger.error(f"CONSENSUS ERROR: {e}")
-                raise ValueError(f"CRITICAL: Consensus check failed: {e}")
+                except ImportError:
+                    raise ValueError(
+                        "MULTI-MODEL CONSENSUS REQUIRED (learning_ready) but MultiModelJuror unavailable"
+                    ) from None
+                except Exception as e:
+                    logger.error(f"CONSENSUS ERROR: {e}")
+                    raise ValueError(f"CRITICAL: Consensus check failed: {e}") from e
 
             # =================================================================
-            # REASONING EVALUATION (Jan 22, 2026 - TruLens Pattern)
+            # REASONING EVALUATION — hard RAG groundedness (no soft skip)
             # =================================================================
             try:
                 from src.safety.reasoning_evaluator import ReasoningEvaluator
 
                 evaluator = ReasoningEvaluator(threshold=0.7)  # 70% groundedness required
 
-                # Fetch recent lessons for groundedness check
+                retrieved_context: list[str] = []
                 try:
                     from src.rag.lessons_search import LessonsSearch
 
-                    lessons = LessonsSearch().search(f"{strategy} {symbol}", limit=3)
-                    retrieved_context = [lesson.content for lesson in lessons]
-                except Exception:
+                    # LessonsSearch.search returns list[(LessonResult, score)]
+                    hits = LessonsSearch().search(
+                        f"{strategy} {symbol} stop-loss delta DTE Rule #1",
+                        top_k=5,
+                    )
+                    for item in hits or []:
+                        lesson = item[0] if isinstance(item, tuple) else item
+                        content = (
+                            getattr(lesson, "snippet", None)
+                            or getattr(lesson, "content", None)
+                            or getattr(lesson, "prevention", None)
+                            or getattr(lesson, "title", None)
+                            or ""
+                        )
+                        if content:
+                            retrieved_context.append(str(content))
+                except Exception as rag_exc:
+                    logger.warning("LessonsSearch failed during reasoning audit: %s", rag_exc)
                     retrieved_context = []
+
+                if not retrieved_context:
+                    raise ValueError(
+                        "REASONING AUDIT FAILED: RAG retrieval required for openings "
+                        "(0 lessons retrieved; rebuild indexes or fix LessonsSearch)"
+                    )
+
+                # Protocol baseline is a first-class source (not a substitute for lessons).
+                # Lessons remain mandatory above; baseline makes protocol keywords auditable.
+                audit_context = [
+                    "Protocol source: Rule #1 don't lose money; mandatory stop-loss; "
+                    "check VIX; 15-delta shorts; 50% profit or 25% validation TP; "
+                    "7 DTE exit; 1-lot credit defined-risk only."
+                ] + retrieved_context
 
                 score = evaluator.evaluate(
                     proposal=proposal,
-                    reasoning="Executing strategy based on VIX Mean Reversion and Phil Town Rule #1.",
-                    retrieved_context=retrieved_context,
+                    reasoning=protocol_reasoning,
+                    retrieved_context=audit_context,
                 )
 
-                # RAG retrieval can be transiently unavailable; avoid deterministic
-                # order blocks when no context was retrieved.
-                has_retrieved_context = bool(retrieved_context)
-                if score.is_hallucination_risk and has_retrieved_context:
+                if score.is_hallucination_risk:
                     raise ValueError(f"REASONING AUDIT FAILED: {score.reasoning_trace}")
-                if score.is_hallucination_risk and not has_retrieved_context:
-                    logger.warning(
-                        "Reasoning audit low groundedness without retrieval context; "
-                        "skipping hard fail."
-                    )
                 gateway.capture_span(
                     "reasoning_evaluation",
                     trace_id,
-                    attributes={"score": score.groundedness, "trace": score.reasoning_trace},
+                    attributes={
+                        "score": score.groundedness,
+                        "trace": score.reasoning_trace,
+                        "lessons": len(retrieved_context),
+                    },
                 )
 
             except ImportError:
-                logger.warning("ReasoningEvaluator unavailable - proceeding with standard safety.")
+                raise ValueError(
+                    "REASONING AUDIT FAILED: ReasoningEvaluator unavailable (fail closed)"
+                ) from None
             except Exception as e:
-                if "REASONING AUDIT FAILED" in str(e):
+                if "REASONING AUDIT FAILED" in str(e) or "CRITICAL:" in str(e):
                     raise
                 logger.error(f"EVALUATION ERROR: {e}")
+                raise ValueError(f"REASONING AUDIT FAILED: evaluation error: {e}") from e
 
             if option_symbols:
                 from src.risk.pre_trade_checklist import PreTradeChecklist
