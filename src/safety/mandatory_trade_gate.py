@@ -276,6 +276,91 @@ def _today_et_str() -> str:
         return datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
 
+def _active_strategy_family() -> str:
+    """Return kill-switch active family (defaults to iron_condor-era semantics)."""
+    try:
+        from src.core.active_strategy import load_kill_state
+
+        state = load_kill_state()
+        if hasattr(state, "active_family"):
+            return str(state.active_family or "")
+        if isinstance(state, dict):
+            return str(state.get("active_family") or "")
+    except Exception as exc:
+        logger.debug("active strategy family lookup failed: %s", exc)
+    return ""
+
+
+def _max_daily_structures_for_gate() -> int:
+    """Daily structure cap for the *active* validation family.
+
+    IC profile remains max_daily_structures=1 (killed path).
+    Put-credit profile is max_daily_structures=3 (profile post-#4274).
+    Using the IC constant for put-credit openings blocked paper validation
+    with false "4/1 today" after residual IC exit fills polluted structures_today.
+    """
+    family = _active_strategy_family()
+    if family == "spy_put_credit":
+        try:
+            from src.core.trading_profiles import get_put_credit_profile
+
+            return int(get_put_credit_profile().max_daily_structures)
+        except Exception as exc:
+            logger.warning("put-credit max_daily_structures lookup failed: %s", exc)
+            return 3
+    return int(MAX_DAILY_STRUCTURES)
+
+
+def _count_put_credit_structures_today() -> int:
+    """Count put-credit *entries* opened today (ET), not residual IC exit fills."""
+    if os.environ.get("PYTEST_CURRENT_TEST") or "pytest" in sys.modules:
+        return 0
+
+    journal = Path(__file__).parent.parent.parent / "data" / "put_credit_entries.json"
+    if not journal.exists():
+        return 0
+    try:
+        payload = json.loads(journal.read_text(encoding="utf-8"))
+    except Exception as exc:
+        logger.warning("Failed to read put_credit_entries.json: %s", exc)
+        return 0
+    if not isinstance(payload, dict):
+        return 0
+
+    today = _today_et_str()
+    n = 0
+    for entry in payload.values():
+        if not isinstance(entry, dict):
+            continue
+        # entry_time preferred; submitted_at / filled_at fallback
+        ts = (
+            entry.get("entry_time")
+            or entry.get("filled_at")
+            or entry.get("submitted_at")
+            or entry.get("created_at")
+            or ""
+        )
+        text = str(ts)
+        # ISO timestamps: compare calendar day in ET when offset present
+        if text.startswith(today):
+            n += 1
+            continue
+        if not text:
+            continue
+        from zoneinfo import ZoneInfo
+
+        try:
+            dt = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        except (TypeError, ValueError) as exc:
+            logger.debug("put-credit entry timestamp unparseable %r: %s", text, exc)
+            dt = None
+        if dt is not None and (
+            dt.astimezone(ZoneInfo("America/New_York")).strftime("%Y-%m-%d") == today
+        ):
+            n += 1
+    return n
+
+
 def _count_structures_today_from_alpaca() -> int:
     """Count today's IC entries from Alpaca order history (works in CI and local).
 
@@ -343,6 +428,13 @@ def _count_structures_today_from_alpaca() -> int:
     return structures
 
 
+def _structures_today_for_gate() -> int:
+    """Structure count for the active family (put-credit vs residual IC noise)."""
+    if _active_strategy_family() == "spy_put_credit":
+        return _count_put_credit_structures_today()
+    return _count_structures_today_from_alpaca()
+
+
 def _load_intraday_metrics(context: dict[str, Any] | None = None) -> dict[str, float | int | str]:
     """Return best-effort intraday metrics for guardrails.
 
@@ -391,8 +483,11 @@ def _load_intraday_metrics(context: dict[str, Any] | None = None) -> dict[str, f
 
     fills_today = 0
     orders_today = 0
-    structures_today = _count_structures_today_from_alpaca()
+    # Active-family-aware structure count. Do NOT let system_state.trades.structures_today
+    # override put-credit: residual IC exit fills have polluted that field (false 4/1 blocks).
+    structures_today = _structures_today_for_gate()
     daily_pnl: float | None = None
+    put_credit_active = _active_strategy_family() == "spy_put_credit"
 
     if _SYSTEM_STATE_PATH.exists():
         try:
@@ -423,13 +518,14 @@ def _load_intraday_metrics(context: dict[str, Any] | None = None) -> dict[str, f
                 except Exception as exc:
                     logger.debug("Failed to parse orders_today: %s", exc)
                     orders_today = 0
-                try:
-                    structures_today = int(
-                        trades.get("structures_today", structures_today) or structures_today
-                    )
-                except Exception as exc:
-                    logger.debug("Failed to parse structures_today: %s", exc)
-                    structures_today = structures_today
+                if not put_credit_active:
+                    try:
+                        structures_today = int(
+                            trades.get("structures_today", structures_today) or structures_today
+                        )
+                    except Exception as exc:
+                        logger.debug("Failed to parse structures_today: %s", exc)
+                        structures_today = structures_today
 
     return {
         "date": today,
@@ -455,8 +551,10 @@ def _enforce_intraday_guardrails(
     daily_pnl = float(metrics.get("daily_pnl", 0.0) or 0.0)
     fills_today = int(metrics.get("fills_today", 0) or 0)
     structures_today = int(metrics.get("structures_today", 0) or 0)
+    max_daily_structures = _max_daily_structures_for_gate()
     checks_performed.append(
-        f"intraday_metrics: pnl={daily_pnl:+.2f} fills={fills_today} structures={structures_today}"
+        f"intraday_metrics: pnl={daily_pnl:+.2f} fills={fills_today} "
+        f"structures={structures_today}/{max_daily_structures}"
     )
 
     if equity > 0 and daily_pnl < -(equity * MAX_DAILY_LOSS_PCT):
@@ -464,10 +562,10 @@ def _enforce_intraday_guardrails(
             False,
             f"Daily loss limit exceeded: {daily_pnl:+.2f} < -{MAX_DAILY_LOSS_PCT:.0%} of equity",
         )
-    if structures_today >= MAX_DAILY_STRUCTURES:
+    if structures_today >= max_daily_structures:
         return (
             False,
-            f"Max structures guardrail hit: {structures_today}/{MAX_DAILY_STRUCTURES} today",
+            f"Max structures guardrail hit: {structures_today}/{max_daily_structures} today",
         )
     if fills_today >= MAX_DAILY_FILLS:
         return False, f"Max fills guardrail hit: {fills_today}/{MAX_DAILY_FILLS} today"
