@@ -60,7 +60,6 @@ def _spy_sma_200(spy_price: float | None) -> tuple[float | None, bool | None, st
         from alpaca.data.historical import StockHistoricalDataClient
         from alpaca.data.requests import StockBarsRequest
         from alpaca.data.timeframe import TimeFrame
-
         from src.utils.alpaca_client import get_alpaca_credentials
 
         key, secret = get_alpaca_credentials()
