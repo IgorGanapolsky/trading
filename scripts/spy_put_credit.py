@@ -32,7 +32,7 @@ logger = logging.getLogger("spy_put_credit")
 ENTRIES_FILE = ROOT / "data" / "put_credit_entries.json"
 AUDIT_DIR = ROOT / "data" / "audit"
 SYSTEM_STATE = ROOT / "data" / "system_state.json"
-CLOSED_ENTRY_STATES = {"closed", "cancelled", "rejected"}
+CLOSED_ENTRY_STATES = {"closed", "cancelled", "canceled", "canceled_unfilled", "cancelled_unfilled", "rejected", "expired"}
 EASTERN = ZoneInfo("America/New_York")
 
 
@@ -893,19 +893,23 @@ def find_put_credit_opportunity(spy_price: float) -> dict | None:
             logger.warning("No put verticals found in delta band %.2f-%.2f", band_lo, band_hi)
         return None
 
-    # Prefer closer to target delta, then higher credit, then nearer target DTE already ordered
-    candidates.sort(key=lambda r: (r["delta_distance"], -r["est_credit"]))
-    opp = candidates[0]
+    # Prefer higher natural credit (fillability), then closer to target delta.
+    # Prior delta-first ranking often picked thin OTMs with est_credit inflated vs book.
+    qualified = [r for r in candidates if float(r.get("est_credit") or 0) >= min_credit]
+    pool = qualified or candidates
+    pool.sort(key=lambda r: (-float(r["est_credit"]), r["delta_distance"]))
+    opp = pool[0]
     opp.pop("delta_distance", None)
     logger.info(
         "Opportunity: SPY put credit short=%.0f long=%.0f credit=$%.2f delta=%.3f exp=%s "
-        "(scanned %d band-qualified)",
+        "(scanned %d band-qualified, %d min-credit-qualified)",
         opp["short_put"],
         opp["long_put"],
         opp["est_credit"],
         opp["put_delta"],
         opp["expiry"],
         len(candidates),
+        len(qualified),
     )
     return opp
 
@@ -928,7 +932,8 @@ def place_put_credit(client, opp: dict) -> str | None:
         OptionLegRequest(symbol=sym(opp["short_put"]), side=OrderSide.SELL, ratio_qty=1),
     ]
 
-    limit_credit = max(profile.min_credit, round(float(opp["est_credit"]) - 0.05, 2))
+    # Start near natural credit (est_credit is short_bid - long_ask), not above book.
+    limit_credit = max(profile.min_credit, round(float(opp["est_credit"]), 2))
     walk = 0.0
     order_id = None
     while walk <= 0.20:
@@ -954,18 +959,31 @@ def place_put_credit(client, opp: dict) -> str | None:
             return None
         order_id = str(order.id)
         logger.info("Order %s status=%s", order_id, order.status)
-        # Brief wait for accept; full fill sync is handled by existing sync jobs.
-        time.sleep(3)
+        # Wait briefly for fill; unfilled NEW/ACCEPTED blocks concurrent slots forever.
+        time.sleep(4)
         try:
             refreshed = client.get_order_by_id(order_id)
             status = _order_status_name(getattr(refreshed, "status", ""))
-            if status == "FILLED":
+            filled_qty = float(getattr(refreshed, "filled_qty", 0) or 0)
+            if status == "FILLED" or filled_qty > 0:
                 break
             if status in {"CANCELED", "CANCELLED", "REJECTED", "EXPIRED"}:
+                order_id = None
                 walk += 0.05
                 continue
-            # accepted / new — stop walking
-            break
+            # Resting unfilled: cancel and walk credit down (still >= min_credit)
+            try:
+                client.cancel_order_by_id(order_id)
+                logger.warning(
+                    "Canceled unfilled put-credit order %s at limit $%.2f; walking credit down",
+                    order_id,
+                    current,
+                )
+            except Exception as cancel_exc:  # noqa: BLE001
+                logger.warning("Cancel unfilled %s failed: %s", order_id, cancel_exc)
+            order_id = None
+            walk += 0.05
+            continue
         except Exception:
             break
         walk += 0.05
