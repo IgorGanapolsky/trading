@@ -783,6 +783,264 @@ class TestSafeSubmitOrder:
         mock_client.submit_order.assert_called_once_with(mock_request)
         mock_juror.assert_not_called()
 
+    def test_ml_ready_juror_agrees_records_agree_span_and_submits(self, monkeypatch, tmp_path):
+        """learning_ready=True + juror agreement -> AGREE span, order proceeds."""
+        monkeypatch.setenv("ALPACA_PAPER_TRADING_API_KEY", "paper-key")
+        monkeypatch.setenv("ALPACA_PAPER_TRADING_API_SECRET", "paper-secret")
+        monkeypatch.delenv("ALPACA_API_KEY", raising=False)
+        monkeypatch.delenv("ALPACA_SECRET_KEY", raising=False)
+        monkeypatch.delenv("SKIP_POLICY_GATE", raising=False)
+        from src.safety.trading_halt import TradingHaltState
+
+        mock_client = MagicMock(spec=["get_account", "submit_order"])
+        mock_client.get_account.return_value = MagicMock(equity="100000")
+        mock_client.submit_order.return_value = MagicMock(id="ml-ready-ok")
+
+        mock_request = MagicMock()
+        mock_request.symbol = None
+        mock_request.limit_price = -1.11
+        mock_request.qty = 1
+        mock_request.side = "SELL"
+        mock_request.legs = [
+            MagicMock(symbol="SPY260821P00703000", side="BUY", ratio_qty=1),
+            MagicMock(symbol="SPY260821P00708000", side="SELL", ratio_qty=1),
+        ]
+
+        with (
+            patch(
+                "src.utils.alpaca_client.get_alpaca_credentials",
+                return_value=("paper-key", "paper-secret"),
+            ),
+            patch("src.utils.alpaca_client.get_options_data_client", return_value=MagicMock()),
+            patch("src.safety.macro_risk_guard.MacroRiskGuard") as mock_macro_guard,
+            patch("src.safety.trading_halt.get_trading_halt_state") as mock_halt,
+            patch.object(gate_mod, "_infer_is_closing_order", return_value=False),
+            patch.object(gate_mod, "_get_positions_qty_map", return_value={}),
+            patch.object(gate_mod, "_estimate_opening_max_loss", return_value=(500.0, 35, "SPY")),
+            patch.object(gate_mod, "_enforce_intraday_guardrails", return_value=(True, "")),
+            patch.object(gate_mod, "_query_rag_for_blocking_lessons", return_value=(False, [])),
+            patch.object(gate_mod, "_check_market_regime", return_value=(1.0, [])),
+            patch.object(gate_mod, "check_context_freshness") as mock_freshness,
+            patch(
+                "src.safety.north_star_guard.get_guard_context",
+                return_value={},
+            ),
+            patch(
+                "src.safety.milestone_controller.get_milestone_context",
+                return_value={},
+            ),
+            patch("src.safety.multi_model_juror.MultiModelJuror") as mock_juror,
+            patch("src.safety.reasoning_evaluator.ReasoningEvaluator") as mock_evaluator,
+            patch("src.rag.lessons_search.LessonsSearch") as mock_lessons,
+            patch.object(
+                gate_mod,
+                "_active_strategy_ml_ready",
+                return_value=(True, {"family": "spy_put_credit", "n": 30, "learning_ready": True}),
+            ),
+        ):
+            mock_macro_guard.return_value.get_macro_snapshot.return_value = {}
+            mock_macro_guard.return_value.check_macro_vitals.return_value = (True, "")
+            mock_halt.return_value = TradingHaltState(active=False, kind="none", path="", reason="")
+            mock_freshness.return_value = MagicMock(
+                is_stale=False, blocking=False, sources=[], stale_sources=[]
+            )
+            mock_juror.return_value.get_consensus.return_value = True
+            mock_evaluator.return_value.evaluate.return_value = MagicMock(
+                is_hallucination_risk=False, groundedness=0.95, reasoning_trace="grounded"
+            )
+            mock_lessons.return_value.search.return_value = [
+                MagicMock(content="Rule #1 don't lose money. Stop-loss, 15-delta, VIX, 7 dte.")
+            ]
+
+            safe_submit_order(mock_client, mock_request, strategy="spy_put_credit")
+
+        mock_client.submit_order.assert_called_once_with(mock_request)
+        mock_juror.return_value.get_consensus.assert_called_once()
+
+    def test_ml_ready_juror_disagrees_blocks_order(self, monkeypatch):
+        """learning_ready=True + juror rejects the proposal -> hard block, no submit."""
+        monkeypatch.setenv("ALPACA_PAPER_TRADING_API_KEY", "paper-key")
+        monkeypatch.setenv("ALPACA_PAPER_TRADING_API_SECRET", "paper-secret")
+        monkeypatch.delenv("ALPACA_API_KEY", raising=False)
+        monkeypatch.delenv("ALPACA_SECRET_KEY", raising=False)
+        monkeypatch.delenv("SKIP_POLICY_GATE", raising=False)
+        from src.safety.trading_halt import TradingHaltState
+
+        mock_client = MagicMock(spec=["get_account", "submit_order"])
+        mock_client.get_account.return_value = MagicMock(equity="100000")
+
+        mock_request = MagicMock()
+        mock_request.symbol = None
+        mock_request.limit_price = -1.11
+        mock_request.qty = 1
+        mock_request.side = "SELL"
+        mock_request.legs = [
+            MagicMock(symbol="SPY260821P00703000", side="BUY", ratio_qty=1),
+            MagicMock(symbol="SPY260821P00708000", side="SELL", ratio_qty=1),
+        ]
+
+        with (
+            patch(
+                "src.utils.alpaca_client.get_alpaca_credentials",
+                return_value=("paper-key", "paper-secret"),
+            ),
+            patch("src.utils.alpaca_client.get_options_data_client", return_value=MagicMock()),
+            patch("src.safety.macro_risk_guard.MacroRiskGuard") as mock_macro_guard,
+            patch("src.safety.trading_halt.get_trading_halt_state") as mock_halt,
+            patch.object(gate_mod, "_infer_is_closing_order", return_value=False),
+            patch.object(gate_mod, "_get_positions_qty_map", return_value={}),
+            patch.object(gate_mod, "_estimate_opening_max_loss", return_value=(500.0, 35, "SPY")),
+            patch.object(gate_mod, "_enforce_intraday_guardrails", return_value=(True, "")),
+            patch.object(gate_mod, "_query_rag_for_blocking_lessons", return_value=(False, [])),
+            patch.object(gate_mod, "_check_market_regime", return_value=(1.0, [])),
+            patch.object(gate_mod, "check_context_freshness") as mock_freshness,
+            patch("src.safety.north_star_guard.get_guard_context", return_value={}),
+            patch("src.safety.milestone_controller.get_milestone_context", return_value={}),
+            patch("src.safety.multi_model_juror.MultiModelJuror") as mock_juror,
+            patch.object(
+                gate_mod,
+                "_active_strategy_ml_ready",
+                return_value=(True, {"family": "spy_put_credit", "n": 30, "learning_ready": True}),
+            ),
+        ):
+            mock_macro_guard.return_value.get_macro_snapshot.return_value = {}
+            mock_macro_guard.return_value.check_macro_vitals.return_value = (True, "")
+            mock_halt.return_value = TradingHaltState(active=False, kind="none", path="", reason="")
+            mock_freshness.return_value = MagicMock(
+                is_stale=False, blocking=False, sources=[], stale_sources=[]
+            )
+            mock_juror.return_value.get_consensus.return_value = False
+
+            with pytest.raises(ValueError, match="MULTI-MODEL CONSENSUS FAILED"):
+                safe_submit_order(mock_client, mock_request, strategy="spy_put_credit")
+
+        mock_client.submit_order.assert_not_called()
+
+    def test_zero_retrieved_lessons_hard_fails_opening(self, monkeypatch):
+        """RAG returns 0 lessons -> hard fail, no soft skip (this PR's core fix)."""
+        monkeypatch.setenv("ALPACA_PAPER_TRADING_API_KEY", "paper-key")
+        monkeypatch.setenv("ALPACA_PAPER_TRADING_API_SECRET", "paper-secret")
+        monkeypatch.delenv("ALPACA_API_KEY", raising=False)
+        monkeypatch.delenv("ALPACA_SECRET_KEY", raising=False)
+        monkeypatch.delenv("SKIP_POLICY_GATE", raising=False)
+        from src.safety.trading_halt import TradingHaltState
+
+        mock_client = MagicMock(spec=["get_account", "submit_order"])
+        mock_client.get_account.return_value = MagicMock(equity="100000")
+
+        mock_request = MagicMock()
+        mock_request.symbol = None
+        mock_request.limit_price = -1.11
+        mock_request.qty = 1
+        mock_request.side = "SELL"
+        mock_request.legs = [
+            MagicMock(symbol="SPY260821P00703000", side="BUY", ratio_qty=1),
+            MagicMock(symbol="SPY260821P00708000", side="SELL", ratio_qty=1),
+        ]
+
+        with (
+            patch(
+                "src.utils.alpaca_client.get_alpaca_credentials",
+                return_value=("paper-key", "paper-secret"),
+            ),
+            patch("src.utils.alpaca_client.get_options_data_client", return_value=MagicMock()),
+            patch("src.safety.macro_risk_guard.MacroRiskGuard") as mock_macro_guard,
+            patch("src.safety.trading_halt.get_trading_halt_state") as mock_halt,
+            patch.object(gate_mod, "_infer_is_closing_order", return_value=False),
+            patch.object(gate_mod, "_get_positions_qty_map", return_value={}),
+            patch.object(gate_mod, "_estimate_opening_max_loss", return_value=(500.0, 35, "SPY")),
+            patch.object(gate_mod, "_enforce_intraday_guardrails", return_value=(True, "")),
+            patch.object(gate_mod, "_query_rag_for_blocking_lessons", return_value=(False, [])),
+            patch.object(gate_mod, "_check_market_regime", return_value=(1.0, [])),
+            patch.object(gate_mod, "check_context_freshness") as mock_freshness,
+            patch("src.safety.north_star_guard.get_guard_context", return_value={}),
+            patch("src.safety.milestone_controller.get_milestone_context", return_value={}),
+            patch("src.rag.lessons_search.LessonsSearch") as mock_lessons,
+            patch.object(
+                gate_mod,
+                "_active_strategy_ml_ready",
+                return_value=(False, {"family": "spy_put_credit", "n": 0, "learning_ready": False}),
+            ),
+        ):
+            mock_macro_guard.return_value.get_macro_snapshot.return_value = {}
+            mock_macro_guard.return_value.check_macro_vitals.return_value = (True, "")
+            mock_halt.return_value = TradingHaltState(active=False, kind="none", path="", reason="")
+            mock_freshness.return_value = MagicMock(
+                is_stale=False, blocking=False, sources=[], stale_sources=[]
+            )
+            # Empty retrieval -- must hard-fail, not soft-skip.
+            mock_lessons.return_value.search.return_value = []
+
+            with pytest.raises(ValueError, match="REASONING AUDIT FAILED"):
+                safe_submit_order(mock_client, mock_request, strategy="spy_put_credit")
+
+        mock_client.submit_order.assert_not_called()
+
+    def test_hallucination_risk_hard_fails_opening(self, monkeypatch):
+        """Low-groundedness reasoning trace -> hard fail (score.is_hallucination_risk)."""
+        monkeypatch.setenv("ALPACA_PAPER_TRADING_API_KEY", "paper-key")
+        monkeypatch.setenv("ALPACA_PAPER_TRADING_API_SECRET", "paper-secret")
+        monkeypatch.delenv("ALPACA_API_KEY", raising=False)
+        monkeypatch.delenv("ALPACA_SECRET_KEY", raising=False)
+        monkeypatch.delenv("SKIP_POLICY_GATE", raising=False)
+        from src.safety.trading_halt import TradingHaltState
+
+        mock_client = MagicMock(spec=["get_account", "submit_order"])
+        mock_client.get_account.return_value = MagicMock(equity="100000")
+
+        mock_request = MagicMock()
+        mock_request.symbol = None
+        mock_request.limit_price = -1.11
+        mock_request.qty = 1
+        mock_request.side = "SELL"
+        mock_request.legs = [
+            MagicMock(symbol="SPY260821P00703000", side="BUY", ratio_qty=1),
+            MagicMock(symbol="SPY260821P00708000", side="SELL", ratio_qty=1),
+        ]
+
+        with (
+            patch(
+                "src.utils.alpaca_client.get_alpaca_credentials",
+                return_value=("paper-key", "paper-secret"),
+            ),
+            patch("src.utils.alpaca_client.get_options_data_client", return_value=MagicMock()),
+            patch("src.safety.macro_risk_guard.MacroRiskGuard") as mock_macro_guard,
+            patch("src.safety.trading_halt.get_trading_halt_state") as mock_halt,
+            patch.object(gate_mod, "_infer_is_closing_order", return_value=False),
+            patch.object(gate_mod, "_get_positions_qty_map", return_value={}),
+            patch.object(gate_mod, "_estimate_opening_max_loss", return_value=(500.0, 35, "SPY")),
+            patch.object(gate_mod, "_enforce_intraday_guardrails", return_value=(True, "")),
+            patch.object(gate_mod, "_query_rag_for_blocking_lessons", return_value=(False, [])),
+            patch.object(gate_mod, "_check_market_regime", return_value=(1.0, [])),
+            patch.object(gate_mod, "check_context_freshness") as mock_freshness,
+            patch("src.safety.north_star_guard.get_guard_context", return_value={}),
+            patch("src.safety.milestone_controller.get_milestone_context", return_value={}),
+            patch("src.safety.reasoning_evaluator.ReasoningEvaluator") as mock_evaluator,
+            patch("src.rag.lessons_search.LessonsSearch") as mock_lessons,
+            patch.object(
+                gate_mod,
+                "_active_strategy_ml_ready",
+                return_value=(False, {"family": "spy_put_credit", "n": 0, "learning_ready": False}),
+            ),
+        ):
+            mock_macro_guard.return_value.get_macro_snapshot.return_value = {}
+            mock_macro_guard.return_value.check_macro_vitals.return_value = (True, "")
+            mock_halt.return_value = TradingHaltState(active=False, kind="none", path="", reason="")
+            mock_freshness.return_value = MagicMock(
+                is_stale=False, blocking=False, sources=[], stale_sources=[]
+            )
+            mock_lessons.return_value.search.return_value = [MagicMock(content="unrelated lesson")]
+            mock_evaluator.return_value.evaluate.return_value = MagicMock(
+                is_hallucination_risk=True,
+                groundedness=0.1,
+                reasoning_trace="reasoning does not cite retrieved lessons",
+            )
+
+            with pytest.raises(ValueError, match="REASONING AUDIT FAILED"):
+                safe_submit_order(mock_client, mock_request, strategy="spy_put_credit")
+
+        mock_client.submit_order.assert_not_called()
+
 
 # -------------------------------------------------------------------
 # safe_close_position wrapper

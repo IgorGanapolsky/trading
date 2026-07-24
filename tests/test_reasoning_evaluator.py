@@ -51,3 +51,37 @@ def test_evaluator_signal_contradiction():
 
     assert score.is_hallucination_risk is True
     assert score.signal_relevance == 0.0  # Contradiction between SELL side and 'reject' reasoning
+
+
+def test_evaluator_uses_put_credit_specific_keyword_checks():
+    """spy_put_credit uses a different keyword set (1-lot, credit) than the
+    generic iron_condor checklist (vix, 50% profit)."""
+    evaluator = ReasoningEvaluator(threshold=0.7)
+    proposal = {"strategy": "spy_put_credit", "side": "SELL"}
+    reasoning = (
+        "Rule #1 don't lose money. 1-lot SPY bull put credit, 15-delta short, "
+        "stop-loss at 200% of credit, exit by 7 dte."
+    )
+    context = [
+        "Rule #1 don't lose money. 1-lot SPY bull put credit, 15-delta short, "
+        "stop-loss at 200% of credit, exit by 7 dte."
+    ]
+
+    score = evaluator.evaluate(proposal, reasoning, context)
+
+    assert score.is_hallucination_risk is False
+    assert score.groundedness == 1.0  # all 6 put-credit keywords match
+
+
+def test_evaluator_empty_retrieved_context_zeroes_relevance():
+    """No retrieved context at all -> context_relevance hard-zeroed (openings
+    require retrieved lessons; this is the 'hard groundedness' fix)."""
+    evaluator = ReasoningEvaluator(threshold=0.7)
+    proposal = {"strategy": "spy_put_credit", "side": "SELL"}
+    reasoning = "Rule #1 don't lose money. 1-lot, 15-delta, stop-loss, 7 dte."
+    context = []
+
+    score = evaluator.evaluate(proposal, reasoning, context)
+
+    assert score.context_relevance == 0.0
+    assert score.is_hallucination_risk is True
