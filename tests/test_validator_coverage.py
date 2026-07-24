@@ -763,11 +763,25 @@ class TestSafeSubmitOrder:
                 groundedness=0.95,
                 reasoning_trace="grounded",
             )
-            mock_lessons.return_value.search.return_value = []
-
-            safe_submit_order(mock_client, mock_request, strategy="iron_condor")
+            # Hard RAG require: openings must retrieve at least one lesson
+            mock_lessons.return_value.search.return_value = [
+                MagicMock(
+                    content=(
+                        "Rule #1 don't lose money. Use stop-loss, 15-delta, "
+                        "check VIX, 50% profit or 7 dte exit."
+                    )
+                )
+            ]
+            # Cold validation: ML consensus deferred (no fake AGREE)
+            with patch.object(
+                gate_mod,
+                "_active_strategy_ml_ready",
+                return_value=(False, {"family": "spy_put_credit", "n": 0, "learning_ready": False}),
+            ):
+                safe_submit_order(mock_client, mock_request, strategy="iron_condor")
 
         mock_client.submit_order.assert_called_once_with(mock_request)
+        mock_juror.assert_not_called()
 
 
 # -------------------------------------------------------------------

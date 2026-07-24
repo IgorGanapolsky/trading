@@ -723,3 +723,33 @@ class TestPutCreditDailyStructureGate:
         )
         assert ok is False
         assert "3/3" in reason
+
+
+class TestMlConsensusAndHardReasoning:
+    """Hard RAG groundedness + no ML theater until learning_ready n>=30."""
+
+    def test_ml_ready_false_on_empty_put_credit_cohort(self, monkeypatch, tmp_path):
+        import json
+        import src.safety.mandatory_trade_gate as gate_mod
+
+        root = tmp_path
+        (root / "data" / "runtime").mkdir(parents=True)
+        (root / "data").mkdir(exist_ok=True)
+        (root / "data" / "runtime" / "strategy_kill_switch.json").write_text(
+            json.dumps({"active_family": "spy_put_credit", "live_blocked": True})
+        )
+        (root / "data" / "trades.json").write_text(
+            json.dumps({"trades": [], "stats": {"closed_trades": 0}})
+        )
+        ready, meta = gate_mod._active_strategy_ml_ready(root)
+        assert ready is False
+        assert meta.get("n", 0) == 0
+
+    def test_protocol_reasoning_includes_put_credit_keywords(self):
+        import src.safety.mandatory_trade_gate as gate_mod
+
+        text = gate_mod._protocol_reasoning_for_strategy("spy_put_credit").lower()
+        assert "rule #1" in text
+        assert "15-delta" in text or "15-delta" in text.replace(" ", "")
+        assert "stop-loss" in text or "stop-loss" in text.replace(" ", "-")
+        assert "7 dte" in text
