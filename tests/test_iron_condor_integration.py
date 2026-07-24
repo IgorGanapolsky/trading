@@ -91,7 +91,7 @@ class TestIronCondorSuccessfulEntry:
     @patch("scripts.iron_condor_trader.acquire_trade_lock")
     @patch("scripts.iron_condor_trader.LessonsLearnedRAG")
     @patch("scripts.iron_condor_trader.safe_submit_order")
-    def test_full_live_flow_with_mleg(self, mock_submit, mock_rag_class, mock_lock, _mock_ts):
+    def test_full_live_flow_with_mleg(self, mock_submit, mock_rag_class, mock_lock, _mock_ts, tmp_path):
         """Full live flow: position check -> RAG -> MLeg order submission."""
         from scripts.iron_condor_trader import IronCondorLegs, IronCondorStrategy
 
@@ -144,6 +144,7 @@ class TestIronCondorSuccessfulEntry:
                     warnings=[],
                 ),
             ),
+            patch("scripts.iron_condor_trader.IC_ENTRIES_PATH", tmp_path / "ic_entries.json"),
         ):
             with patch.object(strategy, "_record_trade"):
                 trade = strategy.execute(ic, live=True)
