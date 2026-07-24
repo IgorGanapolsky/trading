@@ -212,7 +212,7 @@ def evaluate_put_credit_exit(
         elif pnl <= -(max_profit * profile.stop_loss_pct):
             reason = "stop_loss"
 
-    return {
+    result = {
         "should_exit": reason is not None,
         "exit_reason": reason,
         "dte": dte,
@@ -223,6 +223,13 @@ def evaluate_put_credit_exit(
         "profit_target": max_profit * profile.take_profit_pct,
         "stop_loss": -(max_profit * profile.stop_loss_pct),
     }
+    try:
+        from src.risk.put_credit_regime import attach_counterfactuals
+
+        result = attach_counterfactuals(result, credit=credit, quantity=quantity, dte=dte)
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("counterfactual attach skipped: %s", exc)
+    return result
 
 
 def _position_map(client) -> dict[str, Any]:
@@ -983,6 +990,17 @@ def _record_entry(opp: dict, order_id: str) -> None:
     if key in entries and entries[key].get("order_id") != order_id:
         raise RuntimeError(f"Put-credit journal identity collision for {key}")
     signature = f"SPY_{opp['expiry']}_P{int(opp['long_put'])}-{int(opp['short_put'])}"
+    regime = opp.get("regime") if isinstance(opp.get("regime"), dict) else None
+    if regime is None:
+        try:
+            from src.risk.put_credit_regime import capture_regime_snapshot
+
+            regime = capture_regime_snapshot(
+                float(opp["spy_price"]) if opp.get("spy_price") is not None else None
+            ).as_dict()
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Regime snapshot at journal failed: %s", exc)
+            regime = {"error": str(exc)}
     entries[key] = {
         "strategy_family": "spy_put_credit",
         "order_id": order_id,
@@ -1002,6 +1020,7 @@ def _record_entry(opp: dict, order_id: str) -> None:
         "validation_phase": True,
         "profile_name": "spy-put-credit",
         "status": "submitted_unconfirmed",
+        "regime": regime,
     }
     _save_entries(entries)
     logger.info("Recorded %s in %s", key, ENTRIES_FILE)
@@ -1077,6 +1096,16 @@ def main() -> int:
         "--reconcile-entries",
         action="store_true",
         help="Recover missing PCS journals from filled paper BPS orders.",
+    )
+    parser.add_argument(
+        "--ignore-regime-gate",
+        action="store_true",
+        help="Bypass IVR/VIX regime entry gate (paper debug only; still paper-only).",
+    )
+    parser.add_argument(
+        "--regime-status",
+        action="store_true",
+        help="Print current regime snapshot and gate decision only.",
     )
     parser.add_argument("--live", action="store_true", help="Always rejected while live_blocked")
     args = parser.parse_args()
@@ -1158,6 +1187,18 @@ def main() -> int:
         print(json.dumps(report, indent=2, default=str))
         return 2 if report["broken"] else 0
 
+    if args.regime_status:
+        try:
+            price = float(get_underlying_price("SPY"))
+        except Exception:
+            price = None
+        from src.risk.put_credit_regime import capture_regime_snapshot, evaluate_regime_gate
+
+        snap = capture_regime_snapshot(price)
+        gate = evaluate_regime_gate(snap)
+        print(json.dumps(gate, indent=2, default=str))
+        return 0 if gate["allowed"] else 2
+
     if not _inventory_ok():
         return 2
 
@@ -1173,10 +1214,51 @@ def main() -> int:
         logger.error("Cannot get SPY price: %s", exc)
         return 1
 
+    # Research-backed regime gate (IVR / VIX) before scanning or submitting.
+    from src.risk.put_credit_regime import capture_regime_snapshot, evaluate_regime_gate
+
+    regime_snap = capture_regime_snapshot(spy_price)
+    regime_gate = evaluate_regime_gate(regime_snap)
+    if not regime_gate["allowed"] and not args.ignore_regime_gate:
+        logger.error(
+            "PUT-CREDIT REGIME GATE BLOCKED: %s",
+            " | ".join(regime_gate["blockers"]),
+        )
+        print(
+            json.dumps(
+                {
+                    "success": False,
+                    "reason": "regime_gate_blocked",
+                    "regime": regime_gate,
+                },
+                indent=2,
+                default=str,
+            )
+        )
+        return 2
+    if regime_gate.get("soft_flags"):
+        logger.warning("Regime soft flags: %s", " | ".join(regime_gate["soft_flags"]))
+    if args.ignore_regime_gate and not regime_gate["allowed"]:
+        logger.warning(
+            "Ignoring regime gate blockers (debug): %s",
+            " | ".join(regime_gate["blockers"]),
+        )
+
     opp = find_put_credit_opportunity(spy_price)
+    if isinstance(opp, dict):
+        opp["spy_price"] = spy_price
+        opp["regime"] = regime_snap.as_dict()
+        opp["regime_gate"] = {
+            "allowed": regime_gate["allowed"],
+            "blockers": regime_gate["blockers"],
+            "soft_flags": regime_gate["soft_flags"],
+            "thresholds": regime_gate["thresholds"],
+        }
     dry = not args.execute_paper
     plan = plan_structure(dry_run=dry, opp=opp)
     plan["spy_price"] = spy_price
+    plan["regime"] = regime_snap.as_dict()
+    plan["regime_gate"] = regime_gate
     path = write_plan(plan)
 
     if opp is None:
@@ -1192,19 +1274,28 @@ def main() -> int:
         return 2
 
     logger.info(
-        "Policy: 1-lot $%.0f-wide put credit | Δ=%.2f | credit=$%.2f | TP %.0f%% | SL %.0fx",
+        "Policy: 1-lot $%.0f-wide put credit | Δ=%.2f | credit=$%.2f | TP %.0f%% | SL %.0fx | "
+        "IVR=%s VIX=%s",
         plan["wing_width"],
         opp["put_delta"],
         opp["est_credit"],
         plan["take_profit_pct"] * 100,
         plan["stop_loss_pct"],
+        regime_snap.iv_rank_proxy,
+        regime_snap.vix,
     )
 
     if dry:
         logger.info("DRY RUN — no order (pass --execute-paper for paper MLEG)")
         print(
             json.dumps(
-                {"success": True, "dry_run": True, "opportunity": opp, "plan_path": str(path)},
+                {
+                    "success": True,
+                    "dry_run": True,
+                    "opportunity": opp,
+                    "regime": regime_gate,
+                    "plan_path": str(path),
+                },
                 indent=2,
                 default=str,
             )
@@ -1227,6 +1318,16 @@ def main() -> int:
         with acquire_trade_lock(timeout=10):
             if not _inventory_ok(client):
                 return 2
+            # Re-check regime under lock (stale window)
+            regime_snap2 = capture_regime_snapshot(spy_price)
+            regime_gate2 = evaluate_regime_gate(regime_snap2)
+            if not regime_gate2["allowed"] and not args.ignore_regime_gate:
+                logger.error(
+                    "PUT-CREDIT REGIME GATE BLOCKED after lock: %s",
+                    " | ".join(regime_gate2["blockers"]),
+                )
+                return 2
+            opp["regime"] = regime_snap2.as_dict()
             limit_report = evaluate_entry_limits(_load_entries(), candidate_signature=signature)
             if not limit_report["allowed"]:
                 logger.error(

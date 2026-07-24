@@ -96,6 +96,65 @@ def _is_closed(row: dict[str, Any]) -> bool:
     return False
 
 
+def _metrics_from_pnls(pnls: list[float]) -> dict[str, Any]:
+    n = len(pnls)
+    wins = [p for p in pnls if p > 0]
+    losses = [p for p in pnls if p < 0]
+    be = [p for p in pnls if p == 0]
+    gross_win = sum(wins)
+    gross_loss = abs(sum(losses))
+    total = sum(pnls)
+    expectancy = (total / n) if n else None
+    pf = (gross_win / gross_loss) if gross_loss > 0 else (None if n == 0 else float("inf"))
+    win_rate = (len(wins) / n * 100.0) if n else None
+    return {
+        "n": n,
+        "wins": len(wins),
+        "losses": len(losses),
+        "breakeven": len(be),
+        "win_rate_pct": round(win_rate, 2) if win_rate is not None else None,
+        "profit_factor": round(pf, 4) if isinstance(pf, float) and pf != float("inf") else pf,
+        "expectancy": round(expectancy, 4) if expectancy is not None else None,
+        "total_realized_pnl": round(total, 2) if n else 0.0,
+        "avg_win": round(sum(wins) / len(wins), 2) if wins else None,
+        "avg_loss": round(sum(losses) / len(losses), 2) if losses else None,
+    }
+
+
+def _rolling_windows(pnls: list[float], window: int = 20) -> dict[str, Any]:
+    """Stability check: last rolling window metrics (research backlog A2)."""
+    if not pnls:
+        return {
+            "window": window,
+            "sample_sufficient": False,
+            "last": None,
+            "note": "no closed put-credit pnls",
+        }
+    if len(pnls) < window:
+        m = _metrics_from_pnls(pnls)
+        return {
+            "window": window,
+            "sample_sufficient": False,
+            "last": m,
+            "note": f"need {window} closed trades for full rolling window (have {len(pnls)})",
+        }
+    last = _metrics_from_pnls(pnls[-window:])
+    # sign stability vs full sample
+    full = _metrics_from_pnls(pnls)
+    sign_flip = False
+    if full.get("expectancy") is not None and last.get("expectancy") is not None:
+        sign_flip = (full["expectancy"] > 0) != (last["expectancy"] > 0)
+    return {
+        "window": window,
+        "sample_sufficient": True,
+        "last": last,
+        "sign_flip_vs_full": sign_flip,
+        "note": (
+            "If sign_flip_vs_full at n>=30, treat edge as unstable (research kill heuristic)."
+        ),
+    }
+
+
 def summarize_closed(rows: list[dict[str, Any]]) -> dict[str, Any]:
     closed = [r for r in rows if _is_put_credit_trade(r) and _is_closed(r)]
     pnls: list[float] = []
@@ -111,16 +170,11 @@ def summarize_closed(rows: list[dict[str, Any]]) -> dict[str, Any]:
         if pnl is not None:
             pnls.append(pnl)
 
-    n = len(pnls)
-    wins = [p for p in pnls if p > 0]
-    losses = [p for p in pnls if p < 0]
-    be = [p for p in pnls if p == 0]
-    gross_win = sum(wins)
-    gross_loss = abs(sum(losses))
-    total = sum(pnls)
-    expectancy = (total / n) if n else None
-    pf = (gross_win / gross_loss) if gross_loss > 0 else (None if n == 0 else float("inf"))
-    win_rate = (len(wins) / n * 100.0) if n else None
+    base = _metrics_from_pnls(pnls)
+    n = base["n"]
+    expectancy = base["expectancy"]
+    pf = base["profit_factor"]
+    total = base["total_realized_pnl"]
 
     kill = {
         "n_target": KILL_N,
@@ -131,6 +185,11 @@ def summarize_closed(rows: list[dict[str, Any]]) -> dict[str, Any]:
         else None,
         "profit_factor_gt_1": (pf is not None and pf > KILL_MIN_PF) if n >= KILL_N else None,
         "total_pnl_gt_0": (total > 0) if n >= KILL_N else None,
+        "research_note": (
+            "n=30 is an interim floor; Parallel research recommends ~100 trades and "
+            "multi-regime coverage before desk-grade confidence. Live still blocked "
+            "until EDGE_CANDIDATE; do not deposit capital on interim n alone."
+        ),
     }
     if n >= KILL_N:
         kill["pass_all"] = bool(
@@ -143,16 +202,17 @@ def summarize_closed(rows: list[dict[str, Any]]) -> dict[str, Any]:
 
     return {
         "closed_n": n,
-        "wins": len(wins),
-        "losses": len(losses),
-        "breakeven": len(be),
-        "win_rate_pct": round(win_rate, 2) if win_rate is not None else None,
-        "profit_factor": round(pf, 4) if isinstance(pf, float) and pf != float("inf") else pf,
-        "expectancy": round(expectancy, 4) if expectancy is not None else None,
-        "total_realized_pnl": round(total, 2) if n else 0.0,
-        "avg_win": round(sum(wins) / len(wins), 2) if wins else None,
-        "avg_loss": round(sum(losses) / len(losses), 2) if losses else None,
+        "wins": base["wins"],
+        "losses": base["losses"],
+        "breakeven": base["breakeven"],
+        "win_rate_pct": base["win_rate_pct"],
+        "profit_factor": base["profit_factor"],
+        "expectancy": base["expectancy"],
+        "total_realized_pnl": base["total_realized_pnl"],
+        "avg_win": base["avg_win"],
+        "avg_loss": base["avg_loss"],
         "kill_criteria": kill,
+        "rolling_20": _rolling_windows(pnls, 20),
     }
 
 
@@ -166,6 +226,7 @@ def summarize_open(entries: dict[str, Any] | None) -> dict[str, Any]:
         status = str(entry.get("status") or "open").lower()
         if status in {"closed", "exited", "cancelled", "canceled"}:
             continue
+        regime = entry.get("regime") if isinstance(entry.get("regime"), dict) else {}
         open_rows.append(
             {
                 "key": key,
@@ -174,6 +235,13 @@ def summarize_open(entries: dict[str, Any] | None) -> dict[str, Any]:
                 "quantity": entry.get("quantity"),
                 "entry_time": entry.get("entry_time") or entry.get("filled_at"),
                 "signature": entry.get("signature"),
+                "regime": {
+                    "vix": regime.get("vix"),
+                    "iv_rank_proxy": regime.get("iv_rank_proxy"),
+                    "spy_above_200dma": regime.get("spy_above_200dma"),
+                }
+                if regime
+                else None,
             }
         )
     return {"open_n": len(open_rows), "entries": open_rows}
@@ -228,10 +296,19 @@ def build_scorecard(
             "claim_profitable": False
             if closed["closed_n"] < KILL_N
             else bool(closed["kill_criteria"].get("pass_all")),
+            "live_deposit_ready": False,
             "note": (
-                "Do not claim profitability until kill_criteria.verdict is EDGE_CANDIDATE "
-                f"(n>={KILL_N}, expectancy>0, PF>1, total PnL>0)."
+                "Do not claim profitability or deposit real capital until kill_criteria.verdict "
+                f"is EDGE_CANDIDATE (n>={KILL_N}, expectancy>0, PF>1, total PnL>0). "
+                "Process upgrades (regime gate, logging) improve validation quality only — "
+                "they do not create edge."
             ),
+        },
+        "process_upgrades": {
+            "regime_gate": "IVR>=30 and VIX<=30 hard; SPY 200-DMA soft-flag",
+            "entry_regime_logging": True,
+            "exit_counterfactuals_tp50_dte21": True,
+            "rolling_20_metrics": True,
         },
     }
 
