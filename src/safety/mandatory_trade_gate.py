@@ -444,6 +444,60 @@ def _count_put_credit_structures_today() -> int:
     return n
 
 
+def _count_put_credit_structures_today_from_broker() -> int:
+    """Broker-side put-credit structure count for today (ET).
+
+    Greptile #4278 P1: journal-only counters undercount when a fill lands but the
+    process dies before durable journal write. Use max(journal, broker).
+    Counts filled 2-leg multi-leg orders (bull put) and client_order_ids with BPS.
+    """
+    if os.environ.get("PYTEST_CURRENT_TEST") or "pytest" in sys.modules:
+        return 0
+
+    try:
+        from src.utils.alpaca_client import get_alpaca_credentials
+
+        credentials = get_alpaca_credentials()
+        api_key, api_secret = credentials[0], credentials[1]
+        inferred_paper = _infer_paper_from_credentials(credentials)
+        is_paper = True if inferred_paper is None else inferred_paper
+        if not api_key or not api_secret:
+            raise ValueError("No Alpaca credentials")
+
+        from alpaca.trading.client import TradingClient
+        from alpaca.trading.enums import QueryOrderStatus
+        from alpaca.trading.requests import GetOrdersRequest
+
+        client = TradingClient(api_key, api_secret, paper=is_paper)
+        today_str = _today_et_str()
+        orders = client.get_orders(
+            GetOrdersRequest(
+                status=QueryOrderStatus.FILLED,
+                after=f"{today_str}T00:00:00Z",
+                limit=100,
+            )
+        )
+        n = 0
+        for order in orders or []:
+            legs = getattr(order, "legs", None) or []
+            client_id = str(getattr(order, "client_order_id", "") or "").upper()
+            # 2-leg multi-leg = put credit vertical; BPS client id = our put-credit path
+            if len(legs) == 2 or "BPS" in client_id or "PUT_CREDIT" in client_id:
+                # Exclude pure single-leg orphan closes (1 leg, no BPS)
+                if len(legs) == 1 and "BPS" not in client_id:
+                    continue
+                n += 1
+        logger.info(
+            "Broker put-credit structure count today: %s (from %s filled orders)",
+            n,
+            len(orders or []),
+        )
+        return n
+    except Exception as exc:
+        logger.warning("Broker put-credit structure count failed: %s", exc)
+        return 0
+
+
 def _count_structures_today_from_alpaca() -> int:
     """Count today's IC entries from Alpaca order history (works in CI and local).
 
@@ -512,9 +566,15 @@ def _count_structures_today_from_alpaca() -> int:
 
 
 def _structures_today_for_gate() -> int:
-    """Structure count for the active family (put-credit vs residual IC noise)."""
+    """Structure count for the active family (put-credit vs residual IC noise).
+
+    Put-credit: max(journal, broker) so a fill-before-journal crash cannot
+    undercount past max_daily_structures (Greptile #4278 P1).
+    """
     if _active_strategy_family() == "spy_put_credit":
-        return _count_put_credit_structures_today()
+        journal_n = _count_put_credit_structures_today()
+        broker_n = _count_put_credit_structures_today_from_broker()
+        return max(int(journal_n or 0), int(broker_n or 0))
     return _count_structures_today_from_alpaca()
 
 
@@ -1950,6 +2010,28 @@ def safe_submit_order(client, order_request, strategy: str | None = None):
                     raise ValueError(
                         "MULTI-MODEL CONSENSUS REQUIRED (learning_ready) but MultiModelJuror unavailable"
                     ) from None
+                except RuntimeError as e:
+                    # Greptile #4281 P1: JUROR_UNAVAILABLE must not permanently hard-block
+                    # every open after edge is proven. Never claim AGREE; allow without
+                    # multi-model consensus until a real secondary provider is wired.
+                    if "JUROR_UNAVAILABLE" in str(e):
+                        logger.warning(
+                            "Juror unavailable after ml_ready (n=%s); opening without "
+                            "multi-model consensus claim (no fake AGREE): %s",
+                            ml_meta.get("n"),
+                            e,
+                        )
+                        gateway.capture_span(
+                            "juror_consensus",
+                            trace_id,
+                            attributes={
+                                "status": "UNAVAILABLE_NO_FAKE_AGREE",
+                                "n": int(ml_meta.get("n") or 0),
+                            },
+                        )
+                    else:
+                        logger.error(f"CONSENSUS ERROR: {e}")
+                        raise ValueError(f"CRITICAL: Consensus check failed: {e}") from e
                 except Exception as e:
                     logger.error(f"CONSENSUS ERROR: {e}")
                     raise ValueError(f"CRITICAL: Consensus check failed: {e}") from e
@@ -1992,18 +2074,13 @@ def safe_submit_order(client, order_request, strategy: str | None = None):
                         "(0 lessons retrieved; rebuild indexes or fix LessonsSearch)"
                     )
 
-                # Protocol baseline is a first-class source (not a substitute for lessons).
-                # Lessons remain mandatory above; baseline makes protocol keywords auditable.
-                audit_context = [
-                    "Protocol source: Rule #1 don't lose money; mandatory stop-loss; "
-                    "check VIX; 15-delta shorts; 50% profit or 25% validation TP; "
-                    "7 DTE exit; 1-lot credit defined-risk only."
-                ] + retrieved_context
-
+                # Greptile #4281 P1: do NOT inject synthetic protocol baseline into
+                # retrieved_context — that made any nonempty lesson score groundedness
+                # 1.0. Score against *actual lessons only*; protocol lives in reasoning.
                 score = evaluator.evaluate(
                     proposal=proposal,
                     reasoning=protocol_reasoning,
-                    retrieved_context=audit_context,
+                    retrieved_context=retrieved_context,
                 )
 
                 if score.is_hallucination_risk:

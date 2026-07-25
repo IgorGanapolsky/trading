@@ -51,3 +51,20 @@ def test_evaluator_signal_contradiction():
 
     assert score.is_hallucination_risk is True
     assert score.signal_relevance == 0.0  # Contradiction between SELL side and 'reject' reasoning
+
+
+def test_put_credit_unrelated_lesson_does_not_auto_pass():
+    """Greptile #4281: unrelated lesson must not inherit synthetic protocol keywords."""
+    evaluator = ReasoningEvaluator(threshold=0.7)
+    proposal = {"strategy": "spy_put_credit"}
+    reasoning = (
+        "Phil Town Rule #1: don't lose money. SPY-only 1-lot $5-wide bull put credit. "
+        "Target ~15-delta short put, stop-loss at 200% of credit, exit by 7 DTE."
+    )
+    # Unrelated lesson — no protocol keywords
+    context = ["Remember to rotate API keys every 90 days for security hygiene."]
+
+    score = evaluator.evaluate(proposal, reasoning, context)
+
+    assert score.is_hallucination_risk is True
+    assert score.groundedness < 0.7

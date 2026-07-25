@@ -724,6 +724,19 @@ class TestPutCreditDailyStructureGate:
         assert ok is False
         assert "3/3" in reason
 
+    def test_structures_today_uses_max_of_journal_and_broker(self, monkeypatch):
+        """Greptile #4278: fill-before-journal must not undercount past max_daily."""
+        import src.safety.mandatory_trade_gate as gate_mod
+
+        monkeypatch.setattr(gate_mod, "_active_strategy_family", lambda: "spy_put_credit")
+        monkeypatch.setattr(gate_mod, "_count_put_credit_structures_today", lambda: 1)
+        monkeypatch.setattr(gate_mod, "_count_put_credit_structures_today_from_broker", lambda: 3)
+        assert gate_mod._structures_today_for_gate() == 3
+
+        monkeypatch.setattr(gate_mod, "_count_put_credit_structures_today", lambda: 2)
+        monkeypatch.setattr(gate_mod, "_count_put_credit_structures_today_from_broker", lambda: 0)
+        assert gate_mod._structures_today_for_gate() == 2
+
 
 class TestMlConsensusAndHardReasoning:
     """Hard RAG groundedness + no ML theater until learning_ready n>=30."""

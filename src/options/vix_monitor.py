@@ -175,15 +175,20 @@ class VIXMonitor:
             logger.error(f"Failed to fetch VIX: {e}")
             raise RuntimeError(f"Unable to fetch VIX data: {e}")
 
-    def get_vix_percentile(self, lookback_days: int = 252) -> float:
+    def get_vix_percentile(
+        self, lookback_days: int = 252, *, default: float | None = 50.0
+    ) -> float | None:
         """
         Calculate VIX percentile over historical period.
 
         Args:
             lookback_days: Number of trading days to look back (default: 252 = 1 year)
+            default: Value when history/errors prevent a real percentile.
+                Pass ``default=None`` for fail-closed callers (put-credit regime gate).
+                Legacy callers keep the historical median placeholder (50.0).
 
         Returns:
-            VIX percentile (0-100)
+            VIX percentile (0-100), or ``default`` when unavailable.
         """
         try:
             current_vix = self.get_current_vix()
@@ -197,7 +202,7 @@ class VIXMonitor:
 
             if hist.empty or len(hist) < 30:
                 logger.warning(f"Insufficient VIX history: {len(hist)} days")
-                return 50.0  # Default to median
+                return default
 
             # Calculate percentile
             historical_closes = hist["Close"].values
@@ -212,7 +217,7 @@ class VIXMonitor:
 
         except Exception as e:
             logger.error(f"Failed to calculate VIX percentile: {e}")
-            return 50.0  # Default to median on error
+            return default
 
     def get_vix_term_structure(self) -> dict[str, float]:
         """

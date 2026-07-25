@@ -730,6 +730,18 @@ def manage_put_credit_exits(client, *, dry_run: bool = False) -> dict[str, Any]:
             short_price=_position_price(short_pos),
             long_price=_position_price(long_pos),
         )
+        # Greptile #4280 P1: persist counterfactuals on the journal so cohort
+        # analysis can compare 25% TP / 7-DTE vs public 50% / 21-DTE later.
+        if isinstance(decision.get("counterfactuals"), dict):
+            entry["last_counterfactuals"] = decision["counterfactuals"]
+            entry["last_counterfactuals_at"] = datetime.now(timezone.utc).isoformat()
+            entry["last_mark"] = {
+                "current_debit": decision.get("current_debit"),
+                "estimated_pnl": decision.get("estimated_pnl"),
+                "dte": decision.get("dte"),
+                "hold_hours": decision.get("hold_hours"),
+            }
+            changed = True
         detail = {"key": key, **decision}
         if not decision["should_exit"]:
             report["holds"] += 1
@@ -749,6 +761,8 @@ def manage_put_credit_exits(client, *, dry_run: bool = False) -> dict[str, Any]:
         entry["exit_submitted_at"] = datetime.now(timezone.utc).isoformat()
         entry["estimated_exit_debit"] = decision["current_debit"]
         entry["estimated_exit_pnl"] = decision["estimated_pnl"]
+        if isinstance(decision.get("counterfactuals"), dict):
+            entry["exit_counterfactuals"] = decision["counterfactuals"]
         _save_entries(entries)
         changed = True
         report["submitted"] += 1
