@@ -60,9 +60,10 @@ def main() -> int:
     else:
         print("=== REMITTANCE STATUS ($1000/mo after-tax target) ===")
         print(f"month: {progress.month_yyyy_mm}")
-        print(f"remitted_to_bank: ${progress.remitted_to_bank_usd:.2f}")
+        print(f"remitted_to_bank (confirmed): ${progress.remitted_to_bank_usd:.2f}")
+        print(f"in_flight (submitted): ${progress.in_flight_usd:.2f}")
         print(f"target: ${progress.target_usd:.2f}")
-        print(f"events: {progress.remittance_event_count}")
+        print(f"confirmed_events: {progress.remittance_event_count}")
         print(f"target_met: {progress.target_met} claim_allowed: {progress.claim_allowed}")
         if progress.estimated_after_tax_profit_usd is not None:
             print(f"estimated_after_tax_profit: ${progress.estimated_after_tax_profit_usd:.2f}")

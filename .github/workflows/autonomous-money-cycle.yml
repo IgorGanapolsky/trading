@@ -50,7 +50,11 @@ jobs:
           APCA_API_KEY_ID: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
           APCA_API_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
         run: |
-          python3 scripts/autonomous_money_cycle.py --dry-run --fund 0 --remit 0 --json
+          # Nonzero dry-run fund+remit so scheduled cadence logs amount/direction/time
+          # (real ACH still fail-closed inside planner until live gate clears).
+          python3 scripts/autonomous_money_cycle.py --dry-run --fund 100 --remit 100 --json
+          python3 scripts/mercury_broker_transfer.py --direction fund --amount 100 --json
+          python3 scripts/mercury_broker_transfer.py --direction remit --amount 100 --json
           python3 scripts/remittance_status.py --json
 
       - name: Commit audit artifacts

@@ -100,6 +100,7 @@ def test_remittance_progress_never_claims_without_ledger(tmp_path: Path):
 
 
 def test_remittance_progress_counts_confirmed_deposits(tmp_path: Path):
+    """Only CONFIRMED broker→Mercury counts toward target_met (not SUBMITTED)."""
     path = tmp_path / "ledger.jsonl"
     append_transfer_record(
         build_transfer_record(
@@ -111,6 +112,7 @@ def test_remittance_progress_counts_confirmed_deposits(tmp_path: Path):
         ),
         ledger_path=path,
     )
+    # SUBMITTED must be in-flight only — never unlock $1000/mo claim alone
     append_transfer_record(
         build_transfer_record(
             direction=TransferDirection.BROKER_TO_MERCURY,
@@ -135,10 +137,53 @@ def test_remittance_progress_counts_confirmed_deposits(tmp_path: Path):
     progress = compute_remittance_progress(
         load_transfer_ledger(ledger_path=path), month_yyyy_mm="2026-07"
     )
-    assert progress.remitted_to_bank_usd == 1000.0
-    assert progress.remittance_event_count == 2
-    assert progress.target_met is True
-    assert progress.claim_allowed is True
+    assert progress.remitted_to_bank_usd == 600.0
+    assert progress.remittance_event_count == 1
+    assert progress.in_flight_usd == 400.0
+    assert progress.in_flight_event_count == 1
+    assert progress.target_met is False
+    assert progress.claim_allowed is False
+
+    # Second CONFIRMED deposit reaches target
+    append_transfer_record(
+        build_transfer_record(
+            direction=TransferDirection.BROKER_TO_MERCURY,
+            amount_usd=400.0,
+            status=TransferStatus.CONFIRMED,
+            dry_run=False,
+            timestamp="2026-07-25T12:00:00+00:00",
+        ),
+        ledger_path=path,
+    )
+    progress2 = compute_remittance_progress(
+        load_transfer_ledger(ledger_path=path), month_yyyy_mm="2026-07"
+    )
+    assert progress2.remitted_to_bank_usd == 1000.0
+    assert progress2.remittance_event_count == 2
+    assert progress2.in_flight_usd == 400.0  # submitted still tracked separately
+    assert progress2.target_met is True
+    assert progress2.claim_allowed is True
+
+
+def test_submitted_alone_never_meets_target(tmp_path: Path):
+    path = tmp_path / "ledger.jsonl"
+    append_transfer_record(
+        build_transfer_record(
+            direction=TransferDirection.BROKER_TO_MERCURY,
+            amount_usd=1000.0,
+            status=TransferStatus.SUBMITTED,
+            dry_run=False,
+            timestamp="2026-07-15T12:00:00+00:00",
+        ),
+        ledger_path=path,
+    )
+    progress = compute_remittance_progress(
+        load_transfer_ledger(ledger_path=path), month_yyyy_mm="2026-07"
+    )
+    assert progress.remitted_to_bank_usd == 0.0
+    assert progress.in_flight_usd == 1000.0
+    assert progress.target_met is False
+    assert progress.claim_allowed is False
 
 
 def test_live_bank_gate_refuses_when_kill_switch_blocks(tmp_path: Path, monkeypatch):

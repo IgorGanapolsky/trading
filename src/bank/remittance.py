@@ -27,6 +27,8 @@ class RemittanceProgress:
     target_usd: float
     remitted_to_bank_usd: float
     remittance_event_count: int
+    in_flight_usd: float
+    in_flight_event_count: int
     estimated_after_tax_profit_usd: float | None
     realized_pre_tax_pnl_usd: float | None
     tax_rate_used: float
@@ -86,29 +88,34 @@ def compute_remittance_progress(
 ) -> RemittanceProgress:
     """Compute monthly remittance progress from transfer ledger facts.
 
-    ``target_met`` is True only when confirmed/submitted broker→Mercury remittances
-    in the month sum to >= target. Dry-run and blocked rows do not count.
+    ``target_met`` / ``claim_allowed`` require **confirmed** (dry_run=false)
+    broker→Mercury deposits summing to >= target. SUBMITTED is tracked only as
+    ``in_flight_usd`` and never unlocks the claim (AC3 / skeptic).
     """
     month = month_yyyy_mm or datetime.now(timezone.utc).strftime("%Y-%m")
     remitted = 0.0
     n_events = 0
-    countable = {
-        "submitted",
-        "confirmed",
-    }
+    in_flight = 0.0
+    n_in_flight = 0
     for rec in records:
         if rec.direction != TransferDirection.BROKER_TO_MERCURY.value:
-            continue
-        if rec.status not in countable:
             continue
         if rec.dry_run:
             continue
         if _month_key(rec.timestamp, fallback=month) != month:
             continue
-        remitted += float(rec.amount_usd or 0)
-        n_events += 1
+        status = str(rec.status or "").lower()
+        amount = float(rec.amount_usd or 0)
+        if status == "confirmed":
+            remitted += amount
+            n_events += 1
+        elif status == "submitted":
+            # In-flight ACH — not bank evidence of completed remittance
+            in_flight += amount
+            n_in_flight += 1
 
     remitted = round(remitted, 2)
+    in_flight = round(in_flight, 2)
     after_tax: float | None = None
     if realized_pre_tax_pnl_usd is not None:
         after_tax = estimate_after_tax_profit(
@@ -117,8 +124,8 @@ def compute_remittance_progress(
 
     target = float(target_usd)
     pct = round(100.0 * remitted / target, 2) if target > 0 else None
+    # Confirmed deposits only
     target_met = remitted + 1e-9 >= target and n_events > 0
-    # Never claim target met without remittance evidence
     claim_allowed = target_met and remitted > 0
 
     if n_events == 0:
@@ -126,14 +133,18 @@ def compute_remittance_progress(
             f"No confirmed broker→Mercury remittances in {month}. "
             f"Cannot claim ${target:.0f}/mo after-tax target met."
         )
+        if n_in_flight:
+            note += f" In-flight (submitted, not confirmed): ${in_flight:.2f}."
     elif not target_met:
         note = (
-            f"Remitted ${remitted:.2f} of ${target:.0f} target in {month} "
+            f"Confirmed remitted ${remitted:.2f} of ${target:.0f} target in {month} "
             f"({n_events} deposit(s))."
         )
+        if n_in_flight:
+            note += f" In-flight: ${in_flight:.2f} (not counted toward target)."
     else:
         note = (
-            f"Ledger shows ${remitted:.2f} remitted to bank in {month} "
+            f"Ledger shows ${remitted:.2f} confirmed remitted to bank in {month} "
             f"(>= ${target:.0f} target) across {n_events} deposit(s)."
         )
 
@@ -142,6 +153,8 @@ def compute_remittance_progress(
         target_usd=target,
         remitted_to_bank_usd=remitted,
         remittance_event_count=n_events,
+        in_flight_usd=in_flight,
+        in_flight_event_count=n_in_flight,
         estimated_after_tax_profit_usd=after_tax,
         realized_pre_tax_pnl_usd=(
             float(realized_pre_tax_pnl_usd)
