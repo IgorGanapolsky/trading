@@ -737,6 +737,29 @@ class TestPutCreditDailyStructureGate:
         monkeypatch.setattr(gate_mod, "_count_put_credit_structures_today_from_broker", lambda: 0)
         assert gate_mod._structures_today_for_gate() == 2
 
+    def test_broker_entry_classifier_ignores_closes(self):
+        """Greptile #4285: same-day CLOSE BPS must not inflate daily entry count."""
+        import src.safety.mandatory_trade_gate as gate_mod
+        from types import SimpleNamespace
+
+        open_o = SimpleNamespace(client_order_id="OPEN_BPS_abc", legs=[1, 2])
+        close_o = SimpleNamespace(client_order_id="CLOSE_BPS_abc", legs=[1, 2])
+        orphan = SimpleNamespace(client_order_id="CLOSE_BPL_x", legs=[1])
+        assert gate_mod._is_put_credit_entry_order(open_o) is True
+        assert gate_mod._is_put_credit_entry_order(close_o) is False
+        assert gate_mod._is_put_credit_entry_order(orphan) is False
+
+    def test_et_session_start_is_utc_iso(self):
+        import src.safety.mandatory_trade_gate as gate_mod
+
+        s = gate_mod._et_session_start_utc_iso()
+        assert s.endswith("Z")
+        assert "T" in s
+        # Must be parseable as UTC
+        from datetime import datetime
+
+        datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ")
+
 
 class TestMlConsensusAndHardReasoning:
     """Hard RAG groundedness + no ML theater until learning_ready n>=30."""

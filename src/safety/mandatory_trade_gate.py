@@ -444,12 +444,36 @@ def _count_put_credit_structures_today() -> int:
     return n
 
 
+def _et_session_start_utc_iso() -> str:
+    """UTC ISO timestamp for America/New_York midnight today (not UTC midnight)."""
+    from zoneinfo import ZoneInfo
+
+    et = ZoneInfo("America/New_York")
+    now_et = datetime.now(et)
+    start_et = now_et.replace(hour=0, minute=0, second=0, microsecond=0)
+    return start_et.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _is_put_credit_entry_order(order: Any) -> bool:
+    """True only for put-credit *entry* fills (not same-day closes).
+
+    Greptile #4285: counting CLOSE BPS 2-leg fills inflated the daily cap.
+    Our path tags entries as OPEN+BPS via build_client_order_id.
+    """
+    client_id = str(getattr(order, "client_order_id", "") or "").upper()
+    if not client_id:
+        return False
+    if "CLOSE" in client_id:
+        return False
+    # Entry path only — OPEN + BPS (bull put spread)
+    return "OPEN" in client_id and "BPS" in client_id
+
+
 def _count_put_credit_structures_today_from_broker() -> int:
-    """Broker-side put-credit structure count for today (ET).
+    """Broker-side put-credit *entry* count for today (ET session).
 
     Greptile #4278 P1: journal-only counters undercount when a fill lands but the
     process dies before durable journal write. Use max(journal, broker).
-    Counts filled 2-leg multi-leg orders (bull put) and client_order_ids with BPS.
     """
     if os.environ.get("PYTEST_CURRENT_TEST") or "pytest" in sys.modules:
         return 0
@@ -469,26 +493,19 @@ def _count_put_credit_structures_today_from_broker() -> int:
         from alpaca.trading.requests import GetOrdersRequest
 
         client = TradingClient(api_key, api_secret, paper=is_paper)
-        today_str = _today_et_str()
+        # Greptile #4285: ET date + Z was wrong (UTC midnight). Use ET session start.
+        after_utc = _et_session_start_utc_iso()
         orders = client.get_orders(
             GetOrdersRequest(
                 status=QueryOrderStatus.FILLED,
-                after=f"{today_str}T00:00:00Z",
+                after=after_utc,
                 limit=100,
             )
         )
-        n = 0
-        for order in orders or []:
-            legs = getattr(order, "legs", None) or []
-            client_id = str(getattr(order, "client_order_id", "") or "").upper()
-            # 2-leg multi-leg = put credit vertical; BPS client id = our put-credit path
-            if len(legs) == 2 or "BPS" in client_id or "PUT_CREDIT" in client_id:
-                # Exclude pure single-leg orphan closes (1 leg, no BPS)
-                if len(legs) == 1 and "BPS" not in client_id:
-                    continue
-                n += 1
+        n = sum(1 for order in (orders or []) if _is_put_credit_entry_order(order))
         logger.info(
-            "Broker put-credit structure count today: %s (from %s filled orders)",
+            "Broker put-credit ENTRY count today (after=%s): %s (from %s filled orders)",
+            after_utc,
             n,
             len(orders or []),
         )
@@ -1975,6 +1992,13 @@ def safe_submit_order(client, order_request, strategy: str | None = None):
             # Never log fake ModelSelector/Juror "AGREE" during cold validation.
             # =================================================================
             ml_ready, ml_meta = _active_strategy_ml_ready()
+            # Opt-in only: secondary juror is not wired. Never invent AGREE.
+            # Greptile #4285: do not call juror (and soft-bypass outages) until enabled.
+            juror_enabled = os.environ.get("MULTI_MODEL_JUROR_ENABLED", "").lower() in {
+                "1",
+                "true",
+                "yes",
+            }
             if not ml_ready:
                 logger.info(
                     "ML consensus deferred (no edge sample): family=%s n=%s learning_ready=%s detail=%s",
@@ -1989,6 +2013,20 @@ def safe_submit_order(client, order_request, strategy: str | None = None):
                     attributes={
                         "status": "DEFERRED_NO_EDGE",
                         "family": str(ml_meta.get("family") or ""),
+                        "n": int(ml_meta.get("n") or 0),
+                    },
+                )
+            elif not juror_enabled:
+                logger.info(
+                    "ML sample ready (n=%s) but MULTI_MODEL_JUROR_ENABLED unset; "
+                    "consensus deferred (no fake AGREE, no outage bypass)",
+                    ml_meta.get("n"),
+                )
+                gateway.capture_span(
+                    "juror_consensus",
+                    trace_id,
+                    attributes={
+                        "status": "DEFERRED_JUROR_NOT_CONFIGURED",
                         "n": int(ml_meta.get("n") or 0),
                     },
                 )
@@ -2008,31 +2046,11 @@ def safe_submit_order(client, order_request, strategy: str | None = None):
                     )
                 except ImportError:
                     raise ValueError(
-                        "MULTI-MODEL CONSENSUS REQUIRED (learning_ready) but MultiModelJuror unavailable"
+                        "MULTI-MODEL CONSENSUS REQUIRED (learning_ready + enabled) "
+                        "but MultiModelJuror unavailable"
                     ) from None
-                except RuntimeError as e:
-                    # Greptile #4281 P1: JUROR_UNAVAILABLE must not permanently hard-block
-                    # every open after edge is proven. Never claim AGREE; allow without
-                    # multi-model consensus until a real secondary provider is wired.
-                    if "JUROR_UNAVAILABLE" in str(e):
-                        logger.warning(
-                            "Juror unavailable after ml_ready (n=%s); opening without "
-                            "multi-model consensus claim (no fake AGREE): %s",
-                            ml_meta.get("n"),
-                            e,
-                        )
-                        gateway.capture_span(
-                            "juror_consensus",
-                            trace_id,
-                            attributes={
-                                "status": "UNAVAILABLE_NO_FAKE_AGREE",
-                                "n": int(ml_meta.get("n") or 0),
-                            },
-                        )
-                    else:
-                        logger.error(f"CONSENSUS ERROR: {e}")
-                        raise ValueError(f"CRITICAL: Consensus check failed: {e}") from e
                 except Exception as e:
+                    # Fail closed when juror is explicitly enabled.
                     logger.error(f"CONSENSUS ERROR: {e}")
                     raise ValueError(f"CRITICAL: Consensus check failed: {e}") from e
 
