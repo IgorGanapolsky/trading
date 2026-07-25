@@ -89,6 +89,7 @@ def _configure_paths(monkeypatch, project_root: Path) -> tuple[Path, Path]:
     system_state_file = data_dir / "system_state.json"
     trades_file = data_dir / "trades.json"
     ic_entries_file = data_dir / "ic_entries.json"
+    put_credit_entries_file = data_dir / "put_credit_entries.json"
     trajectory_file = data_dir / "feedback" / "trade_trajectories.jsonl"
 
     monkeypatch.setattr(sync_closed, "PROJECT_ROOT", project_root)
@@ -96,6 +97,11 @@ def _configure_paths(monkeypatch, project_root: Path) -> tuple[Path, Path]:
     monkeypatch.setattr(sync_closed, "SYSTEM_STATE_FILE", system_state_file)
     monkeypatch.setattr(sync_closed, "TRADES_FILE", trades_file)
     monkeypatch.setattr(sync_closed, "IC_ENTRIES_FILE", ic_entries_file)
+    monkeypatch.setattr(sync_closed, "PUT_CREDIT_ENTRIES_FILE", put_credit_entries_file)
+    # Isolation: live Alpaca credentials must never pollute unit tests.
+    # Without this, _load_trade_history() merges real broker fills and
+    # assertions like new_closed==1 fail with dozens/hundreds of rows.
+    monkeypatch.setattr(sync_closed, "_fetch_broker_trade_history", lambda limit=500: [])
 
     monkeypatch.setattr(rlhf_storage, "TRAJECTORY_PATH", trajectory_file)
     return trades_file, trajectory_file
