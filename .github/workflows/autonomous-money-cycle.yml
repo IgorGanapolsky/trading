@@ -1,0 +1,68 @@
+name: Autonomous Money Cycle (paper/dry-run)
+
+# Multi-day put-credit manage + bank transfer dry-run plans.
+# Never enables live Mercury ACH or live broker risk without gate clearance
+# (cycle script fail-closes). Default dry-run.
+
+on:
+  schedule:
+    # Weekday mid-session check (approx 11:15 AM ET = 15:15 UTC)
+    - cron: 15 15 * * 1-5
+    # Weekday afternoon manage (approx 2:15 PM ET)
+    - cron: 15 18 * * 1-5
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: autonomous-money-cycle
+  cancel-in-progress: false
+
+jobs:
+  cycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          token: ${{ secrets.GH_PAT || github.token }}
+          fetch-depth: 0
+
+      - name: Refresh to latest main
+        run: |
+          git fetch origin main
+          git checkout -B main origin/main
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install deps
+        run: |
+          pip install -r requirements-minimal.txt 2>/dev/null || pip install alpaca-py python-dotenv
+
+      - name: Run autonomous money cycle (dry-run)
+        env:
+          ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          APCA_API_KEY_ID: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          APCA_API_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+        run: |
+          python3 scripts/autonomous_money_cycle.py --dry-run --fund 0 --remit 0 --json
+          python3 scripts/remittance_status.py --json
+
+      - name: Commit audit artifacts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/audit/autonomous_money_cycle_latest.json \
+                  data/audit/mercury_broker_transfers.jsonl \
+                  data/audit/put_credit_cohort_latest.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No audit changes"
+          else
+            git commit -m "chore: autonomous money cycle dry-run audit [auto]"
+            git push origin main || true
+          fi
