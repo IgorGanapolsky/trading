@@ -40,8 +40,7 @@ try:
     from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
     from alpaca.trading.client import TradingClient
 except ImportError:
-    print("ERROR: alpaca-py not installed. Run: pip install alpaca-py")
-    sys.exit(1)
+    StockHistoricalDataClient = StockBarsRequest = TimeFrame = TimeFrameUnit = TradingClient = None  # type: ignore
 
 
 # ============================================================================

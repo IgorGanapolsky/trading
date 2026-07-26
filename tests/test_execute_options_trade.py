@@ -33,7 +33,7 @@ from scripts.execute_options_trade import (
 class TestIVPercentile:
     """Test IV percentile calculation and gating."""
 
-    @patch("yfinance.Ticker")
+    @patch("src.utils.options_analysis.yf.Ticker")
     def test_iv_percentile_high_returns_sell_premium(self, mock_yf_ticker):
         """High IV percentile (>50%) should recommend selling premium."""
         import numpy as np
@@ -55,7 +55,7 @@ class TestIVPercentile:
         assert result["recommendation"] in ("SELL_PREMIUM", "NEUTRAL")
         assert result["iv_percentile"] is not None
 
-    @patch("yfinance.Ticker")
+    @patch("src.utils.options_analysis.yf.Ticker")
     def test_iv_percentile_insufficient_data_returns_neutral(self, mock_yf_ticker):
         """Insufficient data should return neutral recommendation."""
         import pandas as pd
@@ -70,7 +70,7 @@ class TestIVPercentile:
         assert result["recommendation"] == "NEUTRAL"
         assert result["iv_percentile"] == 50
 
-    @patch("yfinance.Ticker")
+    @patch("src.utils.options_analysis.yf.Ticker")
     def test_iv_percentile_api_failure_returns_neutral(self, mock_yf_ticker):
         """API failure should return neutral (fail open)."""
         mock_ticker_instance = MagicMock()
@@ -89,7 +89,7 @@ class TestIVPercentile:
 class TestTrendFilter:
     """Test trend filter logic."""
 
-    @patch("yfinance.Ticker")
+    @patch("src.utils.options_analysis.yf.Ticker")
     def test_strong_downtrend_blocks_puts(self, mock_yf_ticker):
         """Strong downtrend should return AVOID_PUTS or CAUTION recommendation."""
         import numpy as np
@@ -109,7 +109,7 @@ class TestTrendFilter:
         assert result["trend"] in ("STRONG_DOWNTREND", "MODERATE_DOWNTREND")
         assert result["recommendation"] in ("AVOID_PUTS", "CAUTION_BUT_PROCEED")
 
-    @patch("yfinance.Ticker")
+    @patch("src.utils.options_analysis.yf.Ticker")
     def test_uptrend_allows_puts(self, mock_yf_ticker):
         """Uptrend/sideways should allow selling puts."""
         import numpy as np
@@ -128,7 +128,7 @@ class TestTrendFilter:
         assert result["trend"] == "UPTREND_OR_SIDEWAYS"
         assert result["recommendation"] == "PROCEED"
 
-    @patch("yfinance.Ticker")
+    @patch("src.utils.options_analysis.yf.Ticker")
     def test_trend_filter_api_failure_defaults_proceed(self, mock_yf_ticker):
         """API failure in trend filter should default to PROCEED."""
         mock_ticker_instance = MagicMock()
