@@ -56,10 +56,20 @@ class PaperEquityBrokerAdapter(EquityBrokerAdapter):
     tests without needing a live data source.
     """
 
-    def __init__(self, annual_dividend_yield_pct: float = 3.3):
-        self._positions: dict[str, float] = {}
+    def __init__(
+        self,
+        annual_dividend_yield_pct: float = 3.3,
+        initial_positions: dict[str, float] | None = None,
+    ):
+        self._positions: dict[str, float] = dict(initial_positions) if initial_positions else {}
         self._annual_yield = annual_dividend_yield_pct / 100.0
         self._accrued_dividends_usd = 0.0
+
+    def get_positions(self) -> dict[str, float]:
+        return dict(self._positions)
+
+    def get_portfolio_value(self) -> float:
+        return sum(self._positions.values())
 
     def buy(self, symbol: str, notional_usd: float) -> BuyResult:
         if notional_usd <= 0:
