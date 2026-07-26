@@ -1,0 +1,65 @@
+{
+  "schema_version": "autonomous-money-cycle/1",
+  "ts": "2026-07-26T17:49:57.478515+00:00",
+  "dry_run": true,
+  "strategy_mode": "multi_day_hold_or_buy_hold_non_pdt",
+  "non_day_trade": true,
+  "active_family": "spy_put_credit",
+  "live_gate": {
+    "allowed": false,
+    "live_trading_allowed": false,
+    "bank_transfer_allowed": false,
+    "blockers": [
+      "kill_switch.live_blocked: IC Simple is KILLED as a North Star candidate. Verified paired ledger: 159 closed structures, 20 wins, 138 losses, 1 breakeven, 12.58% win rate, profit factor 0.16, expectancy -$48.62/trade, total rea",
+      "kill_switch.paper_only=true",
+      "insufficient_edge_sample: closed_n=0 need>=30"
+    ],
+    "paper_only": true,
+    "live_blocked": true,
+    "sample_closed_n": 0,
+    "expectancy": null,
+    "profit_factor": null,
+    "strategy_mode": "multi_day_hold_or_buy_hold_non_pdt",
+    "detail": {
+      "active_family": "spy_put_credit",
+      "cohort_verdict": null,
+      "claim_profitable": null
+    }
+  },
+  "steps": {
+    "inventory": {
+      "rc": 0,
+      "stdout_tail": "00703000\",\n      \"root\": \"SPY\",\n      \"expiry_ymd\": \"260821\",\n      \"right\": \"P\",\n      \"strike\": 703.0,\n      \"qty\": 1.0\n    },\n    {\n      \"symbol\": \"SPY260821P00708000\",\n      \"root\": \"SPY\",\n      \"expiry_ymd\": \"260821\",\n      \"right\": \"P\",\n      \"strike\": 708.0,\n      \"qty\": -1.0\n    },\n    {\n      \"symbol\": \"SPY260828P00691000\",\n      \"root\": \"SPY\",\n      \"expiry_ymd\": \"260828\",\n      \"right\": \"P\",\n      \"strike\": 691.0,\n      \"qty\": 1.0\n    },\n    {\n      \"symbol\": \"SPY260828P00696000\",\n      \"root\": \"SPY\",\n      \"expiry_ymd\": \"260828\",\n      \"right\": \"P\",\n      \"strike\": 696.0,\n      \"qty\": -1.0\n    }\n  ],\n  \"block_reasons\": []\n}\njson_out=/Users/igorganapolsky/workspace/git/igor/trading/.worktrees/autonomous-trading-system/data/audit/open_inventory_latest.json\nclean=True findings=0\n"
+    },
+    "manage_put_credit": {
+      "rc": 0,
+      "stdout_tail": "{\n  \"checked\": 1,\n  \"holds\": 1,\n  \"would_exit\": 0,\n  \"submitted\": 0,\n  \"pending\": 0,\n  \"broken\": 0,\n  \"details\": [\n    {\n      \"key\": \"PCS_260828_4fc04e47a2da4fe9ab2814cdad69ab44\",\n      \"should_exit\": false,\n      \"exit_reason\": null,\n      \"dte\": 33,\n      \"hold_hours\": 74.21395504888889,\n      \"credit\": 0.53,\n      \"current_debit\": 0.5100000000000002,\n      \"estimated_pnl\": 1.9999999999999796,\n      \"profit_target\": 13.25,\n      \"stop_loss\": -106.0,\n      \"status\": \"hold\"\n    }\n  ]\n}\n"
+    },
+    "cohort": {
+      "rc": 2,
+      "stdout_tail": ""
+    },
+    "status": {
+      "rc": 0,
+      "stdout_tail": ": \"spy_put_credit\",\n    \"paper_only\": true,\n    \"live_blocked\": true\n  },\n  \"plan\": {\n    \"strategy_family\": \"spy_put_credit\",\n    \"structure\": \"bull_put_credit\",\n    \"underlying\": \"SPY\",\n    \"quantity\": 1,\n    \"wing_width\": 5.0,\n    \"target_dte\": 30,\n    \"min_dte\": 30,\n    \"max_dte\": 45,\n    \"short_delta\": 0.15,\n    \"delta_band\": [\n      0.1,\n      0.22\n    ],\n    \"take_profit_pct\": 0.25,\n    \"stop_loss_pct\": 2.0,\n    \"exit_dte\": 7,\n    \"min_hold_hours\": 24,\n    \"min_credit\": 0.5,\n    \"dry_run\": true,\n    \"planned_at\": \"2026-07-26T17:49:59.887880+00:00\",\n    \"status\": \"planned\",\n    \"opportunity\": null,\n    \"spy_price\": 738.9299926757812\n  },\n  \"plan_path\": \"/Users/igorganapolsky/workspace/git/igor/trading/.worktrees/autonomous-trading-system/data/audit/spy_put_credit_latest_plan.json\"\n}\n"
+    }
+  },
+  "fund": null,
+  "remit": null,
+  "remittance_progress": {
+    "month_yyyy_mm": "2026-07",
+    "target_usd": 1000.0,
+    "remitted_to_bank_usd": 0.0,
+    "remittance_event_count": 0,
+    "in_flight_usd": 0.0,
+    "in_flight_event_count": 0,
+    "estimated_after_tax_profit_usd": null,
+    "realized_pre_tax_pnl_usd": null,
+    "tax_rate_used": 0.37,
+    "pct_of_target": 0.0,
+    "target_met": false,
+    "claim_allowed": false,
+    "note": "No confirmed broker\u2192Mercury remittances in 2026-07. Cannot claim $1000/mo after-tax target met."
+  },
+  "honesty": "paper/dry-run default; live bank+trade refused until EDGE_CANDIDATE; does not claim daily profits or $1000/mo without ledger remittances"
+}
