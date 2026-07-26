@@ -13,3 +13,9 @@ Generated from negative feedback memories (time-weighted, half-life: 7d).
 ## Repeated Failure Constraints
 - security:generic_assignment: 79 failures
 - security:github_pat: 2 failures
+
+## Auto-Review & Sandboxing Rules (Reviewer Agent)
+- **Constraint:** `sandboxing:writable_roots` - Block any write action outside of `src/`, `tests/`, `data/`, `.claude/`, `scripts/`, or `.thumbgate/`.
+- **Constraint:** `security:credential_protection` - Block any action reading or modifying `.env` or secret-carrying files.
+- **Constraint:** `safety:ledger_backup` - Modifications to `data/system_state.json` or `data/trades.json` MUST be preceded by a backup in `data/backups/`.
+- **Constraint:** `safety:circuit_breaker` - After 3 consecutive safety rejections, the agent must halt and request human intervention.
