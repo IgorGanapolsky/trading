@@ -285,6 +285,7 @@ def evaluate_residual_exit(
         elif pnl <= -(max_profit * IRON_CONDOR_STOP_LOSS_MULTIPLIER):
             reason = "stop_loss"
 
+    profit_pct_of_max = (pnl / max_profit) if max_profit > 0 else 0.0
     return {
         "should_exit": reason is not None,
         "exit_reason": reason,
@@ -294,6 +295,9 @@ def evaluate_residual_exit(
         "current_debit": round(current_debit, 4),
         "pnl": round(pnl, 2),
         "max_profit": round(max_profit, 2),
+        # Operator clarity: 0.25 == take-profit threshold (IC_PROFIT_TARGET_PCT)
+        "profit_pct_of_max": round(profit_pct_of_max, 4),
+        "profit_target_pct": IC_PROFIT_TARGET_PCT,
     }
 
 

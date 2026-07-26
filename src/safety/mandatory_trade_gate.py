@@ -107,11 +107,94 @@ except ImportError:
 
 MIN_TRADE_AMOUNT = float(os.environ.get("MIN_TRADE_AMOUNT", "1.0"))
 
+# ML consensus (ModelSelector/Juror) only after verified active-strategy edge sample.
+ML_CONSENSUS_MIN_CLOSED_TRADES = 30
+
 # Track daily losses (reset daily in production)
 # SECURITY FIX (Jan 19, 2026): Added thread lock to prevent race condition
 # where concurrent trades could bypass daily loss limit
 _daily_loss_lock = threading.Lock()
 _daily_loss_tracker: dict[str, float] = {"total": 0.0, "date": ""}
+
+
+def _protocol_reasoning_for_strategy(strategy: str) -> str:
+    """Deterministic protocol text for groundedness checks (not free-form LLM prose)."""
+    family = (strategy or "").strip().lower()
+    if family in {"spy_put_credit", "bull_put", "bull_put_credit", "credit_spread", "put_credit"}:
+        return (
+            "Phil Town Rule #1: don't lose money. SPY-only 1-lot $5-wide bull put credit. "
+            "Target ~15-delta short put in the 0.10-0.22 band, 30-45 DTE. "
+            "Defined risk stop-loss at 200% of credit (2.0x), take profit 25% of max credit, "
+            "exit by 7 DTE; min hold 24h except hard stop. Paper validation only while live blocked."
+        )
+    return (
+        "Phil Town Rule #1: don't lose money. SPY defined-risk options only. "
+        "Use 15-delta shorts, check VIX regime, mandatory stop-loss, "
+        "take profit toward 50% profit of max credit or exit by 7 DTE. No naked options."
+    )
+
+
+def _active_strategy_ml_ready(project_root: Path | None = None) -> tuple[bool, dict[str, Any]]:
+    """True only when active-family verified closed n>=30, learning_ready, positive expectancy.
+
+    Prevents attaching ModelSelector/Juror "agreement" to fills during cold validation.
+    """
+    root = project_root or Path(__file__).resolve().parents[2]
+    meta: dict[str, Any] = {
+        "family": None,
+        "n": 0,
+        "learning_ready": False,
+        "expectancy": None,
+        "profit_factor": None,
+        "detail": "",
+    }
+    try:
+        from src.analytics.trade_evidence import active_strategy_family, build_trade_evidence
+
+        trades_path = root / "data" / "trades.json"
+        if not trades_path.exists():
+            meta["detail"] = "trades.json missing"
+            return False, meta
+        payload = json.loads(trades_path.read_text(encoding="utf-8"))
+        family = active_strategy_family(root)
+        meta["family"] = family
+        require_protocol = family == "spy_put_credit"
+        evidence = build_trade_evidence(
+            payload,
+            strategy_family=family,
+            require_protocol_fields=require_protocol,
+        )
+        n = int(evidence.metrics.closed_trades or 0)
+        exp = evidence.metrics.expectancy_per_trade
+        pf = evidence.metrics.profit_factor
+        meta.update(
+            {
+                "n": n,
+                "learning_ready": bool(evidence.learning_ready),
+                "expectancy": exp,
+                "profit_factor": pf,
+                "issues": list(evidence.issues),
+            }
+        )
+        ready = (
+            bool(evidence.learning_ready)
+            and n >= ML_CONSENSUS_MIN_CLOSED_TRADES
+            and exp is not None
+            and float(exp) > 0.0
+            and pf is not None
+            and float(pf) > 1.0
+        )
+        if not ready:
+            meta["detail"] = (
+                f"need learning_ready + n>={ML_CONSENSUS_MIN_CLOSED_TRADES} "
+                f"+ expectancy>0 + PF>1 (have n={n}, exp={exp}, pf={pf}, "
+                f"learning_ready={evidence.learning_ready})"
+            )
+        return ready, meta
+    except Exception as exc:
+        meta["error"] = str(exc)
+        meta["detail"] = f"ml_ready_check_failed: {exc}"
+        return False, meta
 
 _SYSTEM_STATE_PATH = Path(__file__).parent.parent.parent / "data" / "system_state.json"
 _POLICY_METADATA_PATH = (
@@ -276,6 +359,162 @@ def _today_et_str() -> str:
         return datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
 
+def _active_strategy_family() -> str:
+    """Return kill-switch active family (defaults to iron_condor-era semantics)."""
+    try:
+        from src.core.active_strategy import load_kill_state
+
+        state = load_kill_state()
+        if hasattr(state, "active_family"):
+            return str(state.active_family or "")
+        if isinstance(state, dict):
+            return str(state.get("active_family") or "")
+    except Exception as exc:
+        logger.debug("active strategy family lookup failed: %s", exc)
+    return ""
+
+
+def _max_daily_structures_for_gate() -> int:
+    """Daily structure cap for the *active* validation family.
+
+    IC profile remains max_daily_structures=1 (killed path).
+    Put-credit profile is max_daily_structures=3 (profile post-#4274).
+    Using the IC constant for put-credit openings blocked paper validation
+    with false "4/1 today" after residual IC exit fills polluted structures_today.
+    """
+    family = _active_strategy_family()
+    if family == "spy_put_credit":
+        try:
+            from src.core.trading_profiles import get_put_credit_profile
+
+            return int(get_put_credit_profile().max_daily_structures)
+        except Exception as exc:
+            logger.warning("put-credit max_daily_structures lookup failed: %s", exc)
+            return 3
+    return int(MAX_DAILY_STRUCTURES)
+
+
+def _count_put_credit_structures_today() -> int:
+    """Count put-credit *entries* opened today (ET), not residual IC exit fills."""
+    if os.environ.get("PYTEST_CURRENT_TEST") or "pytest" in sys.modules:
+        return 0
+
+    journal = Path(__file__).parent.parent.parent / "data" / "put_credit_entries.json"
+    if not journal.exists():
+        return 0
+    try:
+        payload = json.loads(journal.read_text(encoding="utf-8"))
+    except Exception as exc:
+        logger.warning("Failed to read put_credit_entries.json: %s", exc)
+        return 0
+    if not isinstance(payload, dict):
+        return 0
+
+    today = _today_et_str()
+    n = 0
+    for entry in payload.values():
+        if not isinstance(entry, dict):
+            continue
+        # entry_time preferred; submitted_at / filled_at fallback
+        ts = (
+            entry.get("entry_time")
+            or entry.get("filled_at")
+            or entry.get("submitted_at")
+            or entry.get("created_at")
+            or ""
+        )
+        text = str(ts)
+        # ISO timestamps: compare calendar day in ET when offset present
+        if text.startswith(today):
+            n += 1
+            continue
+        if not text:
+            continue
+        from zoneinfo import ZoneInfo
+
+        try:
+            dt = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        except (TypeError, ValueError) as exc:
+            logger.debug("put-credit entry timestamp unparseable %r: %s", text, exc)
+            dt = None
+        if dt is not None and (
+            dt.astimezone(ZoneInfo("America/New_York")).strftime("%Y-%m-%d") == today
+        ):
+            n += 1
+    return n
+
+
+def _et_session_start_utc_iso() -> str:
+    """UTC ISO timestamp for America/New_York midnight today (not UTC midnight)."""
+    from zoneinfo import ZoneInfo
+
+    et = ZoneInfo("America/New_York")
+    now_et = datetime.now(et)
+    start_et = now_et.replace(hour=0, minute=0, second=0, microsecond=0)
+    return start_et.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _is_put_credit_entry_order(order: Any) -> bool:
+    """True only for put-credit *entry* fills (not same-day closes).
+
+    Greptile #4285: counting CLOSE BPS 2-leg fills inflated the daily cap.
+    Our path tags entries as OPEN+BPS via build_client_order_id.
+    """
+    client_id = str(getattr(order, "client_order_id", "") or "").upper()
+    if not client_id:
+        return False
+    if "CLOSE" in client_id:
+        return False
+    # Entry path only — OPEN + BPS (bull put spread)
+    return "OPEN" in client_id and "BPS" in client_id
+
+
+def _count_put_credit_structures_today_from_broker() -> int:
+    """Broker-side put-credit *entry* count for today (ET session).
+
+    Greptile #4278 P1: journal-only counters undercount when a fill lands but the
+    process dies before durable journal write. Use max(journal, broker).
+    """
+    if os.environ.get("PYTEST_CURRENT_TEST") or "pytest" in sys.modules:
+        return 0
+
+    try:
+        from src.utils.alpaca_client import get_alpaca_credentials
+
+        credentials = get_alpaca_credentials()
+        api_key, api_secret = credentials[0], credentials[1]
+        inferred_paper = _infer_paper_from_credentials(credentials)
+        is_paper = True if inferred_paper is None else inferred_paper
+        if not api_key or not api_secret:
+            raise ValueError("No Alpaca credentials")
+
+        from alpaca.trading.client import TradingClient
+        from alpaca.trading.enums import QueryOrderStatus
+        from alpaca.trading.requests import GetOrdersRequest
+
+        client = TradingClient(api_key, api_secret, paper=is_paper)
+        # Greptile #4285: ET date + Z was wrong (UTC midnight). Use ET session start.
+        after_utc = _et_session_start_utc_iso()
+        orders = client.get_orders(
+            GetOrdersRequest(
+                status=QueryOrderStatus.FILLED,
+                after=after_utc,
+                limit=100,
+            )
+        )
+        n = sum(1 for order in (orders or []) if _is_put_credit_entry_order(order))
+        logger.info(
+            "Broker put-credit ENTRY count today (after=%s): %s (from %s filled orders)",
+            after_utc,
+            n,
+            len(orders or []),
+        )
+        return n
+    except Exception as exc:
+        logger.warning("Broker put-credit structure count failed: %s", exc)
+        return 0
+
+
 def _count_structures_today_from_alpaca() -> int:
     """Count today's IC entries from Alpaca order history (works in CI and local).
 
@@ -343,6 +582,19 @@ def _count_structures_today_from_alpaca() -> int:
     return structures
 
 
+def _structures_today_for_gate() -> int:
+    """Structure count for the active family (put-credit vs residual IC noise).
+
+    Put-credit: max(journal, broker) so a fill-before-journal crash cannot
+    undercount past max_daily_structures (Greptile #4278 P1).
+    """
+    if _active_strategy_family() == "spy_put_credit":
+        journal_n = _count_put_credit_structures_today()
+        broker_n = _count_put_credit_structures_today_from_broker()
+        return max(int(journal_n or 0), int(broker_n or 0))
+    return _count_structures_today_from_alpaca()
+
+
 def _load_intraday_metrics(context: dict[str, Any] | None = None) -> dict[str, float | int | str]:
     """Return best-effort intraday metrics for guardrails.
 
@@ -391,8 +643,11 @@ def _load_intraday_metrics(context: dict[str, Any] | None = None) -> dict[str, f
 
     fills_today = 0
     orders_today = 0
-    structures_today = _count_structures_today_from_alpaca()
+    # Active-family-aware structure count. Do NOT let system_state.trades.structures_today
+    # override put-credit: residual IC exit fills have polluted that field (false 4/1 blocks).
+    structures_today = _structures_today_for_gate()
     daily_pnl: float | None = None
+    put_credit_active = _active_strategy_family() == "spy_put_credit"
 
     if _SYSTEM_STATE_PATH.exists():
         try:
@@ -423,13 +678,14 @@ def _load_intraday_metrics(context: dict[str, Any] | None = None) -> dict[str, f
                 except Exception as exc:
                     logger.debug("Failed to parse orders_today: %s", exc)
                     orders_today = 0
-                try:
-                    structures_today = int(
-                        trades.get("structures_today", structures_today) or structures_today
-                    )
-                except Exception as exc:
-                    logger.debug("Failed to parse structures_today: %s", exc)
-                    structures_today = structures_today
+                if not put_credit_active:
+                    try:
+                        structures_today = int(
+                            trades.get("structures_today", structures_today) or structures_today
+                        )
+                    except Exception as exc:
+                        logger.debug("Failed to parse structures_today: %s", exc)
+                        structures_today = structures_today
 
     return {
         "date": today,
@@ -455,8 +711,10 @@ def _enforce_intraday_guardrails(
     daily_pnl = float(metrics.get("daily_pnl", 0.0) or 0.0)
     fills_today = int(metrics.get("fills_today", 0) or 0)
     structures_today = int(metrics.get("structures_today", 0) or 0)
+    max_daily_structures = _max_daily_structures_for_gate()
     checks_performed.append(
-        f"intraday_metrics: pnl={daily_pnl:+.2f} fills={fills_today} structures={structures_today}"
+        f"intraday_metrics: pnl={daily_pnl:+.2f} fills={fills_today} "
+        f"structures={structures_today}/{max_daily_structures}"
     )
 
     if equity > 0 and daily_pnl < -(equity * MAX_DAILY_LOSS_PCT):
@@ -464,10 +722,10 @@ def _enforce_intraday_guardrails(
             False,
             f"Daily loss limit exceeded: {daily_pnl:+.2f} < -{MAX_DAILY_LOSS_PCT:.0%} of equity",
         )
-    if structures_today >= MAX_DAILY_STRUCTURES:
+    if structures_today >= max_daily_structures:
         return (
             False,
-            f"Max structures guardrail hit: {structures_today}/{MAX_DAILY_STRUCTURES} today",
+            f"Max structures guardrail hit: {structures_today}/{max_daily_structures} today",
         )
     if fills_today >= MAX_DAILY_FILLS:
         return False, f"Max fills guardrail hit: {fills_today}/{MAX_DAILY_FILLS} today"
@@ -1721,75 +1979,149 @@ def safe_submit_order(client, order_request, strategy: str | None = None):
                 option_symbols = [str(symbol)]
             option_symbols = [s for s in option_symbols if _looks_like_option_symbol(s)]
 
-            # =================================================================
-            # MULTI-MODEL CONSENSUS (Jan 25, 2026 - 'Exclusivity is Dead')
-            # =================================================================
-            try:
-                from src.safety.multi_model_juror import MultiModelJuror
+            proposal = {
+                "symbol": symbol,
+                "strategy": strategy,
+                "legs": option_symbols,
+                "amount": est_amount,
+            }
+            protocol_reasoning = _protocol_reasoning_for_strategy(str(strategy or ""))
 
-                juror = MultiModelJuror()
-                proposal = {
-                    "symbol": symbol,
-                    "strategy": strategy,
-                    "legs": option_symbols,
-                    "amount": est_amount,
-                }
-                if not juror.get_consensus(proposal, primary_reasoning="System trade logic entry"):
-                    raise ValueError(
-                        "MULTI-MODEL CONSENSUS FAILED: Juror detected a risk violation."
+            # =================================================================
+            # MULTI-MODEL CONSENSUS — only after learning_ready n>=30 with edge
+            # Never log fake ModelSelector/Juror "AGREE" during cold validation.
+            # =================================================================
+            ml_ready, ml_meta = _active_strategy_ml_ready()
+            # Opt-in only: secondary juror is not wired. Never invent AGREE.
+            # Greptile #4285: do not call juror (and soft-bypass outages) until enabled.
+            juror_enabled = os.environ.get("MULTI_MODEL_JUROR_ENABLED", "").lower() in {
+                "1",
+                "true",
+                "yes",
+            }
+            if not ml_ready:
+                logger.info(
+                    "ML consensus deferred (no edge sample): family=%s n=%s learning_ready=%s detail=%s",
+                    ml_meta.get("family"),
+                    ml_meta.get("n"),
+                    ml_meta.get("learning_ready"),
+                    ml_meta.get("detail") or ml_meta.get("error") or "",
+                )
+                gateway.capture_span(
+                    "juror_consensus",
+                    trace_id,
+                    attributes={
+                        "status": "DEFERRED_NO_EDGE",
+                        "family": str(ml_meta.get("family") or ""),
+                        "n": int(ml_meta.get("n") or 0),
+                    },
+                )
+            elif not juror_enabled:
+                logger.info(
+                    "ML sample ready (n=%s) but MULTI_MODEL_JUROR_ENABLED unset; "
+                    "consensus deferred (no fake AGREE, no outage bypass)",
+                    ml_meta.get("n"),
+                )
+                gateway.capture_span(
+                    "juror_consensus",
+                    trace_id,
+                    attributes={
+                        "status": "DEFERRED_JUROR_NOT_CONFIGURED",
+                        "n": int(ml_meta.get("n") or 0),
+                    },
+                )
+            else:
+                try:
+                    from src.safety.multi_model_juror import MultiModelJuror
+
+                    juror = MultiModelJuror()
+                    if not juror.get_consensus(
+                        proposal, primary_reasoning=protocol_reasoning
+                    ):
+                        raise ValueError(
+                            "MULTI-MODEL CONSENSUS FAILED: Juror detected a risk violation."
+                        )
+                    gateway.capture_span(
+                        "juror_consensus", trace_id, attributes={"status": "AGREE"}
                     )
-                gateway.capture_span("juror_consensus", trace_id, attributes={"status": "AGREE"})
-            except ImportError:
-                logger.warning("MultiModelJuror unavailable - proceeding with standard safety.")
-            except Exception as e:
-                logger.error(f"CONSENSUS ERROR: {e}")
-                raise ValueError(f"CRITICAL: Consensus check failed: {e}")
+                except ImportError:
+                    raise ValueError(
+                        "MULTI-MODEL CONSENSUS REQUIRED (learning_ready + enabled) "
+                        "but MultiModelJuror unavailable"
+                    ) from None
+                except Exception as e:
+                    # Fail closed when juror is explicitly enabled.
+                    logger.error(f"CONSENSUS ERROR: {e}")
+                    raise ValueError(f"CRITICAL: Consensus check failed: {e}") from e
 
             # =================================================================
-            # REASONING EVALUATION (Jan 22, 2026 - TruLens Pattern)
+            # REASONING EVALUATION — hard RAG groundedness (no soft skip)
             # =================================================================
             try:
                 from src.safety.reasoning_evaluator import ReasoningEvaluator
 
                 evaluator = ReasoningEvaluator(threshold=0.7)  # 70% groundedness required
 
-                # Fetch recent lessons for groundedness check
+                retrieved_context: list[str] = []
                 try:
                     from src.rag.lessons_search import LessonsSearch
 
-                    lessons = LessonsSearch().search(f"{strategy} {symbol}", limit=3)
-                    retrieved_context = [lesson.content for lesson in lessons]
-                except Exception:
+                    # LessonsSearch.search returns list[(LessonResult, score)]
+                    hits = LessonsSearch().search(
+                        f"{strategy} {symbol} stop-loss delta DTE Rule #1",
+                        top_k=5,
+                    )
+                    for item in hits or []:
+                        lesson = item[0] if isinstance(item, tuple) else item
+                        content = (
+                            getattr(lesson, "snippet", None)
+                            or getattr(lesson, "content", None)
+                            or getattr(lesson, "prevention", None)
+                            or getattr(lesson, "title", None)
+                            or ""
+                        )
+                        if content:
+                            retrieved_context.append(str(content))
+                except Exception as rag_exc:
+                    logger.warning("LessonsSearch failed during reasoning audit: %s", rag_exc)
                     retrieved_context = []
 
+                if not retrieved_context:
+                    raise ValueError(
+                        "REASONING AUDIT FAILED: RAG retrieval required for openings "
+                        "(0 lessons retrieved; rebuild indexes or fix LessonsSearch)"
+                    )
+
+                # Greptile #4281 P1: do NOT inject synthetic protocol baseline into
+                # retrieved_context — that made any nonempty lesson score groundedness
+                # 1.0. Score against *actual lessons only*; protocol lives in reasoning.
                 score = evaluator.evaluate(
                     proposal=proposal,
-                    reasoning="Executing strategy based on VIX Mean Reversion and Phil Town Rule #1.",
+                    reasoning=protocol_reasoning,
                     retrieved_context=retrieved_context,
                 )
 
-                # RAG retrieval can be transiently unavailable; avoid deterministic
-                # order blocks when no context was retrieved.
-                has_retrieved_context = bool(retrieved_context)
-                if score.is_hallucination_risk and has_retrieved_context:
+                if score.is_hallucination_risk:
                     raise ValueError(f"REASONING AUDIT FAILED: {score.reasoning_trace}")
-                if score.is_hallucination_risk and not has_retrieved_context:
-                    logger.warning(
-                        "Reasoning audit low groundedness without retrieval context; "
-                        "skipping hard fail."
-                    )
                 gateway.capture_span(
                     "reasoning_evaluation",
                     trace_id,
-                    attributes={"score": score.groundedness, "trace": score.reasoning_trace},
+                    attributes={
+                        "score": score.groundedness,
+                        "trace": score.reasoning_trace,
+                        "lessons": len(retrieved_context),
+                    },
                 )
 
             except ImportError:
-                logger.warning("ReasoningEvaluator unavailable - proceeding with standard safety.")
+                raise ValueError(
+                    "REASONING AUDIT FAILED: ReasoningEvaluator unavailable (fail closed)"
+                ) from None
             except Exception as e:
-                if "REASONING AUDIT FAILED" in str(e):
+                if "REASONING AUDIT FAILED" in str(e) or "CRITICAL:" in str(e):
                     raise
                 logger.error(f"EVALUATION ERROR: {e}")
+                raise ValueError(f"REASONING AUDIT FAILED: evaluation error: {e}") from e
 
             if option_symbols:
                 from src.risk.pre_trade_checklist import PreTradeChecklist

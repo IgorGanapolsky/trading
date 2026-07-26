@@ -78,9 +78,7 @@ class TestWeekdayStats:
 
     def test_legacy_alias_works(self, tracker):
         # update_regime_stats is the back-compat alias; should not crash
-        tracker.update_regime_stats(
-            [{"entry_date": "2026-05-07T10:00", "realized_pnl": 100}]
-        )
+        tracker.update_regime_stats([{"entry_date": "2026-05-07T10:00", "realized_pnl": 100}])
         assert tracker.metrics["weekday_performance"]["win_rate"]["thu"] == 100.0
 
 

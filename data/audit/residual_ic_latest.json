@@ -1,14 +1,16 @@
 {
-  "audited_at": "2026-07-23T18:34:25.396765+00:00",
+  "audited_at": "2026-07-24T20:00:11.858865+00:00",
   "dry_run": false,
-  "reconciled": 2,
+  "reconciled": 1,
   "unresolved": {},
   "pcs_inventory_excluded": {
     "SPY260828P00691000": 1.0,
-    "SPY260828P00696000": -1.0
+    "SPY260828P00696000": -1.0,
+    "SPY260828P00707000": 1.0,
+    "SPY260828P00712000": -1.0
   },
-  "checked": 2,
-  "holds": 2,
+  "checked": 1,
+  "holds": 1,
   "would_exit": 0,
   "submitted": 0,
   "pending": 0,
@@ -26,30 +28,13 @@
       ],
       "should_exit": false,
       "exit_reason": null,
-      "dte": 29,
-      "hold_hours": 50.89534484694444,
-      "current_debit": 1.04,
-      "pnl": 7.0,
+      "dte": 28,
+      "hold_hours": 76.32491752777777,
+      "current_debit": 0.91,
+      "pnl": 20.0,
       "max_profit": 111.0,
-      "status": "hold"
-    },
-    {
-      "entry_order_id": "38126b75-50dd-49e5-932f-8939f332a0c2",
-      "expiry_yymmdd": "260821",
-      "credit": 1.12,
-      "symbols": [
-        "SPY260821P00695000",
-        "SPY260821P00700000",
-        "SPY260821C00776000",
-        "SPY260821C00781000"
-      ],
-      "should_exit": false,
-      "exit_reason": null,
-      "dte": 29,
-      "hold_hours": 146.96803799222224,
-      "current_debit": 0.89,
-      "pnl": 23.0,
-      "max_profit": 112.0,
+      "profit_pct_of_max": 0.1802,
+      "profit_target_pct": 0.25,
       "status": "hold"
     }
   ]

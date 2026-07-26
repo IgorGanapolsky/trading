@@ -17,7 +17,7 @@ Source of truth: `src/core/trading_constants.py`
 
 ## Dual-Track Mandate
 
-1. **The Lab (Paper Account `PA3C5AG0CECQ`)**: ~$100,000. Active validation: **`spy_put_credit`** (1-lot SPY bull put, max 2 concurrent). Iron condor / `ic_simple` **new entries KILLED** (see `data/runtime/strategy_kill_switch.json`). Residual IC legs: exit-only via guardian/`ic_simple.py --mode exit`.
+1. **The Lab (Paper Account `PA3C5AG0CECQ`)**: ~$100,000. Active validation: **`spy_put_credit`** (1-lot SPY bull put, max 3 structures/day, max 2 concurrent — profile post-#4274). Iron condor / `ic_simple` **new entries KILLED** (see `data/runtime/strategy_kill_switch.json`). Residual IC legs: exit-only via guardian/`ic_simple.py --mode exit`.
 2. **The Field (Live Account `979807421`)**: $0 equity (started $20, lost 100%). Inactive — no capital deployed. Live blocked until put-credit kill criteria clear (n≥30, expectancy>0, PF>1).
 
 ## Active Strategy (post IC kill, 2026-07-22)

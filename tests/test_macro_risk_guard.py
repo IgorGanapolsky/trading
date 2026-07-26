@@ -99,9 +99,7 @@ def test_macro_guard_ignores_stale_perplexity_event_risk(tmp_path: Path):
     intel_path.write_text(
         json.dumps(
             {
-                "generated_at_utc": (
-                    datetime.now(timezone.utc) - timedelta(days=2)
-                ).isoformat(),
+                "generated_at_utc": (datetime.now(timezone.utc) - timedelta(days=2)).isoformat(),
                 "recommendation": "BLOCK_NEW_IC",
                 "risk_score": 0.92,
                 "gate_contract": {"blocks_new_iron_condors": True},

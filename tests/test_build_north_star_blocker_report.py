@@ -211,9 +211,10 @@ def test_compute_report_marks_live_block_only_validation_reset() -> None:
     assert report["current_gate"]["block_live_new_positions"] is True
     assert report["action_lane"]["paper_validation_allowed"] is True
     assert report["action_lane"]["live_scaling_blocked"] is True
-    assert "controlled paper validation entries are allowed" in report["action_lane"][
-        "summary"
-    ].lower()
+    assert (
+        "controlled paper validation entries are allowed"
+        in report["action_lane"]["summary"].lower()
+    )
     assert any(
         "expectancy > 0" in item and "profit factor > 1" in item
         for item in report["action_lane"]["resolution_criteria"]

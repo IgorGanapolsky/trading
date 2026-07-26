@@ -668,3 +668,124 @@ class TestMlGateHaltMatcher:
 
         assert _is_ml_gate_halt_reason("Manual halt by operator") is False
         assert _is_ml_gate_halt_reason("ML GATE BLOCKED") is False  # no "WIN RATE" token
+
+
+class TestPutCreditDailyStructureGate:
+    """Active put-credit family must use profile max_daily=3, not IC max=1."""
+
+    def test_max_daily_structures_uses_put_credit_profile(self, monkeypatch):
+        import src.safety.mandatory_trade_gate as gate_mod
+        from src.core.trading_profiles import get_put_credit_profile
+
+        monkeypatch.setattr(gate_mod, "_active_strategy_family", lambda: "spy_put_credit")
+        assert gate_mod._max_daily_structures_for_gate() == get_put_credit_profile().max_daily_structures
+        assert gate_mod._max_daily_structures_for_gate() == 3
+
+    def test_max_daily_structures_ic_family_uses_constant(self, monkeypatch):
+        import src.safety.mandatory_trade_gate as gate_mod
+
+        monkeypatch.setattr(gate_mod, "_active_strategy_family", lambda: "iron_condor")
+        assert gate_mod._max_daily_structures_for_gate() == gate_mod.MAX_DAILY_STRUCTURES
+
+    def test_put_credit_intraday_guardrail_allows_under_three(self, monkeypatch):
+        import src.safety.mandatory_trade_gate as gate_mod
+
+        monkeypatch.setattr(gate_mod, "_active_strategy_family", lambda: "spy_put_credit")
+        ok, reason = gate_mod._enforce_intraday_guardrails(
+            equity=100_000.0,
+            is_opening=True,
+            checks_performed=[],
+            context={
+                "intraday_metrics": {
+                    "daily_pnl": 0.0,
+                    "fills_today": 0,
+                    "structures_today": 1,
+                }
+            },
+        )
+        assert ok is True, reason
+
+    def test_put_credit_intraday_guardrail_blocks_at_three(self, monkeypatch):
+        import src.safety.mandatory_trade_gate as gate_mod
+
+        monkeypatch.setattr(gate_mod, "_active_strategy_family", lambda: "spy_put_credit")
+        ok, reason = gate_mod._enforce_intraday_guardrails(
+            equity=100_000.0,
+            is_opening=True,
+            checks_performed=[],
+            context={
+                "intraday_metrics": {
+                    "daily_pnl": 0.0,
+                    "fills_today": 0,
+                    "structures_today": 3,
+                }
+            },
+        )
+        assert ok is False
+        assert "3/3" in reason
+
+    def test_structures_today_uses_max_of_journal_and_broker(self, monkeypatch):
+        """Greptile #4278: fill-before-journal must not undercount past max_daily."""
+        import src.safety.mandatory_trade_gate as gate_mod
+
+        monkeypatch.setattr(gate_mod, "_active_strategy_family", lambda: "spy_put_credit")
+        monkeypatch.setattr(gate_mod, "_count_put_credit_structures_today", lambda: 1)
+        monkeypatch.setattr(gate_mod, "_count_put_credit_structures_today_from_broker", lambda: 3)
+        assert gate_mod._structures_today_for_gate() == 3
+
+        monkeypatch.setattr(gate_mod, "_count_put_credit_structures_today", lambda: 2)
+        monkeypatch.setattr(gate_mod, "_count_put_credit_structures_today_from_broker", lambda: 0)
+        assert gate_mod._structures_today_for_gate() == 2
+
+    def test_broker_entry_classifier_ignores_closes(self):
+        """Greptile #4285: same-day CLOSE BPS must not inflate daily entry count."""
+        import src.safety.mandatory_trade_gate as gate_mod
+        from types import SimpleNamespace
+
+        open_o = SimpleNamespace(client_order_id="OPEN_BPS_abc", legs=[1, 2])
+        close_o = SimpleNamespace(client_order_id="CLOSE_BPS_abc", legs=[1, 2])
+        orphan = SimpleNamespace(client_order_id="CLOSE_BPL_x", legs=[1])
+        assert gate_mod._is_put_credit_entry_order(open_o) is True
+        assert gate_mod._is_put_credit_entry_order(close_o) is False
+        assert gate_mod._is_put_credit_entry_order(orphan) is False
+
+    def test_et_session_start_is_utc_iso(self):
+        import src.safety.mandatory_trade_gate as gate_mod
+
+        s = gate_mod._et_session_start_utc_iso()
+        assert s.endswith("Z")
+        assert "T" in s
+        # Must be parseable as UTC
+        from datetime import datetime
+
+        datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ")
+
+
+class TestMlConsensusAndHardReasoning:
+    """Hard RAG groundedness + no ML theater until learning_ready n>=30."""
+
+    def test_ml_ready_false_on_empty_put_credit_cohort(self, monkeypatch, tmp_path):
+        import json
+        import src.safety.mandatory_trade_gate as gate_mod
+
+        root = tmp_path
+        (root / "data" / "runtime").mkdir(parents=True)
+        (root / "data").mkdir(exist_ok=True)
+        (root / "data" / "runtime" / "strategy_kill_switch.json").write_text(
+            json.dumps({"active_family": "spy_put_credit", "live_blocked": True})
+        )
+        (root / "data" / "trades.json").write_text(
+            json.dumps({"trades": [], "stats": {"closed_trades": 0}})
+        )
+        ready, meta = gate_mod._active_strategy_ml_ready(root)
+        assert ready is False
+        assert meta.get("n", 0) == 0
+
+    def test_protocol_reasoning_includes_put_credit_keywords(self):
+        import src.safety.mandatory_trade_gate as gate_mod
+
+        text = gate_mod._protocol_reasoning_for_strategy("spy_put_credit").lower()
+        assert "rule #1" in text
+        assert "15-delta" in text or "15-delta" in text.replace(" ", "")
+        assert "stop-loss" in text or "stop-loss" in text.replace(" ", "-")
+        assert "7 dte" in text

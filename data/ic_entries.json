@@ -7,41 +7,6 @@
     "credit": 1.1799999999999997,
     "date": "2026-02-03T13:20:45.676650"
   },
-  "IC_260320": {
-    "credit": 2.0,
-    "date": "2026-07-26T20:29:12.117268+00:00",
-    "entry_time": "2026-07-26T20:29:12.117268+00:00",
-    "order_id": "mleg-order-001",
-    "underlying": "SPY",
-    "expiry": "2026-03-20",
-    "signature": "SPY_2026-03-20_P645-655_C725-735",
-    "quantity": 1,
-    "profile_name": "spy-core",
-    "validation_phase": true,
-    "entry_reason": "",
-    "target_delta": 0.15,
-    "selection_method": "unknown",
-    "strike_selection_method": "unknown",
-    "put_delta": null,
-    "call_delta": null,
-    "strikes": {
-      "short_put": 655.0,
-      "short_call": 725.0,
-      "long_put": 645.0,
-      "long_call": 735.0
-    },
-    "market_snapshot": {
-      "captured_at": "2026-07-26T20:29:12.117373+00:00",
-      "vix_level": 0.0,
-      "vix_3day_ma": 0.0,
-      "vix_percentile": null,
-      "iv_rank_proxy": null,
-      "spy_price": null,
-      "spy_5d_return": null,
-      "spy_20d_return": null,
-      "weekday": 6
-    }
-  },
   "IC_20260320": {
     "credit": 2.0,
     "date": "2026-03-25T17:37:15.315385",
@@ -140,21 +105,5 @@
       "long_call": 781.0
     },
     "fill_confirmed": true
-  },
-  "IC_260821_2": {
-    "quantity": 1,
-    "strikes": {
-      "short_put": 700.0,
-      "long_put": 695.0,
-      "short_call": 776.0,
-      "long_call": 781.0
-    },
-    "signature": "SPY_2026-08-21_P695-700_C776-781",
-    "validation_phase": true,
-    "profile_name": "spy-core",
-    "fill_confirmed": true,
-    "journaled_at": "2026-07-23T14:33:25.736107+00:00",
-    "journal_source": "broker_inventory_reconcile",
-    "note": "Second concurrent 1-lot IC on 2026-08-21 sharing call vertical C776/C781. Broker book had put vertical 695/700 plus 2-lot call vertical while only IC_260821 (P703-708/C776-781) was journaled \u2014 audit blocked new risk."
   }
 }

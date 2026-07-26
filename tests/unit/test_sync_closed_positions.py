@@ -402,9 +402,7 @@ def test_reverse_lookup_promotes_singleton_when_open_lot_matches():
     expected_close_leg, the reverse-lookup fallback should promote it from
     'dropped' to 'paired'."""
     expiry = "260516"
-    open_row = _make_parent_open(
-        "2026-04-15T14:00:00Z", expiry, order_id="parent-open-rev"
-    )
+    open_row = _make_parent_open("2026-04-15T14:00:00Z", expiry, order_id="parent-open-rev")
     # SIMPLE close of all 4 legs with no position_intent — must be matched
     # via reverse-lookup against the open lot's expected_close_legs.
     singleton_closes = [
@@ -450,7 +448,13 @@ def test_reverse_lookup_promotes_singleton_when_open_lot_matches():
 
 
 def _make_singleton_close_for_symbol(
-    filled_at: str, *, symbol: str, order_id: str, side: str, qty: int, price: float,
+    filled_at: str,
+    *,
+    symbol: str,
+    order_id: str,
+    side: str,
+    qty: int,
+    price: float,
     client_order_id: str = "",
 ) -> dict:
     return {
@@ -477,9 +481,7 @@ def test_stamped_client_order_id_pairs_without_reverse_lookup():
     reverse-lookup heuristic having anything to match against).
     """
     expiry = "260516"
-    open_row = _make_parent_open(
-        "2026-04-15T14:00:00Z", expiry, order_id="parent-open-stamp"
-    )
+    open_row = _make_parent_open("2026-04-15T14:00:00Z", expiry, order_id="parent-open-stamp")
     # All 4 closes carry our stamped client_order_id. Intents:
     #   SP=short put close -> BPS, LP=long put close -> BPL
     #   SC=short call close -> BCS, LC=long call close -> BCL
@@ -536,9 +538,9 @@ def test_stamped_client_order_id_pairs_without_reverse_lookup():
         if "alpaca" in fill.get("source", "")
     ]
     assert sources, f"no inventory rows produced: {inventory}"
-    assert all(
-        s == "alpaca_simple_close_client_order_id" for s in sources
-    ), f"expected all closes to be stamped-CID sourced, got {sources}"
+    assert all(s == "alpaca_simple_close_client_order_id" for s in sources), (
+        f"expected all closes to be stamped-CID sourced, got {sources}"
+    )
     assert len(sources) == 4, sources
 
     # End-to-end: the full pairing pipeline yields exactly one paired IC.

@@ -55,14 +55,14 @@ def test_audit_agent_perform_audit(mock_trade_logs):
 
     agent = AuditAgent()
     agent.log_dir = Path(log_dir)  # Point to mock dir
-    agent.audit_graph = AuditGraph(data_dir=audit_dir) # Point to mock graph dir
+    agent.audit_graph = AuditGraph(data_dir=audit_dir)  # Point to mock graph dir
 
     report = agent.perform_audit(date_str)
 
     assert report.trades_scanned == 3
     # Mismatch check: Since AuditGraph is empty, it shouldn't find mismatches yet
     # Violations: 1 (PROHIBITED ticker). Sizing violation removed from simple log scan in new logic
-    # Wait, I kept Ticker Whitelist in log scanning. 
+    # Wait, I kept Ticker Whitelist in log scanning.
     # Let me re-verify AuditAgent logic.
     assert len(report.violations) == 1
     assert report.status == "FAIL"  # HIGH severity violation exists

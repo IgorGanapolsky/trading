@@ -38,13 +38,31 @@ class ReasoningEvaluator:
         """
         logger.info("🧪 Instrumenting trade reasoning for evaluation...")
 
-        # 1. Calculate Groundedness (Does reasoning match RAG lessons?)
-        # Logic: Check if keywords from RAG context appear in reasoning
+        # 1. Calculate Groundedness (Does reasoning match RAG lessons + protocol?)
         context_text = " ".join(retrieved_context).lower()
         reasoning_lower = reasoning.lower()
+        strategy = str(proposal.get("strategy") or "").strip().lower()
+
+        # Strategy-aware protocol keywords (must appear in reasoning AND retrieved context)
+        if strategy in {
+            "spy_put_credit",
+            "bull_put",
+            "bull_put_credit",
+            "put_credit",
+            "credit_spread",
+        }:
+            checks = [
+                "rule #1",
+                "stop-loss",
+                "15-delta",
+                "7 dte",
+                "1-lot",
+                "credit",
+            ]
+        else:
+            checks = ["rule #1", "stop-loss", "vix", "15-delta", "50% profit", "7 dte"]
 
         grounded_points = 0
-        checks = ["rule #1", "stop-loss", "vix", "15-delta", "50% profit", "7 dte"]
         for check in checks:
             if check in context_text and check in reasoning_lower:
                 grounded_points += 1
@@ -53,8 +71,10 @@ class ReasoningEvaluator:
 
         # 2. Context Relevance (Is the market data used relevant to the strategy?)
         context_relevance = 1.0  # Default high for now
-        if "vix" not in reasoning_lower and proposal.get("strategy") == "iron_condor":
+        if "vix" not in reasoning_lower and strategy == "iron_condor":
             context_relevance = 0.5  # Major signal missing
+        if not context_text.strip():
+            context_relevance = 0.0  # openings require retrieved lessons
 
         # 3. Signal Relevance (Does the proposal match the reasoning?)
         signal_relevance = 1.0

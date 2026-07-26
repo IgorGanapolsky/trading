@@ -201,7 +201,9 @@ def test_build_packet_combines_blockers_and_mocked_research(monkeypatch):
     monkeypatch.setattr(
         deep.ml_update,
         "analyze_loss_clusters",
-        lambda payload: [{"id": "cluster", "sample_size": 2, "total_pnl": -50, "expectancy_per_trade": -25}],
+        lambda payload: [
+            {"id": "cluster", "sample_size": 2, "total_pnl": -50, "expectancy_per_trade": -25}
+        ],
     )
     monkeypatch.setattr(deep, "load_json", fake_load_json)
     monkeypatch.setattr(
@@ -256,7 +258,9 @@ def test_write_outputs_supports_dry_run_and_real_files(tmp_path: Path, monkeypat
 
 def test_main_returns_blocked_exit_code_and_prints_outputs(monkeypatch, capsys):
     packet = _sample_packet()
-    monkeypatch.setattr(sys, "argv", ["deep_research_ml_rag.py", "--date", "2026-07-03", "--dry-run"])
+    monkeypatch.setattr(
+        sys, "argv", ["deep_research_ml_rag.py", "--date", "2026-07-03", "--dry-run"]
+    )
     monkeypatch.setattr(deep, "build_packet", lambda today: packet)
     monkeypatch.setattr(
         deep,

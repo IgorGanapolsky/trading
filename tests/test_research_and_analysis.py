@@ -174,11 +174,31 @@ def test_classify_trade_no_data():
 def test_regime_samplers_from_trades():
     trades_data = {
         "trades": [
-            {"status": "closed", "outcome": "win", "decision_trace": {"market_context": {"vix": 17}}},
-            {"status": "closed", "outcome": "win", "decision_trace": {"market_context": {"vix": 18}}},
-            {"status": "closed", "outcome": "loss", "decision_trace": {"market_context": {"vix": 16}}},
-            {"status": "closed", "outcome": "loss", "decision_trace": {"market_context": {"vix": 28}}},
-            {"status": "closed", "outcome": "loss", "decision_trace": {"market_context": {"vix": 29}}},
+            {
+                "status": "closed",
+                "outcome": "win",
+                "decision_trace": {"market_context": {"vix": 17}},
+            },
+            {
+                "status": "closed",
+                "outcome": "win",
+                "decision_trace": {"market_context": {"vix": 18}},
+            },
+            {
+                "status": "closed",
+                "outcome": "loss",
+                "decision_trace": {"market_context": {"vix": 16}},
+            },
+            {
+                "status": "closed",
+                "outcome": "loss",
+                "decision_trace": {"market_context": {"vix": 28}},
+            },
+            {
+                "status": "closed",
+                "outcome": "loss",
+                "decision_trace": {"market_context": {"vix": 29}},
+            },
         ]
     }
     model = {}
@@ -203,10 +223,19 @@ def test_regime_samplers_empty_trades():
 def test_regime_sampler_should_trade_threshold():
     trades = {
         "trades": [
-            {"status": "closed", "outcome": "win", "decision_trace": {"market_context": {"vix": 17}}}
+            {
+                "status": "closed",
+                "outcome": "win",
+                "decision_trace": {"market_context": {"vix": 17}},
+            }
             for _ in range(8)
-        ] + [
-            {"status": "closed", "outcome": "loss", "decision_trace": {"market_context": {"vix": 17}}}
+        ]
+        + [
+            {
+                "status": "closed",
+                "outcome": "loss",
+                "decision_trace": {"market_context": {"vix": 17}},
+            }
             for _ in range(2)
         ]
     }
@@ -219,7 +248,11 @@ def test_regime_sampler_should_trade_threshold():
 def test_regime_sampler_blocks_low_sample():
     trades = {
         "trades": [
-            {"status": "closed", "outcome": "win", "decision_trace": {"market_context": {"vix": 17}}}
+            {
+                "status": "closed",
+                "outcome": "win",
+                "decision_trace": {"market_context": {"vix": 17}},
+            }
             for _ in range(5)
         ]
     }
@@ -234,12 +267,17 @@ def test_regime_sampler_blocks_low_sample():
 
 def test_plan_trade_when_all_gates_pass():
     model = {
-        "regime_samplers": {
-            "normal": {"should_trade": True, "win_rate_pct": 75, "total": 20}
-        },
+        "regime_samplers": {"normal": {"should_trade": True, "win_rate_pct": 75, "total": 20}},
         "gate": {"should_trade": True},
     }
-    research = {"recommendations": {"regime": "normal", "should_trade": True, "suggested_delta": 15, "suggested_profit_target": 0.50}}
+    research = {
+        "recommendations": {
+            "regime": "normal",
+            "should_trade": True,
+            "suggested_delta": 15,
+            "suggested_profit_target": 0.50,
+        }
+    }
     plan = generate_next_day_plan(model, research)
     assert plan["action"] == "TRADE"
     assert plan["suggested_delta"] == 15
@@ -247,12 +285,17 @@ def test_plan_trade_when_all_gates_pass():
 
 def test_plan_hold_when_regime_blocks():
     model = {
-        "regime_samplers": {
-            "volatile": {"should_trade": False, "win_rate_pct": 20, "total": 15}
-        },
+        "regime_samplers": {"volatile": {"should_trade": False, "win_rate_pct": 20, "total": 15}},
         "gate": {"should_trade": True},
     }
-    research = {"recommendations": {"regime": "volatile", "should_trade": True, "suggested_delta": 10, "suggested_profit_target": 0.25}}
+    research = {
+        "recommendations": {
+            "regime": "volatile",
+            "should_trade": True,
+            "suggested_delta": 10,
+            "suggested_profit_target": 0.25,
+        }
+    }
     plan = generate_next_day_plan(model, research)
     assert plan["action"] == "HOLD"
     assert any("win rate" in r.lower() for r in plan["hold_reasons"])
@@ -260,9 +303,7 @@ def test_plan_hold_when_regime_blocks():
 
 def test_plan_hold_when_research_blocks():
     model = {
-        "regime_samplers": {
-            "spike": {"should_trade": False, "win_rate_pct": 0, "total": 0}
-        },
+        "regime_samplers": {"spike": {"should_trade": False, "win_rate_pct": 0, "total": 0}},
         "gate": {"should_trade": True},
     }
     research = {"recommendations": {"regime": "spike", "should_trade": False}}
@@ -272,9 +313,7 @@ def test_plan_hold_when_research_blocks():
 
 def test_plan_hold_when_global_gate_blocks():
     model = {
-        "regime_samplers": {
-            "normal": {"should_trade": True, "win_rate_pct": 80, "total": 30}
-        },
+        "regime_samplers": {"normal": {"should_trade": True, "win_rate_pct": 80, "total": 30}},
         "gate": {"should_trade": False, "block_reason": "Win rate 24.2% < 50.0%"},
     }
     research = {"recommendations": {"regime": "normal", "should_trade": True}}

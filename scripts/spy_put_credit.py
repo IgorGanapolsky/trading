@@ -32,7 +32,7 @@ logger = logging.getLogger("spy_put_credit")
 ENTRIES_FILE = ROOT / "data" / "put_credit_entries.json"
 AUDIT_DIR = ROOT / "data" / "audit"
 SYSTEM_STATE = ROOT / "data" / "system_state.json"
-CLOSED_ENTRY_STATES = {"closed", "cancelled", "rejected"}
+CLOSED_ENTRY_STATES = {"closed", "cancelled", "canceled", "canceled_unfilled", "cancelled_unfilled", "rejected", "expired"}
 EASTERN = ZoneInfo("America/New_York")
 
 
@@ -212,7 +212,7 @@ def evaluate_put_credit_exit(
         elif pnl <= -(max_profit * profile.stop_loss_pct):
             reason = "stop_loss"
 
-    return {
+    result = {
         "should_exit": reason is not None,
         "exit_reason": reason,
         "dte": dte,
@@ -223,6 +223,13 @@ def evaluate_put_credit_exit(
         "profit_target": max_profit * profile.take_profit_pct,
         "stop_loss": -(max_profit * profile.stop_loss_pct),
     }
+    try:
+        from src.risk.put_credit_regime import attach_counterfactuals
+
+        result = attach_counterfactuals(result, credit=credit, quantity=quantity, dte=dte)
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("counterfactual attach skipped: %s", exc)
+    return result
 
 
 def _position_map(client) -> dict[str, Any]:
@@ -723,6 +730,18 @@ def manage_put_credit_exits(client, *, dry_run: bool = False) -> dict[str, Any]:
             short_price=_position_price(short_pos),
             long_price=_position_price(long_pos),
         )
+        # Greptile #4280 P1: persist counterfactuals on the journal so cohort
+        # analysis can compare 25% TP / 7-DTE vs public 50% / 21-DTE later.
+        if isinstance(decision.get("counterfactuals"), dict):
+            entry["last_counterfactuals"] = decision["counterfactuals"]
+            entry["last_counterfactuals_at"] = datetime.now(timezone.utc).isoformat()
+            entry["last_mark"] = {
+                "current_debit": decision.get("current_debit"),
+                "estimated_pnl": decision.get("estimated_pnl"),
+                "dte": decision.get("dte"),
+                "hold_hours": decision.get("hold_hours"),
+            }
+            changed = True
         detail = {"key": key, **decision}
         if not decision["should_exit"]:
             report["holds"] += 1
@@ -742,6 +761,8 @@ def manage_put_credit_exits(client, *, dry_run: bool = False) -> dict[str, Any]:
         entry["exit_submitted_at"] = datetime.now(timezone.utc).isoformat()
         entry["estimated_exit_debit"] = decision["current_debit"]
         entry["estimated_exit_pnl"] = decision["estimated_pnl"]
+        if isinstance(decision.get("counterfactuals"), dict):
+            entry["exit_counterfactuals"] = decision["counterfactuals"]
         _save_entries(entries)
         changed = True
         report["submitted"] += 1
@@ -893,19 +914,23 @@ def find_put_credit_opportunity(spy_price: float) -> dict | None:
             logger.warning("No put verticals found in delta band %.2f-%.2f", band_lo, band_hi)
         return None
 
-    # Prefer closer to target delta, then higher credit, then nearer target DTE already ordered
-    candidates.sort(key=lambda r: (r["delta_distance"], -r["est_credit"]))
-    opp = candidates[0]
+    # Prefer higher natural credit (fillability), then closer to target delta.
+    # Prior delta-first ranking often picked thin OTMs with est_credit inflated vs book.
+    qualified = [r for r in candidates if float(r.get("est_credit") or 0) >= min_credit]
+    pool = qualified or candidates
+    pool.sort(key=lambda r: (-float(r["est_credit"]), r["delta_distance"]))
+    opp = pool[0]
     opp.pop("delta_distance", None)
     logger.info(
         "Opportunity: SPY put credit short=%.0f long=%.0f credit=$%.2f delta=%.3f exp=%s "
-        "(scanned %d band-qualified)",
+        "(scanned %d band-qualified, %d min-credit-qualified)",
         opp["short_put"],
         opp["long_put"],
         opp["est_credit"],
         opp["put_delta"],
         opp["expiry"],
         len(candidates),
+        len(qualified),
     )
     return opp
 
@@ -928,7 +953,8 @@ def place_put_credit(client, opp: dict) -> str | None:
         OptionLegRequest(symbol=sym(opp["short_put"]), side=OrderSide.SELL, ratio_qty=1),
     ]
 
-    limit_credit = max(profile.min_credit, round(float(opp["est_credit"]) - 0.05, 2))
+    # Start near natural credit (est_credit is short_bid - long_ask), not above book.
+    limit_credit = max(profile.min_credit, round(float(opp["est_credit"]), 2))
     walk = 0.0
     order_id = None
     while walk <= 0.20:
@@ -954,18 +980,31 @@ def place_put_credit(client, opp: dict) -> str | None:
             return None
         order_id = str(order.id)
         logger.info("Order %s status=%s", order_id, order.status)
-        # Brief wait for accept; full fill sync is handled by existing sync jobs.
-        time.sleep(3)
+        # Wait briefly for fill; unfilled NEW/ACCEPTED blocks concurrent slots forever.
+        time.sleep(4)
         try:
             refreshed = client.get_order_by_id(order_id)
             status = _order_status_name(getattr(refreshed, "status", ""))
-            if status == "FILLED":
+            filled_qty = float(getattr(refreshed, "filled_qty", 0) or 0)
+            if status == "FILLED" or filled_qty > 0:
                 break
             if status in {"CANCELED", "CANCELLED", "REJECTED", "EXPIRED"}:
+                order_id = None
                 walk += 0.05
                 continue
-            # accepted / new — stop walking
-            break
+            # Resting unfilled: cancel and walk credit down (still >= min_credit)
+            try:
+                client.cancel_order_by_id(order_id)
+                logger.warning(
+                    "Canceled unfilled put-credit order %s at limit $%.2f; walking credit down",
+                    order_id,
+                    current,
+                )
+            except Exception as cancel_exc:  # noqa: BLE001
+                logger.warning("Cancel unfilled %s failed: %s", order_id, cancel_exc)
+            order_id = None
+            walk += 0.05
+            continue
         except Exception:
             break
         walk += 0.05
@@ -983,6 +1022,17 @@ def _record_entry(opp: dict, order_id: str) -> None:
     if key in entries and entries[key].get("order_id") != order_id:
         raise RuntimeError(f"Put-credit journal identity collision for {key}")
     signature = f"SPY_{opp['expiry']}_P{int(opp['long_put'])}-{int(opp['short_put'])}"
+    regime = opp.get("regime") if isinstance(opp.get("regime"), dict) else None
+    if regime is None:
+        try:
+            from src.risk.put_credit_regime import capture_regime_snapshot
+
+            regime = capture_regime_snapshot(
+                float(opp["spy_price"]) if opp.get("spy_price") is not None else None
+            ).as_dict()
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Regime snapshot at journal failed: %s", exc)
+            regime = {"error": str(exc)}
     entries[key] = {
         "strategy_family": "spy_put_credit",
         "order_id": order_id,
@@ -1002,6 +1052,7 @@ def _record_entry(opp: dict, order_id: str) -> None:
         "validation_phase": True,
         "profile_name": "spy-put-credit",
         "status": "submitted_unconfirmed",
+        "regime": regime,
     }
     _save_entries(entries)
     logger.info("Recorded %s in %s", key, ENTRIES_FILE)
@@ -1064,6 +1115,11 @@ def main() -> int:
     )
     parser.add_argument("--status", action="store_true")
     parser.add_argument(
+        "--cohort",
+        action="store_true",
+        help="Print put-credit validation cohort scorecard (edge truth)",
+    )
+    parser.add_argument(
         "--manage-exits",
         action="store_true",
         help="Evaluate and submit paper exits for open put credits.",
@@ -1072,6 +1128,16 @@ def main() -> int:
         "--reconcile-entries",
         action="store_true",
         help="Recover missing PCS journals from filled paper BPS orders.",
+    )
+    parser.add_argument(
+        "--ignore-regime-gate",
+        action="store_true",
+        help="Bypass IVR/VIX regime entry gate (paper debug only; still paper-only).",
+    )
+    parser.add_argument(
+        "--regime-status",
+        action="store_true",
+        help="Print current regime snapshot and gate decision only.",
     )
     parser.add_argument("--live", action="store_true", help="Always rejected while live_blocked")
     args = parser.parse_args()
@@ -1108,6 +1174,13 @@ def main() -> int:
         print(json.dumps(report, indent=2, default=str))
         return 2 if report["broken"] else 0
 
+    if args.cohort:
+        from scripts.put_credit_cohort_scorecard import build_scorecard
+
+        card = build_scorecard()
+        print(json.dumps(card, indent=2, default=str))
+        return 0
+
     if args.status:
         try:
             price = get_underlying_price("SPY")
@@ -1116,9 +1189,20 @@ def main() -> int:
         plan = plan_structure(dry_run=True)
         plan["spy_price"] = price
         path = write_plan(plan)
+        try:
+            from scripts.put_credit_cohort_scorecard import build_scorecard
+
+            cohort = build_scorecard()
+        except Exception as exc:  # noqa: BLE001
+            cohort = {"error": str(exc)}
         print(
             json.dumps(
-                {"kill_state": state.__dict__, "plan": plan, "plan_path": str(path)},
+                {
+                    "kill_state": state.__dict__,
+                    "plan": plan,
+                    "plan_path": str(path),
+                    "cohort": cohort,
+                },
                 indent=2,
                 default=str,
             )
@@ -1135,6 +1219,18 @@ def main() -> int:
         print(json.dumps(report, indent=2, default=str))
         return 2 if report["broken"] else 0
 
+    if args.regime_status:
+        try:
+            price = float(get_underlying_price("SPY"))
+        except Exception:
+            price = None
+        from src.risk.put_credit_regime import capture_regime_snapshot, evaluate_regime_gate
+
+        snap = capture_regime_snapshot(price)
+        gate = evaluate_regime_gate(snap)
+        print(json.dumps(gate, indent=2, default=str))
+        return 0 if gate["allowed"] else 2
+
     if not _inventory_ok():
         return 2
 
@@ -1150,10 +1246,51 @@ def main() -> int:
         logger.error("Cannot get SPY price: %s", exc)
         return 1
 
+    # Research-backed regime gate (IVR / VIX) before scanning or submitting.
+    from src.risk.put_credit_regime import capture_regime_snapshot, evaluate_regime_gate
+
+    regime_snap = capture_regime_snapshot(spy_price)
+    regime_gate = evaluate_regime_gate(regime_snap)
+    if not regime_gate["allowed"] and not args.ignore_regime_gate:
+        logger.error(
+            "PUT-CREDIT REGIME GATE BLOCKED: %s",
+            " | ".join(regime_gate["blockers"]),
+        )
+        print(
+            json.dumps(
+                {
+                    "success": False,
+                    "reason": "regime_gate_blocked",
+                    "regime": regime_gate,
+                },
+                indent=2,
+                default=str,
+            )
+        )
+        return 2
+    if regime_gate.get("soft_flags"):
+        logger.warning("Regime soft flags: %s", " | ".join(regime_gate["soft_flags"]))
+    if args.ignore_regime_gate and not regime_gate["allowed"]:
+        logger.warning(
+            "Ignoring regime gate blockers (debug): %s",
+            " | ".join(regime_gate["blockers"]),
+        )
+
     opp = find_put_credit_opportunity(spy_price)
+    if isinstance(opp, dict):
+        opp["spy_price"] = spy_price
+        opp["regime"] = regime_snap.as_dict()
+        opp["regime_gate"] = {
+            "allowed": regime_gate["allowed"],
+            "blockers": regime_gate["blockers"],
+            "soft_flags": regime_gate["soft_flags"],
+            "thresholds": regime_gate["thresholds"],
+        }
     dry = not args.execute_paper
     plan = plan_structure(dry_run=dry, opp=opp)
     plan["spy_price"] = spy_price
+    plan["regime"] = regime_snap.as_dict()
+    plan["regime_gate"] = regime_gate
     path = write_plan(plan)
 
     if opp is None:
@@ -1169,19 +1306,28 @@ def main() -> int:
         return 2
 
     logger.info(
-        "Policy: 1-lot $%.0f-wide put credit | Δ=%.2f | credit=$%.2f | TP %.0f%% | SL %.0fx",
+        "Policy: 1-lot $%.0f-wide put credit | Δ=%.2f | credit=$%.2f | TP %.0f%% | SL %.0fx | "
+        "IVR=%s VIX=%s",
         plan["wing_width"],
         opp["put_delta"],
         opp["est_credit"],
         plan["take_profit_pct"] * 100,
         plan["stop_loss_pct"],
+        regime_snap.iv_rank_proxy,
+        regime_snap.vix,
     )
 
     if dry:
         logger.info("DRY RUN — no order (pass --execute-paper for paper MLEG)")
         print(
             json.dumps(
-                {"success": True, "dry_run": True, "opportunity": opp, "plan_path": str(path)},
+                {
+                    "success": True,
+                    "dry_run": True,
+                    "opportunity": opp,
+                    "regime": regime_gate,
+                    "plan_path": str(path),
+                },
                 indent=2,
                 default=str,
             )
@@ -1204,6 +1350,16 @@ def main() -> int:
         with acquire_trade_lock(timeout=10):
             if not _inventory_ok(client):
                 return 2
+            # Re-check regime under lock (stale window)
+            regime_snap2 = capture_regime_snapshot(spy_price)
+            regime_gate2 = evaluate_regime_gate(regime_snap2)
+            if not regime_gate2["allowed"] and not args.ignore_regime_gate:
+                logger.error(
+                    "PUT-CREDIT REGIME GATE BLOCKED after lock: %s",
+                    " | ".join(regime_gate2["blockers"]),
+                )
+                return 2
+            opp["regime"] = regime_snap2.as_dict()
             limit_report = evaluate_entry_limits(_load_entries(), candidate_signature=signature)
             if not limit_report["allowed"]:
                 logger.error(

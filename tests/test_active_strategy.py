@@ -179,7 +179,8 @@ def test_find_put_credit_scans_chain_once_and_uses_put_side_only(monkeypatch):
     )
 
 
-def test_find_put_credit_prefers_target_delta_over_higher_credit(monkeypatch):
+def test_find_put_credit_prefers_higher_credit_then_target_delta(monkeypatch):
+    """Fillability first: higher natural credit ranks above closer-to-target delta."""
     from scripts import spy_put_credit as pcs
 
     expiry = "2026-08-28"
@@ -225,9 +226,10 @@ def test_find_put_credit_prefers_target_delta_over_higher_credit(monkeypatch):
     opp = pcs.find_put_credit_opportunity(747.0)
 
     assert opp is not None
-    assert opp["short_put"] == 700.0
-    assert opp["put_delta"] == 0.15
-    assert opp["est_credit"] == 0.60
+    # short=690 / long=685 → natural credit 1.50-0.30=1.20 beats 700/695 at 0.60
+    assert opp["short_put"] == 690.0
+    assert opp["put_delta"] == 0.19
+    assert opp["est_credit"] == 1.20
 
 
 def test_find_put_credit_keeps_minimum_credit_fail_closed(monkeypatch):
@@ -486,7 +488,8 @@ def test_put_credit_entry_builds_supported_bull_put_order_id(tmp_path, monkeypat
 
     assert order_id == "order-1"
     assert captured["strategy"] == "spy_put_credit"
-    assert float(captured["request"].limit_price) == -0.95
+    # limit starts at natural est_credit (1.00), not est-0.05 — improves fill rate
+    assert float(captured["request"].limit_price) == -1.0
     parsed = parse_client_order_id(captured["request"].client_order_id)
     assert parsed is not None
     assert parsed["role"] == "OPEN"
@@ -508,23 +511,33 @@ def test_put_credit_entry_limits_enforce_daily_concurrent_and_signature():
             "status": "open",
             "entry_time": now.isoformat(),
             "signature": "same",
-        }
+        },
+        "PCS_2": {
+            "status": "open",
+            "entry_time": now.isoformat(),
+            "signature": "same2",
+        },
+        "PCS_3": {
+            "status": "open",
+            "entry_time": now.isoformat(),
+            "signature": "same3",
+        },
     }
 
     report = pcs.evaluate_entry_limits(entries, candidate_signature="same", now=now)
 
     assert report["allowed"] is False
-    assert report["today_count"] == 1
+    assert report["today_count"] == 3
     assert any("Daily" in blocker for blocker in report["blockers"])
     assert any("signature" in blocker for blocker in report["blockers"])
 
-    entries["PCS_2"] = {
+    entries["PCS_4"] = {
         "status": "open",
         "entry_time": (now - timedelta(days=1)).isoformat(),
         "signature": "different",
     }
     report = pcs.evaluate_entry_limits(entries, now=now)
-    assert report["active_count"] == 2
+    assert report["active_count"] == 4
     assert any("Concurrent" in blocker for blocker in report["blockers"])
 
 

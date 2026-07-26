@@ -221,8 +221,7 @@ class TestExecutionAgentValidation:
         agent.reason_with_llm = MagicMock(
             return_value={
                 "reasoning": (
-                    "TIMING: IMMEDIATE\nSLIPPAGE: 0.05%\n"
-                    "CONFIDENCE: 0.92\nRECOMMENDATION: EXECUTE"
+                    "TIMING: IMMEDIATE\nSLIPPAGE: 0.05%\nCONFIDENCE: 0.92\nRECOMMENDATION: EXECUTE"
                 )
             }
         )
@@ -256,8 +255,7 @@ class TestExecutionAgentValidation:
         agent.reason_with_llm = MagicMock(
             return_value={
                 "reasoning": (
-                    "TIMING: IMMEDIATE\nSLIPPAGE: 0.05%\n"
-                    "CONFIDENCE: 0.92\nRECOMMENDATION: EXECUTE"
+                    "TIMING: IMMEDIATE\nSLIPPAGE: 0.05%\nCONFIDENCE: 0.92\nRECOMMENDATION: EXECUTE"
                 )
             }
         )
@@ -547,16 +545,44 @@ class TestSafeSubmitOrder:
 
         mock_client.submit_order.assert_not_called()
 
+    @staticmethod
+    def _protocol_grounded_lessons():
+        """Lesson text that satisfies IC groundedness keywords without synthetic baseline.
+
+        Use a plain object (not MagicMock): MagicMock invents truthy .snippet attrs
+        that become garbage context and score groundedness 0.
+        """
+        from types import SimpleNamespace
+
+        return [
+            SimpleNamespace(
+                snippet=None,
+                content=(
+                    "Rule #1 don't lose money. Use stop-loss, check VIX, "
+                    "15-delta shorts, 50% profit target or 7 dte exit."
+                ),
+                prevention=None,
+                title=None,
+            )
+        ]
+
+    @patch("src.rag.lessons_search.LessonsSearch")
     @patch("src.safety.mandatory_trade_gate._get_positions_qty_map", return_value={})
     @patch("src.safety.mandatory_trade_gate._estimate_opening_max_loss")
     @patch("src.safety.mandatory_trade_gate.validate_trade_mandatory")
     @patch("src.safety.mandatory_trade_gate._infer_is_closing_order", return_value=False)
     def test_allows_credit_oriented_iron_condor_entry(
-        self, _mock_is_closing, mock_gate, mock_estimate_opening_max_loss, _mock_qty_map
+        self,
+        _mock_is_closing,
+        mock_gate,
+        mock_estimate_opening_max_loss,
+        _mock_qty_map,
+        mock_lessons,
     ):
         """Proper short iron condors should still pass through safe_submit_order."""
         mock_gate.return_value = MagicMock(approved=True, reason="")
         mock_estimate_opening_max_loss.return_value = (100.0, 35, "SPY")
+        mock_lessons.return_value.search.return_value = self._protocol_grounded_lessons()
 
         mock_client = MagicMock(spec=["get_account", "submit_order"])
         mock_client.get_account.return_value = MagicMock(equity="10000")
@@ -576,11 +602,12 @@ class TestSafeSubmitOrder:
         safe_submit_order(mock_client, mock_request, strategy="iron_condor")
         mock_client.submit_order.assert_called_once_with(mock_request)
 
+    @patch("src.rag.lessons_search.LessonsSearch")
     @patch("src.safety.mandatory_trade_gate.validate_trade_mandatory")
     @patch("src.safety.milestone_controller.get_milestone_context")
     @patch("src.safety.north_star_guard.get_guard_context")
     def test_injects_guard_and_positions_context_for_openings(
-        self, mock_guard, mock_milestone, mock_gate
+        self, mock_guard, mock_milestone, mock_gate, mock_lessons
     ):
         """safe_submit_order injects dynamic context when it can infer an opening order."""
         guard_ctx = {
@@ -600,6 +627,7 @@ class TestSafeSubmitOrder:
         mock_guard.return_value = guard_ctx
         mock_milestone.return_value = milestone_ctx
         mock_gate.return_value = MagicMock(approved=True, reason="")
+        mock_lessons.return_value.search.return_value = self._protocol_grounded_lessons()
 
         # Use a strict spec so MagicMock doesn't fabricate get_all_positions(),
         # which would prevent _infer_is_closing_order() from inferring openings.
@@ -628,6 +656,7 @@ class TestSafeSubmitOrder:
         assert ctx["positions"]
         mock_client.submit_order.assert_called_once_with(mock_request)
 
+    @patch("src.rag.lessons_search.LessonsSearch")
     @patch("src.safety.mandatory_trade_gate._infer_paper_trading_client", return_value=True)
     @patch("src.safety.mandatory_trade_gate._get_positions_qty_map", return_value={})
     @patch("src.safety.mandatory_trade_gate._estimate_opening_max_loss")
@@ -640,10 +669,12 @@ class TestSafeSubmitOrder:
         mock_estimate_opening_max_loss,
         _mock_qty_map,
         _mock_paper,
+        mock_lessons,
     ):
         """The final order gate gets enough context to keep live/scaling blocked."""
         mock_gate.return_value = MagicMock(approved=True, reason="")
         mock_estimate_opening_max_loss.return_value = (500.0, 35, "SPY")
+        mock_lessons.return_value.search.return_value = self._protocol_grounded_lessons()
 
         mock_client = MagicMock(spec=["get_account", "submit_order"])
         mock_client.get_account.return_value = MagicMock(equity="100000")
@@ -765,11 +796,21 @@ class TestSafeSubmitOrder:
                 groundedness=0.95,
                 reasoning_trace="grounded",
             )
-            mock_lessons.return_value.search.return_value = []
-
-            safe_submit_order(mock_client, mock_request, strategy="iron_condor")
+            # Hard RAG require: openings must retrieve at least one lesson
+            # (plain object — MagicMock would invent a truthy .snippet)
+            mock_lessons.return_value.search.return_value = (
+                self._protocol_grounded_lessons()
+            )
+            # Cold validation: ML consensus deferred (no fake AGREE)
+            with patch.object(
+                gate_mod,
+                "_active_strategy_ml_ready",
+                return_value=(False, {"family": "spy_put_credit", "n": 0, "learning_ready": False}),
+            ):
+                safe_submit_order(mock_client, mock_request, strategy="iron_condor")
 
         mock_client.submit_order.assert_called_once_with(mock_request)
+        mock_juror.assert_not_called()
 
 
 # -------------------------------------------------------------------

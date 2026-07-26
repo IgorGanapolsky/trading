@@ -277,7 +277,9 @@ class TestFindTrade:
     """Test find_trade method with mocked strikes."""
 
     @patch.object(IronCondorStrategy, "get_underlying_price", return_value=690.0)
-    @patch.object(IronCondorStrategy, "calculate_strikes", return_value=(645.0, 655.0, 725.0, 735.0))
+    @patch.object(
+        IronCondorStrategy, "calculate_strikes", return_value=(645.0, 655.0, 725.0, 735.0)
+    )
     def test_find_trade_returns_iron_condor_legs(self, mock_strikes, mock_price):
         """find_trade should return a complete IronCondorLegs object."""
         strategy = IronCondorStrategy()
@@ -292,7 +294,9 @@ class TestFindTrade:
         assert ic.max_profit > 0
 
     @patch.object(IronCondorStrategy, "get_underlying_price", return_value=690.0)
-    @patch.object(IronCondorStrategy, "calculate_strikes", return_value=(645.0, 655.0, 725.0, 735.0))
+    @patch.object(
+        IronCondorStrategy, "calculate_strikes", return_value=(645.0, 655.0, 725.0, 735.0)
+    )
     def test_find_trade_expiry_is_friday(self, mock_strikes, mock_price):
         """Options expiry should be a Friday."""
         strategy = IronCondorStrategy()
@@ -434,7 +438,9 @@ class TestExecute:
 
         with (
             patch.object(strategy, "_validate_sync_freshness", return_value=(True, "", {})),
-            patch("scripts.iron_condor_trader.make_alpaca_trading_client", return_value=mock_client),
+            patch(
+                "scripts.iron_condor_trader.make_alpaca_trading_client", return_value=mock_client
+            ),
             patch(
                 "src.utils.alpaca_client.get_alpaca_credentials",
                 return_value=("test_key", "test_secret"),
@@ -455,7 +461,9 @@ class TestExecute:
 
         with (
             patch.object(strategy, "_validate_sync_freshness", return_value=(True, "", {})),
-            patch("scripts.iron_condor_trader.make_alpaca_trading_client", return_value=mock_client),
+            patch(
+                "scripts.iron_condor_trader.make_alpaca_trading_client", return_value=mock_client
+            ),
             patch(
                 "src.utils.alpaca_client.get_alpaca_credentials",
                 return_value=("test_key", "test_secret"),
@@ -529,9 +537,7 @@ class TestRecentExpiryConcentrationGate:
         from scripts.iron_condor_trader import _check_recent_expiry_concentration
 
         now = datetime(2026, 5, 18, tzinfo=timezone.utc)
-        rows = [
-            (f"2026-05-{day:02d}T15:30:00+00:00", "2026-06-05") for day in range(1, 16)
-        ] + [
+        rows = [(f"2026-05-{day:02d}T15:30:00+00:00", "2026-06-05") for day in range(1, 16)] + [
             ("2026-05-16T15:30:00+00:00", "2026-06-12"),
             ("2026-05-17T15:30:00+00:00", "2026-06-19"),
             ("2026-05-18T13:00:00+00:00", "2026-06-26"),
@@ -551,13 +557,9 @@ class TestRecentExpiryConcentrationGate:
         # All historical entries are >60 days old. Even though they were
         # heavily concentrated, the calendar window excludes them — no deadlock.
         now = datetime(2026, 5, 18, tzinfo=timezone.utc)
-        rows = [
-            ("2026-02-01T15:30:00+00:00", "2026-03-06") for _ in range(20)
-        ]
+        rows = [("2026-02-01T15:30:00+00:00", "2026-03-06") for _ in range(20)]
         ledger = self._write_ledger(tmp_path, rows)
-        blocked, _ = _check_recent_expiry_concentration(
-            "2026-06-05", ledger_path=ledger, now=now
-        )
+        blocked, _ = _check_recent_expiry_concentration("2026-06-05", ledger_path=ledger, now=now)
         assert blocked is False
 
     def test_allows_diversified_recent_history(self, tmp_path):
@@ -592,9 +594,7 @@ class TestRecentExpiryConcentrationGate:
             ("2026-05-16T15:30:00+00:00", "2026-06-05"),
         ]
         ledger = self._write_ledger(tmp_path, rows)
-        blocked, _ = _check_recent_expiry_concentration(
-            "2026-06-05", ledger_path=ledger, now=now
-        )
+        blocked, _ = _check_recent_expiry_concentration("2026-06-05", ledger_path=ledger, now=now)
         assert blocked is False
 
     def test_no_ledger_does_not_block(self, tmp_path):
