@@ -203,7 +203,29 @@ class AlpacaEquityBrokerAdapter(EquityBrokerAdapter):
             )
 
     def collect_dividend_income(self) -> DividendIncome:
-        raise NotImplementedError(
-            "Real dividend tracking requires verifying Alpaca's /v2/account/activities "
-            "response shape first. See class docstring."
-        )
+        import requests
+
+        headers = {
+            "APCA-API-KEY-ID": self.api_key,
+            "APCA-API-SECRET-KEY": self.secret_key,
+        }
+        url = "https://api.alpaca.markets/v2/account/activities"
+        try:
+            resp = requests.get(url, headers=headers, params={"activity_types": "DIV"}, timeout=15)
+            resp.raise_for_status()
+            activities = resp.json()
+            total = 0.0
+            if isinstance(activities, list):
+                for act in activities:
+                    if isinstance(act, dict):
+                        total += float(act.get("net_amount", 0.0))
+            return DividendIncome(
+                total_usd=total,
+                observed_at=datetime.now(timezone.utc).isoformat(),
+            )
+        except Exception as exc:
+            logger.error("Failed to fetch Alpaca dividend activities: %s", exc)
+            return DividendIncome(
+                total_usd=0.0,
+                observed_at=datetime.now(timezone.utc).isoformat(),
+            )
