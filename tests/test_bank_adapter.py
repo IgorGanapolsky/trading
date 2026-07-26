@@ -58,9 +58,10 @@ class TestMercuryBankAdapterSafety:
                 _live_enabled=False,
             )
 
-    def test_from_env_requires_both_token_and_account_id(self, monkeypatch):
+    def test_from_env_requires_both_token_and_account_id(self, monkeypatch, tmp_path):
         monkeypatch.delenv("MERCURY_API_TOKEN", raising=False)
         monkeypatch.delenv("MERCURY_ACCOUNT_ID", raising=False)
+        monkeypatch.setenv("MERCURY_SECRETS_PATH", str(tmp_path / "nonexistent.json"))
         with pytest.raises(ValueError, match="MERCURY_API_TOKEN"):
             MercuryBankAdapter.from_env(recipient_id="recipient-1")
 
