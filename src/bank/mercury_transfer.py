@@ -1,13 +1,15 @@
 """Mercury AI bank ↔ brokerage transfer planner/executor.
 
-Default is dry-run. Real transfers require live_bank gate AND MERCURY_API_ENABLED=1
-plus vaulted credentials. No secrets in code or logs.
+Default is dry-run. Real transfers require live_bank gate AND MercuryBankAdapter
+env vars (MERCURY_API_TOKEN, MERCURY_ACCOUNT_ID, MERCURY_LIVE_TRANSFERS_ENABLED=1,
+MERCURY_RECIPIENT_ID). No secrets in code or logs.
 """
 
 from __future__ import annotations
 
 import logging
 import os
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -42,18 +44,106 @@ class TransferPlanResult:
 
 
 def _mercury_api_ready() -> tuple[bool, str]:
-    """Check env flags only — never echo secret values."""
-    enabled = os.environ.get("MERCURY_API_ENABLED", "").lower() in {"1", "true", "yes"}
-    if not enabled:
-        return False, "MERCURY_API_ENABLED not set (real ACH disabled)"
-    # Credential presence without loading secrets into logs
-    key_set = bool(os.environ.get("MERCURY_API_KEY") or os.environ.get("MERCURY_TOKEN"))
-    if not key_set:
-        # Optional vault file path presence
-        vault = Path.home() / ".resume_secrets" / "mercury.json"
-        if not vault.is_file():
-            return False, "no MERCURY_API_KEY/MERCURY_TOKEN and no ~/.resume_secrets/mercury.json"
+    """Check env flags only — never echo secret values.
+
+    Supports both the canonical MercuryBankAdapter env vars and the legacy
+    MERCURY_API_ENABLED flag for backward compatibility.
+    """
+    # Legacy flag (still accepted for backward compat)
+    legacy_enabled = os.environ.get("MERCURY_API_ENABLED", "").lower() in {"1", "true", "yes"}
+
+    # Canonical MercuryBankAdapter env vars
+    token = os.environ.get("MERCURY_API_TOKEN") or os.environ.get("MERCURY_API_KEY") or os.environ.get("MERCURY_TOKEN")
+    account_id = os.environ.get("MERCURY_ACCOUNT_ID")
+    live_enabled = os.environ.get("MERCURY_LIVE_TRANSFERS_ENABLED") == "1"
+    recipient_id = os.environ.get("MERCURY_RECIPIENT_ID")
+
+    if not (legacy_enabled or live_enabled):
+        return False, "MERCURY_LIVE_TRANSFERS_ENABLED=1 not set (real ACH disabled)"
+    if not token:
+        return False, "no MERCURY_API_TOKEN/MERCURY_API_KEY/MERCURY_TOKEN set"
+    if not account_id:
+        return False, "no MERCURY_ACCOUNT_ID set"
+    if not recipient_id:
+        return False, "no MERCURY_RECIPIENT_ID set"
     return True, "mercury_credentials_present"
+
+
+def _execute_real_transfer(
+    *,
+    direction: str,
+    amount_usd: float,
+    reason: str,
+    ledger_path: Path | None,
+    gate: Any,
+) -> TransferPlanResult:
+    """Execute a real Mercury ACH transfer via MercuryBankAdapter.
+
+    MERCURY_TO_BROKER: uses MercuryBankAdapter.send_to_broker() (real ACH push).
+    BROKER_TO_MERCURY: uses MercuryBankAdapter.record_incoming_from_broker()
+    (reconciliation only — Mercury has no pull API; the broker must initiate
+    the return leg).
+    """
+    from src.adapters.bank_adapter import MercuryBankAdapter
+
+    recipient_id = os.environ.get("MERCURY_RECIPIENT_ID", "")
+    try:
+        bank = MercuryBankAdapter.from_env(recipient_id=recipient_id)
+    except (ValueError, RuntimeError) as exc:
+        rec = build_transfer_record(
+            direction=direction,
+            amount_usd=amount_usd,
+            status=TransferStatus.BLOCKED,
+            dry_run=False,
+            reason=reason or "real_transfer_requested",
+            block_reason=f"MercuryBankAdapter construction failed: {exc}",
+            metadata={"gate_allowed": gate.allowed},
+        )
+        append_transfer_record(rec, ledger_path=ledger_path)
+        return TransferPlanResult(
+            ok=False,
+            dry_run=False,
+            blocked=True,
+            record=rec.as_dict(),
+            message=f"BANK TRANSFER REFUSED: {rec.block_reason}",
+        )
+
+    idempotency_key = f"income_loop_{uuid.uuid4().hex[:16]}"
+
+    if direction == TransferDirection.MERCURY_TO_BROKER.value:
+        # Real ACH push from Mercury to broker
+        transfer = bank.send_to_broker(amount_usd, idempotency_key=idempotency_key)
+        status = TransferStatus.CONFIRMED if transfer.success else TransferStatus.FAILED
+        block_reason = transfer.error or ""
+        external_ref = transfer.transfer_id or ""
+    else:
+        # BROKER_TO_MERCURY: reconciliation only (Mercury can't pull)
+        transfer = bank.record_incoming_from_broker(amount_usd)
+        status = TransferStatus.CONFIRMED if transfer.success else TransferStatus.FAILED
+        block_reason = transfer.error or ""
+        external_ref = transfer.transfer_id or ""
+
+    rec = build_transfer_record(
+        direction=direction,
+        amount_usd=amount_usd,
+        status=status,
+        dry_run=False,
+        reason=reason or "real_transfer_executed",
+        block_reason=block_reason,
+        external_ref=external_ref,
+        metadata={"gate_allowed": gate.allowed},
+    )
+    append_transfer_record(rec, ledger_path=ledger_path)
+    return TransferPlanResult(
+        ok=transfer.success,
+        dry_run=False,
+        blocked=not transfer.success,
+        record=rec.as_dict(),
+        message=(
+            f"REAL {direction} ${amount_usd:.2f} {status.value.upper()}"
+            + (f" (ref: {external_ref})" if external_ref else "")
+        ),
+    )
 
 
 def plan_transfer(
@@ -115,27 +205,13 @@ def plan_transfer(
                 record=rec.as_dict(),
                 message=f"BANK TRANSFER REFUSED: {api_msg}",
             )
-        # Real Mercury ACH is not implemented without vendor API contract.
-        # Fail closed rather than pretend a transfer succeeded.
-        rec = build_transfer_record(
+        # Execute real transfer via MercuryBankAdapter
+        return _execute_real_transfer(
             direction=direction_s,
             amount_usd=amount_usd,
-            status=TransferStatus.FAILED,
-            dry_run=False,
-            reason=reason or "real_transfer_requested",
-            block_reason=(
-                "Mercury live ACH executor not configured for production API; "
-                "refusing fabricated transfer receipt"
-            ),
-            metadata={"api": api_msg},
-        )
-        append_transfer_record(rec, ledger_path=ledger_path)
-        return TransferPlanResult(
-            ok=False,
-            dry_run=False,
-            blocked=True,
-            record=rec.as_dict(),
-            message=rec.block_reason,
+            reason=reason,
+            ledger_path=ledger_path,
+            gate=gate,
         )
 
     # Dry-run / plan path — always allowed for operator readiness
