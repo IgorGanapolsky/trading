@@ -5,12 +5,15 @@ Prevents scheduling trades on non-trading days.
 Add this to your src/utils/ and import before any scheduling logic.
 """
 
+import logging
 import os
 from datetime import datetime, timedelta
 from typing import Optional
 from zoneinfo import ZoneInfo
 
 from src.utils.alpaca_client import get_alpaca_client
+
+logger = logging.getLogger(__name__)
 
 # Use Eastern Time everywhere — the NYSE/Alpaca calendar is keyed to ET, not
 # the host's local timezone. A naive `datetime.now()` on a Pacific host at
