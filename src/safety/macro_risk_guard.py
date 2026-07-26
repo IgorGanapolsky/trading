@@ -125,8 +125,15 @@ class MacroRiskGuard:
             return {"oil_price": 75.0, "oil_change": 0.0, "yield_change": 0.0}
 
         try:
-            from alpaca.data.requests import StockBarsRequest
-            from alpaca.data.timeframe import TimeFrame
+            try:
+                from alpaca.data.requests import StockBarsRequest
+                from alpaca.data.timeframe import TimeFrame
+            except ImportError:
+                class StockBarsRequest:  # type: ignore
+                    def __init__(self, **kwargs: Any) -> None:
+                        pass
+                class TimeFrame:  # type: ignore
+                    Day = "day"
 
             # USO acts as our Crude Oil proxy for the Alpha Engine
             # TNX acts as our 10-Year Treasury Yield proxy

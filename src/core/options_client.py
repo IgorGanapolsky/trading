@@ -18,12 +18,15 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from alpaca.data.historical.option import OptionHistoricalDataClient
-from alpaca.data.requests import (
-    OptionChainRequest,
-    OptionSnapshotRequest,
-)
-from alpaca.trading.client import TradingClient
+try:
+    from alpaca.data.historical.option import OptionHistoricalDataClient
+    from alpaca.data.requests import (
+        OptionChainRequest,
+        OptionSnapshotRequest,
+    )
+    from alpaca.trading.client import TradingClient
+except ImportError:
+    OptionHistoricalDataClient = OptionChainRequest = OptionSnapshotRequest = TradingClient = Any  # type: ignore
 from src.safety.mandatory_trade_gate import safe_submit_order
 
 # Configure logging
