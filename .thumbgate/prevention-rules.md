@@ -3,15 +3,15 @@
 Generated from negative feedback memories (time-weighted, half-life: 7d).
 
 ## general
-- Recurrence count: 9 (weighted: 1.9)
-- Rule: For trading/North Star status, lead with hard truth and exact next actions: freeze scale, define kill criteria, audit current open risk, verify latest broker state, and implement/trigger automations instead of abstract conditional statements.
-- Latest mistake: MISTAKE: The response sounded evasive/confused to the user and did not give a decisive right-now operating plan with concrete...
+- Recurrence count: 17 (weighted: 3.5)
+- Rule: Keep every Stop/SubagentStop handler fail-open when stop_hook_active is true, persist CLAUDE_CODE_STOP_HOOK_BLOCK_CAP=50 for claude-yolo, clear only verified stale Ralph state, and smoke-test both recursive and normal stop paths.
+- Latest mistake: MISTAKE: Claude Code used its default Stop hook block cap of 8, so the ninth consecutive block forced the turn to end even...
 
 ## Root Cause Categories
-- guardrail_triggered: 3 failures
+- guardrail_triggered: 34 failures
 
 ## Repeated Failure Constraints
-- security:generic_assignment: 4 failures
+- security:generic_assignment: 79 failures
 - security:github_pat: 2 failures
 
 ## Auto-Review & Sandboxing Rules (Reviewer Agent)

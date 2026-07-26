@@ -1,10 +1,25 @@
 {
-  "last_updated": "2026-07-26T15:22:42.042860+00:00",
+  "last_updated": "2026-07-25T16:16:35.140217+00:00",
   "sync_health": {
-    "last_successful_sync": "2026-07-26T15:22:42.042860+00:00",
+    "last_successful_sync": "2026-07-25T16:16:35.140217+00:00",
     "sync_source": "sync_alpaca_state.py",
-    "sync_count_today": 1,
+    "sync_count_today": 3,
     "history": [
+      {
+        "timestamp": "2026-07-22T20:49:31.723152+00:00",
+        "equity": 94062.0,
+        "success": true
+      },
+      {
+        "timestamp": "2026-07-23T14:30:02.016295+00:00",
+        "equity": 94076.0,
+        "success": true
+      },
+      {
+        "timestamp": "2026-07-23T15:10:06.814803+00:00",
+        "equity": 94073.0,
+        "success": true
+      },
       {
         "timestamp": "2026-07-23T15:17:50.829448+00:00",
         "equity": 94074.0,
@@ -91,42 +106,27 @@
         "success": true
       },
       {
-        "timestamp": "2026-07-24T18:11:42.142660+00:00",
-        "equity": 94103.79,
+        "timestamp": "2026-07-24T18:50:07.841054+00:00",
+        "equity": 94087.79,
         "success": true
       },
       {
-        "timestamp": "2026-07-24T19:31:42.302900+00:00",
-        "equity": 94083.79,
-        "success": true
-      },
-      {
-        "timestamp": "2026-07-24T20:11:12.268090+00:00",
-        "equity": 94089.79,
-        "success": true
-      },
-      {
-        "timestamp": "2026-07-24T20:28:19.674996+00:00",
-        "equity": 94089.79,
-        "success": true
-      },
-      {
-        "timestamp": "2026-07-24T20:52:28.515698+00:00",
-        "equity": 94089.79,
-        "success": true
-      },
-      {
-        "timestamp": "2026-07-25T15:21:43.915057+00:00",
+        "timestamp": "2026-07-25T12:30:13.670908+00:00",
         "equity": 94089.68,
         "success": true
       },
       {
-        "timestamp": "2026-07-26T15:22:42.042860+00:00",
+        "timestamp": "2026-07-25T14:18:39.581107+00:00",
+        "equity": 94089.68,
+        "success": true
+      },
+      {
+        "timestamp": "2026-07-25T16:16:35.140217+00:00",
         "equity": 94089.68,
         "success": true
       }
     ],
-    "last_attempt": "2026-07-26T15:22:42.042860+00:00"
+    "last_attempt": "2026-07-25T16:16:35.140217+00:00"
   },
   "portfolio": {
     "equity": 94089.68,
@@ -222,7 +222,10 @@
       "filled_at": "2026-07-24 16:58:19.813684+00:00",
       "status": "OrderStatus.FILLED",
       "order_class": "OrderClass.MLEG",
-      "legs": ["SPY260828P00707000", "SPY260828P00712000"]
+      "legs": [
+        "SPY260828P00707000",
+        "SPY260828P00712000"
+      ]
     },
     {
       "id": "fcfdc5c5-be14-42b4-a539-237c85a8f1a8",
@@ -249,7 +252,10 @@
       "filled_at": "2026-07-23 15:37:08.050702+00:00",
       "status": "OrderStatus.FILLED",
       "order_class": "OrderClass.MLEG",
-      "legs": ["SPY260828P00691000", "SPY260828P00696000"]
+      "legs": [
+        "SPY260828P00691000",
+        "SPY260828P00696000"
+      ]
     },
     {
       "id": "12d3f881-7beb-46a0-b445-7185d0e5a9b9",
@@ -2435,12 +2441,12 @@
     "buying_power": 371242.72
   },
   "meta": {
-    "last_updated": "2026-07-26T15:22:42.042860+00:00",
+    "last_updated": "2026-07-25T16:16:35.140217+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5,
-    "last_sync_attempt": "2026-07-26T15:22:42.042860+00:00",
+    "last_sync_attempt": "2026-07-25T16:16:35.140217+00:00",
     "alpaca_keys_present": true,
-    "last_sync": "2026-07-26T15:22:41.713704",
+    "last_sync": "2026-07-25T12:16:34.774415",
     "sync_mode": "paper+live",
     "last_daily_verification_at": "2026-07-22T19:57:49.384381+00:00",
     "verification_source": "daily_verification.py"
@@ -2545,14 +2551,18 @@
     "starting_balance": 20.0,
     "total_pl": -20.0,
     "total_pl_pct": -100.0,
-    "synced_at": "2026-07-26T15:22:42.039749"
+    "synced_at": "2026-07-25T12:16:35.137297"
   },
   "strategy_milestones": {
     "enabled": true,
-    "generated_at": "2026-07-26T15:22:43.837771Z",
+    "generated_at": "2026-07-25T16:16:35.186253Z",
     "primary_family": "options_income",
     "rolling_window": 50,
-    "paused_families": ["equity_momentum", "alternatives", "other"],
+    "paused_families": [
+      "equity_momentum",
+      "alternatives",
+      "other"
+    ],
     "strategy_families": {
       "options_income": {
         "status": "validation_reset",
@@ -2647,7 +2657,7 @@
     "estimated_cagr_from_expectancy": -0.0289,
     "target_capital": 300000.0,
     "target_date": null,
-    "updated_at": "2026-07-26T15:22:43.837771Z",
+    "updated_at": "2026-07-25T16:16:35.186253Z",
     "target_mode": "asap_monthly_income",
     "monthly_after_tax_target": 6000.0,
     "estimated_monthly_after_tax_from_expectancy": 0.0,
@@ -2787,7 +2797,7 @@
     "liquidity_min_volume_ratio": 0.2,
     "no_trade_diagnostic": {
       "lookback_days": 7,
-      "decision_records_observed": 0,
+      "decision_records_observed": 1,
       "closed_trades_observed": 2,
       "qualified_setups_observed": 0,
       "gate_status": {
@@ -2811,7 +2821,7 @@
           "detail": "requested=0 max=5000.0"
         },
         "liquidity": {
-          "status": "unknown",
+          "status": "pass",
           "avg_volume_ratio": null,
           "low_liquidity_events": 0,
           "threshold_min_volume_ratio": 0.2
@@ -2850,9 +2860,9 @@
       "gate_block_counts": {},
       "top_rejection_reasons": [],
       "summary": "Closed trades exist in lookback window; no-trade root cause not currently active.",
-      "updated_at": "2026-07-26T15:22:43.833892+00:00"
+      "updated_at": "2026-07-25T16:16:35.153709+00:00"
     },
-    "updated_at": "2026-07-26T15:22:43.834457+00:00"
+    "updated_at": "2026-07-25T16:16:35.154649+00:00"
   },
   "north_star_contributions": {
     "enabled": true,
@@ -2872,17 +2882,17 @@
     "equity_change_this_month": 116.57,
     "monthly_target_progress_pct": 1.94,
     "remaining_to_monthly_target": 5883.43,
-    "days_elapsed_this_month": 26,
-    "days_remaining_this_month": 5,
-    "required_daily_after_tax_from_now": 1176.69,
-    "projected_month_end_after_tax_pnl": 138.99,
-    "projected_gap_to_monthly_target": 5861.01,
+    "days_elapsed_this_month": 25,
+    "days_remaining_this_month": 6,
+    "required_daily_after_tax_from_now": 980.57,
+    "projected_month_end_after_tax_pnl": 144.55,
+    "projected_gap_to_monthly_target": 5855.45,
     "live_month_start_equity": 0.0,
     "live_equity_change_this_month": 0.0,
     "estimated_live_contribution_this_month": 0.0,
     "contribution_estimate_confidence": "medium",
     "inference_note": "Live account has no open positions; live equity change is treated as estimated contribution.",
-    "updated_at": "2026-07-26T15:22:43.834587+00:00"
+    "updated_at": "2026-07-25T16:16:35.154746+00:00"
   },
   "ic_position_management": {
     "last_run": "2026-06-18T09:30:40.322213",
@@ -2897,7 +2907,9 @@
       "severity_score": 0.0,
       "blocked": false,
       "watch": false,
-      "reasons": ["No credit spread data available."],
+      "reasons": [
+        "No credit spread data available."
+      ],
       "latest_data_date": null,
       "stale_days": null,
       "metrics": {
@@ -2926,7 +2938,9 @@
       "position_size_multiplier": 1.0,
       "blocked": false,
       "watch": false,
-      "reasons": ["No USD macro data available."],
+      "reasons": [
+        "No USD macro data available."
+      ],
       "latest_data_date": null,
       "stale_days": null,
       "metrics": {
@@ -2964,7 +2978,9 @@
       "regime": "transition",
       "confidence": 0.396,
       "capex_deceleration_shock": false,
-      "reasons": ["AI-cycle proxies stable"],
+      "reasons": [
+        "AI-cycle proxies stable"
+      ],
       "latest_data_date": "2026-03-05",
       "stale_days": 1,
       "features": {
@@ -2987,7 +3003,13 @@
           "ORCL"
         ],
         "hyperscaler_capex_proxy_observed": 5,
-        "ai_infra_proxy_tickers": ["NVDA", "AVGO", "ANET", "AMD", "SMCI"],
+        "ai_infra_proxy_tickers": [
+          "NVDA",
+          "AVGO",
+          "ANET",
+          "AMD",
+          "SMCI"
+        ],
         "ai_infra_proxy_observed": 5,
         "edge_monetization_proxy_tickers": [
           "META",
@@ -3405,7 +3427,10 @@
     "harvest_source": "daily-trading-workflow",
     "execution_date": "2026-02-27",
     "selection_method": "adaptive",
-    "target_tickers": ["SPY", "IWM"],
+    "target_tickers": [
+      "SPY",
+      "IWM"
+    ],
     "strategy_note": "Uses credit spreads when buying power < 000, CSPs otherwise",
     "tickers_scanned": 0,
     "orders_submitted_today": 0,
@@ -3420,7 +3445,7 @@
   "position_entries": {},
   "position_entry_features": {},
   "north_star_autopilot": {
-    "generated_at_utc": "2026-07-26T15:22:43.834692Z",
+    "generated_at_utc": "2026-07-24T17:33:04.625828Z",
     "cadence_optimizer": {
       "decision": "hold",
       "reason": "Liquidity floor unchanged.",
@@ -3504,7 +3529,7 @@
       "changed": false,
       "payload": {
         "min_liquidity_volume_ratio": 0.2,
-        "updated_at": "2026-07-26T15:22:43.834692+00:00",
+        "updated_at": "2026-07-24T17:33:04.625828+00:00",
         "source": "north_star_autopilot"
       }
     }

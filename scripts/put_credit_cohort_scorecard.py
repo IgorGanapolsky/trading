@@ -155,19 +155,8 @@ def _rolling_windows(pnls: list[float], window: int = 20) -> dict[str, Any]:
     }
 
 
-def _close_sort_key(row: dict[str, Any]) -> str:
-    """ISO-ish close timestamp for chronological rolling windows (Greptile #4280 P2)."""
-    for key in ("exit_time", "exit_date", "closed_at", "filled_at", "entry_time"):
-        val = row.get(key)
-        if val:
-            return str(val)
-    return ""
-
-
 def summarize_closed(rows: list[dict[str, Any]]) -> dict[str, Any]:
     closed = [r for r in rows if _is_put_credit_trade(r) and _is_closed(r)]
-    # Sort by close time so rolling_20 is last-N by time, not JSON iteration order.
-    closed = sorted(closed, key=_close_sort_key)
     pnls: list[float] = []
     for r in closed:
         pnl = _as_float(r.get("realized_pnl"))
@@ -253,9 +242,6 @@ def summarize_open(entries: dict[str, Any] | None) -> dict[str, Any]:
                 }
                 if regime
                 else None,
-                "last_counterfactuals": entry.get("last_counterfactuals"),
-                "last_counterfactuals_at": entry.get("last_counterfactuals_at"),
-                "last_mark": entry.get("last_mark"),
             }
         )
     return {"open_n": len(open_rows), "entries": open_rows}

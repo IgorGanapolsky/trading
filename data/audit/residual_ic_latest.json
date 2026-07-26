@@ -1,6 +1,6 @@
 {
-  "audited_at": "2026-07-24T20:00:11.858865+00:00",
-  "dry_run": false,
+  "audited_at": "2026-07-26T20:01:41.127170+00:00",
+  "dry_run": true,
   "reconciled": 1,
   "unresolved": {},
   "pcs_inventory_excluded": {
@@ -28,8 +28,8 @@
       ],
       "should_exit": false,
       "exit_reason": null,
-      "dte": 28,
-      "hold_hours": 76.32491752777777,
+      "dte": 26,
+      "hold_hours": 124.34971450972222,
       "current_debit": 0.91,
       "pnl": 20.0,
       "max_profit": 111.0,

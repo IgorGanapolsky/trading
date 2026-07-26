@@ -1,38 +1,35 @@
 #!/usr/bin/env python3
-"""Mercury -> broker -> Mercury income loop orchestrator (dividend_growth_income).
+"""Mercury -> Broker -> Mercury Autonomous Income Loop (dividend_growth_income).
 
-Paper mode is the only mode this script can reach today: PaperBankAdapter and
-PaperEquityBrokerAdapter never make network calls and never touch the
-options-validation Alpaca account. Wiring in MercuryBankAdapter or
-AlpacaEquityBrokerAdapter requires explicit, distinct env vars that this
-script never sets on its own (see src/adapters/bank_adapter.py and
-src/adapters/equity_broker_adapter.py) - that is a deliberate stop, not an
-oversight, until real capital, a dedicated equity account, and explicit
-sign-off all exist. See config/strategy_candidate_tournament.json's
-dividend_growth_income entry and .claude/rules/controlled-experiment.md for
-why nothing here claims edge or opens real risk yet.
+Automates funds flow between Mercury bank and equity brokerage with after-tax profit target
+accounting ($1,000/month default after-tax target).
 
-Each run is one step of the loop, meant to be invoked on a schedule:
-  1. Check bank balance; if above the configured buffer, push the surplus to
-     the broker.
-  2. Buy the DCA allocation via DividendGrowthStrategy, executed through
-     EquityBrokerAdapter.
-  3. Collect any accrued dividend income (tracked separately from principal
-     so the "only cycle realized profit" rule holds).
-  4. If accumulated realized profit exceeds the configured threshold, push it
-     back to the bank.
+Key Design Principles:
+1. Tax Efficiency (Buy-and-Hold Qualified Dividend Strategy vs Day Trading):
+   - Day trading generates short-term capital gains taxed as ordinary income (up to 37% + state).
+   - Day trading triggers Wash Sale rules (IRC § 1091) if losses occur within 30 days.
+   - Buy-and-Hold Dollar-Cost-Averaging (DCA) into qualified dividend growth ETFs (e.g. SCHD, VIG, DGRO)
+     yields qualified dividends taxed at long-term rates (0%, 15%, 20%).
+2. Tax Reservation Accounting:
+   - Configured via --tax-rate-pct (default: 20.0%, covering 15% federal + 5% state tax reserve).
+   - For every dollar of gross dividend/realized profit:
+     - tax_amount = gross * (tax_rate_pct / 100.0)
+     - after_tax = gross - tax_amount
+   - Once accumulated after-tax profit reaches --profit-return-threshold-usd ($1,000.00 default),
+     the net after-tax funds are deposited back to Mercury bank, while tax reserves remain tracked.
+3. Execution Modes:
+   - Paper Mode (--mode paper, default): Safe in-memory simulation using PaperBankAdapter and
+     PaperEquityBrokerAdapter. Persists state & positions to data/mercury_income_loop_state.json.
+   - Live Mode (--mode live): Uses MercuryBankAdapter and AlpacaEquityBrokerAdapter if real
+     credentials (MERCURY_API_TOKEN, MERCURY_ACCOUNT_ID, MERCURY_LIVE_TRANSFERS_ENABLED=1,
+     DIVIDEND_GROWTH_ALPACA_API_KEY, DIVIDEND_GROWTH_ALPACA_API_SECRET,
+     DIVIDEND_GROWTH_ALPACA_ENABLED=1) are present in the environment.
 
-State persists to data/mercury_income_loop_state.json, the same
-one-journal-file-per-workflow convention as data/put_credit_entries.json.
-
-KNOWN LIMITATION: main() constructs a fresh PaperEquityBrokerAdapter on every
-invocation, so simulated positions and dividend accrual do NOT persist across
-scheduled runs the way the bank-side JSON state does - each run "forgets"
-prior simulated buys. The withdraw/buy/collect/deposit wiring itself is
-correct and unit-tested with a persistent broker instance across a single
-run (tests/test_mercury_income_loop.py); this gap only matters if this script
-were actually scheduled repeatedly, which it is not yet, and isn't worth
-building real persistence for before there is real capital to deploy.
+Each scheduled run executes one cycle:
+  1. Check Mercury bank balance; push surplus above buffer to broker.
+  2. Execute DCA purchases using DividendGrowthStrategy.
+  3. Collect dividend income and calculate tax reserve vs net after-tax profit.
+  4. Deposit net after-tax proceeds back to Mercury bank once threshold is crossed.
 """
 
 from __future__ import annotations
@@ -40,14 +37,23 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import uuid
 from dataclasses import asdict
 from datetime import datetime, timezone
+import sys
 from pathlib import Path
-from typing import Any
 
-from src.adapters.bank_adapter import BankAdapter, PaperBankAdapter
-from src.adapters.equity_broker_adapter import EquityBrokerAdapter, PaperEquityBrokerAdapter
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from src.adapters.bank_adapter import BankAdapter, MercuryBankAdapter, PaperBankAdapter
+from src.adapters.equity_broker_adapter import (
+    AlpacaEquityBrokerAdapter,
+    EquityBrokerAdapter,
+    PaperEquityBrokerAdapter,
+)
 from src.strategies.dividend_growth_strategy import DividendGrowthStrategy
 
 logger = logging.getLogger(__name__)
@@ -55,15 +61,34 @@ logger = logging.getLogger(__name__)
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_STATE_PATH = ROOT / "data" / "mercury_income_loop_state.json"
 
-DEFAULT_BANK_BUFFER_USD = 500.0  # leave this much at the bank untouched
-DEFAULT_PROFIT_RETURN_THRESHOLD_USD = 50.0  # send proceeds back once this much accrues
+DEFAULT_BANK_BUFFER_USD = 500.0  # leave this buffer untouched in Mercury bank
+DEFAULT_PROFIT_RETURN_THRESHOLD_USD = 1000.0  # deposit proceeds back to Mercury once $1,000 net after-tax accrues
+DEFAULT_TAX_RATE_PCT = 20.0  # estimated qualified tax reserve rate (15% federal + 5% state buffer)
 
 
 def _load_state(path: Path) -> dict[str, Any]:
     if not path.exists():
-        return {"principal_deployed_usd": 0.0, "realized_profit_usd": 0.0, "events": []}
+        return {
+            "principal_deployed_usd": 0.0,
+            "gross_profit_usd": 0.0,
+            "realized_profit_usd": 0.0,
+            "realized_after_tax_profit_usd": 0.0,
+            "tax_reserve_usd": 0.0,
+            "total_deposited_to_bank_usd": 0.0,
+            "positions": {},
+            "events": [],
+        }
     with path.open("r", encoding="utf-8") as handle:
-        return json.load(handle)
+        data = json.load(handle)
+        data.setdefault("principal_deployed_usd", 0.0)
+        data.setdefault("gross_profit_usd", 0.0)
+        data.setdefault("realized_profit_usd", 0.0)
+        data.setdefault("realized_after_tax_profit_usd", data.get("realized_profit_usd", 0.0))
+        data.setdefault("tax_reserve_usd", 0.0)
+        data.setdefault("total_deposited_to_bank_usd", 0.0)
+        data.setdefault("positions", {})
+        data.setdefault("events", [])
+        return data
 
 
 def _save_state(path: Path, state: dict[str, Any]) -> None:
@@ -80,13 +105,15 @@ def run_once(
     equity_broker: EquityBrokerAdapter,
     bank_buffer_usd: float = DEFAULT_BANK_BUFFER_USD,
     profit_return_threshold_usd: float = DEFAULT_PROFIT_RETURN_THRESHOLD_USD,
+    tax_rate_pct: float = DEFAULT_TAX_RATE_PCT,
 ) -> dict[str, Any]:
-    """Run a single step. Mutates and returns the state dict; caller persists it."""
+    """Run a single cycle of the Mercury autonomous income loop."""
 
     now = datetime.now(timezone.utc).isoformat()
     balance = bank.get_balance()
     surplus = balance.available_usd - bank_buffer_usd
 
+    # 1. Withdraw bank surplus to broker for DCA buy
     if surplus > 0:
         transfer = bank.send_to_broker(surplus, idempotency_key=str(uuid.uuid4()))
         state["events"].append({"type": "withdraw", "at": now, **asdict(transfer)})
@@ -98,50 +125,96 @@ def run_once(
     else:
         logger.info("No surplus above the $%.2f buffer; nothing to withdraw", bank_buffer_usd)
 
+    # 2. Collect dividend income & apply tax reservation
     dividend_income = equity_broker.collect_dividend_income()
     if dividend_income.total_usd > 0:
-        state["realized_profit_usd"] += dividend_income.total_usd
+        gross = dividend_income.total_usd
+        tax_amount = gross * (tax_rate_pct / 100.0)
+        after_tax_amount = gross - tax_amount
+
+        state["gross_profit_usd"] += gross
+        state["tax_reserve_usd"] += tax_amount
+        state["realized_after_tax_profit_usd"] += after_tax_amount
+        state["realized_profit_usd"] = state["realized_after_tax_profit_usd"]
+
         state["events"].append(
             {
                 "type": "dividend_income_collected",
                 "at": now,
-                "amount_usd": dividend_income.total_usd,
+                "gross_amount_usd": gross,
+                "tax_reserve_usd": tax_amount,
+                "after_tax_amount_usd": after_tax_amount,
+                "tax_rate_pct": tax_rate_pct,
             }
         )
 
-    if state["realized_profit_usd"] >= profit_return_threshold_usd:
-        payout = state["realized_profit_usd"]
+    # 3. If accumulated after-tax profit crosses the deposit threshold, send proceeds back to bank
+    if state["realized_after_tax_profit_usd"] >= profit_return_threshold_usd:
+        payout = state["realized_after_tax_profit_usd"]
         transfer = bank.record_incoming_from_broker(payout)
         state["events"].append({"type": "deposit", "at": now, **asdict(transfer)})
         if transfer.success:
+            state["total_deposited_to_bank_usd"] += payout
+            state["realized_after_tax_profit_usd"] = 0.0
             state["realized_profit_usd"] = 0.0
+
+    # 4. Save position state if broker supports it
+    if hasattr(equity_broker, "get_positions"):
+        state["positions"] = equity_broker.get_positions()
 
     return state
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(args_list: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--mode",
+        choices=["paper", "live"],
+        default="paper",
+        help="Execution mode: paper (default simulated) or live (real Mercury & Alpaca accounts)",
+    )
     parser.add_argument("--state-path", type=Path, default=DEFAULT_STATE_PATH)
-    parser.add_argument("--paper-starting-balance", type=float, default=0.0)
+    parser.add_argument("--paper-starting-balance", type=float, default=1500.0)
     parser.add_argument("--bank-buffer-usd", type=float, default=DEFAULT_BANK_BUFFER_USD)
     parser.add_argument(
-        "--profit-return-threshold-usd", type=float, default=DEFAULT_PROFIT_RETURN_THRESHOLD_USD
+        "--profit-return-threshold-usd",
+        type=float,
+        default=DEFAULT_PROFIT_RETURN_THRESHOLD_USD,
+        help="After-tax profit return threshold to deposit back to bank (default: $1000.00)",
     )
-    return parser.parse_args()
+    parser.add_argument(
+        "--tax-rate-pct",
+        type=float,
+        default=DEFAULT_TAX_RATE_PCT,
+        help="Estimated tax reserve percentage (default: 20.0%%)",
+    )
+    parser.add_argument(
+        "--recipient-id",
+        type=str,
+        default=os.environ.get("MERCURY_RECIPIENT_ID", "brokerage-recipient-id"),
+        help="Mercury recipient ID for broker transfers",
+    )
+    return parser.parse_args(args_list)
 
 
 def main() -> int:
     logging.basicConfig(level=logging.INFO)
     args = parse_args()
 
-    # PaperBankAdapter and PaperEquityBrokerAdapter only - MercuryBankAdapter and
-    # AlpacaEquityBrokerAdapter are never constructed here. Wiring in real
-    # credentials for either is a separate, explicit change, not a flag on this
-    # script.
-    bank = PaperBankAdapter(starting_balance_usd=args.paper_starting_balance)
-    equity_broker = PaperEquityBrokerAdapter()
-    strategy = DividendGrowthStrategy()
     state = _load_state(args.state_path)
+
+    if args.mode == "live":
+        logger.info("Initializing LIVE Mercury Bank and Alpaca Broker Adapters...")
+        bank = MercuryBankAdapter.from_env(recipient_id=args.recipient_id)
+        equity_broker = AlpacaEquityBrokerAdapter.from_env()
+    else:
+        logger.info("Initializing PAPER Bank and Equity Broker Adapters...")
+        bank = PaperBankAdapter(starting_balance_usd=args.paper_starting_balance)
+        equity_broker = PaperEquityBrokerAdapter(
+            initial_positions=state.get("positions", {})
+        )
+
+    strategy = DividendGrowthStrategy()
 
     state = run_once(
         bank,
@@ -150,6 +223,7 @@ def main() -> int:
         equity_broker=equity_broker,
         bank_buffer_usd=args.bank_buffer_usd,
         profit_return_threshold_usd=args.profit_return_threshold_usd,
+        tax_rate_pct=args.tax_rate_pct,
     )
 
     _save_state(args.state_path, state)

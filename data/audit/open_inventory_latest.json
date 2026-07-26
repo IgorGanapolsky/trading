@@ -1,10 +1,12 @@
 {
   "clean": true,
-  "audited_at": "2026-07-22T21:39:36.917553+00:00",
-  "authority": "broker_filled_mleg_orders",
-  "option_leg_count": 6,
-  "max_abs_qty": 2.0,
-  "expiries": ["260821"],
+  "audited_at": "2026-07-26T20:01:34.201792+00:00",
+  "option_leg_count": 8,
+  "max_abs_qty": 1.0,
+  "expiries": [
+    "260821",
+    "260828"
+  ],
   "findings": [],
   "legs": [
     {
@@ -13,7 +15,7 @@
       "expiry_ymd": "260821",
       "right": "C",
       "strike": 776.0,
-      "qty": -2.0
+      "qty": -1.0
     },
     {
       "symbol": "SPY260821C00781000",
@@ -21,23 +23,7 @@
       "expiry_ymd": "260821",
       "right": "C",
       "strike": 781.0,
-      "qty": 2.0
-    },
-    {
-      "symbol": "SPY260821P00695000",
-      "root": "SPY",
-      "expiry_ymd": "260821",
-      "right": "P",
-      "strike": 695.0,
       "qty": 1.0
-    },
-    {
-      "symbol": "SPY260821P00700000",
-      "root": "SPY",
-      "expiry_ymd": "260821",
-      "right": "P",
-      "strike": 700.0,
-      "qty": -1.0
     },
     {
       "symbol": "SPY260821P00703000",
@@ -54,13 +40,39 @@
       "right": "P",
       "strike": 708.0,
       "qty": -1.0
+    },
+    {
+      "symbol": "SPY260828P00691000",
+      "root": "SPY",
+      "expiry_ymd": "260828",
+      "right": "P",
+      "strike": 691.0,
+      "qty": 1.0
+    },
+    {
+      "symbol": "SPY260828P00696000",
+      "root": "SPY",
+      "expiry_ymd": "260828",
+      "right": "P",
+      "strike": 696.0,
+      "qty": -1.0
+    },
+    {
+      "symbol": "SPY260828P00707000",
+      "root": "SPY",
+      "expiry_ymd": "260828",
+      "right": "P",
+      "strike": 707.0,
+      "qty": 1.0
+    },
+    {
+      "symbol": "SPY260828P00712000",
+      "root": "SPY",
+      "expiry_ymd": "260828",
+      "right": "P",
+      "strike": 712.0,
+      "qty": -1.0
     }
   ],
-  "block_reasons": [],
-  "reconstruction": {
-    "recovered_ic_structures": 2,
-    "unresolved": {},
-    "pending_option_orders": 0,
-    "status": "manage_exits_only"
-  }
+  "block_reasons": []
 }

@@ -12,10 +12,12 @@ live) account credentials, never the options account's.
 
 from __future__ import annotations
 
+import json
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 
 
 @dataclass(frozen=True)
@@ -56,10 +58,20 @@ class PaperEquityBrokerAdapter(EquityBrokerAdapter):
     tests without needing a live data source.
     """
 
-    def __init__(self, annual_dividend_yield_pct: float = 3.3):
-        self._positions: dict[str, float] = {}
+    def __init__(
+        self,
+        annual_dividend_yield_pct: float = 3.3,
+        initial_positions: dict[str, float] | None = None,
+    ):
+        self._positions: dict[str, float] = dict(initial_positions) if initial_positions else {}
         self._annual_yield = annual_dividend_yield_pct / 100.0
         self._accrued_dividends_usd = 0.0
+
+    def get_positions(self) -> dict[str, float]:
+        return dict(self._positions)
+
+    def get_portfolio_value(self) -> float:
+        return sum(self._positions.values())
 
     def buy(self, symbol: str, notional_usd: float) -> BuyResult:
         if notional_usd <= 0:
@@ -126,10 +138,23 @@ class AlpacaEquityBrokerAdapter(EquityBrokerAdapter):
             )
 
     @classmethod
-    def from_env(cls) -> AlpacaEquityBrokerAdapter:
+    def from_env(cls, secrets_path: Path | None = None) -> AlpacaEquityBrokerAdapter:
         api_key = os.environ.get("DIVIDEND_GROWTH_ALPACA_API_KEY")
         secret_key = os.environ.get("DIVIDEND_GROWTH_ALPACA_API_SECRET")
         live_enabled = os.environ.get("DIVIDEND_GROWTH_ALPACA_ENABLED") == "1"
+
+        if not api_key or not secret_key:
+            env_secrets_path = os.environ.get("ALPACA_SECRETS_PATH")
+            path = secrets_path or (Path(env_secrets_path) if env_secrets_path else Path.home() / ".resume_secrets" / "alpaca.json")
+            if path.exists():
+                try:
+                    with path.open("r", encoding="utf-8") as handle:
+                        secrets = json.load(handle)
+                        api_key = api_key or secrets.get("DIVIDEND_GROWTH_ALPACA_API_KEY")
+                        secret_key = secret_key or secrets.get("DIVIDEND_GROWTH_ALPACA_API_SECRET")
+                except Exception:
+                    pass
+
         if not api_key or not secret_key:
             raise ValueError(
                 "DIVIDEND_GROWTH_ALPACA_API_KEY and DIVIDEND_GROWTH_ALPACA_API_SECRET "
@@ -178,7 +203,29 @@ class AlpacaEquityBrokerAdapter(EquityBrokerAdapter):
             )
 
     def collect_dividend_income(self) -> DividendIncome:
-        raise NotImplementedError(
-            "Real dividend tracking requires verifying Alpaca's /v2/account/activities "
-            "response shape first. See class docstring."
-        )
+        import requests
+
+        headers = {
+            "APCA-API-KEY-ID": self.api_key,
+            "APCA-API-SECRET-KEY": self.secret_key,
+        }
+        url = "https://api.alpaca.markets/v2/account/activities"
+        try:
+            resp = requests.get(url, headers=headers, params={"activity_types": "DIV"}, timeout=15)
+            resp.raise_for_status()
+            activities = resp.json()
+            total = 0.0
+            if isinstance(activities, list):
+                for act in activities:
+                    if isinstance(act, dict):
+                        total += float(act.get("net_amount", 0.0))
+            return DividendIncome(
+                total_usd=total,
+                observed_at=datetime.now(timezone.utc).isoformat(),
+            )
+        except Exception as exc:
+            logger.error("Failed to fetch Alpaca dividend activities: %s", exc)
+            return DividendIncome(
+                total_usd=0.0,
+                observed_at=datetime.now(timezone.utc).isoformat(),
+            )

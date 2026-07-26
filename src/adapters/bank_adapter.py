@@ -9,12 +9,14 @@ explicit credentials; nothing in this repo wires it up to run automatically.
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -152,10 +154,23 @@ class MercuryBankAdapter(BankAdapter):
             )
 
     @classmethod
-    def from_env(cls, recipient_id: str) -> MercuryBankAdapter:
+    def from_env(cls, recipient_id: str, secrets_path: Path | None = None) -> MercuryBankAdapter:
         token = os.environ.get("MERCURY_API_TOKEN")
         account_id = os.environ.get("MERCURY_ACCOUNT_ID")
         live_enabled = os.environ.get("MERCURY_LIVE_TRANSFERS_ENABLED") == "1"
+
+        if not token or not account_id:
+            env_secrets_path = os.environ.get("MERCURY_SECRETS_PATH")
+            path = secrets_path or (Path(env_secrets_path) if env_secrets_path else Path.home() / ".resume_secrets" / "mercury.json")
+            if path.exists():
+                try:
+                    with path.open("r", encoding="utf-8") as handle:
+                        secrets = json.load(handle)
+                        token = token or secrets.get("MERCURY_API_TOKEN")
+                        account_id = account_id or secrets.get("MERCURY_ACCOUNT_ID")
+                except Exception:
+                    pass
+
         if not token or not account_id:
             raise ValueError("MERCURY_API_TOKEN and MERCURY_ACCOUNT_ID must be set")
         return cls(

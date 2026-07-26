@@ -8,40 +8,39 @@ updated: "2026-07-24"
 
 # Project State — Put Credit Edge OS (Ralph + GSD)
 
-Last activity: 2026-07-24 — Phase 1 complete on main; Phase 2 entry quality shipping
+Last activity: 2026-07-24 — Phase 1 process complete on main; Phase 2 entry quality shipping
 
-## Current Phase
+### Current Phase
 
 **Phase 2: Smart Entry Quality** (executing)
 
-Phase 1 (Cohort Truth Loop) — DONE on main:
-
-- Cohort scorecard family-isolated
+Phase 1 (Cohort Truth Loop) — **DONE on main**:
+- Cohort scorecard family-isolated (#4278 path + scorecard)
 - Inventory + manage-exits + residual IC on every Ralph tick
-- Regime gate + entry logging + exit counterfactuals + rolling-20
+- Regime gate + entry logging + exit counterfactuals + rolling-20 (#4280)
 
-## Active strategy
+### Active strategy
 
 - Family: `spy_put_credit` only
-- Paper-only; live_blocked=true
+- Paper-only; `live_blocked=true`
 - Profile: 1-lot, max_daily=3, max_concurrent=2, min_credit=$0.50
-- Regime hard gate: IVR>=30, VIX<=30 (soft: SPY 200-DMA)
+- Regime hard gate: IVR≥30, VIX≤30 (soft: SPY 200-DMA)
 
-## Reality (do not inflate)
+### Reality (do not inflate)
 
-- Closed put-credit cohort: **0** → INSUFFICIENT_SAMPLE
+- Closed put-credit cohort: **0** → `INSUFFICIENT_SAMPLE`
 - Open PCS: **2** (hold)
 - Residual IC: exit-only hold
 - Profitability: **unproven**
 - Live deposit ready: **false**
 
-## Blockers
+### Blockers
 
-- Need closed put-credit sample n>=30 before edge judgment
+- Need closed put-credit sample **n≥30** before edge judgment
 - Live capital blocked by design
-- Hard RAG PR #4281 — land when green
+- Hard RAG PR #4281 CI (rebased) — land when green
 
-## Ralph loop
+### Ralph loop
 
 - Tick: `scripts/ralph_gsd_profit_tick.sh` / `.py`
 - State: `.claude/ralph/state.json`
@@ -49,7 +48,7 @@ Phase 1 (Cohort Truth Loop) — DONE on main:
 - Completion promise: `EDGE_GATE_READY_OR_KILLED`
 - Tick schema: `ralph-gsd-profit-tick/2` (includes regime)
 
-## GSD next
+### GSD next
 
 1. Land #4281 (hard RAG / no ML theater)
 2. Keep ticks green; manage exits when TP/stop

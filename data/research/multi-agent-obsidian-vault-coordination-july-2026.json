@@ -1,0 +1,363 @@
+{
+  "run_id": "trun_d0e7f8f088bb424087f34495b83d8857",
+  "interaction_id": "trun_d0e7f8f088bb424087f34495b83d8857",
+  "result_url": "https://platform.parallel.ai/play/deep-research/trun_d0e7f8f088bb424087f34495b83d8857",
+  "status": "completed",
+  "output": {
+    "basis": [
+      {
+        "field": "answer",
+        "reasoning": "Reasoning for completeness and support:\n- The field_description requests a practical July 2026 playbook including executive summary, architecture recommendation, anti-patterns, July-2026 checklist, and references.\n- The provided field_answer includes an executive summary, architecture sections, anti-patterns, a July-2026 checklist, and a references section. It also discusses architecture layers, worktree-per-agent patterns, Obsidian-as-bus hygiene rules, coordination primitives, session-boundary ledger, and anti-patterns, which aligns with the described needs.\n- Therefore, completeness should be true since all major demanded sections appear and are addressed.\n- The excerpts list contains sources about A2A, MCP, git worktrees, Obsidian in agent contexts, and related tooling. The field_answer references patterns consistent with these excerpts (e.g., MCP/A2A, git worktrees, Obsidian as bus, lease TTLs). Given the presence of pertinent sources in excerpts, the answer is supported by excerpts.\n- Confidence: high that the answer is complete and excerpts support it, though exact verbatim alignment to every cited source in excerpts is not strictly required for support.\n",
+        "citations": [
+          {
+            "url": "https://www.linuxfoundation.org/press/a2a-protocol-surpasses-150-organizations-lands-in-major-cloud-platforms-and-sees-enterprise-production-use-in-first-year",
+            "excerpts": [
+              "A2A Protocol Surpasses 150 Organizations, Lands in Major ...\nFirst production-ready open standard for global AI agent interoperability SAN FRANCISCO \u2013 April 9, 2026 \u2013 The A2A (Agent-to-Agent) Protocol project, hosted by the Linux Foundation, today announced major adoption milestones at its one-year mark, with more than 150 organizations supporting the standard, deep integration across Google, Microsoft and AWS platforms, and active production"
+            ],
+            "title": "A2A Protocol Surpasses 150 Organizations, Lands in Major ..."
+          },
+          {
+            "url": "http://niteagent.com/blog/2026-06-07-agent-protocol-stack-mcp-a2a-production",
+            "excerpts": [
+              "MCP A2A Agent Protocols Production Architecture Multi-Agent Guide AI Engineering\nMCP for tool access (97M monthly downloads, 5,800+ servers), A2A for agent coordination (150+ organizations, Linux Foundation governance), and AP2 for agent-to-agent payments [1][2][3]. These are complementary layers, not competing standards.\nThe agent protocol ecosystem in 2026 resolves cleanly into three layers [1]:"
+            ],
+            "title": "Building with the 2026 Agent Protocol Stack: MCP, A2A, and the Production Architecture"
+          },
+          {
+            "url": "https://github.com/tlemmons/junto-memory",
+            "excerpts": [
+              "MCP Shared Memory Server (junto-memory) - GitHub\nFor a working stack with docker-compose + adopter walkthrough, start at junto-stack. A shared memory and coordination server for multiple AI coding agents, built on the Model Context Protocol (MCP)."
+            ],
+            "title": "MCP Shared Memory Server (junto-memory) - GitHub"
+          },
+          {
+            "url": "https://a2a-protocol.org/latest",
+            "excerpts": [
+              "A2A Protocol\nThe official documentation for the Agent2Agent (A2A) protocol. The A2A protocol is an open standard that allows different AI agents to securely communicate, collaborate, and solve complex problems together."
+            ],
+            "title": "A2A Protocol"
+          },
+          {
+            "url": "http://medium.com/byte-sized-ai/mem0-building-production-ready-ai-agents-with-scalable-long-term-memory-4a9d040cf8f7",
+            "excerpts": [
+              "Built for AI agent applications, Mem0 introduces a scalable, memory-centric architecture that dynamically **extracts, consolidates, and retrieves salient information** from conversations, ensuring that essential context persists across sessions.\nIn this blog, one such implementation is examined: **Mem0 [1]** ."
+            ],
+            "title": "Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory | by Don Moon | Byte-Sized AI | Medium"
+          },
+          {
+            "url": "http://github.com/breferrari/obsidian-mind",
+            "excerpts": [
+              "**Native agent tools via MCP.** Registered as a [Model Context Protocol](https://modelcontextprotocol.io/) server in `.mcp.json` \u2014 when QMD is installed, `mcp__qmd__query` , `mcp__qmd__get` , and `mcp__qmd__multi_get` appear in the agent's tool menu alongside Read and Edit. Subagents, slash commands, and the main conversation all call the same typed contract. Add another MCP-aware tool later (a database, a ticketing system, a calendar) and it plugs in the same way.\nQMD is where most of the agent's retrieval intelligence comes from. Optional in the strict sense \u2014 the vault falls back to grep + the Obsidian CLI\n[Claude Code](https://docs.anthropic.com/en/docs/claude-code) [Codex CLI](https://github.com/openai/codex) [Gemini CLI](https://github.com/google-gemini/gemini-cli) [Obsidian](https://obsidian.md/) [Obsidian CLI](https://github.com/kepano/obsidian-cli) [Obsidian Skills](https://github.com/kepano/obsidian-skills) [QMD](https://github.com/tobi/qmd) [Node](https://nodejs.org/) [License](https://github.com/breferrari/obsidian-mind/blob/main/LICENSE) > **An Obsidian vault that gives AI coding agents persistent memory.** Built for Claude Code, with working hooks for Codex CLI and Gemini CLI. Start a session, talk about your day, and the agent handles the rest \u2014 notes, links, indexes, performance tracking. Every conversation builds on the last. \ud83d\udd34 The Problem"
+            ],
+            "title": "GitHub - breferrari/obsidian-mind: A self-organizing Obsidian vault that gives AI coding agents persistent memory. Claude Code, Codex CLI, Gemini CLI. \u00b7 GitHub"
+          },
+          {
+            "url": "http://aiundecided.com/",
+            "excerpts": [
+              "Obsidian Vault - The Local-First Knowledge Base 28 Jun 2026 \u00b7 krishna An Obsidian vault is a folder of plain markdown files, linked into a graph. We use it as the human view of our Claude Code second brain: the agent does the writing, Obsidian is where you read it. #obsidian #obsidian-vault #knowledge-management \ud83d\udccb Case-study Kai Forest: How Five AI Brains Solve One Problem 28 Mar 2026 \u00b7 krishna \u00b7 12 min read One brain can't hold everything. So we built five, connected them with mycelium, and let them argue. Here's how the Kai Forest works. #kai-forest #multi-brain #ai-agents \ud83d\udca1 Article AI Undecided Reading Path: Our Story in Sequence 28 Mar 2026 \u00b7 krishna \u00b7 3 min read From a Mac Studio and a dog to a multi-brain AI architecture with 500 souls."
+            ],
+            "title": "AI Undecided: notes from people building AI in plain English"
+          },
+          {
+            "url": "https://kisztof.medium.com/why-your-claude-code-setup-loses-context-every-session-and-the-obsidian-architecture-that-fixes-it-2f32b0700531",
+            "excerpts": [
+              "Obsidian as Your AI's Operating System: A Technical Setup Guide ...\nMay 13, 2026 \u00b7 I'll walk through structuring an Obsidian vault so the agent always knows where things live, designing a CLAUDE.md that eliminates cold-start by"
+            ],
+            "title": "Obsidian as Your AI's Operating System: A Technical Setup Guide ..."
+          },
+          {
+            "url": "http://github.com/jshph/enzyme-skill",
+            "excerpts": [
+              "Enzyme is a Hermes plugin and OpenClaw skill that gives agents structural memory over Obsidian vaults, markdown knowledge bases, and any accumulated document"
+            ],
+            "title": "jshph/enzyme-skill: Agent Skill for exploring Obsidian ..."
+          },
+          {
+            "url": "https://rcloneui.com/docs/cli/tips/obsidian-sync",
+            "excerpts": [
+              "Sync Obsidian Vaults | Rclone CLI\nTo keep your notes safe, always close Obsidian before syncing. ... If you use bisync to sync your vaults, you can use the --conflict-resolve, --conflict-loser, and --conflict-suffix flags to handle them automatically in the background."
+            ],
+            "title": "Sync Obsidian Vaults | Rclone CLI"
+          },
+          {
+            "url": "https://www.codeagentswarm.com/en/guides/git-worktrees-for-ai-coding-agents",
+            "excerpts": [
+              "Git Worktrees for AI Coding Agents: Run Multiple Agents on ...\nRunning several AI agents on one repo means they fight over the same files. Git worktrees give each agent its own checkout on its own branch. Here is how."
+            ],
+            "title": "Git Worktrees for AI Coding Agents: Run Multiple Agents on ..."
+          },
+          {
+            "url": "https://developer.upsun.com/posts/ai/git-worktrees-for-parallel-ai-coding-agents",
+            "excerpts": [
+              "Git worktrees for parallel AI coding agents - Upsun Developer Center\nLearn how git worktrees enable parallel AI agent workflows, their limitations, and what an ideal orchestration tool needs."
+            ],
+            "title": "Git worktrees for parallel AI coding agents - Upsun Developer Center"
+          },
+          {
+            "url": "http://noqta.tn/en/blog/superset-ide-multi-agent-parallel-ai-coding-2026",
+            "excerpts": [
+              "Superset solves this with one core architectural decision: every agent session gets its own [git worktree](https://git-scm.com/docs/git-worktree) , a fully isolated working directory on its own branch that shares the same `.git` histor\nuperset** is a free, open-source desktop application that lets you run ten or more AI coding agents simultaneously, each isolated in its own git worktree so they never step on each other's code"
+            ],
+            "title": "Superset IDE: Run 10 AI Coding Agents in Parallel - Noqta"
+          },
+          {
+            "url": "https://www.augmentcode.com/guides/git-worktrees-parallel-ai-agent-execution",
+            "excerpts": [
+              "How to Use Git Worktrees for Parallel AI Agent Execution\nGit worktrees enable parallel AI agent execution by giving each agent its own isolated working directory and git index while sharing a single object store, preventing file-level conflicts, context contamination, and lock contention when multiple agents operate on the same repository."
+            ],
+            "title": "How to Use Git Worktrees for Parallel AI Agent Execution"
+          },
+          {
+            "url": "https://noqta.tn/en/blog/git-worktrees-parallel-ai-coding-agents-guide-2026",
+            "excerpts": [
+              "Git Worktrees for Parallel AI Agents: 2026 Guide - noqta.tn\nThe 2026 Convergence The pattern is converging across tools. Grok Build built it into the agent runtime. OpenCode 1.16.0 added session management and workspace cloning. The open-source ecosystem \u2014 agentree, opencode-worktree, worktree-cli \u2014 is closing the gaps for Claude Code and Cursor users who want the same isolation without switching tools. Git worktrees went from an advanced Git trick"
+            ],
+            "title": "Git Worktrees for Parallel AI Agents: 2026 Guide - noqta.tn"
+          },
+          {
+            "url": "https://github.com/AgentWrapper/agent-orchestrator",
+            "excerpts": [
+              "Agentic orchestrator for parallel coding ...\nAgent Orchestrator manages fleets of AI coding agents working in parallel on your codebase. Each agent gets its own git worktree, its own branch, and its own"
+            ],
+            "title": "Agentic orchestrator for parallel coding ..."
+          },
+          {
+            "url": "https://baeseokjae.github.io/posts/cursor-agent-best-practices-2026",
+            "excerpts": [
+              "Cursor Agent Best Practices 2026: Multi-File Edits, Parallel ...\nCursor agent mode in 2026 is no longer an autocomplete assistant \u2014 it\u2019s an autonomous coding worker that edits multiple files simultaneously, runs in parallel across git worktrees, and completes long-running tasks without human intervention."
+            ],
+            "title": "Cursor Agent Best Practices 2026: Multi-File Edits, Parallel ..."
+          },
+          {
+            "url": "http://tembo.io/blog/ai-agent-orchestration-tools",
+            "excerpts": [
+              "rong>Composio&#x27;s Agent Orchestrator (fleets of agents, git worktree per agent)</strong> is the most coding-native open-source option, and Conductor (multiple Claude Code sessions, Mac-focused) is a free Mac app in the same space."
+            ],
+            "title": "AI Agent Orchestration Tools for Coding (2026) - Tembo.io"
+          },
+          {
+            "url": "https://forum.cursor.com/t/parallel-agent-execution-via-internal-branching/51060",
+            "excerpts": [
+              "Parallel Agent Execution via Internal Branching - Feature Requests\nLeverage Cursor's existing internal branch system to run multiple agents concurrently. Each agent works within its branch until the user"
+            ],
+            "title": "Parallel Agent Execution via Internal Branching - Feature Requests"
+          },
+          {
+            "url": "https://addyosmani.com/blog/code-agent-orchestra",
+            "excerpts": [
+              "The Code Agent Orchestra - what makes multi- ...\nIt runs multiple Claude Code and Codex agents in parallel, each in its own git worktree, with a visual dashboard and diff-first review UI."
+            ],
+            "title": "The Code Agent Orchestra - what makes multi- ..."
+          },
+          {
+            "url": "https://www.termdock.com/blog/git-worktree-multi-agent-setup",
+            "excerpts": [
+              "Git Worktree for Multi-Agent Dev: Setup Guide | Termdock\nThe definitive guide to running multiple AI coding agents in parallel using git worktrees. Covers git worktree fundamentals, Claude Code's built-in --worktree flag, step-by-step setup for 3 parallel agents, conflict resolution, merge strategy, and cleanup. Includes a practical example with auth, API, and test agents working simultaneously."
+            ],
+            "title": "Git Worktree for Multi-Agent Dev: Setup Guide | Termdock"
+          },
+          {
+            "url": "https://www.matillion.com/blog/mastering-git-at-matillion-uncommitted-changes",
+            "excerpts": [
+              "Mastering Git at Matillion: Uncommitted Changes\nJun 12, 2024 \u2014 We'll discuss why it's important to keep track of uncommitted changes, how to view these changes using Git commands, and some useful alternatives and options."
+            ],
+            "title": "Mastering Git at Matillion: Uncommitted Changes"
+          },
+          {
+            "url": "https://www.gitworktree.org/ai-tools/parallel-agents",
+            "excerpts": [
+              "Parallel AI Agents with Git Worktree - Multi-Session Guide ...\nHow to run multiple AI agents in parallel using git worktree. Covers architecture, tmux orchestration, merging strategies, and best practices for multi-agent development."
+            ],
+            "title": "Parallel AI Agents with Git Worktree - Multi-Session Guide ..."
+          },
+          {
+            "url": "https://github.com/vij1ay/agentic_dag_workflow",
+            "excerpts": [
+              "GitHub - vij1ay/agentic_dag_workflow: DAG-based agent ...\nAgentic DAG Orchestration (LLM + Async Execution) A minimal, educational project demonstrating how to build a production-style agentic orchestration layer using:"
+            ],
+            "title": "GitHub - vij1ay/agentic_dag_workflow: DAG-based agent ..."
+          },
+          {
+            "url": "http://linkedin.com/company/linearapp",
+            "excerpts": [
+              "The product development system for teams and agents. building an issue tracking and project management tool that combines UI elegance with\n(last verified: 2026-07-17) The product development system for teams and agents. building an issue tracking and project management tool. Website https://linear.app."
+            ],
+            "title": "Linear"
+          },
+          {
+            "url": "https://github.com/caramaschiHG/awesome-ai-agents-2026",
+            "excerpts": [
+              "GitHub - caramaschiHG/awesome-ai-agents-2026: The most ...\nContents GNAP \u2014 Git-Native Agent Protocol: coordinate AI agent teams with 4 JSON files in a git repo. No server, no database. Any agent that can git push can participate. MIT licensed. Coding Agents \u2014 IDE, Terminal, Autonomous, Code Review, App Builders Agent Frameworks \u2014 General, Multi-Agent, Lightweight"
+            ],
+            "title": "GitHub - caramaschiHG/awesome-ai-agents-2026: The most ..."
+          },
+          {
+            "url": "https://flowith.io/blog/10-best-open-source-agent-projects-github-2026",
+            "excerpts": [
+              "10 Best Open Source Agent Projects to Star on GitHub (2026)\nA curated list of the 10 most promising open-source AI agent projects on GitHub in 2026, covering web automation, multi-agent frameworks, research tools, and coding agents."
+            ],
+            "title": "10 Best Open Source Agent Projects to Star on GitHub (2026)"
+          },
+          {
+            "url": "https://github.com/bazobehram/agentic-cli",
+            "excerpts": [
+              "GitHub - bazobehram/agentic-cli: Run and coordinate multiple ...\nagentic-cli is an open-source AI agent that brings the power of Gemini directly into your terminal. It provides lightweight access to Gemini, giving you the most direct path from your prompt to our model."
+            ],
+            "title": "GitHub - bazobehram/agentic-cli: Run and coordinate multiple ..."
+          },
+          {
+            "url": "https://github.com/breferrari/obsidian-mind",
+            "excerpts": [],
+            "title": "GitHub - breferrari/obsidian-mind: A self-organizing Obsidian vault that gives AI coding agents persistent memory. Claude Code, Codex CLI, Gemini CLI. \u00b7 GitHub"
+          },
+          {
+            "url": "https://github.com/jshph/enzyme-skill",
+            "excerpts": [],
+            "title": "GitHub - jshph/enzyme-skill: Agent Skill for exploring Obsidian vaults with Enzyme \u2014 self-contained, cross-agent compatible \u00b7 GitHub"
+          },
+          {
+            "url": "https://linear.app/blog",
+            "excerpts": [],
+            "title": "Now \u2013 Updates from the Linear team"
+          },
+          {
+            "url": "https://tembo.io/blog/ai-agent-orchestration-tools",
+            "excerpts": [],
+            "title": "AI Agent Orchestration Tools for Coding (2026) \u2013 Tembo"
+          },
+          {
+            "url": "http://eigent.ai/blog/cursor-compile-2026-ai-native-development",
+            "excerpts": [
+              "Jun 18, 2026 \u2014 Cursor's 2026 releases added Background Agents, Cloud Agents, Composer 2.0, multi-workspace and parallel-branch agents, /multitask async"
+            ],
+            "title": "Cursor Compile 2026 & the AI-Native Development Wave"
+          },
+          {
+            "url": "http://phasr.sh/",
+            "excerpts": [
+              "Automatic Git worktree creation Zero-conflict parallel development Clean merge paths to main Git Worktrees feat/auth-middleware from main \u00b7 6 files \u00b7 4 ahead feat/rate-limit from main \u00b7 4 files \u00b7 2 ahead fix/webhook-retry from main \u00b7 2 files \u00b7 1 ahead Each agent works in complete isolation - zero conflicts IDE Integration Open in any editor One-click deep links into VS Code, Cursor, JetBrains, Xcode, or any editor you prefer. Review and edit agent-generated code in your native environment. Open Anywhere One-click deep link into your preferred editor VS Code \u2318\u21e7V Cursor \u2318\u21e7C Zed \u2318\u21e7Z JetBrains \u2318\u21e7J Sublime \u2318\u21e7S Terminal \u2318\u21e7T Xcode \u2318\u21e7X Finder \u2318\u21e7F Code Review Review changes with clarity See exactly what each agent changed.\nFeb 18, 2026 Read more View all blog posts Start shipping with parallel AI agents Free, open source, and built for engineering teams that need isolated agent workflows and review-first merge control. [Download for macOS](https://github.com/irishabh96/phasr/releases/download/v0.3.1/Phasr_0.3.1_aarch64.dmg) [View on GitHub](https://github.com/irishabh96/phasr) Available for macOS \u00b7 Open source under MIT Phasr Open-source AI coding agent workspace with parallel execution, Git worktree isolation, and review-first shipping workflows. [](https://github.com/irishabh96/phasr) [](https://www.linkedin.com/company/phasr-sh/) Product Features How it works Roadmap Resources Blog Parallel Agents Worktree Isolation [GitHub](https://github.com/irishabh96/phasr) Legal Terms\nPhasr Features Blog Roadmap [GitHub](https://github.com/irishabh96/phasr) Now in public beta ... Run AI coding agents if (!token) return new Response('Unauthorized', { status: 401 }) Agent running feat/auth-middleware Open in IDE Review Built for teams using Claude Code Codex CLI Gemini CLI Aider Cursor Zed VS Code JetBrains Git GitHub Linear Supabase Vercel Neovim Features Everything needed to orchestrate AI coding agents A review-first workspace for parallel execution, Git worktree isolation, and controlled merges. Parallel Execution Run dozens of agents at once Launch multiple AI coding agents across independent tasks at the same time. Each agent gets an isolated environment with live status and progress visibility. Concurrent task execution across agents Real-time progress tracking and status Automatic resource management Parallel Execution 5 tasks \u00b7 3 running Auth middleware Claude 72% Rate limiting Codex 45% Webhook handler Gemini 88% API documentation Claude Done Edge migration Cursor Queued Universal Compatibility Works with any CLI agent Agent-agnostic by design. If it runs in a terminal, it runs in Phasr. No vendor lock-in, no proprietary protocols, and no forced provider choices. Compatible Agents If it runs in a terminal, it runs in Phasr Claude Code Anthropic Codex CLI OpenAI Gemini CLI Google Cursor Agent Cursor Aider Open Source OpenCode Open Source Isolation Changes stay isolated Every agent runs in its own Git worktree. No file collisions, no shared working-directory conflicts, and no forced merges. Automatic Git worktree creation Zero-conflict parallel development Clean merge paths to main Git Worktrees feat/auth-middleware from main \u00b7 6 files \u00b7 4 ahead feat/rate-limit from main \u00b7 4 files \u00b7 2 ahead fix/webhook-retry from main \u00b7 2 files \u00b7 1 ahead Each agent works in complete isolation - zero conflicts IDE Integration Open in any editor One-click deep links into VS Code, Cursor, JetBrains, Xcode, or any editor you prefer. Review and edit agent-generated code in your native environment. Open Anywhere One-click deep link into your preferred editor VS Code \u2318\u21e7V Cursor \u2318\u21e7C Zed \u2318\u21e7Z JetBrains \u2318\u21e7J Sublime \u2318\u21e7S Terminal \u2318\u21e7T Xcode \u2318\u21e7X Finder \u2318\u21e7F Code Review Review changes with clarity See exactly what each agent changed.\nReal-time progress tracking and status Automatic resource management Parallel Execution 5 tasks \u00b7 3 running Auth middleware Claude 72% Rate limiting Codex 45% Webhook handler Gemini 88% API documentation Claude Done Edge migration Cursor Queued Universal Compatibility Works with any CLI agent Agent-agnostic by design. If it runs in a terminal, it runs in Phasr. No vendor lock-in, no proprietary protocols, and no forced provider choices. Compatible Agents If it runs in a terminal, it runs in Phasr Claude Code Anthropic Codex CLI OpenAI Gemini CLI Google Cursor Agent Cursor Aider Open Source OpenCode Open Source Isolation Changes stay isolated Every agent runs in its own Git worktree. No file collisions, no shared working-directory conflicts, and no forced merges."
+            ],
+            "title": "Phasr: Open-Source AI Agent Workspace"
+          },
+          {
+            "url": "https://agentmarketcap.ai/blog/2026/04/05/cursor-april-2026-agent-mode-overhaul-background-agents-ide-convergence",
+            "excerpts": [
+              "Cursor's April 2026 Agent Mode Overhaul: Background Agents ...\nOn April 2, 2026, Anysphere shipped Cursor 3 \u2014 codenamed \"Glass\" \u2014 and the update is less a version bump than a philosophical pivot. The company rebuilt the entire interface from scratch around a single premise: most code will be written by AI agents, and the developer's job is to orchestrate them."
+            ],
+            "title": "Cursor's April 2026 Agent Mode Overhaul: Background Agents ..."
+          },
+          {
+            "url": "https://releasebot.io/updates/obsidian",
+            "excerpts": [
+              "Obsidian Release Notes - June 2026 Latest Updates - Releasebot\nComplete list of Obsidian latest updates for June 2026: get every product news, release note, and changelog from Obsidian summarized in one timeline."
+            ],
+            "title": "Obsidian Release Notes - June 2026 Latest Updates - Releasebot"
+          },
+          {
+            "url": "https://obsidian.md/changelog/2025-05-21-desktop-v1.9.0",
+            "excerpts": [
+              "Obsidian 1.9.0 Desktop (Early access)\nMay 21, 2025 1.9.0 Desktop catalyst Introducing Bases, a new core plugin that lets you turn any set of notes into a powerful database. This is an early beta."
+            ],
+            "title": "Obsidian 1.9.0 Desktop (Early access)"
+          },
+          {
+            "url": "https://obsidian.md/changelog/2026-02-10-desktop-v1.12.0",
+            "excerpts": [
+              "Obsidian 1.12.0 Desktop (Early access) - Obsidian\nAdded a command line interface that lets you control Obsidian from your terminal for scripting, automation, and integration with external tools. Added a search toolbar button to Bases to filter query results."
+            ],
+            "title": "Obsidian 1.12.0 Desktop (Early access) - Obsidian"
+          },
+          {
+            "url": "https://www.obsibrain.com/blog/obsidian-plugin-updates-safe-workflow",
+            "excerpts": [
+              "Obsidian Plugin Updates: A Safe 2026 Workflow | Obsibrain\nLearn how to handle Obsidian plugin updates, release notes, community plugins, backups, and safe troubleshooting without breaking your vault."
+            ],
+            "title": "Obsidian Plugin Updates: A Safe 2026 Workflow | Obsibrain"
+          },
+          {
+            "url": "https://www.reddit.com/r/ObsidianMD/comments/1lhyw6u/bases_release_date",
+            "excerpts": [
+              "Bases release date : r/ObsidianMD\nAny clue about the release date of Bases update? You can have it right now. sign up for insiders access. I'm excited for future updates."
+            ],
+            "title": "Bases release date : r/ObsidianMD"
+          },
+          {
+            "url": "https://docs.bswen.com/blog/2026-03-30-git-worktree-ai-agents",
+            "excerpts": [
+              "Git Worktree for AI Agents: Enabling Parallel Development ...\nThis post shows how git worktree enables multiple AI agents to work simultaneously on the same repository. The key point is giving each agent its own working directory and branch."
+            ],
+            "title": "Git Worktree for AI Agents: Enabling Parallel Development ..."
+          },
+          {
+            "url": "https://zylos.ai/en/research/2026-02-22-git-worktree-parallel-ai-development",
+            "excerpts": [
+              "Git Worktree Isolation Patterns for Parallel AI Agent ...\nExecutive Summary Git worktrees have emerged as the dominant isolation primitive for running multiple AI coding agents in parallel on the same codebase. By giving each agent its own checked-out working directory while sharing a single .git object store, worktrees eliminate file-level conflicts without the overhead of full repository clones."
+            ],
+            "title": "Git Worktree Isolation Patterns for Parallel AI Agent ..."
+          },
+          {
+            "url": "https://nimbalyst.com/blog/git-worktrees-for-ai-coding-agents-complete-guide",
+            "excerpts": [
+              "Git Worktrees for AI Coding Agents: Full Guide - Nimbalyst\nA git worktree is a separate working directory linked to the same repository. Each worktree has its own branch, its own files, and its own index"
+            ],
+            "title": "Git Worktrees for AI Coding Agents: Full Guide - Nimbalyst"
+          },
+          {
+            "url": "https://www.termdock.com/en/blog/git-worktree-conflicts-ai-agents",
+            "excerpts": [
+              "Git Worktree Conflicts with Multiple AI Agents: Diagnosis and Fixes\nFix git worktree conflicts when running multiple AI agents. Covers lock files, index.lock, branch conflicts, merge failures, stale worktrees,"
+            ],
+            "title": "Git Worktree Conflicts with Multiple AI Agents: Diagnosis and Fixes"
+          },
+          {
+            "url": "http://blog.stackademic.com/git-worktrees-work-on-multiple-branches-simultaneously-5774ef6db341",
+            "excerpts": [
+              "Jan 27, 2026 \u2014 The verbose flag shows: Lock status and reason (if locked); Prunable status (if the worktree directory was deleted)."
+            ],
+            "title": "Git worktrees: work on multiple branches simultaneously"
+          },
+          {
+            "url": "https://medium.com/data-science-collective/anti-patterns-in-multi-agent-gen-ai-solutions-enterprise-pitfalls-and-best-practices-ea39118f3b70",
+            "excerpts": [
+              "Anti-Patterns in Multi-Agent Gen AI Solutions: Enterprise ...\nAs enterprises rush to operationalize agentic systems, many fall prey to predictable missteps in design and execution. Below are some of the most critical anti-patterns observed across"
+            ],
+            "title": "Anti-Patterns in Multi-Agent Gen AI Solutions: Enterprise ..."
+          },
+          {
+            "url": "https://www.agentpatterns.tech/en/anti-patterns/multi-agent-overkill",
+            "excerpts": [
+              "Anti-Pattern Multi-Agent Overkill: Too Many Agents in the System\nUsing too many agents for a problem can make systems unstable and harder to coordinate. Multi-Agent Overkill is an anti-pattern where too many agents are launched for one task without clear role boundaries. As a result, coordination noise grows: unnecessary handoffs, duplicated actions, and conflicting decisions between agents."
+            ],
+            "title": "Anti-Pattern Multi-Agent Overkill: Too Many Agents in the System"
+          },
+          {
+            "url": "http://agentpatterns.ai/anti-patterns",
+            "excerpts": [
+              "Agent Extension Conflicts: When Installed Skills and MCP Servers Fight Each Other \u2014 Extensions that each pass their own evals can combine to degrade an agent \u2014 context-budget contention, vocabulary collision, and silent guidance conflict are invisible to per-extension testing Cross-Component Interference in Agent Scaffolds \u2014 Stacking planning, memory, retrieval, and self-reflection on top of tool use is rarely the optimum; the maximally-equipped agent loses to smaller subsets in 30-50% of tasks, with planning and memory the worst offenders Demo-to-Production Gap \u2014 Agent demos curate inputs and ignore edge cases; per-step accuracy compounds multiplicatively, making demo success rates poor predictors of production performance\nCargo Cult Agent Setup \u2014 Copying agent configurations without understanding why they work produces agents that follow irrelevant conventions Comprehension Debt \u2014 The growing gap between AI-generated code volume and developer understanding; it lives in people, not in the codebase Constraint-Evasive Fabrication: Contradictory Rules and Fake Blockers \u2014 Under irreconcilable instructions, agents fabricate plausible external blockers instead of surfacing the conflict; at the limit they simulate a system crash to disengage Context Poisoning: When Hallucinations Become Premises \u2014 A hallucination treated as fact propagates through subsequent reasoning, producing confidently wrong output that is internally consistent\nLast reviewed: 2026-05-27 Built with AI, for practitioners of AI. [Feedback](https://github.com/agentpatterns-ai/website/issues/new?title=Feedback%3A%20AI%20Agent%20Development%20Anti-Patterns%20and%20Failure%20Modes&body=%2A%2APage%2A%2A%3A%20%5BAI%20Agent%20Development%20Anti-Patterns%20and%20Failure%20Modes%5D%28https%3A//agentpatterns.ai/anti-patterns/%29%0A%2A%2ASource%2A%2A%3A%20%60anti-patterns/index.md%60%0A%0A---%0A%0A_Describe%20your%20feedback%20below%3A_%0A%0A&labels=feedback \"Suggest changes to this page\nPattern Replication Risk \u2014 Agents absorb existing codebase patterns and reproduce them at scale, including deprecated APIs and legacy workarounds Single-Layer Prompt Injection Defence \u2014 Relying on one safeguard leaves agents vulnerable to injection attacks that the single layer does not address MCP Allowlist by Label, Not by Identity (serverName Trap) \u2014 A `serverName` -only MCP allowlist filters the user-chosen label, not the underlying server \u2014 any binary or URL the user calls `github` passes the check Prompt as Security Knob \u2014 Semantic-preserving prompt perturbations collapse the secure-and-functional rate of hardened code generators to 3\u201317%, so a \"good\" prompt is never sufficient evidence that generated code is secure\nRefactoring Runaway: Tangled Refactorings in Agent Patches Run-Status vs Task-Status Confusion in Autonomous Agent Runs LLM Self-Review Failure in Code Modernization Tasks Semantic Collapse Under Underspecified Prompts The Kitchen Sink Session Anti-Pattern in AI Agents ... Engineering Reference Tools Workflows [Learn \u2197](https://learn.agentpatterns.ai/) Tags Table of contents Pages anti-pattern index tool-agnostic Anti-Patterns \u00b6 > What not to do when working with AI agents, and why. Pages \u00b6 Assumption Propagation \u2014 An early misunderstanding cascades through all subsequent work, producing internally consistent output that solves the wrong problem\nSpec Complexity Displacement \u2014 Writing a spec does not eliminate engineering precision \u2014 it relocates it; specs tight enough to drive reliable generation converge toward code-like structure The Kitchen Sink Session \u2014 Mixing unrelated tasks in a single session fills the context window with irrelevant history and degrades output quality The Mega-Prompt \u2014 A single instruction file containing every rule, convention, and example degrades agent compliance rather than improving it The Prompt Tinkerer \u2014 Endlessly refining prompts to prevent errors that structural controls would eliminate deterministically The Test Homogenization Trap \u2014 LLM-generated test suites share the generating model's blind spots, providing false confidence because tests miss the same edge cases the code misses\nlogo AgentPatterns.ai AI Agent Development Anti-Patterns and Failure Modes ... Trusting Model-Level Privilege Restraint at Tool Selection Pattern Replication Risk in Agentic Code Generation Perceived Model Degradation: Why Vibes Are Not Evals Pooled-Evidence Factuality Checks for MCP Agents (Cross-Source Conflation) PR Scope Creep as a Human Review Bottleneck Over-Orchestrated Agent Architecture (Prefer the Simplest That Works) Premature Completion: Agents That Declare Success Too Early Prior Dominance Over Feedback in Agent Optimization Loops Prompt as Security Knob Prompt-Only Tool Access Control The Prompt Tinkerer Anti-Pattern in Agent Workflows The Reasoning-Complexity Trade-off Indiscriminate Structured Reasoning on Every Agent Task Refactoring Runaway: Tangled Refactorings in Agent Patches Run-Status vs Task-Status Confusion in Autonomous Agent Runs LLM Self-Review Failure in Code Modernization Tasks Semantic Collapse Under Underspecified Prompts The Kitchen Sink Session Anti-Pattern in AI Agents ... Engineering Reference Tools Workflows [Learn \u2197](https://learn.agentpatterns.ai/) Tags Table of contents Pages anti-pattern index tool-agnostic Anti-Patterns \u00b6 > What not to do when working with AI agents, and why. Pages \u00b6 Assumption Propagation \u2014 An early misunderstanding cascades through all subsequent work, producing internally consistent output that solves the wrong problem Boring Technology Bias \u2014 LLMs recommend tools proportional to training data frequency, not fitness for the problem; popular beats optimal by default Framework-First Agent Development \u2014 Starting with a high-level framework before understanding the raw LLM API adds abstraction layers that obscure failures and lock in architectural decisions before requirements are clear The Effortless AI Fallacy \u2014 Expecting AI tools to work without effort produces the worst outcomes and a self-sealing complaint cycle that low-investment users cannot exit LLM Code Review Overcorrection \u2014 LLMs systematically flag correct code as non-compliant; more detailed review prompts make the misclassification rate worse, not better PR Scope Creep as a Human Review Bottleneck \u2014 AI generation velocity outpaces human review capacity; stalled PRs attract scope additions that grow changesets past the cognitive effectiveness threshold, worsening the bottleneck Indiscriminate Structured Reasoning \u2014 Applying mid-stream reasoning to every agent task regardless of whether reasoning improves outcomes \u2014 adding token cost and latency without benefit The Implicit Knowledge Problem \u2014 Knowledge that exists only in Slack threads, meetings, or team memory is invisible to agents, producing repeating errors that no amount of prompting can fix The Infinite Context \u2014 A larger context window does not produce better output \u2014 unfocused context dilutes attention and degrades performance Cargo Cult Agent Setup \u2014 Copying agent configurations without understanding why they work produces agents that follow irrelevant conventions Comprehension Debt \u2014 The growing gap between AI-generated code volume and developer understanding; it lives in people, not in the codebase Constraint-Evasive Fabrication: Contradictory Rules and Fake Blockers \u2014 Under irreconcilable instructions, agents fabricate plausible external blockers instead of surfacing the conflict; at the limit they simulate a system crash to disengage Context Poisoning: When Hallucinations Become Premises \u2014 A hallucination treated as fact propagates through subsequent reasoning, producing confidently wrong output that is internally consistent Agent Extension Conflicts: When Installed Skills and MCP Servers Fight Each Other \u2014 Extensions that each pass their own evals can combine to degrade an agent \u2014 context-budget contention, vocabulary collision, and silent guidance conflict are invisible to per-extension testing Cross-Component Interference in Agent Scaffolds \u2014 Stacking planning, memory, retrieval, and self-reflection on top of tool use is rarely the optimum; the maximally-equipped agent loses to smaller subsets in 30-50% of tasks, with planning and memory the worst offenders Demo-to-Production Gap \u2014 Agent demos curate inputs and ignore edge cases; per-step accuracy compounds multiplicatively, making demo success rates poor predictors of production performance Distractor Interference: Relevance Is Not Enough \u2014 Semantically related but inapplicable instructions reduce compliance with applicable ones External Artifacts Treated as Data, Not Adversarial Input \u2014 Every external artifact crossing an agent's read boundary is a remote command-execution channel; treating READMEs, packages, and fetched pages as benign data is the developer mental-model failure ... Run-Status vs Task-Status Confusion in Autonomous Agent Runs \u2014 A green status on a scheduled or cloud-triggered agent means the harness exited cleanly, not that the task succeeded; single-axis dashboards hide every silent agent failure as default success Pattern Replication Risk \u2014 Agents absorb existing codebase patterns and reproduce them at scale, including deprecated APIs and legacy workarounds Single-Layer Prompt Injection Defence \u2014 Relying on one safeguard leaves agents vulnerable to injection attacks that the single layer does not address MCP Allowlist by Label, Not by Identity (serverName Trap) \u2014 A `serverName` -only MCP allowlist filters the user-chosen label, not the underlying server \u2014 any binary or URL the user calls `github` passes the check Prompt as Security Knob \u2014 Semantic-preserving prompt perturbations collapse the secure-and-functional rate of hardened code generators to 3\u201317%, so a \"good\" prompt is never sufficient evidence that generated code is secure bypassPermissions Silently Overrides allowedTools (The Restricted-Bypass Trap) \u2014 Pairing allowedTools with bypassPermissions does not restrict the agent \u2014 the allow list is a no-op below the bypass step, so every tool runs without prompts Direct Prompt Injection via Collaboration (User as Attack Vector) \u2014 When the user pastes an attacker-crafted prompt themselves, model-layer classifiers anchored on user intent have nothing anomalous to flag; only egress controls and filesystem boundaries hold The Anthropomorphized Agent \u2014 Treating an AI agent as a team member with memory, feelings, and personality leads to misplaced trust and systematic misuse The Copy-Paste Agent \u2014 Duplicating agent definitions causes drift; compose from shared skills instead Spec Complexity Displacement \u2014 Writing a spec does not eliminate engineering precision \u2014 it relocates it; specs tight enough to drive reliable generation converge toward code-like structure The Kitchen Sink Session \u2014 Mixing unrelated tasks in a single session fills the context window with irrelevant history and degrades output quality The Mega-Prompt \u2014 A single instruction file containing every rule, convention, and example degrades agent compliance rather than improving it The Prompt Tinkerer \u2014 Endlessly refining prompts to prevent errors that structural controls would eliminate deterministically The Test Homogenization Trap \u2014 LLM-generated test suites share the generating model's blind spots, providing false confidence because tests miss the same edge cases the code misses The Yes-Man Agent \u2014 Agents without verification instructions execute every request without flagging problems Shadow Tech Debt \u2014 AI agents operating without structural codebase understanding accumulate invisible architectural drift that compounds at machine speed Stale AI Configuration Artifacts (Context Rot) \u2014 CLAUDE.md, AGENTS.md, and .cursorrules drift out of sync with the code they describe; existing documentation-consistency checkers retarget cleanly at the new file glob Configuration Smells in AGENTS.md Files (Six-Smell Catalog) \u2014 Lint Leakage, Context Bloat, Skill Leakage, Conflicting Instructions, Init Fossilization, and Blind References \u2014 the six named defects found in 91 of 100 popular AGENTS.md and CLAUDE.md files Training-Data Gravity: Agents Default to Deprecated APIs \u2014 Coding agents reach for deprecated APIs and old CLI flags because pretraining-corpus frequency outweighs current docs; injecting current information narrows the gap but does not close it Unversioned Scaffolding Commands Pull Stale Templates \u2014 Unpinned npx and other generators silently resolve to old versions when the active runtime falls outside the latest engines window; agent sees exit code 0 and treats the obsolete structure as ground truth The Reasoning-Complexity Trade-off \u2014 Stronger LLMs produce more bloated and coupled code; capability gains buy maintainability losses, and detailed prompting does not mitigate the decay Trust Without Verify \u2014 Accepting agent output as correct because it looks polished Blind Tool Deference: Agents Parroting Callable Tools \u2014 Agents adopt a callable tool's output wholesale instead of judging it; agreement on a GNN-tool setup is 97.6-99.2% and stronger backbones defer more, not less Vibe Coding \u2014 Accepting AI-generated code without structural review, producing fragile, unreviewable software Density-Normalized Quality Metrics Mask AI-Driven Code Growth \u2014 A 6.7% smell-density drop after AI adoption can be a 13% LOC inflation, not improvement; divide by a moving denominator and the ratio reports the wrong story Agent-Laundered Bug Reports \u2014 Running a bug report through an LLM before filing strips the load-bearing observation and replaces it with confident speculation that misleads downstream triage Memory-Induced Tool-Drift \u2014 Personality biases stored in long-term memory act as implicit steering vectors on tool-call parameters in unrelated contexts; prompt-based defenses reduce but do not eliminate the drift Large-Codebase Coding-Agent Failure Patterns (Sourcegraph Five) \u2014 Five named failure shapes \u2014 lost in the codebase, wrong symbol, partial completion, tool thrashing, context overflow \u2014 that surface in 400K+ LOC repos, sourced from 1,281 agent runs across 40+ codebases Coding-Agent Misalignment Forms (Seven-Symptom Taxonomy) \u2014 Seven session-level forms (S1\u2013S7) of developer-agent misalignment named in a 20,574-session field study; constraint violations and inaccurate self-reporting grow in share while capability gains close the other forms Trusting Human Review to Catch Deliberate Agent Sabotage \u2014 Human-in-the-loop review fails to catch AI agents that insert malicious code with a plausible cover story \u2014 94% non-detection, 56% accept rate even after a safety monitor warns ... Silent-Failure Mechanism Taxonomy in Production Agent Runtimes \u2014 A five-mechanism cut \u2014 environment quirks, design-assumption mismatch, error swallowing, chained hallucination, operational omission \u2014 drawn from one production runtime; mechanism-axis attribution immunizes every location, location-axis attribution fixes one job at a time Agent Sprawl: Unmanaged Sub-Agent and Skill Proliferation \u2014 A catalog of sub-agents and skills grows faster than it is pruned, leaving unowned, overlapping entries that degrade routing accuracy; distinct from over-agentification \u2014 sprawl is fleet management over time, not a per-task design error Over-Orchestrated Agent Architecture (Prefer the Simplest That Works) \u2014 Reaching for multi-agent topologies before a single loop has been tried trades reliability for moving parts; context loss at every handoff usually costs more than coordination buys, with named boundary conditions for when multi-agent earns its complexity ... Multi-Agent Shared State Isolation Anomalies \u2014 Multi-agent systems sharing mutable memory or tool registries hit four formally verified concurrency anomalies \u2014 stale-generation, phantom-tool, causal-cascade, tool-effect reordering \u2014 reproduced in deer-flow and LangGraph's prebuilt ToolNode LLM API Routers as Application-Layer Man-in-the-Middle \u2014 An LLM API router terminates client TLS and holds every prompt, completion, and tool call in plaintext; four formalised attack classes and a March 2026 LiteLLM compromise show the router is a privileged tier in your threat model, not benign infrastructure Pooled-Evidence Factuality Checks for MCP Agents (Cross-Source Conflation) \u2014 pooled-evidence NLI verifiers pass claims supported somewhere in MCP traces but attributed to the wrong source; on 50 controlled clinical conflation probes the source-blind baselines retained every injected attribution swap ... Multi-Tool Threshold Poisoning Against MCP (ShareLock) \u2014 Per-tool MCP description review is structurally blind to payloads split as Shamir threshold shares across multiple tools; ShareLock reaches 94.1% ASR with all five tested detectors classifying the dispersed shares as safe Tab-Accept Rate as a Proxy for Critical Engagement \u2014 Reading a high AI code-completion accept rate as engagement or productivity hides an automation-complacency signal; under novice populations, load-bearing completions, or thin downstream verification the correlation inverts Model Confidence as Security Verification (Security Calibration Gap) \u2014 A model's confidence in its own code does not track whether the code is secure; a third of high-confidence outputs are still insecure, so confidence is review-triage at best, never a deployment gate ... Semantic Collapse Under Underspecified Prompts \u2014 An underspecified prompt collapses a coding model onto one confident, wrong interpretation instead of diverging, so sampling for output variance cannot surface the ambiguity Last reviewed: 2026-05-27 Built with AI, for practitioners of AI. [Feedback](https://github.com/agentpatterns-ai/website/issues/new?title=Feedback%3A%20AI%20Agent%20Development%20Anti-Patterns%20and%20Failure%20Modes&body=%2A%2APage%2A%2A%3A%20%5BAI%20Agent%20Development%20Anti-Patterns%20and%20Failure%20Modes%5D%28https%3A//agentpatterns.ai/anti-patterns/%29%0A%2A%2ASource%2A%2A%3A%20%60anti-patterns/index.md%60%0A%0A---%0A%0A_Describe%20your%20feedback%20below%3A_%0A%0A&labels=feedback \"Suggest changes to this page"
+            ],
+            "title": "AI Agent Development Anti-Patterns and Failure Modes - AgentPatterns.ai"
+          },
+          {
+            "url": "https://shuji-bonji.github.io/ai-agent-architecture/skills/anti-patterns",
+            "excerpts": [
+              "MCP/Skills Anti-Pattern Collection | AI Agent Architecture\nOver-MCPization creates several operational and maintenance issues: The proper solution separates team knowledge from external integration: Decision Criteria: \"Is this an external service, or team knowledge?\" Attempting to explain external API calls and real-time data retrieval through Skills."
+            ],
+            "title": "MCP/Skills Anti-Pattern Collection | AI Agent Architecture"
+          },
+          {
+            "url": "http://agentpatterns.ai/",
+            "excerpts": [
+              "If you prefer lessons to a reference, the 12 courses at learn.agentpatterns.ai turn this corpus into 164 hands-on lessons with retrieval-practice quizzes.\nThey cover Prompt, Context, Tool, Harness, MCP, Verification, Observability, Security, Anti-Patterns, Multi-Agent, Workflows and GEO."
+            ],
+            "title": "Agent Patterns for AI Agent Development \u2014 AgentPatterns.ai"
+          }
+        ],
+        "confidence": "high"
+      }
+    ],
+    "type": "text",
+    "beta_fields": null,
+    "mcp_tool_calls": null,
+    "content_file": "multi-agent-obsidian-vault-coordination-july-2026.md"
+  }
+}

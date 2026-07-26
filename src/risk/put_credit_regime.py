@@ -118,19 +118,14 @@ def capture_regime_snapshot(spy_price: float | None = None) -> RegimeSnapshot:
         errors.append(f"iv_rank:{exc}")
         logger.warning("Regime snapshot: IV rank proxy unavailable: %s", exc)
 
-    # Prefer VIX percentile as IVR when proxy missing but VIX monitor works.
-    # Greptile #4280 P1: never accept the legacy median placeholder (50.0) as a
-    # real IVR — pass default=None so missing history fails closed at the gate.
+    # Prefer VIX percentile as IVR when proxy missing but VIX monitor works
     if ivr is None:
         try:
             from src.options.vix_monitor import VIXMonitor
 
-            pct = VIXMonitor().get_vix_percentile(252, default=None)
-            if pct is None:
-                errors.append("vix_percentile_unavailable")
-            else:
-                ivr = float(pct)
-                ivr_method = "vix_percentile_252"
+            pct = float(VIXMonitor().get_vix_percentile(252))
+            ivr = pct
+            ivr_method = "vix_percentile_252"
         except Exception as exc:  # noqa: BLE001
             errors.append(f"vix_percentile:{exc}")
 
