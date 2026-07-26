@@ -48,6 +48,13 @@ def test_regime_missing_vix_fail_closed():
     assert any("VIX unavailable" in b for b in gate["blockers"])
 
 
+def test_regime_missing_ivr_fail_closed():
+    """Greptile #4280: unavailable IVR must block, not invent IVR=50."""
+    gate = evaluate_regime_gate(_snap(iv_rank_proxy=None), fail_closed_on_missing=True)
+    assert gate["allowed"] is False
+    assert any("IV rank" in b for b in gate["blockers"])
+
+
 def test_regime_missing_vix_fail_open():
     gate = evaluate_regime_gate(_snap(vix=None), fail_closed_on_missing=False)
     assert gate["allowed"] is True

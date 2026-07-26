@@ -444,6 +444,77 @@ def _count_put_credit_structures_today() -> int:
     return n
 
 
+def _et_session_start_utc_iso() -> str:
+    """UTC ISO timestamp for America/New_York midnight today (not UTC midnight)."""
+    from zoneinfo import ZoneInfo
+
+    et = ZoneInfo("America/New_York")
+    now_et = datetime.now(et)
+    start_et = now_et.replace(hour=0, minute=0, second=0, microsecond=0)
+    return start_et.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _is_put_credit_entry_order(order: Any) -> bool:
+    """True only for put-credit *entry* fills (not same-day closes).
+
+    Greptile #4285: counting CLOSE BPS 2-leg fills inflated the daily cap.
+    Our path tags entries as OPEN+BPS via build_client_order_id.
+    """
+    client_id = str(getattr(order, "client_order_id", "") or "").upper()
+    if not client_id:
+        return False
+    if "CLOSE" in client_id:
+        return False
+    # Entry path only — OPEN + BPS (bull put spread)
+    return "OPEN" in client_id and "BPS" in client_id
+
+
+def _count_put_credit_structures_today_from_broker() -> int:
+    """Broker-side put-credit *entry* count for today (ET session).
+
+    Greptile #4278 P1: journal-only counters undercount when a fill lands but the
+    process dies before durable journal write. Use max(journal, broker).
+    """
+    if os.environ.get("PYTEST_CURRENT_TEST") or "pytest" in sys.modules:
+        return 0
+
+    try:
+        from src.utils.alpaca_client import get_alpaca_credentials
+
+        credentials = get_alpaca_credentials()
+        api_key, api_secret = credentials[0], credentials[1]
+        inferred_paper = _infer_paper_from_credentials(credentials)
+        is_paper = True if inferred_paper is None else inferred_paper
+        if not api_key or not api_secret:
+            raise ValueError("No Alpaca credentials")
+
+        from alpaca.trading.client import TradingClient
+        from alpaca.trading.enums import QueryOrderStatus
+        from alpaca.trading.requests import GetOrdersRequest
+
+        client = TradingClient(api_key, api_secret, paper=is_paper)
+        # Greptile #4285: ET date + Z was wrong (UTC midnight). Use ET session start.
+        after_utc = _et_session_start_utc_iso()
+        orders = client.get_orders(
+            GetOrdersRequest(
+                status=QueryOrderStatus.FILLED,
+                after=after_utc,
+                limit=100,
+            )
+        )
+        n = sum(1 for order in (orders or []) if _is_put_credit_entry_order(order))
+        logger.info(
+            "Broker put-credit ENTRY count today (after=%s): %s (from %s filled orders)",
+            after_utc,
+            n,
+            len(orders or []),
+        )
+        return n
+    except Exception as exc:
+        logger.warning("Broker put-credit structure count failed: %s", exc)
+        return 0
+
+
 def _count_structures_today_from_alpaca() -> int:
     """Count today's IC entries from Alpaca order history (works in CI and local).
 
@@ -512,9 +583,15 @@ def _count_structures_today_from_alpaca() -> int:
 
 
 def _structures_today_for_gate() -> int:
-    """Structure count for the active family (put-credit vs residual IC noise)."""
+    """Structure count for the active family (put-credit vs residual IC noise).
+
+    Put-credit: max(journal, broker) so a fill-before-journal crash cannot
+    undercount past max_daily_structures (Greptile #4278 P1).
+    """
     if _active_strategy_family() == "spy_put_credit":
-        return _count_put_credit_structures_today()
+        journal_n = _count_put_credit_structures_today()
+        broker_n = _count_put_credit_structures_today_from_broker()
+        return max(int(journal_n or 0), int(broker_n or 0))
     return _count_structures_today_from_alpaca()
 
 
@@ -1915,6 +1992,13 @@ def safe_submit_order(client, order_request, strategy: str | None = None):
             # Never log fake ModelSelector/Juror "AGREE" during cold validation.
             # =================================================================
             ml_ready, ml_meta = _active_strategy_ml_ready()
+            # Opt-in only: secondary juror is not wired. Never invent AGREE.
+            # Greptile #4285: do not call juror (and soft-bypass outages) until enabled.
+            juror_enabled = os.environ.get("MULTI_MODEL_JUROR_ENABLED", "").lower() in {
+                "1",
+                "true",
+                "yes",
+            }
             if not ml_ready:
                 logger.info(
                     "ML consensus deferred (no edge sample): family=%s n=%s learning_ready=%s detail=%s",
@@ -1929,6 +2013,20 @@ def safe_submit_order(client, order_request, strategy: str | None = None):
                     attributes={
                         "status": "DEFERRED_NO_EDGE",
                         "family": str(ml_meta.get("family") or ""),
+                        "n": int(ml_meta.get("n") or 0),
+                    },
+                )
+            elif not juror_enabled:
+                logger.info(
+                    "ML sample ready (n=%s) but MULTI_MODEL_JUROR_ENABLED unset; "
+                    "consensus deferred (no fake AGREE, no outage bypass)",
+                    ml_meta.get("n"),
+                )
+                gateway.capture_span(
+                    "juror_consensus",
+                    trace_id,
+                    attributes={
+                        "status": "DEFERRED_JUROR_NOT_CONFIGURED",
                         "n": int(ml_meta.get("n") or 0),
                     },
                 )
@@ -1948,9 +2046,11 @@ def safe_submit_order(client, order_request, strategy: str | None = None):
                     )
                 except ImportError:
                     raise ValueError(
-                        "MULTI-MODEL CONSENSUS REQUIRED (learning_ready) but MultiModelJuror unavailable"
+                        "MULTI-MODEL CONSENSUS REQUIRED (learning_ready + enabled) "
+                        "but MultiModelJuror unavailable"
                     ) from None
                 except Exception as e:
+                    # Fail closed when juror is explicitly enabled.
                     logger.error(f"CONSENSUS ERROR: {e}")
                     raise ValueError(f"CRITICAL: Consensus check failed: {e}") from e
 
@@ -1992,18 +2092,13 @@ def safe_submit_order(client, order_request, strategy: str | None = None):
                         "(0 lessons retrieved; rebuild indexes or fix LessonsSearch)"
                     )
 
-                # Protocol baseline is a first-class source (not a substitute for lessons).
-                # Lessons remain mandatory above; baseline makes protocol keywords auditable.
-                audit_context = [
-                    "Protocol source: Rule #1 don't lose money; mandatory stop-loss; "
-                    "check VIX; 15-delta shorts; 50% profit or 25% validation TP; "
-                    "7 DTE exit; 1-lot credit defined-risk only."
-                ] + retrieved_context
-
+                # Greptile #4281 P1: do NOT inject synthetic protocol baseline into
+                # retrieved_context — that made any nonempty lesson score groundedness
+                # 1.0. Score against *actual lessons only*; protocol lives in reasoning.
                 score = evaluator.evaluate(
                     proposal=proposal,
                     reasoning=protocol_reasoning,
-                    retrieved_context=audit_context,
+                    retrieved_context=retrieved_context,
                 )
 
                 if score.is_hallucination_risk:
