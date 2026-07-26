@@ -6,8 +6,11 @@ Role: Handle atomic order submission via MLEG.
 import logging
 from typing import Any
 
-from alpaca.trading.enums import OrderClass, OrderSide, TimeInForce
-from alpaca.trading.requests import LimitOrderRequest, OptionLegRequest
+try:
+    from alpaca.trading.enums import OrderClass, OrderSide, TimeInForce
+    from alpaca.trading.requests import LimitOrderRequest, OptionLegRequest
+except ImportError:
+    OrderClass = OrderSide = TimeInForce = LimitOrderRequest = OptionLegRequest = Any  # type: ignore
 from src.safety.mandatory_trade_gate import safe_submit_order
 
 logger = logging.getLogger(__name__)

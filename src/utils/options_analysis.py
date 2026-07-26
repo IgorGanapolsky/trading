@@ -26,7 +26,7 @@ import logging
 from typing import TYPE_CHECKING
 
 import numpy as np
-import yfinance as yf
+from src.utils import yfinance_wrapper as yf
 
 if TYPE_CHECKING:
     pass
