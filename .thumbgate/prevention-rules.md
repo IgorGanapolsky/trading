@@ -3,9 +3,9 @@
 Generated from negative feedback memories (time-weighted, half-life: 7d).
 
 ## general
-- Recurrence count: 16 (weighted: 2.5)
-- Rule: Review the assistant response before taking the next similar action. Latest user message: thumbs down: claude-yolo hit the ninth consecutive Stop/SubagentStop hook block because the default cap was eight; preserve stop_hook_active passthrough and persist CLAUDE_CODE_STOP_HOOK_BLOCK_CAP=50.
-- Latest mistake: MISTAKE: Unchanged. Holding.
+- Recurrence count: 17 (weighted: 3.5)
+- Rule: Keep every Stop/SubagentStop handler fail-open when stop_hook_active is true, persist CLAUDE_CODE_STOP_HOOK_BLOCK_CAP=50 for claude-yolo, clear only verified stale Ralph state, and smoke-test both recursive and normal stop paths.
+- Latest mistake: MISTAKE: Claude Code used its default Stop hook block cap of 8, so the ninth consecutive block forced the turn to end even...
 
 ## Root Cause Categories
 - guardrail_triggered: 34 failures
