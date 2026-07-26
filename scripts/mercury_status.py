@@ -38,7 +38,7 @@ def load_token() -> str:
             payload = json.loads(VAULT_PATH.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
             raise SystemExit(f"Failed to read {VAULT_PATH}: {exc}") from exc
-        token = payload.get("api_token")
+        token = payload.get("MERCURY_API_TOKEN") or payload.get("api_token")
         if token:
             return token
     raise SystemExit(

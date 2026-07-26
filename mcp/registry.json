@@ -33,6 +33,16 @@
       }
     },
     {
+      "id": "mercury",
+      "display_name": "Mercury Bank (read-only)",
+      "module": "mcp.servers.mercury",
+      "tools": {
+        "get_bank_status": "get_bank_status",
+        "get_bank_transactions": "get_bank_transactions",
+        "get_bank_health": "get_bank_health"
+      }
+    },
+    {
       "id": "gmail",
       "display_name": "Gmail Integration",
       "module": "mcp.servers.gmail",
