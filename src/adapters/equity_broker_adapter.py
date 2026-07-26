@@ -12,10 +12,12 @@ live) account credentials, never the options account's.
 
 from __future__ import annotations
 
+import json
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 
 
 @dataclass(frozen=True)
@@ -136,10 +138,23 @@ class AlpacaEquityBrokerAdapter(EquityBrokerAdapter):
             )
 
     @classmethod
-    def from_env(cls) -> AlpacaEquityBrokerAdapter:
+    def from_env(cls, secrets_path: Path | None = None) -> AlpacaEquityBrokerAdapter:
         api_key = os.environ.get("DIVIDEND_GROWTH_ALPACA_API_KEY")
         secret_key = os.environ.get("DIVIDEND_GROWTH_ALPACA_API_SECRET")
         live_enabled = os.environ.get("DIVIDEND_GROWTH_ALPACA_ENABLED") == "1"
+
+        if not api_key or not secret_key:
+            env_secrets_path = os.environ.get("ALPACA_SECRETS_PATH")
+            path = secrets_path or (Path(env_secrets_path) if env_secrets_path else Path.home() / ".resume_secrets" / "alpaca.json")
+            if path.exists():
+                try:
+                    with path.open("r", encoding="utf-8") as handle:
+                        secrets = json.load(handle)
+                        api_key = api_key or secrets.get("DIVIDEND_GROWTH_ALPACA_API_KEY")
+                        secret_key = secret_key or secrets.get("DIVIDEND_GROWTH_ALPACA_API_SECRET")
+                except Exception:
+                    pass
+
         if not api_key or not secret_key:
             raise ValueError(
                 "DIVIDEND_GROWTH_ALPACA_API_KEY and DIVIDEND_GROWTH_ALPACA_API_SECRET "
