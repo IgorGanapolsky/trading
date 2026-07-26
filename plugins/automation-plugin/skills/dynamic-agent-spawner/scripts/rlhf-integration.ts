@@ -6,8 +6,8 @@
  * - Cortex: Human-readable audit trail for oversight
  */
 
-import { MemAlign, type Feedback } from "./memalign.ts";
-import { CortexWriter, type CortexEntry } from "./cortex-writer.ts";
+import { MemAlign, type Feedback } from "./memalign";
+import { CortexWriter, type CortexEntry } from "./cortex-writer";
 import {
   closeSync,
   existsSync,
@@ -233,9 +233,19 @@ Memory Systems:
   }
 }
 
-const isMainModule =
-  process.argv[1] !== undefined &&
-  resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const isMainModule = (() => {
+  if (!process.argv[1]) return false;
+  try {
+    const scriptPath = resolve(process.argv[1]);
+    const currentPath = fileURLToPath(import.meta.url);
+    return (
+      scriptPath === currentPath ||
+      scriptPath.replace(/\.ts$/, "") === currentPath.replace(/\.ts$/, "")
+    );
+  } catch {
+    return false;
+  }
+})();
 
 if (isMainModule) {
   main().catch(console.error);
