@@ -1,11 +1,13 @@
 {
-  "audited_at": "2026-07-24T16:37:41.860944+00:00",
-  "dry_run": false,
+  "audited_at": "2026-07-26T19:01:33.902485+00:00",
+  "dry_run": true,
   "reconciled": 1,
   "unresolved": {},
   "pcs_inventory_excluded": {
     "SPY260828P00691000": 1.0,
-    "SPY260828P00696000": -1.0
+    "SPY260828P00696000": -1.0,
+    "SPY260828P00707000": 1.0,
+    "SPY260828P00712000": -1.0
   },
   "checked": 1,
   "holds": 1,
@@ -26,8 +28,8 @@
       ],
       "should_exit": false,
       "exit_reason": null,
-      "dte": 28,
-      "hold_hours": 72.94991809694444,
+      "dte": 26,
+      "hold_hours": 123.34770808500001,
       "current_debit": 0.91,
       "pnl": 20.0,
       "max_profit": 111.0,

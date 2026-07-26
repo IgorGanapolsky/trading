@@ -43,6 +43,7 @@ def main() -> int:
 
     steps = {
         "inventory": _run([python, "scripts/audit_open_inventory.py"]),
+        "regime": _run([python, "scripts/spy_put_credit.py", "--regime-status"]),
         "put_credit_manage_dry": _run(
             [python, "scripts/spy_put_credit.py", "--manage-exits", "--dry-run"]
         ),
@@ -58,12 +59,28 @@ def main() -> int:
     except Exception:
         cohort = {"parse_error": True, "raw_tail": raw[-500:]}
 
+    regime = {}
+    reg_raw = steps["regime"]["stdout_tail"]
+    try:
+        regime = json.loads(reg_raw[reg_raw.find("{") : reg_raw.rfind("}") + 1])
+    except Exception:
+        regime = {"parse_error": True, "rc": steps["regime"]["rc"]}
+
     report = {
-        "schema_version": "ralph-gsd-profit-tick/1",
+        "schema_version": "ralph-gsd-profit-tick/2",
+        "framework": "ralph+gsd",
         "ts": ts,
         "rcs": {k: v["rc"] for k, v in steps.items()},
         "inventory_ok": steps["inventory"]["rc"] in (0, 2),  # 2 = unclean still ran
         "inventory_clean": steps["inventory"]["rc"] == 0,
+        "regime": {
+            "allowed": regime.get("allowed"),
+            "blockers": regime.get("blockers"),
+            "soft_flags": regime.get("soft_flags"),
+            "vix": (regime.get("snapshot") or {}).get("vix"),
+            "iv_rank_proxy": (regime.get("snapshot") or {}).get("iv_rank_proxy"),
+            "rc": steps["regime"]["rc"],
+        },
         "cohort": {
             "closed_n": (cohort.get("closed") or {}).get("closed_n"),
             "open_n": (cohort.get("open") or {}).get("open_n"),
@@ -72,6 +89,14 @@ def main() -> int:
             ),
             "progress_pct": (cohort.get("progress") or {}).get("pct_to_gate"),
             "claim_profitable": (cohort.get("honesty") or {}).get("claim_profitable"),
+            "live_deposit_ready": (cohort.get("honesty") or {}).get("live_deposit_ready"),
+            "rolling_20": (cohort.get("closed") or {}).get("rolling_20"),
+        },
+        "gsd": {
+            "milestone": "v2.0-put-credit-edge",
+            "phase": 2,
+            "phase_name": "Smart Entry Quality",
+            "completion_promise": "EDGE_GATE_READY_OR_KILLED",
         },
         "honesty": "paper validation only; live_blocked; no profitability claim",
     }
@@ -84,6 +109,9 @@ def main() -> int:
     )
     (out_dir / f"tick_{ts}_cohort.json").write_text(
         json.dumps(cohort, indent=2) + "\n", encoding="utf-8"
+    )
+    (out_dir / f"tick_{ts}_regime.json").write_text(
+        json.dumps(regime, indent=2) + "\n", encoding="utf-8"
     )
 
     ralph_state = ROOT / ".claude" / "ralph" / "state.json"

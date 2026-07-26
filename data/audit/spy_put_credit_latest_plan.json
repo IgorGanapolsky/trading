@@ -17,19 +17,9 @@
   "exit_dte": 7,
   "min_hold_hours": 24,
   "min_credit": 0.5,
-  "dry_run": false,
-  "planned_at": "2026-07-24T15:34:26.372017+00:00",
+  "dry_run": true,
+  "planned_at": "2026-07-25T13:19:34.359869+00:00",
   "status": "planned",
-  "opportunity": {
-    "expiry": "2026-09-04",
-    "short_put": 700.0,
-    "long_put": 695.0,
-    "put_wing": 5.0,
-    "est_credit": 0.55,
-    "put_delta": 0.1709,
-    "method": "live_delta_band_scan",
-    "quantity": 1,
-    "spy_price": 742.3200073242188
-  },
-  "spy_price": 742.3200073242188
+  "opportunity": null,
+  "spy_price": 738.9299926757812
 }

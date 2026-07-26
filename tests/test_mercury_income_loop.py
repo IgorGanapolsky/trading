@@ -22,7 +22,7 @@ def _fresh_state():
 
 class TestParseArgs:
     def test_default_args(self):
-        args = parse_args()
+        args = parse_args([])
         assert args.mode == "paper"
         assert args.profit_return_threshold_usd == 1000.0
         assert args.tax_rate_pct == 20.0

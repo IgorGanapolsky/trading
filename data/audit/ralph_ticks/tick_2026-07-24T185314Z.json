@@ -1,0 +1,38 @@
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-24T185314Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 2,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": null,
+    "blockers": null,
+    "soft_flags": null,
+    "vix": null,
+    "iv_rank_proxy": null,
+    "rc": 2
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": null,
+    "rolling_20": null
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}

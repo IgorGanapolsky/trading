@@ -1,0 +1,1786 @@
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-24T190102Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.74,
+    "iv_rank_proxy": 70.08,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-24T190102Z.json
+ralph_iteration=22
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-24T200107Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.81,
+    "iv_rank_proxy": 70.49,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-24T200107Z.json
+ralph_iteration=23
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-24T210112Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 67.21,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-24T210112Z.json
+ralph_iteration=24
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-24T220118Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 67.21,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-24T220118Z.json
+ralph_iteration=25
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-24T230124Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 67.08,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-24T230124Z.json
+ralph_iteration=26
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-25T000129Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 67.08,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-25T000129Z.json
+ralph_iteration=27
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-25T010136Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 67.08,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-25T010136Z.json
+ralph_iteration=28
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-25T020141Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 67.08,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-25T020141Z.json
+ralph_iteration=29
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-25T030146Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 67.08,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-25T030146Z.json
+ralph_iteration=30
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-25T040151Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 67.08,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-25T040151Z.json
+ralph_iteration=31
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-25T050156Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 67.08,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-25T050156Z.json
+ralph_iteration=32
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-25T120032Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 67.08,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-25T120032Z.json
+ralph_iteration=33
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-25T130042Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 67.08,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-25T130042Z.json
+ralph_iteration=34
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-25T140052Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 67.08,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-25T140052Z.json
+ralph_iteration=35
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-25T141849Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 67.08,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-25T141849Z.json
+ralph_iteration=37
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-25T151854Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 67.08,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-25T151854Z.json
+ralph_iteration=38
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-25T161859Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 67.08,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-25T161859Z.json
+ralph_iteration=39
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-25T171905Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 67.08,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-25T171905Z.json
+ralph_iteration=40
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-25T181910Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 67.08,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-25T181910Z.json
+ralph_iteration=41
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-25T191916Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 67.08,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-25T191916Z.json
+ralph_iteration=42
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-25T201935Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 67.08,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-25T201935Z.json
+ralph_iteration=43
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-25T211942Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 67.08,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-25T211942Z.json
+ralph_iteration=44
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-25T221948Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 67.08,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-25T221948Z.json
+ralph_iteration=45
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-25T231953Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 66.94,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-25T231953Z.json
+ralph_iteration=46
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-26T001958Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 66.94,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-26T001958Z.json
+ralph_iteration=47
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-26T012003Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 66.94,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-26T012003Z.json
+ralph_iteration=48
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-26T022008Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 66.94,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-26T022008Z.json
+ralph_iteration=49
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-26T032014Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 66.94,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-26T032014Z.json
+ralph_iteration=50
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-26T042019Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 66.94,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-26T042019Z.json
+ralph_iteration=51
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-26T052025Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 66.94,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-26T052025Z.json
+ralph_iteration=52
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-26T120029Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 66.94,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-26T120029Z.json
+ralph_iteration=53
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-26T130043Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 66.94,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-26T130043Z.json
+ralph_iteration=54
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-26T140052Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 66.94,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-26T140052Z.json
+ralph_iteration=55
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-26T150059Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 66.94,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-26T150059Z.json
+ralph_iteration=56
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-26T160105Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 66.94,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-26T160105Z.json
+ralph_iteration=57
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-26T170113Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 66.94,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-26T170113Z.json
+ralph_iteration=58
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-26T180123Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 66.94,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-26T180123Z.json
+ralph_iteration=59
+{
+  "schema_version": "ralph-gsd-profit-tick/2",
+  "framework": "ralph+gsd",
+  "ts": "2026-07-26T190128Z",
+  "rcs": {
+    "inventory": 0,
+    "regime": 0,
+    "put_credit_manage_dry": 0,
+    "residual_ic_dry": 0,
+    "cohort": 0
+  },
+  "inventory_ok": true,
+  "inventory_clean": true,
+  "regime": {
+    "allowed": true,
+    "blockers": [],
+    "soft_flags": [
+      "SPY 200-DMA unavailable"
+    ],
+    "vix": 18.58,
+    "iv_rank_proxy": 66.94,
+    "rc": 0
+  },
+  "cohort": {
+    "closed_n": 0,
+    "open_n": 2,
+    "kill_verdict": "INSUFFICIENT_SAMPLE",
+    "progress_pct": 0.0,
+    "claim_profitable": false,
+    "live_deposit_ready": false,
+    "rolling_20": {
+      "window": 20,
+      "sample_sufficient": false,
+      "last": null,
+      "note": "no closed put-credit pnls"
+    }
+  },
+  "gsd": {
+    "milestone": "v2.0-put-credit-edge",
+    "phase": 2,
+    "phase_name": "Smart Entry Quality",
+    "completion_promise": "EDGE_GATE_READY_OR_KILLED"
+  },
+  "honesty": "paper validation only; live_blocked; no profitability claim"
+}
+report=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/ralph_ticks/tick_2026-07-26T190128Z.json
+ralph_iteration=60

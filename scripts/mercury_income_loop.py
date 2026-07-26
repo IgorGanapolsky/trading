@@ -41,8 +41,12 @@ import os
 import uuid
 from dataclasses import asdict
 from datetime import datetime, timezone
+import sys
 from pathlib import Path
-from typing import Any
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from src.adapters.bank_adapter import BankAdapter, MercuryBankAdapter, PaperBankAdapter
 from src.adapters.equity_broker_adapter import (
@@ -161,7 +165,7 @@ def run_once(
     return state
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(args_list: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--mode",
@@ -190,7 +194,7 @@ def parse_args() -> argparse.Namespace:
         default=os.environ.get("MERCURY_RECIPIENT_ID", "brokerage-recipient-id"),
         help="Mercury recipient ID for broker transfers",
     )
-    return parser.parse_args()
+    return parser.parse_args(args_list)
 
 
 def main() -> int:

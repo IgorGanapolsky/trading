@@ -1,40 +1,103 @@
 {
   "PCS_260828_4fc04e47a2da4fe9ab2814cdad69ab44": {
-    "strategy_family": "spy_put_credit",
-    "structure": "bull_put_credit",
     "account_mode": "paper",
-    "order_id": "4fc04e47-a2da-4fe9-ab28-14cdad69ab44",
     "client_order_id": "IC-OPEN-BPS--1784821027308661000000",
-    "entry_time": "2026-07-23T15:37:08.050702+00:00",
-    "submitted_at": "2026-07-23T15:37:08.002050+00:00",
-    "filled_at": "2026-07-23T15:37:08.050702+00:00",
-    "expiry": "2026-08-28",
-    "quantity": 1,
     "credit": 0.53,
-    "limit_credit": 0.5,
     "credit_source": "broker_fill",
+    "entry_time": "2026-07-23T15:37:08.050702+00:00",
+    "expiry": "2026-08-28",
+    "fill_confirmed": true,
     "fill_confirmed_at": "2026-07-23T15:37:08.050702+00:00",
+    "filled_at": "2026-07-23T15:37:08.050702+00:00",
+    "filled_avg_price": -0.53,
+    "last_counterfactuals": {
+      "dte_now": 34,
+      "note": "Counterfactuals only \u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history.",
+      "public_exit_dte": 21,
+      "tp_25_target": 13.25,
+      "tp_50_target": 26.5,
+      "would_hit_tp_25_now": false,
+      "would_hit_tp_50_now": false,
+      "would_trigger_public_21dte_exit": false
+    },
+    "last_counterfactuals_at": "2026-07-25T14:19:22.472937+00:00",
+    "last_mark": {
+      "current_debit": 0.5100000000000002,
+      "dte": 34,
+      "estimated_pnl": 1.9999999999999796,
+      "hold_hours": 46.7040059425
+    },
+    "legs": {
+      "long": "SPY260828P00691000",
+      "short": "SPY260828P00696000"
+    },
+    "limit_credit": 0.5,
+    "order_id": "4fc04e47-a2da-4fe9-ab28-14cdad69ab44",
+    "planned_credit": 0.54,
+    "profile_name": "spy-put-credit",
     "put_delta": 0.1843,
     "put_delta_source": "execution_plan_snapshot",
+    "quantity": 1,
+    "reconciled_at": "2026-07-23T15:55:08+00:00",
+    "reconstruction_reason": "filled_broker_order_missing_durable_strategy_journal",
     "selection_method": "live_delta_band_scan",
     "selection_snapshot_planned_at": "2026-07-23T15:37:05.285607+00:00",
-    "planned_credit": 0.54,
-    "underlying_price_at_scan": 736.5999755859375,
-    "strikes": {
-      "short_put": 696.0,
-      "long_put": 691.0
-    },
     "signature": "SPY_2026-08-28_P691-696",
-    "validation_phase": true,
-    "profile_name": "spy-put-credit",
     "status": "open",
-    "fill_confirmed": true,
-    "filled_avg_price": -0.53,
-    "legs": {
-      "short": "SPY260828P00696000",
-      "long": "SPY260828P00691000"
+    "strategy_family": "spy_put_credit",
+    "strikes": {
+      "long_put": 691.0,
+      "short_put": 696.0
     },
-    "reconciled_at": "2026-07-23T15:55:08+00:00",
-    "reconstruction_reason": "filled_broker_order_missing_durable_strategy_journal"
+    "structure": "bull_put_credit",
+    "submitted_at": "2026-07-23T15:37:08.002050+00:00",
+    "underlying_price_at_scan": 736.5999755859375,
+    "validation_phase": true
+  },
+  "PCS_260828_fb85cfe193c14511868bd0e1b0a59220": {
+    "account_mode": "paper",
+    "client_order_id": "IC-OPEN-BPS--1784912299288979000003",
+    "credit": 0.65,
+    "credit_source": "broker_fill",
+    "entry_time": "2026-07-24T16:58:19.813683+00:00",
+    "expiry": "2026-08-28",
+    "fill_confirmed_at": "2026-07-24T16:58:19.813683+00:00",
+    "filled_at": "2026-07-24T16:58:19.813683+00:00",
+    "last_counterfactuals": {
+      "dte_now": 34,
+      "note": "Counterfactuals only \u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history.",
+      "public_exit_dte": 21,
+      "tp_25_target": 16.25,
+      "tp_50_target": 32.5,
+      "would_hit_tp_25_now": false,
+      "would_hit_tp_50_now": false,
+      "would_trigger_public_21dte_exit": false
+    },
+    "last_counterfactuals_at": "2026-07-25T14:19:22.472956+00:00",
+    "last_mark": {
+      "current_debit": 0.79,
+      "dte": 34,
+      "estimated_pnl": -14.000000000000002,
+      "hold_hours": 21.350738685
+    },
+    "limit_credit": 0.61,
+    "order_id": "fb85cfe1-93c1-4511-868b-d0e1b0a59220",
+    "profile_name": "spy-put-credit",
+    "put_delta": null,
+    "put_delta_source": "unavailable_after_broker_reconstruction",
+    "quantity": 1,
+    "reconciled_at": "2026-07-24T18:50:06.042552+00:00",
+    "reconstruction_reason": "filled_broker_order_missing_durable_strategy_journal",
+    "selection_method": "broker_reconstructed_unverified",
+    "signature": "SPY_2026-08-28_P707-712",
+    "status": "open",
+    "strategy_family": "spy_put_credit",
+    "strikes": {
+      "long_put": 707.0,
+      "short_put": 712.0
+    },
+    "structure": "bull_put_credit",
+    "submitted_at": "2026-07-24T16:58:19.748755+00:00",
+    "validation_phase": true
   }
 }
