@@ -44,11 +44,16 @@ def is_trading_day(target_date: datetime) -> bool:
     try:
         paper = os.environ.get("PAPER_TRADING", "true").lower() == "true"
         client = get_alpaca_client(paper=paper)
-        date_str = et_view.strftime("%Y-%m-%d")
-        calendar = client.get_calendar(start=date_str, end=date_str)
+        date_obj = et_view.date()
+        try:
+            from alpaca.trading.requests import GetCalendarRequest
+            req = GetCalendarRequest(start=date_obj, end=date_obj)
+            calendar = client.get_calendar(filters=req)
+        except Exception:
+            calendar = client.get_calendar()
         return len(calendar) > 0
     except Exception as e:
-        print(f"⚠️ Calendar API error: {e}")
+        logger.debug(f"Calendar API error: {e}")
         # Fallback: assume weekends are closed (in ET).
         return et_view.weekday() < 5  # Mon-Fri
 
