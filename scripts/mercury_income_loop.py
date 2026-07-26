@@ -1,26 +1,38 @@
 #!/usr/bin/env python3
 """Mercury -> broker -> Mercury income loop orchestrator (dividend_growth_income).
 
-Paper mode is the only mode this script can reach today: PaperBankAdapter never
-makes a network call, and AlpacaTrader defaults to paper=True. Wiring in
-MercuryBankAdapter and a live Alpaca account requires explicit env vars that
-this script never sets on its own (see src/adapters/bank_adapter.py) - that is
-a deliberate stop, not an oversight, until real capital and explicit sign-off
-exist. See config/strategy_candidate_tournament.json's dividend_growth_income
-entry and .claude/rules/controlled-experiment.md for why nothing here claims
-edge or opens real risk yet.
+Paper mode is the only mode this script can reach today: PaperBankAdapter and
+PaperEquityBrokerAdapter never make network calls and never touch the
+options-validation Alpaca account. Wiring in MercuryBankAdapter or
+AlpacaEquityBrokerAdapter requires explicit, distinct env vars that this
+script never sets on its own (see src/adapters/bank_adapter.py and
+src/adapters/equity_broker_adapter.py) - that is a deliberate stop, not an
+oversight, until real capital, a dedicated equity account, and explicit
+sign-off all exist. See config/strategy_candidate_tournament.json's
+dividend_growth_income entry and .claude/rules/controlled-experiment.md for
+why nothing here claims edge or opens real risk yet.
 
 Each run is one step of the loop, meant to be invoked on a schedule:
   1. Check bank balance; if above the configured buffer, push the surplus to
      the broker.
-  2. Once broker cash has settled, buy the DCA allocation via
-     DividendGrowthStrategy.
-  3. If accumulated broker cash (i.e. dividends/proceeds, tracked separately
-     from principal so the "only cycle realized profit" rule holds) exceeds
-     the configured threshold, push it back to the bank.
+  2. Buy the DCA allocation via DividendGrowthStrategy, executed through
+     EquityBrokerAdapter.
+  3. Collect any accrued dividend income (tracked separately from principal
+     so the "only cycle realized profit" rule holds).
+  4. If accumulated realized profit exceeds the configured threshold, push it
+     back to the bank.
 
 State persists to data/mercury_income_loop_state.json, the same
 one-journal-file-per-workflow convention as data/put_credit_entries.json.
+
+KNOWN LIMITATION: main() constructs a fresh PaperEquityBrokerAdapter on every
+invocation, so simulated positions and dividend accrual do NOT persist across
+scheduled runs the way the bank-side JSON state does - each run "forgets"
+prior simulated buys. The withdraw/buy/collect/deposit wiring itself is
+correct and unit-tested with a persistent broker instance across a single
+run (tests/test_mercury_income_loop.py); this gap only matters if this script
+were actually scheduled repeatedly, which it is not yet, and isn't worth
+building real persistence for before there is real capital to deploy.
 """
 
 from __future__ import annotations
@@ -35,6 +47,7 @@ from pathlib import Path
 from typing import Any
 
 from src.adapters.bank_adapter import BankAdapter, PaperBankAdapter
+from src.adapters.equity_broker_adapter import EquityBrokerAdapter, PaperEquityBrokerAdapter
 from src.strategies.dividend_growth_strategy import DividendGrowthStrategy
 
 logger = logging.getLogger(__name__)
@@ -64,6 +77,7 @@ def run_once(
     strategy: DividendGrowthStrategy,
     state: dict[str, Any],
     *,
+    equity_broker: EquityBrokerAdapter,
     bank_buffer_usd: float = DEFAULT_BANK_BUFFER_USD,
     profit_return_threshold_usd: float = DEFAULT_PROFIT_RETURN_THRESHOLD_USD,
 ) -> dict[str, Any]:
@@ -78,18 +92,22 @@ def run_once(
         state["events"].append({"type": "withdraw", "at": now, **asdict(transfer)})
         if transfer.success:
             state["principal_deployed_usd"] += surplus
-            orders = strategy.plan_purchase(surplus)
-            for order in orders:
-                state["events"].append(
-                    {
-                        "type": "dca_buy_planned",
-                        "at": now,
-                        "symbol": order.symbol,
-                        "notional_usd": order.notional_usd,
-                    }
-                )
+            for order in strategy.plan_purchase(surplus):
+                buy_result = equity_broker.buy(order.symbol, order.notional_usd)
+                state["events"].append({"type": "dca_buy", "at": now, **asdict(buy_result)})
     else:
         logger.info("No surplus above the $%.2f buffer; nothing to withdraw", bank_buffer_usd)
+
+    dividend_income = equity_broker.collect_dividend_income()
+    if dividend_income.total_usd > 0:
+        state["realized_profit_usd"] += dividend_income.total_usd
+        state["events"].append(
+            {
+                "type": "dividend_income_collected",
+                "at": now,
+                "amount_usd": dividend_income.total_usd,
+            }
+        )
 
     if state["realized_profit_usd"] >= profit_return_threshold_usd:
         payout = state["realized_profit_usd"]
@@ -116,10 +134,12 @@ def main() -> int:
     logging.basicConfig(level=logging.INFO)
     args = parse_args()
 
-    # PaperBankAdapter only - MercuryBankAdapter is never constructed here.
-    # Wiring in real credentials is a separate, explicit change, not a flag on
-    # this script.
+    # PaperBankAdapter and PaperEquityBrokerAdapter only - MercuryBankAdapter and
+    # AlpacaEquityBrokerAdapter are never constructed here. Wiring in real
+    # credentials for either is a separate, explicit change, not a flag on this
+    # script.
     bank = PaperBankAdapter(starting_balance_usd=args.paper_starting_balance)
+    equity_broker = PaperEquityBrokerAdapter()
     strategy = DividendGrowthStrategy()
     state = _load_state(args.state_path)
 
@@ -127,6 +147,7 @@ def main() -> int:
         bank,
         strategy,
         state,
+        equity_broker=equity_broker,
         bank_buffer_usd=args.bank_buffer_usd,
         profit_return_threshold_usd=args.profit_return_threshold_usd,
     )
