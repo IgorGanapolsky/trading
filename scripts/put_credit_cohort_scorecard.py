@@ -157,6 +157,9 @@ def _rolling_windows(pnls: list[float], window: int = 20) -> dict[str, Any]:
 
 def summarize_closed(rows: list[dict[str, Any]]) -> dict[str, Any]:
     closed = [r for r in rows if _is_put_credit_trade(r) and _is_closed(r)]
+    # Rolling-window metrics need chronological order; input JSON order is not
+    # guaranteed (Greptile #4280 P2). ISO-8601 strings sort chronologically.
+    closed.sort(key=lambda r: str(r.get("exit_time") or ""))
     pnls: list[float] = []
     for r in closed:
         pnl = _as_float(r.get("realized_pnl"))
