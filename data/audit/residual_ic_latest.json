@@ -1,5 +1,5 @@
 {
-  "audited_at": "2026-07-26T20:01:41.127170+00:00",
+  "audited_at": "2026-07-27T15:56:17.471722+00:00",
   "dry_run": true,
   "reconciled": 1,
   "unresolved": {},
@@ -28,8 +28,8 @@
       ],
       "should_exit": false,
       "exit_reason": null,
-      "dte": 26,
-      "hold_hours": 124.34971450972222,
+      "dte": 25,
+      "hold_hours": 144.25980872,
       "current_debit": 0.91,
       "pnl": 20.0,
       "max_profit": 111.0,
