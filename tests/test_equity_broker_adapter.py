@@ -59,9 +59,12 @@ class TestAlpacaEquityBrokerAdapterSafety:
         with pytest.raises(RuntimeError, match="DIVIDEND_GROWTH_ALPACA_ENABLED"):
             AlpacaEquityBrokerAdapter(api_key="k", secret_key="s", _live_enabled=False)
 
-    def test_from_env_requires_both_credentials(self, monkeypatch):
+    def test_from_env_requires_both_credentials(self, monkeypatch, tmp_path):
         monkeypatch.delenv("DIVIDEND_GROWTH_ALPACA_API_KEY", raising=False)
         monkeypatch.delenv("DIVIDEND_GROWTH_ALPACA_API_SECRET", raising=False)
+        # Point the vault fallback at a missing file so a developer's real
+        # ~/.resume_secrets/alpaca.json cannot satisfy from_env in this test.
+        monkeypatch.setenv("ALPACA_SECRETS_PATH", str(tmp_path / "missing.json"))
         with pytest.raises(ValueError, match="DIVIDEND_GROWTH_ALPACA_API_KEY"):
             AlpacaEquityBrokerAdapter.from_env()
 
@@ -72,7 +75,28 @@ class TestAlpacaEquityBrokerAdapterSafety:
         with pytest.raises(RuntimeError, match="DIVIDEND_GROWTH_ALPACA_ENABLED"):
             AlpacaEquityBrokerAdapter.from_env()
 
-    def test_collect_dividend_income_not_implemented(self):
+    def test_collect_dividend_income_sums_dividend_activities(self, monkeypatch):
+        import requests
+
+        class FakeResponse:
+            def raise_for_status(self):
+                pass
+
+            def json(self):
+                return [{"net_amount": "1.25"}, {"net_amount": 2.75}, "not-a-dict"]
+
+        monkeypatch.setattr(requests, "get", lambda *a, **k: FakeResponse())
         adapter = AlpacaEquityBrokerAdapter(api_key="k", secret_key="s", _live_enabled=True)
-        with pytest.raises(NotImplementedError, match="activities"):
-            adapter.collect_dividend_income()
+        income = adapter.collect_dividend_income()
+        assert income.total_usd == 4.0
+
+    def test_collect_dividend_income_fails_closed_to_zero(self, monkeypatch):
+        import requests
+
+        def raise_error(*a, **k):
+            raise requests.exceptions.ConnectionError("no network in tests")
+
+        monkeypatch.setattr(requests, "get", raise_error)
+        adapter = AlpacaEquityBrokerAdapter(api_key="k", secret_key="s", _live_enabled=True)
+        income = adapter.collect_dividend_income()
+        assert income.total_usd == 0.0
