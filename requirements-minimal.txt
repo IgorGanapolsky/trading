@@ -57,7 +57,7 @@ pytest-timeout>=2.0.0
 fastapi==0.139.2                # MCP server for component manifest
 uvicorn==0.51.0                 # ASGI server for MCP
 httpx==0.28.1                   # TestClient compatibility with fastapi/starlette
-aiohttp==3.14.1                 # xai-sdk transitive dependency security floor
+aiohttp==3.14.3                 # xai-sdk transitive dependency security floor
 # scikit-learn==1.5.0            # Never imported - ML models not implemented
 # python-crontab==3.0.0          # Never imported - using schedule instead
 
