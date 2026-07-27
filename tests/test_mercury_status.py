@@ -1,4 +1,29 @@
+import json
+
+import pytest
+
+import scripts.mercury_status as mercury_status
 from scripts.mercury_status import summarize_accounts
+
+
+class TestLoadToken:
+    """Regression: the vault stores MERCURY_API_TOKEN, not api_token (2026-07-26)."""
+
+    @pytest.fixture(autouse=True)
+    def no_env_token(self, monkeypatch):
+        monkeypatch.delenv("MERCURY_API_TOKEN", raising=False)
+
+    def test_reads_canonical_vault_key(self, monkeypatch, tmp_path):
+        vault = tmp_path / "mercury.json"
+        vault.write_text(json.dumps({"MERCURY_API_TOKEN": "vault-token"}), encoding="utf-8")
+        monkeypatch.setattr(mercury_status, "VAULT_PATH", vault)
+        assert mercury_status.load_token() == "vault-token"
+
+    def test_reads_legacy_vault_key(self, monkeypatch, tmp_path):
+        vault = tmp_path / "mercury.json"
+        vault.write_text(json.dumps({"api_token": "legacy-token"}), encoding="utf-8")
+        monkeypatch.setattr(mercury_status, "VAULT_PATH", vault)
+        assert mercury_status.load_token() == "legacy-token"
 
 
 class TestSummarizeAccounts:
