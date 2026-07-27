@@ -38,11 +38,12 @@ import argparse
 import json
 import logging
 import os
+import sys
 import uuid
 from dataclasses import asdict
 from datetime import datetime, timezone
-import sys
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -184,6 +185,8 @@ def parse_args(args_list: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--tax-rate-pct",
+        "--tax-rate",
+        dest="tax_rate_pct",
         type=float,
         default=DEFAULT_TAX_RATE_PCT,
         help="Estimated tax reserve percentage (default: 20.0%%)",
@@ -194,7 +197,26 @@ def parse_args(args_list: list[str] | None = None) -> argparse.Namespace:
         default=os.environ.get("MERCURY_RECIPIENT_ID", "brokerage-recipient-id"),
         help="Mercury recipient ID for broker transfers",
     )
-    return parser.parse_args(args_list)
+    parser.add_argument(
+        "--live",
+        action="store_true",
+        help="Alias for --mode live (used by run_autonomous_trading.py)",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print final state as JSON (always on; flag kept for scheduler compatibility)",
+    )
+    parser.add_argument(
+        "--ledger-path",
+        type=Path,
+        default=None,
+        help="Optional JSONL ledger; one line appended per completed cycle",
+    )
+    args = parser.parse_args(args_list)
+    if args.live:
+        args.mode = "live"
+    return args
 
 
 def main() -> int:
@@ -202,6 +224,7 @@ def main() -> int:
     args = parse_args()
 
     state = _load_state(args.state_path)
+    events_before = len(state.get("events", []))
 
     if args.mode == "live":
         logger.info("Initializing LIVE Mercury Bank and Alpaca Broker Adapters...")
@@ -227,6 +250,30 @@ def main() -> int:
     )
 
     _save_state(args.state_path, state)
+
+    if args.ledger_path:
+        args.ledger_path.parent.mkdir(parents=True, exist_ok=True)
+        direction_names = {"to_broker": "mercury_to_broker", "to_bank": "broker_to_mercury"}
+        with args.ledger_path.open("a", encoding="utf-8") as handle:
+            for event in state.get("events", [])[events_before:]:
+                if event.get("type") not in ("withdraw", "deposit") or not event.get("success"):
+                    continue
+                handle.write(
+                    json.dumps(
+                        {
+                            "ts": event.get("at") or event.get("initiated_at"),
+                            "direction": direction_names.get(
+                                event.get("direction"), event.get("direction")
+                            ),
+                            "amount_usd": event.get("amount_usd"),
+                            "transfer_id": event.get("transfer_id"),
+                            "mode": args.mode,
+                        },
+                        sort_keys=True,
+                    )
+                    + "\n"
+                )
+
     print(json.dumps(state, indent=2, sort_keys=True))
     return 0
 
