@@ -13,11 +13,14 @@ live) account credentials, never the options account's.
 from __future__ import annotations
 
 import json
+import logging
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)

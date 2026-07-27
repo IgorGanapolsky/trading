@@ -7,7 +7,7 @@ All Alpaca API calls are mocked -- no live network needed.
 """
 
 import sys
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -71,7 +71,9 @@ def test_is_trading_day_fallback_weekday_on_api_error(mock_client_fn):
 
 @patch("src.utils.calendar_validation.get_alpaca_client")
 def test_is_trading_day_passes_correct_date_string(mock_client_fn):
-    """Should format the date as YYYY-MM-DD for the API call."""
+    """Should query the calendar for exactly the target ET date via GetCalendarRequest."""
+    from alpaca.trading.requests import GetCalendarRequest
+
     mock_client = MagicMock()
     mock_client.get_calendar.return_value = [MagicMock()]
     mock_client_fn.return_value = mock_client
@@ -79,7 +81,8 @@ def test_is_trading_day_passes_correct_date_string(mock_client_fn):
     target = datetime(2026, 7, 4, 9, 30, 0)
     is_trading_day(target)
 
-    mock_client.get_calendar.assert_called_once_with(start="2026-07-04", end="2026-07-04")
+    expected = GetCalendarRequest(start=date(2026, 7, 4), end=date(2026, 7, 4))
+    mock_client.get_calendar.assert_called_once_with(filters=expected)
 
 
 # ---------------------------------------------------------------------------
