@@ -11,21 +11,21 @@
     "filled_at": "2026-07-23T15:37:08.050702+00:00",
     "filled_avg_price": -0.53,
     "last_counterfactuals": {
-      "dte_now": 34,
-      "note": "Counterfactuals only \u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history.",
-      "public_exit_dte": 21,
       "tp_25_target": 13.25,
       "tp_50_target": 26.5,
       "would_hit_tp_25_now": false,
       "would_hit_tp_50_now": false,
-      "would_trigger_public_21dte_exit": false
+      "public_exit_dte": 21,
+      "dte_now": 32,
+      "would_trigger_public_21dte_exit": false,
+      "note": "Counterfactuals only \u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history."
     },
-    "last_counterfactuals_at": "2026-07-25T14:19:22.472937+00:00",
+    "last_counterfactuals_at": "2026-07-27T15:56:11.835059+00:00",
     "last_mark": {
-      "current_debit": 0.5100000000000002,
-      "dte": 34,
-      "estimated_pnl": 1.9999999999999796,
-      "hold_hours": 46.7040059425
+      "current_debit": 0.5200000000000005,
+      "estimated_pnl": 0.9999999999999565,
+      "dte": 32,
+      "hold_hours": 96.31771707055555
     },
     "legs": {
       "long": "SPY260828P00691000",
@@ -64,21 +64,21 @@
     "fill_confirmed_at": "2026-07-24T16:58:19.813683+00:00",
     "filled_at": "2026-07-24T16:58:19.813683+00:00",
     "last_counterfactuals": {
-      "dte_now": 34,
-      "note": "Counterfactuals only \u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history.",
-      "public_exit_dte": 21,
       "tp_25_target": 16.25,
       "tp_50_target": 32.5,
       "would_hit_tp_25_now": false,
       "would_hit_tp_50_now": false,
-      "would_trigger_public_21dte_exit": false
+      "public_exit_dte": 21,
+      "dte_now": 32,
+      "would_trigger_public_21dte_exit": false,
+      "note": "Counterfactuals only \u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history."
     },
-    "last_counterfactuals_at": "2026-07-25T14:19:22.472956+00:00",
+    "last_counterfactuals_at": "2026-07-27T15:56:11.835107+00:00",
     "last_mark": {
-      "current_debit": 0.79,
-      "dte": 34,
-      "estimated_pnl": -14.000000000000002,
-      "hold_hours": 21.350738685
+      "current_debit": 0.8200000000000003,
+      "estimated_pnl": -17.000000000000025,
+      "dte": 32,
+      "hold_hours": 70.96445038944445
     },
     "limit_credit": 0.61,
     "order_id": "fb85cfe1-93c1-4511-868b-d0e1b0a59220",
