@@ -29,16 +29,16 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.adapters.mercury_readonly import MercuryReadOnlyClient
+from src.adapters.mercury_readonly import MercuryReadOnlyClient  # noqa: E402
 
 DEFAULT_STATE_PATH = ROOT / "data" / "mercury_state.json"
 
 
-def cmd_accounts(client: MercuryReadOnlyClient, args: argparse.Namespace) -> int:
+def cmd_accounts(client: MercuryReadOnlyClient, args: argparse.Namespace) -> None:
     snapshot = client.snapshot()
     if args.json:
         print(json.dumps(snapshot, indent=2))
-        return 0
+        return
     print("=== MERCURY ACCOUNTS (read-only) ===")
     for a in snapshot["accounts"]:
         print(
@@ -46,14 +46,13 @@ def cmd_accounts(client: MercuryReadOnlyClient, args: argparse.Namespace) -> int
             f"${float(a['available_balance_usd'] or 0):,.2f} available"
         )
     print(f"  TOTAL available: ${snapshot['total_available_usd']:,.2f}")
-    return 0
 
 
-def cmd_transactions(client: MercuryReadOnlyClient, args: argparse.Namespace) -> int:
+def cmd_transactions(client: MercuryReadOnlyClient, args: argparse.Namespace) -> None:
     result = client.get_transactions(args.account, limit=args.limit)
     if args.json:
         print(json.dumps(result, indent=2))
-        return 0
+        return
     rows = result["transactions"]
     print(f"=== MERCURY TRANSACTIONS [{args.account}] ({len(rows)} of {result['total']}) ===")
     for t in rows:
@@ -64,10 +63,9 @@ def cmd_transactions(client: MercuryReadOnlyClient, args: argparse.Namespace) ->
         )
     if not rows:
         print("  (no transactions)")
-    return 0
 
 
-def cmd_sync(client: MercuryReadOnlyClient, args: argparse.Namespace) -> int:
+def cmd_sync(client: MercuryReadOnlyClient, args: argparse.Namespace) -> None:
     snapshot = client.snapshot()
     args.state_path.parent.mkdir(parents=True, exist_ok=True)
     args.state_path.write_text(json.dumps(snapshot, indent=2) + "\n", encoding="utf-8")
@@ -75,14 +73,12 @@ def cmd_sync(client: MercuryReadOnlyClient, args: argparse.Namespace) -> int:
         f"✅ Mercury sync complete: {len(snapshot['accounts'])} accounts, "
         f"${snapshot['total_available_usd']:,.2f} available -> {args.state_path}"
     )
-    return 0
 
 
-def cmd_health(client: MercuryReadOnlyClient, args: argparse.Namespace) -> int:
+def cmd_health(client: MercuryReadOnlyClient, args: argparse.Namespace) -> None:
     accounts = client.list_accounts()
     active = sum(1 for a in accounts if a.get("status") == "active")
     print(f"✅ Mercury API reachable: {len(accounts)} accounts ({active} active)")
-    return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -116,11 +112,13 @@ def main(argv: list[str] | None = None) -> int:
     except ValueError as exc:
         print(f"❌ Mercury credentials missing: {exc}")
         return 1
+    # Operator CLI: report failures as messages, never tracebacks.
     try:
-        return args.func(client, args)
-    except Exception as exc:  # noqa: BLE001 - operator CLI reports, never tracebacks
+        args.func(client, args)
+    except Exception as exc:  # noqa: BLE001
         print(f"❌ Mercury {args.command} failed: {exc}")
         return 1
+    return 0
 
 
 if __name__ == "__main__":
