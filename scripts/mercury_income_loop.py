@@ -49,13 +49,14 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.adapters.bank_adapter import BankAdapter, MercuryBankAdapter, PaperBankAdapter
-from src.adapters.equity_broker_adapter import (
+from src.adapters.bank_adapter import BankAdapter, MercuryBankAdapter, PaperBankAdapter  # noqa: E402
+from src.adapters.equity_broker_adapter import (  # noqa: E402
     AlpacaEquityBrokerAdapter,
     EquityBrokerAdapter,
     PaperEquityBrokerAdapter,
 )
-from src.strategies.dividend_growth_strategy import DividendGrowthStrategy
+from src.bank.subaccounts import MercurySubAccountManager  # noqa: E402
+from src.strategies.dividend_growth_strategy import DividendGrowthStrategy  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -156,6 +157,10 @@ def run_once(
         state["events"].append({"type": "deposit", "at": now, **asdict(transfer)})
         if transfer.success:
             state["total_deposited_to_bank_usd"] += payout
+            # Automate Mercury sub-account allocation split
+            sub_mgr = MercurySubAccountManager()
+            sub_split = sub_mgr.calculate_auto_transfer_split(payout, tax_pct=tax_rate_pct, profit_pct=10.0)
+            state["events"].append({"type": "subaccount_split", "at": now, **sub_split.as_dict()})
             state["realized_after_tax_profit_usd"] = 0.0
             state["realized_profit_usd"] = 0.0
 
