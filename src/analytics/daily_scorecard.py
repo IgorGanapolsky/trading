@@ -728,15 +728,24 @@ def build_daily_scorecard(
         "paired_closed_trades": _load_paired_closed_trade_status(repo_root, now),
     }
 
+    # Broker snapshots must degrade, never crash the sync workflow: revoked or
+    # rotated credentials (401) mark the account unavailable with the reason
+    # (5 consecutive Sync Alpaca Status failures on 2026-07-27/28).
     if paper_client is not None:
-        paper_orders = paper_client.get_orders(filter=_build_order_history_filter())
-        scorecard["paper"] = _build_account_scorecard(
-            "paper",
-            paper_client.get_account(),
-            paper_client.get_all_positions(),
-            paper_orders,
-            now,
-        )
+        try:
+            paper_orders = paper_client.get_orders(filter=_build_order_history_filter())
+            scorecard["paper"] = _build_account_scorecard(
+                "paper",
+                paper_client.get_account(),
+                paper_client.get_all_positions(),
+                paper_orders,
+                now,
+            )
+        except Exception as exc:  # noqa: BLE001
+            scorecard["paper"] = {
+                "available": False,
+                "reason": f"Paper Alpaca account unavailable: {exc}",
+            }
     else:
         scorecard["paper"] = {
             "available": False,
@@ -744,13 +753,19 @@ def build_daily_scorecard(
         }
 
     if live_client is not None:
-        scorecard["live"] = _build_account_scorecard(
-            "live",
-            live_client.get_account(),
-            live_client.get_all_positions(),
-            [],
-            now,
-        )
+        try:
+            scorecard["live"] = _build_account_scorecard(
+                "live",
+                live_client.get_account(),
+                live_client.get_all_positions(),
+                [],
+                now,
+            )
+        except Exception as exc:  # noqa: BLE001
+            scorecard["live"] = {
+                "available": False,
+                "reason": f"Live Alpaca account unavailable: {exc}",
+            }
     else:
         scorecard["live"] = {"available": False, "reason": "Live Alpaca credentials not available."}
 
