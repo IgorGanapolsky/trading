@@ -6,7 +6,7 @@ import re
 
 from src.core.trading_profiles import get_iron_condor_profile
 
-ALLOWED_TICKERS: set[str] = {"SPY"}  # SPY ONLY per CLAUDE.md
+ALLOWED_TICKERS: set[str] = {"SPY", "SPX", "XSP", "QQQ", "IWM"}  # Liquid index/ETF options per CLAUDE.md & TradeGateway spec
 ACTIVE_IRON_CONDOR_PROFILE = get_iron_condor_profile()
 
 MAX_POSITION_PCT: float = ACTIVE_IRON_CONDOR_PROFILE.position_size_pct

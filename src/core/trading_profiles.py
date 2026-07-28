@@ -133,6 +133,11 @@ class PutCreditProfile:
         return data
 
 
+    def with_underlying(self, underlying: str) -> PutCreditProfile:
+        """Preserve the policy while routing to a different underlying (e.g. XSP for Section 1256 tax treatment)."""
+        return replace(self, underlying=underlying.upper().strip())
+
+
 _BASELINE_PUT_CREDIT_PROFILE = PutCreditProfile(
     name="spy-put-credit",
     underlying="SPY",
@@ -159,6 +164,7 @@ _BASELINE_PUT_CREDIT_PROFILE = PutCreditProfile(
 
 PUT_CREDIT_PROFILE_REGISTRY: dict[str, PutCreditProfile] = {
     "spy-put-credit": _BASELINE_PUT_CREDIT_PROFILE,
+    "xsp-put-credit": _BASELINE_PUT_CREDIT_PROFILE.with_underlying("XSP"),
 }
 
 DEFAULT_PUT_CREDIT_PROFILE_NAME = "spy-put-credit"
