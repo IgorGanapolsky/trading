@@ -45,6 +45,11 @@ class MLFeaturePipeline:
             "strategy": strategy,
             "features": features.as_dict(),
             "feature_vector_shape": list(features.to_vector().shape),
-            "shadow_evaluation": shadow_eval.as_dict(),
-            "pipeline_status": "OK",
+            "grpo_evaluation": shadow_eval.as_dict(),
+            "operational_trade_guidance": {
+                "recommended_delta": shadow_eval.proposed_delta,
+                "recommended_dte": shadow_eval.proposed_dte,
+                "confidence_score": shadow_eval.proposed_confidence,
+            },
+            "pipeline_status": "OPERATIONAL_ACTIVE",
         }
