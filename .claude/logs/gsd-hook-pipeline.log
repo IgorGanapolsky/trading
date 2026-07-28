@@ -6750,3 +6750,15 @@ ReferenceError: require is not defined in ES module scope, you can use import in
 [2026-07-28T15:15:52Z] [user_prompt_submit] pipeline start
 [2026-07-28T15:15:54Z] [user_prompt_submit] pipeline complete
 [2026-07-28T15:16:01Z] [pre_tool_use] pipeline start
+[2026-07-28T15:16:05Z] [pre_tool_use] pipeline complete
+[2026-07-28T15:16:22Z] [pre_tool_use] pipeline start
+[2026-07-28T15:16:23Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-28T15:16:28Z] [pre_tool_use] pipeline start
+[2026-07-28T15:16:31Z] [pre_tool_use] skipping duplicate concurrent run
+[2026-07-28T15:16:32Z] [pre_tool_use] pipeline complete
+[2026-07-28T15:16:43Z] [pre_tool_use] pipeline start
+[2026-07-28T15:16:45Z] [pre_tool_use] pipeline complete
+[2026-07-28T15:16:51Z] [pre_tool_use] pipeline start
+[2026-07-28T15:16:52Z] [pre_tool_use] pipeline complete
+[2026-07-28T15:16:59Z] [pre_tool_use] pipeline start
+[2026-07-28T15:17:01Z] [pre_tool_use] pipeline complete
