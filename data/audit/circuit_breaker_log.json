@@ -33,5 +33,19 @@
     "current_equity": 9400.0,
     "peak_equity": 10000.0,
     "drawdown_pct": 6.0
+  },
+  {
+    "tripped_at": "2026-07-28T22:35:31.180731+00:00",
+    "reason": "INTRADAY_DRAWDOWN_EXCEEDED: Current equity $9400.00 is 6.00% below peak $10000.00 (max allowed: 5.00%).",
+    "current_equity": 9400.0,
+    "peak_equity": 10000.0,
+    "drawdown_pct": 6.0
+  },
+  {
+    "tripped_at": "2026-07-28T22:43:19.194067+00:00",
+    "reason": "INTRADAY_DRAWDOWN_EXCEEDED: Current equity $9400.00 is 6.00% below peak $10000.00 (max allowed: 5.00%).",
+    "current_equity": 9400.0,
+    "peak_equity": 10000.0,
+    "drawdown_pct": 6.0
   }
 ]

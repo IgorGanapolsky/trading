@@ -13,14 +13,13 @@ from typing import Any, Optional, TypeVar
 from pydantic import BaseModel, Field, field_validator
 
 try:
-    from src.core.trading_constants import MAX_POSITION_PCT
+    from src.core.trading_constants import ALLOWED_TICKERS, MAX_POSITION_PCT
 except ImportError:
+    ALLOWED_TICKERS = {"SPY", "XSP", "SPX", "QQQ", "IWM"}
     MAX_POSITION_PCT = 0.02
 
-# Allowlist of tradeable symbols - UPDATED Jan 19, 2026 (LL-244)
-# Per CLAUDE.md: SPY/SPX/XSP for index options
-# SPY = equity option, SPX/XSP = index options with Section 1256 tax treatment
-ALLOWED_SYMBOLS = frozenset({"SPY"})  # SPY ONLY per CLAUDE.md — aligned with trading_constants.py
+# Allowlist of tradeable symbols aligned with trading_constants.py
+ALLOWED_SYMBOLS = frozenset(ALLOWED_TICKERS)
 
 # Maximum values to prevent resource exhaustion
 MAX_LOOKBACK_DAYS = 365
