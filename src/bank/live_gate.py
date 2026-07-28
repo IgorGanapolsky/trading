@@ -110,8 +110,12 @@ def evaluate_live_bank_gate(
                 blockers.append(f"expectancy_not_positive: {exp_f}")
             if pf_f is None or pf_f <= EDGE_MIN_PF:
                 blockers.append(f"profit_factor_not_gt_1: {pf_f}")
-        if metrics.get("live_deposit_ready") is False:
-            blockers.append("cohort.live_deposit_ready=false")
+        if metrics.get("live_deposit_ready") is not True:
+            # Human sign-off bit: the scorecard generator always writes False;
+            # a missing/trimmed honesty section must not bypass it (fail closed).
+            blockers.append(
+                f"cohort.live_deposit_ready={metrics.get('live_deposit_ready')} (need explicit true)"
+            )
         if metrics.get("verdict") and str(metrics.get("verdict")) != "EDGE_CANDIDATE":
             blockers.append(f"kill_verdict={metrics.get('verdict')} (need EDGE_CANDIDATE)")
 

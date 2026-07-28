@@ -86,6 +86,17 @@ class TestOrderInvariance:
         shuffled_out = summarize_closed(shuffled)
         assert baseline == reversed_out == shuffled_out
 
+    def test_rolling_window_selects_chronologically_newest_trades(self):
+        """Order-invariance alone would also pass under a deterministic but
+        WRONG ordering (e.g. newest-first, making rolling pick the oldest 20).
+        Pin the exact window: chronological last 20 of days 5..24 sums to
+        290 - 2*(6+9+12+15+18+21+24) = 80.0 with this fixture's sign rule."""
+        shuffled = self._rows()
+        random.Random(7).shuffle(shuffled)
+        rolling = summarize_closed(shuffled)["rolling_20"]["last"]
+        assert rolling is not None
+        assert rolling["total_realized_pnl"] == 80.0
+
 
 class TestScopeFilters:
     def test_open_rows_and_foreign_strategies_are_excluded(self):
