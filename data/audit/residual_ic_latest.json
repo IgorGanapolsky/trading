@@ -1,7 +1,7 @@
 {
-  "audited_at": "2026-07-28T15:08:43.730697+00:00",
+  "audited_at": "2026-07-28T15:50:51.873613+00:00",
   "dry_run": true,
-  "reconciled": 1,
+  "reconciled": 0,
   "unresolved": {},
   "pcs_inventory_excluded": {
     "SPY260828P00691000": 1.0,
@@ -9,33 +9,11 @@
     "SPY260828P00707000": 1.0,
     "SPY260828P00712000": -1.0
   },
-  "checked": 1,
+  "checked": 0,
   "holds": 0,
-  "would_exit": 1,
+  "would_exit": 0,
   "submitted": 0,
   "pending": 0,
   "broken": 0,
-  "details": [
-    {
-      "entry_order_id": "12d3f881-7beb-46a0-b445-7185d0e5a9b9",
-      "expiry_yymmdd": "260821",
-      "credit": 1.11,
-      "symbols": [
-        "SPY260821P00703000",
-        "SPY260821P00708000",
-        "SPY260821C00776000",
-        "SPY260821C00781000"
-      ],
-      "should_exit": true,
-      "exit_reason": "profit_target",
-      "dte": 24,
-      "hold_hours": 167.46710288416665,
-      "current_debit": 0.81,
-      "pnl": 30.0,
-      "max_profit": 111.0,
-      "profit_pct_of_max": 0.2703,
-      "profit_target_pct": 0.25,
-      "status": "would_exit"
-    }
-  ]
+  "details": []
 }
