@@ -791,3 +791,33 @@ def test_summarize_why_today_loss_flat_and_no_driver_paths():
         flat_with_positions["summary"]
         == "Today's flat result comes from open-position repricing $0.00."
     )
+
+
+class _RaisingClient:
+    """Simulates revoked/rotated credentials: every broker call raises 401."""
+
+    def _boom(self, *args, **kwargs):
+        raise RuntimeError("401 Client Error: Unauthorized for url: /v2/account")
+
+    get_account = _boom
+    get_all_positions = _boom
+    get_orders = _boom
+
+
+def test_unavailable_broker_accounts_degrade_instead_of_crashing(tmp_path):
+    """Regression: 2026-07-27/28 the live account 401 crashed the entire
+    Sync Alpaca Status workflow. Credential failures must yield an
+    available=False block with the reason, never an exception."""
+    now = datetime(2026, 7, 28, 10, 0, tzinfo=ET)
+    scorecard = build_daily_scorecard(
+        tmp_path,
+        now=now,
+        paper_client=_RaisingClient(),
+        live_client=_RaisingClient(),
+        sync_paired_ledger=False,
+    )
+    assert scorecard["paper"]["available"] is False
+    assert "Unauthorized" in scorecard["paper"]["reason"]
+    assert scorecard["live"]["available"] is False
+    assert "Unauthorized" in scorecard["live"]["reason"]
+    assert scorecard["north_star"] is not None
