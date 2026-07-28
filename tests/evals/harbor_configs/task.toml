@@ -1,0 +1,117 @@
+# Harbor Task Definition for Trade Execution Evals
+# Maps to Harbour format: evals/<task-id>/
+# Components: task.toml, instruction.md, environment/, tests/
+
+[[specs.tasks]]
+name = "trade-execution-rules"
+id = "te-001"
+description = "Validate iron condor trade proposals against Phil Town Rule #1 compliance checks"
+version = "1.0.0"
+
+[[specs.eval_checks]]
+id = "EVAL-001"
+name = "ticker-allowed"
+weight = 0.25
+goal_description = "Ticker must be liquid ETF (SPY, SPX, XSP, QQQ, IWM)"
+process_description = "Check ticker against allowlist before any price validation"
+style_description = "Report violation with liquid ETF alternative suggestion"
+
+[[specs.eval_checks]]
+id = "EVAL-002"
+name = "strategy-allowed"
+weight = 0.15
+goal_description = "Strategy must be iron_condor (credit spread variants only)"
+process_description = "Validate strategy matches approved list"
+style_description = "Report unsupported strategies with available alternatives"
+
+[[specs.eval_checks]]
+id = "EVAL-003"
+name = "position-size-limit"
+weight = 0.25
+goal_description = "Max risk ≤5% of account value ($1,500 for $30k account)"
+process_description = "Calculate max allowed risk and compare against proposal"
+style_description = "Report exact limit with remaining capacity"
+
+[[specs.eval_checks]]
+id = "EVAL-004"
+name = "iron-condor-legs"
+weight = 0.15
+goal_description = "Iron condor must have exactly 4 legs (2 puts, 2 calls)"
+process_description = "Count defined option legs in proposal"
+style_description = "Report leg count mismatch with expected configuration"
+
+[[specs.eval_checks]]
+id = "EVAL-005"
+name = "delta-range-validation"
+weight = 0.15
+goal_description = "Short strikes: put 15-20 delta, call 15-20 delta"
+process_description = "Calculate/validate IV-adjusted deltas for short strikes"
+style_description = "Report actual vs target delta with IV adjustment note"
+
+[[specs.eval_checks]]
+id = "EVAL-006"
+name = "dte-range"
+weight = 0.15
+goal_description = "Days to expiration: 30-45 days for monthly options"
+process_description = "Calculate DTE from trade date to nearest valid strike week"
+style_description = "Report DTE with next valid strike expiration"
+
+[[specs.eval_checks]]
+id = "EVAL-007"
+name = "stop-loss-required"
+weight = 0.15
+goal_description = "Stop loss at 100% of credit received (no partial stops)"
+process_description = "Verify stop_loss_multiplier equals 1.0 (hard requirement)"
+style_description = "Report actual stop vs required 1.0x with example"
+
+[[specs.eval_checks]]
+id = "EVAL-008"
+name = "risk-reward-check"
+weight = 0.20
+goal_description = "Risk/reward ratio ≤2:1 (optional warning)"
+process_description = "Calculate max_risk / credit_received, warn if >2.0"
+style_description = "Report actual ratio with recommendation"
+
+[[specs.env_setup]]
+python_version = "3.11"
+dependencies_inline = """pip install pytest decimal numpy pytz"""
+base_image = "python:3.11-slim"
+
+[[specs.golden_scenarios]]
+id = "scenario-valid-trade"
+description = "Valid SPY iron condor that passes all checks"
+expected_pass_rate = 1.0
+golden_inputs = """ticker='SPY' strategy='iron_condor' legs=4 
+                 short_put_delta=0.15 short_call_delta=0.16 
+                 dte=35 max_risk=500 credit_received=300 
+                 stop_loss_multiplier=1.0 account_value=30000"""
+
+[[specs.golden_scenarios]]
+id = "scenario-ticker-violation"
+description = "Non-whitelisted ticker (SOFI, TSLA)"
+expected_pass_rate = 0.985
+violation_count_minimum = 1
+
+[[specs.golden_scenarios]]
+id = "scenario-delta-too-wide"
+description = "Delta outside 15-20 range (e.g., 0.30)"
+expected_pass_rate = 0.985
+violation_count_minimum = 1
+
+[[specs.golden_scenarios]]
+id = "scenario-size-to-limits"
+description = "Position at 5% limit ($1,500 for $30k account)"
+expected_pass_rate = 1.0
+max_risk_value = "1500"
+
+[[specs.golden_scenarios]]
+id = "scenario-dte-too-short"
+description = "DTE <30 days (weekly options)"
+expected_pass_rate = 0.985
+violation_count_minimum = 1
+
+[[specs.golden_scenarios]]
+id = "scenario-stop-loss-deficit"
+description = "Stop loss at 1.5x instead of required 1.0x"
+expected_pass_rate = 0.985
+violation_count_minimum = 1
