@@ -3,7 +3,10 @@
   "audited_at": "2026-07-28T14:08:19.653139+00:00",
   "option_leg_count": 8,
   "max_abs_qty": 1.0,
-  "expiries": ["260821", "260828"],
+  "expiries": [
+    "260821",
+    "260828"
+  ],
   "findings": [],
   "legs": [
     {
@@ -73,3 +76,5 @@
   ],
   "block_reasons": []
 }
+json_out=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/open_inventory_latest.json
+clean=True findings=0

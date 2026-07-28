@@ -1,6 +1,6 @@
 {
-  "audited_at": "2026-07-27T20:05:23.219286+00:00",
-  "dry_run": false,
+  "audited_at": "2026-07-28T14:08:31.040782+00:00",
+  "dry_run": true,
   "reconciled": 1,
   "unresolved": {},
   "pcs_inventory_excluded": {
@@ -28,12 +28,12 @@
       ],
       "should_exit": false,
       "exit_reason": null,
-      "dte": 25,
-      "hold_hours": 148.411405265,
-      "current_debit": 0.85,
-      "pnl": 26.0,
+      "dte": 24,
+      "hold_hours": 166.46357790583335,
+      "current_debit": 0.84,
+      "pnl": 27.0,
       "max_profit": 111.0,
-      "profit_pct_of_max": 0.2342,
+      "profit_pct_of_max": 0.2432,
       "profit_target_pct": 0.25,
       "status": "hold"
     }
