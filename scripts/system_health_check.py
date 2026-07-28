@@ -526,6 +526,62 @@ def check_feedback_freshness():
     return results
 
 
+def check_live_sync_freshness():
+    """Detect a live-account sync silently frozen while paper sync stays fresh.
+
+    Added Jul 28, 2026: the live Alpaca key 401'd for ~2 days but the sync
+    workflow stayed green (fail-soft), so live_account.synced_at froze at
+    Jul 25 while sync_health.last_successful_sync kept advancing. A large lag
+    between the two is the fingerprint of dead live credentials being masked.
+    """
+    results = {"name": "Live Account Sync Freshness", "status": "UNKNOWN", "details": []}
+
+    def _parse(ts: str) -> datetime:
+        dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+        return dt.replace(tzinfo=None)
+
+    try:
+        state_file = Path("data/system_state.json")
+        if not state_file.exists():
+            results["status"] = "BROKEN"
+            results["details"].append("✗ system_state.json not found")
+            return results
+
+        state = json.loads(state_file.read_text())
+        live_synced_at = (state.get("live_account") or {}).get("synced_at", "")
+        paper_synced_at = (state.get("sync_health") or {}).get("last_successful_sync", "")
+
+        if not live_synced_at or not paper_synced_at:
+            results["status"] = "BROKEN"
+            results["details"].append(
+                "✗ Missing live_account.synced_at or sync_health.last_successful_sync "
+                "— cannot prove live credentials work (fail-closed)"
+            )
+            return results
+
+        lag_hours = (_parse(paper_synced_at) - _parse(live_synced_at)).total_seconds() / 3600
+
+        if lag_hours > 24:
+            results["status"] = "BROKEN"
+            results["details"].append(
+                f"✗ Live sync frozen: live_account.synced_at lags paper sync by "
+                f"{lag_hours:.1f}h (live={live_synced_at}, paper={paper_synced_at}). "
+                "Likely unauthorized live credentials masked by fail-soft — "
+                "run the alpaca-live-key-rotate runbook."
+            )
+        else:
+            results["status"] = "OK"
+            results["details"].append(
+                f"✓ Live sync fresh (lags paper by {max(lag_hours, 0):.1f}h)"
+            )
+
+    except Exception as e:
+        results["status"] = "BROKEN"
+        results["details"].append(f"✗ Error: {e}")
+
+    return results
+
+
 def check_win_rate_validity():
     """Verify performance and active learning use row-derived paired evidence."""
     results = {"name": "Verified Trade Evidence", "status": "UNKNOWN", "details": []}
@@ -653,6 +709,7 @@ def main():
         check_data_integrity,  # Validate data before other checks
         check_position_completeness,  # Jan 27: Caught incomplete IC
         check_feedback_freshness,  # Jan 27: Caught stale stats.json
+        check_live_sync_freshness,  # Jul 28: Caught 401'd live key masked by fail-soft
         check_win_rate_validity,  # Jan 27: Caught 0% win rate bug
         check_rag_system,
         check_rl_system,

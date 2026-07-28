@@ -211,3 +211,51 @@ def test_check_position_completeness_accepts_protected_four_leg_structure(monkey
 
     assert result["status"] == "OK"
     assert any("Defined-risk put/call exposure" in detail for detail in result["details"])
+
+
+def _write_state(tmp_path, live_synced_at, paper_synced_at):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir(exist_ok=True)
+    state = {"sync_health": {"last_successful_sync": paper_synced_at}}
+    if live_synced_at is not None:
+        state["live_account"] = {"synced_at": live_synced_at}
+    (data_dir / "system_state.json").write_text(json.dumps(state))
+
+
+def test_check_live_sync_freshness_ok_when_live_matches_paper(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    _write_state(
+        tmp_path,
+        "2026-07-28T17:14:06.580179",
+        "2026-07-28T17:14:06.582797+00:00",
+    )
+
+    result = sh.check_live_sync_freshness()
+
+    assert result["status"] == "OK"
+    assert any("Live sync fresh" in detail for detail in result["details"])
+
+
+def test_check_live_sync_freshness_broken_when_live_frozen(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    _write_state(
+        tmp_path,
+        "2026-07-25T12:16:35.137297",
+        "2026-07-28T16:34:26.363982+00:00",
+    )
+
+    result = sh.check_live_sync_freshness()
+
+    assert result["status"] == "BROKEN"
+    assert any("lags paper sync" in detail for detail in result["details"])
+    assert any("alpaca-live-key-rotate" in detail for detail in result["details"])
+
+
+def test_check_live_sync_freshness_fails_closed_on_missing_fields(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    _write_state(tmp_path, None, "2026-07-28T16:34:26.363982+00:00")
+
+    result = sh.check_live_sync_freshness()
+
+    assert result["status"] == "BROKEN"
+    assert any("fail-closed" in detail for detail in result["details"])
