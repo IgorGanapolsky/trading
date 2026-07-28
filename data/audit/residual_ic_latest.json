@@ -1,5 +1,5 @@
 {
-  "audited_at": "2026-07-28T14:08:31.040782+00:00",
+  "audited_at": "2026-07-28T15:08:43.730697+00:00",
   "dry_run": true,
   "reconciled": 1,
   "unresolved": {},
@@ -10,8 +10,8 @@
     "SPY260828P00712000": -1.0
   },
   "checked": 1,
-  "holds": 1,
-  "would_exit": 0,
+  "holds": 0,
+  "would_exit": 1,
   "submitted": 0,
   "pending": 0,
   "broken": 0,
@@ -26,16 +26,16 @@
         "SPY260821C00776000",
         "SPY260821C00781000"
       ],
-      "should_exit": false,
-      "exit_reason": null,
+      "should_exit": true,
+      "exit_reason": "profit_target",
       "dte": 24,
-      "hold_hours": 166.46357790583335,
-      "current_debit": 0.84,
-      "pnl": 27.0,
+      "hold_hours": 167.46710288416665,
+      "current_debit": 0.81,
+      "pnl": 30.0,
       "max_profit": 111.0,
-      "profit_pct_of_max": 0.2432,
+      "profit_pct_of_max": 0.2703,
       "profit_target_pct": 0.25,
-      "status": "hold"
+      "status": "would_exit"
     }
   ]
 }
