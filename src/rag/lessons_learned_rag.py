@@ -428,6 +428,41 @@ class LessonsLearnedRAG:
         """Get all CRITICAL severity lessons."""
         return [lesson for lesson in self.lessons if lesson["severity"] == "CRITICAL"]
 
+    def query_lessons_with_regime(
+        self, query_text: str, regime_context: dict | None = None, top_k: int = 5
+    ) -> list:
+        """Search lessons with regime-aware metadata filtering (vix, iv_rank, structure)."""
+        base_results = self.query(query_text, top_k=top_k * 2)
+        if not regime_context or not base_results:
+            return base_results[:top_k]
+
+        vix = regime_context.get("vix")
+        iv_rank = regime_context.get("iv_rank_proxy")
+        structure = regime_context.get("structure")
+
+        scored_results = []
+        for item in base_results:
+            content_lower = str(item.get("content", "")).lower()
+            score = item.get("score", 0.5)
+
+            # Boost lessons matching elevated VIX/volatility if VIX is high
+            if vix is not None and vix > 25.0 and ("vix" in content_lower or "volatility" in content_lower):
+                score += 0.15
+
+            # Boost lessons matching IV rank conditions
+            if iv_rank is not None and iv_rank < 30.0 and ("iv rank" in content_lower or "low iv" in content_lower):
+                score += 0.15
+
+            # Boost lessons matching specific option structure
+            if structure and structure.lower() in content_lower:
+                score += 0.10
+
+            item["score"] = round(score, 4)
+            scored_results.append(item)
+
+        scored_results.sort(key=lambda x: x["score"], reverse=True)
+        return scored_results[:top_k]
+
     def add_lesson(self, lesson_id: str, content: str) -> None:
         """Add a new lesson (writes to file)."""
         lesson_file = self.knowledge_dir / f"{lesson_id}.md"

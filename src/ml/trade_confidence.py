@@ -282,3 +282,32 @@ def sample_trade_confidence(
     """Quick access to sample trade confidence."""
     model = get_trade_confidence_model()
     return model.sample_confidence(strategy, ticker, regime)
+
+
+def evaluate_ml_trade_gate(
+    strategy: str = "spy_put_credit",
+    ticker: str = "SPY",
+    regime: Optional[str] = None,
+    min_confidence: float = 0.70,
+) -> dict:
+    """Evaluate pre-flight ML confidence gate for risk entry.
+
+    Returns:
+        dict containing {allowed, confidence, min_confidence, details}
+    """
+    model = get_trade_confidence_model()
+    details = model.get_trade_confidence(strategy, ticker, regime)
+    confidence = details.get("sampled_confidence", 0.0)
+    posterior_mean = details.get("posterior_mean", 0.0)
+
+    # Allow entry if posterior_mean or sampled confidence meets threshold
+    allowed = (confidence >= min_confidence) or (posterior_mean >= min_confidence)
+
+    return {
+        "allowed": allowed,
+        "confidence": confidence,
+        "posterior_mean": posterior_mean,
+        "min_confidence": min_confidence,
+        "recommendation": details.get("recommendation", "AVOID"),
+        "details": details,
+    }

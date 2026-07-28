@@ -71,12 +71,20 @@ def compute_trade_reward(
     # Composite reward
     total = W_RETURN * r_return - W_DOWNSIDE * r_downside + W_BENCHMARK * r_benchmark
 
+    # DTE friction penalty (holding too close to expiration increases gamma risk)
+    dte_friction_penalty = 0.0
+    if dte_at_exit < 7:
+        dte_friction_penalty = 0.5 * (7 - max(0, dte_at_exit)) / 7.0
+
+    total_risk_adjusted = total - dte_friction_penalty
+
     return {
-        "total_reward": round(total, 4),
+        "total_reward": round(total_risk_adjusted, 4),
         "components": {
             "return": round(r_return, 4),
             "downside": round(r_downside, 4),
             "benchmark_excess": round(r_benchmark, 4),
+            "dte_friction_penalty": round(dte_friction_penalty, 4),
         },
         "weights": {"w_return": W_RETURN, "w_downside": W_DOWNSIDE, "w_benchmark": W_BENCHMARK},
         "inputs": {
