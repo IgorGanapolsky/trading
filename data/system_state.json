@@ -206,7 +206,10 @@
       "filled_at": "2026-07-24 16:58:19.813684+00:00",
       "status": "OrderStatus.FILLED",
       "order_class": "OrderClass.MLEG",
-      "legs": ["SPY260828P00707000", "SPY260828P00712000"]
+      "legs": [
+        "SPY260828P00707000",
+        "SPY260828P00712000"
+      ]
     },
     {
       "id": "fcfdc5c5-be14-42b4-a539-237c85a8f1a8",
@@ -233,7 +236,10 @@
       "filled_at": "2026-07-23 15:37:08.050702+00:00",
       "status": "OrderStatus.FILLED",
       "order_class": "OrderClass.MLEG",
-      "legs": ["SPY260828P00691000", "SPY260828P00696000"]
+      "legs": [
+        "SPY260828P00691000",
+        "SPY260828P00696000"
+      ]
     },
     {
       "id": "12d3f881-7beb-46a0-b445-7185d0e5a9b9",
@@ -2485,7 +2491,11 @@
     "generated_at": "2026-07-29T16:14:10.510302Z",
     "primary_family": "options_income",
     "rolling_window": 50,
-    "paused_families": ["equity_momentum", "alternatives", "other"],
+    "paused_families": [
+      "equity_momentum",
+      "alternatives",
+      "other"
+    ],
     "strategy_families": {
       "options_income": {
         "status": "validation_reset",
@@ -2830,7 +2840,9 @@
       "severity_score": 0.0,
       "blocked": false,
       "watch": false,
-      "reasons": ["No credit spread data available."],
+      "reasons": [
+        "No credit spread data available."
+      ],
       "latest_data_date": null,
       "stale_days": null,
       "metrics": {
@@ -2859,7 +2871,9 @@
       "position_size_multiplier": 1.0,
       "blocked": false,
       "watch": false,
-      "reasons": ["No USD macro data available."],
+      "reasons": [
+        "No USD macro data available."
+      ],
       "latest_data_date": null,
       "stale_days": null,
       "metrics": {
@@ -2897,7 +2911,9 @@
       "regime": "transition",
       "confidence": 0.396,
       "capex_deceleration_shock": false,
-      "reasons": ["AI-cycle proxies stable"],
+      "reasons": [
+        "AI-cycle proxies stable"
+      ],
       "latest_data_date": "2026-03-05",
       "stale_days": 1,
       "features": {
@@ -2920,7 +2936,13 @@
           "ORCL"
         ],
         "hyperscaler_capex_proxy_observed": 5,
-        "ai_infra_proxy_tickers": ["NVDA", "AVGO", "ANET", "AMD", "SMCI"],
+        "ai_infra_proxy_tickers": [
+          "NVDA",
+          "AVGO",
+          "ANET",
+          "AMD",
+          "SMCI"
+        ],
         "ai_infra_proxy_observed": 5,
         "edge_monetization_proxy_tickers": [
           "META",
@@ -3338,7 +3360,10 @@
     "harvest_source": "daily-trading-workflow",
     "execution_date": "2026-02-27",
     "selection_method": "adaptive",
-    "target_tickers": ["SPY", "IWM"],
+    "target_tickers": [
+      "SPY",
+      "IWM"
+    ],
     "strategy_note": "Uses credit spreads when buying power < 000, CSPs otherwise",
     "tickers_scanned": 0,
     "orders_submitted_today": 0,
@@ -3443,7 +3468,7 @@
     }
   },
   "trailing_stops": {
-    "last_set": "2026-04-15T15:54:12.225404",
+    "last_set": "2026-07-29T12:52:01.859075",
     "stops_active": 1,
     "positions_skipped": 0,
     "value_protected": 500.0,

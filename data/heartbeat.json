@@ -1,6 +1,60 @@
 {
   "heartbeats": [
     {
+      "timestamp": "2026-07-29T16:47:26.315007+00:00",
+      "workflow": "trading_session",
+      "status": "success",
+      "details": {
+        "tickers_processed": 2,
+        "session_type": "market_hours"
+      }
+    },
+    {
+      "timestamp": "2026-07-29T16:47:25.969866+00:00",
+      "workflow": "trading_session",
+      "status": "success",
+      "details": {
+        "tickers_processed": 2,
+        "session_type": "market_hours"
+      }
+    },
+    {
+      "timestamp": "2026-07-29T16:47:25.613095+00:00",
+      "workflow": "trading_session",
+      "status": "success",
+      "details": {
+        "tickers_processed": 2,
+        "session_type": "market_hours"
+      }
+    },
+    {
+      "timestamp": "2026-07-29T16:46:09.665231+00:00",
+      "workflow": "trading_session",
+      "status": "success",
+      "details": {
+        "tickers_processed": 2,
+        "session_type": "market_hours"
+      }
+    },
+    {
+      "timestamp": "2026-07-29T16:46:09.261046+00:00",
+      "workflow": "trading_session",
+      "status": "success",
+      "details": {
+        "tickers_processed": 2,
+        "session_type": "market_hours"
+      }
+    },
+    {
+      "timestamp": "2026-07-29T16:46:08.909864+00:00",
+      "workflow": "trading_session",
+      "status": "success",
+      "details": {
+        "tickers_processed": 2,
+        "session_type": "market_hours"
+      }
+    },
+    {
       "timestamp": "2026-07-29T15:10:07.465691+00:00",
       "workflow": "pre_market_sync",
       "status": "success",
@@ -608,42 +662,6 @@
       "workflow": "pre_market_sync",
       "status": "success",
       "details": {}
-    },
-    {
-      "timestamp": "2026-02-20T14:39:50.753515",
-      "workflow": "pre_market_sync",
-      "status": "success",
-      "details": {}
-    },
-    {
-      "timestamp": "2026-02-19T14:41:59.614510",
-      "workflow": "pre_market_sync",
-      "status": "success",
-      "details": {}
-    },
-    {
-      "timestamp": "2026-02-18T14:40:54.160228",
-      "workflow": "pre_market_sync",
-      "status": "success",
-      "details": {}
-    },
-    {
-      "timestamp": "2026-02-17T14:41:10.430948",
-      "workflow": "pre_market_sync",
-      "status": "success",
-      "details": {}
-    },
-    {
-      "timestamp": "2026-02-16T14:40:06.418157",
-      "workflow": "pre_market_sync",
-      "status": "success",
-      "details": {}
-    },
-    {
-      "timestamp": "2026-02-13T14:40:53.374797",
-      "workflow": "pre_market_sync",
-      "status": "success",
-      "details": {}
     }
   ],
   "workflows": {
@@ -653,9 +671,9 @@
       "total_runs": 98
     },
     "trading_session": {
-      "last_heartbeat": "2026-07-28T22:38:59.239271+00:00",
+      "last_heartbeat": "2026-07-29T16:47:26.315007+00:00",
       "last_status": "success",
-      "total_runs": 22
+      "total_runs": 28
     }
   }
 }
