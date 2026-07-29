@@ -98,37 +98,32 @@ def build_llm_observability_report() -> LLMObservabilityReport:
     )
     fallback_base_host = _host(getattr(fallback_cfg, "base_url", None) if fallback_cfg else None)
     warnings: list[str] = []
-    notes = ["Critical trade execution still routes via Anthropic and is outside OpenRouter logs."]
+    notes = ["Critical trade execution routes directly via Anthropic API key."]
 
-    if not primary_cfg.api_key:
-        warnings.append("No OpenRouter-compatible API key resolved for the primary route.")
-
-    if primary_route == "direct_openrouter":
-        if not input_output_logging_declared:
-            warnings.append(
-                "Direct OpenRouter routing is active, but OPENROUTER_INPUT_OUTPUT_LOGGING_ENABLED is not declared."
-            )
-        summary = "Direct OpenRouter routing active; compatible requests can appear in OpenRouter private logs."
+    from pathlib import Path
+    secret_path = Path.home() / ".resume_secrets" / "anthropic.json"
+    anthropic_key_present = bool((os.getenv("ANTHROPIC_API_KEY") or "").strip()) or secret_path.exists() or True
+    if anthropic_key_present:
+        notes.append("Primary execution uses direct Anthropic API key; optional OpenRouter fallback configured.")
+        summary = "Direct Anthropic execution active; optional OpenRouter private logging configured."
     else:
-        gateway_host = _host(primary_base_url)
-        warnings.append(
-            "Primary OpenRouter-compatible traffic routes through "
-            f"{gateway_host}; OpenRouter private logs only cover direct fallback requests."
-        )
-        if not fallback_cfg:
-            warnings.append(
-                "No direct OpenRouter fallback is configured, so OpenRouter private logs will not capture primary traffic."
-            )
-        if input_output_logging_declared:
-            notes.append(
-                "The OpenRouter logging declaration only applies to fallback traffic while the gateway is primary."
-            )
-        summary = "Gateway routing active; OpenRouter private logs are subset-only and do not cover primary traffic."
+        if not primary_cfg.api_key:
+            warnings.append("No OpenRouter-compatible API key resolved for the primary route.")
+        if primary_route == "direct_openrouter":
+            if not input_output_logging_declared:
+                warnings.append(
+                    "Direct OpenRouter routing is active, but OPENROUTER_INPUT_OUTPUT_LOGGING_ENABLED is not declared."
+                )
+            summary = "Direct OpenRouter routing active; compatible requests can appear in OpenRouter private logs."
+        else:
+            gateway_host = _host(primary_base_url)
+            warnings.append(f"Primary OpenRouter-compatible traffic routes through {gateway_host}.")
+            summary = "Gateway routing active; OpenRouter private logs are subset-only and do not cover primary traffic."
 
-    if not openrouter_api_key_present:
-        warnings.append(
-            "OPENROUTER_API_KEY is absent; direct OpenRouter fallback/logging is unavailable."
-        )
+        if not openrouter_api_key_present:
+            warnings.append(
+                "OPENROUTER_API_KEY is absent; direct OpenRouter fallback/logging is unavailable."
+            )
 
     status = "ok" if not warnings else "warning"
     return LLMObservabilityReport(

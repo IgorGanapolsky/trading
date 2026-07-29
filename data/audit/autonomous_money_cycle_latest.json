@@ -1,6 +1,6 @@
 {
   "schema_version": "autonomous-money-cycle/1",
-  "ts": "2026-07-29T15:53:59.265904+00:00",
+  "ts": "2026-07-29T16:18:49.150874+00:00",
   "dry_run": true,
   "strategy_mode": "multi_day_hold_or_buy_hold_non_pdt",
   "non_day_trade": true,
@@ -31,11 +31,11 @@
   "steps": {
     "inventory": {
       "rc": 0,
-      "stdout_tail": "\": [],\n  \"legs\": [\n    {\n      \"symbol\": \"SPY260828P00691000\",\n      \"root\": \"SPY\",\n      \"expiry_ymd\": \"260828\",\n      \"right\": \"P\",\n      \"strike\": 691.0,\n      \"qty\": 1.0\n    },\n    {\n      \"symbol\": \"SPY260828P00696000\",\n      \"root\": \"SPY\",\n      \"expiry_ymd\": \"260828\",\n      \"right\": \"P\",\n      \"strike\": 696.0,\n      \"qty\": -1.0\n    },\n    {\n      \"symbol\": \"SPY260828P00707000\",\n      \"root\": \"SPY\",\n      \"expiry_ymd\": \"260828\",\n      \"right\": \"P\",\n      \"strike\": 707.0,\n      \"qty\": 1.0\n    },\n    {\n      \"symbol\": \"SPY260828P00712000\",\n      \"root\": \"SPY\",\n      \"expiry_ymd\": \"260828\",\n      \"right\": \"P\",\n      \"strike\": 712.0,\n      \"qty\": -1.0\n    }\n  ],\n  \"block_reasons\": []\n}\njson_out=/home/runner/work/trading/trading/data/audit/open_inventory_latest.json\nclean=True findings=0\n"
+      "stdout_tail": ": [\n    {\n      \"symbol\": \"SPY260828P00691000\",\n      \"root\": \"SPY\",\n      \"expiry_ymd\": \"260828\",\n      \"right\": \"P\",\n      \"strike\": 691.0,\n      \"qty\": 1.0\n    },\n    {\n      \"symbol\": \"SPY260828P00696000\",\n      \"root\": \"SPY\",\n      \"expiry_ymd\": \"260828\",\n      \"right\": \"P\",\n      \"strike\": 696.0,\n      \"qty\": -1.0\n    },\n    {\n      \"symbol\": \"SPY260828P00707000\",\n      \"root\": \"SPY\",\n      \"expiry_ymd\": \"260828\",\n      \"right\": \"P\",\n      \"strike\": 707.0,\n      \"qty\": 1.0\n    },\n    {\n      \"symbol\": \"SPY260828P00712000\",\n      \"root\": \"SPY\",\n      \"expiry_ymd\": \"260828\",\n      \"right\": \"P\",\n      \"strike\": 712.0,\n      \"qty\": -1.0\n    }\n  ],\n  \"block_reasons\": []\n}\njson_out=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/open_inventory_latest.json\nclean=True findings=0\n"
     },
     "manage_put_credit": {
       "rc": 0,
-      "stdout_tail": "fe193c14511868bd0e1b0a59220\",\n      \"should_exit\": false,\n      \"exit_reason\": null,\n      \"dte\": 30,\n      \"hold_hours\": 118.92802913416666,\n      \"credit\": 0.65,\n      \"current_debit\": 0.9199999999999999,\n      \"estimated_pnl\": -26.99999999999999,\n      \"profit_target\": 16.25,\n      \"stop_loss\": -130.0,\n      \"counterfactuals\": {\n        \"tp_25_target\": 16.25,\n        \"tp_50_target\": 32.5,\n        \"would_hit_tp_25_now\": false,\n        \"would_hit_tp_50_now\": false,\n        \"public_exit_dte\": 21,\n        \"dte_now\": 30,\n        \"would_trigger_public_21dte_exit\": false,\n        \"note\": \"Counterfactuals only \\u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history.\"\n      },\n      \"status\": \"hold\"\n    }\n  ]\n}\n"
+      "stdout_tail": "fe193c14511868bd0e1b0a59220\",\n      \"should_exit\": false,\n      \"exit_reason\": null,\n      \"dte\": 30,\n      \"hold_hours\": 119.34274830027778,\n      \"credit\": 0.65,\n      \"current_debit\": 0.9900000000000002,\n      \"estimated_pnl\": -34.00000000000002,\n      \"profit_target\": 16.25,\n      \"stop_loss\": -130.0,\n      \"counterfactuals\": {\n        \"tp_25_target\": 16.25,\n        \"tp_50_target\": 32.5,\n        \"would_hit_tp_25_now\": false,\n        \"would_hit_tp_50_now\": false,\n        \"public_exit_dte\": 21,\n        \"dte_now\": 30,\n        \"would_trigger_public_21dte_exit\": false,\n        \"note\": \"Counterfactuals only \\u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history.\"\n      },\n      \"status\": \"hold\"\n    }\n  ]\n}\n"
     },
     "cohort": {
       "rc": 0,
