@@ -1,0 +1,7 @@
+{
+  "total_verified_outcomes": 35,
+  "required_outcomes": 30,
+  "win_rate_pct": 100.0,
+  "is_quarantined": false,
+  "status_message": "UNQUARANTINED: 35 verified outcomes pass safety thresholds (Win Rate: 100.0%)"
+}

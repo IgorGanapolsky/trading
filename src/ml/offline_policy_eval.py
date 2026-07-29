@@ -41,7 +41,7 @@ class OfflinePolicyEvaluator:
         weighted_rewards = []
 
         for traj in trajectories:
-            reward = float(traj.get("reward", 0.0))
+            reward = float(traj.get("reward", traj.get("profit_usd", 0.0)))
             behavior_prob = float(traj.get("behavior_prob", 1.0))
             behavior_prob = max(0.01, behavior_prob)
 
