@@ -24,8 +24,61 @@ class ParentChildContext:
 class ParentChildRetriever:
     """Expands small matched child chunks to full parent lesson context."""
 
-    def __init__(self, parent_store: dict[str, str] | None = None):
+    def __init__(self, parent_store: dict[str, str] | None = None, chunk_size_chars: int = 300):
         self.parent_store = parent_store or {}
+        self.parent_titles: dict[str, str] = {}
+        self.chunk_size_chars = chunk_size_chars
+        self.children: list[dict[str, Any]] = []
+
+    def add_document(self, parent_id: str, title: str, full_content: str, metadata: dict[str, Any] | None = None) -> None:
+        meta = metadata or {}
+        self.parent_store[parent_id] = full_content
+        self.parent_titles[parent_id] = title
+        text = full_content.strip()
+        lines = [s.strip() for s in text.split("\n") if s.strip()]
+        curr = []
+        curr_len = 0
+        idx = 0
+        for line in lines:
+            if curr_len + len(line) > self.chunk_size_chars and curr:
+                chunk_txt = " ".join(curr)
+                self.children.append({
+                    "id": f"{parent_id}_c{idx}",
+                    "parent_id": parent_id,
+                    "title": title,
+                    "content": chunk_txt,
+                    **meta,
+                })
+                idx += 1
+                curr = [line]
+                curr_len = len(line)
+            else:
+                curr.append(line)
+                curr_len += len(line)
+        if curr:
+            chunk_txt = " ".join(curr)
+            self.children.append({
+                "id": f"{parent_id}_c{idx}",
+                "parent_id": parent_id,
+                "title": title,
+                "content": chunk_txt,
+                **meta,
+            })
+
+    def retrieve_parent_context(self, matched_parent_ids: list[str]) -> list[ParentChildContext]:
+        res = []
+        for pid in matched_parent_ids:
+            content = self.parent_store.get(pid, "")
+            title = self.parent_titles.get(pid, pid)
+            res.append(
+                ParentChildContext(
+                    child_chunk_id=f"{pid}_c0",
+                    parent_lesson_id=pid,
+                    parent_title=title,
+                    full_parent_content=content,
+                )
+            )
+        return res
 
     def expand_child_to_parent(
         self,
