@@ -28,5 +28,5 @@ def test_parent_child_retriever_chunking_and_resolution():
     assert len(retriever.children) > 1
     parents = retriever.retrieve_parent_context(["LL-268"])
     assert len(parents) == 1
-    assert parents[0].title == "Iron Condor Rules"
-    assert "Hard stop loss" in parents[0].full_content
+    assert parents[0].parent_title == "Iron Condor Rules"
+    assert "Hard stop loss" in parents[0].full_parent_content
