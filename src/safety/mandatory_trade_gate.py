@@ -981,6 +981,37 @@ def _check_market_regime(strategy: str, context: dict | None) -> tuple[float, li
     return confidence, warnings
 
 
+def _check_ml_trade_confidence(strategy: str, symbol: str, context: dict | None = None) -> tuple[float, list[str]]:
+    """Check ML model trade confidence (P(W) >= 0.70) pre-flight gate.
+
+    Returns:
+        (confidence_score, warnings_list)
+    """
+    warnings: list[str] = []
+    try:
+        from src.ml.trade_confidence import evaluate_ml_trade_gate
+
+        underlying = _extract_underlying(symbol)
+        regime_snapshot = context.get("regime_snapshot") if context else None
+        regime_label = regime_snapshot.get("label") if isinstance(regime_snapshot, dict) else None
+
+        gate_res = evaluate_ml_trade_gate(
+            strategy=strategy,
+            ticker=underlying,
+            regime=regime_label,
+            min_confidence=0.70,
+        )
+        conf = float(gate_res.get("confidence", 1.0))
+        if not gate_res.get("allowed", True):
+            warnings.append(
+                f"⚠️ ML Trade Confidence Gate: sampled confidence {conf:.2f} < 0.70 threshold"
+            )
+        return conf, warnings
+    except Exception as exc:
+        logger.debug("ML trade confidence check skipped: %s", exc)
+        return 1.0, []
+
+
 def _query_rag_for_blocking_lessons(symbol: str, strategy: str) -> tuple[bool, list[str]]:
     """
     Query RAG for lessons that should block this trade.
