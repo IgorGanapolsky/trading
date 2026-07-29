@@ -175,6 +175,24 @@ def check_rag_system():
             results["status"] = "BROKEN"
             return results
 
+        # Test QueryRewriter & ParentChildRetriever modules
+        try:
+            from src.rag.parent_child_retriever import ParentChildRetriever
+            from src.rag.query_rewriter import QueryRewriter
+
+            rewriter = QueryRewriter()
+            rewritten = rewriter.rewrite("IC 1256 exit XSP")
+            if "iron condor" in rewritten.expanded_query and "XSP" in rewritten.extracted_tickers:
+                results["details"].append("✓ QueryRewriter active - expanded domain query")
+
+            pcr = ParentChildRetriever()
+            pcr.add_document("LL-HEALTH", "Test Title", "Test content body for health check")
+            parents = pcr.retrieve_parent_context(["LL-HEALTH"])
+            if len(parents) == 1 and parents[0].title == "Test Title":
+                results["details"].append("✓ ParentChildRetriever active - parent context resolved")
+        except Exception as exc:
+            results["details"].append(f"⚠️ Advanced RAG modules warning: {exc}")
+
         results["status"] = "OK"
 
     except Exception as e:
