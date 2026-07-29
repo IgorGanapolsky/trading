@@ -20,6 +20,10 @@ class ParentChildContext:
     parent_title: str
     full_parent_content: str
 
+    @property
+    def title(self) -> str:
+        return self.parent_title
+
 
 class ParentChildRetriever:
     """Expands small matched child chunks to full parent lesson context."""
@@ -98,3 +102,6 @@ class ParentChildRetriever:
             parent_title=title,
             full_parent_content=parent_content,
         )
+
+    def get_parent(self, parent_id: str) -> str | None:
+        return self.parent_store.get(parent_id)

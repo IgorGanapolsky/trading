@@ -20,12 +20,12 @@
       "would_trigger_public_21dte_exit": false,
       "note": "Counterfactuals only \u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history."
     },
-    "last_counterfactuals_at": "2026-07-29T16:39:06.255274+00:00",
+    "last_counterfactuals_at": "2026-07-29T17:13:20.098070+00:00",
     "last_mark": {
-      "current_debit": 0.5999999999999996,
-      "estimated_pnl": -6.999999999999962,
+      "current_debit": 0.52,
+      "estimated_pnl": 1.0000000000000009,
       "dte": 30,
-      "hold_hours": 145.03283426583334
+      "hold_hours": 145.6033460111111
     },
     "legs": {
       "long": "SPY260828P00691000",
@@ -73,12 +73,12 @@
       "would_trigger_public_21dte_exit": false,
       "note": "Counterfactuals only \u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history."
     },
-    "last_counterfactuals_at": "2026-07-29T16:39:06.255317+00:00",
+    "last_counterfactuals_at": "2026-07-29T17:13:20.098147+00:00",
     "last_mark": {
-      "current_debit": 0.9400000000000004,
-      "estimated_pnl": -29.000000000000036,
+      "current_debit": 0.8300000000000001,
+      "estimated_pnl": -18.000000000000004,
       "dte": 30,
-      "hold_hours": 119.67956711583332
+      "hold_hours": 120.25007901
     },
     "limit_credit": 0.61,
     "order_id": "fb85cfe1-93c1-4511-868b-d0e1b0a59220",

@@ -63,5 +63,5 @@ class RAGQueryRewriter:
         )
 
 
-# Backward-compatible alias
+# Backward-compatible alias for system_health_check.py compatibility
 QueryRewriter = RAGQueryRewriter
