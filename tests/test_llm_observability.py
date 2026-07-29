@@ -4,6 +4,7 @@ from src.observability.llm_observability import build_llm_observability_report
 
 
 def _clear_llm_env(monkeypatch) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "")
     for key in [
         "OPENROUTER_API_KEY",
         "LLM_GATEWAY_BASE_URL",
