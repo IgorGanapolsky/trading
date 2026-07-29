@@ -33,6 +33,7 @@ class EvaluationQuery:
     query: str
     expected_lesson_ids: list[str]  # Lessons that MUST appear
     avoid_lesson_ids: list[str] = field(default_factory=list)  # Lessons that should NOT appear
+    graded_relevance: dict[str, int] = field(default_factory=dict)  # 4-tier relevance (3=CRITICAL, 2=HIGH, 1=Context, 0=Irrelevant)
     description: str = ""
 
     def __post_init__(self):
@@ -41,6 +42,17 @@ class EvaluationQuery:
             lid.replace(".md", "").lower() for lid in self.expected_lesson_ids
         ]
         self.avoid_lesson_ids = [lid.replace(".md", "").lower() for lid in self.avoid_lesson_ids]
+        if self.graded_relevance:
+            self.graded_relevance = {
+                lid.replace(".md", "").lower(): grade
+                for lid, grade in self.graded_relevance.items()
+            }
+        else:
+            self.graded_relevance = {
+                lid: 3 for lid in self.expected_lesson_ids
+            }
+            for lid in self.avoid_lesson_ids:
+                self.graded_relevance[lid] = 0
 
 
 @dataclass
@@ -500,6 +512,45 @@ class RAGEvaluator:
             return 0.0
 
         return dcg / ideal_dcg
+
+    def ndcg_at_k(
+        self,
+        retrieved: list[str],
+        graded_relevance: dict[str, int],
+        k: int,
+    ) -> float:
+        """
+        Calculate Normalized Discounted Cumulative Gain (nDCG@k) with 4-tier graded relevance.
+
+        Grades:
+          3: CRITICAL Block
+          2: HIGH Advisory
+          1: Context
+          0: Irrelevant
+
+        DCG@k = sum_{i=1}^k (2^{rel_i} - 1) / log2(i + 1)
+        IDCG@k = Ideal DCG when relevant documents are sorted descending by grade
+        """
+        if k == 0:
+            return 0.0
+
+        dcg = 0.0
+        for i, doc in enumerate(retrieved[:k]):
+            norm_doc = self._normalize_match_id(doc)
+            rel = graded_relevance.get(norm_doc, 0)
+            if rel > 0:
+                dcg += (2**rel - 1) / math.log2(i + 2)
+
+        ideal_grades = sorted(graded_relevance.values(), reverse=True)[:k]
+        idcg = 0.0
+        for i, rel in enumerate(ideal_grades):
+            if rel > 0:
+                idcg += (2**rel - 1) / math.log2(i + 2)
+
+        if idcg == 0.0:
+            return 1.0 if not graded_relevance else 0.0
+
+        return dcg / idcg
 
     def evaluate_unanswerable(
         self,
