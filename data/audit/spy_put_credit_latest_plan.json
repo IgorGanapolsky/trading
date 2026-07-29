@@ -18,8 +18,8 @@
   "min_hold_hours": 24,
   "min_credit": 0.5,
   "dry_run": true,
-  "planned_at": "2026-07-29T16:38:34.246822+00:00",
+  "planned_at": "2026-07-29T16:39:10.492209+00:00",
   "status": "planned",
   "opportunity": null,
-  "spy_price": 733.3599853515625
+  "spy_price": 733.4000244140625
 }

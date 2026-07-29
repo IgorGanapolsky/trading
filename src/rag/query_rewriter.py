@@ -1,68 +1,52 @@
-"""Query Rewriter for Financial and Options Trading RAG.
+"""RAG Query Rewriter & Synonym Expansion Engine.
 
-Expands technical trading abbreviations, normalizes ticker symbols, and generates
-multi-query expansions for hybrid vector + BM25 search.
+Expands short agentic trading queries into domain-enriched search queries
+to boost vector and BM25 retrieval recall for risk rules and strategy lessons.
 """
 
 from __future__ import annotations
 
 import logging
-import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
-# Common options trading & financial domain expansions
-DOMAIN_EXPANSIONS: dict[str, list[str]] = {
-    "ic": ["iron condor", "neutral credit spread"],
-    "csp": ["cash secured put", "bull put credit"],
-    "1256": ["section 1256", "tax optimization", "xsp index option"],
-    "pdt": ["pattern day trader", "equity margin restriction"],
-    "vix": ["volatility index", "regime spike"],
-    "stop": ["stop loss", "max loss limit", "200% credit stop"],
-    "dte": ["days to expiration", "time decay"],
-    "ivr": ["iv rank", "implied volatility rank"],
+DOMAIN_SYNONYMS: dict[str, list[str]] = {
+    "put credit": ["short put spread", "credit spread", "put spread", "15 delta", "45 dte"],
+    "iron condor": ["4-leg spread", "short strangle defined risk", "50% profit target", "7 dte exit"],
+    "circuit breaker": ["drawdown kill switch", "5% account protection", "trading halt"],
+    "bogleheads": ["three fund portfolio", "bogleheads forum", "long term buy and hold"],
+    "section 1256": ["xsp", "spx", "60/40 tax treatment", "index options"],
 }
 
 
 @dataclass(frozen=True)
-class RewrittenQuery:
+class ExpandedQuery:
     original_query: str
     expanded_query: str
-    extracted_tickers: list[str] = field(default_factory=list)
-    key_terms: list[str] = field(default_factory=list)
+    synonyms_added: tuple[str, ...]
 
 
-class QueryRewriter:
-    """Domain-aware query rewriter for trading RAG retrieval."""
+class RAGQueryRewriter:
+    """Rewrites and expands queries with domain-specific trading terms."""
 
-    def __init__(self, expansions: dict[str, list[str]] | None = None):
-        self.expansions = expansions or DOMAIN_EXPANSIONS
-        self.ticker_pattern = re.compile(r"\b(SPY|XSP|SPX|QQQ|IWM|SOFI|AAPL|MSFT|NVDA|TSLA)\b", re.IGNORECASE)
+    def rewrite(self, query: str) -> ExpandedQuery:
+        q_lower = query.lower().strip()
+        added: list[str] = []
 
-    def rewrite(self, query: str) -> RewrittenQuery:
-        if not query or not query.strip():
-            return RewrittenQuery(original_query="", expanded_query="")
+        for key, terms in DOMAIN_SYNONYMS.items():
+            if key in q_lower:
+                for t in terms:
+                    if t not in q_lower:
+                        added.append(t)
 
-        raw_query = query.strip()
-        tokens = raw_query.lower().split()
-        expanded_parts = [raw_query]
-        extracted_tickers = [t.upper() for t in self.ticker_pattern.findall(raw_query)]
-        key_terms = []
+        if added:
+            expanded = f"{query} " + " ".join(added[:4])
+        else:
+            expanded = query
 
-        for token in tokens:
-            cleaned = re.sub(r"[^\w]", "", token)
-            if cleaned in self.expansions:
-                expansion_terms = self.expansions[cleaned]
-                expanded_parts.extend(expansion_terms)
-                key_terms.extend(expansion_terms)
-            elif len(cleaned) > 2:
-                key_terms.append(cleaned)
-
-        expanded_query = " ".join(dict.fromkeys(expanded_parts))
-        return RewrittenQuery(
-            original_query=raw_query,
-            expanded_query=expanded_query,
-            extracted_tickers=list(dict.fromkeys(extracted_tickers)),
-            key_terms=list(dict.fromkeys(key_terms)),
+        return ExpandedQuery(
+            original_query=query,
+            expanded_query=expanded.strip(),
+            synonyms_added=tuple(added[:4]),
         )

@@ -1,0 +1,18 @@
+{
+  "schema_version": "autonomous-trading-scheduler/1",
+  "ts": "2026-07-29T16:38:54.303271+00:00",
+  "dry_run": true,
+  "non_day_trade": true,
+  "steps": {
+    "income_loop": {
+      "rc": 0,
+      "stdout_tail": "{\n  \"events\": [\n    {\n      \"amount_usd\": 1000.0,\n      \"at\": \"2026-07-29T16:38:55.135638+00:00\",\n      \"direction\": \"to_broker\",\n      \"error\": null,\n      \"initiated_at\": \"2026-07-29T16:38:55.135669+00:00\",\n      \"success\": true,\n      \"transfer_id\": \"paper-a02017ab-e810-42f6-aae3-691d12d628f8\",\n      \"type\": \"withdraw\"\n    },\n    {\n      \"at\": \"2026-07-29T16:38:55.135638+00:00\",\n      \"error\": null,\n      \"filled_at\": \"2026-07-29T16:38:55.135695+00:00\",\n      \"notional_usd\": 1000.0,\n      \"success\": true,\n      \"symbol\": \"SCHD\",\n      \"type\": \"dca_buy\"\n    }\n  ],\n  \"gross_profit_usd\": 0.0,\n  \"positions\": {\n    \"SCHD\": 1000.0\n  },\n  \"principal_deployed_usd\": 1000.0,\n  \"realized_after_tax_profit_usd\": 0.0,\n  \"realized_profit_usd\": 0.0,\n  \"tax_reserve_usd\": 0.0,\n  \"total_deposited_to_bank_usd\": 0.0\n}\n",
+      "stderr_tail": "2026-07-29 12:38:55,135 - __main__ - INFO - Initializing PAPER Bank and Equity Broker Adapters...\n"
+    },
+    "remittance_status": {
+      "rc": 0,
+      "stdout_tail": "{\n  \"target_monthly_after_tax_usd\": 1000.0,\n  \"progress\": {\n    \"month_yyyy_mm\": \"2026-07\",\n    \"target_usd\": 1000.0,\n    \"remitted_to_bank_usd\": 0.0,\n    \"remittance_event_count\": 0,\n    \"in_flight_usd\": 0.0,\n    \"in_flight_event_count\": 0,\n    \"estimated_after_tax_profit_usd\": null,\n    \"realized_pre_tax_pnl_usd\": null,\n    \"tax_rate_used\": 0.37,\n    \"pct_of_target\": 0.0,\n    \"target_met\": false,\n    \"claim_allowed\": false,\n    \"note\": \"No confirmed broker\\u2192Mercury remittances in 2026-07. Cannot claim $1000/mo after-tax target met.\"\n  },\n  \"live_bank_gate\": {\n    \"allowed\": false,\n    \"blockers\": [\n      \"kill_switch.live_blocked: IC Simple is KILLED as a North Star candidate. Verified paired ledger: 159 closed structures, 20 wins, 138 losses, 1 breakeven, 12.58% win rate, profit factor 0.16, expectancy -$48.62/trade, total rea\",\n      \"kill_switch.paper_only=true\",\n      \"insufficient_edge_sample: closed_n=0 need>=30\",\n      \"cohort.live_deposit_ready=False (need explicit true)\",\n      \"kill_verdict=INSUFFICIENT_SAMPLE (need EDGE_CANDIDATE)\"\n    ],\n    \"strategy_mode\": \"multi_day_hold_or_buy_hold_non_pdt\"\n  },\n  \"honesty\": \"target_met requires confirmed non-dry-run broker_to_mercury ledger rows; estimated_after_tax_profit is not bank remittance\"\n}\n",
+      "stderr_tail": ""
+    }
+  }
+}

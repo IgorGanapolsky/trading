@@ -1,6 +1,6 @@
 {
   "schema_version": "autonomous-money-cycle/1",
-  "ts": "2026-07-29T16:38:27.867590+00:00",
+  "ts": "2026-07-29T16:39:03.849164+00:00",
   "dry_run": true,
   "strategy_mode": "multi_day_hold_or_buy_hold_non_pdt",
   "non_day_trade": true,
@@ -35,7 +35,7 @@
     },
     "manage_put_credit": {
       "rc": 0,
-      "stdout_tail": "e193c14511868bd0e1b0a59220\",\n      \"should_exit\": false,\n      \"exit_reason\": null,\n      \"dte\": 30,\n      \"hold_hours\": 119.66972386666667,\n      \"credit\": 0.65,\n      \"current_debit\": 0.9500000000000002,\n      \"estimated_pnl\": -30.000000000000014,\n      \"profit_target\": 16.25,\n      \"stop_loss\": -130.0,\n      \"counterfactuals\": {\n        \"tp_25_target\": 16.25,\n        \"tp_50_target\": 32.5,\n        \"would_hit_tp_25_now\": false,\n        \"would_hit_tp_50_now\": false,\n        \"public_exit_dte\": 21,\n        \"dte_now\": 30,\n        \"would_trigger_public_21dte_exit\": false,\n        \"note\": \"Counterfactuals only \\u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history.\"\n      },\n      \"status\": \"hold\"\n    }\n  ]\n}\n"
+      "stdout_tail": "e193c14511868bd0e1b0a59220\",\n      \"should_exit\": false,\n      \"exit_reason\": null,\n      \"dte\": 30,\n      \"hold_hours\": 119.67956711583332,\n      \"credit\": 0.65,\n      \"current_debit\": 0.9400000000000004,\n      \"estimated_pnl\": -29.000000000000036,\n      \"profit_target\": 16.25,\n      \"stop_loss\": -130.0,\n      \"counterfactuals\": {\n        \"tp_25_target\": 16.25,\n        \"tp_50_target\": 32.5,\n        \"would_hit_tp_25_now\": false,\n        \"would_hit_tp_50_now\": false,\n        \"public_exit_dte\": 21,\n        \"dte_now\": 30,\n        \"would_trigger_public_21dte_exit\": false,\n        \"note\": \"Counterfactuals only \\u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history.\"\n      },\n      \"status\": \"hold\"\n    }\n  ]\n}\n"
     },
     "cohort": {
       "rc": 0,
