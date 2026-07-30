@@ -1,6 +1,6 @@
 {
   "clean": true,
-  "audited_at": "2026-07-30T14:17:47.211278+00:00",
+  "audited_at": "2026-07-30T12:17:26.318301+00:00",
   "option_leg_count": 4,
   "max_abs_qty": 1.0,
   "expiries": [
@@ -43,3 +43,5 @@
   ],
   "block_reasons": []
 }
+json_out=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/open_inventory_latest.json
+clean=True findings=0

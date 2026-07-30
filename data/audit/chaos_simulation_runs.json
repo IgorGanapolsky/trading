@@ -2014,5 +2014,509 @@
       }
     ],
     "passed": false
+  },
+  {
+    "seed": 12345,
+    "total_steps": 50,
+    "faults_injected_count": 13,
+    "invariant_violations_count": 27,
+    "faults_injected": [
+      {
+        "step": 2,
+        "fault": "CIRCUIT_BREAKER_STORM"
+      },
+      {
+        "step": 12,
+        "fault": "BROKER_API_TIMEOUT"
+      },
+      {
+        "step": 16,
+        "fault": "PARTIAL_FILL_DESYNC"
+      },
+      {
+        "step": 18,
+        "fault": "CIRCUIT_BREAKER_STORM"
+      },
+      {
+        "step": 21,
+        "fault": "MERCURY_REMITTANCE_DELAY"
+      },
+      {
+        "step": 24,
+        "fault": "PARTIAL_FILL_DESYNC"
+      },
+      {
+        "step": 26,
+        "fault": "BROKER_API_TIMEOUT"
+      },
+      {
+        "step": 28,
+        "fault": "MERCURY_REMITTANCE_DELAY"
+      },
+      {
+        "step": 29,
+        "fault": "STALE_GREEKS_DATA"
+      },
+      {
+        "step": 40,
+        "fault": "MERCURY_REMITTANCE_DELAY"
+      },
+      {
+        "step": 43,
+        "fault": "PARTIAL_FILL_DESYNC"
+      },
+      {
+        "step": 46,
+        "fault": "PARTIAL_FILL_DESYNC"
+      },
+      {
+        "step": 50,
+        "fault": "BROKER_API_TIMEOUT"
+      }
+    ],
+    "violations": [
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 6.00% exceeded 5.0% safety limit",
+        "step_index": 2,
+        "seed": 12345,
+        "fault_type": "CIRCUIT_BREAKER_STORM"
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.90% exceeded 5.0% safety limit",
+        "step_index": 3,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.80% exceeded 5.0% safety limit",
+        "step_index": 4,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.70% exceeded 5.0% safety limit",
+        "step_index": 5,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.60% exceeded 5.0% safety limit",
+        "step_index": 6,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.50% exceeded 5.0% safety limit",
+        "step_index": 7,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.40% exceeded 5.0% safety limit",
+        "step_index": 8,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.30% exceeded 5.0% safety limit",
+        "step_index": 9,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.20% exceeded 5.0% safety limit",
+        "step_index": 10,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.10% exceeded 5.0% safety limit",
+        "step_index": 11,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "IRON_CONDOR_4_LEG_HEDGE",
+        "description": "Unhedged options position found with 2 legs open",
+        "step_index": 16,
+        "seed": 12345,
+        "fault_type": "PARTIAL_FILL_DESYNC"
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 6.00% exceeded 5.0% safety limit",
+        "step_index": 18,
+        "seed": 12345,
+        "fault_type": "CIRCUIT_BREAKER_STORM"
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.90% exceeded 5.0% safety limit",
+        "step_index": 19,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.80% exceeded 5.0% safety limit",
+        "step_index": 20,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.70% exceeded 5.0% safety limit",
+        "step_index": 21,
+        "seed": 12345,
+        "fault_type": "MERCURY_REMITTANCE_DELAY"
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.60% exceeded 5.0% safety limit",
+        "step_index": 22,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.50% exceeded 5.0% safety limit",
+        "step_index": 23,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.50% exceeded 5.0% safety limit",
+        "step_index": 24,
+        "seed": 12345,
+        "fault_type": "PARTIAL_FILL_DESYNC"
+      },
+      {
+        "invariant_name": "IRON_CONDOR_4_LEG_HEDGE",
+        "description": "Unhedged options position found with 2 legs open",
+        "step_index": 24,
+        "seed": 12345,
+        "fault_type": "PARTIAL_FILL_DESYNC"
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.40% exceeded 5.0% safety limit",
+        "step_index": 25,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.30% exceeded 5.0% safety limit",
+        "step_index": 26,
+        "seed": 12345,
+        "fault_type": "BROKER_API_TIMEOUT"
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.20% exceeded 5.0% safety limit",
+        "step_index": 27,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.10% exceeded 5.0% safety limit",
+        "step_index": 28,
+        "seed": 12345,
+        "fault_type": "MERCURY_REMITTANCE_DELAY"
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.10% exceeded 5.0% safety limit",
+        "step_index": 29,
+        "seed": 12345,
+        "fault_type": "STALE_GREEKS_DATA"
+      },
+      {
+        "invariant_name": "DELTA_LIMIT_15",
+        "description": "Position delta 0.220 exceeded max 0.15 threshold",
+        "step_index": 29,
+        "seed": 12345,
+        "fault_type": "STALE_GREEKS_DATA"
+      },
+      {
+        "invariant_name": "IRON_CONDOR_4_LEG_HEDGE",
+        "description": "Unhedged options position found with 2 legs open",
+        "step_index": 43,
+        "seed": 12345,
+        "fault_type": "PARTIAL_FILL_DESYNC"
+      },
+      {
+        "invariant_name": "IRON_CONDOR_4_LEG_HEDGE",
+        "description": "Unhedged options position found with 2 legs open",
+        "step_index": 46,
+        "seed": 12345,
+        "fault_type": "PARTIAL_FILL_DESYNC"
+      }
+    ],
+    "passed": false
+  },
+  {
+    "seed": 12345,
+    "total_steps": 50,
+    "faults_injected_count": 13,
+    "invariant_violations_count": 27,
+    "faults_injected": [
+      {
+        "step": 2,
+        "fault": "CIRCUIT_BREAKER_STORM"
+      },
+      {
+        "step": 12,
+        "fault": "BROKER_API_TIMEOUT"
+      },
+      {
+        "step": 16,
+        "fault": "PARTIAL_FILL_DESYNC"
+      },
+      {
+        "step": 18,
+        "fault": "CIRCUIT_BREAKER_STORM"
+      },
+      {
+        "step": 21,
+        "fault": "MERCURY_REMITTANCE_DELAY"
+      },
+      {
+        "step": 24,
+        "fault": "PARTIAL_FILL_DESYNC"
+      },
+      {
+        "step": 26,
+        "fault": "BROKER_API_TIMEOUT"
+      },
+      {
+        "step": 28,
+        "fault": "MERCURY_REMITTANCE_DELAY"
+      },
+      {
+        "step": 29,
+        "fault": "STALE_GREEKS_DATA"
+      },
+      {
+        "step": 40,
+        "fault": "MERCURY_REMITTANCE_DELAY"
+      },
+      {
+        "step": 43,
+        "fault": "PARTIAL_FILL_DESYNC"
+      },
+      {
+        "step": 46,
+        "fault": "PARTIAL_FILL_DESYNC"
+      },
+      {
+        "step": 50,
+        "fault": "BROKER_API_TIMEOUT"
+      }
+    ],
+    "violations": [
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 6.00% exceeded 5.0% safety limit",
+        "step_index": 2,
+        "seed": 12345,
+        "fault_type": "CIRCUIT_BREAKER_STORM"
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.90% exceeded 5.0% safety limit",
+        "step_index": 3,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.80% exceeded 5.0% safety limit",
+        "step_index": 4,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.70% exceeded 5.0% safety limit",
+        "step_index": 5,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.60% exceeded 5.0% safety limit",
+        "step_index": 6,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.50% exceeded 5.0% safety limit",
+        "step_index": 7,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.40% exceeded 5.0% safety limit",
+        "step_index": 8,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.30% exceeded 5.0% safety limit",
+        "step_index": 9,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.20% exceeded 5.0% safety limit",
+        "step_index": 10,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.10% exceeded 5.0% safety limit",
+        "step_index": 11,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "IRON_CONDOR_4_LEG_HEDGE",
+        "description": "Unhedged options position found with 2 legs open",
+        "step_index": 16,
+        "seed": 12345,
+        "fault_type": "PARTIAL_FILL_DESYNC"
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 6.00% exceeded 5.0% safety limit",
+        "step_index": 18,
+        "seed": 12345,
+        "fault_type": "CIRCUIT_BREAKER_STORM"
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.90% exceeded 5.0% safety limit",
+        "step_index": 19,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.80% exceeded 5.0% safety limit",
+        "step_index": 20,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.70% exceeded 5.0% safety limit",
+        "step_index": 21,
+        "seed": 12345,
+        "fault_type": "MERCURY_REMITTANCE_DELAY"
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.60% exceeded 5.0% safety limit",
+        "step_index": 22,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.50% exceeded 5.0% safety limit",
+        "step_index": 23,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.50% exceeded 5.0% safety limit",
+        "step_index": 24,
+        "seed": 12345,
+        "fault_type": "PARTIAL_FILL_DESYNC"
+      },
+      {
+        "invariant_name": "IRON_CONDOR_4_LEG_HEDGE",
+        "description": "Unhedged options position found with 2 legs open",
+        "step_index": 24,
+        "seed": 12345,
+        "fault_type": "PARTIAL_FILL_DESYNC"
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.40% exceeded 5.0% safety limit",
+        "step_index": 25,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.30% exceeded 5.0% safety limit",
+        "step_index": 26,
+        "seed": 12345,
+        "fault_type": "BROKER_API_TIMEOUT"
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.20% exceeded 5.0% safety limit",
+        "step_index": 27,
+        "seed": 12345,
+        "fault_type": null
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.10% exceeded 5.0% safety limit",
+        "step_index": 28,
+        "seed": 12345,
+        "fault_type": "MERCURY_REMITTANCE_DELAY"
+      },
+      {
+        "invariant_name": "DRAWDOWN_LIMIT_5_PCT",
+        "description": "Account drawdown 5.10% exceeded 5.0% safety limit",
+        "step_index": 29,
+        "seed": 12345,
+        "fault_type": "STALE_GREEKS_DATA"
+      },
+      {
+        "invariant_name": "DELTA_LIMIT_15",
+        "description": "Position delta 0.220 exceeded max 0.15 threshold",
+        "step_index": 29,
+        "seed": 12345,
+        "fault_type": "STALE_GREEKS_DATA"
+      },
+      {
+        "invariant_name": "IRON_CONDOR_4_LEG_HEDGE",
+        "description": "Unhedged options position found with 2 legs open",
+        "step_index": 43,
+        "seed": 12345,
+        "fault_type": "PARTIAL_FILL_DESYNC"
+      },
+      {
+        "invariant_name": "IRON_CONDOR_4_LEG_HEDGE",
+        "description": "Unhedged options position found with 2 legs open",
+        "step_index": 46,
+        "seed": 12345,
+        "fault_type": "PARTIAL_FILL_DESYNC"
+      }
+    ],
+    "passed": false
   }
 ]
