@@ -13,19 +13,19 @@
     "last_counterfactuals": {
       "tp_25_target": 13.25,
       "tp_50_target": 26.5,
-      "would_hit_tp_25_now": false,
+      "would_hit_tp_25_now": true,
       "would_hit_tp_50_now": false,
       "public_exit_dte": 21,
       "dte_now": 29,
       "would_trigger_public_21dte_exit": false,
       "note": "Counterfactuals only \u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history."
     },
-    "last_counterfactuals_at": "2026-07-30T18:37:37.981694+00:00",
+    "last_counterfactuals_at": "2026-07-30T20:04:11.409841+00:00",
     "last_mark": {
-      "current_debit": 0.40000000000000036,
-      "estimated_pnl": 12.999999999999968,
+      "current_debit": 0.3599999999999999,
+      "estimated_pnl": 17.000000000000014,
       "dte": 29,
-      "hold_hours": 171.00831323916668
+      "hold_hours": 172.45093216944443
     },
     "legs": {
       "long": "SPY260828P00691000",
@@ -43,7 +43,7 @@
     "selection_method": "live_delta_band_scan",
     "selection_snapshot_planned_at": "2026-07-23T15:37:05.285607+00:00",
     "signature": "SPY_2026-08-28_P691-696",
-    "status": "open",
+    "status": "exit_pending",
     "strategy_family": "spy_put_credit",
     "strikes": {
       "long_put": 691.0,
@@ -52,7 +52,22 @@
     "structure": "bull_put_credit",
     "submitted_at": "2026-07-23T15:37:08.002050+00:00",
     "underlying_price_at_scan": 736.5999755859375,
-    "validation_phase": true
+    "validation_phase": true,
+    "exit_reason": "profit_target",
+    "exit_order_id": "ea71127d-8178-4809-85ca-545697d03506",
+    "exit_submitted_at": "2026-07-30T20:04:11.552232+00:00",
+    "estimated_exit_debit": 0.3599999999999999,
+    "estimated_exit_pnl": 17.000000000000014,
+    "exit_counterfactuals": {
+      "tp_25_target": 13.25,
+      "tp_50_target": 26.5,
+      "would_hit_tp_25_now": true,
+      "would_hit_tp_50_now": false,
+      "public_exit_dte": 21,
+      "dte_now": 29,
+      "would_trigger_public_21dte_exit": false,
+      "note": "Counterfactuals only \u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history."
+    }
   },
   "PCS_260828_fb85cfe193c14511868bd0e1b0a59220": {
     "account_mode": "paper",
@@ -73,12 +88,12 @@
       "would_trigger_public_21dte_exit": false,
       "note": "Counterfactuals only \u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history."
     },
-    "last_counterfactuals_at": "2026-07-30T18:37:37.981756+00:00",
+    "last_counterfactuals_at": "2026-07-30T20:04:11.552745+00:00",
     "last_mark": {
-      "current_debit": 0.6800000000000002,
-      "estimated_pnl": -3.0000000000000138,
+      "current_debit": 0.6199999999999997,
+      "estimated_pnl": 3.000000000000036,
       "dte": 29,
-      "hold_hours": 145.6550466797222
+      "hold_hours": 147.0977052836111
     },
     "limit_credit": 0.61,
     "order_id": "fb85cfe1-93c1-4511-868b-d0e1b0a59220",
