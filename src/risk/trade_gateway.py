@@ -242,7 +242,7 @@ class TradeGateway:
 
         ALLOWED_TICKERS = _CENTRAL_TICKERS
     except ImportError:
-        ALLOWED_TICKERS = {"SPY", "SPX", "XSP", "QQQ", "IWM"}
+        ALLOWED_TICKERS = {"SPY"}  # SPY ONLY during put-credit validation
     TICKER_WHITELIST_ENABLED = True  # Toggle for paper testing
 
     # FORBIDDEN strategies - will be rejected outright

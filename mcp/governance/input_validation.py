@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field, field_validator
 try:
     from src.core.trading_constants import ALLOWED_TICKERS, MAX_POSITION_PCT
 except ImportError:
-    ALLOWED_TICKERS = {"SPY", "XSP", "SPX", "QQQ", "IWM"}
+    ALLOWED_TICKERS = {"SPY"}  # SPY ONLY during put-credit validation
     MAX_POSITION_PCT = 0.02
 
 # Allowlist of tradeable symbols aligned with trading_constants.py
