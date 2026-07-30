@@ -100,7 +100,13 @@ class EvalHarness:
             current_eq = case.input_state.get("current_equity", 10000.0)
             peak_eq = case.input_state.get("peak_equity", 10000.0)
             cb = DrawdownCircuitBreaker(max_drawdown_pct=5.0)
-            status = cb.check_equity(current_equity=current_eq, peak_equity=peak_eq)
+            # NEVER persist eval equity into production data/TRADING_HALTED.
+            # Synthetic cases (e.g. 9400/10000) previously halted real paper trading.
+            status = cb.check_equity(
+                current_equity=current_eq,
+                peak_equity=peak_eq,
+                persist=False,
+            )
 
             expected_tripped = case.expected_outcome.get("tripped", False)
             passed = status.tripped == expected_tripped
@@ -109,7 +115,11 @@ class EvalHarness:
                 category=case.category,
                 passed=passed,
                 details=f"Circuit breaker tripped={status.tripped} (expected {expected_tripped})",
-                diagnostics={"drawdown_pct": status.drawdown_pct, "tripped": status.tripped},
+                diagnostics={
+                    "drawdown_pct": status.drawdown_pct,
+                    "tripped": status.tripped,
+                    "persist": False,
+                },
             )
 
         else:
