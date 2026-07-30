@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from src.trading.live_trading_switch import LiveTradingSwitch
