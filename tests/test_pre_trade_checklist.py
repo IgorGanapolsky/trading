@@ -45,7 +45,7 @@ class TestPreTradeChecklistInitialization:
 
     def test_constants_match_claude_md(self):
         """Verify constants match trading_constants.py specification."""
-        assert {"SPY", "XSP", "SPX", "QQQ", "IWM"} == PreTradeChecklist.ALLOWED_TICKERS
+        assert {"SPY"} == PreTradeChecklist.ALLOWED_TICKERS
         assert PreTradeChecklist.MAX_POSITION_PCT == 0.02
         assert PreTradeChecklist.MIN_DTE == 30
         assert PreTradeChecklist.MAX_DTE == 45
@@ -65,15 +65,17 @@ class TestTickerValidation:
         assert passed is True
         assert len(failures) == 0
 
-    def test_spx_allowed(self, checklist):
-        """SPX should pass ticker check (Section 1256 index option)."""
+    def test_spx_blocked_during_validation(self, checklist):
+        """SPX blocked while put-credit cohort is SPY-only."""
         passed, failures = checklist.validate(symbol="SPX", max_loss=100.0, dte=35, is_spread=True)
-        assert passed is True
+        assert passed is False
+        assert any("SPX not allowed" in f for f in failures)
 
-    def test_xsp_allowed(self, checklist):
-        """XSP should pass ticker check (Section 1256 index option)."""
+    def test_xsp_blocked_during_validation(self, checklist):
+        """XSP blocked while put-credit cohort is SPY-only."""
         passed, failures = checklist.validate(symbol="XSP", max_loss=100.0, dte=35, is_spread=True)
-        assert passed is True
+        assert passed is False
+        assert any("XSP not allowed" in f for f in failures)
 
     def test_unapproved_ticker_blocked(self, checklist):
         """AAPL should fail ticker check - not in allowed set."""
@@ -86,10 +88,10 @@ class TestTickerValidation:
         passed, failures = checklist.validate(symbol="spy", max_loss=100.0, dte=35, is_spread=True)
         assert passed is True
 
-    def test_spx_mixed_case_allowed(self, checklist):
-        """Mixed case SpX should pass ticker check (case-insensitive)."""
+    def test_spx_mixed_case_blocked(self, checklist):
+        """Mixed case SpX still blocked (case-insensitive allowlist)."""
         passed, failures = checklist.validate(symbol="SpX", max_loss=100.0, dte=35, is_spread=True)
-        assert passed is True
+        assert passed is False
 
     def test_f_not_allowed(self, checklist):
         """F (Ford) should fail ticker check."""
@@ -132,26 +134,26 @@ class TestOptionsSymbolParsing:
         )
         assert passed is True
 
-    def test_spx_options_symbol_allowed(self, checklist):
-        """SPX options symbol should pass (Section 1256 index option)."""
+    def test_spx_options_symbol_blocked(self, checklist):
+        """SPX options blocked during SPY-only validation."""
         passed, failures = checklist.validate(
             symbol="SPX260221P00660000", max_loss=100.0, dte=35, is_spread=True
         )
-        assert passed is True
+        assert passed is False
 
-    def test_xsp_options_symbol_allowed(self, checklist):
-        """XSP options symbol should pass (Section 1256 index option)."""
+    def test_xsp_options_symbol_blocked(self, checklist):
+        """XSP options blocked during SPY-only validation."""
         passed, failures = checklist.validate(
             symbol="XSP260221P00066000", max_loss=100.0, dte=35, is_spread=True
         )
-        assert passed is True
+        assert passed is False
 
-    def test_iwm_options_symbol_allowed(self, checklist):
-        """IWM options symbol should pass (allowed ticker)."""
+    def test_iwm_options_symbol_blocked(self, checklist):
+        """IWM options blocked during SPY-only validation."""
         passed, failures = checklist.validate(
             symbol="IWM260221C00220000", max_loss=100.0, dte=35, is_spread=True
         )
-        assert passed is True
+        assert passed is False
 
     def test_aapl_options_symbol_rejected(self, checklist):
         """AAPL options symbol should be rejected."""

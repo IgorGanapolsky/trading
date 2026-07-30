@@ -38,8 +38,20 @@ class DrawdownCircuitBreaker:
     def __init__(self, max_drawdown_pct: float = DEFAULT_MAX_INTRADAY_DRAWDOWN_PCT):
         self.max_drawdown_pct = max_drawdown_pct
 
-    def check_equity(self, current_equity: float, peak_equity: float) -> CircuitBreakerStatus:
-        """Check current equity against peak equity. Trips TRADING_HALTED if threshold breached."""
+    def check_equity(
+        self,
+        current_equity: float,
+        peak_equity: float,
+        *,
+        persist: bool = True,
+    ) -> CircuitBreakerStatus:
+        """Check current equity against peak equity.
+
+        When ``persist`` is True (default), a trip writes ``data/TRADING_HALTED``
+        and the circuit-breaker audit log. Callers that only *simulate* a trip
+        (eval harness, unit tests that assert logic without side effects) MUST
+        pass ``persist=False`` so synthetic equity numbers cannot halt production.
+        """
         if peak_equity <= 0:
             return CircuitBreakerStatus(
                 tripped=False,
@@ -55,9 +67,16 @@ class DrawdownCircuitBreaker:
         if drawdown_pct >= self.max_drawdown_pct:
             reason = (
                 f"INTRADAY_DRAWDOWN_EXCEEDED: Current equity ${current_equity:.2f} is "
-                f"{drawdown_pct:.2f}% below peak ${peak_equity:.2f} (max allowed: {self.max_drawdown_pct:.2f}%)."
+                f"{drawdown_pct:.2f}% below peak ${peak_equity:.2f} "
+                f"(max allowed: {self.max_drawdown_pct:.2f}%)."
             )
-            self._trip_circuit_breaker(reason, current_equity, peak_equity, drawdown_pct)
+            if persist:
+                self._trip_circuit_breaker(reason, current_equity, peak_equity, drawdown_pct)
+            else:
+                logger.info(
+                    "Circuit breaker would trip (persist=False): %s",
+                    reason,
+                )
             return CircuitBreakerStatus(
                 tripped=True,
                 current_equity=current_equity,

@@ -9,19 +9,19 @@ from src.safety.mandatory_trade_gate import (
 )
 
 
-def test_validate_ticker_supports_xsp_and_spy():
-    """Verify validate_ticker allows XSP and SPY index/ETF tickers."""
-    valid_xsp, err_xsp = validate_ticker("XSP")
-    assert valid_xsp is True
-    assert err_xsp == ""
-
+def test_validate_ticker_spy_only_during_validation():
+    """Verify validate_ticker is SPY-only while put-credit cohort validates."""
     valid_spy, err_spy = validate_ticker("SPY")
     assert valid_spy is True
     assert err_spy == ""
 
-    valid_opt, err_opt = validate_ticker("XSP260821P00500000")
+    valid_opt, err_opt = validate_ticker("SPY260821P00500000")
     assert valid_opt is True
     assert err_opt == ""
+
+    valid_xsp, err_xsp = validate_ticker("XSP")
+    assert valid_xsp is False
+    assert err_xsp
 
 
 def test_check_ml_trade_confidence_gate():

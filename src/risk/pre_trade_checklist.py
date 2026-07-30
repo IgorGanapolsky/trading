@@ -23,7 +23,7 @@ try:
         extract_underlying as _extract_underlying_shared,
     )
 except ImportError:
-    _CENTRAL_ALLOWED_TICKERS = {"SPY", "SPX", "XSP", "QQQ", "IWM"}
+    _CENTRAL_ALLOWED_TICKERS = {"SPY"}  # SPY ONLY during put-credit validation
     _CENTRAL_MAX_POSITION_PCT = 0.02
 
     def _extract_underlying_shared(symbol: str) -> str:  # type: ignore[misc]
