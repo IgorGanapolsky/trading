@@ -1,0 +1,9 @@
+{
+  "live_credentials_present": true,
+  "live_api_valid": true,
+  "live_cash_balance": 5000.0,
+  "live_buying_power": 20000.0,
+  "options_approved_level": 3,
+  "live_trading_active": true,
+  "status_message": "\u2705 LIVE REAL MONEY TRADING ACTIVE"
+}
