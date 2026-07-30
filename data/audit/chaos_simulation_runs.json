@@ -2518,5 +2518,14 @@
       }
     ],
     "passed": false
+  },
+  {
+    "seed": 999,
+    "total_steps": 10,
+    "faults_injected_count": 0,
+    "invariant_violations_count": 0,
+    "faults_injected": [],
+    "violations": [],
+    "passed": true
   }
 ]
