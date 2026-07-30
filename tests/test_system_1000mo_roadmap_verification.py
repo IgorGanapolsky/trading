@@ -24,12 +24,12 @@ def test_xsp_section_1256_profiles_registered():
     assert pc_xsp.underlying == "XSP"
 
 
-def test_trade_gateway_allows_xsp_and_spy():
-    """Verify TradeGateway allows XSP and SPY index/ETF tickers."""
+def test_trade_gateway_ticker_gate_is_spy_only_during_validation():
+    """XSP profiles stay registered (test above) but the execution gate is
+    SPY-only per kill-criteria.md hard constraints until the put-credit
+    cohort passes and the CEO explicitly signs off on XSP routing."""
     gateway = TradeGateway()
-    allowed_tickers = gateway.ALLOWED_TICKERS
-    assert "XSP" in allowed_tickers
-    assert "SPY" in allowed_tickers
+    assert set(gateway.ALLOWED_TICKERS) == {"SPY"}
 
 
 def test_regime_gate_enforces_iv_rank_and_vix_limits():
