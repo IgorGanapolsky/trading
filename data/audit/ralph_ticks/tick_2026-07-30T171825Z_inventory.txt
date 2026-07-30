@@ -43,3 +43,5 @@
   ],
   "block_reasons": []
 }
+json_out=/Users/igorganapolsky/workspace/git/igor/trading/data/audit/open_inventory_latest.json
+clean=True findings=0

@@ -1,0 +1,30 @@
+{
+  "session": "2026-07-30-ops-truth-hygiene",
+  "answers": {
+    "trading_real_money": false,
+    "making_real_money": false,
+    "mercury_connected": true,
+    "mercury_available_usd": 100.0,
+    "alpaca_paper_connected": true,
+    "alpaca_paper_equity": 94123.52,
+    "alpaca_live_api": "HTTP 401 unauthorized",
+    "target_1000_mo_after_tax": false,
+    "remitted_2026_07_usd": 0.0
+  },
+  "actions": {
+    "merged_pr": 4314,
+    "opened_pr": [4317, 4318],
+    "closed_pr": 4313,
+    "cleared_trading_halt": true,
+    "halt_clear_reason": "eval_harness contamination synthetic 9400/10000",
+    "live_readiness_honesty_fix": "PR 4317",
+    "live_key_rotation": "deferred - vault/keychain/env all 401; paper operational; live policy-blocked"
+  },
+  "paper_state": {
+    "open_pcs": 2,
+    "max_concurrent": 2,
+    "inventory_clean": true,
+    "closed_pcs_cohort": 0,
+    "new_entries_blocked_reason": "Concurrent put credits 2/2"
+  }
+}
