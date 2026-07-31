@@ -1,6 +1,6 @@
 {
   "schema_version": "put-credit-cohort-scorecard/1",
-  "generated_at": "2026-07-30T18:46:10.448562+00:00",
+  "generated_at": "2026-07-31T15:56:36.817197+00:00",
   "active_family": "spy_put_credit",
   "paper_only": true,
   "live_blocked": true,
@@ -15,17 +15,8 @@
     "min_hold_hours": 24
   },
   "open": {
-    "open_n": 2,
+    "open_n": 1,
     "entries": [
-      {
-        "key": "PCS_260828_4fc04e47a2da4fe9ab2814cdad69ab44",
-        "expiry": "2026-08-28",
-        "credit": 0.53,
-        "quantity": 1,
-        "entry_time": "2026-07-23T15:37:08.050702+00:00",
-        "signature": "SPY_2026-08-28_P691-696",
-        "regime": null
-      },
       {
         "key": "PCS_260828_fb85cfe193c14511868bd0e1b0a59220",
         "expiry": "2026-08-28",
@@ -38,19 +29,19 @@
     ]
   },
   "closed": {
-    "closed_n": 0,
-    "wins": 0,
+    "closed_n": 1,
+    "wins": 1,
     "losses": 0,
     "breakeven": 0,
-    "win_rate_pct": null,
-    "profit_factor": null,
-    "expectancy": null,
-    "total_realized_pnl": 0.0,
-    "avg_win": null,
+    "win_rate_pct": 100.0,
+    "profit_factor": Infinity,
+    "expectancy": 17.0,
+    "total_realized_pnl": 17.0,
+    "avg_win": 17.0,
     "avg_loss": null,
     "kill_criteria": {
       "n_target": 30,
-      "n_closed": 0,
+      "n_closed": 1,
       "sample_sufficient": false,
       "expectancy_gt_0": null,
       "profit_factor_gt_1": null,
@@ -62,14 +53,25 @@
     "rolling_20": {
       "window": 20,
       "sample_sufficient": false,
-      "last": null,
-      "note": "no closed put-credit pnls"
+      "last": {
+        "n": 1,
+        "wins": 1,
+        "losses": 0,
+        "breakeven": 0,
+        "win_rate_pct": 100.0,
+        "profit_factor": Infinity,
+        "expectancy": 17.0,
+        "total_realized_pnl": 17.0,
+        "avg_win": 17.0,
+        "avg_loss": null
+      },
+      "note": "need 20 closed trades for full rolling window (have 1)"
     }
   },
   "progress": {
-    "closed_toward_n30": 0,
-    "remaining_to_gate": 30,
-    "pct_to_gate": 0.0
+    "closed_toward_n30": 1,
+    "remaining_to_gate": 29,
+    "pct_to_gate": 3.3
   },
   "honesty": {
     "claim_profitable": false,
