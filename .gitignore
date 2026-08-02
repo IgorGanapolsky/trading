@@ -43,6 +43,8 @@ data/trading_halt.txt
 !data/strategy_params.json
 !data/ic_stats.json
 !data/trade_journal.jsonl
+!data/runtime/
+!data/runtime/**
 logs/*.log
 population_log*.txt
 
@@ -197,3 +199,70 @@ rag_knowledge/
 # Agent-generated local state
 .agents/
 .codex/
+
+# === REPO HYGIENE (2026-08-02) ===
+# Runtime / agent garbage — never re-commit. Canonical ledgers stay whitelisted above.
+
+# Screenshots, browser dumps, IDE/editor state
+data/screenshots/
+.playwright-mcp/
+.obsidian/
+.aider*
+.aider.chat.history.md
+
+# Audit / analysis / report dumps (regenerated locally)
+data/audit/
+data/audit_trail/
+data/audit_reports/
+data/analysis/
+data/reports/
+data/debug/
+data/post_market_analysis/
+data/workflow_health/
+data/workflow_state/
+data/swarm_state/
+data/claude_ops/
+data/context_engine/
+data/vector_db/
+data/blog_cache/
+data/youtube_cache/
+data/newsletter_signals/
+data/external_signals/
+data/market_signals/
+data/options_signals/
+data/sentiment/
+data/evaluations/
+data/feedback/
+data/memory/
+data/ipo/
+data/archive/
+data/analytics/
+data/revenue/
+data/research/
+data/trade_plans/
+data/backtests/
+data/backtests_verification/
+data/gpu_backtests/
+data/ml_training_data/
+data/datasets/
+data/rag_knowledge/
+
+# Deprecated raw daily trade dumps (use data/trades.json)
+data/trades_*.json
+data/trades_for_clustering.json
+data/options_trades_*.json
+data/backtest_trades.json
+
+# Logs + generated workflow artifacts
+logs/
+!logs/.gitkeep
+artifacts/
+!artifacts/.gitkeep
+
+# Claude session logs (config under .claude/ stays tracked)
+.claude/logs/
+
+# Binary ML training dumps stay local (JSON weights under models/ml may be tracked intentionally)
+*.pt
+!models/ml/*.pt
+

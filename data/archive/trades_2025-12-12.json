@@ -1,9 +1,0 @@
-[
-  {
-    "symbol": "SPY",
-    "qty": 1,
-    "id": "848c5608-8bcd-40f1-96e5-4fc97aec4133",
-    "status": "OrderStatus.PENDING_NEW",
-    "ts": "2025-12-12T16:46:50.834333+00:00"
-  }
-]

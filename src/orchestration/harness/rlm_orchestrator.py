@@ -102,13 +102,9 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     orchestrator = RLMOrchestrator()
 
-    # Example Task: Analyze recent trades
+    # Example Task: Analyze paired closed trades (canonical ledger only)
     recent_trade_files = [
-        "data/trades_2026-02-16.json",
-        "data/trades_2026-02-17.json",
-        "data/trades_2026-02-18.json",
-        "data/trades_2026-02-19.json",
-        "data/trades_2026-02-20.json",
+        "data/trades.json",
     ]
 
     task = RLMTask(

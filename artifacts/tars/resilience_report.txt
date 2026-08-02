@@ -1,6 +1,0 @@
-timestamp_utc=2026-03-06T11:09:02Z
-test=invalid_model_error_path
-curl_exit=0
-has_error_field=true
-error_type=invalid_request_error
-error_message=The specified model is not enabled for this mode or does not exist

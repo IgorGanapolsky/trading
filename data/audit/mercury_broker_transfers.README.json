@@ -1,4 +1,0 @@
-{
-  "schema": "mercury_broker_transfers.jsonl",
-  "note": "append-only transfer log; no secrets"
-}
