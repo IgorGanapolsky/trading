@@ -1,263 +1,29 @@
-name: Execute Credit Spread
+name: Execute Credit Spread (DISABLED)
+
+# KILLED path for freehand credit spreads. Use spy_put_credit paper validation only.
+# See data/runtime/strategy_kill_switch.json
 
 on:
-  # DISABLED: ic_simple.py is sole trader (2026-04-01)
-  # schedule:
-  # Run at 9:35 AM ET on weekdays (covers EST/EDT)
-  #     - cron: "35 13,14 * * 1-5"
   workflow_dispatch:
     inputs:
-      symbol:
-        description: "Underlying symbol (SPY ONLY per CLAUDE.md Jan 19, 2026)"
+      acknowledge_killed:
+        description: "Type STRATEGY_KILLED to acknowledge this workflow is a no-op"
         required: true
-        default: "SPY"
-        type: choice
-        options:
-          - SPY
-      spread_width:
-        description: "Spread width in dollars (max $2 for 5% compliance with $5K account)"
-        required: true
-        default: "2"
-      quantity:
-        description: "Number of spreads"
-        required: true
-        default: "1"
+        default: ""
 
 permissions:
   contents: read
 
-# CRITICAL: Global trade concurrency - prevents race conditions (LL-281)
-concurrency:
-  group: global-trade-execution
-  cancel-in-progress: false
-
-env:
-  # Note: get_alpaca_client() expects these specific names
-  ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-  ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
-  # Legacy fallback names
-  ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-  ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
-  ALPACA_BASE_URL: "https://paper-api.alpaca.markets"
-
-  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 jobs:
-  execute-spread:
+  refuse:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
-        with:
-          python-version: "3.11"
-          cache: "pip"
-
-      - name: Install dependencies
+      - name: Refuse freehand credit-spread execution
         run: |
-          pip install alpaca-py requests yfinance numpy
-
-      # ===== NEW: CALENDAR VALIDATION (LL-240 fix) =====
-      - name: Validate Trading Day
-        id: calendar_check
-        env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
-        run: |
-          python3 << 'CALENDAR_EOF'
-          import os
-          from datetime import date
-          from alpaca.trading.client import TradingClient
-          from alpaca.trading.requests import GetCalendarRequest
-
-          client = TradingClient(
-              os.environ['ALPACA_API_KEY'],
-              os.environ['ALPACA_API_SECRET'],
-              paper=True
-          )
-
-          today = date.today()
-          calendar_request = GetCalendarRequest(start=today, end=today)
-          calendar = client.get_calendar(calendar_request)
-
-          if not calendar:
-              print(f"::notice::{today} is NOT a trading day (holiday/weekend)")
-              print("skip=true >> $GITHUB_OUTPUT")
-              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-                  f.write("skip=true\n")
-          else:
-              print(f"✅ {today} is a valid trading day")
-              print(f"   Market opens: {calendar[0].open}")
-              print(f"   Market closes: {calendar[0].close}")
-              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-                  f.write("skip=false\n")
-          CALENDAR_EOF
-
-      # ===== POSITION COMPLIANCE CHECK (LL-240 + LL-232 fix) =====
-      - name: Check Position Compliance
-        id: compliance_check
-        if: steps.calendar_check.outputs.skip != 'true'
-        env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
-          SPREAD_WIDTH: ${{ inputs.spread_width || '2' }}
-          QUANTITY: ${{ inputs.quantity || '1' }}
-        run: |
-          python3 << 'COMPLIANCE_EOF'
-          import os
-          from alpaca.trading.client import TradingClient
-
-          client = TradingClient(
-              os.environ['ALPACA_API_KEY'],
-              os.environ['ALPACA_API_SECRET'],
-              paper=True
-          )
-
-          account = client.get_account()
-          equity = float(account.equity)
-          positions = client.get_all_positions()
-
-          # Get proposed trade parameters
-          spread_width = int(os.environ.get('SPREAD_WIDTH', '2'))  # Default $2 for 5% compliance
-          quantity = int(os.environ.get('QUANTITY', '1'))
-          proposed_risk = spread_width * 100 * quantity  # $2 spread = $200 collateral per contract
-
-          # Calculate current exposure
-          option_positions = [p for p in positions if len(p.symbol) > 10]
-          spread_count = len(option_positions) // 2
-          current_risk = spread_count * 500  # Estimate existing risk
-
-          print(f"=== COMPLIANCE CHECK (CLAUDE.md Rules) ===")
-          print(f"Account Equity: ${equity:.2f}")
-          print(f"")
-
-          # NEW: PDT (Pattern Day Trading) Check - LL-271 Prevention
-          print(f"--- PDT (Pattern Day Trading) Check ---")
-          daytrade_count = int(getattr(account, 'daytrade_count', 0))
-          is_pdt = getattr(account, 'pattern_day_trader', False)
-          print(f"Day trades in last 5 days: {daytrade_count}")
-          print(f"PDT status: {'FLAGGED' if is_pdt else 'OK'}")
-
-          if is_pdt and equity < 25000:
-              print(f"::error::PDT BLOCKED: Account is PDT-flagged with equity under $25K")
-              print(f"::error::Cannot execute any day trades until restriction clears")
-              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-                  f.write("compliant=false\n")
-              exit(1)
-
-          if daytrade_count >= 3 and equity < 25000:
-              print(f"::warning::PDT WARNING: {daytrade_count}/4 day trades used. One more day trade will trigger PDT.")
-              # Allow trade but warn - the position won't be a day trade if held overnight
-
-          print(f"✅ PDT check PASSED")
-          print(f"")
-
-          try:
-              from src.core.trading_constants import MAX_CUMULATIVE_RISK_PCT, MAX_POSITION_PCT
-          except Exception:
-              MAX_POSITION_PCT = 0.05
-              MAX_CUMULATIVE_RISK_PCT = 0.10
-
-          print(f"--- Per-Position Limit ({MAX_POSITION_PCT * 100:.0f}% Rule) ---")
-          max_per_position = equity * MAX_POSITION_PCT
-          print(f"{MAX_POSITION_PCT * 100:.0f}% Position Limit: ${max_per_position:.2f}")
-          print(f"Proposed trade risk: ${proposed_risk}")
-
-          if proposed_risk > max_per_position:
-              print(
-                  f"::error::POSITION SIZE VIOLATION: ${proposed_risk} exceeds "
-                  f"{MAX_POSITION_PCT * 100:.0f}% limit (${max_per_position:.2f})"
-              )
-              print(f"::error::Reduce quantity or spread width to comply with CLAUDE.md")
-              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-                  f.write("compliant=false\n")
-              exit(1)
-
-          print(f"✅ Per-position check PASSED (${proposed_risk} <= ${max_per_position:.2f})")
-          print(f"")
-          print(f"--- Total Exposure Limit ({MAX_CUMULATIVE_RISK_PCT * 100:.0f}% Rule) ---")
-          total_risk = current_risk + proposed_risk
-          total_risk_pct = (total_risk / equity) * 100
-          print(f"Current exposure: ${current_risk}")
-          print(f"After trade: ${total_risk} ({total_risk_pct:.1f}%)")
-
-          MAX_TOTAL_EXPOSURE_PCT = MAX_CUMULATIVE_RISK_PCT * 100
-          if total_risk_pct > MAX_TOTAL_EXPOSURE_PCT:
-              print(f"::error::TOTAL EXPOSURE VIOLATION: {total_risk_pct:.1f}% exceeds {MAX_TOTAL_EXPOSURE_PCT:.1f}% limit")
-              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-                  f.write("compliant=false\n")
-              exit(1)
-
-          print(f"✅ Total exposure check PASSED ({total_risk_pct:.1f}% < {MAX_TOTAL_EXPOSURE_PCT}%)")
-          print(f"")
-          print(f"✅ ALL COMPLIANCE CHECKS PASSED")
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-              f.write("compliant=true\n")
-          COMPLIANCE_EOF
-
-      - name: Execute Bull Put Credit Spread
-        if: steps.calendar_check.outputs.skip != 'true' && steps.compliance_check.outputs.compliant == 'true'
-        env:
-          SYMBOL: ${{ inputs.symbol || 'SPY' }}
-          SPREAD_WIDTH: ${{ inputs.spread_width || '2' }}
-          PAPER_TRADING: "true"
-        run: |
-          echo "=== Executing Bull Put Credit Spread via scripts/execute_credit_spread.py ==="
-          echo "Symbol: $SYMBOL"
-          echo "Spread Width: \$$SPREAD_WIDTH"
-          python3 scripts/execute_credit_spread.py --symbol "$SYMBOL" --width "$SPREAD_WIDTH"
-
-      # ===== MANDATORY STOP-LOSS (LL-232 + CLAUDE.md) =====
-      - name: Set Stop-Loss on New Position
-        if: steps.calendar_check.outputs.skip != 'true' && steps.compliance_check.outputs.compliant == 'true'
-        env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
-        run: |
-          echo "🛡️ Setting mandatory stop-loss (CLAUDE.md: 100% credit-loss threshold)"
-          python3 scripts/set_trailing_stops.py --trail-pct 0.20 || {
-            echo "::warning::Stop-loss setting had issues - verify manually"
-          }
-          echo "✅ Stop-loss protection activated"
-
-      # ===== FAILURE NOTIFICATION VIA GITHUB ISSUE =====
-      - name: Create Alert on Failure
-        if: failure()
-        continue-on-error: true # Non-critical: notification failure shouldn't change workflow status
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const title = '🚨 ALERT: Credit Spread Execution Failed';
-            const body = `## CRITICAL Alert - Trade Failure
-
-            **Timestamp**: ${new Date().toISOString()}
-            **Symbol**: ${{ inputs.symbol || 'SPY' }}
-            **Workflow Run**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-            ---
-
-            The credit spread execution workflow failed. Check the logs for details.
-
-            **Possible causes:**
-            - Position compliance violation (risk limits exceeded)
-            - Market closed / not a trading day
-            - API connection issues
-            - Insufficient buying power
-
-            ---
-
-            *Automated alert from execute-credit-spread.yml*`;
-
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: title,
-              body: body,
-              labels: ['alert', 'critical', 'trade-failure', 'automated']
-            });
-            console.log('Alert issue created');
+          echo "STRATEGY_KILLED: freehand credit-spread workflow is disabled."
+          echo "Successor: python3 scripts/spy_put_credit.py --dry-run  (paper only)"
+          echo "Kill switch: data/runtime/strategy_kill_switch.json"
+          if [ "${{ github.event.inputs.acknowledge_killed }}" != "STRATEGY_KILLED" ]; then
+            echo "Set acknowledge_killed=STRATEGY_KILLED if you only wanted to confirm the kill."
+          fi
+          exit 1

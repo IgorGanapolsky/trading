@@ -6,23 +6,34 @@
 - NORTH_STAR_MONTHLY_AFTER_TAX: 6000
 - MAX_POSITIONS: 8
 
-## Strategy: Iron Condors on SPY
+## Active Strategy (post IC kill, 2026-07-22)
 
-- Sell 15-20 delta put spread (bull put) + 15-20 delta call spread (bear call)
-- $5-wide wings during validation cohort 1 (CEO-approved 2026-07-02; rehab plan rejected $10-wide wings), 30-45 DTE
-- Wing width source of truth: `data/strategy_params.json` — do not hardcode in docs
-- 2 concurrent ICs across different expiry cycles (8 legs max)
-- 15-delta = 86% win rate (LL-220), risk/reward ~1.5:1
+**Primary entry: `spy_put_credit` (paper only).** See `data/runtime/strategy_kill_switch.json`
+and `.claude/rules/kill-criteria.md` / `controlled-experiment.md`.
 
-## Pre-Trade Checklist (MANDATORY)
+- SPY 1-lot bull put credit, $5 wide, 15Δ short, 30–45 DTE
+- Max 3 structures/day, max 2 concurrent
+- Stop at 200% of credit; profit take 25%; exit by 7 DTE
+- Live capital blocked until cohort n≥30 with expectancy>0 and PF>1
 
-1. [ ] Ticker = SPY (ONLY — best liquidity, tightest spreads)
-2. [ ] Position size ≤ 5% of account ($5,000 risk)
-3. [ ] Iron condor (4-leg, defined risk on BOTH sides)
-4. [ ] Short strikes at 15-20 delta
-5. [ ] 30-45 DTE expiration
-6. [ ] Stop-loss at 200% of credit defined (CEO-approved 2026-07-02)
-7. [ ] Exit plan: 25% profit OR 7 DTE (CEO-approved 2026-07-02; LL-268)
+### Iron Condor — KILLED for new entries
+
+- Do **not** open new iron condors via `ic_simple.py`, `iron_condor_trader.py`, or
+  disabled IC workflows.
+- Residual IC legs: exit/manage only via guardian / `ic_simple.py --mode exit`.
+- Historical IC rules below are **archive context only**, not active North Star path.
+
+## Pre-Trade Checklist (MANDATORY) — put credit
+
+1. [ ] Ticker = SPY (ONLY)
+2. [ ] Paper account only (`spy_put_credit`)
+3. [ ] 1-lot defined-risk put credit (2-leg)
+4. [ ] Short strike ~15 delta
+5. [ ] 30–45 DTE
+6. [ ] Stop-loss at 200% of credit defined
+7. [ ] Exit plan: 25% profit OR 7 DTE
+8. [ ] Open inventory clean (`scripts/audit_open_inventory.py`)
+9. [ ] Broker state fresh; kill switch allows put-credit family
 
 ## Ticker Selection
 
@@ -35,15 +46,18 @@
 ## Win Rate Tracking
 
 - Track every paper trade: entry, exit, P/L, win/loss
-- Required metrics: win rate %, avg win, avg loss, profit factor
-- < 80% after 30 trades: check delta selection, may need wider wings
-- 80-85%: on track, maintain discipline
-- 85%+: profitable, consider scaling after 90 days
+- Required metrics: win rate %, avg win, avg loss, profit factor, expectancy
+- Gate on expectancy > 0 and PF > 1 over 30 clean put-credit trades — not headline win rate alone
 
 ## Projection Rules (MANDATORY)
 
-- NO return projections until 30+ completed iron condor trades exist
+- NO return projections until 30+ completed put-credit validation trades exist
 - NO extrapolating daily/weekly returns to monthly/yearly timeframes
-- NO attributing P/L to iron condors without decomposing by order source
-- All P/L claims MUST use `validate_pl_report()` from `src/utils/pl_validator.py`
+- All P/L claims MUST use paired ledger (`data/trades.json`) + `validate_pl_report()` when available
 - If asked "how much did we make" — show decomposed report, not a single number
+
+## Archive — historical IC structure (killed for new risk)
+
+- Sell 15-20 delta put spread + 15-20 delta call spread
+- $5-wide wings, 30-45 DTE, 2 concurrent ICs max (8 legs)
+- Stop 200% credit; exit 25% profit OR 7 DTE
