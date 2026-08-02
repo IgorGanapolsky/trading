@@ -28,14 +28,22 @@ FORBIDDEN_TRACKED_PREFIXES = (
     "data/memory/",
     "data/sentiment/",
     "data/options_signals/",
+    "rag_knowledge/",
+    ".planning/",
+    ".thumbgate/",
+    ".agents/",
     "logs/autonomous_trading_",
     "artifacts/devloop/",
     "artifacts/tars/",
     ".playwright-mcp/",
     ".obsidian/",
     ".aider.chat.history.md",
+    ".aider*",
     ".claude/logs/",
     "docs/contest/",
+    "docs/data/",
+    "docs/assets/snapshots/",
+    "graphify-out/",
 )
 
 # Exact deprecated dump filenames (root of data/)
@@ -101,3 +109,8 @@ def test_gitignore_has_hygiene_section() -> None:
     assert "REPO HYGIENE (2026-08-02)" in gitignore
     assert "data/screenshots/" in gitignore
     assert "logs/" in gitignore
+    assert "rag_knowledge/" in gitignore
+    assert ".planning/" in gitignore
+    assert "docs/data/" in gitignore
+    assert "docs/assets/snapshots/" in gitignore
+    assert "graphify-out/" in gitignore
