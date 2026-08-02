@@ -61,6 +61,7 @@ REQUIRED_TRACKED = (
     "data/strategy_params.json",
     "data/runtime/strategy_kill_switch.json",
     "data/revenue/outbound_target_leads.json",
+    "data/feedback/stats.json",
     ".gitignore",
 )
 

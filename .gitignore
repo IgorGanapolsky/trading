@@ -146,6 +146,7 @@ data/silver/
 data/gold/
 wiki/
 data/feedback/
+!data/feedback/stats.json
 data/backups/
 data/lancedb_feedback/
 data/chroma/
@@ -237,6 +238,7 @@ data/options_signals/
 data/sentiment/
 data/evaluations/
 data/feedback/
+!data/feedback/stats.json
 data/memory/
 data/ipo/
 data/archive/
