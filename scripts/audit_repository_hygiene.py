@@ -13,12 +13,38 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 FORBIDDEN_PREFIXES = (
-    ".claude/logs/", "artifacts/", "coverage/", "data/agent_context/", "data/audit/",
-    "data/backtests/", "data/cache/", "data/reports/", "data/screenshots/",
-    "docs/assets/snapshots/", "logs/", "node_modules/", "reports/",
+    ".claude/logs/",
+    "artifacts/",
+    "coverage/",
+    "data/agent_context/",
+    "data/audit/",
+    "data/backtests/",
+    "data/cache/",
+    "data/reports/",
+    "data/screenshots/",
+    "docs/assets/snapshots/",
+    "logs/",
+    "node_modules/",
+    "reports/",
 )
 FORBIDDEN_NAMES = {".coverage", ".DS_Store", "coverage.json", "coverage.xml", "pytest.ini"}
-BINARY_SUFFIXES = {".avif", ".gif", ".gz", ".ico", ".jpeg", ".jpg", ".pdf", ".png", ".pyc", ".sqlite", ".db", ".pkl", ".pt", ".webp", ".zip"}
+BINARY_SUFFIXES = {
+    ".avif",
+    ".gif",
+    ".gz",
+    ".ico",
+    ".jpeg",
+    ".jpg",
+    ".pdf",
+    ".png",
+    ".pyc",
+    ".sqlite",
+    ".db",
+    ".pkl",
+    ".pt",
+    ".webp",
+    ".zip",
+}
 LESSON_ID_PATTERNS = (
     re.compile(r"(?im)^\s*id\s*:\s*['\"]?(LL[-_ ]?\d+)", re.IGNORECASE),
     re.compile(r"(?im)^\s*\*\*ID\*\*\s*:\s*(LL[-_ ]?\d+)", re.IGNORECASE),
@@ -26,7 +52,9 @@ LESSON_ID_PATTERNS = (
 )
 FILENAME_LESSON_ID = re.compile(r"(?i)(?:^|[/_-])LL[-_ ]?(\d+)")
 LOCAL_PATH_PATTERN = re.compile(r"/Users/(?!\.\.\.)[A-Za-z0-9._-]+/")
-STALE_STATUS_PATTERN = re.compile(r"(?im)^\s*(?:\*\*)?status(?:\*\*)?\s*:\s*(IN_PROGRESS|ACTIVE CRISIS|PENDING)\b")
+STALE_STATUS_PATTERN = re.compile(
+    r"(?im)^\s*(?:\*\*)?status(?:\*\*)?\s*:\s*(IN_PROGRESS|ACTIVE CRISIS|PENDING)\b"
+)
 
 
 @dataclass(frozen=True)
@@ -82,9 +110,13 @@ def scan(repo: Path) -> dict:
         total_lines += physical_line_count(data)
         suffix_counts[path.suffix.lower() or "[no suffix]"] += 1
         if any(relative.startswith(prefix) for prefix in FORBIDDEN_PREFIXES):
-            findings.append(Finding("error", "generated-path", relative, "tracked generated output"))
+            findings.append(
+                Finding("error", "generated-path", relative, "tracked generated output")
+            )
         if path.name in FORBIDDEN_NAMES or path.suffix.lower() in {".pyc", ".log"}:
-            findings.append(Finding("error", "generated-file", relative, "tracked runtime artifact"))
+            findings.append(
+                Finding("error", "generated-file", relative, "tracked runtime artifact")
+            )
         if data:
             content_hashes[hashlib.sha256(data).hexdigest()].append(relative)
         is_binary = b"\0" in data[:8192] or path.suffix.lower() in BINARY_SUFFIXES
@@ -94,23 +126,44 @@ def scan(repo: Path) -> dict:
         text_files += 1
         text = data.decode("utf-8", errors="replace")
         if LOCAL_PATH_PATTERN.search(text) and not relative.startswith("tests/"):
-            findings.append(Finding("error", "absolute-user-path", relative, "contains a machine-specific /Users path"))
+            findings.append(
+                Finding(
+                    "error",
+                    "absolute-user-path",
+                    relative,
+                    "contains a machine-specific /Users path",
+                )
+            )
         if relative.startswith("rag_knowledge/lessons_learned/"):
             if identifier := lesson_id(relative, text):
                 lesson_ids[identifier].append(relative)
             else:
                 findings.append(Finding("warning", "lesson-id", relative, "no lesson ID found"))
             if match := STALE_STATUS_PATTERN.search(text[:3000]):
-                findings.append(Finding("warning", "stale-lesson-status", relative, f"status is {match.group(1)}"))
+                findings.append(
+                    Finding(
+                        "warning", "stale-lesson-status", relative, f"status is {match.group(1)}"
+                    )
+                )
 
     for identifier, lesson_paths in sorted(lesson_ids.items()):
         if len(lesson_paths) > 1:
-            findings.append(Finding("error", "duplicate-lesson-id", ", ".join(lesson_paths), f"{identifier} appears {len(lesson_paths)} times"))
+            findings.append(
+                Finding(
+                    "error",
+                    "duplicate-lesson-id",
+                    ", ".join(lesson_paths),
+                    f"{identifier} appears {len(lesson_paths)} times",
+                )
+            )
 
     duplicate_groups = [items for items in content_hashes.values() if len(items) > 1]
     return {
-        "files_scanned": len(paths), "physical_lines": total_lines, "text_files": text_files,
-        "binary_files": binary_files, "lesson_files": sum(len(items) for items in lesson_ids.values()),
+        "files_scanned": len(paths),
+        "physical_lines": total_lines,
+        "text_files": text_files,
+        "binary_files": binary_files,
+        "lesson_files": sum(len(items) for items in lesson_ids.values()),
         "duplicate_content_groups": len(duplicate_groups),
         "errors": sum(item.severity == "error" for item in findings),
         "warnings": sum(item.severity == "warning" for item in findings),

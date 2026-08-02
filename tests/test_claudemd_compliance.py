@@ -13,14 +13,21 @@ def test_documented_active_path_is_put_credit() -> None:
 
 
 def test_killed_entry_scripts_are_absent() -> None:
-    for path in ("scripts/ic_simple.py", "scripts/iron_condor_trader.py", "scripts/iron_condor_guardian.py", "scripts/iron_condor_scanner.py"):
+    for path in (
+        "scripts/ic_simple.py",
+        "scripts/iron_condor_trader.py",
+        "scripts/iron_condor_guardian.py",
+        "scripts/iron_condor_scanner.py",
+    ):
         assert not Path(path).exists()
 
 
 def test_workflow_only_executes_current_entry_path() -> None:
     text = WORKFLOW.read_text()
     assert "python3 scripts/spy_put_credit.py" in text and "--execute-paper" in text
-    assert "--live" not in text and "iron_condor_trader.py" not in text and "ic_simple.py" not in text
+    assert (
+        "--live" not in text and "iron_condor_trader.py" not in text and "ic_simple.py" not in text
+    )
 
 
 def test_workflows_do_not_default_to_forbidden_tickers() -> None:
@@ -34,4 +41,3 @@ def test_kill_switch_blocks_live() -> None:
     assert state["live_blocked"] is True
     assert {"ic_simple", "iron_condor"} <= set(state["killed_families"])
     assert state["active_family"] == "spy_put_credit"
-

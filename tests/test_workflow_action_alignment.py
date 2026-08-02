@@ -16,9 +16,7 @@ from pathlib import Path
 WORKFLOWS = Path(__file__).resolve().parents[1] / ".github" / "workflows"
 
 MONOREPO_ACTION = "github/codeql-action"
-ANY_REF_PATTERN = re.compile(
-    rf"uses:\s*{re.escape(MONOREPO_ACTION)}/([\w-]+)@(\S+)"
-)
+ANY_REF_PATTERN = re.compile(rf"uses:\s*{re.escape(MONOREPO_ACTION)}/([\w-]+)@(\S+)")
 FULL_SHA = re.compile(r"^[0-9a-fA-F]{40}$")
 
 

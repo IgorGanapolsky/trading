@@ -17,7 +17,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -481,7 +481,7 @@ def audit_open_inventory(
         expiries=expiries,
         max_abs_qty=max_abs,
         option_leg_count=len(legs),
-        audited_at=datetime.now(timezone.utc).isoformat(),
+        audited_at=datetime.now(UTC).isoformat(),
     )
 
 

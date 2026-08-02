@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -35,8 +35,8 @@ def _parse_timestamp(value: str) -> datetime | None:
     except ValueError:
         return None
     if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
+        return parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
 
 
 def _to_bool(value: Any, default: bool = False) -> bool:
@@ -121,7 +121,7 @@ def collect_ab_metrics(
     )
 
     metric = {
-        "captured_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "captured_at_utc": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "variant": variant,
         "gate_passed": _to_bool(gate_report.get("passed", False), default=False),
         "gate_latency_seconds": _sum_gate_latency_seconds(gate_report),
@@ -167,7 +167,7 @@ def _read_jsonl(path: Path) -> list[dict[str, Any]]:
 
 
 def summarize_records(records: list[dict[str, Any]], days: int) -> dict[str, Any]:
-    cutoff = datetime.now(timezone.utc) - timedelta(days=max(1, days))
+    cutoff = datetime.now(UTC) - timedelta(days=max(1, days))
     scoped: list[dict[str, Any]] = []
     for item in records:
         ts = _parse_timestamp(str(item.get("captured_at_utc") or ""))
@@ -180,7 +180,7 @@ def summarize_records(records: list[dict[str, Any]], days: int) -> dict[str, Any
         by_variant.setdefault(variant, []).append(item)
 
     summary: dict[str, Any] = {
-        "generated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "generated_at_utc": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "lookback_days": days,
         "samples": len(scoped),
         "variants": {},

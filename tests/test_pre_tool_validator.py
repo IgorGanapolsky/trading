@@ -15,9 +15,7 @@ def test_valid_execute_trade() -> None:
 
 
 def test_missing_required_param() -> None:
-    res = PreToolValidator.validate_tool_call(
-        "execute_trade", {"symbol": "SPY", "quantity": 10}
-    )
+    res = PreToolValidator.validate_tool_call("execute_trade", {"symbol": "SPY", "quantity": 10})
     assert res.is_valid is False
     assert any("Missing required parameter 'action'" in err for err in res.errors)
 

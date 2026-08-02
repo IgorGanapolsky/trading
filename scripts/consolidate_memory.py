@@ -14,7 +14,7 @@ Architecture (from MarkTechPost self-organizing memory pattern):
 import json
 import sys
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -265,7 +265,7 @@ def main():
         consolidated_scenes.append(scene_summary)
 
     # Build output
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     output = {
         "version": 1,
         "consolidated_at": now,

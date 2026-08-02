@@ -71,7 +71,9 @@ class DeterministicMarketSimulator:
             side = self.rng.choice(sides)
             amount = self.rng.uniform(0.0, 20000.0)
             equity = self.rng.choice([0.0, 1000.0, 50000.0, 100000.0])
-            strategy = self.rng.choice(["spy_put_credit", "xsp_put_credit", "iron_condor", "unknown_strat"])
+            strategy = self.rng.choice(
+                ["spy_put_credit", "xsp_put_credit", "iron_condor", "unknown_strat"]
+            )
 
             # Fault injection check
             is_fault = self.rng.random() < self.config.fault_injection_rate
@@ -138,7 +140,9 @@ class DeterministicMarketSimulator:
             else:
                 invariants_passed += 1
 
-        repro_cmd = f"python -m pytest tests/test_antithesis_simulation.py --seed={self.config.seed}"
+        repro_cmd = (
+            f"python -m pytest tests/test_antithesis_simulation.py --seed={self.config.seed}"
+        )
         return SimulationReport(
             seed=self.config.seed,
             total_iterations=self.config.num_iterations,

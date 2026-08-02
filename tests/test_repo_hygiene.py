@@ -21,7 +21,7 @@ def test_repository_hygiene_audit_has_no_errors() -> None:
 
 
 def test_required_operational_paths_remain_in_candidate_tree() -> None:
-    assert REQUIRED_PATHS <= set(candidate_paths(REPO_ROOT))
+    assert set(candidate_paths(REPO_ROOT)) >= REQUIRED_PATHS
 
 
 def test_gitignore_covers_generated_surfaces() -> None:

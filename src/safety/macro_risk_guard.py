@@ -7,7 +7,7 @@ Inspired by CNBC/PwC: 'Investors becoming more cautious on U.S. allocations'.
 
 import json
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Optional
 
@@ -97,7 +97,7 @@ class MacroRiskGuard:
             logger.warning("Invalid Perplexity intel timestamp: %s", generated_raw)
             return True, ""
 
-        age_minutes = (datetime.now(timezone.utc) - generated_at).total_seconds() / 60
+        age_minutes = (datetime.now(UTC) - generated_at).total_seconds() / 60
         if age_minutes > self.intel_max_age_minutes:
             logger.info("Ignoring stale Perplexity intel age %.1f minutes", age_minutes)
             return True, ""
@@ -129,9 +129,11 @@ class MacroRiskGuard:
                 from alpaca.data.requests import StockBarsRequest
                 from alpaca.data.timeframe import TimeFrame
             except ImportError:
+
                 class StockBarsRequest:  # type: ignore
                     def __init__(self, **kwargs: Any) -> None:
                         pass
+
                 class TimeFrame:  # type: ignore
                     Day = "day"
 
@@ -140,7 +142,7 @@ class MacroRiskGuard:
             symbols = ["USO", "TNX"]
 
             # Fetch latest bars to calculate change
-            end = datetime.now(timezone.utc)
+            end = datetime.now(UTC)
             start = end - timedelta(days=2)
 
             request_params = StockBarsRequest(

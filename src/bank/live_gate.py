@@ -102,9 +102,7 @@ def evaluate_live_bank_gate(
 
     if require_edge_sample:
         if closed_n_i is None or closed_n_i < EDGE_N_MIN:
-            blockers.append(
-                f"insufficient_edge_sample: closed_n={closed_n_i} need>={EDGE_N_MIN}"
-            )
+            blockers.append(f"insufficient_edge_sample: closed_n={closed_n_i} need>={EDGE_N_MIN}")
         else:
             if exp_f is None or exp_f <= EDGE_MIN_EXPECTANCY:
                 blockers.append(f"expectancy_not_positive: {exp_f}")
@@ -151,7 +149,5 @@ def assert_live_bank_allowed(*, action: str = "live_or_bank") -> LiveBankGateDec
     """Raise RuntimeError with block reasons if live/bank not allowed."""
     decision = evaluate_live_bank_gate()
     if not decision.allowed:
-        raise RuntimeError(
-            f"{action} REFUSED (fail closed): " + "; ".join(decision.blockers)
-        )
+        raise RuntimeError(f"{action} REFUSED (fail closed): " + "; ".join(decision.blockers))
     return decision

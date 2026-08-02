@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 
 from src.safety.north_star_autopilot import (
@@ -67,7 +67,7 @@ def test_hard_gate_monitor_critical_on_stale_and_target_mismatch() -> None:
     state = _base_state()
     state["meta"]["last_updated"] = "2026-02-18T00:00:00Z"
     state["north_star"]["monthly_after_tax_target"] = 5000.0
-    now_utc = datetime(2026, 2, 20, 15, 0, tzinfo=timezone.utc)
+    now_utc = datetime(2026, 2, 20, 15, 0, tzinfo=UTC)
     monitor = compute_hard_gate_monitor(state, now_utc=now_utc, halt_exists=False)
     assert monitor["status"] == "critical"
     assert monitor["critical_count"] >= 1
@@ -97,7 +97,7 @@ def test_build_snapshot_and_write_overrides(tmp_path: Path) -> None:
         "warnings": [],
         "root_causes": ["cadence miss"],
     }
-    now_utc = datetime(2026, 2, 20, 15, 0, tzinfo=timezone.utc)
+    now_utc = datetime(2026, 2, 20, 15, 0, tzinfo=UTC)
     snapshot = build_autopilot_snapshot(
         state=state,
         blocker_report=blocker_report,

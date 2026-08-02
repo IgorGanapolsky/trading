@@ -65,12 +65,12 @@ class OptionsGreeksAnalyzer:
 
         if is_put:
             theta = (
-                - (S * sigma * _n_prime(d1)) / (2.0 * math.sqrt(T))
+                -(S * sigma * _n_prime(d1)) / (2.0 * math.sqrt(T))
                 + self.r * K * math.exp(-self.r * T) * _cnd(-d2)
             ) / 365.0
         else:
             theta = (
-                - (S * sigma * _n_prime(d1)) / (2.0 * math.sqrt(T))
+                -(S * sigma * _n_prime(d1)) / (2.0 * math.sqrt(T))
                 - self.r * K * math.exp(-self.r * T) * _cnd(d2)
             ) / 365.0
 

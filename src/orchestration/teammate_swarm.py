@@ -28,7 +28,7 @@ import asyncio
 import json
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any, Callable
@@ -70,7 +70,7 @@ class AgentMessage:
     sender: str
     receiver: str
     content: dict[str, Any]
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     message_type: str = "data"  # 'data', 'signal', 'error', 'control'
 
     def to_dict(self) -> dict:
@@ -92,7 +92,7 @@ class AgentResult:
     success: bool
     output: dict[str, Any]
     execution_time_ms: float
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     error: str | None = None
 
     def to_dict(self) -> dict:
@@ -130,7 +130,7 @@ class SwarmAgent:
 
     async def execute(self, inputs: dict[str, Any], messages: list[AgentMessage]) -> AgentResult:
         """Execute agent with inputs and accumulated messages."""
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
         self.status = AgentStatus.RUNNING
 
         # Gather relevant messages for this agent
@@ -149,7 +149,7 @@ class SwarmAgent:
                 else:
                     result = self.fn(**inputs)
 
-                execution_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
+                execution_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
                 self.status = AgentStatus.COMPLETED
 
                 return AgentResult(
@@ -160,14 +160,14 @@ class SwarmAgent:
                     execution_time_ms=execution_time,
                 )
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 last_error = f"Timeout after {self.timeout_seconds}s"
             except Exception as e:
                 last_error = str(e)
                 logger.warning(f"{self.name} attempt {attempt + 1} failed: {e}")
 
         # All retries failed
-        execution_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
+        execution_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
         self.status = AgentStatus.FAILED
 
         return AgentResult(
@@ -732,7 +732,7 @@ class TradingSwarm:
         """Persist swarm state to disk."""
         state = {
             "swarm": self.name,
-            "last_updated": datetime.now(timezone.utc).isoformat(),
+            "last_updated": datetime.now(UTC).isoformat(),
             "execution_order": self.execution_order,
             "results": {name: r.to_dict() for name, r in self.results.items()},
             "messages": [m.to_dict() for m in self.messages],

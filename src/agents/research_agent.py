@@ -23,7 +23,7 @@ import hashlib
 import json
 import os
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -205,7 +205,7 @@ class PerplexityResearchAgent:
         except (KeyError, ValueError):
             return None
 
-        if datetime.now(timezone.utc) - timestamp > timedelta(days=self.cache_ttl_days):
+        if datetime.now(UTC) - timestamp > timedelta(days=self.cache_ttl_days):
             return None
 
         response = entry.get("response")
@@ -220,7 +220,7 @@ class PerplexityResearchAgent:
         cache = self._load_cache()
         key = self._cache_key(query)
         cache[key] = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "response": response,
         }
         self._save_cache(cache)
@@ -424,7 +424,7 @@ If exact numbers aren't available, provide reasonable estimates with confidence 
                 ),
                 confidence=self._calculate_confidence(response),
                 sources=response.get("citations", [])[:5],
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 raw_response=response.get("answer", ""),
             )
 
@@ -591,7 +591,7 @@ If exact numbers aren't available, provide reasonable estimates with confidence 
             state["research_insights"] = {}
 
         insights = state["research_insights"]
-        insights["last_updated"] = datetime.now(timezone.utc).isoformat()
+        insights["last_updated"] = datetime.now(UTC).isoformat()
         insights["parameters"] = insights.get("parameters", {})
 
         # Update parameters from high-confidence results
@@ -674,11 +674,11 @@ async def run_weekend_research() -> dict[str, Any]:
     """
     print("=" * 60)
     print("AUTONOMOUS WEEKEND RESEARCH")
-    print(f"Time: {datetime.now(timezone.utc).isoformat()}")
+    print(f"Time: {datetime.now(UTC).isoformat()}")
     print("=" * 60)
 
     results_summary = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "gpu_backtest": None,
         "perplexity_research": None,
         "combined_insights": [],
@@ -796,7 +796,7 @@ async def run_weekend_research() -> dict[str, Any]:
             state["research_insights"] = {}
 
         insights = state["research_insights"]
-        insights["last_updated"] = datetime.now(timezone.utc).isoformat()
+        insights["last_updated"] = datetime.now(UTC).isoformat()
         insights["gpu_backtest"] = gpu_results if gpu_results.get("status") == "completed" else None
         insights["combined_insights"] = results_summary["combined_insights"]
 

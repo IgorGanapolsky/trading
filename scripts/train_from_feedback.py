@@ -15,7 +15,7 @@ import argparse
 import json
 import logging
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 logging.basicConfig(level=logging.INFO)
@@ -162,7 +162,7 @@ def compute_time_weight(timestamp: str) -> float:
             ts = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
         # Make naive if needed
         if ts.tzinfo is not None:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
         else:
             now = datetime.now()
         age_days = (now - ts).total_seconds() / 86400

@@ -74,8 +74,8 @@ def _expected_from_ic_entries(entries: dict) -> dict[str, float]:
         if len(ymd) != 6:
             continue
 
-        def occ(right: str, strike: float) -> str:
-            return f"SPY{ymd}{right}{int(strike * 1000):08d}"
+        def occ(right: str, strike: float, expiry: str = ymd) -> str:
+            return f"SPY{expiry}{right}{int(strike * 1000):08d}"
 
         expected[occ("P", sp)] = expected.get(occ("P", sp), 0.0) - qty
         expected[occ("P", lp)] = expected.get(occ("P", lp), 0.0) + qty

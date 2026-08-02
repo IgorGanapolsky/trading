@@ -13,7 +13,7 @@ Lesson ll_134: "Auto-cancel stale orders older than 1 day"
 import logging
 import os
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ def main() -> int:
 
     logger.info(f"Found {len(orders)} open orders")
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     stale_threshold = now - timedelta(hours=MAX_ORDER_AGE_HOURS)
     cancelled_count = 0
     freed_collateral = 0.0
@@ -72,7 +72,7 @@ def main() -> int:
     for order in orders:
         created_at = order.created_at
         if created_at.tzinfo is None:
-            created_at = created_at.replace(tzinfo=timezone.utc)
+            created_at = created_at.replace(tzinfo=UTC)
 
         age_hours = (now - created_at).total_seconds() / 3600
 

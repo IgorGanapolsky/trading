@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -77,7 +77,7 @@ def test_failed_mature_put_credit_cohort_writes_non_bypassable_halt(tmp_path):
     assert umt._write_active_cohort_halt(
         halt_file,
         policy,
-        now=datetime(2026, 7, 23, tzinfo=timezone.utc),
+        now=datetime(2026, 7, 23, tzinfo=UTC),
     )
     reason = halt_file.read_text(encoding="utf-8")
     assert reason.startswith("ACTIVE COHORT GATE BLOCKED: spy_put_credit")

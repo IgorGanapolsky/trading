@@ -142,10 +142,7 @@ class LiveTradingSwitch:
             live_active = account_funded and (not policy_blocked)
 
             if live_active:
-                msg = (
-                    "LIVE REAL MONEY TRADING ACTIVE "
-                    f"(cash=${cash:,.2f}, options_level={opt_lvl})"
-                )
+                msg = f"LIVE REAL MONEY TRADING ACTIVE (cash=${cash:,.2f}, options_level={opt_lvl})"
             elif policy_blocked and account_funded:
                 msg = (
                     f"Live account funded (cash=${cash:,.2f}, options_level={opt_lvl}) "

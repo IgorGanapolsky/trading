@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -29,11 +29,11 @@ class OrchestratorTelemetry:
         default_path = Path("data/audit_trail/hybrid_funnel_runs.jsonl")
         self.log_path = Path(log_path) if log_path else default_path
         self.log_path.parent.mkdir(parents=True, exist_ok=True)
-        self.session_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+        self.session_id = datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
         self.run_id = os.getenv("GITHUB_RUN_ID") or os.getenv("RUN_ID") or self.session_id
 
         # Session decision tracking
-        self.session_start_time = datetime.now(timezone.utc)
+        self.session_start_time = datetime.now(UTC)
         self.session_decisions: dict[str, dict[str, Any]] = {}
         self.orders_placed = 0
 
@@ -53,7 +53,7 @@ class OrchestratorTelemetry:
         """Initialize tracking for a ticker evaluation."""
         self.session_decisions[ticker] = {
             "ticker": ticker,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "gate_reached": 0,
             "decision": "PENDING",
             "rejection_reason": None,
@@ -91,7 +91,7 @@ class OrchestratorTelemetry:
 
     def save_session_decisions(self, session_profile: dict[str, Any] | None = None) -> None:
         """Save all session decisions to a JSON file."""
-        end_time = datetime.now(timezone.utc)
+        end_time = datetime.now(UTC)
         duration = (end_time - self.session_start_time).total_seconds()
 
         output = {
@@ -123,7 +123,7 @@ class OrchestratorTelemetry:
 
     def print_session_summary(self) -> None:
         """Print a formatted summary of all trading decisions."""
-        end_time = datetime.now(timezone.utc)
+        end_time = datetime.now(UTC)
         duration = (end_time - self.session_start_time).total_seconds()
 
         rejected = sum(1 for d in self.session_decisions.values() if d["decision"] == "REJECTED")
@@ -162,7 +162,7 @@ class OrchestratorTelemetry:
         print("=" * 70 + "\n")
 
     def record(self, event_type: str, ticker: str, status: str, payload: dict[str, Any]) -> None:
-        now_iso = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        now_iso = datetime.now(UTC).isoformat().replace("+00:00", "Z")
         entry = {
             "ts": now_iso,
             "session": self.session_id,
@@ -312,7 +312,7 @@ class QuarterlyProfitSweeper:
 
     def is_quarter_end(self, check_date: datetime | None = None) -> bool:
         """Check if today is the last day of a quarter."""
-        today = check_date or datetime.now(timezone.utc)
+        today = check_date or datetime.now(UTC)
         if today.month not in self.QUARTER_END_MONTHS:
             return False
 
@@ -386,11 +386,11 @@ class QuarterlyProfitSweeper:
                 "profit_calc": profit_calc,
             }
 
-        sweep_id = f"sweep_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
+        sweep_id = f"sweep_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}"
 
         result = {
             "sweep_id": sweep_id,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "status": "dry_run" if dry_run else "executed",
             "amount": sweep_amount,
             "destination": destination,
@@ -431,7 +431,7 @@ class QuarterlyProfitSweeper:
 
     def _get_quarter_label(self) -> str:
         """Get current quarter label (e.g., 'Q4 2025')."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         quarter = (now.month - 1) // 3 + 1
         return f"Q{quarter} {now.year}"
 

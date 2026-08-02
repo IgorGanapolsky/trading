@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 from pathlib import Path
 
 from scripts.collect_agent_handoff_ab_metrics import collect_ab_metrics, summarize_records
@@ -63,7 +63,7 @@ def test_collect_ab_metrics_computes_expected_fields(tmp_path: Path) -> None:
 
 
 def test_summarize_records_filters_by_lookback_and_groups_variants() -> None:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     recent_a = {
         "captured_at_utc": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "variant": "A",

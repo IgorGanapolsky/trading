@@ -101,14 +101,19 @@ def build_llm_observability_report() -> LLMObservabilityReport:
     notes = ["Critical trade execution routes directly via Anthropic API key."]
 
     from pathlib import Path
+
     secret_path = Path.home() / ".resume_secrets" / "anthropic.json"
     if "ANTHROPIC_API_KEY" in os.environ:
         anthropic_key_present = bool(os.environ["ANTHROPIC_API_KEY"].strip())
     else:
         anthropic_key_present = secret_path.exists() or True
     if anthropic_key_present:
-        notes.append("Primary execution uses direct Anthropic API key; optional OpenRouter fallback configured.")
-        summary = "Direct Anthropic execution active; optional OpenRouter private logging configured."
+        notes.append(
+            "Primary execution uses direct Anthropic API key; optional OpenRouter fallback configured."
+        )
+        summary = (
+            "Direct Anthropic execution active; optional OpenRouter private logging configured."
+        )
     else:
         if not primary_cfg.api_key:
             warnings.append("No OpenRouter-compatible API key resolved for the primary route.")

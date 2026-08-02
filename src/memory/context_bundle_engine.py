@@ -13,7 +13,7 @@ import re
 import subprocess
 from collections import Counter
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -83,7 +83,7 @@ class BundleDoc:
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _normalize_text(text: str) -> str:
@@ -189,7 +189,7 @@ class ContextBundleEngine:
         tf_map = index.get("tf", {})
         avgdl = float(index.get("avg_doc_len", 1.0)) or 1.0
         docs = index["docs"]
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         results: list[dict[str, Any]] = []
         max_raw = 0.0
 
@@ -363,9 +363,7 @@ class ContextBundleEngine:
                     title=title,
                     text=_normalize_text(text),
                     tags=tags,
-                    timestamp=datetime.fromtimestamp(
-                        file_path.stat().st_mtime, tz=timezone.utc
-                    ).isoformat(),
+                    timestamp=datetime.fromtimestamp(file_path.stat().st_mtime, tz=UTC).isoformat(),
                     metadata={
                         "path": str(file_path.relative_to(self.project_root)),
                         "severity": severity,

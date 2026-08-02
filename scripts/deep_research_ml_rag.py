@@ -11,7 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -281,7 +281,7 @@ def build_packet(today: date | None = None) -> dict[str, Any]:
     ]
 
     return {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "date": today.isoformat(),
         "decision": "BLOCKED" if blockers else "RESEARCH_READY",
         "profit_claim": "No profit claim. Current evidence blocks scaling.",

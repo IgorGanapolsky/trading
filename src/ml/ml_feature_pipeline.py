@@ -7,7 +7,7 @@ and GRPOShadowEvaluator for operational trade signal generation and evaluation.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from src.ml.feature_extractor import FeatureExtractor, MarketFeatures
 from src.ml.grpo_shadow_evaluator import GRPOShadowEvaluator, ShadowEvaluation
@@ -26,10 +26,10 @@ class MLFeaturePipeline:
         self,
         symbol: str,
         strategy: str,
-        market_snapshot: Dict[str, Any],
+        market_snapshot: dict[str, Any],
         baseline_delta: float = 0.15,
         baseline_dte: int = 35,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Process a market tick: extract features, run shadow GRPO eval, and return pipeline metadata."""
         features: MarketFeatures = self.feature_extractor.extract_from_snapshot(market_snapshot)
         shadow_eval: ShadowEvaluation = self.shadow_evaluator.evaluate_shadow_tick(

@@ -16,7 +16,7 @@ import argparse
 import json
 import sys
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -449,7 +449,7 @@ def _build_payload(
             for symbol, summary in summaries.items()
         },
         "source": source,
-        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(UTC).isoformat(),
     }
 
 
@@ -472,7 +472,7 @@ def _apply_override(payload: dict, override_status: str, override_reason: str) -
     out["watch"] = status == "watch"
     out["reasons"] = reasons
     out["source"] = f"{out.get('source', 'unknown')}+override"
-    out["updated_at"] = datetime.now(timezone.utc).isoformat()
+    out["updated_at"] = datetime.now(UTC).isoformat()
     return out
 
 
@@ -531,7 +531,7 @@ def main() -> int:
 
     if args.offline and existing_payload:
         payload = dict(existing_payload)
-        payload["updated_at"] = datetime.now(timezone.utc).isoformat()
+        payload["updated_at"] = datetime.now(UTC).isoformat()
         payload["source"] = f"{payload.get('source', 'unknown')}+offline"
     else:
         summaries = {symbol: _fetch_ticker_summary(symbol) for symbol in ALL_TICKERS}

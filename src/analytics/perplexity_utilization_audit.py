@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -102,7 +102,7 @@ def build_perplexity_usage_snapshot(
         gaps.append("agent_playground_not_versioned_in_repo")
 
     return {
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "credential_available_in_runtime": credential_present,
         "active_perplexity_files": len(matches),
         "workflows_with_perplexity": workflow_matches,

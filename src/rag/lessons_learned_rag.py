@@ -447,11 +447,19 @@ class LessonsLearnedRAG:
             score = item.get("score", 0.5)
 
             # Boost lessons matching elevated VIX/volatility if VIX is high
-            if vix is not None and vix > 25.0 and ("vix" in content_lower or "volatility" in content_lower):
+            if (
+                vix is not None
+                and vix > 25.0
+                and ("vix" in content_lower or "volatility" in content_lower)
+            ):
                 score += 0.15
 
             # Boost lessons matching IV rank conditions
-            if iv_rank is not None and iv_rank < 30.0 and ("iv rank" in content_lower or "low iv" in content_lower):
+            if (
+                iv_rank is not None
+                and iv_rank < 30.0
+                and ("iv rank" in content_lower or "low iv" in content_lower)
+            ):
                 score += 0.15
 
             # Boost lessons matching specific option structure

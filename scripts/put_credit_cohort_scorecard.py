@@ -14,7 +14,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -287,7 +287,7 @@ def build_scorecard(
 
     return {
         "schema_version": "put-credit-cohort-scorecard/1",
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "active_family": kill_switch.get("active_family"),
         "paper_only": kill_switch.get("paper_only"),
         "live_blocked": kill_switch.get("live_blocked"),

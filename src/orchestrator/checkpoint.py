@@ -16,7 +16,7 @@ import logging
 import os
 import sqlite3
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -94,7 +94,7 @@ class PipelineCheckpointer:
 
     def generate_thread_id(self, ticker: str, strategy: str = "gate_pipeline") -> str:
         """Generate unique thread ID for a trade execution."""
-        timestamp = datetime.now(timezone.utc).isoformat()
+        timestamp = datetime.now(UTC).isoformat()
         return f"trade:{strategy}:{ticker}:{timestamp}"
 
     def save_checkpoint(
@@ -123,7 +123,7 @@ class PipelineCheckpointer:
             PipelineCheckpoint with saved data
         """
         checkpoint_id = f"gate_{gate_index}_{gate_name}"
-        created_at = datetime.now(timezone.utc).isoformat()
+        created_at = datetime.now(UTC).isoformat()
 
         # Serialize context and results
         context_dict = self._serialize_context(context)
@@ -268,7 +268,7 @@ class PipelineCheckpointer:
         """Remove checkpoints older than specified days."""
         from datetime import timedelta
 
-        cutoff = (datetime.now(timezone.utc) - timedelta(days=days_to_keep)).isoformat()
+        cutoff = (datetime.now(UTC) - timedelta(days=days_to_keep)).isoformat()
 
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.execute(

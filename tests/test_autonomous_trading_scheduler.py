@@ -124,8 +124,10 @@ class TestMonitorRemittance:
 
         ledger = tmp_path / "ledger.jsonl"
         # Add confirmed deposits totaling $1000
-        for amount, ts in [(600.0, "2026-07-10T12:00:00+00:00"),
-                           (400.0, "2026-07-20T12:00:00+00:00")]:
+        for amount, ts in [
+            (600.0, "2026-07-10T12:00:00+00:00"),
+            (400.0, "2026-07-20T12:00:00+00:00"),
+        ]:
             append_transfer_record(
                 build_transfer_record(
                     direction=TransferDirection.BROKER_TO_MERCURY,
@@ -247,6 +249,7 @@ class TestMonitorRemittance:
             append_transfer_record,
             build_transfer_record,
         )
+
         append_transfer_record(
             build_transfer_record(
                 direction=TransferDirection.BROKER_TO_MERCURY,

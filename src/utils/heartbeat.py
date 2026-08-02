@@ -26,7 +26,7 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -81,7 +81,7 @@ def record_heartbeat(
     # `.replace(tzinfo=None)` strip, were silently off by the host offset —
     # `hours_since` could go negative, masking a dead system as alive, or
     # falsely trip the staleness gate on a healthy system.
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     timestamp = now.isoformat()
 
     # Record this heartbeat
@@ -178,9 +178,9 @@ def check_heartbeat(
     try:
         heartbeat_dt = datetime.fromisoformat(last_heartbeat.replace("Z", "+00:00"))
         if heartbeat_dt.tzinfo is None:
-            heartbeat_dt = heartbeat_dt.replace(tzinfo=timezone.utc)
+            heartbeat_dt = heartbeat_dt.replace(tzinfo=UTC)
         else:
-            heartbeat_dt = heartbeat_dt.astimezone(timezone.utc)
+            heartbeat_dt = heartbeat_dt.astimezone(UTC)
     except ValueError:
         return HeartbeatStatus(
             is_alive=False,
@@ -190,7 +190,7 @@ def check_heartbeat(
             message=f"⛔ INVALID TIMESTAMP: {last_heartbeat}",
         )
 
-    age = datetime.now(timezone.utc) - heartbeat_dt
+    age = datetime.now(UTC) - heartbeat_dt
     hours_since = age.total_seconds() / 3600
 
     if hours_since > max_age_hours:

@@ -27,7 +27,9 @@ def test_state_writers_serialize_and_fail_on_push_errors() -> None:
         text = _read(name)
         assert queue in text or "state-writer-{0}-{1}" in text
         assert "cancel-in-progress: false" in text and "set -euo pipefail" in text
-        assert "git pull --ff-only origin main" in text and "git push origin HEAD:main ||" not in text
+        assert (
+            "git pull --ff-only origin main" in text and "git push origin HEAD:main ||" not in text
+        )
 
 
 def test_ci_cancels_superseded_branch_runs_only() -> None:
@@ -37,6 +39,10 @@ def test_ci_cancels_superseded_branch_runs_only() -> None:
 
 
 def test_removed_mutating_automation_stays_removed() -> None:
-    removed = {"auto-format.yml", "browser-automation-pilot.yml", "daily-trading.yml", "self-healing-auto-fix.yml"}
+    removed = {
+        "auto-format.yml",
+        "browser-automation-pilot.yml",
+        "daily-trading.yml",
+        "self-healing-auto-fix.yml",
+    }
     assert all(not (WORKFLOWS / name).exists() for name in removed)
-

@@ -16,7 +16,7 @@ import logging
 import math
 import os
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Optional
 
@@ -33,7 +33,9 @@ class EvaluationQuery:
     query: str
     expected_lesson_ids: list[str]  # Lessons that MUST appear
     avoid_lesson_ids: list[str] = field(default_factory=list)  # Lessons that should NOT appear
-    graded_relevance: dict[str, int] = field(default_factory=dict)  # 4-tier relevance (3=CRITICAL, 2=HIGH, 1=Context, 0=Irrelevant)
+    graded_relevance: dict[str, int] = field(
+        default_factory=dict
+    )  # 4-tier relevance (3=CRITICAL, 2=HIGH, 1=Context, 0=Irrelevant)
     description: str = ""
 
     def __post_init__(self):
@@ -48,9 +50,7 @@ class EvaluationQuery:
                 for lid, grade in self.graded_relevance.items()
             }
         else:
-            self.graded_relevance = {
-                lid: 3 for lid in self.expected_lesson_ids
-            }
+            self.graded_relevance = {lid: 3 for lid in self.expected_lesson_ids}
             for lid in self.avoid_lesson_ids:
                 self.graded_relevance[lid] = 0
 
@@ -698,7 +698,7 @@ class RAGEvaluator:
             )
 
         return EvaluationReport(
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             num_queries=len(self.test_queries),
             k=k,
             mean_precision_at_k=mean_p,
@@ -727,7 +727,7 @@ class RAGEvaluator:
         output_dir.mkdir(parents=True, exist_ok=True)
 
         # Create filename with timestamp
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         filename = f"rag_evaluation_{timestamp}.json"
         output_path = output_dir / filename
 

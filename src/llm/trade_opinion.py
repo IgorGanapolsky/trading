@@ -24,7 +24,7 @@ import logging
 import os
 import re
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -278,7 +278,7 @@ def _stable_sample(seed: str, sample_rate: float) -> bool:
         return False
     if sample_rate >= 1.0:
         return True
-    day_seed = datetime.now(timezone.utc).date().isoformat()
+    day_seed = datetime.now(UTC).date().isoformat()
     digest = hashlib.sha256(f"{day_seed}:{seed}".encode()).hexdigest()
     value = int(digest[:8], 16) / 0xFFFFFFFF
     return value < sample_rate

@@ -11,15 +11,16 @@ Covers:
 from __future__ import annotations
 
 from scripts.backtest_gate import check_gate, compute_metrics, simulate_with_params
+from datetime import UTC
 
 
 def _make_trade(
     outcome: str, pnl: float, entry_credit: float = 200, hold_hours: float = 2.0
 ) -> dict:
     """Helper to create test trades."""
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
-    entry = datetime(2026, 3, 1, 14, 0, tzinfo=timezone.utc)
+    entry = datetime(2026, 3, 1, 14, 0, tzinfo=UTC)
     exit_dt = entry + timedelta(hours=hold_hours)
     return {
         "id": f"test_{outcome}_{pnl}",

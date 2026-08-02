@@ -18,7 +18,7 @@ import shlex
 import subprocess  # nosec B404 - controlled local workflow commands only
 import sys
 from dataclasses import asdict, dataclass
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 DEFAULT_REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -206,7 +206,7 @@ def build_context_bundle(
     line_numbers: bool = False,
 ) -> tuple[str, BundleStats]:
     """Build a token-aware markdown context bundle."""
-    now_utc = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    now_utc = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     header = [
         "# Agent Context Bundle",
         "",
@@ -337,7 +337,7 @@ def run_chain(
     dry_run: bool = False,
 ) -> tuple[int, Path]:
     """Run planner/executor chaining and persist artifacts."""
-    run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    run_id = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     run_dir = output_dir / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
 
@@ -729,7 +729,7 @@ def cmd_bundle(args: argparse.Namespace) -> int:
 
 def cmd_retro(args: argparse.Namespace) -> int:
     repo_root = Path(args.repo_root).resolve()
-    entry_date = _parse_date(args.date) if args.date else datetime.now(timezone.utc).date()
+    entry_date = _parse_date(args.date) if args.date else datetime.now(UTC).date()
     stdin_payload = _read_stdin_if_available() if args.include_stdin else ""
 
     explicit_wins = list(args.win)

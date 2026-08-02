@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import subprocess  # nosec B404 — fixed local scripts only
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -37,7 +37,7 @@ def _run(args: list[str]) -> dict:
 def main() -> int:
     py = ROOT / ".venv" / "bin" / "python"
     python = str(py if py.is_file() else Path(sys.executable))
-    ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H%M%SZ")
+    ts = datetime.now(UTC).strftime("%Y-%m-%dT%H%M%SZ")
     out_dir = ROOT / "data" / "audit" / "ralph_ticks"
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -129,7 +129,7 @@ def main() -> int:
             "goal": "put_credit_edge_proof_n30",
             "iteration": int(prev.get("iteration") or 0) + 1,
             "max_iterations": int(prev.get("max_iterations") or 10_000),
-            "last_tick_at": datetime.now(timezone.utc).isoformat(),
+            "last_tick_at": datetime.now(UTC).isoformat(),
             "last_tick_report": str(report_path),
             "claim_profitable": False,
             "status": "running",

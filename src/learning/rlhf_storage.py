@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -13,7 +13,7 @@ TRAJECTORY_PATH = Path("data/feedback/trade_trajectories.jsonl")
 
 def _utc_now_iso() -> str:
     """Return UTC timestamp with explicit Z suffix."""
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
 def _append_jsonl(path: Path, payload: dict[str, Any]) -> None:

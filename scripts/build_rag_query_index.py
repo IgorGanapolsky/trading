@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import os
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from html import escape
 from pathlib import Path
 
@@ -139,8 +139,8 @@ def _parse_utc_iso(raw: str) -> datetime | None:
     except ValueError:
         return None
     if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
+        return parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
 
 
 def _has_explicit_time(raw: str) -> bool:
@@ -149,9 +149,9 @@ def _has_explicit_time(raw: str) -> bool:
 
 def _to_utc_iso(dt: datetime) -> str:
     if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
+        dt = dt.replace(tzinfo=UTC)
     else:
-        dt = dt.astimezone(timezone.utc)
+        dt = dt.astimezone(UTC)
     return dt.isoformat().replace("+00:00", "Z")
 
 
@@ -160,9 +160,9 @@ def _source_age_days(source_dt: datetime | None, indexed_at_utc: str) -> int | N
     if source_dt is None or indexed_dt is None:
         return None
     if source_dt.tzinfo is None:
-        source_dt = source_dt.replace(tzinfo=timezone.utc)
+        source_dt = source_dt.replace(tzinfo=UTC)
     else:
-        source_dt = source_dt.astimezone(timezone.utc)
+        source_dt = source_dt.astimezone(UTC)
     return max(0, (indexed_dt - source_dt).days)
 
 
@@ -253,7 +253,7 @@ def _infer_date_from_path(path: Path) -> datetime | None:
         day = int(day_txt)
         month = MONTH_MAP[month_txt]
         year_match = re.search(r"(20\d{2})", stem)
-        year = int(year_match.group(1)) if year_match else datetime.now(timezone.utc).year
+        year = int(year_match.group(1)) if year_match else datetime.now(UTC).year
         try:
             return datetime(year, month, day)
         except ValueError:
@@ -316,7 +316,7 @@ def _build_lesson_record(
     text = path.read_text(encoding="utf-8", errors="ignore")
     frontmatter = _parse_frontmatter(text)
     category = category_override or (rel_path.parts[0] if rel_path.parts else "general")
-    source_mtime_utc = _to_utc_iso(datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc))
+    source_mtime_utc = _to_utc_iso(datetime.fromtimestamp(path.stat().st_mtime, tz=UTC))
 
     if category == "lessons_learned":
         item_id = path.stem
@@ -394,7 +394,7 @@ def build_index() -> list[dict]:
         markdown_paths: list[Path] = []
     else:
         markdown_paths = sorted(RAG_ROOT.rglob("*.md"))
-    indexed_at_utc = _to_utc_iso(datetime.now(timezone.utc))
+    indexed_at_utc = _to_utc_iso(datetime.now(UTC))
     include_artifact_ingest = (
         os.getenv("INCLUDE_ARTIFACT_INGEST_LESSONS", "").strip().lower() in TRUTHY
     )
@@ -443,7 +443,7 @@ def build_index() -> list[dict]:
 def _build_lessons_page(lessons: list[dict]) -> str:
     max_items = int(os.getenv("LESSONS_INDEX_LIMIT", "120"))
     items = lessons[:max_items]
-    updated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    updated = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
 
     rows = []
     for lesson in items:

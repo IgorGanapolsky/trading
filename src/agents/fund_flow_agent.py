@@ -18,7 +18,7 @@ import json
 import os
 import statistics
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -293,7 +293,7 @@ class FundFlowAgent:
             nav_trend=nav_trend,
             days_analyzed=len(flows),
             confidence=confidence,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
         )
 
 

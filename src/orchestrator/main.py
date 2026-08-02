@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -1041,7 +1041,7 @@ class TradingOrchestrator:
                             # Prediction outcome tracking for A2 adaptation mode
                             "actual_return": actual_return_pct,
                             "prediction_correct": prediction_correct,
-                            "outcome_timestamp": datetime.now(timezone.utc).isoformat(),
+                            "outcome_timestamp": datetime.now(UTC).isoformat(),
                         },
                     )
 
@@ -2278,7 +2278,7 @@ class TradingOrchestrator:
         cost_estimate = self._estimate_execution_costs(order_size)
 
         # A2 Adaptation: Track RL prediction for future confidence calibration
-        prediction_timestamp = datetime.now(timezone.utc).isoformat()
+        prediction_timestamp = datetime.now(UTC).isoformat()
         self.telemetry.order_event(
             ticker,
             {
@@ -2927,7 +2927,7 @@ class TradingOrchestrator:
     def _persist_bias_from_llm(self, ticker: str, llm_payload: dict) -> None:
         try:
             score = float(llm_payload.get("score", 0.0))
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             snapshot = BiasSnapshot(
                 symbol=ticker,
                 score=score,

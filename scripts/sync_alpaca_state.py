@@ -21,7 +21,7 @@ import json
 import logging
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 # Add project root to path
@@ -53,7 +53,7 @@ def _truthy(value: str | None) -> bool:
 
 
 def _now_utc_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _safe_float(value: object, default: float = 0.0) -> float:
@@ -81,8 +81,8 @@ def _parse_filled_at(raw_value: str | None) -> datetime | None:
 def _canonical_fill_dt(fill_dt: datetime) -> datetime:
     """Normalize parsed fill timestamps to UTC for consistent date math."""
     if fill_dt.tzinfo is None:
-        return fill_dt.replace(tzinfo=timezone.utc)
-    return fill_dt.astimezone(timezone.utc)
+        return fill_dt.replace(tzinfo=UTC)
+    return fill_dt.astimezone(UTC)
 
 
 def _derive_trade_summary_from_fills(trade_history: object, *, now: datetime | None = None) -> dict:
@@ -97,7 +97,7 @@ def _derive_trade_summary_from_fills(trade_history: object, *, now: datetime | N
                 continue
             fills.append((_canonical_fill_dt(filled_dt), trade))
 
-    today_utc = _canonical_fill_dt(now or datetime.now(timezone.utc)).date()
+    today_utc = _canonical_fill_dt(now or datetime.now(UTC)).date()
     todays_fills = sum(1 for filled_dt, _ in fills if filled_dt.date() == today_utc)
     last_trade_dt = max((filled_dt for filled_dt, _ in fills), default=None)
 
@@ -299,7 +299,7 @@ def update_system_state(alpaca_data: dict | None) -> None:
     state.setdefault("meta", {})
     state.setdefault("sync_health", {})
     now_iso = _now_utc_iso()
-    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today_str = datetime.now(UTC).strftime("%Y-%m-%d")
     state["meta"]["last_updated"] = now_iso
     state["meta"]["last_sync_attempt"] = now_iso
     state["last_updated"] = now_iso

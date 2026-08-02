@@ -17,7 +17,7 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -82,7 +82,7 @@ class PaperEquityBrokerAdapter(EquityBrokerAdapter):
                 success=False,
                 symbol=symbol,
                 notional_usd=notional_usd,
-                filled_at=datetime.now(timezone.utc).isoformat(),
+                filled_at=datetime.now(UTC).isoformat(),
                 error="notional_usd must be positive",
             )
         self._positions[symbol] = self._positions.get(symbol, 0.0) + notional_usd
@@ -90,7 +90,7 @@ class PaperEquityBrokerAdapter(EquityBrokerAdapter):
             success=True,
             symbol=symbol,
             notional_usd=notional_usd,
-            filled_at=datetime.now(timezone.utc).isoformat(),
+            filled_at=datetime.now(UTC).isoformat(),
         )
 
     def accrue_dividends_for_days(self, days: float) -> None:
@@ -102,7 +102,7 @@ class PaperEquityBrokerAdapter(EquityBrokerAdapter):
     def collect_dividend_income(self) -> DividendIncome:
         income = DividendIncome(
             total_usd=self._accrued_dividends_usd,
-            observed_at=datetime.now(timezone.utc).isoformat(),
+            observed_at=datetime.now(UTC).isoformat(),
         )
         self._accrued_dividends_usd = 0.0
         return income
@@ -148,7 +148,11 @@ class AlpacaEquityBrokerAdapter(EquityBrokerAdapter):
 
         if not api_key or not secret_key:
             env_secrets_path = os.environ.get("ALPACA_SECRETS_PATH")
-            path = secrets_path or (Path(env_secrets_path) if env_secrets_path else Path.home() / ".resume_secrets" / "alpaca.json")
+            path = secrets_path or (
+                Path(env_secrets_path)
+                if env_secrets_path
+                else Path.home() / ".resume_secrets" / "alpaca.json"
+            )
             if path.exists():
                 try:
                     with path.open("r", encoding="utf-8") as handle:
@@ -194,14 +198,14 @@ class AlpacaEquityBrokerAdapter(EquityBrokerAdapter):
                 success=True,
                 symbol=symbol,
                 notional_usd=notional_usd,
-                filled_at=datetime.now(timezone.utc).isoformat(),
+                filled_at=datetime.now(UTC).isoformat(),
             )
         except Exception as exc:  # noqa: BLE001 - surfaced via result, not raised
             return BuyResult(
                 success=False,
                 symbol=symbol,
                 notional_usd=notional_usd,
-                filled_at=datetime.now(timezone.utc).isoformat(),
+                filled_at=datetime.now(UTC).isoformat(),
                 error=str(exc),
             )
 
@@ -224,11 +228,11 @@ class AlpacaEquityBrokerAdapter(EquityBrokerAdapter):
                         total += float(act.get("net_amount", 0.0))
             return DividendIncome(
                 total_usd=total,
-                observed_at=datetime.now(timezone.utc).isoformat(),
+                observed_at=datetime.now(UTC).isoformat(),
             )
         except Exception as exc:
             logger.error("Failed to fetch Alpaca dividend activities: %s", exc)
             return DividendIncome(
                 total_usd=0.0,
-                observed_at=datetime.now(timezone.utc).isoformat(),
+                observed_at=datetime.now(UTC).isoformat(),
             )

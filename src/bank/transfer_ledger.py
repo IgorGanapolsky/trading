@@ -10,8 +10,8 @@ import json
 import os
 import uuid
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
-from enum import Enum
+from datetime import UTC, datetime
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -19,14 +19,14 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_LEDGER_PATH = REPO_ROOT / "data" / "audit" / "mercury_broker_transfers.jsonl"
 
 
-class TransferDirection(str, Enum):
+class TransferDirection(StrEnum):
     """Money movement direction relative to the trading brokerage."""
 
     MERCURY_TO_BROKER = "mercury_to_broker"  # fund trading account
     BROKER_TO_MERCURY = "broker_to_mercury"  # remit proceeds to bank
 
 
-class TransferStatus(str, Enum):
+class TransferStatus(StrEnum):
     PLANNED = "planned"
     DRY_RUN = "dry_run"
     BLOCKED = "blocked"
@@ -65,7 +65,7 @@ class TransferRecord:
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def new_transfer_id() -> str:
@@ -89,9 +89,7 @@ def build_transfer_record(
     amt = float(amount_usd)
     if amt < 0:
         raise ValueError("amount_usd must be non-negative")
-    direction_s = (
-        direction.value if isinstance(direction, TransferDirection) else str(direction)
-    )
+    direction_s = direction.value if isinstance(direction, TransferDirection) else str(direction)
     if direction_s not in {d.value for d in TransferDirection}:
         raise ValueError(f"invalid direction: {direction_s}")
     status_s = status.value if isinstance(status, TransferStatus) else str(status)
@@ -123,9 +121,7 @@ def append_transfer_record(
     ledger_path: Path | None = None,
 ) -> Path:
     """Append one JSONL row. Creates parent dirs. Returns path written."""
-    path = ledger_path or Path(
-        os.environ.get("MERCURY_TRANSFER_LEDGER", str(DEFAULT_LEDGER_PATH))
-    )
+    path = ledger_path or Path(os.environ.get("MERCURY_TRANSFER_LEDGER", str(DEFAULT_LEDGER_PATH)))
     path.parent.mkdir(parents=True, exist_ok=True)
     line = json.dumps(record.as_dict(), sort_keys=True) + "\n"
     with path.open("a", encoding="utf-8") as fh:
@@ -135,9 +131,7 @@ def append_transfer_record(
 
 def load_transfer_ledger(*, ledger_path: Path | None = None) -> list[TransferRecord]:
     """Load all transfer records from JSONL (skips bad lines)."""
-    path = ledger_path or Path(
-        os.environ.get("MERCURY_TRANSFER_LEDGER", str(DEFAULT_LEDGER_PATH))
-    )
+    path = ledger_path or Path(os.environ.get("MERCURY_TRANSFER_LEDGER", str(DEFAULT_LEDGER_PATH)))
     if not path.is_file():
         return []
     out: list[TransferRecord] = []

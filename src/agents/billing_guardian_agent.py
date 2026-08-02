@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import subprocess
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 
@@ -48,9 +48,7 @@ class BillingGuardianAgent:
             return []
 
     def enforce_billing_policies(self):
-        logger.info(
-            f"[{datetime.now(timezone.utc).isoformat()}] Billing Guardian checking GCP projects..."
-        )
+        logger.info(f"[{datetime.now(UTC).isoformat()}] Billing Guardian checking GCP projects...")
         projects = self.get_active_projects()
 
         for project in projects:

@@ -7,7 +7,6 @@ import sys
 import types
 from pathlib import Path
 
-import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -371,4 +370,3 @@ class TestCompositeReward:
         # Should work even with 1 trade in journal
         assert "total_reward" in r
         assert "trade_count" in r
-

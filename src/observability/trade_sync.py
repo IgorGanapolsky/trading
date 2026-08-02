@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Optional
 
@@ -68,7 +68,7 @@ class TradeSync:
         results = {"system_state": False}
 
         trade_data = {
-            "id": order_id or f"local-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
+            "id": order_id or f"local-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}",
             "symbol": symbol,
             "side": side,
             "qty": str(qty),
@@ -77,7 +77,7 @@ class TradeSync:
             "strategy": strategy,
             "pnl": pnl,
             "pnl_pct": pnl_pct,
-            "filled_at": datetime.now(timezone.utc).isoformat(),
+            "filled_at": datetime.now(UTC).isoformat(),
             "metadata": metadata or {},
             "source": "trade_sync.py",  # Track origin for debugging
         }
@@ -123,7 +123,7 @@ class TradeSync:
             state["trade_history"] = state["trade_history"][:100]
 
             # Update metadata
-            state["last_updated"] = datetime.now(timezone.utc).isoformat() + "Z"
+            state["last_updated"] = datetime.now(UTC).isoformat() + "Z"
             state["trades_loaded"] = len(state["trade_history"])
 
             # Save

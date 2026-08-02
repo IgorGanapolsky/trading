@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -41,7 +41,7 @@ def load_todays_trades(date_str: str | None = None) -> list[dict]:
     Result: OPTIONS TRADES NEVER SYNCED TO RAG = no learning = same mistakes.
     """
     if date_str is None:
-        date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        date_str = datetime.now(UTC).strftime("%Y-%m-%d")
 
     # Also create YYYYMMDD format for options trades
     date_no_hyphens = date_str.replace("-", "")
@@ -293,7 +293,7 @@ def main():
         # reconcile. The audit metadata remains available for diagnosis.
         evidence_payload["rows"] = []
     packet = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "source": str(ledger_path),
         "authority": "verified_paired_closed_trade_rows",
         "publication_status": "quarantined" if quarantined else "published",

@@ -12,7 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -66,8 +66,8 @@ def _parse_dt(raw: Any) -> datetime | None:
         try:
             dt = datetime.fromisoformat(candidate)
             if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=timezone.utc)
-            return dt.astimezone(timezone.utc)
+                dt = dt.replace(tzinfo=UTC)
+            return dt.astimezone(UTC)
         except Exception:
             continue
     return None
@@ -108,7 +108,7 @@ def _normalize_history_rows(raw: Any) -> list[dict[str, Any]]:
         key=lambda r: (
             _parse_dt(r.get("updated_at"))
             or _parse_dt(r.get("week_start"))
-            or datetime.min.replace(tzinfo=timezone.utc)
+            or datetime.min.replace(tzinfo=UTC)
         ),
     )
     return rows
@@ -547,7 +547,7 @@ def main() -> int:
     if not isinstance(state, dict):
         state = {}
     history = _normalize_history_rows(_load_json(history_path))
-    now_utc = datetime.now(timezone.utc)
+    now_utc = datetime.now(UTC)
 
     report = compute_report(
         state=state,

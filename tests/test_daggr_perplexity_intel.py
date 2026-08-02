@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 
 from src.orchestration.daggr_workflow import (
@@ -16,7 +16,7 @@ def test_load_latest_perplexity_trading_intel_requires_fresh_artifact(tmp_path: 
     path.write_text(
         json.dumps(
             {
-                "generated_at_utc": datetime(2026, 4, 13, 14, 0, tzinfo=timezone.utc).isoformat(),
+                "generated_at_utc": datetime(2026, 4, 13, 14, 0, tzinfo=UTC).isoformat(),
                 "recommendation": "BLOCK_NEW_IC",
                 "risk_score": 0.8,
             }
@@ -26,12 +26,12 @@ def test_load_latest_perplexity_trading_intel_requires_fresh_artifact(tmp_path: 
 
     fresh = load_latest_perplexity_trading_intel(
         path,
-        now=datetime(2026, 4, 13, 15, 0, tzinfo=timezone.utc),
+        now=datetime(2026, 4, 13, 15, 0, tzinfo=UTC),
     )
     stale = load_latest_perplexity_trading_intel(
         path,
         max_age_minutes=30,
-        now=datetime(2026, 4, 13, 15, 0, tzinfo=timezone.utc),
+        now=datetime(2026, 4, 13, 15, 0, tzinfo=UTC),
     )
 
     assert fresh is not None

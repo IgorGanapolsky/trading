@@ -12,7 +12,7 @@ from __future__ import annotations
 import math
 import re
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Callable, Iterable
 
 STRATEGY_IC = frozenset({"iron_condor", "ic_simple", "ic"})
@@ -524,7 +524,7 @@ def build_system_diagnosis(
     primary_causes = [c for c in causes if c.get("severity") in {"CRITICAL", "HIGH"}][:5]
 
     return {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "diagnosis_version": "1.0",
         "headline": (
             "System is miserable because the iron-condor process lost money at scale "

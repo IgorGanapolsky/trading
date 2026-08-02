@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Tests for cancel_stale_orders.py - CEO directive Jan 12, 2026."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -35,7 +35,7 @@ class TestCancelStaleOrders:
 
     def test_stale_order_detection(self):
         """Test that orders older than threshold are detected as stale."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Order created 5 hours ago should be stale (threshold is 4h)
         stale_order_time = now - timedelta(hours=5)
@@ -49,7 +49,7 @@ class TestCancelStaleOrders:
 
     def test_fresh_order_not_cancelled(self):
         """Test that fresh orders are preserved."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Order created 1 hour ago
         fresh_order_time = now - timedelta(hours=1)

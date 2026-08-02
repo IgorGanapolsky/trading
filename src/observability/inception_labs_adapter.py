@@ -75,9 +75,7 @@ class InceptionROIReport:
         else:
             d["avg_latency_ms"] = None
             d["avg_tokens_per_call"] = None
-        d["success_rate"] = (
-            round(self.successes / self.n_calls, 3) if self.n_calls else None
-        )
+        d["success_rate"] = round(self.successes / self.n_calls, 3) if self.n_calls else None
         return d
 
 
@@ -207,25 +205,19 @@ class InceptionLabsMercuryAdapter:
 
         t0 = time.perf_counter()
         try:
-            r = requests.post(
-                url, headers=headers, json=payload, timeout=self.timeout_s
-            )
+            r = requests.post(url, headers=headers, json=payload, timeout=self.timeout_s)
             latency_ms = (time.perf_counter() - t0) * 1000.0
             if r.status_code == 200:
                 data = r.json()
-                content = (
-                    ((data.get("choices") or [{}])[0].get("message") or {}).get(
-                        "content"
-                    )
-                    or ""
-                )
+                content = ((data.get("choices") or [{}])[0].get("message") or {}).get(
+                    "content"
+                ) or ""
                 usage = data.get("usage") or {}
                 prompt_tok = int(usage.get("prompt_tokens") or 0)
                 completion_tok = int(usage.get("completion_tokens") or 0)
                 reasoning_tok = int(usage.get("reasoning_tokens") or 0)
                 total = int(
-                    usage.get("total_tokens")
-                    or (prompt_tok + completion_tok + reasoning_tok)
+                    usage.get("total_tokens") or (prompt_tok + completion_tok + reasoning_tok)
                 )
                 cost = _estimate_cost(prompt_tok, completion_tok)
                 return InceptionResponse(

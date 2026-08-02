@@ -22,7 +22,7 @@ import logging
 import ssl
 import sys
 import urllib.request
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -148,7 +148,7 @@ def analyze_spy_options_chain(chain_data: dict | None) -> dict:
         expirations = result[0].get("expirationDates", [])
 
         # Find 30-45 DTE expiration
-        now_ts = datetime.now(timezone.utc).timestamp()
+        now_ts = datetime.now(UTC).timestamp()
         target_dte_range = []
         for exp_ts in expirations:
             dte = (exp_ts - now_ts) / 86400
@@ -168,7 +168,7 @@ def analyze_spy_options_chain(chain_data: dict | None) -> dict:
 
 def generate_daily_research_lesson(vix_analysis: dict, chain_analysis: dict) -> str:
     """Generate a daily research lesson from market data."""
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
     vix = vix_analysis.get("vix")
     regime = vix_analysis.get("regime", "unknown")
     guidance = vix_analysis.get("guidance", "No guidance available")
@@ -203,7 +203,7 @@ Severity: LOW
 def save_research_state(vix_analysis: dict, chain_analysis: dict):
     """Save research state for downstream consumers."""
     state = {
-        "last_updated": datetime.now(timezone.utc).isoformat(),
+        "last_updated": datetime.now(UTC).isoformat(),
         "vix": vix_analysis,
         "spy_chain": chain_analysis,
         "recommendations": {
@@ -222,7 +222,7 @@ def main(dry_run: bool = False):
     """Run daily strategy research."""
     logger.info("=" * 70)
     logger.info("DAILY STRATEGY RESEARCH")
-    logger.info(f"Time: {datetime.now(timezone.utc).isoformat()}")
+    logger.info(f"Time: {datetime.now(UTC).isoformat()}")
     logger.info("=" * 70)
 
     # 1. Fetch VIX data
@@ -239,7 +239,7 @@ def main(dry_run: bool = False):
 
     # 3. Generate research lesson
     lesson_content = generate_daily_research_lesson(vix_analysis, chain_analysis)
-    today = datetime.now(timezone.utc).strftime("%Y%m%d")
+    today = datetime.now(UTC).strftime("%Y%m%d")
     lesson_file = LESSONS_DIR / f"research_{today}.md"
 
     # Quality gate: don't save lessons with no real data (dilutes RAG)

@@ -9,20 +9,20 @@ prevent downstream runtime exceptions.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import Any
 
 
 @dataclass(frozen=True)
 class ValidationResult:
     is_valid: bool
-    errors: List[str] = field(default_factory=list)
-    normalized_input: Dict[str, Any] = field(default_factory=dict)
+    errors: list[str] = field(default_factory=list)
+    normalized_input: dict[str, Any] = field(default_factory=dict)
 
 
 class PreToolValidator:
     """Pre-execution schema and argument validator for agent tool invocations."""
 
-    REQUIRED_SCHEMAS: Dict[str, Dict[str, Any]] = {
+    REQUIRED_SCHEMAS: dict[str, dict[str, Any]] = {
         "execute_trade": {
             "required": ["symbol", "action", "quantity"],
             "types": {"symbol": str, "action": str, "quantity": (int, float)},
@@ -43,9 +43,9 @@ class PreToolValidator:
     }
 
     @classmethod
-    def validate_tool_call(cls, tool_name: str, tool_input: Dict[str, Any]) -> ValidationResult:
+    def validate_tool_call(cls, tool_name: str, tool_input: dict[str, Any]) -> ValidationResult:
         """Validates tool call input against registered parameter schemas."""
-        errors: List[str] = []
+        errors: list[str] = []
         if not isinstance(tool_input, dict):
             return ValidationResult(is_valid=False, errors=["tool_input must be a dictionary"])
 

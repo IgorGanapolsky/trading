@@ -678,7 +678,10 @@ class TestPutCreditDailyStructureGate:
         from src.core.trading_profiles import get_put_credit_profile
 
         monkeypatch.setattr(gate_mod, "_active_strategy_family", lambda: "spy_put_credit")
-        assert gate_mod._max_daily_structures_for_gate() == get_put_credit_profile().max_daily_structures
+        assert (
+            gate_mod._max_daily_structures_for_gate()
+            == get_put_credit_profile().max_daily_structures
+        )
         assert gate_mod._max_daily_structures_for_gate() == 3
 
     def test_max_daily_structures_ic_family_uses_constant(self, monkeypatch):

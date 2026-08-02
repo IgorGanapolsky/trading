@@ -1,4 +1,3 @@
-import pytest
 from src.rag.query_rewriter import RAGQueryRewriter
 from src.rag.hybrid_retriever import HybridRAGRetriever
 from src.rag.parent_child_retriever import ParentChildRetriever

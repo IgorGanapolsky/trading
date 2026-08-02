@@ -20,7 +20,7 @@ from __future__ import annotations
 import asyncio
 import json
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Callable
 
@@ -40,7 +40,7 @@ class NodeResult:
     success: bool
     output: Any
     execution_time_ms: float
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     cached: bool = False
     error: str | None = None
 
@@ -84,7 +84,7 @@ def load_latest_perplexity_trading_intel(
     except ValueError:
         return None
 
-    current = now or datetime.now(timezone.utc)
+    current = now or datetime.now(UTC)
     age_minutes = (current - generated_at).total_seconds() / 60
     if age_minutes > max_age_minutes:
         return None
@@ -106,7 +106,7 @@ class WorkflowNode:
 
     async def execute(self, inputs: dict[str, Any], cache: dict[str, NodeResult]) -> NodeResult:
         """Execute this node with given inputs."""
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
 
         # Check cache first
         cache_key = f"{self.name}:{hash(json.dumps(inputs, sort_keys=True, default=str))}"
@@ -125,7 +125,7 @@ class WorkflowNode:
                 else:
                     result = self.fn(**inputs)
 
-                execution_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
+                execution_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
 
                 node_result = NodeResult(
                     node_name=self.name,
@@ -140,13 +140,13 @@ class WorkflowNode:
 
                 return node_result
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 last_error = f"Timeout after {self.timeout_seconds}s"
             except Exception as e:
                 last_error = str(e)
 
         # All retries failed
-        execution_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
+        execution_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
         return NodeResult(
             node_name=self.name,
             success=False,
@@ -319,7 +319,7 @@ class TradingWorkflow:
         """Persist workflow state to disk."""
         state = {
             "workflow": self.name,
-            "last_updated": datetime.now(timezone.utc).isoformat(),
+            "last_updated": datetime.now(UTC).isoformat(),
             "results": {name: result.to_dict() for name, result in self.results.items()},
             "execution_order": self.execution_order,
         }

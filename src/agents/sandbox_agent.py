@@ -189,7 +189,7 @@ print(json.dumps({{"output": _sandbox_output}}))
                     proc.communicate(),
                     timeout=self.capabilities.max_execution_time_seconds,
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 proc.kill()
                 return SandboxResult(
                     success=False,

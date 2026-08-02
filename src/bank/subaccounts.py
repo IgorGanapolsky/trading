@@ -11,8 +11,8 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
-from enum import Enum
+from datetime import UTC, datetime
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SUBACCOUNT_LOG_PATH = ROOT / "data" / "audit" / "mercury_subaccount_transfers.jsonl"
 
 
-class SubAccountType(str, Enum):
+class SubAccountType(StrEnum):
     OPERATING_EXPENSES = "operating_expenses"
     TAXES = "taxes"
     PROFIT = "profit"
@@ -116,7 +116,7 @@ class MercurySubAccountManager:
             operating_expenses_usd=operating_exp,
             tax_pct=tax_pct,
             profit_pct=profit_pct,
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
         )
 
         self._log_record("AUTO_TRANSFER_SPLIT", result.as_dict())
@@ -138,7 +138,7 @@ class MercurySubAccountManager:
             cashback_rate_pct=cashback_rate_pct,
             cashback_earned_usd=cashback,
             destination_subaccount=destination_subaccount,
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
         )
 
         self._log_record("CASHBACK_REWARD", result.as_dict())

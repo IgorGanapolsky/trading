@@ -20,7 +20,7 @@ import logging
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any, Callable
 
@@ -53,7 +53,7 @@ class TickerResult:
     processing_time_ms: float = 0.0
     indicators: dict[str, Any] = field(default_factory=dict)
     order_details: dict[str, Any] | None = None
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 @dataclass
@@ -161,7 +161,7 @@ class ParallelTickerProcessor:
         if not tickers:
             return ParallelProcessingResult(total_tickers=0)
 
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
         result = ParallelProcessingResult(total_tickers=len(tickers))
 
         logger.info(
@@ -214,7 +214,7 @@ class ParallelTickerProcessor:
                     result.errors += 1
 
         # Calculate total time
-        end_time = datetime.now(timezone.utc)
+        end_time = datetime.now(UTC)
         result.total_time_ms = (end_time - start_time).total_seconds() * 1000
 
         logger.info(result.summary())
@@ -229,7 +229,7 @@ class ParallelTickerProcessor:
         - Exception handling
         - Structured result creation
         """
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
         active = self._active_count.increment()
         logger.debug("Processing %s (active: %d)", ticker, active)
 
@@ -246,7 +246,7 @@ class ParallelTickerProcessor:
                 )
 
             # Add timing
-            end_time = datetime.now(timezone.utc)
+            end_time = datetime.now(UTC)
             result.processing_time_ms = (end_time - start_time).total_seconds() * 1000
 
             completed = self._completed_count.increment()
@@ -261,7 +261,7 @@ class ParallelTickerProcessor:
             return result
 
         except Exception as e:
-            end_time = datetime.now(timezone.utc)
+            end_time = datetime.now(UTC)
             processing_time_ms = (end_time - start_time).total_seconds() * 1000
 
             logger.error("Error processing %s: %s", ticker, e, exc_info=True)

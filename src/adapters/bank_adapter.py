@@ -15,7 +15,7 @@ import os
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -76,7 +76,7 @@ class PaperBankAdapter(BankAdapter):
         return BankBalance(
             account_id="paper-mercury-sim",
             available_usd=self._balance,
-            observed_at=datetime.now(timezone.utc).isoformat(),
+            observed_at=datetime.now(UTC).isoformat(),
         )
 
     def send_to_broker(self, amount_usd: float, idempotency_key: str) -> TransferResult:
@@ -86,7 +86,7 @@ class PaperBankAdapter(BankAdapter):
                 transfer_id=None,
                 amount_usd=amount_usd,
                 direction="to_broker",
-                initiated_at=datetime.now(timezone.utc).isoformat(),
+                initiated_at=datetime.now(UTC).isoformat(),
                 error="amount_usd must be positive",
             )
             self._transfers.append(result)
@@ -97,7 +97,7 @@ class PaperBankAdapter(BankAdapter):
                 transfer_id=None,
                 amount_usd=amount_usd,
                 direction="to_broker",
-                initiated_at=datetime.now(timezone.utc).isoformat(),
+                initiated_at=datetime.now(UTC).isoformat(),
                 error=f"insufficient balance: have ${self._balance:.2f}, need ${amount_usd:.2f}",
             )
             self._transfers.append(result)
@@ -108,7 +108,7 @@ class PaperBankAdapter(BankAdapter):
             transfer_id=f"paper-{idempotency_key}",
             amount_usd=amount_usd,
             direction="to_broker",
-            initiated_at=datetime.now(timezone.utc).isoformat(),
+            initiated_at=datetime.now(UTC).isoformat(),
         )
         self._transfers.append(result)
         return result
@@ -120,7 +120,7 @@ class PaperBankAdapter(BankAdapter):
             transfer_id=f"paper-{uuid.uuid4()}",
             amount_usd=amount_usd,
             direction="to_bank",
-            initiated_at=datetime.now(timezone.utc).isoformat(),
+            initiated_at=datetime.now(UTC).isoformat(),
         )
         self._transfers.append(result)
         return result
@@ -161,7 +161,11 @@ class MercuryBankAdapter(BankAdapter):
 
         if not token or not account_id:
             env_secrets_path = os.environ.get("MERCURY_SECRETS_PATH")
-            path = secrets_path or (Path(env_secrets_path) if env_secrets_path else Path.home() / ".resume_secrets" / "mercury.json")
+            path = secrets_path or (
+                Path(env_secrets_path)
+                if env_secrets_path
+                else Path.home() / ".resume_secrets" / "mercury.json"
+            )
             if path.exists():
                 try:
                     with path.open("r", encoding="utf-8") as handle:
@@ -196,7 +200,7 @@ class MercuryBankAdapter(BankAdapter):
         return BankBalance(
             account_id=self.account_id,
             available_usd=float(payload.get("availableBalance", 0.0)),
-            observed_at=datetime.now(timezone.utc).isoformat(),
+            observed_at=datetime.now(UTC).isoformat(),
         )
 
     def send_to_broker(self, amount_usd: float, idempotency_key: str) -> TransferResult:
@@ -220,7 +224,7 @@ class MercuryBankAdapter(BankAdapter):
                 transfer_id=str(payload.get("id")),
                 amount_usd=amount_usd,
                 direction="to_broker",
-                initiated_at=datetime.now(timezone.utc).isoformat(),
+                initiated_at=datetime.now(UTC).isoformat(),
             )
         except Exception as exc:  # noqa: BLE001 - surfaced to caller via result, not raised
             logger.error("Mercury transfer failed: %s", exc)
@@ -229,7 +233,7 @@ class MercuryBankAdapter(BankAdapter):
                 transfer_id=None,
                 amount_usd=amount_usd,
                 direction="to_broker",
-                initiated_at=datetime.now(timezone.utc).isoformat(),
+                initiated_at=datetime.now(UTC).isoformat(),
                 error=str(exc),
             )
 
@@ -241,5 +245,5 @@ class MercuryBankAdapter(BankAdapter):
             transfer_id=f"reconcile-{uuid.uuid4()}",
             amount_usd=amount_usd,
             direction="to_bank",
-            initiated_at=datetime.now(timezone.utc).isoformat(),
+            initiated_at=datetime.now(UTC).isoformat(),
         )

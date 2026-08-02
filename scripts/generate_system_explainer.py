@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 
@@ -78,7 +78,7 @@ def main() -> int:
     latest_timestamp = status.get("timestamp_utc", "n/a")
     latency_ms = smoke_metrics.get("latency_ms", "n/a")
     est_cost = smoke_metrics.get("estimated_total_cost_usd", "n/a")
-    now_utc = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    now_utc = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     lines: list[str] = []
     lines.append("---")

@@ -71,7 +71,11 @@ def test_tick_includes_regime_and_gsd_fields(tmp_path, monkeypatch):
     reports = list((root / "data" / "audit" / "ralph_ticks").glob("tick_*.json"))
     assert reports, "expected tick report"
     # exclude detail dumps
-    main_reports = [p for p in reports if "_cohort" not in p.name and "_regime" not in p.name and "_inventory" not in p.name]
+    main_reports = [
+        p
+        for p in reports
+        if "_cohort" not in p.name and "_regime" not in p.name and "_inventory" not in p.name
+    ]
     report = json.loads(main_reports[0].read_text())
     assert report["schema_version"] == "ralph-gsd-profit-tick/2"
     assert report["framework"] == "ralph+gsd"

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 from src.ml.policy_registry import PolicyRegistry
 from src.ml.policy_scorer import PolicyScorer
@@ -21,7 +21,7 @@ def test_policy_scorer_blocks_stale_registry() -> None:
     decision = scorer.score(
         "iron_condor",
         model_metrics={"expected_return_per_trade": 0.12},
-        as_of=datetime(2026, 3, 17, 12, 0, tzinfo=timezone.utc),
+        as_of=datetime(2026, 3, 17, 12, 0, tzinfo=UTC),
     )
 
     assert decision["eligible"] is False
@@ -45,7 +45,7 @@ def test_policy_scorer_blocks_insufficient_samples() -> None:
     decision = scorer.score(
         "iron_condor",
         model_metrics={"expected_return_per_trade": 0.11},
-        as_of=datetime(2026, 3, 17, 10, 0, tzinfo=timezone.utc),
+        as_of=datetime(2026, 3, 17, 10, 0, tzinfo=UTC),
     )
 
     assert decision["eligible"] is False
@@ -69,7 +69,7 @@ def test_policy_scorer_blocks_negative_expectancy() -> None:
     decision = scorer.score(
         "iron_condor",
         model_metrics={"expected_return_per_trade": -0.01},
-        as_of=datetime(2026, 3, 17, 11, 0, tzinfo=timezone.utc),
+        as_of=datetime(2026, 3, 17, 11, 0, tzinfo=UTC),
     )
 
     assert decision["eligible"] is False
@@ -93,7 +93,7 @@ def test_policy_scorer_passes_when_all_checks_pass() -> None:
     decision = scorer.score(
         "iron_condor",
         model_metrics={"expected_return_per_trade": 0.08},
-        as_of=datetime(2026, 3, 17, 12, 0, tzinfo=timezone.utc),
+        as_of=datetime(2026, 3, 17, 12, 0, tzinfo=UTC),
     )
 
     assert decision["eligible"] is True

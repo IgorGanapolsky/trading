@@ -1,4 +1,3 @@
-import pytest
 from src.analysis.iv_skew_analyzer import IVSkewAnalyzer
 from src.ml.offline_policy_eval import OfflinePolicyEvaluator
 from src.rag.rag_reranker import RAGReranker
@@ -34,8 +33,18 @@ def test_offline_policy_evaluator():
 def test_rag_reranker():
     reranker = RAGReranker()
     candidates = [
-        {"id": "LL-100", "title": "General Options Trade", "content": "Basic options overview", "score": 0.5},
-        {"id": "LL-295", "title": "Drawdown & Circuit Breaker Rules", "content": "Halt trading if drawdown reaches 5%", "score": 0.6},
+        {
+            "id": "LL-100",
+            "title": "General Options Trade",
+            "content": "Basic options overview",
+            "score": 0.5,
+        },
+        {
+            "id": "LL-295",
+            "title": "Drawdown & Circuit Breaker Rules",
+            "content": "Halt trading if drawdown reaches 5%",
+            "score": 0.6,
+        },
     ]
     results = reranker.rerank("circuit breaker drawdown", candidates)
 

@@ -18,7 +18,7 @@ from __future__ import annotations
 import json
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -141,7 +141,7 @@ def generate_next_day_plan(model: dict, research: dict) -> dict:
     global_gate_open = gate.get("should_trade", False)
 
     plan = {
-        "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        "date": datetime.now(UTC).strftime("%Y-%m-%d"),
         "current_regime": current_regime,
         "regime_win_rate": win_rate,
         "regime_sample_size": total,
@@ -176,7 +176,7 @@ def main(dry_run: bool = False):
     """Run post-market analysis."""
     logger.info("=" * 70)
     logger.info("POST-MARKET ANALYSIS")
-    logger.info(f"Time: {datetime.now(timezone.utc).isoformat()}")
+    logger.info(f"Time: {datetime.now(UTC).isoformat()}")
     logger.info("=" * 70)
 
     # 1. Load data
@@ -205,12 +205,12 @@ def main(dry_run: bool = False):
 
     # 4. Save
     if not dry_run:
-        model["last_updated"] = datetime.now(timezone.utc).isoformat()
+        model["last_updated"] = datetime.now(UTC).isoformat()
         MODEL_FILE.write_text(json.dumps(model, indent=2))
         logger.info(f"\nModel updated: {MODEL_FILE}")
 
         ANALYSIS_DIR.mkdir(parents=True, exist_ok=True)
-        today = datetime.now(timezone.utc).strftime("%Y%m%d")
+        today = datetime.now(UTC).strftime("%Y%m%d")
         plan_file = ANALYSIS_DIR / f"plan_{today}.json"
         plan_file.write_text(json.dumps(plan, indent=2))
         logger.info(f"Plan saved: {plan_file}")

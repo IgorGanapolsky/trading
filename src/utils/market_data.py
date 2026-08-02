@@ -18,7 +18,7 @@ import os
 import random
 import time
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from enum import Enum
 from pathlib import Path
 
@@ -482,10 +482,9 @@ class MarketDataProvider:
         """Log fetch result to health log for monitoring."""
         try:
             import json
-            from datetime import timezone
 
             health_entry = {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "symbol": symbol,
                 **result.to_dict(),
             }
@@ -768,7 +767,7 @@ class MarketDataProvider:
             from alpaca.data.timeframe import TimeFrame
 
             # Alpaca API: get_stock_bars returns BarSet
-            end_dt = datetime.now(timezone.utc)
+            end_dt = datetime.now(UTC)
             # Request a generous window to ensure sufficient bars
             start_dt = end_dt - timedelta(days=lookback_days + self.YFINANCE_LOOKBACK_BUFFER_DAYS)
             feed = os.getenv("ALPACA_DATA_FEED", "iex")

@@ -132,7 +132,6 @@ class PutCreditProfile:
         data["structure"] = "bull_put_credit"
         return data
 
-
     def with_underlying(self, underlying: str) -> PutCreditProfile:
         """Preserve the policy while routing to a different underlying (e.g. XSP for Section 1256 tax treatment)."""
         return replace(self, underlying=underlying.upper().strip())

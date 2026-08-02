@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 import math
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -66,9 +66,7 @@ def _write_cache(tmp_path, *, vix: float, vvix: float, age_minutes: int = 0) -> 
     cache_file.write_text(
         json.dumps(
             {
-                "timestamp": (
-                    datetime.now(timezone.utc) - timedelta(minutes=age_minutes)
-                ).isoformat(),
+                "timestamp": (datetime.now(UTC) - timedelta(minutes=age_minutes)).isoformat(),
                 "vix_level": vix,
                 "vvix_level": vvix,
             }
@@ -178,7 +176,7 @@ def test_pct_naive_datetime_gets_utc():
     # line 81: naive datetime (no tzinfo)
     result = _parse_cache_timestamp("2025-01-01T12:00:00")
     assert result is not None
-    assert result.tzinfo == timezone.utc
+    assert result.tzinfo == UTC
 
 
 def test_pct_z_suffix_parses_correctly():
@@ -198,7 +196,7 @@ def test_load_cache_returns_none_when_vix_invalid(tmp_path):
     cache_file.write_text(
         json.dumps(
             {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "vix_level": -1,
                 "vvix_level": 95.0,
             }
@@ -213,7 +211,7 @@ def test_load_cache_returns_none_when_vvix_zero(tmp_path):
     cache_file.write_text(
         json.dumps(
             {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "vix_level": 18.0,
                 "vvix_level": 0,
             }

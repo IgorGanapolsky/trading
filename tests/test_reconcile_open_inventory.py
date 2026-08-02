@@ -11,6 +11,7 @@ from scripts.reconcile_open_inventory import (
     plan_reductions,
 )
 from tests.test_residual_ic_manager import _open, _position
+from datetime import UTC
 
 
 def test_plan_reduces_extra_call_lot_and_orphan_put():
@@ -76,10 +77,10 @@ def test_clean_book_no_actions():
 
 
 def test_broker_orders_preserve_two_valid_ics_with_shared_call_vertical():
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    older = datetime(2026, 7, 17, 15, 36, tzinfo=timezone.utc)
-    newer = datetime(2026, 7, 21, 15, 40, tzinfo=timezone.utc)
+    older = datetime(2026, 7, 17, 15, 36, tzinfo=UTC)
+    newer = datetime(2026, 7, 21, 15, 40, tzinfo=UTC)
     orders = [
         _open("older", older, 695, 700, (3.40, 3.80, 2.04, 1.32)),
         _open("newer", newer, 703, 708, (2.96, 3.37, 1.85, 1.15)),

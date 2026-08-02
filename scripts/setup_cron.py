@@ -91,7 +91,9 @@ def main() -> int:
         if install_cron():
             print(f"Cron job installed: {CRON_ENTRY}")
             print(f"Logs: {LOG_FILE}")
-            print("Default: paper/dry-run mode. Edit the cron entry to add --execute for live mode.")
+            print(
+                "Default: paper/dry-run mode. Edit the cron entry to add --execute for live mode."
+            )
             return 0
         else:
             print("Failed to install cron job. Is crontab available?")

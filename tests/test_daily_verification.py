@@ -1,6 +1,6 @@
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from unittest.mock import patch
 
@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 class _FixedDateTime(datetime):
     @classmethod
     def now(cls, tz=None):
-        fixed = cls(2026, 3, 17, 12, 34, 56, tzinfo=timezone.utc)
+        fixed = cls(2026, 3, 17, 12, 34, 56, tzinfo=UTC)
         if tz is None:
             return fixed.replace(tzinfo=None)
         return fixed.astimezone(tz)

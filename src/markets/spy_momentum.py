@@ -14,7 +14,7 @@ never block trade persistence.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +32,7 @@ def compute_returns(
         from alpaca.data.historical import StockHistoricalDataClient
         from alpaca.data.requests import StockBarsRequest
         from alpaca.data.timeframe import TimeFrame
+
         from src.utils.alpaca_client import get_alpaca_credentials
     except ImportError:
         return None, None
@@ -42,7 +43,7 @@ def compute_returns(
 
     try:
         client = StockHistoricalDataClient(key, secret)
-        end = datetime.now(timezone.utc)
+        end = datetime.now(UTC)
         start = end - timedelta(days=window_long + 10)
         req = StockBarsRequest(
             symbol_or_symbols=[symbol],

@@ -39,9 +39,7 @@ def _fake_client(response):
 
 
 def _run(argv, client, monkeypatch):
-    monkeypatch.setattr(
-        mercury_cli.MercuryReadOnlyClient, "from_env", staticmethod(lambda: client)
-    )
+    monkeypatch.setattr(mercury_cli.MercuryReadOnlyClient, "from_env", staticmethod(lambda: client))
     return mercury_cli.main(argv)
 
 
@@ -71,17 +69,13 @@ class TestCommands:
         assert "Discover" in out
 
     def test_transactions_json(self, capsys, monkeypatch):
-        code = _run(
-            ["transactions", "--json"], _fake_client(TRANSACTIONS_RESPONSE), monkeypatch
-        )
+        code = _run(["transactions", "--json"], _fake_client(TRANSACTIONS_RESPONSE), monkeypatch)
         assert code == 0
         payload = json.loads(capsys.readouterr().out)
         assert payload["total"] == 1
 
     def test_transactions_empty_book(self, capsys, monkeypatch):
-        code = _run(
-            ["transactions"], _fake_client({"total": 0, "transactions": []}), monkeypatch
-        )
+        code = _run(["transactions"], _fake_client({"total": 0, "transactions": []}), monkeypatch)
         assert code == 0
         assert "(no transactions)" in capsys.readouterr().out
 

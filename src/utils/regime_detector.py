@@ -21,7 +21,7 @@ import logging
 import math
 import os
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -78,8 +78,8 @@ def _parse_cache_timestamp(value: Any) -> datetime | None:
     except ValueError:
         return None
     if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
+        return parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
 
 
 def _load_regime_data_cache() -> dict[str, float] | None:
@@ -94,7 +94,7 @@ def _load_regime_data_cache() -> dict[str, float] | None:
     # Reject clock-skewed or stale cache. A future cached_at (clock skew
     # or bad write) would produce a negative `age` that always passes the
     # MAX_AGE check, accepting a poisoned cache indefinitely.
-    age = datetime.now(timezone.utc) - cached_at
+    age = datetime.now(UTC) - cached_at
     if age < timedelta(0) or age > REGIME_DATA_CACHE_MAX_AGE:
         return None
 
@@ -111,7 +111,7 @@ def _save_regime_data_cache(vix: float, vvix: float) -> None:
         REGIME_DATA_CACHE.write_text(
             json.dumps(
                 {
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                     "vix_level": round(vix, 4),
                     "vvix_level": round(vvix, 4),
                 },

@@ -7,7 +7,6 @@ to optimize strike selection and credit collection for SPY/XSP put credit spread
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 
 
 @dataclass(frozen=True)

@@ -23,5 +23,7 @@ def test_ci_installs_lint_and_test_tools() -> None:
 
 def test_minimal_dependencies_exclude_heavy_optional_rag_stack() -> None:
     requirements = Path("requirements-minimal.txt").read_text().lower()
-    assert all(package not in requirements for package in ("torch", "sentence-transformers", "lancedb", "chromadb"))
-
+    assert all(
+        package not in requirements
+        for package in ("torch", "sentence-transformers", "lancedb", "chromadb")
+    )

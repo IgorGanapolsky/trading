@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -101,16 +101,13 @@ class DrawdownCircuitBreaker:
 
         # 1. Create data/TRADING_HALTED file kill-switch
         HALT_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
-        halt_content = (
-            f"TRADING_HALTED at {datetime.now(timezone.utc).isoformat()}\n"
-            f"Reason: {reason}\n"
-        )
+        halt_content = f"TRADING_HALTED at {datetime.now(UTC).isoformat()}\nReason: {reason}\n"
         HALT_FILE_PATH.write_text(halt_content, encoding="utf-8")
 
         # 2. Append to audit log
         CIRCUIT_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
         record = {
-            "tripped_at": datetime.now(timezone.utc).isoformat(),
+            "tripped_at": datetime.now(UTC).isoformat(),
             "reason": reason,
             "current_equity": current_equity,
             "peak_equity": peak_equity,

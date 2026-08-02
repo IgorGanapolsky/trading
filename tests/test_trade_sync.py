@@ -17,7 +17,7 @@ Updated: Jan 17, 2026 - Architecture fix: system_state.json replaces trades_*.js
 import json
 import sys
 import tempfile
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from unittest.mock import patch
 
@@ -88,7 +88,7 @@ class TestSyncToSystemState:
                     "price": "450.0",
                     "strategy": "momentum",
                     "pnl": 50.0,
-                    "filled_at": datetime.now(timezone.utc).isoformat(),
+                    "filled_at": datetime.now(UTC).isoformat(),
                 }
             )
 
@@ -131,7 +131,7 @@ class TestSyncToSystemState:
                     "qty": "5",
                     "price": "100.0",
                     "strategy": "test",
-                    "filled_at": datetime.now(timezone.utc).isoformat(),
+                    "filled_at": datetime.now(UTC).isoformat(),
                 }
             )
 

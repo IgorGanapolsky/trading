@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
@@ -49,8 +49,8 @@ def _position(symbol, qty, current):
 
 
 def test_recovers_two_same_expiry_structures_with_shared_call_vertical():
-    older = datetime(2026, 7, 17, 15, 36, tzinfo=timezone.utc)
-    newer = datetime(2026, 7, 21, 15, 40, tzinfo=timezone.utc)
+    older = datetime(2026, 7, 17, 15, 36, tzinfo=UTC)
+    newer = datetime(2026, 7, 21, 15, 40, tzinfo=UTC)
     orders = [
         _open("38126b7550dd49e5939f", older, 695, 700, (3.40, 3.80, 2.04, 1.32)),
         _open("12d3f8817beb46a0b445", newer, 703, 708, (2.96, 3.37, 1.85, 1.15)),
@@ -143,17 +143,13 @@ def test_exit_rules_respect_hold_and_trigger_profit_after_24h():
             {"qty": 1, "current_price": 0.1},
         ],
     }
-    held = evaluate_residual_exit(structure, now=datetime(2026, 7, 21, 20, 0, tzinfo=timezone.utc))
-    profit = evaluate_residual_exit(
-        structure, now=datetime(2026, 7, 22, 20, 0, tzinfo=timezone.utc)
-    )
+    held = evaluate_residual_exit(structure, now=datetime(2026, 7, 21, 20, 0, tzinfo=UTC))
+    profit = evaluate_residual_exit(structure, now=datetime(2026, 7, 22, 20, 0, tzinfo=UTC))
     assert held["should_exit"] is False
     assert profit["should_exit"] is False  # $20 P/L is below the $50 target
 
     structure["legs"][0]["current_price"] = 0.3
-    profit = evaluate_residual_exit(
-        structure, now=datetime(2026, 7, 22, 20, 0, tzinfo=timezone.utc)
-    )
+    profit = evaluate_residual_exit(structure, now=datetime(2026, 7, 22, 20, 0, tzinfo=UTC))
     assert profit["should_exit"] is True
     assert profit["exit_reason"] == "profit_target"
 
@@ -178,7 +174,7 @@ def _residual_structure(entry_order_id: str) -> dict:
     return {
         "entry_order_id": entry_order_id,
         "expiry_yymmdd": "260821",
-        "entry_time": (datetime.now(timezone.utc) - timedelta(days=2)).isoformat(),
+        "entry_time": (datetime.now(UTC) - timedelta(days=2)).isoformat(),
         "credit": 1.0,
         "quantity": 1,
         "legs": [
@@ -329,5 +325,5 @@ def test_residual_helpers_cover_invalid_pcs_and_urgent_exit_rules():
     assert assignment["exit_reason"] == "assignment_failsafe"
 
     structure["expiry_yymmdd"] = "260825"
-    dte = evaluate_residual_exit(structure, now=datetime(2026, 8, 18, 12, 0, tzinfo=timezone.utc))
+    dte = evaluate_residual_exit(structure, now=datetime(2026, 8, 18, 12, 0, tzinfo=UTC))
     assert dte["exit_reason"] == "dte_exit"

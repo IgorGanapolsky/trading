@@ -218,7 +218,9 @@ def test_live_bank_gate_refuses_when_kill_switch_blocks(tmp_path: Path, monkeypa
     import src.bank.live_gate as gate_mod
 
     monkeypatch.setattr(active_mod, "KILL_FILE", runtime / "strategy_kill_switch.json")
-    monkeypatch.setattr(active_mod, "HYPOTHESIS_FILE", runtime / "strategy_validation_hypothesis.json")
+    monkeypatch.setattr(
+        active_mod, "HYPOTHESIS_FILE", runtime / "strategy_validation_hypothesis.json"
+    )
     monkeypatch.setattr(gate_mod, "DEFAULT_COHORT", cohort_path)
 
     decision = evaluate_live_bank_gate(cohort_path=cohort_path)
@@ -285,7 +287,12 @@ def test_mercury_api_ready_checks_env_vars(monkeypatch):
     import src.bank.mercury_transfer as mt
 
     # All missing
-    for var in ("MERCURY_API_TOKEN", "MERCURY_ACCOUNT_ID", "MERCURY_LIVE_TRANSFERS_ENABLED", "MERCURY_RECIPIENT_ID"):
+    for var in (
+        "MERCURY_API_TOKEN",
+        "MERCURY_ACCOUNT_ID",
+        "MERCURY_LIVE_TRANSFERS_ENABLED",
+        "MERCURY_RECIPIENT_ID",
+    ):
         monkeypatch.delenv(var, raising=False)
     ok, msg = mt._mercury_api_ready()
     assert ok is False
@@ -425,7 +432,12 @@ def test_execute_real_transfer_blocks_when_api_not_ready(tmp_path: Path, monkeyp
     monkeypatch.setattr(mt, "evaluate_live_bank_gate", lambda: allowed)
 
     # Don't set any Mercury env vars
-    for var in ("MERCURY_API_TOKEN", "MERCURY_ACCOUNT_ID", "MERCURY_LIVE_TRANSFERS_ENABLED", "MERCURY_RECIPIENT_ID"):
+    for var in (
+        "MERCURY_API_TOKEN",
+        "MERCURY_ACCOUNT_ID",
+        "MERCURY_LIVE_TRANSFERS_ENABLED",
+        "MERCURY_RECIPIENT_ID",
+    ):
         monkeypatch.delenv(var, raising=False)
 
     result = mt.plan_fund_from_mercury(

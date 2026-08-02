@@ -7,16 +7,19 @@ to boost vector and BM25 retrieval recall for risk rules and strategy lessons.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
-
 import re
-from dataclasses import field
+from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
 DOMAIN_SYNONYMS: dict[str, list[str]] = {
     "put credit": ["short put spread", "credit spread", "put spread", "15 delta", "45 dte"],
-    "iron condor": ["4-leg spread", "short strangle defined risk", "50% profit target", "7 dte exit"],
+    "iron condor": [
+        "4-leg spread",
+        "short strangle defined risk",
+        "50% profit target",
+        "7 dte exit",
+    ],
     "circuit breaker": ["drawdown kill switch", "5% account protection", "trading halt"],
     "bogleheads": ["three fund portfolio", "bogleheads forum", "long term buy and hold"],
     "section 1256": ["xsp", "spx", "60/40 tax treatment", "index options"],

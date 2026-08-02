@@ -50,6 +50,7 @@ def is_trading_day(target_date: datetime) -> bool:
         date_obj = et_view.date()
         try:
             from alpaca.trading.requests import GetCalendarRequest
+
             req = GetCalendarRequest(start=date_obj, end=date_obj)
             calendar = client.get_calendar(filters=req)
         except Exception:

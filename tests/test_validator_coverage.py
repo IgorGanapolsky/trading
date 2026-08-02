@@ -798,9 +798,7 @@ class TestSafeSubmitOrder:
             )
             # Hard RAG require: openings must retrieve at least one lesson
             # (plain object — MagicMock would invent a truthy .snippet)
-            mock_lessons.return_value.search.return_value = (
-                self._protocol_grounded_lessons()
-            )
+            mock_lessons.return_value.search.return_value = self._protocol_grounded_lessons()
             # Cold validation: ML consensus deferred (no fake AGREE)
             with patch.object(
                 gate_mod,

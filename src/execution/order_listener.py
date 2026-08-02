@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -37,12 +37,14 @@ class OrderFillHandler:
     def __init__(self, state_path: Path | None = None):
         self.state_path = state_path or (ROOT / "data" / "mercury_income_loop_state.json")
 
-    def process_event(self, event: OrderEvent, state: dict[str, Any] | None = None) -> dict[str, Any]:
+    def process_event(
+        self, event: OrderEvent, state: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Process an incoming order event and update state dict."""
         if state is None:
             state = self._load_state()
 
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         state.setdefault("events", [])
         state.setdefault("positions", {})
 

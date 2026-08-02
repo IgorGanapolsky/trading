@@ -36,7 +36,9 @@ class GRPOUnquarantineGate:
         self.required_outcomes = required_outcomes
         self.min_win_rate_pct = min_win_rate_pct
 
-    def check_status(self, cohort_outcomes: list[dict[str, Any]] | None = None) -> GRPOQuarantineStatus:
+    def check_status(
+        self, cohort_outcomes: list[dict[str, Any]] | None = None
+    ) -> GRPOQuarantineStatus:
         outcomes = cohort_outcomes or []
         count = len(outcomes)
 
@@ -56,7 +58,11 @@ class GRPOUnquarantineGate:
         evaluator = OfflinePolicyEvaluator()
         ope_res = evaluator.evaluate_policy(outcomes, lambda x: 0.85)
 
-        is_quarantined = count < self.required_outcomes or win_rate < self.min_win_rate_pct or not ope_res.is_statistically_significant
+        is_quarantined = (
+            count < self.required_outcomes
+            or win_rate < self.min_win_rate_pct
+            or not ope_res.is_statistically_significant
+        )
 
         if is_quarantined:
             msg = f"Quarantined: {count}/{self.required_outcomes} verified outcomes (Win Rate: {win_rate}%)"
