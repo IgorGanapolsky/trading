@@ -1,154 +1,31 @@
-name: Iron Condor Scanner + Auto-Execute
+name: Iron Condor Scanner + Auto-Execute (DISABLED)
+
+# KILLED 2026-07-22 with IC Simple. Do not re-enable.
+# Successor: scripts/spy_put_credit.py (paper only).
+# See data/runtime/strategy_kill_switch.json
 
 on:
-  # DISABLED: ic_simple.py is sole trader (2026-04-01)
-  # schedule:
-  # 9:45 AM ET (14:45 UTC) Mon-Fri — morning scan
-  #     - cron: "45 14 * * 1-5"
-  # 11:30 AM ET (16:30 UTC) Mon-Fri — midday scan
-  #     - cron: "30 16 * * 1-5"
-  # 2:00 PM ET (19:00 UTC) Mon-Fri — afternoon scan
-  #     - cron: "0 19 * * 1-5"
   workflow_dispatch:
     inputs:
-      dry_run:
-        description: "Dry run (no execution)"
-        required: false
-        default: "false"
-        type: boolean
-
-# Prevent concurrent trade execution (LL-281 race condition fix)
-concurrency:
-  group: global-trade-execution
-  cancel-in-progress: false
+      acknowledge_killed:
+        description: "Type STRATEGY_KILLED to acknowledge this workflow is a no-op"
+        required: true
+        default: ""
 
 permissions:
-  contents: write
-
-env:
-  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+  contents: read
 
 jobs:
-  scan-and-execute:
+  refuse:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
-        with:
-          python-version: "3.11"
-          cache: "pip"
-
-      - name: Install dependencies
+      - name: Refuse iron condor scan/execute
         run: |
-          pip install -r requirements-minimal.txt
-
-      - name: Scan for opportunity
-        id: scan
-        env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
-          ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
-        run: |
-          python3 << 'EOF'
-          import json
-          import os
-          import sys
-          sys.path.insert(0, '.')
-
-          from scripts.iron_condor_scanner import scan_for_opportunity
-
-          dry_run = "${{ github.event.inputs.dry_run }}" == "true"
-          result = scan_for_opportunity(dry_run=dry_run)
-
-          if result:
-              print(f"OPPORTUNITY FOUND: {result['expiry']}")
-              with open('opportunity.json', 'w') as f:
-                  json.dump(result, f)
-              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-                  f.write('found=true\n')
-          else:
-              print("No opportunity found")
-              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-                  f.write('found=false\n')
-          EOF
-
-      - name: Execute trade immediately
-        if: steps.scan.outputs.found == 'true' && github.event.inputs.dry_run != 'true'
-        env:
-          ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
-        run: |
-          python3 << 'EOF'
-          import json
-          import os
-
-          from alpaca.trading.client import TradingClient
-          from alpaca.trading.enums import OrderClass, OrderSide, TimeInForce
-          from alpaca.trading.requests import MarketOrderRequest, OptionLegRequest
-
-          with open('opportunity.json') as f:
-              opp = json.load(f)
-
-          strikes = opp['strikes']
-          expiry = opp['expiry'].replace('-', '')[2:]  # YYMMDD
-
-          def build_sym(strike, opt_type):
-              return f"SPY{expiry}{opt_type}{int(strike * 1000):08d}"
-
-          long_put = build_sym(strikes['long_put'], 'P')
-          short_put = build_sym(strikes['short_put'], 'P')
-          short_call = build_sym(strikes['short_call'], 'C')
-          long_call = build_sym(strikes['long_call'], 'C')
-
-          print(f"Executing IC: {long_put}/{short_put} | {short_call}/{long_call}")
-
-          api_key = os.environ.get('ALPACA_PAPER_TRADING_API_KEY')
-          secret = os.environ.get('ALPACA_PAPER_TRADING_API_SECRET')
-          # Order-submitting client routes through the mandatory trade gate.
-          from src.utils.alpaca_client import get_guarded_trading_client
-          client = get_guarded_trading_client(paper=True)
-          if client is None:
-              print("❌ ABORT: guarded TradingClient unavailable (creds?)")
-              import sys; sys.exit(1)
-
-          # Validate symbols exist before submitting order
-          from alpaca.data.historical.option import OptionHistoricalDataClient
-          from alpaca.data.requests import OptionSnapshotRequest
-          opts_client = OptionHistoricalDataClient(api_key, secret)
-          symbols = [long_put, short_put, short_call, long_call]
-          snaps = opts_client.get_option_snapshot(OptionSnapshotRequest(symbol_or_symbols=symbols))
-          missing = [s for s in symbols if s not in snaps]
-          if missing:
-              print(f"❌ ABORT: symbols not found on Alpaca: {missing}")
-              import sys; sys.exit(1)
-          print(f"✅ All 4 symbols validated on Alpaca")
-
-          legs = [
-              OptionLegRequest(symbol=long_put, side=OrderSide.BUY, ratio_qty=1),
-              OptionLegRequest(symbol=short_put, side=OrderSide.SELL, ratio_qty=1),
-              OptionLegRequest(symbol=short_call, side=OrderSide.SELL, ratio_qty=1),
-              OptionLegRequest(symbol=long_call, side=OrderSide.BUY, ratio_qty=1),
-          ]
-
-          # 2 contracts per IC: $1,600 max risk (well under 5% of $101K)
-          order = client.submit_order(MarketOrderRequest(  # noqa: direct-submit-order  -- client is get_guarded_trading_client() above; submit routes through mandatory trade gate
-              qty=2,
-              order_class=OrderClass.MLEG,
-              legs=legs,
-              time_in_force=TimeInForce.DAY,
-          ))
-
-          print(f"✅ Order submitted: {order.id} - {order.status}")
-          EOF
-
-      - name: Commit trade log updates
-        if: steps.scan.outputs.found == 'true' && github.event.inputs.dry_run != 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/ic_trade_log.json data/ic_entries.json || true
-          git diff --staged --quiet || git commit -m "chore: Log IC trade [autonomous]"
-          git push || true
+          echo "STRATEGY_KILLED: iron_condor / ic_simple new entries are forbidden."
+          echo "This workflow previously scanned and auto-executed iron condors."
+          echo "Successor: python3 scripts/spy_put_credit.py --dry-run  (paper only)"
+          echo "Kill switch: data/runtime/strategy_kill_switch.json"
+          if [ "${{ github.event.inputs.acknowledge_killed }}" != "STRATEGY_KILLED" ]; then
+            echo "Set acknowledge_killed=STRATEGY_KILLED if you only wanted to confirm the kill."
+          fi
+          exit 1
