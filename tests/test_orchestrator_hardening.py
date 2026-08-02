@@ -39,6 +39,7 @@ class TestOrchestratorHardening:
         # Patch staleness guards via monkeypatch so they persist through run()
         monkeypatch.setattr(orch_main, "check_data_staleness", lambda **kw: _FRESH_STALENESS)
         monkeypatch.setattr(orch_main, "check_context_freshness", lambda **kw: _FRESH_CONTEXT)
+        monkeypatch.setattr(orch_main, "record_heartbeat", MagicMock())
         with (
             patch("src.orchestrator.main.AlpacaExecutor"),
             patch("src.orchestrator.main.MomentumAgent"),

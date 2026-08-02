@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import re
 from datetime import UTC, datetime
 from pathlib import Path
@@ -21,7 +22,12 @@ from pathlib import Path
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-MODEL_PATH = Path(__file__).parent.parent / "models" / "ml" / "feedback_model.json"
+MODEL_PATH = Path(
+    os.getenv(
+        "FEEDBACK_MODEL_PATH",
+        str(Path(__file__).parent.parent / "models" / "ml" / "feedback_model.json"),
+    )
+)
 FEEDBACK_DIRS = [
     Path(__file__).parent.parent / "data" / "feedback",
     Path(__file__).parent.parent / ".claude" / "memory" / "feedback",

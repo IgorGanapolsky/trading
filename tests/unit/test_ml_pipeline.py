@@ -41,7 +41,8 @@ if importlib.util.find_spec("numpy") is None:
     np_mod.object_ = object
     np_mod.str_ = str
 
-if importlib.util.find_spec("torch") is None:
+_STUBBED_TORCH = importlib.util.find_spec("torch") is None
+if _STUBBED_TORCH:
     _ensure_module("torch")
     _ensure_module("torch.nn")
     _ensure_module("torch.optim")
@@ -60,6 +61,11 @@ if importlib.util.find_spec("torch") is None:
 
 from src.ml.reward import compute_portfolio_reward, compute_trade_reward
 from src.rag.vector_store import TradeRAG
+
+# Do not leak the lightweight test stub into SciPy or other later test modules.
+if _STUBBED_TORCH:
+    for _module_name in ("torch.optim", "torch.nn", "torch"):
+        sys.modules.pop(_module_name, None)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 1. Thompson Sampling
