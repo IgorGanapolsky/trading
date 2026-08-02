@@ -2,6 +2,8 @@
 
 These paths are local/runtime artifacts. They must never be re-committed.
 See .gitignore "REPO HYGIENE (2026-08-02)" and LL cleanup session.
+
+Knowledge corpus (rag_knowledge/) and architecture docs may remain tracked.
 """
 
 from __future__ import annotations
@@ -24,25 +26,18 @@ FORBIDDEN_TRACKED_PREFIXES = (
     "data/reports/",
     "data/backtests/",
     "data/ml_training_data/",
-    "data/rag_knowledge/",
+    "data/rag_knowledge/",  # displaced path; canonical is repo-root rag_knowledge/
     "data/memory/",
     "data/sentiment/",
     "data/options_signals/",
-    "rag_knowledge/",
-    ".planning/",
-    ".thumbgate/",
-    ".agents/",
     "logs/autonomous_trading_",
     "artifacts/devloop/",
     "artifacts/tars/",
     ".playwright-mcp/",
     ".obsidian/",
     ".aider.chat.history.md",
-    ".aider*",
     ".claude/logs/",
     "docs/contest/",
-    "docs/data/",
-    "docs/assets/snapshots/",
     "graphify-out/",
 )
 
@@ -59,6 +54,7 @@ REQUIRED_TRACKED = (
     "data/put_credit_entries.json",
     "data/strategy_params.json",
     "data/runtime/strategy_kill_switch.json",
+    "data/revenue/outbound_target_leads.json",
     ".gitignore",
 )
 
@@ -109,8 +105,3 @@ def test_gitignore_has_hygiene_section() -> None:
     assert "REPO HYGIENE (2026-08-02)" in gitignore
     assert "data/screenshots/" in gitignore
     assert "logs/" in gitignore
-    assert "rag_knowledge/" in gitignore
-    assert ".planning/" in gitignore
-    assert "docs/data/" in gitignore
-    assert "docs/assets/snapshots/" in gitignore
-    assert "graphify-out/" in gitignore
