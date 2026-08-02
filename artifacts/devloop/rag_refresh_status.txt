@@ -1,5 +1,0 @@
-tars_ingest_exit=0
-reindex_exit=0
-tars_rag_validation_exit=0
-query_index_exit=0
-report_exit=0

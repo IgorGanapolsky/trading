@@ -898,6 +898,33 @@ def _patch_put_credit_cli_basics(pcs, monkeypatch):
     )
     monkeypatch.setattr("src.core.active_strategy.load_kill_state", lambda: state)
     monkeypatch.setattr(pcs, "_assert_active", lambda: None)
+    # Entry path always hits regime gate; keep unit tests independent of live IVR/VIX.
+    from src.risk.put_credit_regime import RegimeSnapshot
+
+    allowed_snap = RegimeSnapshot(
+        captured_at="2026-08-02T00:00:00+00:00",
+        spy_price=747.0,
+        vix=16.0,
+        iv_rank_proxy=55.0,
+        iv_rank_method="test",
+        spy_sma_200=700.0,
+        spy_above_200dma=True,
+        source_errors=(),
+    )
+    monkeypatch.setattr(
+        "src.risk.put_credit_regime.capture_regime_snapshot",
+        lambda *_a, **_k: allowed_snap,
+    )
+    monkeypatch.setattr(
+        "src.risk.put_credit_regime.evaluate_regime_gate",
+        lambda *_a, **_k: {
+            "allowed": True,
+            "blockers": [],
+            "soft_flags": [],
+            "thresholds": {},
+            "snapshot": allowed_snap.as_dict(),
+        },
+    )
     return state
 
 
