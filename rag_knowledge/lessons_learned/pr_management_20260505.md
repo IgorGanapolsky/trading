@@ -1,4 +1,4 @@
-# PR Management Lesson - 2026-05-05
+# LL-344: PR Management Lesson - 2026-05-05
 
 ## Context
 - PR #3944 refreshed public North Star status after the IC exit-only rerun and was merged after CI, Public Surface Guard, CodeQL, GitGuardian, and Socket checks passed.

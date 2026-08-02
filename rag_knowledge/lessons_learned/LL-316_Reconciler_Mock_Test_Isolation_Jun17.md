@@ -45,7 +45,7 @@ uv run pytest tests/unit/test_reconciliation.py -v
 Run reconciler script directly on production ledger:
 ```text
 uv run python3 scripts/reconcile_broker_vs_paired.py
-INFO Reconciliation report written: /Users/igorganapolsky/workspace/git/igor/trading/data/reports/reconciliation_2026-06-18.json
+INFO Reconciliation report written: $REPO_ROOT/data/reports/reconciliation_2026-06-18.json
 INFO broker=$-8093.00  paired_in=$-7966.50  paired_out=$-63.00  delta=$-126.50  threshold=$150.00  window=[2026-01-22 17:48:41.448722+00:00, 2026-05-06 15:54:59.512970+00:00]
 ```
 The reconciler correctly exits with `0` (reconciled within `$150.00` threshold).

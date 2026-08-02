@@ -1,4 +1,4 @@
-# LL — Repo Garbage Cleanup (2026-08-02)
+# LL-338: Repo Garbage Cleanup (2026-08-02)
 
 ## Problem
 

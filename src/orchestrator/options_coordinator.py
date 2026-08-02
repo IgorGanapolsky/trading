@@ -18,15 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class OptionsStrategyCoordinator:
-    """Coordinates options strategy execution and risk management.
-
-    Responsibilities:
-    - Run Phil Town Rule #1 options (CSPs, covered calls)
-    - Run IV-aware options execution pipeline
-    - Monitor options positions for risk (stop-losses, delta)
-
-    This class is injected into TradingOrchestrator to reduce its complexity.
-    """
+    """Coordinates portfolio risk checks while legacy entry gates remain archived."""
 
     def __init__(
         self,
@@ -90,7 +82,7 @@ class OptionsStrategyCoordinator:
         results = {
             "action": "archived",
             "reason": "Rule One / cash-secured-put path removed from active operating scope.",
-            "active_path": "scripts/iron_condor_trader.py",
+            "active_path": "scripts/spy_put_credit.py",
         }
         logger.info("--- Gate 6 archived: Rule One options path disabled ---")
         self.telemetry.record(
@@ -106,7 +98,7 @@ class OptionsStrategyCoordinator:
         results = {
             "action": "archived",
             "reason": "IV-aware multi-ticker execution removed from active operating scope.",
-            "active_path": "scripts/iron_condor_trader.py",
+            "active_path": "scripts/spy_put_credit.py",
         }
         logger.info("--- Gate 7 archived: multi-ticker IV execution disabled ---")
         self.telemetry.record(

@@ -1,4 +1,4 @@
-# SPX Tax Advantage Over SPY (Feb 8, 2026)
+# LL-346: SPX Tax Advantage Over SPY (Feb 8, 2026)
 
 ## Source: CBOE, Green Trader Tax, IRS Publication 550
 

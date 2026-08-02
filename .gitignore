@@ -1,284 +1,177 @@
-# Environment
+# Local environments and secrets
 .env
-.env.devloop
-.env.local
-.env.*.local
+.env.*
+!.env.example
+.envrc
 .venv/
 venv/
-.venv/
-.pc-venv/
 env/
 ENV/
-*.pyc
+.pc-venv/
+*.pem
+*.p12
+*.pfx
+api_keys.txt
+.secrets
+.github/local-secrets.env
+data/google_sheets_credentials.json
+
+# Python, test, and build output
 __pycache__/
 *.py[cod]
 *$py.class
-
-# IDEs
-.vscode/
-.idea/
-*.swp
-
-# Claude Code - allow configuration but ignore state
-.claude/ralph_state.json
-*.swo
-.DS_Store
-
-# OMX (oh-my-codex) local UI/state (never commit)
-.omx/
-
-# Data
-data/*.csv
-data/*.json
-# Runtime kill-switch / halt flags — local only (must never be resurrected by checkout)
-data/TRADING_HALTED
-data/SYSTEM_HALTED
-data/trading_halt.txt
-# Whitelist canonical trade data files
-!data/system_state.json
-!data/trades.json
-!data/ic_entries.json
-!data/put_credit_entries.json
-!data/thumbgate_rules.json
-!data/strategy_params.json
-!data/ic_stats.json
-!data/trade_journal.jsonl
-!data/runtime/
-!data/runtime/**
-!data/revenue/outbound_target_leads.json
-logs/*.log
-population_log*.txt
-
-# Web artifacts (downloaded pages, archives)
-*.mht
-article_*.html
-
-# Cache directories (API responses, health logs, etc.) - ignore recursively
-data/cache/
-data/gpu_backtests/cache/
-data/gpu_backtests/price_cache/
-data/market_cache/
-**/*.jsonl
-
-# Historical data (can be regenerated, but some may be useful to track)
-# Note: data/historical/ contains CSV files that may be committed for backtesting
-# Uncomment the next line if you want to ignore all historical data:
-# data/historical/
-
-# Docker
-*.pid
-
-# Core dumps (prevent accidental commits from crashes).
-# IMPORTANT: patterns must be root-anchored — bare "core" also matched the
-# src/core/ package directory and silently blocked new strategy modules.
-/core
-/core.*
-*.core
-
-# Secrets
-*_secret*
-*_key*
-api_keys.txt
-.github/local-secrets.env
-.secrets
-!scripts/validate_env_keys.py
-# Block test files in root (but allow in tests/ directory)
-/test_*.py
-/*_test.py
-
-# Testing
 .pytest_cache/
 .coverage
+coverage*.xml
+coverage*.json
 htmlcov/
-
-# Node.js (Trigger.dev)
-node_modules/
-
-# Distribution
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
 dist/
 build/
 *.egg-info/
 
-# Persistent State Management
-# Allow system state to be committed for cross-machine continuity
-!data/.gitkeep
-!data/system_state.json
-!data/tier2_watchlist.json
-!data/watchlist_4ms_small_capital.json
-!data/performance_log.json
-!data/heartbeat.json
-data/google_sheets_credentials.json
-
-# Local CI/CD
-.pc-venv/
-.actrc
-.cursorrules
-.mypy_cache/
-.ruff_cache/
-.pre-commit-config.yaml.save
-worktrees/
+# Editors and local agent state
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.aider*
+.obsidian/
+.playwright-mcp/
+.omx/
+.codex/
+.planning/
 .worktrees/
+worktrees/
 trading_worktrees/
-GEMINI.md
+.claude/logs/
+.claude/ralph/
+.claude/ralph_state.json
+.claude/orchestrator_state.json
+.claude/reports/*.txt
+.claude/epics/
+.claude/prds/
+.claude/context/
+.claude/memory/
+.claude/scripts/feedback/venv/
 
-# High-churn agent state and generated artifacts
-data/agent_context/
-data/options_signals/
-data/trading_plans/
+# Keep reusable project skills and checked-in review policy; ignore their local state.
+.agents/*
+!.agents/skills/
+!.agents/skills/**
+.thumbgate/*
+!.thumbgate/AUTO_REVIEW.md
+.rlhf/
+
+# Node and generated site output
+node_modules/
+site/
+
+# Runtime flags, locks, and crash output
+/core
+/core.*
+*.core
+*.pid
+.trade_lock
+data/.trade_lock
+data/TRADING_HALTED
+data/SYSTEM_HALTED
+data/trading_halt.txt
+LIQUIDATE_NOW
+TRIGGER_SYNC_NOW
+
+# Runtime logs and disposable reports
+logs/
+artifacts/
+reports/**/*.json
+reports/**/*.txt
+data/audit/
+data/audit_trail/
+data/audit_reports/
+data/analysis/
+data/analytics/
+data/archive/
+data/backups/
+data/backtests/
+data/backtests_verification/
+data/blog_cache/
+data/bronze/
+data/cache/
+data/checkpoints/
+data/chroma/
+data/chroma_db/
+data/claude_ops/
+data/context_engine/
+data/datasets/
+data/debug/
 data/evaluations/
-data/sentiment/news_*.json
+data/external_signals/
+data/feedback/
+!data/feedback/stats.json
+data/gold/
+data/gpu_backtests/
+data/ipo/
+data/lancedb_feedback/
+data/market_cache/
+data/market_signals/
+data/memory/
+data/ml_training_data/
+data/monitoring/
+data/newsletter_signals/
+data/options_signals/
+data/post_market_analysis/
+data/reports/
+data/research/
+data/revenue/
+data/screenshots/
+data/sentiment/
+data/silver/
+data/swarm_state/
+data/trade_plans/
+data/trading_plans/
+data/vector_db/
+data/workflow_health/
+data/workflow_state/
+data/youtube_cache/
 
-# Runtime artifacts and logs
-*.db
+# Rebuilt RAG indexes and caches. Source documents live in rag_knowledge/.
+data/rag/cache/
+data/rag/normalized/
+data/rag/vector_store/
+data/rag/sentiment.db
+data/rag/tfidf_vectorizer.pkl
+data/rag/lessons_learned.json
+data/rag/lessons_learned_index.json
+data/rag/lessons_indexing_stats.json
+
+# Deprecated raw snapshots; canonical state is explicitly tracked in data/.
+data/*.csv
+data/trades_*.json
+data/options_trades_*.json
+data/trades_for_clustering.json
+data/backtest_trades.json
+data/api_circuit_breaker_state.json
+data/crisis_log.json
+data/failure_reflections.json
+data/gateway_decisions.jsonl
+data/stop_verification.json
+data/trade_gateway_state.json
+data/vix_history.json
+
+# Local ML binaries. Small, reviewed metadata JSON may remain tracked.
+*.pt
+
+# Miscellaneous local outputs
+*.mht
+article_*.html
 manual_run*.txt
 failed_log.txt
 pytest_cov_report.txt
 ralph_output.txt
 *.trigger
-LIQUIDATE_NOW
-TRIGGER_SYNC_NOW
-reports/*.txt
-reports/**/*.json
-data/audit_trail/
-data/sentiment/
-data/bronze/
-data/silver/
-data/gold/
+population_log*.txt
 wiki/
-data/feedback/
-!data/feedback/stats.json
-data/backups/
-data/lancedb_feedback/
-data/chroma/
-data/chroma_db/
-.trade_lock
-.envrc
-.claude/memory/feedback/
-.claude/memory/lancedb/
-.claude/memory/model_cache/
-.claude/memory/chroma_db/
-.claude/memory/memalign/
-.claude/memory/lessons-learned.memory.md
-.claude/memory/*.json
-.claude/scripts/feedback/venv/
-
-# High-churn agent state (never commit)
-.claude/ralph/
-.claude/orchestrator_state.json
-.claude/reports/*.txt
-
-# CCPM local workspace (project management)
-.claude/epics/
-.claude/prds/
-.claude/context/
-
-# Generated workflow artifacts
-artifacts/**
-!artifacts/.gitkeep
-
-# Coverage XML reports (regenerated by pytest)
-coverage*.xml
-coverage*.json
-
-# Audit reports (generated artifacts)
-data/audit_reports/
-
-# Generated site (MkDocs/Jekyll output)
-site/
-
-# Generated RAG vector store / embeddings (regenerated by scripts/vectorize_rag_knowledge.py)
-data/rag_knowledge/
-
-# NOTE: root-level rag_knowledge/ IS intentionally tracked as the primary
-# lessons corpus (191+ lessons). Do NOT add a blanket `rag_knowledge/` ignore.
-
-# Consolidated memory (local only)
-.claude/memory/consolidated_memory.json
-
-# Legacy MCP Memory Gateway local state
-.rlhf/
-
-# ThumbGate local state
-.thumbgate/
-
-# Agent-generated local state
-.agents/
-.codex/
-
-# === REPO HYGIENE (2026-08-02) ===
-# Runtime / agent garbage — never re-commit. Canonical ledgers stay whitelisted above.
-
-# Screenshots, browser dumps, IDE/editor state
-data/screenshots/
-.playwright-mcp/
-.obsidian/
-.aider*
-.aider.chat.history.md
-
-# Audit / analysis / report dumps (regenerated locally)
-data/audit/
-data/audit_trail/
-data/audit_reports/
-data/analysis/
-data/reports/
-data/debug/
-data/post_market_analysis/
-data/workflow_health/
-data/workflow_state/
-data/swarm_state/
-data/claude_ops/
-data/context_engine/
-data/vector_db/
-data/blog_cache/
-data/youtube_cache/
-data/newsletter_signals/
-data/external_signals/
-data/market_signals/
-data/options_signals/
-data/sentiment/
-data/evaluations/
-data/feedback/
-!data/feedback/stats.json
-data/memory/
-data/ipo/
-data/archive/
-data/analytics/
-# data/revenue/  # keep outbound_target_leads.json tracked
-data/research/
-data/trade_plans/
-data/backtests/
-data/backtests_verification/
-data/gpu_backtests/
-data/ml_training_data/
-data/datasets/
-data/rag_knowledge/
-
-# Deprecated raw daily trade dumps (use data/trades.json)
-data/trades_*.json
-data/trades_for_clustering.json
-data/options_trades_*.json
-data/backtest_trades.json
-
-# Logs + generated workflow artifacts
-logs/
-!logs/.gitkeep
-artifacts/
-!artifacts/.gitkeep
-
-# Claude session logs (config under .claude/ stays tracked)
-.claude/logs/
-
-# Docs build outputs and generated analytics snapshots (regenerated by scripts)
-docs/data/
-docs/assets/snapshots/
-
-# Session planning state (local only)
-.planning/
-
-# graphify-out — local tool output (generated graph reports)
-graphify-out/
-
-# Binary ML training dumps stay local (JSON weights under models/ml may be tracked intentionally)
-*.pt
-!models/ml/*.pt
-

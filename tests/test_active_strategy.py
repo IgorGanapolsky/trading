@@ -783,7 +783,10 @@ def test_put_credit_exit_manager_dry_run_flags_orphan_cleanup(tmp_path, monkeypa
 
 def test_schedule_manages_put_credit_exits_every_weekday_slot():
     workflow = (
-        Path(__file__).resolve().parents[1] / ".github" / "workflows" / "ic-simple.yml"
+        Path(__file__).resolve().parents[1]
+        / ".github"
+        / "workflows"
+        / "put-credit-validation.yml"
     ).read_text(encoding="utf-8")
     assert "Manage put-credit exits" in workflow
     assert "--manage-exits" in workflow
@@ -795,7 +798,10 @@ def test_schedule_manages_put_credit_exits_every_weekday_slot():
 
 def test_schedule_preserves_trigger_intent_when_github_delivers_late():
     workflow = (
-        Path(__file__).resolve().parents[1] / ".github" / "workflows" / "ic-simple.yml"
+        Path(__file__).resolve().parents[1]
+        / ".github"
+        / "workflows"
+        / "put-credit-validation.yml"
     ).read_text(encoding="utf-8")
     determine_mode = workflow.split("- name: Determine mode", 1)[1].split(
         "- name: Reconcile filled put-credit journals", 1

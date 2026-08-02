@@ -1,4 +1,4 @@
-# Automated Position Management Requirements (Feb 8, 2026)
+# LL-345: Automated Position Management Requirements (Feb 8, 2026)
 
 ## Source: Tastylive best practices, Option Alpha, system gap analysis
 

@@ -44,4 +44,13 @@ Always tell the user 100% truth. Never fabricate, hide, or misrepresent status, 
 - If security context is relevant, keep it minimal and technical.
 - Avoid phrasing like "your key is compromised" or "effectively compromised". State only concrete, verifiable facts (e.g., whether a secret appears in the repo) and the next required action.
 - Do not comment on a user-pasted key being "compromised" due to being pasted into chat. Only raise key-handling actions when a secret is present in the repo, logs, or other systems we control (or when the user explicitly asks).
-- Dynamically retrieve and use default credentials from `~/.resume_secrets/` (e.g. via the [job-site-login](file:///Users/igorganapolsky/.gemini/config/skills/job-site-login/SKILL.md) skill) for job site flows. Never hardcode credentials.
+- Retrieve authorized credentials at action time from environment variables or the local keyring. Never hardcode credentials.
+
+## Repository Hygiene Standards
+
+- The active entry path is `scripts/spy_put_credit.py` in paper mode. New `ic_simple` and `iron_condor` entries are killed; `scripts/residual_ic_manager.py` owns residual exits.
+- Run `make check` before publishing and `make dry-run` before operational changes.
+- Keep canonical source, configuration, compact ledgers, and curated RAG lessons in Git. Ignore generated output.
+- Put reusable agent procedures in `.agents/skills/`, contributor instructions in `CONTRIBUTING.md`, and extension contracts in `docs/EXTENSIONS.md`.
+- Core imports must be side-effect free. Optional providers are lazy adapters.
+- Every retained workflow must have a current owner, bounded permissions, and a tested contract.

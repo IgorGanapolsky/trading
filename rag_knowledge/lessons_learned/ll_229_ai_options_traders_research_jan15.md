@@ -1,6 +1,6 @@
 # LL-229: Research - Top AI Options Traders Starting Small
 
-**ID**: LL-211
+**ID**: LL-229
 **Date**: January 15, 2026
 **Category**: Research / Strategy
 **Source**: Web Research (Ralph CTO Iteration 5)

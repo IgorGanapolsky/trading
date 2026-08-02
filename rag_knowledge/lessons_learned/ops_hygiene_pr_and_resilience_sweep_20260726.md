@@ -1,4 +1,4 @@
-# Ops Hygiene: PR Management, Idempotency & Turn Resilience (2026-07-26)
+# LL-343: PR Management, Idempotency and Turn Resilience (2026-07-26)
 
 ## Context
 Session-start PR/branch/CI hygiene sweep and turn resilience overhaul executed per CTO directive.

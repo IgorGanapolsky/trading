@@ -1,0 +1,230 @@
+name: Put Credit Validation
+
+# The killed iron-condor entry stack is gone. This workflow keeps the separate,
+# broker-reconciled residual exit manager and paper-validates its successor.
+
+on:
+  schedule:
+    - cron: "0 15 * * 1-5" # 11:00 AM ET — exit residual IC + put-credit entry attempt
+    - cron: 0 16 * * 1-5 # Exit check: 12:00 PM ET
+    - cron: "0 18 * * 1-5" # Exit check: 2:00 PM ET
+    - cron: "30 19 * * 1-5" # EOD exit: 3:30 PM ET
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "entry, exit, both, or status"
+        required: false
+        default: "both"
+      dry_run:
+        description: "Dry run (no orders)"
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ format('state-writer-{0}-{1}', github.repository, github.ref_name || 'main') }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          token: ${{ secrets.GH_PAT || github.token }}
+          fetch-depth: 0
+
+      - name: Refresh to latest main
+        run: |
+          git fetch origin main
+          git checkout -B main origin/main
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dev]" 2>/dev/null || pip install alpaca-py python-dotenv scipy numpy
+          pip install sentence-transformers faiss-cpu lancedb 2>/dev/null || echo "Semantic RAG unavailable"
+          pip install torch --index-url https://download.pytorch.org/whl/cpu 2>/dev/null || echo "PyTorch unavailable"
+
+      - name: Determine mode
+        id: mode
+        env:
+          INPUT_MODE: ${{ github.event.inputs.mode || 'both' }}
+          INPUT_DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          EVENT_NAME: ${{ github.event_name }}
+          SCHEDULE_EXPRESSION: ${{ github.event.schedule || '' }}
+        run: |
+          MODE="$INPUT_MODE"
+          DRY="$INPUT_DRY_RUN"
+          case "$MODE" in
+            entry|exit|both|status) ;;
+            *) echo "Invalid mode: $MODE"; exit 2 ;;
+          esac
+          case "$DRY" in
+            true|false) ;;
+            *) echo "Invalid dry_run: $DRY"; exit 2 ;;
+          esac
+          RUN_PUT_CREDIT=false
+          if [ "$EVENT_NAME" = "schedule" ]; then
+            # GitHub can deliver scheduled jobs late. Preserve the intent of the
+            # triggering cron expression instead of reclassifying by wall clock.
+            case "$SCHEDULE_EXPRESSION" in
+              "0 15 * * 1-5")
+                MODE="both"
+                RUN_PUT_CREDIT=true
+                ;;
+              "0 16 * * 1-5"|"0 18 * * 1-5"|"30 19 * * 1-5") MODE="exit" ;;
+              *) echo "Unknown schedule expression: $SCHEDULE_EXPRESSION"; exit 2 ;;
+            esac
+          else
+            # manual dispatch: entry/both includes put-credit
+            if [ "$MODE" = "entry" ] || [ "$MODE" = "both" ]; then
+              RUN_PUT_CREDIT=true
+            fi
+          fi
+          {
+            echo "mode=$MODE"
+            echo "dry_run=$DRY"
+            echo "run_put_credit=$RUN_PUT_CREDIT"
+          } >> "$GITHUB_OUTPUT"
+          echo "Mode: $MODE, Dry run: $DRY, Put credit: $RUN_PUT_CREDIT"
+
+      - name: Reconcile filled put-credit journals
+        if: steps.mode.outputs.mode != 'status'
+        env:
+          ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          FLAGS=(--reconcile-entries)
+          if [ "$DRY_RUN" = "true" ]; then
+            FLAGS+=(--dry-run)
+          fi
+          # Repair the crash window between a broker fill and local journal write
+          # before either inventory owner evaluates the live option legs.
+          python3 scripts/spy_put_credit.py "${FLAGS[@]}"
+
+      - name: Manage residual IC positions (broker-reconciled exits only)
+        id: residual_ic
+        continue-on-error: true
+        if: steps.mode.outputs.mode != 'status'
+        env:
+          ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          RAG_QUERY_INDEX_MAX_AGE_MINUTES: "999999"
+          CONTEXT_INDEX_MAX_AGE_MINUTES: "999999"
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          # Recover each open structure from its filled MLEG order. This remains
+          # correct when multiple ICs share strikes and broker quantities aggregate.
+          FLAGS=()
+          if [ "$DRY_RUN" = "true" ]; then
+            FLAGS+=(--dry-run)
+          fi
+          python3 scripts/residual_ic_manager.py "${FLAGS[@]}"
+
+      - name: Manage put-credit exits
+        if: always() && steps.mode.outputs.mode != 'status'
+        env:
+          ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          FLAGS=(--manage-exits)
+          if [ "$DRY_RUN" = "true" ]; then
+            FLAGS+=(--dry-run)
+          fi
+          # Every weekday slot evaluates fixed TP, stop, and DTE exits.
+          python3 scripts/spy_put_credit.py "${FLAGS[@]}"
+
+      - name: Refresh broker-paired outcome ledger
+        if: steps.mode.outputs.mode != 'status' && steps.mode.outputs.dry_run != 'true'
+        env:
+          ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          # Reconcile evidence before any successor entry.
+          # Raw order telemetry never becomes an outcome label.
+          python3 scripts/sync_closed_positions.py
+
+      - name: Run spy_put_credit paper entry (successor strategy)
+        if: >-
+          steps.residual_ic.outcome == 'success' &&
+          steps.mode.outputs.run_put_credit == 'true' &&
+          steps.mode.outputs.mode != 'status'
+        env:
+          ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          if [ "$DRY_RUN" = "true" ]; then
+            python3 scripts/spy_put_credit.py --dry-run
+          else
+            # Paper MLEG only — live blocked by strategy_kill_switch.json
+            python3 scripts/spy_put_credit.py --execute-paper || {
+              echo "Put-credit entry skipped or no opportunity (exit 0 so workflow continues)"
+              true
+            }
+          fi
+
+      - name: Show strategy status
+        if: steps.mode.outputs.mode == 'status'
+        env:
+          ALPACA_PAPER_TRADING_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_PAPER_TRADING_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          python3 scripts/spy_put_credit.py --status
+
+      - name: Commit trade data
+        if: >-
+          always() &&
+          steps.mode.outputs.mode != 'status' &&
+          steps.mode.outputs.dry_run != 'true'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          npx --yes prettier@3.6.2 --write \
+            data/ic_entries.json \
+            data/put_credit_entries.json \
+            data/ic_stats.json \
+            data/system_state.json \
+            data/trades.json \
+            data/verification_reports.json \
+            data/runtime/intraday_pnl_latest.json \
+            data/runtime/intraday_pnl_history.json \
+            models/ml/grpo_trade_metadata.json \
+            || true
+
+          git add -f data/ic_entries.json data/put_credit_entries.json data/ic_stats.json data/trade_journal.jsonl 2>/dev/null || true
+          git add -f data/system_state.json data/trades.json data/verification_reports.json 2>/dev/null || true
+          git add -f data/runtime/intraday_pnl_latest.json data/runtime/intraday_pnl_history.json 2>/dev/null || true
+          git add -f data/runtime/strategy_kill_switch.json 2>/dev/null || true
+          if git diff --staged --quiet; then
+            echo "No trade data changes"
+          else
+            git commit -m "chore: put-credit / residual IC trade data [auto]"
+            git pull --ff-only origin main
+            git push origin HEAD:main
+          fi
+
+      - name: Fail closed on unresolved residual IC inventory
+        if: always() && steps.residual_ic.outcome == 'failure'
+        run: |
+          echo "Residual IC reconciliation or exit submission failed; new entries stayed blocked."
+          exit 1

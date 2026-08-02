@@ -2467,7 +2467,7 @@ class TradingOrchestrator:
             return
 
         if ticker.upper() == "SPY":
-            replay_command = "python scripts/iron_condor_trader.py --symbol SPY --dry-run"
+            replay_command = "python scripts/spy_put_credit.py --dry-run"
         else:
             replay_command = (
                 f"manual replay required: no single-script replay path for {ticker}; "

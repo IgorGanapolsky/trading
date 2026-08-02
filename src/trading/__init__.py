@@ -1,3 +1,1 @@
-"""Trading module."""
-
-from . import options_executor  # noqa: F401
+"""Trading-domain package with side-effect-free imports."""

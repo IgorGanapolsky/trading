@@ -1,5 +1,44 @@
 SHELL := /bin/bash
+PYTHON ?= python3
+VENV ?= .venv
+VENV_PYTHON := $(VENV)/bin/python
+TRADING_ENV ?= paper
+export TRADING_ENV
 
-.PHONY: hygiene
+.PHONY: setup lint format test coverage audit health check dry-run hygiene
+
+setup:
+	$(PYTHON) -m venv $(VENV)
+	$(VENV_PYTHON) -m pip install --upgrade pip
+	$(VENV_PYTHON) -m pip install -e ".[dev]"
+
+lint:
+	$(VENV_PYTHON) -m ruff check src scripts tests
+	$(VENV_PYTHON) -m ruff format --check src scripts tests
+
+format:
+	$(VENV_PYTHON) -m ruff check --fix src scripts tests
+	$(VENV_PYTHON) -m ruff format src scripts tests
+
+test:
+	$(VENV_PYTHON) -m pytest -q
+
+coverage:
+	$(VENV_PYTHON) -m pytest --cov=src --cov=scripts --cov-report=term-missing \
+		--cov-report=xml --cov-report=json --cov-report=html -q
+
+audit:
+	$(VENV_PYTHON) scripts/audit_repository_hygiene.py --check
+
+health:
+	SYSTEM_HEALTH_BOUNDED=1 $(VENV_PYTHON) scripts/system_health_check.py
+
+check: lint audit test
+
+dry-run: health
+	$(VENV_PYTHON) scripts/spy_put_credit.py --dry-run
+	$(VENV_PYTHON) scripts/residual_ic_manager.py --dry-run
+
 hygiene:
 	scripts/worktree_hygiene.sh --prune
+

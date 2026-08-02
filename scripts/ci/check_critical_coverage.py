@@ -18,7 +18,8 @@ COVERAGE_XML = sys.argv[1] if len(sys.argv) > 1 else "coverage.xml"
 # order execution, safety gates, ML pipeline).
 # Start conservative, ratchet up as tests are added.
 CRITICAL_FILES = {
-    "scripts/ic_simple.py": 30,
+    "scripts/spy_put_credit.py": 30,
+    "scripts/residual_ic_manager.py": 25,
     "src/ml/reward.py": 70,
     "src/ml/trade_confidence.py": 60,
     "src/rag/vector_store.py": 40,

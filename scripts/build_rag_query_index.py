@@ -15,12 +15,8 @@ from pathlib import Path
 
 RAG_ROOT = Path("rag_knowledge")
 ADDITIONAL_MARKDOWN_SOURCES = [Path("docs/_reports/sql-analytics-summary.md")]
-REPO_OUTPUT_PATHS = [
-    Path("data/rag/lessons_query.json"),
-    Path("docs/data/rag/lessons_query.json"),
-]
+REPO_OUTPUT_PATHS = [Path("data/rag/lessons_query.json")]
 LOCAL_OUTPUT_PATHS = [Path("artifacts/local/rag/lessons_query.json")]
-REPO_LESSONS_PAGE_PATH = Path("docs/lessons/index.html")
 LOCAL_LESSONS_PAGE_PATH = Path("artifacts/local/rag/lessons_index.html")
 
 DATE_PATTERNS = [
@@ -80,7 +76,7 @@ def _resolve_write_profile() -> str:
 
 def _resolve_output_targets(profile: str) -> tuple[list[Path], Path]:
     if profile == "repo":
-        return REPO_OUTPUT_PATHS, REPO_LESSONS_PAGE_PATH
+        return REPO_OUTPUT_PATHS, LOCAL_LESSONS_PAGE_PATH
     # Always refresh data/rag/lessons_query.json — mandatory trade gate reads this
     # path for staleness. Local profile also writes artifacts for HTML browsing.
     return LOCAL_OUTPUT_PATHS + REPO_OUTPUT_PATHS, LOCAL_LESSONS_PAGE_PATH

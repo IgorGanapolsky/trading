@@ -27,6 +27,9 @@
 - Merge only the PRs that are actually ready.
 - Clean up stale branches, worktrees, and disposable runtime output when safe.
 - Verify `main` health after merges with CI plus a local dry-run/readiness check.
+- Use `make check` as the unified local gate and `make dry-run` as the paper-only smoke test.
+- Reject generated screenshots, caches, databases, reports, model artifacts, and duplicate RAG indexes from Git.
+- Keep the active entry surface to `scripts/spy_put_credit.py`; use `scripts/residual_ic_manager.py` only for residual exits.
 
 ## Reporting Rules
 
@@ -40,5 +43,4 @@
 - Query RAG before work and update RAG after work.
 - Record mistakes and lessons learned in RAG.
 - Exclude secrets and tokens from stored directives and logs. Never hardcode credentials.
-- Use the central secrets files under `~/.resume_secrets/` dynamically (e.g. via [job-site-login](file:///Users/igorganapolsky/.gemini/config/skills/job-site-login/SKILL.md)) for login/registration/reset workflows.
 - Treat chat-provided tokens as action-time credentials only; never save them to files, commits, or memory.

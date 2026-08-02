@@ -1,277 +1,37 @@
-#!/usr/bin/env python3
-"""
-CLAUDE.md Compliance Test - Validates code matches documented strategy.
-
-Created: Jan 19, 2026 (LL-242: Strategy Mismatch Crisis)
-
-This test prevents the $5K account failure mode where:
-- CLAUDE.md said "credit spreads on SPY only"
-- Code actually executed naked puts on individual stocks
-
-Run: pytest tests/test_claudemd_compliance.py -v
-"""
-
 import json
 import re
 from pathlib import Path
 
-import pytest
+WORKFLOW = Path(".github/workflows/put-credit-validation.yml")
+KILL_SWITCH = Path("data/runtime/strategy_kill_switch.json")
 
 
-class TestClaudeMdCompliance:
-    """Test that code matches CLAUDE.md strategy rules."""
-
-    @pytest.fixture
-    def claudemd_content(self) -> str:
-        """Load CLAUDE.md content."""
-        claudemd_path = Path(".claude/CLAUDE.md")
-        if not claudemd_path.exists():
-            pytest.skip("CLAUDE.md not found")
-        return claudemd_path.read_text()
-
-    @pytest.fixture
-    def daily_trading_workflow(self) -> str:
-        """Load daily-trading.yml content."""
-        workflow_path = Path(".github/workflows/daily-trading.yml")
-        if not workflow_path.exists():
-            pytest.skip("daily-trading.yml not found")
-        return workflow_path.read_text()
-
-    @pytest.fixture
-    def system_state(self) -> dict:
-        """Load current system state."""
-        state_path = Path("data/system_state.json")
-        if not state_path.exists():
-            pytest.skip("system_state.json not found")
-        return json.loads(state_path.read_text())
-
-    def test_only_spy_tickers_in_workflow(self, daily_trading_workflow: str):
-        """Verify workflow only trades SPY (per CLAUDE.md ticker whitelist)."""
-        # Find all ticker references
-        # Allowed: SPY, IWM (per CLAUDE.md)
-        # Forbidden: SOFI, F, T, INTC, BAC, VZ, etc.
-        forbidden_tickers = ["SOFI", "F", "T", "INTC", "BAC", "VZ", "AMD", "NVDA"]
-
-        for ticker in forbidden_tickers:
-            # Check for ticker being actively traded (not just mentioned)
-            pattern = rf'--symbol\s+["\']?{ticker}["\']?'
-            matches = re.findall(pattern, daily_trading_workflow, re.IGNORECASE)
-            assert len(matches) == 0, f"Forbidden ticker {ticker} found in workflow: {matches}"
-
-    def test_no_naked_puts_in_workflow(self, daily_trading_workflow: str):
-        """Verify workflow doesn't execute naked put scripts."""
-        # CLAUDE.md says: "NO NAKED PUTS" - only iron condors/credit spreads
-        # Check for actual CSP script execution (not comments/documentation)
-        csp_execution_patterns = [
-            r"python3\s+.*execute_cash_secured_put",
-            r"python3\s+.*sell_naked_put",
-            r"python3\s+.*execute_csp",
-        ]
-
-        for pattern in csp_execution_patterns:
-            # Find lines that execute CSP scripts
-            matches = re.findall(pattern, daily_trading_workflow, re.IGNORECASE)
-            assert len(matches) == 0, (
-                f"Naked put execution '{pattern}' found in workflow: {matches}"
-            )
-
-    def test_conflicting_traders_disabled(self, daily_trading_workflow: str):
-        """Verify conflicting traders are disabled."""
-        # These traders violate CLAUDE.md (per LL-242):
-        # - simple_daily_trader.py: Sells naked CSPs
-        # - rule_one_trader.py: Trades individual stocks
-        # - guaranteed_trader.py: Buys SPY shares (not iron condors)
-
-        conflicting_traders = [
-            "simple_daily_trader.py",
-            "rule_one_trader.py",
-        ]
-
-        for trader in conflicting_traders:
-            # Check if trader is actively called (not commented)
-            # Pattern: python3 scripts/trader.py (without # before)
-            active_pattern = rf"^\s*python3\s+scripts/{trader}"
-            matches = re.findall(active_pattern, daily_trading_workflow, re.MULTILINE)
-            assert len(matches) == 0, f"Conflicting trader {trader} is still active in workflow"
-
-    def test_iron_condor_trader_is_primary(self, daily_trading_workflow: str):
-        """Verify iron_condor_trader.py is the primary strategy."""
-        assert "iron_condor_trader.py" in daily_trading_workflow, (
-            "iron_condor_trader.py should be in workflow"
-        )
-
-    @pytest.mark.xfail(
-        reason="Known violation: 6 positions open. Fix scheduled Jan 20 9:35 AM ET via close_excess_spreads.py (LL-244)",
-        strict=False,
-    )
-    def test_position_limit_compliance(self, system_state: dict):
-        """Verify position count doesn't exceed CLAUDE.md limit."""
-        # Canonical limit: MAX_POSITIONS=8 option legs (~2 iron condors).
-        MAX_POSITIONS = 8
-
-        positions = system_state.get("positions", [])
-        position_count = len(positions)
-
-        # This is a WARNING, not failure - gives time to close excess
-        if position_count > MAX_POSITIONS:
-            pytest.fail(
-                f"Position limit exceeded: {position_count} positions "
-                f"(max {MAX_POSITIONS} per CLAUDE.md). "
-                f"Run: python3 scripts/close_excess_spreads.py"
-            )
-
-    @pytest.mark.xfail(
-        reason="Legacy SOFI position SOFI260213P00032000 exists. Close via: python3 scripts/emergency_close_sofi.py",
-        strict=False,
-    )
-    def test_positions_are_spy_only(self, system_state: dict):
-        """Verify all positions are SPY (per CLAUDE.md ticker whitelist)."""
-        positions = system_state.get("positions", [])
-
-        for pos in positions:
-            symbol = pos.get("symbol", "")
-            # Extract underlying from option symbol (e.g., SPY260220P00565000 -> SPY)
-            underlying = symbol[:3] if len(symbol) > 3 else symbol
-
-            assert underlying in [
-                "SPY",
-                "SPX",
-                "XSP",
-                "QQQ",
-                "IWM",
-                "SPXW",
-            ], f"Non-whitelisted ticker in positions: {symbol} (underlying: {underlying})"
-
-    @pytest.mark.xfail(
-        reason="Legacy SOFI position SOFI260213P00032000 exists. Close via: python3 scripts/emergency_close_sofi.py",
-        strict=False,
-    )
-    def test_no_individual_stocks_in_positions(self, system_state: dict):
-        """Verify no individual stock positions exist."""
-        positions = system_state.get("positions", [])
-        forbidden = ["SOFI", "F", "T", "INTC", "BAC", "VZ", "AMD", "NVDA"]
-
-        for pos in positions:
-            symbol = pos.get("symbol", "")
-            for ticker in forbidden:
-                assert not symbol.startswith(ticker), (
-                    f"Forbidden ticker {ticker} in positions: {symbol}"
-                )
-
-    @pytest.mark.xfail(
-        reason="Known violation: SPY260220P00653000 ($570) exceeds 5% limit. Fix scheduled Jan 20 (LL-244)",
-        strict=False,
-    )
-    def test_5pct_position_limit(self, system_state: dict):
-        """Verify no single position exceeds 5% of portfolio."""
-        # CLAUDE.md: "Position limit: 5% max = $248 risk"
-        portfolio = system_state.get("portfolio", {})
-        equity = portfolio.get("equity", 5000)
-        max_risk = equity * 0.05
-
-        positions = system_state.get("positions", [])
-        for pos in positions:
-            value = abs(pos.get("value", 0))
-            if value > max_risk:
-                pytest.fail(
-                    f"Position {pos.get('symbol')} value ${value:.2f} "
-                    f"exceeds 5% limit (${max_risk:.2f})"
-                )
+def test_documented_active_path_is_put_credit() -> None:
+    directives = Path("CLAUDE.md").read_text() + Path(".claude/CLAUDE.md").read_text()
+    assert "spy_put_credit.py" in directives
+    assert "paper" in directives.lower()
 
 
-class TestWorkflowTickerCompliance:
-    """Test that ALL workflows only trade SPY (LL-273: SOFI violation Jan 21, 2026)."""
-
-    @pytest.fixture
-    def all_workflows(self) -> dict[str, str]:
-        """Load all workflow files."""
-        workflows = {}
-        workflow_dir = Path(".github/workflows")
-        if not workflow_dir.exists():
-            pytest.skip("workflows directory not found")
-        for wf in workflow_dir.glob("*.yml"):
-            workflows[wf.name] = wf.read_text()
-        return workflows
-
-    def test_no_sofi_defaults_in_workflows(self, all_workflows: dict[str, str]):
-        """
-        Verify NO workflow has SOFI as a default ticker.
-
-        LL-273 Root Cause: emergency-simple-trade.yml had default: "SOFI"
-        which bypassed all validation gates and caused the Jan 21 loss.
-        """
-        for workflow_name, content in all_workflows.items():
-            # Check for default: "SOFI" in workflow inputs
-            sofi_default_patterns = [
-                r'default:\s*["\']?SOFI["\']?',
-                r'default:\s*["\']?sofi["\']?',
-            ]
-            for pattern in sofi_default_patterns:
-                matches = re.findall(pattern, content, re.IGNORECASE)
-                assert len(matches) == 0, (
-                    f"Workflow {workflow_name} has SOFI as default! "
-                    f"This BYPASSES SPY-only validation. Fix: Change default to SPY."
-                )
-
-    def test_workflows_have_ticker_validation(self, all_workflows: dict[str, str]):
-        """
-        Verify workflows that trade have ticker validation steps.
-
-        Trading workflows should validate tickers BEFORE executing trades.
-        """
-        trading_workflows = [
-            "daily-trading.yml",
-            "emergency-simple-trade.yml",
-        ]
-        for workflow_name in trading_workflows:
-            if workflow_name not in all_workflows:
-                continue
-            content = all_workflows[workflow_name]
-            # Check for some form of ticker validation
-            has_validation = (
-                "validate" in content.lower()
-                or "ALLOWED_TICKERS" in content
-                or "SPY ONLY" in content
-                or "ticker validation" in content.lower()
-            )
-            assert has_validation, (
-                f"Workflow {workflow_name} lacks ticker validation! "
-                f"Add a validation step before trade execution."
-            )
+def test_killed_entry_scripts_are_absent() -> None:
+    for path in ("scripts/ic_simple.py", "scripts/iron_condor_trader.py", "scripts/iron_condor_guardian.py", "scripts/iron_condor_scanner.py"):
+        assert not Path(path).exists()
 
 
-class TestStrategyDocumentation:
-    """Test that strategy documentation exists and is consistent."""
-
-    def test_claudemd_exists(self):
-        """Verify CLAUDE.md exists."""
-        assert Path(".claude/CLAUDE.md").exists(), "CLAUDE.md not found"
-
-    def test_claudemd_has_strategy_section(self):
-        """Verify strategy is documented in CLAUDE.md or trading rules."""
-        claude_content = Path(".claude/CLAUDE.md").read_text()
-        trading_rules = Path(".claude/rules/trading.md")
-        trading_content = trading_rules.read_text() if trading_rules.exists() else ""
-        combined = claude_content + trading_content
-        assert "## Strategy" in combined or "iron condor" in combined.lower(), (
-            "Strategy not documented in CLAUDE.md or trading rules"
-        )
-
-    def test_claudemd_has_iron_condor_strategy(self):
-        """Verify CLAUDE.md documents iron condor strategy."""
-        content = Path(".claude/CLAUDE.md").read_text()
-        assert "iron condor" in content.lower(), "CLAUDE.md should document iron condor strategy"
-
-    def test_claudemd_has_position_limit(self):
-        """Verify position limit is documented in CLAUDE.md or risk rules."""
-        claude_content = Path(".claude/CLAUDE.md").read_text()
-        risk_rules = Path(".claude/rules/risk-management.md")
-        risk_content = risk_rules.read_text() if risk_rules.exists() else ""
-        combined = (claude_content + risk_content).lower()
-        assert "iron condor" in combined and ("max" in combined or "position" in combined), (
-            "Position limit not documented in CLAUDE.md or risk rules"
-        )
+def test_workflow_only_executes_current_entry_path() -> None:
+    text = WORKFLOW.read_text()
+    assert "python3 scripts/spy_put_credit.py" in text and "--execute-paper" in text
+    assert "--live" not in text and "iron_condor_trader.py" not in text and "ic_simple.py" not in text
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+def test_workflows_do_not_default_to_forbidden_tickers() -> None:
+    forbidden = re.compile(r"default:\s*['\"]?(SOFI|AMD|NVDA|INTC)['\"]?", re.IGNORECASE)
+    for workflow in Path(".github/workflows").glob("*.yml"):
+        assert forbidden.search(workflow.read_text()) is None, workflow
+
+
+def test_kill_switch_blocks_live() -> None:
+    state = json.loads(KILL_SWITCH.read_text())
+    assert state["live_blocked"] is True
+    assert {"ic_simple", "iron_condor"} <= set(state["killed_families"])
+    assert state["active_family"] == "spy_put_credit"
+

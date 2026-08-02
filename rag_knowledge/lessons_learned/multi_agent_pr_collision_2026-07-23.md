@@ -1,4 +1,4 @@
-# Lesson: check open/merged PRs before building a fix, not just local files
+# LL-342: Check open/merged PRs before building a fix
 
 **Date:** 2026-07-23
 **Severity:** 3 (wasted a work cycle, no capital/data impact)
