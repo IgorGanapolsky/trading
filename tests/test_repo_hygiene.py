@@ -30,12 +30,18 @@ FORBIDDEN_TRACKED_PREFIXES = (
     "data/memory/",
     "data/sentiment/",
     "data/options_signals/",
+    ".planning/",
+    ".thumbgate/",
+    ".agents/",
+    "docs/data/",
+    "docs/assets/snapshots/",
     "logs/autonomous_trading_",
     "artifacts/devloop/",
     "artifacts/tars/",
     ".playwright-mcp/",
     ".obsidian/",
     ".aider.chat.history.md",
+    ".aider*",
     ".claude/logs/",
     "docs/contest/",
     "graphify-out/",
@@ -105,3 +111,8 @@ def test_gitignore_has_hygiene_section() -> None:
     assert "REPO HYGIENE (2026-08-02)" in gitignore
     assert "data/screenshots/" in gitignore
     assert "logs/" in gitignore
+    assert "data/rag_knowledge/" in gitignore  # data/ subdir ignored; root kept tracked
+    assert ".planning/" in gitignore
+    assert "docs/data/" in gitignore
+    assert "docs/assets/snapshots/" in gitignore
+    assert "graphify-out/" in gitignore
