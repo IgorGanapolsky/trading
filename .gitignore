@@ -175,3 +175,4 @@ ralph_output.txt
 *.trigger
 population_log*.txt
 wiki/
+graphify-out/

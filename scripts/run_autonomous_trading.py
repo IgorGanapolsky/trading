@@ -75,6 +75,7 @@ def run_daily_cycle(
     tax_rate: float = 0.15,
     state_path: Path | None = None,
     ledger_path: Path | None = None,
+    report_dir: Path | None = None,
     skip_put_credit: bool = False,
     skip_income_loop: bool = False,
 ) -> dict[str, Any]:
@@ -137,6 +138,8 @@ def run_daily_cycle(
     status_args = [
         python,
         "scripts/remittance_status.py",
+        "--ledger-path",
+        str(ledger_path or DEFAULT_LEDGER_PATH),
         "--json",
     ]
     result = _run(status_args)
@@ -156,7 +159,7 @@ def run_daily_cycle(
         pass
 
     # Save report
-    log_dir = DEFAULT_LOG_DIR
+    log_dir = report_dir or DEFAULT_LOG_DIR
     log_dir.mkdir(parents=True, exist_ok=True)
     report_path = log_dir / f"autonomous_trading_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
     report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
@@ -184,6 +187,7 @@ def main() -> int:
     p.add_argument("--tax-rate", type=float, default=0.15)
     p.add_argument("--state-path", type=Path, default=DEFAULT_STATE_PATH)
     p.add_argument("--ledger-path", type=Path, default=DEFAULT_LEDGER_PATH)
+    p.add_argument("--report-dir", type=Path, default=DEFAULT_LOG_DIR)
     p.add_argument("--skip-put-credit", action="store_true")
     p.add_argument("--skip-income-loop", action="store_true")
     p.add_argument("--json", action="store_true")
@@ -198,6 +202,7 @@ def main() -> int:
         tax_rate=args.tax_rate,
         state_path=args.state_path,
         ledger_path=args.ledger_path,
+        report_dir=args.report_dir,
         skip_put_credit=args.skip_put_credit,
         skip_income_loop=args.skip_income_loop,
     )

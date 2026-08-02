@@ -210,7 +210,7 @@ def main(dry_run: bool = False):
         )
         for key, legs in iron_condors.items():
             logger.info(f"   {key[0]} exp {key[1]}: {', '.join(legs)}")
-        logger.info("   These must be managed as a unit via manage_iron_condor_positions.py")
+        logger.info("   Residual IC legs must be managed as a unit via residual_ic_manager.py")
 
     # Convert Alpaca positions to dict format for PositionManager
     # EXCLUDE iron condor legs - they are managed separately
@@ -239,7 +239,7 @@ def main(dry_run: bool = False):
 
     if not position_dicts:
         logger.info("No non-iron-condor positions to evaluate")
-        logger.info("Iron condors should be managed via scripts/manage_iron_condor_positions.py")
+        logger.info("Residual iron condors are exit-only via scripts/residual_ic_manager.py")
         return
 
     # Evaluate non-iron-condor positions only

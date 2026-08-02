@@ -32,7 +32,7 @@ def validate_ticker(ticker: str, context: str = "") -> str:
 
     Args:
         ticker: The ticker symbol to validate
-        context: Optional context for logging (e.g., "iron_condor_trader")
+        context: Optional caller context for logging.
 
     Returns:
         The normalized (uppercase) ticker if valid

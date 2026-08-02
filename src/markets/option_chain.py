@@ -46,7 +46,7 @@ MIN_BID = 0.05
 
 @dataclass
 class StrikeSelection:
-    """Result of delta-based strike selection (consumed by iron_condor_trader)."""
+    """Result of delta-based strike selection for options research."""
 
     short_put: float
     long_put: float
@@ -94,7 +94,7 @@ class OptionContract:
 
 
 # ---------------------------------------------------------------------------
-# High-level API (used by iron_condor_trader.py)
+# High-level API for delta-based option-chain selection.
 # ---------------------------------------------------------------------------
 
 

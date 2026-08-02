@@ -278,6 +278,18 @@ This is a new lesson.
                 # Lessons should be reloaded
                 assert len(rag.lessons) == 1
 
+    def test_add_lesson_creates_missing_directory_and_does_not_duplicate(self, tmp_path):
+        from src.rag.lessons_learned_rag import LessonsLearnedRAG
+
+        knowledge_dir = tmp_path / "nested" / "lessons"
+        with patch("src.rag.lessons_learned_rag.LESSONS_SEARCH_AVAILABLE", False):
+            rag = LessonsLearnedRAG(knowledge_dir=str(knowledge_dir))
+            rag.add_lesson("LL-TEST", "# Test\n\n**Severity**: LOW\n")
+            rag._load_lessons()
+
+        assert knowledge_dir.is_dir()
+        assert [lesson["id"] for lesson in rag.lessons] == ["LL-TEST"]
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

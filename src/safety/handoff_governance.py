@@ -16,10 +16,10 @@ HIGH_RISK_PATH_PREFIXES: tuple[str, ...] = (
     "src/risk/",
     "src/safety/",
     "scripts/autonomous_trader.py",
-    "scripts/iron_condor_",
-    "scripts/manage_iron_condor_positions.py",
+    "scripts/residual_ic_manager.py",
+    "scripts/spy_put_credit.py",
     ".github/workflows/daily-trading.yml",
-    ".github/workflows/iron-condor-",
+    ".github/workflows/put-credit-",
 )
 
 CRITICAL_RISK_PATH_PREFIXES: tuple[str, ...] = (

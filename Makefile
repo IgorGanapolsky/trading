@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-PYTHON ?= python3
+PYTHON ?= python3.11
 VENV ?= .venv
 VENV_PYTHON := $(VENV)/bin/python
 TRADING_ENV ?= paper
@@ -41,4 +41,3 @@ dry-run: health
 
 hygiene:
 	scripts/worktree_hygiene.sh --prune
-

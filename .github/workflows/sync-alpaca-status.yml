@@ -95,12 +95,12 @@ jobs:
           git restore data/trades.json
           git diff --quiet -- data/trades.json
 
-      # DISABLED: ic_simple.py is the sole position manager (2026-04-01)
-      # manage_iron_condor_positions.py was closing positions via individual legs
-      # while ic_simple.py manages them via MLEG — two competing systems caused
+      # DISABLED: residual_ic_manager.py owns residual IC exits.
+      # The retired manager closed individual legs while the active manager uses
+      # recovered MLEG structures — competing systems caused
       # unexpected position closures and potential P/L loss.
       # - name: Manage Iron Condor Exits (Intraday)
-      #   run: python3 scripts/manage_iron_condor_positions.py
+      #   run: python3 scripts/residual_ic_manager.py --dry-run
 
       - name: Retrain GRPO Model
         env:

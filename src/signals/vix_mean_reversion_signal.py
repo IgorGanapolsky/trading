@@ -262,7 +262,7 @@ class VIXMeanReversionSignal:
 
     def should_enter_trade(self) -> tuple[bool, str]:
         """
-        Simple interface for iron_condor_trader.py integration.
+        Simple interface for strategy research and safety gates.
 
         Returns:
             Tuple of (should_enter: bool, reason: str)

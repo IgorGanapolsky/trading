@@ -17,7 +17,7 @@ Source of truth: `src/core/trading_constants.py`
 
 ## Dual-Track Mandate
 
-1. **The Lab (Paper Account `PA3C5AG0CECQ`)**: ~$100,000. Active validation: **`spy_put_credit`** (1-lot SPY bull put, max 3 structures/day, max 2 concurrent — profile post-#4274). Iron condor / `ic_simple` **new entries KILLED** (see `data/runtime/strategy_kill_switch.json`). Residual IC legs: exit-only via guardian/`ic_simple.py --mode exit`.
+1. **The Lab (paper account)**: Active validation is **`spy_put_credit`** (1-lot SPY bull put, max 3 structures/day, max 2 concurrent). Iron-condor new entries are killed by `data/runtime/strategy_kill_switch.json`; residual IC inventory is exit-only through `scripts/residual_ic_manager.py`.
 2. **The Field (Live Account `979807421`)**: $0 equity (started $20, lost 100%). Inactive — no capital deployed. Live blocked until put-credit kill criteria clear (n≥30, expectancy>0, PF>1).
 
 ## Active Strategy (post IC kill, 2026-07-22)
@@ -35,8 +35,8 @@ Source of truth: `src/core/trading_constants.py`
 ## Commands
 
 ```bash
-pytest tests/ -q                            # run tests
-ruff check src/                             # lint
+make check                                  # lint, hygiene audit, and tests
+make dry-run                                # health plus paper-only strategy plans
 npx -y thumbgate@1.5.0 status              # inspect local agent feedback memory
 npx -y thumbgate@1.5.0 summary             # compact feedback summary
 printf 'thumbs down' | python3 scripts/capture_hook_feedback.py
@@ -46,7 +46,7 @@ python scripts/system_health_check.py        # verify protected systems before t
 .venv/bin/python scripts/spy_put_credit.py --status   # active strategy status
 .venv/bin/python scripts/spy_put_credit.py --dry-run  # plan put credit (no order)
 .venv/bin/python scripts/audit_open_inventory.py      # inventory hygiene (exit 2 if unclean)
-.venv/bin/python scripts/ic_simple.py --mode exit     # residual IC exit only
+.venv/bin/python scripts/residual_ic_manager.py --dry-run # residual IC exit plan
 ```
 
 ## Simplification Mandate
@@ -57,11 +57,10 @@ python scripts/system_health_check.py        # verify protected systems before t
 
 ## Pre-Merge Checklist
 
-1. `pytest tests/ -q` -- pass
-2. `ruff check src/` -- clean
-3. `python scripts/validate_env_keys.py` -- valid
-4. Dry run trading logic if applicable
-5. CI green on PR
+1. `make check` -- lint, repository audit, and tests pass
+2. `make dry-run` -- protected systems and paper-only plans pass
+3. `python scripts/validate_env_keys.py` -- valid when provider access is in scope
+4. CI green on the PR
 
 ## Core Directives
 
@@ -75,7 +74,7 @@ python scripts/system_health_check.py        # verify protected systems before t
 8. Use PRs for all changes -- merge via GitHub API
 9. Compound engineering -- Fix -> Test -> Prevent -> Memory -> Verify
 10. Never hardcode credentials -- use env vars only
-11. Parallel execution -- use Task tool agents
+11. Parallel execution is optional and must follow the active session/tool directives
 
 ## CTO Mandates
 

@@ -9,7 +9,7 @@ The opinion is ADVISORY ONLY — hard risk limits in Python are never overridden
 Phil Town Rule #1: Don't lose money. The risk engine has final say.
 
 Integration points:
-- Called by iron_condor_trader.py between VIX check and find_trade()
+- Optional research input; not part of the active put-credit execution path.
 - Uses model_selector for budget-aware routing (DeepSeek-R1 via OpenRouter)
 - Falls back gracefully: if LLM call fails, trade proceeds with existing logic
 

@@ -41,7 +41,7 @@ Three structural findings, not in-sample slices:
 > Enter iron condors **only when the IV-rank proxy at entry is ≥ 30**
 > (already enforced by `MIN_IV_RANK_FOR_CREDIT` in `src/risk/trade_gateway.py`),
 > hold to **50% of max profit** (instead of the prior 25-50% range), with
-> a **24-h minimum hold** (enforced in `src/strategies/iron_condor/ic_simple.py`),
+> a **24-h minimum hold** (historically enforced by the retired IC entry stack),
 > on **SPY only**, with **1-lot per entry** (enforced by
 > `MAX_CONTRACTS_PER_TRADE=1` after PR #4034), at **15-20 delta short
 > strikes**, **30-45 DTE**, **$10 wing width**.

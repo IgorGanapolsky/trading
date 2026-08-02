@@ -13,6 +13,7 @@ jobs:
     name: Detect Changed Paths
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     outputs:
       run_full_tests: ${{ steps.filter.outputs.run_full_tests }}
     steps:
@@ -78,6 +79,7 @@ jobs:
     name: Trunk Check
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     # checks/pull-requests write are required for trunk-io/trunk-action to
     # post annotations to the PR. Without them the action returns exit 1 with
     # "Resource not accessible by integration" 403 (recurring noise on every
@@ -134,7 +136,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-3.11-${{ hashFiles('requirements-ci.txt') }}
+          key: ${{ runner.os }}-pip-3.11-${{ hashFiles('requirements-ci.txt', 'pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-pip-3.11-
 
@@ -150,6 +152,9 @@ jobs:
           PYTHON_BIN: python
           REPORT_DIR: artifacts/test-reports
         run: |
+          python -m ruff check src scripts tests
+          python -m ruff format --check src scripts tests
+          python scripts/audit_repository_hygiene.py --check
           chmod +x scripts/ci/run_all_tests.sh
           bash scripts/ci/run_all_tests.sh
 
@@ -182,7 +187,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-3.11-${{ hashFiles('requirements-ci.txt') }}
+          key: ${{ runner.os }}-pip-3.11-${{ hashFiles('requirements-ci.txt', 'pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-pip-3.11-
 

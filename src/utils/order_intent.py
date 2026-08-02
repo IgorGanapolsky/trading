@@ -19,7 +19,7 @@ Examples:
     IC-CLOSE-BPS-SP-1748549812345678901      (singleton close of that leg)
 
 This module is pure-function and free of side effects so it can be imported
-from `trade_gateway`, `iron_condor_trader`, `ic_simple`, `iron_condor_guardian`,
+from trade execution and residual-position management paths,
 and `sync_closed_positions` without circular deps.
 """
 
