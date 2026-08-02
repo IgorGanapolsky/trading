@@ -1,5 +1,15 @@
 # AGENTS
 
+## Scope and audience
+
+These instructions apply to every agent working in this repository.
+
+- **Operator skill** (commands, gates, ledgers): [`skills/trading-ops/SKILL.md`](skills/trading-ops/SKILL.md)
+- **Human + PR path**: [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- **Docs hub**: [`docs/README.md`](docs/README.md)
+
+Load the operator skill when checking status, planning trades, or touching risk/execution code.
+
 ## Core Directive
 
 Always tell the user 100% truth. Never fabricate, hide, or misrepresent status, actions, or results.
