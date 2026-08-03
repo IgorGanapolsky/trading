@@ -1026,26 +1026,26 @@ def _query_rag_for_blocking_lessons(symbol: str, strategy: str) -> tuple[bool, l
     should_block = False
 
     try:
-        # Try to import and query the lessons RAG
-        from src.rag.lessons_rag import LessonsRAG
+        # Query the trading RAG pipeline for blocking lessons
+        from src.rag.rag_pipeline import get_trading_rag_pipeline
 
-        rag = LessonsRAG()
+        pipeline = get_trading_rag_pipeline()
         query = f"{symbol} {strategy} trading mistakes critical"
-        results = rag.search(query=query, top_k=3)
+        results = pipeline.query(query=query, top_k=3, rerank=True)
 
-        for lesson, score in results or []:
-            if score > 0.15:  # Relevance threshold
-                severity = getattr(lesson, "severity", "MEDIUM").upper()
-                title = getattr(lesson, "title", "Unknown lesson")
+        for result in results or []:
+            score = float(result.get("rerank_score", result.get("score", 0.0)))
+            severity = str(result.get("severity", "MEDIUM")).upper()
+            title = result.get("title", "Unknown lesson")
 
-                if severity == "CRITICAL" and score > 0.5:
-                    should_block = True
-                    warnings.append(f"[CRITICAL] {title} (score={score:.2f}) - BLOCKING")
-                elif severity == "HIGH" and score > 0.7:
-                    should_block = True
-                    warnings.append(f"[HIGH] {title} (score={score:.2f}) - BLOCKING")
-                elif severity in ("HIGH", "CRITICAL"):
-                    warnings.append(f"[{severity}] {title} (score={score:.2f})")
+            if severity == "CRITICAL" and score > 0.5:
+                should_block = True
+                warnings.append(f"[CRITICAL] {title} (score={score:.2f}) - BLOCKING")
+            elif severity == "HIGH" and score > 0.7:
+                should_block = True
+                warnings.append(f"[HIGH] {title} (score={score:.2f}) - BLOCKING")
+            elif severity in ("HIGH", "CRITICAL"):
+                warnings.append(f"[{severity}] {title} (score={score:.2f})")
 
     except ImportError:
         logger.debug("LessonsRAG not available - skipping RAG check")
