@@ -43,6 +43,19 @@ def test_metadata_filter_severity():
     assert out[0]["id"] == "2"
 
 
+def test_domain_boost_prefers_stop_loss_over_wealth():
+    from src.rag.retrieval_quality import domain_relevance_boost
+
+    q = "put credit stop loss inventory unclean"
+    stop = domain_relevance_boost(
+        q, "Stop loss failure", "Always set 200% credit stop on put credit inventory", "CRITICAL"
+    )
+    wealth = domain_relevance_boost(
+        q, "Wealth Building Pillars", "Four pillars of wealth building roadmap", "LOW"
+    )
+    assert stop > wealth
+
+
 def test_quality_retriever_parent_child_expand():
     lessons = [
         {

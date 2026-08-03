@@ -210,6 +210,62 @@ def rrf_fuse(
     return [items[i] for i in ordered]
 
 
+# Trading safety phrases: big boost when query and doc share these
+_SAFETY_PHRASES: tuple[str, ...] = (
+    "stop loss",
+    "200%",
+    "put credit",
+    "iron condor",
+    "unclean inventory",
+    "inventory",
+    "kill switch",
+    "live blocked",
+    "1-lot",
+    "7 dte",
+    "profit target",
+    "section 1256",
+    "wash sale",
+    "orphan",
+    "freehand",
+)
+
+
+def domain_relevance_boost(query: str, title: str, content: str, severity: str) -> float:
+    """Additive boost for phrase overlap + severity alignment with risk queries."""
+    q = (query or "").lower()
+    blob = f"{title} {content}".lower()
+    boost = 0.0
+    for phrase in _SAFETY_PHRASES:
+        if phrase in q and phrase in blob:
+            boost += 0.35
+        elif phrase in q and any(w in blob for w in phrase.split() if len(w) > 3):
+            boost += 0.08
+    # Risk-flavored queries prefer CRITICAL/HIGH
+    riskish = any(
+        w in q
+        for w in (
+            "stop",
+            "loss",
+            "kill",
+            "halt",
+            "block",
+            "inventory",
+            "unclean",
+            "fail",
+            "critical",
+        )
+    )
+    sev = (severity or "").upper()
+    if riskish and sev == "CRITICAL":
+        boost += 0.25
+    elif riskish and sev == "HIGH":
+        boost += 0.12
+    # Penalize wealth/roadmap noise when query is operational risk
+    if riskish and any(x in blob for x in ("wealth building", "roadmap", "north star 30")):
+        boost -= 0.2
+    return boost
+
+
 class QualityRetriever:
     """Orchestrates rewrite → hybrid → filter → rerank → parent expand."""
 
@@ -404,6 +460,15 @@ class QualityRetriever:
         )
         # Fail-open: if filters wiped everything, keep fused
         candidates = filtered if filtered else fused
+
+        # Domain phrase boost before rerank (fixes wealth-pillar false tops on risk queries)
+        for c in candidates:
+            blob = f"{c.get('title', '')} {c.get('snippet', '')} {c.get('content', '')}"
+            boost = domain_relevance_boost(
+                query, str(c.get("title", "")), blob, str(c.get("severity", ""))
+            )
+            c["score"] = float(c.get("score") or c.get("rrf_score") or 0.0) + boost
+        candidates.sort(key=lambda x: float(x.get("score") or 0.0), reverse=True)
 
         if use_rerank and candidates:
             try:
