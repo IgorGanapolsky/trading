@@ -40,6 +40,29 @@ class LessonsLearnedRAG:
 
         # LanceDB-first retrieval (semantic)
         self.lancedb_rag = None
+
+        # --- TradingRAGPipeline backend (FTS5 + bigram-Jaccard + CE rerank) ---
+        self._pipeline = None
+        try:
+            from src.rag.rag_pipeline import TradingRAGPipeline, get_trading_rag_pipeline
+            if self._custom_dir:
+                # Custom directory: create a separate pipeline (not the singleton)
+                import tempfile as _tempfile
+                _fd, _db_path = _tempfile.mkstemp(suffix=".db")
+                os.close(_fd)
+                self._pipeline = TradingRAGPipeline(
+                    db_path=_db_path, lessons_dir=str(self.knowledge_dir)
+                )
+                self._pipeline.index_from_markdown_dir(str(self.knowledge_dir))
+                # Store db_path for cleanup
+                self._pipeline._temp_db_path = _db_path
+            else:
+                self._pipeline = get_trading_rag_pipeline()
+            logger.info("✅ TradingRAGPipeline initialized (primary backend)")
+        except Exception as e:
+            logger.warning(f"TradingRAGPipeline init failed: {e} - using legacy search")
+            self._pipeline = None
+
         self.lancedb_enabled = os.getenv("LANCEDB_RAG", "true").lower() in {
             "1",
             "true",
@@ -256,7 +279,16 @@ class LessonsLearnedRAG:
         return ranked[:top_k]
 
     def query(self, query: str, top_k: int = 5, severity_filter: Optional[str] = None) -> list:
-        """Search lessons using LanceDB first, then keyword matching."""
+        """Search lessons using the enhanced TradingRAGPipeline (FTS5 + bigram-Jaccard + CE rerank).
+
+        Falls back to legacy LanceDB/keyword search if the pipeline is unavailable.
+        """
+        if self._pipeline is not None:
+            try:
+                return self._pipeline.query(query=query, top_k=top_k, severity_filter=severity_filter)
+            except Exception as e:
+                logger.warning(f"TradingRAGPipeline query failed: {e} - using legacy search")
+
         if self.lancedb_rag is not None:
             try:
                 results = self._query_lancedb(query, top_k=top_k)

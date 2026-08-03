@@ -6,16 +6,20 @@ Uses historical lessons to provide a 'soft' veto or warning on current trade par
 import logging
 from typing import Any
 
-from src.rag.lessons_learned_rag import LessonsLearnedRAG
+from src.rag.rag_pipeline import get_trading_rag_pipeline
 
 logger = logging.getLogger(__name__)
 
 
 class RAGSafetyGuard:
-    """Consults the RAG database for similar past incidents before entry."""
+    """Consults the RAG database for similar past incidents before entry.
+
+    Uses TradingRAGPipeline with SQLite FTS5 + bigram-Jaccard hybrid + cross-encoder
+    reranking for robust lesson retrieval.
+    """
 
     def __init__(self):
-        self.rag = LessonsLearnedRAG()
+        self.pipeline = get_trading_rag_pipeline()
 
     def check_safety(self, symbol: str, vix: float, iv: float) -> dict[str, Any]:
         """
@@ -23,7 +27,7 @@ class RAGSafetyGuard:
         """
         query = f"SPY iron condor risk at VIX {vix:.1f} and IV {iv:.1%}."
         try:
-            results = self.rag.query(query, top_k=3)
+            results = self.pipeline.query(query=query, top_k=3, rerank=True)
 
             if not results:
                 return {"veto": False, "reason": "No similar historical data found."}
@@ -32,8 +36,10 @@ class RAGSafetyGuard:
             # and matches the regime, we flag a warning.
             warnings = []
             for doc in results:
-                content = doc.get("content", "").upper()
-                if "FAILURE" in content or "LOSS" in content or "CRITICAL" in content:
+                content = (doc.get("content_snippet", "") or doc.get("content", "") or "").upper()
+                # Check severity from the lesson record
+                severity = str(doc.get("severity", "")).upper()
+                if "FAILURE" in content or "LOSS" in content or "CRITICAL" in content or severity in ("CRITICAL", "HIGH"):
                     warnings.append(doc.get("id", "Unknown Lesson"))
 
             if warnings:
