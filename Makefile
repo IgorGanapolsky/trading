@@ -5,7 +5,7 @@ VENV_PYTHON := $(VENV)/bin/python
 TRADING_ENV ?= paper
 export TRADING_ENV
 
-.PHONY: setup lint ruff format test coverage audit security health skill-check check dry-run hygiene production-scorecard production-desk validation-factory
+.PHONY: setup lint ruff format test coverage audit security health skill-check coordination-check coordination-audit coordination-preflight check dry-run hygiene production-scorecard production-desk validation-factory
 
 setup:
 	$(PYTHON) -m venv $(VENV)
@@ -43,7 +43,16 @@ skill-check:
 	$(VENV_PYTHON) -m pytest tests/test_repo_docs_layout.py tests/test_repo_hygiene.py tests/test_killed_ic_workflows.py tests/test_judge_panel.py -q
 	$(VENV_PYTHON) scripts/judge_panel.py --self-check
 
-check: lint audit security skill-check test
+coordination-check:
+	$(VENV_PYTHON) -m pytest tests/test_agent_coordination.py tests/test_agent_coordination_hooks.py -q
+
+coordination-audit:
+	$(VENV_PYTHON) scripts/agent_coordination.py audit --warn-only
+
+coordination-preflight:
+	$(VENV_PYTHON) scripts/agent_coordination.py preflight
+
+check: lint audit security skill-check coordination-check test
 
 dry-run: health
 	$(VENV_PYTHON) scripts/spy_put_credit.py --dry-run
