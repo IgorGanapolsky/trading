@@ -15,6 +15,7 @@ ruff:
 	ruff check src/
 
 skill-check:
-	pytest tests/test_repo_docs_layout.py tests/test_repo_hygiene.py tests/test_killed_ic_workflows.py -q
+	pytest tests/test_repo_docs_layout.py tests/test_repo_hygiene.py tests/test_killed_ic_workflows.py tests/test_judge_panel.py -q
+	python scripts/judge_panel.py --self-check
 
 check: ruff skill-check
