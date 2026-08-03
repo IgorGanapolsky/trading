@@ -85,10 +85,45 @@ def test_parse_html_strips_scripts_and_extracts_table(tmp_path: Path):
     assert doc.backend in {"html_stdlib", "bs4"}
     assert "Revenue grew" in doc.text
     assert "evil()" not in doc.text
+    # Chrome tags must be stripped on both stdlib and bs4 paths
+    assert "Skip me" not in doc.text
     assert doc.quality.passed is True
     assert len(doc.tables) >= 1
     assert "Revenue" in doc.tables[0].headers or any("Revenue" in row for row in doc.tables[0].rows)
     assert "Extracted Tables" in doc.markdown or "|" in doc.markdown
+
+
+def test_parse_pdf_continues_past_short_docling_extract(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Short Docling extract must not block pdfplumber/pypdf fallback (Codex P1)."""
+    from src.research import messy_document_parser as mdp
+
+    pdf_path = tmp_path / "short-then-good.pdf"
+    pdf_path.write_bytes(b"%PDF-1.4 fake")
+
+    long_text = (
+        "Berkshire Hathaway shareholder letter discusses insurance float and "
+        "owner earnings with substantial narrative detail for investors."
+    )
+
+    def fake_docling(_path: Path):
+        return ("tiny", [], {"pages": 0, "backend_detail": "docling-stub"})
+
+    def fake_pdfplumber(_path: Path):
+        return (long_text, [], {"pages": 1, "backend_detail": "pdfplumber-stub"})
+
+    def fake_pypdf(_path: Path):
+        raise AssertionError("pypdf should not run after pdfplumber quality pass")
+
+    monkeypatch.setattr(mdp, "_extract_pdf_docling", fake_docling)
+    monkeypatch.setattr(mdp, "_extract_pdf_pdfplumber", fake_pdfplumber)
+    monkeypatch.setattr(mdp, "_extract_pdf_pypdf", fake_pypdf)
+
+    doc = mdp.parse_pdf(pdf_path)
+    assert doc.backend == "pdfplumber"
+    assert doc.quality.passed is True
+    assert "insurance float" in doc.text
+    assert doc.metadata.get("attempts") == ["docling", "pdfplumber"]
+    assert any("docling_quality_fail" in w for w in doc.warnings)
 
 
 def test_parse_html_string_without_path():
