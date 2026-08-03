@@ -294,9 +294,16 @@ def main() -> int:
     )
     ralph_state.write_text(json.dumps(prev, indent=2) + "\n", encoding="utf-8")
 
-    print(json.dumps(report, indent=2))
-    print(f"report={report_path}")
-    print(f"ralph_iteration={prev['iteration']}")
+    # Do not dump full report JSON to stdout (CodeQL: clear-text financial fields).
+    # Full report remains on disk at report_path.
+    print(
+        "ralph_tick "
+        f"iteration={prev['iteration']} "
+        f"grade={production_gate.get('grade')} "
+        f"score={production_gate.get('score_0_10')} "
+        f"allow_new_risk={bool(production_gate.get('allow_new_risk'))} "
+        f"report={report_path}"
+    )
     return 0
 
 

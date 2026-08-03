@@ -160,11 +160,7 @@ def score_dimensions(
 
     # Sample velocity (cash path speed — still honest)
     velocity = min(10.0, 1.5 + n * 0.25 + open_n * 0.6)
-    velocity_block = (
-        None
-        if n >= 20
-        else "Need more clean closes toward n=30 for $1k/mo timeline"
-    )
+    velocity_block = None if n >= 20 else "Need more clean closes toward n=30 for $1k/mo timeline"
     dims.append(
         _dim(
             "sample_velocity",
@@ -366,7 +362,11 @@ def score_dimensions(
         obs_block = "kill switch missing"
     if not (ROOT / "src" / "risk" / "production_gate.py").is_file():
         obs_score = min(obs_score, 7.0)
-    if (ROOT / "data" / "audit" / "put_credit_cohort_latest.json").is_file() and age_h is not None and age_h < 24:
+    if (
+        (ROOT / "data" / "audit" / "put_credit_cohort_latest.json").is_file()
+        and age_h is not None
+        and age_h < 24
+    ):
         obs_score = 10.0
         obs_block = None
     dims.append(
