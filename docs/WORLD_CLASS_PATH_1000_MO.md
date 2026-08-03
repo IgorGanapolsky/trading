@@ -96,15 +96,28 @@ Goal: **30 clean** put-credit structures, same profile:
 ## Daily operator command (desk ritual)
 
 ```bash
+# One command (recommended):
+python3 scripts/production_desk_session.py
+# or: make production-desk
+
+# Manual equivalent:
 python3 scripts/sync_alpaca_state.py
 python3 scripts/audit_open_inventory.py
 python3 scripts/put_credit_cohort_scorecard.py
 python3 scripts/world_class_production_scorecard.py
+python3 scripts/spy_put_credit.py --production-gate
 python3 scripts/spy_put_credit.py --status
-# if RTH + clean + regime ok:
+# if RTH + production gate allow_new_risk + regime ok:
 python3 scripts/spy_put_credit.py --dry-run
-# execute only via approved paper path when dry-run is valid
+# paper execute only when dry-run valid (never --live until EDGE_CANDIDATE)
 ```
+
+### Two grades (do not confuse them)
+
+| Grade | Meaning | Can be A+ today? |
+| --- | --- | --- |
+| **process_ops / production_control_plane** | Halt, family, inventory, freshness, kill switch, live lock | **Yes** — when desk ritual green |
+| **overall (cash engine)** | Edge sample + live capital + readiness | **No** until EDGE_CANDIDATE + funded live |
 
 ## Anti-goals (explicit)
 

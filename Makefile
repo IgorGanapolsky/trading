@@ -54,5 +54,9 @@ production-scorecard:
 	$(VENV_PYTHON) scripts/put_credit_cohort_scorecard.py
 	$(VENV_PYTHON) scripts/world_class_production_scorecard.py
 
+# Full desk session: sync, audit, scorecards, production gate, dry-run
+production-desk:
+	$(VENV_PYTHON) scripts/production_desk_session.py
+
 hygiene:
 	scripts/worktree_hygiene.sh --prune

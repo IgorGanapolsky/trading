@@ -1146,6 +1146,16 @@ def main() -> int:
         help="Print current regime snapshot and gate decision only.",
     )
     parser.add_argument("--live", action="store_true", help="Always rejected while live_blocked")
+    parser.add_argument(
+        "--skip-production-gate",
+        action="store_true",
+        help="Bypass ops production gate (debug only; still paper-only / kill switch)",
+    )
+    parser.add_argument(
+        "--production-gate",
+        action="store_true",
+        help="Print production gate JSON and exit (0=ops ok for new paper risk)",
+    )
     args = parser.parse_args()
 
     from src.core.active_strategy import load_kill_state
@@ -1169,6 +1179,59 @@ def main() -> int:
     except RuntimeError as exc:
         logger.error("%s", exc)
         return 2
+
+    # Production gate: halt, family, inventory, broker freshness (ops A+ control plane)
+    if args.production_gate or not args.skip_production_gate:
+        try:
+            from src.risk.production_gate import evaluate_production_gate
+
+            pg = evaluate_production_gate(for_live=False)
+            if args.production_gate:
+                print(json.dumps(pg.to_dict(), indent=2, default=str))
+                return 0 if pg.allow_new_risk else 2
+            if not args.skip_production_gate and not pg.allow_new_risk:
+                # Allow status/cohort/reconcile/manage without blocking
+                status_only = (
+                    args.status
+                    or args.cohort
+                    or args.reconcile_entries
+                    or args.manage_exits
+                    or args.regime_status
+                    or args.dry_run
+                )
+                if not status_only:
+                    logger.error(
+                        "PRODUCTION GATE blocked new risk: grade=%s blockers=%s",
+                        pg.grade,
+                        pg.blockers,
+                    )
+                    print(json.dumps(pg.to_dict(), indent=2, default=str))
+                    return 2
+                logger.warning(
+                    "PRODUCTION GATE: allow_new_risk=false grade=%s blockers=%s "
+                    "(continuing because status/dry-run path)",
+                    pg.grade,
+                    pg.blockers,
+                )
+            else:
+                logger.info(
+                    "PRODUCTION GATE ok grade=%s score=%s allow_new_risk=%s",
+                    pg.grade,
+                    pg.score_0_10,
+                    pg.allow_new_risk,
+                )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("PRODUCTION GATE evaluation failed (non-fatal for status): %s", exc)
+            if not (
+                args.status
+                or args.cohort
+                or args.reconcile_entries
+                or args.manage_exits
+                or args.regime_status
+                or args.dry_run
+                or args.skip_production_gate
+            ):
+                return 2
 
     if args.reconcile_entries:
         try:
