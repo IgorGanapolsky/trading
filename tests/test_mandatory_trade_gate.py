@@ -90,9 +90,16 @@ class TestGateResult:
 class TestValidateTradeMandatory:
     """Test validate_trade_mandatory function."""
 
-    def test_valid_trade_approved(self):
-        """Test that valid trade is approved within the 2% position limit."""
+    def test_valid_trade_approved(self, monkeypatch):
+        """Test that valid trade is approved within the 2% position limit.
+
+        Mocks _query_rag_for_blocking_lessons so the position-size validation
+        is tested in isolation (RAG safety is tested separately).
+        """
+        import src.safety.mandatory_trade_gate as gate_mod
         from src.safety.mandatory_trade_gate import validate_trade_mandatory
+
+        monkeypatch.setattr(gate_mod, "_query_rag_for_blocking_lessons", lambda *_: (False, []))
 
         result = validate_trade_mandatory(
             symbol="SPY",
