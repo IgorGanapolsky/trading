@@ -11,24 +11,24 @@ Coordination issue: [IGO-35](https://linear.app/igorganapolsky/issue/IGO-35/trad
 ## Executive results
 
 ```text
-Files scanned: 2,953 baseline tracked files; 1,138 retained files rescanned
-Issues found: 2,651 bounded path/check findings
-Issues fixed: 2,651 bounded path/check findings
+Files scanned: 2,953 baseline tracked files; 1,146 retained files rescanned
+Issues found: 2,654 bounded path/check findings
+Issues fixed: 2,654 bounded path/check findings
 Files deleted: 1,842
 Lines removed: 214,552 Git text deletions; final physical-line delta below
 RAG entries cleaned: 146 net lesson-file reduction
 ```
 
-The reproducible issue count is 1,842 removable tracked paths + 798 Ruff findings + 5 high-confidence weak-hash findings + 4 high npm advisories + 1 failing baseline test + 1 stale/yanked lock entry. Broader architectural gaps are reported separately and are not hidden inside this number.
+The reproducible issue count is 1,842 removable tracked paths + 798 Ruff findings + 5 high-confidence weak-hash findings + 4 high npm advisories + 1 failing baseline test + 1 stale/yanked lock entry + 3 judge-panel isolation/redaction defects found in the final concurrent `main` merge. Broader architectural gaps are reported separately and are not hidden inside this number.
 
 ## Before and after
 
 | Metric                            |        Before |                     After |    Delta |
 | --------------------------------- | ------------: | ------------------------: | -------: |
-| Tracked files                     |         2,953 |                     1,138 |   -1,815 |
-| Physical lines scanned            |     1,244,491 |                   271,134 | -973,357 |
-| SCC code lines                    |       346,527 |                   198,374 | -148,153 |
-| Python code lines (SCC)           |       157,903 |                   139,883 |  -18,020 |
+| Tracked files                     |         2,953 |                     1,146 |   -1,807 |
+| Physical lines scanned            |     1,244,491 |                   272,146 | -972,345 |
+| SCC code lines                    |       346,527 |                   199,308 | -147,219 |
+| Python code lines (SCC)           |       157,903 |                   140,721 |  -17,182 |
 | GitHub workflow files             |            83 |                        24 |      -59 |
 | RAG lesson files                  |           318 |                       172 | -146 net |
 | Full-suite failures               |             1 |                         0 |       -1 |
@@ -59,6 +59,7 @@ No user-owned dirty primary-checkout changes or other agents' active worktrees w
 - `scripts/query_lessons_learned.py`: restored dependency-free query CLI with keyword fallback and JSON output.
 - `scripts/system_health_check.py` and RAG health path: bounded keyword query plus isolated read/write proof.
 - `src/agents/rag_webhook.py`: side-effect-free import and current UTC handling.
+- `src/evals/judge_panel/`: deterministic claim/PR/coordination audit with credential redaction, isolated foreign-agent evidence, complete Grok collision detection, and trade-entry refusal.
 - `scripts/spy_put_credit.py` + `scripts/residual_ic_manager.py`: documented as the only current entry/exit owners.
 - GitHub workflows: removed ownerless schedules, bounded permissions/triggers, forced manual validation to dry-run, changed CodeQL from JavaScript to Go, and added workflow dependency contracts.
 - `pyproject.toml`, `uv.lock`, `.trunk/trunk.yaml`, and `Makefile`: one Python contract, hermetic Go/Python tool versions, security checks, and one `make check` path.

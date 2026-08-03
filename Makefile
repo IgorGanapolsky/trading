@@ -40,7 +40,8 @@ health:
 	SYSTEM_HEALTH_BOUNDED=1 $(VENV_PYTHON) scripts/system_health_check.py
 
 skill-check:
-	$(VENV_PYTHON) -m pytest tests/test_repo_docs_layout.py tests/test_repo_hygiene.py tests/test_killed_ic_workflows.py -q
+	$(VENV_PYTHON) -m pytest tests/test_repo_docs_layout.py tests/test_repo_hygiene.py tests/test_killed_ic_workflows.py tests/test_judge_panel.py -q
+	$(VENV_PYTHON) scripts/judge_panel.py --self-check
 
 check: lint audit security skill-check test
 

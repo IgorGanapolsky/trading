@@ -35,6 +35,23 @@ If a tool or hook refuses a boundary action, treat that as signal — find the a
 
 Unmatched fills are **not** trades. Do not promote them into win rate / expectancy.
 
+## Judge panel (claim / PR / coord audit — not trade entry)
+
+Mixture-of-Experts + hard-veto judge for **agent claims**, PR text/diffs, and multi-agent collisions.
+
+```bash
+python scripts/judge_panel.py --self-check
+python scripts/judge_panel.py --kind claim_audit --text "CI green on run <id> sha <sha>"
+python scripts/judge_panel.py --kind pr_audit --diff-file /tmp/patch.diff
+python scripts/judge_panel.py --kind coord_audit --agent grok \
+  --other-claims-file ~/Documents/AI-Agent-Sync/Agent-State/codex.md \
+  --claimed-file src/evals/judge_panel/panel.py
+```
+
+- Code: `src/evals/judge_panel/`
+- **Never** use this panel to approve put-credit or IC entries (`trade_entry` always vetoes).
+- Edge / “ready for live” claims without ledger or run evidence → fail/veto.
+
 ## Status commands (read-only first)
 
 ```bash

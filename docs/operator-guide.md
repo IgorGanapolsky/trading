@@ -27,6 +27,11 @@ python scripts/system_health_check.py
 # 3. Strategy status / plan
 python scripts/spy_put_credit.py --status
 python scripts/spy_put_credit.py --dry-run
+
+# 4. (Optional) Agent claim / PR audit — LLM-as-Judge MoE panel
+#    Does NOT approve trades. Hard risk gates always veto.
+python scripts/judge_panel.py --self-check
+python scripts/judge_panel.py --kind claim_audit --text "your status claim here"
 ```
 
 ## Truth sources
