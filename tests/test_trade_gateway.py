@@ -21,8 +21,22 @@ from src.risk.trade_gateway import RejectionReason, TradeGateway, TradeRequest
 
 @pytest.fixture(autouse=True)
 def mock_rag():
-    """Mock RAG to prevent real lessons from blocking test trades."""
-    with patch("src.risk.trade_gateway.LessonsLearnedRAG") as mock_rag_class:
+    """Mock RAG to prevent real lessons from blocking test trades.
+
+    TradeGateway prefers retrieve_for_trade (defended path) and only falls back
+    to LessonsLearnedRAG.query. Both must return empty for unit tests that
+    assert approval of liquidity/IV/capital checks in isolation.
+    """
+    empty_defended = MagicMock()
+    empty_defended.lessons = []
+    empty_defended.meta = {}
+    with (
+        patch("src.risk.trade_gateway.LessonsLearnedRAG") as mock_rag_class,
+        patch(
+            "src.rag.retrieve_for_trade.retrieve_for_trade",
+            return_value=empty_defended,
+        ),
+    ):
         mock_rag_instance = MagicMock()
         mock_rag_instance.query.return_value = []  # No lessons found
         mock_rag_class.return_value = mock_rag_instance
