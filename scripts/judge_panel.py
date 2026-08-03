@@ -4,9 +4,9 @@
 Does NOT approve trades. Hard risk vetoes always win.
 
 Examples:
-  python scripts/judge_panel.py --kind claim --text "CI green on run 123456"
-  python scripts/judge_panel.py --kind pr --diff-file /tmp/patch.diff
-  python scripts/judge_panel.py --kind coord --other-claims-file vault.md --agent grok
+  python scripts/judge_panel.py --kind claim_audit --text "CI green on run 123456"
+  python scripts/judge_panel.py --kind pr_audit --diff-file ./patch.diff
+  python scripts/judge_panel.py --kind coord_audit --other-claims-file vault.md --agent grok
   python scripts/judge_panel.py --self-check
 """
 
@@ -23,11 +23,43 @@ if str(ROOT) not in sys.path:
 
 from src.evals.judge_panel import TaskKind, run_panel  # noqa: E402
 
+# Paths may only be read under these roots (absolute after resolve).
+# Do NOT include /tmp — Bandit B108 flags hardcoded temp-dir allowlists.
+_ALLOWED_READ_ROOTS: tuple[Path, ...] = (
+    ROOT,
+    Path.home() / "Documents" / "AI-Agent-Sync",
+)
 
-def _read(path: str | None) -> str:
+
+def safe_read_text(path: str | None, *, roots: tuple[Path, ...] | None = None) -> str:
+    """Read a UTF-8 text file only if it resolves under an allowed root.
+
+    Prevents path traversal / arbitrary FS reads from CLI args (Sonar S8707).
+    """
     if not path:
         return ""
-    return Path(path).read_text(encoding="utf-8", errors="replace")
+    allowed = roots if roots is not None else _ALLOWED_READ_ROOTS
+    try:
+        candidate = Path(path).expanduser().resolve(strict=True)
+    except (OSError, RuntimeError) as exc:
+        raise SystemExit(f"error: cannot resolve path {path!r}: {exc}") from exc
+
+    if not candidate.is_file():
+        raise SystemExit(f"error: not a file: {path!r}")
+
+    for root in allowed:
+        try:
+            root_resolved = root.expanduser().resolve()
+        except (OSError, RuntimeError):
+            continue
+        try:
+            candidate.relative_to(root_resolved)
+            return candidate.read_text(encoding="utf-8", errors="replace")
+        except ValueError:
+            continue
+
+    roots_disp = ", ".join(str(r) for r in allowed)
+    raise SystemExit(f"error: path outside allowed roots ({roots_disp}): {path!r}")
 
 
 def _self_check() -> int:
@@ -35,47 +67,47 @@ def _self_check() -> int:
     cases = [
         (
             "unverified_edge",
-            dict(
-                kind=TaskKind.CLAIM_AUDIT,
-                text="Edge proven and profitable, ready for live",
-            ),
+            {
+                "kind": TaskKind.CLAIM_AUDIT,
+                "text": "Edge proven and profitable, ready for live",
+            },
             False,
         ),
         (
             "verified_claim",
-            dict(
-                kind=TaskKind.CLAIM_AUDIT,
-                text="CI green on run 30780143772, merge sha d69beb2b6, n=162 expectancy=-47",
-            ),
+            {
+                "kind": TaskKind.CLAIM_AUDIT,
+                "text": ("CI green on run 30780143772, merge sha d69beb2b6, n=162 expectancy=-47"),
+            },
             True,
         ),
         (
             "ic_resume",
-            dict(
-                kind=TaskKind.PR_AUDIT,
-                diff="+ # resume iron condor entries tomorrow\n",
-                text="open new iron condor",
-            ),
+            {
+                "kind": TaskKind.PR_AUDIT,
+                "diff": "+ # resume iron condor entries tomorrow\n",
+                "text": "open new iron condor",
+            },
             False,
         ),
         (
             "trade_entry_refuse",
-            dict(
-                kind=TaskKind.TRADE_ENTRY,
-                text="panel should sell 15 delta put credit",
-            ),
+            {
+                "kind": TaskKind.TRADE_ENTRY,
+                "text": "panel should sell 15 delta put credit",
+            },
             False,
         ),
         (
             "coord_collision",
-            dict(
-                kind=TaskKind.COORD_AUDIT,
-                agent="grok",
-                claimed_files=["src/risk/trade_gateway.py"],
-                other_agent_claims=(
+            {
+                "kind": TaskKind.COORD_AUDIT,
+                "agent": "grok",
+                "claimed_files": ["src/risk/trade_gateway.py"],
+                "other_agent_claims": (
                     "codex owns In Progress IGO-35; claimed_files: src/risk/trade_gateway.py"
                 ),
-            ),
+            },
             False,
         ),
     ]
@@ -94,6 +126,21 @@ def _self_check() -> int:
     print("SELF-CHECK PASS")
     print(json.dumps({"cases": len(cases), "all_passed": True}, indent=2))
     return 0
+
+
+def _print_human(verdict) -> None:
+    print(f"kind={verdict.kind.value}")
+    print(f"passed={verdict.passed} vetoed={verdict.vetoed} score={verdict.score}")
+    print(f"experts={','.join(verdict.experts_used)}")
+    print(f"summary={verdict.judge_summary}")
+    if verdict.veto_reasons:
+        print("veto_reasons:")
+        for r in verdict.veto_reasons:
+            print(f"  - {r}")
+    for o in verdict.opinions:
+        print(f"[{o.expert.value}] passed={o.passed} veto={o.veto} score={o.score}")
+        for f in o.findings:
+            print(f"  finding: {f}")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -127,28 +174,17 @@ def main(argv: list[str] | None = None) -> int:
     verdict = run_panel(
         kind=args.kind,
         text=args.text,
-        diff=_read(args.diff_file),
-        claim=_read(args.claim_file),
+        diff=safe_read_text(args.diff_file),
+        claim=safe_read_text(args.claim_file),
         agent=args.agent,
-        other_agent_claims=_read(args.other_claims_file),
+        other_agent_claims=safe_read_text(args.other_claims_file),
         claimed_files=args.claimed_file,
     )
 
     if args.json:
         print(json.dumps(verdict.to_dict(), indent=2))
     else:
-        print(f"kind={verdict.kind.value}")
-        print(f"passed={verdict.passed} vetoed={verdict.vetoed} score={verdict.score}")
-        print(f"experts={','.join(verdict.experts_used)}")
-        print(f"summary={verdict.judge_summary}")
-        if verdict.veto_reasons:
-            print("veto_reasons:")
-            for r in verdict.veto_reasons:
-                print(f"  - {r}")
-        for o in verdict.opinions:
-            print(f"[{o.expert.value}] passed={o.passed} veto={o.veto} score={o.score}")
-            for f in o.findings:
-                print(f"  finding: {f}")
+        _print_human(verdict)
 
     return 0 if verdict.passed else 2
 
