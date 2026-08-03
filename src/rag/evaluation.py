@@ -278,18 +278,34 @@ class RAGEvaluator:
     def _get_search_engine(self):
         """Lazy load the search engine."""
         if self._search_engine is None:
-            if self.prefer_lancedb:
+            # Prefer LessonsLearnedRAG so TRADING_RAG_DEFENDED (FTS5+hybrid+CE) is measured.
+            prefer_defended = os.getenv("TRADING_RAG_DEFENDED", "true").lower() in {
+                "1",
+                "true",
+                "yes",
+                "on",
+            }
+            if self.prefer_lancedb or prefer_defended:
                 try:
                     from src.rag.lessons_learned_rag import LessonsLearnedRAG
 
                     self._search_engine = LessonsLearnedRAG()
-                    if getattr(self._search_engine, "lancedb_rag", None) is not None:
+                    source = getattr(self._search_engine, "last_source", None)
+                    # Probe once so last_source reflects defended/lancedb/keyword
+                    try:
+                        self._search_engine.query("iron condor", top_k=1)
+                        source = getattr(self._search_engine, "last_source", source)
+                    except Exception as probe_exc:
+                        logger.debug("RAG eval engine probe skipped: %s", probe_exc)
+                    if source == "defended":
+                        self._engine_source = "defended"
+                    elif getattr(self._search_engine, "lancedb_rag", None) is not None:
                         self._engine_source = "lancedb"
                     else:
-                        self._engine_source = "keyword"
+                        self._engine_source = source or "lessons-learned-rag"
                     return self._search_engine
                 except Exception as e:
-                    logger.warning(f"LanceDB RAG unavailable: {e} - using keyword search")
+                    logger.warning(f"LessonsLearnedRAG unavailable: {e} - using keyword search")
 
             try:
                 from src.rag.lessons_search import get_lessons_search

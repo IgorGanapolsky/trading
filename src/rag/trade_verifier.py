@@ -46,7 +46,33 @@ class TradeVerifier:
         logger.info(f"RAG Verifier: Checking past disasters for: {query}")
 
         try:
-            # Search top 3 most similar lessons
+            # Prefer defended retrieve_for_trade (FTS5 + hybrid + multi-query + heuristic CE)
+            try:
+                from src.rag.retrieve_for_trade import retrieve_for_trade
+
+                defended = retrieve_for_trade(query, top_k=3, use_llm_rerank=False)
+                if defended.lessons:
+                    for row in defended.lessons:
+                        score = float(row.get("score") or 0.0)
+                        sev = str(row.get("severity") or "").upper()
+                        if score >= self.threshold and sev in {"CRITICAL", "HIGH"}:
+                            block_msg = (
+                                f"BLOCKING TRADE: High similarity ({score:.2f}) to past disaster "
+                                f"{row.get('id')}: {row.get('title')}"
+                            )
+                            logger.warning("🚨 %s", block_msg)
+                            logger.warning("Lesson Prevention: %s", row.get("prevention"))
+                            return False, block_msg
+                    best = defended.lessons[0]
+                    return (
+                        True,
+                        f"Verified against defended RAG. Closest: {best.get('id')} "
+                        f"(Score: {float(best.get('score') or 0):.2f})",
+                    )
+            except Exception as defended_exc:
+                logger.debug("Defended verifier path failed: %s", defended_exc)
+
+            # Search top 3 most similar lessons (legacy)
             matches = self.rag_engine.search(query, top_k=3)
 
             if not matches:

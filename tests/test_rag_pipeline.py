@@ -272,7 +272,7 @@ class TestStage3MultiQuery:
 
 class TestStage4Reranker:
     def test_reranker_type_is_cross_encoder(self, pipeline):
-        """Reranker uses cross-encoder when sentence-transformers is installed; else heuristic."""
+        """Reranker uses cross-encoder when available; else heuristic or llm."""
         rtype = pipeline._reranker.reranker_type
         assert rtype in {"cross-encoder", "heuristic", "llm"}
 

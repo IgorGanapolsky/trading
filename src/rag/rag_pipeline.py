@@ -1609,9 +1609,7 @@ class TradingRAGPipeline:
                         query,
                         top_k=top_k,
                         min_severity=severity_filter,
-                        use_vector=os.getenv("RAG_USE_VECTOR", "0")
-                        .strip()
-                        .lower()
+                        use_vector=os.getenv("RAG_USE_VECTOR", "0").strip().lower()
                         in {"1", "true", "yes"},
                     )
                     for h in hits:

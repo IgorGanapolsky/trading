@@ -37,7 +37,7 @@ Reconcile broker inventory before allowing new risk.
 
     payload = json.loads(capsys.readouterr().out)
     assert result == 0
-    # Pipeline is primary; keyword remains valid fallback for custom dirs.
-    assert payload["source"] in {"pipeline", "keyword"}
+    # Defended/pipeline primary; keyword remains a valid fallback for custom dirs.
+    assert payload["source"] in {"defended", "pipeline", "keyword"}
     assert payload["count"] == 1
     assert payload["results"][0]["id"] == "ll_999_inventory_reconciliation"
