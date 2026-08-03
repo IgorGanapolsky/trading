@@ -7,7 +7,7 @@ boosts. Optional FTS5 candidate seed is fused via Reciprocal Rank Fusion (RRF).
 from __future__ import annotations
 
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Iterable, Optional
 
 STOP = {
@@ -111,7 +111,7 @@ def _recency_boost(lesson: dict[str, Any]) -> float:
     if ts:
         try:
             dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
-            age_days = max(0.0, (datetime.now(timezone.utc) - dt.astimezone(timezone.utc)).days)
+            age_days = max(0.0, (datetime.now(UTC) - dt.astimezone(UTC)).days)
             if age_days <= 7:
                 return 0.2
             if age_days <= 30:
@@ -121,7 +121,7 @@ def _recency_boost(lesson: dict[str, Any]) -> float:
         except ValueError:
             pass
     lid = str(lesson.get("id", "")).lower()
-    month = datetime.now(timezone.utc).strftime("%b").lower()[:3]
+    month = datetime.now(UTC).strftime("%b").lower()[:3]
     if month in lid:
         return 0.1
     return 0.0

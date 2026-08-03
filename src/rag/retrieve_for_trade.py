@@ -339,10 +339,10 @@ def capture_and_store_feedback(
             "reason": decision.reason,
         }
     import hashlib
-    from datetime import datetime, timezone
+    from datetime import UTC, datetime
 
     digest = hashlib.sha256(payload["content"].encode("utf-8")).hexdigest()[:10]
-    day = datetime.now(timezone.utc).strftime("%Y%m%d")
+    day = datetime.now(UTC).strftime("%Y%m%d")
     lesson_id = f"fb_{decision.signal[:3]}_{day}_{digest}"
 
     conn = connect(db_path)
