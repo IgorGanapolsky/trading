@@ -49,5 +49,10 @@ dry-run: health
 	$(VENV_PYTHON) scripts/spy_put_credit.py --dry-run
 	$(VENV_PYTHON) scripts/residual_ic_manager.py --dry-run
 
+# Desk ritual for $1k/mo path: edge truth + production grades (not forecasts)
+production-scorecard:
+	$(VENV_PYTHON) scripts/put_credit_cohort_scorecard.py
+	$(VENV_PYTHON) scripts/world_class_production_scorecard.py
+
 hygiene:
 	scripts/worktree_hygiene.sh --prune
