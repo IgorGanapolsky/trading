@@ -19,11 +19,59 @@ from typing import Any, Optional
 logger = logging.getLogger(__name__)
 
 CATEGORIES = {
-    "risk": ["stop", "drawdown", "loss", "circuit", "halt", "kill", "sizing", "lot"],
-    "options": ["delta", "dte", "put", "call", "credit", "condor", "spread", "vix"],
-    "execution": ["order", "fill", "gateway", "alpaca", "close", "orphan", "inventory"],
-    "ops": ["ci", "deploy", "workflow", "rag", "lancedb", "sync"],
+    "risk": [
+        "stop",
+        "drawdown",
+        "loss",
+        "circuit",
+        "halt",
+        "kill",
+        "sizing",
+        "lot",
+        "5pct",
+        "accumulation",
+        "aggregate",
+    ],
+    "options": [
+        "delta",
+        "dte",
+        "put",
+        "call",
+        "credit",
+        "condor",
+        "spread",
+        "vix",
+        "iron",
+        "entry",
+        "exit",
+    ],
+    "execution": [
+        "order",
+        "fill",
+        "gateway",
+        "alpaca",
+        "close",
+        "orphan",
+        "inventory",
+        "api",
+        "bug",
+        "workflow",
+    ],
+    "ops": ["ci", "deploy", "workflow", "rag", "lancedb", "sync", "webhook"],
+    "ticker_risk": ["sofi", "pdt", "blackout", "blocked", "blacklist"],
+    "tax": ["tax", "xsp", "1256", "section"],
 }
+
+# Strong trading anchors only — avoid bare "trade/options" matching OOD phrases.
+_TRADING_QUERY_HINTS = re.compile(
+    r"\b(spy|xsp|spx|qqq|iwm|sofi|alpaca|iron\s*condor|\bic\b|put\s*credit|"
+    r"credit\s*spread|bull\s*put|15\s*delta|7\s*dte|\bdte\b|\bdelta\b|\bvix\b|"
+    r"\bpdt\b|drawdown|lancedb|rag\s*webhook|section\s*1256|north\s*star|"
+    r"financial\s*independence|position\s*sizing|close_position|close\s*position|"
+    r"orphan|win\s*rate|profit\s*factor|trade\s*gateway|entry\s*signals?|"
+    r"exit\s*strateg|webhook|iron\s*condor)\b",
+    re.IGNORECASE,
+)
 
 
 def _clamp01(value: float) -> float:
@@ -185,12 +233,17 @@ def llm_listwise_rerank(
         return None
 
 
+def is_trading_domain_query(query: str) -> bool:
+    return bool(_TRADING_QUERY_HINTS.search(query or ""))
+
+
 def rerank_candidates(
     query: str,
     candidates: list[dict[str, Any]],
     *,
     top_k: int = 5,
     use_llm: bool | None = None,
+    ood_reject: bool = True,
 ) -> list[dict[str, Any]]:
     if not candidates:
         return []
@@ -234,7 +287,7 @@ def rerank_candidates(
             **cand,
             "pairwiseHeuristicScore": heuristic[i],
             "llmRerankScore": llm_scores[i] if llm_scores is not None else None,
-            "crossEncoderScore": None,  # no neural CE shipped by default
+            "crossEncoderScore": None,  # neural CE optional; heuristic is default
             "combinedScore": round(combined, 6),
             "score": round(combined, 6),
             "relevanceScore": round(combined, 6),
@@ -246,4 +299,9 @@ def rerank_candidates(
         out.append(row)
 
     out.sort(key=lambda x: x["combinedScore"], reverse=True)
+
+    # Hard OOD reject: non-trading queries return empty (prevents keyword pollution)
+    if ood_reject and out and not is_trading_domain_query(query):
+        return []
+
     return out[:top_k]

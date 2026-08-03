@@ -35,18 +35,85 @@ STOP = {
 
 DOMAIN_EXPANSIONS: dict[str, list[str]] = {
     "put credit": ["short put spread", "credit spread", "bull put", "15 delta"],
-    "iron condor": ["4-leg", "defined risk", "short strangle", "7 dte", "exit", "management"],
+    "iron condor": [
+        "4-leg",
+        "defined risk",
+        "short strangle",
+        "7 dte",
+        "exit",
+        "management",
+        "adjustment",
+        "ic",
+    ],
+    "iron condor exit": [
+        "position management",
+        "management system",
+        "71k",
+        "adjustment",
+        "win rate research",
+        "7 dte exit",
+    ],
     "stop loss": ["200% credit", "hard stop", "max loss"],
-    "position sizing": ["1-lot", "lot size", "max concurrent", "accumulation", "position limit"],
-    "position sizing error": ["accumulation bug", "5pct", "lot size", "hardcoded"],
-    "close position": ["close_position", "alpaca", "orphan", "buy to close", "api bug"],
-    "api bug": ["alpaca", "close_position", "sdk", "endpoint"],
+    "position sizing": [
+        "1-lot",
+        "lot size",
+        "max concurrent",
+        "accumulation",
+        "position limit",
+        "5pct",
+        "aggregate",
+        "hardcoded",
+    ],
+    "position sizing error": [
+        "accumulation bug",
+        "position accumulation",
+        "5pct",
+        "aggregate risk",
+        "hardcoded",
+        "position limit",
+        "violation",
+    ],
+    "close position": [
+        "close_position",
+        "alpaca",
+        "orphan",
+        "buy to close",
+        "api bug",
+        "workflow",
+        "submit_order",
+        "atomic",
+        "exit ownership",
+    ],
+    "api bug": ["alpaca", "close_position", "sdk", "endpoint", "workflow"],
     "circuit breaker": ["trading halt", "kill switch", "drawdown"],
-    "exit strategy": ["7 dte", "profit target", "25%", "management", "adjustment"],
-    "win rate": ["expectancy", "profit factor", "71k", "research"],
-    "sofi": ["pdt", "blocked", "individual stock", "blacklist"],
-    "delta": ["15 delta", "20 delta", "short strike", "selection"],
-    "rag webhook": ["lancedb", "semantic search", "cloud run", "query"],
+    "exit strategy": [
+        "7 dte",
+        "profit target",
+        "25%",
+        "management",
+        "adjustment",
+        "win rate",
+        "position management",
+    ],
+    "win rate": ["expectancy", "profit factor", "71k", "research", "management"],
+    "sofi": [
+        "pdt",
+        "blocked",
+        "individual stock",
+        "blacklist",
+        "blackout",
+        "ticker",
+        "crisis",
+        "spy-only",
+        "legacy position",
+    ],
+    "blocked trading": ["sofi", "pdt", "halt", "blackout", "crisis", "ci failure"],
+    "delta": ["15 delta", "20 delta", "short strike", "selection", "vix", "entry"],
+    "delta selection": ["15 delta", "short strike", "vix entry", "iron condor", "win rate"],
+    "rag webhook": ["lancedb", "semantic search", "cloud run", "query", "routing"],
+    "financial independence": ["north star", "roadmap", "wealth", "6000"],
+    "tax optimization": ["xsp", "section 1256", "60/40", "spy"],
+    "entry signals": ["vix", "timing", "iron condor entry", "delta"],
 }
 
 
@@ -126,8 +193,11 @@ def _recency_boost(lesson: dict[str, Any]) -> float:
 
 
 def score_relevance(lesson: dict[str, Any], query: str) -> float:
-    """Keyword + path-ish token overlap + bigram Jaccard (when base signal > 0)."""
-    q_tokens = tokenize(query)
+    """Keyword + path token overlap + expansions + intent/ID boosts + bigram Jaccard."""
+    q_raw = (query or "").strip()
+    expansions = expand_query_terms(q_raw)
+    expanded = f"{q_raw} {' '.join(expansions)}".strip() if expansions else q_raw
+    q_tokens = tokenize(expanded)
     if not q_tokens:
         return 0.0
 
@@ -135,32 +205,71 @@ def score_relevance(lesson: dict[str, Any], query: str) -> float:
     content = str(lesson.get("content") or lesson.get("snippet") or "")
     prevention = str(lesson.get("prevention") or "")
     tags = " ".join(str(t) for t in (lesson.get("tags") or []))
-    blob = f"{title}\n{content}\n{prevention}\n{tags}".lower()
+    lid = str(lesson.get("id") or "").lower().replace("-", "_")
+    id_text = lid.replace("_", " ")
+    title_l = title.lower()
+    blob = f"{title}\n{content}\n{prevention}\n{tags}\n{id_text}".lower()
     doc_tokens = set(tokenize(blob))
 
     score = 0.0
     hits = sum(1 for t in q_tokens if t in doc_tokens or t in blob)
-    score += min(hits * 0.08, 0.48)
+    score += min(hits * 0.09, 0.54)
 
-    # Title / prevention exact-ish boosts
-    title_hits = sum(1 for t in q_tokens if t in title.lower())
-    score += min(title_hits * 0.06, 0.24)
+    title_hits = sum(1 for t in q_tokens if t in title_l)
+    score += min(title_hits * 0.08, 0.32)
     prev_hits = sum(1 for t in q_tokens if t in prevention.lower())
     score += min(prev_hits * 0.05, 0.2)
+
+    q_lower = q_raw.lower()
+    for phrase in (
+        "close position",
+        "iron condor",
+        "position sizing",
+        "win rate",
+        "entry signals",
+        "rag webhook",
+        "tax optimization",
+        "financial independence",
+        "api bug",
+        "position accumulation",
+        "position management",
+    ):
+        if phrase in q_lower and phrase in blob:
+            score += 0.18
+
+    if "error" in q_lower or "bug" in q_lower:
+        for kw in ("bug", "error", "violation", "accumulation", "bypass", "hardcoded"):
+            if kw in lid or kw in title_l:
+                score += 0.14
+    if "exit" in q_lower and any(
+        t in lid or t in title_l for t in ("management", "71k", "adjustment")
+    ):
+        score += 0.22
+    if "sizing" in q_lower and any(
+        t in lid for t in ("accumulation", "aggregate", "5pct", "sizing", "hardcoded", "violation")
+    ):
+        score += 0.24
+    if "sofi" in q_lower and "sofi" in lid:
+        score += 0.28
+    if "webhook" in q_lower or ("rag" in q_lower and "query" in q_lower):
+        if any(t in lid for t in ("webhook", "lancedb", "rag_failure", "rag_query", "rag")):
+            score += 0.22
+    if "roadmap" in q_lower or "independence" in q_lower:
+        if any(t in lid for t in ("roadmap", "independence", "north_star", "wealth")):
+            score += 0.2
 
     score += _severity_boost(str(lesson.get("severity") or ""))
     score += _recency_boost(lesson)
 
-    # Lesson id / filename token boost (e.g. close_position, sofi, lot)
-    lid = str(lesson.get("id") or "").lower().replace("-", "_")
-    id_hits = sum(1 for t in q_tokens if t in lid)
-    score += min(id_hits * 0.1, 0.3)
+    id_tokens = set(tokenize(id_text))
+    id_hits = sum(1 for t in q_tokens if t in id_tokens or t in lid)
+    score += min(id_hits * 0.12, 0.4)
 
     if score > 0:
-        bj = bigram_jaccard(text_bigrams(query), text_bigrams(blob[:4000]))
-        score += bj * 0.25
+        bj = bigram_jaccard(text_bigrams(expanded), text_bigrams(blob[:4000]))
+        score += bj * 0.3
 
-    return min(score, 1.5)
+    return min(score, 1.8)
 
 
 def expand_query_terms(query: str) -> list[str]:
