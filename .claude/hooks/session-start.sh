@@ -23,5 +23,17 @@ echo "  2. Thumbs down -> record the failure pattern before continuing"
 echo "  3. Use ThumbGate as the canonical local feedback path"
 echo ""
 
+PYTHON_BIN="${PROJECT_ROOT}/.venv/bin/python"
+if [[ ! -x ${PYTHON_BIN} ]]; then
+	PYTHON_BIN="$(command -v python3.11 || command -v python3 || true)"
+fi
+if [[ -n ${PYTHON_BIN} && -f ${PROJECT_ROOT}/scripts/agent_coordination.py ]]; then
+	echo "Coordination Audit:"
+	PYTHONPATH="${PROJECT_ROOT}" "${PYTHON_BIN}" \
+		"${PROJECT_ROOT}/scripts/agent_coordination.py" \
+		--repo-root "${PROJECT_ROOT}" audit --warn-only || true
+	echo ""
+fi
+
 python3 "${PROJECT_ROOT}/scripts/thumbgate_session_start.py" || true
 echo ""

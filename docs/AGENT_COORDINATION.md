@@ -28,16 +28,47 @@ Then:
 
 1. Create one worktree from current `origin/main`.
 2. Name the branch with the issue key, such as `fix/igo-123-short-description`.
-3. Put the issue key, agent, base SHA, worktree, and intended files in the PR template.
-4. Update the Linear issue when scope, blockers, or evidence changes.
-5. After merge, attach the PR, merge SHA, CI result, and protected-system checks, then mark
+3. Record exact intended files in the Vault claim, not merely the repository name.
+4. Run the local fail-closed check before writing:
+
+   ```bash
+   make coordination-preflight
+   ```
+
+5. Put the issue key, agent, base SHA, worktree, and intended files in the PR template.
+6. Update the Linear issue when scope, blockers, or evidence changes.
+7. After merge, attach the PR, merge SHA, CI result, and protected-system checks, then mark
    the issue done through the bridge. Release the claim if the work is abandoned.
+
+## Enforcement surfaces
+
+- `scripts/agent_coordination.py preflight` validates the active Vault claim, agent,
+  issue-key branch, linked worktree, exact file scope, and foreign-claim overlaps.
+- `.claude/hooks/agent_coordination_guard.sh` blocks mutating Bash commands outside that
+  contract. Edit/Write hooks apply the same check to the target file.
+- `.github/workflows/agent-coordination.yml` validates issue/branch/PR metadata without
+  requiring Linear credentials in CI. Dependabot is narrowly exempt when both its actor
+  and branch identify Dependabot.
+- The `trading.coordination` Herdr plugin audits pane/worktree lifecycle against durable
+  claims. Herdr state is diagnostic and never marks a Linear issue done.
+- `scripts/worktree_hygiene.sh` is the only supported removal path. It refuses active,
+  dirty, unmerged, unknown, and primary worktrees.
+
+Run a full read-only reconciliation at any time:
+
+```bash
+make coordination-audit
+```
 
 ## Collision rule
 
 Before writing, compare the issue list, vault claims, worktree inventory, open PRs, and
 intended file scope. If any active work overlaps, stop edits and reconcile on the Linear
 issue. Never delete, rename, reset, or reuse another agent's worktree or branch.
+
+Older PRs that predate enforcement may temporarily carry the `coordination-legacy` label,
+but their body must state a concrete `Coordination legacy reason`. The exception is visible,
+reviewable, and must not be used for new work.
 
 ## Evidence rule
 

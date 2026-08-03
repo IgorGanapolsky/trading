@@ -7,6 +7,7 @@
 - Base SHA:
 - Branch/worktree:
 - Files or systems claimed:
+- Coordination legacy reason:
 
 ## Change
 
