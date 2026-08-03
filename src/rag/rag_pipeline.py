@@ -1256,6 +1256,7 @@ class TradingRAGPipeline:
         self._reranker = RAGEReranker()
         self._lessons_cache: list[dict[str, Any]] = []
         self._cache_loaded = False
+        self._quality: Any = None
         # Latency control: LRU query cache (embedding/search results)
         try:
             from src.rag.rag_cache import RAGQueryCache
@@ -1330,6 +1331,20 @@ class TradingRAGPipeline:
         self._cache_loaded = True
         if not self._lessons_cache and self.lessons_dir:
             self.index_from_markdown_dir(self.lessons_dir)
+        self._rebuild_quality_index()
+
+    def _rebuild_quality_index(self) -> None:
+        """Header-aware parent/child + metadata index for QualityRetriever."""
+        try:
+            from src.rag.retrieval_quality import QualityRetriever
+
+            if self._quality is None:
+                self._quality = QualityRetriever(pipeline=self)
+            n = self._quality.index_parents(self._lessons_cache or [])
+            logger.debug("QualityRetriever indexed %d child chunks", n)
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("QualityRetriever index skipped: %s", exc)
+            self._quality = None
 
     def index_size(self) -> int:
         """Number of lessons currently loadable from the store/cache."""
@@ -1373,6 +1388,7 @@ class TradingRAGPipeline:
         count = self.store.upsert_many(records)
         self._lessons_cache = self.store.get_all()
         self._cache_loaded = True
+        self._rebuild_quality_index()
         logger.info("Indexed %d lessons from %s into SQLite FTS5", count, path)
         return count
 
@@ -1575,19 +1591,57 @@ class TradingRAGPipeline:
                     logger.debug("retrieval telemetry skipped: %s", exc)
                 return results
 
-        raw = self.query(query, top_k=top_k, severity_filter=severity_filter)
+        # Prefer quality stack (rewrite + hybrid RRF + parent-child + metadata + rerank)
+        use_quality = os.getenv("RAG_QUALITY_STACK", "1").strip().lower() not in {
+            "0",
+            "false",
+            "no",
+            "off",
+        }
         results: list[tuple[LessonResult, float]] = []
-        for item in raw:
-            lesson = LessonResult(
-                id=item["id"],
-                title=item.get("title", item["id"]),
-                severity=item.get("severity", "LOW"),
-                snippet=item.get("snippet", ""),
-                prevention=item.get("prevention", ""),
-                file=item.get("file", ""),
-                score=item["score"],
-            )
-            results.append((lesson, item["score"]))
+        if use_quality:
+            try:
+                self._ensure_loaded()
+                if self._quality is None:
+                    self._rebuild_quality_index()
+                if self._quality is not None:
+                    hits = self._quality.retrieve(
+                        query,
+                        top_k=top_k,
+                        min_severity=severity_filter,
+                        use_vector=os.getenv("RAG_USE_VECTOR", "0")
+                        .strip()
+                        .lower()
+                        in {"1", "true", "yes"},
+                    )
+                    for h in hits:
+                        lesson = LessonResult(
+                            id=h.lesson_id,
+                            title=h.title,
+                            severity=h.severity,
+                            snippet=h.snippet,
+                            prevention="",
+                            file="",
+                            score=h.score,
+                        )
+                        results.append((lesson, h.score))
+            except Exception as exc:  # noqa: BLE001
+                logger.debug("quality retrieve failed, FTS fallback: %s", exc)
+                results = []
+
+        if not results:
+            raw = self.query(query, top_k=top_k, severity_filter=severity_filter)
+            for item in raw:
+                lesson = LessonResult(
+                    id=item["id"],
+                    title=item.get("title", item["id"]),
+                    severity=item.get("severity", "LOW"),
+                    snippet=item.get("snippet", ""),
+                    prevention=item.get("prevention", ""),
+                    file=item.get("file", ""),
+                    score=item["score"],
+                )
+                results.append((lesson, item["score"]))
 
         latency_ms = (_time.perf_counter() - t0) * 1000.0
         if self._query_cache is not None and not cache_hit:
