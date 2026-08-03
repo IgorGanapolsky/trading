@@ -24,7 +24,7 @@ import re
 import sqlite3
 import threading
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Optional
 
@@ -479,7 +479,7 @@ def parse_lesson_markdown(content: str, lesson_id: str | None = None) -> LessonR
         prevention=prevention,
         tags=tags,
         source="markdown",
-        created_at=datetime.now(timezone.utc).isoformat(),
+        created_at=datetime.now(UTC).isoformat(),
     )
 
 
@@ -1017,9 +1017,7 @@ def gate_decision(top_lessons: list[tuple[LessonResult, float]]) -> GateDecision
         max_score = max(max_score, score)
         sev = lesson.severity.upper()
 
-        if sev == "CRITICAL" and score > _BLOCK_THRESHOLD_CRITICAL:
-            blocking.append(f"[{sev}] {lesson.title} (score={score:.2f})")
-        elif sev == "HIGH" and score > _BLOCK_THRESHOLD_HIGH:
+        if sev == "CRITICAL" and score > _BLOCK_THRESHOLD_CRITICAL or sev == "HIGH" and score > _BLOCK_THRESHOLD_HIGH:
             blocking.append(f"[{sev}] {lesson.title} (score={score:.2f})")
         elif sev in ("CRITICAL", "HIGH") and score > _WARN_THRESHOLD:
             warnings.append(f"[{sev}] {lesson.title} (score={score:.2f})")
@@ -1107,7 +1105,7 @@ class TradingRAGPipeline:
             prevention=record.prevention,
             tags=record.tags,
             source=source,
-            created_at=datetime.now(timezone.utc).isoformat(),
+            created_at=datetime.now(UTC).isoformat(),
         )
         self.store.put(record)
         self._cache_loaded = False  # invalidate cache
@@ -1131,7 +1129,7 @@ class TradingRAGPipeline:
             prevention=record.prevention,
             tags=record.tags,
             source=source,
-            created_at=datetime.now(timezone.utc).isoformat(),
+            created_at=datetime.now(UTC).isoformat(),
         )
         self.store.put(record)
         self._cache_loaded = False
