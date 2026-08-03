@@ -44,6 +44,7 @@ An agent visible as `done` in Herdr disappeared before the next `agent get`, whi
 - A task worktree was removed and had to be reconstructed. Never delete a worktree without checking its branch, owner, dirtiness, and recovery path.
 - A diagnostic shell loop used zsh's reserved `path` variable and failed read-only. Use task-specific variable names in shell diagnostics.
 - The first secret scan traversed local caches and was needlessly slow. Scope security scans to repository candidates and report only finding types and paths, never values.
+- A double-quoted PR body allowed Markdown backticks to execute as shell command substitution and polluted the draft description with Git help text. Use an `apply_patch`-created body file with `gh pr edit --body-file`; verify the rendered body before relying on it.
 
 ## Tags
 

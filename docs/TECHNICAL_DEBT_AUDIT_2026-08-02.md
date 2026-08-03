@@ -26,7 +26,7 @@ The reproducible issue count is 1,842 removable tracked paths + 798 Ruff finding
 | Metric                            |        Before |                     After |    Delta |
 | --------------------------------- | ------------: | ------------------------: | -------: |
 | Tracked files                     |         2,953 |                     1,146 |   -1,807 |
-| Physical lines scanned            |     1,244,491 |                   272,155 | -972,336 |
+| Physical lines scanned            |     1,244,491 |                   272,156 | -972,335 |
 | SCC code lines                    |       346,527 |                   199,232 | -147,295 |
 | Python code lines (SCC)           |       157,903 |                   140,721 |  -17,182 |
 | GitHub workflow files             |            83 |                        24 |      -59 |
