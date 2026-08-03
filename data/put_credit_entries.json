@@ -106,7 +106,7 @@
     "reconstruction_reason": "filled_broker_order_missing_durable_strategy_journal",
     "selection_method": "broker_reconstructed_unverified",
     "signature": "SPY_2026-08-28_P707-712",
-    "status": "exit_pending",
+    "status": "closed",
     "strategy_family": "spy_put_credit",
     "strikes": {
       "long_put": 707.0,
@@ -129,6 +129,7 @@
       "would_trigger_public_21dte_exit": false,
       "note": "Counterfactuals only \u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history."
     },
-    "exit_order_id": "3310d412-8ec4-4e91-9a6f-123366586a4a"
+    "exit_order_id": "3310d412-8ec4-4e91-9a6f-123366586a4a",
+    "exit_filled_at": "2026-08-03T16:48:41.592843+00:00"
   }
 }
