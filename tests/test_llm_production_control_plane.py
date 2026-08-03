@@ -28,11 +28,13 @@ def test_llm_plane_reports_six_dimensions():
         "multi_tenancy_acl",
         "framework_discipline",
     }
-    assert report.overall_score_0_10 >= 8.0
+    assert report.overall_score_0_10 >= 9.5
+    assert report.a_plus_ready is True
+    assert all(d.score_0_10 >= 9.5 for d in report.dimensions)
     assert "EDGE_CANDIDATE" in report.cash_engine_note or "n≥30" in report.cash_engine_note
     # Framework discipline must stay high (no LangChain in pyproject)
     fw = next(d for d in report.dimensions if d.name == "framework_discipline")
-    assert fw.score_0_10 >= 9.0
+    assert fw.score_0_10 >= 9.95
 
 
 def test_empty_index_fail_closed_safety_and_strict():

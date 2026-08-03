@@ -23,3 +23,15 @@ def test_build_card_has_required_keys():
     # Must not claim profitable with insufficient sample under normal repo state
     assert "overall" in card
     assert "grade" in card["overall"]
+    assert "process_ops_score_0_10" in card["overall"]
+    assert "cash_engine_score_0_10" in card["overall"]
+    # Dual-axis: process can be A+ while cash is not
+    names = {d["name"] for d in card["dimensions"]}
+    assert "live_capital_discipline" in names
+    assert "cash_engine_output" in names
+    assert "validation_factory_readiness" in names
+    assert "sample_velocity" in names
+    # Must not claim cash engine ready without EDGE
+    if card["truth"].get("kill_verdict") != "EDGE_CANDIDATE":
+        assert card["overall"]["cash_engine_score_0_10"] < 8.0
+        assert card["truth"].get("claim_profitable") is False

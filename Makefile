@@ -5,7 +5,7 @@ VENV_PYTHON := $(VENV)/bin/python
 TRADING_ENV ?= paper
 export TRADING_ENV
 
-.PHONY: setup lint ruff format test coverage audit security health skill-check check dry-run hygiene production-scorecard
+.PHONY: setup lint ruff format test coverage audit security health skill-check check dry-run hygiene production-scorecard production-desk validation-factory
 
 setup:
 	$(PYTHON) -m venv $(VENV)
@@ -57,6 +57,10 @@ production-scorecard:
 # Full desk session: sync, audit, scorecards, production gate, dry-run
 production-desk:
 	$(VENV_PYTHON) scripts/production_desk_session.py
+
+# Validation factory tick toward n=30 clean put-credits (paper only)
+validation-factory:
+	$(VENV_PYTHON) scripts/validation_factory_tick.py
 
 hygiene:
 	scripts/worktree_hygiene.sh --prune

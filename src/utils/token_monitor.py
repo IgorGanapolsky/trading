@@ -413,4 +413,28 @@ def record_llm_usage(
         List of any triggered alerts
     """
     monitor = get_token_monitor()
-    return monitor.record_usage(agent_name, input_tokens, output_tokens, model)
+    alerts = monitor.record_usage(agent_name, input_tokens, output_tokens, model)
+    # Dual-write lightweight span for end-to-end LLM observability (best-effort).
+    try:
+        import time
+        import uuid
+
+        from src.observability.opentelemetry_tracer import get_agent_tracer
+
+        now = time.time()
+        get_agent_tracer().record_span(
+            span_id=str(uuid.uuid4()),
+            session_id=agent_name,
+            name=f"llm.{agent_name}",
+            kind="llm",
+            start_time=now,
+            end_time=now,
+            status="ok",
+            attributes={"model": model, "agent": agent_name},
+            model_name=model,
+            prompt_tokens=int(input_tokens),
+            completion_tokens=int(output_tokens),
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("AgentTracer span dual-write skipped: %s", exc)
+    return alerts
