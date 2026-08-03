@@ -2,7 +2,7 @@
 
 ## Status
 
-Implementation and local safe validation are complete on `chore/igo-35-comprehensive-audit`. The credential-free paper dry run failed closed before broker access, so authenticated inventory validation remains a separate proof surface. GitHub PR checks and post-merge `main` verification are recorded in the final section when available.
+Implementation, merge, and post-merge validation are complete. [PR #4328](https://github.com/IgorGanapolsky/trading/pull/4328) was squash-merged as `0efb9bda4c06d950f0a153b7a41e6b360917fa74`. Fresh `main` CI, Main Head Verification, CodeQL, Offline Evals, OpenSSF, and SonarCloud all passed on that exact SHA. The credential-free paper dry run failed closed before broker access, so authenticated inventory validation remains a separate proof surface.
 
 Audit baseline: `ae7dc2a5213ec77769fc4a5e56caf86ac25d0d10`
 
@@ -26,7 +26,7 @@ The reproducible issue count is 1,842 removable tracked paths + 798 Ruff finding
 | Metric                            |        Before |                     After |    Delta |
 | --------------------------------- | ------------: | ------------------------: | -------: |
 | Tracked files                     |         2,953 |                     1,146 |   -1,807 |
-| Physical lines scanned            |     1,244,491 |                   272,148 | -972,343 |
+| Physical lines scanned            |     1,244,491 |                   272,156 | -972,335 |
 | SCC code lines                    |       346,527 |                   199,232 | -147,295 |
 | Python code lines (SCC)           |       157,903 |                   140,721 |  -17,182 |
 | GitHub workflow files             |            83 |                        24 |      -59 |
@@ -35,7 +35,7 @@ The reproducible issue count is 1,842 removable tracked paths + 798 Ruff finding
 | Python dependency vulnerabilities | not baselined |                   0 known |    clean |
 | npm high advisories               |             4 | 0 Node subsystem retained |       -4 |
 
-Git comparison: [baseline to audit branch](https://github.com/IgorGanapolsky/trading/compare/ae7dc2a5213ec77769fc4a5e56caf86ac25d0d10...chore/igo-35-comprehensive-audit). Its Files view is the exact deleted-file list; the groups below explain why each class was removed.
+Git comparison: [baseline to merged audit SHA](https://github.com/IgorGanapolsky/trading/compare/ae7dc2a5213ec77769fc4a5e56caf86ac25d0d10...0efb9bda4c06d950f0a153b7a41e6b360917fa74). Its Files view is the exact deleted-file list; the groups below explain why each class was removed.
 
 ## Deleted paths and justification
 
@@ -95,21 +95,28 @@ The prior 63.445% value covered 21,322 of 33,607 statements on a narrower source
 
 ## Protected-system verification
 
-| Component               | Local proof                                                                                       | GitHub proof      |
-| ----------------------- | ------------------------------------------------------------------------------------------------- | ----------------- |
-| AI RAG read/query/write | bounded health loaded 172 lessons, returned queries, and passed an isolated write/read round-trip | pending PR CI     |
-| Python orchestration    | 145 focused RAG/orchestrator/health tests plus the full suite passed                              | pending PR CI     |
-| Go orchestration        | `go test ./...` passing with hermetic Go 1.25                                                     | CodeQL/CI pending |
-| Monitoring              | bounded health passed; workflow contracts and self-healing tests passed                           | pending PR CI     |
-| CI pipeline             | full local runner, Ruff, workflow integrity, dependency audit, Bandit, and repository audit pass  | pending PR checks |
+| Component               | Local proof                                                                                       | GitHub proof                                                                                                                                                                     |
+| ----------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AI RAG read/query/write | bounded health loaded 172 lessons, returned queries, and passed an isolated write/read round-trip | [Main Head Verification passed](https://github.com/IgorGanapolsky/trading/actions/runs/30783436103)                                                                              |
+| Python orchestration    | 145 focused RAG/orchestrator/health tests plus the full suite passed                              | [Main CI passed](https://github.com/IgorGanapolsky/trading/actions/runs/30783436135)                                                                                             |
+| Go orchestration        | `go test ./...` passing with hermetic Go 1.25                                                     | [Main CI](https://github.com/IgorGanapolsky/trading/actions/runs/30783436135) and [CodeQL passed](https://github.com/IgorGanapolsky/trading/actions/runs/30783436143)            |
+| Monitoring              | bounded health passed; workflow contracts and self-healing tests passed                           | [Main Head Verification passed](https://github.com/IgorGanapolsky/trading/actions/runs/30783436103)                                                                              |
+| CI pipeline             | full local runner, Ruff, workflow integrity, dependency audit, Bandit, and repository audit pass  | [PR checks](https://github.com/IgorGanapolsky/trading/actions/runs/30782501761) and [fresh `main` CI](https://github.com/IgorGanapolsky/trading/actions/runs/30783436135) passed |
 
 ## CI health
 
 ```text
-Pipeline status: PENDING FINAL PR
+Pipeline status: PASSING on merged SHA 0efb9bda4c06d950f0a153b7a41e6b360917fa74
 Flaky tests fixed: baseline failure plus CI test-isolation failures
 New checks: repository hygiene, workflow dependency integrity, docs/skill layout, security target, combined branch coverage
 ```
+
+Fresh post-merge evidence:
+
+- [Full `main` CI](https://github.com/IgorGanapolsky/trading/actions/runs/30783436135): passed, including workflow validation, Trunk, changed-path detection, and the full test runner.
+- [Main Head Verification](https://github.com/IgorGanapolsky/trading/actions/runs/30783436103): passed bounded health and the generated-state regression ring.
+- [SonarCloud](https://github.com/IgorGanapolsky/trading/actions/runs/30783436102): coverage generation and scan passed.
+- [CodeQL](https://github.com/IgorGanapolsky/trading/actions/runs/30783436143), [Offline Evals](https://github.com/IgorGanapolsky/trading/actions/runs/30783436108), and [OpenSSF Scorecard](https://github.com/IgorGanapolsky/trading/actions/runs/30783436137): passed.
 
 The local paper command reached the broker-inventory boundary and failed closed because Alpaca paper credentials were not present in the isolated worktree. No order was submitted. This is safe fail-closed evidence, not authenticated broker or dry-run success.
 
@@ -131,5 +138,5 @@ The Obsidian Linear community plugin remains an optional human dashboard. It is 
 1. Ratchet combined coverage from the verified floor toward 70%, prioritizing orchestrator gates, system health, and broker boundaries.
 2. Review the active `eval-engineering-hiroi` orphan branch separately; it contains a large unique evaluation pipeline and was preserved rather than deleted.
 3. Classify the newly generated `auto/self-heal-*` branch after its owner/run settles; it is active, not stale.
-4. Schedule a follow-up audit after the coverage tranche, not before current CI and merge proof are complete.
+4. Follow-up [AGENT-26](https://linear.app/igorganapolsky/issue/AGENT-26/trading-follow-up-coverage-ratchet-and-authenticated-paper-dry-run) records the coverage ratchet, authenticated paper dry run, and preserved-branch reclassification work.
 5. Re-run the paper inventory dry run in an authenticated environment; the isolated worktree proved fail-closed behavior only.
