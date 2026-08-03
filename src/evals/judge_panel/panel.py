@@ -35,9 +35,7 @@ def _verdict_head(passed: bool, vetoed: bool) -> str:
 
 
 def _default_summary(opinions: list[ExpertOpinion], vetoed: bool, passed: bool) -> str:
-    parts = [
-        f"{o.expert.value}={_opinion_flag(o)}(score={o.score:.2f})" for o in opinions
-    ]
+    parts = [f"{o.expert.value}={_opinion_flag(o)}(score={o.score:.2f})" for o in opinions]
     head = _verdict_head(passed, vetoed)
     return f"{head}: " + "; ".join(parts)
 

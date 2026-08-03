@@ -127,8 +127,7 @@ class TestEvidenceExpert:
             PanelInput(
                 kind=TaskKind.CLAIM_AUDIT,
                 text=(
-                    "CI green on run 30780143772 merge sha d69beb2b6ec419b8 "
-                    "n=162 expectancy=-47"
+                    "CI green on run 30780143772 merge sha d69beb2b6ec419b8 n=162 expectancy=-47"
                 ),
             )
         )
@@ -207,9 +206,7 @@ class TestCoordExpert:
         assert o.veto is True
 
     def test_empty_claims_limited_check(self):
-        o = CoordinationExpert().evaluate(
-            PanelInput(kind=TaskKind.COORD_AUDIT, agent="grok")
-        )
+        o = CoordinationExpert().evaluate(PanelInput(kind=TaskKind.COORD_AUDIT, agent="grok"))
         assert o.passed is True
         assert "coord:no_foreign_claims" in o.evidence_cites
 
@@ -252,9 +249,7 @@ class TestPanel:
         assert "experts agree" in v.judge_summary
 
     def test_missing_expert_vetoes(self):
-        v = JudgePanel(experts={}).run(
-            PanelInput(kind=TaskKind.CLAIM_AUDIT, text="docs only")
-        )
+        v = JudgePanel(experts={}).run(PanelInput(kind=TaskKind.CLAIM_AUDIT, text="docs only"))
         assert v.passed is False
         assert v.vetoed is True
         assert any("missing expert" in r for r in v.veto_reasons)

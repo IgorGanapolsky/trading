@@ -59,9 +59,7 @@ def safe_read_text(path: str | None, *, roots: tuple[Path, ...] | None = None) -
             continue
 
     roots_disp = ", ".join(str(r) for r in allowed)
-    raise SystemExit(
-        f"error: path outside allowed roots ({roots_disp}): {path!r}"
-    )
+    raise SystemExit(f"error: path outside allowed roots ({roots_disp}): {path!r}")
 
 
 def _self_check() -> int:
@@ -79,10 +77,7 @@ def _self_check() -> int:
             "verified_claim",
             {
                 "kind": TaskKind.CLAIM_AUDIT,
-                "text": (
-                    "CI green on run 30780143772, merge sha d69beb2b6, "
-                    "n=162 expectancy=-47"
-                ),
+                "text": ("CI green on run 30780143772, merge sha d69beb2b6, n=162 expectancy=-47"),
             },
             True,
         ),
@@ -110,8 +105,7 @@ def _self_check() -> int:
                 "agent": "grok",
                 "claimed_files": ["src/risk/trade_gateway.py"],
                 "other_agent_claims": (
-                    "codex owns In Progress IGO-35; "
-                    "claimed_files: src/risk/trade_gateway.py"
+                    "codex owns In Progress IGO-35; claimed_files: src/risk/trade_gateway.py"
                 ),
             },
             False,
@@ -122,8 +116,7 @@ def _self_check() -> int:
         v = run_panel(**kwargs)
         if v.passed != expect_pass:
             failures.append(
-                f"{name}: expected passed={expect_pass} got {v.passed} "
-                f"summary={v.judge_summary}"
+                f"{name}: expected passed={expect_pass} got {v.passed} summary={v.judge_summary}"
             )
     if failures:
         print("SELF-CHECK FAIL")
