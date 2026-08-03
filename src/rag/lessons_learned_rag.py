@@ -37,6 +37,7 @@ class LessonsLearnedRAG:
         self._custom_dir = knowledge_dir is not None
         self.lessons = []
         self.last_source = "none"
+        self.last_retrieve_meta: dict = {}
 
         # LanceDB-first retrieval (semantic)
         self.lancedb_rag = None
@@ -256,7 +257,32 @@ class LessonsLearnedRAG:
         return ranked[:top_k]
 
     def query(self, query: str, top_k: int = 5, severity_filter: Optional[str] = None) -> list:
-        """Search lessons using LanceDB first, then keyword matching."""
+        """Search lessons using defended path first, then LanceDB, then keyword."""
+        # Defended trading RAG (FTS5 + pragmatic hybrid + multi-query@0.6 + CE heuristic)
+        # Default ON. Set TRADING_RAG_DEFENDED=0 to use legacy LanceDB/keyword only.
+        defended = os.getenv("TRADING_RAG_DEFENDED", "true").lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+        if defended and not self._custom_dir:
+            try:
+                from src.rag.retrieve_for_trade import retrieve_for_trade
+
+                result = retrieve_for_trade(
+                    query,
+                    top_k=top_k,
+                    severity_filter=severity_filter,
+                    use_llm_rerank=False,  # keep query path deterministic/offline
+                )
+                if result.lessons:
+                    self.last_source = "defended"
+                    self.last_retrieve_meta = result.meta
+                    return result.lessons
+            except Exception as e:
+                logger.warning("Defended retrieve_for_trade failed: %s — falling back", e)
+
         if self.lancedb_rag is not None:
             try:
                 results = self._query_lancedb(query, top_k=top_k)
