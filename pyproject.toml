@@ -45,7 +45,7 @@ research = [
   "praw>=7.8.2,<8.0.0",
   "youtube-transcript-api>=1.2.3,<2.0.0",
 ]
-security = ["bandit>=1.9.4", "detect-secrets>=1.5.0", "pip-audit>=2.10.0"]
+security = ["bandit>=1.9.4", "detect-secrets>=1.5.0", "pip-audit>=2.10.1"]
 
 [project.urls]
 Repository = "https://github.com/IgorGanapolsky/trading"
