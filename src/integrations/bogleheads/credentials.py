@@ -53,10 +53,7 @@ def load_credentials() -> BogleheadsCredentials:
       - account iganapolsky@gmail.com / service bogleheads.org.username
       - hermes-fleet / BOGLEHEADS_USERNAME|PASSWORD|EMAIL
     """
-    email = (
-        _keychain_get("hermes-fleet", "BOGLEHEADS_EMAIL")
-        or "iganapolsky@gmail.com"
-    )
+    email = _keychain_get("hermes-fleet", "BOGLEHEADS_EMAIL") or "iganapolsky@gmail.com"
     username = (
         _keychain_get("hermes-fleet", "BOGLEHEADS_USERNAME")
         or _keychain_get(email, "bogleheads.org.username")

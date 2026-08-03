@@ -72,9 +72,7 @@ def draft_reply(thread: dict[str, Any]) -> str:
         )
 
     if score < 0.25:
-        lines.append(
-            "(I'll keep this light — the thread may already cover the main points.)"
-        )
+        lines.append("(I'll keep this light — the thread may already cover the main points.)")
 
     body = " ".join(lines) + DRAFT_FOOTER
     # Soft length cap for forum etiquette
@@ -159,12 +157,7 @@ def post_reply_in_chrome(
     time.sleep(3.0)
 
     # Escape body for JS single-quoted string
-    body_esc = (
-        body.replace("\\", "\\\\")
-        .replace("'", "\\'")
-        .replace("\n", "\\n")
-        .replace("\r", "")
-    )
+    body_esc = body.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "")
 
     js = f"""
 (() => {{
