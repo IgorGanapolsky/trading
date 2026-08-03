@@ -6,8 +6,11 @@ This module provides:
 - Local JSON backup for trade recording
 - Semantic search across trading knowledge
 - RAG evaluation metrics (Precision@k, Recall@k, MRR)
+- Financial Graph RAG (temporal property graph + TokenGuard)
 
 Note: ChromaDB was deprecated Jan 7, 2026 in favor of LanceDB.
+Graph RAG lives under ``src.rag.graph`` — import from there to avoid
+shadowing submodule paths (same rule as retrieve_for_trade).
 """
 
 from src.rag.evaluation import (
@@ -19,9 +22,8 @@ from src.rag.evaluation import (
 from src.rag.lessons_learned_rag import LessonsLearnedRAG
 from src.rag.unified_search import UnifiedSearch, get_unified_search
 
-# NOTE: Do not re-export retrieve_for_trade symbols here — that shadows the
-# submodule name ``src.rag.retrieve_for_trade`` and breaks ``import src.rag.retrieve_for_trade``.
-# Import from ``src.rag.retrieve_for_trade`` directly.
+# NOTE: Do not re-export retrieve_for_trade or graph pipeline symbols here —
+# that shadows submodule package names. Import from ``src.rag.graph`` directly.
 
 __all__ = [
     "LessonsLearnedRAG",

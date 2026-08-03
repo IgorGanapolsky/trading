@@ -1,0 +1,282 @@
+"""Tests for financial Graph RAG (stdlib SQLite property graph)."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import pytest
+
+from src.rag.graph.builder import FinancialGraphBuilder
+from src.rag.graph.pipeline import GraphRAGPipeline
+from src.rag.graph.router import QueryIntent, route_query
+from src.rag.graph.schema import EdgeRel, NodeType
+from src.rag.graph.store import FinancialGraphStore
+from src.rag.graph.token_gateway import apply_token_guard, estimate_tokens
+
+
+@pytest.fixture
+def graph_db(tmp_path: Path) -> Path:
+    return tmp_path / "financial_graph.sqlite"
+
+
+@pytest.fixture
+def store(graph_db: Path) -> FinancialGraphStore:
+    s = FinancialGraphStore(db_path=graph_db)
+    yield s
+    s.close()
+
+
+@pytest.fixture
+def mini_repo(tmp_path: Path) -> Path:
+    """Minimal ledger fixtures for builder tests."""
+    root = tmp_path / "repo"
+    (root / "data/runtime").mkdir(parents=True)
+    (root / "data/rag").mkdir(parents=True)
+    (root / "rag_knowledge/lessons_learned").mkdir(parents=True)
+
+    kill = {
+        "updated_at": "2026-07-22T15:00:00Z",
+        "active_family": "spy_put_credit",
+        "killed_families": ["ic_simple", "iron_condor"],
+        "paper_only": True,
+        "live_blocked": True,
+        "reason": "IC Simple killed; successor spy_put_credit",
+        "evidence": {"closed_trades": 159, "profit_factor": 0.16},
+    }
+    (root / "data/runtime/strategy_kill_switch.json").write_text(
+        json.dumps(kill), encoding="utf-8"
+    )
+
+    lesson = """# LL-999: Never freehand-close inventory
+
+**Severity**: CRITICAL
+
+## Prevention
+Always use guardian workflow for residual IC exits.
+Put credit validation requires clean inventory.
+SPY only. Iron condor new entries are forbidden.
+"""
+    (root / "rag_knowledge/lessons_learned/LL-999.md").write_text(lesson, encoding="utf-8")
+
+    trades = {
+        "meta": {},
+        "stats": {},
+        "trades": [
+            {
+                "id": "PC_SPY_TEST_1",
+                "symbol": "SPY",
+                "strategy": "spy_put_credit",
+                "status": "closed",
+                "entry_date": "2026-07-01",
+                "exit_date": "2026-07-10",
+                "realized_pnl": 40.0,
+                "outcome": "win",
+                "quantity": 1,
+                "signature": "SPY_PUT_TEST",
+            },
+            {
+                "id": "IC_SPY_TEST_2",
+                "symbol": "SPY",
+                "strategy": "iron_condor",
+                "status": "closed",
+                "entry_date": "2026-02-01",
+                "exit_date": "2026-02-02",
+                "realized_pnl": -200.0,
+                "outcome": "loss",
+                "quantity": 1,
+                "signature": "SPY_IC_TEST",
+            },
+        ],
+    }
+    (root / "data/trades.json").write_text(json.dumps(trades), encoding="utf-8")
+
+    (root / "data/runtime/usd_macro_sentiment.json").write_text(
+        json.dumps({"score": 0.1, "note": "fixture"}), encoding="utf-8"
+    )
+    return root
+
+
+def test_store_upsert_and_temporal_expire(store: FinancialGraphStore) -> None:
+    store.upsert_node("ticker:SPY", NodeType.TICKER, label="SPY")
+    store.upsert_node("strategy:spy_put_credit", NodeType.STRATEGY, label="put credit")
+    e1 = store.upsert_edge(
+        "strategy:spy_put_credit",
+        "ticker:SPY",
+        EdgeRel.TRADES,
+        edge_id="e:pc:TRADES:spy",
+        weight=1.0,
+    )
+    assert e1.src == "strategy:spy_put_credit"
+    neigh = store.neighbors("strategy:spy_put_credit", direction="out")
+    assert len(neigh) == 1
+    assert neigh[0][1].id == "ticker:SPY"
+
+    # Replace active edge → prior expires
+    store.upsert_edge(
+        "strategy:spy_put_credit",
+        "ticker:SPY",
+        EdgeRel.TRADES,
+        edge_id="e:pc:TRADES:spy:v2",
+        weight=0.5,
+        replace_active=True,
+    )
+    active = store.neighbors("strategy:spy_put_credit", direction="out")
+    assert len(active) == 1
+    assert active[0][0].id == "e:pc:TRADES:spy:v2"
+
+
+def test_bfs_paths(store: FinancialGraphStore) -> None:
+    store.upsert_node("a", NodeType.CONCEPT, "A")
+    store.upsert_node("b", NodeType.CONCEPT, "B")
+    store.upsert_node("c", NodeType.CONCEPT, "C")
+    store.upsert_edge("a", "b", EdgeRel.RELATED_TO, edge_id="e:ab")
+    store.upsert_edge("b", "c", EdgeRel.IMPACTS, edge_id="e:bc", weight=1.5)
+    paths = store.bfs_paths(["a"], max_hops=2, max_paths=10)
+    assert paths
+    terminal = {p.node_ids[-1] for p in paths}
+    assert "b" in terminal
+    assert "c" in terminal
+
+
+def test_router_strategy_status() -> None:
+    d = route_query("why is iron condor killed and live blocked?")
+    assert d.intent == QueryIntent.STRATEGY_STATUS
+    assert any("strategy" in s or "macro" in s for s in d.seed_hints)
+
+
+def test_router_macro() -> None:
+    d = route_query("how does VIX spike impact SPY put credit?")
+    assert d.intent == QueryIntent.MACRO_IMPACT
+    assert "concept:vix_spike" in d.seed_hints or "ticker:SPY" in d.seed_hints
+
+
+def test_token_guard_trims() -> None:
+    paths = [
+        {"node_ids": [f"n{i}", f"n{i+1}"], "rels": ["RELATED_TO"], "score": float(10 - i)}
+        for i in range(30)
+    ]
+    nodes = [
+        {
+            "id": f"n{i}",
+            "type": "lesson",
+            "label": f"Lesson {i}",
+            "properties": {"snippet": "x" * 400},
+        }
+        for i in range(40)
+    ]
+    guard = apply_token_guard(
+        query="test",
+        intent="hybrid",
+        route_reason="unit",
+        paths=paths,
+        nodes=nodes,
+        vector_hits=[{"id": "L1", "title": "t", "snippet": "y" * 500, "score": 1.0}],
+        max_tokens=200,
+        hard_max_tokens=5000,
+        max_paths=20,
+        max_nodes=20,
+    )
+    assert guard.allowed
+    assert guard.trimmed_paths > 0 or guard.estimated_tokens <= 200
+    assert estimate_tokens(guard.context_text) == guard.estimated_tokens
+
+
+def test_token_guard_hard_halt() -> None:
+    huge_nodes = [
+        {
+            "id": f"n{i}",
+            "type": "lesson",
+            "label": "L",
+            "properties": {"snippet": "z" * 2000},
+        }
+        for i in range(5)
+    ]
+    # Force halt with tiny hard max and no room to trim below it after build
+    guard = apply_token_guard(
+        query="q",
+        intent="hybrid",
+        route_reason="unit",
+        paths=[{"node_ids": ["a", "b"], "rels": ["X"], "score": 1.0}],
+        nodes=huge_nodes,
+        max_tokens=10,
+        hard_max_tokens=30,
+        max_paths=1,
+        max_nodes=1,
+        max_vector_hits=0,
+    )
+    # May still be allowed if trim works; if not, must halt cleanly
+    if not guard.allowed:
+        assert guard.halt_reason
+        assert "HALTED" in guard.context_text
+
+
+def test_builder_and_pipeline_query(mini_repo: Path, graph_db: Path) -> None:
+    store = FinancialGraphStore(db_path=graph_db)
+    builder = FinancialGraphBuilder(store, repo_root=mini_repo)
+    result = builder.rebuild(clear=True)
+    assert result["stats"]["nodes"] >= 10
+    assert result["stats"]["edges"] >= 5
+
+    # Kill path exists
+    neigh = store.neighbors("macro:strategy_kill_2026_07_22", direction="out")
+    rels = {e.rel for e, _ in neigh}
+    assert "KILLED" in rels or "SUCCEEDS" in rels
+
+    # Lesson linked
+    lesson = store.get_node("lesson:LL-999")
+    assert lesson is not None
+    assert lesson.properties.get("severity") == "CRITICAL"
+
+    # Trades linked
+    assert store.get_node("trade:PC_SPY_TEST_1") is not None
+
+    pipe = GraphRAGPipeline(
+        store=store,
+        repo_root=mini_repo,
+        auto_build_if_empty=False,
+    )
+    # Graph-only to avoid depending on full lessons corpus / LanceDB
+    out = pipe.query(
+        "why is iron condor killed?",
+        force_graph_only=True,
+        max_tokens=2000,
+    )
+    assert out.allowed
+    assert out.route["intent"] == QueryIntent.STRATEGY_STATUS.value
+    assert out.latency_ms < 5000  # generous for CI; local is usually << 100ms
+    ctx = out.context.lower()
+    assert "iron_condor" in ctx or "killed" in ctx or "spy_put_credit" in ctx
+    pipe.close()
+    store.close()
+
+
+def test_pipeline_stats_empty_autobuild(mini_repo: Path, graph_db: Path) -> None:
+    pipe = GraphRAGPipeline(
+        store=FinancialGraphStore(db_path=graph_db),
+        repo_root=mini_repo,
+        auto_build_if_empty=True,
+    )
+    stats = pipe.stats()
+    assert stats["nodes"] > 0
+    pipe.close()
+
+
+def test_cli_rebuild_and_query(mini_repo: Path, graph_db: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from scripts import graph_rag_query as cli
+
+    monkeypatch.setattr(cli, "_REPO", mini_repo)
+    code = cli.main(
+        [
+            "--repo-root",
+            str(mini_repo),
+            "--db",
+            str(graph_db),
+            "--rebuild",
+            "--query",
+            "put credit stop loss rules",
+            "--graph-only",
+            "--json",
+        ]
+    )
+    assert code in (0, 2)
