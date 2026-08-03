@@ -4,26 +4,26 @@
     "created": "2026-07-07T21:32:24.241944+00:00",
     "purpose": "Master ledger for broker-paired closed option structures",
     "paper_phase_start": "2026-01-22",
-    "last_sync": "2026-08-01T14:33:49.887759+00:00",
+    "last_sync": "2026-08-03T15:55:01.609612+00:00",
     "sync_source": "sync_closed_positions.py"
   },
   "stats": {
-    "total_trades": 162,
-    "closed_trades": 162,
+    "total_trades": 163,
+    "closed_trades": 163,
     "open_trades": 0,
-    "wins": 23,
+    "wins": 24,
     "losses": 138,
     "breakeven": 1,
-    "win_rate_pct": 14.2,
-    "avg_win": 67.57,
+    "win_rate_pct": 14.72,
+    "avg_win": 66.38,
     "avg_loss": 66.66,
     "profit_factor": 0.17,
-    "expectancy": -47.19,
-    "total_pnl": -7645.0,
-    "total_realized_pnl": -7645.0,
+    "expectancy": -46.66,
+    "total_pnl": -7606.0,
+    "total_realized_pnl": -7606.0,
     "edge_metric_unit": "paired_closed_structure",
     "unpaired_attribution_status": "quarantined_not_edge_eligible",
-    "reconciliation_total_cash": -5478.0,
+    "reconciliation_total_cash": -5439.0,
     "by_strategy": {
       "iron_condor": {
         "closed_trades": 161,
@@ -36,19 +36,19 @@
         "total_realized_pnl": -7662.0
       },
       "spy_put_credit": {
-        "closed_trades": 1,
-        "wins": 1,
+        "closed_trades": 2,
+        "wins": 2,
         "losses": 0,
         "breakeven": 0,
         "win_rate_pct": 100.0,
         "profit_factor": null,
-        "expectancy": 17.0,
-        "total_realized_pnl": 17.0
+        "expectancy": 28.0,
+        "total_realized_pnl": 56.0
       }
     },
     "paper_phase_start": "2026-01-22",
-    "paper_phase_days": 191,
-    "last_updated": "2026-08-01T14:33:49.887747+00:00",
+    "paper_phase_days": 193,
+    "last_updated": "2026-08-03T15:55:01.609602+00:00",
     "unpaired_realized_pnl": 2167.0,
     "unpaired_in_cohort_pnl": 409.0,
     "unpaired_order_count": 15,
@@ -6357,6 +6357,48 @@
         "exit": ["27681593-6554-41c9-b130-ac5e8e73972e"]
       },
       "journal_key": "PCS_260828_4fc04e47a2da4fe9ab2814cdad69ab44",
+      "evidence_source": "broker_paired_put_credit_journal"
+    },
+    {
+      "id": "PCS_fb85cfe1-93c1-4511-868b-d0e1b0a59220_3310d412-8ec4-4e91-9a6f-123366586a4a",
+      "status": "closed",
+      "strategy": "spy_put_credit",
+      "strategy_family": "spy_put_credit",
+      "symbol": "SPY",
+      "signature": "SPY_2026-08-28_P707-712",
+      "journal_signature": "SPY_2026-08-28_P707-712",
+      "entry_time": "2026-07-24T16:58:19.813684+00:00",
+      "exit_time": "2026-08-03T15:55:00.577185+00:00",
+      "expiry": "2026-08-28",
+      "quantity": 1.0,
+      "entry_credit": 65.0,
+      "entry_credit_per_share": 0.65,
+      "exit_debit": 26.0,
+      "exit_debit_per_share": 0.26,
+      "realized_pnl": 39.0,
+      "outcome": "win",
+      "exit_reason": "profit_target",
+      "hold_hours": 238.94,
+      "dte": 35,
+      "put_delta": null,
+      "selection_method": "broker_reconstructed_unverified",
+      "profile_name": "spy-put-credit",
+      "validation_phase": true,
+      "strikes": {
+        "short_put": 712.0,
+        "long_put": 707.0
+      },
+      "legs": {
+        "underlying": "SPY",
+        "expiry": "2026-08-28",
+        "put_strikes": [707.0, 712.0],
+        "call_strikes": []
+      },
+      "order_ids": {
+        "entry": ["fb85cfe1-93c1-4511-868b-d0e1b0a59220"],
+        "exit": ["3310d412-8ec4-4e91-9a6f-123366586a4a"]
+      },
+      "journal_key": "PCS_260828_fb85cfe193c14511868bd0e1b0a59220",
       "evidence_source": "broker_paired_put_credit_journal"
     }
   ]

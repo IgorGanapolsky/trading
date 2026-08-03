@@ -83,18 +83,18 @@
       "tp_25_target": 16.25,
       "tp_50_target": 32.5,
       "would_hit_tp_25_now": true,
-      "would_hit_tp_50_now": false,
+      "would_hit_tp_50_now": true,
       "public_exit_dte": 21,
-      "dte_now": 28,
+      "dte_now": 25,
       "would_trigger_public_21dte_exit": false,
       "note": "Counterfactuals only \u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history."
     },
-    "last_counterfactuals_at": "2026-07-31T20:04:57.964959+00:00",
+    "last_counterfactuals_at": "2026-08-03T15:54:58.508460+00:00",
     "last_mark": {
-      "current_debit": 0.46999999999999975,
-      "estimated_pnl": 18.00000000000003,
-      "dte": 28,
-      "hold_hours": 171.11059668027775
+      "current_debit": 0.26,
+      "estimated_pnl": 39.0,
+      "dte": 25,
+      "hold_hours": 238.94408092277777
     },
     "limit_credit": 0.61,
     "order_id": "fb85cfe1-93c1-4511-868b-d0e1b0a59220",
@@ -116,19 +116,19 @@
     "submitted_at": "2026-07-24T16:58:19.748755+00:00",
     "validation_phase": true,
     "exit_reason": "profit_target",
-    "exit_order_id": "53b8188b-9b93-488f-ad03-3298f1bf9ff9",
-    "exit_submitted_at": "2026-07-31T20:04:58.110671+00:00",
-    "estimated_exit_debit": 0.46999999999999975,
-    "estimated_exit_pnl": 18.00000000000003,
+    "exit_submitted_at": "2026-08-03T15:55:00.459888+00:00",
+    "estimated_exit_debit": 0.26,
+    "estimated_exit_pnl": 39.0,
     "exit_counterfactuals": {
       "tp_25_target": 16.25,
       "tp_50_target": 32.5,
       "would_hit_tp_25_now": true,
-      "would_hit_tp_50_now": false,
+      "would_hit_tp_50_now": true,
       "public_exit_dte": 21,
-      "dte_now": 28,
+      "dte_now": 25,
       "would_trigger_public_21dte_exit": false,
       "note": "Counterfactuals only \u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history."
-    }
+    },
+    "exit_order_id": "3310d412-8ec4-4e91-9a6f-123366586a4a"
   }
 }
