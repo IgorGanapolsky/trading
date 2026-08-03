@@ -22,6 +22,12 @@ class QueryIntent(StrEnum):
     HYBRID = "hybrid"  # multi-hop default
 
 
+NODE_SPY_PUT_CREDIT = "strategy:spy_put_credit"
+NODE_IRON_CONDOR = "strategy:iron_condor"
+NODE_KILL_EVENT = "macro:strategy_kill_2026_07_22"
+NODE_SPY = "ticker:SPY"
+
+
 @dataclass(frozen=True)
 class RouteDecision:
     intent: QueryIntent
@@ -131,11 +137,11 @@ def _match_seed_hints(query: str) -> list[str]:
     for m in _TICKER_RE.finditer(query):
         hints.append(f"ticker:{m.group(1).upper()}")
     if "put credit" in q or "spy_put_credit" in q or "bull put" in q:
-        hints.append("strategy:spy_put_credit")
+        hints.append(NODE_SPY_PUT_CREDIT)
     if "iron condor" in q or "ic simple" in q or "ic_simple" in q:
-        hints.append("strategy:iron_condor")
+        hints.append(NODE_IRON_CONDOR)
     if "kill" in q:
-        hints.append("macro:strategy_kill_2026_07_22")
+        hints.append(NODE_KILL_EVENT)
     if "inventory" in q or "orphan" in q:
         hints.append("concept:inventory_hygiene")
     if "vix" in q or "volatility" in q:
@@ -192,7 +198,7 @@ def route_query(query: str) -> RouteDecision:
     if not q:
         return RouteDecision(
             intent=QueryIntent.HYBRID,
-            seed_hints=["strategy:spy_put_credit"],
+            seed_hints=[NODE_SPY_PUT_CREDIT],
             max_hops=2,
             prefer_rels=["GOVERNS", "BLOCKS", "RELATED_TO"],
             use_vector_fusion=True,
@@ -218,7 +224,7 @@ def route_query(query: str) -> RouteDecision:
 
     if best is None or best_hits == 0:
         if not hints:
-            hints = ["strategy:spy_put_credit", "ticker:SPY"]
+            hints = [NODE_SPY_PUT_CREDIT, NODE_SPY]
         return RouteDecision(
             intent=QueryIntent.HYBRID,
             seed_hints=hints,
@@ -230,18 +236,7 @@ def route_query(query: str) -> RouteDecision:
 
     intent, hops, rels, fuse, reason = best
     if not hints:
-        if intent == QueryIntent.STRATEGY_STATUS:
-            hints = [
-                "strategy:spy_put_credit",
-                "strategy:iron_condor",
-                "macro:strategy_kill_2026_07_22",
-            ]
-        elif intent == QueryIntent.MACRO_IMPACT:
-            hints = ["concept:fed_policy", "concept:vix_spike", "ticker:SPY"]
-        elif intent == QueryIntent.TRADE_EVIDENCE:
-            hints = ["strategy:spy_put_credit", "strategy:iron_condor"]
-        else:
-            hints = ["strategy:spy_put_credit"]
+        hints = _default_seeds_for_intent(intent)
 
     return RouteDecision(
         intent=intent,
@@ -253,9 +248,16 @@ def route_query(query: str) -> RouteDecision:
     )
 
 
-def expand_seeds_from_store(seed_hints: Iterable[str], search_fn) -> list[str]:
-    """Resolve seed hints; fall back to store text search for free tokens."""
-    seeds: list[str] = []
-    for h in seed_hints:
-        seeds.append(h)
-    return seeds
+def _default_seeds_for_intent(intent: QueryIntent) -> list[str]:
+    if intent == QueryIntent.STRATEGY_STATUS:
+        return [NODE_SPY_PUT_CREDIT, NODE_IRON_CONDOR, NODE_KILL_EVENT]
+    if intent == QueryIntent.MACRO_IMPACT:
+        return ["concept:fed_policy", "concept:vix_spike", NODE_SPY]
+    if intent == QueryIntent.TRADE_EVIDENCE:
+        return [NODE_SPY_PUT_CREDIT, NODE_IRON_CONDOR]
+    return [NODE_SPY_PUT_CREDIT]
+
+
+def expand_seeds_from_store(seed_hints: Iterable[str]) -> list[str]:
+    """Copy seed hints preserving order (compat helper for callers)."""
+    return list(seed_hints)

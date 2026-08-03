@@ -309,3 +309,186 @@ def test_golden_intents_stable() -> None:
     ]
     for query, intent in cases:
         assert route_query(query).intent == intent, query
+
+
+def test_resolve_graph_db_path_guards(tmp_path: Path) -> None:
+    from src.rag.graph.store import resolve_graph_db_path
+
+    ok = resolve_graph_db_path(tmp_path / "g.sqlite", base_dir=tmp_path)
+    assert ok.suffix == ".sqlite"
+    with pytest.raises(ValueError):
+        resolve_graph_db_path("file:/tmp/evil.sqlite", base_dir=tmp_path)
+    with pytest.raises(ValueError):
+        resolve_graph_db_path(tmp_path / "no_ext", base_dir=tmp_path)
+    with pytest.raises(ValueError):
+        # Absolute path outside base and temp roots
+        resolve_graph_db_path("/etc/passwd.sqlite", base_dir=tmp_path)
+
+
+def test_strategy_node_id_and_outcome() -> None:
+    from src.rag.graph.builder import _strategy_node_id, _trade_outcome
+
+    assert _strategy_node_id("ic_simple") == "strategy:ic_simple"
+    assert _strategy_node_id("iron_condor") == "strategy:iron_condor"
+    assert _strategy_node_id("spy put credit") == "strategy:spy_put_credit"
+    assert _strategy_node_id("custom_xyz") == "strategy:custom_xyz"
+    assert _trade_outcome("win", -1) == "win"
+    assert _trade_outcome(None, 10) == "win"
+    assert _trade_outcome(None, -10) == "loss"
+    assert _trade_outcome(None, 0) == "flat"
+
+
+def test_neighbors_directions_and_as_of(store: FinancialGraphStore) -> None:
+    store.upsert_node("a", NodeType.CONCEPT, "A")
+    store.upsert_node("b", NodeType.CONCEPT, "B")
+    store.upsert_edge(
+        "a",
+        "b",
+        EdgeRel.IMPACTS,
+        edge_id="e:ab",
+        valid_from="2026-01-01T00:00:00+00:00",
+    )
+    assert store.neighbors("a", direction="out")
+    assert store.neighbors("b", direction="in")
+    assert store.neighbors("a", direction="both", rels=[EdgeRel.IMPACTS])
+    assert store.neighbors("a", as_of="2026-06-01T00:00:00+00:00")
+    past = store.neighbors("a", as_of="2025-01-01T00:00:00+00:00")
+    assert past == []
+    types = store.get_nodes_by_type(NodeType.CONCEPT)
+    assert len(types) >= 2
+    assert store.search_nodes("A")
+    store.expire_edge("e:ab", at="2026-07-01T00:00:00+00:00")
+    active = store.neighbors("a", direction="out")
+    assert active == []
+
+
+def test_hybrid_retriever_vector_fusion_and_explain(store: FinancialGraphStore) -> None:
+    from src.rag.graph.retriever import GraphHybridRetriever
+
+    store.upsert_node("strategy:spy_put_credit", NodeType.STRATEGY, "pc")
+    store.upsert_node("macro:strategy_kill_2026_07_22", NodeType.MACRO_EVENT, "kill")
+    store.upsert_node("strategy:iron_condor", NodeType.STRATEGY, "ic")
+    store.upsert_edge(
+        "macro:strategy_kill_2026_07_22",
+        "strategy:iron_condor",
+        EdgeRel.KILLED,
+        edge_id="e:kill",
+    )
+
+    def fake_vector(q: str, k: int) -> list[dict]:
+        return [{"id": "LL-1", "title": "t", "snippet": "s", "score": 0.9}]
+
+    ret = GraphHybridRetriever(store, vector_search=fake_vector)
+    # lesson_risk enables vector fusion; strategy_status is graph-primary
+    out = ret.retrieve("inventory orphan lesson prevention", force_graph_only=False)
+    assert out.route.intent == QueryIntent.LESSON_RISK
+    assert out.vector_hits
+    assert not out.graph_only
+    expl = ret.explain_node("strategy:iron_condor")
+    assert expl["id"] == "strategy:iron_condor"
+
+    def boom(q: str, k: int) -> list[dict]:
+        raise RuntimeError("vector down")
+
+    ret2 = GraphHybridRetriever(store, vector_search=boom)
+    out2 = ret2.retrieve("inventory orphan lesson prevention", force_graph_only=False)
+    assert out2.graph_only
+    assert out2.vector_hits == []
+
+    status = ret.retrieve("why is iron condor killed?", force_graph_only=False)
+    assert status.route.intent == QueryIntent.STRATEGY_STATUS
+
+    # free-text seed resolution when hints miss
+    store.upsert_node("lesson:LL-42", NodeType.LESSON, "lesson forty two inventory")
+    seeds = ret._resolve_seeds(["does-not-exist-xyz"], "lesson forty two inventory")
+    assert seeds  # free-text search should still locate something
+
+
+def test_default_vector_search_shapes(monkeypatch: pytest.MonkeyPatch) -> None:
+    from src.rag.graph import retriever as R
+
+    class FakeLesson:
+        id = "L1"
+        title = "t"
+        snippet = "snip"
+        prevention = "p"
+        severity = "HIGH"
+        file = "f.md"
+        score = 0.5
+
+    class FakeRAG:
+        def search(self, query: str, top_k: int = 5):
+            return [
+                (FakeLesson(), "not-a-float"),
+                {"id": "D1", "title": "dict", "score": 0.2},
+                FakeLesson(),
+            ]
+
+    monkeypatch.setattr(
+        R,
+        "LessonsLearnedRAG",
+        FakeRAG,
+        raising=False,
+    )
+
+    # Patch import path used inside function
+    import sys
+    import types
+
+    mod = types.ModuleType("src.rag.lessons_learned_rag")
+    mod.LessonsLearnedRAG = FakeRAG  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "src.rag.lessons_learned_rag", mod)
+    hits = R._default_vector_search("q", 3)
+    assert len(hits) == 3
+
+
+def test_pipeline_singleton_and_route(
+    mini_repo: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from src.rag.graph import pipeline as P
+
+    monkeypatch.chdir(mini_repo)
+    db = tmp_path / "pipe.sqlite"
+    store = FinancialGraphStore(db_path=db, base_dir=tmp_path)
+    pipe = GraphRAGPipeline(store=store, repo_root=mini_repo, auto_build_if_empty=True)
+    assert pipe.route("vix impact").intent == QueryIntent.MACRO_IMPACT
+    r = pipe.retrieve("stop loss rules", force_graph_only=True)
+    assert r.paths is not None
+    # refresh singleton path
+    P._PIPELINE_SINGLETON = pipe
+    again = P.get_graph_rag_pipeline(repo_root=mini_repo, refresh=True)
+    assert again is not None
+    again.close()
+
+
+def test_router_empty_and_hybrid() -> None:
+    d = route_query("")
+    assert d.intent == QueryIntent.HYBRID
+    d2 = route_query("random unrelated words about nothing")
+    assert d2.intent == QueryIntent.HYBRID
+
+
+def test_build_financial_graph_helper(mini_repo: Path, tmp_path: Path) -> None:
+    from src.rag.graph.builder import build_financial_graph
+
+    out = build_financial_graph(
+        repo_root=mini_repo,
+        db_path=tmp_path / "built.sqlite",
+        clear=True,
+    )
+    assert out["stats"]["nodes"] > 0
+
+
+def test_token_guard_empty_estimate() -> None:
+    assert estimate_tokens("") == 0
+    guard = apply_token_guard(
+        query="q",
+        intent="hybrid",
+        route_reason="r",
+        paths=[],
+        nodes=[],
+        vector_hits=[],
+        max_tokens=100,
+        hard_max_tokens=100,
+    )
+    assert guard.allowed

@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
+import tempfile
 import threading
 import uuid
 from collections import defaultdict, deque
@@ -19,7 +20,61 @@ from typing import Any, Iterable, Optional
 
 from src.rag.graph.schema import EdgeRel, NodeType
 
-DEFAULT_GRAPH_DB = Path(os.getenv("TRADING_GRAPH_RAG_DB", "data/rag/financial_graph.sqlite"))
+# Default relative path only — never open a raw env/CLI string without validation.
+_DEFAULT_RELATIVE_DB = Path("data/rag/financial_graph.sqlite")
+_ALLOWED_DB_SUFFIXES = frozenset({".sqlite", ".db", ".sqlite3"})
+
+
+def resolve_graph_db_path(
+    db_path: str | Path | None = None,
+    *,
+    base_dir: str | Path | None = None,
+) -> Path:
+    """Resolve a SQLite graph path with hard injection guards.
+
+    Blocks URI backends, null bytes, and paths outside the repo / temp roots so
+    CLI or agent-supplied strings cannot hijack the connection target (S8706).
+    """
+    base = Path(base_dir or Path.cwd()).expanduser().resolve()
+    if db_path is None:
+        env_raw = os.getenv("TRADING_GRAPH_RAG_DB")
+        raw = Path(env_raw) if env_raw else _DEFAULT_RELATIVE_DB
+    else:
+        raw = Path(str(db_path).strip())
+
+    raw_s = str(raw)
+    if not raw_s or "\x00" in raw_s:
+        raise ValueError("invalid graph db path")
+    lowered = raw_s.lower()
+    if lowered.startswith(("file:", "sqlite:", "http:", "https:", "ftp:")):
+        raise ValueError("URI-style graph db paths are not allowed")
+
+    candidate = raw.expanduser()
+    if not candidate.is_absolute():
+        candidate = (base / candidate).resolve()
+    else:
+        candidate = candidate.resolve()
+
+    if candidate.suffix.lower() not in _ALLOWED_DB_SUFFIXES:
+        raise ValueError(f"unsupported graph db extension: {candidate.suffix!r}")
+
+    tmp_root = Path(tempfile.gettempdir()).resolve()
+    allowed_roots = (base, tmp_root)
+    if not any(_is_relative_to(candidate, root) for root in allowed_roots):
+        raise ValueError(f"graph db path outside allowed roots: {candidate}")
+    return candidate
+
+
+def _is_relative_to(path: Path, root: Path) -> bool:
+    try:
+        path.relative_to(root)
+        return True
+    except ValueError:
+        return False
+
+
+# Back-compat name used by older imports / docs.
+DEFAULT_GRAPH_DB = _DEFAULT_RELATIVE_DB
 
 _SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS nodes (
@@ -122,8 +177,14 @@ class GraphPath:
 class FinancialGraphStore:
     """Thread-safe SQLite property graph with temporal edge filters."""
 
-    def __init__(self, db_path: str | Path | None = None):
-        self.db_path = Path(db_path or DEFAULT_GRAPH_DB)
+    def __init__(
+        self,
+        db_path: str | Path | None = None,
+        *,
+        base_dir: str | Path | None = None,
+    ):
+        # Validate before any connect — path is never a raw untrusted CLI string.
+        self.db_path = resolve_graph_db_path(db_path, base_dir=base_dir)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._lock = threading.RLock()
         self._conn: Optional[sqlite3.Connection] = None
@@ -131,7 +192,8 @@ class FinancialGraphStore:
 
     def _connect(self) -> sqlite3.Connection:
         if self._conn is None:
-            self._conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
+            # Connect only to the already-validated filesystem path object.
+            self._conn = sqlite3.connect(self.db_path.as_posix(), check_same_thread=False)
             self._conn.row_factory = sqlite3.Row
             self._conn.execute("PRAGMA foreign_keys = ON")
             self._conn.execute("PRAGMA journal_mode = WAL")

@@ -53,6 +53,36 @@ def _utc_now() -> str:
     return datetime.now(UTC).isoformat()
 
 
+NODE_SPY = "ticker:SPY"
+NODE_SPY_PUT_CREDIT = "strategy:spy_put_credit"
+NODE_IRON_CONDOR = "strategy:iron_condor"
+NODE_IC_SIMPLE = "strategy:ic_simple"
+
+
+def _trade_outcome(raw: Any, pnl: float) -> str:
+    if raw:
+        return str(raw)
+    if pnl > 0:
+        return "win"
+    if pnl < 0:
+        return "loss"
+    return "flat"
+
+
+def _strategy_node_id(strategy: str) -> str:
+    """Map a trade strategy string to a canonical strategy node id."""
+    s = (strategy or "unknown").lower().strip()
+    if s == "ic_simple":
+        return NODE_IC_SIMPLE
+    if s in {"iron_condor", "ic"}:
+        return NODE_IRON_CONDOR
+    if "put" in s and "credit" in s:
+        return NODE_SPY_PUT_CREDIT
+    if s in SEED_STRATEGIES:
+        return f"strategy:{s}"
+    return f"strategy:{s or 'unknown'}"
+
+
 def _read_json(path: Path) -> Any | None:
     if not path.exists():
         return None
@@ -146,7 +176,7 @@ class FinancialGraphBuilder:
             if sid in {"spy_put_credit", "iron_condor", "ic_simple", "residual_ic"}:
                 self.store.upsert_edge(
                     f"strategy:{sid}",
-                    "ticker:SPY",
+                    NODE_SPY,
                     EdgeRel.TRADES,
                     weight=1.0,
                     properties={"underlying": "SPY"},
@@ -160,7 +190,7 @@ class FinancialGraphBuilder:
             # Put-credit rules govern active strategy
             self.store.upsert_edge(
                 rid,
-                "strategy:spy_put_credit",
+                NODE_SPY_PUT_CREDIT,
                 EdgeRel.GOVERNS,
                 weight=1.2,
                 edge_id=f"e:{rid}:GOVERNS:strategy:spy_put_credit",
@@ -170,7 +200,7 @@ class FinancialGraphBuilder:
         # IC kill rule
         self.store.upsert_edge(
             "rule:no_new_ic_entries",
-            "strategy:iron_condor",
+            NODE_IRON_CONDOR,
             EdgeRel.BLOCKS,
             weight=2.0,
             edge_id="e:rule:no_new_ic_entries:BLOCKS:strategy:iron_condor",
@@ -184,29 +214,29 @@ class FinancialGraphBuilder:
         # Macro concepts impact SPY / sector proxies
         self.store.upsert_edge(
             "concept:fed_policy",
-            "ticker:SPY",
+            NODE_SPY,
             EdgeRel.IMPACTS,
             weight=1.1,
             edge_id="e:concept:fed_policy:IMPACTS:ticker:SPY",
         )
         self.store.upsert_edge(
             "concept:vix_spike",
-            "strategy:spy_put_credit",
+            NODE_SPY_PUT_CREDIT,
             EdgeRel.IMPACTS,
             weight=1.3,
             edge_id="e:concept:vix_spike:IMPACTS:strategy:spy_put_credit",
         )
         self.store.upsert_edge(
             "concept:inventory_hygiene",
-            "strategy:spy_put_credit",
+            NODE_SPY_PUT_CREDIT,
             EdgeRel.BLOCKS,
             weight=1.5,
             properties={"gate": "UNCLEAN_INVENTORY"},
             edge_id="e:concept:inventory_hygiene:BLOCKS:strategy:spy_put_credit",
         )
         self.store.upsert_edge(
-            "strategy:spy_put_credit",
-            "strategy:iron_condor",
+            NODE_SPY_PUT_CREDIT,
+            NODE_IRON_CONDOR,
             EdgeRel.SUCCEEDS,
             weight=1.0,
             properties={"note": "put-credit is successor after IC kill"},
@@ -389,7 +419,7 @@ class FinancialGraphBuilder:
             if severity in {"CRITICAL", "HIGH", "P0", "P1"}:
                 self.store.upsert_edge(
                     node_id,
-                    "strategy:spy_put_credit",
+                    NODE_SPY_PUT_CREDIT,
                     EdgeRel.PREVENTS,
                     weight=1.4 if severity in {"CRITICAL", "P0"} else 1.2,
                     properties={"severity": severity},
@@ -460,7 +490,7 @@ class FinancialGraphBuilder:
             strategy = str(t.get("strategy") or "unknown").lower()
             symbol = str(t.get("symbol") or "SPY").upper()
             pnl = float(t.get("realized_pnl") or 0.0)
-            outcome = str(t.get("outcome") or ("win" if pnl > 0 else "loss" if pnl < 0 else "flat"))
+            outcome = _trade_outcome(t.get("outcome"), pnl)
             self.store.upsert_node(
                 node_id,
                 NodeType.TRADE,
@@ -478,22 +508,7 @@ class FinancialGraphBuilder:
             )
             c["nodes"] += 1
 
-            sid = (
-                f"strategy:{strategy}"
-                if strategy in SEED_STRATEGIES
-                or strategy
-                in {
-                    "spy_put_credit",
-                    "iron_condor",
-                    "ic_simple",
-                }
-                else f"strategy:{strategy}"
-            )
-            # Normalize common aliases
-            if strategy in {"iron_condor", "ic", "ic_simple"}:
-                sid = "strategy:iron_condor" if strategy != "ic_simple" else "strategy:ic_simple"
-            if "put" in strategy and "credit" in strategy:
-                sid = "strategy:spy_put_credit"
+            sid = _strategy_node_id(strategy)
 
             self.store.upsert_edge(
                 node_id,
@@ -577,14 +592,14 @@ class FinancialGraphBuilder:
                 c["nodes"] += 1
                 self.store.upsert_edge(
                     sid,
-                    "ticker:SPY",
+                    NODE_SPY,
                     EdgeRel.IMPACTS,
                     weight=0.8,
                     edge_id=f"e:{sid}:IMPACTS:ticker:SPY",
                 )
                 self.store.upsert_edge(
                     sid,
-                    "strategy:spy_put_credit",
+                    NODE_SPY_PUT_CREDIT,
                     EdgeRel.IMPACTS,
                     weight=0.9,
                     edge_id=f"e:{sid}:IMPACTS:strategy:spy_put_credit",

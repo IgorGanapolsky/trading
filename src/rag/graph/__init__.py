@@ -11,7 +11,7 @@ leaf nodes, intent routing, token gateway) without hard Neo4j/FalkorDB deps.
 from src.rag.graph.pipeline import GraphRAGPipeline, GraphRAGResult, get_graph_rag_pipeline
 from src.rag.graph.router import QueryIntent, route_query
 from src.rag.graph.schema import EdgeRel, NodeType
-from src.rag.graph.store import FinancialGraphStore
+from src.rag.graph.store import FinancialGraphStore, resolve_graph_db_path
 from src.rag.graph.token_gateway import TokenGuardResult, apply_token_guard
 
 __all__ = [
@@ -24,5 +24,6 @@ __all__ = [
     "TokenGuardResult",
     "apply_token_guard",
     "get_graph_rag_pipeline",
+    "resolve_graph_db_path",
     "route_query",
 ]

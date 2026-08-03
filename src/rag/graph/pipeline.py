@@ -73,7 +73,8 @@ class GraphRAGPipeline:
     ):
         self.repo_root = Path(repo_root or Path.cwd())
         self.store = store or FinancialGraphStore(
-            db_path=self.repo_root / "data/rag/financial_graph.sqlite"
+            db_path=self.repo_root / "data/rag/financial_graph.sqlite",
+            base_dir=self.repo_root,
         )
         self.retriever = GraphHybridRetriever(self.store)
         self.auto_build_if_empty = auto_build_if_empty
