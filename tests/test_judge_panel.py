@@ -7,10 +7,14 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 from src.evals.judge_panel import ExpertName, ExpertRouter, JudgePanel, TaskKind, run_panel
+from src.evals.judge_panel.experts import (
+    CoordinationExpert,
+    EvidenceExpert,
+    RiskRulesExpert,
+)
 from src.evals.judge_panel.models import PanelInput
-from src.evals.judge_panel.experts import RiskRulesExpert, EvidenceExpert, CoordinationExpert
+from src.evals.judge_panel.panel import re_claims_pass
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -33,6 +37,11 @@ class TestRouter:
             ExpertName.EVIDENCE,
             ExpertName.COORDINATION,
         }
+
+    def test_coord_routes_coord_and_risk(self):
+        r = ExpertRouter().select(TaskKind.COORD_AUDIT)
+        assert ExpertName.COORDINATION in r
+        assert ExpertName.RISK_RULES in r
 
 
 class TestRiskExpert:
@@ -80,6 +89,27 @@ class TestRiskExpert:
         assert fake_value not in " ".join(o.findings)
         assert "[REDACTED]" in " ".join(o.findings)
 
+    def test_live_capital_veto(self):
+        o = RiskRulesExpert().evaluate(
+            PanelInput(kind=TaskKind.PR_AUDIT, text="deploy live capital now")
+        )
+        assert o.veto is True
+
+    def test_halt_tamper_veto(self):
+        o = RiskRulesExpert().evaluate(
+            PanelInput(kind=TaskKind.PR_AUDIT, text="rm data/TRADING_HALTED")
+        )
+        assert o.veto is True
+
+    def test_llm_trade_council_veto(self):
+        o = RiskRulesExpert().evaluate(
+            PanelInput(
+                kind=TaskKind.PR_AUDIT,
+                text="llm council approves the trade for entry",
+            )
+        )
+        assert o.veto is True
+
 
 class TestEvidenceExpert:
     def test_unverified_edge_claim_vetoes(self):
@@ -96,7 +126,10 @@ class TestEvidenceExpert:
         o = EvidenceExpert().evaluate(
             PanelInput(
                 kind=TaskKind.CLAIM_AUDIT,
-                text="CI green on run 30780143772 merge sha d69beb2b6ec419b8 n=162 expectancy=-47",
+                text=(
+                    "CI green on run 30780143772 merge sha d69beb2b6ec419b8 "
+                    "n=162 expectancy=-47"
+                ),
             )
         )
         assert o.passed is True
@@ -111,6 +144,21 @@ class TestEvidenceExpert:
         )
         assert o.passed is False
         assert o.veto is True
+
+    def test_no_claims_passes(self):
+        o = EvidenceExpert().evaluate(
+            PanelInput(kind=TaskKind.CLAIM_AUDIT, text="docs only, no status claim")
+        )
+        assert o.passed is True
+        assert o.score == 1.0
+
+    def test_soft_claim_without_edge_fails_not_veto(self):
+        # "shipped" is a claim marker but not edge-like → fail without veto
+        o = EvidenceExpert().evaluate(
+            PanelInput(kind=TaskKind.CLAIM_AUDIT, text="Feature shipped to users")
+        )
+        assert o.passed is False
+        assert o.veto is False
 
 
 class TestCoordExpert:
@@ -135,10 +183,12 @@ class TestCoordExpert:
                 agent="grok",
                 claimed_files=["src/evals/judge_panel/panel.py"],
                 other_agent_claims=(
-                    "codex In Progress IGO-35 trading cleanup claimed_files: scripts/audit_open_inventory.py"
+                    "codex In Progress IGO-35 trading cleanup "
+                    "claimed_files: scripts/audit_open_inventory.py"
                 ),
             )
         )
+        # Soft foreign trading warning but still passed
         assert o.passed is True
         assert o.veto is False
 
@@ -156,6 +206,25 @@ class TestCoordExpert:
         assert o.passed is False
         assert o.veto is True
 
+    def test_empty_claims_limited_check(self):
+        o = CoordinationExpert().evaluate(
+            PanelInput(kind=TaskKind.COORD_AUDIT, agent="grok")
+        )
+        assert o.passed is True
+        assert "coord:no_foreign_claims" in o.evidence_cites
+
+    def test_clean_when_no_in_progress(self):
+        o = CoordinationExpert().evaluate(
+            PanelInput(
+                kind=TaskKind.COORD_AUDIT,
+                agent="grok",
+                claimed_files=["src/foo.py"],
+                other_agent_claims="codex finished yesterday on other work",
+            )
+        )
+        assert o.passed is True
+        assert o.veto is False
+
 
 class TestPanel:
     def test_veto_cannot_be_overridden_by_narrative(self):
@@ -172,6 +241,24 @@ class TestPanel:
         assert v.vetoed is True
         assert "narrative_stripped_false_pass" in v.judge_summary or not v.passed
 
+    def test_honest_narrative_kept_on_pass(self):
+        def ok_narrative(summary, opinions):
+            return "PASS: experts agree on docs-only change"
+
+        v = JudgePanel(narrative_fn=ok_narrative).run(
+            PanelInput(kind=TaskKind.CLAIM_AUDIT, text="docs only")
+        )
+        assert v.passed is True
+        assert "experts agree" in v.judge_summary
+
+    def test_missing_expert_vetoes(self):
+        v = JudgePanel(experts={}).run(
+            PanelInput(kind=TaskKind.CLAIM_AUDIT, text="docs only")
+        )
+        assert v.passed is False
+        assert v.vetoed is True
+        assert any("missing expert" in r for r in v.veto_reasons)
+
     def test_run_panel_convenience(self):
         v = run_panel(
             TaskKind.CLAIM_AUDIT,
@@ -181,12 +268,53 @@ class TestPanel:
         assert "evidence" in v.experts_used
         assert "risk_rules" in v.experts_used
 
+    def test_run_panel_string_kind(self):
+        v = run_panel("trade_entry", text="buy")
+        assert v.kind is TaskKind.TRADE_ENTRY
+        assert v.passed is False
+
     def test_to_dict_serializable(self):
         v = run_panel(TaskKind.TRADE_ENTRY, text="enter")
         d = v.to_dict()
         json.dumps(d)
         assert d["passed"] is False
         assert d["vetoed"] is True
+
+    def test_re_claims_pass_helpers(self):
+        assert re_claims_pass("") is False
+        assert re_claims_pass("PASS: ok") is True
+        assert re_claims_pass("panel pass confirmed") is True
+        assert re_claims_pass("FAIL: no") is False
+
+
+class TestSafeRead:
+    def test_safe_read_allows_repo_file(self, tmp_path):
+        # Import from script module path
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import judge_panel as cli  # type: ignore
+
+        target = ROOT / "scripts" / "judge_panel.py"
+        text = cli.safe_read_text(str(target), roots=(ROOT,))
+        assert "safe_read_text" in text or "Judge panel" in text
+
+    def test_safe_read_rejects_outside_root(self, tmp_path):
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import judge_panel as cli  # type: ignore
+
+        outsider = tmp_path / "secret.txt"
+        outsider.write_text("leak", encoding="utf-8")
+        try:
+            cli.safe_read_text(str(outsider), roots=(ROOT,))
+            raise AssertionError("expected SystemExit")
+        except SystemExit as exc:
+            assert "outside allowed roots" in str(exc)
+
+    def test_safe_read_empty_path(self):
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import judge_panel as cli  # type: ignore
+
+        assert cli.safe_read_text(None) == ""
+        assert cli.safe_read_text("") == ""
 
 
 class TestCLI:
@@ -222,3 +350,32 @@ class TestCLI:
         assert proc.returncode == 2
         data = json.loads(proc.stdout)
         assert data["passed"] is False
+
+    def test_cli_reads_diff_file_under_repo(self, tmp_path):
+        # write under repo root via relative path in cwd
+        diff = ROOT / "artifacts"
+        diff.mkdir(exist_ok=True)
+        f = diff / "judge_panel_test.diff"
+        f.write_text("+ open new iron condor\n", encoding="utf-8")
+        try:
+            script = ROOT / "scripts" / "judge_panel.py"
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "--kind",
+                    "pr_audit",
+                    "--diff-file",
+                    str(f),
+                    "--json",
+                ],
+                cwd=str(ROOT),
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            assert proc.returncode == 2
+            data = json.loads(proc.stdout)
+            assert data["vetoed"] is True
+        finally:
+            f.unlink(missing_ok=True)
