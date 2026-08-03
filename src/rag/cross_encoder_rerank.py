@@ -32,8 +32,7 @@ def _clamp01(value: float) -> float:
 
 def candidate_text(doc: dict[str, Any]) -> str:
     return " ".join(
-        str(doc.get(k) or "")
-        for k in ("title", "content", "snippet", "prevention")
+        str(doc.get(k) or "") for k in ("title", "content", "snippet", "prevention")
     ).strip()
 
 
@@ -120,10 +119,14 @@ def llm_listwise_rerank(
             default_api_key_env="OPENROUTER_API_KEY",
             default_base_url=OPENROUTER_BASE_URL,
         )
-        api_key = getattr(cfg, "api_key", None) or (cfg.get("api_key") if isinstance(cfg, dict) else None)
-        base_url = getattr(cfg, "base_url", None) or (
-            cfg.get("base_url") if isinstance(cfg, dict) else None
-        ) or OPENROUTER_BASE_URL
+        api_key = getattr(cfg, "api_key", None) or (
+            cfg.get("api_key") if isinstance(cfg, dict) else None
+        )
+        base_url = (
+            getattr(cfg, "base_url", None)
+            or (cfg.get("base_url") if isinstance(cfg, dict) else None)
+            or OPENROUTER_BASE_URL
+        )
         if not api_key:
             return None
         # Only allow http(s) LLM endpoints.

@@ -83,9 +83,7 @@ def is_low_specificity(text: str) -> bool:
     if LOW_SPEC.match(n):
         return True
     words = n.split()
-    if len(n) < 18 or len(words) < 4:
-        return True
-    return False
+    return bool(len(n) < 18 or len(words) < 4)
 
 
 @dataclass(frozen=True)

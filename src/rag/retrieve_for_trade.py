@@ -276,9 +276,7 @@ def assemble_trade_context(
         score_bit = f" score={float(score):.2f}" if score is not None else ""
         stages = (lesson.get("reranker") or {}).get("stages") or []
         stage_bit = f" via={'+'.join(stages)}" if stages else ""
-        lines.append(
-            f"{i}. [{sev}] {lesson.get('id')}{score_bit}{stage_bit}: {text}"
-        )
+        lines.append(f"{i}. [{sev}] {lesson.get('id')}{score_bit}{stage_bit}: {text}")
     if meta:
         if meta.get("rewrite_applied"):
             lines.append(
@@ -369,9 +367,7 @@ def capture_and_store_feedback(
             f"**Severity**: {payload['severity']}\n\n"
             f"{payload['content']}\n\n"
             f"## Prevention\n\n{payload['prevention']}\n\n"
-            f"## Tags\n\n"
-            + ", ".join(f"`{t}`" for t in payload["tags"])
-            + "\n",
+            f"## Tags\n\n" + ", ".join(f"`{t}`" for t in payload["tags"]) + "\n",
             encoding="utf-8",
         )
 
