@@ -34,7 +34,9 @@ class ParentChildRetriever:
         self.chunk_size_chars = chunk_size_chars
         self.children: list[dict[str, Any]] = []
 
-    def add_document(self, parent_id: str, title: str, full_content: str, metadata: dict[str, Any] | None = None) -> None:
+    def add_document(
+        self, parent_id: str, title: str, full_content: str, metadata: dict[str, Any] | None = None
+    ) -> None:
         meta = metadata or {}
         self.parent_store[parent_id] = full_content
         self.parent_titles[parent_id] = title
@@ -46,13 +48,15 @@ class ParentChildRetriever:
         for line in lines:
             if curr_len + len(line) > self.chunk_size_chars and curr:
                 chunk_txt = " ".join(curr)
-                self.children.append({
-                    "id": f"{parent_id}_c{idx}",
-                    "parent_id": parent_id,
-                    "title": title,
-                    "content": chunk_txt,
-                    **meta,
-                })
+                self.children.append(
+                    {
+                        "id": f"{parent_id}_c{idx}",
+                        "parent_id": parent_id,
+                        "title": title,
+                        "content": chunk_txt,
+                        **meta,
+                    }
+                )
                 idx += 1
                 curr = [line]
                 curr_len = len(line)
@@ -61,13 +65,15 @@ class ParentChildRetriever:
                 curr_len += len(line)
         if curr:
             chunk_txt = " ".join(curr)
-            self.children.append({
-                "id": f"{parent_id}_c{idx}",
-                "parent_id": parent_id,
-                "title": title,
-                "content": chunk_txt,
-                **meta,
-            })
+            self.children.append(
+                {
+                    "id": f"{parent_id}_c{idx}",
+                    "parent_id": parent_id,
+                    "title": title,
+                    "content": chunk_txt,
+                    **meta,
+                }
+            )
 
     def retrieve_parent_context(self, matched_parent_ids: list[str]) -> list[ParentChildContext]:
         res = []

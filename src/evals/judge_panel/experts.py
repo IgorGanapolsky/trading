@@ -210,9 +210,7 @@ class EvidenceExpert:
                 veto=False,
             )
 
-        findings.append(
-            "UNVERIFIED_CLAIM: strong claim without SHA / run id / ledger cite / n="
-        )
+        findings.append("UNVERIFIED_CLAIM: strong claim without SHA / run id / ledger cite / n=")
         # Unverified claim is a fail but not always a policy veto (soft fail).
         # Edge-profit claims without numbers get a veto.
         edge_like = any(

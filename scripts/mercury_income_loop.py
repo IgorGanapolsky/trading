@@ -49,7 +49,11 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.adapters.bank_adapter import BankAdapter, MercuryBankAdapter, PaperBankAdapter  # noqa: E402
+from src.adapters.bank_adapter import (  # noqa: E402
+    BankAdapter,
+    MercuryBankAdapter,
+    PaperBankAdapter,
+)
 from src.adapters.equity_broker_adapter import (  # noqa: E402
     AlpacaEquityBrokerAdapter,
     EquityBrokerAdapter,
@@ -64,7 +68,9 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_STATE_PATH = ROOT / "data" / "mercury_income_loop_state.json"
 
 DEFAULT_BANK_BUFFER_USD = 500.0  # leave this buffer untouched in Mercury bank
-DEFAULT_PROFIT_RETURN_THRESHOLD_USD = 1000.0  # deposit proceeds back to Mercury once $1,000 net after-tax accrues
+DEFAULT_PROFIT_RETURN_THRESHOLD_USD = (
+    1000.0  # deposit proceeds back to Mercury once $1,000 net after-tax accrues
+)
 DEFAULT_TAX_RATE_PCT = 20.0  # estimated qualified tax reserve rate (15% federal + 5% state buffer)
 
 
@@ -159,7 +165,9 @@ def run_once(
             state["total_deposited_to_bank_usd"] += payout
             # Automate Mercury sub-account allocation split
             sub_mgr = MercurySubAccountManager()
-            sub_split = sub_mgr.calculate_auto_transfer_split(payout, tax_pct=tax_rate_pct, profit_pct=10.0)
+            sub_split = sub_mgr.calculate_auto_transfer_split(
+                payout, tax_pct=tax_rate_pct, profit_pct=10.0
+            )
             state["events"].append({"type": "subaccount_split", "at": now, **sub_split.as_dict()})
             state["realized_after_tax_profit_usd"] = 0.0
             state["realized_profit_usd"] = 0.0
@@ -238,9 +246,7 @@ def main() -> int:
     else:
         logger.info("Initializing PAPER Bank and Equity Broker Adapters...")
         bank = PaperBankAdapter(starting_balance_usd=args.paper_starting_balance)
-        equity_broker = PaperEquityBrokerAdapter(
-            initial_positions=state.get("positions", {})
-        )
+        equity_broker = PaperEquityBrokerAdapter(initial_positions=state.get("positions", {}))
 
     strategy = DividendGrowthStrategy()
 

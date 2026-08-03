@@ -196,6 +196,7 @@ def _active_strategy_ml_ready(project_root: Path | None = None) -> tuple[bool, d
         meta["detail"] = f"ml_ready_check_failed: {exc}"
         return False, meta
 
+
 _SYSTEM_STATE_PATH = Path(__file__).parent.parent.parent / "data" / "system_state.json"
 _POLICY_METADATA_PATH = (
     Path(__file__).parent.parent.parent / "models" / "ml" / "grpo_trade_metadata.json"
@@ -981,7 +982,9 @@ def _check_market_regime(strategy: str, context: dict | None) -> tuple[float, li
     return confidence, warnings
 
 
-def _check_ml_trade_confidence(strategy: str, symbol: str, context: dict | None = None) -> tuple[float, list[str]]:
+def _check_ml_trade_confidence(
+    strategy: str, symbol: str, context: dict | None = None
+) -> tuple[float, list[str]]:
     """Check ML model trade confidence (P(W) >= 0.70) pre-flight gate.
 
     Returns:
@@ -2066,9 +2069,7 @@ def safe_submit_order(client, order_request, strategy: str | None = None):
                     from src.safety.multi_model_juror import MultiModelJuror
 
                     juror = MultiModelJuror()
-                    if not juror.get_consensus(
-                        proposal, primary_reasoning=protocol_reasoning
-                    ):
+                    if not juror.get_consensus(proposal, primary_reasoning=protocol_reasoning):
                         raise ValueError(
                             "MULTI-MODEL CONSENSUS FAILED: Juror detected a risk violation."
                         )

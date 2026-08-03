@@ -30,6 +30,7 @@ def current_iv_rank_proxy(underlying: str = "SPY") -> float | None:
         from alpaca.data.historical import StockHistoricalDataClient
         from alpaca.data.requests import StockBarsRequest
         from alpaca.data.timeframe import TimeFrame
+
         from src.utils.alpaca_client import get_alpaca_credentials
     except ImportError:
         return None

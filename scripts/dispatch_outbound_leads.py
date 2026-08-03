@@ -34,7 +34,7 @@ def dispatch_leads() -> Path:
         output.append(f"Channel   : {lead['channel']}")
         output.append(f"Offer Tier: {lead['offer_tier']}")
         output.append("--- PERSONALIZED MESSAGE DRAFT ---")
-        output.append(lead['personalized_dm'])
+        output.append(lead["personalized_dm"])
         output.append("\n" + "=" * 60 + "\n")
 
     DISPATCH_FILE.parent.mkdir(parents=True, exist_ok=True)

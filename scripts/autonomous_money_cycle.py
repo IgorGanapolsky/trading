@@ -103,7 +103,9 @@ def run_cycle(
             "cohort": _run([python, "scripts/put_credit_cohort_scorecard.py", "--json"]),
             "status": _run([python, "scripts/spy_put_credit.py", "--status"]),
         }
-        report["steps"] = {k: {"rc": v["rc"], "stdout_tail": v["stdout_tail"][-800:]} for k, v in steps.items()}
+        report["steps"] = {
+            k: {"rc": v["rc"], "stdout_tail": v["stdout_tail"][-800:]} for k, v in steps.items()
+        }
 
         # Live new risk only if gate allows (will refuse under current kill switch)
         if not dry_run and gate.live_trading_allowed:

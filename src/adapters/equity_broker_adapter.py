@@ -148,7 +148,11 @@ class AlpacaEquityBrokerAdapter(EquityBrokerAdapter):
 
         if not api_key or not secret_key:
             env_secrets_path = os.environ.get("ALPACA_SECRETS_PATH")
-            path = secrets_path or (Path(env_secrets_path) if env_secrets_path else Path.home() / ".resume_secrets" / "alpaca.json")
+            path = secrets_path or (
+                Path(env_secrets_path)
+                if env_secrets_path
+                else Path.home() / ".resume_secrets" / "alpaca.json"
+            )
             if path.exists():
                 try:
                     with path.open("r", encoding="utf-8") as handle:

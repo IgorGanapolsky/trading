@@ -32,7 +32,15 @@ logger = logging.getLogger("spy_put_credit")
 ENTRIES_FILE = ROOT / "data" / "put_credit_entries.json"
 AUDIT_DIR = ROOT / "data" / "audit"
 SYSTEM_STATE = ROOT / "data" / "system_state.json"
-CLOSED_ENTRY_STATES = {"closed", "cancelled", "canceled", "canceled_unfilled", "cancelled_unfilled", "rejected", "expired"}
+CLOSED_ENTRY_STATES = {
+    "closed",
+    "cancelled",
+    "canceled",
+    "canceled_unfilled",
+    "cancelled_unfilled",
+    "rejected",
+    "expired",
+}
 EASTERN = ZoneInfo("America/New_York")
 
 

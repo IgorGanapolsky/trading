@@ -11,7 +11,6 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-import requests
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +45,9 @@ class BogleheadsPoster:
         logger.info("Drafted Bogleheads reply for topic %s: %s", topic_id, topic_title)
         return draft
 
-    def post_reply(self, draft: ForumPostDraft, session_cookies: dict[str, str] | None = None) -> dict[str, Any]:
+    def post_reply(
+        self, draft: ForumPostDraft, session_cookies: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Post a reply to a Bogleheads.org thread via HTTP POST or session cookies."""
         url = f"https://www.bogleheads.org/forum/posting.php?mode=reply&t={draft.topic_id}"
         headers = {
@@ -76,5 +77,7 @@ class BogleheadsPoster:
         with POST_LOG_PATH.open("w", encoding="utf-8") as h:
             json.dump(logs, h, indent=2)
 
-        logger.info("Successfully recorded and submitted Bogleheads post to topic %s", draft.topic_id)
+        logger.info(
+            "Successfully recorded and submitted Bogleheads post to topic %s", draft.topic_id
+        )
         return post_record

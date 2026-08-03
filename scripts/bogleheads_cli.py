@@ -27,7 +27,9 @@ def main() -> int:
 
     args = parser.parse_args()
     poster = BogleheadsPoster()
-    draft = poster.draft_reply(topic_id=args.topic_id, topic_title=args.title, reply_text=args.message)
+    draft = poster.draft_reply(
+        topic_id=args.topic_id, topic_title=args.title, reply_text=args.message
+    )
 
     if args.post:
         result = poster.post_reply(draft)
@@ -35,7 +37,12 @@ def main() -> int:
         print(json.dumps(result, indent=2))
     else:
         print("📝 Draft Created (Use --post to publish):")
-        print(json.dumps(dict(topic_id=draft.topic_id, title=draft.topic_title, reply=draft.reply_text), indent=2))
+        print(
+            json.dumps(
+                dict(topic_id=draft.topic_id, title=draft.topic_title, reply=draft.reply_text),
+                indent=2,
+            )
+        )
 
     return 0
 

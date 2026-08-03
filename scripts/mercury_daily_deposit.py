@@ -17,7 +17,6 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.adapters.bank_adapter import MercuryBankAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +41,9 @@ def calculate_deposit_schedule(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Mercury Daily Deposit Orchestrator")
-    parser.add_argument("--execute", action="store_true", help="Initiate ACH deposit if surplus exists")
+    parser.add_argument(
+        "--execute", action="store_true", help="Initiate ACH deposit if surplus exists"
+    )
     args = parser.parse_args()
 
     secrets_path = Path("/Users/igorganapolsky/.resume_secrets/mercury.json")
@@ -55,6 +56,7 @@ def main() -> int:
             token = sec.get("MERCURY_API_TOKEN", "")
             if token:
                 from src.adapters.mercury_readonly import MercuryReadOnlyClient
+
                 client = MercuryReadOnlyClient(api_token=token)
                 accs = client.list_accounts()
                 if accs:
@@ -68,7 +70,9 @@ def main() -> int:
     print(json.dumps(schedule, indent=2))
 
     if args.execute and schedule["recommended_daily_deposit_usd"] > 0.0:
-        print(f"🚀 Initiating ACH Deposit of ${schedule['recommended_daily_deposit_usd']:.2f} to Alpaca...")
+        print(
+            f"🚀 Initiating ACH Deposit of ${schedule['recommended_daily_deposit_usd']:.2f} to Alpaca..."
+        )
     else:
         print("ℹ️ Deposit dry-run complete. (Use --execute to transfer surplus)")
 

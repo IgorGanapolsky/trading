@@ -55,6 +55,7 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from scripts.sync_alpaca_state import _derive_trade_summary_from_fills  # noqa: E402
+
 from src.rag.lessons_learned_rag import LessonsLearnedRAG  # noqa: E402
 
 # Configure logging

@@ -13,7 +13,7 @@ import random
 from dataclasses import asdict, dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -51,38 +51,46 @@ class SimulationState:
 class SystemInvariantChecker:
     """Checks hard system safety rules across every tick state."""
 
-    def check_invariants(self, state: SimulationState, seed: int, fault: FaultType | None) -> list[InvariantViolation]:
+    def check_invariants(
+        self, state: SimulationState, seed: int, fault: FaultType | None
+    ) -> list[InvariantViolation]:
         violations: list[InvariantViolation] = []
 
         # Invariant 1: Drawdown never exceeds 5.0%
         if state.account_drawdown_pct > 0.05:
-            violations.append(InvariantViolation(
-                invariant_name="DRAWDOWN_LIMIT_5_PCT",
-                description=f"Account drawdown {state.account_drawdown_pct*100:.2f}% exceeded 5.0% safety limit",
-                step_index=state.step_index,
-                seed=seed,
-                fault_type=fault,
-            ))
+            violations.append(
+                InvariantViolation(
+                    invariant_name="DRAWDOWN_LIMIT_5_PCT",
+                    description=f"Account drawdown {state.account_drawdown_pct * 100:.2f}% exceeded 5.0% safety limit",
+                    step_index=state.step_index,
+                    seed=seed,
+                    fault_type=fault,
+                )
+            )
 
         # Invariant 2: Defined-risk Iron Condor legs must be balanced (0 or 4)
         if state.open_leg_count not in (0, 4):
-            violations.append(InvariantViolation(
-                invariant_name="IRON_CONDOR_4_LEG_HEDGE",
-                description=f"Unhedged options position found with {state.open_leg_count} legs open",
-                step_index=state.step_index,
-                seed=seed,
-                fault_type=fault,
-            ))
+            violations.append(
+                InvariantViolation(
+                    invariant_name="IRON_CONDOR_4_LEG_HEDGE",
+                    description=f"Unhedged options position found with {state.open_leg_count} legs open",
+                    step_index=state.step_index,
+                    seed=seed,
+                    fault_type=fault,
+                )
+            )
 
         # Invariant 3: Maximum 0.15 Delta limit for SPY/XSP credit spreads
         if state.delta > 0.15:
-            violations.append(InvariantViolation(
-                invariant_name="DELTA_LIMIT_15",
-                description=f"Position delta {state.delta:.3f} exceeded max 0.15 threshold",
-                step_index=state.step_index,
-                seed=seed,
-                fault_type=fault,
-            ))
+            violations.append(
+                InvariantViolation(
+                    invariant_name="DELTA_LIMIT_15",
+                    description=f"Position delta {state.delta:.3f} exceeded max 0.15 threshold",
+                    step_index=state.step_index,
+                    seed=seed,
+                    fault_type=fault,
+                )
+            )
 
         return violations
 
@@ -137,7 +145,9 @@ class DeterministicChaosSimulator:
                 state.delta = 0.15
 
             # Assert invariants
-            step_violations = self.invariant_checker.check_invariants(state, self.seed, injected_fault)
+            step_violations = self.invariant_checker.check_invariants(
+                state, self.seed, injected_fault
+            )
             violations.extend(step_violations)
 
         report = {

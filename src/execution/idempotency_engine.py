@@ -12,7 +12,7 @@ import hashlib
 import json
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 
 @dataclass
@@ -22,7 +22,7 @@ class IdempotencyRecord:
     payload_hash: str
     created_at: float
     status: str  # "pending", "completed", "failed"
-    result: Optional[Dict[str, Any]] = None
+    result: Optional[dict[str, Any]] = None
 
 
 class IdempotencyEngine:
@@ -30,26 +30,26 @@ class IdempotencyEngine:
 
     def __init__(self, ttl_seconds: float = 86400.0) -> None:
         self.ttl_seconds = ttl_seconds
-        self._records: Dict[str, IdempotencyRecord] = {}
+        self._records: dict[str, IdempotencyRecord] = {}
 
-    def generate_key(self, session_id: str, action_type: str, payload: Dict[str, Any]) -> str:
+    def generate_key(self, session_id: str, action_type: str, payload: dict[str, Any]) -> str:
         """Generates a deterministic idempotency key for a given session, action, and payload."""
         payload_str = json.dumps(payload, sort_keys=True)
         payload_hash = hashlib.sha256(payload_str.encode("utf-8")).hexdigest()[:16]
         return f"idemp_{session_id}_{action_type}_{payload_hash}"
 
     def register_action(
-        self, key: str, action_type: str, payload: Dict[str, Any]
-    ) -> tuple[bool, Optional[Dict[str, Any]]]:
+        self, key: str, action_type: str, payload: dict[str, Any]
+    ) -> tuple[bool, Optional[dict[str, Any]]]:
         """
         Registers an intended action.
-        
+
         Returns (is_new, existing_result):
         - (True, None): Action is new and registered as pending. Proceed with execution.
         - (False, result): Action was already executed previously. Skip re-execution and return saved result.
         """
         self._cleanup_expired()
-        
+
         if key in self._records:
             record = self._records[key]
             if record.status == "completed":
@@ -70,7 +70,7 @@ class IdempotencyEngine:
         )
         return True, None
 
-    def mark_complete(self, key: str, result: Dict[str, Any]) -> None:
+    def mark_complete(self, key: str, result: dict[str, Any]) -> None:
         """Marks an idempotency record as successfully completed."""
         if key in self._records:
             self._records[key].status = "completed"

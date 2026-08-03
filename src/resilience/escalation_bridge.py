@@ -12,7 +12,7 @@ import json
 import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 
 @dataclass
@@ -20,7 +20,7 @@ class FailureEvent:
     source: str
     reason: str
     timestamp: float
-    context: Dict[str, Any] = field(default_factory=dict)
+    context: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -28,7 +28,7 @@ class EscalationPackage:
     escalation_id: str
     consecutive_failures: int
     source: str
-    reasons: List[str]
+    reasons: list[str]
     created_at: float
     status: str  # "pending_operator_review", "resolved", "bypassed"
 
@@ -39,12 +39,14 @@ class HumanEscalationBridge:
     def __init__(self, failure_threshold: int = 3, state_dir: Optional[Path] = None) -> None:
         self.failure_threshold = failure_threshold
         self.state_dir = state_dir or (Path.cwd() / ".claude" / "memory" / "escalations")
-        self._consecutive_failures: List[FailureEvent] = []
+        self._consecutive_failures: list[FailureEvent] = []
 
-    def record_failure(self, source: str, reason: str, context: Optional[Dict[str, Any]] = None) -> Optional[EscalationPackage]:
+    def record_failure(
+        self, source: str, reason: str, context: Optional[dict[str, Any]] = None
+    ) -> Optional[EscalationPackage]:
         """
         Records a failure event.
-        
+
         If consecutive failures reach the threshold (e.g. 3), builds and returns an EscalationPackage.
         """
         event = FailureEvent(

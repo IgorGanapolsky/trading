@@ -60,6 +60,7 @@ class MultiBroker:
         if self._alpaca_client is None:
             try:
                 from alpaca.trading.client import TradingClient
+
                 from src.utils.alpaca_client import get_alpaca_credentials
 
                 api_key, secret_key = get_alpaca_credentials()
@@ -161,6 +162,7 @@ class MultiBroker:
         """Get quote from Alpaca."""
         from alpaca.data.historical import StockHistoricalDataClient
         from alpaca.data.requests import StockLatestQuoteRequest
+
         from src.utils.alpaca_client import get_alpaca_credentials
 
         api_key, secret_key = get_alpaca_credentials()

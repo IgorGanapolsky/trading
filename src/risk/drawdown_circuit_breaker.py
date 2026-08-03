@@ -102,8 +102,7 @@ class DrawdownCircuitBreaker:
         # 1. Create data/TRADING_HALTED file kill-switch
         HALT_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
         halt_content = (
-            f"TRADING_HALTED at {datetime.now(timezone.utc).isoformat()}\n"
-            f"Reason: {reason}\n"
+            f"TRADING_HALTED at {datetime.now(timezone.utc).isoformat()}\nReason: {reason}\n"
         )
         HALT_FILE_PATH.write_text(halt_content, encoding="utf-8")
 

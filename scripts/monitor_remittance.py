@@ -44,6 +44,7 @@ def _days_remaining_in_month() -> int:
     else:
         last = now.replace(month=now.month + 1, day=1)
     from datetime import timedelta
+
     last_day = (last - timedelta(days=1)).day
     return last_day - now.day + 1
 
@@ -56,6 +57,7 @@ def _send_telegram_alert(message: str) -> bool:
         return False
     try:
         import requests
+
         resp = requests.post(
             f"https://api.telegram.org/bot{token}/sendMessage",
             json={"chat_id": chat_id, "text": message, "parse_mode": "Markdown"},
@@ -73,6 +75,7 @@ def _send_webhook_alert(message: str) -> bool:
         return False
     try:
         import requests
+
         resp = requests.post(
             url,
             json={"text": message, "source": "remittance_monitor"},
@@ -90,6 +93,7 @@ def _send_email_alert(message: str) -> bool:
         return False
     try:
         import subprocess  # nosec B404
+
         proc = subprocess.run(  # nosec
             ["mail", "-s", "Remittance Monitor Alert", email],
             input=message,
@@ -227,7 +231,9 @@ def main() -> int:
         print(f"in_flight (submitted): ${status['progress']['in_flight_usd']:.2f}")
         print(f"target: ${status['target_usd']:.0f}")
         print(f"days_remaining: {status['days_remaining']}")
-        print(f"pace: ${status['current_daily_pace']:.2f}/day vs ${status['required_daily_pace']:.2f}/day needed")
+        print(
+            f"pace: ${status['current_daily_pace']:.2f}/day vs ${status['required_daily_pace']:.2f}/day needed"
+        )
         print(f"live_bank_gate.allowed: {status['live_bank_gate']['allowed']}")
 
     # Send alerts if requested

@@ -12,7 +12,7 @@ import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import numpy as np
 
@@ -26,7 +26,7 @@ class ShadowEvaluation:
     timestamp: str
     symbol: str
     strategy: str
-    market_features: Dict[str, Any]
+    market_features: dict[str, Any]
     baseline_delta: float
     baseline_dte: int
     proposed_delta: float
@@ -36,7 +36,7 @@ class ShadowEvaluation:
     dte_divergence: int
     status: str = "SHADOW_LOGGED"
 
-    def as_dict(self) -> Dict[str, Any]:
+    def as_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -51,7 +51,7 @@ class GRPOShadowEvaluator:
         self,
         symbol: str,
         strategy: str,
-        snapshot: Dict[str, Any],
+        snapshot: dict[str, Any],
         baseline_delta: float = 0.15,
         baseline_dte: int = 35,
     ) -> ShadowEvaluation:
@@ -65,7 +65,9 @@ class GRPOShadowEvaluator:
 
         proposed_delta = float(np.round(np.clip(baseline_delta + delta_adj, 0.05, 0.30), 2))
         proposed_dte = int(np.clip(baseline_dte + dte_adj, 14, 60))
-        proposed_confidence = float(np.round(np.clip(0.60 + 0.2 * (features.iv_rank / 100.0), 0.0, 1.0), 2))
+        proposed_confidence = float(
+            np.round(np.clip(0.60 + 0.2 * (features.iv_rank / 100.0), 0.0, 1.0), 2)
+        )
 
         eval_record = ShadowEvaluation(
             timestamp=datetime.now(timezone.utc).isoformat(),
@@ -93,13 +95,13 @@ class GRPOShadowEvaluator:
         except Exception as e:
             logger.error("Failed to log shadow evaluation: %s", e)
 
-    def read_shadow_evaluations(self, max_records: int = 100) -> List[Dict[str, Any]]:
+    def read_shadow_evaluations(self, max_records: int = 100) -> list[dict[str, Any]]:
         """Read historical shadow evaluation records."""
         if not self.shadow_log_path.exists():
             return []
         records = []
         try:
-            with open(self.shadow_log_path, "r", encoding="utf-8") as f:
+            with open(self.shadow_log_path, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if line:

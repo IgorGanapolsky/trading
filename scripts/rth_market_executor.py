@@ -82,14 +82,17 @@ def main() -> int:
     }
 
     if not in_rth:
-        logger.info("Outside Regular Trading Hours (%s ET). Skipping execution.", now_et.strftime("%Y-%m-%d %H:%M:%S"))
+        logger.info(
+            "Outside Regular Trading Hours (%s ET). Skipping execution.",
+            now_et.strftime("%Y-%m-%d %H:%M:%S"),
+        )
         audit_entry["status"] = "SKIPPED_OUTSIDE_RTH"
         append_audit_log(audit_entry)
         print(json.dumps(audit_entry, indent=2))
         return 0
 
     logger.info("Executing Market Hours RTH Tasks (%s ET)...", now_et.strftime("%Y-%m-%d %H:%M:%S"))
-    
+
     # Task 1: Sync Alpaca State
     audit_entry["actions"].append(run_script("sync_alpaca_state.py"))
 

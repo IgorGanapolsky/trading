@@ -129,9 +129,11 @@ class MacroRiskGuard:
                 from alpaca.data.requests import StockBarsRequest
                 from alpaca.data.timeframe import TimeFrame
             except ImportError:
+
                 class StockBarsRequest:  # type: ignore
                     def __init__(self, **kwargs: Any) -> None:
                         pass
+
                 class TimeFrame:  # type: ignore
                     Day = "day"
 

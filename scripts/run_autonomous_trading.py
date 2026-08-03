@@ -42,6 +42,7 @@ DEFAULT_LEDGER_PATH = ROOT / "data" / "audit" / "mercury_broker_transfers.jsonl"
 def _run(args: list[str], *, timeout: int = 180) -> dict[str, Any]:
     """Run a subprocess and capture its output (best-effort)."""
     import os
+
     env = dict(os.environ)
     env["PYTHONPATH"] = str(ROOT) + os.pathsep + env.get("PYTHONPATH", "")
     try:
@@ -99,11 +100,16 @@ def run_daily_cycle(
         income_args = [
             python,
             "scripts/mercury_income_loop.py",
-            "--state-path", str(state_path or DEFAULT_STATE_PATH),
-            "--ledger-path", str(ledger_path or DEFAULT_LEDGER_PATH),
-            "--bank-buffer-usd", str(bank_buffer_usd),
-            "--profit-return-threshold-usd", str(profit_return_threshold_usd),
-            "--tax-rate", str(tax_rate),
+            "--state-path",
+            str(state_path or DEFAULT_STATE_PATH),
+            "--ledger-path",
+            str(ledger_path or DEFAULT_LEDGER_PATH),
+            "--bank-buffer-usd",
+            str(bank_buffer_usd),
+            "--profit-return-threshold-usd",
+            str(profit_return_threshold_usd),
+            "--tax-rate",
+            str(tax_rate),
         ]
         if not dry_run:
             income_args.append("--live")
@@ -148,8 +154,9 @@ def run_daily_cycle(
 
     # Parse remittance progress from the status output
     try:
-        status_output = json.loads(result["stdout_tail"].strip().split("\n")[-1]
-                                   if result["stdout_tail"].strip() else "{}")
+        status_output = json.loads(
+            result["stdout_tail"].strip().split("\n")[-1] if result["stdout_tail"].strip() else "{}"
+        )
         if isinstance(status_output, dict) and "progress" in status_output:
             report["remittance_progress"] = status_output["progress"]
     except (json.JSONDecodeError, IndexError, KeyError):
@@ -158,7 +165,9 @@ def run_daily_cycle(
     # Save report
     log_dir = DEFAULT_LOG_DIR
     log_dir.mkdir(parents=True, exist_ok=True)
-    report_path = log_dir / f"autonomous_trading_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
+    report_path = (
+        log_dir / f"autonomous_trading_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
+    )
     report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     report["report_path"] = str(report_path)
 
@@ -179,7 +188,11 @@ def main() -> int:
         help="Allow live paths (still fail-closed if gate blocks).",
     )
     p.add_argument("--paper-starting-balance", type=float, default=0.0)
-    p.add_argument("--bank-buffer-usd", type=float, default=bank_buffer_usd if (bank_buffer_usd := 500.0) else 500.0)
+    p.add_argument(
+        "--bank-buffer-usd",
+        type=float,
+        default=bank_buffer_usd if (bank_buffer_usd := 500.0) else 500.0,
+    )
     p.add_argument("--profit-return-threshold-usd", type=float, default=50.0)
     p.add_argument("--tax-rate", type=float, default=0.15)
     p.add_argument("--state-path", type=Path, default=DEFAULT_STATE_PATH)

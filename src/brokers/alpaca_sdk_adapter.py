@@ -8,13 +8,11 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any
 from pathlib import Path
-from dotenv import dotenv_values
+from typing import Any
 
 from alpaca.trading.client import TradingClient
-from alpaca.trading.requests import GetOrdersRequest
-from alpaca.trading.enums import OrderSide, QueryOrderStatus, TimeInForce
+from dotenv import dotenv_values
 
 logger = logging.getLogger(__name__)
 
@@ -50,8 +48,12 @@ class AlpacaSDKAdapter:
             except Exception as e:
                 logger.warning("Live TradingClient failed, falling back to paper: %s", e)
 
-        paper_key = vals.get("ALPACA_PAPER_TRADING_API_KEY") or os.environ.get("ALPACA_PAPER_TRADING_API_KEY")
-        paper_secret = vals.get("ALPACA_PAPER_TRADING_API_SECRET") or os.environ.get("ALPACA_PAPER_TRADING_API_SECRET")
+        paper_key = vals.get("ALPACA_PAPER_TRADING_API_KEY") or os.environ.get(
+            "ALPACA_PAPER_TRADING_API_KEY"
+        )
+        paper_secret = vals.get("ALPACA_PAPER_TRADING_API_SECRET") or os.environ.get(
+            "ALPACA_PAPER_TRADING_API_SECRET"
+        )
 
         if paper_key and paper_secret:
             try:

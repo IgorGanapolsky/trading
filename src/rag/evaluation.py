@@ -33,7 +33,9 @@ class EvaluationQuery:
     query: str
     expected_lesson_ids: list[str]  # Lessons that MUST appear
     avoid_lesson_ids: list[str] = field(default_factory=list)  # Lessons that should NOT appear
-    graded_relevance: dict[str, int] = field(default_factory=dict)  # 4-tier relevance (3=CRITICAL, 2=HIGH, 1=Context, 0=Irrelevant)
+    graded_relevance: dict[str, int] = field(
+        default_factory=dict
+    )  # 4-tier relevance (3=CRITICAL, 2=HIGH, 1=Context, 0=Irrelevant)
     description: str = ""
 
     def __post_init__(self):
@@ -48,9 +50,7 @@ class EvaluationQuery:
                 for lid, grade in self.graded_relevance.items()
             }
         else:
-            self.graded_relevance = {
-                lid: 3 for lid in self.expected_lesson_ids
-            }
+            self.graded_relevance = {lid: 3 for lid in self.expected_lesson_ids}
             for lid in self.avoid_lesson_ids:
                 self.graded_relevance[lid] = 0
 

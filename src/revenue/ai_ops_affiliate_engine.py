@@ -10,10 +10,9 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +54,12 @@ PACKAGE_CATALOG: dict[PackageTier, PackageDefinition] = {
         tier=PackageTier.ENTERPRISE,
         setup_fee=10000.0,
         monthly_retainer=5000.0,
-        dfy_agents=("Outbound SDR Agent", "Appointment Setter Agent", "RAG Knowledge Base Agent", "Executive Reporting Agent"),
+        dfy_agents=(
+            "Outbound SDR Agent",
+            "Appointment Setter Agent",
+            "RAG Knowledge Base Agent",
+            "Executive Reporting Agent",
+        ),
         estimated_client_mrr_boost=35000.0,
     ),
 }
@@ -135,16 +139,13 @@ class AIOpsAffiliateEngine:
     def calculate_affiliate_mrar(self, active_client_count: int) -> float:
         """Calculates Monthly Recurring Affiliate Revenue (MRAR) for active client count."""
         per_client_commission = sum(
-            tool.monthly_cost_per_client * tool.commission_rate
-            for tool in AFFILIATE_STACK
+            tool.monthly_cost_per_client * tool.commission_rate for tool in AFFILIATE_STACK
         )
         return round(per_client_commission * active_client_count, 2)
 
     def calculate_total_monthly_revenue(self) -> dict[str, float]:
         active_clients = [c for c in self.clients if c.active]
-        retainer_revenue = sum(
-            PACKAGE_CATALOG[c.tier].monthly_retainer for c in active_clients
-        )
+        retainer_revenue = sum(PACKAGE_CATALOG[c.tier].monthly_retainer for c in active_clients)
         affiliate_mrar = self.calculate_affiliate_mrar(len(active_clients))
         total_monthly = retainer_revenue + affiliate_mrar
 
@@ -158,7 +159,7 @@ class AIOpsAffiliateEngine:
     def allocate_to_mercury_trading(self, gross_amount: float) -> dict[str, float]:
         """Routes gross revenue through Mercury Bank auto-allocation ratios."""
         tax_reserve = round(gross_amount * 0.20, 2)
-        rem= max(0.0, gross_amount - tax_reserve)
+        rem = max(0.0, gross_amount - tax_reserve)
 
         opex_reserve = 500.0 if rem >= 500.0 else rem
         surplus = max(0.0, rem - opex_reserve)

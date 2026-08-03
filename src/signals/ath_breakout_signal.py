@@ -6,6 +6,7 @@ from dataclasses import asdict, dataclass
 from typing import Literal
 
 import pandas as pd
+
 from src.utils.technical_indicators import calculate_atr
 
 BreakoutStatus = Literal[

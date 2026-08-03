@@ -24,6 +24,7 @@ from enum import Enum
 from typing import Any, TypeVar
 
 from pydantic import BaseModel, Field
+
 from src.utils.llm_gateway import (
     OPENROUTER_BASE_URL,
     resolve_openai_compatible_config,
@@ -251,6 +252,7 @@ class MirascopeTradingClient:
             )
             if self._openrouter_fallback_client is None:
                 from openai import OpenAI
+
                 from src.utils.llm_gateway import OPENROUTER_HEADERS
 
                 self._openrouter_fallback_client = OpenAI(

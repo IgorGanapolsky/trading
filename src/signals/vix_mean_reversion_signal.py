@@ -23,6 +23,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 import numpy as np
+
 from src.utils import yfinance_wrapper as yf
 
 logger = logging.getLogger(__name__)

@@ -161,7 +161,11 @@ class MercuryBankAdapter(BankAdapter):
 
         if not token or not account_id:
             env_secrets_path = os.environ.get("MERCURY_SECRETS_PATH")
-            path = secrets_path or (Path(env_secrets_path) if env_secrets_path else Path.home() / ".resume_secrets" / "mercury.json")
+            path = secrets_path or (
+                Path(env_secrets_path)
+                if env_secrets_path
+                else Path.home() / ".resume_secrets" / "mercury.json"
+            )
             if path.exists():
                 try:
                     with path.open("r", encoding="utf-8") as handle:

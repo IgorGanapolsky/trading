@@ -89,9 +89,7 @@ def build_transfer_record(
     amt = float(amount_usd)
     if amt < 0:
         raise ValueError("amount_usd must be non-negative")
-    direction_s = (
-        direction.value if isinstance(direction, TransferDirection) else str(direction)
-    )
+    direction_s = direction.value if isinstance(direction, TransferDirection) else str(direction)
     if direction_s not in {d.value for d in TransferDirection}:
         raise ValueError(f"invalid direction: {direction_s}")
     status_s = status.value if isinstance(status, TransferStatus) else str(status)
@@ -123,9 +121,7 @@ def append_transfer_record(
     ledger_path: Path | None = None,
 ) -> Path:
     """Append one JSONL row. Creates parent dirs. Returns path written."""
-    path = ledger_path or Path(
-        os.environ.get("MERCURY_TRANSFER_LEDGER", str(DEFAULT_LEDGER_PATH))
-    )
+    path = ledger_path or Path(os.environ.get("MERCURY_TRANSFER_LEDGER", str(DEFAULT_LEDGER_PATH)))
     path.parent.mkdir(parents=True, exist_ok=True)
     line = json.dumps(record.as_dict(), sort_keys=True) + "\n"
     with path.open("a", encoding="utf-8") as fh:
@@ -135,9 +131,7 @@ def append_transfer_record(
 
 def load_transfer_ledger(*, ledger_path: Path | None = None) -> list[TransferRecord]:
     """Load all transfer records from JSONL (skips bad lines)."""
-    path = ledger_path or Path(
-        os.environ.get("MERCURY_TRANSFER_LEDGER", str(DEFAULT_LEDGER_PATH))
-    )
+    path = ledger_path or Path(os.environ.get("MERCURY_TRANSFER_LEDGER", str(DEFAULT_LEDGER_PATH)))
     if not path.is_file():
         return []
     out: list[TransferRecord] = []

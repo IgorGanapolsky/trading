@@ -146,9 +146,7 @@ class MercuryReadOnlyClient:
 
     def list_accounts(self) -> list[dict[str, Any]]:
         payload = self._get("/accounts")
-        return [
-            summarize_account(a) for a in payload.get("accounts", []) if isinstance(a, dict)
-        ]
+        return [summarize_account(a) for a in payload.get("accounts", []) if isinstance(a, dict)]
 
     def get_account(self, alias_or_id: str) -> dict[str, Any]:
         account_id = self.resolve_account_id(alias_or_id)

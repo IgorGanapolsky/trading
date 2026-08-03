@@ -118,9 +118,7 @@ def compute_remittance_progress(
     in_flight = round(in_flight, 2)
     after_tax: float | None = None
     if realized_pre_tax_pnl_usd is not None:
-        after_tax = estimate_after_tax_profit(
-            float(realized_pre_tax_pnl_usd), tax_rate=tax_rate
-        )
+        after_tax = estimate_after_tax_profit(float(realized_pre_tax_pnl_usd), tax_rate=tax_rate)
 
     target = float(target_usd)
     pct = round(100.0 * remitted / target, 2) if target > 0 else None
@@ -157,9 +155,7 @@ def compute_remittance_progress(
         in_flight_event_count=n_in_flight,
         estimated_after_tax_profit_usd=after_tax,
         realized_pre_tax_pnl_usd=(
-            float(realized_pre_tax_pnl_usd)
-            if realized_pre_tax_pnl_usd is not None
-            else None
+            float(realized_pre_tax_pnl_usd) if realized_pre_tax_pnl_usd is not None else None
         ),
         tax_rate_used=float(tax_rate),
         pct_of_target=pct,
