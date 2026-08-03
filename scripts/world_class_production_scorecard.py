@@ -22,12 +22,13 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.put_credit_cohort_scorecard import (  # noqa: E402
-    build_scorecard as build_put_credit_card,
-)
 from src.core.near_term_goal import (  # noqa: E402
     NEAR_TERM_MONTHLY_AFTER_TAX,
     path_economics,
+)
+
+from scripts.put_credit_cohort_scorecard import (  # noqa: E402
+    build_scorecard as build_put_credit_card,
 )
 
 OUT_DEFAULT = ROOT / "data" / "audit" / "world_class_production_latest.json"

@@ -288,8 +288,7 @@ def evaluate_production_gate(
     if for_live:
         allow_new_risk = allow_new_risk and allow_live_capital
 
-    ok = allow_new_risk if not for_live else allow_live_capital
-    # For ops A+: ok means all critical checks green (paper path)
+    # For ops A+: ok means all critical/high checks green (paper path)
     ops_ok = not critical_fail and not high_fail
 
     return ProductionGateResult(
