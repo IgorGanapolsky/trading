@@ -59,10 +59,8 @@ trading_worktrees/
 .claude/memory/
 .claude/scripts/feedback/venv/
 
-# Keep reusable project skills and checked-in review policy; ignore their local state.
+# Keep checked-in review policy; ignore local agent state.
 .agents/*
-!.agents/skills/
-!.agents/skills/**
 .thumbgate/*
 !.thumbgate/AUTO_REVIEW.md
 .rlhf/

@@ -44,11 +44,11 @@ Add a dependency only when retained code imports it. Optional providers must fol
 
 ## Change boundaries
 
-| Normal PR scope | Extra scrutiny required |
-| --- | --- |
-| Tests, docs, hygiene | Risk constants and mandatory gates |
-| RAG lessons and retrieval | Broker submission or exit automation |
-| Dead-code removal with caller evidence | Live-account paths or halt behavior |
+| Normal PR scope                        | Extra scrutiny required              |
+| -------------------------------------- | ------------------------------------ |
+| Tests, docs, hygiene                   | Risk constants and mandatory gates   |
+| RAG lessons and retrieval              | Broker submission or exit automation |
+| Dead-code removal with caller evidence | Live-account paths or halt behavior  |
 
 Do not force-push `main`, hardcode credentials, re-enable killed iron-condor entry paths, or create repository-local task boards. Open a PR against `main` and include exact test and CI evidence.
 

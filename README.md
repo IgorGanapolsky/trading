@@ -38,16 +38,16 @@ Broker-backed commands read paper credentials from environment variables or the 
 
 ## Active system
 
-| Concern | Owner |
-| --- | --- |
-| Paper entry, status, and put-credit exits | `scripts/spy_put_credit.py` |
-| Residual iron-condor exits | `scripts/residual_ic_manager.py` |
-| Entry and live-trading kill switch | `src/core/active_strategy.py` |
-| Mandatory risk policy | `src/safety/mandatory_trade_gate.py` |
-| Broker order boundary | `src/risk/trade_gateway.py` |
-| Canonical broker/trade ledgers | `data/system_state.json`, `data/trades.json` |
-| Curated operational lessons | `rag_knowledge/lessons_learned/` |
-| Dependency-free lesson query | `scripts/query_lessons_learned.py` |
+| Concern                                   | Owner                                        |
+| ----------------------------------------- | -------------------------------------------- |
+| Paper entry, status, and put-credit exits | `scripts/spy_put_credit.py`                  |
+| Residual iron-condor exits                | `scripts/residual_ic_manager.py`             |
+| Entry and live-trading kill switch        | `src/core/active_strategy.py`                |
+| Mandatory risk policy                     | `src/safety/mandatory_trade_gate.py`         |
+| Broker order boundary                     | `src/risk/trade_gateway.py`                  |
+| Canonical broker/trade ledgers            | `data/system_state.json`, `data/trades.json` |
+| Curated operational lessons               | `rag_knowledge/lessons_learned/`             |
+| Dependency-free lesson query              | `scripts/query_lessons_learned.py`           |
 
 ## Commands
 
@@ -64,16 +64,16 @@ make dry-run     # health + paper-only strategy and residual-exit plans
 
 ## Repository map
 
-| Path | Purpose |
-| --- | --- |
-| `src/` | Importable product code |
-| `scripts/` | Explicit operator and maintenance entry points |
-| `tests/` | Unit, integration, contract, and smoke tests |
-| `skills/` | Reusable agent procedures |
-| `config/` | Reviewed static configuration |
-| `data/` | Compact canonical ledgers; generated output is ignored |
-| `rag_knowledge/` | Curated sources and lessons, not runtime indexes |
-| `docs/` | Current engineering and operating documentation |
+| Path             | Purpose                                                |
+| ---------------- | ------------------------------------------------------ |
+| `src/`           | Importable product code                                |
+| `scripts/`       | Explicit operator and maintenance entry points         |
+| `tests/`         | Unit, integration, contract, and smoke tests           |
+| `skills/`        | Reusable agent procedures                              |
+| `config/`        | Reviewed static configuration                          |
+| `data/`          | Compact canonical ledgers; generated output is ignored |
+| `rag_knowledge/` | Curated sources and lessons, not runtime indexes       |
+| `docs/`          | Current engineering and operating documentation        |
 
 Start with [CONTRIBUTING.md](CONTRIBUTING.md), [data/README.md](data/README.md), and [docs/EXTENSIONS.md](docs/EXTENSIONS.md).
 

@@ -23,8 +23,8 @@ Operator and design docs for the trading lab.
 
 ## Pitch / archive (not operating truth)
 
-| Doc                                      | Notes                                           |
-| ---------------------------------------- | ----------------------------------------------- |
+| Doc                                      | Notes                                          |
+| ---------------------------------------- | ---------------------------------------------- |
 | [INVESTOR_PITCH.md](./INVESTOR_PITCH.md) | Narrative deck; verify numbers against ledgers |
 
 ## Data artifacts (generated / live)

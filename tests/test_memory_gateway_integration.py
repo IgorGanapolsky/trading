@@ -46,9 +46,7 @@ def test_gateway_hook_scripts_have_valid_bash_syntax() -> None:
 
 def test_runtime_failures_do_not_auto_commit_rag_lessons() -> None:
     assert not (PROJECT_ROOT / ".github" / "workflows" / "auto-record-lesson.yml").exists()
-    skill = (PROJECT_ROOT / ".agents" / "skills" / "trading-ops" / "SKILL.md").read_text(
-        encoding="utf-8"
-    )
+    skill = (PROJECT_ROOT / "skills" / "trading-ops" / "SKILL.md").read_text(encoding="utf-8")
     assert "RAG" in skill and "git push origin main" not in skill
 
 
