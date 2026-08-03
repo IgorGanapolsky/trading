@@ -139,9 +139,15 @@ def test_metadata_filters_apply_before_ranking(tmp_path: Path) -> None:
     critical = pipeline.query("iron condor exit rule", severity_filter="CRITICAL")
     high = pipeline.query("position sizing risk", severity_filter="HIGH")
     tagged = pipeline.query("position sizing risk", tag_filter="position-sizing")
+    exact_tag_miss = pipeline.query("position sizing risk", tag_filter="position")
+    section = pipeline.query("position sizing risk", section_filter="prevention")
+    future_version = pipeline.query("position sizing risk", min_version=2)
     assert critical and all(item["severity"] == "CRITICAL" for item in critical)
     assert high and all(item["severity"] == "HIGH" for item in high)
     assert tagged and all("position" in item["title"].lower() for item in tagged)
+    assert exact_tag_miss == []
+    assert section and all(item["section_title"] == "Prevention" for item in section)
+    assert future_version == []
     pipeline.close()
 
 
@@ -227,6 +233,9 @@ def test_service_contract_auth_validation_and_metrics(tmp_path: Path, monkeypatc
     assert response.status_code == 200
     payload = response.json()
     assert payload["results"]
+    assert payload["results"][0]["chunk_id"]
+    assert payload["results"][0]["parent_context"]
+    assert payload["results"][0]["retrieval_channels"]
     assert len(payload["query_hash"]) == 16
     invalid = client.post(
         "/v1/search",

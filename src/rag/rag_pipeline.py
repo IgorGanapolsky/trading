@@ -189,6 +189,9 @@ class LessonResult:
     prevention: str
     file: str
     score: float = 0.0
+    chunk_id: str = ""
+    section_title: str = ""
+    parent_context: str = ""
 
 
 @dataclass
@@ -217,15 +220,22 @@ class RetrievalFilters:
     severity: str | None = None
     source: str | None = None
     tag: str | None = None
+    section: str | None = None
+    min_version: int | None = None
 
     def normalized(self) -> RetrievalFilters:
         severity = self.severity.upper().strip() if self.severity else None
         if severity and severity not in {"CRITICAL", "HIGH", "MEDIUM", "LOW"}:
             raise ValueError(f"unsupported severity filter: {severity}")
+        min_version = self.min_version
+        if min_version is not None and min_version < 1:
+            raise ValueError("min_version filter must be at least 1")
         return RetrievalFilters(
             severity=severity,
             source=self.source.strip() if self.source else None,
             tag=self.tag.strip().lower() if self.tag else None,
+            section=self.section.strip().lower() if self.section else None,
+            min_version=min_version,
         )
 
 
@@ -771,8 +781,15 @@ class SQLiteFTS5Store:
         query: str,
         top_k: int = 10,
         filters: RetrievalFilters | None = None,
+        *,
+        dedupe_lessons: bool = True,
     ) -> list[dict[str, Any]]:
-        """Search chunk-level FTS5 with parameterized metadata filters."""
+        """Search chunk-level FTS5 with parameterized metadata filters.
+
+        Legacy callers receive one best chunk per lesson. Production hybrid
+        retrieval can retain child chunks until reranking by setting
+        ``dedupe_lessons=False``.
+        """
         conn = self._get_conn()
         fts_query = self._escape_fts_query(query)
         if not fts_query:
@@ -786,6 +803,10 @@ class SQLiteFTS5Store:
             normalized_filters.source,
             normalized_filters.tag,
             normalized_filters.tag,
+            normalized_filters.section,
+            normalized_filters.section,
+            normalized_filters.min_version,
+            normalized_filters.min_version,
             max(top_k * 4, top_k),
         ]
         sql = """
@@ -801,12 +822,21 @@ class SQLiteFTS5Store:
             WHERE lesson_chunks_fts MATCH ? AND l.active = 1
               AND (? IS NULL OR l.severity = ?)
               AND (? IS NULL OR l.source = ?)
-              AND (? IS NULL OR instr(lower(l.tags), ?) > 0)
+              AND (
+                  ? IS NULL OR instr(
+                      ',' || replace(lower(l.tags), ' ', '') || ',',
+                      ',' || replace(?, ' ', '') || ','
+                  ) > 0
+              )
+              AND (? IS NULL OR lower(c.section_title) = ?)
+              AND (? IS NULL OR l.version >= ?)
             ORDER BY bm25_score ASC
             LIMIT ?
         """
         with self._lock:
             rows = conn.execute(sql, params).fetchall()
+        if not dedupe_lessons:
+            return [dict(row) for row in rows[:top_k]]
         deduped: dict[str, dict[str, Any]] = {}
         for row in rows:
             item = dict(row)
@@ -884,21 +914,81 @@ class SQLiteFTS5Store:
             normalized_filters.source,
             normalized_filters.tag,
             normalized_filters.tag,
+            normalized_filters.section,
+            normalized_filters.section,
+            normalized_filters.min_version,
+            normalized_filters.min_version,
         ]
         sql = """
                 SELECT c.chunk_id, c.lesson_id, c.chunk_index, c.section_title,
                        c.content, l.title, l.severity, l.prevention, l.tags,
-                       l.source, l.source_path, l.version, l.metadata_json
+                       l.content AS full_content, l.source, l.source_path,
+                       l.version, l.metadata_json, l.created_at, l.updated_at
                 FROM lesson_chunks c JOIN lessons l ON l.lesson_id = c.lesson_id
                 WHERE l.active = 1
                   AND (? IS NULL OR l.severity = ?)
                   AND (? IS NULL OR l.source = ?)
-                  AND (? IS NULL OR instr(lower(l.tags), ?) > 0)
+                  AND (
+                      ? IS NULL OR instr(
+                          ',' || replace(lower(l.tags), ' ', '') || ',',
+                          ',' || replace(?, ' ', '') || ','
+                      ) > 0
+                  )
+                  AND (? IS NULL OR lower(c.section_title) = ?)
+                  AND (? IS NULL OR l.version >= ?)
                 ORDER BY c.lesson_id, c.chunk_index
                 """
         with self._lock:
             rows = self._get_conn().execute(sql, params).fetchall()
         return [dict(row) for row in rows]
+
+    def get_parent_section(
+        self,
+        lesson_id: str,
+        section_title: str,
+        *,
+        max_chars: int = 4_000,
+    ) -> dict[str, Any]:
+        """Expand a winning child chunk to its bounded parent section.
+
+        Chunks overlap by design, so adjacent pieces are joined after removing
+        their exact shared boundary. The child remains the citation unit; this
+        parent text is only the context assembly unit.
+        """
+        if not 256 <= max_chars <= MAX_CONTEXT_CHARS:
+            raise ValueError(f"max_chars must be between 256 and {MAX_CONTEXT_CHARS}")
+        with self._lock:
+            rows = (
+                self._get_conn()
+                .execute(
+                    """
+                SELECT chunk_id, chunk_index, content
+                FROM lesson_chunks
+                WHERE lesson_id = ? AND section_title = ?
+                ORDER BY chunk_index
+                """,
+                    (lesson_id, section_title),
+                )
+                .fetchall()
+            )
+        parts = [str(row["content"]) for row in rows]
+        if not parts:
+            return {"content": "", "chunk_count": 0, "truncated": False}
+        merged = parts[0]
+        for part in parts[1:]:
+            overlap = 0
+            overlap_limit = min(len(merged), len(part), DEFAULT_CHUNK_OVERLAP * 2)
+            for size in range(overlap_limit, 31, -1):
+                if merged[-size:] == part[:size]:
+                    overlap = size
+                    break
+            merged = f"{merged}{part[overlap:]}" if overlap else f"{merged}\n\n{part}"
+        truncated = len(merged) > max_chars
+        return {
+            "content": merged[:max_chars],
+            "chunk_count": len(parts),
+            "truncated": truncated,
+        }
 
     def record_ingestion(self, source: str, report: IngestionReport) -> None:
         finished = datetime.now(UTC).isoformat()
@@ -1021,6 +1111,7 @@ def extract_severity(content: str) -> str | None:
         "PERMANENT": "LOW",
         "RESOLVED": "LOW",
     }.get(raw, raw)
+
 
 def quality_gate(content: str) -> tuple[bool, str]:
     """Normalize and quality-check lesson content before storage.
@@ -1261,7 +1352,12 @@ class EmbeddingIndex:
             self._fingerprint = fingerprint
 
     def search(
-        self, query: str, chunks: list[dict[str, Any]], top_k: int = 50
+        self,
+        query: str,
+        chunks: list[dict[str, Any]],
+        top_k: int = 50,
+        *,
+        dedupe_lessons: bool = True,
     ) -> list[dict[str, Any]]:
         self.refresh(chunks)
         with self._refresh_lock:
@@ -1270,22 +1366,23 @@ class EmbeddingIndex:
         if not rows:
             return []
         query_vector = self._embed_many([query])[0]
-        best_by_lesson: dict[str, dict[str, Any]] = {}
+        scored: list[dict[str, Any]] = []
         for row, vector in zip(rows, vectors, strict=False):
             score = sum(a * b for a, b in zip(query_vector, vector, strict=False))
             # Hash embeddings are lexical; non-positive values are not evidence.
             if self.degraded and score <= 0.0:
                 continue
             item = {**row, "vector_score": max(0.0, min(float(score), 1.0))}
-            lesson_id = str(row.get("lesson_id", ""))
-            if lesson_id and (
-                lesson_id not in best_by_lesson
-                or item["vector_score"] > best_by_lesson[lesson_id]["vector_score"]
-            ):
+            scored.append(item)
+        ranked = sorted(scored, key=lambda item: item["vector_score"], reverse=True)
+        if not dedupe_lessons:
+            return ranked[:top_k]
+        best_by_lesson: dict[str, dict[str, Any]] = {}
+        for item in ranked:
+            lesson_id = str(item.get("lesson_id", ""))
+            if lesson_id and lesson_id not in best_by_lesson:
                 best_by_lesson[lesson_id] = item
-        return sorted(best_by_lesson.values(), key=lambda item: item["vector_score"], reverse=True)[
-            :top_k
-        ]
+        return list(best_by_lesson.values())[:top_k]
 
 
 # ---------------------------------------------------------------------------
@@ -1772,10 +1869,11 @@ def pragmatic_hybrid_search(
     query: str,
     lessons: list[dict[str, Any]],
     top_k: int = 10,
-    keyword_weight: float = 0.25,
-    lexical_weight: float = 0.20,
-    unigram_weight: float = 0.20,
-    vector_weight: float = 0.20,
+    keyword_weight: float = 0.20,
+    lexical_weight: float = 0.15,
+    unigram_weight: float = 0.15,
+    vector_weight: float = 0.15,
+    rrf_weight: float = 0.20,
 ) -> list[HybridHit]:
     """Combine bigram-Jaccard lexical similarity with BM25 keyword search.
 
@@ -1787,6 +1885,7 @@ def pragmatic_hybrid_search(
     - Title boost: tokens in the title get a 0.15 multiplier
     - Phrase boost: if the exact query appears in the text, +0.15
     - Dense vector score: semantic when configured, deterministic hashing fallback
+    - Reciprocal-rank fusion: rank-stable agreement between BM25 and vectors
 
     Scores are normalized to [0, 1] and combined with configurable weights.
     """
@@ -1862,6 +1961,7 @@ def pragmatic_hybrid_search(
             keyword = min(term_hits / max(len(query_tokens), 1), 1.0)
 
         vector = max(0.0, min(float(lesson.get("vector_score", 0.0) or 0.0), 1.0))
+        rrf = max(0.0, min(float(lesson.get("rrf_score", 0.0) or 0.0), 1.0))
 
         # --- Combined ---
         combined = (
@@ -1869,6 +1969,7 @@ def pragmatic_hybrid_search(
             + (keyword_weight * keyword)
             + (unigram_weight * unigram)
             + (vector_weight * vector)
+            + (rrf_weight * rrf)
             + min(phrase_bonus, 0.05)
             + (title_match * 0.10)
         )
@@ -2609,30 +2710,58 @@ class TradingRAGPipeline(_LegacyTradingRAGPipeline):
         *,
         top_k: int = 200,
     ) -> list[dict[str, Any]]:
-        fts_rows = self.store.fts_search(query, top_k=top_k, filters=filters)
+        fts_rows = self.store.fts_search(
+            query,
+            top_k=top_k,
+            filters=filters,
+            dedupe_lessons=False,
+        )
         dense_rows = self._embedding.search(
             query,
             self.store.get_chunks(filters),
             top_k=min(top_k, 100),
+            dedupe_lessons=False,
         )
-        merged: dict[str, dict[str, Any]] = {str(row["lesson_id"]): dict(row) for row in fts_rows}
-        for dense in dense_rows:
-            lesson_id = str(dense.get("lesson_id", ""))
-            if not lesson_id:
+        merged: dict[str, dict[str, Any]] = {}
+        for rank, row in enumerate(fts_rows, start=1):
+            chunk_id = str(row.get("chunk_id", ""))
+            if not chunk_id:
                 continue
-            if lesson_id not in merged:
-                merged[lesson_id] = {
+            merged[chunk_id] = {
+                **dict(row),
+                "bm25_rank": rank,
+                "dense_rank": None,
+                "retrieval_channels": ["bm25"],
+            }
+        for rank, dense in enumerate(dense_rows, start=1):
+            chunk_id = str(dense.get("chunk_id", ""))
+            if not chunk_id:
+                continue
+            if chunk_id not in merged:
+                merged[chunk_id] = {
                     **dense,
                     "bm25_score": 0.0,
-                    "full_content": dense.get("content", ""),
-                    "created_at": "",
-                    "updated_at": "",
+                    "bm25_rank": None,
+                    "dense_rank": rank,
+                    "retrieval_channels": ["vector"],
+                    "full_content": dense.get("full_content", dense.get("content", "")),
                     "file": dense.get("source_path", dense.get("source", "")),
                 }
-            merged[lesson_id]["vector_score"] = max(
-                float(merged[lesson_id].get("vector_score", 0.0) or 0.0),
+            else:
+                merged[chunk_id]["dense_rank"] = rank
+                merged[chunk_id]["retrieval_channels"] = ["bm25", "vector"]
+            merged[chunk_id]["vector_score"] = max(
+                float(merged[chunk_id].get("vector_score", 0.0) or 0.0),
                 float(dense.get("vector_score", 0.0) or 0.0),
             )
+        max_rrf = 2.0 / 61.0
+        for row in merged.values():
+            rrf = 0.0
+            if row.get("bm25_rank") is not None:
+                rrf += 1.0 / (60.0 + float(row["bm25_rank"]))
+            if row.get("dense_rank") is not None:
+                rrf += 1.0 / (60.0 + float(row["dense_rank"]))
+            row["rrf_score"] = min(rrf / max_rrf, 1.0)
         return list(merged.values())
 
     @staticmethod
@@ -2696,6 +2825,8 @@ class TradingRAGPipeline(_LegacyTradingRAGPipeline):
         severity_filter: str | None = None,
         source_filter: str | None = None,
         tag_filter: str | None = None,
+        section_filter: str | None = None,
+        min_version: int | None = None,
         rerank: bool = True,
     ) -> list[dict[str, Any]]:
         """Execute the measured lexical + vector + conditional multi-query pipeline."""
@@ -2709,6 +2840,8 @@ class TradingRAGPipeline(_LegacyTradingRAGPipeline):
             severity=severity_filter,
             source=source_filter,
             tag=tag_filter,
+            section=section_filter,
+            min_version=min_version,
         ).normalized()
         self._ensure_loaded()
         key = self._cache_key(normalized_query, top_k, filters, rerank, self._generation)
@@ -2733,8 +2866,7 @@ class TradingRAGPipeline(_LegacyTradingRAGPipeline):
         variant_count = 1
         try:
             rows_by_id = {
-                str(row["lesson_id"]): row
-                for row in self._candidate_rows(normalized_query, filters)
+                str(row["chunk_id"]): row for row in self._candidate_rows(normalized_query, filters)
             }
             hits = pragmatic_hybrid_search(
                 normalized_query, list(rows_by_id.values()), top_k=max(top_k * 12, 60)
@@ -2746,14 +2878,22 @@ class TradingRAGPipeline(_LegacyTradingRAGPipeline):
                 for variant in variants[1:]:
                     variant_count += 1
                     for row in self._candidate_rows(variant.text, filters, top_k=100):
-                        lesson_id = str(row["lesson_id"])
-                        existing = rows_by_id.get(lesson_id)
+                        chunk_id = str(row["chunk_id"])
+                        existing = rows_by_id.get(chunk_id)
                         if existing is None:
-                            rows_by_id[lesson_id] = row
+                            rows_by_id[chunk_id] = row
                         else:
                             existing["vector_score"] = max(
                                 float(existing.get("vector_score", 0.0) or 0.0),
                                 float(row.get("vector_score", 0.0) or 0.0),
+                            )
+                            existing["rrf_score"] = max(
+                                float(existing.get("rrf_score", 0.0) or 0.0),
+                                float(row.get("rrf_score", 0.0) or 0.0),
+                            )
+                            existing["retrieval_channels"] = sorted(
+                                set(existing.get("retrieval_channels", []))
+                                | set(row.get("retrieval_channels", []))
                             )
                 hits = pragmatic_hybrid_search(
                     normalized_query,
@@ -2779,7 +2919,8 @@ class TradingRAGPipeline(_LegacyTradingRAGPipeline):
                 else:
                     candidates = [
                         {
-                            "id": hit.id,
+                            "id": hit.raw.get("chunk_id", f"{hit.id}::c0"),
+                            "lesson_id": hit.id,
                             "title": hit.title,
                             "severity": hit.severity,
                             "content_snippet": hit.snippet,
@@ -2791,6 +2932,8 @@ class TradingRAGPipeline(_LegacyTradingRAGPipeline):
                             "version": hit.raw.get("version", 1),
                             "chunk_id": hit.raw.get("chunk_id", f"{hit.id}::c0"),
                             "section_title": hit.raw.get("section_title", ""),
+                            "retrieval_channels": hit.raw.get("retrieval_channels", []),
+                            "rrf_score": hit.raw.get("rrf_score", 0.0),
                             "score": hit.combined_score,
                             "lexical_score": hit.lexical_score,
                             "lexical_confidence": hit.lexical_confidence,
@@ -2800,8 +2943,27 @@ class TradingRAGPipeline(_LegacyTradingRAGPipeline):
                         }
                         for hit in hits
                     ]
-                    rerank_limit = max(top_k * 2, 10)
-                    rerank_candidates = candidates[:rerank_limit]
+                    # Child chunks from one long lesson can dominate the raw
+                    # top ranks. Keep up to two evidence-bearing children per
+                    # parent and continue scanning until the reranker sees a
+                    # broad document set; final output is one parent per lesson.
+                    rerank_candidates: list[dict[str, Any]] = []
+                    candidate_parents: set[str] = set()
+                    child_count_by_parent: Counter[str] = Counter()
+                    parent_target = max(top_k * 4, 20)
+                    candidate_limit = max(top_k * 8, 40)
+                    for candidate in candidates:
+                        parent_id = str(candidate.get("lesson_id", candidate.get("id", "")))
+                        if child_count_by_parent[parent_id] >= 2:
+                            continue
+                        rerank_candidates.append(candidate)
+                        candidate_parents.add(parent_id)
+                        child_count_by_parent[parent_id] += 1
+                        if (
+                            len(candidate_parents) >= parent_target
+                            or len(rerank_candidates) >= candidate_limit
+                        ):
+                            break
                     if rerank and self._reranker._cross_encoder is not None:
                         # One CE pass serves both absolute OOD detection and
                         # ranking. The prior implementation scored 60 rows
@@ -2829,15 +2991,29 @@ class TradingRAGPipeline(_LegacyTradingRAGPipeline):
                             else rerank_candidates
                         )
                     results = []
+                    parent_hits: Counter[str] = Counter()
+                    seen_parent_sections: set[tuple[str, str]] = set()
                     for item in ranked:
                         final_score = float(item.get("rerank_score", item.get("score", 0.0)))
                         if final_score < _MIN_RESULT_SCORE:
                             continue
+                        lesson_id = str(item.get("lesson_id", item.get("id", "")))
+                        section_title = str(item.get("section_title", ""))
+                        parent_key = (lesson_id, section_title)
+                        if parent_key in seen_parent_sections or parent_hits[lesson_id] >= 1:
+                            continue
+                        parent = self.store.get_parent_section(lesson_id, section_title)
+                        seen_parent_sections.add(parent_key)
+                        parent_hits[lesson_id] += 1
                         results.append(
                             {
                                 **item,
+                                "id": lesson_id,
                                 "score": round(max(0.0, min(final_score, 1.0)), 6),
                                 "snippet": str(item.get("content_snippet", ""))[:500],
+                                "parent_context": parent["content"],
+                                "parent_chunk_count": parent["chunk_count"],
+                                "parent_context_truncated": parent["truncated"],
                                 "reranker_type": self._reranker.reranker_type,
                                 "embedding_backend": self._embedding.backend,
                             }
@@ -2906,6 +3082,9 @@ class TradingRAGPipeline(_LegacyTradingRAGPipeline):
                     prevention=item.get("prevention", ""),
                     file=item.get("file", ""),
                     score=float(item["score"]),
+                    chunk_id=item.get("chunk_id", ""),
+                    section_title=item.get("section_title", ""),
+                    parent_context=item.get("parent_context", ""),
                 ),
                 float(item["score"]),
             )
@@ -2924,10 +3103,13 @@ class TradingRAGPipeline(_LegacyTradingRAGPipeline):
         for lesson, score in results:
             record = {
                 "lesson_id": lesson.id,
+                "chunk_id": lesson.chunk_id,
+                "section_title": lesson.section_title,
                 "severity": lesson.severity,
                 "title": lesson.title,
                 "score": round(score, 6),
                 "snippet": lesson.snippet[:600],
+                "parent_context": lesson.parent_context[:1_600],
                 "prevention": lesson.prevention[:600],
             }
             encoded = json.dumps(record, ensure_ascii=True, sort_keys=True)

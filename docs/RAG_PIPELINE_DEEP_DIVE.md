@@ -4,7 +4,7 @@
 
 The implementation is now a coherent, production-shaped RAG service rather
 than several disconnected search helpers. Its **code and deterministic
-retrieval evaluation grade is A / 9.0**. The default dependency-light path is
+retrieval evaluation grade is A / 9.2**. The default dependency-light path is
 still a **B / 7.8** because it uses `hashing-v1` and heuristic reranking.
 Production mode uses strict-quality indexing: governed lessons are active and
 legacy failures are explicitly quarantined instead of silently diluting the
@@ -15,10 +15,10 @@ Current deterministic holdout at `k=5`:
 
 | Metric                  | Result |   Gate |
 | ----------------------- | -----: | -----: |
-| Precision@5             | 0.7400 | ≥ 0.70 |
-| Recall@5                | 0.8933 | ≥ 0.85 |
+| Precision@5             | 0.7600 | ≥ 0.70 |
+| Recall@5                | 0.9183 | ≥ 0.85 |
 | MRR                     | 1.0000 | ≥ 0.95 |
-| nDCG@5                  | 0.9220 | ≥ 0.90 |
+| nDCG@5                  | 0.9301 | ≥ 0.90 |
 | OOD accuracy            | 1.0000 |   1.00 |
 | OOD false-positive rate | 0.0000 |   0.00 |
 
@@ -36,10 +36,11 @@ measure trading profitability and cannot open the live-capital gate.
   → idempotent insert/update/tombstone and cache invalidation
 
 query + metadata filters
-  → BM25 candidates + lexical bigram/unigram scoring + dense candidates
+  → child-chunk BM25 candidates + dense candidates + reciprocal-rank fusion
+  → lexical bigram/unigram, phrase, title, and exact metadata signals
   → multi-query expansion only when top lexical confidence < 0.6
-  → cross-encoder, validated LLM, or explicitly degraded heuristic rerank
-  → OOD rejection + deduplication
+  → cross-encoder, validated LLM, or explicitly degraded heuristic rerank children
+  → OOD rejection + bounded parent-section expansion + document diversification
   → bounded, cited, injection-marked context
   → deterministic high-risk tool gate
 ```
@@ -54,9 +55,12 @@ sections, then applies bounded overlapping windows to oversized sections.
 Chunks retain the parent lesson ID, heading, sequence, content hash, severity,
 tags, source, source path, version, and quality status.
 
-Trade-off: overlap costs index space, but it reduces boundary misses. Parent
-metadata allows citations and filtering without copying the whole document
-into every prompt.
+Trade-off: overlap costs index space, but it reduces boundary misses. Retrieval
+keeps child chunks distinct through fusion and reranking, then expands a winning
+child to its bounded parent section. This preserves precise chunk citations
+without starving the generator of surrounding qualifications. Repeated parent
+sections are deduplicated and no document contributes more than one final
+section in a result set.
 
 ### Embeddings
 
@@ -86,9 +90,11 @@ versions, tombstones, and the evaluation contract stable.
 
 Trading lessons contain exact identifiers, option symbols, error messages, and
 policy terms that lexical search handles better than semantic similarity.
-Vector search recovers paraphrases. The pipeline therefore merges BM25,
+Vector search recovers paraphrases. The pipeline therefore uses reciprocal-rank
+fusion to combine chunk-level BM25 and dense ranks, then scores
 bigram-Jaccard, unigram coverage, phrase/title signals, and dense similarity.
-Metadata filters run before ranking.
+Rank fusion is more stable than assuming BM25 and cosine scores share a
+calibrated scale. Metadata filters run before either retrieval backend.
 
 Pure vector search was rejected because it can blur exact risk-policy language;
 pure keyword search was rejected because it misses paraphrased incidents.
@@ -101,6 +107,11 @@ Required fields are:
 - `source_path`, created/updated timestamps, content SHA-256, and version;
 - chunk heading and ordinal;
 - quality-gate status, redaction count, and tombstone state.
+
+Exact severity, source, whole-tag, section, and minimum-version filters are
+validated and applied to BM25 and vector candidates before ranking. Whole-tag
+matching prevents a filter such as `risk` from accidentally matching
+`risk-adjusted`.
 
 This supports deterministic filters, provenance, idempotent updates, deletion,
 audits, and exact citation assembly.
@@ -116,11 +127,12 @@ invalidated after writes.
 
 ## Retrieval and gating
 
-Candidate generation is wide, filter-first, and hybrid. Conditional
+Candidate generation is wide, child-chunk-level, filter-first, and hybrid. Conditional
 multi-query expansion is limited to three deterministic variants and fires
 only when the best lexical score is below 0.6, controlling latency and query
-drift. Rerankers must return only candidate IDs; unknown or duplicate IDs are
-discarded.
+drift. Rerankers receive unique child chunk IDs and must return only those
+candidate IDs; unknown or duplicate IDs are discarded. Only after reranking is
+the winning child expanded to its parent section and diversified by document.
 
 The cross-encoder is the preferred local reranker. A structured LLM reranker is
 allowed only when configured and its JSON output passes ID validation. The
@@ -161,10 +173,10 @@ Observed fresh-local fallback benchmark on 172 documents / 1,683 chunks:
 - 105-query mixed run: p50 0.083 ms, p95 0.606 ms, p99 134.665 ms with
   100 cache hits.
 
-The strict semantic proof used 133 governed documents, BGE embeddings, and the
+The strict semantic proof used 135 governed documents, BGE embeddings, and the
 cross-encoder. Its checked-in holdout remained above every retrieval gate. A
 representative warmed run measured p50 122 ms and p95 276 ms. Repeated CPU
-model/index warmups ranged from roughly 14 to 61 seconds; readiness remained
+model/index warmups ranged from roughly 14 to 90 seconds; readiness remained
 closed until they completed.
 
 These are development-machine measurements, not production SLO proof. The

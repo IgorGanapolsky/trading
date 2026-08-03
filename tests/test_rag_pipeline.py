@@ -164,6 +164,67 @@ class TestStage1CaptureAndStore:
         """index_from_markdown_dir should load all valid lessons from directory."""
         assert pipeline.lesson_count >= 3
 
+    def test_chunk_search_can_retain_multiple_children_until_rerank(self):
+        """Production retrieval must not collapse a parent before child reranking."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            from src.rag.rag_pipeline import LessonRecord, SQLiteFTS5Store
+
+            store = SQLiteFTS5Store(os.path.join(tmpdir, "children.db"))
+            content = (
+                "# HIGH: Hierarchical Retrieval\n\n## Prevention\n"
+                + ("alpha evidence boundary " * 90)
+                + ("beta evidence boundary " * 90)
+            )
+            store.put(
+                LessonRecord(
+                    lesson_id="ll-hierarchical",
+                    title="Hierarchical Retrieval",
+                    content=content,
+                    severity="HIGH",
+                    prevention="Keep child chunks until reranking.",
+                    tags="rag,retrieval",
+                    source="test",
+                    created_at="2026-08-03T00:00:00+00:00",
+                )
+            )
+            children = store.fts_search(
+                "evidence boundary",
+                top_k=20,
+                dedupe_lessons=False,
+            )
+            assert len(children) >= 2
+            assert len({child["chunk_id"] for child in children}) >= 2
+            store.close()
+
+    def test_parent_section_expands_winning_child_and_exact_tag_filter(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            from src.rag.rag_pipeline import LessonRecord, RetrievalFilters, SQLiteFTS5Store
+
+            store = SQLiteFTS5Store(os.path.join(tmpdir, "parent.db"))
+            prevention = (
+                "parent opening context " + ("bounded filler " * 140) + "parent tail marker"
+            )
+            store.put(
+                LessonRecord(
+                    lesson_id="ll-parent",
+                    title="Parent Child Retrieval",
+                    content=f"# HIGH: Parent Child Retrieval\n\n## Prevention\n{prevention}",
+                    severity="HIGH",
+                    prevention=prevention,
+                    tags="options,retrieval",
+                    source="test",
+                    created_at="2026-08-03T00:00:00+00:00",
+                )
+            )
+            chunks = store.get_chunks(RetrievalFilters(tag="retrieval", section="prevention"))
+            assert len(chunks) >= 2
+            parent = store.get_parent_section("ll-parent", "Prevention")
+            assert parent["chunk_count"] >= 2
+            assert "parent opening context" in parent["content"]
+            assert "parent tail marker" in parent["content"]
+            assert store.get_chunks(RetrievalFilters(tag="triev")) == []
+            store.close()
+
     def test_capture_feedback_stores_lesson(self, pipeline):
         """capture_feedback should store a new lesson after quality gate passes."""
         feedback = (
@@ -227,6 +288,29 @@ class TestStage2HybridRetrieval:
             assert "severity" in r
             assert "score" in r
             assert 0.0 <= r["score"] <= 1.0
+
+    def test_query_returns_child_citation_and_parent_context(self, pipeline):
+        prevention = (
+            "The parent section begins with the liquidation decision tree. "
+            + ("risk evidence context " * 120)
+            + "Gamma breach liquidation protocol closes the spread."
+        )
+        stored, _ = pipeline.capture_feedback(
+            f"# HIGH: Gamma Breach Protocol\n\n## Severity\nHIGH\n\n## Prevention\n{prevention}",
+            lesson_id="ll-parent-query",
+        )
+        assert stored is True
+        results = pipeline.query("gamma breach liquidation protocol", top_k=5)
+        matching = [item for item in results if item["id"] == "ll-parent-query"]
+        assert matching
+        hit = matching[0]
+        assert hit["chunk_id"].startswith("ll-parent-query::c")
+        assert hit["section_title"] == "Prevention"
+        assert "parent section begins" in hit["parent_context"]
+        assert "Gamma breach liquidation protocol" in hit["parent_context"]
+        assert hit["parent_chunk_count"] >= 2
+        assert set(hit["retrieval_channels"]) <= {"bm25", "vector"}
+        assert 0.0 <= hit["rrf_score"] <= 1.0
 
 
 # -- Stage 3: Multi-query (3 variants, combined-score threshold trigger) --

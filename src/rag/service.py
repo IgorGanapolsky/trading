@@ -31,6 +31,8 @@ class SearchRequest(StrictModel):
     severity: Literal["CRITICAL", "HIGH", "MEDIUM", "LOW"] | None = None
     source: str | None = Field(default=None, max_length=100)
     tag: str | None = Field(default=None, max_length=100)
+    section: str | None = Field(default=None, max_length=200)
+    min_version: int | None = Field(default=None, ge=1)
     rerank: bool = True
 
 
@@ -47,6 +49,11 @@ class SearchHit(StrictModel):
     source: str = ""
     chunk_id: str = ""
     section_title: str = ""
+    parent_context: str = ""
+    parent_chunk_count: int = 0
+    parent_context_truncated: bool = False
+    retrieval_channels: list[str] = Field(default_factory=list)
+    rrf_score: float = Field(default=0.0, ge=0.0, le=1.0)
     reranker_type: str
     embedding_backend: str
 
@@ -215,6 +222,8 @@ async def search(payload: SearchRequest, request: Request) -> SearchResponse:
         severity_filter=payload.severity,
         source_filter=payload.source,
         tag_filter=payload.tag,
+        section_filter=payload.section,
+        min_version=payload.min_version,
         rerank=payload.rerank,
     )
     trace = pipeline.last_query_trace

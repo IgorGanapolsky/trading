@@ -94,9 +94,9 @@ Operational feedback follows one governed path:
 
 ```text
 👎 feedback → normalize/redact → quality gate → versioned SQLite FTS5
-  → BM25 + bigram/unigram + vector retrieval with metadata filters
+  → child-chunk BM25 + vector retrieval with filter-first reciprocal-rank fusion
   → up to three queries only when lexical confidence < 0.6
-  → cross-encoder or validated LLM rerank; heuristic fallback is degraded
+  → cross-encoder or validated LLM rerank → bounded parent-section expansion
   → bounded cited context → deterministic tool-call decision
 ```
 
