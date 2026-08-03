@@ -277,6 +277,10 @@ This is a new lesson.
 
                 # Lessons should be reloaded
                 assert len(rag.lessons) == 1
+                assert rag.query("new lesson", top_k=1)[0]["id"] == "new_lesson"
+                temporary_db = Path(rag._pipeline._temp_db_path)
+                rag.close()
+                assert not temporary_db.exists()
 
     def test_add_lesson_creates_missing_directory_and_does_not_duplicate(self, tmp_path):
         from src.rag.lessons_learned_rag import LessonsLearnedRAG

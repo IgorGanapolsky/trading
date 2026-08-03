@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bogleheads Forum Operator" # yamllint disable-line rule:quoted-strings
+  short_description: "Research, ingest, draft, and publish forum replies" # yamllint disable-line rule:quoted-strings
+  default_prompt: "Use $bogleheads-forum-operator to research relevant Bogleheads threads, ingest cited evidence, and draft an appropriate reply." # yamllint disable-line rule:quoted-strings

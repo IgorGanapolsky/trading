@@ -12,6 +12,7 @@ REQUIRED_PATHS = (
     "CONTRIBUTING.md",
     "docs/README.md",
     "docs/operator-guide.md",
+    "skills/bogleheads-forum-operator/SKILL.md",
     "skills/trading-ops/SKILL.md",
 )
 

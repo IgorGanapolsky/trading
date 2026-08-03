@@ -186,16 +186,19 @@ def check_rag_system():
         # Verify the read/write contract without mutating the repository.
         with tempfile.TemporaryDirectory(prefix="trading-rag-health-") as tmpdir:
             writable_rag = LessonsLearnedRAG(knowledge_dir=tmpdir)
-            writable_rag.add_lesson(
-                "LL-HEALTH",
-                "# Health Probe\n\n**Severity**: LOW\n\nRAG write and read round trip.",
-            )
-            round_trip = writable_rag.query("round trip", top_k=1)
-            if not round_trip or round_trip[0]["id"] != "LL-HEALTH":
-                results["details"].append("✗ RAG write/read round trip failed")
-                results["status"] = "BROKEN"
-                return results
-            results["details"].append("✓ RAG write/read round trip works")
+            try:
+                writable_rag.add_lesson(
+                    "LL-HEALTH",
+                    "# Health Probe\n\n**Severity**: LOW\n\nRAG write and read round trip.",
+                )
+                round_trip = writable_rag.query("round trip", top_k=1)
+                if not round_trip or round_trip[0]["id"] != "LL-HEALTH":
+                    results["details"].append("✗ RAG write/read round trip failed")
+                    results["status"] = "BROKEN"
+                    return results
+                results["details"].append("✓ RAG write/read round trip works")
+            finally:
+                writable_rag.close()
 
         # Test QueryRewriter & ParentChildRetriever modules
         try:

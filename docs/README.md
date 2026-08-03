@@ -4,22 +4,24 @@ Operator and design docs for the trading lab.
 
 ## Start here
 
-| Doc                                                              | Audience        | Purpose                              |
-| ---------------------------------------------------------------- | --------------- | ------------------------------------ |
-| [operator-guide.md](./operator-guide.md)                         | Human operator  | Daily commands, gates, truth sources |
-| [../skills/trading-ops/SKILL.md](../skills/trading-ops/SKILL.md) | Coding agents   | How to operate the repo safely       |
-| [AGENT_COORDINATION.md](./AGENT_COORDINATION.md)                 | Multiple agents | Ownership and collision protocol     |
-| [../AGENTS.md](../AGENTS.md)                                     | Agents          | Project contribution rules           |
-| [../CONTRIBUTING.md](../CONTRIBUTING.md)                         | Humans + agents | PR path                              |
+| Doc                                                                                          | Audience        | Purpose                                |
+| -------------------------------------------------------------------------------------------- | --------------- | -------------------------------------- |
+| [operator-guide.md](./operator-guide.md)                                                     | Human operator  | Daily commands, gates, truth sources   |
+| [../skills/trading-ops/SKILL.md](../skills/trading-ops/SKILL.md)                             | Coding agents   | How to operate the repo safely         |
+| [../skills/bogleheads-forum-operator/SKILL.md](../skills/bogleheads-forum-operator/SKILL.md) | Coding agents   | Forum research, ingestion, and replies |
+| [AGENT_COORDINATION.md](./AGENT_COORDINATION.md)                                             | Multiple agents | Ownership and collision protocol       |
+| [../AGENTS.md](../AGENTS.md)                                                                 | Agents          | Project contribution rules             |
+| [../CONTRIBUTING.md](../CONTRIBUTING.md)                                                     | Humans + agents | PR path                                |
 
 ## Strategy & research
 
-| Doc                                                                | Notes                                      |
-| ------------------------------------------------------------------ | ------------------------------------------ |
-| [operator-guide.md](./operator-guide.md)                           | Current paper strategy and operating gates |
-| [research/](./research/)                                           | Edge audits and deep dives                 |
-| [RAG_11_STAGES_SPECIFICATION.md](./RAG_11_STAGES_SPECIFICATION.md) | RAG pipeline stages                        |
-| [EXTENSIONS.md](./EXTENSIONS.md)                                   | Optional provider boundary                 |
+| Doc                                                                | Notes                                       |
+| ------------------------------------------------------------------ | ------------------------------------------- |
+| [operator-guide.md](./operator-guide.md)                           | Current paper strategy and operating gates  |
+| [research/](./research/)                                           | Edge audits and deep dives                  |
+| [RAG_11_STAGES_SPECIFICATION.md](./RAG_11_STAGES_SPECIFICATION.md) | RAG pipeline stages                         |
+| [DOCUMENT_INGESTION.md](./DOCUMENT_INGESTION.md)                   | Messy-document parsing and A+ quality gates |
+| [EXTENSIONS.md](./EXTENSIONS.md)                                   | Optional provider boundary                  |
 
 ## Pitch / archive (not operating truth)
 

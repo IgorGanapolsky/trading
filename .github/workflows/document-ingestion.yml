@@ -1,0 +1,110 @@
+name: Document Ingestion Quality Gate
+
+on:
+  pull_request:
+    paths:
+      - src/rag/document_ingestion_pipeline.py
+      - src/research/docling_parser.py
+      - scripts/ingest_document.py
+      - scripts/bogleheads_research.py
+      - skills/bogleheads-forum-operator/**
+      - tests/test_bogleheads_research.py
+      - tests/test_document_ingestion_*.py
+      - tests/test_docling_parser_compat.py
+      - pyproject.toml
+      - uv.lock
+      - .github/workflows/document-ingestion.yml
+  push:
+    branches: [main]
+    paths:
+      - src/rag/document_ingestion_pipeline.py
+      - src/research/docling_parser.py
+      - scripts/ingest_document.py
+      - scripts/bogleheads_research.py
+      - skills/bogleheads-forum-operator/**
+      - tests/test_bogleheads_research.py
+      - tests/test_document_ingestion_*.py
+      - tests/test_docling_parser_compat.py
+      - pyproject.toml
+      - uv.lock
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deterministic-ingestion:
+    name: Deterministic parser and manifest gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install deterministic parser stack
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Run format, quality, provenance, and version gates
+        run: |
+          python -m ruff check \
+            src/rag/document_ingestion_pipeline.py \
+            src/research/docling_parser.py \
+            scripts/ingest_document.py \
+            scripts/bogleheads_research.py \
+            tests/test_bogleheads_research.py \
+            tests/test_document_ingestion_pipeline.py \
+            tests/test_docling_parser_compat.py
+          pytest \
+            tests/test_bogleheads_research.py \
+            tests/test_document_ingestion_pipeline.py \
+            tests/test_docling_parser_compat.py \
+            -q
+          python scripts/ingest_document.py --capabilities | tee /tmp/ingestion-capabilities.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          capabilities = json.loads(Path("/tmp/ingestion-capabilities.json").read_text())
+          required = ("html", "pdf_text", "tables")
+          missing = [name for name in required if not capabilities.get(name)]
+          if missing:
+              raise SystemExit(f"Missing deterministic ingestion capabilities: {missing}")
+          PY
+
+  docling-ocr-and-tables:
+    name: Real Docling OCR and TableFormer gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Cache Docling models
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
+        with:
+          path: |
+            ~/.cache/huggingface
+            ~/.cache/docling
+            ~/.EasyOCR
+          key: docling-models-${{ runner.os }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
+      - name: Install full layout and OCR stack
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,document-ingestion]"
+      - name: Prove real OCR and table reconstruction
+        run: |
+          python scripts/ingest_document.py --capabilities | tee /tmp/ingestion-capabilities.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          capabilities = json.loads(Path("/tmp/ingestion-capabilities.json").read_text())
+          required = ("pdf_layout", "scanned_pdf_ocr", "images_ocr", "docx")
+          missing = [name for name in required if not capabilities.get(name)]
+          if missing:
+              raise SystemExit(f"Missing Docling ingestion capabilities: {missing}")
+          PY
+          pytest tests/test_document_ingestion_docling.py -q

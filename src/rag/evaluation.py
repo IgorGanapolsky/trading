@@ -535,9 +535,7 @@ class RAGEvaluator:
             return 0.0
 
         # Normalize graded_relevance keys to match normalized retrieved IDs
-        normalized_relevance = {
-            self._normalize_match_id(k): v for k, v in graded_relevance.items()
-        }
+        normalized_relevance = {self._normalize_match_id(k): v for k, v in graded_relevance.items()}
 
         dcg = 0.0
         for i, doc in enumerate(retrieved[:k]):

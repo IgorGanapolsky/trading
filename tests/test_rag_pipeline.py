@@ -1,10 +1,10 @@
 """Unit tests for the 5-stage TradingRAGPipeline:
 
-  Stage 1: Capture 👎 → normalize/quality-gate → store lesson (SQLite FTS5)
-  Stage 2: Retrieve: bigram-Jaccard + keyword pragmatic-hybrid-search
-  Stage 3: Multi-query (3 variants, combined-score threshold trigger)
-  Stage 4: Cross-encoder reranker (LLM if key, else heuristic)
-  Stage 5: Assemble context + deterministic gate
+Stage 1: Capture 👎 → normalize/quality-gate → store lesson (SQLite FTS5)
+Stage 2: Retrieve: bigram-Jaccard + keyword pragmatic-hybrid-search
+Stage 3: Multi-query (3 variants, combined-score threshold trigger)
+Stage 4: Cross-encoder reranker (LLM if key, else heuristic)
+Stage 5: Assemble context + deterministic gate
 """
 
 from __future__ import annotations
@@ -13,6 +13,7 @@ import os
 import sys
 import tempfile
 import logging
+from pathlib import Path
 
 import pytest
 
@@ -132,10 +133,7 @@ class TestStage1CaptureAndStore:
         """Lesson without prevention section should be rejected."""
         from src.rag.rag_pipeline import quality_gate
 
-        content = (
-            "# CRITICAL: Bad Trade\n\n"
-            "## Severity\nCRITICAL\n"
-        )
+        content = "# CRITICAL: Bad Trade\n\n## Severity\nCRITICAL\n"
         passed, reason = quality_gate(content)
         assert passed is False
 
@@ -162,6 +160,30 @@ class TestStage1CaptureAndStore:
             assert results[0]["lesson_id"] == "ll-001_test_lesson"
             assert "CRITICAL" in str(results[0].get("severity", ""))
             store.close()
+
+    def test_markdown_index_reconciles_additions_and_removals(self, tmp_path: Path):
+        from src.rag.rag_pipeline import TradingRAGPipeline
+
+        lessons_dir = Path(_make_test_lessons(str(tmp_path)))
+        pipeline = TradingRAGPipeline(db_path=tmp_path / "sync.db", lessons_dir=lessons_dir)
+        try:
+            assert pipeline.index_from_markdown_dir(lessons_dir) == 3
+            added = lessons_dir / "ll-104_new_ingestion_rule.md"
+            added.write_text(
+                "# HIGH: New ingestion rule\n\n"
+                "**Severity**: HIGH\n\n"
+                "## Prevention\nAlways synchronize generated indexes with canonical Markdown.",
+                encoding="utf-8",
+            )
+            assert pipeline.index_from_markdown_dir(lessons_dir) == 4
+            assert pipeline.lesson_count == 4
+
+            added.unlink()
+            assert pipeline.index_from_markdown_dir(lessons_dir) == 3
+            assert pipeline.lesson_count == 3
+            assert pipeline.store.get_by_id("ll-104_new_ingestion_rule") is None
+        finally:
+            pipeline.close()
 
     def test_index_from_markdown_dir_loads_lessons(self, pipeline):
         """index_from_markdown_dir should load all valid lessons from directory."""
@@ -275,8 +297,11 @@ class TestStage3MultiQuery:
 
 class TestStage4Reranker:
     def test_reranker_type_is_cross_encoder(self, pipeline):
-        """Reranker should use cross-encoder when available."""
-        assert pipeline._reranker.reranker_type == "cross-encoder"
+        """Reranker should report the real optional-backend capability."""
+        from importlib.util import find_spec
+
+        expected = "cross-encoder" if find_spec("sentence_transformers") else "heuristic"
+        assert pipeline._reranker.reranker_type == expected
 
     def test_cross_encoder_scores_in_range(self, pipeline):
         """CE ensemble scores should be in [0, 1] range."""
@@ -307,8 +332,13 @@ class TestStage4Reranker:
         assert reranker.reranker_type == "heuristic"
         # Should not crash on simple candidates
         candidates = [
-            {"id": "ll-001", "title": "test", "severity": "HIGH",
-             "content_snippet": "test content", "score": 0.5},
+            {
+                "id": "ll-001",
+                "title": "test",
+                "severity": "HIGH",
+                "content_snippet": "test content",
+                "score": 0.5,
+            },
         ]
         results = reranker.rerank("test query", candidates, top_n=1)
         assert len(results) == 1
@@ -317,9 +347,12 @@ class TestStage4Reranker:
 # -- Stage 5: Assemble context + deterministic gate --
 
 
-def _make_lesson_result(lesson_id: str, title: str, severity: str, prevention: str = "Prevent this", score: float = 0.5):
+def _make_lesson_result(
+    lesson_id: str, title: str, severity: str, prevention: str = "Prevent this", score: float = 0.5
+):
     """Helper to create a LessonResult for gate tests."""
     from src.rag.rag_pipeline import LessonResult
+
     return LessonResult(
         id=lesson_id,
         title=title,
@@ -387,7 +420,9 @@ class TestStage5DeterministicGate:
 
     def test_retrieve_and_gate_integration(self, pipeline):
         """Full pipeline: retrieve + gate should return (results, decision, context)."""
-        results, decision, context = pipeline.retrieve_and_gate("iron condor exit strategy", top_k=5)
+        results, decision, context = pipeline.retrieve_and_gate(
+            "iron condor exit strategy", top_k=5
+        )
         assert isinstance(results, list)
         assert decision is not None
         assert decision.severity in ("APPROVED", "WARN", "BLOCK")
@@ -406,8 +441,10 @@ class TestLessonsLearnedRAGDelegation:
         rag = LessonsLearnedRAG()
         try:
             assert rag._pipeline is not None
-            # The standard lessons dir has 320 lessons
-            assert rag._pipeline.lesson_count >= 300
+            lessons_dir = Path(__file__).resolve().parents[1] / "rag_knowledge" / "lessons_learned"
+            canonical_count = len(list(lessons_dir.glob("*.md")))
+            assert canonical_count > 0
+            assert rag._pipeline.lesson_count == canonical_count
         finally:
             if rag._pipeline:
                 rag._pipeline.close()

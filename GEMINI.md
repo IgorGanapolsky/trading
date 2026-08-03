@@ -44,6 +44,7 @@
 - Record mistakes and lessons learned in RAG.
 - Exclude secrets and tokens from stored directives and logs. Never hardcode credentials.
 - Treat chat-provided tokens as action-time credentials only; never save them to files, commits, or memory.
+- For Bogleheads work, load `skills/bogleheads-forum-operator/SKILL.md`; route forum text through production ingestion and never confuse a draft or forum post with trading edge or realized profit.
 
 ## Multi-Agent Coordination
 

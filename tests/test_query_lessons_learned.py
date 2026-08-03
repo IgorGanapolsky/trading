@@ -37,6 +37,6 @@ Reconcile broker inventory before allowing new risk.
 
     payload = json.loads(capsys.readouterr().out)
     assert result == 0
-    assert payload["source"] == "keyword"
+    assert payload["source"] == "fts5"
     assert payload["count"] == 1
     assert payload["results"][0]["id"] == "ll_999_inventory_reconciliation"

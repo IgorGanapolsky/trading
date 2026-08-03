@@ -45,9 +45,11 @@ class LessonsLearnedRAG:
         self._pipeline = None
         try:
             from src.rag.rag_pipeline import TradingRAGPipeline, get_trading_rag_pipeline
+
             if self._custom_dir:
                 # Custom directory: create a separate pipeline (not the singleton)
                 import tempfile as _tempfile
+
                 _fd, _db_path = _tempfile.mkstemp(suffix=".db")
                 os.close(_fd)
                 self._pipeline = TradingRAGPipeline(
@@ -58,6 +60,9 @@ class LessonsLearnedRAG:
                 self._pipeline._temp_db_path = _db_path
             else:
                 self._pipeline = get_trading_rag_pipeline()
+                # The SQLite cache is generated state. Reconcile it with the
+                # canonical Markdown corpus whenever an operator facade starts.
+                self._pipeline.index_from_markdown_dir(self.knowledge_dir)
             logger.info("✅ TradingRAGPipeline initialized (primary backend)")
         except Exception as e:
             logger.warning(f"TradingRAGPipeline init failed: {e} - using legacy search")
@@ -285,7 +290,11 @@ class LessonsLearnedRAG:
         """
         if self._pipeline is not None:
             try:
-                return self._pipeline.query(query=query, top_k=top_k, severity_filter=severity_filter)
+                results = self._pipeline.query(
+                    query=query, top_k=top_k, severity_filter=severity_filter
+                )
+                self.last_source = "fts5"
+                return results
             except Exception as e:
                 logger.warning(f"TradingRAGPipeline query failed: {e} - using legacy search")
 
@@ -510,3 +519,17 @@ class LessonsLearnedRAG:
         lesson_file = self.knowledge_dir / f"{lesson_id}.md"
         lesson_file.write_text(content, encoding="utf-8")
         self._load_lessons()  # Reload
+        if self._pipeline is not None:
+            self._pipeline.index_from_markdown_dir(self.knowledge_dir)
+
+    def close(self) -> None:
+        """Close and remove a custom temporary pipeline database."""
+        if not self._custom_dir or self._pipeline is None:
+            return
+        temporary_path = getattr(self._pipeline, "_temp_db_path", None)
+        self._pipeline.close()
+        if temporary_path:
+            path = Path(temporary_path)
+            for suffix in ("", "-shm", "-wal"):
+                Path(f"{path}{suffix}").unlink(missing_ok=True)
+        self._pipeline = None
