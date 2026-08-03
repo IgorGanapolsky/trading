@@ -69,13 +69,13 @@ _TRADING_QUERY_HINTS = re.compile(
     r"\bpdt\b|drawdown|lancedb|rag\s*webhook|section\s*1256|north\s*star|"
     r"financial\s*independence|position\s*sizing|close_position|close\s*position|"
     r"orphan|win\s*rate|profit\s*factor|trade\s*gateway|entry\s*signals?|"
-    r"exit\s*strateg|webhook|iron\s*condor)\b",
+    r"exit\s*strateg|webhook|iron\s*condor|\btrading\b|\btrader\b)\b",
     re.IGNORECASE,
 )
 
 
 def _clamp01(value: float) -> float:
-    return max(0.0, min(1.0, float(value)))
+    return max(0.0, min(1.0, float(value))
 
 
 def candidate_text(doc: dict[str, Any]) -> str:
