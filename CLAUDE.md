@@ -43,7 +43,7 @@ Project instructions live in `.claude/CLAUDE.md`. Rules auto-load from `.claude/
 - Keep canonical source and small ledgers in Git; keep screenshots, caches, local databases, reports, and generated indexes out of Git.
 - Every workflow needs a current owner and tested contract. Delete disabled one-off workflows.
 - Optional integrations belong behind narrow adapters and core imports remain side-effect free.
-- Reusable agent instructions live under `.agents/skills/`; human guidance lives in `README.md`, `CONTRIBUTING.md`, and `docs/`.
+- Reusable agent instructions live under `skills/`; human guidance lives in `README.md`, `CONTRIBUTING.md`, and `docs/`.
 
 ## Multi-Agent Coordination
 

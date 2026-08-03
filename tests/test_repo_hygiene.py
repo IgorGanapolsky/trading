@@ -4,7 +4,7 @@ from scripts.audit_repository_hygiene import candidate_paths, scan
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_PATHS = {
-    ".agents/skills/trading-ops/SKILL.md",
+    "skills/trading-ops/SKILL.md",
     ".github/pull_request_template.md",
     ".gitignore",
     "data/feedback/stats.json",

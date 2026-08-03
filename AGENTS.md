@@ -1,5 +1,15 @@
 # AGENTS
 
+## Scope and audience
+
+These instructions apply to every agent working in this repository.
+
+- **Operator skill** (commands, gates, ledgers): [`skills/trading-ops/SKILL.md`](skills/trading-ops/SKILL.md)
+- **Human + PR path**: [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- **Docs hub**: [`docs/README.md`](docs/README.md)
+
+Load the operator skill when checking status, planning trades, or touching risk/execution code.
+
 ## Core Directive
 
 Always tell the user 100% truth. Never fabricate, hide, or misrepresent status, actions, or results.
@@ -51,7 +61,7 @@ Always tell the user 100% truth. Never fabricate, hide, or misrepresent status, 
 - The active entry path is `scripts/spy_put_credit.py` in paper mode. New `ic_simple` and `iron_condor` entries are killed; `scripts/residual_ic_manager.py` owns residual exits.
 - Run `make check` before publishing and `make dry-run` before operational changes.
 - Keep canonical source, configuration, compact ledgers, and curated RAG lessons in Git. Ignore generated output.
-- Put reusable agent procedures in `.agents/skills/`, contributor instructions in `CONTRIBUTING.md`, and extension contracts in `docs/EXTENSIONS.md`.
+- Put reusable agent procedures in `skills/`, contributor instructions in `CONTRIBUTING.md`, and extension contracts in `docs/EXTENSIONS.md`.
 - Core imports must be side-effect free. Optional providers are lazy adapters.
 - Every retained workflow must have a current owner, bounded permissions, and a tested contract.
 
