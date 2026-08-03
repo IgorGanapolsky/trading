@@ -9,3 +9,8 @@ chroma_db/
 # Large RAG source files (download on demand)
 berkshire_letters/raw/*.pdf
 bogleheads/raw/
+# Trading defended RAG FTS5 index (rebuilt via scripts/sync_lessons_to_sqlite_fts.py)
+lessons.sqlite
+lessons.sqlite-wal
+lessons.sqlite-shm
+lessons.sqlite-journal

@@ -37,6 +37,7 @@ class LessonsLearnedRAG:
         self._custom_dir = knowledge_dir is not None
         self.lessons = []
         self.last_source = "none"
+        self.last_retrieve_meta: dict = {}
 
         # LanceDB-first retrieval (semantic)
         self.lancedb_rag = None
@@ -279,13 +280,42 @@ class LessonsLearnedRAG:
         return ranked[:top_k]
 
     def query(self, query: str, top_k: int = 5, severity_filter: Optional[str] = None) -> list:
-        """Search lessons using the enhanced TradingRAGPipeline (FTS5 + bigram-Jaccard + CE rerank).
+        """Search lessons: defended path → TradingRAGPipeline → LanceDB → keyword.
 
-        Falls back to legacy LanceDB/keyword search if the pipeline is unavailable.
+        Defended trading RAG (FTS5 + pragmatic hybrid + multi-query@0.6 + CE heuristic)
+        is default ON. Set TRADING_RAG_DEFENDED=0 to skip it.
         """
+        defended = os.getenv("TRADING_RAG_DEFENDED", "true").lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+        if defended and not self._custom_dir:
+            try:
+                from src.rag.retrieve_for_trade import retrieve_for_trade
+
+                result = retrieve_for_trade(
+                    query,
+                    top_k=top_k,
+                    severity_filter=severity_filter,
+                    use_llm_rerank=False,  # keep query path deterministic/offline
+                )
+                if result.lessons:
+                    self.last_source = "defended"
+                    self.last_retrieve_meta = result.meta
+                    return result.lessons
+            except Exception as e:
+                logger.warning("Defended retrieve_for_trade failed: %s — falling back", e)
+
         if self._pipeline is not None:
             try:
-                return self._pipeline.query(query=query, top_k=top_k, severity_filter=severity_filter)
+                results = self._pipeline.query(
+                    query=query, top_k=top_k, severity_filter=severity_filter
+                )
+                if results:
+                    self.last_source = "trading_rag_pipeline"
+                    return results
             except Exception as e:
                 logger.warning(f"TradingRAGPipeline query failed: {e} - using legacy search")
 

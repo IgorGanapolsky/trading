@@ -1488,14 +1488,44 @@ class TradeGateway:
         # FIX Jan 15, 2026: Only block if lesson SPECIFICALLY mentions this ticker
         # Previous bug: lessons about SOFI were blocking SPY trades
         # ============================================================
-        # Query RAG for lessons about this ticker and strategy
+        # Query RAG for lessons about this ticker and strategy (defended path)
         query_terms = f"{request.symbol}"
         if request.strategy_type:
             query_terms += f" {request.strategy_type}"
         query_terms += f" {request.side}"
 
         underlying = self._get_underlying_symbol(request.symbol)
-        rag_lessons = self.rag.query(query_terms, top_k=5)
+        rag_lessons: list = []
+        rag_context = ""
+        try:
+            from src.rag.retrieve_for_trade import (
+                assemble_trade_context,
+                retrieve_for_trade,
+            )
+
+            defended = retrieve_for_trade(
+                query_terms,
+                top_k=5,
+                use_llm_rerank=False,
+            )
+            rag_lessons = defended.lessons
+            if rag_lessons:
+                rag_context = assemble_trade_context(
+                    rag_lessons,
+                    meta=defended.meta,
+                    action=query_terms,
+                )
+                metadata["rag_defended"] = {
+                    "source": "retrieve_for_trade",
+                    "top_lexical": defended.meta.get("top_lexical"),
+                    "rewrite_applied": defended.meta.get("rewrite_applied"),
+                    "fts": defended.meta.get("fts"),
+                    "rerank_stages": defended.meta.get("rerank_stages"),
+                }
+                metadata["rag_context"] = rag_context[:2000]
+        except Exception as rag_exc:
+            logger.warning("Defended RAG path failed (%s); falling back to LessonsLearnedRAG", rag_exc)
+            rag_lessons = self.rag.query(query_terms, top_k=5)
 
         # Only consider CRITICAL lessons that specifically mention THIS ticker
         critical_rag_lessons = []
