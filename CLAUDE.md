@@ -53,6 +53,10 @@ Project instructions live in `.claude/CLAUDE.md`. Rules auto-load from `.claude/
   publish one PR, then mark the issue done or release it.
 - Put the Linear key in the branch and PR. Stop and reconcile if another active claim or
   overlapping worktree exists; never remove another agent's worktree.
+- Run `make coordination-preflight` before writes and `make coordination-audit` before
+  cleanup. Raw `git worktree remove` is prohibited; use the claim-aware hygiene wrapper.
+- GitHub PR metadata must pass `.github/workflows/agent-coordination.yml`. Herdr lifecycle
+  is diagnostic only and never substitutes for a durable claim or merge evidence.
 - The Obsidian Linear plugin is a human dashboard, not a lock. Do not add a second
   repository-local task database or copy the shared bridge into this repository.
 

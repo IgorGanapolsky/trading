@@ -75,5 +75,10 @@ Always tell the user 100% truth. Never fabricate, hide, or misrepresent status, 
   and PR metadata.
 - If a claim, branch, or touched-file scope overlaps, stop and reconcile through the issue;
   never delete another agent's worktree or overwrite its files.
+- Run `make coordination-preflight` before writes. Use
+  `scripts/worktree_hygiene.sh --remove <path>` instead of raw worktree deletion; the
+  wrapper must reject active, dirty, unmerged, unknown, and primary worktrees.
+- Treat Herdr agent state as transient diagnostic evidence. GitHub's coordination check
+  must bind the issue key, branch, base SHA, worktree, and claimed files on every PR.
 - On completion, attach test/CI/merge evidence and mark the claim done. On abandonment,
   release it. The Obsidian Linear plugin is a dashboard, not a concurrency lock.

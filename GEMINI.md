@@ -52,4 +52,8 @@
 - Linear owns task assignment, the shared vault owns the live claim, and Git owns code.
 - Include the Linear key in the branch and PR. Never delete or repurpose another agent's
   branch, worktree, claim note, or active issue.
+- Run `make coordination-preflight` before writes and use the claim-aware worktree hygiene
+  wrapper for cleanup. Require the GitHub coordination workflow on every non-Dependabot PR.
+- Herdr is a transient lifecycle sensor, not authorization to edit, delete, merge, or mark
+  Linear work done.
 - Treat the Obsidian Linear plugin as a display surface only; it does not replace claims.

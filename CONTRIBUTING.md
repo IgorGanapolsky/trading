@@ -14,6 +14,7 @@ git fetch origin main
 git worktree add -b feature/<issue-key>-<slug> .worktrees/<slug> origin/main
 cd .worktrees/<slug>
 make setup
+make coordination-preflight
 ```
 
 Linear owns task assignment, the shared Obsidian vault records the live claim, Herdr exposes terminal lifecycle, and the issue-scoped worktree/PR is code truth.
@@ -51,5 +52,10 @@ Add a dependency only when retained code imports it. Optional providers must fol
 | Dead-code removal with caller evidence | Live-account paths or halt behavior  |
 
 Do not force-push `main`, hardcode credentials, re-enable killed iron-condor entry paths, or create repository-local task boards. Open a PR against `main` and include exact test and CI evidence.
+
+Do not run raw `git worktree remove` or delete a worktree directory. Use
+`scripts/worktree_hygiene.sh --check-remove <path>` first and
+`scripts/worktree_hygiene.sh --remove <path>` only after the claim is inactive, the tree is
+clean, and its HEAD is contained in `origin/main`.
 
 Contributions use the repository's MIT license.

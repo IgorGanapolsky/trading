@@ -1,0 +1,19 @@
+id = "trading.coordination"
+name = "Trading coordination audit"
+version = "0.1.0"
+min_herdr_version = "0.7.5"
+description = "Reconcile Herdr agents with Linear, Vault, and Git worktrees"
+platforms = ["macos", "linux"]
+
+[[startup]]
+command = ["bash", "scripts/audit.sh"]
+
+[[events]]
+on = "worktree.created"
+command = ["bash", "scripts/audit.sh"]
+
+[[actions]]
+id = "audit"
+title = "Audit trading coordination"
+contexts = ["workspace", "tab", "pane"]
+command = ["bash", "scripts/audit.sh"]

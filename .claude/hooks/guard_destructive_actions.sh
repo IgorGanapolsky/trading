@@ -12,6 +12,8 @@
 set -euo pipefail
 
 MAGIC_WORD_FILE="/tmp/claude_magic_word_authorized"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="${CLAUDE_PROJECT_DIR:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 
 INPUT="$(cat || true)"
 if [[ -z ${INPUT} ]]; then
@@ -28,6 +30,26 @@ RISK_CONST_RE='(IRON_CONDOR_STOP_LOSS_MULTIPLIER|MAX_CONCURRENT_IRON_CONDORS|NOR
 DESTRUCTIVE_MCP_RE='^mcp__alpaca__(close_position|close_all_positions|cancel_order|cancel_all_orders|liquidate)'
 
 reason=""
+
+case "${TOOL_NAME}" in
+Edit | Write | NotebookEdit | MultiEdit)
+	PYTHON_BIN="${PROJECT_ROOT}/.venv/bin/python"
+	if [[ ! -x ${PYTHON_BIN} ]]; then
+		PYTHON_BIN="$(command -v python3.11 || command -v python3 || true)"
+	fi
+	if [[ -z ${PYTHON_BIN} || ! -f ${PROJECT_ROOT}/scripts/agent_coordination.py ]]; then
+		echo "BLOCKED: coordination preflight is unavailable" >&2
+		exit 2
+	fi
+	if ! PYTHONPATH="${PROJECT_ROOT}" "${PYTHON_BIN}" \
+		"${PROJECT_ROOT}/scripts/agent_coordination.py" \
+		--repo-root "${PROJECT_ROOT}" preflight --file "${FILE_PATH}" >/dev/null; then
+		echo "BLOCKED: file edit has no matching active Linear/Vault claim" >&2
+		exit 2
+	fi
+	;;
+*) ;;
+esac
 
 case "${TOOL_NAME}" in
 Edit | Write | NotebookEdit | MultiEdit)
