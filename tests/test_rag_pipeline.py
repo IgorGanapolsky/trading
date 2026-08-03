@@ -272,8 +272,8 @@ class TestStage3MultiQuery:
 
 class TestStage4Reranker:
     def test_reranker_type_is_cross_encoder(self, pipeline):
-        """Reranker uses cross-encoder when installed, else heuristic."""
-        assert pipeline._reranker.reranker_type in ("cross-encoder", "heuristic", "llm")
+        """Reranker uses cross-encoder when installed; else heuristic/llm."""
+        assert pipeline._reranker.reranker_type in {"cross-encoder", "heuristic", "llm"}
 
     def test_cross_encoder_scores_in_range(self, pipeline):
         """CE ensemble scores should be in [0, 1] range."""

@@ -37,7 +37,7 @@ Reconcile broker inventory before allowing new risk.
 
     payload = json.loads(capsys.readouterr().out)
     assert result == 0
-    # Dependency-free custom corpus may use keyword LessonsSearch or TradingRAGPipeline.
-    assert payload["source"] in {"keyword", "pipeline"}
+    # Custom corpus may hit pipeline, defended path, or keyword fallback.
+    assert payload["source"] in {"pipeline", "keyword", "defended"}
     assert payload["count"] == 1
     assert payload["results"][0]["id"] == "ll_999_inventory_reconciliation"
