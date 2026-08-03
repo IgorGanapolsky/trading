@@ -302,7 +302,7 @@ def _score_multi_tenancy_acl() -> DimensionScore:
     if _exists("src/rag/document_acl.py"):
         score += 1.5
         evidence.append("document ACL / sensitivity labels module")
-        if _file_contains("src/rag/document_acl.py", "SECRET") or _file_contains(
+        if _file_contains("src/rag/document_acl.py", "FORBIDDEN") or _file_contains(
             "src/rag/document_acl.py", "scrub"
         ):
             score += 0.8
