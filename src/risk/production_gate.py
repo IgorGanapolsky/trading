@@ -268,6 +268,62 @@ def evaluate_production_gate(
     if not paper_ok:
         blockers.append("paper_equity_missing_or_too_low")
 
+    # 7) RAG knowledge base non-empty (empty_index fail-closed for safety path)
+    rag_index_ok = True
+    rag_detail = "rag index check skipped"
+    try:
+        from src.rag.rag_pipeline import get_trading_rag_pipeline
+
+        pipe = get_trading_rag_pipeline()
+        n_lessons = pipe.index_size()
+        rag_index_ok = n_lessons > 0
+        rag_detail = f"rag_index_size={n_lessons}"
+        if not rag_index_ok:
+            blockers.append("empty_rag_index")
+    except Exception as exc:  # noqa: BLE001
+        # High but not critical: order path can still use gateway without FTS
+        rag_index_ok = False
+        rag_detail = f"rag_index_error={exc}"
+        blockers.append("rag_index_unavailable")
+    checks.append(
+        GateCheck(
+            "rag_index_non_empty",
+            rag_index_ok,
+            "high",
+            rag_detail,
+        )
+    )
+
+    # 8) LLM production control plane (process maturity; not edge)
+    llm_ok = True
+    llm_detail = "llm plane skipped"
+    try:
+        from src.observability.llm_production_control_plane import (
+            evaluate_llm_production_control_plane,
+        )
+
+        llm_report = evaluate_llm_production_control_plane()
+        # Require B+ process floor for new risk ops; do not require A+ cash engine
+        llm_ok = llm_report.overall_score_0_10 >= 8.0
+        llm_detail = (
+            f"llm_grade={llm_report.overall_grade} score={llm_report.overall_score_0_10} "
+            f"a_plus_ready={llm_report.a_plus_ready}"
+        )
+        if not llm_ok:
+            blockers.append("llm_production_plane_below_b_plus")
+    except Exception as exc:  # noqa: BLE001
+        llm_ok = False
+        llm_detail = f"llm_plane_error={exc}"
+        blockers.append("llm_production_plane_error")
+    checks.append(
+        GateCheck(
+            "llm_production_plane",
+            llm_ok,
+            "high",
+            llm_detail,
+        )
+    )
+
     # Score: critical failures dominate
     critical_fail = [c for c in checks if c.severity == "critical" and not c.ok]
     high_fail = [c for c in checks if c.severity == "high" and not c.ok]
@@ -285,6 +341,12 @@ def evaluate_production_gate(
     if require_clean_inventory and not inv_ok:
         allow_new_risk = False
     if require_fresh_state and not state_ok:
+        allow_new_risk = False
+    # Empty knowledge base must not approve new risk (fail-closed)
+    if not rag_index_ok:
+        allow_new_risk = False
+    if not llm_ok:
+        # Process plane below B+ is a high-severity ops failure
         allow_new_risk = False
     if for_live:
         allow_new_risk = allow_new_risk and allow_live_capital

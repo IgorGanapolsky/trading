@@ -4,12 +4,39 @@ Structured Pre-Tool Validator Gate.
 Validates all incoming tool arguments, required parameters, and types BEFORE
 tool execution. Rejects malformed arguments early to save token overhead and
 prevent downstream runtime exceptions.
+
+Production rule: money-moving tool names FAIL CLOSED when unregistered.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
+
+# Unregistered tools that can move money / alter risk → reject (fail-closed).
+FAIL_CLOSED_TOOL_PREFIXES: tuple[str, ...] = (
+    "execute_",
+    "place_",
+    "submit_",
+    "close_",
+    "liquidat",
+    "cancel_order",
+    "transfer_",
+    "withdraw",
+)
+
+FAIL_CLOSED_TOOL_NAMES: frozenset[str] = frozenset(
+    {
+        "execute_trade",
+        "place_order",
+        "submit_order",
+        "close_position",
+        "close_all_positions",
+        "liquidat_positions",
+        "cancel_order",
+        "cancel_all_orders",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -43,6 +70,13 @@ class PreToolValidator:
     }
 
     @classmethod
+    def _is_money_tool(cls, tool_name: str) -> bool:
+        name = (tool_name or "").strip().lower()
+        if name in FAIL_CLOSED_TOOL_NAMES:
+            return True
+        return any(name.startswith(p) or p in name for p in FAIL_CLOSED_TOOL_PREFIXES)
+
+    @classmethod
     def validate_tool_call(cls, tool_name: str, tool_input: dict[str, Any]) -> ValidationResult:
         """Validates tool call input against registered parameter schemas."""
         errors: list[str] = []
@@ -51,7 +85,16 @@ class PreToolValidator:
 
         schema = cls.REQUIRED_SCHEMAS.get(tool_name)
         if not schema:
-            # Unregistered tools pass validation by default
+            # Fail-closed for money tools; advisory tools may pass unregistered.
+            if cls._is_money_tool(tool_name):
+                return ValidationResult(
+                    is_valid=False,
+                    errors=[
+                        f"FAIL_CLOSED: unregistered money-moving tool '{tool_name}' "
+                        "requires an explicit schema before execution"
+                    ],
+                    normalized_input={},
+                )
             return ValidationResult(is_valid=True, errors=[], normalized_input=tool_input)
 
         # Check required fields

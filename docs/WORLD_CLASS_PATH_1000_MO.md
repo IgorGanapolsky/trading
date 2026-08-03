@@ -28,6 +28,29 @@ World-class is **not** more frameworks. It is:
 4. **Inventory hygiene** before new risk
 5. **Live capital only after edge**
 6. **Boring repetition** at 1-lot, then scale size — never scale a PF&lt;1 process
+7. **LLM/RAG production plane A+** (latency/cost, observability, fail-closed modes,
+   structured validation, operator document ACL, no heavy frameworks) — process only;
+   it does **not** print dollars
+
+### LLM/RAG A+ control plane (process)
+
+```bash
+python3 -c "from src.observability.llm_production_control_plane import evaluate_llm_production_control_plane; \
+r=evaluate_llm_production_control_plane(); print(r.overall_grade, r.overall_score_0_10, r.a_plus_ready)"
+python3 scripts/world_class_production_scorecard.py
+```
+
+| Dimension            | Contract                                                                 |
+| -------------------- | ------------------------------------------------------------------------ |
+| latency_cost_control | ModelSelector tiers, RAG LRU cache wired, deterministic order path       |
+| observability        | route report, token monitor, retrieval JSONL scores, eval module         |
+| failure_modes        | empty_index fail-closed, gate modes, CRITICAL lesson blocks, kill switch |
+| structured_outputs   | Pydantic decisions, PreToolValidator fail-closed for money tools         |
+| multi_tenancy_acl    | single-operator + document sensitivity + secret scrub                    |
+| framework_discipline | no LangChain/LangGraph/LlamaIndex on money path                          |
+
+**Hard truth:** LLM plane A+ + ops A+ with put-credit n&lt;30 still means **overall cash engine is not A+**.
+`$1,000/mo after-tax` requires EDGE_CANDIDATE then funded live. Do not confuse planes.
 
 ## Math for $1,000/mo after-tax (requirements, not forecasts)
 

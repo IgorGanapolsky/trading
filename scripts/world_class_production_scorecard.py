@@ -355,6 +355,37 @@ def build_world_class_card() -> dict[str, Any]:
         production_gate_view = {"error": str(exc)}
         dims.append(_dim("production_control_plane", 0.0, f"error={exc}", str(exc)))
 
+    # LLM / RAG production control plane (process maturity — never prints as profit)
+    llm_plane_view: dict[str, Any] = {}
+    try:
+        from src.observability.llm_production_control_plane import (
+            evaluate_llm_production_control_plane,
+        )
+
+        llm_plane = evaluate_llm_production_control_plane()
+        llm_plane_view = llm_plane.to_dict()
+        for d in llm_plane.dimensions:
+            dims.append(
+                _dim(
+                    f"llm_{d.name}",
+                    d.score_0_10,
+                    "; ".join(d.evidence[:4]) or d.name,
+                    ",".join(d.gaps) if d.gaps else None,
+                )
+            )
+        dims.append(
+            _dim(
+                "llm_production_overall",
+                llm_plane.overall_score_0_10,
+                f"grade={llm_plane.overall_grade} a_plus_ready={llm_plane.a_plus_ready} | "
+                f"{llm_plane.cash_engine_note[:120]}",
+                None if llm_plane.a_plus_ready else "not all six dims ≥9.0",
+            )
+        )
+    except Exception as exc:  # noqa: BLE001
+        llm_plane_view = {"error": str(exc)}
+        dims.append(_dim("llm_production_overall", 0.0, f"error={exc}", str(exc)))
+
     avg = sum(d["score_0_10"] for d in dims) / max(len(dims), 1)
 
     # Priority actions — process, not fantasy
@@ -454,6 +485,7 @@ def build_world_class_card() -> dict[str, Any]:
             ),
         },
         "production_gate": production_gate_view,
+        "llm_production_plane": llm_plane_view,
         "priority_actions": actions,
         "world_class_definition": {
             "not_this": [

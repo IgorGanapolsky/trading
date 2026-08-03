@@ -476,9 +476,18 @@ def quality_gate(content: str) -> tuple[bool, str]:
       - A severity marker (critical/high/medium/low/P0-P3)
       - At least one prevention/action/solution section
       - At least 50 characters of substantive content
+      - No secret-like material (document ACL)
     """
     if not content or len(content.strip()) < 50:
         return False, "content too short (< 50 chars)"
+
+    try:
+        from src.rag.document_acl import detect_secrets
+
+        if detect_secrets(content):
+            return False, "secret-like material refused for RAG index"
+    except ImportError:
+        pass
 
     content_lower = content.lower()
     if not _REQUIRED_SEVERITY_PATTERN.search(content):
@@ -1064,12 +1073,20 @@ class GateDecision:
     """Deterministic gate decision for a tool call."""
 
     approved: bool
-    severity: str  # "APPROVED", "WARN", "BLOCK"
+    severity: str  # "APPROVED", "WARN", "BLOCK", "DEGRADED"
     reason: str
     blocking_lessons: list[str]
     warning_lessons: list[str]
     top_score: float
+    mode: str = "advisory"
+    empty_index: bool = False
 
+
+# Gate modes:
+# - advisory: empty hits OK (block only on matching CRITICAL/HIGH)
+# - safety: empty *index* blocks; empty hits WARN (degraded consult)
+# - strict: empty index or empty hits → BLOCK (require knowledge consult)
+GateMode = str  # advisory | safety | strict
 
 # Default thresholds — deterministic, no LLM involved
 _BLOCK_THRESHOLD_CRITICAL: float = 0.50
@@ -1091,23 +1108,76 @@ _CE_OOD_THRESHOLD: float = 0.10
 _MULTI_QUERY_THRESHOLD: float = 0.55
 
 
-def gate_decision(top_lessons: list[tuple[LessonResult, float]]) -> GateDecision:
+def gate_decision(
+    top_lessons: list[tuple[LessonResult, float]],
+    *,
+    mode: GateMode = "advisory",
+    index_size: int | None = None,
+) -> GateDecision:
     """Deterministically gate a tool call based on retrieved lesson scores and severity.
 
     Rules (deterministic, threshold-based):
+      - empty_index + safety/strict → BLOCK (fail-closed knowledge base)
+      - empty hits + strict → BLOCK
+      - empty hits + safety → WARN/DEGRADED (approved only in advisory)
       - CRITICAL + score > 0.50 → BLOCK
       - HIGH    + score > 0.70 → BLOCK
       - CRITICAL/HIGH + score > 0.15 → WARN (soft)
       - Otherwise → APPROVED
+
+    ``mode``:
+      - advisory: default trade consult — empty hits mean no matching risk lesson
+      - safety: used for pre-trade knowledge gates — empty index is fatal
+      - strict: require at least one hit and a healthy index
     """
+    mode_norm = (mode or "advisory").strip().lower()
+    empty_index = index_size is not None and index_size <= 0
+
+    if empty_index:
+        approved = mode_norm == "advisory"
+        return GateDecision(
+            approved=approved,
+            severity="BLOCK" if not approved else "DEGRADED",
+            reason="empty_index: RAG knowledge base has zero lessons loaded",
+            blocking_lessons=[] if approved else ["EMPTY_RAG_INDEX"],
+            warning_lessons=["EMPTY_RAG_INDEX"] if approved else [],
+            top_score=0.0,
+            mode=mode_norm,
+            empty_index=True,
+        )
+
     if not top_lessons:
+        if mode_norm == "strict":
+            return GateDecision(
+                approved=False,
+                severity="BLOCK",
+                reason="strict mode: no retrieval hits (retrieval miss fail-closed)",
+                blocking_lessons=["RETRIEVAL_MISS"],
+                warning_lessons=[],
+                top_score=0.0,
+                mode=mode_norm,
+                empty_index=False,
+            )
+        if mode_norm == "safety":
+            return GateDecision(
+                approved=True,
+                severity="DEGRADED",
+                reason="safety mode: no matching lessons (index present; consult degraded)",
+                blocking_lessons=[],
+                warning_lessons=["RETRIEVAL_MISS_DEGRADED"],
+                top_score=0.0,
+                mode=mode_norm,
+                empty_index=False,
+            )
         return GateDecision(
             approved=True,
             severity="APPROVED",
-            reason="No relevant lessons found.",
+            reason="No matching lessons (index consulted; no CRITICAL hit).",
             blocking_lessons=[],
             warning_lessons=[],
             top_score=0.0,
+            mode=mode_norm,
+            empty_index=False,
         )
 
     blocking: list[str] = []
@@ -1118,12 +1188,10 @@ def gate_decision(top_lessons: list[tuple[LessonResult, float]]) -> GateDecision
         max_score = max(max_score, score)
         sev = lesson.severity.upper()
 
-        if (
-            sev == "CRITICAL"
-            and score > _BLOCK_THRESHOLD_CRITICAL
-            or sev == "HIGH"
-            and score > _BLOCK_THRESHOLD_HIGH
-        ):
+        should_block = (sev == "CRITICAL" and score > _BLOCK_THRESHOLD_CRITICAL) or (
+            sev == "HIGH" and score > _BLOCK_THRESHOLD_HIGH
+        )
+        if should_block:
             blocking.append(f"[{sev}] {lesson.title} (score={score:.2f})")
         elif sev in ("CRITICAL", "HIGH") and score > _WARN_THRESHOLD:
             warnings.append(f"[{sev}] {lesson.title} (score={score:.2f})")
@@ -1136,6 +1204,8 @@ def gate_decision(top_lessons: list[tuple[LessonResult, float]]) -> GateDecision
             blocking_lessons=blocking,
             warning_lessons=warnings,
             top_score=max_score,
+            mode=mode_norm,
+            empty_index=False,
         )
 
     if warnings:
@@ -1146,6 +1216,8 @@ def gate_decision(top_lessons: list[tuple[LessonResult, float]]) -> GateDecision
             blocking_lessons=[],
             warning_lessons=warnings,
             top_score=max_score,
+            mode=mode_norm,
+            empty_index=False,
         )
 
     return GateDecision(
@@ -1155,6 +1227,8 @@ def gate_decision(top_lessons: list[tuple[LessonResult, float]]) -> GateDecision
         blocking_lessons=[],
         warning_lessons=[],
         top_score=max_score,
+        mode=mode_norm,
+        empty_index=False,
     )
 
 
@@ -1182,6 +1256,13 @@ class TradingRAGPipeline:
         self._reranker = RAGEReranker()
         self._lessons_cache: list[dict[str, Any]] = []
         self._cache_loaded = False
+        # Latency control: LRU query cache (embedding/search results)
+        try:
+            from src.rag.rag_cache import RAGQueryCache
+
+            self._query_cache: Any = RAGQueryCache(capacity=128, ttl_seconds=300.0)
+        except ImportError:
+            self._query_cache = None
 
     # -- Stage 1: Capture --> normalize --> quality-gate --> store (SQLite FTS5) --
 
@@ -1250,6 +1331,11 @@ class TradingRAGPipeline:
         if not self._lessons_cache and self.lessons_dir:
             self.index_from_markdown_dir(self.lessons_dir)
 
+    def index_size(self) -> int:
+        """Number of lessons currently loadable from the store/cache."""
+        self._ensure_loaded()
+        return len(self._lessons_cache)
+
     def index_from_markdown_dir(self, lessons_dir: str | Path) -> int:
         """Load all markdown lessons from a directory into SQLite FTS5."""
         path = Path(lessons_dir)
@@ -1257,9 +1343,20 @@ class TradingRAGPipeline:
             logger.warning("Lessons directory not found: %s", path)
             return 0
 
+        try:
+            from src.rag.document_acl import detect_secrets, scrub_secrets
+        except ImportError:
+            scrub_secrets = None  # type: ignore[assignment]
+            detect_secrets = None  # type: ignore[assignment]
+
         records: list[LessonRecord] = []
         for f in sorted(path.glob("*.md")):
             content = f.read_text(encoding="utf-8", errors="ignore")
+            if detect_secrets is not None and detect_secrets(content):
+                logger.warning("Skipping lesson with secret-like material: %s", f.name)
+                continue
+            if scrub_secrets is not None:
+                content = scrub_secrets(content)
             record = parse_lesson_markdown(content, lesson_id=f.stem)
             record = LessonRecord(
                 lesson_id=record.lesson_id,
@@ -1447,8 +1544,37 @@ class TradingRAGPipeline:
     ) -> list[tuple[LessonResult, float]]:
         """Search interface compatible with gates.py and main.py.
 
-        Returns list of (LessonResult, score) tuples.
+        Returns list of (LessonResult, score) tuples. Uses RAGQueryCache when available.
         """
+        import time as _time
+
+        cache_key = f"{query.strip().lower()}::{top_k}::{severity_filter or ''}"
+        t0 = _time.perf_counter()
+        cache_hit = False
+        if self._query_cache is not None:
+            cached = self._query_cache.get(cache_key)
+            if cached is not None:
+                cache_hit = True
+                results = cached
+                latency_ms = (_time.perf_counter() - t0) * 1000.0
+                try:
+                    from src.rag.retrieval_telemetry import record_retrieval_event
+
+                    record_retrieval_event(
+                        query=query,
+                        hit_count=len(results),
+                        top_score=float(results[0][1]) if results else 0.0,
+                        top_ids=[r[0].id for r in results[:5]],
+                        top_k=top_k,
+                        latency_ms=latency_ms,
+                        index_size=self.index_size(),
+                        empty_index=self.index_size() == 0,
+                        cache_hit=True,
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    logger.debug("retrieval telemetry skipped: %s", exc)
+                return results
+
         raw = self.query(query, top_k=top_k, severity_filter=severity_filter)
         results: list[tuple[LessonResult, float]] = []
         for item in raw:
@@ -1462,6 +1588,27 @@ class TradingRAGPipeline:
                 score=item["score"],
             )
             results.append((lesson, item["score"]))
+
+        latency_ms = (_time.perf_counter() - t0) * 1000.0
+        if self._query_cache is not None and not cache_hit:
+            self._query_cache.put(cache_key, results, latency_ms=latency_ms)
+
+        try:
+            from src.rag.retrieval_telemetry import record_retrieval_event
+
+            record_retrieval_event(
+                query=query,
+                hit_count=len(results),
+                top_score=float(results[0][1]) if results else 0.0,
+                top_ids=[r[0].id for r in results[:5]],
+                top_k=top_k,
+                latency_ms=latency_ms,
+                index_size=self.index_size(),
+                empty_index=self.index_size() == 0,
+                cache_hit=False,
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("retrieval telemetry skipped: %s", exc)
         return results
 
     def retrieve_and_gate(
@@ -1470,13 +1617,33 @@ class TradingRAGPipeline:
         top_k: int = 5,
         *,
         severity_filter: str | None = None,
+        mode: GateMode = "safety",
     ) -> tuple[list[tuple[LessonResult, float]], GateDecision, str]:
         """Full pipeline: retrieve → assemble context → deterministic gate.
 
-        Returns (results, gate_decision, context_string).
+        Default mode is ``safety`` (empty index fail-closed). Use ``advisory`` for
+        soft consults. Returns (results, gate_decision, context_string).
         """
         results = self.search(query, top_k=top_k, severity_filter=severity_filter)
-        decision = gate_decision(results)
+        decision = gate_decision(results, mode=mode, index_size=self.index_size())
+
+        try:
+            from src.rag.retrieval_telemetry import record_retrieval_event
+
+            record_retrieval_event(
+                query=query,
+                hit_count=len(results),
+                top_score=decision.top_score,
+                top_ids=[r[0].id for r in results[:5]],
+                top_k=top_k,
+                mode=mode,
+                index_size=self.index_size(),
+                empty_index=decision.empty_index,
+                gate_severity=decision.severity,
+                gate_approved=decision.approved,
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("retrieval telemetry skipped: %s", exc)
 
         # Assemble context
         context_parts = []
