@@ -1524,7 +1524,9 @@ class TradeGateway:
                 }
                 metadata["rag_context"] = rag_context[:2000]
         except Exception as rag_exc:
-            logger.warning("Defended RAG path failed (%s); falling back to LessonsLearnedRAG", rag_exc)
+            logger.warning(
+                "Defended RAG path failed (%s); falling back to LessonsLearnedRAG", rag_exc
+            )
             rag_lessons = self.rag.query(query_terms, top_k=5)
 
         # Only consider CRITICAL lessons that specifically mention THIS ticker

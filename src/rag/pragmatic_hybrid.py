@@ -52,9 +52,7 @@ DOMAIN_EXPANSIONS: dict[str, list[str]] = {
 
 def tokenize(text: str) -> list[str]:
     return [
-        t
-        for t in re.split(r"[^a-z0-9_\-]+", (text or "").lower())
-        if len(t) > 2 and t not in STOP
+        t for t in re.split(r"[^a-z0-9_\-]+", (text or "").lower()) if len(t) > 2 and t not in STOP
     ]
 
 
@@ -187,9 +185,7 @@ def build_query_variants(query: str, *, max_variants: int = 3) -> list[str]:
     focused_terms = [t for t in tokenize(original) if len(t) >= 3][:12]
     focused_terms.extend(expansions[:4])
     if focused_terms:
-        variants.append(
-            "trading failure prevention " + " ".join(dict.fromkeys(focused_terms))
-        )
+        variants.append("trading failure prevention " + " ".join(dict.fromkeys(focused_terms)))
     # Dedupe preserve order
     out: list[str] = []
     seen: set[str] = set()
