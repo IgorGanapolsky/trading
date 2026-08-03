@@ -19,11 +19,68 @@ from typing import Any, Optional
 logger = logging.getLogger(__name__)
 
 CATEGORIES = {
-    "risk": ["stop", "drawdown", "loss", "circuit", "halt", "kill", "sizing", "lot"],
-    "options": ["delta", "dte", "put", "call", "credit", "condor", "spread", "vix"],
-    "execution": ["order", "fill", "gateway", "alpaca", "close", "orphan", "inventory"],
-    "ops": ["ci", "deploy", "workflow", "rag", "lancedb", "sync"],
+    "risk": [
+        "stop",
+        "drawdown",
+        "loss",
+        "circuit",
+        "halt",
+        "kill",
+        "sizing",
+        "lot",
+        "5pct",
+        "accumulation",
+        "aggregate",
+    ],
+    "options": [
+        "delta",
+        "dte",
+        "put",
+        "call",
+        "credit",
+        "condor",
+        "spread",
+        "vix",
+        "iron",
+        "entry",
+        "exit",
+    ],
+    "execution": [
+        "order",
+        "fill",
+        "gateway",
+        "alpaca",
+        "close",
+        "orphan",
+        "inventory",
+        "api",
+        "bug",
+        "workflow",
+        "submit",
+    ],
+    "ops": ["ci", "deploy", "workflow", "rag", "lancedb", "sync", "webhook"],
+    "ticker_risk": ["sofi", "pdt", "blackout", "blocked", "blacklist", "spy-only"],
+    "tax": ["tax", "xsp", "1256", "section"],
 }
+
+# Minimum combined score for a result to survive OOD rejection
+OOD_MIN_COMBINED = 0.20
+# Queries without strong trading anchors require a higher bar (OOD rejection)
+OOD_MIN_COMBINED_WEAK_QUERY = 0.55
+OOD_MIN_HEURISTIC_WEAK = 0.45
+
+# Strong trading anchors only — avoid bare "trade/options/hedging" which match OOD
+# phrases like "quantum gravity trade" or "options traders on mars".
+_TRADING_QUERY_HINTS = re.compile(
+    r"\b(spy|xsp|spx|qqq|iwm|sofi|alpaca|iron\s*condor|\bic\b|put\s*credit|"
+    r"credit\s*spread|bull\s*put|cash\s*secured|15\s*delta|7\s*dte|0\s*dte|"
+    r"\bdte\b|\bdelta\b|\bvix\b|\bpdt\b|drawdown|lancedb|rag\s*webhook|"
+    r"section\s*1256|north\s*star|financial\s*independence|position\s*sizing|"
+    r"close_position|close\s*position|orphan\s*(leg|put|inventory)|win\s*rate|"
+    r"profit\s*factor|trade\s*gateway|submit_order|mleg|xsp\s*tax|"
+    r"entry\s*signals?|exit\s*strateg|webhook|iron\s*condor)\b",
+    re.IGNORECASE,
+)
 
 
 def _clamp01(value: float) -> float:
@@ -185,12 +242,17 @@ def llm_listwise_rerank(
         return None
 
 
+def is_trading_domain_query(query: str) -> bool:
+    return bool(_TRADING_QUERY_HINTS.search(query or ""))
+
+
 def rerank_candidates(
     query: str,
     candidates: list[dict[str, Any]],
     *,
     top_k: int = 5,
     use_llm: bool | None = None,
+    ood_reject: bool = True,
 ) -> list[dict[str, Any]]:
     if not candidates:
         return []
@@ -234,7 +296,7 @@ def rerank_candidates(
             **cand,
             "pairwiseHeuristicScore": heuristic[i],
             "llmRerankScore": llm_scores[i] if llm_scores is not None else None,
-            "crossEncoderScore": None,  # no neural CE shipped by default
+            "crossEncoderScore": None,  # neural CE optional; heuristic is the default
             "combinedScore": round(combined, 6),
             "score": round(combined, 6),
             "relevanceScore": round(combined, 6),
@@ -246,4 +308,21 @@ def rerank_candidates(
         out.append(row)
 
     out.sort(key=lambda x: x["combinedScore"], reverse=True)
+
+    if ood_reject and out:
+        max_h = max(float(r.get("pairwiseHeuristicScore") or 0.0) for r in out)
+        max_c = float(out[0].get("combinedScore") or 0.0)
+        domain = is_trading_domain_query(query)
+        floor = OOD_MIN_COMBINED if domain else OOD_MIN_COMBINED_WEAK_QUERY
+        # Non-trading queries: hard reject (do not inject random lessons into gates)
+        if not domain:
+            return []
+        # Hard reject: weak pairwise + weak combined (classic OOD / garbage)
+        if max_h < 0.18 and max_c < floor:
+            return []
+        # Soft filter: drop tail noise below floor * 0.85
+        out = [r for r in out if float(r.get("combinedScore") or 0.0) >= floor * 0.85]
+        if not out:
+            return []
+
     return out[:top_k]

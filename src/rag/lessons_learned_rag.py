@@ -301,10 +301,12 @@ class LessonsLearnedRAG:
                     severity_filter=severity_filter,
                     use_llm_rerank=False,  # keep query path deterministic/offline
                 )
-                if result.lessons:
-                    self.last_source = "defended"
-                    self.last_retrieve_meta = result.meta
-                    return result.lessons
+                # Always honor defended path when it succeeds — including empty
+                # results (OOD rejection). Falling through would re-introduce
+                # keyword false positives and defeat the A+ OOD gate.
+                self.last_source = "defended"
+                self.last_retrieve_meta = result.meta or {}
+                return result.lessons
             except Exception as e:
                 logger.warning("Defended retrieve_for_trade failed: %s — falling back", e)
 

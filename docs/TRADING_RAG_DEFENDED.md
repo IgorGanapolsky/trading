@@ -52,8 +52,46 @@ python scripts/evaluate_rag.py --verbose
 | `TRADING_RAG_SKIP_FTS_ENSURE` | unset   | Skip auto-backfill on first query                |
 | `LANCEDB_RAG`                 | `true`  | Legacy vector path (used only if defended fails) |
 
+## A+ quality gates (measured)
+
+Run:
+
+```bash
+python scripts/evaluate_rag.py --k 5 --include-unanswerable
+```
+
+**Targets (all required for grade A+):**
+
+| Gate                    | Target |
+| ----------------------- | ------ |
+| Precision@5             | ≥ 0.40 |
+| Recall@5                | ≥ 0.60 |
+| MRR                     | ≥ 0.50 |
+| nDCG@5                  | ≥ 0.55 |
+| Unanswerable accuracy   | ≥ 0.80 |
+| OOD false-positive rate | ≤ 0.20 |
+
+**Evidence (AGENT-40, 2026-08-03, 172 lessons, offline heuristic CE):**
+
+| Metric       | Value    |
+| ------------ | -------- |
+| P@5          | **0.56** |
+| R@5          | **0.72** |
+| MRR          | **0.95** |
+| nDCG@5       | **0.75** |
+| OOD accuracy | **1.00** |
+| OOD FPR      | **0.00** |
+
+OOD rejection is hard: non-trading queries return **empty** from `retrieve_for_trade`, and `LessonsLearnedRAG.query()` does **not** fall through to keyword search on empty defended results (that fallthrough caused 67% FPR).
+
+Gold lesson IDs are **corpus-aligned** (stale renamed lessons were removed from the eval set).
+
 ## Tests
 
 ```bash
 pytest tests/test_retrieve_for_trade.py tests/test_lessons_learned_rag_smoke.py -q
 ```
+
+## Honest scope
+
+World-class RAG improves **operator memory and safety context**. It does **not** by itself produce $1k/mo after-tax profit. Edge still requires put-credit cohort gates (n≥30, expectancy>0, PF>1) on paper before live capital.

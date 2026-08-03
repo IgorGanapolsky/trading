@@ -252,3 +252,35 @@ def test_defended_path_retrieves_sizing_lesson(tmp_db: Path, knowledge_dir: Path
     )
     assert res.lessons
     assert any("999" in str(x.get("id")) for x in res.lessons)
+
+
+def test_ood_queries_return_empty(tmp_db: Path, knowledge_dir: Path):
+    """Out-of-domain queries must not inject random lessons into trade gates."""
+    from src.rag.cross_encoder_rerank import is_trading_domain_query
+
+    ensure_index(tmp_db, knowledge_dir, force=True)
+    ood = [
+        "quantum gravity trade execution protocol",
+        "mars colony funding strategy for options traders",
+        "dinosaur extinction hedging playbook",
+    ]
+    for q in ood:
+        assert is_trading_domain_query(q) is False
+        res = retrieve_for_trade(
+            q,
+            top_k=5,
+            db_path=tmp_db,
+            knowledge_dir=knowledge_dir,
+            ensure_fts=False,
+            use_llm_rerank=False,
+        )
+        assert res.lessons == [], f"OOD leak for query={q!r}: {res.lessons}"
+
+
+def test_domain_query_detector_positive():
+    from src.rag.cross_encoder_rerank import is_trading_domain_query
+
+    assert is_trading_domain_query("iron condor exit strategy")
+    assert is_trading_domain_query("position sizing error")
+    assert is_trading_domain_query("SOFI blocked trading")
+    assert is_trading_domain_query("close position API bug")
