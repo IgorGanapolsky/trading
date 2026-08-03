@@ -12,7 +12,7 @@ import logging
 import re
 import sqlite3
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Optional
 
@@ -166,7 +166,7 @@ def parse_markdown_lesson(path: Path) -> LessonRow | None:
         prevention=prevention,
         tags=tags,
         source_path=str(path),
-        updated_at=datetime.now(timezone.utc).isoformat(),
+        updated_at=datetime.now(UTC).isoformat(),
     )
 
 
@@ -216,7 +216,7 @@ def upsert_feedback_lesson(
         prevention=prevention[:2000],
         tags=list(tags or ["feedback", "negative"]),
         source_path="feedback",
-        updated_at=datetime.now(timezone.utc).isoformat(),
+        updated_at=datetime.now(UTC).isoformat(),
     )
     upsert_lesson(conn, row)
     return row
@@ -281,7 +281,7 @@ def search_fts(
             tags = json.loads(row["tags_json"] or "[]")
         except json.JSONDecodeError:
             tags = []
-        rank = float(row["rank"]) if "rank" in row.keys() else 0.0
+        rank = float(row["rank"]) if "rank" in row else 0.0
         # bm25: lower is better; convert to a 0..1-ish score for fusion.
         score = 1.0 / (1.0 + max(0.0, rank + 10.0)) if rank else 0.5
         out.append(
