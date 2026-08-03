@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.analytics.statistical_edge import calculate_edge_statistics  # noqa: E402
+from src.analytics.statistical_edge import calculate_edge_statistics, to_json_safe  # noqa: E402
 
 DEFAULT_TRADES = ROOT / "data" / "trades.json"
 DEFAULT_ENTRIES = ROOT / "data" / "put_credit_entries.json"
@@ -360,10 +360,14 @@ def main() -> int:
 
     card = build_scorecard()
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps(card, indent=2) + "\n", encoding="utf-8")
+    safe_card = to_json_safe(card)
+    args.out.write_text(
+        json.dumps(safe_card, indent=2, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
 
     if args.json:
-        print(json.dumps(card, indent=2))
+        print(json.dumps(safe_card, indent=2, allow_nan=False))
         return 0
 
     closed = card["closed"]

@@ -5,9 +5,7 @@ from __future__ import annotations
 import math
 import statistics
 from dataclasses import asdict, dataclass
-from typing import Iterable
-
-MAX_REPORTED_PROFIT_FACTOR = 999.99
+from typing import Any, Iterable
 
 
 @dataclass(frozen=True)
@@ -37,6 +35,25 @@ def _finite_pnls(values: Iterable[float]) -> list[float]:
         if math.isfinite(parsed):
             result.append(parsed)
     return result
+
+
+def to_json_safe(value: Any) -> Any:
+    """Return a standards-compliant JSON view without changing metric math.
+
+    Profit factor is mathematically infinite when a non-empty sample has no
+    losing trades. JSON has no numeric infinity literal, so serialization
+    boundaries encode it explicitly as a string while in-process analytics
+    retain ``math.inf`` for comparisons and golden-answer tests.
+    """
+    if isinstance(value, float) and not math.isfinite(value):
+        if math.isnan(value):
+            return None
+        return "Infinity" if value > 0 else "-Infinity"
+    if isinstance(value, dict):
+        return {key: to_json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [to_json_safe(item) for item in value]
+    return value
 
 
 def closed_trade_max_drawdown(pnls: Iterable[float]) -> float:
@@ -76,12 +93,7 @@ def calculate_edge_statistics(pnls: Iterable[float]) -> EdgeStatistics:
         upper = mean + margin
     gross_profit = sum(wins)
     gross_loss = abs(sum(losses))
-    # JSON has no Infinity literal. A high finite reporting cap keeps service,
-    # artifact, and jq consumers standards-compliant while the separate loss
-    # count preserves the reason for the cap.
-    profit_factor = (
-        gross_profit / gross_loss if gross_loss else (MAX_REPORTED_PROFIT_FACTOR if wins else None)
-    )
+    profit_factor = gross_profit / gross_loss if gross_loss else (math.inf if wins else None)
     return EdgeStatistics(
         sample_size=n,
         wins=len(wins),

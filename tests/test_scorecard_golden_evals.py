@@ -10,9 +10,11 @@ go-live decision.
 
 from __future__ import annotations
 
+import json
 import random
 
 from scripts.put_credit_cohort_scorecard import summarize_closed
+from src.analytics.statistical_edge import to_json_safe
 
 
 def _row(
@@ -59,6 +61,8 @@ class TestGoldenAnswers:
         out = summarize_closed(rows)
         assert out["profit_factor"] == float("inf")
         assert out["win_rate_pct"] == 100.0
+        serialized = json.dumps(to_json_safe(out), allow_nan=False)
+        assert json.loads(serialized)["profit_factor"] == "Infinity"
 
     def test_empty_input_yields_zero_sample_not_fabrication(self):
         out = summarize_closed([])

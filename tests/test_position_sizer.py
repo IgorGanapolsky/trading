@@ -1,10 +1,12 @@
+import math
+
 from src.analytics.statistical_edge import calculate_edge_statistics
 from src.execution.position_sizer import DynamicPositionSizer
 
 
-def test_all_wins_use_finite_json_safe_profit_factor():
+def test_all_wins_keep_mathematical_profit_factor_in_process():
     stats = calculate_edge_statistics([25.0] * 100)
-    assert stats.profit_factor == 999.99
+    assert stats.profit_factor is not None and math.isinf(stats.profit_factor)
 
 
 def test_position_sizer_zero_balance():

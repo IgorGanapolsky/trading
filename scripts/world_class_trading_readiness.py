@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.analytics.statistical_edge import required_pretax_monthly  # noqa: E402
+from src.analytics.statistical_edge import required_pretax_monthly, to_json_safe  # noqa: E402
 from src.bank.live_gate import evaluate_live_bank_gate  # noqa: E402
 from src.bank.remittance import (  # noqa: E402
     DEFAULT_SHORT_TERM_TAX_RATE,
@@ -84,7 +84,10 @@ def build_readiness(
     with tempfile.TemporaryDirectory(prefix="world-class-trading-") as temporary:
         temp_root = Path(temporary)
         cohort_path = temp_root / "cohort.json"
-        cohort_path.write_text(json.dumps(cohort, allow_nan=False), encoding="utf-8")
+        cohort_path.write_text(
+            json.dumps(to_json_safe(cohort), allow_nan=False),
+            encoding="utf-8",
+        )
         live_gate = evaluate_live_bank_gate(cohort_path=cohort_path)
 
         pipeline = TradingRAGPipeline(
@@ -239,7 +242,7 @@ def main() -> int:
     args = parser.parse_args()
     report = build_readiness(include_rag_eval=not args.skip_rag_eval)
     if args.json:
-        print(json.dumps(report, indent=2, allow_nan=False))
+        print(json.dumps(to_json_safe(report), indent=2, allow_nan=False))
     else:
         print("=== WORLD-CLASS TRADING READINESS ===")
         print(json.dumps(report["verdicts"], indent=2))
