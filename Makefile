@@ -5,7 +5,7 @@ VENV_PYTHON := $(VENV)/bin/python
 TRADING_ENV ?= paper
 export TRADING_ENV
 
-.PHONY: setup lint ruff format test coverage audit security health skill-check check dry-run hygiene
+.PHONY: setup lint ruff format test coverage audit security health skill-check check dry-run hygiene production-scorecard
 
 setup:
 	$(PYTHON) -m venv $(VENV)

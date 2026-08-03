@@ -299,12 +299,17 @@ def build_scorecard(
             "claim_profitable": False
             if closed["closed_n"] < KILL_N
             else bool(closed["kill_criteria"].get("pass_all")),
-            "live_deposit_ready": False,
+            # True only when full kill gate passes — never on partial n.
+            "live_deposit_ready": bool(
+                closed["kill_criteria"].get("verdict") == "EDGE_CANDIDATE"
+                and closed["kill_criteria"].get("pass_all") is True
+            ),
             "note": (
                 "Do not claim profitability or deposit real capital until kill_criteria.verdict "
                 f"is EDGE_CANDIDATE (n>={KILL_N}, expectancy>0, PF>1, total PnL>0). "
                 "Process upgrades (regime gate, logging) improve validation quality only — "
-                "they do not create edge."
+                "they do not create edge. Near-term cash goal $1000/mo after-tax still "
+                "requires EDGE_CANDIDATE then live capital; paper equity alone is not income."
             ),
         },
         "process_upgrades": {
