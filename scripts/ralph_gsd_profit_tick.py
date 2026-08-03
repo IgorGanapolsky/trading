@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import subprocess  # nosec B404 — fixed local scripts only
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -142,7 +142,7 @@ def _world_class_summary(card: dict[str, Any]) -> dict[str, Any]:
 def main() -> int:
     py = ROOT / ".venv" / "bin" / "python"
     python = str(py if py.is_file() else Path(sys.executable))
-    ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H%M%SZ")
+    ts = datetime.now(UTC).strftime("%Y-%m-%dT%H%M%SZ")
     out_dir = ROOT / "data" / "audit" / "ralph_ticks"
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -181,9 +181,9 @@ def main() -> int:
     else:
         production_gate.setdefault("source", "evaluate_production_gate")
 
-    gate_present = production_gate.get("grade") is not None or production_gate.get(
-        "score_0_10"
-    ) is not None
+    gate_present = (
+        production_gate.get("grade") is not None or production_gate.get("score_0_10") is not None
+    )
 
     gsd: dict[str, Any] = {
         "milestone": "v2.0-put-credit-edge",
@@ -201,9 +201,7 @@ def main() -> int:
         )
         gsd["production_control_plane"] = True
     else:
-        gsd["phase_note"] = (
-            "phase 2 put-credit edge path; production gate unavailable this tick"
-        )
+        gsd["phase_note"] = "phase 2 put-credit edge path; production gate unavailable this tick"
         gsd["production_control_plane"] = False
 
     report = {
@@ -284,7 +282,7 @@ def main() -> int:
             "goal": "put_credit_edge_proof_n30",
             "iteration": int(prev.get("iteration") or 0) + 1,
             "max_iterations": int(prev.get("max_iterations") or 10_000),
-            "last_tick_at": datetime.now(timezone.utc).isoformat(),
+            "last_tick_at": datetime.now(UTC).isoformat(),
             "last_tick_report": str(report_path),
             "claim_profitable": False,
             "status": "running",

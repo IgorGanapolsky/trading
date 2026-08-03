@@ -150,7 +150,9 @@ def test_tick_includes_regime_gsd_and_production_fields(tmp_path, monkeypatch):
     assert report["gsd"]["phase"] == 2
     assert report["gsd"]["production_control_plane"] is True
     assert "production control plane" in report["gsd"]["phase_note"]
-    assert "profitability claim" in report["honesty"] or "no profitability claim" in report["honesty"]
+    assert (
+        "profitability claim" in report["honesty"] or "no profitability claim" in report["honesty"]
+    )
     assert "paper" in report["honesty"]
 
     ralph = json.loads((root / ".claude" / "ralph" / "state.json").read_text())
@@ -186,7 +188,10 @@ def test_tick_degrades_when_production_gate_import_fails(tmp_path, monkeypatch):
                 "rc": 0,
                 "stdout_tail": json.dumps(
                     {
-                        "closed": {"closed_n": 0, "kill_criteria": {"verdict": "INSUFFICIENT_SAMPLE"}},
+                        "closed": {
+                            "closed_n": 0,
+                            "kill_criteria": {"verdict": "INSUFFICIENT_SAMPLE"},
+                        },
                         "open": {"open_n": 0},
                         "progress": {"pct_to_gate": 0.0},
                         "honesty": {"claim_profitable": False, "live_deposit_ready": False},

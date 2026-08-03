@@ -45,9 +45,11 @@ class LessonsLearnedRAG:
         self._pipeline = None
         try:
             from src.rag.rag_pipeline import TradingRAGPipeline, get_trading_rag_pipeline
+
             if self._custom_dir:
                 # Custom directory: create a separate pipeline (not the singleton)
                 import tempfile as _tempfile
+
                 _fd, _db_path = _tempfile.mkstemp(suffix=".db")
                 os.close(_fd)
                 self._pipeline = TradingRAGPipeline(
@@ -285,7 +287,9 @@ class LessonsLearnedRAG:
         """
         if self._pipeline is not None:
             try:
-                return self._pipeline.query(query=query, top_k=top_k, severity_filter=severity_filter)
+                return self._pipeline.query(
+                    query=query, top_k=top_k, severity_filter=severity_filter
+                )
             except Exception as e:
                 logger.warning(f"TradingRAGPipeline query failed: {e} - using legacy search")
 

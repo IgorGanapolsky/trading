@@ -159,7 +159,9 @@ def evaluate_production_gate(
     # 3) System state freshness
     age = _file_age_hours(SYSTEM_STATE)
     state = _load_json(SYSTEM_STATE) or {}
-    state_ok = age is not None and age <= MAX_STATE_AGE_HOURS if require_fresh_state else age is not None
+    state_ok = (
+        age is not None and age <= MAX_STATE_AGE_HOURS if require_fresh_state else age is not None
+    )
     checks.append(
         GateCheck(
             "broker_state_fresh",
@@ -226,8 +228,7 @@ def evaluate_production_gate(
             "edge_cohort",
             True,  # does not block paper new risk
             "info",
-            f"verdict={verdict} closed_n={closed.get('closed_n')} "
-            f"live_deposit_ready={edge}",
+            f"verdict={verdict} closed_n={closed.get('closed_n')} live_deposit_ready={edge}",
         )
     )
     # World-class: live_blocked stays true until human flips AFTER EDGE_CANDIDATE.
@@ -313,7 +314,6 @@ def assert_new_risk_allowed(*, for_live: bool = False) -> ProductionGateResult:
         )
     if not result.allow_new_risk:
         raise RuntimeError(
-            "PRODUCTION GATE: new risk blocked — "
-            f"blockers={result.blockers} grade={result.grade}"
+            f"PRODUCTION GATE: new risk blocked — blockers={result.blockers} grade={result.grade}"
         )
     return result

@@ -28,6 +28,8 @@ def test_evaluate_returns_structure():
 
 
 def test_live_for_live_blocks_without_edge():
-    result = evaluate_production_gate(for_live=True, require_fresh_state=False, require_clean_inventory=False)
+    result = evaluate_production_gate(
+        for_live=True, require_fresh_state=False, require_clean_inventory=False
+    )
     # With current repo state (insufficient sample), live must be false
     assert result.allow_live_capital is False

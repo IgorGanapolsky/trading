@@ -480,6 +480,7 @@ def main() -> int:
     args = parser.parse_args()
 
     card = build_world_class_card()
+
     # JSON-safe: replace inf
     def _sanitize(obj: Any) -> Any:
         if isinstance(obj, float):

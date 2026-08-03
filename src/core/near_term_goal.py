@@ -81,9 +81,7 @@ def path_economics(
 
     blockers: list[str] = []
     if kill_verdict == "INSUFFICIENT_SAMPLE":
-        blockers.append(
-            f"Put-credit cohort n={closed_n}/30 — no statistical edge claim allowed"
-        )
+        blockers.append(f"Put-credit cohort n={closed_n}/30 — no statistical edge claim allowed")
     if kill_verdict == "NO_EDGE_KILL":
         blockers.append("Cohort failed kill criteria — redesign required, not scale")
     if live_equity <= 0:
