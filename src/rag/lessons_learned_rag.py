@@ -284,10 +284,10 @@ class LessonsLearnedRAG:
     def query(self, query: str, top_k: int = 5, severity_filter: Optional[str] = None) -> list:
         """Search lessons: defended retrieve_for_trade → TradingRAGPipeline → LanceDB → keyword.
 
-        Defended path (FTS5 + pragmatic hybrid + multi-query@0.6 + CE heuristic) is default ON.
-        Set TRADING_RAG_DEFENDED=0 to skip it. Falls back through pipeline then legacy search.
+        Defended path is default ON (set TRADING_RAG_DEFENDED=0 to skip).
+        Custom knowledge dirs stay on the keyword/file path (no shared FTS singleton).
         """
-        # Defended trading RAG — prefer for default knowledge dir (PR #4345)
+        # Defended trading RAG — default knowledge dir only
         defended = os.getenv("TRADING_RAG_DEFENDED", "true").lower() in {
             "1",
             "true",
@@ -304,22 +304,21 @@ class LessonsLearnedRAG:
                     severity_filter=severity_filter,
                     use_llm_rerank=False,  # keep query path deterministic/offline
                 )
-                if result.lessons:
-                    self.last_source = "defended"
-                    self.last_retrieve_meta = result.meta
-                    return result.lessons
+                # Honor empty OOD results (do not fall through to keyword)
+                self.last_source = "defended"
+                self.last_retrieve_meta = result.meta or {}
+                return result.lessons
             except Exception as e:
                 logger.warning("Defended retrieve_for_trade failed: %s — falling back", e)
 
-        # Main's TradingRAGPipeline (also covers custom knowledge dirs)
-        if self._pipeline is not None:
+        # TradingRAGPipeline for default dir only
+        if self._pipeline is not None and not self._custom_dir:
             try:
                 results = self._pipeline.query(
                     query=query, top_k=top_k, severity_filter=severity_filter
                 )
-                if results:
-                    self.last_source = "pipeline"
-                    return results
+                self.last_source = "trading_rag_pipeline"
+                return results
             except Exception as e:
                 logger.warning(f"TradingRAGPipeline query failed: {e} - using legacy search")
 

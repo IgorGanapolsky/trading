@@ -272,8 +272,8 @@ class TestStage3MultiQuery:
 
 class TestStage4Reranker:
     def test_reranker_type_is_cross_encoder(self, pipeline):
-        """Reranker uses cross-encoder when the model loads; else heuristic."""
-        assert pipeline._reranker.reranker_type in {"cross-encoder", "heuristic"}
+        """Reranker uses CE when installed; else heuristic/llm offline fallback."""
+        assert pipeline._reranker.reranker_type in {"cross-encoder", "heuristic", "llm"}
 
     def test_cross_encoder_scores_in_range(self, pipeline):
         """CE ensemble scores should be in [0, 1] range."""
@@ -413,8 +413,8 @@ class TestLessonsLearnedRAGDelegation:
         rag = LessonsLearnedRAG()
         try:
             assert rag._pipeline is not None
-            # Index should hold a non-trivial lesson corpus (count tracks repo md set)
-            assert rag._pipeline.lesson_count >= 100
+            # Current curated corpus size (lessons_learned/*.md)
+            assert rag._pipeline.lesson_count >= 150
         finally:
             if rag._pipeline:
                 rag._pipeline.close()
