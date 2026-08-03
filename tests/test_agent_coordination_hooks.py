@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 import subprocess
+import sys
 import tomllib
 from pathlib import Path
 
@@ -149,7 +150,7 @@ def test_coordination_cli_accepts_valid_and_rejects_invalid_pr_events(tmp_path: 
     event = tmp_path / "event.json"
     event.write_text(json.dumps(valid), encoding="utf-8")
     command = [
-        str(ROOT / ".venv/bin/python"),
+        sys.executable,
         str(ROOT / "scripts/agent_coordination.py"),
         "validate-pr",
         "--event",
