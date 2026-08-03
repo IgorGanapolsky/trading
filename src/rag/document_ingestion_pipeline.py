@@ -1,7 +1,9 @@
 """9-Stage Document Ingestion, Deduplication, & Versioning Pipeline.
 
-Provides automated document parsing, SHA256 content deduplication, unicode normalization,
-incremental update manifest tracking, and re-indexing version control.
+Provides automated document parsing (messy multi-format via
+``src.research.messy_document_parser``), SHA256 content deduplication,
+unicode normalization, incremental update manifest tracking, and
+re-indexing version control.
 """
 
 from __future__ import annotations
@@ -11,7 +13,7 @@ import json
 import logging
 import re
 import unicodedata
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +21,23 @@ logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST_FILE = ROOT / "data" / "audit" / "ingestion_version_manifest.json"
+
+# Binary / messy extensions routed through the multi-format cascade
+_MESSY_SUFFIXES = frozenset(
+    {
+        ".pdf",
+        ".html",
+        ".htm",
+        ".xhtml",
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".tif",
+        ".tiff",
+        ".webp",
+        ".gif",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -64,6 +83,49 @@ class DocumentIngestionPipeline:
         lines = [line.rstrip() for line in text.splitlines()]
         return "\n".join(lines).strip()
 
+    def extract_from_path(
+        self,
+        file_path: Path,
+        *,
+        require_quality_pass: bool = False,
+    ) -> dict[str, Any]:
+        """Extract text from a filesystem path (Markdown or messy formats).
+
+        Returns a payload with text/markdown/backend/quality. Does not write
+        the manifest — call ``ingest_document`` / ``ingest_file`` for that.
+        """
+        file_path = Path(file_path)
+        suffix = file_path.suffix.lower()
+
+        if suffix in _MESSY_SUFFIXES or suffix == ".pdf":
+            from src.research.messy_document_parser import parse_document
+
+            parsed = parse_document(file_path, require_quality_pass=require_quality_pass)
+            body = parsed.markdown or parsed.text
+            return {
+                "text": body,
+                "backend": parsed.backend,
+                "format": parsed.format,
+                "quality": asdict(parsed.quality) if parsed.quality else {},
+                "tables": len(parsed.tables),
+                "warnings": list(parsed.warnings),
+                "content_hash_short": parsed.content_hash,
+                "parse_metadata": parsed.metadata,
+            }
+
+        # Clean text/markdown path
+        raw = file_path.read_text(encoding="utf-8", errors="replace")
+        return {
+            "text": raw,
+            "backend": "plaintext",
+            "format": "markdown" if suffix in {".md", ".markdown"} else "text",
+            "quality": {"passed": True, "char_count": len(raw)},
+            "tables": 0,
+            "warnings": [],
+            "content_hash_short": "",
+            "parse_metadata": {},
+        }
+
     def ingest_document(self, file_path: Path, raw_content: str) -> IngestedDocument:
         norm_content = self.normalize_text(raw_content)
         content_hash = self.compute_sha256(norm_content)
@@ -105,6 +167,45 @@ class DocumentIngestionPipeline:
             self.manifest["total_ingested"] = len(self.manifest["documents"])
             self.save_manifest()
 
+        return doc
+
+    def ingest_file(
+        self,
+        file_path: Path | str,
+        *,
+        require_quality_pass: bool = False,
+    ) -> IngestedDocument:
+        """End-to-end: extract (messy or clean) → normalize → dedup → version.
+
+        For PDFs/HTML/images uses ``messy_document_parser``. Quality failures
+        still produce an IngestedDocument with empty/partial text unless
+        ``require_quality_pass=True`` (then ValueError).
+        """
+        file_path = Path(file_path)
+        extracted = self.extract_from_path(file_path, require_quality_pass=require_quality_pass)
+        doc = self.ingest_document(file_path, extracted.get("text") or "")
+        # Attach parse provenance without breaking frozen dataclass consumers
+        enriched_meta = {
+            **doc.metadata,
+            "parse_backend": extracted.get("backend"),
+            "parse_format": extracted.get("format"),
+            "parse_tables": extracted.get("tables"),
+            "parse_quality": extracted.get("quality"),
+            "parse_warnings": extracted.get("warnings"),
+        }
+        # Rebuild with enriched metadata (frozen dataclass)
+        doc = IngestedDocument(
+            lesson_id=doc.lesson_id,
+            file_path=doc.file_path,
+            sha256_hash=doc.sha256_hash,
+            version=doc.version,
+            normalized_content=doc.normalized_content,
+            metadata=enriched_meta,
+            is_duplicate=doc.is_duplicate,
+        )
+        if not doc.is_duplicate and doc.lesson_id in self.manifest["documents"]:
+            self.manifest["documents"][doc.lesson_id]["metadata"] = enriched_meta
+            self.save_manifest()
         return doc
 
     def save_manifest(self) -> None:
