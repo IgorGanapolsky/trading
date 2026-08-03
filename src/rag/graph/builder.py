@@ -344,7 +344,9 @@ class FinancialGraphBuilder:
                 NodeType.LESSON,
                 label=title,
                 properties={
-                    "file": str(path.relative_to(self.repo_root)) if path.is_relative_to(self.repo_root) else str(path),
+                    "file": str(path.relative_to(self.repo_root))
+                    if path.is_relative_to(self.repo_root)
+                    else str(path),
                     "severity": severity,
                     "snippet": snippet,
                     "hybrid_leaf": True,  # vector/chunk leaf attach point
@@ -476,11 +478,17 @@ class FinancialGraphBuilder:
             )
             c["nodes"] += 1
 
-            sid = f"strategy:{strategy}" if strategy in SEED_STRATEGIES or strategy in {
-                "spy_put_credit",
-                "iron_condor",
-                "ic_simple",
-            } else f"strategy:{strategy}"
+            sid = (
+                f"strategy:{strategy}"
+                if strategy in SEED_STRATEGIES
+                or strategy
+                in {
+                    "spy_put_credit",
+                    "iron_condor",
+                    "ic_simple",
+                }
+                else f"strategy:{strategy}"
+            )
             # Normalize common aliases
             if strategy in {"iron_condor", "ic", "ic_simple"}:
                 sid = "strategy:iron_condor" if strategy != "ic_simple" else "strategy:ic_simple"

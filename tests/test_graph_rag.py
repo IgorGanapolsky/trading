@@ -44,9 +44,7 @@ def mini_repo(tmp_path: Path) -> Path:
         "reason": "IC Simple killed; successor spy_put_credit",
         "evidence": {"closed_trades": 159, "profit_factor": 0.16},
     }
-    (root / "data/runtime/strategy_kill_switch.json").write_text(
-        json.dumps(kill), encoding="utf-8"
-    )
+    (root / "data/runtime/strategy_kill_switch.json").write_text(json.dumps(kill), encoding="utf-8")
 
     lesson = """# LL-999: Never freehand-close inventory
 
@@ -153,7 +151,7 @@ def test_router_macro() -> None:
 
 def test_token_guard_trims() -> None:
     paths = [
-        {"node_ids": [f"n{i}", f"n{i+1}"], "rels": ["RELATED_TO"], "score": float(10 - i)}
+        {"node_ids": [f"n{i}", f"n{i + 1}"], "rels": ["RELATED_TO"], "score": float(10 - i)}
         for i in range(30)
     ]
     nodes = [
@@ -262,7 +260,9 @@ def test_pipeline_stats_empty_autobuild(mini_repo: Path, graph_db: Path) -> None
     pipe.close()
 
 
-def test_cli_rebuild_and_query(mini_repo: Path, graph_db: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_cli_rebuild_and_query(
+    mini_repo: Path, graph_db: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     from scripts import graph_rag_query as cli
 
     monkeypatch.setattr(cli, "_REPO", mini_repo)
@@ -280,3 +280,32 @@ def test_cli_rebuild_and_query(mini_repo: Path, graph_db: Path, monkeypatch: pyt
         ]
     )
     assert code in (0, 2)
+
+
+def test_verify_graph_rag_gate_on_fixture(mini_repo: Path, tmp_path: Path) -> None:
+    """Hard gate script must pass against fixture ledgers (no network)."""
+    from scripts import verify_graph_rag as verify
+
+    db = tmp_path / "verify_graph.sqlite"
+    code = verify.main(
+        [
+            "--repo-root",
+            str(mini_repo),
+            "--db",
+            str(db),
+            "--json",
+        ]
+    )
+    assert code == 0
+
+
+def test_golden_intents_stable() -> None:
+    """Router golden intents must not drift (CI regression lock)."""
+    cases = [
+        ("why is iron condor killed?", QueryIntent.STRATEGY_STATUS),
+        ("how does VIX spike impact SPY put credit?", QueryIntent.MACRO_IMPACT),
+        ("iron condor expectancy and profit factor from paired trades", QueryIntent.TRADE_EVIDENCE),
+        ("put credit stop loss 200% rule", QueryIntent.LESSON_RISK),
+    ]
+    for query, intent in cases:
+        assert route_query(query).intent == intent, query

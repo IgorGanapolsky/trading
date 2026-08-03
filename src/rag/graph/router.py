@@ -231,7 +231,11 @@ def route_query(query: str) -> RouteDecision:
     intent, hops, rels, fuse, reason = best
     if not hints:
         if intent == QueryIntent.STRATEGY_STATUS:
-            hints = ["strategy:spy_put_credit", "strategy:iron_condor", "macro:strategy_kill_2026_07_22"]
+            hints = [
+                "strategy:spy_put_credit",
+                "strategy:iron_condor",
+                "macro:strategy_kill_2026_07_22",
+            ]
         elif intent == QueryIntent.MACRO_IMPACT:
             hints = ["concept:fed_policy", "concept:vix_spike", "ticker:SPY"]
         elif intent == QueryIntent.TRADE_EVIDENCE:

@@ -165,7 +165,9 @@ class FinancialGraphStore:
         now = _utc_now()
         with self._lock:
             conn = self._connect()
-            existing = conn.execute("SELECT id, created_at, properties FROM nodes WHERE id = ?", (node_id,)).fetchone()
+            existing = conn.execute(
+                "SELECT id, created_at, properties FROM nodes WHERE id = ?", (node_id,)
+            ).fetchone()
             if existing:
                 merged = _loads(existing["properties"])
                 merged.update(props)
@@ -399,9 +401,7 @@ class FinancialGraphStore:
         """Multi-source BFS collecting unique paths up to max_hops."""
         if not seed_ids:
             return []
-        prefer = {
-            (r.value if isinstance(r, EdgeRel) else str(r)) for r in (prefer_rels or [])
-        }
+        prefer = {(r.value if isinstance(r, EdgeRel) else str(r)) for r in (prefer_rels or [])}
         paths: list[GraphPath] = []
         seen_terminal: set[tuple[str, ...]] = set()
 
@@ -428,9 +428,7 @@ class FinancialGraphStore:
                         )
                 if hops >= max_hops:
                     continue
-                for edge, other in self.neighbors(
-                    node, direction="both", as_of=as_of, limit=50
-                ):
+                for edge, other in self.neighbors(node, direction="both", as_of=as_of, limit=50):
                     if other.id in visited_from_seed and other.id != seed:
                         # allow revisiting seed only; skip cycles
                         if other.id in pnodes:

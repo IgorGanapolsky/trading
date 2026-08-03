@@ -65,9 +65,7 @@ def _default_vector_search(query: str, top_k: int) -> list[dict[str, Any]]:
                 {
                     "id": getattr(obj, "id", None) or getattr(obj, "lesson_id", None) or "",
                     "title": getattr(obj, "title", "") or "",
-                    "snippet": getattr(obj, "snippet", "")
-                    or getattr(obj, "content", "")
-                    or "",
+                    "snippet": getattr(obj, "snippet", "") or getattr(obj, "content", "") or "",
                     "prevention": getattr(obj, "prevention", "") or "",
                     "severity": getattr(obj, "severity", "") or "",
                     "file": getattr(obj, "file", "") or "",

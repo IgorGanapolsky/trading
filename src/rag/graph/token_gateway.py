@@ -114,9 +114,7 @@ def apply_token_guard(
     # Sort by score descending when present
     paths_sorted = sorted(paths, key=lambda p: float(p.get("score") or 0.0), reverse=True)
     nodes_sorted = list(nodes)
-    vectors_sorted = sorted(
-        vector_hits, key=lambda h: float(h.get("score") or 0.0), reverse=True
-    )
+    vectors_sorted = sorted(vector_hits, key=lambda h: float(h.get("score") or 0.0), reverse=True)
 
     keep_paths = paths_sorted[:max_paths]
     keep_nodes = nodes_sorted[:max_nodes]
@@ -184,8 +182,10 @@ def apply_token_guard(
         tokens = estimate_tokens(text)
 
     allowed = tokens <= hard_max_tokens
-    halt = None if allowed else (
-        f"context estimated_tokens={tokens} exceeds hard_max_tokens={hard_max_tokens}"
+    halt = (
+        None
+        if allowed
+        else (f"context estimated_tokens={tokens} exceeds hard_max_tokens={hard_max_tokens}")
     )
     if not allowed:
         text = (

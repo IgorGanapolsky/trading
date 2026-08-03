@@ -125,7 +125,16 @@ Before trusting Graph RAG in any agent loop that influences risk:
 1. Rebuild graph after kill-switch or large lesson ingest.
 2. Spot-check strategy_status queries return `KILLED` / `SUCCEEDS` paths.
 3. Run `pytest tests/test_graph_rag.py`.
-4. Keep TokenGuard hard limits on; multi-hop without a budget burns tokens.
+4. Run the hard gate: `python scripts/verify_graph_rag.py` (also `make graph-rag-check`).
+5. Keep TokenGuard hard limits on; multi-hop without a budget burns tokens.
+
+### Automated gates
+
+| Gate                       | Command                              | Wired into                                        |
+| -------------------------- | ------------------------------------ | ------------------------------------------------- |
+| Unit + fixture rebuild     | `pytest tests/test_graph_rag.py`     | CI full suite, offline-evals                      |
+| Golden multi-hop (5 cases) | `python scripts/verify_graph_rag.py` | offline-evals, `make check` via `graph-rag-check` |
+| Format/lint                | `ruff check` + `ruff format --check` | CI Run All Tests                                  |
 
 ## Future upgrades (optional)
 
