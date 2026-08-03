@@ -287,9 +287,14 @@ class LessonsLearnedRAG:
         """
         if self._pipeline is not None:
             try:
-                return self._pipeline.query(
+                pipeline_results = self._pipeline.query(
                     query=query, top_k=top_k, severity_filter=severity_filter
                 )
+                if pipeline_results:
+                    self.last_source = "pipeline"
+                    return pipeline_results
+                # Empty pipeline hit: fall through to LanceDB/keyword so custom
+                # corpora and sparse indexes still resolve.
             except Exception as e:
                 logger.warning(f"TradingRAGPipeline query failed: {e} - using legacy search")
 
