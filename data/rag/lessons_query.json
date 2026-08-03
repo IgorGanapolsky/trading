@@ -7,16 +7,16 @@
     "severity": "",
     "summary": "**Date:** 2026-08-02 **Severity:** HIGH (4) **Category:** repository hygiene, multi-agent coordination, CI truth ## What happened A whole-repository cleanup overlapped two other agents' documentation and audit work. A competing audit merged while this branch was active, and a later Herdr-style documentation PR moved `main` again. Merging current `main` also reintroduced generated `graphify-out/` c",
     "tags": [],
-    "content": "# LL-349: Comprehensive cleanup needs durable ownership and post-merge re-audits\n\n**Date:** 2026-08-02  \n**Severity:** HIGH (4)  \n**Category:** repository hygiene, multi-agent coordination, CI truth\n\n## What happened\n\nA whole-repository cleanup overlapped two other agents' documentation and audit work. A competing audit merged while this branch was active, and a later Herdr-style documentation PR moved `main` again. Merging current `main` also reintroduced generated `graphify-out/` content that had already been classified as disposable.\n\nThe cleanup additionally found a README-advertised lessons query command that did not exist, a stale coverage threshold for a zero-caller iron-condor option-chain module, five weak fingerprint hashes, a yanked dependency lock entry, and CI workflows whose schedules outlived their code owners.\n\n## Coordination rule\n\nUse four layers with different responsibilities:\n\n1. **Linear issue** is the durable task owner.\n2. **Shared Obsidian vault claim** records live WIP and touched-file scope.\n3. **Herdr** exposes transient pane and agent lifecycle; it is not a durable lock.\n4. **Issue-scoped worktree and PR** are the authoritative code record.\n\nAn agent visible as `done` in Herdr disappeared before the next `agent get`, which directly demonstrates why terminal presence cannot replace an issue lock. The Obsidian Linear plugin is useful as a human dashboard but cannot arbitrate concurrent writes.\n\n## Cleanup rule\n\n- Re-run the hygiene scanner after every rebase or merge; generated artifacts can return through the new base.\n- Prove dead code with repository-wide caller and workflow searches before deletion.\n- Keep one canonical skill tree (`skills/`), one docs hub, and one contributor contract.\n- Treat generated reports, indexes, screenshots, logs, caches, and runtime databases as rebuildable outputs.\n- If documentation advertises a command, enforce the command with a contract test.\n\n## Verification rule\n\n- Compare coverage only when source scopes match. The old 63.445% report covered a smaller source set; it cannot be presented as a regression against combined `src + scripts` branch coverage.\n- A passing targeted test is not a passing full suite, and a local suite is not green GitHub CI.\n- RAG reliability means query plus isolated read/write proof; file presence alone is insufficient.\n- Dry runs prove planning and safety boundaries, not order submission, fills, live capital, or profit.\n\n## Mistakes and prevention\n\n- A task worktree was removed and had to be reconstructed. Never delete a worktree without checking its branch, owner, dirtiness, and recovery path.\n- A diagnostic shell loop used zsh's reserved `path` variable and failed read-only. Use task-specific variable names in shell diagnostics.\n- The first secret scan traversed local caches and was needlessly slow. Scope security scans to repository candidates and report only finding types and paths, never values.\n\n## Tags\n\n#hygiene #linear #obsidian #herdr #worktrees #coverage #rag #ci",
+    "content": "# LL-349: Comprehensive cleanup needs durable ownership and post-merge re-audits\n\n**Date:** 2026-08-02\n\n**Severity:** HIGH (4)\n\n**Category:** repository hygiene, multi-agent coordination, CI truth\n\n## What happened\n\nA whole-repository cleanup overlapped two other agents' documentation and audit work. A competing audit merged while this branch was active, and a later Herdr-style documentation PR moved `main` again. Merging current `main` also reintroduced generated `graphify-out/` content that had already been classified as disposable.\n\nThe cleanup additionally found a README-advertised lessons query command that did not exist, a stale coverage threshold for a zero-caller iron-condor option-chain module, five weak fingerprint hashes, a yanked dependency lock entry, and CI workflows whose schedules outlived their code owners.\n\n## Coordination rule\n\nUse four layers with different responsibilities:\n\n1. **Linear issue** is the durable task owner.\n2. **Shared Obsidian vault claim** records live WIP and touched-file scope.\n3. **Herdr** exposes transient pane and agent lifecycle; it is not a durable lock.\n4. **Issue-scoped worktree and PR** are the authoritative code record.\n\nAn agent visible as `done` in Herdr disappeared before the next `agent get`, which directly demonstrates why terminal presence cannot replace an issue lock. The Obsidian Linear plugin is useful as a human dashboard but cannot arbitrate concurrent writes.\n\n## Cleanup rule\n\n- Re-run the hygiene scanner after every rebase or merge; generated artifacts can return through the new base.\n- Prove dead code with repository-wide caller and workflow searches before deletion.\n- Keep one canonical skill tree (`skills/`), one docs hub, and one contributor contract.\n- Treat generated reports, indexes, screenshots, logs, caches, and runtime databases as rebuildable outputs.\n- If documentation advertises a command, enforce the command with a contract test.\n\n## Verification rule\n\n- Compare coverage only when source scopes match. The old 63.445% report covered a smaller source set; it cannot be presented as a regression against combined `src + scripts` branch coverage.\n- A passing targeted test is not a passing full suite, and a local suite is not green GitHub CI.\n- RAG reliability means query plus isolated read/write proof; file presence alone is insufficient.\n- Dry runs prove planning and safety boundaries, not order submission, fills, live capital, or profit.\n- Claim judges must keep foreign-agent text out of the current claim's risk/evidence corpus, redact matched credential material, and test every supported agent identity. A concurrent merge violated all three rules until the post-merge audit caught it.\n\n## Mistakes and prevention\n\n- A task worktree was removed and had to be reconstructed. Never delete a worktree without checking its branch, owner, dirtiness, and recovery path.\n- A diagnostic shell loop used zsh's reserved `path` variable and failed read-only. Use task-specific variable names in shell diagnostics.\n- The first secret scan traversed local caches and was needlessly slow. Scope security scans to repository candidates and report only finding types and paths, never values.\n\n## Tags\n\n#hygiene #linear #obsidian #herdr #worktrees #coverage #rag #ci",
     "file": "rag_knowledge/lessons_learned/ll_349_comprehensive_cleanup_and_coordination.md",
-    "event_timestamp_utc": "2026-08-03T03:12:47.909161Z",
-    "source_mtime_utc": "2026-08-03T03:12:47.909161Z",
+    "event_timestamp_utc": "2026-08-03T03:41:27.166951Z",
+    "source_mtime_utc": "2026-08-03T03:41:27.166951Z",
     "source_age_days": 1,
     "metadata_completeness": 0.667,
     "recency_score": 1.0,
     "confidence_score": 0.7,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_herdr_style_repo_org_2026-08-02",
@@ -35,7 +35,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.85,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_repo_garbage_cleanup_2026-08-02",
@@ -54,7 +54,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.7,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ops_hygiene_pr_and_resilience_sweep_20260726",
@@ -73,7 +73,7 @@
     "recency_score": 0.7,
     "confidence_score": 0.61,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "multi_agent_pr_collision_2026-07-23",
@@ -92,7 +92,7 @@
     "recency_score": 0.7,
     "confidence_score": 0.61,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_20260704_reconciliation_partial_consumption",
@@ -111,7 +111,7 @@
     "recency_score": 0.7,
     "confidence_score": 0.685,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_20260703_pr_hygiene_reconciliation_blocker",
@@ -130,7 +130,7 @@
     "recency_score": 0.5,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL_20260702_silent_quarantine_outage",
@@ -149,7 +149,7 @@
     "recency_score": 0.5,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-315_CI_Halt_State_Test_Isolation_Jun17",
@@ -168,7 +168,7 @@
     "recency_score": 0.5,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-316_Reconciler_Mock_Test_Isolation_Jun17",
@@ -187,7 +187,7 @@
     "recency_score": 0.5,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_20260617_pr_hygiene_dependabot_ci",
@@ -206,7 +206,7 @@
     "recency_score": 0.5,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "pr_management_20260505",
@@ -225,7 +225,7 @@
     "recency_score": 0.5,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_20260504_pr_hygiene_public_status",
@@ -244,7 +244,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.475,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_341_pr_merge_requires_main_verification_may03",
@@ -263,7 +263,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-353_PR_Merge_CI_Hygiene_Feb16",
@@ -282,7 +282,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "automated_position_management_feb08",
@@ -301,7 +301,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.475,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "spx_tax_advantage_feb08",
@@ -320,7 +320,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.475,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_skipped_prevention_step_feb06",
@@ -339,7 +339,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_325_cto_violated_rule1_closed_positions_feb04",
@@ -358,7 +358,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "claude_date_hallucination_feb01",
@@ -377,7 +377,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_331_cloud_rag_cost_explosion_feb1",
@@ -396,7 +396,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_347_secret_upload_verification_feb01",
@@ -415,7 +415,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-321_VIX_Entry_Rules_Iron_Condor_Jan31",
@@ -441,7 +441,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-322_XSP_vs_SPY_Tax_Optimization_Jan31",
@@ -467,7 +467,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-323_Iron_Condor_Management_71K_Study_Jan31",
@@ -493,7 +493,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-319_CTO_Rule1_Failure_Jan30",
@@ -519,7 +519,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-320_CEO_Identity_North_Star_Commitment",
@@ -538,7 +538,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_337_async_hooks_performance_jan27",
@@ -557,7 +557,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-312_Crisis_Prevention_Systems_Audit_Jan26",
@@ -582,7 +582,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-314_Execution_Readiness_Checklist_Jan26",
@@ -601,7 +601,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-318_CTO_Wrong_Repo_Confusion_Jan26",
@@ -620,7 +620,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-334_CTO_Violated_Directive_3_Jan26",
@@ -639,7 +639,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-335_PR_Hygiene_Session_Jan26",
@@ -658,7 +658,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.475,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_313_rag_hooks_audit_jan26",
@@ -677,7 +677,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.7,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_317_orphan_inventory_superseded",
@@ -696,7 +696,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_336_paper_trading_blocked_vix_jan26",
@@ -715,7 +715,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-306_CTO_Ignores_Surfaced_RAG_Lessons_Jan25",
@@ -734,7 +734,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_309_iron_condor_optimal_control_research_jan25",
@@ -753,7 +753,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_310_vix_timing_iron_condor_entry_jan25",
@@ -772,7 +772,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-303_PR_Management_System_Hygiene_Jan24",
@@ -791,7 +791,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.7,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-304_System_Hygiene_Weekend_Jan24",
@@ -810,7 +810,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.475,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-305_CI_Lint_Fix_E741_Jan24",
@@ -829,7 +829,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-333_RLHF_Thompson_Sampling_Model_Jan24",
@@ -854,7 +854,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-296_XSP_Tax_Optimization_Recommendation",
@@ -880,7 +880,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-297_Comprehensive_Tax_Strategy_Planning",
@@ -908,7 +908,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-299_Iron_Condor_Adjustment_Strategies",
@@ -933,7 +933,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-300_RAG_Webhook_RAG_Query_Fix_Jan23",
@@ -952,7 +952,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-301_IC_Position_Management_System_Jan23",
@@ -976,7 +976,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-302_ML_RAG_Integration_Analysis_Jan23",
@@ -995,7 +995,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-332_Q1_2026_Tax_Action_Plan",
@@ -1020,7 +1020,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_298_ci_verification_honesty",
@@ -1039,7 +1039,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_326_chain_validated_strikes",
@@ -1058,7 +1058,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_327_single_entry_owner",
@@ -1077,7 +1077,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-290_Position_Accumulation_Bug_Jan22",
@@ -1104,7 +1104,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-293_Iron_Condor_30K_Account_Optimization",
@@ -1130,7 +1130,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-294_Financial_Independence_Roadmap",
@@ -1155,7 +1155,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-295_Wealth_Building_Pillars",
@@ -1182,7 +1182,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_280_aggregate_position_risk",
@@ -1201,7 +1201,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_281_atomic_orders_and_exit_ownership",
@@ -1220,7 +1220,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_282_incident_recovery_fail_closed",
@@ -1239,7 +1239,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-268_Iron_Condor_Win_Rate_Research",
@@ -1258,7 +1258,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-269_Iron_Condor_Entry_Signals",
@@ -1277,7 +1277,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-273_CTO_Failure_Stale_Data_Jan21",
@@ -1296,7 +1296,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_272_rogue_entry_and_pdt_incident",
@@ -1315,7 +1315,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_276_day2_crisis_no_call_legs_jan21",
@@ -1334,7 +1334,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.475,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_277_iron_condor_optimization_research_jan21",
@@ -1353,7 +1353,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.7,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_278_position_imbalance_crisis_jan21",
@@ -1372,7 +1372,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_279_partial_iron_condor_auto_close_jan21",
@@ -1391,7 +1391,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_247_sofi_pdt_crisis_jan20",
@@ -1410,7 +1410,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_250_trading_crisis_jan20_2026",
@@ -1429,7 +1429,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.475,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_270_system_blocked_no_auto_cleanup_jan20",
@@ -1455,7 +1455,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_271_exceptional_daily_profit_jan20",
@@ -1474,7 +1474,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.475,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_330_ci_failure_sofi_position_jan20",
@@ -1500,7 +1500,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_241_holiday_hallucination_jan19",
@@ -1525,7 +1525,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_242_adversarial_audit_strategy_mismatch_jan19",
@@ -1553,7 +1553,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_244_adversarial_audit_findings_jan19",
@@ -1579,7 +1579,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_245_better_context_beats_better_model_jan19",
@@ -1598,7 +1598,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_246_position_count_not_enforced_jan19",
@@ -1623,7 +1623,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_257_5k_vs_100k_failure_analysis_jan19",
@@ -1642,7 +1642,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_258_5pct_position_limit_enforcement_jan19",
@@ -1661,7 +1661,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_259_5pct_limit_script_bypass_jan19",
@@ -1680,7 +1680,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_261_position_size_hardcoded_violations_jan19",
@@ -1699,7 +1699,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_264_trade_history_sync_fix_jan19",
@@ -1724,7 +1724,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_265_credit_spread_exit_strategies_jan19",
@@ -1743,7 +1743,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.7,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_266_position_sizing_kelly_criterion_jan19",
@@ -1762,7 +1762,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.7,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_267_env_var_bypass_vulnerability_jan19",
@@ -1787,7 +1787,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_329_iron_condor_execution_failure_jan19",
@@ -1813,7 +1813,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_256_webhook_trade_data_source_jan17",
@@ -1832,7 +1832,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.475,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-226_Trade_Data_Source_Priority_Bug",
@@ -1851,7 +1851,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.7,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_231_failure_analysis_jan16",
@@ -1870,7 +1870,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.475,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_232_position_sizing_violation_jan16",
@@ -1889,7 +1889,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_233_rule1_alignment_audit_jan16",
@@ -1908,7 +1908,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_234_close_workflow_bugs_jan16",
@@ -1927,7 +1927,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_235_cto_violated_claude_md_jan16",
@@ -1946,7 +1946,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_236_market_calendar_failure_jan16",
@@ -1965,7 +1965,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_237_trust_failure_calendar_jan16",
@@ -1984,7 +1984,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_238_lancedb_rag_init_failure_jan16",
@@ -2003,7 +2003,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_239_pr_management_jan16_clean",
@@ -2022,7 +2022,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.475,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_253_rule1_compliance_jan16",
@@ -2041,7 +2041,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_254_is_market_holiday_bug_jan16",
@@ -2060,7 +2060,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.475,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_255_deep_research_small_account_success_jan16",
@@ -2079,7 +2079,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_260_weekly_options_book_evaluation_jan16",
@@ -2098,7 +2098,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.7,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_262_sync_infrastructure_improvements_jan16",
@@ -2117,7 +2117,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.475,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_263_pdt_blocks_fix_scheduled_retry_jan16",
@@ -2136,7 +2136,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_206_execution_failure_analysis_jan15",
@@ -2162,7 +2162,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_207_income_math_deep_research_jan15",
@@ -2181,7 +2181,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_208_why_5k_failed_100k_succeeded_jan15",
@@ -2200,7 +2200,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_209_math_error_spy_spreads_affordable_jan15",
@@ -2219,7 +2219,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_211_100k_history_analysis_workflow_jan15",
@@ -2244,7 +2244,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_212_north_star_math_roadmap_jan15",
@@ -2263,7 +2263,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.7,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_213_trading_system_fixes_jan15",
@@ -2282,7 +2282,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_214_rolling_strategy_losing_trades_jan15",
@@ -2301,7 +2301,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_215_call_credit_spreads_bearish_neutral_jan15",
@@ -2320,7 +2320,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.7,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_217_options_risk_monitor_paper_arg_crisis_jan15",
@@ -2339,7 +2339,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.475,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_218_dashboard_100k_bug_jan15",
@@ -2358,7 +2358,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_220_north_star_30month_roadmap_jan15",
@@ -2377,7 +2377,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.475,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_221_orphan_put_crisis_jan15",
@@ -2396,7 +2396,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.475,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_222_plan_mode_video_evaluation_jan15",
@@ -2415,7 +2415,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.7,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_223_session_start_verification_jan15",
@@ -2434,7 +2434,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_229_ai_options_traders_research_jan15",
@@ -2453,7 +2453,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.475,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_230_pr_hygiene_jan15",
@@ -2472,7 +2472,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-191",
@@ -2491,7 +2491,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-195",
@@ -2510,7 +2510,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_193_mandate_violation_manual_handoff_jan14",
@@ -2529,7 +2529,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_194_cto_autonomous_sofi_exit_decision_jan14",
@@ -2555,7 +2555,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_201_systems_thinking_audiobook_evaluation_jan14",
@@ -2574,7 +2574,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_202_sofi_earnings_risk_jan14",
@@ -2593,7 +2593,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_203_100k_account_analysis_jan14",
@@ -2612,7 +2612,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.475,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_205_jan14_loss_root_cause_analysis",
@@ -2639,7 +2639,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_210_options_position_import_fix_jan14",
@@ -2658,7 +2658,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_227_rag_failure_100k_lessons_lost_jan14",
@@ -2677,7 +2677,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_228_sandbox_git_proxy_limitations_jan14",
@@ -2696,7 +2696,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_251_pr_hygiene_jan14_2026",
@@ -2715,7 +2715,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_252_sofi_ticker_blackout_violation_jan14",
@@ -2734,7 +2734,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_328_cto_directive_violations_jan14",
@@ -2753,7 +2753,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_145_technical_debt_cleanup_jan13",
@@ -2772,7 +2772,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_147_placeholder_tests_removed_jan13",
@@ -2791,7 +2791,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_148_missing_test_files_blocking_trading_jan13",
@@ -2810,7 +2810,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_153_ci_missing_tests_jan13",
@@ -2829,7 +2829,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_157_rag_webhook_analytical_query_routing_jan13",
@@ -2848,7 +2848,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.475,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_158_day74_emergency_fix_jan13",
@@ -2867,7 +2867,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_161_zero_options_buying_power_root_cause_jan13",
@@ -2886,7 +2886,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_162_rag_system_analysis_jan13",
@@ -2905,7 +2905,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_166_rag_webhook_lancedb_missing_jan13",
@@ -2924,7 +2924,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_168_alpaca_options_no_trailing_stop_jan13",
@@ -2943,7 +2943,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_171_phil_town_rule_violation_jan13",
@@ -2962,7 +2962,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_172_prevent_duplicate_short_positions_jan13",
@@ -2981,7 +2981,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_174_rule1_violation_jan13_session2",
@@ -3000,7 +3000,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_175_stop_repeating_failures_jan13",
@@ -3019,7 +3019,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.7,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_176_pdt_protection_blocks_trade_jan13",
@@ -3038,7 +3038,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.475,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_181_ceo_review_session_jan13",
@@ -3057,7 +3057,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_183_comprehensive_review_jan13",
@@ -3082,7 +3082,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_185_north_star_revision_data_driven_jan13",
@@ -3101,7 +3101,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_187_tech_debt_audit_jan13",
@@ -3120,7 +3120,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_190_sofi_blackout_violation_jan13",
@@ -3145,7 +3145,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_196_trade_gateway_rule1_fix_jan13",
@@ -3164,7 +3164,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_197_math_reality_check_jan13",
@@ -3183,7 +3183,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_198_git_workflows_evaluation_jan13",
@@ -3202,7 +3202,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_224_agentic_memory_paper_evaluation_jan13",
@@ -3221,7 +3221,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_225_dead_code_cleanup_jan13",
@@ -3240,7 +3240,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.475,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_131_never_tell_ceo_to_run_ci_jan12",
@@ -3259,7 +3259,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_133_registry_fix_and_hygiene_jan12",
@@ -3278,7 +3278,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.475,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_135_investment_strategy_comprehensive_review_jan12",
@@ -3304,7 +3304,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_137_branch_and_pr_hygiene_jan12",
@@ -3323,7 +3323,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_144_stale_order_threshold_fix_jan12",
@@ -3342,7 +3342,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_163_sandbox_vs_github_api_access_jan12",
@@ -3361,7 +3361,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.55,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_001_phil_town_valuations_dec2025",
@@ -3386,7 +3386,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_002_theta_scaling_plan_dec2025",
@@ -3412,7 +3412,7 @@
     "recency_score": 0.25,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "blogs/phil_town/phil_town_blog_posts",
@@ -3431,7 +3431,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "books/phil_town_four_ms_detailed",
@@ -3450,7 +3450,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "books/phil_town_rule_one",
@@ -3469,7 +3469,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-274_RAG_Webhook_Compound_Query_Routing_Fix",
@@ -3488,7 +3488,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "LL-360_ic_simple_killed_put_credit_successor",
@@ -3507,7 +3507,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_240_deep_integrity_audit_14_issues",
@@ -3526,7 +3526,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "ll_340_macro_geopolitical_risk",
@@ -3545,7 +3545,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.625,
     "lifecycle": "watch",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "podcasts/phil_town/invested_podcast_overview",
@@ -3564,7 +3564,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "podcasts/phil_town/iron_condor_strategy_synthesis",
@@ -3583,7 +3583,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "podcasts/phil_town/risk_management_principles",
@@ -3602,7 +3602,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "podcasts/phil_town/rule1_options_trading_strategy",
@@ -3621,7 +3621,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "youtube/transcripts/8pPnLzZmKKY_What_is_a_Moat_in_Investing",
@@ -3640,7 +3640,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "youtube/transcripts/9hWMAL0q-xw_How_to_Read_Financial_Statements",
@@ -3659,7 +3659,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "youtube/transcripts/A9kZ_fVwLLo_Margin_of_Safety_Explained",
@@ -3678,7 +3678,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "youtube/transcripts/B9xVBqxTHKI_Understanding_ROIC_-_Return_on_Invested_Capital",
@@ -3697,7 +3697,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "youtube/transcripts/E7t8qPKGMxs_When_to_Sell_a_Stock_-_Exit_Strategy",
@@ -3716,7 +3716,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "youtube/transcripts/HcZRD3YUKZM_Value_Investing_vs_Growth_Investing",
@@ -3735,7 +3735,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "youtube/transcripts/Hfq4K1nP4v4_The_Wheel_Strategy_Explained",
@@ -3754,7 +3754,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "youtube/transcripts/K6CkCQU_qkE_The_4_Ms_of_Investing_-_Rule_1_Investing",
@@ -3773,7 +3773,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "youtube/transcripts/P6dqZMjZxHA_The_Payback_Time_Strategy",
@@ -3792,7 +3792,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "youtube/transcripts/QmVKxH2PdCI_Circle_of_Competence_-_Stay_in_Your_Lane",
@@ -3811,7 +3811,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "youtube/transcripts/Rm69dKSsTrA_How_to_Invest_in_Stocks_for_Beginners_2024",
@@ -3830,7 +3830,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "youtube/transcripts/WRF86rX2wXs_Cash_Secured_Puts_Strategy",
@@ -3849,7 +3849,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "youtube/transcripts/XyYjVrMbMpI_How_to_Calculate_Sticker_Price_-_Intrinsic_Value",
@@ -3868,7 +3868,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "youtube/transcripts/Yp7_oQEGfNc_Market_Crashes_-_Opportunity_of_a_Lifetime",
@@ -3887,7 +3887,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "youtube/transcripts/Z5chrxMuBoo_Rule_1_Dont_Lose_Money",
@@ -3906,7 +3906,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "youtube/transcripts/dVKjsPQbZNo_Owner_Earnings_Explained_-_Buffetts_Secret_Metric",
@@ -3925,7 +3925,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "youtube/transcripts/gWIi6WLczZA_Warren_Buffett_How_to_Invest_for_Beginners",
@@ -3944,7 +3944,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "youtube/transcripts/iRvKG9yFNBo_Debt_and_the_Balance_Sheet",
@@ -3963,7 +3963,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "youtube/transcripts/k2z7K4PLkQg_Building_a_Watchlist_-_Stock_Analysis_Process",
@@ -3982,7 +3982,7 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   },
   {
     "id": "youtube/transcripts/oLaGH5LVhJ8_Covered_Calls_for_Income_-_Options_Strategy",
@@ -4001,6 +4001,6 @@
     "recency_score": 1.0,
     "confidence_score": 0.775,
     "lifecycle": "active",
-    "indexed_at_utc": "2026-08-03T03:12:57.035292Z"
+    "indexed_at_utc": "2026-08-03T03:41:30.774505Z"
   }
 ]

@@ -26,8 +26,8 @@ The reproducible issue count is 1,842 removable tracked paths + 798 Ruff finding
 | Metric                            |        Before |                     After |    Delta |
 | --------------------------------- | ------------: | ------------------------: | -------: |
 | Tracked files                     |         2,953 |                     1,146 |   -1,807 |
-| Physical lines scanned            |     1,244,491 |                   272,146 | -972,345 |
-| SCC code lines                    |       346,527 |                   199,308 | -147,219 |
+| Physical lines scanned            |     1,244,491 |                   272,148 | -972,343 |
+| SCC code lines                    |       346,527 |                   199,232 | -147,295 |
 | Python code lines (SCC)           |       157,903 |                   140,721 |  -17,182 |
 | GitHub workflow files             |            83 |                        24 |      -59 |
 | RAG lesson files                  |           318 |                       172 | -146 net |
@@ -69,11 +69,11 @@ No user-owned dirty primary-checkout changes or other agents' active worktrees w
 
 ```text
 Before: 63.445% on a smaller historical source scope (not comparable)
-After: 51.6394% combined src + scripts statement-and-branch coverage
+After: 51.7203% combined src + scripts statement-and-branch coverage
 New tests: query CLI, repository hygiene, workflow dependencies/contracts, docs/skill layout, RAG health, import safety, and runtime isolation
 ```
 
-The final local CI-equivalent run contained 3,093 passing tests, 30 skips, 1 expected failure, and 0 failures across the core and integration phases. Coverage measured 50,594 statements and 14,794 branches: 27,286 statements and 6,480 branches were covered. The combined coverage floor is now enforced at 50%; all six critical-file thresholds passed.
+The final local CI-equivalent run contained 3,112 passing tests, 30 skips, 1 expected failure, and 0 failures across the core and integration phases. Coverage measured 50,851 statements and 14,866 branches: 27,470 statements and 6,519 branches were covered. The combined coverage floor is now enforced at 50%; all six critical-file thresholds passed.
 
 Remaining coverage gaps are real:
 

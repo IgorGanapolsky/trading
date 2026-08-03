@@ -37,6 +37,7 @@ An agent visible as `done` in Herdr disappeared before the next `agent get`, whi
 - A passing targeted test is not a passing full suite, and a local suite is not green GitHub CI.
 - RAG reliability means query plus isolated read/write proof; file presence alone is insufficient.
 - Dry runs prove planning and safety boundaries, not order submission, fills, live capital, or profit.
+- Claim judges must keep foreign-agent text out of the current claim's risk/evidence corpus, redact matched credential material, and test every supported agent identity. A concurrent merge violated all three rules until the post-merge audit caught it.
 
 ## Mistakes and prevention
 
