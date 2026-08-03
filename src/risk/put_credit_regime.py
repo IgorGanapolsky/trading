@@ -14,7 +14,7 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -60,13 +60,14 @@ def _spy_sma_200(spy_price: float | None) -> tuple[float | None, bool | None, st
         from alpaca.data.historical import StockHistoricalDataClient
         from alpaca.data.requests import StockBarsRequest
         from alpaca.data.timeframe import TimeFrame
+
         from src.utils.alpaca_client import get_alpaca_credentials
 
         key, secret = get_alpaca_credentials()
         if not key:
             return None, None, "no_alpaca_credentials"
         client = StockHistoricalDataClient(key, secret)
-        end = datetime.now(timezone.utc)
+        end = datetime.now(UTC)
         start = end - timedelta(days=400)
         req = StockBarsRequest(
             symbol_or_symbols=["SPY"],
@@ -134,7 +135,7 @@ def capture_regime_snapshot(spy_price: float | None = None) -> RegimeSnapshot:
         errors.append(sma_err)
 
     return RegimeSnapshot(
-        captured_at=datetime.now(timezone.utc).isoformat(),
+        captured_at=datetime.now(UTC).isoformat(),
         spy_price=float(spy_price) if spy_price is not None else None,
         vix=round(vix, 4) if vix is not None else None,
         iv_rank_proxy=round(ivr, 2) if ivr is not None else None,

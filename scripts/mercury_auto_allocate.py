@@ -25,13 +25,22 @@ logger = logging.getLogger(__name__)
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Mercury Sub-Account Auto-Allocation CLI")
-    parser.add_argument("--revenue", type=float, default=0.0, help="Incoming business revenue (USD)")
-    parser.add_argument("--checking-balance", type=float, default=0.0, help="Available Mercury checking balance (USD)")
+    parser.add_argument(
+        "--revenue", type=float, default=0.0, help="Incoming business revenue (USD)"
+    )
+    parser.add_argument(
+        "--checking-balance",
+        type=float,
+        default=0.0,
+        help="Available Mercury checking balance (USD)",
+    )
     parser.add_argument("--execute", action="store_true", help="Save allocation plan to state")
     args = parser.parse_args()
 
     allocator = MercuryAutoAllocator()
-    plan = allocator.plan_allocation(incoming_revenue_usd=args.revenue, available_checking_usd=args.checking_balance)
+    plan = allocator.plan_allocation(
+        incoming_revenue_usd=args.revenue, available_checking_usd=args.checking_balance
+    )
 
     print("=== 🏦 MERCURY SUB-ACCOUNT AUTO-ALLOCATION PLAN ===")
     print(json.dumps(asdict(plan), indent=2))

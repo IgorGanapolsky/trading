@@ -21,7 +21,7 @@ from __future__ import annotations
 import json
 import os
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -146,9 +146,7 @@ class MercuryReadOnlyClient:
 
     def list_accounts(self) -> list[dict[str, Any]]:
         payload = self._get("/accounts")
-        return [
-            summarize_account(a) for a in payload.get("accounts", []) if isinstance(a, dict)
-        ]
+        return [summarize_account(a) for a in payload.get("accounts", []) if isinstance(a, dict)]
 
     def get_account(self, alias_or_id: str) -> dict[str, Any]:
         account_id = self.resolve_account_id(alias_or_id)
@@ -176,7 +174,7 @@ class MercuryReadOnlyClient:
         accounts = self.list_accounts()
         total = sum(float(a.get("available_balance_usd") or 0.0) for a in accounts)
         return {
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "read_only": True,
             "accounts": accounts,
             "total_available_usd": total,

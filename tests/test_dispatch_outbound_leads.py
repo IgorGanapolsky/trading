@@ -1,5 +1,3 @@
-import pytest
-from pathlib import Path
 from scripts.dispatch_outbound_leads import dispatch_leads
 
 

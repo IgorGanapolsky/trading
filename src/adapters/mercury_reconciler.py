@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -33,11 +33,13 @@ class MercuryACHReconciler:
     def __init__(self, state_path: Path | None = None):
         self.state_path = state_path or (ROOT / "data" / "mercury_income_loop_state.json")
 
-    def reconcile_deposit(self, notification: ACHDepositNotification, state: dict[str, Any] | None = None) -> dict[str, Any]:
+    def reconcile_deposit(
+        self, notification: ACHDepositNotification, state: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         if state is None:
             state = self._load_state()
 
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         state.setdefault("total_deposited_to_bank_usd", 0.0)
         state.setdefault("events", [])
 

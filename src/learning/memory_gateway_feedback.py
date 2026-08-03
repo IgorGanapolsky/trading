@@ -8,7 +8,7 @@ import os
 import re
 import subprocess
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Iterable, Sequence
 
@@ -68,7 +68,7 @@ class LessonHint:
 
 
 def safe_now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def normalize_text(value: str, *, limit: int = 2000) -> str:
@@ -363,7 +363,7 @@ def append_feedback_fallback(
     paths = resolve_thumbgate_paths(project_root)
     paths.feedback_dir.mkdir(parents=True, exist_ok=True)
     entry = {
-        "id": f"fb_{hashlib.md5((context + safe_now_iso()).encode('utf-8')).hexdigest()[:10]}",
+        "id": f"fb_{hashlib.sha256((context + safe_now_iso()).encode('utf-8')).hexdigest()[:10]}",
         "timestamp": safe_now_iso(),
         "signal": signal.feedback,
         "context": context,

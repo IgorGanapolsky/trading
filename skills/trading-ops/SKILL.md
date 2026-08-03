@@ -15,9 +15,9 @@ Before any action that could submit orders or close positions:
 
 1. Read `data/runtime/strategy_kill_switch.json` — confirm `active_family` and `live_blocked`.
 2. Prefer **paper** paths only. Live is blocked until kill criteria clear.
-3. **Do not** freehand-close positions outside the guardian / residual exit path.
+3. **Do not** freehand-close positions outside `spy_put_credit.py` or `residual_ic_manager.py`.
 4. **Do not** remove `data/TRADING_HALTED` / halt flags to “unblock” trading.
-5. **Do not** reopen iron condor entry workflows (must remain STRATEGY_KILLED no-ops).
+5. **Do not** recreate iron-condor entry workflows; they must remain absent.
 6. Never hardcode Alpaca keys; use `get_alpaca_credentials()`.
 
 If a tool or hook refuses a boundary action, treat that as signal — find the allowed path or stop.
@@ -71,8 +71,8 @@ Inventory unclean (`exit 2`) → **no new risk**.
 # plan only — no submit
 python scripts/spy_put_credit.py --dry-run
 
-# residual IC exit-only (not new IC entries)
-python scripts/ic_simple.py --mode exit
+# residual IC plan only (not new IC entries)
+python scripts/residual_ic_manager.py --dry-run
 ```
 
 Never describe a dry-run plan as an executed trade.
@@ -93,9 +93,8 @@ Never describe a dry-run plan as an executed trade.
 ## Tests
 
 ```bash
-pytest tests/ -q
-ruff check src/
-pytest tests/test_killed_ic_workflows.py tests/test_repo_hygiene.py -q
+make check
+make dry-run
 ```
 
 ## What this skill is not

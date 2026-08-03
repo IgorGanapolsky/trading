@@ -12,24 +12,15 @@ __all__ = [
     "build_perplexity_usage_snapshot",
     "build_system_diagnosis",
     "build_trade_setup_audit",
-    "recommend_provider",
     "render_local_ops_markdown",
     "render_sql_analytics_summary",
     "render_trade_setup_audit_markdown",
-    "run_browser_ab_pilot",
-    "summarize_provider_results",
     "write_trade_setup_audit_artifacts",
 ]
 
 
 def __getattr__(name: str) -> Any:
     module_map = {
-        "run_browser_ab_pilot": ("src.analytics.browser_automation_pilot", "run_browser_ab_pilot"),
-        "summarize_provider_results": (
-            "src.analytics.browser_automation_pilot",
-            "summarize_provider_results",
-        ),
-        "recommend_provider": ("src.analytics.browser_provider_promotion", "recommend_provider"),
         "build_local_ops_snapshot": (
             "src.analytics.local_ops_snapshot",
             "build_local_ops_snapshot",

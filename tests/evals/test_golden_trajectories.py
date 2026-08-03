@@ -38,7 +38,12 @@ def test_evaluator_full_run() -> None:
         TrajectoryTurn(
             turn_index=1,
             user_prompt="Place order for SPY",
-            tool_calls=[{"name": "place_order", "input": {"symbol": "SPY", "side": "buy", "qty": 5, "type": "market"}}],
+            tool_calls=[
+                {
+                    "name": "place_order",
+                    "input": {"symbol": "SPY", "side": "buy", "qty": 5, "type": "market"},
+                }
+            ],
             assistant_response="Order placed.",
         )
     ]

@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 
-class TaskKind(str, Enum):
+class TaskKind(StrEnum):
     """What the panel is judging."""
 
     CLAIM_AUDIT = "claim_audit"
@@ -17,7 +17,7 @@ class TaskKind(str, Enum):
     TRADE_ENTRY = "trade_entry"
 
 
-class ExpertName(str, Enum):
+class ExpertName(StrEnum):
     RISK_RULES = "risk_rules"
     EVIDENCE = "evidence"
     COORDINATION = "coordination"

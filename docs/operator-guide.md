@@ -46,15 +46,15 @@ python scripts/judge_panel.py --kind claim_audit --text "your status claim here"
 ## Hard rules
 
 1. Paper validation only until n≥30 put-credit cohort with expectancy > 0 and PF > 1.
-2. Do not freehand-close options outside guardian / residual exit scripts.
+2. Do not freehand-close options outside `spy_put_credit.py` or `residual_ic_manager.py`.
 3. Do not clear halt files to force trading.
 4. Do not re-enable IC entry workflows.
 
 ## Tests before merge
 
 ```bash
-pytest tests/ -q
-ruff check src/
+make check
+make dry-run
 ```
 
 ## When something fails

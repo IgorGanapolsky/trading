@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -30,7 +30,7 @@ def parse_trade_timestamp(value: Any) -> datetime | None:
 
     if isinstance(value, (int, float)):
         try:
-            return datetime.fromtimestamp(float(value), tz=timezone.utc)
+            return datetime.fromtimestamp(float(value), tz=UTC)
         except (OverflowError, OSError, ValueError):
             return None
 
@@ -121,7 +121,7 @@ def _trade_fingerprint(trade: Mapping[str, Any], timestamp: datetime | None) -> 
     elif timestamp.tzinfo is None:
         ts_value = timestamp.replace(microsecond=0).isoformat()
     else:
-        ts_value = timestamp.astimezone(timezone.utc).replace(microsecond=0).isoformat()
+        ts_value = timestamp.astimezone(UTC).replace(microsecond=0).isoformat()
 
     return "|".join(
         (
@@ -168,7 +168,7 @@ def reconcile_filled_trade_activity(
     elif isinstance(today, date):
         today_date = today
     else:
-        today_date = datetime.now(timezone.utc).date()
+        today_date = datetime.now(UTC).date()
 
     state = system_state if isinstance(system_state, Mapping) else {}
     trade_history = state.get("trade_history")

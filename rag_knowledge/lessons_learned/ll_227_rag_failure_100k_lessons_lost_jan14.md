@@ -1,6 +1,6 @@
 # LL-227: RAG System Gap - $100K Account Period Investigation Needed
 
-**ID**: LL-203
+**ID**: LL-227
 **Date**: January 14, 2026
 **Severity**: HIGH (was CRITICAL - revised after verification)
 **Category**: Data Gap / Investigation Required

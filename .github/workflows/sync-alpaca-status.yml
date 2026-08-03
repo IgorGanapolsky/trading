@@ -7,7 +7,7 @@ name: Sync Alpaca Status
 on:
   schedule:
     - cron: "*/15 15-19 * * 1-5" # Every 15 min, 10 AM - 3 PM ET (peak hours)
-    - cron: "45 13 * * 1-5" # 9:45 AM ET — sync before IC Simple entry at 10:00 AM
+    - cron: "45 13 * * 1-5" # 9:45 AM ET — pre-market state refresh
     - cron: "30 14 * * 1-5" # 10:30 AM ET
     - cron: "0,30 20 * * 1-5" # 4:00/4:30 PM ET — market close
     - cron: "0 15 * * 0,6" # Once daily on weekends at 10 AM ET
@@ -74,7 +74,7 @@ jobs:
           python3 scripts/post_market_analysis.py || echo "⚠️ Post-market analysis failed"
           python3 scripts/update_north_star_operating_plan.py || echo "⚠️ North Star operating plan update failed"
 
-      - name: Restore IC-owned ledger after learning refresh
+      - name: Restore entry-workflow-owned ledger after learning refresh
         run: |
           set -euo pipefail
           # sync_closed_positions.py may refresh data/trades.json for learning, but
@@ -95,12 +95,12 @@ jobs:
           git restore data/trades.json
           git diff --quiet -- data/trades.json
 
-      # DISABLED: ic_simple.py is the sole position manager (2026-04-01)
-      # manage_iron_condor_positions.py was closing positions via individual legs
-      # while ic_simple.py manages them via MLEG — two competing systems caused
+      # DISABLED: residual_ic_manager.py owns residual IC exits.
+      # The retired manager closed individual legs while the active manager uses
+      # recovered MLEG structures — competing systems caused
       # unexpected position closures and potential P/L loss.
       # - name: Manage Iron Condor Exits (Intraday)
-      #   run: python3 scripts/manage_iron_condor_positions.py
+      #   run: python3 scripts/residual_ic_manager.py --dry-run
 
       - name: Retrain GRPO Model
         env:
@@ -115,8 +115,9 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
 
-          # SYNC-OWNED FILES ONLY — prevents commit races with IC Simple.
-          # IC Simple owns: trades.json, ic_entries.json, grpo_*, trade_confidence_model,
+          # SYNC-OWNED FILES ONLY — prevents races with Put Credit Validation.
+          # Put Credit Validation owns: trades.json, put_credit_entries.json,
+          # ic_entries.json, grpo_*, trade_confidence_model,
           #   feedback_model, trade_trajectories, rag lessons, strategy_params.
           # Sync owns: system_state, pnl snapshots, north_star, public status, wiki, halt.
           npx --yes prettier@3.6.2 --write \

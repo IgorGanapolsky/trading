@@ -15,8 +15,9 @@ import json
 import logging
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -75,21 +76,24 @@ def main() -> int:
     in_rth = is_regular_trading_hours(now_et)
 
     audit_entry = {
-        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "timestamp_utc": datetime.now(UTC).isoformat(),
         "timestamp_et": now_et.isoformat(),
         "in_rth": in_rth,
         "actions": [],
     }
 
     if not in_rth:
-        logger.info("Outside Regular Trading Hours (%s ET). Skipping execution.", now_et.strftime("%Y-%m-%d %H:%M:%S"))
+        logger.info(
+            "Outside Regular Trading Hours (%s ET). Skipping execution.",
+            now_et.strftime("%Y-%m-%d %H:%M:%S"),
+        )
         audit_entry["status"] = "SKIPPED_OUTSIDE_RTH"
         append_audit_log(audit_entry)
         print(json.dumps(audit_entry, indent=2))
         return 0
 
     logger.info("Executing Market Hours RTH Tasks (%s ET)...", now_et.strftime("%Y-%m-%d %H:%M:%S"))
-    
+
     # Task 1: Sync Alpaca State
     audit_entry["actions"].append(run_script("sync_alpaca_state.py"))
 

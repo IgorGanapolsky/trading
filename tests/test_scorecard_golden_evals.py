@@ -74,8 +74,7 @@ class TestOrderInvariance:
 
     def _rows(self):
         return [
-            _row(float(i if i % 3 else -i), f"2026-06-{i:02d}T15:00:00+00:00")
-            for i in range(1, 25)
+            _row(float(i if i % 3 else -i), f"2026-06-{i:02d}T15:00:00+00:00") for i in range(1, 25)
         ]
 
     def test_shuffled_inputs_produce_identical_output(self):

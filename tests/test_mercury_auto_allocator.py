@@ -1,4 +1,3 @@
-import pytest
 from src.adapters.mercury_auto_allocator import MercuryAutoAllocator
 
 

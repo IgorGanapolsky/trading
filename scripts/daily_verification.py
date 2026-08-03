@@ -14,7 +14,7 @@ import json
 import ssl
 import sys
 import urllib.request
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, NamedTuple, Optional
 
@@ -59,7 +59,7 @@ def _today_et() -> tuple[str, datetime]:
         return today, start
     except Exception:
         # Fallback to UTC.
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         today = now.strftime("%Y-%m-%d")
         start = now.replace(hour=0, minute=0, second=0, microsecond=0)
         return today, start
@@ -144,9 +144,9 @@ def _extract_latest_trade_from_orders(client: Any) -> Optional[LatestTrade]:
                     break
 
         if filled_at.tzinfo is None:
-            filled_at = filled_at.replace(tzinfo=timezone.utc)
+            filled_at = filled_at.replace(tzinfo=UTC)
         else:
-            filled_at = filled_at.astimezone(timezone.utc)
+            filled_at = filled_at.astimezone(UTC)
 
         return LatestTrade(
             date=filled_at.date().isoformat(), symbol=str(symbol) if symbol else None
@@ -210,7 +210,7 @@ def _update_system_state_from_report(
     state.setdefault("trades", {})
     state.setdefault("meta", {})
     state.setdefault("sync_health", {})
-    now_iso = datetime.now(timezone.utc).isoformat()
+    now_iso = datetime.now(UTC).isoformat()
 
     state["paper_account"]["equity"] = report.equity
     state["paper_account"]["current_equity"] = report.equity

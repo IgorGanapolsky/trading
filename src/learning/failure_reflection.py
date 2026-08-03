@@ -16,6 +16,7 @@ Created: Jan 13, 2026
 
 import json
 import logging
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
@@ -233,7 +234,7 @@ def reflect_on_failure(
     error_message: str = "",
     context: Optional[dict[str, Any]] = None,
     strategy: Optional[str] = None,
-    save_to_rag: bool = True,
+    save_to_rag: bool | None = None,
 ) -> dict[str, Any]:
     """
     Main entry point: Generate reflection and optionally save to RAG.
@@ -266,7 +267,16 @@ def reflect_on_failure(
     # Log to JSON
     log_reflection(reflection)
 
-    # Save to RAG if enabled
+    if save_to_rag is None:
+        save_to_rag = os.getenv("RAG_FAILURE_REFLECTION_WRITE", "").lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+
+    # Runtime failures stay in the ignored reflection log unless an operator
+    # explicitly enables promotion into the reviewed RAG source corpus.
     if save_to_rag:
         filepath = save_reflection_to_rag(reflection)
         reflection["saved_to"] = filepath

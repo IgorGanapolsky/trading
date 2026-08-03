@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
 
@@ -57,14 +57,14 @@ class MarketFeatures:
             dtype=np.float32,
         )
 
-    def as_dict(self) -> Dict[str, Any]:
+    def as_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
 class FeatureExtractor:
     """Extracts and normalizes features from raw market snapshots."""
 
-    def extract_from_snapshot(self, snapshot: Dict[str, Any]) -> MarketFeatures:
+    def extract_from_snapshot(self, snapshot: dict[str, Any]) -> MarketFeatures:
         """Extract MarketFeatures from market snapshot dictionary."""
         try:
             return MarketFeatures(
@@ -87,7 +87,7 @@ class FeatureExtractor:
             logger.warning("Feature extraction failed, using defaults: %s", e)
             return MarketFeatures()
 
-    def batch_extract(self, snapshots: List[Dict[str, Any]]) -> np.ndarray:
+    def batch_extract(self, snapshots: list[dict[str, Any]]) -> np.ndarray:
         """Extract feature matrix (N x 14) from batch of snapshots."""
         features = [self.extract_from_snapshot(s).to_vector() for s in snapshots]
         if not features:

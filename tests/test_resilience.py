@@ -12,7 +12,7 @@ import os
 import tempfile
 import threading
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 from pathlib import Path
 from unittest.mock import patch
 
@@ -626,7 +626,7 @@ Iron-condor new entries killed
     def test_check_data_freshness_healthy(self, temp_project):
         """Fresh data passes check."""
         state_file = temp_project / "data" / "system_state.json"
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         state_data = {"last_updated": now.isoformat()}
         state_file.write_text(json.dumps(state_data))
 
@@ -638,7 +638,7 @@ Iron-condor new entries killed
     def test_check_data_freshness_stale(self, temp_project):
         """Stale data (>24h) is UNHEALTHY."""
         state_file = temp_project / "data" / "system_state.json"
-        old_time = datetime.now(timezone.utc) - timedelta(hours=25)
+        old_time = datetime.now(UTC) - timedelta(hours=25)
         state_data = {"last_updated": old_time.isoformat()}
         state_file.write_text(json.dumps(state_data))
 
@@ -651,7 +651,7 @@ Iron-condor new entries killed
     def test_check_data_freshness_degraded(self, temp_project):
         """Moderately stale data (4-24h) is DEGRADED."""
         state_file = temp_project / "data" / "system_state.json"
-        old_time = datetime.now(timezone.utc) - timedelta(hours=5)
+        old_time = datetime.now(UTC) - timedelta(hours=5)
         state_data = {"last_updated": old_time.isoformat()}
         state_file.write_text(json.dumps(state_data))
 
@@ -712,7 +712,7 @@ class TestSelfHealerRunAll:
                         "portfolio": {"equity": 30000},
                         "positions": [],
                         "trade_history": [],
-                        "last_updated": datetime.now(timezone.utc).isoformat(),
+                        "last_updated": datetime.now(UTC).isoformat(),
                     }
                 )
             )

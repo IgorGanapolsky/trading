@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 from src.ml.policy_registry import PolicyRegistry
 
@@ -16,7 +16,7 @@ def test_policy_registry_marks_stale_metadata() -> None:
         }
     )
 
-    status = registry.status("iron_condor", as_of=datetime(2026, 3, 17, 12, 0, tzinfo=timezone.utc))
+    status = registry.status("iron_condor", as_of=datetime(2026, 3, 17, 12, 0, tzinfo=UTC))
 
     assert status["exists"] is True
     assert status["age_days"] == 16
@@ -37,7 +37,7 @@ def test_policy_registry_marks_insufficient_samples() -> None:
         }
     )
 
-    status = registry.status("iron_condor", as_of=datetime(2026, 3, 17, 9, 0, tzinfo=timezone.utc))
+    status = registry.status("iron_condor", as_of=datetime(2026, 3, 17, 9, 0, tzinfo=UTC))
 
     assert status["exists"] is True
     assert status["is_fresh"] is True

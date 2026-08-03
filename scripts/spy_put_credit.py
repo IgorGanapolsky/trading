@@ -18,7 +18,7 @@ import logging
 import re
 import sys
 import time
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -32,7 +32,15 @@ logger = logging.getLogger("spy_put_credit")
 ENTRIES_FILE = ROOT / "data" / "put_credit_entries.json"
 AUDIT_DIR = ROOT / "data" / "audit"
 SYSTEM_STATE = ROOT / "data" / "system_state.json"
-CLOSED_ENTRY_STATES = {"closed", "cancelled", "canceled", "canceled_unfilled", "cancelled_unfilled", "rejected", "expired"}
+CLOSED_ENTRY_STATES = {
+    "closed",
+    "cancelled",
+    "canceled",
+    "canceled_unfilled",
+    "cancelled_unfilled",
+    "rejected",
+    "expired",
+}
 EASTERN = ZoneInfo("America/New_York")
 
 
@@ -115,8 +123,8 @@ def _parse_timestamp(value: Any) -> datetime | None:
     except ValueError:
         return None
     if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
+        return parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
 
 
 def evaluate_entry_limits(
@@ -128,7 +136,7 @@ def evaluate_entry_limits(
     """Enforce one new structure/day, concurrency, and signature uniqueness."""
 
     profile = _load_profile()
-    current = (now or datetime.now(timezone.utc)).astimezone(EASTERN)
+    current = (now or datetime.now(UTC)).astimezone(EASTERN)
     active = {key: entry for key, entry in entries.items() if _is_active_entry(entry)}
     today_count = 0
     for entry in entries.values():
@@ -181,9 +189,9 @@ def evaluate_put_credit_exit(
     """Evaluate the fixed TP/SL/DTE lifecycle from current option marks."""
 
     profile = _load_profile()
-    current = now or datetime.now(timezone.utc)
+    current = now or datetime.now(UTC)
     if current.tzinfo is None:
-        current = current.replace(tzinfo=timezone.utc)
+        current = current.replace(tzinfo=UTC)
     expiry_yymmdd = _expiry_yymmdd(entry)
     if not expiry_yymmdd:
         raise ValueError("Put-credit journal entry has no parseable expiry")
@@ -195,9 +203,7 @@ def evaluate_put_credit_exit(
     pnl = (credit - current_debit) * 100 * quantity
     max_profit = credit * 100 * quantity
     entered = _parse_timestamp(entry.get("entry_time"))
-    hold_hours = (
-        (current.astimezone(timezone.utc) - entered).total_seconds() / 3600 if entered else None
-    )
+    hold_hours = (current.astimezone(UTC) - entered).total_seconds() / 3600 if entered else None
 
     reason = None
     if dte <= 1:
@@ -407,7 +413,7 @@ def _recovered_put_credit_entry(order: Any) -> tuple[str, dict[str, Any]]:
         "validation_phase": True,
         "profile_name": "spy-put-credit",
         "status": "open",
-        "reconciled_at": datetime.now(timezone.utc).isoformat(),
+        "reconciled_at": datetime.now(UTC).isoformat(),
         "reconstruction_reason": "filled_broker_order_missing_durable_strategy_journal",
     }
 
@@ -448,7 +454,7 @@ def reconcile_put_credit_entries(client: Any, *, dry_run: bool = False) -> dict[
             filter=GetOrdersRequest(
                 status=QueryOrderStatus.ALL,
                 nested=True,
-                after=datetime.now(timezone.utc) - timedelta(days=120),
+                after=datetime.now(UTC) - timedelta(days=120),
                 limit=500,
             )
         )
@@ -517,7 +523,7 @@ def _confirm_entry_credit(client, entry: dict[str, Any], short_pos: Any, long_po
             if fill not in (None, ""):
                 entry["credit"] = abs(float(fill))
                 entry["credit_source"] = "broker_fill"
-                entry["fill_confirmed_at"] = datetime.now(timezone.utc).isoformat()
+                entry["fill_confirmed_at"] = datetime.now(UTC).isoformat()
                 entry["status"] = "open"
                 return True
         except Exception as exc:
@@ -528,7 +534,7 @@ def _confirm_entry_credit(client, entry: dict[str, Any], short_pos: Any, long_po
     if derived > 0:
         entry["credit"] = derived
         entry["credit_source"] = "broker_position_derived"
-        entry["fill_confirmed_at"] = datetime.now(timezone.utc).isoformat()
+        entry["fill_confirmed_at"] = datetime.now(UTC).isoformat()
         entry["status"] = "open"
         return True
     return False
@@ -545,7 +551,7 @@ def _pending_exit_is_active(client, entry: dict[str, Any]) -> bool:
         return True
     if status == "FILLED":
         entry["status"] = "closed"
-        entry["exit_filled_at"] = datetime.now(timezone.utc).isoformat()
+        entry["exit_filled_at"] = datetime.now(UTC).isoformat()
         return True
     if status in {"CANCELED", "CANCELLED", "REJECTED", "EXPIRED"}:
         entry["status"] = "open"
@@ -705,7 +711,7 @@ def manage_put_credit_exits(client, *, dry_run: bool = False) -> dict[str, Any]:
                 entry["status"] = "exit_pending"
                 entry["exit_reason"] = "orphan_cleanup"
                 entry["exit_order_id"] = str(order.id)
-                entry["exit_submitted_at"] = datetime.now(timezone.utc).isoformat()
+                entry["exit_submitted_at"] = datetime.now(UTC).isoformat()
                 _save_entries(entries)
                 report["submitted"] += 1
                 report["details"].append(
@@ -734,7 +740,7 @@ def manage_put_credit_exits(client, *, dry_run: bool = False) -> dict[str, Any]:
         # analysis can compare 25% TP / 7-DTE vs public 50% / 21-DTE later.
         if isinstance(decision.get("counterfactuals"), dict):
             entry["last_counterfactuals"] = decision["counterfactuals"]
-            entry["last_counterfactuals_at"] = datetime.now(timezone.utc).isoformat()
+            entry["last_counterfactuals_at"] = datetime.now(UTC).isoformat()
             entry["last_mark"] = {
                 "current_debit": decision.get("current_debit"),
                 "estimated_pnl": decision.get("estimated_pnl"),
@@ -758,7 +764,7 @@ def manage_put_credit_exits(client, *, dry_run: bool = False) -> dict[str, Any]:
         entry["status"] = "exit_pending"
         entry["exit_reason"] = decision["exit_reason"]
         entry["exit_order_id"] = str(order.id)
-        entry["exit_submitted_at"] = datetime.now(timezone.utc).isoformat()
+        entry["exit_submitted_at"] = datetime.now(UTC).isoformat()
         entry["estimated_exit_debit"] = decision["current_debit"]
         entry["estimated_exit_pnl"] = decision["estimated_pnl"]
         if isinstance(decision.get("counterfactuals"), dict):
@@ -777,7 +783,7 @@ def manage_put_credit_exits(client, *, dry_run: bool = False) -> dict[str, Any]:
 
 def _friday_expiries(min_dte: int, max_dte: int, target_dte: int) -> list[str]:
     """Candidate Friday expiries in [min_dte, max_dte], target first."""
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     fridays: list[tuple[int, str]] = []
     # walk ~10 weeks forward
     d = today
@@ -1036,7 +1042,7 @@ def _record_entry(opp: dict, order_id: str) -> None:
     entries[key] = {
         "strategy_family": "spy_put_credit",
         "order_id": order_id,
-        "entry_time": datetime.now(timezone.utc).isoformat(),
+        "entry_time": datetime.now(UTC).isoformat(),
         "expiry": opp["expiry"],
         "quantity": opp.get("quantity", 1),
         "credit": opp.get("est_credit"),
@@ -1078,7 +1084,7 @@ def plan_structure(dry_run: bool = True, opp: dict | None = None) -> dict:
         "min_hold_hours": cfg["min_hold_hours"],
         "min_credit": cfg["min_credit"],
         "dry_run": dry_run,
-        "planned_at": datetime.now(timezone.utc).isoformat(),
+        "planned_at": datetime.now(UTC).isoformat(),
         "status": "planned",
         "opportunity": opp,
     }
@@ -1092,7 +1098,7 @@ def write_plan(plan: dict) -> Path:
     path.write_text(serialized, encoding="utf-8")
     opportunity = plan.get("opportunity")
     if plan.get("dry_run") is False and isinstance(opportunity, dict):
-        planned_at = str(plan.get("planned_at") or datetime.now(timezone.utc).isoformat())
+        planned_at = str(plan.get("planned_at") or datetime.now(UTC).isoformat())
         timestamp = re.sub(r"[^0-9]", "", planned_at)[:20] or str(time.time_ns())
         expiry = re.sub(r"[^0-9]", "", str(opportunity.get("expiry") or "unknown"))
         long_put = re.sub(r"[^0-9]", "", str(opportunity.get("long_put") or "unknown"))

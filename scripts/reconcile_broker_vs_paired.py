@@ -639,7 +639,7 @@ def main(argv: list[str] | None = None) -> int:
         paired["paired_realized_in_window"] + partial_consumption["unconsumed_cash"], 2
     )
 
-    date_str = args.date or _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%d")
+    date_str = args.date or _dt.datetime.now(_dt.UTC).strftime("%Y-%m-%d")
     notes = (
         "broker_realized = sum(signed_cash) over FILLED rows grouped by "
         "leg-key (SIMPLE: OCC symbol; MLEG: sorted tuple of leg symbols) "

@@ -1,119 +1,33 @@
-"""Prevention: block re-introduction of runtime garbage into git.
-
-These paths are local/runtime artifacts. They must never be re-committed.
-See .gitignore "REPO HYGIENE (2026-08-02)" and LL cleanup session.
-
-Knowledge corpus (rag_knowledge/) and architecture docs may remain tracked.
-"""
-
-from __future__ import annotations
-
-import subprocess
 from pathlib import Path
 
-import pytest
+from scripts.audit_repository_hygiene import candidate_paths, scan
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-
-# Prefixes that must not appear in `git ls-files` output.
-FORBIDDEN_TRACKED_PREFIXES = (
-    "data/screenshots/",
-    "data/audit/",
-    "data/audit_trail/",
-    "data/agent_context/",
-    "data/debug/",
-    "data/analysis/",
-    "data/reports/",
-    "data/backtests/",
-    "data/ml_training_data/",
-    "data/rag_knowledge/",  # displaced path; canonical is repo-root rag_knowledge/
-    "data/memory/",
-    "data/sentiment/",
-    "data/options_signals/",
-    ".planning/",
-    ".thumbgate/",
-    ".agents/",
-    "docs/data/",
-    "docs/assets/snapshots/",
-    "logs/autonomous_trading_",
-    "artifacts/devloop/",
-    "artifacts/tars/",
-    ".playwright-mcp/",
-    ".obsidian/",
-    ".aider.chat.history.md",
-    ".aider*",
-    ".claude/logs/",
-    "docs/contest/",
-    "graphify-out/",
-)
-
-# Exact deprecated dump filenames (root of data/)
-FORBIDDEN_TRACKED_EXACT = (
-    "data/trades_for_clustering.json",
-    "data/backtest_trades.json",
-)
-
-# Canonical ledgers that MUST remain tracked
-REQUIRED_TRACKED = (
+REQUIRED_PATHS = {
+    "skills/trading-ops/SKILL.md",
+    ".github/pull_request_template.md",
+    ".gitignore",
+    "data/feedback/stats.json",
+    "data/put_credit_entries.json",
+    "data/runtime/strategy_kill_switch.json",
     "data/system_state.json",
     "data/trades.json",
-    "data/put_credit_entries.json",
-    "data/strategy_params.json",
-    "data/runtime/strategy_kill_switch.json",
-    "data/revenue/outbound_target_leads.json",
-    "data/feedback/stats.json",
-    ".gitignore",
-)
+    "docs/AGENT_COORDINATION.md",
+    "docs/EXTENSIONS.md",
+    "scripts/query_lessons_learned.py",
+}
 
 
-def _git_ls_files() -> list[str]:
-    result = subprocess.run(
-        ["git", "ls-files"],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    return [line for line in result.stdout.splitlines() if line]
+def test_repository_hygiene_audit_has_no_errors() -> None:
+    report = scan(REPO_ROOT)
+    assert [item for item in report["findings"] if item["severity"] == "error"] == []
 
 
-@pytest.fixture(scope="module")
-def tracked_files() -> list[str]:
-    return _git_ls_files()
+def test_required_operational_paths_remain_in_candidate_tree() -> None:
+    assert set(candidate_paths(REPO_ROOT)) >= REQUIRED_PATHS
 
 
-def test_forbidden_runtime_garbage_not_tracked(tracked_files: list[str]) -> None:
-    offenders: list[str] = []
-    for path in tracked_files:
-        if path in FORBIDDEN_TRACKED_EXACT:
-            offenders.append(path)
-            continue
-        for prefix in FORBIDDEN_TRACKED_PREFIXES:
-            if path == prefix.rstrip("/") or path.startswith(prefix):
-                offenders.append(path)
-                break
-        if path.startswith("data/trades_") and path.endswith(".json"):
-            offenders.append(path)
-    assert offenders == [], (
-        "Runtime garbage re-entered the git index. Remove with "
-        "`git rm --cached <path>` and keep .gitignore hygiene rules.\n"
-        f"Offenders ({len(offenders)}):\n" + "\n".join(offenders[:40])
-    )
-
-
-def test_canonical_ledgers_still_tracked(tracked_files: list[str]) -> None:
-    tracked = set(tracked_files)
-    missing = [p for p in REQUIRED_TRACKED if p not in tracked]
-    assert missing == [], f"Canonical paths missing from git: {missing}"
-
-
-def test_gitignore_has_hygiene_section() -> None:
-    gitignore = (REPO_ROOT / ".gitignore").read_text(encoding="utf-8")
-    assert "REPO HYGIENE (2026-08-02)" in gitignore
-    assert "data/screenshots/" in gitignore
-    assert "logs/" in gitignore
-    assert "data/rag_knowledge/" in gitignore  # data/ subdir ignored; root kept tracked
-    assert ".planning/" in gitignore
-    assert "docs/data/" in gitignore
-    assert "docs/assets/snapshots/" in gitignore
-    assert "graphify-out/" in gitignore
+def test_gitignore_covers_generated_surfaces() -> None:
+    text = (REPO_ROOT / ".gitignore").read_text(encoding="utf-8")
+    for pattern in ("artifacts/", "logs/", "data/cache/", "data/screenshots/", "__pycache__/"):
+        assert pattern in text

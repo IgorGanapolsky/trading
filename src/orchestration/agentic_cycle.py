@@ -7,7 +7,7 @@ so orchestration flows can run with deterministic tracing and stop criteria.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Callable, Literal
 
 Observer = Callable[[dict[str, Any]], dict[str, Any]]
@@ -43,7 +43,7 @@ class AgenticCycleTrace:
     feedback: dict[str, Any]
     phase: Literal["completed", "error"] = "completed"
     timestamp: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(),
+        default_factory=lambda: datetime.now(UTC).isoformat(),
     )
 
 

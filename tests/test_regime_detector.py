@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import math
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 
 import pandas as pd
 import pytest
@@ -39,9 +39,7 @@ def _write_regime_cache(tmp_path, *, vix: float, vvix: float, age_minutes: int =
     cache_file.write_text(
         json.dumps(
             {
-                "timestamp": (
-                    datetime.now(timezone.utc) - timedelta(minutes=age_minutes)
-                ).isoformat(),
+                "timestamp": (datetime.now(UTC) - timedelta(minutes=age_minutes)).isoformat(),
                 "vix_level": vix,
                 "vvix_level": vvix,
             }

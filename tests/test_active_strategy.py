@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from contextlib import nullcontext
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
@@ -505,7 +505,7 @@ def test_put_credit_resolves_to_options_income_milestone_family():
 def test_put_credit_entry_limits_enforce_daily_concurrent_and_signature():
     from scripts import spy_put_credit as pcs
 
-    now = datetime(2026, 7, 22, 16, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 7, 22, 16, 0, tzinfo=UTC)
     entries = {
         "PCS_1": {
             "status": "open",
@@ -544,7 +544,7 @@ def test_put_credit_entry_limits_enforce_daily_concurrent_and_signature():
 def test_put_credit_exit_rules_cover_profit_stop_hold_and_dte():
     from scripts import spy_put_credit as pcs
 
-    now = datetime(2026, 7, 22, 16, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 7, 22, 16, 0, tzinfo=UTC)
     entry = {
         "expiry": "2026-08-21",
         "entry_time": (now - timedelta(days=2)).isoformat(),
@@ -572,7 +572,7 @@ def test_put_credit_exit_rules_cover_profit_stop_hold_and_dte():
 def test_put_credit_exit_manager_dry_run_never_submits(tmp_path, monkeypatch):
     from scripts import spy_put_credit as pcs
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     entries_path = tmp_path / "put_credit_entries.json"
     entries_path.write_text(
         json.dumps(
@@ -659,7 +659,7 @@ def test_partial_exit_fill_remains_managed_as_pending():
 def test_submitted_exit_is_saved_before_later_entry_failure(tmp_path, monkeypatch):
     from scripts import spy_put_credit as pcs
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     entries_path = tmp_path / "put_credit_entries.json"
     entries_path.write_text(
         json.dumps(
@@ -720,7 +720,7 @@ def test_put_credit_exit_manager_distinguishes_pending_entry_from_broken(tmp_pat
                     "status": "submitted_unconfirmed",
                     "order_id": "order-1",
                     "expiry": "2026-08-21",
-                    "entry_time": datetime.now(timezone.utc).isoformat(),
+                    "entry_time": datetime.now(UTC).isoformat(),
                     "credit": 1.0,
                     "quantity": 1,
                     "strikes": {"short_put": 700.0, "long_put": 695.0},
@@ -753,7 +753,7 @@ def test_put_credit_exit_manager_dry_run_flags_orphan_cleanup(tmp_path, monkeypa
                     "status": "open",
                     "order_id": "order-1",
                     "expiry": "2026-08-21",
-                    "entry_time": datetime.now(timezone.utc).isoformat(),
+                    "entry_time": datetime.now(UTC).isoformat(),
                     "credit": 1.0,
                     "quantity": 1,
                     "strikes": {"short_put": 700.0, "long_put": 695.0},
@@ -783,7 +783,7 @@ def test_put_credit_exit_manager_dry_run_flags_orphan_cleanup(tmp_path, monkeypa
 
 def test_schedule_manages_put_credit_exits_every_weekday_slot():
     workflow = (
-        Path(__file__).resolve().parents[1] / ".github" / "workflows" / "ic-simple.yml"
+        Path(__file__).resolve().parents[1] / ".github" / "workflows" / "put-credit-validation.yml"
     ).read_text(encoding="utf-8")
     assert "Manage put-credit exits" in workflow
     assert "--manage-exits" in workflow
@@ -795,7 +795,7 @@ def test_schedule_manages_put_credit_exits_every_weekday_slot():
 
 def test_schedule_preserves_trigger_intent_when_github_delivers_late():
     workflow = (
-        Path(__file__).resolve().parents[1] / ".github" / "workflows" / "ic-simple.yml"
+        Path(__file__).resolve().parents[1] / ".github" / "workflows" / "put-credit-validation.yml"
     ).read_text(encoding="utf-8")
     determine_mode = workflow.split("- name: Determine mode", 1)[1].split(
         "- name: Reconcile filled put-credit journals", 1
@@ -829,7 +829,7 @@ def test_put_credit_parsing_and_credit_confirmation_failure_paths(tmp_path, monk
 
     assert pcs._parse_timestamp(None) is None
     assert pcs._parse_timestamp("not-a-timestamp") is None
-    assert pcs._parse_timestamp("2026-07-22T12:00:00").tzinfo == timezone.utc
+    assert pcs._parse_timestamp("2026-07-22T12:00:00").tzinfo == UTC
     assert pcs._expiry_yymmdd({"expiry": "260821"}) == "260821"
     assert pcs._expiry_yymmdd({"signature": "SPY_2026-08-21_P695-700"}) == "260821"
     assert pcs._expiry_yymmdd({}) == ""

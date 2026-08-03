@@ -1,6 +1,6 @@
-# LL-175: Trade Gateway Rule #1 Enforcement Fixed
+# LL-196: Trade Gateway Rule #1 Enforcement Fixed
 
-**ID**: ll_175
+**ID**: LL-196
 **Date**: 2026-01-13
 **Severity**: CRITICAL
 **Type**: Bug Fix

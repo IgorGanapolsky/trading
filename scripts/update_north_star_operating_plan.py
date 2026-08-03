@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -63,7 +63,7 @@ def _load_history(path: Path) -> list[dict[str, Any]]:
 
 
 def _run_autopilot(state: dict[str, Any]) -> dict[str, Any]:
-    now_utc = datetime.now(timezone.utc)
+    now_utc = datetime.now(UTC)
     blocker_report = compute_report(
         state=state,
         weekly_history=_load_history(WEEKLY_HISTORY_PATH),
@@ -90,7 +90,7 @@ def _run_autopilot(state: dict[str, Any]) -> dict[str, Any]:
             trades_path=TRADES_PATH,
             weekly_history_path=WEEKLY_HISTORY_PATH,
         )
-        now_utc = datetime.now(timezone.utc)
+        now_utc = datetime.now(UTC)
         blocker_report = compute_report(
             state=state,
             weekly_history=_load_history(WEEKLY_HISTORY_PATH),

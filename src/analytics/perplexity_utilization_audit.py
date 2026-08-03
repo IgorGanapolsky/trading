@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -20,8 +20,6 @@ EXPECTED_HIGH_ROI_FILES = (
     "src/analytics/perplexity_trading_intel.py",
     "src/analytics/perplexity_utilization_audit.py",
     "scripts/run_perplexity_trading_intel.py",
-    ".github/workflows/pre-market-scan.yml",
-    ".github/workflows/perplexity-trading-intel.yml",
 )
 
 
@@ -92,17 +90,11 @@ def build_perplexity_usage_snapshot(
         gaps.append("local_runtime_missing_perplexity_credential")
     if missing_expected:
         gaps.append("missing_high_roi_files")
-    if not any(
-        item["path"] == ".github/workflows/perplexity-trading-intel.yml" for item in matches
-    ):
-        gaps.append("missing_24_7_trading_intel_workflow")
     if not any(item["path"] == "src/analytics/perplexity_trading_intel.py" for item in matches):
         gaps.append("missing_structured_trading_intel_engine")
-    if not any(item["mentions_agent_playground"] for item in matches):
-        gaps.append("agent_playground_not_versioned_in_repo")
 
     return {
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "credential_available_in_runtime": credential_present,
         "active_perplexity_files": len(matches),
         "workflows_with_perplexity": workflow_matches,
@@ -131,12 +123,10 @@ def _score_utilization(
         score += 20
     if not missing_expected:
         score += 30
-    if any(item["path"] == ".github/workflows/perplexity-trading-intel.yml" for item in matches):
-        score += 20
     if any(item["path"] == "src/analytics/perplexity_trading_intel.py" for item in matches):
+        score += 30
+    if any(item["path"] == "scripts/run_perplexity_trading_intel.py" for item in matches):
         score += 20
-    if any(item["mentions_agent_playground"] for item in matches):
-        score += 10
     return score
 
 

@@ -8,7 +8,7 @@ import hashlib
 import json
 import sys
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -77,7 +77,7 @@ def _trade_fingerprint(trade: dict[str, Any]) -> str:
         "realized_pnl": trade.get("realized_pnl", trade.get("pnl", trade.get("pl"))),
     }
     payload = json.dumps(material, sort_keys=True, ensure_ascii=True)
-    return hashlib.sha1(payload.encode("utf-8")).hexdigest()[:16]
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
 
 
 def _event_key(trade: dict[str, Any]) -> str:
@@ -197,7 +197,7 @@ def run_pipeline(
     dry_run: bool = False,
     max_events: int = 0,
 ) -> dict[str, Any]:
-    now_utc = datetime.now(timezone.utc)
+    now_utc = datetime.now(UTC)
     trades_payload = _load_json(trades_path)
     closed = _closed_trades(trades_payload)
     if max_events > 0:

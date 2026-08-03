@@ -29,7 +29,7 @@ import logging
 import os
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -2065,7 +2065,7 @@ class Gate5Execution:
             indicators = ctx.momentum_signal.indicators if ctx.momentum_signal else {}
             self.position_manager.track_entry(
                 symbol=ticker,
-                entry_date=datetime.now(timezone.utc),
+                entry_date=datetime.now(UTC),
                 entry_features=indicators,
             )
             logger.debug("Tracked entry for %s with features", ticker)

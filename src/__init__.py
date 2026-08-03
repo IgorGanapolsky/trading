@@ -1,3 +1,4 @@
-"""Root src package."""
+"""Importable trading-system packages.
 
-from . import trading  # noqa: F401
+Importing :mod:`src` must not initialize brokers, providers, or orchestration.
+"""

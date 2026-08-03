@@ -10,8 +10,9 @@ Created: Jan 17, 2026
 
 import json
 import os
-import sys
 import urllib.request
+
+import pytest
 
 WEBHOOK_URL = os.environ.get("RAG_WEBHOOK_URL", "").strip()
 
@@ -20,8 +21,7 @@ def test_webhook_health():
     """Verify webhook is healthy and has trade data loaded."""
     print("🔍 Testing webhook health endpoint...")
     if not WEBHOOK_URL:
-        print("⚠️  SKIP: RAG_WEBHOOK_URL not set")
-        return True
+        pytest.skip("RAG_WEBHOOK_URL not set")
 
     try:
         req = urllib.request.Request(
@@ -41,33 +41,25 @@ def test_webhook_health():
         # This catches the LL-230 bug where Cloud Run couldn't find trade files
         trades_loaded = data.get("trades_loaded", 0)
         if trades_loaded == 0:
-            print("\n❌ FAIL: trades_loaded=0")
-            print("   This indicates a data source mismatch (see LL-230)")
-            print("   Webhook should read from system_state.json -> trade_history")
-            return False
+            pytest.fail("trades_loaded=0; webhook data source does not match canonical state")
 
         if data.get("status") != "healthy":
-            print(f"\n❌ FAIL: status={data.get('status')}")
-            return False
+            pytest.fail(f"unexpected webhook status: {data.get('status')}")
 
         if data.get("rag_mode") != "lancedb_first":
-            print(f"\n❌ FAIL: rag_mode={data.get('rag_mode')}")
-            return False
+            pytest.fail(f"unexpected RAG mode: {data.get('rag_mode')}")
 
         print(f"\n✅ PASS: Webhook healthy with {trades_loaded} trades loaded")
-        return True
 
     except Exception as e:
-        print(f"\n❌ FAIL: Could not reach webhook: {e}")
-        return False
+        pytest.fail(f"could not reach webhook: {e}", pytrace=False)
 
 
 def test_webhook_trade_query():
     """Verify webhook can respond to trade queries."""
     print("\n🔍 Testing webhook trade query...")
     if not WEBHOOK_URL:
-        print("⚠️  SKIP: RAG_WEBHOOK_URL not set")
-        return True
+        pytest.skip("RAG_WEBHOOK_URL not set")
 
     try:
         payload = json.dumps(
@@ -91,28 +83,22 @@ def test_webhook_trade_query():
         # Check response structure
         messages = data.get("fulfillmentResponse", {}).get("messages", [])
         if not messages:
-            print("❌ FAIL: No messages in response")
-            return False
+            pytest.fail("no messages in webhook response")
 
         text = messages[0].get("text", {}).get("text", [""])[0]
         if not text:
-            print("❌ FAIL: Empty response text")
-            return False
+            pytest.fail("empty webhook response text")
 
         # Should contain trade info, not "No trades found"
         if "No trades found" in text:
-            print("❌ FAIL: Webhook returned 'No trades found'")
-            print(f"   Response: {text[:200]}...")
-            return False
+            pytest.fail("webhook returned 'No trades found'")
 
         print(f"  Response length: {len(text)} chars")
         print(f"  Preview: {text[:100]}...")
         print("\n✅ PASS: Webhook returned trade data")
-        return True
 
     except Exception as e:
-        print(f"\n❌ FAIL: Trade query failed: {e}")
-        return False
+        pytest.fail(f"trade query failed: {e}", pytrace=False)
 
 
 def test_webhook_compound_query():
@@ -124,8 +110,7 @@ def test_webhook_compound_query():
     """
     print("\n🔍 Testing webhook compound P/L + analytical query...")
     if not WEBHOOK_URL:
-        print("⚠️  SKIP: RAG_WEBHOOK_URL not set")
-        return True
+        pytest.skip("RAG_WEBHOOK_URL not set")
 
     try:
         payload = json.dumps(
@@ -148,20 +133,16 @@ def test_webhook_compound_query():
 
         messages = data.get("fulfillmentResponse", {}).get("messages", [])
         if not messages:
-            print("❌ FAIL: No messages in response")
-            return False
+            pytest.fail("no messages in compound webhook response")
 
         text = messages[0].get("text", {}).get("text", [""])[0]
         if not text:
-            print("❌ FAIL: Empty response text")
-            return False
+            pytest.fail("empty compound webhook response text")
 
         # Should NOT be a raw trade dump (starts with "Trade History (found X trades)")
         # Should be a compound response with P/L + analysis
         if "Trade History (found" in text and "P/L: $0.00" in text:
-            print("❌ FAIL: Got raw trade dump instead of compound analysis")
-            print(f"   Response: {text[:300]}...")
-            return False
+            pytest.fail("compound query returned a raw trade dump")
 
         # Should contain analytical elements (P/L status + explanation)
         has_pl_status = "P/L" in text or "today" in text.lower()
@@ -175,43 +156,6 @@ def test_webhook_compound_query():
         print(f"  Has analysis: {has_analysis}")
         print(f"  Preview: {text[:200]}...")
         print("\n✅ PASS: Compound query returned proper analysis")
-        return True
 
     except Exception as e:
-        print(f"\n❌ FAIL: Compound query failed: {e}")
-        return False
-
-
-def main():
-    """Run all integration tests."""
-    print("=" * 60)
-    print("WEBHOOK INTEGRATION TESTS")
-    print("=" * 60)
-
-    results = []
-    results.append(("Health Check", test_webhook_health()))
-    results.append(("Trade Query", test_webhook_trade_query()))
-    results.append(("Compound Query", test_webhook_compound_query()))
-
-    print("\n" + "=" * 60)
-    print("RESULTS")
-    print("=" * 60)
-
-    all_passed = True
-    for name, passed in results:
-        status = "✅ PASS" if passed else "❌ FAIL"
-        print(f"  {status}: {name}")
-        if not passed:
-            all_passed = False
-
-    print()
-    if all_passed:
-        print("✅ All integration tests passed!")
-        return 0
-    else:
-        print("❌ Some tests failed!")
-        return 1
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+        pytest.fail(f"compound query failed: {e}", pytrace=False)

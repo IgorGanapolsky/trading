@@ -21,7 +21,7 @@ import json
 import logging
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 # Add project root to path
@@ -53,7 +53,7 @@ def _truthy(value: str | None) -> bool:
 
 
 def _now_utc_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _safe_float(value: object, default: float = 0.0) -> float:
@@ -81,8 +81,8 @@ def _parse_filled_at(raw_value: str | None) -> datetime | None:
 def _canonical_fill_dt(fill_dt: datetime) -> datetime:
     """Normalize parsed fill timestamps to UTC for consistent date math."""
     if fill_dt.tzinfo is None:
-        return fill_dt.replace(tzinfo=timezone.utc)
-    return fill_dt.astimezone(timezone.utc)
+        return fill_dt.replace(tzinfo=UTC)
+    return fill_dt.astimezone(UTC)
 
 
 def _derive_trade_summary_from_fills(trade_history: object, *, now: datetime | None = None) -> dict:
@@ -97,7 +97,7 @@ def _derive_trade_summary_from_fills(trade_history: object, *, now: datetime | N
                 continue
             fills.append((_canonical_fill_dt(filled_dt), trade))
 
-    today_utc = _canonical_fill_dt(now or datetime.now(timezone.utc)).date()
+    today_utc = _canonical_fill_dt(now or datetime.now(UTC)).date()
     todays_fills = sum(1 for filled_dt, _ in fills if filled_dt.date() == today_utc)
     last_trade_dt = max((filled_dt for filled_dt, _ in fills), default=None)
 
@@ -288,9 +288,20 @@ def update_system_state(alpaca_data: dict | None) -> None:
     """
     logger.info("📝 Updating system_state.json...")
 
+    # Derive every sibling output from the selected state file. Tests and
+    # alternate operators can redirect one root without leaking writes into
+    # the repository's production-shaped snapshots.
+    state_file = SYSTEM_STATE_FILE
+    data_dir = state_file.parent
+    runtime_dir = data_dir / "runtime"
+    intraday_history_file = runtime_dir / "intraday_pnl_history.json"
+    intraday_latest_file = runtime_dir / "intraday_pnl_latest.json"
+    trades_path = data_dir / "trades.json"
+    weekly_history_path = data_dir / "north_star_weekly_history.json"
+
     # Load existing state
-    if SYSTEM_STATE_FILE.exists():
-        with open(SYSTEM_STATE_FILE) as f:
+    if state_file.exists():
+        with open(state_file) as f:
             state = json.load(f)
     else:
         state = {}
@@ -299,7 +310,7 @@ def update_system_state(alpaca_data: dict | None) -> None:
     state.setdefault("meta", {})
     state.setdefault("sync_health", {})
     now_iso = _now_utc_iso()
-    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today_str = datetime.now(UTC).strftime("%Y-%m-%d")
     state["meta"]["last_updated"] = now_iso
     state["meta"]["last_sync_attempt"] = now_iso
     state["last_updated"] = now_iso
@@ -496,8 +507,8 @@ def update_system_state(alpaca_data: dict | None) -> None:
 
         apply_operating_plan_to_state(
             state,
-            trades_path=PROJECT_ROOT / "data" / "trades.json",
-            weekly_history_path=PROJECT_ROOT / "data" / "north_star_weekly_history.json",
+            trades_path=trades_path,
+            weekly_history_path=weekly_history_path,
         )
     except Exception as e:
         logger.warning(f"Could not update North Star operating plan in system_state: {e}")
@@ -513,8 +524,8 @@ def update_system_state(alpaca_data: dict | None) -> None:
 
         snapshot = compute_milestone_snapshot(
             state=state,
-            state_path=SYSTEM_STATE_FILE,
-            trades_path=PROJECT_ROOT / "data" / "trades.json",
+            state_path=state_file,
+            trades_path=trades_path,
         )
         apply_snapshot_to_state(state, snapshot)
     except Exception as e:
@@ -524,7 +535,6 @@ def update_system_state(alpaca_data: dict | None) -> None:
     # not from raw Alpaca fills (which are not paired into outcomes).
     try:
         trades_payload = {}
-        trades_path = PROJECT_ROOT / "data" / "trades.json"
         if trades_path.exists():
             with open(trades_path) as handle:
                 trades_payload = json.load(handle) or {}
@@ -541,12 +551,17 @@ def update_system_state(alpaca_data: dict | None) -> None:
         logger.warning(f"Could not refresh win rate metrics from trades.json: {e}")
 
     # Write atomically
-    SYSTEM_STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    temp_file = SYSTEM_STATE_FILE.with_suffix(".tmp")
+    state_file.parent.mkdir(parents=True, exist_ok=True)
+    temp_file = state_file.with_suffix(".tmp")
     with open(temp_file, "w") as f:
         json.dump(state, f, indent=2)
-    temp_file.rename(SYSTEM_STATE_FILE)
-    _write_intraday_pnl_snapshot(state=state, now_iso=now_iso)
+    temp_file.rename(state_file)
+    _write_intraday_pnl_snapshot(
+        state=state,
+        now_iso=now_iso,
+        history_file=intraday_history_file,
+        latest_file=intraday_latest_file,
+    )
 
     # Log result
     paper_equity = state.get("paper_account", {}).get("equity", 0)
@@ -557,7 +572,12 @@ def update_system_state(alpaca_data: dict | None) -> None:
     )
 
 
-def _write_intraday_pnl_snapshot(state: dict, now_iso: str) -> None:
+def _write_intraday_pnl_snapshot(
+    state: dict,
+    now_iso: str,
+    history_file: Path = INTRADAY_PNL_HISTORY_FILE,
+    latest_file: Path = INTRADAY_PNL_LATEST_FILE,
+) -> None:
     """Persist bounded intraday P/L snapshots for auditability across sync runs."""
     paper = state.get("paper_account", {}) if isinstance(state.get("paper_account"), dict) else {}
     live = state.get("live_account", {}) if isinstance(state.get("live_account"), dict) else {}
@@ -580,13 +600,13 @@ def _write_intraday_pnl_snapshot(state: dict, now_iso: str) -> None:
         },
     }
 
-    RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
+    history_file.parent.mkdir(parents=True, exist_ok=True)
 
     history: list[dict] = []
-    if INTRADAY_PNL_HISTORY_FILE.exists():
+    if history_file.exists():
         try:
-            with open(INTRADAY_PNL_HISTORY_FILE) as history_file:
-                loaded = json.load(history_file)
+            with open(history_file) as history_handle:
+                loaded = json.load(history_handle)
                 if isinstance(loaded, list):
                     history = loaded
         except Exception as exc:
@@ -595,15 +615,15 @@ def _write_intraday_pnl_snapshot(state: dict, now_iso: str) -> None:
     history.append(snapshot)
     history = history[-INTRADAY_HISTORY_LIMIT:]
 
-    history_tmp = INTRADAY_PNL_HISTORY_FILE.with_suffix(".tmp")
-    latest_tmp = INTRADAY_PNL_LATEST_FILE.with_suffix(".tmp")
-    with open(history_tmp, "w") as history_file:
-        json.dump(history, history_file, indent=2)
-    with open(latest_tmp, "w") as latest_file:
-        json.dump(snapshot, latest_file, indent=2)
+    history_tmp = history_file.with_suffix(".tmp")
+    latest_tmp = latest_file.with_suffix(".tmp")
+    with open(history_tmp, "w") as history_handle:
+        json.dump(history, history_handle, indent=2)
+    with open(latest_tmp, "w") as latest_handle:
+        json.dump(snapshot, latest_handle, indent=2)
 
-    history_tmp.rename(INTRADAY_PNL_HISTORY_FILE)
-    latest_tmp.rename(INTRADAY_PNL_LATEST_FILE)
+    history_tmp.rename(history_file)
+    latest_tmp.rename(latest_file)
 
 
 def main() -> int:

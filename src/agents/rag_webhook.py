@@ -33,6 +33,7 @@ import logging
 import os
 import ssl
 import sys
+from datetime import UTC
 from pathlib import Path
 from typing import Optional
 
@@ -55,6 +56,7 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from scripts.sync_alpaca_state import _derive_trade_summary_from_fills  # noqa: E402
+
 from src.rag.lessons_learned_rag import LessonsLearnedRAG  # noqa: E402
 
 # Configure logging
@@ -309,9 +311,7 @@ def query_alpaca_api_direct() -> Optional[dict]:
 
             today_str = datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
         except ImportError:
-            from datetime import timezone
-
-            today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            today_str = datetime.now(UTC).strftime("%Y-%m-%d")
 
         activities_url = (
             f"https://paper-api.alpaca.markets/v2/account/activities/FILL?date={today_str}"
@@ -476,14 +476,14 @@ def _calculate_challenge_day(start_date_raw: str | None = None) -> int:
 
 def build_live_system_state_snapshot() -> dict:
     """Return a system-state-shaped snapshot with live Alpaca paper data overlaid when available."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     try:
         from zoneinfo import ZoneInfo
 
         today_str = datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
     except ImportError:
-        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        today_str = datetime.now(UTC).strftime("%Y-%m-%d")
 
     cached_state = _load_cached_system_state()
     has_cached_state = bool(cached_state)
@@ -531,7 +531,7 @@ def build_live_system_state_snapshot() -> dict:
     buying_power = _coerce_float(alpaca_data.get("buying_power"))
     last_equity = _coerce_float(alpaca_data.get("last_equity"))
     daily_change = _coerce_float(alpaca_data.get("daily_change"))
-    queried_at = str(alpaca_data.get("queried_at") or datetime.now(timezone.utc).isoformat())
+    queried_at = str(alpaca_data.get("queried_at") or datetime.now(UTC).isoformat())
     total_pl = equity - starting_balance
     total_pl_pct = (total_pl / starting_balance * 100.0) if starting_balance > 0 else 0.0
 
@@ -585,7 +585,7 @@ def build_live_system_state_snapshot() -> dict:
 
 def get_current_portfolio_status() -> dict:
     """Get current portfolio status - PREFER Alpaca API, fallback to cached files."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     state = build_live_system_state_snapshot()
     if not state:
@@ -597,7 +597,7 @@ def get_current_portfolio_status() -> dict:
 
         today_str = datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
     except ImportError:
-        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        today_str = datetime.now(UTC).strftime("%Y-%m-%d")
 
     # Build canonical activity from fills, not state["trades"] summary fields.
     # state["trades"] can become stale while trade_history is newer.
@@ -1266,9 +1266,7 @@ def assess_trading_readiness(
         et_tz = ZoneInfo("America/New_York")
         now_et = datetime.now(et_tz)
     except ImportError:
-        from datetime import timezone
-
-        now_et = datetime.now(timezone.utc)
+        now_et = datetime.now(UTC)
 
     checks = []
     warnings = []

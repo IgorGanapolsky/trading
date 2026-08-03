@@ -105,13 +105,14 @@ class LessonsLearnedRAG:
 
     def _load_lessons(self) -> None:
         """Load all lessons from markdown files."""
+        self.lessons = []
         if not self.knowledge_dir.exists():
             logger.warning(f"Lessons directory not found: {self.knowledge_dir}")
             return
 
         for lesson_file in self.knowledge_dir.glob("*.md"):
             try:
-                content = lesson_file.read_text()
+                content = lesson_file.read_text(encoding="utf-8")
                 # Parse basic metadata
                 lesson = {
                     "id": lesson_file.stem,
@@ -446,11 +447,19 @@ class LessonsLearnedRAG:
             score = item.get("score", 0.5)
 
             # Boost lessons matching elevated VIX/volatility if VIX is high
-            if vix is not None and vix > 25.0 and ("vix" in content_lower or "volatility" in content_lower):
+            if (
+                vix is not None
+                and vix > 25.0
+                and ("vix" in content_lower or "volatility" in content_lower)
+            ):
                 score += 0.15
 
             # Boost lessons matching IV rank conditions
-            if iv_rank is not None and iv_rank < 30.0 and ("iv rank" in content_lower or "low iv" in content_lower):
+            if (
+                iv_rank is not None
+                and iv_rank < 30.0
+                and ("iv rank" in content_lower or "low iv" in content_lower)
+            ):
                 score += 0.15
 
             # Boost lessons matching specific option structure
@@ -465,6 +474,7 @@ class LessonsLearnedRAG:
 
     def add_lesson(self, lesson_id: str, content: str) -> None:
         """Add a new lesson (writes to file)."""
+        self.knowledge_dir.mkdir(parents=True, exist_ok=True)
         lesson_file = self.knowledge_dir / f"{lesson_id}.md"
-        lesson_file.write_text(content)
+        lesson_file.write_text(content, encoding="utf-8")
         self._load_lessons()  # Reload

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -185,9 +185,9 @@ def _parse_closed_at(value: Any) -> datetime | None:
         return None
     try:
         if len(raw) == 10 and raw[4] == "-" and raw[7] == "-":
-            return datetime.strptime(raw, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            return datetime.strptime(raw, "%Y-%m-%d").replace(tzinfo=UTC)
         parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
-        return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+        return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
     except ValueError:
         return None
 

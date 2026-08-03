@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 
 from src.analytics.perplexity_trading_intel import (
@@ -61,7 +61,7 @@ def test_dry_run_writes_json_rag_and_ml_artifacts(tmp_path: Path) -> None:
     runner = PerplexityTradingIntelRunner(
         tmp_path,
         dry_run=True,
-        now=datetime(2026, 4, 13, 13, 30, tzinfo=timezone.utc),
+        now=datetime(2026, 4, 13, 13, 30, tzinfo=UTC),
     )
     payload = asyncio.run(runner.run("pre_market"))
     duplicate_payload = asyncio.run(runner.run("pre_market"))

@@ -1,99 +1,99 @@
 # trading
 
-**paper-first SPY options validation lab** with broker-backed ledgers, hard risk gates, and agent-bypass-proof safety.
+**Paper-first SPY options validation lab** with broker-backed ledgers, deterministic risk gates, and local lessons memory.
 
-[docs](docs/README.md) · [operator guide](docs/operator-guide.md) · [agent skill](skills/trading-ops/SKILL.md) · [live strategy](docs/LIVE_STRATEGY.md)
+[Docs](docs/README.md) · [Operator guide](docs/operator-guide.md) · [Agent skill](skills/trading-ops/SKILL.md) · [Coordination](docs/AGENT_COORDINATION.md)
 
----
+> Live trading is blocked. The active put-credit edge is not proven; tests, healthy automation, plans, and paper fills are not profit evidence.
 
-**guardrails first. edge second.**
+## Guardrails first, edge second
 
-- **trade gateway** — every new-risk path hits `TradeGateway` before the broker
-- **kill switch** — strategy family is explicit in `data/runtime/strategy_kill_switch.json`
-- **paired ledger** — closed outcomes in `data/trades.json`; unmatched fills stay quarantined
-- **RAG memory** — lessons under `rag_knowledge/lessons_learned/` feed gates and ops
-- **paper only for active validation** — live capital blocked until cohort criteria clear
+- **Trade gateway** — new-risk paths cross `TradeGateway` before the broker.
+- **Kill switch** — active and killed strategy families are explicit in `data/runtime/strategy_kill_switch.json`.
+- **Paired ledger** — closed outcomes live in `data/trades.json`; unmatched fills remain quarantined.
+- **RAG memory** — curated lessons under `rag_knowledge/lessons_learned/` inform operations and gates.
+- **Paper validation** — live capital stays blocked until the reviewed cohort criteria pass.
 
-Active family: **`spy_put_credit`** (1-lot SPY bull put credit, paper). Iron condor **new entries are killed**; residual IC legs are exit-only.
+Active family: **`spy_put_credit`** (1-lot SPY bull put credit, paper). New iron-condor entries are killed; existing residual IC legs are exit-only.
 
-This is **not** a proven profitable system. Current edge is unproven until the put-credit cohort hits n≥30 with expectancy > 0 and PF > 1. Read ledgers, not marketing.
+## Quick start
 
----
-
-## quick start
+Requires Python 3.11.
 
 ```bash
 git clone https://github.com/IgorGanapolsky/trading
 cd trading
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements-minimal.txt   # or: uv sync
+make setup
 
-# status (no orders)
-python scripts/spy_put_credit.py --status
-python scripts/audit_open_inventory.py
-python scripts/system_health_check.py
+# Read-only status and local health
+.venv/bin/python scripts/spy_put_credit.py --status
+.venv/bin/python scripts/audit_open_inventory.py
+make health
 
-# plan only (no submit)
-python scripts/spy_put_credit.py --dry-run
+# Plans only; no order submission
+make dry-run
 ```
 
-Credentials: Alpaca paper keys via env / `get_alpaca_credentials()` — never hardcode.
+Broker-backed commands read paper credentials from environment variables or the local credential helper. Never hardcode credentials.
 
----
+## Active system
 
-## docs
+| Concern                                   | Owner                                        |
+| ----------------------------------------- | -------------------------------------------- |
+| Paper entry, status, and put-credit exits | `scripts/spy_put_credit.py`                  |
+| Residual iron-condor exits                | `scripts/residual_ic_manager.py`             |
+| Entry and live-trading kill switch        | `src/core/active_strategy.py`                |
+| Mandatory risk policy                     | `src/safety/mandatory_trade_gate.py`         |
+| Broker order boundary                     | `src/risk/trade_gateway.py`                  |
+| Canonical broker/trade ledgers            | `data/system_state.json`, `data/trades.json` |
+| Curated operational lessons               | `rag_knowledge/lessons_learned/`             |
+| Dependency-free lesson query              | `scripts/query_lessons_learned.py`           |
 
-| Path                                                       | Purpose                             |
-| ---------------------------------------------------------- | ----------------------------------- |
-| [docs/README.md](docs/README.md)                           | docs index                          |
-| [docs/operator-guide.md](docs/operator-guide.md)           | human operator runbook              |
-| [docs/LIVE_STRATEGY.md](docs/LIVE_STRATEGY.md)             | strategy spec                       |
-| [skills/trading-ops/SKILL.md](skills/trading-ops/SKILL.md) | agent skill (operate this repo)     |
-| [AGENTS.md](AGENTS.md)                                     | agent instructions for contributors |
-| [CONTRIBUTING.md](CONTRIBUTING.md)                         | PR / issue path                     |
-
----
-
-## current truth (verify on disk)
-
-| Source                                   | Question                            |
-| ---------------------------------------- | ----------------------------------- |
-| `data/system_state.json`                 | broker equity, positions, last sync |
-| `data/trades.json`                       | paired closed-structure outcomes    |
-| `data/put_credit_entries.json`           | active put-credit journal           |
-| `data/runtime/strategy_kill_switch.json` | active vs killed families           |
-
-Do not invent P/L or win rate. Cite the ledger.
-
----
-
-## agent instructions
-
-If you are an AI agent working in this repository:
-
-1. Read [`AGENTS.md`](AGENTS.md) before changing code
-2. Install/use the operator skill: [`skills/trading-ops/SKILL.md`](skills/trading-ops/SKILL.md)
-3. Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before opening PRs
-
-Repo layout ideas (skills, docs hub, clean README pitch) were inspired by
-[Herdr](https://github.com/herdrdev/herdr) / [herdr.dev](https://herdr.dev) —
-agent skill + plugins docs at [herdr.dev/docs/agent-skill](https://herdr.dev/docs/agent-skill/)
-and [herdr.dev/docs/plugins](https://herdr.dev/docs/plugins/). No affiliation.
-
----
-
-## development
+## Commands
 
 ```bash
-make check          # ruff (src) + focused pytest if available
-make test           # pytest tests/ -q
-make hygiene        # worktree prune helper
+make lint        # Ruff checks and formatting verification
+make test        # full Python test suite
+make coverage    # branch coverage in terminal, XML, JSON, and HTML
+make audit       # repository and RAG hygiene audit
+make security    # dependency and high-confidence static-security checks
+make health      # bounded protected-system health snapshot
+make check       # lint + audit + security + contracts + full tests
+make dry-run     # health + paper-only strategy and residual-exit plans
 ```
 
-Use a dedicated git worktree for feature work (see AGENTS.md). Never force-push `main`.
+## Repository map
 
----
+| Path             | Purpose                                                |
+| ---------------- | ------------------------------------------------------ |
+| `src/`           | Importable product code                                |
+| `scripts/`       | Explicit operator and maintenance entry points         |
+| `tests/`         | Unit, integration, contract, and smoke tests           |
+| `skills/`        | Reusable agent procedures                              |
+| `config/`        | Reviewed static configuration                          |
+| `data/`          | Compact canonical ledgers; generated output is ignored |
+| `rag_knowledge/` | Curated sources and lessons, not runtime indexes       |
+| `docs/`          | Current engineering and operating documentation        |
 
-## license
+Start with [CONTRIBUTING.md](CONTRIBUTING.md), [data/README.md](data/README.md), and [docs/EXTENSIONS.md](docs/EXTENSIONS.md).
 
-See [LICENSE](LICENSE).
+## Multi-agent coordination
+
+[docs/AGENT_COORDINATION.md](docs/AGENT_COORDINATION.md) defines the layered contract:
+
+- **Herdr**: live pane and agent lifecycle.
+- **Linear**: durable task ownership.
+- **Shared Obsidian vault**: live claim and handoff record.
+- **Issue-scoped worktree and PR**: authoritative code change and review.
+
+The Obsidian Linear plugin is a human dashboard, not a lock. Repository organization and first-class skill ideas are inspired by [Herdr](https://github.com/herdrdev/herdr), its [agent-skill guide](https://herdr.dev/docs/agent-skill/), and its [plugin guide](https://herdr.dev/docs/plugins/); there is no affiliation.
+
+## Evidence boundary
+
+- A dry run is a plan, not an order.
+- A submitted order is not a fill.
+- A paper fill is not live performance.
+- A model score or test result is not trading edge.
+- Promotion requires reviewed thresholds backed by broker-paired closed trades.
+
+MIT licensed. Nothing in this repository is financial advice.

@@ -5,7 +5,7 @@ Verify Trade Execution - Monday Morning Monitor
 CEO Directive (Jan 10, 2026): "Add monitoring to ensure we catch if Monday's trades fail"
 Updated (Jan 16, 2026): Fixed to use system_state.json as primary source of truth
 
-This script verifies that trades actually executed after the daily-trading workflow runs.
+This script reconciles broker execution evidence after Put Credit Validation runs.
 Primary check: system_state.json trades.today_trades field (synced from Alpaca API)
 Secondary check: Alpaca API direct query
 

@@ -10,7 +10,8 @@ Project instructions live in `.claude/CLAUDE.md`. Rules auto-load from `.claude/
 
 ## Active Operating Scope
 
-- Primary execution path: `scripts/iron_condor_trader.py`
+- Primary entry path: `scripts/spy_put_credit.py` (paper only)
+- Residual iron-condor exits: `scripts/residual_ic_manager.py`; new iron-condor entries are killed
 - Canonical ledgers: `data/system_state.json` and `data/trades.json`
 - Archived from the default operating path: blog/wiki/dashboard/pages publishing and discovery marketing workflows
 - Never describe the system as profitable or validated unless current ledger data proves it
@@ -36,9 +37,23 @@ Project instructions live in `.claude/CLAUDE.md`. Rules auto-load from `.claude/
 - Completion confirmation phrase for this workflow:
   - "Done merging PRs. CI passing. System hygiene complete. Ready for next session."
 
-## Credentials & Skills
+## Repository Hygiene
 
-- **Secrets Registry**: Default credentials are kept in `~/.resume_secrets/` (e.g. [job_sites.json](file:///Users/igorganapolsky/.resume_secrets/job_sites.json), [default_passwords.json](file:///Users/igorganapolsky/.resume_secrets/default_passwords.json)). Never hardcode or repeat password/token secrets in code, logs, commits, or directive files.
-- **Job Site Login Skill**: The `job-site-login` skill is stored at [SKILL.md](file:///Users/igorganapolsky/.gemini/config/skills/job-site-login/SKILL.md). Use it to automate login, new account creation, and password reset flows.
+- Run `make check` before pushing and `make dry-run` before an operational change.
+- Keep canonical source and small ledgers in Git; keep screenshots, caches, local databases, reports, and generated indexes out of Git.
+- Every workflow needs a current owner and tested contract. Delete disabled one-off workflows.
+- Optional integrations belong behind narrow adapters and core imports remain side-effect free.
+- Reusable agent instructions live under `skills/`; human guidance lives in `README.md`, `CONTRIBUTING.md`, and `docs/`.
 
-Note: Never store secrets or tokens in this file.
+## Multi-Agent Coordination
+
+- Claim a Linear issue through the shared bridge before editing. Linear is task ownership,
+  the shared Obsidian vault is the live claim ledger, and the Git worktree/PR is code truth.
+- Follow `docs/AGENT_COORDINATION.md`: list, claim, work in one issue-scoped worktree,
+  publish one PR, then mark the issue done or release it.
+- Put the Linear key in the branch and PR. Stop and reconcile if another active claim or
+  overlapping worktree exists; never remove another agent's worktree.
+- The Obsidian Linear plugin is a human dashboard, not a lock. Do not add a second
+  repository-local task database or copy the shared bridge into this repository.
+
+Never store secrets or tokens in this file.

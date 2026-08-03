@@ -311,6 +311,7 @@ def get_spy_range_forecast(horizon_days: int = 30) -> dict:
         from alpaca.data import StockHistoricalDataClient
         from alpaca.data.requests import StockBarsRequest
         from alpaca.data.timeframe import TimeFrame
+
         from src.utils.alpaca_client import get_alpaca_credentials
 
         creds = get_alpaca_credentials()

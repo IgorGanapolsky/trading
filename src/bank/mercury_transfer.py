@@ -53,7 +53,11 @@ def _mercury_api_ready() -> tuple[bool, str]:
     legacy_enabled = os.environ.get("MERCURY_API_ENABLED", "").lower() in {"1", "true", "yes"}
 
     # Canonical MercuryBankAdapter env vars
-    token = os.environ.get("MERCURY_API_TOKEN") or os.environ.get("MERCURY_API_KEY") or os.environ.get("MERCURY_TOKEN")
+    token = (
+        os.environ.get("MERCURY_API_TOKEN")
+        or os.environ.get("MERCURY_API_KEY")
+        or os.environ.get("MERCURY_TOKEN")
+    )
     account_id = os.environ.get("MERCURY_ACCOUNT_ID")
     live_enabled = os.environ.get("MERCURY_LIVE_TRANSFERS_ENABLED") == "1"
     recipient_id = os.environ.get("MERCURY_RECIPIENT_ID")
@@ -160,9 +164,7 @@ def plan_transfer(
     Real execution requires: dry_run=False, force_execute=True, live gate allowed,
     and Mercury API ready. Otherwise logs a dry_run or blocked record.
     """
-    direction_s = (
-        direction.value if isinstance(direction, TransferDirection) else str(direction)
-    )
+    direction_s = direction.value if isinstance(direction, TransferDirection) else str(direction)
     gate = evaluate_live_bank_gate()
     want_real = (not dry_run) and force_execute
 

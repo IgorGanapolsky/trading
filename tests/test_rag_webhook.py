@@ -12,6 +12,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from datetime import UTC
 
 pytest.importorskip("anthropic", reason="anthropic required for rag_webhook tests")
 
@@ -709,14 +710,14 @@ class TestPortfolioStatusFunction:
     def test_get_current_portfolio_status_prefers_canonical_trade_history_activity(self, tmp_path):
         """Stale state['trades'] must not override newer fill activity in trade_history."""
         import json
-        from datetime import datetime, timezone
+        from datetime import datetime
         from unittest.mock import patch
 
         from src.agents import rag_webhook
 
         data_dir = tmp_path / "data"
         data_dir.mkdir(parents=True, exist_ok=True)
-        fill_ts = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+        fill_ts = datetime.now(UTC).replace(microsecond=0).isoformat()
 
         state = {
             "account": {"current_equity": 100.0, "total_pl": 5.0, "total_pl_pct": 5.0},
@@ -748,14 +749,14 @@ class TestPortfolioStatusFunction:
     def test_get_current_portfolio_status_derives_activity_from_trade_files(self, tmp_path):
         """Fallback should derive activity from local data/trades_*.json when needed."""
         import json
-        from datetime import datetime, timezone
+        from datetime import datetime
         from unittest.mock import patch
 
         from src.agents import rag_webhook
 
         data_dir = tmp_path / "data"
         data_dir.mkdir(parents=True, exist_ok=True)
-        fill_ts = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+        fill_ts = datetime.now(UTC).replace(microsecond=0).isoformat()
         today_str = fill_ts[:10]
 
         state = {

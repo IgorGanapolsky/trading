@@ -12,6 +12,7 @@ import json
 import os
 import re
 import sys
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -109,7 +110,7 @@ def _parse_option_symbol(symbol: str) -> tuple[str, str] | None:
 
 
 def check_vector_db():
-    """Verify LanceDB index exists and is queryable."""
+    """Verify the optional LanceDB index without masking keyword RAG health."""
     results = {"name": "LanceDB Index", "status": "UNKNOWN", "details": []}
 
     try:
@@ -118,14 +119,21 @@ def check_vector_db():
             results["status"] = "OK"
             results["details"].append(f"✓ {detail}")
         else:
-            if _bounded_mode_enabled() and (
-                "path missing" in detail.lower() or "not installed" in detail.lower()
-            ):
-                results["status"] = "STUB"
-                results["details"].append(f"⚠️ {detail} - non-blocking in bounded CI mode")
-            else:
+            vector_required = os.getenv("LANCEDB_REQUIRED", "").strip().lower() in {
+                "1",
+                "true",
+                "yes",
+                "on",
+            }
+            if vector_required:
                 results["status"] = "BROKEN"
-                results["details"].append(f"✗ {detail}")
+                results["details"].append(f"✗ {detail} - LANCEDB_REQUIRED is enabled")
+            else:
+                results["status"] = "STUB"
+                if _bounded_mode_enabled():
+                    results["details"].append(f"⚠️ {detail} - non-blocking in bounded CI mode")
+                else:
+                    results["details"].append(f"⚠️ {detail} - keyword fallback remains available")
 
     except Exception as e:
         results["status"] = "BROKEN"
@@ -174,6 +182,20 @@ def check_rag_system():
             results["details"].append("✗ search() method missing - gates.py will crash!")
             results["status"] = "BROKEN"
             return results
+
+        # Verify the read/write contract without mutating the repository.
+        with tempfile.TemporaryDirectory(prefix="trading-rag-health-") as tmpdir:
+            writable_rag = LessonsLearnedRAG(knowledge_dir=tmpdir)
+            writable_rag.add_lesson(
+                "LL-HEALTH",
+                "# Health Probe\n\n**Severity**: LOW\n\nRAG write and read round trip.",
+            )
+            round_trip = writable_rag.query("round trip", top_k=1)
+            if not round_trip or round_trip[0]["id"] != "LL-HEALTH":
+                results["details"].append("✗ RAG write/read round trip failed")
+                results["status"] = "BROKEN"
+                return results
+            results["details"].append("✓ RAG write/read round trip works")
 
         # Test QueryRewriter & ParentChildRetriever modules
         try:

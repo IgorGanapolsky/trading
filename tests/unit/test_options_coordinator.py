@@ -148,7 +148,7 @@ class TestRunOptionsStrategy:
             result = coordinator.run_options_strategy()
             assert result["action"] == "archived"
             assert "Rule One" in result["reason"]
-            assert result["active_path"] == "scripts/iron_condor_trader.py"
+            assert result["active_path"] == "scripts/spy_put_credit.py"
 
 
 class TestPaperMode:

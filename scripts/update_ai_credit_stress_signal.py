@@ -16,7 +16,7 @@ import argparse
 import csv
 import json
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from io import StringIO
 from pathlib import Path
 
@@ -232,7 +232,7 @@ def _build_payload(
             for name, summary in metrics.items()
         },
         "source": source,
-        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(UTC).isoformat(),
     }
 
 
@@ -251,7 +251,7 @@ def _apply_override(payload: dict, override_status: str, override_reason: str) -
     payload["watch"] = status == "watch"
     payload["reasons"] = reasons
     payload["source"] = f"{payload.get('source', 'unknown')}+override"
-    payload["updated_at"] = datetime.now(timezone.utc).isoformat()
+    payload["updated_at"] = datetime.now(UTC).isoformat()
     return payload
 
 
@@ -335,7 +335,7 @@ def main() -> int:
                 "stale_days": None,
                 "metrics": {},
                 "source": "offline",
-                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(UTC).isoformat(),
             }
         )
     else:
@@ -378,7 +378,7 @@ def main() -> int:
             if not reasons and existing_payload:
                 payload = dict(existing_payload)
                 payload["source"] = "cached_fallback"
-                payload["updated_at"] = datetime.now(timezone.utc).isoformat()
+                payload["updated_at"] = datetime.now(UTC).isoformat()
                 payload["reasons"] = list(payload.get("reasons", [])) + fetch_errors
 
     if args.override_status:

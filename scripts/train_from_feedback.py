@@ -14,14 +14,20 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-MODEL_PATH = Path(__file__).parent.parent / "models" / "ml" / "feedback_model.json"
+MODEL_PATH = Path(
+    os.getenv(
+        "FEEDBACK_MODEL_PATH",
+        str(Path(__file__).parent.parent / "models" / "ml" / "feedback_model.json"),
+    )
+)
 FEEDBACK_DIRS = [
     Path(__file__).parent.parent / "data" / "feedback",
     Path(__file__).parent.parent / ".claude" / "memory" / "feedback",
@@ -162,7 +168,7 @@ def compute_time_weight(timestamp: str) -> float:
             ts = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
         # Make naive if needed
         if ts.tzinfo is not None:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
         else:
             now = datetime.now()
         age_days = (now - ts).total_seconds() / 86400

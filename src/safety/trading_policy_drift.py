@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -159,7 +159,7 @@ def collect_trading_policy_ab_metrics(
 
     checks_failed = checks_total - checks_passed
     return {
-        "generated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "generated_at_utc": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "cohort_a_canonical": canonical,
         "cohort_b_documents": document_results,
         "checks_total": checks_total,

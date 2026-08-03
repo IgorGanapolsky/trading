@@ -11,14 +11,10 @@ from __future__ import annotations
 import ast
 import json
 import logging
-import re
-import subprocess
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-
-from src.eval.trace_miner import EvalCase, TraceMiner
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +24,7 @@ ROOT = Path(__file__).resolve().parents[2]
 @dataclass(frozen=True)
 class AgentComponent:
     """Discovered agent component from repo inspection."""
+
     name: str
     component_type: str  # "prompt", "tool", "skill", "hook", "agent", "model"
     file_path: str
@@ -39,6 +36,7 @@ class AgentComponent:
 @dataclass(frozen=True)
 class EvalProposal:
     """Proposed eval task for user review."""
+
     proposal_id: str
     title: str
     description: str
@@ -53,6 +51,7 @@ class EvalProposal:
 @dataclass(frozen=True)
 class EvalTask:
     """Complete Harbor-format eval task ready for execution."""
+
     task_id: str
     name: str
     description: str
@@ -127,14 +126,18 @@ class RepoInspector:
                 if isinstance(node, ast.Assign):
                     for target in node.targets:
                         if isinstance(target, ast.Name) and "prompt" in target.id.lower():
-                            if isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
-                                components.append(AgentComponent(
-                                    name=target.id,
-                                    component_type="prompt",
-                                    file_path=str(file_path.relative_to(self.root)),
-                                    description=f"Prompt template: {node.value.value[:100]}...",
-                                    metadata={"full_prompt": node.value.value},
-                                ))
+                            if isinstance(node.value, ast.Constant) and isinstance(
+                                node.value.value, str
+                            ):
+                                components.append(
+                                    AgentComponent(
+                                        name=target.id,
+                                        component_type="prompt",
+                                        file_path=str(file_path.relative_to(self.root)),
+                                        description=f"Prompt template: {node.value.value[:100]}...",
+                                        metadata={"full_prompt": node.value.value},
+                                    )
+                                )
         except Exception as exc:
             logger.debug("Failed to parse %s: %s", file_path, exc)
         return components
@@ -146,13 +149,15 @@ class RepoInspector:
             content = file_path.read_text(encoding="utf-8")
             # Look for prompt sections
             if "prompt" in content.lower() or "system" in content.lower():
-                components.append(AgentComponent(
-                    name=file_path.stem,
-                    component_type="prompt",
-                    file_path=str(file_path.relative_to(self.root)),
-                    description=f"Prompt document: {file_path.name}",
-                    metadata={"content": content[:500]},
-                ))
+                components.append(
+                    AgentComponent(
+                        name=file_path.stem,
+                        component_type="prompt",
+                        file_path=str(file_path.relative_to(self.root)),
+                        description=f"Prompt document: {file_path.name}",
+                        metadata={"content": content[:500]},
+                    )
+                )
         except Exception as exc:
             logger.debug("Failed to parse %s: %s", file_path, exc)
         return components
@@ -172,22 +177,32 @@ class RepoInspector:
                     for node in ast.walk(tree):
                         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                             if node.name.startswith("tool_") or "tool" in node.name.lower():
-                                components.append(AgentComponent(
-                                    name=node.name,
-                                    component_type="tool",
-                                    file_path=str(tool_file.relative_to(self.root)),
-                                    description=f"Tool function: {node.name}",
-                                    metadata={"args": [arg.arg for arg in node.args.args]},
-                                ))
+                                components.append(
+                                    AgentComponent(
+                                        name=node.name,
+                                        component_type="tool",
+                                        file_path=str(tool_file.relative_to(self.root)),
+                                        description=f"Tool function: {node.name}",
+                                        metadata={"args": [arg.arg for arg in node.args.args]},
+                                    )
+                                )
                         elif isinstance(node, ast.ClassDef):
                             if "tool" in node.name.lower():
-                                components.append(AgentComponent(
-                                    name=node.name,
-                                    component_type="tool",
-                                    file_path=str(tool_file.relative_to(self.root)),
-                                    description=f"Tool class: {node.name}",
-                                    metadata={"methods": [n.name for n in node.body if isinstance(n, ast.FunctionDef)]},
-                                ))
+                                components.append(
+                                    AgentComponent(
+                                        name=node.name,
+                                        component_type="tool",
+                                        file_path=str(tool_file.relative_to(self.root)),
+                                        description=f"Tool class: {node.name}",
+                                        metadata={
+                                            "methods": [
+                                                n.name
+                                                for n in node.body
+                                                if isinstance(n, ast.FunctionDef)
+                                            ]
+                                        },
+                                    )
+                                )
                 except Exception as exc:
                     logger.debug("Failed to parse %s: %s", tool_file, exc)
         return components
@@ -203,13 +218,15 @@ class RepoInspector:
                 try:
                     content = skill_file.read_text(encoding="utf-8")
                     if "skill" in content.lower() or "class.*Skill" in content:
-                        components.append(AgentComponent(
-                            name=skill_file.stem,
-                            component_type="skill",
-                            file_path=str(skill_file.relative_to(self.root)),
-                            description=f"Skill module: {skill_file.name}",
-                            metadata={},
-                        ))
+                        components.append(
+                            AgentComponent(
+                                name=skill_file.stem,
+                                component_type="skill",
+                                file_path=str(skill_file.relative_to(self.root)),
+                                description=f"Skill module: {skill_file.name}",
+                                metadata={},
+                            )
+                        )
                 except Exception as exc:
                     logger.debug("Failed to parse %s: %s", skill_file, exc)
         return components
@@ -235,14 +252,18 @@ class RepoInspector:
 
                     for node in ast.walk(tree):
                         if isinstance(node, ast.FunctionDef):
-                            if "hook" in node.name.lower() or node.name.startswith(("pre_", "post_", "on_")):
-                                components.append(AgentComponent(
-                                    name=node.name,
-                                    component_type="hook",
-                                    file_path=str(hook_file.relative_to(self.root)),
-                                    description=f"Hook: {node.name}",
-                                    metadata={},
-                                ))
+                            if "hook" in node.name.lower() or node.name.startswith(
+                                ("pre_", "post_", "on_")
+                            ):
+                                components.append(
+                                    AgentComponent(
+                                        name=node.name,
+                                        component_type="hook",
+                                        file_path=str(hook_file.relative_to(self.root)),
+                                        description=f"Hook: {node.name}",
+                                        metadata={},
+                                    )
+                                )
                 except Exception as exc:
                     logger.debug("Failed to parse %s: %s", hook_file, exc)
         return components
@@ -262,15 +283,25 @@ class RepoInspector:
                     for node in ast.walk(tree):
                         if isinstance(node, ast.ClassDef):
                             if "agent" in node.name.lower() or any(
-                                base.id == "Agent" for base in node.bases if isinstance(base, ast.Name)
+                                base.id == "Agent"
+                                for base in node.bases
+                                if isinstance(base, ast.Name)
                             ):
-                                components.append(AgentComponent(
-                                    name=node.name,
-                                    component_type="agent",
-                                    file_path=str(agent_file.relative_to(self.root)),
-                                    description=f"Agent class: {node.name}",
-                                    metadata={"methods": [n.name for n in node.body if isinstance(n, ast.FunctionDef)]},
-                                ))
+                                components.append(
+                                    AgentComponent(
+                                        name=node.name,
+                                        component_type="agent",
+                                        file_path=str(agent_file.relative_to(self.root)),
+                                        description=f"Agent class: {node.name}",
+                                        metadata={
+                                            "methods": [
+                                                n.name
+                                                for n in node.body
+                                                if isinstance(n, ast.FunctionDef)
+                                            ]
+                                        },
+                                    )
+                                )
                 except Exception as exc:
                     logger.debug("Failed to parse %s: %s", agent_file, exc)
         return components
@@ -287,13 +318,15 @@ class RepoInspector:
 
         for config_file in config_files:
             if config_file.exists():
-                components.append(AgentComponent(
-                    name=config_file.name,
-                    component_type="model_config",
-                    file_path=str(config_file.relative_to(self.root)),
-                    description=f"Model configuration: {config_file.name}",
-                    metadata={},
-                ))
+                components.append(
+                    AgentComponent(
+                        name=config_file.name,
+                        component_type="model_config",
+                        file_path=str(config_file.relative_to(self.root)),
+                        description=f"Model configuration: {config_file.name}",
+                        metadata={},
+                    )
+                )
         return components
 
 
@@ -347,31 +380,35 @@ class TraceAnalyzer:
         # Generate proposals from patterns
         for error_type, count in sorted(failure_patterns.items(), key=lambda x: -x[1]):
             if count >= 2:  # Recurring failure
-                proposals.append(EvalProposal(
-                    proposal_id=f"trace_failure_{error_type}_{datetime.now().strftime('%Y%m%d')}",
-                    title=f"Recurring {error_type} failures ({count} occurrences)",
-                    description=f"Production traces show {count} instances of {error_type}. Build eval to prevent regression.",
-                    category="regression",
-                    source="trace_mining",
-                    affected_components=[error_type],
-                    suggested_verifier_type="deterministic",
-                    estimated_effort="low",
-                    priority_score=min(0.9, 0.5 + count * 0.1),
-                ))
+                proposals.append(
+                    EvalProposal(
+                        proposal_id=f"trace_failure_{error_type}_{datetime.now().strftime('%Y%m%d')}",
+                        title=f"Recurring {error_type} failures ({count} occurrences)",
+                        description=f"Production traces show {count} instances of {error_type}. Build eval to prevent regression.",
+                        category="regression",
+                        source="trace_mining",
+                        affected_components=[error_type],
+                        suggested_verifier_type="deterministic",
+                        estimated_effort="low",
+                        priority_score=min(0.9, 0.5 + count * 0.1),
+                    )
+                )
 
         for tool_name, count in sorted(tool_errors.items(), key=lambda x: -x[1]):
             if count >= 2:
-                proposals.append(EvalProposal(
-                    proposal_id=f"tool_failure_{tool_name}_{datetime.now().strftime('%Y%m%d')}",
-                    title=f"Tool {tool_name} failures ({count} occurrences)",
-                    description=f"Tool {tool_name} failed {count} times in production. Build eval for tool contract.",
-                    category="tool_reliability",
-                    source="trace_mining",
-                    affected_components=[tool_name],
-                    suggested_verifier_type="hybrid",
-                    estimated_effort="medium",
-                    priority_score=min(0.85, 0.4 + count * 0.1),
-                ))
+                proposals.append(
+                    EvalProposal(
+                        proposal_id=f"tool_failure_{tool_name}_{datetime.now().strftime('%Y%m%d')}",
+                        title=f"Tool {tool_name} failures ({count} occurrences)",
+                        description=f"Tool {tool_name} failed {count} times in production. Build eval for tool contract.",
+                        category="tool_reliability",
+                        source="trace_mining",
+                        affected_components=[tool_name],
+                        suggested_verifier_type="hybrid",
+                        estimated_effort="medium",
+                        priority_score=min(0.85, 0.4 + count * 0.1),
+                    )
+                )
 
         return proposals
 
@@ -384,7 +421,9 @@ class TraceAnalyzer:
 class EvalProposalEngine:
     """Generates eval proposals from repo inspection and trace analysis."""
 
-    def __init__(self, inspector: RepoInspector | None = None, analyzer: TraceAnalyzer | None = None):
+    def __init__(
+        self, inspector: RepoInspector | None = None, analyzer: TraceAnalyzer | None = None
+    ):
         self.inspector = inspector or RepoInspector()
         self.analyzer = analyzer or TraceAnalyzer()
 
@@ -417,43 +456,49 @@ class EvalProposalEngine:
 
         # High-priority: agents and tools
         for comp in by_type.get("agent", []):
-            proposals.append(EvalProposal(
-                proposal_id=f"agent_{comp.name}",
-                title=f"Agent behavior: {comp.name}",
-                description=f"Test {comp.name} agent decision making and tool usage patterns.",
-                category="agent_behavior",
-                source="repo_inspection",
-                affected_components=[comp.name],
-                suggested_verifier_type="hybrid",
-                estimated_effort="high",
-                priority_score=0.9,
-            ))
+            proposals.append(
+                EvalProposal(
+                    proposal_id=f"agent_{comp.name}",
+                    title=f"Agent behavior: {comp.name}",
+                    description=f"Test {comp.name} agent decision making and tool usage patterns.",
+                    category="agent_behavior",
+                    source="repo_inspection",
+                    affected_components=[comp.name],
+                    suggested_verifier_type="hybrid",
+                    estimated_effort="high",
+                    priority_score=0.9,
+                )
+            )
 
         for comp in by_type.get("tool", []):
-            proposals.append(EvalProposal(
-                proposal_id=f"tool_{comp.name}",
-                title=f"Tool contract: {comp.name}",
-                description=f"Validate {comp.name} tool input/output contract and error handling.",
-                category="tool_contract",
-                source="repo_inspection",
-                affected_components=[comp.name],
-                suggested_verifier_type="deterministic",
-                estimated_effort="low",
-                priority_score=0.8,
-            ))
+            proposals.append(
+                EvalProposal(
+                    proposal_id=f"tool_{comp.name}",
+                    title=f"Tool contract: {comp.name}",
+                    description=f"Validate {comp.name} tool input/output contract and error handling.",
+                    category="tool_contract",
+                    source="repo_inspection",
+                    affected_components=[comp.name],
+                    suggested_verifier_type="deterministic",
+                    estimated_effort="low",
+                    priority_score=0.8,
+                )
+            )
 
         for comp in by_type.get("skill", []):
-            proposals.append(EvalProposal(
-                proposal_id=f"skill_{comp.name}",
-                title=f"Skill execution: {comp.name}",
-                description=f"Test {comp.name} skill end-to-end with realistic inputs.",
-                category="skill_execution",
-                source="repo_inspection",
-                affected_components=[comp.name],
-                suggested_verifier_type="llm_judge",
-                estimated_effort="medium",
-                priority_score=0.75,
-            ))
+            proposals.append(
+                EvalProposal(
+                    proposal_id=f"skill_{comp.name}",
+                    title=f"Skill execution: {comp.name}",
+                    description=f"Test {comp.name} skill end-to-end with realistic inputs.",
+                    category="skill_execution",
+                    source="repo_inspection",
+                    affected_components=[comp.name],
+                    suggested_verifier_type="llm_judge",
+                    estimated_effort="medium",
+                    priority_score=0.75,
+                )
+            )
 
         return proposals
 
@@ -487,16 +532,18 @@ class EvalProposalEngine:
 
         for category, description in critical_categories.items():
             if category not in existing_categories:
-                proposals.append(EvalProposal(
-                    proposal_id=f"missing_{category}",
-                    title=f"Missing eval coverage: {category}",
-                    description=f"No evals found for {description}. Critical for production safety.",
-                    category=category,
-                    source="eval_gap",
-                    affected_components=[category],
-                    suggested_verifier_type="deterministic",
-                    estimated_effort="low",
-                    priority_score=0.85,
-                ))
+                proposals.append(
+                    EvalProposal(
+                        proposal_id=f"missing_{category}",
+                        title=f"Missing eval coverage: {category}",
+                        description=f"No evals found for {description}. Critical for production safety.",
+                        category=category,
+                        source="eval_gap",
+                        affected_components=[category],
+                        suggested_verifier_type="deterministic",
+                        estimated_effort="low",
+                        priority_score=0.85,
+                    )
+                )
 
         return proposals

@@ -18,7 +18,7 @@ import argparse
 import json
 import logging
 import sys
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -56,8 +56,8 @@ def _timestamp(value: Any) -> datetime | None:
         except ValueError:
             return None
     if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
+        return parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
 
 
 def _is_option(symbol: str) -> bool:
@@ -106,7 +106,7 @@ def recover_active_structures(
     candidates.sort(
         key=lambda order: (
             _timestamp(getattr(order, "filled_at", None) or getattr(order, "created_at", None))
-            or datetime.min.replace(tzinfo=timezone.utc)
+            or datetime.min.replace(tzinfo=UTC)
         ),
         reverse=True,
     )
@@ -254,16 +254,14 @@ def evaluate_residual_exit(
         IRON_CONDOR_STOP_LOSS_MULTIPLIER,
     )
 
-    current = now or datetime.now(timezone.utc)
+    current = now or datetime.now(UTC)
     if current.tzinfo is None:
-        current = current.replace(tzinfo=timezone.utc)
+        current = current.replace(tzinfo=UTC)
     expiry_raw = str(structure["expiry_yymmdd"])
     expiry = date(2000 + int(expiry_raw[:2]), int(expiry_raw[2:4]), int(expiry_raw[4:6]))
     dte = (expiry - current.astimezone(EASTERN).date()).days
     entered = _timestamp(structure.get("entry_time"))
-    hold_hours = (
-        (current.astimezone(timezone.utc) - entered).total_seconds() / 3600 if entered else None
-    )
+    hold_hours = (current.astimezone(UTC) - entered).total_seconds() / 3600 if entered else None
     credit = _number(structure.get("credit"))
     current_debit = sum(
         _number(leg.get("current_price")) * (1 if _number(leg.get("qty")) < 0 else -1)
@@ -369,7 +367,7 @@ def _get_orders(client: Any, *, open_only: bool = False) -> list[Any]:
         "limit": 500,
     }
     if not open_only:
-        kwargs["after"] = datetime.now(timezone.utc) - timedelta(days=120)
+        kwargs["after"] = datetime.now(UTC) - timedelta(days=120)
     return list(client.get_orders(filter=GetOrdersRequest(**kwargs)))
 
 
@@ -381,7 +379,7 @@ def manage_residual_ics(client: Any, *, dry_run: bool = False) -> dict[str, Any]
     unexplained, pcs_matched = unresolved_after_pcs(unresolved, _load_active_pcs_expected())
     pending_signatures = {_order_signature(order) for order in _get_orders(client, open_only=True)}
     report: dict[str, Any] = {
-        "audited_at": datetime.now(timezone.utc).isoformat(),
+        "audited_at": datetime.now(UTC).isoformat(),
         "dry_run": dry_run,
         "reconciled": len(structures),
         "unresolved": unexplained,

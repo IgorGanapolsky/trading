@@ -5,7 +5,7 @@ Provides industrial-grade instrumentation for agent spans.
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Optional
 
@@ -33,7 +33,7 @@ class TelemetryGateway:
         Records a structured span to the trace log.
         """
         event = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "name": name,
             "trace_id": trace_id,
             "parent_id": parent_id,

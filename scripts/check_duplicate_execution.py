@@ -14,7 +14,7 @@ Exit codes:
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 
 def main():
@@ -22,7 +22,7 @@ def main():
     skip = False
     reason = ""
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     force_trade = os.getenv("FORCE_TRADE", "").strip().lower() in {
         "1",
         "true",

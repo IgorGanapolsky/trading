@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any, Mapping, Optional
 
 
@@ -18,8 +18,8 @@ def _to_utc_datetime(value: Any) -> datetime:
         raise TypeError(f"Unsupported datetime value type: {type(value)!r}")
 
     if dt.tzinfo is None:
-        return dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(timezone.utc)
+        return dt.replace(tzinfo=UTC)
+    return dt.astimezone(UTC)
 
 
 @dataclass(frozen=True)
@@ -54,7 +54,7 @@ class PolicyMetadata:
         )
 
     def age_days(self, *, as_of: Optional[datetime] = None) -> int:
-        now = _to_utc_datetime(as_of or datetime.now(timezone.utc))
+        now = _to_utc_datetime(as_of or datetime.now(UTC))
         if now < self.trained_at:
             return 0
         delta: timedelta = now - self.trained_at

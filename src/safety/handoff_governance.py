@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -16,10 +16,10 @@ HIGH_RISK_PATH_PREFIXES: tuple[str, ...] = (
     "src/risk/",
     "src/safety/",
     "scripts/autonomous_trader.py",
-    "scripts/iron_condor_",
-    "scripts/manage_iron_condor_positions.py",
-    ".github/workflows/daily-trading.yml",
-    ".github/workflows/iron-condor-",
+    "scripts/residual_ic_manager.py",
+    "scripts/spy_put_credit.py",
+    ".github/workflows/put-credit-validation.yml",
+    ".github/workflows/put-credit-",
 )
 
 CRITICAL_RISK_PATH_PREFIXES: tuple[str, ...] = (
@@ -54,7 +54,7 @@ CAPABILITY_POLICY: dict[str, dict[str, Any]] = {
 
 
 def _utc_now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _normalize_path(path: str) -> str:

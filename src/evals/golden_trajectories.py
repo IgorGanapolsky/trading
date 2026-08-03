@@ -11,14 +11,14 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Optional
 
 
 @dataclass
 class TrajectoryTurn:
     turn_index: int
     user_prompt: str
-    tool_calls: List[Dict[str, Any]]
+    tool_calls: list[dict[str, Any]]
     assistant_response: str
 
 
@@ -26,7 +26,7 @@ class TrajectoryTurn:
 class EvaluationVerdict:
     trajectory_id: str
     deterministic_passed: bool
-    deterministic_failures: List[str]
+    deterministic_failures: list[str]
     judge_score: Optional[float] = None
     judge_reasoning: Optional[str] = None
 
@@ -38,10 +38,10 @@ class GoldenTrajectoryEvaluator:
         self.dataset_path = dataset_path
 
     def evaluate_deterministic_assertions(
-        self, turns: List[TrajectoryTurn], rules: List[Callable[[TrajectoryTurn], Optional[str]]]
-    ) -> List[str]:
+        self, turns: list[TrajectoryTurn], rules: list[Callable[[TrajectoryTurn], Optional[str]]]
+    ) -> list[str]:
         """Runs deterministic code assertions against every turn in the trajectory."""
-        failures: List[str] = []
+        failures: list[str] = []
         for turn in turns:
             for rule in rules:
                 error = rule(turn)
@@ -52,13 +52,13 @@ class GoldenTrajectoryEvaluator:
     def evaluate_llm_as_judge(
         self,
         trajectory_id: str,
-        turns: List[TrajectoryTurn],
+        turns: list[TrajectoryTurn],
         rubric: str,
         judge_fn: Optional[Callable[[str, str], tuple[float, str]]] = None,
     ) -> tuple[float, str]:
         """
         Evaluates qualitative aspects of a trajectory using an LLM-as-judge function.
-        
+
         Returns (score_1_to_5, reasoning).
         """
         if judge_fn is None:
@@ -71,8 +71,8 @@ class GoldenTrajectoryEvaluator:
     def run_full_evaluation(
         self,
         trajectory_id: str,
-        turns: List[TrajectoryTurn],
-        deterministic_rules: List[Callable[[TrajectoryTurn], Optional[str]]],
+        turns: list[TrajectoryTurn],
+        deterministic_rules: list[Callable[[TrajectoryTurn], Optional[str]]],
         rubric: str,
         judge_fn: Optional[Callable[[str, str], tuple[float, str]]] = None,
     ) -> EvaluationVerdict:

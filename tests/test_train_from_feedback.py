@@ -1,6 +1,7 @@
 """Tests for the feedback training script."""
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -123,7 +124,7 @@ class TestTrainFromFeedback:
         finally:
             sys.path.pop(0)
 
-    def test_cli_positive_feedback(self):
+    def test_cli_positive_feedback(self, tmp_path):
         """CLI accepts positive feedback."""
         script = Path(__file__).parent.parent / "scripts" / "train_from_feedback.py"
         result = subprocess.run(
@@ -137,6 +138,7 @@ class TestTrainFromFeedback:
             ],
             capture_output=True,
             text=True,
+            env={**os.environ, "FEEDBACK_MODEL_PATH": str(tmp_path / "feedback_model.json")},
         )
         # Script may succeed or fail based on model path, but should not crash
         assert result.returncode in [0, 1]

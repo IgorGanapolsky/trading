@@ -21,7 +21,7 @@ import re
 import sys
 import threading
 from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -196,6 +196,7 @@ def _active_strategy_ml_ready(project_root: Path | None = None) -> tuple[bool, d
         meta["detail"] = f"ml_ready_check_failed: {exc}"
         return False, meta
 
+
 _SYSTEM_STATE_PATH = Path(__file__).parent.parent.parent / "data" / "system_state.json"
 _POLICY_METADATA_PATH = (
     Path(__file__).parent.parent.parent / "models" / "ml" / "grpo_trade_metadata.json"
@@ -356,7 +357,7 @@ def _today_et_str() -> str:
         return datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
     except Exception as exc:
         logger.debug("ZoneInfo unavailable, falling back to UTC: %s", exc)
-        return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        return datetime.now(UTC).strftime("%Y-%m-%d")
 
 
 def _active_strategy_family() -> str:
@@ -451,7 +452,7 @@ def _et_session_start_utc_iso() -> str:
     et = ZoneInfo("America/New_York")
     now_et = datetime.now(et)
     start_et = now_et.replace(hour=0, minute=0, second=0, microsecond=0)
-    return start_et.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return start_et.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _is_put_credit_entry_order(order: Any) -> bool:
@@ -822,7 +823,7 @@ def _load_policy_gate_config(
         payload.get("trained_at")
         or payload.get("updated_at")
         or payload.get("last_updated")
-        or datetime.fromtimestamp(metadata_path.stat().st_mtime, tz=timezone.utc).isoformat()
+        or datetime.fromtimestamp(metadata_path.stat().st_mtime, tz=UTC).isoformat()
     )
     metadata = {
         "version": str(
@@ -884,7 +885,7 @@ def _evaluate_policy_gate(strategy: str, context: dict[str, Any] | None) -> dict
     decision = scorer.score(
         policy_name,
         model_metrics=policy_payload.get("metrics"),
-        as_of=datetime.now(timezone.utc),
+        as_of=datetime.now(UTC),
     )
     decision["metadata_path"] = policy_payload.get("metadata_path")
     return decision
@@ -981,7 +982,9 @@ def _check_market_regime(strategy: str, context: dict | None) -> tuple[float, li
     return confidence, warnings
 
 
-def _check_ml_trade_confidence(strategy: str, symbol: str, context: dict | None = None) -> tuple[float, list[str]]:
+def _check_ml_trade_confidence(
+    strategy: str, symbol: str, context: dict | None = None
+) -> tuple[float, list[str]]:
     """Check ML model trade confidence (P(W) >= 0.70) pre-flight gate.
 
     Returns:
@@ -2066,9 +2069,7 @@ def safe_submit_order(client, order_request, strategy: str | None = None):
                     from src.safety.multi_model_juror import MultiModelJuror
 
                     juror = MultiModelJuror()
-                    if not juror.get_consensus(
-                        proposal, primary_reasoning=protocol_reasoning
-                    ):
+                    if not juror.get_consensus(proposal, primary_reasoning=protocol_reasoning):
                         raise ValueError(
                             "MULTI-MODEL CONSENSUS FAILED: Juror detected a risk violation."
                         )

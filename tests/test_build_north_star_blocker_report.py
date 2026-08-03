@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 from scripts.build_north_star_blocker_report import compute_report, render_markdown
 
 
 def test_compute_report_marks_blocked_for_negative_expectancy_and_cadence_fail() -> None:
-    now = datetime(2026, 2, 19, 18, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 2, 19, 18, 0, tzinfo=UTC)
     state = {
         "meta": {"last_updated": "2026-02-19T17:30:00Z"},
         "last_updated": "2026-02-19T17:30:00Z",
@@ -45,7 +45,7 @@ def test_compute_report_marks_blocked_for_negative_expectancy_and_cadence_fail()
 
 
 def test_compute_report_not_blocked_when_gate_is_clean() -> None:
-    now = datetime(2026, 2, 19, 18, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 2, 19, 18, 0, tzinfo=UTC)
     state = {
         "meta": {"last_updated": "2026-02-19T17:30:00Z"},
         "last_updated": "2026-02-19T17:30:00Z",
@@ -132,7 +132,7 @@ def test_render_markdown_contains_absolute_dates_and_history_table() -> None:
 
 
 def test_compute_report_parses_boolean_like_strings_in_weekly_gate() -> None:
-    now = datetime(2026, 2, 19, 18, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 2, 19, 18, 0, tzinfo=UTC)
     state = {
         "meta": {"last_updated": "2026-02-19T17:30:00Z"},
         "last_updated": "2026-02-19T17:30:00Z",
@@ -163,7 +163,7 @@ def test_compute_report_parses_boolean_like_strings_in_weekly_gate() -> None:
 
 
 def test_compute_report_marks_live_block_only_validation_reset() -> None:
-    now = datetime(2026, 4, 9, 18, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 4, 9, 18, 0, tzinfo=UTC)
     state = {
         "meta": {"last_updated": "2026-04-09T17:30:00Z"},
         "last_updated": "2026-04-09T17:30:00Z",
@@ -222,7 +222,7 @@ def test_compute_report_marks_live_block_only_validation_reset() -> None:
 
 
 def test_compute_report_treats_ml_halt_as_validation_reset_warning() -> None:
-    now = datetime(2026, 5, 5, 12, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 5, 5, 12, 0, tzinfo=UTC)
     state = {
         "meta": {"last_updated": "2026-05-05T11:30:00Z"},
         "last_updated": "2026-05-05T11:30:00Z",

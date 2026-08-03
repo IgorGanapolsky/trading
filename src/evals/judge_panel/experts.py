@@ -83,8 +83,10 @@ _RISK_VIOLATIONS: list[tuple[str, re.Pattern[str]]] = [
         "CREDENTIAL_HARDCODE",
         re.compile(
             r"("
-            r"APCA_API_KEY_ID\s*=\s*['\"](?!\$\{)[^'\"]+['\"]|"
-            r"APCA_API_SECRET_KEY\s*=\s*['\"](?!\$\{)[^'\"]+['\"]|"
+            r"(?:APCA_API_KEY_ID|ALPACA(?:_PAPER_TRADING)?_API_KEY)"
+            r"\s*=\s*['\"](?!\$\{)[^'\"]+['\"]|"
+            r"(?:APCA_API_SECRET_KEY|ALPACA(?:_PAPER_TRADING)?_SECRET_KEY)"
+            r"\s*=\s*['\"](?!\$\{)[^'\"]+['\"]|"
             r"sk_live_[A-Za-z0-9]{10,}|"
             r"ghp_[A-Za-z0-9]{20,}"
             r")",
@@ -105,7 +107,7 @@ _RISK_VIOLATIONS: list[tuple[str, re.Pattern[str]]] = [
 ]
 
 _OTHER_AGENT = re.compile(
-    r"\b(codex|claude-code|hermes|antigravity|cursor|gemini)\b",
+    r"\b(codex|claude-code|grok|hermes|antigravity|cursor|gemini)\b",
     re.IGNORECASE,
 )
 
@@ -116,8 +118,9 @@ class Expert(Protocol):
     def evaluate(self, payload: PanelInput) -> ExpertOpinion: ...
 
 
-def _corpus(payload: PanelInput) -> str:
-    parts = [payload.text, payload.diff, payload.claim, payload.other_agent_claims]
+def _primary_corpus(payload: PanelInput) -> str:
+    """Return only the material owned by the claim or change under review."""
+    parts = [payload.text, payload.diff, payload.claim]
     return "\n".join(p for p in parts if p)
 
 
@@ -127,7 +130,7 @@ class RiskRulesExpert:
     name = ExpertName.RISK_RULES
 
     def evaluate(self, payload: PanelInput) -> ExpertOpinion:
-        body = _corpus(payload)
+        body = _primary_corpus(payload)
         findings: list[str] = []
         cites: list[str] = []
         veto = False
@@ -135,7 +138,8 @@ class RiskRulesExpert:
         for code, pattern in _RISK_VIOLATIONS:
             m = pattern.search(body)
             if m:
-                findings.append(f"{code}: matched {m.group(0)!r}")
+                matched = "[REDACTED]" if code == "CREDENTIAL_HARDCODE" else repr(m.group(0))
+                findings.append(f"{code}: matched {matched}")
                 cites.append(f"risk_pattern:{code}")
                 # All listed patterns are hard vetoes.
                 veto = True
@@ -182,7 +186,7 @@ class EvidenceExpert:
     name = ExpertName.EVIDENCE
 
     def evaluate(self, payload: PanelInput) -> ExpertOpinion:
-        body = _corpus(payload)
+        body = _primary_corpus(payload)
         claims = _CLAIM_MARKERS.findall(body)
         evidence = _EVIDENCE_TOKENS.findall(body)
         findings: list[str] = []
@@ -210,9 +214,7 @@ class EvidenceExpert:
                 veto=False,
             )
 
-        findings.append(
-            "UNVERIFIED_CLAIM: strong claim without SHA / run id / ledger cite / n="
-        )
+        findings.append("UNVERIFIED_CLAIM: strong claim without SHA / run id / ledger cite / n=")
         # Unverified claim is a fail but not always a policy veto (soft fail).
         # Edge-profit claims without numbers get a veto.
         edge_like = any(
@@ -253,9 +255,7 @@ class CoordinationExpert:
 
         # Detect another agent marked In Progress on overlapping paths or same repo scope.
         foreign_agents = {
-            m.group(1).lower()
-            for m in _OTHER_AGENT.finditer(other)
-            if m.group(1).lower() != me and m.group(1).lower() != "grok"
+            m.group(1).lower() for m in _OTHER_AGENT.finditer(other) if m.group(1).lower() != me
         }
         if me in foreign_agents:
             foreign_agents.discard(me)

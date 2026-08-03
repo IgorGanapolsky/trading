@@ -40,7 +40,7 @@ Edit | Write | NotebookEdit | MultiEdit)
 	;;
 *)
 	if [[ ${TOOL_NAME} =~ $DESTRUCTIVE_MCP_RE ]]; then
-		reason="Destructive Alpaca MCP call: ${TOOL_NAME}. Position close/cancel is owned by iron-condor-guardian workflow (LL-306, LL-325)."
+		reason="Destructive Alpaca MCP call: ${TOOL_NAME}. Reconciled exits are owned by put-credit-validation.yml and its current managers."
 	fi
 	;;
 esac

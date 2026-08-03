@@ -11,7 +11,7 @@ on:
   workflow_dispatch: {}
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ${{ format('daily-reconciliation-{0}-{1}', github.repository, github.ref_name || 'main') }}
@@ -29,14 +29,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          token: ${{ secrets.GH_PAT || github.token }}
-          fetch-depth: 0
-
-      - name: Refresh to latest main
-        run: |
-          git fetch origin main
-          git checkout -B main origin/main
 
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
@@ -77,24 +69,14 @@ jobs:
           python3 scripts/reconcile_broker_vs_paired.py
           echo "reconcile_exit=$?" >> "$GITHUB_OUTPUT"
 
-      - name: Commit reconciliation report
-        run: |
-          set -euo pipefail
-          git config user.name "GitHub Actions Bot"
-          git config user.email "actions@github.com"
-
-          git add data/reports/reconciliation_*.json 2>/dev/null || true
-          if git diff --staged --quiet; then
-            echo "No reconciliation report changes to commit"
-            exit 0
-          fi
-          git commit -m "chore: daily reconciliation [auto]"
-
-          if [ -n "${{ secrets.GH_PAT }}" ]; then
-            git remote set-url origin "https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git"
-          fi
-          git pull --ff-only origin main
-          git push origin HEAD:main
+      - name: Upload reconciliation report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: daily-reconciliation-report
+          retention-days: 14
+          path: data/reports/reconciliation_*.json
+          if-no-files-found: ignore
 
       - name: Fail workflow if reconciliation alerted
         run: |

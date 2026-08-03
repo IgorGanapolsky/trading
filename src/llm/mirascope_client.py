@@ -20,10 +20,11 @@ from __future__ import annotations
 
 import logging
 from collections.abc import AsyncIterator, Iterator
-from enum import Enum
+from enum import StrEnum
 from typing import Any, TypeVar
 
 from pydantic import BaseModel, Field
+
 from src.utils.llm_gateway import (
     OPENROUTER_BASE_URL,
     resolve_openai_compatible_config,
@@ -45,7 +46,7 @@ T = TypeVar("T", bound=BaseModel)
 # =============================================================================
 
 
-class TradeSignal(str, Enum):
+class TradeSignal(StrEnum):
     """Trading signal types."""
 
     BUY = "BUY"
@@ -54,7 +55,7 @@ class TradeSignal(str, Enum):
     CLOSE = "CLOSE"
 
 
-class RiskLevel(str, Enum):
+class RiskLevel(StrEnum):
     """Risk assessment levels."""
 
     LOW = "LOW"
@@ -63,7 +64,7 @@ class RiskLevel(str, Enum):
     CRITICAL = "CRITICAL"
 
 
-class MarketRegime(str, Enum):
+class MarketRegime(StrEnum):
     """Market regime classifications."""
 
     BULLISH = "BULLISH"
@@ -107,7 +108,7 @@ class RiskAssessment(BaseModel):
     mitigations: list[str] = Field(default_factory=list, description="Suggested risk mitigations")
 
 
-class LLMProvider(str, Enum):
+class LLMProvider(StrEnum):
     """Supported LLM providers."""
 
     ANTHROPIC = "anthropic"
@@ -251,6 +252,7 @@ class MirascopeTradingClient:
             )
             if self._openrouter_fallback_client is None:
                 from openai import OpenAI
+
                 from src.utils.llm_gateway import OPENROUTER_HEADERS
 
                 self._openrouter_fallback_client = OpenAI(

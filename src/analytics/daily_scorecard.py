@@ -6,7 +6,7 @@ import importlib
 import json
 import re
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -42,8 +42,8 @@ def _parse_iso(value: Any) -> datetime | None:
     except ValueError:
         return None
     if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
+        return parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
 
 
 def _fmt_money(value: float | None) -> str:
@@ -533,7 +533,7 @@ def _load_north_star_status(repo_root: Path, now: datetime) -> dict[str, Any]:
     updated_at = _parse_iso(updated_at_raw)
     stale = True
     if updated_at is not None:
-        stale = (now.astimezone(timezone.utc) - updated_at).total_seconds() > 24 * 60 * 60
+        stale = (now.astimezone(UTC) - updated_at).total_seconds() > 24 * 60 * 60
 
     return {
         "available": True,

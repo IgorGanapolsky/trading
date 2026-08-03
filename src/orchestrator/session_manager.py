@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import logging
 import os
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from typing import Any
 
 import holidays
@@ -39,7 +39,7 @@ def is_us_market_day(day: date | None = None) -> bool:
     Returns:
         True if markets are open, False if weekend or holiday.
     """
-    current_day = day or datetime.now(timezone.utc).date()
+    current_day = day or datetime.now(UTC).date()
     if current_day.weekday() >= 5:  # Saturday/Sunday
         return False
     calendar = _get_us_holidays(current_day.year)
@@ -92,7 +92,7 @@ class SessionManager:
             - rl_threshold: RL confidence threshold
             - momentum_overrides: Dict of momentum parameter adjustments
         """
-        today = datetime.now(timezone.utc).date()
+        today = datetime.now(UTC).date()
         market_day = is_us_market_day(today)
 
         proxy_list = [

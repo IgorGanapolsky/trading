@@ -23,6 +23,7 @@ class TestRunDailyCycle:
             profit_return_threshold_usd=50.0,
             state_path=state_path,
             ledger_path=ledger_path,
+            report_dir=tmp_path,
             skip_put_credit=True,  # skip options path for simplicity
         )
         assert report["dry_run"] is True
@@ -42,6 +43,7 @@ class TestRunDailyCycle:
             bank_buffer_usd=500.0,
             state_path=state_path,
             ledger_path=ledger_path,
+            report_dir=tmp_path,
             skip_put_credit=True,
         )
         assert state_path.exists()
@@ -57,6 +59,7 @@ class TestRunDailyCycle:
             bank_buffer_usd=500.0,
             state_path=state_path,
             ledger_path=ledger_path,
+            report_dir=tmp_path,
             skip_put_credit=True,
         )
         assert ledger_path.exists()
@@ -75,19 +78,25 @@ class TestRunDailyCycle:
             bank_buffer_usd=500.0,
             state_path=state_path,
             ledger_path=ledger_path,
+            report_dir=tmp_path,
             skip_put_credit=True,
         )
         # Remittance progress may or may not be parsed from JSON output
         # depending on how the subprocess output is formatted
         assert "steps" in report
 
-    def test_skip_income_loop_still_runs_put_credit(self, tmp_path: Path):
+    def test_skip_income_loop_still_runs_put_credit(self, tmp_path: Path, monkeypatch):
+        monkeypatch.setattr(
+            "scripts.run_autonomous_trading._run",
+            lambda args, **_kwargs: {"cmd": args, "rc": 0, "stdout_tail": "{}", "stderr_tail": ""},
+        )
         state_path = tmp_path / "state.json"
         ledger_path = tmp_path / "ledger.jsonl"
         report = run_daily_cycle(
             dry_run=True,
             state_path=state_path,
             ledger_path=ledger_path,
+            report_dir=tmp_path,
             skip_income_loop=True,
         )
         assert "income_loop" not in report["steps"]
@@ -115,8 +124,10 @@ class TestMonitorRemittance:
 
         ledger = tmp_path / "ledger.jsonl"
         # Add confirmed deposits totaling $1000
-        for amount, ts in [(600.0, "2026-07-10T12:00:00+00:00"),
-                           (400.0, "2026-07-20T12:00:00+00:00")]:
+        for amount, ts in [
+            (600.0, "2026-07-10T12:00:00+00:00"),
+            (400.0, "2026-07-20T12:00:00+00:00"),
+        ]:
             append_transfer_record(
                 build_transfer_record(
                     direction=TransferDirection.BROKER_TO_MERCURY,
@@ -238,6 +249,7 @@ class TestMonitorRemittance:
             append_transfer_record,
             build_transfer_record,
         )
+
         append_transfer_record(
             build_transfer_record(
                 direction=TransferDirection.BROKER_TO_MERCURY,

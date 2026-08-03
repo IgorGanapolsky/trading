@@ -9,7 +9,7 @@ Resolves the Alpaca SIP subscription error on free tier by attempting:
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -22,12 +22,13 @@ def get_spy_historical_closes(days: int = 250) -> list[float]:
         from alpaca.data.historical import StockHistoricalDataClient
         from alpaca.data.requests import StockBarsRequest
         from alpaca.data.timeframe import TimeFrame
+
         from src.utils.alpaca_client import get_alpaca_credentials
 
         key, secret = get_alpaca_credentials()
         if key and secret:
             client = StockHistoricalDataClient(key, secret)
-            end = datetime.now(timezone.utc)
+            end = datetime.now(UTC)
             start = end - timedelta(days=days + 30)
             req = StockBarsRequest(
                 symbol_or_symbols=["SPY"],

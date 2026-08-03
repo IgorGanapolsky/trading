@@ -22,7 +22,7 @@
     "quarantined_unmatched_cash": 2167.0
   },
   "operator_rules": [
-    "Do not open new iron condors via ic_simple.py or iron_condor_trader.py.",
+    "Killed iron-condor entry scripts were removed; do not recreate an alternate entry path.",
     "Exit/management of already-open IC legs remains allowed via guardian workflows only.",
     "New paper validation entries must use spy_put_credit (1-lot SPY bull put, $5 wide).",
     "Validation throughput: max 3 new put-credit structures per day (up from 1), 2 concurrent, 1 contract each. Triples validation speed with zero additional risk per trade.",

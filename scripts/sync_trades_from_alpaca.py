@@ -24,7 +24,7 @@ import logging
 import ssl
 import sys
 import urllib.request
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 # Add project root to path
@@ -67,7 +67,7 @@ def fetch_todays_fills(date_str: str | None = None) -> list[dict]:
 
             date_str = datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
         except ImportError:
-            date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            date_str = datetime.now(UTC).strftime("%Y-%m-%d")
 
     try:
         # Query Alpaca account activities for fills
@@ -110,7 +110,7 @@ def convert_fill_to_trade(fill: dict) -> dict:
         "strategy": "alpaca_sync",  # Indicates this was synced from Alpaca
         "order_id": fill.get("order_id"),
         "activity_type": fill.get("activity_type", "FILL"),
-        "timestamp": fill.get("transaction_time", datetime.now(timezone.utc).isoformat()),
+        "timestamp": fill.get("transaction_time", datetime.now(UTC).isoformat()),
         "source": "alpaca_api_sync",
     }
 
@@ -192,7 +192,7 @@ def update_system_state_trades(trade_count: int, date_str: str) -> bool:
 
         # Update meta
         state.setdefault("meta", {})
-        now_iso = datetime.now(timezone.utc).isoformat()
+        now_iso = datetime.now(UTC).isoformat()
         state["meta"]["last_updated"] = now_iso
         state["meta"]["trade_sync"] = "alpaca_api"
         state["last_updated"] = now_iso
@@ -232,7 +232,7 @@ def main() -> int:
 
             date_str = datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
         except ImportError:
-            date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            date_str = datetime.now(UTC).strftime("%Y-%m-%d")
 
     logger.info(f"Syncing trades for: {date_str}")
 

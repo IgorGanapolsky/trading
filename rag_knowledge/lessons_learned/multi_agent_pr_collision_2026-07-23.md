@@ -1,4 +1,4 @@
-# Lesson: check open/merged PRs before building a fix, not just local files
+# LL-342: Check open/merged PRs before building a fix
 
 **Date:** 2026-07-23
 **Severity:** 3 (wasted a work cycle, no capital/data impact)
@@ -25,12 +25,13 @@ conflict and made the duplication obvious. PR #4257 was closed as superseded.
 
 This repo has multiple agents (Claude, Codex, others) working the same
 problem space concurrently via separate worktrees/branches. Local `git log`
-and `data/runtime/strategy_kill_switch.json` told me *what* strategy is
-active, but not *what other agents are actively fixing right now*.
+and `data/runtime/strategy_kill_switch.json` told me _what_ strategy is
+active, but not _what other agents are actively fixing right now_.
 
 ## Prevention
 
 Before implementing a fix for a gap found via code inspection:
+
 1. `gh pr list --state open` first — check titles/bodies for topical overlap.
 2. `git fetch --prune`, then inspect both `git worktree list` and
    `git branch -r --no-merged origin/main` — include remote in-flight work,

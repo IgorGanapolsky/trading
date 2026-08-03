@@ -1,4 +1,3 @@
-import pytest
 from pathlib import Path
 from src.rag.document_ingestion_pipeline import DocumentIngestionPipeline
 

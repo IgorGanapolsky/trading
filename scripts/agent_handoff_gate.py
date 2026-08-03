@@ -15,7 +15,7 @@ import subprocess  # nosec B404 - controlled local workflow commands only
 import sys
 import time
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -79,7 +79,7 @@ class GateReport:
     audit_log_jsonl: str | None = None
     audit_record_hash: str | None = None
     generated_at_utc: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        default_factory=lambda: datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     )
 
     @property
@@ -650,7 +650,7 @@ def run_gate(args: argparse.Namespace) -> int:
     audit_record = append_handoff_audit_record(
         audit_log_path,
         {
-            "generated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "generated_at_utc": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "mode": args.mode,
             "base_ref": args.base_ref,
             "risk_tier": risk_tier,

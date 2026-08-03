@@ -222,6 +222,10 @@ def main(dry_run: bool = False, trail_pct: float | None = None):
     logger.info(f"Total value protected: ${total_protected_value:,.2f}")
     logger.info("=" * 70)
 
+    if dry_run:
+        logger.info("Dry run complete; persistent system state was not modified")
+        return True
+
     # Update system state
     state_file = Path(__file__).parent.parent / "data" / "system_state.json"
     try:

@@ -14,7 +14,7 @@ import logging
 import re
 import sys
 from collections import defaultdict, deque
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -111,7 +111,7 @@ def _parse_option_symbol(symbol: Any) -> dict[str, Any] | None:
     month = int(m.group("mm"))
     day = int(m.group("dd"))
     try:
-        expiry = datetime(year, month, day, tzinfo=timezone.utc).date()
+        expiry = datetime(year, month, day, tzinfo=UTC).date()
     except ValueError:
         return None
     return {
@@ -1267,8 +1267,8 @@ def _pair_closed_put_credits(
                 "symbol": "SPY",
                 "signature": (f"SPY_{expiry}_P{_strike_text(long_put)}-{_strike_text(short_put)}"),
                 "journal_signature": str(entry.get("signature") or ""),
-                "entry_time": entry_time.astimezone(timezone.utc).isoformat(),
-                "exit_time": exit_time.astimezone(timezone.utc).isoformat(),
+                "entry_time": entry_time.astimezone(UTC).isoformat(),
+                "exit_time": exit_time.astimezone(UTC).isoformat(),
                 "expiry": expiry,
                 "quantity": quantity,
                 "entry_credit": entry_credit,
@@ -1316,7 +1316,7 @@ def _expiry_from_entry_key(key: str) -> str | None:
     month = int(token[2:4])
     day = int(token[4:6])
     try:
-        return datetime(year, month, day, tzinfo=timezone.utc).date().isoformat()
+        return datetime(year, month, day, tzinfo=UTC).date().isoformat()
     except ValueError:
         return None
 
@@ -1345,8 +1345,8 @@ def _normalized_dt(dt: datetime | None) -> datetime | None:
     if dt is None:
         return None
     if dt.tzinfo is None:
-        return dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(timezone.utc)
+        return dt.replace(tzinfo=UTC)
+    return dt.astimezone(UTC)
 
 
 def _entry_provenance_for_trade(
@@ -1409,7 +1409,7 @@ def _merge_entry_provenance(trade: dict[str, Any], raw_entries: Any) -> dict[str
 
 
 def _empty_ledger() -> dict[str, Any]:
-    now_iso = datetime.now(timezone.utc).isoformat()
+    now_iso = datetime.now(UTC).isoformat()
     return {
         "meta": {
             "version": "1.1",
@@ -1502,7 +1502,7 @@ def _compute_stats(
     paper_days = 0
     try:
         start = datetime.fromisoformat(paper_phase_start).date()
-        paper_days = (datetime.now(timezone.utc).date() - start).days
+        paper_days = (datetime.now(UTC).date() - start).days
     except Exception:
         pass
 
@@ -1556,7 +1556,7 @@ def _compute_stats(
         "by_strategy": by_strategy,
         "paper_phase_start": paper_phase_start,
         "paper_phase_days": paper_days,
-        "last_updated": datetime.now(timezone.utc).isoformat(),
+        "last_updated": datetime.now(UTC).isoformat(),
     }
 
 
@@ -1590,7 +1590,7 @@ def _compute_unpaired_singleton_pnl(
                     paired_exit_ids.add(str(oid))
 
     try:
-        cohort_dt = datetime.fromisoformat(cohort_start).replace(tzinfo=timezone.utc)
+        cohort_dt = datetime.fromisoformat(cohort_start).replace(tzinfo=UTC)
     except ValueError:
         cohort_dt = None
 
@@ -1737,7 +1737,7 @@ def _apply_learning_update_for_trade(
     pnl = _parse_float(trade.get("realized_pnl"), 0.0)
     expiry = str((trade.get("legs") or {}).get("expiry") or "")
     trade_id = str(trade.get("id") or "")
-    exit_time = str(trade.get("exit_time") or datetime.now(timezone.utc).isoformat())
+    exit_time = str(trade.get("exit_time") or datetime.now(UTC).isoformat())
 
     from src.learning.distributed_feedback import LocalBackend, aggregate_feedback
     from src.learning.outcome_labeler import build_outcome_label
@@ -1896,7 +1896,7 @@ def sync_closed_positions(dry_run: bool = False) -> dict[str, Any]:
     ledger["stats"].update(unpaired_stats)
     ledger["meta"]["paper_phase_start"] = paper_phase_start
     ledger["meta"]["purpose"] = "Master ledger for broker-paired closed option structures"
-    ledger["meta"]["last_sync"] = datetime.now(timezone.utc).isoformat()
+    ledger["meta"]["last_sync"] = datetime.now(UTC).isoformat()
     ledger["meta"]["sync_source"] = "sync_closed_positions.py"
 
     new_payload = json.dumps(ledger, indent=2) + "\n"

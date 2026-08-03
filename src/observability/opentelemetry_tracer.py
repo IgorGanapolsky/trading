@@ -10,9 +10,9 @@ from __future__ import annotations
 import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
-MODEL_PRICING_PER_1K: Dict[str, Dict[str, float]] = {
+MODEL_PRICING_PER_1K: dict[str, dict[str, float]] = {
     "claude-3-5-sonnet": {"input": 0.003, "output": 0.015},
     "claude-3-opus": {"input": 0.015, "output": 0.075},
     "claude-3-haiku": {"input": 0.00025, "output": 0.00125},
@@ -32,7 +32,7 @@ class SpanEvent:
     end_time: float
     duration_ms: float
     status: str  # "ok", "error"
-    attributes: Dict[str, Any] = field(default_factory=dict)
+    attributes: dict[str, Any] = field(default_factory=dict)
     prompt_tokens: int = 0
     completion_tokens: int = 0
     total_cost_usd: float = 0.0
@@ -42,14 +42,10 @@ class AgentTracer:
     """OpenTelemetry-compatible tracer for multi-turn agent telemetry."""
 
     def __init__(self, log_path: Optional[Path] = None) -> None:
-        self.log_path = log_path or (
-            Path.cwd() / ".claude" / "logs" / "opentelemetry_spans.jsonl"
-        )
-        self.spans: List[SpanEvent] = []
+        self.log_path = log_path or (Path.cwd() / ".claude" / "logs" / "opentelemetry_spans.jsonl")
+        self.spans: list[SpanEvent] = []
 
-    def compute_cost(
-        self, model_name: str, prompt_tokens: int, completion_tokens: int
-    ) -> float:
+    def compute_cost(self, model_name: str, prompt_tokens: int, completion_tokens: int) -> float:
         pricing = MODEL_PRICING_PER_1K.get(model_name.lower()) or MODEL_PRICING_PER_1K["default"]
         input_cost = (prompt_tokens / 1000.0) * pricing["input"]
         output_cost = (completion_tokens / 1000.0) * pricing["output"]
@@ -65,7 +61,7 @@ class AgentTracer:
         end_time: float,
         status: str = "ok",
         parent_span_id: Optional[str] = None,
-        attributes: Optional[Dict[str, Any]] = None,
+        attributes: Optional[dict[str, Any]] = None,
         model_name: str = "default",
         prompt_tokens: int = 0,
         completion_tokens: int = 0,

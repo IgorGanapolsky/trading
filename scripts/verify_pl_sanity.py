@@ -26,7 +26,7 @@ import argparse
 import json
 import os
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 try:
     from dotenv import load_dotenv
@@ -300,7 +300,7 @@ class PLSanityChecker:
         current_time = datetime.now()
         # Make timezone-aware if not already (assuming UTC for system consistency)
         if current_time.tzinfo is None:
-            current_time = current_time.replace(tzinfo=timezone.utc)
+            current_time = current_time.replace(tzinfo=UTC)
 
         cutoff_date = current_time - timedelta(days=days)
 
@@ -326,12 +326,12 @@ class PLSanityChecker:
                             else:
                                 # Fallback for YYYY-MM-DD
                                 trade_date = datetime.strptime(trade_date_str, "%Y-%m-%d").replace(
-                                    tzinfo=timezone.utc
+                                    tzinfo=UTC
                                 )
 
                             # Ensure trade_date has timezone
                             if trade_date.tzinfo is None:
-                                trade_date = trade_date.replace(tzinfo=timezone.utc)
+                                trade_date = trade_date.replace(tzinfo=UTC)
 
                             if trade_date >= cutoff_date:
                                 trade_count += 1

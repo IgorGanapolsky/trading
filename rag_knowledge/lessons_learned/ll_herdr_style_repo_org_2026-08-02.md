@@ -1,4 +1,4 @@
-# LL — Herdr-style repo organization (2026-08-02)
+# LL-348: Herdr-style repo organization (2026-08-02)
 
 ## Context
 

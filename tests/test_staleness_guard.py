@@ -2,7 +2,7 @@
 
 import json
 import math
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 from pathlib import Path
 from unittest.mock import patch
 
@@ -38,7 +38,7 @@ def _write_state(tmp_path: Path, data: dict) -> Path:
 
 def _fresh_state(hours_ago: float = 1.0) -> dict:
     """Return a minimal valid state dict with a timestamp `hours_ago` hours in the past."""
-    ts = (datetime.now(timezone.utc) - timedelta(hours=hours_ago)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    ts = (datetime.now(UTC) - timedelta(hours=hours_ago)).strftime("%Y-%m-%dT%H:%M:%SZ")
     return {
         "meta": {"last_updated": ts},
         "portfolio": {"equity": "100500.00", "cash": "80000.00"},
@@ -107,7 +107,7 @@ class TestCheckDataStaleness:
 
     def test_top_level_last_updated_fallback(self, tmp_path):
         """When meta.last_updated is absent, top-level last_updated is used."""
-        ts = (datetime.now(timezone.utc) - timedelta(hours=0.5)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        ts = (datetime.now(UTC) - timedelta(hours=0.5)).strftime("%Y-%m-%dT%H:%M:%SZ")
         state = {"last_updated": ts, "portfolio": {}, "paper_account": {}}
         p = _write_state(tmp_path, state)
         result = check_data_staleness(state_path=p)
@@ -115,7 +115,7 @@ class TestCheckDataStaleness:
 
     def test_non_iso_timestamp_format(self, tmp_path):
         """Supports '%Y-%m-%d %H:%M:%S' format."""
-        ts = (datetime.now(timezone.utc) - timedelta(hours=2.0)).strftime("%Y-%m-%d %H:%M:%S")
+        ts = (datetime.now(UTC) - timedelta(hours=2.0)).strftime("%Y-%m-%d %H:%M:%S")
         state = {"meta": {"last_updated": ts}, "portfolio": {}, "paper_account": {}}
         p = _write_state(tmp_path, state)
         result = check_data_staleness(state_path=p)
@@ -262,14 +262,14 @@ class TestContextFreshness:
                 [
                     {
                         "id": "ll_1",
-                        "indexed_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                        "indexed_at_utc": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
                     }
                 ]
             ),
             encoding="utf-8",
         )
         context_path.write_text(
-            json.dumps({"built_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}),
+            json.dumps({"built_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")}),
             encoding="utf-8",
         )
         monkeypatch.setenv("RAG_WRITE_PROFILE", "repo")
@@ -288,7 +288,7 @@ class TestContextFreshness:
 
         rag_path.write_text("{not-json", encoding="utf-8")
         context_path.write_text(
-            json.dumps({"built_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}),
+            json.dumps({"built_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")}),
             encoding="utf-8",
         )
         monkeypatch.setenv("RAG_WRITE_PROFILE", "repo")
@@ -307,7 +307,7 @@ class TestContextFreshness:
         rag_path = tmp_path / "lessons_query.json"
         context_path = tmp_path / "context_index.json"
 
-        now_utc = datetime.now(timezone.utc)
+        now_utc = datetime.now(UTC)
         ten_minutes_ago_utc = now_utc - timedelta(minutes=10)
         offset_ts = ten_minutes_ago_utc.astimezone(timezone(timedelta(hours=-5))).isoformat()
 

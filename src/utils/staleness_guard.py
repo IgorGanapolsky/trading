@@ -17,7 +17,7 @@ import logging
 import os
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -126,9 +126,7 @@ def check_data_staleness(
                     blocking=is_market_day,
                 )
         else:
-            updated_dt = datetime.strptime(last_updated, "%Y-%m-%d %H:%M:%S").replace(
-                tzinfo=timezone.utc
-            )
+            updated_dt = datetime.strptime(last_updated, "%Y-%m-%d %H:%M:%S").replace(tzinfo=UTC)
 
         # Calculate age
         age = _utc_now() - updated_dt
@@ -253,11 +251,11 @@ def _resolve_rag_query_index_path() -> Path:
 
 
 def _utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _to_utc_iso(dt: datetime) -> str:
-    return dt.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+    return dt.astimezone(UTC).isoformat().replace("+00:00", "Z")
 
 
 def _parse_iso_datetime(value: str | None) -> datetime | None:
@@ -269,8 +267,8 @@ def _parse_iso_datetime(value: str | None) -> datetime | None:
     except ValueError:
         return None
     if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
+        return parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
 
 
 def _extract_rag_query_index_last_sync(path: Path) -> str | None:
@@ -349,7 +347,7 @@ def _build_context_source(
         )
     last_dt = _parse_iso_datetime(last_sync) if last_sync else None
     if not last_dt:
-        file_dt = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
+        file_dt = datetime.fromtimestamp(path.stat().st_mtime, tz=UTC)
         last_sync = _to_utc_iso(file_dt)
         last_dt = file_dt
 

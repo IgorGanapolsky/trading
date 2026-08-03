@@ -23,6 +23,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 import numpy as np
+
 from src.utils import yfinance_wrapper as yf
 
 logger = logging.getLogger(__name__)
@@ -262,7 +263,7 @@ class VIXMeanReversionSignal:
 
     def should_enter_trade(self) -> tuple[bool, str]:
         """
-        Simple interface for iron_condor_trader.py integration.
+        Simple interface for strategy research and safety gates.
 
         Returns:
             Tuple of (should_enter: bool, reason: str)

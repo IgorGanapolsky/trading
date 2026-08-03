@@ -1,17 +1,19 @@
 # Boundary Policy
 
 This document codifies the boundary-crossing rules enforced by `.claude/hooks/`.
-It is the machine-readable companion to `MANDATORY_RULES.md`, `risk-management.md`,
-and `trading.md`. A Codex-style auto-reviewer (or any future PreToolUse guard)
+It is the machine-readable companion to `risk-management.md` and `trading.md`.
+A Codex-style auto-reviewer (or any future PreToolUse guard)
 should treat the **Hard Blocks** below as policy-deny decisions.
 
 ## Hard Blocks (deny without explicit override)
 
-1. **Closing positions outside the guardian workflow.**
+1. **Closing positions outside the reconciled manager workflow.**
    Bash: any command matching `close_position`, `liquidat`, or
    `submit_order.*SELL`. MCP: any `mcp__alpaca__close_position`,
    `close_all_positions`, `cancel_order`, `cancel_all_orders`, `liquidate`.
-   Owner: `.github/workflows/iron-condor-guardian.yml`. Lessons: LL-306, LL-325.
+   Owner: `.github/workflows/put-credit-validation.yml`, which invokes
+   `scripts/spy_put_credit.py --manage-exits` and `scripts/residual_ic_manager.py`.
+   Lessons: LL-306, LL-325.
 
 2. **Removing the TRADING_HALTED kill-switch.**
    Bash: `rm`/`mv`/`>` against `data/TRADING_HALTED`, `data/SYSTEM_HALTED`,

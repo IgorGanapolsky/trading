@@ -11,7 +11,7 @@ import json
 import logging
 import re
 import unicodedata
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -76,7 +76,7 @@ class DocumentIngestionPipeline:
         prev_hash = existing.get("sha256_hash", "")
         prev_version = existing.get("version", 0)
 
-        is_duplicate = (content_hash == prev_hash)
+        is_duplicate = content_hash == prev_hash
         version = prev_version if is_duplicate else prev_version + 1
 
         metadata = {

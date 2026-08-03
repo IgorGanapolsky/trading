@@ -57,6 +57,29 @@ class TestRiskExpert:
         assert o.passed is True
         assert o.veto is False
 
+    def test_foreign_claim_does_not_veto_current_change(self):
+        o = RiskRulesExpert().evaluate(
+            PanelInput(
+                kind=TaskKind.PR_AUDIT,
+                text="docs only: operator guide link",
+                other_agent_claims="claude-code owns a task to open new iron condor",
+            )
+        )
+        assert o.passed is True
+        assert o.veto is False
+
+    def test_hardcoded_credential_veto_redacts_value(self):
+        fake_value = "not-a-real-secret-value"
+        o = RiskRulesExpert().evaluate(
+            PanelInput(
+                kind=TaskKind.PR_AUDIT,
+                diff=f"+ ALPACA_API_KEY='{fake_value}'",
+            )
+        )
+        assert o.veto is True
+        assert fake_value not in " ".join(o.findings)
+        assert "[REDACTED]" in " ".join(o.findings)
+
 
 class TestEvidenceExpert:
     def test_unverified_edge_claim_vetoes(self):
@@ -77,6 +100,17 @@ class TestEvidenceExpert:
             )
         )
         assert o.passed is True
+
+    def test_foreign_evidence_cannot_validate_current_claim(self):
+        o = EvidenceExpert().evaluate(
+            PanelInput(
+                kind=TaskKind.CLAIM_AUDIT,
+                text="Edge proven and ready for live",
+                other_agent_claims="codex cited run 30780143772 and sha d69beb2b6",
+            )
+        )
+        assert o.passed is False
+        assert o.veto is True
 
 
 class TestCoordExpert:
@@ -107,6 +141,20 @@ class TestCoordExpert:
         )
         assert o.passed is True
         assert o.veto is False
+
+    def test_grok_is_detected_as_foreign_agent(self):
+        o = CoordinationExpert().evaluate(
+            PanelInput(
+                kind=TaskKind.COORD_AUDIT,
+                agent="codex",
+                claimed_files=["src/risk/trade_gateway.py"],
+                other_agent_claims=(
+                    "grok In Progress claimed_files: src/risk/trade_gateway.py trading cleanup"
+                ),
+            )
+        )
+        assert o.passed is False
+        assert o.veto is True
 
 
 class TestPanel:

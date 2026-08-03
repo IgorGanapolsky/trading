@@ -18,7 +18,7 @@ import json
 import math
 import os
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -373,9 +373,7 @@ class GPUBacktestEngine:
         try:
             meta = json.loads(meta_path.read_text())
             downloaded_at = datetime.fromisoformat(meta["downloaded_at"])
-            if datetime.now(timezone.utc) - downloaded_at > timedelta(
-                days=self.price_cache_ttl_days
-            ):
+            if datetime.now(UTC) - downloaded_at > timedelta(days=self.price_cache_ttl_days):
                 return False
 
             payload = np.load(data_path)
@@ -413,7 +411,7 @@ class GPUBacktestEngine:
         try:
             import yfinance as yf
 
-            end = datetime.now(timezone.utc)
+            end = datetime.now(UTC)
             try:
                 start = end.replace(year=end.year - years)
             except ValueError:
@@ -450,7 +448,7 @@ class GPUBacktestEngine:
                 "ticker": ticker.upper(),
                 "years": years,
                 "rows": int(len(prices)),
-                "downloaded_at": datetime.now(timezone.utc).isoformat(),
+                "downloaded_at": datetime.now(UTC).isoformat(),
                 "source": "synthetic",
             }
 
@@ -488,7 +486,7 @@ class GPUBacktestEngine:
                 return None
 
             created_at = datetime.fromisoformat(payload["created_at"])
-            if datetime.now(timezone.utc) - created_at > timedelta(days=self.grid_cache_ttl_days):
+            if datetime.now(UTC) - created_at > timedelta(days=self.grid_cache_ttl_days):
                 return None
 
             result_data = payload.get("result")
@@ -516,7 +514,7 @@ class GPUBacktestEngine:
         cache_path = CACHE_DIR / f"grid_search_{cache_key}.json"
         payload = {
             "cache_version": CACHE_VERSION,
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
             "grid": grid,
             "n_trades_per_sim": n_trades_per_sim,
             "price_meta": self.price_meta,
@@ -547,7 +545,7 @@ class GPUBacktestEngine:
             if cached_result is not None:
                 return cached_result
 
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
 
         # Generate all parameter combinations
         from itertools import product
@@ -571,7 +569,7 @@ class GPUBacktestEngine:
         else:
             results = _cpu_simulate_trades(self.price_data, combinations, n_trades_per_sim)
 
-        execution_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
+        execution_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
 
         # Process results
         all_results = []
@@ -712,7 +710,7 @@ class GPUBacktestEngine:
         if self.price_data is None:
             self.load_price_data()
 
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
 
         # Generate random trade outcomes
         np.random.seed(None)  # True randomness
@@ -744,7 +742,7 @@ class GPUBacktestEngine:
         expected_return = np.mean(outcomes)
         worst_case = np.min(outcomes)
 
-        execution_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
+        execution_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
 
         return {
             **var_results,
@@ -783,7 +781,7 @@ async def run_gpu_backtest() -> dict[str, Any]:
         "grid_search": grid_result.to_dict(),
         "monte_carlo_var": var_result,
         "gpu_available": CUDA_AVAILABLE,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }
 
 

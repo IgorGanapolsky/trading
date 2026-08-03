@@ -25,7 +25,11 @@ class LLMGateway:
     def get_routing_status(cls) -> GatewayRoutingStatus:
         primary = os.getenv("PRIMARY_LLM_ROUTE", "anthropic")
         secondary = os.getenv("SECONDARY_LLM_ROUTE", "direct_openrouter")
-        logging_declared = os.getenv("OPENROUTER_INPUT_OUTPUT_LOGGING_ENABLED", "0") in {"1", "true", "yes"}
+        logging_declared = os.getenv("OPENROUTER_INPUT_OUTPUT_LOGGING_ENABLED", "0") in {
+            "1",
+            "true",
+            "yes",
+        }
         has_key = bool(os.getenv("OPENROUTER_API_KEY"))
 
         return GatewayRoutingStatus(

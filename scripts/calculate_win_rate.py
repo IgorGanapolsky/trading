@@ -12,7 +12,7 @@ Usage:
 import json
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -89,7 +89,7 @@ def calculate_stats(
     if paper_phase_start:
         try:
             start_date = datetime.fromisoformat(paper_phase_start).date()
-            paper_phase_days = (datetime.now(timezone.utc).date() - start_date).days
+            paper_phase_days = (datetime.now(UTC).date() - start_date).days
         except (ValueError, TypeError):
             pass
 
@@ -108,7 +108,7 @@ def calculate_stats(
             "total_pnl": 0.0,
             "paper_phase_start": paper_phase_start,
             "paper_phase_days": paper_phase_days,
-            "last_updated": datetime.now(timezone.utc).isoformat(),
+            "last_updated": datetime.now(UTC).isoformat(),
         }
 
     wins = [t for t in closed if t.get("outcome") == "win"]
@@ -135,7 +135,7 @@ def calculate_stats(
         "total_pnl": round(total_wins - total_losses, 2),
         "paper_phase_start": paper_phase_start,
         "paper_phase_days": paper_phase_days,
-        "last_updated": datetime.now(timezone.utc).isoformat(),
+        "last_updated": datetime.now(UTC).isoformat(),
     }
 
 
@@ -248,7 +248,7 @@ def close_trade(trade_id: str, exit_price: float, exit_date: str = None) -> bool
             # Update trade
             trade["status"] = "closed"
             trade["exit_price"] = exit_price
-            trade["exit_date"] = exit_date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            trade["exit_date"] = exit_date or datetime.now(UTC).strftime("%Y-%m-%d")
             trade["realized_pnl"] = round(pnl, 2)
             trade["unrealized_pnl"] = None
             trade["outcome"] = outcome
@@ -305,7 +305,7 @@ def add_trade(
         "type": trade_type,
         "side": side,
         "qty": qty,
-        "entry_date": entry_date or datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        "entry_date": entry_date or datetime.now(UTC).strftime("%Y-%m-%d"),
         "entry_price": entry_price,
         "exit_date": None,
         "exit_price": None,

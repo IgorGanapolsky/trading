@@ -26,6 +26,7 @@ def main() -> int:
 
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--json", action="store_true")
+    p.add_argument("--ledger-path", type=Path, default=None)
     p.add_argument("--month", default=None, help="YYYY-MM (default: current UTC month)")
     p.add_argument(
         "--realized-pnl",
@@ -36,7 +37,7 @@ def main() -> int:
     args = p.parse_args()
 
     progress = compute_remittance_progress(
-        load_transfer_ledger(),
+        load_transfer_ledger(ledger_path=args.ledger_path),
         month_yyyy_mm=args.month,
         target_usd=MONTHLY_AFTER_TAX_TARGET_USD,
         realized_pre_tax_pnl_usd=args.realized_pnl,

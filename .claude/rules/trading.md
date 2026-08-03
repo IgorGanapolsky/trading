@@ -2,62 +2,54 @@
 
 ## Canonical Policy Constants
 
-- IRON_CONDOR_STOP_LOSS_MULTIPLIER: 2.0 (CEO-approved 2026-07-02, validation cohort; was 1.0)
+- LEGACY_IC_STOP_LOSS_MULTIPLIER: 2.0 (exit-only inventory)
 - NORTH_STAR_MONTHLY_AFTER_TAX: 6000
 - MAX_POSITIONS: 8
 
-## Active Strategy (post IC kill, 2026-07-22)
+## Active Strategy: SPY Put Credit
 
-**Primary entry: `spy_put_credit` (paper only).** See `data/runtime/strategy_kill_switch.json`
-and `.claude/rules/kill-criteria.md` / `controlled-experiment.md`.
+- Paper-only SPY bull-put credit spreads through `scripts/spy_put_credit.py`.
+- The strategy kill switch is authoritative; killed families cannot submit new entries.
+- Use one-lot, $5-wide structures with a roughly 15-delta short strike and 30–45 DTE.
+- Maximum 3 structures per day and 2 concurrent structures.
+- Define a 200%-of-credit stop, a 25% profit target, and a 7-DTE time exit.
+- Residual iron-condor inventory is exit-only through `scripts/residual_ic_manager.py`.
+- Live capital stays blocked until at least 30 broker-reconciled, paired closures show
+  positive expectancy and profit factor above 1.
 
-- SPY 1-lot bull put credit, $5 wide, 15Δ short, 30–45 DTE
-- Max 3 structures/day, max 2 concurrent
-- Stop at 200% of credit; profit take 25%; exit by 7 DTE
-- Live capital blocked until cohort n≥30 with expectancy>0 and PF>1
+## Pre-Trade Checklist
 
-### Iron Condor — KILLED for new entries
-
-- Do **not** open new iron condors via `ic_simple.py`, `iron_condor_trader.py`, or
-  disabled IC workflows.
-- Residual IC legs: exit/manage only via guardian / `ic_simple.py --mode exit`.
-- Historical IC rules below are **archive context only**, not active North Star path.
-
-## Pre-Trade Checklist (MANDATORY) — put credit
-
-1. [ ] Ticker = SPY (ONLY)
-2. [ ] Paper account only (`spy_put_credit`)
-3. [ ] 1-lot defined-risk put credit (2-leg)
-4. [ ] Short strike ~15 delta
-5. [ ] 30–45 DTE
-6. [ ] Stop-loss at 200% of credit defined
-7. [ ] Exit plan: 25% profit OR 7 DTE
-8. [ ] Open inventory clean (`scripts/audit_open_inventory.py`)
-9. [ ] Broker state fresh; kill switch allows put-credit family
+1. [ ] Ticker is SPY.
+2. [ ] Paper mode is explicit and live submission is blocked.
+3. [ ] The order is a one-lot, defined-risk, two-leg bull-put spread.
+4. [ ] Both strikes are present in the current option chain.
+5. [ ] Short strike is approximately 15 delta and expiration is 30–45 DTE.
+6. [ ] Stop-loss, profit target, and time exit are defined before submission.
+7. [ ] Open inventory is reconciled with `scripts/audit_open_inventory.py`.
+8. [ ] The strategy kill switch permits the put-credit family.
+9. [ ] Entry and exit journals reconcile to broker orders.
 
 ## Ticker Selection
 
-| Priority | Ticker | Rationale                                                               |
-| -------- | ------ | ----------------------------------------------------------------------- |
-| 1        | SPY    | ONLY ticker. Best liquidity, tightest spreads, no early assignment risk |
+| Priority | Ticker | Rationale                                                                       |
+| -------- | ------ | ------------------------------------------------------------------------------- |
+| 1        | SPY    | Required ticker; deepest liquidity and tight spreads for the validation cohort. |
 
-**NO individual stocks.** $100K success was SPY. $5K failure was SOFI.
+Do not open new positions in individual stocks.
 
-## Win Rate Tracking
+## Evidence and Projection Rules
 
-- Track every paper trade: entry, exit, P/L, win/loss
-- Required metrics: win rate %, avg win, avg loss, profit factor, expectancy
-- Gate on expectancy > 0 and PF > 1 over 30 clean put-credit trades — not headline win rate alone
+- Track every paper trade: entry, exit, P/L, and outcome.
+- Required metrics are win rate, average win, average loss, profit factor, and expectancy.
+- Evaluate only paired, broker-reconciled closed trades from the active strategy family.
+- Do not project returns until at least 30 qualifying closures exist.
+- Do not extrapolate daily or weekly returns to monthly or yearly timeframes.
+- Do not attribute P/L to a strategy without decomposing it by order source.
+- Validate P/L with `validate_pl_report()` from `src/utils/pl_validator.py` when available.
+- When asked how much was made, show the decomposed evidence rather than one headline number.
 
-## Projection Rules (MANDATORY)
+## Archived Iron-Condor Policy
 
-- NO return projections until 30+ completed put-credit validation trades exist
-- NO extrapolating daily/weekly returns to monthly/yearly timeframes
-- All P/L claims MUST use paired ledger (`data/trades.json`) + `validate_pl_report()` when available
-- If asked "how much did we make" — show decomposed report, not a single number
-
-## Archive — historical IC structure (killed for new risk)
-
-- Sell 15-20 delta put spread + 15-20 delta call spread
-- $5-wide wings, 30-45 DTE, 2 concurrent ICs max (8 legs)
-- Stop 200% credit; exit 25% profit OR 7 DTE
+Iron condors are killed for new risk. Historical structure rules are retained only to
+interpret exit-only inventory: $5-wide wings, 30–45 DTE, 200%-of-credit stop, 25%
+profit target, and 7-DTE time exit.

@@ -1,9 +1,11 @@
-# Ops Hygiene: PR Management, Idempotency & Turn Resilience (2026-07-26)
+# LL-343: PR Management, Idempotency and Turn Resilience (2026-07-26)
 
 ## Context
+
 Session-start PR/branch/CI hygiene sweep and turn resilience overhaul executed per CTO directive.
 
 ## Key Findings & Improvements
+
 1. **Claude Harness Turn Blocks:**
    `stop_hook_active=true` handling fixed across `Stop` and `SubagentStop` hooks, and block cap set to 50 (`CLAUDE_CODE_STOP_HOOK_BLOCK_CAP=50`).
 2. **Order Idempotency Engine:**
@@ -20,5 +22,6 @@ Session-start PR/branch/CI hygiene sweep and turn resilience overhaul executed p
    `main` CI passing. Total test collection: 2,939 tests passing (Exit code 0). `iron_condor_trader.py --dry-run` safely fails closed to successor `spy_put_credit.py`.
 
 ## Prevention Rules
+
 - Always use `yfinance_wrapper` for yfinance imports in `src/` to prevent module import crashes when yfinance is uninstalled.
 - Always provide fallback mock types for optional third-party SDK imports (`alpaca`, `yfinance`) in core modules so unit tests execute cleanly in minimal environments.

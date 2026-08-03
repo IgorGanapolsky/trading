@@ -12,9 +12,7 @@ def test_live_trading_switch_missing_credentials(tmp_path, monkeypatch):
         json.dumps({"paper_only": True, "live_blocked": True, "reason": "test"}),
         encoding="utf-8",
     )
-    monkeypatch.setattr(
-        "src.trading.live_trading_switch.KILL_SWITCH_FILE", kill
-    )
+    monkeypatch.setattr("src.trading.live_trading_switch.KILL_SWITCH_FILE", kill)
     monkeypatch.setattr(
         "src.trading.live_trading_switch.LIVE_READINESS_FILE",
         tmp_path / "readiness.json",
@@ -47,9 +45,7 @@ def test_live_trading_switch_funded_but_policy_blocked(mock_get, tmp_path, monke
         ),
         encoding="utf-8",
     )
-    monkeypatch.setattr(
-        "src.trading.live_trading_switch.KILL_SWITCH_FILE", kill
-    )
+    monkeypatch.setattr("src.trading.live_trading_switch.KILL_SWITCH_FILE", kill)
     monkeypatch.setattr(
         "src.trading.live_trading_switch.LIVE_READINESS_FILE",
         tmp_path / "readiness.json",
@@ -96,9 +92,7 @@ def test_live_trading_switch_active_when_policy_allows(mock_get, tmp_path, monke
         ),
         encoding="utf-8",
     )
-    monkeypatch.setattr(
-        "src.trading.live_trading_switch.KILL_SWITCH_FILE", kill
-    )
+    monkeypatch.setattr("src.trading.live_trading_switch.KILL_SWITCH_FILE", kill)
     monkeypatch.setattr(
         "src.trading.live_trading_switch.LIVE_READINESS_FILE",
         tmp_path / "readiness.json",

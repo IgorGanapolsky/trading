@@ -12,6 +12,7 @@ from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
+
 from src.utils.market_data import get_market_data_provider
 
 logger = logging.getLogger(__name__)

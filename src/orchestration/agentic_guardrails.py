@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -65,7 +65,7 @@ class ModuleContract:
     dependents: list[str]  # modules that depend on this
     change_category: ChangeCategory
     owner: str = "CTO"  # Default owner is Claude CTO
-    last_updated: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    last_updated: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def to_dict(self) -> dict:
         return {
@@ -100,7 +100,7 @@ class ChangeRequest:
     rollback_procedure: str
     status: ApprovalStatus = ApprovalStatus.PENDING
     ceo_approval_required: bool = False
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     approved_at: datetime | None = None
     approved_by: str | None = None
 
@@ -285,7 +285,7 @@ class DualReadMigration:
                 self.migration_log.append(
                     {
                         "action": "backup_created",
-                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "timestamp": datetime.now(UTC).isoformat(),
                         "backup_path": str(self.backup_path),
                     }
                 )
@@ -295,7 +295,7 @@ class DualReadMigration:
                 {
                     "action": "backup_failed",
                     "error": str(e),
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 }
             )
         return False
@@ -344,7 +344,7 @@ class DualReadMigration:
                 self.migration_log.append(
                     {
                         "action": "rollback_completed",
-                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "timestamp": datetime.now(UTC).isoformat(),
                     }
                 )
                 return True
@@ -353,7 +353,7 @@ class DualReadMigration:
                 {
                     "action": "rollback_failed",
                     "error": str(e),
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 }
             )
         return False
@@ -425,7 +425,7 @@ Please review and respond with:
             if change.change_id == change_id:
                 if approved:
                     change.status = ApprovalStatus.APPROVED
-                    change.approved_at = datetime.now(timezone.utc)
+                    change.approved_at = datetime.now(UTC)
                     change.approved_by = approver
                 else:
                     change.status = ApprovalStatus.REJECTED

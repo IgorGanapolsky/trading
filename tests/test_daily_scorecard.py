@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import sys
 import types
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
@@ -153,7 +153,7 @@ def test_build_daily_scorecard_derives_realized_from_account_delta(tmp_path: Pat
                 filled_qty="1",
                 filled_avg_price="0.91",
                 order_class="simple",
-                filled_at=datetime(2026, 4, 1, 13, 45, tzinfo=timezone.utc),
+                filled_at=datetime(2026, 4, 1, 13, 45, tzinfo=UTC),
             ),
             SimpleNamespace(
                 id="mleg-1",
@@ -163,7 +163,7 @@ def test_build_daily_scorecard_derives_realized_from_account_delta(tmp_path: Pat
                 filled_qty="1",
                 filled_avg_price="-0.93",
                 order_class="mleg",
-                filled_at=datetime(2026, 4, 1, 14, 5, tzinfo=timezone.utc),
+                filled_at=datetime(2026, 4, 1, 14, 5, tzinfo=UTC),
                 legs=[
                     SimpleNamespace(
                         symbol="SPY260501P00600000",
@@ -609,7 +609,7 @@ def test_daily_scorecard_helper_error_paths(monkeypatch, tmp_path: Path):
                 filled_qty="1",
                 filled_avg_price="1.0",
                 order_class="simple",
-                filled_at=datetime(2026, 4, 1, 13, 0, tzinfo=timezone.utc),
+                filled_at=datetime(2026, 4, 1, 13, 0, tzinfo=UTC),
             ),
             now,
         )
@@ -617,7 +617,7 @@ def test_daily_scorecard_helper_error_paths(monkeypatch, tmp_path: Path):
     )
     assert (
         daily_scorecard_mod._flatten_fill_legs_from_order(
-            SimpleNamespace(legs=None, filled_at=datetime(2026, 4, 1, 13, 0, tzinfo=timezone.utc)),
+            SimpleNamespace(legs=None, filled_at=datetime(2026, 4, 1, 13, 0, tzinfo=UTC)),
             now,
         )
         == []

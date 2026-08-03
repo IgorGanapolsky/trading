@@ -62,15 +62,27 @@ def test_probe_vector_index_flags_missing_path(monkeypatch, tmp_path):
     assert str(missing_path) in detail
 
 
-def test_check_vector_db_reports_broken_on_empty_index(monkeypatch):
+def test_check_vector_db_treats_optional_empty_index_as_stub(monkeypatch):
     monkeypatch.setattr(
         sh, "_probe_vector_index", lambda: (False, "document_aware_rag table empty")
     )
 
     result = sh.check_vector_db()
 
-    assert result["status"] == "BROKEN"
+    assert result["status"] == "STUB"
     assert any("table empty" in detail for detail in result["details"])
+
+
+def test_check_vector_db_reports_broken_when_required(monkeypatch):
+    monkeypatch.setattr(
+        sh, "_probe_vector_index", lambda: (False, "document_aware_rag table empty")
+    )
+    monkeypatch.setenv("LANCEDB_REQUIRED", "true")
+
+    result = sh.check_vector_db()
+
+    assert result["status"] == "BROKEN"
+    assert any("LANCEDB_REQUIRED" in detail for detail in result["details"])
 
 
 def test_check_vector_db_is_non_blocking_in_bounded_mode_for_missing_path(monkeypatch):

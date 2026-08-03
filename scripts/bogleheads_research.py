@@ -11,8 +11,9 @@ import json
 import logging
 import sys
 import xml.etree.ElementTree as ET
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+
 import requests
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -63,12 +64,12 @@ def fetch_bogleheads_feed(limit: int = 15) -> list[dict[str, str]]:
 def main() -> int:
     logging.basicConfig(level=logging.INFO)
     logger.info("Fetching latest Bogleheads forum discussions...")
-    
+
     entries = fetch_bogleheads_feed(15)
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
     record = {
-        "fetched_at": datetime.now(timezone.utc).isoformat(),
+        "fetched_at": datetime.now(UTC).isoformat(),
         "total_threads": len(entries),
         "threads": entries,
     }

@@ -9,7 +9,7 @@ This module converts weekly gate diagnostics into deterministic automation:
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -60,8 +60,8 @@ def _parse_dt(raw: Any) -> datetime | None:
         try:
             parsed = datetime.fromisoformat(candidate)
             if parsed.tzinfo is None:
-                parsed = parsed.replace(tzinfo=timezone.utc)
-            return parsed.astimezone(timezone.utc)
+                parsed = parsed.replace(tzinfo=UTC)
+            return parsed.astimezone(UTC)
         except Exception:
             continue
     return None

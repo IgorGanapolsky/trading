@@ -11,7 +11,7 @@ import calendar
 import json
 import re
 from collections import Counter
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -767,7 +767,7 @@ def _compute_no_trade_diagnostic(
         "gate_block_counts": gate_block_counts,
         "top_rejection_reasons": top_reasons,
         "summary": summary,
-        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(UTC).isoformat(),
     }
 
 
@@ -1130,7 +1130,7 @@ def compute_weekly_gate(
             else:
                 weekly_entry = {
                     **weekly_entry_fields,
-                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                    "updated_at": datetime.now(UTC).isoformat(),
                 }
             weekly_history[idx] = weekly_entry
             replaced = True
@@ -1139,7 +1139,7 @@ def compute_weekly_gate(
         weekly_history.append(
             {
                 **weekly_entry_fields,
-                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(UTC).isoformat(),
             }
         )
 
@@ -1326,7 +1326,7 @@ def compute_weekly_gate(
             weekly_history[idx] = {
                 **row,
                 **final_weekly_entry_fields,
-                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(UTC).isoformat(),
             }
         break
 
@@ -1373,7 +1373,7 @@ def compute_weekly_gate(
         "contradiction_reason": contradiction_reason,
         "liquidity_min_volume_ratio": round(min_liquidity_volume_ratio, 4),
         "no_trade_diagnostic": no_trade_diagnostic,
-        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(UTC).isoformat(),
     }
     if unverified_trade_history_diagnostic is not None:
         gate["unverified_trade_history_diagnostic"] = unverified_trade_history_diagnostic
@@ -1467,7 +1467,7 @@ def compute_contribution_plan(
         "estimated_live_contribution_this_month": estimated_live_contribution,
         "contribution_estimate_confidence": contribution_confidence,
         "inference_note": inference_note,
-        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(UTC).isoformat(),
     }
 
 

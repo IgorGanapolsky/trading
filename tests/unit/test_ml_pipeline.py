@@ -7,7 +7,6 @@ import sys
 import types
 from pathlib import Path
 
-import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -42,7 +41,8 @@ if importlib.util.find_spec("numpy") is None:
     np_mod.object_ = object
     np_mod.str_ = str
 
-if importlib.util.find_spec("torch") is None:
+_STUBBED_TORCH = importlib.util.find_spec("torch") is None
+if _STUBBED_TORCH:
     _ensure_module("torch")
     _ensure_module("torch.nn")
     _ensure_module("torch.optim")
@@ -61,6 +61,11 @@ if importlib.util.find_spec("torch") is None:
 
 from src.ml.reward import compute_portfolio_reward, compute_trade_reward
 from src.rag.vector_store import TradeRAG
+
+# Do not leak the lightweight test stub into SciPy or other later test modules.
+if _STUBBED_TORCH:
+    for _module_name in ("torch.optim", "torch.nn", "torch"):
+        sys.modules.pop(_module_name, None)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 1. Thompson Sampling
@@ -371,94 +376,3 @@ class TestCompositeReward:
         # Should work even with 1 trade in journal
         assert "total_reward" in r
         assert "trade_count" in r
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# 4. Strategy Params (ML-writable config)
-# ══════════════════════════════════════════════════════════════════════════════
-
-
-class TestStrategyParams:
-    """Verify ic_simple reads ML-adjustable params."""
-
-    def test_loads_from_file(self):
-        params_file = Path("data/strategy_params.json")
-        if not params_file.exists():
-            pytest.skip("strategy_params.json not found")
-        data = json.loads(params_file.read_text())
-        assert "params" in data
-        assert "target_delta" in data["params"]
-        assert "max_ic" in data["params"]
-
-    def test_default_params_have_all_keys(self):
-        sys.path.insert(0, ".")
-        from scripts.ic_simple import _load_strategy_params
-
-        params = _load_strategy_params()
-        required = [
-            "target_delta",
-            "wing_width",
-            "target_dte",
-            "min_dte",
-            "max_dte",
-            "min_credit",
-            "profit_target",
-            "stop_loss",
-            "exit_dte",
-            "max_ic",
-        ]
-        for key in required:
-            assert key in params, f"Missing param: {key}"
-
-    def test_max_ic_is_2(self):
-        """CLAUDE.md mandate: max 2 concurrent iron condors."""
-        sys.path.insert(0, ".")
-        from scripts.ic_simple import _load_strategy_params
-
-        params = _load_strategy_params()
-        assert params["max_ic"] == 2
-
-    def test_adjust_strategy_params_respects_bounds(self):
-        sys.path.insert(0, ".")
-        from scripts.ic_simple import STRATEGY_PARAMS_FILE, _adjust_strategy_params
-
-        # Save original
-        original = STRATEGY_PARAMS_FILE.read_text() if STRATEGY_PARAMS_FILE.exists() else None
-
-        try:
-            # Try to set delta out of bounds
-            _adjust_strategy_params(
-                {"target_delta": 0.50},  # Way above 0.25 max bound
-                reason="test",
-                source="test",
-                confidence=0.80,
-            )
-            data = json.loads(STRATEGY_PARAMS_FILE.read_text())
-            # Should be clamped to 0.25
-            assert data["params"]["target_delta"] <= 0.25
-        finally:
-            # Restore original
-            if original:
-                STRATEGY_PARAMS_FILE.write_text(original)
-
-    def test_adjust_rejected_below_confidence(self):
-        sys.path.insert(0, ".")
-        from scripts.ic_simple import STRATEGY_PARAMS_FILE, _adjust_strategy_params
-
-        original = STRATEGY_PARAMS_FILE.read_text() if STRATEGY_PARAMS_FILE.exists() else None
-        original_data = json.loads(original) if original else {}
-        old_delta = original_data.get("params", {}).get("target_delta", 0.15)
-
-        try:
-            _adjust_strategy_params(
-                {"target_delta": 0.20},
-                reason="test",
-                source="test",
-                confidence=0.50,  # Below 0.70 threshold
-            )
-            data = json.loads(STRATEGY_PARAMS_FILE.read_text())
-            # Should NOT have changed
-            assert data["params"]["target_delta"] == old_delta
-        finally:
-            if original:
-                STRATEGY_PARAMS_FILE.write_text(original)

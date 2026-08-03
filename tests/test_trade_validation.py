@@ -18,7 +18,7 @@ class TestTradeRecordingValidation:
 
     def test_reject_trade_with_zero_quantity(self):
         """Trade with qty=0 should NOT be recorded to trades file."""
-        # Simulate what iron_condor_trader does
+        # Simulate the strategy validator's call pattern.
         trade = {
             "timestamp": "2025-12-29T10:00:00",
             "strategy": "iron_condor",
@@ -136,7 +136,7 @@ class TestOptionsTradeValidation:
 
     def test_iron_condor_failed_not_recorded(self):
         """Iron condor with LIVE_FAILED status should not be recorded."""
-        # Simulate iron_condor_trader.py logic (after fix)
+        # Simulate the strategy validation logic after the fix.
         status = "LIVE_FAILED"
         _order_ids = []  # noqa: F841 - Empty because all legs failed
 

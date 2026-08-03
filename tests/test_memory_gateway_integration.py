@@ -4,8 +4,6 @@ import json
 import subprocess
 from pathlib import Path
 
-import yaml
-
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -46,16 +44,10 @@ def test_gateway_hook_scripts_have_valid_bash_syntax() -> None:
         assert result.returncode == 0, result.stderr
 
 
-def test_auto_record_lesson_workflow_uses_thumbgate_and_no_main_push() -> None:
-    workflow = yaml.safe_load(
-        (PROJECT_ROOT / ".github" / "workflows" / "auto-record-lesson.yml").read_text(
-            encoding="utf-8"
-        )
-    )
-    record_job = workflow["jobs"]["record-lesson"]
-    step_commands = "\n".join(step.get("run", "") for step in record_job["steps"])
-    assert "thumbgate@1.5.0 capture" in step_commands
-    assert "git push origin main" not in step_commands
+def test_runtime_failures_do_not_auto_commit_rag_lessons() -> None:
+    assert not (PROJECT_ROOT / ".github" / "workflows" / "auto-record-lesson.yml").exists()
+    skill = (PROJECT_ROOT / "skills" / "trading-ops" / "SKILL.md").read_text(encoding="utf-8")
+    assert "RAG" in skill and "git push origin main" not in skill
 
 
 def test_gateway_pretool_hook_has_repo_local_gate_config() -> None:

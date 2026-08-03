@@ -11,13 +11,13 @@
 ### Position Sizing
 
 - NEVER more than 5% on single trade ($5,000 risk per position)
-- 2 iron condors max concurrent across different expiry cycles (8 legs max deployed)
+- 2 put-credit structures max concurrent; residual IC inventory is exit-only
 - NO NAKED OPTIONS, NO UNDEFINED RISK
 
 ### Stop-Loss (MANDATORY)
 
 - Close if total loss reaches 200% of credit (CEO-approved 2026-07-02; was 100%) — NO EXCEPTIONS
-- If tested, roll untested side closer for additional credit
+- Do not add risk to repair a tested structure
 - Exit at 7 DTE to avoid gamma risk (changed from 21 DTE per LL-268)
 
 ### Exit Rules
@@ -27,10 +27,9 @@
 
 ### Financial Independence Path
 
-- Phase 1 ($100K-$150K): 2 iron condors max, $10-wide wings, prove the system
-- Phase 2 ($150K-$300K): Scale to 7-8 if 80%+ win rate
-- Phase 3 ($300K-$600K): 10+, diversify expirations across weekly/monthly
-- Phase 4 ($600K+): Withdraw $6K/month = North Star
+- Scaling is blocked until the active paper cohort has at least 30 paired closes,
+  positive expectancy, and profit factor above 1.
+- Capital deployment and withdrawal claims require provider-visible evidence.
 
 ### Tax Optimization
 

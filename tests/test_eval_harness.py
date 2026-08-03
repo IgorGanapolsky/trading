@@ -1,4 +1,3 @@
-import pytest
 from src.eval.eval_harness import EvalHarness
 from src.eval.trace_miner import TraceMiner
 

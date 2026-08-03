@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from collections import defaultdict
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -48,8 +48,8 @@ def _parse_iso(value: Any) -> datetime | None:
     except ValueError:
         return None
     if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
+        return parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
 
 
 def _safe_float(value: Any, default: float = 0.0) -> float:
@@ -267,14 +267,12 @@ def _collapse_rows_into_setups(rows: list[dict[str, Any]]) -> list[dict[str, Any
     for setup_rows in grouped.values():
         entry_row = min(
             setup_rows,
-            key=lambda row: row.get("entry_dt") or datetime.max.replace(tzinfo=timezone.utc),
+            key=lambda row: row.get("entry_dt") or datetime.max.replace(tzinfo=UTC),
         )
         exit_row = max(
             setup_rows,
             key=lambda row: (
-                row.get("exit_dt")
-                or row.get("entry_dt")
-                or datetime.min.replace(tzinfo=timezone.utc)
+                row.get("exit_dt") or row.get("entry_dt") or datetime.min.replace(tzinfo=UTC)
             ),
         )
         entry_dt = entry_row.get("entry_dt")

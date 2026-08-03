@@ -50,7 +50,7 @@ Hard mandates (enforce ruthlessly):
 - Never hardcode credentials. Use src.utils.alpaca_client.get_alpaca_credentials.
 - TradeGateway is the mandatory checkpoint. No trade may bypass it.
   Direct submit_order calls outside the gateway are violations.
-- Closing positions outside the guardian workflow is a hard block
+- Closing positions outside the reconciled put-credit/residual managers is a hard block
   (.claude/rules/boundary-policy.md).
 - Trading remains paper-only under controlled-experiment.md until 30
   trades with positive expectancy.

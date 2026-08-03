@@ -11,7 +11,6 @@ import json
 import logging
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +49,9 @@ class MercuryAutoAllocator:
         self.safety_buffer_usd = safety_buffer_usd
         self.trading_collateral_pct = trading_collateral_pct
 
-    def plan_allocation(self, incoming_revenue_usd: float, available_checking_usd: float) -> MercuryAllocationPlan:
+    def plan_allocation(
+        self, incoming_revenue_usd: float, available_checking_usd: float
+    ) -> MercuryAllocationPlan:
         tax_reserve = round(incoming_revenue_usd * self.tax_rate, 2)
         remaining_revenue = max(0.0, incoming_revenue_usd - tax_reserve)
 

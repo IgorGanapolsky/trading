@@ -45,12 +45,18 @@ class TestSchedulerToIncomeLoopContract:
         ledger = tmp_path / "ledger.jsonl"
         args = income_loop.parse_args(
             [
-                "--state-path", str(tmp_path / "state.json"),
-                "--ledger-path", str(ledger),
-                "--bank-buffer-usd", "500.0",
-                "--profit-return-threshold-usd", "50.0",
-                "--tax-rate", "20.0",
-                "--paper-starting-balance", "1500.0",
+                "--state-path",
+                str(tmp_path / "state.json"),
+                "--ledger-path",
+                str(ledger),
+                "--bank-buffer-usd",
+                "500.0",
+                "--profit-return-threshold-usd",
+                "50.0",
+                "--tax-rate",
+                "20.0",
+                "--paper-starting-balance",
+                "1500.0",
                 "--json",
             ]
         )
@@ -61,11 +67,16 @@ class TestSchedulerToIncomeLoopContract:
     def test_live_argv_parses_and_selects_live_mode(self, tmp_path):
         args = income_loop.parse_args(
             [
-                "--state-path", str(tmp_path / "state.json"),
-                "--ledger-path", str(tmp_path / "ledger.jsonl"),
-                "--bank-buffer-usd", "500.0",
-                "--profit-return-threshold-usd", "50.0",
-                "--tax-rate", "20.0",
+                "--state-path",
+                str(tmp_path / "state.json"),
+                "--ledger-path",
+                str(tmp_path / "ledger.jsonl"),
+                "--bank-buffer-usd",
+                "500.0",
+                "--profit-return-threshold-usd",
+                "50.0",
+                "--tax-rate",
+                "20.0",
                 "--live",
                 "--json",
             ]
@@ -131,6 +142,5 @@ class TestCallSiteContracts:
             for flag in sorted(flags - accepted):
                 problems.append(f"{target_script} does not accept {flag}")
         assert not problems, (
-            "call-site flag drift (argparse would exit 2 at runtime):\n"
-            + "\n".join(problems)
+            "call-site flag drift (argparse would exit 2 at runtime):\n" + "\n".join(problems)
         )

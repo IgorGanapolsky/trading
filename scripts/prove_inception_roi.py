@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -27,7 +27,7 @@ from src.observability.inception_labs_adapter import (  # noqa: E402
 def main() -> int:
     adapter = InceptionLabsMercuryAdapter()
     out = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "configured": adapter.configured,
         "model": adapter.model,
         "api_base": "https://api.inceptionlabs.ai/v1",
