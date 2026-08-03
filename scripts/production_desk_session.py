@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
-import subprocess
+import subprocess  # nosec B404 - fixed argv lists to repo scripts only
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
@@ -27,7 +27,7 @@ OUT = ROOT / "data" / "audit" / "production_desk_session_latest.json"
 
 def _run(cmd: list[str], *, timeout: int = 180) -> dict[str, Any]:
     try:
-        proc = subprocess.run(
+        proc = subprocess.run(  # nosec B603 - argv is always fixed local script paths
             cmd,
             cwd=str(ROOT),
             capture_output=True,
