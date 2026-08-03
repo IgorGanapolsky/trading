@@ -476,9 +476,7 @@ class QualityRetriever:
 
                 # Prefer pipeline CE reranker if present
                 if self.pipeline is not None and hasattr(self.pipeline, "_reranker"):
-                    reranked = self.pipeline._reranker.rerank(
-                        query, candidates, top_n=top_k * 2
-                    )
+                    reranked = self.pipeline._reranker.rerank(query, candidates, top_n=top_k * 2)
                     if reranked and isinstance(reranked[0], dict):
                         candidates = reranked
                     else:
@@ -540,7 +538,9 @@ class QualityRetriever:
                     title=str(c.get("title") or meta.get("title") or lid),
                     severity=str(c.get("severity") or meta.get("severity") or "LOW").upper(),
                     snippet=snippet,
-                    score=float(c.get("score") or c.get("rrf_score") or c.get("rerank_score") or 0.0),
+                    score=float(
+                        c.get("score") or c.get("rrf_score") or c.get("rerank_score") or 0.0
+                    ),
                     source=str(c.get("source") or "hybrid"),
                     metadata={
                         "strategy_family": c.get("strategy_family") or meta.get("strategy_family"),
