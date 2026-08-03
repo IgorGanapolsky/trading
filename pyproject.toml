@@ -36,7 +36,7 @@ dev = [
   "ruff>=0.16.0,<1.0.0",
 ]
 rag = [
-  "lancedb>=0.34.0,<1.0.0",
+  "lancedb>=0.36.0,<1.0.0",
   "scikit-learn>=1.9.0,<2.0.0",
   "sentence-transformers>=5.0.0,<6.0.0",
 ]
