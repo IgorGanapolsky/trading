@@ -534,14 +534,19 @@ class RAGEvaluator:
         if k == 0:
             return 0.0
 
+        # Normalize graded_relevance keys to match normalized retrieved IDs
+        normalized_relevance = {
+            self._normalize_match_id(k): v for k, v in graded_relevance.items()
+        }
+
         dcg = 0.0
         for i, doc in enumerate(retrieved[:k]):
             norm_doc = self._normalize_match_id(doc)
-            rel = graded_relevance.get(norm_doc, 0)
+            rel = normalized_relevance.get(norm_doc, 0)
             if rel > 0:
                 dcg += (2**rel - 1) / math.log2(i + 2)
 
-        ideal_grades = sorted(graded_relevance.values(), reverse=True)[:k]
+        ideal_grades = sorted(normalized_relevance.values(), reverse=True)[:k]
         idcg = 0.0
         for i, rel in enumerate(ideal_grades):
             if rel > 0:
