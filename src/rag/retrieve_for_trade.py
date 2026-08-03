@@ -208,6 +208,25 @@ def retrieve_for_trade(
         pool=candidate_pool,
     )
     candidates = hybrid["results"]
+    # Domain phrase + severity boost (shared with QualityRetriever)
+    try:
+        from src.rag.retrieval_quality import domain_relevance_boost
+
+        for row in candidates:
+            blob = f"{row.get('title', '')} {row.get('snippet', '')} {row.get('content', '')}"
+            boost = domain_relevance_boost(
+                query,
+                str(row.get("title") or ""),
+                blob,
+                str(row.get("severity") or ""),
+            )
+            base = float(row.get("score") or row.get("combinedScore") or 0.0)
+            row["score"] = base + boost
+            row["domainBoost"] = boost
+        candidates.sort(key=lambda r: float(r.get("score") or 0.0), reverse=True)
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("domain boost skipped: %s", exc)
+
     reranked = rerank_candidates(
         query,
         candidates,

@@ -82,6 +82,7 @@ PROCESS_DIM_NAMES = frozenset(
         "data_integrity_paired_ledger",
         "live_capital_discipline",
         "validation_factory_readiness",
+        "retrieval_quality_eval",
         "observability_ops",
         "production_control_plane",
         "llm_latency_cost_control",
@@ -377,6 +378,46 @@ def score_dimensions(
             f"{round(age_h, 1) if age_h is not None else None} "
             f"cohort_scorecard=present kill_switch=present",
             obs_block,
+        )
+    )
+
+    # Retrieval quality (process): latest eval report if present
+    eval_dir = ROOT / "data" / "evaluations" / "rag"
+    rag_score = 7.0
+    rag_block = "no rag evaluation report — run scripts/evaluate_rag.py --save"
+    rag_ev = "eval=missing"
+    if eval_dir.is_dir():
+        reports = sorted(eval_dir.glob("rag_evaluation_*.json"), key=lambda p: p.stat().st_mtime)
+        if reports:
+            latest = _load(reports[-1]) or {}
+            metrics = latest.get("metrics") or latest
+            p5 = float(metrics.get("mean_precision_at_k") or metrics.get("precision_at_k") or 0)
+            r5 = float(metrics.get("mean_recall_at_k") or metrics.get("recall_at_k") or 0)
+            mrr = float(metrics.get("mrr") or 0)
+            # Nested metrics shape from EvaluationReport.to_dict
+            if "metrics" in latest and isinstance(latest["metrics"], dict):
+                p5 = float(latest["metrics"].get("mean_precision_at_k") or p5)
+                r5 = float(latest["metrics"].get("mean_recall_at_k") or r5)
+                mrr = float(latest["metrics"].get("mrr") or mrr)
+            rag_ev = f"P@5={p5:.3f} R@5={r5:.3f} MRR={mrr:.3f} file={reports[-1].name}"
+            if p5 >= 0.55 and r5 >= 0.60 and mrr >= 0.50:
+                rag_score = 10.0
+                rag_block = None
+            elif p5 >= 0.40 and r5 >= 0.50:
+                rag_score = 9.0
+                rag_block = None
+            elif p5 >= 0.30:
+                rag_score = 7.5
+                rag_block = "retrieval below A+ targets"
+            else:
+                rag_score = 5.0
+                rag_block = "retrieval quality fail — improve hybrid/rerank"
+    dims.append(
+        _dim(
+            "retrieval_quality_eval",
+            rag_score,
+            f"plane=process {rag_ev}",
+            rag_block,
         )
     )
 
