@@ -3,6 +3,10 @@
 **Date**: 2026-01-25
 **Category**: Research / Strategy Optimization
 **Source**: arXiv:2501.12397 - "Stochastic Optimal Control of Iron Condor Portfolios"
+**Severity**: MEDIUM
+
+> **Historical only:** the iron-condor entry family is killed. Research notes
+> cannot override the active-family kill switch.
 
 ## Key Findings
 

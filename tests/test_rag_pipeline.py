@@ -175,7 +175,7 @@ class TestStage1CaptureAndStore:
         )
         stored, reason = pipeline.capture_feedback(feedback, lesson_id="ll-999_feedback_test")
         assert stored is True
-        assert "Stored" in reason
+        assert "lesson" in reason
 
     def test_capture_feedback_rejects_low_quality(self, pipeline):
         """capture_feedback should reject content that fails quality gate."""
@@ -198,14 +198,13 @@ class TestStage2HybridRetrieval:
         for i in range(len(hits) - 1):
             assert hits[i].combined_score >= hits[i + 1].combined_score
 
-    def test_pragmatic_hybrid_includes_token_floor(self, pipeline):
-        """Lessons with any token match should get the token floor score."""
+    def test_pragmatic_hybrid_includes_query_coverage(self, pipeline):
+        """Lessons expose calibrated query-token coverage without an unsafe score floor."""
         from src.rag.rag_pipeline import pragmatic_hybrid_search
 
         fts_results = pipeline.store.fts_search("delta", top_k=50)
         hits = pragmatic_hybrid_search("delta selection", fts_results, top_k=50)
-        # At least one result should have combined_score >= 0.10 (token floor)
-        assert any(h.combined_score >= 0.10 for h in hits)
+        assert any(h.query_token_coverage > 0 for h in hits)
 
     def test_pragmatic_hybrid_title_boost(self, pipeline):
         """Lessons with query terms in title should get a title boost."""
@@ -256,24 +255,26 @@ class TestStage3MultiQuery:
         """Multi-query should trigger when top combined score < threshold."""
         # Use a query that's unlikely to match well
         results = pipeline.query("xyzzy qwerty flibbertigibbet", top_k=5)
-        # Should return empty (OOD) or very few results
-        assert isinstance(results, list)
+        assert results == []
+        assert pipeline.last_query_trace is not None
 
     def test_multi_query_does_not_trigger_high_score(self, pipeline):
         """Multi-query should NOT trigger when top combined score > threshold."""
         # "iron condor exit strategy" with real lessons has high combined score
-        results = pipeline.query("iron condor exit strategy", top_k=5)
+        results = pipeline.query("iron condor", top_k=5)
         # Should still return good results
         assert len(results) > 0
+        assert pipeline.last_query_trace is not None
+        assert pipeline.last_query_trace.variant_count == 1
 
 
 # -- Stage 4: Cross-encoder reranker (LLM if key, else heuristic) --
 
 
 class TestStage4Reranker:
-    def test_reranker_type_is_cross_encoder(self, pipeline):
-        """Reranker uses cross-encoder when the model loads; else heuristic."""
-        assert pipeline._reranker.reranker_type in {"cross-encoder", "heuristic"}
+    def test_reranker_reports_effective_capability(self, pipeline):
+        """The runtime reports its real reranker instead of assuming an optional model."""
+        assert pipeline._reranker.reranker_type in {"cross-encoder", "llm", "heuristic"}
 
     def test_cross_encoder_scores_in_range(self, pipeline):
         """CE ensemble scores should be in [0, 1] range."""

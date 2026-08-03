@@ -50,7 +50,7 @@ def test_milestone_snapshot_pauses_underperforming_options_family(tmp_path):
     assert snapshot["north_star_probability"]["score"] <= 35.0
     assert snapshot["north_star_probability"]["target_date"] is None
     assert snapshot["north_star_probability"]["target_mode"] == "asap_monthly_income"
-    assert snapshot["north_star_probability"]["monthly_after_tax_target"] == 6000.0
+    assert snapshot["north_star_probability"]["monthly_after_tax_target"] == 1000.0
 
 
 def test_milestone_context_blocks_buy_for_paused_family(tmp_path):

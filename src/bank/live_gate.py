@@ -17,9 +17,10 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_COHORT = REPO_ROOT / "data" / "audit" / "put_credit_cohort_latest.json"
 DEFAULT_KILL = REPO_ROOT / "data" / "runtime" / "strategy_kill_switch.json"
 
-EDGE_N_MIN = 30
+EDGE_N_MIN = 100
 EDGE_MIN_EXPECTANCY = 0.0
-EDGE_MIN_PF = 1.0
+EDGE_MIN_EXPECTANCY_LOWER_95 = 0.0
+EDGE_MIN_PF = 1.2
 
 
 @dataclass(frozen=True)
@@ -53,12 +54,15 @@ def _load_cohort_metrics(cohort_path: Path) -> dict[str, Any]:
         return {}
     closed = raw.get("closed") if isinstance(raw.get("closed"), dict) else {}
     kill = closed.get("kill_criteria") if isinstance(closed.get("kill_criteria"), dict) else {}
+    desk = closed.get("desk_grade") if isinstance(closed.get("desk_grade"), dict) else {}
     honesty = raw.get("honesty") if isinstance(raw.get("honesty"), dict) else {}
     return {
         "closed_n": closed.get("closed_n"),
         "expectancy": closed.get("expectancy"),
+        "expectancy_lower_95": closed.get("expectancy_lower_95"),
         "profit_factor": closed.get("profit_factor"),
         "verdict": kill.get("verdict"),
+        "desk_grade_verdict": desk.get("verdict"),
         "live_deposit_ready": honesty.get("live_deposit_ready"),
         "claim_profitable": honesty.get("claim_profitable"),
     }
@@ -75,7 +79,8 @@ def evaluate_live_bank_gate(
     buy-and-hold), never same-day churn as the primary path.
     """
     state = load_kill_state()
-    metrics = _load_cohort_metrics(cohort_path or DEFAULT_COHORT)
+    resolved_cohort_path = cohort_path or DEFAULT_COHORT
+    metrics = _load_cohort_metrics(resolved_cohort_path)
     blockers: list[str] = []
 
     if state.live_blocked:
@@ -99,6 +104,31 @@ def evaluate_live_bank_gate(
         pf_f = float(pf) if pf is not None else None
     except (TypeError, ValueError):
         pf_f = None
+    try:
+        exp_lower_f = (
+            float(metrics.get("expectancy_lower_95"))
+            if metrics.get("expectancy_lower_95") is not None
+            else None
+        )
+    except (TypeError, ValueError):
+        exp_lower_f = None
+
+    source_paths = (
+        REPO_ROOT / "data" / "trades.json",
+        REPO_ROOT / "data" / "put_credit_entries.json",
+        DEFAULT_KILL,
+    )
+    if resolved_cohort_path.is_file():
+        cohort_mtime = resolved_cohort_path.stat().st_mtime
+        stale_sources = [
+            str(path.relative_to(REPO_ROOT))
+            for path in source_paths
+            if path.is_file() and path.stat().st_mtime > cohort_mtime
+        ]
+        if stale_sources:
+            blockers.append("cohort_artifact_stale_vs: " + ", ".join(stale_sources))
+    else:
+        blockers.append("cohort_artifact_missing")
 
     if require_edge_sample:
         if closed_n_i is None or closed_n_i < EDGE_N_MIN:
@@ -106,8 +136,10 @@ def evaluate_live_bank_gate(
         else:
             if exp_f is None or exp_f <= EDGE_MIN_EXPECTANCY:
                 blockers.append(f"expectancy_not_positive: {exp_f}")
+            if exp_lower_f is None or exp_lower_f <= EDGE_MIN_EXPECTANCY_LOWER_95:
+                blockers.append(f"expectancy_lower_95_not_positive: {exp_lower_f}")
             if pf_f is None or pf_f <= EDGE_MIN_PF:
-                blockers.append(f"profit_factor_not_gt_1: {pf_f}")
+                blockers.append(f"profit_factor_not_gte_{EDGE_MIN_PF}: {pf_f}")
         if metrics.get("live_deposit_ready") is not True:
             # Human sign-off bit: the scorecard generator always writes False;
             # a missing/trimmed honesty section must not bypass it (fail closed).
@@ -116,6 +148,11 @@ def evaluate_live_bank_gate(
             )
         if metrics.get("verdict") and str(metrics.get("verdict")) != "EDGE_CANDIDATE":
             blockers.append(f"kill_verdict={metrics.get('verdict')} (need EDGE_CANDIDATE)")
+        if str(metrics.get("desk_grade_verdict")) != "DESK_GRADE_CANDIDATE":
+            blockers.append(
+                f"desk_grade_verdict={metrics.get('desk_grade_verdict')} "
+                "(need DESK_GRADE_CANDIDATE)"
+            )
 
     # Deduplicate while preserving order
     seen: set[str] = set()
@@ -140,6 +177,8 @@ def evaluate_live_bank_gate(
         detail={
             "active_family": state.active_family,
             "cohort_verdict": metrics.get("verdict"),
+            "desk_grade_verdict": metrics.get("desk_grade_verdict"),
+            "expectancy_lower_95": exp_lower_f,
             "claim_profitable": metrics.get("claim_profitable"),
         },
     )

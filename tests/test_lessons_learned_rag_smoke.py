@@ -267,9 +267,13 @@ class TestLessonsLearnedRAGAddLesson:
 
 **Severity**: HIGH
 
-This is a new lesson.
+This is a new lesson with enough operational detail to pass the quality gate.
+
+## Prevention
+
+Reject unsafe writes and keep the durable file and retrieval index consistent.
 """
-                rag.add_lesson("new_lesson", content)
+                assert rag.add_lesson("new_lesson", content) is True
 
                 # File should exist
                 lesson_file = Path(tmpdir) / "new_lesson.md"
@@ -284,7 +288,12 @@ This is a new lesson.
         knowledge_dir = tmp_path / "nested" / "lessons"
         with patch("src.rag.lessons_learned_rag.LESSONS_SEARCH_AVAILABLE", False):
             rag = LessonsLearnedRAG(knowledge_dir=str(knowledge_dir))
-            rag.add_lesson("LL-TEST", "# Test\n\n**Severity**: LOW\n")
+            assert rag.add_lesson(
+                "LL-TEST",
+                "# Test\n\n**Severity**: LOW\n\n"
+                "A durable lesson needs enough context for reliable retrieval.\n\n"
+                "## Prevention\nRequire governed content before indexing the lesson.",
+            )
             rag._load_lessons()
 
         assert knowledge_dir.is_dir()

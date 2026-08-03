@@ -24,7 +24,7 @@ def test_guard_validation_mode_with_low_sample(tmp_path):
     assert guard["max_position_pct"] == 0.05
     assert guard["target_date"] is None
     assert guard["north_star_target_mode"] == "asap_monthly_income"
-    assert guard["north_star_monthly_after_tax_target"] == 6000.0
+    assert guard["north_star_monthly_after_tax_target"] == 1000.0
 
 
 def test_guard_capital_preservation_blocks_new_positions(tmp_path):

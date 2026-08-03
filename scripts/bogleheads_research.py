@@ -1,20 +1,16 @@
 #!/usr/bin/env python3
-"""Bogleheads Forum Research & Insight Extractor.
-
-Parses Bogleheads RSS feed (https://www.bogleheads.org/forum/feed.php) to extract
-the latest index investing discussions, asset allocation trends, and Phil Town / Jack Bogle philosophy insights.
-"""
+"""Ingest and query bounded public Bogleheads research."""
 
 from __future__ import annotations
 
+import argparse
 import json
 import logging
+import os
 import sys
-import xml.etree.ElementTree as ET
 from datetime import UTC, datetime
 from pathlib import Path
-
-import requests
+from tempfile import NamedTemporaryFile
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -22,65 +18,57 @@ if str(ROOT) not in sys.path:
 
 logger = logging.getLogger(__name__)
 
-FEED_URL = "https://www.bogleheads.org/forum/feed.php"
 OUTPUT_PATH = ROOT / "data" / "research" / "bogleheads_latest.json"
+DB_PATH = ROOT / "data" / "rag" / "bogleheads_research.db"
+
+from src.research.bogleheads_ingestion import (  # noqa: E402
+    BogleheadsResearchStore,
+    documents_as_json,
+    fetch_public_feed,
+)
 
 
-def fetch_bogleheads_feed(limit: int = 15) -> list[dict[str, str]]:
-    headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"}
-    resp = requests.get(FEED_URL, headers=headers, timeout=15)
-    resp.raise_for_status()
-
-    root = ET.fromstring(resp.text)
-    ns = {"atom": "http://www.w3.org/2005/Atom"}
-
-    entries = []
-    for entry in root.findall("atom:entry", ns)[:limit]:
-        title_el = entry.find("atom:title", ns)
-        link_el = entry.find("atom:link", ns)
-        updated_el = entry.find("atom:updated", ns)
-        content_el = entry.find("atom:content", ns)
-        author_el = entry.find("atom:author/atom:name", ns)
-
-        title = title_el.text if title_el is not None else ""
-        link = link_el.attrib.get("href", "") if link_el is not None else ""
-        updated = updated_el.text if updated_el is not None else ""
-        author = author_el.text if author_el is not None else ""
-        snippet = content_el.text[:300] if content_el is not None and content_el.text else ""
-
-        entries.append(
-            {
-                "title": title,
-                "link": link,
-                "author": author,
-                "updated": updated,
-                "snippet": snippet,
-            }
-        )
-
-    return entries
+def _write_json_atomic(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with NamedTemporaryFile("w", encoding="utf-8", dir=path.parent, delete=False) as handle:
+        json.dump(payload, handle, indent=2, sort_keys=True)
+        handle.write("\n")
+        temp_path = Path(handle.name)
+    os.replace(temp_path, path)
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--limit", type=int, default=15)
+    parser.add_argument("--output", type=Path, default=OUTPUT_PATH)
+    parser.add_argument("--db", type=Path, default=DB_PATH)
+    parser.add_argument("--search", help="query the isolated local forum-research index")
+    parser.add_argument("--search-limit", type=int, default=10)
+    args = parser.parse_args([] if argv is None else argv)
     logging.basicConfig(level=logging.INFO)
-    logger.info("Fetching latest Bogleheads forum discussions...")
+    if args.search:
+        with BogleheadsResearchStore(args.db) as store:
+            results = store.search(args.search, limit=args.search_limit)
+        print(json.dumps({"query": args.search, "results": results}, indent=2))
+        return 0
 
-    entries = fetch_bogleheads_feed(15)
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-
+    logger.info("Fetching one bounded Bogleheads public-feed page")
+    documents, rejected = fetch_public_feed(limit=args.limit)
+    with BogleheadsResearchStore(args.db) as store:
+        report = store.sync(documents, rejected=rejected)
     record = {
         "fetched_at": datetime.now(UTC).isoformat(),
-        "total_threads": len(entries),
-        "threads": entries,
+        "trust_level": "untrusted_research",
+        "gate_effect": "none",
+        "total_threads": len(documents),
+        "ingestion": report.__dict__,
+        "threads": documents_as_json(documents),
     }
-
-    with OUTPUT_PATH.open("w", encoding="utf-8") as h:
-        json.dump(record, h, indent=2)
-
-    logger.info("Saved %d Bogleheads topics to %s", len(entries), OUTPUT_PATH)
-    print(json.dumps(record, indent=2))
+    _write_json_atomic(args.output, record)
+    logger.info("Indexed %d public topics into %s", len(documents), args.db)
+    print(json.dumps(record, indent=2, sort_keys=True))
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv[1:]))

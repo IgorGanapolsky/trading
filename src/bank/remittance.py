@@ -11,9 +11,10 @@ from datetime import UTC, datetime
 from typing import Any, Iterable
 
 from src.bank.transfer_ledger import TransferDirection, TransferRecord
+from src.core.trading_constants import NORTH_STAR_MONTHLY_AFTER_TAX
 
-# Goal remittance target (user: $1000/mo after-tax). Distinct from North Star $6000.
-MONTHLY_AFTER_TAX_TARGET_USD = 1000.0
+# One source of truth for goal accounting and confirmed bank remittances.
+MONTHLY_AFTER_TAX_TARGET_USD = NORTH_STAR_MONTHLY_AFTER_TAX
 
 # Conservative default short-term capital gains rate for SPY equity options (federal+state est.)
 DEFAULT_SHORT_TERM_TAX_RATE = 0.37

@@ -62,8 +62,9 @@ def _write_kill(tmp_path, monkeypatch, *, paper_only: bool, live_blocked: bool) 
 def _cohort(
     tmp_path,
     *,
-    closed_n: int = 35,
+    closed_n: int = 100,
     expectancy: float = 12.5,
+    expectancy_lower_95: float = 5.0,
     profit_factor: float = 1.8,
     verdict: str = "EDGE_CANDIDATE",
     live_deposit_ready: bool | None = True,
@@ -73,8 +74,10 @@ def _cohort(
         "closed": {
             "closed_n": closed_n,
             "expectancy": expectancy,
+            "expectancy_lower_95": expectancy_lower_95,
             "profit_factor": profit_factor,
             "kill_criteria": {"verdict": verdict},
+            "desk_grade": {"verdict": "DESK_GRADE_CANDIDATE"},
         }
     }
     if not omit_honesty:
@@ -90,9 +93,9 @@ def _blocker_matching(decision, needle: str) -> bool:
 
 class TestPolicyConstants:
     def test_thresholds_match_kill_criteria_policy(self):
-        assert live_gate.EDGE_N_MIN == 30
+        assert live_gate.EDGE_N_MIN == 100
         assert live_gate.EDGE_MIN_EXPECTANCY == 0.0
-        assert live_gate.EDGE_MIN_PF == 1.0
+        assert live_gate.EDGE_MIN_PF == 1.2
 
 
 class TestGateCanOpen:
@@ -132,7 +135,7 @@ class TestFailClosed:
 
 class TestEachCriterionBlocksIndependently:
     def test_insufficient_sample_blocks(self, kill_cleared):
-        decision = evaluate_live_bank_gate(cohort_path=_cohort(kill_cleared, closed_n=29))
+        decision = evaluate_live_bank_gate(cohort_path=_cohort(kill_cleared, closed_n=99))
         assert decision.allowed is False
         assert _blocker_matching(decision, "insufficient_edge_sample")
 
@@ -144,7 +147,14 @@ class TestEachCriterionBlocksIndependently:
     def test_profit_factor_at_one_blocks(self, kill_cleared):
         decision = evaluate_live_bank_gate(cohort_path=_cohort(kill_cleared, profit_factor=1.0))
         assert decision.allowed is False
-        assert _blocker_matching(decision, "profit_factor_not_gt_1")
+        assert _blocker_matching(decision, "profit_factor_not_gte_1.2")
+
+    def test_nonpositive_expectancy_confidence_bound_blocks(self, kill_cleared):
+        decision = evaluate_live_bank_gate(
+            cohort_path=_cohort(kill_cleared, expectancy=10.0, expectancy_lower_95=-1.0)
+        )
+        assert decision.allowed is False
+        assert _blocker_matching(decision, "expectancy_lower_95_not_positive")
 
     def test_non_candidate_verdict_blocks(self, kill_cleared):
         decision = evaluate_live_bank_gate(

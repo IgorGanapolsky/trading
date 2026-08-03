@@ -5,6 +5,15 @@
 **Severity**: HIGH
 **Source**: Web research on iron condor entry timing
 
+> **Historical only:** iron-condor entries are killed. These signals must not
+> be used to create or authorize new risk.
+
+## Prevention
+
+Do not revive the killed iron-condor family from historical entry research.
+Any successor hypothesis must start as a separately identified paper cohort
+and pass the current statistical and live-capital gates.
+
 ## Problem
 
 System not generating enough trade signals. Need clear entry criteria.

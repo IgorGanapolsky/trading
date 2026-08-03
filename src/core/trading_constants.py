@@ -38,9 +38,13 @@ MAX_DAILY_FILLS: int = 20
 MIN_DTE: int = ACTIVE_IRON_CONDOR_PROFILE.min_dte
 MAX_DTE: int = ACTIVE_IRON_CONDOR_PROFILE.max_dte
 
+# Canonical operator goal. All projections, gates, scorecards, and remittance
+# evidence must use this value rather than maintaining competing targets.
+NORTH_STAR_MONTHLY_AFTER_TAX: float = 1_000.0
+NORTH_STAR_DAILY_AFTER_TAX: float = 50.0
+# Capital is an observed constraint, not proof of edge. Retained as a planning
+# ceiling while the income target is proved from realized cohort expectancy.
 NORTH_STAR_TARGET_CAPITAL: float = 300_000.0
-NORTH_STAR_MONTHLY_AFTER_TAX: float = 6_000.0
-NORTH_STAR_DAILY_AFTER_TAX: float = 200.0
 NORTH_STAR_TARGET_WIN_RATE_PCT: float = 80.0
 NORTH_STAR_PAPER_VALIDATION_DAYS: int = 90
 

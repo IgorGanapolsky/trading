@@ -22,6 +22,8 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from src.analytics.statistical_edge import calculate_edge_statistics  # noqa: E402
+
 DEFAULT_TRADES = ROOT / "data" / "trades.json"
 DEFAULT_ENTRIES = ROOT / "data" / "put_credit_entries.json"
 DEFAULT_KILL = ROOT / "data" / "runtime" / "strategy_kill_switch.json"
@@ -30,6 +32,8 @@ DEFAULT_OUT = ROOT / "data" / "audit" / "put_credit_cohort_latest.json"
 KILL_N = 30
 KILL_MIN_EXPECTANCY = 0.0
 KILL_MIN_PF = 1.0
+DESK_GRADE_N = 100
+DESK_GRADE_MIN_PF = 1.2
 
 
 def _load_json(path: Path) -> Any:
@@ -97,27 +101,21 @@ def _is_closed(row: dict[str, Any]) -> bool:
 
 
 def _metrics_from_pnls(pnls: list[float]) -> dict[str, Any]:
-    n = len(pnls)
-    wins = [p for p in pnls if p > 0]
-    losses = [p for p in pnls if p < 0]
-    be = [p for p in pnls if p == 0]
-    gross_win = sum(wins)
-    gross_loss = abs(sum(losses))
-    total = sum(pnls)
-    expectancy = (total / n) if n else None
-    pf = (gross_win / gross_loss) if gross_loss > 0 else (None if n == 0 else float("inf"))
-    win_rate = (len(wins) / n * 100.0) if n else None
+    stats = calculate_edge_statistics(pnls)
     return {
-        "n": n,
-        "wins": len(wins),
-        "losses": len(losses),
-        "breakeven": len(be),
-        "win_rate_pct": round(win_rate, 2) if win_rate is not None else None,
-        "profit_factor": round(pf, 4) if isinstance(pf, float) and pf != float("inf") else pf,
-        "expectancy": round(expectancy, 4) if expectancy is not None else None,
-        "total_realized_pnl": round(total, 2) if n else 0.0,
-        "avg_win": round(sum(wins) / len(wins), 2) if wins else None,
-        "avg_loss": round(sum(losses) / len(losses), 2) if losses else None,
+        "n": stats.sample_size,
+        "wins": stats.wins,
+        "losses": stats.losses,
+        "breakeven": stats.breakeven,
+        "win_rate_pct": stats.win_rate_pct,
+        "profit_factor": stats.profit_factor,
+        "expectancy": stats.expectancy_per_trade,
+        "expectancy_lower_95": stats.expectancy_lower_95,
+        "expectancy_upper_95": stats.expectancy_upper_95,
+        "total_realized_pnl": stats.total_realized_pnl,
+        "avg_win": stats.average_win,
+        "avg_loss": stats.average_loss,
+        "max_closed_trade_drawdown": stats.max_closed_trade_drawdown,
     }
 
 
@@ -178,6 +176,7 @@ def summarize_closed(rows: list[dict[str, Any]]) -> dict[str, Any]:
     expectancy = base["expectancy"]
     pf = base["profit_factor"]
     total = base["total_realized_pnl"]
+    expectancy_lower_95 = base["expectancy_lower_95"]
 
     kill = {
         "n_target": KILL_N,
@@ -203,6 +202,37 @@ def summarize_closed(rows: list[dict[str, Any]]) -> dict[str, Any]:
         kill["pass_all"] = None
         kill["verdict"] = "INSUFFICIENT_SAMPLE"
 
+    rolling = _rolling_windows(pnls, 20)
+    desk_grade = {
+        "n_target": DESK_GRADE_N,
+        "n_closed": n,
+        "sample_sufficient": n >= DESK_GRADE_N,
+        "expectancy_lower_95_gt_0": (expectancy_lower_95 is not None and expectancy_lower_95 > 0.0)
+        if n >= DESK_GRADE_N
+        else None,
+        "profit_factor_gte_1_2": (pf is not None and pf >= DESK_GRADE_MIN_PF)
+        if n >= DESK_GRADE_N
+        else None,
+        "rolling_20_stable": (
+            bool(rolling.get("sample_sufficient")) and not bool(rolling.get("sign_flip_vs_full"))
+        )
+        if n >= DESK_GRADE_N
+        else None,
+    }
+    if n >= DESK_GRADE_N:
+        desk_grade["pass_all"] = bool(
+            desk_grade["expectancy_lower_95_gt_0"]
+            and desk_grade["profit_factor_gte_1_2"]
+            and desk_grade["rolling_20_stable"]
+            and total > 0.0
+        )
+        desk_grade["verdict"] = (
+            "DESK_GRADE_CANDIDATE" if desk_grade["pass_all"] else "DESK_GRADE_REJECTED"
+        )
+    else:
+        desk_grade["pass_all"] = None
+        desk_grade["verdict"] = "INSUFFICIENT_DESK_GRADE_SAMPLE"
+
     return {
         "closed_n": n,
         "wins": base["wins"],
@@ -211,11 +241,15 @@ def summarize_closed(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "win_rate_pct": base["win_rate_pct"],
         "profit_factor": base["profit_factor"],
         "expectancy": base["expectancy"],
+        "expectancy_lower_95": base["expectancy_lower_95"],
+        "expectancy_upper_95": base["expectancy_upper_95"],
         "total_realized_pnl": base["total_realized_pnl"],
         "avg_win": base["avg_win"],
         "avg_loss": base["avg_loss"],
+        "max_closed_trade_drawdown": base["max_closed_trade_drawdown"],
         "kill_criteria": kill,
-        "rolling_20": _rolling_windows(pnls, 20),
+        "desk_grade": desk_grade,
+        "rolling_20": rolling,
     }
 
 
@@ -301,8 +335,10 @@ def build_scorecard(
             else bool(closed["kill_criteria"].get("pass_all")),
             "live_deposit_ready": False,
             "note": (
-                "Do not claim profitability or deposit real capital until kill_criteria.verdict "
-                f"is EDGE_CANDIDATE (n>={KILL_N}, expectancy>0, PF>1, total PnL>0). "
+                "Do not claim real-money readiness until desk_grade.verdict is "
+                f"DESK_GRADE_CANDIDATE (n>={DESK_GRADE_N}, expectancy 95% lower bound >0, "
+                f"PF>={DESK_GRADE_MIN_PF}, stable rolling window, total PnL>0). "
+                f"The n={KILL_N} EDGE_CANDIDATE gate is only an interim paper experiment floor. "
                 "Process upgrades (regime gate, logging) improve validation quality only — "
                 "they do not create edge."
             ),

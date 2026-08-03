@@ -1,0 +1,4 @@
+interface:
+  display_name: Bogleheads Research
+  short_description: Research and safely draft Bogleheads participation
+  default_prompt: Use $bogleheads-research to inspect relevant forum discussions, stage cited research, and prepare a policy-compliant reply draft.

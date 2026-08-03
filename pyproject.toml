@@ -1,7 +1,7 @@
 [project]
 name = "trading"
 version = "1.0.0"
-description = "Paper-first SPY put-credit lab with deterministic risk gates and local lessons memory"
+description = "SPY put-credit validation and real-money control plane with deterministic risk and evidence gates"
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
 license = { text = "MIT" }
@@ -10,6 +10,7 @@ keywords = ["trading", "alpaca", "options", "risk-management", "rag"]
 dependencies = [
   "alpaca-py>=0.43.5",
   "anthropic>=0.120.2,<1.0.0",
+  "defusedxml>=0.7.1,<1.0.0",
   "fastapi>=0.141.1,<1.0.0",
   "holidays>=0.101",
   "httpx>=0.28.1,<1.0.0",

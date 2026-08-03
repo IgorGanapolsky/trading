@@ -5,6 +5,17 @@
 **Severity**: HIGH
 **Related**: LL-296, LL-297, LL-294
 
+> **Historical only:** dates, thresholds, tax assumptions, and the $6,000 goal
+> below are superseded. Current code uses a conservative reserve for planning;
+> it does not make a tax determination.
+
+## Prevention
+
+Verify instrument classification and current tax treatment against primary
+IRS material and qualified tax advice before acting. Never apply Section 1256
+or 60/40 treatment to SPY equity options by analogy, and never treat a reserve
+estimate as an after-tax result.
+
 ## Executive Summary
 
 Concrete action items for Q1 2026 tax planning. This is the "do this now" version of the comprehensive tax strategy (LL-297).

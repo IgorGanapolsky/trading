@@ -15,7 +15,7 @@ from src.safety.north_star_autopilot import (
 def _base_state() -> dict:
     return {
         "meta": {"last_updated": "2026-02-20T14:00:00Z"},
-        "north_star": {"monthly_after_tax_target": 6000.0},
+        "north_star": {"monthly_after_tax_target": 1000.0},
         "north_star_weekly_gate": {
             "updated_at": "2026-02-20T14:00:00Z",
             "mode": "validation",

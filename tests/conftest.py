@@ -191,6 +191,8 @@ def reset_environment():
     # Avoid hard failures in minimal CI where LanceDB isn't installed.
     os.environ.setdefault("LANCEDB_REQUIRED", "false")
     os.environ.setdefault("LANCEDB_RAG", "false")
+    os.environ.setdefault("RAG_EMBEDDING_BACKEND", "hashing")
+    os.environ.setdefault("RAG_RERANKER_MODE", "heuristic")
 
     yield
 

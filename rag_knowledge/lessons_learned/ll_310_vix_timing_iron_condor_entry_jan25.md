@@ -1,5 +1,10 @@
 # LL-310: VIX Timing for Iron Condor Entry
 
+**Severity**: MEDIUM
+
+> **Historical only:** iron-condor entries are killed. Timing research cannot
+> override the active-family or live-capital gates.
+
 **Date**: 2026-01-25
 **Category**: Strategy / Entry Timing
 **Status**: RESEARCH

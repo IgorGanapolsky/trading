@@ -3,18 +3,36 @@ name: Offline Evals (Regression Gate)
 on:
   pull_request:
     paths:
-      - "src/rag/**"
-      - "src/safety/**"
-      - "src/orchestrator/gates.py"
-      - "tests/evals/**"
-      - ".github/workflows/offline-evals.yml"
+      - src/rag/**
+      - src/analytics/statistical_edge.py
+      - src/bank/live_gate.py
+      - src/execution/position_sizer.py
+      - src/safety/**
+      - src/orchestrator/gates.py
+      - scripts/put_credit_cohort_scorecard.py
+      - scripts/world_class_trading_readiness.py
+      - tests/evals/**
+      - tests/test_rag_*.py
+      - tests/test_live_gate_evals.py
+      - tests/test_position_sizer.py
+      - tests/test_put_credit_cohort_scorecard.py
+      - .github/workflows/offline-evals.yml
   push:
     branches: [main]
     paths:
-      - "src/rag/**"
-      - "src/safety/**"
-      - "src/orchestrator/gates.py"
-      - "tests/evals/**"
+      - src/rag/**
+      - src/analytics/statistical_edge.py
+      - src/bank/live_gate.py
+      - src/execution/position_sizer.py
+      - src/safety/**
+      - src/orchestrator/gates.py
+      - scripts/put_credit_cohort_scorecard.py
+      - scripts/world_class_trading_readiness.py
+      - tests/evals/**
+      - tests/test_rag_*.py
+      - tests/test_live_gate_evals.py
+      - tests/test_position_sizer.py
+      - tests/test_put_credit_cohort_scorecard.py
   workflow_dispatch:
 
 permissions:
@@ -43,11 +61,19 @@ jobs:
       - name: Run offline evals (deterministic)
         env:
           # Ensure optional heavy deps cannot cause network access during evals.
-          HF_HUB_OFFLINE: "1"
-          TRANSFORMERS_OFFLINE: "1"
+          HF_HUB_OFFLINE: 1
+          TRANSFORMERS_OFFLINE: 1
+          RAG_EMBEDDING_BACKEND: hashing
+          RAG_RERANKER_MODE: heuristic
         run: |
           pytest -q \
             tests/evals \
             tests/test_mandatory_trade_gate.py \
             tests/test_orchestrator_gates.py \
-            tests/test_lessons_learned_rag_smoke.py
+            tests/test_lessons_learned_rag_smoke.py \
+            tests/test_rag_pipeline.py \
+            tests/test_rag_production_pipeline.py \
+            tests/test_rag_evaluation.py \
+            tests/test_live_gate_evals.py \
+            tests/test_position_sizer.py \
+            tests/test_put_credit_cohort_scorecard.py

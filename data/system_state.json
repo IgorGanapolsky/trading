@@ -2446,7 +2446,7 @@
   },
   "strategy_milestones": {
     "enabled": true,
-    "generated_at": "2026-08-03T14:37:34.491498Z",
+    "generated_at": "2026-08-03T14:39:27.517618Z",
     "primary_family": "options_income",
     "rolling_window": 50,
     "paused_families": ["equity_momentum", "alternatives", "other"],
@@ -2544,9 +2544,9 @@
     "estimated_cagr_from_expectancy": -0.0249,
     "target_capital": 300000.0,
     "target_date": null,
-    "updated_at": "2026-08-03T14:37:34.491498Z",
+    "updated_at": "2026-08-03T14:39:27.517618Z",
     "target_mode": "asap_monthly_income",
-    "monthly_after_tax_target": 6000.0,
+    "monthly_after_tax_target": 1000.0,
     "estimated_monthly_after_tax_from_expectancy": 0.0,
     "monthly_target_progress_pct": 0.0
   },
@@ -2747,9 +2747,9 @@
       "gate_block_counts": {},
       "top_rejection_reasons": [],
       "summary": "Closed trades exist in lookback window; no-trade root cause not currently active.",
-      "updated_at": "2026-08-03T14:37:34.487523+00:00"
+      "updated_at": "2026-08-03T14:39:27.513969+00:00"
     },
-    "updated_at": "2026-08-03T14:37:34.488096+00:00"
+    "updated_at": "2026-08-03T14:39:27.515041+00:00"
   },
   "north_star_contributions": {
     "enabled": true,
@@ -2758,8 +2758,8 @@
     "target_date": null,
     "months_remaining": null,
     "target_capital": 300000.0,
-    "monthly_after_tax_target": 6000.0,
-    "daily_after_tax_target": 200.0,
+    "monthly_after_tax_target": 1000.0,
+    "daily_after_tax_target": 50.0,
     "current_equity": 94167.43,
     "required_cagr_without_contributions": null,
     "required_monthly_contribution_by_return": {},
@@ -2767,19 +2767,19 @@
     "required_monthly_contribution_at_assumed_return": null,
     "month_start_equity": 94150.43,
     "equity_change_this_month": 17.0,
-    "monthly_target_progress_pct": 0.28,
-    "remaining_to_monthly_target": 5983.0,
+    "monthly_target_progress_pct": 1.7,
+    "remaining_to_monthly_target": 983.0,
     "days_elapsed_this_month": 3,
     "days_remaining_this_month": 28,
-    "required_daily_after_tax_from_now": 213.68,
+    "required_daily_after_tax_from_now": 35.11,
     "projected_month_end_after_tax_pnl": 175.67,
-    "projected_gap_to_monthly_target": 5824.33,
+    "projected_gap_to_monthly_target": 824.33,
     "live_month_start_equity": 0.0,
     "live_equity_change_this_month": 0.0,
     "estimated_live_contribution_this_month": 0.0,
     "contribution_estimate_confidence": "medium",
     "inference_note": "Live account has no open positions; live equity change is treated as estimated contribution.",
-    "updated_at": "2026-08-03T14:37:34.488220+00:00"
+    "updated_at": "2026-08-03T14:39:27.515477+00:00"
   },
   "ic_position_management": {
     "last_run": "2026-06-18T09:30:40.322213",
@@ -3317,7 +3317,7 @@
   "position_entries": {},
   "position_entry_features": {},
   "north_star_autopilot": {
-    "generated_at_utc": "2026-08-03T14:37:34.488347Z",
+    "generated_at_utc": "2026-08-03T14:39:27.517721Z",
     "cadence_optimizer": {
       "decision": "hold",
       "reason": "Liquidity floor unchanged.",
@@ -3401,7 +3401,7 @@
       "changed": false,
       "payload": {
         "min_liquidity_volume_ratio": 0.2,
-        "updated_at": "2026-08-03T14:37:34.488347+00:00",
+        "updated_at": "2026-08-03T14:39:27.517721+00:00",
         "source": "north_star_autopilot"
       }
     }

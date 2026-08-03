@@ -1,5 +1,7 @@
 # LL-240: Deep Operational Integrity Audit - 14 Issues Found
 
+**Severity**: HIGH
+
 ## Date
 
 January 16, 2026 (Friday, 6:00 PM ET)

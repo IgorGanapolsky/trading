@@ -188,7 +188,9 @@ def check_rag_system():
             writable_rag = LessonsLearnedRAG(knowledge_dir=tmpdir)
             writable_rag.add_lesson(
                 "LL-HEALTH",
-                "# Health Probe\n\n**Severity**: LOW\n\nRAG write and read round trip.",
+                "# Health Probe\n\n**Severity**: LOW\n\n"
+                "RAG write and read round trip validates persistence.\n\n"
+                "## Prevention\nReject deployment when the round trip cannot be retrieved.",
             )
             round_trip = writable_rag.query("round trip", top_k=1)
             if not round_trip or round_trip[0]["id"] != "LL-HEALTH":

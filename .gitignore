@@ -141,6 +141,7 @@ data/rag/cache/
 data/rag/normalized/
 data/rag/vector_store/
 data/rag/sentiment.db
+data/rag/bogleheads_research.db*
 data/rag/tfidf_vectorizer.pkl
 data/rag/lessons_learned.json
 data/rag/lessons_learned_index.json

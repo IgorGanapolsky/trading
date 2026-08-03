@@ -365,8 +365,8 @@ def test_contribution_plan_tracks_monthly_target_progress():
 
     assert plan["target_mode"] == "asap_monthly_income"
     assert plan["target_date"] is None
-    assert plan["monthly_after_tax_target"] == 6000.0
-    assert plan["daily_after_tax_target"] == 200.0
+    assert plan["monthly_after_tax_target"] == 1000.0
+    assert plan["daily_after_tax_target"] == 50.0
     assert plan["required_monthly_contribution_by_return"] == {}
     assert plan["required_cagr_without_contributions"] is None
     assert plan["required_daily_after_tax_from_now"] >= 0.0

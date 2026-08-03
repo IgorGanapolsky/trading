@@ -5,6 +5,15 @@
 **Severity**: HIGH
 **Related**: LL-299, LL-310, LL-268, LL-277
 
+> **Historical only:** the iron-condor entry family is killed. These rules may
+> explain past decisions but cannot authorize a new order.
+
+## Prevention
+
+Do not translate historical VIX research into a live entry. The active
+`spy_put_credit` family must use its reviewed profile, current regime controls,
+and independent cohort evidence; killed-family lessons are context only.
+
 ## Summary
 
 Research-backed entry rules for iron condors based on VIX levels and IV rank.

@@ -121,13 +121,16 @@ def main() -> int:
         trades_path=TRADES_PATH,
         weekly_history_path=WEEKLY_HISTORY_PATH,
     )
-    snapshot = _run_autopilot(state)
+    # Refresh the canonical goal before the autopilot evaluates target drift.
+    # Running the monitor first made a normal $6k -> $1k goal migration create
+    # a false critical freeze for one full state generation.
     milestone_snapshot = compute_milestone_snapshot(
         state=state,
         state_path=STATE_PATH,
         trades_path=TRADES_PATH,
     )
     apply_milestone_snapshot_to_state(state, milestone_snapshot)
+    snapshot = _run_autopilot(state)
 
     STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
     STATE_PATH.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")

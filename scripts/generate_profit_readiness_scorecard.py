@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+from src.core.trading_constants import NORTH_STAR_MONTHLY_AFTER_TAX
+
 
 @dataclass
 class Metric:
@@ -591,7 +593,9 @@ def main() -> int:
     else:
         delta_status = "PASS" if delta_7d > 0 else "WARN"
         run_rate_status = (
-            "PASS" if monthly_run_rate is not None and monthly_run_rate >= 6000 else "WARN"
+            "PASS"
+            if monthly_run_rate is not None and monthly_run_rate >= NORTH_STAR_MONTHLY_AFTER_TAX
+            else "WARN"
         )
         delta_pct_text = f"{delta_7d_pct:.2f}%" if delta_7d_pct is not None else "N/A"
         run_rate_text = f"${monthly_run_rate:,.2f}/month" if monthly_run_rate is not None else "N/A"
@@ -600,7 +604,7 @@ def main() -> int:
         )
         lines.append(f"- Monthly run-rate estimate: {run_rate_text} [{run_rate_status}]")
         lines.append(f"- Data source: {delta_source}")
-        lines.append("- North Star target: $6,000/month after tax")
+        lines.append(f"- North Star target: ${NORTH_STAR_MONTHLY_AFTER_TAX:,.0f}/month after tax")
     lines.append("")
     lines.append("## Interpretation")
     lines.append("- PASS means metric is within current readiness threshold.")

@@ -5,6 +5,7 @@ Updated Feb 9, 2026: LanceDB-first semantic retrieval with keyword fallback.
 
 import logging
 import os
+import re
 from pathlib import Path
 from typing import Optional
 
@@ -61,6 +62,9 @@ class LessonsLearnedRAG:
                 self._pipeline._temp_db_path = _db_path
             else:
                 self._pipeline = get_trading_rag_pipeline()
+                # Reconcile the durable index with source markdown so a long-
+                # lived singleton cannot silently omit newly added lessons.
+                self._pipeline.sync_markdown_dir(self.knowledge_dir, delete_missing=True)
             logger.info("✅ TradingRAGPipeline initialized (primary backend)")
         except Exception as e:
             logger.warning(f"TradingRAGPipeline init failed: {e} - using legacy search")
@@ -538,9 +542,20 @@ class LessonsLearnedRAG:
         scored_results.sort(key=lambda x: x["score"], reverse=True)
         return scored_results[:top_k]
 
-    def add_lesson(self, lesson_id: str, content: str) -> None:
-        """Add a new lesson (writes to file)."""
+    def add_lesson(self, lesson_id: str, content: str) -> bool:
+        """Quality-gate and persist a lesson to both durable retrieval surfaces."""
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}", lesson_id):
+            raise ValueError("lesson_id must be a safe filename identifier")
+
+        if self._pipeline is not None and not self._pipeline.add_lesson(
+            lesson_id, content, source="manual"
+        ):
+            return False
+
         self.knowledge_dir.mkdir(parents=True, exist_ok=True)
         lesson_file = self.knowledge_dir / f"{lesson_id}.md"
-        lesson_file.write_text(content, encoding="utf-8")
+        pending_file = lesson_file.with_suffix(".md.pending")
+        pending_file.write_text(content, encoding="utf-8")
+        pending_file.replace(lesson_file)
         self._load_lessons()  # Reload
+        return True

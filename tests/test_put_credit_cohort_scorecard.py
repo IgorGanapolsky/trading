@@ -18,6 +18,8 @@ def test_summarize_closed_insufficient_sample():
     assert out["wins"] == 1
     assert out["kill_criteria"]["verdict"] == "INSUFFICIENT_SAMPLE"
     assert out["kill_criteria"]["sample_sufficient"] is False
+    assert out["desk_grade"]["verdict"] == "INSUFFICIENT_DESK_GRADE_SAMPLE"
+    assert out["expectancy_lower_95"] is None
 
 
 def test_summarize_closed_ignores_iron_condor():
@@ -39,6 +41,17 @@ def test_summarize_closed_edge_candidate_at_n30():
     assert out["expectancy"] is not None and out["expectancy"] > 0
     assert out["profit_factor"] is not None and out["profit_factor"] > 1
     assert out["kill_criteria"]["verdict"] == "EDGE_CANDIDATE"
+    assert out["desk_grade"]["verdict"] == "INSUFFICIENT_DESK_GRADE_SAMPLE"
+
+
+def test_summarize_closed_requires_confident_edge_for_desk_grade():
+    wins = [{"strategy": "spy_put_credit", "status": "closed", "realized_pnl": 40.0}] * 95
+    losses = [{"strategy": "spy_put_credit", "status": "closed", "realized_pnl": -100.0}] * 5
+    out = summarize_closed(wins + losses)
+    assert out["closed_n"] == 100
+    assert out["expectancy_lower_95"] is not None and out["expectancy_lower_95"] > 0
+    assert out["profit_factor"] >= 1.2
+    assert out["desk_grade"]["verdict"] == "DESK_GRADE_CANDIDATE"
 
 
 def test_summarize_open_skips_closed():

@@ -1,5 +1,11 @@
 # LL-220: North Star 30-Month Roadmap to $100/Day
 
+**Severity**: LOW
+
+> **Superseded:** this is a historical planning artifact. The canonical goal is
+> $1,000/month after tax and projections cannot substitute for realized,
+> statistically supported, bank-remitted profit.
+
 **Created**: January 15, 2026
 **Starting Capital**: $4,959.26
 **Daily Deposits**: $25/day (~$750/month)

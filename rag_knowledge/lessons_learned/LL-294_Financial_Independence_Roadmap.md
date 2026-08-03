@@ -5,6 +5,16 @@
 **Severity**: HIGH (CEO MANDATE)
 **Goal**: $6,000/month after tax = Financial Independence
 
+> **Superseded:** the canonical operating objective is now $1,000/month after
+> tax, proved by confirmed broker-to-bank remittance. The projections below
+> are historical context and are not current forecasts.
+
+## Prevention
+
+Never use an old capital-growth table as evidence of attainable returns. Read
+the canonical target from code, require realized active-cohort confidence
+bounds, and prove the outcome from settled bank remittances.
+
 ## Why This Matters
 
 $6K/month after tax provides:
