@@ -2,8 +2,8 @@ name: System Health Monitor
 
 on:
   schedule:
-    # Run every 15 minutes during market hours (9:30 AM - 4:00 PM ET)
-    - cron: "*/15 13-21 * * 1-5" # UTC = ET + 5
+    # Hourly weekday health signal; execution workflows retain their own safety checks.
+    - cron: 17 14-20 * * 1-5
   workflow_dispatch:
 
 permissions:

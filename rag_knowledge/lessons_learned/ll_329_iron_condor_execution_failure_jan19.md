@@ -15,7 +15,7 @@ The $5K paper account has ZERO call spreads despite CLAUDE.md mandating iron con
 
 Current positions (from system_state.json):
 
-```
+```text
 SPY260220P00565000: +1 (long put)  -> 565/570 put spread
 SPY260220P00570000: -1 (short put) ->
 SPY260220P00595000: +1 (long put)  -> 595/600 put spread

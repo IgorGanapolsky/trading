@@ -13,7 +13,7 @@ This was a major operational breach - stale data was being used for 4+ days.
 Usage:
     python3 scripts/record_account_to_rag.py
 
-Runs in CI via daily-trading.yml and claude-agent-utility.yml
+Available to explicit operator workflows; it is not an automatic trading trigger.
 """
 
 import json

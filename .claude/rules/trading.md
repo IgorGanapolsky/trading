@@ -31,9 +31,9 @@
 
 ## Ticker Selection
 
-| Priority | Ticker | Rationale |
-| --- | --- | --- |
-| 1 | SPY | Required ticker; deepest liquidity and tight spreads for the validation cohort. |
+| Priority | Ticker | Rationale                                                                       |
+| -------- | ------ | ------------------------------------------------------------------------------- |
+| 1        | SPY    | Required ticker; deepest liquidity and tight spreads for the validation cohort. |
 
 Do not open new positions in individual stocks.
 

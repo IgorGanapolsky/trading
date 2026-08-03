@@ -77,7 +77,7 @@ def _trade_fingerprint(trade: dict[str, Any]) -> str:
         "realized_pnl": trade.get("realized_pnl", trade.get("pnl", trade.get("pl"))),
     }
     payload = json.dumps(material, sort_keys=True, ensure_ascii=True)
-    return hashlib.sha1(payload.encode("utf-8")).hexdigest()[:16]
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
 
 
 def _event_key(trade: dict[str, Any]) -> str:

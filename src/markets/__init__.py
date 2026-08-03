@@ -1,1 +1,1 @@
-"""Market data helpers (option chain, IV, SPY momentum)."""
+"""Market data helpers for IV, regime, and SPY momentum."""

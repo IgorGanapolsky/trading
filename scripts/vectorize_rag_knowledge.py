@@ -65,8 +65,8 @@ PHIL_TOWN_CONCEPTS = [
 
 
 def get_file_hash(filepath: Path) -> str:
-    """Get MD5 hash of file content for change detection."""
-    return hashlib.md5(filepath.read_bytes()).hexdigest()
+    """Get a SHA-256 hash of file content for change detection."""
+    return hashlib.sha256(filepath.read_bytes()).hexdigest()
 
 
 def load_index_cache() -> dict:

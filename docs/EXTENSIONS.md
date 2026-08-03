@@ -13,4 +13,3 @@ The host owns configuration and secret lookup, validation, timeouts/retries/circ
 7. Do not create an extension registry until at least two retained adapters need the same lifecycle contract.
 
 This takes the useful part of a plugin architecture—clear ownership and optionality—without introducing a plugin loader the repository does not need.
-

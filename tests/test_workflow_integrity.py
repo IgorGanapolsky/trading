@@ -37,14 +37,6 @@ def test_put_credit_entry_depends_on_clean_residual_inventory() -> None:
     assert text.index("scripts/residual_ic_manager.py") < text.index("--execute-paper")
 
 
-def test_event_router_handles_non_success_ci_conclusions() -> None:
-    text = _text("event-router.yml")
-    assert all(
-        f"workflow_run.conclusion == '{item}'" in text
-        for item in ("failure", "cancelled", "timed_out")
-    )
-
-
 def test_ci_stale_run_watchdog_can_cancel_stuck_runs() -> None:
     text = _text("ci-stale-run-watchdog.yml")
     assert all(

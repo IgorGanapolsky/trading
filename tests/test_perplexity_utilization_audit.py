@@ -14,8 +14,6 @@ def test_perplexity_usage_snapshot_detects_high_roi_wiring(tmp_path: Path) -> No
         "src/analytics/perplexity_trading_intel.py": 'model = "sonar-pro"\n',
         "src/analytics/perplexity_utilization_audit.py": "PERPLEXITY_API_KEY\n",
         "scripts/run_perplexity_trading_intel.py": "perplexity_trading_intel\n",
-        ".github/workflows/pre-market-scan.yml": "PERPLEXITY_API_KEY\nsonar-pro\n",
-        ".github/workflows/perplexity-trading-intel.yml": "api.perplexity.ai\nsonar\n",
     }
     for rel_path, content in files.items():
         path = tmp_path / rel_path
@@ -27,9 +25,7 @@ def test_perplexity_usage_snapshot_detects_high_roi_wiring(tmp_path: Path) -> No
     assert snapshot["credential_available_in_runtime"] is True
     assert snapshot["missing_expected_files"] == []
     assert snapshot["max_utilization_score"] >= 90
-    assert ".github/workflows/perplexity-trading-intel.yml" in {
-        item["path"] for item in snapshot["workflows_with_perplexity"]
-    }
+    assert snapshot["workflows_with_perplexity"] == []
 
 
 def test_perplexity_usage_artifacts_render_markdown(tmp_path: Path) -> None:

@@ -33,6 +33,7 @@ import logging
 import os
 import ssl
 import sys
+from datetime import UTC
 from pathlib import Path
 from typing import Optional
 
@@ -53,8 +54,6 @@ except ImportError:
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
-
-from datetime import UTC
 
 from scripts.sync_alpaca_state import _derive_trade_summary_from_fills  # noqa: E402
 

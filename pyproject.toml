@@ -8,21 +8,43 @@ license = { text = "MIT" }
 authors = [{ name = "Igor Ganapolsky" }]
 keywords = ["trading", "alpaca", "options", "risk-management", "rag"]
 dependencies = [
-  "alpaca-py>=0.43.5", "anthropic>=0.120.0,<1.0.0", "fastapi>=0.140.0,<1.0.0",
-  "holidays>=0.101", "httpx>=0.28.1,<1.0.0", "numpy>=2.4.0,<3.0.0",
-  "openai>=1.109.1,<3.0.0", "pandas>=2.3.3,<4.0.0", "pydantic-settings>=2.14.2,<3.0.0",
-  "python-dotenv>=1.2.2,<2.0.0", "PyYAML>=6.0.3,<8.0.0", "requests>=2.34.2,<3.0.0",
-  "scipy>=1.17.0,<2.0.0", "uvicorn>=0.51.0,<1.0.0", "yfinance>=0.2.66,<1.0.0",
+  "alpaca-py>=0.43.5",
+  "anthropic>=0.120.0,<1.0.0",
+  "fastapi>=0.140.0,<1.0.0",
+  "holidays>=0.101",
+  "httpx>=0.28.1,<1.0.0",
+  "numpy>=2.4.0,<3.0.0",
+  "openai>=1.109.1,<3.0.0",
+  "pandas>=2.3.3,<4.0.0",
+  "pydantic-settings>=2.14.2,<3.0.0",
+  "python-dotenv>=1.2.2,<2.0.0",
+  "PyYAML>=6.0.3,<8.0.0",
+  "requests>=2.34.2,<3.0.0",
+  "scipy>=1.17.0,<2.0.0",
+  "uvicorn>=0.51.0,<1.0.0",
+  "yfinance>=0.2.66,<1.0.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-  "mypy>=1.20.2", "pre-commit>=4.0.0", "pytest>=9.0.3,<10.0.0",
-  "pytest-asyncio>=1.0.0,<2.0.0", "pytest-cov>=7.0.0,<8.0.0",
-  "pytest-timeout>=2.4.0,<3.0.0", "ruff>=0.16.0,<1.0.0",
+  "mypy>=1.20.2",
+  "pre-commit>=4.0.0",
+  "pytest>=9.0.3,<10.0.0",
+  "pytest-asyncio>=1.0.0,<2.0.0",
+  "pytest-cov>=7.0.0,<8.0.0",
+  "pytest-timeout>=2.4.0,<3.0.0",
+  "ruff>=0.16.0,<1.0.0",
 ]
-rag = ["lancedb>=0.34.0,<1.0.0", "scikit-learn>=1.9.0,<2.0.0", "sentence-transformers>=5.0.0,<6.0.0"]
-research = ["google-generativeai>=0.8.6,<1.0.0", "praw>=7.8.2,<8.0.0", "youtube-transcript-api>=1.2.3,<2.0.0"]
+rag = [
+  "lancedb>=0.34.0,<1.0.0",
+  "scikit-learn>=1.9.0,<2.0.0",
+  "sentence-transformers>=5.0.0,<6.0.0",
+]
+research = [
+  "google-generativeai>=0.8.6,<1.0.0",
+  "praw>=7.8.2,<8.0.0",
+  "youtube-transcript-api>=1.2.3,<2.0.0",
+]
 security = ["bandit>=1.9.4", "detect-secrets>=1.5.0", "pip-audit>=2.10.0"]
 
 [project.urls]
@@ -40,21 +62,44 @@ packages = ["src"]
 line-length = 100
 target-version = "py311"
 src = ["src", "scripts", "tests"]
-exclude = [".claude/scripts/feedback", ".git", ".venv", "data", "rag_knowledge", "reports", "research"]
+exclude = [".git", ".venv", "data", "rag_knowledge", "reports", "research"]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "UP", "B", "SIM", "S"]
 ignore = [
-  "B007", "B027", "B904", "B905", "E402", "E501", "E722",
-  "S101", "S105", "S106", "S110", "S112", "S113", "S310", "S311", "S314", "S324",
-  "S602", "S603", "S607", "SIM102", "SIM105", "SIM108", "SIM117", "UP007", "UP035", "UP045",
+  "B007",
+  "B027",
+  "B904",
+  "B905",
+  "E402",
+  "E501",
+  "E722",
+  "S101",
+  "S105",
+  "S106",
+  "S110",
+  "S112",
+  "S113",
+  "S310",
+  "S311",
+  "S314",
+  "S324",
+  "S602",
+  "S603",
+  "S607",
+  "SIM102",
+  "SIM105",
+  "SIM108",
+  "SIM117",
+  "UP007",
+  "UP035",
+  "UP045",
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["I001", "S101", "S105", "S106"]
 "scripts/check_alpaca_minimum_orders.py" = ["F401"]
 "scripts/test_langsmith.py" = ["F401"]
-".claude/skills/*/scripts/*.py" = ["F401"]
 "src/rag/__init__.py" = ["F401"]
 "src/risk/__init__.py" = ["F401"]
 
@@ -83,11 +128,17 @@ timeout = 300
 timeout_method = "thread"
 addopts = "--strict-markers --tb=short --durations=10 --maxfail=20"
 markers = [
-  "asyncio: uses an asyncio event loop", "slow: long-running test",
-  "integration: crosses component boundaries", "unit: isolated unit test",
-  "requires_api: needs external network access", "requires_secrets: needs provider credentials",
+  "asyncio: uses an asyncio event loop",
+  "slow: long-running test",
+  "integration: crosses component boundaries",
+  "unit: isolated unit test",
+  "requires_api: needs external network access",
+  "requires_secrets: needs provider credentials",
 ]
-filterwarnings = ["ignore::DeprecationWarning", "ignore::PendingDeprecationWarning"]
+filterwarnings = [
+  "ignore::DeprecationWarning",
+  "ignore::PendingDeprecationWarning",
+]
 
 [tool.coverage.run]
 source = ["src", "scripts"]
@@ -96,4 +147,9 @@ omit = ["tests/*", ".venv/*"]
 
 [tool.coverage.report]
 skip_covered = true
-exclude_lines = ["pragma: no cover", "def __repr__", "raise NotImplementedError", "if __name__ == .__main__.:"]
+exclude_lines = [
+  "pragma: no cover",
+  "def __repr__",
+  "raise NotImplementedError",
+  "if __name__ == .__main__.:",
+]

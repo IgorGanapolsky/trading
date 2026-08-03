@@ -18,7 +18,7 @@ HIGH_RISK_PATH_PREFIXES: tuple[str, ...] = (
     "scripts/autonomous_trader.py",
     "scripts/residual_ic_manager.py",
     "scripts/spy_put_credit.py",
-    ".github/workflows/daily-trading.yml",
+    ".github/workflows/put-credit-validation.yml",
     ".github/workflows/put-credit-",
 )
 

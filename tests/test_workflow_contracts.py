@@ -17,6 +17,7 @@ def test_put_credit_workflow_uses_current_entry_and_residual_exit_paths() -> Non
 def test_put_credit_workflow_is_paper_only_and_fail_closed() -> None:
     text = PUT_CREDIT.read_text()
     assert "--execute-paper" in text and "--live" not in text
+    assert "github.event_name == 'workflow_dispatch' && 'true' || 'false'" in text
     assert "steps.residual_ic.outcome == 'success'" in text
     assert "steps.residual_ic.outcome == 'failure'" in text
 
@@ -42,7 +43,16 @@ def test_removed_mutating_automation_stays_removed() -> None:
     removed = {
         "auto-format.yml",
         "browser-automation-pilot.yml",
+        "claude-agent-utility.yml",
         "daily-trading.yml",
+        "deploy-rag-webhook.yml.disabled",
+        "event-router.yml",
+        "iron-condor-guardian.yml",
+        "notify-alert.yml",
+        "notify-failure.yml",
+        "pre-market-scan.yml",
         "self-healing-auto-fix.yml",
+        "webhook-health-check.yml",
+        "webhook-integration-test.yml",
     }
     assert all(not (WORKFLOWS / name).exists() for name in removed)

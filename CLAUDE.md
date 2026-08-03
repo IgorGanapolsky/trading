@@ -45,4 +45,15 @@ Project instructions live in `.claude/CLAUDE.md`. Rules auto-load from `.claude/
 - Optional integrations belong behind narrow adapters and core imports remain side-effect free.
 - Reusable agent instructions live under `.agents/skills/`; human guidance lives in `README.md`, `CONTRIBUTING.md`, and `docs/`.
 
+## Multi-Agent Coordination
+
+- Claim a Linear issue through the shared bridge before editing. Linear is task ownership,
+  the shared Obsidian vault is the live claim ledger, and the Git worktree/PR is code truth.
+- Follow `docs/AGENT_COORDINATION.md`: list, claim, work in one issue-scoped worktree,
+  publish one PR, then mark the issue done or release it.
+- Put the Linear key in the branch and PR. Stop and reconcile if another active claim or
+  overlapping worktree exists; never remove another agent's worktree.
+- The Obsidian Linear plugin is a human dashboard, not a lock. Do not add a second
+  repository-local task database or copy the shared bridge into this repository.
+
 Never store secrets or tokens in this file.

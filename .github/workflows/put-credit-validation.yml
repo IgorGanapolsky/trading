@@ -5,20 +5,12 @@ name: Put Credit Validation
 
 on:
   schedule:
-    - cron: "0 15 * * 1-5" # 11:00 AM ET — exit residual IC + put-credit entry attempt
+    - cron: 0 15 * * 1-5 # 11:00 AM ET — exit residual IC + put-credit entry attempt
     - cron: 0 16 * * 1-5 # Exit check: 12:00 PM ET
-    - cron: "0 18 * * 1-5" # Exit check: 2:00 PM ET
-    - cron: "30 19 * * 1-5" # EOD exit: 3:30 PM ET
+    - cron: 0 18 * * 1-5 # Exit check: 2:00 PM ET
+    - cron: 30 19 * * 1-5 # EOD exit: 3:30 PM ET
+  # Manual dispatch is always a dry run. Scheduled jobs retain their bounded paper behavior.
   workflow_dispatch:
-    inputs:
-      mode:
-        description: "entry, exit, both, or status"
-        required: false
-        default: "both"
-      dry_run:
-        description: "Dry run (no orders)"
-        required: false
-        default: "false"
 
 permissions:
   contents: write
@@ -56,8 +48,8 @@ jobs:
       - name: Determine mode
         id: mode
         env:
-          INPUT_MODE: ${{ github.event.inputs.mode || 'both' }}
-          INPUT_DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          INPUT_MODE: both
+          INPUT_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && 'true' || 'false' }}
           EVENT_NAME: ${{ github.event_name }}
           SCHEDULE_EXPRESSION: ${{ github.event.schedule || '' }}
         run: |
@@ -84,7 +76,7 @@ jobs:
               *) echo "Unknown schedule expression: $SCHEDULE_EXPRESSION"; exit 2 ;;
             esac
           else
-            # manual dispatch: entry/both includes put-credit
+            # Manual dispatch is forced dry-run above; entry/both includes a plan only.
             if [ "$MODE" = "entry" ] || [ "$MODE" = "both" ]; then
               RUN_PUT_CREDIT=true
             fi

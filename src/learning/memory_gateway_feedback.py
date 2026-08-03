@@ -363,7 +363,7 @@ def append_feedback_fallback(
     paths = resolve_thumbgate_paths(project_root)
     paths.feedback_dir.mkdir(parents=True, exist_ok=True)
     entry = {
-        "id": f"fb_{hashlib.md5((context + safe_now_iso()).encode('utf-8')).hexdigest()[:10]}",
+        "id": f"fb_{hashlib.sha256((context + safe_now_iso()).encode('utf-8')).hexdigest()[:10]}",
         "timestamp": safe_now_iso(),
         "signal": signal.feedback,
         "context": context,

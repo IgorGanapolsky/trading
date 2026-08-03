@@ -2,7 +2,7 @@
 
 **Date**: 2026-01-27
 **Category**: Performance Optimization
-**Source**: Boris Cherny (Claude Code team) - https://x.com/bcherny/status/2015524460481388760
+**Source**: [Boris Cherny, Claude Code team](https://x.com/bcherny/status/2015524460481388760)
 
 ## Problem
 

@@ -22,7 +22,7 @@ def _utc_now_iso() -> str:
 
 def _stable_hash(payload: Any) -> str:
     raw = json.dumps(payload, sort_keys=True, ensure_ascii=True, default=str)
-    return hashlib.sha1(raw.encode("utf-8")).hexdigest()[:16]
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
 
 
 def _event_timestamp(event: Mapping[str, Any]) -> str:

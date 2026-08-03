@@ -7,7 +7,7 @@ import argparse
 import hashlib
 import json
 import re
-import subprocess
+import subprocess  # nosec B404
 from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -23,6 +23,7 @@ FORBIDDEN_PREFIXES = (
     "data/reports/",
     "data/screenshots/",
     "docs/assets/snapshots/",
+    "graphify-out/",
     "logs/",
     "node_modules/",
     "reports/",
@@ -66,7 +67,9 @@ class Finding:
 
 
 def _git_paths(repo: Path, *args: str) -> set[str]:
-    completed = subprocess.run(["git", *args, "-z"], cwd=repo, check=True, capture_output=True)
+    completed = subprocess.run(  # nosec B603 B607
+        ["git", *args, "-z"], cwd=repo, check=True, capture_output=True
+    )
     return {item.decode() for item in completed.stdout.split(b"\0") if item}
 
 
@@ -112,6 +115,10 @@ def scan(repo: Path) -> dict:
         if any(relative.startswith(prefix) for prefix in FORBIDDEN_PREFIXES):
             findings.append(
                 Finding("error", "generated-path", relative, "tracked generated output")
+            )
+        if relative.startswith(".github/workflows/") and path.suffix not in {".yml", ".yaml"}:
+            findings.append(
+                Finding("error", "disabled-workflow", relative, "workflow is not executable YAML")
             )
         if path.name in FORBIDDEN_NAMES or path.suffix.lower() in {".pyc", ".log"}:
             findings.append(

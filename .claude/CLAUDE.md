@@ -57,10 +57,11 @@ python scripts/system_health_check.py        # verify protected systems before t
 
 ## Pre-Merge Checklist
 
-1. `make check` -- lint, repository audit, and tests pass
-2. `make dry-run` -- protected systems and paper-only plans pass
-3. `python scripts/validate_env_keys.py` -- valid when provider access is in scope
-4. CI green on the PR
+1. Claim the Linear issue and isolated worktree per `docs/AGENT_COORDINATION.md`
+2. `make check` -- lint, repository audit, and tests pass
+3. `make dry-run` -- protected systems and paper-only plans pass
+4. `python scripts/validate_env_keys.py` -- valid when provider access is in scope
+5. CI green on the PR; close or release the shared claim with evidence
 
 ## Core Directives
 
@@ -75,6 +76,8 @@ python scripts/system_health_check.py        # verify protected systems before t
 9. Compound engineering -- Fix -> Test -> Prevent -> Memory -> Verify
 10. Never hardcode credentials -- use env vars only
 11. Parallel execution is optional and must follow the active session/tool directives
+12. Linear owns tasks, the shared Obsidian vault owns live claims, and Git owns code; the
+    Obsidian Linear plugin is display-only
 
 ## CTO Mandates
 

@@ -39,9 +39,7 @@ RAG_INSIGHTS = Path("rag_knowledge/youtube/insights")
 CACHE_FILE = Path("data/youtube_cache/phil_town_videos.json")
 PROCESSED_FILE = Path("data/youtube_cache/processed_videos.json")
 
-# Proxy configuration (set via env vars)
-# TRANSCRIPT_PROXY = "socks5://127.0.0.1:9050"  # Tor proxy
-# Or use residential proxy: "http://user:pass@proxy.example.com:8080"
+# Optional proxy configuration; keep credentials in the TRANSCRIPT_PROXY environment variable.
 PROXY_URL = os.environ.get("TRANSCRIPT_PROXY", "")
 
 # Curated list of Phil Town's best videos with EMBEDDED transcripts

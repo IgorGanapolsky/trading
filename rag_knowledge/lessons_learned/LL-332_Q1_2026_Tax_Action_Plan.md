@@ -15,7 +15,7 @@ Concrete action items for Q1 2026 tax planning. This is the "do this now" versio
 
 Email Braxton at AlpacaDB with:
 
-```
+```text
 Subject: XSP Options Support & Tax Optimization
 
 Hi Braxton,

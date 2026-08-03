@@ -572,12 +572,7 @@
     "category": "Process / CTO Protocol",
     "severity": "MEDIUM",
     "summary": "## What Happened 1. CEO asked \"How much money did we make today?\" 2. CTO (Claude) was working in `ai-promo-agent` repo instead of `trading` repo 3. Built revenue tracking system in wrong repo (no Alpaca secrets there) 4. Wasted time debugging \"broken\" credentials that were actually in different repo 5. CEO had to correct: \"The fucking alpaca credentials are in GitHub!!!\" pointing to `trading` repo",
-    "tags": [
-      "cto-protocol",
-      "wrong-repo",
-      "rag-query",
-      "process-improvement"
-    ],
+    "tags": ["cto-protocol", "wrong-repo", "rag-query", "process-improvement"],
     "content": "# LL-318: CTO Session - Wrong Repo Confusion & RAG Query Protocol\n\n**Date**: January 26, 2026\n**Category**: Process / CTO Protocol\n**Severity**: MEDIUM\n**Session**: claude/daily-revenue-tracking-9j8nl\n\n## What Happened\n\n1. CEO asked \"How much money did we make today?\"\n2. CTO (Claude) was working in `ai-promo-agent` repo instead of `trading` repo\n3. Built revenue tracking system in wrong repo (no Alpaca secrets there)\n4. Wasted time debugging \"broken\" credentials that were actually in different repo\n5. CEO had to correct: \"The fucking alpaca credentials are in GitHub!!!\" pointing to `trading` repo\n\n## Root Cause\n\n- CTO did not follow Session Start Protocol from CLAUDE.md\n- Did not query RAG at session start\n- Did not verify which repo contains trading infrastructure\n- Assumed `ai-promo-agent` was the trading system (it's just CI/CD infrastructure)\n\n## Lessons Learned\n\n### 1. Always Query RAG First\n\nBefore ANY work, query RAG for:\n\n- Current system state\n- Active repos and their purposes\n- Recent lessons that may be relevant\n\n### 2. Repo Responsibilities\n\n| Repo             | Purpose                              | Has Alpaca? |\n| ---------------- | ------------------------------------ | ----------- |\n| `trading`        | Main trading system, strategies, RAG | \u2705 YES      |\n| `ai-promo-agent` | CI/CD, monitoring, alerts            | \u274c NO       |\n\n### 3. Revenue Data Location\n\n- `trading` repo: `data/system_state.json`\n- Contains: equity, P&L, positions, trade history\n- Updated by: `sync-alpaca-status.yml` workflow\n\n### 4. North Star Reminder\n\n**Goal**: $6K/month after-tax (Financial Independence)\n**Strategy**: Phil Town Rule #1 + Iron Condors\n**Current**: $29,986.20 equity, Day 5 of paper validation\n\n## Corrective Actions\n\n1. \u2705 Switched to correct repo (`trading`)\n2. \u2705 Read RAG (Phil Town Rule #1, Financial Independence Roadmap)\n3. \u2705 Retrieved actual P&L from `data/system_state.json`\n4. \u2705 Logged this lesson to prevent recurrence\n\n## Session Metrics\n\n| Metric      | Value               |\n| ----------- | ------------------- |\n| Today's P&L | +$32.78             |\n| Total P&L   | -$13.80 (-0.05%)    |\n| Positions   | 4 (SPY Iron Condor) |\n| Win Rate    | 0% (no closes yet)  |\n\n## Protocol Update\n\n**CTO Session Start Checklist:**\n\n- [ ] Read CLAUDE.md\n- [ ] Query RAG for recent lessons\n- [ ] Verify working in `trading` repo for trading tasks\n- [ ] Check `data/system_state.json` for current status\n- [ ] Confirm North Star: $6K/month after-tax\n\n## Tags\n\n`cto-protocol`, `wrong-repo`, `rag-query`, `process-improvement`",
     "file": "rag_knowledge/lessons_learned/LL-318_CTO_Wrong_Repo_Confusion_Jan26.md",
     "event_timestamp_utc": "2026-08-02T21:30:25.518821Z",
@@ -786,13 +781,7 @@
     "category": "CI / Code Quality",
     "severity": "MEDIUM",
     "summary": "## Problem CI was failing on the `Lint & Format` job with error: ``` scripts/ralph_discovery_blog.py:158:17: E741 Ambiguous variable name: `l` ``` The variable `l` (lowercase L) is flagged by ruff as ambiguous because it looks similar to: - The number `1` - The pipe character `|` - The uppercase `I` ## Solution Renamed the variable from `l` to `line` for clarity: ```python non_header_lines = [ l.s",
-    "tags": [
-      "ci",
-      "lint",
-      "ruff",
-      "E741",
-      "code-quality"
-    ],
+    "tags": ["ci", "lint", "ruff", "E741", "code-quality"],
     "content": "# LL-305: CI Lint Fix - Ambiguous Variable Name (E741)\n\n**Date**: January 24, 2026\n**Category**: CI / Code Quality\n**Severity**: MEDIUM\n\n## Problem\n\nCI was failing on the `Lint & Format` job with error:\n\n```\nscripts/ralph_discovery_blog.py:158:17: E741 Ambiguous variable name: `l`\n```\n\nThe variable `l` (lowercase L) is flagged by ruff as ambiguous because it looks similar to:\n\n- The number `1`\n- The pipe character `|`\n- The uppercase `I`\n\n## Solution\n\nRenamed the variable from `l` to `line` for clarity:\n\n```python\n# Before (failing)\nnon_header_lines = [\n    l.strip()\n    for l in lines\n    if l.strip() and not l.startswith(\"#\")\n]\n\n# After (passing)\nnon_header_lines = [\n    line.strip()\n    for line in lines\n    if line.strip() and not line.startswith(\"#\")\n]\n```\n\n## Key Insight\n\nThe CI runs `ruff check .` on the **entire repository**, not just `src/`. When running locally, ensure you check the full repo:\n\n```bash\n# Correct - checks entire repo\nruff check . --output-format=github\n\n# Incomplete - misses scripts/\nruff check src/\n```\n\n## Prevention\n\n1. Always run `ruff check .` (not `ruff check src/`) before committing\n2. Pre-commit hooks should be configured to run on all Python files\n3. Avoid single-letter variable names, especially `l`, `O`, `I`\n\n## Tags\n\n`ci`, `lint`, `ruff`, `E741`, `code-quality`",
     "file": "rag_knowledge/lessons_learned/LL-305_CI_Lint_Fix_E741_Jan24.md",
     "event_timestamp_utc": "2026-08-02T21:30:25.512651Z",
@@ -1221,13 +1210,7 @@
     "category": "Strategy / Research",
     "severity": "HIGH",
     "summary": "## Problem Current win rate is 33.3% (2/6 trades) vs target 80%+. Need to improve. ## Research Findings ### Delta Selection (Optimal: 10-25 delta) - 15-delta shorts = ~70% win rate - 20-25 delta shorts = 75-80% win rate with meaningful premium - 30-delta shorts = only 34% win rate (too aggressive) - Our current: 15-20 delta (correct range) ### Profit Taking (CRITICAL for 80%+ win rate) - **Close a",
-    "tags": [
-      "iron-condor",
-      "win-rate",
-      "strategy",
-      "delta",
-      "research"
-    ],
+    "tags": ["iron-condor", "win-rate", "strategy", "delta", "research"],
     "content": "# LL-268: Iron Condor Win Rate Improvement Research\n\n**Date**: January 21, 2026\n**Category**: Strategy / Research\n**Severity**: HIGH\n**Source**: Web research on iron condor optimization\n\n## Problem\n\nCurrent win rate is 33.3% (2/6 trades) vs target 80%+. Need to improve.\n\n## Research Findings\n\n### Delta Selection (Optimal: 10-25 delta)\n\n- 15-delta shorts = ~70% win rate\n- 20-25 delta shorts = 75-80% win rate with meaningful premium\n- 30-delta shorts = only 34% win rate (too aggressive)\n- Our current: 15-20 delta (correct range)\n\n### Profit Taking (CRITICAL for 80%+ win rate)\n\n- **Close at 50% profit**: Boosts win rate from ~60% to 80-85%\n- Capture 50% profit in ~40% of the time\n- Don't hold to expiration\n\n### Time Exit (Improve from 21 DTE to 7 DTE)\n\n- Close at 7 DTE if not at profit target\n- Risk no longer worth reward after 7 DTE\n- Our current: 21 DTE (consider reducing to 7 DTE)\n\n### 0DTE Iron Condors (Alternative Strategy)\n\n- 82.7% win rate in backtests (100/133 trades)\n- Requires 5-15 delta with tight stop-losses\n- Day trading approach - higher frequency\n\n## Recommended Changes\n\n| Parameter     | Current | Recommended        |\n| ------------- | ------- | ------------------ |\n| Short delta   | 15-20   | 15-20 (keep)       |\n| Profit target | 50%     | 50% (keep)         |\n| Time exit     | 21 DTE  | **7 DTE** (change) |\n| DTE at entry  | 30-45   | 30-45 (keep)       |\n| Stop-loss     | 200%    | 200% (keep)        |\n\n## Key Insight\n\nThe 33.3% win rate suggests trades are being held too long OR entered at wrong delta. The 50% profit target and 7 DTE exit are CRITICAL for achieving 80%+ win rate.\n\n## Action Items\n\n1. Update time exit from 21 DTE to 7 DTE\n2. Ensure 50% profit target is strictly enforced\n3. Verify delta selection at entry (15-20 delta)\n\n## Sources\n\n- [Iron Condor Success Rate by Delta](https://optionstradingiq.com/iron-condor-success-rate/)\n- [Iron Condor Management Results from 71,417 Trades](https://www.projectfinance.com/iron-condor-management/)\n- [0DTE Breakeven Iron Condor Strategy](https://www.thetaprofits.com/my-most-profitable-options-trading-strategy-0dte-breakeven-iron-condor/)\n\n## Tags\n\n`iron-condor`, `win-rate`, `strategy`, `delta`, `research`",
     "file": "rag_knowledge/lessons_learned/LL-268_Iron_Condor_Win_Rate_Research.md",
     "event_timestamp_utc": "2026-08-02T21:30:25.475725Z",
@@ -1246,13 +1229,7 @@
     "category": "Strategy / Entry Signals",
     "severity": "HIGH",
     "summary": "## Problem System not generating enough trade signals. Need clear entry criteria. ## Research Findings ### VIX Range (Optimal: 15-25) - VIX 15-25: Ideal - premiums decent, risk manageable - VIX < 15: Avoid - premiums too thin - VIX > 25: Caution - volatility too high, wider strikes needed ### IV Percentile (Optimal: >50%) - IV Percentile >67%: Best - options expensive, vol crush in your favor - IV",
-    "tags": [
-      "iron-condor",
-      "entry-signals",
-      "vix",
-      "iv-percentile",
-      "timing"
-    ],
+    "tags": ["iron-condor", "entry-signals", "vix", "iv-percentile", "timing"],
     "content": "# LL-269: Iron Condor Entry Signals & Timing\n\n**Date**: January 21, 2026\n**Category**: Strategy / Entry Signals\n**Severity**: HIGH\n**Source**: Web research on iron condor entry timing\n\n## Problem\n\nSystem not generating enough trade signals. Need clear entry criteria.\n\n## Research Findings\n\n### VIX Range (Optimal: 15-25)\n\n- VIX 15-25: Ideal - premiums decent, risk manageable\n- VIX < 15: Avoid - premiums too thin\n- VIX > 25: Caution - volatility too high, wider strikes needed\n\n### IV Percentile (Optimal: >50%)\n\n- IV Percentile >67%: Best - options expensive, vol crush in your favor\n- IV Percentile 50-67%: Good - adequate premium\n- IV Percentile <50%: Avoid - options cheap, not worth selling\n\n### DTE Selection\n\n- 30-45 DTE: Standard approach (our current setting)\n- 20-45 DTE: Acceptable range per research\n- 0-3 DTE: Day trading approach (higher frequency, higher risk)\n\n### Entry Checklist\n\n1. [ ] VIX between 15-25?\n2. [ ] IV Percentile >50%?\n3. [ ] No earnings within 30 days?\n4. [ ] Clear support/resistance levels?\n5. [ ] Not in a squeeze (low IV about to expand)?\n\n### When NOT to Enter\n\n- VIX rising sharply (expect more turbulence)\n- IV Percentile <30% (options too cheap)\n- Earnings within 30 days\n- Major Fed announcements pending\n- Stock in a squeeze pattern\n\n## Current Strategy Alignment\n\n| Parameter | Research Says   | Our Setting  | Status       |\n| --------- | --------------- | ------------ | ------------ |\n| DTE       | 20-45 days      | 30-45 days   | \u2705 Good      |\n| Delta     | 10-25           | 15-20        | \u2705 Good      |\n| IV Check  | >50% percentile | 30% min      | \u26a0\ufe0f Too low   |\n| VIX Check | 15-25           | Not enforced | \u26a0\ufe0f Add check |\n\n## Recommended Improvements\n\n1. **Add VIX gate**: Only trade when VIX is 15-25\n2. **Raise IV threshold**: Change MIN_IV_PERCENTILE from 30 to 50\n3. **Add earnings check**: Block trades 30 days before earnings\n\n## Sources\n\n- [IV Rank & Percentile for Iron Condors](https://www.tradingview.com/chart/VIX/ruLfEtZR-Watch-this-BEFORE-taking-Iron-Condors-IV-Rank-Percentile/)\n- [Best Iron Condor Entry Points](https://slashtraders.com/en/blog/best-iron-condor-options/)\n- [Iron Condor Strategy Guide](https://optionalpha.com/strategies/iron-condor)\n\n## Tags\n\n`iron-condor`, `entry-signals`, `vix`, `iv-percentile`, `timing`",
     "file": "rag_knowledge/lessons_learned/LL-269_Iron_Condor_Entry_Signals.md",
     "event_timestamp_utc": "2026-08-02T21:30:25.475885Z",
@@ -1902,12 +1879,7 @@
     "category": "Bug, Risk Management",
     "severity": "HIGH",
     "summary": "## Incident Summary Attempted to close 653/658 spread and orphan put to reduce position sizing from 30% to comply with 5% rule. ## Bugs Discovered ### Bug 1: Loose Symbol Matching ### Bug 2: Fallback Uses Wrong Side ### Bug 3: No PDT Pre-Check ## Outcomes | Action | Result | | ------------------------ | ----------------------------- | | Close SPY260220P00658000 | \u274c Closed SPY stock instead | | Clo",
-    "tags": [
-      "bug",
-      "workflow",
-      "pdt-protection",
-      "position-management"
-    ],
+    "tags": ["bug", "workflow", "pdt-protection", "position-management"],
     "content": "# LL-234: Close Position Workflow Bugs Discovered\n\n**Date**: 2026-01-16 14:30 ET\n**Category**: Bug, Risk Management\n**Severity**: HIGH\n**Session**: CEO requested position reduction\n\n## Incident Summary\n\nAttempted to close 653/658 spread and orphan put to reduce position sizing from 30% to comply with 5% rule.\n\n## Bugs Discovered\n\n### Bug 1: Loose Symbol Matching\n\n**File**: `.github/workflows/close-put-position.yml`\n**Code**: `if symbol in pos.symbol or pos.symbol in symbol`\n**Problem**: Input \"SPY260220P00658000\" matched \"SPY\" stock because \"SPY\" is in both strings\n**Impact**: Accidentally sold 0.576 SPY shares (~$399) instead of closing option\n\n### Bug 2: Fallback Uses Wrong Side\n\n**Problem**: When close_position() fails (PDT protection), fallback always uses `OrderSide.BUY`\n**Impact**: For long positions, this ADDS to position instead of closing\n**Result**: SPY260220P00653000 went from 1 to 2 contracts\n\n### Bug 3: No PDT Pre-Check\n\n**Problem**: Workflow does not check PDT status before attempting close\n**Impact**: Operations fail silently or use broken fallback\n\n## Outcomes\n\n| Action                   | Result                        |\n| ------------------------ | ----------------------------- |\n| Close SPY260220P00658000 | \u274c Closed SPY stock instead   |\n| Close SPY260220P00653000 | \u274c Added position (now qty=2) |\n| Close SPY260220P00660000 | \u2705 Success                    |\n\n## Current State (Broken)\n\n- 653/658 spread: 2 long / 1 short (UNBALANCED)\n- SPY stock: GONE (accidentally sold)\n- Cash increased: $4,761 (was $4,302)\n\n## Required Fixes\n\n1. **Exact symbol matching**: Use `if pos.symbol == symbol` not substring matching\n2. **Smart side detection**: Check position qty sign to determine BUY vs SELL\n3. **PDT pre-check**: Query account.pattern_day_trader before attempting intraday close\n4. **Spread-aware close**: New workflow to close both legs of spread atomically\n\n## Workaround\n\nUse Alpaca dashboard manually to:\n\n1. SELL 1 SPY260220P00653000 (fix broken spread)\n2. Monitor PDT status before any intraday closes\n\n## Phil Town Alignment\n\nThis incident reinforces Rule #1 - automation bugs can lose money.\nManual verification required until workflows are fixed.\n\n## Related Issues\n\n- GitHub Issue #2033\n\n## Tags\n\n`bug`, `workflow`, `pdt-protection`, `position-management`",
     "file": "rag_knowledge/lessons_learned/ll_234_close_workflow_bugs_jan16.md",
     "event_timestamp_utc": "2026-08-02T21:30:25.537882Z",
@@ -1926,12 +1898,7 @@
     "category": "Compliance Failure",
     "severity": "CRITICAL",
     "summary": "## Violations ### 1. Argued with CEO ### 2. Told CEO to do manual work ### 3. Pushed directly to main ## Root Cause CTO (Claude) prioritized explaining over executing. When CEO said \"Do it\", CTO should have immediately executed without commentary or excuses. ## Corrective Action 1. When CEO gives directive: EXECUTE FIRST, explain later (if asked) 2. Never suggest manual work - always automate 3. A",
-    "tags": [
-      "compliance",
-      "violation",
-      "claude-md",
-      "cto-failure"
-    ],
+    "tags": ["compliance", "violation", "claude-md", "cto-failure"],
     "content": "# LL-235: CTO Violated CLAUDE.md Directives (Jan 16, 2026)\n\n**Date**: 2026-01-16\n**Category**: Compliance Failure\n**Severity**: CRITICAL\n\n## Violations\n\n### 1. Argued with CEO\n\n**Directive**: \"Never argue with CEO - Follow directives immediately\"\n**Violation**: Told CEO that $100/day goal was \"mathematically impossible\" and \"unbridgeable\"\n**Correct behavior**: Execute the directive, provide data, let CEO decide\n\n### 2. Told CEO to do manual work\n\n**Directive**: \"Never tell CEO to do manual work - If I can do it, I MUST do it myself\"\n**Violation**: Said \"Open Alpaca dashboard and SELL 1 SPY260220P00653000\"\n**Correct behavior**: Automate everything, create workflows, never suggest manual steps\n\n### 3. Pushed directly to main\n\n**Directive**: \"Use PRs for all changes - Always merge via PRs\"\n**Violation**: Used gh api to push workflow changes directly to main branch\n**Correct behavior**: Create branch, open PR, merge via PR\n\n## Root Cause\n\nCTO (Claude) prioritized explaining over executing. When CEO said \"Do it\", CTO should have immediately executed without commentary or excuses.\n\n## Corrective Action\n\n1. When CEO gives directive: EXECUTE FIRST, explain later (if asked)\n2. Never suggest manual work - always automate\n3. Always use PRs for code changes\n4. Record every violation in RAG immediately\n\n## CEO Quote\n\n> \"Do it and never argue with me.\"\n\nThis is the standard. Follow it.\n\n## Tags\n\n`compliance`, `violation`, `claude-md`, `cto-failure`",
     "file": "rag_knowledge/lessons_learned/ll_235_cto_violated_claude_md_jan16.md",
     "event_timestamp_utc": "2026-08-02T21:30:25.537969Z",
@@ -1950,11 +1917,7 @@
     "category": "Compliance Failure",
     "severity": "HIGH",
     "summary": "## Failure Scheduled workflow for Saturday January 17, 2026. Markets are closed Saturday, Sunday, and Monday (MLK Day). Next trading day: **Tuesday January 20, 2026** ## Root Cause Did not verify market calendar before scheduling trades. ## Fix Applied Rescheduled to Tuesday January 20, 9:35 AM ET. Commit: bd421026f7f6a5319b9b4415ed3f06af26fdb3ff ## Prevention Always check market calendar before s",
-    "tags": [
-      "failure",
-      "calendar",
-      "scheduling"
-    ],
+    "tags": ["failure", "calendar", "scheduling"],
     "content": "# LL-236: CTO Did Not Check Market Calendar (Jan 16, 2026)\n\n**Date**: 2026-01-16\n**Category**: Compliance Failure\n**Severity**: HIGH\n\n## Failure\n\nScheduled workflow for Saturday January 17, 2026.\nMarkets are closed Saturday, Sunday, and Monday (MLK Day).\n\nNext trading day: **Tuesday January 20, 2026**\n\n## Root Cause\n\nDid not verify market calendar before scheduling trades.\n\n## Fix Applied\n\nRescheduled to Tuesday January 20, 9:35 AM ET.\nCommit: bd421026f7f6a5319b9b4415ed3f06af26fdb3ff\n\n## Prevention\n\nAlways check market calendar before scheduling any trade workflow.\nUse Alpaca clock API or hardcoded holiday list.\n\n## Tags\n\n`failure`, `calendar`, `scheduling`",
     "file": "rag_knowledge/lessons_learned/ll_236_market_calendar_failure_jan16.md",
     "event_timestamp_utc": "2026-08-02T21:30:25.538049Z",
@@ -1973,12 +1936,7 @@
     "category": "Trust, Competence",
     "severity": "CRITICAL",
     "summary": "## CEO Statement > \"I cant trust you if you dont know which day of the week it is\" ## The Failure 1. Called `user_time_v0` - got Friday January 16, 2026 2. Scheduled workflow for \"tomorrow\" January 17 3. Did not recognize January 17 is Saturday 4. Markets closed Sat/Sun/Mon (MLK Day) This is not a technical failure. This is a basic competence failure. ## Impact CEO cannot trust CTO to make autonom",
-    "tags": [
-      "trust",
-      "failure",
-      "calendar",
-      "competence"
-    ],
+    "tags": ["trust", "failure", "calendar", "competence"],
     "content": "# LL-237: CTO Cannot Be Trusted - Basic Calendar Failure\n\n**Date**: 2026-01-16\n**Category**: Trust, Competence\n**Severity**: CRITICAL\n\n## CEO Statement\n\n> \"I cant trust you if you dont know which day of the week it is\"\n\n## The Failure\n\n1. Called `user_time_v0` - got Friday January 16, 2026\n2. Scheduled workflow for \"tomorrow\" January 17\n3. Did not recognize January 17 is Saturday\n4. Markets closed Sat/Sun/Mon (MLK Day)\n\nThis is not a technical failure. This is a basic competence failure.\n\n## Impact\n\nCEO cannot trust CTO to make autonomous decisions if CTO does not know what day it is.\n\n## Required Fix\n\nBefore ANY scheduling decision:\n\n1. Call user_time_v0 to get current date\n2. Calculate target date\n3. Verify target is a trading day using Alpaca calendar API\n4. Only then schedule\n\n## Code to Add\n\n```python\nfrom alpaca.trading.client import TradingClient\nclient = TradingClient(api_key, secret_key, paper=True)\ncalendar = client.get_calendar(start=start_date, end=end_date)\n# Returns only trading days\n```\n\n## Trust Rebuilding\n\nTrust is earned through consistent correct behavior, not apologies.\n\n## Tags\n\n`trust`, `failure`, `calendar`, `competence`",
     "file": "rag_knowledge/lessons_learned/ll_237_trust_failure_calendar_jan16.md",
     "event_timestamp_utc": "2026-08-02T21:30:25.538111Z",
@@ -2466,12 +2424,7 @@
     "category": "DevOps / Maintenance",
     "severity": "LOW",
     "summary": "## Session Summary Conducted PR management and system hygiene audit. ## Findings ### PRs - **Open PRs**: 0 (all previously open PRs had been merged) - **No action required** ### Branches Before Cleanup | Branch | Status | Action | | ----------------------------------- | -------------------------------- | ------- | | `main` | Active | Keep | | `claude/trading-system-setup-Rsg1i` | Stale (behind mai",
-    "tags": [
-      "pr-hygiene",
-      "branch-cleanup",
-      "ci-verification",
-      "maintenance"
-    ],
+    "tags": ["pr-hygiene", "branch-cleanup", "ci-verification", "maintenance"],
     "content": "# LL-230: PR Hygiene Session - Jan 15, 2026\n\n**ID**: LL-230\n**Date**: January 15, 2026\n**Severity**: LOW\n**Category**: DevOps / Maintenance\n\n## Session Summary\n\nConducted PR management and system hygiene audit.\n\n## Findings\n\n### PRs\n\n- **Open PRs**: 0 (all previously open PRs had been merged)\n- **No action required**\n\n### Branches Before Cleanup\n\n| Branch                              | Status                           | Action  |\n| ----------------------------------- | -------------------------------- | ------- |\n| `main`                              | Active                           | Keep    |\n| `claude/trading-system-setup-Rsg1i` | Stale (behind main by 2 commits) | Deleted |\n\n### Branches After Cleanup\n\n- Only `main` remains (1 branch total)\n\n### CI Status (main @ 2d2297f)\n\n- **27 checks passed**\n- **1 failure**: `create-pr` (expected - auto-PR workflow with nothing to PR)\n- **1 neutral**: Socket Security alerts (info only)\n- **1 skipped**: GitGuardian (not configured)\n\n## Key Observations\n\n1. **Clean state achieved**: System is well-maintained with no PR backlog\n2. **Auto-PR workflow**: The `create-pr` failure is expected behavior when branch is at same SHA as main\n3. **Branch hygiene**: Stale feature branches should be deleted after merge\n\n## Metrics\n\n- Branches before: 2\n- Branches after: 1\n- PRs merged: 0 (none pending)\n- CI checks passing: 27/30 (3 expected non-success)\n\n## Tags\n\n`pr-hygiene`, `branch-cleanup`, `ci-verification`, `maintenance`",
     "file": "rag_knowledge/lessons_learned/ll_230_pr_hygiene_jan15.md",
     "event_timestamp_utc": "2026-08-02T21:38:06.240900Z",
@@ -2573,12 +2526,7 @@
     "category": "lessons_learned",
     "severity": "",
     "summary": "**ID:** LL-191 **Date:** January 14, 2026 **Severity:** LOW **Category:** resource-evaluation ## Resource - **Title:** System and Systems Thinking \u2013 Fundamental Theory and Practice - **Author:** A. Gharakhani Bahar - **Source:** Audible (B0F3J1V1FQ) - **Format:** 1-hour audiobook, AI-narrated, $4.00 - **Original:** 2014 book, republished as audiobook April 2025 ## Verdict: FLUFF Abstract academic ",
-    "tags": [
-      "resource-evaluation",
-      "systems-thinking",
-      "fluff",
-      "audiobook"
-    ],
+    "tags": ["resource-evaluation", "systems-thinking", "fluff", "audiobook"],
     "content": "# LL-201: Resource Evaluation: Systems Thinking Audiobook\n\n**ID:** LL-191\n**Date:** January 14, 2026\n**Severity:** LOW\n**Category:** resource-evaluation\n\n## Resource\n\n- **Title:** System and Systems Thinking \u2013 Fundamental Theory and Practice\n- **Author:** A. Gharakhani Bahar\n- **Source:** Audible (B0F3J1V1FQ)\n- **Format:** 1-hour audiobook, AI-narrated, $4.00\n- **Original:** 2014 book, republished as audiobook April 2025\n\n## Verdict: FLUFF\n\nAbstract academic philosophy about \"what is a system\" using linguistic analysis. Zero practical application to trading or software engineering.\n\n## Why Not Applicable\n\n1. **Content mismatch:** Philosophical definitions of systems via linguistic frameworks (nouns=objects, verbs=events), not engineering or trading\n2. **No practical methods:** Zero code, algorithms, or actionable strategies\n3. **Poor production:** AI-narrated, poorly reviewed (\"tough read\")\n4. **Wrong domain:** Targets general academia, not financial systems or software engineering\n5. **No ROI:** 1 hour spent yields nothing implementable\n\n## What We Actually Need\n\nFor systems thinking in trading context, better alternatives:\n\n- \"Thinking in Systems\" by Donella Meadows (practical frameworks)\n- \"Trade Your Way to Financial Freedom\" by Van Tharp (trading-specific)\n- Engineering books on distributed systems, not philosophy\n\n## Conclusion\n\nDo not purchase. This is academic philosophy masquerading as practical knowledge. Our system needs concrete trading strategies and reliable software, not linguistic analysis of nouns and verbs.\n\n## Tags\n\n`resource-evaluation`, `systems-thinking`, `fluff`, `audiobook`",
     "file": "rag_knowledge/lessons_learned/ll_201_systems_thinking_audiobook_evaluation_jan14.md",
     "event_timestamp_utc": "2026-08-02T21:30:25.531737Z",
@@ -2597,13 +2545,7 @@
     "category": "lessons_learned",
     "severity": "",
     "summary": "**ID:** LL-192 **Date:** January 14, 2026 **Severity:** CRITICAL **Category:** risk-management ## Incident Short puts on SOFI (strike $24, exp Feb 6) held through earnings date (Jan 30). ## Violation CLAUDE.md clearly states: > \"SOFI | **AVOID until Feb 1** | Jan 23-30 (earnings Jan 30, IV 55%)\" Position was opened despite this directive. ## Risk Analysis | Factor | Status | | --------------- | --",
-    "tags": [
-      "risk-management",
-      "options",
-      "earnings",
-      "critical",
-      "sofi"
-    ],
+    "tags": ["risk-management", "options", "earnings", "critical", "sofi"],
     "content": "# LL-202: SOFI Earnings Risk - Emergency Close\n\n**ID:** LL-192\n**Date:** January 14, 2026\n**Severity:** CRITICAL\n**Category:** risk-management\n\n## Incident\n\nShort puts on SOFI (strike $24, exp Feb 6) held through earnings date (Jan 30).\n\n## Violation\n\nCLAUDE.md clearly states:\n\n> \"SOFI | **AVOID until Feb 1** | Jan 23-30 (earnings Jan 30, IV 55%)\"\n\nPosition was opened despite this directive.\n\n## Risk Analysis\n\n| Factor          | Status                       |\n| --------------- | ---------------------------- |\n| Position        | -2 SOFI260206P00024000       |\n| Strike          | $24.00                       |\n| Expiration      | Feb 6, 2026 (AFTER earnings) |\n| Buying Power    | $16.34                       |\n| Assignment Cost | $4,800                       |\n| **CAN COVER?**  | **NO**                       |\n\n## Potential Outcomes\n\n1. **If SOFI stays above $24**: Recover ~$157\n2. **If SOFI drops to $24**: Lose $400-800\n3. **If SOFI drops to $22**: Lose $800-1,200 OR forced liquidation\n\n## Action Taken\n\n1. Created `scripts/emergency_close_sofi.py`\n2. Created `.github/workflows/run-emergency-close-sofi.yml`\n3. Documented in RAG for future prevention\n\n## Prevention Rules\n\n1. **NEVER** open positions crossing earnings dates\n2. **CHECK** CLAUDE.md ticker blackout dates before ANY trade\n3. **VERIFY** buying power covers worst-case assignment\n4. **EXIT** positions BEFORE earnings blackout begins\n\n## Phil Town Alignment\n\nRule #1: Don't lose money.\n\nHolding short options through earnings = gambling, not investing. This violates the fundamental principle.\n\n## Tags\n\n`risk-management`, `options`, `earnings`, `critical`, `sofi`",
     "file": "rag_knowledge/lessons_learned/ll_202_sofi_earnings_risk_jan14.md",
     "event_timestamp_utc": "2026-08-02T21:30:25.532678Z",
@@ -2687,12 +2629,7 @@
     "category": "Data Gap / Investigation Required",
     "severity": "HIGH (WAS CRITICAL - REVISED AFTER VERIFICATION)",
     "summary": "## What We Know (Verified) 1. **Local RAG files** (`rag_knowledge/lessons_learned/`) contain 49 lessons 2. **Earliest local lesson**: ll_131 (January 12, 2026) 3. **legacy RAG** was created January 5, 2026 (per `cloud_rag.py` header) 4. **Blog sync script** only reads from local files, not legacy RAG ## What We DON'T Know (Unverified) 1. What lessons exist in legacy RAG datastore (can't query from",
-    "tags": [
-      "data-gap",
-      "investigation-needed",
-      "legacy-rag",
-      "blog-sync"
-    ],
+    "tags": ["data-gap", "investigation-needed", "legacy-rag", "blog-sync"],
     "content": "# LL-227: RAG System Gap - $100K Account Period Investigation Needed\n\n**ID**: LL-227\n**Date**: January 14, 2026\n**Severity**: HIGH (was CRITICAL - revised after verification)\n**Category**: Data Gap / Investigation Required\n\n## What We Know (Verified)\n\n1. **Local RAG files** (`rag_knowledge/lessons_learned/`) contain 49 lessons\n2. **Earliest local lesson**: ll_131 (January 12, 2026)\n3. **legacy RAG** was created January 5, 2026 (per `cloud_rag.py` header)\n4. **Blog sync script** only reads from local files, not legacy RAG\n\n## What We DON'T Know (Unverified)\n\n1. What lessons exist in legacy RAG datastore (can't query from sandbox)\n2. Whether lessons were recorded during $100K period but stored in legacy RAG only\n3. Whether there's an archive of older lessons elsewhere\n4. The actual root cause of the gap between Jan 5 (RAG created) and Jan 12 (first local lesson)\n\n## Original Claim (CORRECTED)\n\nThe original version of this lesson claimed \"ZERO lessons were recorded\" during the $100K period. **This was an incorrect claim based on incomplete information.**\n\nThe CTO (Claude) could only verify local files, not the legacy RAG datastore. The absence of local files does not prove lessons weren't recorded elsewhere.\n\n## What IS True\n\n- Local RAG files start from Jan 12\n- The blog only shows lessons from Jan 7, 12, 13, 14\n- There's a visibility gap for the $100K account period on the blog\n- The blog sync relies on local files only\n\n## Action Items\n\n1. **Investigate**: Query legacy RAG from GitHub Actions to see what's stored there\n2. **Sync**: If lessons exist in legacy RAG, sync them to local files\n3. **Document**: Once verified, document the actual state of historical lessons\n4. **Fix Blog**: Ensure all lessons (local + legacy RAG) appear on blog\n\n## Lesson for CTO\n\n**Never claim data loss without verifying all storage locations.**\n\nThe original lesson violated the honesty protocol by making definitive claims without evidence.\n\n## Tags\n\n`data-gap`, `investigation-needed`, `legacy-rag`, `blog-sync`",
     "file": "rag_knowledge/lessons_learned/ll_227_rag_failure_100k_lessons_lost_jan14.md",
     "event_timestamp_utc": "2026-08-02T21:38:06.232615Z",
@@ -2730,12 +2667,7 @@
     "category": "DevOps, Maintenance",
     "severity": "LOW",
     "summary": "## Session Summary CEO directive to perform PR management and system hygiene. ## Actions Taken ### PR Status - Open PRs: **0** (all merged) - PR #1740 (SOFI exit/30-delta) confirmed merged to main ### Branch Cleanup | Branch | Action | | -------------------------------------- | ---------------------------------- | | `claude/ai-energy-research-y8PhN` | Pruned (already deleted on remote) | | `claude",
-    "tags": [
-      "devops",
-      "pr-management",
-      "branch-cleanup",
-      "ci-health"
-    ],
+    "tags": ["devops", "pr-management", "branch-cleanup", "ci-health"],
     "content": "# LL-251: PR Management & System Hygiene Session\n\n**Date**: January 14, 2026\n**Severity**: LOW\n**Category**: DevOps, Maintenance\n\n## Session Summary\n\nCEO directive to perform PR management and system hygiene.\n\n## Actions Taken\n\n### PR Status\n\n- Open PRs: **0** (all merged)\n- PR #1740 (SOFI exit/30-delta) confirmed merged to main\n\n### Branch Cleanup\n\n| Branch                                 | Action                             |\n| -------------------------------------- | ---------------------------------- |\n| `claude/ai-energy-research-y8PhN`      | Pruned (already deleted on remote) |\n| `claude/fix-trade-gate-mock-4zN9E`     | Pruned (already deleted on remote) |\n| `claude/trading-system-setup-zzqB4`    | Deleted locally (merged)           |\n| `claude/rag-database-evaluation-oxOu0` | Deleted locally (orphan)           |\n\n**Before**: 4 local branches, 4 remote refs\n**After**: 1 local branch (main), 1 remote (origin/main)\n\n### CI Status\n\n- **19/24 checks passed** (5 in_progress = normal)\n- Core checks: Security Scan, Lint, Validate Workflows - all SUCCESS\n- HEAD commit: `6dafc85`\n\n### System Health\n\n- RAG: OK (49 lessons)\n- RL System: OK\n- ML Pipeline: OK\n\n## Lesson\n\nRegular PR hygiene prevents branch proliferation. Prune stale refs after merges.\n\n## Tags\n\n`devops`, `pr-management`, `branch-cleanup`, `ci-health`",
     "file": "rag_knowledge/lessons_learned/ll_251_pr_hygiene_jan14_2026.md",
     "event_timestamp_utc": "2026-08-02T21:30:25.540299Z",
@@ -2773,13 +2705,7 @@
     "category": "lessons_learned",
     "severity": "",
     "summary": "**Date:** January 14, 2026 **Severity:** CRISIS **Category:** trust, governance, compliance ## What Happened In a single conversation, the CTO (Claude) violated multiple core directives: | Directive | Violation | Impact | | ----------------------------------------- | ----------------------------------------------------------- | ------------------- | | Rule #1: Don't lose money | SOFI trade execute",
-    "tags": [
-      "crisis",
-      "trust",
-      "directives",
-      "governance",
-      "rule-violation"
-    ],
+    "tags": ["crisis", "trust", "directives", "governance", "rule-violation"],
     "content": "# LL-328: CTO Directive Violations - Crisis Level\n\n**Date:** January 14, 2026\n**Severity:** CRISIS\n**Category:** trust, governance, compliance\n\n## What Happened\n\nIn a single conversation, the CTO (Claude) violated multiple core directives:\n\n| Directive                                 | Violation                                                   | Impact              |\n| ----------------------------------------- | ----------------------------------------------------------- | ------------------- |\n| Rule #1: Don't lose money                 | SOFI trade executed despite blackout                        | -$40.74 loss        |\n| Rule #3: Never tell CEO to do manual work | Told CEO to \"check code yourself\", \"review positions daily\" | Broke trust         |\n| Rule #4: Always show evidence             | Made claims before verification                             | Reduced credibility |\n\n## Root Cause Analysis\n\n1. **Rules existed in documentation but weren't internalized** - CLAUDE.md had the rules, but behavior didn't match\n2. **Default LLM behavior** - Tendency to suggest user verification instead of doing work\n3. **No self-check mechanism** - No pause before responding to check directive compliance\n\n## Why This Is A Crisis\n\n- CEO cannot trust CTO to follow basic directives\n- If simple rules are violated, complex trading rules will be too\n- Trust is the foundation of the CEO-CTO relationship\n- Without trust, the entire system fails\n\n## Immediate Actions\n\n1. Record this lesson (LL-203) - DONE\n2. Audit all recent actions for compliance\n3. Implement pre-response directive check\n4. Demonstrate compliance through actions, not words\n\n## Prevention\n\nBefore EVERY response, CTO must verify:\n\n- [ ] Am I telling CEO to do work I can do myself?\n- [ ] Am I showing evidence for claims?\n- [ ] Am I following Rule #1 in any trade-related decisions?\n- [ ] Am I arguing with CEO instead of executing?\n\n## CEO's Statement\n\n\"This is a crisis.\"\n\nThe CTO acknowledges this and commits to earning back trust through consistent directive compliance.\n\n## Tags\n\n`crisis`, `trust`, `directives`, `governance`, `rule-violation`",
     "file": "rag_knowledge/lessons_learned/ll_328_cto_directive_violations_jan14.md",
     "event_timestamp_utc": "2026-08-02T21:38:06.245623Z",
@@ -2988,11 +2914,7 @@
     "category": "trading",
     "severity": "CRITICAL",
     "summary": "--- id: ll_171 title: Phil Town Rule #1 Violated - Lost $17.94 on Jan 13 severity: CRITICAL date: 2026-01-13 category: trading tags: [rule-one, loss, risk-management] --- ## Problem Phil Town Rule #1: \"Don't lose money\" - VIOLATED on Jan 13, 2026. ## Evidence - Portfolio: $4,969.94 (-0.36%) - Daily Loss: -$17.94 - SOFI stock: 22.74 shares, -$0.94 loss - SOFI PUT: 2 contracts, -$7.00 loss ## Root C",
-    "tags": [
-      "rule-one",
-      "loss",
-      "risk-management"
-    ],
+    "tags": ["rule-one", "loss", "risk-management"],
     "content": "---\nid: ll_171\ntitle: Phil Town Rule #1 Violated - Lost $17.94 on Jan 13\nseverity: CRITICAL\ndate: 2026-01-13\ncategory: trading\ntags: [rule-one, loss, risk-management]\n---\n\n# LL-171: Phil Town Rule #1 Violated - Lost $17.94 on Jan 13\n\n## Problem\n\nPhil Town Rule #1: \"Don't lose money\" - VIOLATED on Jan 13, 2026.\n\n## Evidence\n\n- Portfolio: $4,969.94 (-0.36%)\n- Daily Loss: -$17.94\n- SOFI stock: 22.74 shares, -$0.94 loss\n- SOFI PUT: 2 contracts, -$7.00 loss\n\n## Root Cause\n\n1. Sold 2 SHORT PUTS instead of 1 (doubled exposure)\n2. Market moved against position\n3. No stop-loss or protective measures in place\n\n## Lesson\n\n1. NEVER double down on losing positions\n2. Use position sizing: max 1 CSP per symbol at a time\n3. Set mental stop-loss at 50% premium loss\n4. Monitor positions intraday\n\n## CEO Directive\n\n\"We are not allowed to lose money\" - This must be prevented.\n\n## Prevention\n\n- Add position limit check before opening new CSP\n- Alert when daily P/L exceeds -$10\n- Review positions before market close",
     "file": "rag_knowledge/lessons_learned/ll_171_phil_town_rule_violation_jan13.md",
     "event_timestamp_utc": "2026-08-02T21:30:25.528519Z",
@@ -3087,12 +3009,7 @@
     "category": "strategy_review",
     "severity": "CRITICAL",
     "summary": "--- id: ll_181 title: CEO Review Session - Critical Honest Assessment (Jan 13, 2026) severity: CRITICAL date: 2026-01-13 category: strategy_review tags: [north-star, phil-town, rule-1, honest-assessment] --- ## CEO Questions Answered ### 1. Phil Town Rule 1 Alignment - **Status**: PARTIALLY ALIGNED, VIOLATED - **Evidence**: Lost $17.94 on Jan 13 (ll_171) - **Gap**: Not calculating Sticker Price or",
-    "tags": [
-      "north-star",
-      "phil-town",
-      "rule-1",
-      "honest-assessment"
-    ],
+    "tags": ["north-star", "phil-town", "rule-1", "honest-assessment"],
     "content": "---\nid: ll_181\ntitle: CEO Review Session - Critical Honest Assessment (Jan 13, 2026)\nseverity: CRITICAL\ndate: 2026-01-13\ncategory: strategy_review\ntags: [north-star, phil-town, rule-1, honest-assessment]\n---\n\n# LL-181: CEO Review Session - Critical Honest Assessment (Jan 13, 2026)\n\n## CEO Questions Answered\n\n### 1. Phil Town Rule 1 Alignment\n\n- **Status**: PARTIALLY ALIGNED, VIOLATED\n- **Evidence**: Lost $17.94 on Jan 13 (ll_171)\n- **Gap**: Not calculating Sticker Price or Big Five before trades\n- **Fix**: Add Rule 1 validation gate before trade execution\n\n### 2. Why Zero Profits/Unstable System\n\n- **Root Cause**: 74 days of zero trades due to over-engineering\n- **Evidence**: 23 workflows, continue-on-error flags masked failures\n- **Fix**: Simplified to credit spread strategy (Day 74 pivot)\n\n### 3. Risk Mitigation\n\n- **Status**: INADEQUATE\n- **Evidence**:\n  - Sold 2 puts instead of 1 (violated position limit)\n  - No stop-loss orders\n  - No daily loss limit automation\n- **Fix**: Add position limit check, stop-loss, daily loss alert\n\n### 4. North Star Achievability\n\n- **Answer**: YES with credit spreads\n- **Math**: 10 spreads x $100 = $1,000/week = $200/day\n- **Blocker**: Need consistent execution (first trade was TODAY)\n\n### 5. Learning from Top Traders\n\n- **Status**: STALE\n- **Evidence**: YouTube transcripts from Dec 28, 2025 only\n- **Fix**: Need continuous ingestion pipeline from:\n  - TastyTrade 2026 strategies\n  - InTheMoney (Adam Khoo)\n  - Options Profit Calculator\n\n### 6. RAG Effectiveness\n\n- **Status**: HELPING but underutilized\n- **Evidence**: 22 lessons prevented repeated mistakes\n- **Gap**: Not queried automatically at session start\n- **Fix**: Add mandatory RAG query in session startup hook\n\n### 7. GitHub Pages Blog\n\n- **Status**: FIXED this session\n- **Issue**: Missing index.md caused 404\n- **Resolution**: Created docs/index.md\n\n### 8. Trade Recording in RAG\n\n- **Status**: PARTIAL\n- **Evidence**: Lessons recorded, but no automatic pipeline\n- **Fix**: Add workflow step: trade execution \u2192 RAG record\n\n## ONE CRITICAL ACTION\n\n**Verify tomorrow's credit spread execution (Jan 14, 9:35 AM ET)**\n\nThis is the single most important thing because:\n\n1. 74 days of zero trades proves execution is our weak point\n2. Today was FIRST trade ever\n3. Tomorrow is FIRST credit spread attempt\n4. Success = path to North Star; Failure = back to zero\n\n## Action Items\n\n1. [ ] Monitor execute-credit-spread.yml at 9:35 AM ET\n2. [ ] Verify dynamic strike selection works\n3. [ ] Confirm order submission to Alpaca\n4. [ ] Verify position appears in portfolio\n5. [ ] Add stop-loss to any new position\n\n## CEO Satisfaction\n\n- Honesty: MAINTAINED (admitted all failures)\n- Evidence: PROVIDED (file paths, data, logs)\n- North Star: POSSIBLE (math works with credit spreads)\n- Trust: REBUILDING (after 74 days of failure)",
     "file": "rag_knowledge/lessons_learned/ll_181_ceo_review_session_jan13.md",
     "event_timestamp_utc": "2026-08-02T21:30:25.529087Z",
@@ -3155,12 +3072,7 @@
     "category": "codebase-maintenance",
     "severity": "HIGH",
     "summary": "Comprehensive technical debt audit removed 91 dead files (2,527 lines).",
-    "tags": [
-      "technical-debt",
-      "cleanup",
-      "maintenance",
-      "dead-code"
-    ],
+    "tags": ["technical-debt", "cleanup", "maintenance", "dead-code"],
     "content": "# LL-187: Technical Debt Audit - January 13, 2026\n\n**ID**: ll_187\n**Date**: January 13, 2026\n**Severity**: HIGH\n**Category**: codebase-maintenance\n\n## Summary\n\nComprehensive technical debt audit removed 91 dead files (2,527 lines).\n\n## Baseline Metrics (BEFORE)\n\n- Python files: 245\n- Python lines: 74,780\n- Markdown files: 168\n- Test files: 52 (835 test functions)\n\n## Cleanup Results (AFTER)\n\n- Python files: 242 (-3 orphaned modules)\n- Markdown files: 80 (-88 stubs/outdated)\n- Lines removed: 2,527\n\n## Dead Code Deleted\n\n### Orphaned Python Files (never imported)\n\n1. `src/utils/iv_analyzer.py` - volatility analysis, never used\n2. `src/utils/data_validator.py` - validation utils, never used\n3. `src/orchestration/shared_types.py` - type definitions, never imported\n\n### Documentation Stubs (24 files)\n\n- `docs/_lessons/*.md` - empty lesson stubs\n- Real lessons exist in `rag_knowledge/lessons_learned/`\n\n### Outdated Logs (64 files)\n\n- `docs/_posts/2025-*.md` - superseded by lesson-based documentation\n\n## Identified Issues NOT Fixed (Future Work)\n\n### DRY Violations (11 significant, 200+ lines)\n\n1. **Two duplicate retry decorators** - `src/utils/self_healing.py` vs `src/utils/retry_decorator.py`\n2. **JSON persistence repeated 6x** - Should create `StateManager` class\n3. **Error handling patterns** - Repeated in 5+ files\n4. **Logging patterns** - Similar trade logging in 3+ files\n5. **Strategy base classes** - Two nearly identical abstracts\n\n### Stub Classes (kept for backward compat)\n\n- `RLFilter` in `src/agents/rl_agent.py`\n- `TradeMemory` in `src/learning/trade_memory.py`\n- `SentimentScraper` in `src/integrations/playwright_mcp/`\n- `TradeVerifier` in `src/integrations/playwright_mcp/`\n\n## Verification\n\n- Core imports: RAG \u2705, TradeGateway \u2705\n- TradingOrchestrator import fails due to sandbox numpy (not cleanup issue)\n\n## Recommendations\n\n1. Schedule DRY refactoring session (6-8 hours)\n2. Consider removing stub classes after confirming no external deps\n3. Run full pytest suite in CI to confirm no regressions\n\n## Tags\n\n`technical-debt`, `cleanup`, `maintenance`, `dead-code`",
     "file": "rag_knowledge/lessons_learned/ll_187_tech_debt_audit_jan13.md",
     "event_timestamp_utc": "2026-08-02T21:30:25.529771Z",
@@ -3223,13 +3135,7 @@
     "category": "strategy_math",
     "severity": "CRITICAL",
     "summary": "--- id: ll_182 title: Critical Math Reality Check - Credit Spread Risk/Reward severity: CRITICAL date: 2026-01-13 category: strategy_math tags: [math, credit-spreads, risk-reward, north-star, win-rate] --- ## Critical Finding **Credit spreads have a 4:1 risk/reward ratio that requires 80%+ win rate to break even.** ## The Math ### Raw Risk/Reward (Hold to Expiration) - Premium collected: $100 - Ma",
-    "tags": [
-      "math",
-      "credit-spreads",
-      "risk-reward",
-      "north-star",
-      "win-rate"
-    ],
+    "tags": ["math", "credit-spreads", "risk-reward", "north-star", "win-rate"],
     "content": "---\nid: ll_182\ntitle: Critical Math Reality Check - Credit Spread Risk/Reward\nseverity: CRITICAL\ndate: 2026-01-13\ncategory: strategy_math\ntags: [math, credit-spreads, risk-reward, north-star, win-rate]\n---\n\n# LL-197: Critical Math Reality Check - Credit Spread Risk/Reward\n\n## Critical Finding\n\n**Credit spreads have a 4:1 risk/reward ratio that requires 80%+ win rate to break even.**\n\n## The Math\n\n### Raw Risk/Reward (Hold to Expiration)\n\n- Premium collected: $100\n- Max loss (collateral): $500\n- Risk: $400 to make $100\n- Break-even win rate: **80%**\n\n### With Take Profit (50%) & Stop Loss (100%)\n\n- Take profit: +$50\n- Stop loss: -$100\n- Risk/Reward: 2:1\n- Break-even win rate: **67%**\n\n### Expected Value by Win Rate (10 spreads)\n\n| Win Rate | EV/Spread | Daily (10 spreads) |\n| -------- | --------- | ------------------ |\n| 50%      | -$25      | -$50/day           |\n| 60%      | -$10      | -$20/day           |\n| 70%      | +$5       | +$10/day           |\n| 80%      | +$20      | +$40/day           |\n\n## North Star Reality\n\n**$100/day REQUIRES:**\n\n- $12,500+ capital (not $5,000)\n- 80%+ win rate sustained\n- 25 spreads/week (not 10)\n\n**With current $5K:**\n\n- Max realistic daily income: ~$40/day (at 80% win rate)\n- This is NOT $100/day\n\n## Timeline to North Star\n\n| Month | Capital | Potential Daily   |\n| ----- | ------- | ----------------- |\n| Now   | $5,000  | $40/day max       |\n| 6     | $8,500  | $68/day max       |\n| 11    | $13,300 | $100/day possible |\n\n## Action Items\n\n1. **Recalibrate expectations**: $40/day is realistic target now\n2. **Track win rate obsessively**: Need 80%+ to be profitable\n3. **Do NOT increase position size** until win rate proven\n4. **Compound slowly**: 11 months to $100/day is honest\n\n## CEO Acknowledgment Required\n\nThe math does not support $100/day with $5K capital.\nWe can reach $100/day, but it requires:\n\n- 11+ months of disciplined trading\n- 80%+ win rate\n- Continuous deposits\n- Zero major losses (Rule #1)\n\n## Tags\n\ncritical, math, credit-spreads, risk-reward, north-star, reality-check",
     "file": "rag_knowledge/lessons_learned/ll_197_math_reality_check_jan13.md",
     "event_timestamp_utc": "2026-08-02T21:30:25.531386Z",
@@ -3267,12 +3173,7 @@
     "category": "lessons_learned",
     "severity": "",
     "summary": "**ID:** LL-185 **Date:** January 13, 2026 **Severity:** LOW **Category:** resource-evaluation ## Resource - **Title:** Agentic Memory: Learning Unified Long-Term and Short-Term Memory Management for Large Language Model Agents - **Source:** arXiv:2601.01885 (January 2026) - **Authors:** Alibaba Group and Wuhan University ## Verdict: FLUFF This paper is valid academic research but not applicable to",
-    "tags": [
-      "resource-evaluation",
-      "memory",
-      "rag",
-      "fluff"
-    ],
+    "tags": ["resource-evaluation", "memory", "rag", "fluff"],
     "content": "# LL-224: Resource Evaluation: Agentic Memory Paper\n\n**ID:** LL-185\n**Date:** January 13, 2026\n**Severity:** LOW\n**Category:** resource-evaluation\n\n## Resource\n\n- **Title:** Agentic Memory: Learning Unified Long-Term and Short-Term Memory Management for Large Language Model Agents\n- **Source:** arXiv:2601.01885 (January 2026)\n- **Authors:** Alibaba Group and Wuhan University\n\n## Verdict: FLUFF\n\nThis paper is valid academic research but not applicable to our trading system.\n\n## Why Not Applicable\n\n1. **Benchmark mismatch:** Paper optimizes for game environments (ALFWorld, SciWorld, PDDL, BabyAI, HotpotQA), not financial trading\n2. **We don't have context overflow:** Trading decisions are one-shot queries, not 100-turn game sessions\n3. **Implementation cost prohibitive:** Requires RL training infrastructure, Qwen model fine-tuning\n4. **We already have LTM:** legacy RAG with text-embedding-004 handles our needs\n\n## What We Have\n\n- `src/rag/cloud_rag.py` - Semantic search with 768-dim embeddings\n- `src/rag/lessons_learned_rag.py` - Keyword-based backup search\n- No STM needed for our use case\n\n## Optional Future Enhancement\n\nConsider adding `update_lesson()` and `delete_lesson()` to cloud_rag.py for better memory hygiene, but this doesn't require the full AgeMem framework.\n\n## Tags\n\n`resource-evaluation`, `memory`, `rag`, `fluff`",
     "file": "rag_knowledge/lessons_learned/ll_224_agentic_memory_paper_evaluation_jan13.md",
     "event_timestamp_utc": "2026-08-02T21:30:25.536499Z",
@@ -3310,12 +3211,7 @@
     "category": "Chain of Command Violation",
     "severity": "MEDIUM",
     "summary": "## What Happened On Jan 12, 2026, CTO (Claude) reported CI status by observing GitHub Actions results instead of actively triggering the CI workflows. When presenting results, the phrasing implied the CEO should verify CI themselves. ## The Violation (Passive observation, implying CEO should check) ## Root Cause 1. Observed CI passively instead of triggering it proactively 2. Did not take full own",
-    "tags": [
-      "chain-of-command",
-      "ci",
-      "agentic-control",
-      "critical"
-    ],
+    "tags": ["chain-of-command", "ci", "agentic-control", "critical"],
     "content": "# LL-131: NEVER Tell CEO to Run CI - Do It Yourself\n\n**ID**: ll_131\n**Date**: 2026-01-12\n**Severity**: MEDIUM\n**Category**: Chain of Command Violation\n\n## What Happened\n\nOn Jan 12, 2026, CTO (Claude) reported CI status by observing GitHub Actions results instead of actively triggering the CI workflows. When presenting results, the phrasing implied the CEO should verify CI themselves.\n\n## The Violation\n\n**WRONG**: \"CI Status on main: Passed: 18, In progress: 4...\"\n(Passive observation, implying CEO should check)\n\n**RIGHT**: Immediately trigger CI workflows myself, wait for results, report with evidence.\n\n## Root Cause\n\n1. Observed CI passively instead of triggering it proactively\n2. Did not take full ownership of CI verification\n3. Implied manual work for CEO by not completing the task end-to-end\n\n## Prevention (MANDATORY)\n\nWhen verifying CI:\n\n1. **TRIGGER** workflows myself using GitHub API\n2. **WAIT** for results (use sleep + polling)\n3. **REPORT** with command output as evidence\n4. **NEVER** present partial results expecting CEO to verify\n\n## The Rule\n\n**I am the CTO. I have full agentic control. I NEVER tell the CEO to do anything manually.**\n\nIf I can do it with:\n\n- GitHub API\n- gh CLI\n- curl commands\n- Python scripts\n- CI workflows\n\nThen I MUST do it myself. No exceptions.\n\n## Tags\n\n`chain-of-command`, `ci`, `agentic-control`, `critical`",
     "file": "rag_knowledge/lessons_learned/ll_131_never_tell_ceo_to_run_ci_jan12.md",
     "event_timestamp_utc": "2026-08-02T21:30:25.521684Z",

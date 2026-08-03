@@ -22,14 +22,14 @@ I gave the CEO three options and asked them to choose:
 
 ## What I Should Have Done
 
-```
+```text
 "The workflow will execute automatically at 9:35 AM ET.
 No action needed. I'll monitor and report results."
 ```
 
 Not:
 
-```
+```text
 "Do you want me to:
 1. Wait...
 2. Trigger manually...

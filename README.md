@@ -18,16 +18,16 @@ make dry-run
 
 ## Active system
 
-| Concern | Owner |
-| --- | --- |
-| Paper entry, status, and put-credit exits | `scripts/spy_put_credit.py` |
-| Residual iron-condor exits | `scripts/residual_ic_manager.py` |
-| Entry and live-trading kill switch | `src/core/active_strategy.py` |
-| Mandatory risk policy | `src/safety/mandatory_trade_gate.py` |
-| Broker order boundary | `src/risk/trade_gateway.py` |
-| Canonical broker/trade ledgers | `data/system_state.json`, `data/trades.json` |
-| Curated operational lessons | `rag_knowledge/lessons_learned/` |
-| Dependency-free lesson query | `scripts/query_lessons_learned.py` |
+| Concern                                   | Owner                                        |
+| ----------------------------------------- | -------------------------------------------- |
+| Paper entry, status, and put-credit exits | `scripts/spy_put_credit.py`                  |
+| Residual iron-condor exits                | `scripts/residual_ic_manager.py`             |
+| Entry and live-trading kill switch        | `src/core/active_strategy.py`                |
+| Mandatory risk policy                     | `src/safety/mandatory_trade_gate.py`         |
+| Broker order boundary                     | `src/risk/trade_gateway.py`                  |
+| Canonical broker/trade ledgers            | `data/system_state.json`, `data/trades.json` |
+| Curated operational lessons               | `rag_knowledge/lessons_learned/`             |
+| Dependency-free lesson query              | `scripts/query_lessons_learned.py`           |
 
 New `iron_condor` and `ic_simple` entries are killed. The residual manager exists only to reconcile and exit previously opened structures.
 
@@ -58,6 +58,10 @@ docs/           current engineering and operational documentation
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), [data/README.md](data/README.md), and [docs/EXTENSIONS.md](docs/EXTENSIONS.md) before changing architecture or operational state.
 
+Multiple agents coordinate through [docs/AGENT_COORDINATION.md](docs/AGENT_COORDINATION.md):
+Linear owns the task, the shared Obsidian vault owns the live claim, and the issue-scoped
+worktree/PR owns the code change.
+
 ## Evidence boundary
 
 - A dry run is a plan, not an order.
@@ -67,4 +71,3 @@ See [CONTRIBUTING.md](CONTRIBUTING.md), [data/README.md](data/README.md), and [d
 - Promotion requires the thresholds in `config/strategy_candidate_tournament.json` using broker-paired closed trades.
 
 MIT licensed. Nothing in this repository is financial advice.
-

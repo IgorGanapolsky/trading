@@ -54,3 +54,16 @@ Always tell the user 100% truth. Never fabricate, hide, or misrepresent status, 
 - Put reusable agent procedures in `.agents/skills/`, contributor instructions in `CONTRIBUTING.md`, and extension contracts in `docs/EXTENSIONS.md`.
 - Core imports must be side-effect free. Optional providers are lazy adapters.
 - Every retained workflow must have a current owner, bounded permissions, and a tested contract.
+
+## Multi-Agent Coordination Contract
+
+- Before editing, use the shared bridge in the coordination repository to list active work
+  and claim a Linear issue. Follow `docs/AGENT_COORDINATION.md`.
+- Linear is the task lock, the shared Obsidian vault is the live file/WIP claim, and the
+  dedicated Git worktree plus PR are the authoritative code record.
+- Use one issue, one agent, one worktree, and one PR. Include the issue key in the branch
+  and PR metadata.
+- If a claim, branch, or touched-file scope overlaps, stop and reconcile through the issue;
+  never delete another agent's worktree or overwrite its files.
+- On completion, attach test/CI/merge evidence and mark the claim done. On abandonment,
+  release it. The Obsidian Linear plugin is a dashboard, not a concurrency lock.

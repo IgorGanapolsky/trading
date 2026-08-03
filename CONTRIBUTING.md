@@ -2,6 +2,10 @@
 
 Use Python 3.11 and make each change in a dedicated Git worktree branched from current `origin/main`. Preserve unrelated worktree changes.
 
+Before editing, claim a Linear issue with the shared bridge and include its key in the
+branch and pull request. The full claim/release protocol is in
+[`docs/AGENT_COORDINATION.md`](docs/AGENT_COORDINATION.md).
+
 ## Development loop
 
 ```bash
@@ -27,3 +31,5 @@ Add a dependency only when retained production code imports it. Optional provide
 
 Never commit credentials, `.env` files, provider databases, or user-specific absolute paths.
 
+Do not create repository-local task boards or copy the central coordination bridge. Linear
+tracks ownership, the shared Obsidian vault tracks live claims, and Git tracks code review.

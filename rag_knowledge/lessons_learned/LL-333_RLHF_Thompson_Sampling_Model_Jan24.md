@@ -44,7 +44,7 @@ The AI trading system uses a Thompson Sampling RLHF model to learn from user fee
 
 ## Model Location
 
-```
+```text
 models/ml/feedback_model.json
 data/feedback/stats.json
 ```

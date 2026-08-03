@@ -23,7 +23,6 @@ CRITICAL_FILES = {
     "src/ml/reward.py": 70,
     "src/ml/trade_confidence.py": 60,
     "src/rag/vector_store.py": 40,
-    "src/markets/option_chain.py": 30,
     "src/safety/mandatory_trade_gate.py": 15,
 }
 

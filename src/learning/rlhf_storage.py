@@ -24,7 +24,7 @@ def _append_jsonl(path: Path, payload: dict[str, Any]) -> None:
 
 def _stable_event_key(material: dict[str, Any]) -> str:
     raw = json.dumps(material, sort_keys=True, ensure_ascii=True)
-    digest = hashlib.sha1(raw.encode("utf-8")).hexdigest()[:16]
+    digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
     return f"trajectory::{digest}"
 
 

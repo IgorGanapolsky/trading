@@ -44,3 +44,12 @@
 - Record mistakes and lessons learned in RAG.
 - Exclude secrets and tokens from stored directives and logs. Never hardcode credentials.
 - Treat chat-provided tokens as action-time credentials only; never save them to files, commits, or memory.
+
+## Multi-Agent Coordination
+
+- Use the shared Linear/Obsidian bridge described in `docs/AGENT_COORDINATION.md` before
+  repository work: `--list`, `--claim`, isolated worktree/PR, then `--done` or release.
+- Linear owns task assignment, the shared vault owns the live claim, and Git owns code.
+- Include the Linear key in the branch and PR. Never delete or repurpose another agent's
+  branch, worktree, claim note, or active issue.
+- Treat the Obsidian Linear plugin as a display surface only; it does not replace claims.

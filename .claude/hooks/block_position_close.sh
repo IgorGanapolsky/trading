@@ -1,6 +1,6 @@
 #!/bin/bash
-# HARD BLOCK: CTO cannot close positions
-# Only iron-condor-guardian.yml workflow can close positions
+# HARD BLOCK: freehand agents cannot close positions.
+# Put-credit validation delegates reconciled exits to the two current managers.
 # Per LL-306, LL-325: "Trust the guardrails, not the agent"
 
 INPUT="$1"
@@ -10,10 +10,12 @@ if echo "${INPUT}" | grep -qiE "(close_position|close.*position|submit_order.*SE
 	{
 		echo "🚫 HARD BLOCK: Position closing disabled for CTO"
 		echo ""
-		echo "Only the iron-condor-guardian workflow can close positions."
+		echo "Only put-credit-validation.yml may invoke the reconciled exit managers:"
+		echo "  - scripts/spy_put_credit.py --manage-exits"
+		echo "  - scripts/residual_ic_manager.py"
 		echo "This is enforced by LL-306 and LL-325."
 		echo ""
-		echo "Guardian closes automatically when:"
+		echo "The managers evaluate exits when:"
 		echo "  - 50% profit reached"
 		echo "  - 200% stop loss hit"
 		echo "  - 7 DTE reached"
