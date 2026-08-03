@@ -150,9 +150,7 @@ def build_llm_observability_report() -> LLMObservabilityReport:
         and primary_route == "direct_openrouter"
         and input_output_logging_declared
     )
-    openrouter_private_logs_cover_fallback = bool(
-        fallback_cfg and input_output_logging_declared
-    )
+    openrouter_private_logs_cover_fallback = bool(fallback_cfg and input_output_logging_declared)
 
     status = "ok" if not warnings else "warning"
     return LLMObservabilityReport(

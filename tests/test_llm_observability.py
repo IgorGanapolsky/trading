@@ -81,7 +81,9 @@ def test_no_credentials_reports_deterministic_only_without_false_green(monkeypat
     assert report.primary_route == "unconfigured"
     assert report.primary_base_url is None
     assert report.summary == "No LLM provider route is configured; deterministic paths only."
-    assert any("No Anthropic, gateway, or OpenRouter credential" in item for item in report.warnings)
+    assert any(
+        "No Anthropic, gateway, or OpenRouter credential" in item for item in report.warnings
+    )
 
 
 def test_claude_credential_alias_is_reported_without_exposing_value(monkeypatch) -> None:
@@ -94,5 +96,7 @@ def test_claude_credential_alias_is_reported_without_exposing_value(monkeypatch)
     assert report.anthropic_api_key_present is True
     assert report.primary_route == "direct_anthropic"
     assert report.primary_base_host == "api.anthropic.com"
-    assert report.summary == "Direct Anthropic analysis is configured with local structured tracing."
+    assert (
+        report.summary == "Direct Anthropic analysis is configured with local structured tracing."
+    )
     assert "test-value" not in str(report.as_dict())
