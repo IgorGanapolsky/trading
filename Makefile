@@ -5,7 +5,7 @@ VENV_PYTHON := $(VENV)/bin/python
 TRADING_ENV ?= paper
 export TRADING_ENV
 
-.PHONY: setup lint ruff format test coverage audit security health skill-check check dry-run hygiene
+.PHONY: setup lint ruff format test coverage audit security health skill-check check dry-run hygiene bogleheads
 
 setup:
 	$(PYTHON) -m venv $(VENV)
@@ -51,3 +51,7 @@ dry-run: health
 
 hygiene:
 	scripts/worktree_hygiene.sh --prune
+
+# Public RSS + RAG promote + drafts (Chrome login unless BOGLEHEADS_SKIP_CHROME=1)
+bogleheads:
+	$(PYTHON) scripts/bogleheads_ops.py pipeline $(if $(BOGLEHEADS_SKIP_CHROME),--skip-chrome,)
