@@ -284,12 +284,15 @@ class LessonsLearnedRAG:
         """Search lessons using the enhanced TradingRAGPipeline (FTS5 + bigram-Jaccard + CE rerank).
 
         Falls back to legacy LanceDB/keyword search if the pipeline is unavailable.
+        Custom knowledge dirs stay on the keyword/file path (no shared FTS singleton).
         """
-        if self._pipeline is not None:
+        if self._pipeline is not None and not self._custom_dir:
             try:
-                return self._pipeline.query(
+                results = self._pipeline.query(
                     query=query, top_k=top_k, severity_filter=severity_filter
                 )
+                self.last_source = "trading_rag_pipeline"
+                return results
             except Exception as e:
                 logger.warning(f"TradingRAGPipeline query failed: {e} - using legacy search")
 
