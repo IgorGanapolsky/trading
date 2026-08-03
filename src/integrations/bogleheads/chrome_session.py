@@ -86,12 +86,12 @@ end tell
 
 
 def chrome_active_url() -> str:
-    script = '''
+    script = """
 tell application "Google Chrome"
   if (count of windows) = 0 then return ""
   return URL of active tab of front window
 end tell
-'''
+"""
     return _osascript(script)
 
 
@@ -238,9 +238,7 @@ def ensure_logged_in(*, force_login: bool = False) -> dict[str, Any]:
         status["fill_result"] = json.loads(raw) if raw.startswith("{") else {"raw": raw[:300]}
     except Exception as exc:
         status["error"] = str(exc)[:300]
-        status["hint"] = (
-            "Enable Chrome: View → Developer → Allow JavaScript from Apple Events"
-        )
+        status["hint"] = "Enable Chrome: View → Developer → Allow JavaScript from Apple Events"
         return status
 
     time.sleep(4.0)

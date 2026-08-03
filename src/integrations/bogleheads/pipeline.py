@@ -58,9 +58,7 @@ def run_pipeline(
     if login_chrome:
         try:
             login = ensure_logged_in()
-            report["stages"]["login"] = {
-                k: v for k, v in login.items() if k != "password"
-            }
+            report["stages"]["login"] = {k: v for k, v in login.items() if k != "password"}
         except Exception as exc:
             report["stages"]["login"] = {"ok": False, "error": str(exc)[:300]}
             login = {"ok": False}
