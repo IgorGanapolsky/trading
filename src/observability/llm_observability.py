@@ -66,6 +66,87 @@ class LLMObservabilityReport:
         return asdict(self)
 
 
+def _broken_gateway_report(
+    exc: GatewayRequiredError,
+    *,
+    gateway_base_url: str | None,
+    gateway_api_key_present: bool,
+    openrouter_api_key_present: bool,
+    anthropic_api_key_present: bool,
+    input_output_logging_declared: bool,
+) -> LLMObservabilityReport:
+    """Build the fail-closed report for a required but unavailable gateway."""
+    return LLMObservabilityReport(
+        status="broken",
+        summary="Gateway routing required but not configured.",
+        primary_route="unconfigured",
+        primary_base_url=None,
+        primary_base_host=None,
+        fallback_base_host=None,
+        openrouter_api_key_present=openrouter_api_key_present,
+        gateway_base_url_present=bool(gateway_base_url),
+        gateway_base_host=_host(gateway_base_url),
+        gateway_api_key_present=gateway_api_key_present,
+        input_output_logging_declared=input_output_logging_declared,
+        openrouter_private_logs_cover_primary=False,
+        openrouter_private_logs_cover_fallback=False,
+        critical_execution_provider="deterministic_python",
+        critical_execution_covered_by_openrouter=False,
+        warnings=(str(exc),),
+        notes=(),
+        anthropic_api_key_present=anthropic_api_key_present,
+        local_structured_tracing_available=True,
+    )
+
+
+def _resolve_primary_route(
+    primary_cfg, *, anthropic_api_key_present: bool
+) -> tuple[str, str | None]:
+    """Return the truthful primary route and base URL for the resolved credentials."""
+    if primary_cfg.api_key:
+        primary_base_url = primary_cfg.base_url or OPENROUTER_BASE_URL
+        primary_route = (
+            "direct_openrouter"
+            if _same_base_url(primary_base_url, OPENROUTER_BASE_URL)
+            else "gateway"
+        )
+        return primary_route, primary_base_url
+    if anthropic_api_key_present:
+        return "direct_anthropic", ANTHROPIC_BASE_URL
+    return "unconfigured", None
+
+
+def _route_summary(
+    *,
+    primary_route: str,
+    primary_base_url: str | None,
+    compatible_route_configured: bool,
+    anthropic_api_key_present: bool,
+    input_output_logging_declared: bool,
+) -> tuple[str, list[str]]:
+    """Describe route coverage without conflating provider presence with tracing."""
+    warnings: list[str] = []
+    if not anthropic_api_key_present and not compatible_route_configured:
+        return (
+            "No LLM provider route is configured; deterministic paths only.",
+            ["No Anthropic, gateway, or OpenRouter credential was resolved."],
+        )
+    if primary_route == "gateway":
+        gateway_host = _host(primary_base_url)
+        warnings.append(
+            f"OpenRouter private logs do not cover primary gateway traffic through {gateway_host}."
+        )
+        return "Gateway routing is configured with local structured tracing.", warnings
+    if primary_route == "direct_openrouter":
+        if not input_output_logging_declared:
+            warnings.append(
+                "Direct OpenRouter routing is active, but "
+                "OPENROUTER_INPUT_OUTPUT_LOGGING_ENABLED is not declared."
+            )
+        return "Direct OpenRouter routing is configured with local structured tracing.", warnings
+    return "Direct Anthropic analysis is configured with local structured tracing.", warnings
+
+
 def build_llm_observability_report() -> LLMObservabilityReport:
     """Summarize how this process routes OpenRouter-compatible traffic."""
     input_output_logging_declared = _is_truthy(os.getenv("OPENROUTER_INPUT_OUTPUT_LOGGING_ENABLED"))
@@ -76,49 +157,24 @@ def build_llm_observability_report() -> LLMObservabilityReport:
         (os.getenv("ANTHROPIC_API_KEY") or "").strip()
         or (os.getenv("CLAUDE_API_KEY") or "").strip()
     )
-    local_structured_tracing_available = True
-
     try:
         primary_cfg, fallback_cfg = resolve_openrouter_primary_and_fallback_configs()
     except GatewayRequiredError as exc:
-        return LLMObservabilityReport(
-            status="broken",
-            summary="Gateway routing required but not configured.",
-            primary_route="unconfigured",
-            primary_base_url=None,
-            primary_base_host=None,
-            fallback_base_host=None,
-            openrouter_api_key_present=openrouter_api_key_present,
-            gateway_base_url_present=bool(gateway_base_url),
-            gateway_base_host=_host(gateway_base_url),
+        return _broken_gateway_report(
+            exc,
+            gateway_base_url=gateway_base_url,
             gateway_api_key_present=gateway_api_key_present,
-            input_output_logging_declared=input_output_logging_declared,
-            openrouter_private_logs_cover_primary=False,
-            openrouter_private_logs_cover_fallback=False,
-            critical_execution_provider="deterministic_python",
-            critical_execution_covered_by_openrouter=False,
-            warnings=(str(exc),),
-            notes=(),
+            openrouter_api_key_present=openrouter_api_key_present,
             anthropic_api_key_present=anthropic_api_key_present,
-            local_structured_tracing_available=local_structured_tracing_available,
+            input_output_logging_declared=input_output_logging_declared,
         )
 
     compatible_route_configured = bool(primary_cfg.api_key)
-    if compatible_route_configured:
-        primary_base_url = primary_cfg.base_url or OPENROUTER_BASE_URL
-        primary_route = (
-            "direct_openrouter"
-            if _same_base_url(primary_base_url, OPENROUTER_BASE_URL)
-            else "gateway"
-        )
-    elif anthropic_api_key_present:
-        primary_base_url = ANTHROPIC_BASE_URL
-        primary_route = "direct_anthropic"
-    else:
-        primary_base_url = None
-        primary_route = "unconfigured"
+    primary_route, primary_base_url = _resolve_primary_route(
+        primary_cfg,
+        anthropic_api_key_present=anthropic_api_key_present,
+    )
     fallback_base_host = _host(getattr(fallback_cfg, "base_url", None) if fallback_cfg else None)
-    warnings: list[str] = []
     notes = [
         "Order authorization remains deterministic; LLM output is advisory and cannot bypass risk gates.",
         "Local structured tracing is available without sending prompts or responses to telemetry.",
@@ -126,24 +182,13 @@ def build_llm_observability_report() -> LLMObservabilityReport:
     if anthropic_api_key_present:
         notes.append("Direct Anthropic analysis credentials are configured.")
 
-    if not anthropic_api_key_present and not compatible_route_configured:
-        summary = "No LLM provider route is configured; deterministic paths only."
-        warnings.append("No Anthropic, gateway, or OpenRouter credential was resolved.")
-    elif primary_route == "gateway" and compatible_route_configured:
-        gateway_host = _host(primary_base_url)
-        summary = "Gateway routing is configured with local structured tracing."
-        warnings.append(
-            f"OpenRouter private logs do not cover primary gateway traffic through {gateway_host}."
-        )
-    elif compatible_route_configured:
-        summary = "Direct OpenRouter routing is configured with local structured tracing."
-        if not input_output_logging_declared:
-            warnings.append(
-                "Direct OpenRouter routing is active, but "
-                "OPENROUTER_INPUT_OUTPUT_LOGGING_ENABLED is not declared."
-            )
-    else:
-        summary = "Direct Anthropic analysis is configured with local structured tracing."
+    summary, warnings = _route_summary(
+        primary_route=primary_route,
+        primary_base_url=primary_base_url,
+        compatible_route_configured=compatible_route_configured,
+        anthropic_api_key_present=anthropic_api_key_present,
+        input_output_logging_declared=input_output_logging_declared,
+    )
 
     openrouter_private_logs_cover_primary = bool(
         compatible_route_configured
@@ -172,7 +217,7 @@ def build_llm_observability_report() -> LLMObservabilityReport:
         warnings=tuple(warnings),
         notes=tuple(notes),
         anthropic_api_key_present=anthropic_api_key_present,
-        local_structured_tracing_available=local_structured_tracing_available,
+        local_structured_tracing_available=True,
     )
 
 

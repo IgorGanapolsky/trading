@@ -9,6 +9,11 @@ from src.observability.ai_runtime import AIRuntimeTelemetry
 from src.observability.opentelemetry_tracer import AgentTracer
 
 
+def _raise_inside_operation(operation) -> None:
+    with operation:
+        raise RuntimeError("provider timeout")
+
+
 def test_llm_operation_records_route_usage_and_trace_correlation(tmp_path: Path) -> None:
     tracer = AgentTracer(log_path=tmp_path / "spans.jsonl")
     runtime = AIRuntimeTelemetry(tracer)
@@ -36,15 +41,15 @@ def test_llm_operation_records_route_usage_and_trace_correlation(tmp_path: Path)
 def test_runtime_exception_is_traced_without_swallowing_it(tmp_path: Path) -> None:
     tracer = AgentTracer(log_path=tmp_path / "spans.jsonl")
     runtime = AIRuntimeTelemetry(tracer)
+    operation = runtime.operation(
+        "market_analysis",
+        "llm",
+        session_id="desk-session",
+        model_name="model",
+    )
 
     with pytest.raises(RuntimeError, match="provider timeout"):
-        with runtime.operation(
-            "market_analysis",
-            "llm",
-            session_id="desk-session",
-            model_name="model",
-        ):
-            raise RuntimeError("provider timeout")
+        _raise_inside_operation(operation)
 
     assert tracer.spans[0].status == "error"
     assert tracer.spans[0].attributes["error_type"] == "RuntimeError"

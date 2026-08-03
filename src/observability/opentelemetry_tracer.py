@@ -200,7 +200,7 @@ class AgentTracer:
             with self._lock:
                 self.dropped_spans += 1
                 self.last_write_error = f"{type(exc).__name__}: {exc}"
-            logger.error("AI telemetry persistence failed: %s", exc)
+            logger.exception("AI telemetry persistence failed")
             return False
 
     def snapshot(self) -> TraceSnapshot:

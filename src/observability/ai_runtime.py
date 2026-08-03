@@ -80,14 +80,12 @@ class RuntimeOperation:
     def __enter__(self) -> RuntimeOperation:
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback) -> bool:
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
         if exc_value is not None:
             self.attributes["error_type"] = type(exc_value).__name__
             self.finish(status="error")
-            return False
-        if not self._finished:
+        elif not self._finished:
             self.finish()
-        return False
 
 
 class AIRuntimeTelemetry:
