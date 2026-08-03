@@ -185,7 +185,7 @@ def score_dimensions(
         _dim(
             "cash_engine_output",
             cash_out,
-            f"plane=cash live_equity={live_eq} verdict={verdict}",
+            f"plane=cash live_funded={live_eq > 0} verdict={verdict}",
             cash_block,
         )
     )
@@ -200,7 +200,7 @@ def score_dimensions(
         _dim(
             "real_money_readiness",
             ready_score,
-            f"plane=cash verdict={verdict} inventory_clean={inv_clean} live_eq={live_eq}",
+            f"plane=cash verdict={verdict} inventory_clean={inv_clean} live_funded={live_eq > 0}",
             ready_block,
         )
     )
@@ -230,7 +230,7 @@ def score_dimensions(
             "risk_and_capital_protection",
             max(0.0, risk_score),
             f"plane=process inventory_clean={inv_clean} live_blocked={kill_switch.get('live_blocked')} "
-            f"halted={halted} paper_equity={paper_eq}",
+            f"halted={halted} paper_account_present={paper_eq is not None and paper_eq > 0}",
             risk_block,
         )
     )
@@ -305,7 +305,7 @@ def score_dimensions(
         _dim(
             "live_capital_discipline",
             disc_score,
-            f"plane=process live_equity={live_eq} live_blocked={kill_switch.get('live_blocked')} "
+            f"plane=process live_funded={live_eq > 0} live_blocked={kill_switch.get('live_blocked')} "
             f"verdict={verdict}",
             disc_block,
         )
@@ -624,15 +624,44 @@ def main() -> int:
 
     card = _sanitize(card)
     args.out.parent.mkdir(parents=True, exist_ok=True)
+    # Full card (incl. equity) stays on disk only — avoid clear-text logging of account balances.
     args.out.write_text(json.dumps(card, indent=2) + "\n", encoding="utf-8")
-
-    if args.json:
-        print(json.dumps(card, indent=2))
-        return 0
 
     t = card["truth"]
     o = card["overall"]
     e = card["economics_for_1000_mo"]
+
+    # Public summary: grades + cohort counts only (no equity / P/L amounts on stdout).
+    public = {
+        "schema_version": card.get("schema_version"),
+        "generated_at": card.get("generated_at"),
+        "overall": {
+            "grade": o.get("grade"),
+            "score_0_10": o.get("score_0_10"),
+            "label": o.get("label"),
+            "process_ops_grade": o.get("process_ops_grade"),
+            "process_ops_score_0_10": o.get("process_ops_score_0_10"),
+            "cash_engine_grade": o.get("cash_engine_grade"),
+            "cash_engine_score_0_10": o.get("cash_engine_score_0_10"),
+        },
+        "truth": {
+            "active_family": t.get("active_family"),
+            "paper_only": t.get("paper_only"),
+            "live_blocked": t.get("live_blocked"),
+            "put_credit_closed_n": t.get("put_credit_closed_n"),
+            "put_credit_open_n": t.get("put_credit_open_n"),
+            "kill_verdict": t.get("kill_verdict"),
+            "inventory_clean": t.get("inventory_clean"),
+            "trading_halted": t.get("trading_halted"),
+            "claim_profitable": t.get("claim_profitable"),
+        },
+        "json_out": str(args.out),
+    }
+
+    if args.json:
+        print(json.dumps(public, indent=2))
+        return 0
+
     print("=== WORLD-CLASS PRODUCTION SCORECARD ===")
     print(f"Near-term goal: ${card['goal']['near_term_after_tax_monthly_usd']}/mo after-tax REAL")
     print(f"Blended overall: {o['grade']} ({o['score_0_10']}/10) — {o['label']}")
@@ -640,23 +669,17 @@ def main() -> int:
         f"Process plane: {o.get('process_ops_grade')} "
         f"({o.get('process_ops_score_0_10')}/10) perfect10={o.get('process_perfect_10')}"
     )
+    print(f"Cash engine plane: {o.get('cash_engine_grade')} ({o.get('cash_engine_score_0_10')}/10)")
     print(
-        f"Cash engine plane: {o.get('cash_engine_grade')} "
-        f"({o.get('cash_engine_score_0_10')}/10) — {o.get('note')}"
-    )
-    print(
-        f"Paper equity: ${t['paper_equity']:,.2f}  Live: ${t['live_equity']:,.2f}  "
-        f"family={t['active_family']} live_blocked={t['live_blocked']}"
+        f"family={t['active_family']} live_blocked={t['live_blocked']} paper_only={t['paper_only']}"
     )
     print(
         f"Put-credit: closed={t['put_credit_closed_n']} open={t['put_credit_open_n']} "
         f"verdict={t['kill_verdict']} inventory_clean={t['inventory_clean']}"
     )
     print(
-        f"$1k/mo needs ~${e['pre_tax_monthly_required']:,.0f}/mo pre-tax "
-        f"(~{e['required_monthly_return_pct_on_paper']}% of paper equity) "
-        f"or ~${e['required_expectancy_usd_per_trade_at_plan_cadence']}/trade "
-        f"@ {e['planning_trades_per_month']} closes/mo"
+        f"$1k/mo plan cadence: {e.get('planning_trades_per_month')} closes/mo "
+        f"(see json for detailed economics)"
     )
     print("Dimensions:")
     for d in card["dimensions"]:
