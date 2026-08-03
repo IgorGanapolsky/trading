@@ -36,12 +36,28 @@ python scripts/judge_panel.py --kind claim_audit --text "your status claim here"
 
 ## Truth sources
 
-| Question                | File                             |
-| ----------------------- | -------------------------------- |
-| Equity / positions      | `data/system_state.json`         |
-| Closed structure P/L    | `data/trades.json`               |
-| Open put-credit journal | `data/put_credit_entries.json`   |
-| Lessons                 | `rag_knowledge/lessons_learned/` |
+| Question                | File                                                            |
+| ----------------------- | --------------------------------------------------------------- |
+| Equity / positions      | `data/system_state.json`                                        |
+| Closed structure P/L    | `data/trades.json`                                              |
+| Open put-credit journal | `data/put_credit_entries.json`                                  |
+| Lessons                 | `rag_knowledge/lessons_learned/`                                |
+| Bogleheads research     | `rag_knowledge/bogleheads/` + `data/research/bogleheads_*.json` |
+
+## Bogleheads forum (ingest + optional participate)
+
+```bash
+# Full automate: RSS → RAG promote → Chrome login → enrich → drafts (no live post)
+python scripts/bogleheads_ops.py pipeline
+
+# RSS + promote only
+python scripts/bogleheads_ops.py ingest
+
+# Live post one draft (explicit gate)
+python scripts/bogleheads_ops.py post --confirm-token BOGLEHEADS_POST_CONFIRMED
+```
+
+Skill: `skills/bogleheads-forum/SKILL.md`. Credentials: Keychain only (`eazyigz`).
 
 ## Hard rules
 
