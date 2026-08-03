@@ -287,9 +287,12 @@ class LessonsLearnedRAG:
         """
         if self._pipeline is not None:
             try:
-                return self._pipeline.query(
+                results = self._pipeline.query(
                     query=query, top_k=top_k, severity_filter=severity_filter
                 )
+                # Pipeline is lexical+hybrid (FTS5/bigram); report source for CLI/tests.
+                self.last_source = "pipeline"
+                return results
             except Exception as e:
                 logger.warning(f"TradingRAGPipeline query failed: {e} - using legacy search")
 
