@@ -24,11 +24,10 @@ if str(ROOT) not in sys.path:
 from src.evals.judge_panel import TaskKind, run_panel  # noqa: E402
 
 # Paths may only be read under these roots (absolute after resolve).
+# Do NOT include /tmp — Bandit B108 flags hardcoded temp-dir allowlists.
 _ALLOWED_READ_ROOTS: tuple[Path, ...] = (
     ROOT,
     Path.home() / "Documents" / "AI-Agent-Sync",
-    Path("/tmp"),
-    Path("/private/tmp"),
 )
 
 
