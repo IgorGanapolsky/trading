@@ -93,7 +93,9 @@ def test_parse_html_strips_scripts_and_extracts_table(tmp_path: Path):
     assert "Extracted Tables" in doc.markdown or "|" in doc.markdown
 
 
-def test_parse_pdf_continues_past_short_docling_extract(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def test_parse_pdf_continues_past_short_docling_extract(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
     """Short Docling extract must not block pdfplumber/pypdf fallback (Codex P1)."""
     from src.research import messy_document_parser as mdp
 
