@@ -1503,10 +1503,20 @@ class TradeGateway:
                 retrieve_for_trade,
             )
 
+            # Map strategy_type → family filter (soft: includes "general" lessons too)
+            strategy_family = None
+            st = str(request.strategy_type or "").lower()
+            if "put" in st and "credit" in st:
+                strategy_family = "spy_put_credit"
+            elif "iron" in st or st in {"ic", "ic_simple"}:
+                strategy_family = "iron_condor"
+
             defended = retrieve_for_trade(
                 query_terms,
                 top_k=5,
                 use_llm_rerank=False,
+                strategy_family=strategy_family,
+                parent_expand=True,
             )
             rag_lessons = defended.lessons
             if rag_lessons:
@@ -1521,6 +1531,12 @@ class TradeGateway:
                     "rewrite_applied": defended.meta.get("rewrite_applied"),
                     "fts": defended.meta.get("fts"),
                     "rerank_stages": defended.meta.get("rerank_stages"),
+                    "strategy_family": strategy_family,
+                    "parent_expand": defended.meta.get("parent_expand"),
+                    "path": defended.meta.get("path"),
+                    "acl_dropped": defended.meta.get("acl_dropped"),
+                    "ood_rejected": defended.meta.get("ood_rejected"),
+                    "trace_id": defended.meta.get("trace_id"),
                 }
                 metadata["rag_context"] = rag_context[:2000]
         except Exception as rag_exc:

@@ -68,6 +68,7 @@ class QueryResult:
     first_relevant_position: Optional[int]  # 1-indexed, None if not found
     k: int
     utility_at_k: Optional[float] = None
+    ndcg_at_k: Optional[float] = None
 
 
 @dataclass
@@ -81,6 +82,7 @@ class EvaluationReport:
     mean_recall_at_k: float
     mrr: float  # Mean Reciprocal Rank
     mean_utility_at_k: float = 0.0
+    mean_ndcg_at_k: float = 0.0
     unanswerable_accuracy: Optional[float] = None
     unanswerable_false_positive_rate: Optional[float] = None
     unanswerable_results: list[dict] = field(default_factory=list)
@@ -98,6 +100,7 @@ class EvaluationReport:
                 "mean_recall_at_k": round(self.mean_recall_at_k, 4),
                 "mrr": round(self.mrr, 4),
                 "mean_utility_at_k": round(self.mean_utility_at_k, 4),
+                "mean_ndcg_at_k": round(self.mean_ndcg_at_k, 4),
             },
             "unanswerable": {
                 "accuracy": (
@@ -125,6 +128,7 @@ class EvaluationReport:
                     "utility_at_k": (
                         round(qr.utility_at_k, 4) if qr.utility_at_k is not None else None
                     ),
+                    "ndcg_at_k": (round(qr.ndcg_at_k, 4) if qr.ndcg_at_k is not None else None),
                 }
                 for qr in self.query_results
             ],
@@ -141,6 +145,8 @@ DEFAULT_TEST_QUERIES = [
             "LL-268_Iron_Condor_Win_Rate_Research",
             "LL-301_IC_Position_Management_System_Jan23",
             "LL-323_Iron_Condor_Management_71K_Study_Jan31",
+            "LL-299_Iron_Condor_Adjustment_Strategies",
+            "ll_277_iron_condor_optimization_research_jan21",
         ],
         description="Exit strategy should include win-rate research and management/exit system lessons",
     ),
@@ -156,12 +162,12 @@ DEFAULT_TEST_QUERIES = [
     EvaluationQuery(
         query="close position API bug",
         expected_lesson_ids=[
-            "ll_282_close_position_api_for_orphans_jan22",
-            "ll_281_alpaca_api_close_position_bug_jan22",
-            "LL-291_Alpaca_Close_Position_Bug_Jan22",
-            "LL-292_Alpaca_Close_Position_Bug_Jan22",
+            "ll_234_close_workflow_bugs_jan16",
+            "ll_325_cto_violated_rule1_closed_positions_feb04",
+            "ll_281_atomic_orders_and_exit_ownership",
+            "ll_221_orphan_put_crisis_jan15",
         ],
-        description="Should find Alpaca close_position() API bug and remediation lessons",
+        description="Should find close-workflow / orphan / exit-ownership lessons (corpus-aligned)",
     ),
     EvaluationQuery(
         query="tax optimization XSP",
@@ -179,6 +185,7 @@ DEFAULT_TEST_QUERIES = [
             "LL-295_Wealth_Building_Pillars",
             "ll_212_north_star_math_roadmap_jan15",
             "ll_220_north_star_30month_roadmap_jan15",
+            "LL-320_CEO_Identity_North_Star_Commitment",
         ],
         description="Should find financial independence and North Star roadmap lessons",
     ),
@@ -186,19 +193,23 @@ DEFAULT_TEST_QUERIES = [
         query="position sizing error",
         expected_lesson_ids=[
             "LL-290_Position_Accumulation_Bug_Jan22",
-            "ll_280_cumulative_position_risk_bypass_jan22",
+            "ll_280_aggregate_position_risk",
             "ll_258_5pct_position_limit_enforcement_jan19",
+            "ll_261_position_size_hardcoded_violations_jan19",
+            "ll_232_position_sizing_violation_jan16",
         ],
         description="Should find position sizing/limit enforcement and accumulation issues",
     ),
     EvaluationQuery(
         query="SOFI blocked trading",
         expected_lesson_ids=[
-            "LL-272_SOFI_Position_Blocked_Trading_Jan21",
+            "ll_252_sofi_ticker_blackout_violation_jan14",
             "ll_247_sofi_pdt_crisis_jan20",
+            "ll_330_ci_failure_sofi_position_jan20",
             "ll_158_day74_emergency_fix_jan13",
+            "ll_250_trading_crisis_jan20_2026",
         ],
-        description="Should find SOFI blockage and crisis recovery lessons",
+        description="Should find SOFI blackout/PDT/legacy-position blockage lessons",
     ),
     EvaluationQuery(
         query="delta selection options",
@@ -215,6 +226,9 @@ DEFAULT_TEST_QUERIES = [
             "LL-300_RAG_Webhook_RAG_Query_Fix_Jan23",
             "ll_238_lancedb_rag_init_failure_jan16",
             "ll_227_rag_failure_100k_lessons_lost_jan14",
+            "LL-274_RAG_Webhook_Compound_Query_Routing_Fix",
+            "ll_157_rag_webhook_analytical_query_routing_jan13",
+            "ll_166_rag_webhook_lancedb_missing_jan13",
         ],
         description="Should find webhook/query fixes and RAG gap lessons",
     ),
@@ -645,6 +659,7 @@ class RAGEvaluator:
         r_at_k = self.recall_at_k(retrieved, expected, k)
         rr, position = self.reciprocal_rank(retrieved, expected)
         utility = self.utility_at_k(retrieved, expected, avoid, k)
+        ndcg = self.ndcg_at_k(retrieved, query.graded_relevance, k)
 
         return QueryResult(
             query=query.query,
@@ -656,6 +671,7 @@ class RAGEvaluator:
             first_relevant_position=position,
             k=k,
             utility_at_k=utility,
+            ndcg_at_k=ndcg,
         )
 
     def evaluate_all(
@@ -682,6 +698,7 @@ class RAGEvaluator:
         recalls = []
         reciprocal_ranks = []
         utilities = []
+        ndcgs = []
 
         for test_query in self.test_queries:
             try:
@@ -693,6 +710,8 @@ class RAGEvaluator:
                 reciprocal_ranks.append(result.reciprocal_rank)
                 if result.utility_at_k is not None:
                     utilities.append(result.utility_at_k)
+                if result.ndcg_at_k is not None:
+                    ndcgs.append(result.ndcg_at_k)
 
             except Exception as e:
                 logger.error(f"Failed to evaluate query '{test_query.query}': {e}")
@@ -703,6 +722,7 @@ class RAGEvaluator:
         mean_r = sum(recalls) / len(recalls) if recalls else 0.0
         mrr = sum(reciprocal_ranks) / len(reciprocal_ranks) if reciprocal_ranks else 0.0
         mean_utility = sum(utilities) / len(utilities) if utilities else 0.0
+        mean_ndcg = sum(ndcgs) / len(ndcgs) if ndcgs else 0.0
 
         unanswerable_metrics = {
             "accuracy": None,
@@ -724,6 +744,7 @@ class RAGEvaluator:
             mean_recall_at_k=mean_r,
             mrr=mrr,
             mean_utility_at_k=mean_utility,
+            mean_ndcg_at_k=mean_ndcg,
             unanswerable_accuracy=unanswerable_metrics.get("accuracy"),
             unanswerable_false_positive_rate=unanswerable_metrics.get("false_positive_rate"),
             unanswerable_results=unanswerable_metrics.get("results", []),
@@ -781,6 +802,7 @@ if __name__ == "__main__":
     print(f"  Mean Recall@{report.k}: {report.mean_recall_at_k:.4f}")
     print(f"  MRR: {report.mrr:.4f}")
     print(f"  Mean Utility@{report.k}: {report.mean_utility_at_k:.4f}")
+    print(f"  Mean nDCG@{report.k}: {report.mean_ndcg_at_k:.4f}")
 
     if report.failed_queries:
         print(f"\nFailed queries: {len(report.failed_queries)}")

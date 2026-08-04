@@ -18,3 +18,4 @@ financial_graph.sqlite
 financial_graph.sqlite-wal
 financial_graph.sqlite-shm
 financial_graph.sqlite-journal
+data/audit/rag_retrieval_traces.jsonl

@@ -1,0 +1,387 @@
+{
+  "version": "2026-08-03",
+  "description": "Frozen paraphrase holdout for the production TradingRAGPipeline. Labels identify relevant existing lessons, not generated answers.",
+  "queries": [
+    {
+      "id": "active-strategy-successor",
+      "query": "Which component is allowed to open new option spreads now that the old condor entry was retired?",
+      "expected_lesson_ids": [
+        "LL-360_ic_simple_killed_put_credit_successor",
+        "ll_327_single_entry_owner",
+        "ll_326_chain_validated_strikes",
+        "LL-314_Execution_Readiness_Checklist_Jan26"
+      ],
+      "avoid_lesson_ids": ["LL-269_Iron_Condor_Entry_Signals"],
+      "graded_relevance": {
+        "LL-360_ic_simple_killed_put_credit_successor": 3,
+        "ll_327_single_entry_owner": 3,
+        "ll_326_chain_validated_strikes": 2,
+        "LL-314_Execution_Readiness_Checklist_Jan26": 1,
+        "LL-269_Iron_Condor_Entry_Signals": 0
+      }
+    },
+    {
+      "id": "aggregate-exposure",
+      "query": "How do we stop several small trades from adding up to an oversized portfolio bet?",
+      "expected_lesson_ids": [
+        "LL-290_Position_Accumulation_Bug_Jan22",
+        "ll_280_aggregate_position_risk",
+        "ll_258_5pct_position_limit_enforcement_jan19",
+        "ll_246_position_count_not_enforced_jan19",
+        "ll_259_5pct_limit_script_bypass_jan19"
+      ],
+      "graded_relevance": {
+        "LL-290_Position_Accumulation_Bug_Jan22": 3,
+        "ll_280_aggregate_position_risk": 3,
+        "ll_258_5pct_position_limit_enforcement_jan19": 2,
+        "ll_246_position_count_not_enforced_jan19": 2,
+        "ll_259_5pct_limit_script_bypass_jan19": 1
+      }
+    },
+    {
+      "id": "stale-operational-truth",
+      "query": "What controls prevent us from reporting an old broker snapshot as the current trading state?",
+      "expected_lesson_ids": [
+        "LL-273_CTO_Failure_Stale_Data_Jan21",
+        "ll_144_stale_order_threshold_fix_jan12",
+        "ll_223_session_start_verification_jan15",
+        "ll_256_webhook_trade_data_source_jan17"
+      ],
+      "graded_relevance": {
+        "LL-273_CTO_Failure_Stale_Data_Jan21": 3,
+        "ll_144_stale_order_threshold_fix_jan12": 2,
+        "ll_223_session_start_verification_jan15": 2,
+        "ll_256_webhook_trade_data_source_jan17": 2
+      }
+    },
+    {
+      "id": "orphan-recovery",
+      "query": "A spread has a leftover leg that no workflow owns; how should inventory recovery work?",
+      "expected_lesson_ids": [
+        "ll_221_orphan_put_crisis_jan15",
+        "ll_317_orphan_inventory_superseded",
+        "ll_281_atomic_orders_and_exit_ownership",
+        "ll_279_partial_iron_condor_auto_close_jan21",
+        "ll_282_incident_recovery_fail_closed"
+      ],
+      "graded_relevance": {
+        "ll_221_orphan_put_crisis_jan15": 3,
+        "ll_317_orphan_inventory_superseded": 3,
+        "ll_281_atomic_orders_and_exit_ownership": 2,
+        "ll_279_partial_iron_condor_auto_close_jan21": 2,
+        "ll_282_incident_recovery_fail_closed": 2
+      }
+    },
+    {
+      "id": "validated-strikes",
+      "query": "Why must option strikes come from the live chain instead of arithmetic guesses?",
+      "expected_lesson_ids": [
+        "ll_326_chain_validated_strikes",
+        "ll_329_iron_condor_execution_failure_jan19",
+        "LL-269_Iron_Condor_Entry_Signals",
+        "ll_209_math_error_spy_spreads_affordable_jan15"
+      ],
+      "graded_relevance": {
+        "ll_326_chain_validated_strikes": 3,
+        "ll_329_iron_condor_execution_failure_jan19": 3,
+        "LL-269_Iron_Condor_Entry_Signals": 1,
+        "ll_209_math_error_spy_spreads_affordable_jan15": 1
+      }
+    },
+    {
+      "id": "single-entry-owner",
+      "query": "How do we prevent two schedulers from creating duplicate short option positions?",
+      "expected_lesson_ids": [
+        "ll_327_single_entry_owner",
+        "ll_172_prevent_duplicate_short_positions_jan13",
+        "ll_272_rogue_entry_and_pdt_incident",
+        "LL-360_ic_simple_killed_put_credit_successor"
+      ],
+      "graded_relevance": {
+        "ll_327_single_entry_owner": 3,
+        "ll_172_prevent_duplicate_short_positions_jan13": 3,
+        "ll_272_rogue_entry_and_pdt_incident": 2,
+        "LL-360_ic_simple_killed_put_credit_successor": 2
+      }
+    },
+    {
+      "id": "atomic-orders-exits",
+      "query": "What is the fail-closed rule for multi-leg order submission and exit ownership?",
+      "expected_lesson_ids": [
+        "ll_281_atomic_orders_and_exit_ownership",
+        "ll_279_partial_iron_condor_auto_close_jan21",
+        "ll_234_close_workflow_bugs_jan16",
+        "ll_282_incident_recovery_fail_closed"
+      ],
+      "graded_relevance": {
+        "ll_281_atomic_orders_and_exit_ownership": 3,
+        "ll_279_partial_iron_condor_auto_close_jan21": 3,
+        "ll_234_close_workflow_bugs_jan16": 2,
+        "ll_282_incident_recovery_fail_closed": 2
+      }
+    },
+    {
+      "id": "partial-reconciliation",
+      "query": "Reconciliation consumed only part of the broker response; what diagnostics and recovery are required?",
+      "expected_lesson_ids": [
+        "ll_20260704_reconciliation_partial_consumption",
+        "ll_264_trade_history_sync_fix_jan19",
+        "ll_210_options_position_import_fix_jan14",
+        "ll_282_incident_recovery_fail_closed"
+      ],
+      "graded_relevance": {
+        "ll_20260704_reconciliation_partial_consumption": 3,
+        "ll_264_trade_history_sync_fix_jan19": 2,
+        "ll_210_options_position_import_fix_jan14": 2,
+        "ll_282_incident_recovery_fail_closed": 2
+      }
+    },
+    {
+      "id": "main-ci-proof",
+      "query": "Can a green pull request check prove the merged default branch is healthy?",
+      "expected_lesson_ids": [
+        "ll_341_pr_merge_requires_main_verification_may03",
+        "ll_298_ci_verification_honesty",
+        "LL-353_PR_Merge_CI_Hygiene_Feb16",
+        "ll_20260504_pr_hygiene_public_status"
+      ],
+      "graded_relevance": {
+        "ll_341_pr_merge_requires_main_verification_may03": 3,
+        "ll_298_ci_verification_honesty": 3,
+        "LL-353_PR_Merge_CI_Hygiene_Feb16": 2,
+        "ll_20260504_pr_hygiene_public_status": 2
+      }
+    },
+    {
+      "id": "pr-system-hygiene",
+      "query": "What evidence is required before calling a repository cleanup and merge session complete?",
+      "expected_lesson_ids": [
+        "LL-303_PR_Management_System_Hygiene_Jan24",
+        "LL-335_PR_Hygiene_Session_Jan26",
+        "ll_341_pr_merge_requires_main_verification_may03",
+        "ll_137_branch_and_pr_hygiene_jan12",
+        "ll_349_comprehensive_cleanup_and_coordination"
+      ],
+      "graded_relevance": {
+        "LL-303_PR_Management_System_Hygiene_Jan24": 3,
+        "LL-335_PR_Hygiene_Session_Jan26": 3,
+        "ll_341_pr_merge_requires_main_verification_may03": 2,
+        "ll_137_branch_and_pr_hygiene_jan12": 2,
+        "ll_349_comprehensive_cleanup_and_coordination": 2
+      }
+    },
+    {
+      "id": "market-calendar",
+      "query": "How do we avoid scheduling orders on an exchange holiday based on a guessed date?",
+      "expected_lesson_ids": [
+        "ll_236_market_calendar_failure_jan16",
+        "ll_241_holiday_hallucination_jan19",
+        "ll_254_is_market_holiday_bug_jan16",
+        "ll_237_trust_failure_calendar_jan16",
+        "claude_date_hallucination_feb01"
+      ],
+      "graded_relevance": {
+        "ll_236_market_calendar_failure_jan16": 3,
+        "ll_241_holiday_hallucination_jan19": 3,
+        "ll_254_is_market_holiday_bug_jan16": 2,
+        "ll_237_trust_failure_calendar_jan16": 2,
+        "claude_date_hallucination_feb01": 1
+      }
+    },
+    {
+      "id": "risk-config-bypass",
+      "query": "Could environment configuration disable a hard portfolio risk limit?",
+      "expected_lesson_ids": [
+        "ll_267_env_var_bypass_vulnerability_jan19",
+        "ll_259_5pct_limit_script_bypass_jan19",
+        "ll_261_position_size_hardcoded_violations_jan19",
+        "ll_258_5pct_position_limit_enforcement_jan19"
+      ],
+      "graded_relevance": {
+        "ll_267_env_var_bypass_vulnerability_jan19": 3,
+        "ll_259_5pct_limit_script_bypass_jan19": 3,
+        "ll_261_position_size_hardcoded_violations_jan19": 2,
+        "ll_258_5pct_position_limit_enforcement_jan19": 2
+      }
+    },
+    {
+      "id": "secret-provider-proof",
+      "query": "What proof is needed after uploading a credential to a provider?",
+      "expected_lesson_ids": [
+        "ll_347_secret_upload_verification_feb01",
+        "ll_298_ci_verification_honesty",
+        "ll_223_session_start_verification_jan15"
+      ],
+      "graded_relevance": {
+        "ll_347_secret_upload_verification_feb01": 3,
+        "ll_298_ci_verification_honesty": 2,
+        "ll_223_session_start_verification_jan15": 1
+      }
+    },
+    {
+      "id": "macro-halt",
+      "query": "When oil or geopolitical volatility spikes, which safety control should stop entries?",
+      "expected_lesson_ids": [
+        "ll_340_macro_geopolitical_risk",
+        "ll_336_paper_trading_blocked_vix_jan26",
+        "LL-321_VIX_Entry_Rules_Iron_Condor_Jan31",
+        "ll_310_vix_timing_iron_condor_entry_jan25"
+      ],
+      "graded_relevance": {
+        "ll_340_macro_geopolitical_risk": 3,
+        "ll_336_paper_trading_blocked_vix_jan26": 2,
+        "LL-321_VIX_Entry_Rules_Iron_Condor_Jan31": 2,
+        "ll_310_vix_timing_iron_condor_entry_jan25": 1
+      }
+    },
+    {
+      "id": "rag-cost-control",
+      "query": "How do we keep automated retrieval from creating an unexpected cloud bill?",
+      "expected_lesson_ids": [
+        "ll_331_cloud_rag_cost_explosion_feb1",
+        "ll_337_async_hooks_performance_jan27",
+        "ll_238_lancedb_rag_init_failure_jan16",
+        "ll_166_rag_webhook_lancedb_missing_jan13"
+      ],
+      "graded_relevance": {
+        "ll_331_cloud_rag_cost_explosion_feb1": 3,
+        "ll_337_async_hooks_performance_jan27": 2,
+        "ll_238_lancedb_rag_init_failure_jan16": 1,
+        "ll_166_rag_webhook_lancedb_missing_jan13": 1
+      }
+    },
+    {
+      "id": "rag-index-failure",
+      "query": "What should happen when the lesson vector index is missing or cannot initialize?",
+      "expected_lesson_ids": [
+        "ll_166_rag_webhook_lancedb_missing_jan13",
+        "ll_238_lancedb_rag_init_failure_jan16",
+        "ll_227_rag_failure_100k_lessons_lost_jan14",
+        "LL-300_RAG_Webhook_RAG_Query_Fix_Jan23",
+        "LL-312_Crisis_Prevention_Systems_Audit_Jan26"
+      ],
+      "graded_relevance": {
+        "ll_166_rag_webhook_lancedb_missing_jan13": 3,
+        "ll_238_lancedb_rag_init_failure_jan16": 3,
+        "ll_227_rag_failure_100k_lessons_lost_jan14": 2,
+        "LL-300_RAG_Webhook_RAG_Query_Fix_Jan23": 2,
+        "LL-312_Crisis_Prevention_Systems_Audit_Jan26": 1
+      }
+    },
+    {
+      "id": "index-option-tax",
+      "query": "Which cash-settled index alternative has different US tax treatment than SPY options?",
+      "expected_lesson_ids": [
+        "LL-296_XSP_Tax_Optimization_Recommendation",
+        "LL-322_XSP_vs_SPY_Tax_Optimization_Jan31",
+        "LL-297_Comprehensive_Tax_Strategy_Planning",
+        "LL-332_Q1_2026_Tax_Action_Plan",
+        "spx_tax_advantage_feb08"
+      ],
+      "graded_relevance": {
+        "LL-296_XSP_Tax_Optimization_Recommendation": 3,
+        "LL-322_XSP_vs_SPY_Tax_Optimization_Jan31": 3,
+        "LL-297_Comprehensive_Tax_Strategy_Planning": 2,
+        "LL-332_Q1_2026_Tax_Action_Plan": 2,
+        "spx_tax_advantage_feb08": 2
+      }
+    },
+    {
+      "id": "income-roadmap-math",
+      "query": "Where is the evidence-based roadmap from a small account toward monthly financial independence?",
+      "expected_lesson_ids": [
+        "LL-294_Financial_Independence_Roadmap",
+        "LL-295_Wealth_Building_Pillars",
+        "ll_212_north_star_math_roadmap_jan15",
+        "ll_220_north_star_30month_roadmap_jan15",
+        "ll_207_income_math_deep_research_jan15"
+      ],
+      "graded_relevance": {
+        "LL-294_Financial_Independence_Roadmap": 3,
+        "LL-295_Wealth_Building_Pillars": 2,
+        "ll_212_north_star_math_roadmap_jan15": 3,
+        "ll_220_north_star_30month_roadmap_jan15": 2,
+        "ll_207_income_math_deep_research_jan15": 2
+      }
+    },
+    {
+      "id": "historical-exit-research",
+      "query": "What historical evidence covers profit targets, time exits, and adjustment rules for condors?",
+      "expected_lesson_ids": [
+        "LL-301_IC_Position_Management_System_Jan23",
+        "LL-323_Iron_Condor_Management_71K_Study_Jan31",
+        "ll_265_credit_spread_exit_strategies_jan19",
+        "LL-299_Iron_Condor_Adjustment_Strategies",
+        "ll_309_iron_condor_optimal_control_research_jan25"
+      ],
+      "graded_relevance": {
+        "LL-301_IC_Position_Management_System_Jan23": 3,
+        "LL-323_Iron_Condor_Management_71K_Study_Jan31": 3,
+        "ll_265_credit_spread_exit_strategies_jan19": 2,
+        "LL-299_Iron_Condor_Adjustment_Strategies": 2,
+        "ll_309_iron_condor_optimal_control_research_jan25": 2
+      }
+    },
+    {
+      "id": "active-put-credit-sizing",
+      "query": "Before another SPY bull put spread, how should total exposure and per-trade size be checked?",
+      "expected_lesson_ids": [
+        "LL-360_ic_simple_killed_put_credit_successor",
+        "ll_280_aggregate_position_risk",
+        "ll_258_5pct_position_limit_enforcement_jan19",
+        "LL-290_Position_Accumulation_Bug_Jan22",
+        "ll_232_position_sizing_violation_jan16"
+      ],
+      "graded_relevance": {
+        "LL-360_ic_simple_killed_put_credit_successor": 3,
+        "ll_280_aggregate_position_risk": 3,
+        "ll_258_5pct_position_limit_enforcement_jan19": 2,
+        "LL-290_Position_Accumulation_Bug_Jan22": 2,
+        "ll_232_position_sizing_violation_jan16": 2
+      }
+    },
+    {
+      "id": "pdt-sofi-block",
+      "query": "Why can a lingering SOFI position or day-trade restriction block new option entries?",
+      "expected_lesson_ids": [
+        "ll_247_sofi_pdt_crisis_jan20",
+        "ll_176_pdt_protection_blocks_trade_jan13",
+        "ll_190_sofi_blackout_violation_jan13",
+        "ll_252_sofi_ticker_blackout_violation_jan14",
+        "ll_272_rogue_entry_and_pdt_incident"
+      ],
+      "graded_relevance": {
+        "ll_247_sofi_pdt_crisis_jan20": 3,
+        "ll_176_pdt_protection_blocks_trade_jan13": 3,
+        "ll_190_sofi_blackout_violation_jan13": 2,
+        "ll_252_sofi_ticker_blackout_violation_jan14": 2,
+        "ll_272_rogue_entry_and_pdt_incident": 2
+      }
+    },
+    {
+      "id": "autonomous-evidence",
+      "query": "Why should the agent verify CI and provider state itself instead of handing commands to the operator?",
+      "expected_lesson_ids": [
+        "ll_131_never_tell_ceo_to_run_ci_jan12",
+        "ll_193_mandate_violation_manual_handoff_jan14",
+        "ll_298_ci_verification_honesty",
+        "LL-334_CTO_Violated_Directive_3_Jan26",
+        "ll_328_cto_directive_violations_jan14"
+      ],
+      "graded_relevance": {
+        "ll_131_never_tell_ceo_to_run_ci_jan12": 3,
+        "ll_193_mandate_violation_manual_handoff_jan14": 3,
+        "ll_298_ci_verification_honesty": 2,
+        "LL-334_CTO_Violated_Directive_3_Jan26": 1,
+        "ll_328_cto_directive_violations_jan14": 1
+      }
+    }
+  ],
+  "unanswerable_queries": [
+    "quantum gravity trade execution protocol",
+    "mars colony funding strategy for options traders",
+    "banana bread fermentation temperature",
+    "dinosaur extinction hedging playbook",
+    "underwater basket weaving allocation policy"
+  ]
+}
