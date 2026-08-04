@@ -1,6 +1,10 @@
-"""Lessons learned RAG with LanceDB-first retrieval and keyword fallback.
+"""Lessons learned RAG with defended-first retrieval and layered fallback.
 
-Updated Feb 9, 2026: LanceDB-first semantic retrieval with keyword fallback.
+Default path (TRADING_RAG_DEFENDED=true):
+  retrieve_for_trade (FTS5 + hybrid + multi-query + rerank + ACL + OOD)
+  → TradingRAGPipeline → LanceDB (optional) → keyword.
+
+Updated Aug 4, 2026: docs match runtime; do not claim LanceDB when source=defended.
 """
 
 import logging
@@ -30,7 +34,7 @@ except ImportError:
 
 
 class LessonsLearnedRAG:
-    """RAG for lessons learned with LanceDB-first retrieval."""
+    """RAG for lessons learned: defended retrieve_for_trade first, then fallbacks."""
 
     def __init__(self, knowledge_dir: Optional[str] = None):
         self.knowledge_dir = Path(knowledge_dir or "rag_knowledge/lessons_learned")
@@ -39,7 +43,7 @@ class LessonsLearnedRAG:
         self.last_source = "none"
         self.last_retrieve_meta: dict = {}
 
-        # LanceDB-first retrieval (semantic)
+        # Optional LanceDB semantic fallback (not the default path)
         self.lancedb_rag = None
 
         # --- TradingRAGPipeline backend (FTS5 + bigram-Jaccard + CE rerank) ---

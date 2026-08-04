@@ -17,12 +17,13 @@ Version History:
 - v3.7.0 Jan 16, 2026: Fix trades_loaded=0 - check system_state.json for trade_history
 - v3.9.0 Jan 16, 2026: Fix trade data source priority - system_state.json FIRST (Alpaca source of truth)
 
-Architecture (v3.0.0):
-- Primary: LanceDB local semantic search
-- Fallback: Keyword-based search
+Architecture (v3.10 / AGENT-70):
+- Primary: defended retrieve_for_trade (FTS5 + hybrid + multi-query + rerank + ACL + OOD)
+  via LessonsLearnedRAG when TRADING_RAG_DEFENDED=true (default)
+- Fallback: TradingRAGPipeline → LanceDB (if available) → keyword
+- Do not claim LanceDB when last_source is defended/pipeline/keyword
 
-CEO Directive: "I want to be able to ask about my trades and get accurate information"
-requires semantic search.
+CEO Directive: accurate trade/lesson answers; no fabricated edge claims.
 """
 
 from __future__ import annotations
@@ -121,7 +122,7 @@ def get_local_rag() -> LessonsLearnedRAG:
     if local_rag is None:
         local_rag = LessonsLearnedRAG()
         logger.info(
-            "RAG initialized with %s lessons (LanceDB-first, keyword fallback)",
+            "RAG initialized with %s lessons (defended-first → pipeline → LanceDB → keyword)",
             len(local_rag.lessons),
         )
     return local_rag
@@ -129,16 +130,29 @@ def get_local_rag() -> LessonsLearnedRAG:
 
 def query_rag_hybrid(query: str, top_k: int = 5) -> tuple[list, str]:
     """
-    Query RAG using LanceDB-first retrieval with keyword fallback.
+    Query RAG via LessonsLearnedRAG (defended retrieve_for_trade first by default).
 
     Returns:
-        Tuple of (results_list, source_name)
+        Tuple of (results_list, source_name) where source is one of:
+        defended | pipeline | lancedb | keyword | none
     """
     rag = get_local_rag()
     results = rag.query(query, top_k=top_k)
     source = rag.last_source or "keyword"
-    logger.info(f"RAG returned {len(results)} results (source={source})")
+    logger.info("RAG returned %s results (source=%s)", len(results), source)
     return results, source
+
+
+def _source_header(source: str) -> str:
+    """Human-readable source label — never claim LanceDB when path was defended."""
+    labels = {
+        "defended": "Based on defended trading retrieval (FTS5 + hybrid + rerank):\n",
+        "pipeline": "Based on TradingRAGPipeline hybrid index:\n",
+        "lancedb": "Based on our semantic index (LanceDB):\n",
+        "keyword": "Based on our keyword index:\n",
+        "none": "Based on RAG (source unknown):\n",
+    }
+    return labels.get((source or "keyword").lower(), f"Based on RAG source={source}:\n")
 
 
 def format_rag_response(results: list, query: str, source: str) -> str:
@@ -149,13 +163,7 @@ def format_rag_response(results: list, query: str, source: str) -> str:
             "Try searching for: trading, risk, CI, RAG, verification, or operational."
         )
 
-    response_parts = []
-    header = (
-        "Based on our semantic index (LanceDB):\n"
-        if source == "lancedb"
-        else "Based on our keyword index:\n"
-    )
-    response_parts.append(header)
+    response_parts = [_source_header(source)]
 
     for lesson in results:
         lesson_id = lesson.get("id", "unknown")
@@ -2255,7 +2263,7 @@ Please check directly:
 Or ask me about **lessons learned** instead (e.g., "What lessons did we learn about risk management?")"""
                         logger.warning("Trade query but no portfolio data available")
         else:
-            # Query RAG system for relevant lessons (LanceDB-first)
+            # Query RAG system for relevant lessons (defended-first)
             results, source = query_rag_hybrid(user_query, top_k=5)
 
             if not results:
@@ -2339,7 +2347,7 @@ async def root():
         "rag_last_source": rag.last_source,
         "endpoints": {
             "/webhook": "POST - RAG Webhook (lessons + trades + readiness)",
-            "/rag-search": "POST - RAG search (LanceDB-first, JSON response)",
+            "/rag-search": "POST - RAG search (defended-first, JSON response)",
             "/portfolio-status": "GET - Broker-backed portfolio snapshot for dashboard/status surfaces",
             "/health": "GET - Health check",
             "/diagnostics": "GET - Detailed diagnostic info for debugging",
