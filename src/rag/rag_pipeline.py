@@ -24,7 +24,7 @@ import re
 import sqlite3
 import threading
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Optional
 
@@ -46,7 +46,15 @@ DOMAIN_SYNONYMS: dict[str, list[str]] = {
     "vix": ["volatility", "vxv", "volatility index", "vix spike"],
     "delta": ["15 delta", "20 delta", "strike selection", "probability otm"],
     "dte": ["days to expiration", "expiry", "time decay", "7 dte", "0 dte"],
-    "position sizing": ["position limit", "allocation", "risk per trade", "notional", "size", "sizing", "limit"],
+    "position sizing": [
+        "position limit",
+        "allocation",
+        "risk per trade",
+        "notional",
+        "size",
+        "sizing",
+        "limit",
+    ],
     "stop loss": ["stop-loss", "max loss", "loss limit", "drawdown halt"],
     "section 1256": ["xsp", "spx", "60/40 tax", "index option", "60-40"],
     "1256": ["section 1256", "xsp", "spx", "60/40 tax treatment"],
@@ -64,13 +72,64 @@ TICKER_REGEX = re.compile(
 # Stopwords for tokenization
 _STOPWORDS: frozenset[str] = frozenset(
     {
-        "the", "and", "for", "with", "from", "that", "this", "into", "over",
-        "your", "you", "our", "are", "was", "were", "why", "how", "what",
-        "when", "where", "who", "which", "about", "after", "before",
-        "they", "them", "their", "then", "than", "but", "not", "can",
-        "could", "should", "would", "will", "just", "does", "did", "had",
-        "has", "have", "it", "its", "be", "as", "at", "by", "or", "if",
-        "in", "on", "to", "of", "a", "an", "is",
+        "the",
+        "and",
+        "for",
+        "with",
+        "from",
+        "that",
+        "this",
+        "into",
+        "over",
+        "your",
+        "you",
+        "our",
+        "are",
+        "was",
+        "were",
+        "why",
+        "how",
+        "what",
+        "when",
+        "where",
+        "who",
+        "which",
+        "about",
+        "after",
+        "before",
+        "they",
+        "them",
+        "their",
+        "then",
+        "than",
+        "but",
+        "not",
+        "can",
+        "could",
+        "should",
+        "would",
+        "will",
+        "just",
+        "does",
+        "did",
+        "had",
+        "has",
+        "have",
+        "it",
+        "its",
+        "be",
+        "as",
+        "at",
+        "by",
+        "or",
+        "if",
+        "in",
+        "on",
+        "to",
+        "of",
+        "a",
+        "an",
+        "is",
     }
 )
 
@@ -94,6 +153,7 @@ _SECTION_HEADERS = (
 # ---------------------------------------------------------------------------
 # Data structures
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class LessonResult:
@@ -305,7 +365,7 @@ class SQLiteFTS5Store:
 
     # --- FTS5 query escaping ---
     _FTS_STOPWORDS_REMOVED = False
-    _FTS_SPECIAL_CHARS = set('-+*<>(){}[]!"\'')
+    _FTS_SPECIAL_CHARS = set("-+*<>(){}[]!\"'")
 
     @staticmethod
     def _escape_fts_query(query: str) -> str:
@@ -372,9 +432,7 @@ class SQLiteFTS5Store:
     def get_by_id(self, lesson_id: str) -> Optional[dict[str, Any]]:
         conn = self._get_conn()
         with self._lock:
-            row = conn.execute(
-                "SELECT * FROM lessons WHERE lesson_id = ?", (lesson_id,)
-            ).fetchone()
+            row = conn.execute("SELECT * FROM lessons WHERE lesson_id = ?", (lesson_id,)).fetchone()
         return dict(row) if row else None
 
     def upsert_many(self, records: list[LessonRecord]) -> int:
@@ -388,8 +446,16 @@ class SQLiteFTS5Store:
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 [
-                    (r.lesson_id, r.title, r.content, r.severity, r.prevention,
-                     r.tags, r.source, r.created_at)
+                    (
+                        r.lesson_id,
+                        r.title,
+                        r.content,
+                        r.severity,
+                        r.prevention,
+                        r.tags,
+                        r.source,
+                        r.created_at,
+                    )
                     for r in records
                 ],
             )
@@ -400,6 +466,7 @@ class SQLiteFTS5Store:
 # ---------------------------------------------------------------------------
 # Quality gate
 # ---------------------------------------------------------------------------
+
 
 def quality_gate(content: str) -> tuple[bool, str]:
     """Normalize and quality-check lesson content before storage.
@@ -479,13 +546,14 @@ def parse_lesson_markdown(content: str, lesson_id: str | None = None) -> LessonR
         prevention=prevention,
         tags=tags,
         source="markdown",
-        created_at=datetime.now(timezone.utc).isoformat(),
+        created_at=datetime.now(UTC).isoformat(),
     )
 
 
 # ---------------------------------------------------------------------------
 # Multi-query engine
 # ---------------------------------------------------------------------------
+
 
 def generate_query_variants(query: str, max_variants: int = 3) -> list[QueryVariant]:
     """Generate up to *max_variants* query variants for multi-query retrieval.
@@ -521,7 +589,9 @@ def generate_query_variants(query: str, max_variants: int = 3) -> list[QueryVari
     tickers = TICKER_REGEX.findall(query)
     tokens = tokenize(query)
     keyword_parts = list(dict.fromkeys(tokens))  # dedupe, preserve order
-    keyword_str = " ".join(tickers[:3] + keyword_parts[:8]) if tickers else " ".join(keyword_parts[:8])
+    keyword_str = (
+        " ".join(tickers[:3] + keyword_parts[:8]) if tickers else " ".join(keyword_parts[:8])
+    )
     variants.append(QueryVariant(text=keyword_str or query, kind="keyword_focused"))
 
     return variants[:max_variants]
@@ -530,6 +600,32 @@ def generate_query_variants(query: str, max_variants: int = 3) -> list[QueryVari
 # ---------------------------------------------------------------------------
 # Reranker
 # ---------------------------------------------------------------------------
+
+CROSS_ENCODER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+
+# Cross-encoder weights are immutable and ~80MB; loading them cost ~3-4s on EVERY
+# RAGEReranker() construction, and a reranker is built per pipeline. That doubled the
+# test suite (640s -> 1277s) and put multiple seconds on the first query of every new
+# pipeline. The model is stateless for scoring, so one process-wide instance is correct.
+_cross_encoder_cache: dict[str, Any] = {}
+_cross_encoder_lock = threading.Lock()
+
+
+def _load_cross_encoder(model_name: str):
+    """Return a process-wide cross-encoder, loading it at most once per model."""
+    cached = _cross_encoder_cache.get(model_name)
+    if cached is not None:
+        return cached
+    with _cross_encoder_lock:
+        # Re-check inside the lock: two threads can race past the fast path above.
+        cached = _cross_encoder_cache.get(model_name)
+        if cached is None:
+            from sentence_transformers import CrossEncoder
+
+            cached = CrossEncoder(model_name)
+            _cross_encoder_cache[model_name] = cached
+    return cached
+
 
 class RAGEReranker:
     """Reranker that uses a cross-encoder when available, LLM when an API key is present,
@@ -543,9 +639,19 @@ class RAGEReranker:
 
     # Domain keywords that get a priority boost in the heuristic fallback
     _HIGH_PRIORITY_KEYWORDS: list[str] = [
-        "drawdown", "circuit breaker", "safety buffer", "stop loss",
-        "position sizing", "risk management", "section 1256", "200-dma",
-        "bogleheads", "wash sale", "pdt", "margin", "tax",
+        "drawdown",
+        "circuit breaker",
+        "safety buffer",
+        "stop loss",
+        "position sizing",
+        "risk management",
+        "section 1256",
+        "200-dma",
+        "bogleheads",
+        "wash sale",
+        "pdt",
+        "margin",
+        "tax",
     ]
 
     def __init__(self) -> None:
@@ -559,11 +665,9 @@ class RAGEReranker:
         """Detect the best available reranker and initialize it."""
         # 1. Try cross-encoder
         try:
-            from sentence_transformers import CrossEncoder
-
-            self._cross_encoder = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+            self._cross_encoder = _load_cross_encoder(CROSS_ENCODER_MODEL)
             self._reranker_type = "cross-encoder"
-            logger.info("RAGEReranker: using cross-encoder/ms-marco-MiniLM-L-6-v2")
+            logger.info("RAGEReranker: using %s", CROSS_ENCODER_MODEL)
             return
         except Exception:
             logger.debug("Cross-encoder unavailable, falling through to LLM/heuristic")
@@ -661,7 +765,11 @@ class RAGEReranker:
             # Title-match boost: query tokens appearing in the title get a boost
             title_lower = (c.get("title", "") + " " + str(c.get("id", ""))).lower()
             title_tokens = set(tokenize(title_lower))
-            title_overlap = len(query_tokens & title_tokens) / max(len(query_tokens), 1) if query_tokens else 0.0
+            title_overlap = (
+                len(query_tokens & title_tokens) / max(len(query_tokens), 1)
+                if query_tokens
+                else 0.0
+            )
             title_boost = title_overlap * 0.12
 
             c["rerank_score"] = round(
@@ -679,7 +787,7 @@ class RAGEReranker:
             return []
 
         # Limit to a manageable number for LLM reranking
-        top_candidates = candidates[:min(10, len(candidates))]
+        top_candidates = candidates[: min(10, len(candidates))]
         prompt = self._build_llm_rerank_prompt(query, top_candidates)
 
         try:
@@ -726,9 +834,9 @@ class RAGEReranker:
         ]
         for i, c in enumerate(candidates):
             snippet = (c.get("content_snippet") or c.get("content", ""))[:200]
-            lines.append(f"[{i}] id={c.get('id')} title={c.get('title','')} snippet={snippet}")
+            lines.append(f"[{i}] id={c.get('id')} title={c.get('title', '')} snippet={snippet}")
         lines.append("")
-        lines.append("Output format: [\"id1\", \"id2\", ...]")
+        lines.append('Output format: ["id1", "id2", ...]')
         return "\n".join(lines)
 
     def _parse_llm_rerank_output(self, text: str) -> list[str]:
@@ -769,7 +877,11 @@ class RAGEReranker:
             stemmed_doc = _stem_tokens(doc_tokens)
             if stemmed_query and stemmed_doc:
                 overlap = len(stemmed_query & stemmed_doc) / max(len(stemmed_query), 1)
-                unigram_jaccard = len(stemmed_query & stemmed_doc) / len(stemmed_query | stemmed_doc) if (stemmed_query | stemmed_doc) else 0.0
+                unigram_jaccard = (
+                    len(stemmed_query & stemmed_doc) / len(stemmed_query | stemmed_doc)
+                    if (stemmed_query | stemmed_doc)
+                    else 0.0
+                )
             else:
                 overlap = 0.0
                 unigram_jaccard = 0.0
@@ -783,7 +895,11 @@ class RAGEReranker:
 
             # Title match boost
             title_tokens = set(tokenize(title.lower()))
-            title_match = len(query_tokens & title_tokens) / max(len(query_tokens), 1) if query_tokens else 0.0
+            title_match = (
+                len(query_tokens & title_tokens) / max(len(query_tokens), 1)
+                if query_tokens
+                else 0.0
+            )
 
             # Domain priority keyword boost
             priority_boost = 0.0
@@ -815,6 +931,7 @@ class RAGEReranker:
 # ---------------------------------------------------------------------------
 # Pragmatic hybrid search (bigram-Jaccard + keyword)
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class HybridHit:
@@ -896,14 +1013,20 @@ def pragmatic_hybrid_search(
         if stemmed_query and stemmed_doc:
             unigram = len(stemmed_query & stemmed_doc) / len(stemmed_query | stemmed_doc)
         else:
-            unigram = len(query_tokens & doc_tokens) / len(query_tokens | doc_tokens) if (query_tokens and doc_tokens) else 0.0
+            unigram = (
+                len(query_tokens & doc_tokens) / len(query_tokens | doc_tokens)
+                if (query_tokens and doc_tokens)
+                else 0.0
+            )
 
         # --- Phrase matching bonus ---
         phrase_bonus = 0.15 if query_lower and query_lower in text_lower else 0.0
 
         # --- Title boost ---
         title_tokens = set(tokenize(title_lower))
-        title_match = len(query_tokens & title_tokens) / max(len(query_tokens), 1) if query_tokens else 0.0
+        title_match = (
+            len(query_tokens & title_tokens) / max(len(query_tokens), 1) if query_tokens else 0.0
+        )
 
         # --- Keyword: BM25 (from SQLite FTS5, or TF fallback) ---
         raw_bm25 = abs(float(lesson.get("bm25_score", 0.0)))
@@ -957,6 +1080,7 @@ def pragmatic_hybrid_search(
 # ---------------------------------------------------------------------------
 # Deterministic gate
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class GateDecision:
@@ -1017,9 +1141,10 @@ def gate_decision(top_lessons: list[tuple[LessonResult, float]]) -> GateDecision
         max_score = max(max_score, score)
         sev = lesson.severity.upper()
 
-        if sev == "CRITICAL" and score > _BLOCK_THRESHOLD_CRITICAL:
-            blocking.append(f"[{sev}] {lesson.title} (score={score:.2f})")
-        elif sev == "HIGH" and score > _BLOCK_THRESHOLD_HIGH:
+        is_blocking = (sev == "CRITICAL" and score > _BLOCK_THRESHOLD_CRITICAL) or (
+            sev == "HIGH" and score > _BLOCK_THRESHOLD_HIGH
+        )
+        if is_blocking:
             blocking.append(f"[{sev}] {lesson.title} (score={score:.2f})")
         elif sev in ("CRITICAL", "HIGH") and score > _WARN_THRESHOLD:
             warnings.append(f"[{sev}] {lesson.title} (score={score:.2f})")
@@ -1057,6 +1182,7 @@ def gate_decision(top_lessons: list[tuple[LessonResult, float]]) -> GateDecision
 # ---------------------------------------------------------------------------
 # The full pipeline
 # ---------------------------------------------------------------------------
+
 
 class TradingRAGPipeline:
     """End-to-end RAG pipeline for the trading system.
@@ -1107,15 +1233,13 @@ class TradingRAGPipeline:
             prevention=record.prevention,
             tags=record.tags,
             source=source,
-            created_at=datetime.now(timezone.utc).isoformat(),
+            created_at=datetime.now(UTC).isoformat(),
         )
         self.store.put(record)
         self._cache_loaded = False  # invalidate cache
         return True, f"Stored lesson '{record.lesson_id}'"
 
-    def add_lesson(
-        self, lesson_id: str, content: str, *, source: str = "manual"
-    ) -> bool:
+    def add_lesson(self, lesson_id: str, content: str, *, source: str = "manual") -> bool:
         """Convenience alias: add a lesson with quality gate."""
         normalized = re.sub(r"\s+", " ", content).strip()
         passes, reason = quality_gate(normalized)
@@ -1131,7 +1255,7 @@ class TradingRAGPipeline:
             prevention=record.prevention,
             tags=record.tags,
             source=source,
-            created_at=datetime.now(timezone.utc).isoformat(),
+            created_at=datetime.now(UTC).isoformat(),
         )
         self.store.put(record)
         self._cache_loaded = False
@@ -1209,7 +1333,11 @@ class TradingRAGPipeline:
         # bigram-Jaccard + cross-encoder handle precision.
         fts_results = self.store.fts_search(query, top_k=200)
         if severity_filter:
-            fts_results = [item for item in fts_results if item.get("severity", "").upper() == severity_filter.upper()]
+            fts_results = [
+                item
+                for item in fts_results
+                if item.get("severity", "").upper() == severity_filter.upper()
+            ]
 
         # Pragmatic hybrid search: bigram-Jaccard on top of FTS5 BM25 results
         hits = pragmatic_hybrid_search(query, fts_results, top_k=top_k * 8)
@@ -1224,7 +1352,11 @@ class TradingRAGPipeline:
             for variant in variants:
                 v_fts = self.store.fts_search(variant.text, top_k=100)
                 if severity_filter:
-                    v_fts = [item for item in v_fts if item.get("severity", "").upper() == severity_filter.upper()]
+                    v_fts = [
+                        item
+                        for item in v_fts
+                        if item.get("severity", "").upper() == severity_filter.upper()
+                    ]
                 v_hits = pragmatic_hybrid_search(variant.text, v_fts, top_k=top_k * 2)
                 # Merge by lesson_id, keeping highest combined_score
                 existing_ids = {h.id for h in hits}
@@ -1268,7 +1400,9 @@ class TradingRAGPipeline:
             # (not batch-relative), so OOD queries get near-zero scores
             if self._reranker._cross_encoder is not None and candidates:
                 ce_candidates = [dict(c) for c in candidates]
-                ce_pass = self._reranker._rerank_cross_encoder(query, ce_candidates, top_n=len(ce_candidates))
+                ce_pass = self._reranker._rerank_cross_encoder(
+                    query, ce_candidates, top_n=len(ce_candidates)
+                )
                 max_ce_sig = max((float(r.get("_ce_sigmoid", 0.0)) for r in ce_pass), default=0.0)
                 if max_ce_sig < _CE_OOD_THRESHOLD:
                     return []  # Out-of-domain — all CE scores too low
@@ -1277,42 +1411,52 @@ class TradingRAGPipeline:
             reranked = self._reranker.rerank(query, candidates, top_n=top_k * 8)
 
             # Filter by minimum rerank score
-            reranked = [r for r in reranked if float(r.get("rerank_score", 0.0)) >= _MIN_RESULT_SCORE]
+            reranked = [
+                r for r in reranked if float(r.get("rerank_score", 0.0)) >= _MIN_RESULT_SCORE
+            ]
 
             results = []
             for c in reranked:
-                results.append({
-                    "id": c["id"],
-                    "title": c["title"],
-                    "severity": c["severity"].upper(),
-                    "snippet": c.get("content_snippet", c.get("content", ""))[:500],
-                    "content": c.get("content", ""),
-                    "prevention": c.get("prevention", ""),
-                    "file": c.get("file", ""),
-                    "score": c.get("rerank_score", c.get("score", 0.0)),
-                    "lexical_score": next((h.lexical_score for h in hits if h.id == c["id"]), 0.0),
-                    "keyword_score": next((h.keyword_score for h in hits if h.id == c["id"]), 0.0),
-                    "reranker_type": self._reranker.reranker_type,
-                })
+                results.append(
+                    {
+                        "id": c["id"],
+                        "title": c["title"],
+                        "severity": c["severity"].upper(),
+                        "snippet": c.get("content_snippet", c.get("content", ""))[:500],
+                        "content": c.get("content", ""),
+                        "prevention": c.get("prevention", ""),
+                        "file": c.get("file", ""),
+                        "score": c.get("rerank_score", c.get("score", 0.0)),
+                        "lexical_score": next(
+                            (h.lexical_score for h in hits if h.id == c["id"]), 0.0
+                        ),
+                        "keyword_score": next(
+                            (h.keyword_score for h in hits if h.id == c["id"]), 0.0
+                        ),
+                        "reranker_type": self._reranker.reranker_type,
+                    }
+                )
             return results[:top_k]
 
         # --- No rerank — return hybrid results with OOD filter ---
         results = []
         for h in hits[:top_k]:
             if h.combined_score >= _MIN_RESULT_SCORE:
-                results.append({
-                    "id": h.id,
-                    "title": h.title,
-                    "severity": h.severity.upper(),
-                    "snippet": h.snippet,
-                    "content": h.raw.get("content", h.snippet),
-                    "prevention": h.prevention,
-                    "file": h.file,
-                    "score": h.combined_score,
-                    "lexical_score": h.lexical_score,
-                    "keyword_score": h.keyword_score,
-                    "reranker_type": self._reranker.reranker_type,
-                })
+                results.append(
+                    {
+                        "id": h.id,
+                        "title": h.title,
+                        "severity": h.severity.upper(),
+                        "snippet": h.snippet,
+                        "content": h.raw.get("content", h.snippet),
+                        "prevention": h.prevention,
+                        "file": h.file,
+                        "score": h.combined_score,
+                        "lexical_score": h.lexical_score,
+                        "keyword_score": h.keyword_score,
+                        "reranker_type": self._reranker.reranker_type,
+                    }
+                )
         return results
 
     def search(
@@ -1359,8 +1503,7 @@ class TradingRAGPipeline:
         context_parts = []
         for i, (lesson, score) in enumerate(results, 1):
             context_parts.append(
-                f"[{i}] ({lesson.severity}) {lesson.title} | score={score:.3f} | "
-                f"id={lesson.id}"
+                f"[{i}] ({lesson.severity}) {lesson.title} | score={score:.3f} | id={lesson.id}"
             )
             context_parts.append(lesson.snippet[:300])
             context_parts.append("")
@@ -1371,7 +1514,9 @@ class TradingRAGPipeline:
     def get_critical_lessons(self) -> list[dict[str, Any]]:
         """Return all CRITICAL severity lessons."""
         self._ensure_loaded()
-        return [item for item in self._lessons_cache if item.get("severity", "").upper() == "CRITICAL"]
+        return [
+            item for item in self._lessons_cache if item.get("severity", "").upper() == "CRITICAL"
+        ]
 
     def close(self) -> None:
         self.store.close()
@@ -1396,6 +1541,8 @@ def get_trading_rag_pipeline(
         with _default_lock:
             if _default_pipeline is None or refresh:
                 db = db_path or DEFAULT_DB_PATH
-                lessons = lessons_dir or (Path(__file__).parent.parent.parent / "rag_knowledge" / "lessons_learned")
+                lessons = lessons_dir or (
+                    Path(__file__).parent.parent.parent / "rag_knowledge" / "lessons_learned"
+                )
                 _default_pipeline = TradingRAGPipeline(db_path=db, lessons_dir=lessons)
     return _default_pipeline

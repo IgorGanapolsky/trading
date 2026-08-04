@@ -39,7 +39,12 @@ class RAGSafetyGuard:
                 content = (doc.get("content_snippet", "") or doc.get("content", "") or "").upper()
                 # Check severity from the lesson record
                 severity = str(doc.get("severity", "")).upper()
-                if "FAILURE" in content or "LOSS" in content or "CRITICAL" in content or severity in ("CRITICAL", "HIGH"):
+                if (
+                    "FAILURE" in content
+                    or "LOSS" in content
+                    or "CRITICAL" in content
+                    or severity in ("CRITICAL", "HIGH")
+                ):
                     warnings.append(doc.get("id", "Unknown Lesson"))
 
             if warnings:

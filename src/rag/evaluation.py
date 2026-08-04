@@ -272,40 +272,54 @@ class RAGEvaluator:
                 "yes",
             }
         self.prefer_lancedb = prefer_lancedb
+        # Opt-in only: score the legacy standalone term-counter instead of the path the
+        # application actually serves. Useful as a baseline, never as the default.
+        self.legacy_keyword_engine = os.getenv("RAG_EVAL_LEGACY_ENGINE", "").lower() in {
+            "1",
+            "true",
+            "yes",
+        }
         self._search_engine = None
         self._engine_source = None
 
     def _get_search_engine(self):
-        """Lazy load the search engine."""
+        """Lazy load the retriever under evaluation.
+
+        Defaults to the **production** entry point, `LessonsLearnedRAG.query()`, which
+        prefers TradingRAGPipeline (FTS5 + bigram-Jaccard + multi-query + rerank).
+
+        Previously this defaulted to the standalone `LessonsSearch` term-counter, so the
+        harness scored a retriever the application never calls and published the result
+        as a CI pass/fail gate. A metric whose provenance does not match its label is
+        worse than no metric: it manufactures confidence. `_engine_source` now names the
+        backend that actually served the queries, and the report prints it.
+        """
         if self._search_engine is None:
-            if self.prefer_lancedb:
-                try:
-                    from src.rag.lessons_learned_rag import LessonsLearnedRAG
-
-                    self._search_engine = LessonsLearnedRAG()
-                    if getattr(self._search_engine, "lancedb_rag", None) is not None:
-                        self._engine_source = "lancedb"
-                    else:
-                        self._engine_source = "keyword"
-                    return self._search_engine
-                except Exception as e:
-                    logger.warning(f"LanceDB RAG unavailable: {e} - using keyword search")
-
-            try:
+            if self.legacy_keyword_engine:
                 from src.rag.lessons_search import get_lessons_search
 
                 self._search_engine = get_lessons_search()
-                self._engine_source = "keyword"
-            except ImportError:
-                # Fallback to LessonsLearnedRAG
+                self._engine_source = "legacy_keyword(LessonsSearch)"
+                return self._search_engine
+
+            try:
                 from src.rag.lessons_learned_rag import LessonsLearnedRAG
 
                 self._search_engine = LessonsLearnedRAG()
-                self._engine_source = (
-                    "lancedb"
-                    if getattr(self._search_engine, "lancedb_rag", None) is not None
-                    else "keyword"
-                )
+                if getattr(self._search_engine, "lancedb_rag", None) is not None:
+                    self._engine_source = "production(lancedb)"
+                elif getattr(self._search_engine, "_pipeline", None) is not None:
+                    self._engine_source = "production(pipeline)"
+                else:
+                    self._engine_source = "production(keyword_fallback)"
+                return self._search_engine
+            except Exception as e:
+                logger.warning("Production retriever unavailable (%s); scoring legacy engine", e)
+
+            from src.rag.lessons_search import get_lessons_search
+
+            self._search_engine = get_lessons_search()
+            self._engine_source = "legacy_keyword(LessonsSearch)"
         return self._search_engine
 
     def get_engine_source(self) -> Optional[str]:
@@ -535,9 +549,7 @@ class RAGEvaluator:
             return 0.0
 
         # Normalize graded_relevance keys to match normalized retrieved IDs
-        normalized_relevance = {
-            self._normalize_match_id(k): v for k, v in graded_relevance.items()
-        }
+        normalized_relevance = {self._normalize_match_id(k): v for k, v in graded_relevance.items()}
 
         dcg = 0.0
         for i, doc in enumerate(retrieved[:k]):

@@ -6,6 +6,11 @@ sentiment_rag.db-wal
 # ChromaDB vector database (regenerated with vectorize_rag_knowledge.py --rebuild)
 chroma_db/
 
+# Temporal trade graph (regenerated with scripts/trade_graph.py --build)
+trade_graph.sqlite
+trade_graph.sqlite-shm
+trade_graph.sqlite-wal
+
 # Large RAG source files (download on demand)
 berkshire_letters/raw/*.pdf
 bogleheads/raw/

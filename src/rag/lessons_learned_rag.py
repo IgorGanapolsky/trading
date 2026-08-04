@@ -45,9 +45,11 @@ class LessonsLearnedRAG:
         self._pipeline = None
         try:
             from src.rag.rag_pipeline import TradingRAGPipeline, get_trading_rag_pipeline
+
             if self._custom_dir:
                 # Custom directory: create a separate pipeline (not the singleton)
                 import tempfile as _tempfile
+
                 _fd, _db_path = _tempfile.mkstemp(suffix=".db")
                 os.close(_fd)
                 self._pipeline = TradingRAGPipeline(
@@ -285,7 +287,14 @@ class LessonsLearnedRAG:
         """
         if self._pipeline is not None:
             try:
-                return self._pipeline.query(query=query, top_k=top_k, severity_filter=severity_filter)
+                results = self._pipeline.query(
+                    query=query, top_k=top_k, severity_filter=severity_filter
+                )
+                # Record provenance. Without this the primary backend served results
+                # while `last_source` stayed at its "none" default, so the CLI reported
+                # no source for rows it had just returned.
+                self.last_source = "pipeline"
+                return results
             except Exception as e:
                 logger.warning(f"TradingRAGPipeline query failed: {e} - using legacy search")
 
@@ -505,8 +514,18 @@ class LessonsLearnedRAG:
         return scored_results[:top_k]
 
     def add_lesson(self, lesson_id: str, content: str) -> None:
-        """Add a new lesson (writes to file)."""
+        """Add a new lesson (writes to file) and make it immediately retrievable."""
         self.knowledge_dir.mkdir(parents=True, exist_ok=True)
         lesson_file = self.knowledge_dir / f"{lesson_id}.md"
         lesson_file.write_text(content, encoding="utf-8")
-        self._load_lessons()  # Reload
+        self._load_lessons()  # Reload the legacy keyword corpus
+
+        # query() prefers the pipeline backend, so a write that never reaches the
+        # pipeline index is invisible to the very next read. Without this re-index the
+        # write/read contract silently did not hold: the file existed on disk and the
+        # lesson was unretrievable.
+        if self._pipeline is not None:
+            try:
+                self._pipeline.index_from_markdown_dir(str(self.knowledge_dir))
+            except Exception as e:
+                logger.warning(f"Pipeline re-index after add_lesson failed: {e}")

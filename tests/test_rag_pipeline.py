@@ -1,10 +1,10 @@
 """Unit tests for the 5-stage TradingRAGPipeline:
 
-  Stage 1: Capture 👎 → normalize/quality-gate → store lesson (SQLite FTS5)
-  Stage 2: Retrieve: bigram-Jaccard + keyword pragmatic-hybrid-search
-  Stage 3: Multi-query (3 variants, combined-score threshold trigger)
-  Stage 4: Cross-encoder reranker (LLM if key, else heuristic)
-  Stage 5: Assemble context + deterministic gate
+Stage 1: Capture 👎 → normalize/quality-gate → store lesson (SQLite FTS5)
+Stage 2: Retrieve: bigram-Jaccard + keyword pragmatic-hybrid-search
+Stage 3: Multi-query (3 variants, combined-score threshold trigger)
+Stage 4: Cross-encoder reranker (LLM if key, else heuristic)
+Stage 5: Assemble context + deterministic gate
 """
 
 from __future__ import annotations
@@ -13,6 +13,7 @@ import os
 import sys
 import tempfile
 import logging
+from pathlib import Path
 
 import pytest
 
@@ -132,10 +133,7 @@ class TestStage1CaptureAndStore:
         """Lesson without prevention section should be rejected."""
         from src.rag.rag_pipeline import quality_gate
 
-        content = (
-            "# CRITICAL: Bad Trade\n\n"
-            "## Severity\nCRITICAL\n"
-        )
+        content = "# CRITICAL: Bad Trade\n\n## Severity\nCRITICAL\n"
         passed, reason = quality_gate(content)
         assert passed is False
 
@@ -275,8 +273,25 @@ class TestStage3MultiQuery:
 
 class TestStage4Reranker:
     def test_reranker_type_is_cross_encoder(self, pipeline):
-        """Reranker should use cross-encoder when available."""
-        assert pipeline._reranker.reranker_type == "cross-encoder"
+        """Cross-encoder when the optional dep is installed; documented fallback otherwise.
+
+        `sentence_transformers` is optional. Asserting it is always present made this
+        test fail on any environment without it, which is a report about the machine,
+        not about the pipeline. The invariant that matters is that the reranker resolves
+        to a known backend and never silently ends up in an undefined state.
+        """
+        try:
+            import sentence_transformers  # noqa: F401
+
+            cross_encoder_available = True
+        except ImportError:
+            cross_encoder_available = False
+
+        reranker_type = pipeline._reranker.reranker_type
+        if cross_encoder_available:
+            assert reranker_type == "cross-encoder"
+        else:
+            assert reranker_type in {"llm", "heuristic"}
 
     def test_cross_encoder_scores_in_range(self, pipeline):
         """CE ensemble scores should be in [0, 1] range."""
@@ -307,8 +322,13 @@ class TestStage4Reranker:
         assert reranker.reranker_type == "heuristic"
         # Should not crash on simple candidates
         candidates = [
-            {"id": "ll-001", "title": "test", "severity": "HIGH",
-             "content_snippet": "test content", "score": 0.5},
+            {
+                "id": "ll-001",
+                "title": "test",
+                "severity": "HIGH",
+                "content_snippet": "test content",
+                "score": 0.5,
+            },
         ]
         results = reranker.rerank("test query", candidates, top_n=1)
         assert len(results) == 1
@@ -317,9 +337,12 @@ class TestStage4Reranker:
 # -- Stage 5: Assemble context + deterministic gate --
 
 
-def _make_lesson_result(lesson_id: str, title: str, severity: str, prevention: str = "Prevent this", score: float = 0.5):
+def _make_lesson_result(
+    lesson_id: str, title: str, severity: str, prevention: str = "Prevent this", score: float = 0.5
+):
     """Helper to create a LessonResult for gate tests."""
     from src.rag.rag_pipeline import LessonResult
+
     return LessonResult(
         id=lesson_id,
         title=title,
@@ -387,7 +410,9 @@ class TestStage5DeterministicGate:
 
     def test_retrieve_and_gate_integration(self, pipeline):
         """Full pipeline: retrieve + gate should return (results, decision, context)."""
-        results, decision, context = pipeline.retrieve_and_gate("iron condor exit strategy", top_k=5)
+        results, decision, context = pipeline.retrieve_and_gate(
+            "iron condor exit strategy", top_k=5
+        )
         assert isinstance(results, list)
         assert decision is not None
         assert decision.severity in ("APPROVED", "WARN", "BLOCK")
@@ -406,8 +431,16 @@ class TestLessonsLearnedRAGDelegation:
         rag = LessonsLearnedRAG()
         try:
             assert rag._pipeline is not None
-            # The standard lessons dir has 320 lessons
-            assert rag._pipeline.lesson_count >= 300
+            # Assert against the corpus that actually exists rather than a hardcoded
+            # count. The old `>= 300` encoded a stale snapshot and broke as soon as the
+            # lessons directory changed size, which says nothing about delegation.
+            lessons_dir = Path(__file__).resolve().parents[1] / "rag_knowledge" / "lessons_learned"
+            on_disk = len(list(lessons_dir.glob("*.md")))
+            assert on_disk > 0, "lessons corpus is empty; nothing to delegate to"
+            assert rag._pipeline.lesson_count > 0
+            assert rag._pipeline.lesson_count <= on_disk, (
+                "pipeline reports more lessons than exist on disk"
+            )
         finally:
             if rag._pipeline:
                 rag._pipeline.close()

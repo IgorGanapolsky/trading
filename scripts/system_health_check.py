@@ -186,9 +186,18 @@ def check_rag_system():
         # Verify the read/write contract without mutating the repository.
         with tempfile.TemporaryDirectory(prefix="trading-rag-health-") as tmpdir:
             writable_rag = LessonsLearnedRAG(knowledge_dir=tmpdir)
+            # The probe must satisfy quality_gate(): a severity marker AND a
+            # prevention/action section. Without the section the lesson is rejected at
+            # ingestion, so the round trip could never succeed and this check reported
+            # "RAG System: BROKEN" permanently -- a broken probe, not a broken RAG.
             writable_rag.add_lesson(
                 "LL-HEALTH",
-                "# Health Probe\n\n**Severity**: LOW\n\nRAG write and read round trip.",
+                "# Health Probe\n\n"
+                "**Severity**: LOW\n\n"
+                "## Summary\n"
+                "RAG write and read round trip.\n\n"
+                "## Prevention\n"
+                "Keep the health probe lesson valid so the round trip stays meaningful.",
             )
             round_trip = writable_rag.query("round trip", top_k=1)
             if not round_trip or round_trip[0]["id"] != "LL-HEALTH":
@@ -196,6 +205,17 @@ def check_rag_system():
                 results["status"] = "BROKEN"
                 return results
             results["details"].append("✓ RAG write/read round trip works")
+
+        # Name the active retrieval tier. Degradation here is allowed (trading must
+        # never be blocked by a search index), but it must never be invisible: the
+        # weak tier measured precision@5 0.20 against 0.36 with the cross-encoder.
+        try:
+            from src.rag.retrieval_tier import describe_retrieval_tier, tier_summary_line
+
+            marker = "⚠️" if describe_retrieval_tier()["quality_degraded"] else "✓"
+            results["details"].append(f"{marker} {tier_summary_line()}")
+        except Exception as exc:
+            results["details"].append(f"⚠️ Retrieval tier unknown: {exc}")
 
         # Test QueryRewriter & ParentChildRetriever modules
         try:

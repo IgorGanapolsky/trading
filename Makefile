@@ -31,6 +31,10 @@ coverage:
 
 audit:
 	$(VENV_PYTHON) scripts/audit_repository_hygiene.py --check
+	$(VENV_PYTHON) scripts/check_exit_reason_coverage.py
+
+graph:
+	$(VENV_PYTHON) scripts/trade_graph.py --build
 
 security:
 	$(VENV_PYTHON) -m pip_audit
@@ -46,6 +50,7 @@ skill-check:
 check: lint audit security skill-check test
 
 dry-run: health
+	$(VENV_PYTHON) scripts/check_exit_reason_coverage.py
 	$(VENV_PYTHON) scripts/spy_put_credit.py --dry-run
 	$(VENV_PYTHON) scripts/residual_ic_manager.py --dry-run
 

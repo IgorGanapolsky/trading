@@ -30,12 +30,17 @@ from src.rag.evaluation import (
 )
 
 
-def print_report(report: EvaluationReport, verbose: bool = False) -> None:
+def print_report(
+    report: EvaluationReport, verbose: bool = False, engine_source: str | None = None
+) -> None:
     """Print evaluation report to console."""
     print("\n" + "=" * 60)
     print("RAG EVALUATION REPORT")
     print("=" * 60)
     print(f"Timestamp: {report.timestamp}")
+    # Provenance: a retrieval score is only interpretable against the backend that
+    # produced it. This harness previously scored an engine the app never calls.
+    print(f"Engine scored: {engine_source or 'unknown'}")
     print(f"Queries evaluated: {report.num_queries}")
     print(f"k (top results considered): {report.k}")
 
@@ -237,7 +242,7 @@ Examples:
     if args.json:
         print(json.dumps(report.to_dict(), indent=2))
     else:
-        print_report(report, verbose=args.verbose)
+        print_report(report, verbose=args.verbose, engine_source=engine_source)
 
     # Save if requested
     if args.save:
