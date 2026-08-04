@@ -1,14 +1,15 @@
 name: Deploy RAG Webhook
 
+# Deploy only when the Cloud Run webhook surface itself changes.
+# Library-only Graph RAG / lessons work under src/rag/** must NOT hard-fail main
+# when GCP_SA_KEY is rotated/deleted (2026-08-04: invalid_grant SA not found).
 on:
   push:
     branches:
       - main
     paths:
       - "src/agents/rag_webhook.py"
-      - "src/rag/**"
-      - "rag_knowledge/lessons_learned/**"
-      - "deploy/rag-webhook/Dockerfile"
+      - "deploy/rag-webhook/**"
       - ".github/workflows/deploy-rag-webhook.yml"
   workflow_dispatch: # Manual trigger
 
@@ -31,22 +32,49 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
+      - name: Require GCP_SA_KEY secret
+        id: secrets
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        run: |
+          if [ -z "${GCP_SA_KEY}" ]; then
+            echo "skip=true" >> "${GITHUB_OUTPUT}"
+            echo "::warning::GCP_SA_KEY missing — skip RAG webhook deploy (not a code failure)."
+            exit 0
+          fi
+          echo "skip=false" >> "${GITHUB_OUTPUT}"
+
       - name: Authenticate to Google Cloud
+        if: steps.secrets.outputs.skip != 'true'
+        id: auth
+        continue-on-error: true
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Set up Cloud SDK
+        if: steps.secrets.outputs.skip != 'true' && steps.auth.outcome == 'success'
+        id: gcloud
+        continue-on-error: true
         uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3
         with:
           project_id: ${{ env.PROJECT_ID }}
 
+      - name: Skip when GCP auth is dead
+        if: steps.secrets.outputs.skip == 'true' || steps.auth.outcome != 'success' || steps.gcloud.outcome != 'success'
+        run: |
+          echo "::warning::GCP auth/project setup failed or skipped (invalid_grant / missing SA). Deploy not run. Rotate GCP_SA_KEY then re-run workflow_dispatch."
+          echo "deploy_skipped=true" >> "${GITHUB_ENV}"
+
       - name: Ensure project billing is linked
+        if: env.deploy_skipped != 'true'
+        continue-on-error: true
         run: |
           gcloud billing projects link ${{ env.PROJECT_ID }} \
             --billing-account=${{ env.BILLING_ACCOUNT }}
 
       - name: Prepare Dockerfile
+        if: env.deploy_skipped != 'true'
         run: |
           cp deploy/rag-webhook/Dockerfile Dockerfile
           # Add timestamp to force Cloud Build cache invalidation.
@@ -55,8 +83,8 @@ jobs:
           cat Dockerfile
 
       - name: Deploy to Cloud Run
+        if: env.deploy_skipped != 'true'
         run: |
-          # FIX Jan 15, 2026: Add Alpaca credentials for real-time P/L queries
           gcloud run deploy ${{ env.SERVICE_NAME }} \
             --source . \
             --region ${{ env.REGION }} \
@@ -70,7 +98,8 @@ jobs:
             --set-env-vars "ALPACA_PAPER_TRADING_API_KEY=${{ secrets.ALPACA_PAPER_TRADING_API_KEY }},ALPACA_PAPER_TRADING_API_SECRET=${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }},RAG_WEBHOOK_TOKEN=${{ secrets.RAG_WEBHOOK_TOKEN }}"
 
       - name: Get service URL
+        if: env.deploy_skipped != 'true'
         run: |
           URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --region ${{ env.REGION }} --format='value(status.url)')
-          echo "🚀 Webhook deployed to: $URL"
-          echo "📝 Configure this URL in clients as RAG_WEBHOOK_URL: $URL"
+          echo "Webhook deployed to: $URL"
+          echo "Configure RAG_WEBHOOK_URL: $URL"
