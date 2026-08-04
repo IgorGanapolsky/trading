@@ -14,3 +14,7 @@ lessons.sqlite
 lessons.sqlite-wal
 lessons.sqlite-shm
 lessons.sqlite-journal
+financial_graph.sqlite
+financial_graph.sqlite-wal
+financial_graph.sqlite-shm
+financial_graph.sqlite-journal

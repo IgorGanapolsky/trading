@@ -61,6 +61,12 @@ python scripts/system_health_check.py
 # optional refresh (mutates local state files; does not open risk by itself)
 python scripts/sync_alpaca_state.py
 python scripts/sync_closed_positions.py
+# Graph RAG (relationships across kill switch, lessons, paired trades)
+python scripts/graph_rag_query.py --rebuild
+python scripts/graph_rag_query.py --query "why is iron condor killed?" --graph-only
+# Hard gate: rebuild + 5 golden multi-hop assertions (CI offline-evals + make check)
+python scripts/verify_graph_rag.py
+make graph-rag-check
 ```
 
 Inventory unclean (`exit 2`) → **no new risk**.

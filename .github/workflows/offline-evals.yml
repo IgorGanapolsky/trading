@@ -50,4 +50,12 @@ jobs:
             tests/evals \
             tests/test_mandatory_trade_gate.py \
             tests/test_orchestrator_gates.py \
-            tests/test_lessons_learned_rag_smoke.py
+            tests/test_lessons_learned_rag_smoke.py \
+            tests/test_graph_rag.py
+
+      - name: Graph RAG rebuild + golden multi-hop gate
+        env:
+          HF_HUB_OFFLINE: "1"
+          TRANSFORMERS_OFFLINE: "1"
+        run: |
+          python scripts/verify_graph_rag.py --json

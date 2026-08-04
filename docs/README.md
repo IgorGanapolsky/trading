@@ -19,6 +19,7 @@ Operator and design docs for the trading lab.
 | [operator-guide.md](./operator-guide.md)                           | Current paper strategy and operating gates |
 | [research/](./research/)                                           | Edge audits and deep dives                 |
 | [RAG_11_STAGES_SPECIFICATION.md](./RAG_11_STAGES_SPECIFICATION.md) | RAG pipeline stages                        |
+| [GRAPH_RAG.md](./GRAPH_RAG.md)                                     | Temporal Graph RAG (strategy/lesson/trade) |
 | [EXTENSIONS.md](./EXTENSIONS.md)                                   | Optional provider boundary                 |
 
 ## Pitch / archive (not operating truth)
