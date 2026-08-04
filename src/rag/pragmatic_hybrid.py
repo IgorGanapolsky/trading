@@ -314,11 +314,17 @@ def score_relevance(lesson: dict[str, Any], query: str) -> float:
         if phrase in q_lower and phrase in blob:
             score += 0.18
 
-    # Distinctive multi-word title/id alignment
-    for phrase in re.findall(r"[a-z0-9]+(?:[_\s-][a-z0-9]+){1,3}", q_lower):
-        compact = phrase.replace(" ", "_").replace("-", "_")
-        if len(compact) >= 6 and (compact in lid or phrase in title_l or phrase in blob[:2000]):
-            score += 0.12
+    # Distinctive multi-word title/id alignment (bounded, linear scan — no ReDoS)
+    tokens = [t for t in re.split(r"[^a-z0-9]+", q_lower) if t]
+    for width in (2, 3, 4):
+        if len(tokens) < width:
+            continue
+        for i in range(len(tokens) - width + 1):
+            phrase_parts = tokens[i : i + width]
+            phrase = " ".join(phrase_parts)
+            compact = "_".join(phrase_parts)
+            if len(compact) >= 6 and (compact in lid or phrase in title_l or phrase in blob[:2000]):
+                score += 0.12
 
     # Intent / failure-mode boosts (precision for operator queries)
     if "error" in q_lower or "bug" in q_lower:
