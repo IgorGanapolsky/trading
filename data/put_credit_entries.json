@@ -114,7 +114,7 @@
     },
     "structure": "bull_put_credit",
     "submitted_at": "2026-07-24T16:58:19.748755+00:00",
-    "validation_phase": true,
+    "validation_phase": false,
     "exit_reason": "profit_target",
     "exit_submitted_at": "2026-08-03T15:55:00.459888+00:00",
     "estimated_exit_debit": 0.26,
@@ -130,6 +130,7 @@
       "note": "Counterfactuals only \u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history."
     },
     "exit_order_id": "3310d412-8ec4-4e91-9a6f-123366586a4a",
-    "exit_filled_at": "2026-08-03T16:48:41.592843+00:00"
+    "exit_filled_at": "2026-08-03T16:48:41.592843+00:00",
+    "evidence_note": "broker_reconstructed_unverified: excluded from protocol validation cohort"
   }
 }

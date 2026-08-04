@@ -144,6 +144,38 @@ def test_invalid_protocol_row_is_quarantined_and_blocks_learning() -> None:
     assert not evidence.learning_ready
 
 
+def test_broker_reconstructed_unverified_is_warning_not_issue() -> None:
+    """Reconstructed fills stay quarantined without red-lighting evidence health."""
+    payload = {
+        "trades": [
+            _put_credit_row(
+                id="PCS-recon",
+                selection_method="broker_reconstructed_unverified",
+                put_delta=None,
+                validation_phase=False,
+            ),
+            _put_credit_row(
+                id="PCS-good",
+                selection_method="live_delta_band_scan",
+                put_delta=0.1843,
+            ),
+        ],
+        "stats": {"closed_trades": 2, "total_realized_pnl": 150},
+    }
+
+    evidence = build_trade_evidence(
+        payload,
+        strategy_family="spy_put_credit",
+        require_protocol_fields=True,
+    )
+
+    assert [row["id"] for row in evidence.rows] == ["PCS-good"]
+    assert evidence.rejected_by_reason["broker_reconstructed_unverified"] == 1
+    assert any("quarantined_unverified_reconstruction" in w for w in evidence.warnings)
+    assert not any("failed evidence validation" in issue for issue in evidence.issues)
+    assert evidence.learning_ready
+
+
 def test_outcome_mismatch_and_duplicate_ids_are_rejected() -> None:
     first = _put_credit_row(outcome="loss")
     duplicate = deepcopy(first)
