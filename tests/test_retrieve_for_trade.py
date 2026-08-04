@@ -252,3 +252,80 @@ def test_defended_path_retrieves_sizing_lesson(tmp_db: Path, knowledge_dir: Path
     )
     assert res.lessons
     assert any("999" in str(x.get("id")) for x in res.lessons)
+
+
+def test_ood_queries_return_empty(tmp_db: Path, knowledge_dir: Path):
+    """Out-of-domain queries must not inject random lessons into trade gates."""
+    from src.rag.cross_encoder_rerank import is_trading_domain_query
+
+    ensure_index(tmp_db, knowledge_dir, force=True)
+    ood = [
+        "quantum gravity trade execution protocol",
+        "mars colony funding strategy for options traders",
+        "dinosaur extinction hedging playbook",
+    ]
+    for q in ood:
+        assert is_trading_domain_query(q) is False
+        res = retrieve_for_trade(
+            q,
+            top_k=5,
+            db_path=tmp_db,
+            knowledge_dir=knowledge_dir,
+            ensure_fts=False,
+            use_llm_rerank=False,
+        )
+        assert res.lessons == [], f"OOD leak for query={q!r}: {res.lessons}"
+
+
+def test_domain_query_detector_positive():
+    from src.rag.cross_encoder_rerank import is_trading_domain_query
+
+    assert is_trading_domain_query("iron condor exit strategy")
+    assert is_trading_domain_query("position sizing error")
+    assert is_trading_domain_query("SOFI blocked trading")
+    assert is_trading_domain_query("close position API bug")
+
+
+def test_strategy_family_filter_and_parent_expand(tmp_db: Path, knowledge_dir: Path):
+    """Metadata filter keeps put-credit family; parent expand fills section_pack."""
+    (knowledge_dir / "LL-PCS_put_credit_stop.md").write_text(
+        """# LL-PCS Put credit stop
+
+**Severity**: HIGH
+
+## What Happened
+Put credit stop at 200% credit fired on SPY.
+
+## Prevention
+Exit bull put credit at 200% of credit or 7 DTE; never scale lots mid-cohort.
+
+## Tags
+`spy_put_credit`, `stop_loss`
+""",
+        encoding="utf-8",
+    )
+    ensure_index(tmp_db, knowledge_dir, force=True)
+    res = retrieve_for_trade(
+        "put credit stop loss SPY bull put",
+        top_k=5,
+        db_path=tmp_db,
+        knowledge_dir=knowledge_dir,
+        ensure_fts=False,
+        use_llm_rerank=False,
+        strategy_family="spy_put_credit",
+        parent_expand=True,
+    )
+    assert res.lessons
+    assert res.meta.get("parent_expand") is True
+    assert any(str(x.get("strategy_family")) in {"spy_put_credit", "general"} for x in res.lessons)
+    # Parent expand should surface prevention pack for matched lessons
+    top = res.lessons[0]
+    assert top.get("prevention") or top.get("section_pack") or top.get("content")
+
+
+def test_infer_strategy_family_helpers():
+    from src.rag.retrieve_for_trade import _infer_strategy_family
+
+    assert _infer_strategy_family("spy put credit 1-lot") == "spy_put_credit"
+    assert _infer_strategy_family("iron condor 4-leg IC") == "iron_condor"
+    assert _infer_strategy_family("general risk note") == "general"

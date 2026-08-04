@@ -10,6 +10,7 @@ References:
 
 Created: February 2, 2026
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -139,9 +140,7 @@ class DoclingDocument:
             "document_type": self.document_type,
             "content_hash": self.content_hash,
             "full_text": (
-                self.full_text[:1000] + "..."
-                if len(self.full_text) > 1000
-                else self.full_text
+                self.full_text[:1000] + "..." if len(self.full_text) > 1000 else self.full_text
             ),
             "section_count": len(self.sections),
             "table_count": len(self.tables),
@@ -183,9 +182,7 @@ class DoclingDocument:
 
         # Standalone tables at the end
         if self.tables:
-            standalone = [
-                t for t in self.tables if not any(t in s.tables for s in self.sections)
-            ]
+            standalone = [t for t in self.tables if not any(t in s.tables for s in self.sections)]
             if standalone:
                 lines.append("## Tables")
                 lines.append("")
@@ -379,42 +376,42 @@ class DoclingFinancialParser:
             return self._fallback_parse_pdf(filepath)
 
     def _fallback_parse_pdf(self, filepath: Path) -> Optional[DoclingDocument]:
-        """Fallback PDF parsing using PyPDF2 or similar."""
+        """Fallback PDF parsing via production cascade (pdfplumber → pypdf).
+
+        Delegates to ``messy_document_parser`` so Docling and the unified
+        multi-format path share one quality-gated backend stack.
+        """
         try:
-            # Try PyPDF2
-            try:
-                from PyPDF2 import PdfReader
+            from src.research.messy_document_parser import parse_pdf
 
-                reader = PdfReader(str(filepath))
-                pages = []
-                for page in reader.pages:
-                    text = page.extract_text()
-                    if text:
-                        pages.append(text)
-                full_text = "\n\n".join(pages)
-            except ImportError:
-                # Try pdfplumber as alternative
-                try:
-                    import pdfplumber
+            parsed = parse_pdf(filepath)
+            if not parsed.text and not parsed.quality.passed:
+                logger.error(
+                    "Fallback PDF cascade produced no usable text for %s "
+                    "(backend=%s reasons=%s). Install: pip install '.[documents]'",
+                    filepath,
+                    parsed.backend,
+                    parsed.quality.reasons,
+                )
+                if parsed.quality.likely_scanned:
+                    logger.error("Likely scanned PDF — OCR backend required")
+                return None
 
-                    pages = []
-                    with pdfplumber.open(filepath) as pdf:
-                        for page in pdf.pages:
-                            text = page.extract_text()
-                            if text:
-                                pages.append(text)
-                    full_text = "\n\n".join(pages)
-                except ImportError:
-                    logger.error(
-                        "No PDF library available. Install PyPDF2 or pdfplumber."
-                    )
-                    return None
-
-            # Basic section extraction
+            full_text = parsed.markdown or parsed.text
             sections = self._extract_sections_basic(full_text)
-
-            # Detect document type
             doc_type = self._detect_document_type(full_text)
+
+            tables: list[ParsedTable] = []
+            for i, t in enumerate(parsed.tables):
+                tables.append(
+                    ParsedTable(
+                        title=t.title,
+                        headers=t.headers,
+                        rows=t.rows,
+                        page_number=t.page_number,
+                        table_index=i,
+                    )
+                )
 
             return DoclingDocument(
                 source_path=str(filepath),
@@ -423,8 +420,18 @@ class DoclingFinancialParser:
                 content_hash=self._get_content_hash(full_text),
                 full_text=full_text,
                 sections=sections,
-                tables=[],  # Basic parsing doesn't extract tables well
-                metadata={"source": "fallback", "pages": len(pages)},
+                tables=tables,
+                metadata={
+                    "source": "fallback",
+                    "backend": parsed.backend,
+                    "pages": parsed.metadata.get("pages"),
+                    "quality": {
+                        "passed": parsed.quality.passed,
+                        "reasons": list(parsed.quality.reasons),
+                        "likely_scanned": parsed.quality.likely_scanned,
+                    },
+                    "warnings": list(parsed.warnings),
+                },
             )
 
         except Exception as e:
@@ -705,31 +712,20 @@ class DoclingFinancialParser:
 
         if any(kw in title_lower for kw in ["risk", "factor", "uncertainty"]):
             return "risk_factors"
-        elif any(
-            kw in title_lower for kw in ["financial", "results", "statement", "balance"]
-        ):
+        elif any(kw in title_lower for kw in ["financial", "results", "statement", "balance"]):
             return "financials"
-        elif any(
-            kw in title_lower for kw in ["management", "discussion", "analysis", "md&a"]
-        ):
+        elif any(kw in title_lower for kw in ["management", "discussion", "analysis", "md&a"]):
             return "mda"
-        elif any(
-            kw in title_lower
-            for kw in ["executive", "summary", "overview", "highlight"]
-        ):
+        elif any(kw in title_lower for kw in ["executive", "summary", "overview", "highlight"]):
             return "summary"
-        elif any(
-            kw in title_lower for kw in ["outlook", "guidance", "forward", "projection"]
-        ):
+        elif any(kw in title_lower for kw in ["outlook", "guidance", "forward", "projection"]):
             return "guidance"
         elif any(kw in title_lower for kw in ["note", "footnote", "accounting"]):
             return "notes"
         else:
             return "content"
 
-    def save_parsed(
-        self, doc: DoclingDocument, output_format: str = "markdown"
-    ) -> Path:
+    def save_parsed(self, doc: DoclingDocument, output_format: str = "markdown") -> Path:
         """
         Save parsed document to disk.
 
@@ -830,9 +826,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if not args.file:
-        print(
-            "Usage: python docling_parser.py <pdf_file> [--output markdown|json|both]"
-        )
+        print("Usage: python docling_parser.py <pdf_file> [--output markdown|json|both]")
         print("\nOptions:")
         print("  --extract-financials  Extract key financial metrics")
         print("  --extract-tables      Extract tables as DataFrames")

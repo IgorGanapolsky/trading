@@ -5,7 +5,7 @@ VENV_PYTHON := $(VENV)/bin/python
 TRADING_ENV ?= paper
 export TRADING_ENV
 
-.PHONY: setup lint ruff format test coverage audit security health skill-check coordination-check coordination-audit coordination-preflight check dry-run hygiene graph-rag-check
+.PHONY: setup lint ruff format test coverage audit security health skill-check coordination-check coordination-audit coordination-preflight check dry-run hygiene graph-rag-check rag-aplus-check
 
 setup:
 	$(PYTHON) -m venv $(VENV)
@@ -56,7 +56,11 @@ graph-rag-check:
 	$(VENV_PYTHON) -m pytest tests/test_graph_rag.py -q
 	$(VENV_PYTHON) scripts/verify_graph_rag.py
 
-check: lint audit security skill-check coordination-check graph-rag-check test
+rag-aplus-check:
+	$(VENV_PYTHON) -m pytest tests/test_rag_aplus_platform.py tests/test_messy_document_parser.py tests/test_retrieve_for_trade.py -q
+	$(VENV_PYTHON) scripts/verify_rag_aplus.py
+
+check: lint audit security skill-check coordination-check graph-rag-check rag-aplus-check test
 
 dry-run: health
 	$(VENV_PYTHON) scripts/spy_put_credit.py --dry-run

@@ -44,11 +44,34 @@ def print_report(report: EvaluationReport, verbose: bool = False) -> None:
     print(f"Mean Recall@{report.k}:    {report.mean_recall_at_k:.4f}")
     print(f"Mean Reciprocal Rank:      {report.mrr:.4f}")
     print(f"Mean Utility@{report.k}:   {report.mean_utility_at_k:.4f}")
+    print(f"Mean nDCG@{report.k}:      {getattr(report, 'mean_ndcg_at_k', 0.0):.4f}")
 
     if report.unanswerable_accuracy is not None:
         print("\n--- UNANSWERABLE METRICS ---")
         print(f"Unanswerable Accuracy:     {report.unanswerable_accuracy:.4f}")
         print(f"Unanswerable False Pos Rate: {report.unanswerable_false_positive_rate:.4f}")
+
+    # A+ gates (world-class trading RAG)
+    print("\n--- A+ GATES ---")
+    gates = {
+        f"P@{report.k}>=0.40": report.mean_precision_at_k >= 0.40,
+        f"R@{report.k}>=0.60": report.mean_recall_at_k >= 0.60,
+        "MRR>=0.50": report.mrr >= 0.50,
+        f"nDCG@{report.k}>=0.55": getattr(report, "mean_ndcg_at_k", 0.0) >= 0.55,
+    }
+    if report.unanswerable_accuracy is not None:
+        gates["OOD_acc>=0.80"] = report.unanswerable_accuracy >= 0.80
+        fpr = report.unanswerable_false_positive_rate
+        # Note: FPR can be 0.0 — do not use `or` (0.0 is falsy).
+        gates["OOD_FPR<=0.20"] = fpr is not None and fpr <= 0.20
+    for name, ok in gates.items():
+        print(f"[{'PASS' if ok else 'FAIL'}] {name}")
+    if all(gates.values()):
+        print("[GRADE] A+ (all gates green)")
+    elif sum(gates.values()) >= max(1, len(gates) - 1):
+        print("[GRADE] A- (near A+; one gate soft)")
+    else:
+        print("[GRADE] below A+ — see FAIL lines")
 
     # Interpret metrics
     print("\n--- INTERPRETATION ---")

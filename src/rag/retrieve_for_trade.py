@@ -5,7 +5,9 @@ Pipeline:
   → retrieve: FTS5 seed + pragmatic hybrid (bigram-Jaccard + keyword)
   → multi-query: ≤3 variants when top lexical < 0.6
   → rerank: pairwise heuristic (+ optional LLM listwise)
+  → ACL filter (principal / sensitivity)
   → assemble context → caller gates the next trade/tool deterministically
+  → emit retrieval trace (observability)
 """
 
 from __future__ import annotations
@@ -13,12 +15,20 @@ from __future__ import annotations
 import logging
 import os
 import re
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from src.rag.acl import Principal, filter_documents, infer_sensitivity
 from src.rag.cross_encoder_rerank import rerank_candidates
 from src.rag.lesson_store import connect, ensure_index, search_fts
+from src.rag.observability import (
+    emit_trace,
+    estimate_tokens,
+    finish_trace,
+    new_trace,
+)
 from src.rag.pragmatic_hybrid import (
     build_query_variants,
     pragmatic_hybrid_search,
@@ -30,6 +40,8 @@ logger = logging.getLogger(__name__)
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_REWRITE_BELOW = 0.6
 KNOWLEDGE_DIR = ROOT / "rag_knowledge" / "lessons_learned"
+# Below this top score, treat as OOD / unanswerable for trade gates.
+DEFAULT_OOD_MIN_SCORE = float(os.getenv("TRADING_RAG_OOD_MIN_SCORE", "0.08"))
 
 
 @dataclass
@@ -50,6 +62,46 @@ class RetrieveResult:
             if t and t in blob:
                 out.append(lesson)
         return out
+
+
+_FAMILY_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
+    (
+        "spy_put_credit",
+        re.compile(
+            r"put[\s_-]?credit|bull[\s_-]?put|pcs_|spy_put_credit|short put spread",
+            re.I,
+        ),
+    ),
+    (
+        "iron_condor",
+        re.compile(r"iron[\s_-]?condor|\bic\b|ic_simple|4[\s-]?leg", re.I),
+    ),
+]
+
+
+def _infer_strategy_family(text: str, path_stem: str = "") -> str:
+    blob = f"{path_stem} {text[:2000]}"
+    for family, pat in _FAMILY_PATTERNS:
+        if pat.search(blob):
+            return family
+    return "general"
+
+
+def _extract_section_pack(full_text: str, prevention: str) -> str:
+    """Parent expand: prefer Prevention + What Happened for trade gates."""
+    parts: list[str] = []
+    for header in (
+        r"##\s*(?:prevention|how to avoid|solution)[^\n]*\n(.*?)(?=\n##|\Z)",
+        r"##\s*(?:what happened|incident|problem)[^\n]*\n(.*?)(?=\n##|\Z)",
+    ):
+        m = re.search(header, full_text, re.I | re.DOTALL)
+        if m and m.group(1).strip():
+            parts.append(m.group(1).strip()[:1200])
+    if parts:
+        return "\n\n".join(parts)
+    if prevention:
+        return prevention[:1500]
+    return full_text[:1500]
 
 
 def _load_markdown_corpus(knowledge_dir: Path | None = None) -> list[dict[str, Any]]:
@@ -80,6 +132,11 @@ def _load_markdown_corpus(knowledge_dir: Path | None = None) -> list[dict[str, A
             re.IGNORECASE | re.DOTALL,
         )
         prevention = prev_m.group(1).strip() if prev_m else ""
+        tags: list[str] = []
+        tags_m = re.search(r"##\s*Tags\s*\n(.+?)(?=\n##|\Z)", text, re.I | re.DOTALL)
+        if tags_m:
+            tags = re.findall(r"`([^`]+)`", tags_m.group(1))
+        family = _infer_strategy_family(text, path.stem)
         docs.append(
             {
                 "id": path.stem,
@@ -88,8 +145,13 @@ def _load_markdown_corpus(knowledge_dir: Path | None = None) -> list[dict[str, A
                 "snippet": text[:500],
                 "severity": sev,
                 "prevention": prevention,
-                "tags": [],
+                "section_pack": _extract_section_pack(text, prevention),
+                "tags": tags,
                 "file": str(path),
+                "doc_type": "lesson",
+                "strategy_family": family,
+                "section_type": "prevention" if prevention else "content",
+                "parent_id": path.stem,
             }
         )
     return docs
@@ -142,20 +204,101 @@ def resolve_query_plan(
     }
 
 
+def _apply_metadata_filters(
+    corpus: list[dict[str, Any]],
+    *,
+    severity_filter: str | None,
+    strategy_family: str | None,
+    doc_type: str | None = "lesson",
+) -> list[dict[str, Any]]:
+    """Hard metadata filters. Soft-include general when family filter is set."""
+    out = corpus
+    if severity_filter:
+        want = severity_filter.upper()
+        out = [d for d in out if str(d.get("severity", "")).upper() == want]
+    if doc_type:
+        typed = [d for d in out if str(d.get("doc_type", "lesson")) == doc_type]
+        if typed:
+            out = typed
+    if strategy_family:
+        fam = strategy_family.lower().strip()
+        if fam and fam not in {"*", "all", "any"}:
+            filtered = [
+                d
+                for d in out
+                if str(d.get("strategy_family", "general")).lower() in {fam, "general"}
+            ]
+            # Never empty the corpus solely due to family — fall back unfiltered family
+            if filtered:
+                out = filtered
+    return out
+
+
+def _parent_expand_lessons(
+    rows: list[dict[str, Any]],
+    corpus_by_id: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Expand matched rows to parent prevention pack when available."""
+    expanded: list[dict[str, Any]] = []
+    for row in rows:
+        lid = str(row.get("id") or "")
+        parent = corpus_by_id.get(lid) or corpus_by_id.get(str(row.get("parent_id") or ""))
+        pack = ""
+        if parent:
+            pack = str(parent.get("section_pack") or parent.get("prevention") or "")
+        content = pack or row.get("content") or row.get("snippet") or ""
+        prevention = (parent or {}).get("prevention") or row.get("prevention") or ""
+        expanded.append(
+            {
+                **row,
+                "content": content,
+                "prevention": prevention,
+                "snippet": str(content)[:500],
+                "section_pack": pack,
+                "parent_expanded": bool(pack),
+                "strategy_family": (parent or row).get("strategy_family", "general"),
+                "doc_type": (parent or row).get("doc_type", "lesson"),
+            }
+        )
+    return expanded
+
+
 def retrieve_for_trade(
     query: str,
     *,
     top_k: int = 5,
     candidate_pool: int = 40,
     severity_filter: str | None = None,
+    strategy_family: str | None = None,
+    doc_type: str | None = "lesson",
     rewrite_below: float = DEFAULT_REWRITE_BELOW,
     use_llm_rerank: bool | None = None,
     db_path: Path | None = None,
     knowledge_dir: Path | None = None,
     ensure_fts: bool = True,
+    parent_expand: bool = True,
+    principal: Principal | None = None,
+    ood_min_score: float = DEFAULT_OOD_MIN_SCORE,
+    emit_retrieval_trace: bool = True,
 ) -> RetrieveResult:
-    """Run the full defended retrieve path for a trade/agent query."""
-    started_meta: dict[str, Any] = {"query": query, "top_k": top_k}
+    """Run the full defended retrieve path for a trade/agent query.
+
+    Stages: FTS seed → metadata filters → pragmatic hybrid (BM25-ish + bigram)
+    → multi-query when weak → heuristic/CE rerank → optional parent expand
+    → ACL filter → OOD hard-reject → retrieval trace.
+    """
+    t0 = time.perf_counter()
+    principal = principal or Principal.operator()
+    trace = new_trace(query, principal=principal.name)
+    started_meta: dict[str, Any] = {
+        "query": query,
+        "top_k": top_k,
+        "strategy_family": strategy_family,
+        "severity_filter": severity_filter,
+        "doc_type": doc_type,
+        "principal": principal.name,
+        "trace_id": trace.trace_id,
+    }
 
     if ensure_fts and os.environ.get("TRADING_RAG_SKIP_FTS_ENSURE", "").lower() not in {
         "1",
@@ -189,13 +332,38 @@ def retrieve_for_trade(
         started_meta["fts"] = {"applied": False, "error": str(exc)}
 
     corpus = _merge_corpus(markdown_docs, fts_docs)
-    if severity_filter:
-        corpus = [
-            d for d in corpus if str(d.get("severity", "")).upper() == severity_filter.upper()
-        ]
+    # Infer family on FTS-only rows
+    for d in corpus:
+        if not d.get("strategy_family"):
+            d["strategy_family"] = _infer_strategy_family(
+                str(d.get("content") or d.get("title") or ""),
+                str(d.get("id") or ""),
+            )
+        if not d.get("doc_type"):
+            d["doc_type"] = "lesson"
+        if not d.get("section_pack") and d.get("content"):
+            d["section_pack"] = _extract_section_pack(
+                str(d.get("content") or ""),
+                str(d.get("prevention") or ""),
+            )
+
+    corpus = _apply_metadata_filters(
+        corpus,
+        severity_filter=severity_filter,
+        strategy_family=strategy_family,
+        doc_type=doc_type,
+    )
+    started_meta["corpus_after_filters"] = len(corpus)
 
     if not corpus:
-        return RetrieveResult(lessons=[], meta={**started_meta, "strategy": "empty-corpus"})
+        meta = {**started_meta, "strategy": "empty-corpus", "ood_rejected": False}
+        if emit_retrieval_trace:
+            trace.strategy = "empty-corpus"
+            finish_trace(trace, t0=t0)
+            emit_trace(trace)
+        return RetrieveResult(lessons=[], meta=meta)
+
+    corpus_by_id = {str(d["id"]): d for d in corpus}
 
     top_lex = probe_top_lexical(corpus, query)
     plan = resolve_query_plan(query, top_lex, rewrite_below=rewrite_below)
@@ -211,30 +379,64 @@ def retrieve_for_trade(
     reranked = rerank_candidates(
         query,
         candidates,
-        top_k=top_k,
+        top_k=max(top_k * 2, top_k),  # extra headroom for ACL drops
         use_llm=use_llm_rerank,
     )
+    if parent_expand:
+        reranked = _parent_expand_lessons(reranked, corpus_by_id)
 
-    # Normalize shape for TradeGateway / evaluators
+    # Normalize shape for TradeGateway / evaluators + attach ACL sensitivity
     lessons: list[dict[str, Any]] = []
     for row in reranked:
+        severity = row.get("severity") or "MEDIUM"
+        tags = row.get("tags") or []
+        content = row.get("content") or row.get("snippet") or ""
+        sensitivity = row.get("sensitivity") or infer_sensitivity(
+            severity=str(severity),
+            tags=tags,
+            text=f"{row.get('title') or ''} {content}"[:600],
+        )
+        sens_value = sensitivity.value if hasattr(sensitivity, "value") else str(sensitivity)
         lessons.append(
             {
                 "id": row.get("id"),
                 "title": row.get("title") or row.get("id"),
-                "severity": row.get("severity") or "MEDIUM",
+                "severity": severity,
                 "score": float(row.get("score") or 0.0),
                 "snippet": (row.get("snippet") or row.get("content") or "")[:500],
-                "content": row.get("content") or row.get("snippet") or "",
+                "content": content,
                 "prevention": row.get("prevention") or "",
-                "tags": row.get("tags") or [],
+                "section_pack": row.get("section_pack") or "",
+                "tags": tags,
                 "file": row.get("file") or row.get("source_path") or "",
+                "strategy_family": row.get("strategy_family") or "general",
+                "doc_type": row.get("doc_type") or "lesson",
+                "parent_expanded": bool(row.get("parent_expanded")),
+                "sensitivity": sens_value,
                 "combinedScore": row.get("combinedScore"),
                 "pairwiseHeuristicScore": row.get("pairwiseHeuristicScore"),
                 "reranker": row.get("reranker"),
                 "backend": "retrieve-for-trade",
             }
         )
+
+    pre_acl = len(lessons)
+    lessons = filter_documents(lessons, principal)
+    acl_dropped = pre_acl - len(lessons)
+    lessons = lessons[:top_k]
+
+    # OOD hard-reject: empty result when top score is noise-level
+    top_score = float(lessons[0]["score"]) if lessons else 0.0
+    ood_rejected = bool(lessons) and top_score < ood_min_score
+    if ood_rejected:
+        lessons = []
+
+    path_bits = ["fts", "hybrid", "rerank"]
+    if parent_expand:
+        path_bits.append("parent_expand")
+    path_bits.append("acl")
+    if ood_rejected:
+        path_bits.append("ood_reject")
 
     meta = {
         **started_meta,
@@ -245,7 +447,30 @@ def retrieve_for_trade(
         else ["first-stage", "pairwise-heuristic"],
         "corpus_size": len(corpus),
         "top_lexical": top_lex,
+        "parent_expand": parent_expand,
+        "acl_dropped": acl_dropped,
+        "ood_rejected": ood_rejected,
+        "ood_min_score": ood_min_score,
+        "top_score": top_score,
+        "path": "+".join(path_bits),
     }
+
+    if emit_retrieval_trace:
+        trace.strategy = meta["path"]
+        trace.stages = path_bits
+        trace.fts_hits = int((started_meta.get("fts") or {}).get("hits") or 0)
+        trace.hybrid_pool = len(candidates)
+        trace.variants = list(plan.get("variants") or [query])
+        trace.top_scores = [float(x.get("score") or 0) for x in lessons[:5]]
+        trace.top_ids = [str(x.get("id") or "") for x in lessons[:5]]
+        trace.acl_dropped = acl_dropped
+        trace.token_estimate = estimate_tokens(
+            " ".join(str(x.get("snippet") or "") for x in lessons)
+        )
+        finish_trace(trace, t0=t0)
+        emit_trace(trace)
+        meta["latency_ms"] = trace.latency_ms
+
     return RetrieveResult(lessons=lessons, meta=meta)
 
 
@@ -264,7 +489,8 @@ def assemble_trade_context(
         lines.append(f"Action: {action[:200]}")
     for i, lesson in enumerate(lessons, 1):
         text = (
-            lesson.get("prevention")
+            lesson.get("section_pack")
+            or lesson.get("prevention")
             or lesson.get("snippet")
             or lesson.get("content")
             or lesson.get("title")
@@ -272,11 +498,15 @@ def assemble_trade_context(
         )
         text = re.sub(r"\s+", " ", str(text)).strip()[:280]
         sev = lesson.get("severity", "?")
+        fam = lesson.get("strategy_family") or "general"
         score = lesson.get("score")
         score_bit = f" score={float(score):.2f}" if score is not None else ""
         stages = (lesson.get("reranker") or {}).get("stages") or []
         stage_bit = f" via={'+'.join(stages)}" if stages else ""
-        lines.append(f"{i}. [{sev}] {lesson.get('id')}{score_bit}{stage_bit}: {text}")
+        expand_bit = " parent+" if lesson.get("parent_expanded") else ""
+        lines.append(
+            f"{i}. [{sev}|{fam}] {lesson.get('id')}{score_bit}{stage_bit}{expand_bit}: {text}"
+        )
     if meta:
         if meta.get("rewrite_applied"):
             lines.append(

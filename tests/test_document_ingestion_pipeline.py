@@ -31,3 +31,16 @@ def test_document_ingestion_deduplication(tmp_path):
     doc2 = pipeline.ingest_document(file_path, raw_text)
     assert doc2.version == 1
     assert doc2.is_duplicate is True
+
+
+def test_document_ingestion_extract_from_markdown_path(tmp_path):
+    manifest_file = tmp_path / "manifest.json"
+    pipeline = DocumentIngestionPipeline(manifest_file=manifest_file)
+    md = tmp_path / "LL-100_note.md"
+    md.write_text(
+        "# Note\n\nEnough content for markdown extract path to remain stable.\n",
+        encoding="utf-8",
+    )
+    payload = pipeline.extract_from_path(md)
+    assert payload["backend"] == "plaintext"
+    assert "Enough content" in payload["text"]
