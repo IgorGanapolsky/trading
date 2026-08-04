@@ -1,7 +1,27 @@
 # Trading RAG quality scorecard (AGENT-70 A+ platform)
 
-**Updated:** 2026-08-03  
+**Updated:** 2026-08-04  
 **Scope:** Paper SPY put-credit lab — not multi-tenant SaaS, not live HFT.
+
+**Honesty:** Architecture A+ (capability matrix + `verify_rag_aplus.py`) is **not** the same
+as measured holdout A+ (`scripts/evaluate_rag.py`) or trading edge (n≥30 paired closes).
+Webhook/LessonsLearnedRAG default to **defended** retrieval; LanceDB is fallback only.
+Re-run evaluate_rag after retrieval changes; do not copy stale bake-off numbers.
+
+## Measured holdout (lab eval) (fresh 2026-08-04, tip of main worktree)
+
+Re-run: `python scripts/evaluate_rag.py` on 10 default queries, k=5, ~174 lessons.
+
+| Metric                   |      Value | Lab A+ gate |    Stretch |
+| ------------------------ | ---------: | ----------: | ---------: |
+| Precision@5              | **0.5600** |  ≥0.40 PASS | ≥0.50 PASS |
+| Recall@5                 | **0.7200** |  ≥0.60 PASS | ≥0.75 FAIL |
+| MRR                      | **0.9500** |  ≥0.50 PASS | ≥0.80 PASS |
+| nDCG@5                   | **0.7294** |  ≥0.55 PASS | ≥0.80 FAIL |
+| Queries with ≥1 relevant |      10/10 |           — |          — |
+| Graph golden             |    **5/5** |           — |          — |
+
+**Lab grade (script gates): A+.** Stretch A+ not claimed (recall/nDCG).
 
 RAG quality reduces preventable operational errors. It does **not** create a
 trading edge and does **not** prove $1,000–$6,000/month after tax. That outcome
