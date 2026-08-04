@@ -74,6 +74,12 @@ def _spy_sma_200(spy_price: float | None) -> tuple[float | None, bool | None, st
             timeframe=TimeFrame.Day,
             start=start,
             end=end,
+            # Without an explicit feed the SDK falls back to a data tier this account
+            # is not entitled to. Every request failed, the 200-day average came back
+            # None, and fail_closed_on_missing correctly refused every entry -- for 12
+            # days, while the scheduled check reported success. Mirrors
+            # src/utils/market_data.py, which already defaults to iex.
+            feed=os.getenv("ALPACA_DATA_FEED", "iex"),
         )
         bars = client.get_stock_bars(req)
         rows = bars.data.get("SPY") if hasattr(bars, "data") else None
