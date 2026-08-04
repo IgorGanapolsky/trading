@@ -307,7 +307,20 @@ def build_trade_evidence(
             if protocol_reasons:
                 for reason in set(protocol_reasons):
                     rejected[reason] += 1
-                invalid_candidate_rows += 1
+                selection = str(
+                    raw.get("selection_method") or raw.get("strike_selection_method") or ""
+                ).lower()
+                # Explicit broker reconstructions are inventory truth, not clean
+                # validation cohort. Quarantine them as warnings so one unrecovered
+                # fill cannot mark the whole verified-evidence surface BROKEN.
+                if "unverified" in selection or "reconstruct" in selection:
+                    rejected["broker_reconstructed_unverified"] += 1
+                    warnings.append(
+                        "quarantined_unverified_reconstruction:"
+                        f"{trade_id}:{','.join(sorted(set(protocol_reasons)))}"
+                    )
+                else:
+                    invalid_candidate_rows += 1
                 continue
 
         normalized = dict(raw)

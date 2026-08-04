@@ -6383,7 +6383,7 @@
       "put_delta": null,
       "selection_method": "broker_reconstructed_unverified",
       "profile_name": "spy-put-credit",
-      "validation_phase": true,
+      "validation_phase": false,
       "strikes": {
         "short_put": 712.0,
         "long_put": 707.0
@@ -6399,7 +6399,8 @@
         "exit": ["3310d412-8ec4-4e91-9a6f-123366586a4a"]
       },
       "journal_key": "PCS_260828_fb85cfe193c14511868bd0e1b0a59220",
-      "evidence_source": "broker_paired_put_credit_journal"
+      "evidence_source": "broker_paired_put_credit_journal",
+      "evidence_note": "broker_reconstructed_unverified: filled order missing durable journal; excluded from protocol validation cohort"
     }
   ]
 }
