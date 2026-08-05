@@ -167,8 +167,8 @@ jobs:
           else
             # Paper MLEG only — live blocked by strategy_kill_switch.json
             python3 scripts/spy_put_credit.py --execute-paper || {
-              echo "Put-credit entry skipped or no opportunity (exit 0 so workflow continues)"
-              true
+              echo "::error::entry attempt failed - no trade was evaluated"
+              exit 1
             }
           fi
 
