@@ -67,6 +67,10 @@ python scripts/graph_rag_query.py --query "why is iron condor killed?" --graph-o
 # Hard gate: rebuild + 5 golden multi-hop assertions (CI offline-evals + make check)
 python scripts/verify_graph_rag.py
 make graph-rag-check
+# Continuous arXiv research feed (DS / ML / Agentic RAG) — never submits trades
+make arxiv-ingest
+make arxiv-ingest-status
+# Local continuous job (every 6h): bash scripts/setup_arxiv_ingest_launchagent.sh install
 ```
 
 Inventory unclean (`exit 2`) → **no new risk**.

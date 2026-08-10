@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.igor.trading-arxiv-ingest</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>__REPO_ROOT__/.venv/bin/python</string>
+    <string>__REPO_ROOT__/scripts/arxiv_paper_ingestion.py</string>
+    <string>--max-results</string>
+    <string>15</string>
+    <string>--rebuild-index</string>
+    <string>--json</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>__REPO_ROOT__</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PYTHONPATH</key>
+    <string>__REPO_ROOT__</string>
+    <key>TRADING_ENV</key>
+    <string>paper</string>
+  </dict>
+  <!-- Every 6 hours -->
+  <key>StartInterval</key>
+  <integer>21600</integer>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>LowPriorityIO</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>__REPO_ROOT__/logs/arxiv_ingest.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>__REPO_ROOT__/logs/arxiv_ingest.err.log</string>
+</dict>
+</plist>

@@ -4,9 +4,11 @@ Research module for trading system.
 Contains:
 - messy_document_parser: multi-format cascade (PDF/HTML/text + quality gate)
 - docling_parser: IBM Docling integration for parsing financial documents
+- arxiv_collector: continuous arXiv paper ingestion for DS/ML/Agentic RAG
 - research_agent: Perplexity-powered weekend research agent
 """
 
+from src.research.arxiv_collector import ArxivCollector, ArxivPaper, IngestionRunReport
 from src.research.docling_parser import (
     DoclingDocument,
     DoclingFinancialParser,
@@ -23,9 +25,12 @@ from src.research.messy_document_parser import (
 )
 
 __all__ = [
+    "ArxivCollector",
+    "ArxivPaper",
     "DoclingDocument",
     "DoclingFinancialParser",
     "FinancialMetrics",
+    "IngestionRunReport",
     "ParsedDocument",
     "ParsedSection",
     "ParsedTable",

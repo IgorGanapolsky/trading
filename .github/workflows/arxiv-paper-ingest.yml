@@ -1,0 +1,115 @@
+name: ArXiv Paper Ingestion (DS/ML/RAG)
+
+# Continuous research feed: pull trading/RL/RAG papers from arXiv into the
+# DocumentIngestionPipeline and curated rag_knowledge/research/arxiv corpus.
+# Never submits trades. Research-only.
+
+on:
+  schedule:
+    # Daily 07:15 UTC (~03:15 ET) — before pre-market, after overnight arXiv batch
+    - cron: 15 7 * * *
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: arxiv-paper-ingest
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install minimal dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements-minimal.txt ]; then
+            pip install -r requirements-minimal.txt
+          fi
+          pip install -e . --no-deps 2>/dev/null || true
+
+      - name: Run arXiv continuous ingestion
+        id: ingest
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          MAX_RESULTS=20
+          MIN_REL=0.18
+          ARGS=(--max-results "$MAX_RESULTS" --min-relevance "$MIN_REL" --json --rebuild-index)
+          python scripts/arxiv_paper_ingestion.py "${ARGS[@]}" | tee /tmp/arxiv_ingest.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path("/tmp/arxiv_ingest.json")
+          text = p.read_text(encoding="utf-8")
+          start = text.rfind("{")
+          data = json.loads(text[start:]) if start >= 0 else {}
+          print(f"status={data.get('status')}")
+          print(f"ingested={data.get('ingested', 0)}")
+          print(f"promoted={data.get('promoted', 0)}")
+          Path("data/runtime").mkdir(parents=True, exist_ok=True)
+          status = Path("data/runtime/arxiv_ingestion_latest.json")
+          if not status.exists() and data:
+              status.write_text(json.dumps(data, indent=2), encoding="utf-8")
+          PY
+
+      - name: Upload status artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: arxiv-ingest-status
+          path: |
+            data/runtime/arxiv_ingestion_latest.json
+            data/audit/arxiv_ingestion_manifest.json
+          if-no-files-found: warn
+
+      - name: Open PR for newly curated research papers
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          mkdir -p rag_knowledge/research/arxiv
+          if git status --porcelain rag_knowledge/research/arxiv data/runtime/arxiv_ingestion_latest.json 2>/dev/null | grep -q .; then
+            BRANCH="chore/arxiv-ingest-${GITHUB_RUN_ID}"
+            git switch -c "$BRANCH"
+            git add rag_knowledge/research/arxiv || true
+            if git ls-files --error-unmatch data/runtime/arxiv_ingestion_latest.json >/dev/null 2>&1; then
+              git add data/runtime/arxiv_ingestion_latest.json
+            fi
+            if git diff --cached --quiet; then
+              echo "No curated papers to commit"
+              exit 0
+            fi
+            git commit -m "chore(rag): curated arXiv research papers [auto AGENT-364]"
+            git push -u origin "$BRANCH"
+            PR_BODY="Automated arXiv research ingestion from run ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}.
+
+          Source: https://arxiv.org/
+          Scope: DS / ML / Agentic RAG only — no trade submission.
+          Issue: AGENT-364
+          "
+            gh pr create \
+              --base main \
+              --head "$BRANCH" \
+              --title "chore(rag): curated arXiv research papers" \
+              --body "$PR_BODY" || echo "::warning::PR create failed; branch pushed: $BRANCH"
+          else
+            echo "No curated research changes"
+          fi

@@ -20,6 +20,7 @@ Operator and design docs for the trading lab.
 | [research/](./research/)                                           | Edge audits and deep dives                 |
 | [RAG_11_STAGES_SPECIFICATION.md](./RAG_11_STAGES_SPECIFICATION.md) | RAG pipeline stages                        |
 | [GRAPH_RAG.md](./GRAPH_RAG.md)                                     | Temporal Graph RAG (strategy/lesson/trade) |
+| [ARXIV_INGESTION.md](./ARXIV_INGESTION.md)                         | Continuous arXiv → DS/ML/Agentic RAG job   |
 | [EXTENSIONS.md](./EXTENSIONS.md)                                   | Optional provider boundary                 |
 
 ## Pitch / archive (not operating truth)

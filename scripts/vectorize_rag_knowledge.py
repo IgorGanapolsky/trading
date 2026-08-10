@@ -36,6 +36,7 @@ CONTENT_SOURCES = {
     "trainings": RAG_KNOWLEDGE / "trainings",
     "newsletters": RAG_KNOWLEDGE / "newsletters",
     "lessons_learned": RAG_KNOWLEDGE / "lessons_learned",
+    "research": RAG_KNOWLEDGE / "research",
     "books": RAG_KNOWLEDGE / "books",
 }
 

@@ -124,6 +124,10 @@ data/options_signals/
 data/post_market_analysis/
 data/reports/
 data/research/
+
+# Generated arXiv paper store (curated promotions live under rag_knowledge/research/)
+data/arxiv/
+logs/arxiv_ingest*.log
 data/revenue/
 data/screenshots/
 data/sentiment/
@@ -174,3 +178,4 @@ ralph_output.txt
 population_log*.txt
 wiki/
 graphify-out/
+data/runtime/arxiv_ingestion_latest.json

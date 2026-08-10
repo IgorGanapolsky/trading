@@ -5,7 +5,7 @@ VENV_PYTHON := $(VENV)/bin/python
 TRADING_ENV ?= paper
 export TRADING_ENV
 
-.PHONY: setup lint ruff format test coverage audit security health skill-check coordination-check coordination-audit coordination-preflight check dry-run hygiene graph-rag-check rag-aplus-check
+.PHONY: setup lint ruff format test coverage audit security health skill-check coordination-check coordination-audit coordination-preflight check dry-run hygiene graph-rag-check rag-aplus-check arxiv-ingest arxiv-ingest-status
 
 setup:
 	$(PYTHON) -m venv $(VENV)
@@ -68,3 +68,11 @@ dry-run: health
 
 hygiene:
 	scripts/worktree_hygiene.sh --prune
+
+
+# Continuous arXiv research ingestion (DS / ML / Agentic RAG) — AGENT-364
+arxiv-ingest:
+	PYTHONPATH=. $(VENV_PYTHON) scripts/arxiv_paper_ingestion.py --max-results 15 --rebuild-index
+
+arxiv-ingest-status:
+	PYTHONPATH=. $(VENV_PYTHON) scripts/arxiv_paper_ingestion.py --status
