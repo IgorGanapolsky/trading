@@ -162,9 +162,7 @@ def test_continuous_ingestion_dedupes(tmp_path: Path):
     mock_resp.read.return_value = SAMPLE_ATOM_XML
     mock_resp.__enter__.return_value = mock_resp
     with patch("urllib.request.urlopen", return_value=mock_resp):
-        first = collector.run_continuous_ingestion(
-            query="option", max_results=5, multi_query=False
-        )
+        first = collector.run_continuous_ingestion(query="option", max_results=5, multi_query=False)
         second = collector.run_continuous_ingestion(
             query="option", max_results=5, multi_query=False
         )

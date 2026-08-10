@@ -512,9 +512,7 @@ class FinancialGraphBuilder:
                 c["edges"] += 1
             if "rag" in lower or "retrieval" in lower:
                 cid = "concept:agentic_rag"
-                self.store.upsert_node(
-                    cid, NodeType.CONCEPT, label="agentic_rag", properties={}
-                )
+                self.store.upsert_node(cid, NodeType.CONCEPT, label="agentic_rag", properties={})
                 self.store.upsert_edge(
                     node_id,
                     cid,
