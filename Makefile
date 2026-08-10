@@ -60,6 +60,13 @@ rag-aplus-check:
 	$(VENV_PYTHON) -m pytest tests/test_rag_aplus_platform.py tests/test_messy_document_parser.py tests/test_retrieve_for_trade.py -q
 	$(VENV_PYTHON) scripts/verify_rag_aplus.py
 
+# Continuous arXiv research → Agentic RAG (https://arxiv.org)
+arxiv-ingest:
+	$(VENV_PYTHON) scripts/arxiv_paper_ingestion.py --max-results 15 --rebuild-index
+
+arxiv-ingest-check:
+	$(VENV_PYTHON) -m pytest tests/test_arxiv_collector.py -q
+
 check: lint audit security skill-check coordination-check graph-rag-check rag-aplus-check test
 
 dry-run: health
