@@ -24,16 +24,31 @@ If a tool or hook refuses a boundary action, treat that as signal — find the a
 
 ## Canonical files
 
-| Path                                     | Authority                                   |
-| ---------------------------------------- | ------------------------------------------- |
-| `data/system_state.json`                 | Broker snapshot (equity, positions, orders) |
-| `data/trades.json`                       | Paired closed structures (edge metrics)     |
-| `data/put_credit_entries.json`           | Put-credit lifecycle journal                |
-| `data/runtime/strategy_kill_switch.json` | Active / killed strategy families           |
-| `src/core/trading_constants.py`          | Policy constants                            |
-| `rag_knowledge/lessons_learned/`         | Operator memory                             |
+| Path                                       | Authority                                      |
+| ------------------------------------------ | ---------------------------------------------- |
+| `data/system_state.json`                   | Broker snapshot (equity, positions, orders)    |
+| `data/trades.json`                         | Paired closed structures (edge metrics)        |
+| `data/put_credit_entries.json`             | Put-credit lifecycle journal                   |
+| `data/runtime/strategy_kill_switch.json`   | Active / killed strategy families              |
+| `src/core/trading_constants.py`            | Policy constants                               |
+| `rag_knowledge/lessons_learned/`           | Operator memory                                |
+| `rag_knowledge/arxiv/`                     | Continuous arXiv research corpus (Agentic RAG) |
+| `data/audit/arxiv_ingestion_manifest.json` | arXiv ingest dedupe + run history              |
 
 Unmatched fills are **not** trades. Do not promote them into win rate / expectancy.
+
+## Continuous arXiv research ingest
+
+Twice-daily GitHub Action (`arxiv-paper-ingestion.yml`) pulls new papers from
+[arXiv](https://arxiv.org) (API: `export.arxiv.org`) into `rag_knowledge/arxiv/`
+and rebuilds `data/rag/lessons_query.json`. Local:
+
+```bash
+make arxiv-ingest
+python scripts/arxiv_paper_ingestion.py --query "option credit spread" --json
+```
+
+Papers are **research context only** — never treat them as live signals or edge proof.
 
 ## Judge panel (claim / PR / coord audit — not trade entry)
 

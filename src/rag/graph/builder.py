@@ -140,6 +140,7 @@ class FinancialGraphBuilder:
         counts.update(self.seed_ontology())
         counts.update(self.ingest_kill_switch())
         counts.update(self.ingest_lessons())
+        counts.update(self.ingest_arxiv_papers())
         counts.update(self.ingest_trades())
         counts.update(self.ingest_runtime_signals())
         stats = self.store.stats()
@@ -450,6 +451,73 @@ class FinancialGraphBuilder:
                     "concept:north_star",
                     EdgeRel.RELATED_TO,
                     edge_id=f"e:{node_id}:RELATED_TO:concept:north_star",
+                )
+                c["edges"] += 1
+
+        return c
+
+    # ------------------------------------------------------------------
+    # arXiv research papers (Agentic RAG continuous ingest)
+    # ------------------------------------------------------------------
+
+    def ingest_arxiv_papers(self, limit: int | None = 200) -> Counter[str]:
+        """Ingest rag_knowledge/arxiv/*.md as LESSON nodes (research context)."""
+        c: Counter[str] = Counter()
+        arxiv_dir = self.repo_root / "rag_knowledge/arxiv"
+        if not arxiv_dir.is_dir():
+            return c
+
+        files = sorted(arxiv_dir.glob("*.md"))
+        if limit is not None:
+            files = files[:limit]
+
+        for path in files:
+            try:
+                content = path.read_text(encoding="utf-8", errors="replace")
+            except OSError as exc:
+                logger.warning("Skip arXiv paper %s: %s", path, exc)
+                continue
+
+            stem = path.stem
+            node_id = f"arxiv:{stem[:100]}"
+            title = _extract_title(content, stem)
+            snippet = content[:1200]
+            self.store.upsert_node(
+                node_id,
+                NodeType.LESSON,
+                label=title,
+                properties={
+                    "file": str(path.relative_to(self.repo_root))
+                    if path.is_relative_to(self.repo_root)
+                    else str(path),
+                    "source": "arxiv",
+                    "snippet": snippet,
+                    "hybrid_leaf": True,
+                },
+            )
+            c["nodes"] += 1
+
+            lower = content.lower()
+            if "option" in lower or "put credit" in lower or "volatility" in lower:
+                sid = "strategy:spy_put_credit"
+                self.store.upsert_node(
+                    sid, NodeType.STRATEGY, label="spy_put_credit", properties={}
+                )
+                self.store.upsert_edge(
+                    node_id,
+                    sid,
+                    EdgeRel.RELATED_TO,
+                    edge_id=f"e:{node_id}:RELATED_TO:{sid}",
+                )
+                c["edges"] += 1
+            if "rag" in lower or "retrieval" in lower:
+                cid = "concept:agentic_rag"
+                self.store.upsert_node(cid, NodeType.CONCEPT, label="agentic_rag", properties={})
+                self.store.upsert_edge(
+                    node_id,
+                    cid,
+                    EdgeRel.RELATED_TO,
+                    edge_id=f"e:{node_id}:RELATED_TO:{cid}",
                 )
                 c["edges"] += 1
 
