@@ -1,0 +1,186 @@
+{
+  "papers": {
+    "2608.07147v1": {
+      "title": "DiDPO: Diff-in-Diff Policy Optimization for Coding Agent Training",
+      "published": "2026-08-07T12:07:12Z",
+      "relevance_score": 0.43,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.07147v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_07147v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_07147v1.md",
+      "ingested_at": "2026-08-10T23:52:54.577792+00:00",
+      "sha256": "77ffb17d9eb60b524d75952c89bf9584b67130c30bca9e3aea219dadc17400e3",
+      "chunks": 11
+    },
+    "2608.07363v1": {
+      "title": "QFCQT: A Chaotically Gated Quantformer Framework for Volatile Time-Series Forecasting",
+      "published": "2026-08-07T16:05:21Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.07363v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_07363v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_07363v1.md",
+      "ingested_at": "2026-08-10T23:52:54.579039+00:00",
+      "sha256": "9fc0bd8392e93b53f887e973772e7f2467f7aced6d8d04395a20f280e8ff193b",
+      "chunks": 11
+    },
+    "2608.07333v1": {
+      "title": "When GNNs Fail: Quantifying and Overcoming Temporal Correlation Volatility in Time Series",
+      "published": "2026-08-07T15:28:45Z",
+      "relevance_score": 0.31,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.07333v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_07333v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_07333v1.md",
+      "ingested_at": "2026-08-10T23:52:54.580104+00:00",
+      "sha256": "c6142b8a5eb2c614037f56fc879f255b584de87be86a95c14e89f9679b1d9e8d",
+      "chunks": 12
+    },
+    "2608.07463v1": {
+      "title": "MirrorWorld: Taming Video Diffusion Models for Mirror Reflection Generation",
+      "published": "2026-08-07T17:58:10Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CV",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.07463v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_07463v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_07463v1.md",
+      "ingested_at": "2026-08-10T23:52:54.581246+00:00",
+      "sha256": "786af1139bd9617d2240159da25f93c48c9d22862dd65327947c593e472254ca",
+      "chunks": 11
+    },
+    "2608.07460v1": {
+      "title": "CreativeInstruct: Scalably Teaching LLMs to Balance Quality, Creativity, and Diversity",
+      "published": "2026-08-07T17:55:48Z",
+      "relevance_score": 0.39,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.07460v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_07460v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_07460v1.md",
+      "ingested_at": "2026-08-10T23:52:54.582275+00:00",
+      "sha256": "a3401b6cf5dc16d139285cf7fa75a9223407374de4ece132700f6fab182eac45",
+      "chunks": 11
+    },
+    "2608.07458v1": {
+      "title": "CoinRAG: Contextualized Information Nugget KV Cache Reuse for Long-Context RAG",
+      "published": "2026-08-07T17:51:49Z",
+      "relevance_score": 0.36,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.IR",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.07458v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_07458v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_07458v1.md",
+      "ingested_at": "2026-08-10T23:52:54.583310+00:00",
+      "sha256": "835b95633c00dc24742bd976562308989e65562461d003f6fff542d51b244688",
+      "chunks": 11
+    },
+    "2608.07446v1": {
+      "title": "Taxonomy-Driven Analysis of Open-Source AI Risk Mitigation Tools",
+      "published": "2026-08-07T17:33:09Z",
+      "relevance_score": 0.51,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.SE",
+        "cs.AI",
+        "cs.CY"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.07446v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_07446v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_07446v1.md",
+      "ingested_at": "2026-08-10T23:52:54.584391+00:00",
+      "sha256": "3ccbf2e760d0757acbf77dd4e21c4fc60dccee1ebacb02a8d5cd23ae14e871e8",
+      "chunks": 11
+    },
+    "2608.07436v1": {
+      "title": "Post-Grokking Collapse at the Representation-Readout Interface in Muon-Trained Transformers",
+      "published": "2026-08-07T17:21:49Z",
+      "relevance_score": 0.26,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.07436v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_07436v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_07436v1.md",
+      "ingested_at": "2026-08-10T23:52:54.585510+00:00",
+      "sha256": "1c73125ff74eb752b212d025fedc7c883b0320cd4737ea3fb4a6c2ad7944f793",
+      "chunks": 11
+    },
+    "2608.07430v1": {
+      "title": "Diffusion LLMs as Targets and Adversaries: Mechanistic Safety Exploits",
+      "published": "2026-08-07T17:17:18Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.07430v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_07430v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_07430v1.md",
+      "ingested_at": "2026-08-10T23:52:54.586646+00:00",
+      "sha256": "5fe9ab733274c543c793d4b40c6c4ed5ffbce011e3edd015dfa19bc2d613e9a5",
+      "chunks": 11
+    }
+  },
+  "skipped_low_relevance": {
+    "2608.07302v1": {
+      "title": "Same Attention, Different Truths: Put Logit-Lens over Visual Attention to Detect and Mitigate LVLM Object Hallucination",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-10T23:52:54.576032+00:00"
+    },
+    "2608.07275v1": {
+      "title": "A Finite E-Group of Nilpotency Class Three",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-10T23:52:54.576315+00:00"
+    },
+    "2608.07444v1": {
+      "title": "RIS-Aided mmWave Localization Under Cross-Link Interference via Beam-Domain ML Fingerprinting",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-10T23:52:54.578120+00:00"
+    }
+  },
+  "total_ingested": 9,
+  "last_run_utc": "2026-08-10T23:52:54.587014+00:00",
+  "runs": [
+    {
+      "finished_at": "2026-08-10T23:52:54.587014+00:00",
+      "candidates": 12,
+      "new_ingested": 9,
+      "skipped_low_relevance": 3,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    }
+  ]
+}
