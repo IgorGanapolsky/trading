@@ -13,6 +13,11 @@ Graph RAG lives under ``src.rag.graph`` — import from there to avoid
 shadowing submodule paths (same rule as retrieve_for_trade).
 """
 
+from src.rag.answer_metrics import (
+    AnswerScore,
+    RAGAnswerMetrics,
+    measure_answer_metrics,
+)
 from src.rag.evaluation import (
     EvaluationQuery,
     EvaluationReport,
@@ -33,4 +38,7 @@ __all__ = [
     "EvaluationQuery",
     "EvaluationReport",
     "get_evaluator",
+    "AnswerScore",
+    "RAGAnswerMetrics",
+    "measure_answer_metrics",
 ]
