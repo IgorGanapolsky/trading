@@ -14,9 +14,10 @@ import sys
 from dataclasses import dataclass
 
 ACCOUNT = "paper"
+SERVICE_PREFIX = "trading.alpaca.paper.api"
 SERVICES = {
-    "api-key": "trading.alpaca.paper.api-key",
-    "api-secret": "trading.alpaca.paper.api-secret",
+    "api-key": f"{SERVICE_PREFIX}-key",
+    "api-secret": f"{SERVICE_PREFIX}-secret",
 }
 
 
@@ -97,10 +98,7 @@ def store_from_clipboard(kind: str) -> StoreResult:
     try:
         keychain_write(service, value)
         verified = keychain_read(service)
-        if (
-            not hashlib.sha256(verified.encode()).digest()
-            == hashlib.sha256(value.encode()).digest()
-        ):
+        if hashlib.sha256(verified.encode()).digest() != hashlib.sha256(value.encode()).digest():
             raise RuntimeError(f"Keychain verification mismatch for service {service}")
         return StoreResult(
             service=service,
