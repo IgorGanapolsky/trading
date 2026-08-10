@@ -20,6 +20,11 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 # Research defaults — keep knobs explicit for audit.
+# Preferred short-premium IVR for *edge claims* is still 30 (research 2026-07-24).
+# Paper validation may lower the hard floor via PUT_CREDIT_MIN_IVR so the n→30
+# cohort is not frozen in multi-week low-vol regimes; stratify scorecards by
+# iv_rank_proxy >= RESEARCH_PREFERRED_IVR when claiming edge.
+RESEARCH_PREFERRED_IVR = float(os.environ.get("PUT_CREDIT_RESEARCH_IVR", "30"))
 MIN_IV_RANK = float(os.environ.get("PUT_CREDIT_MIN_IVR", "30"))
 MAX_VIX = float(os.environ.get("PUT_CREDIT_MAX_VIX", "30"))
 REQUIRE_ABOVE_200DMA = os.environ.get("PUT_CREDIT_REQUIRE_200DMA", "0").lower() in {
@@ -201,6 +206,12 @@ def evaluate_regime_gate(
         blockers.append(
             f"IV rank proxy {float(ivr):.1f} < min {float(min_iv_rank):.1f} (short-premium filter)"
         )
+    elif float(ivr) < float(RESEARCH_PREFERRED_IVR):
+        # Allowed under a lowered paper floor, but not "rich premium" for edge claims.
+        soft.append(
+            f"IV rank proxy {float(ivr):.1f} < research preferred "
+            f"{float(RESEARCH_PREFERRED_IVR):.1f} (lean premium; stratify later)"
+        )
 
     if above is False:
         msg = "SPY below 200-day SMA (trend soft-flag)"
@@ -217,6 +228,7 @@ def evaluate_regime_gate(
         "soft_flags": soft,
         "thresholds": {
             "min_iv_rank": min_iv_rank,
+            "research_preferred_ivr": RESEARCH_PREFERRED_IVR,
             "max_vix": max_vix,
             "require_above_200dma": require_above_200dma,
             "fail_closed_on_missing": fail_closed_on_missing,

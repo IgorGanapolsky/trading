@@ -78,6 +78,58 @@ def _bootstrap_env_from_dotenv() -> None:
         logger.info("Loaded local dotenv file(s) for Alpaca credential discovery")
 
 
+def _keychain_generic_password(service: str, account: str = "hermes-fleet") -> Optional[str]:
+    """Read a macOS Keychain generic password without logging the secret."""
+    if os.name != "posix" or not Path("/usr/bin/security").exists():
+        return None
+    # Fixed argv only (no shell, no user-controlled binary path).
+    try:
+        import subprocess as _sp  # nosec B404 — Keychain CLI bridge only
+
+        proc = _sp.run(  # nosec B603 — absolute binary + fixed argv
+            [
+                "/usr/bin/security",
+                "find-generic-password",
+                "-a",
+                account,
+                "-s",
+                service,
+                "-w",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if proc.returncode != 0:
+            return None
+        value = (proc.stdout or "").strip()
+        return value or None
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("Keychain read failed for %s: %s", service, exc)
+        return None
+
+
+def _bootstrap_env_from_keychain() -> None:
+    """Fill missing paper Alpaca env vars from Keychain (local Mac operator path)."""
+    pairs = (
+        ("ALPACA_PAPER_TRADING_API_KEY", "ALPACA_PAPER_TRADING_API_KEY"),
+        ("ALPACA_PAPER_TRADING_API_SECRET", "ALPACA_PAPER_TRADING_API_SECRET"),
+        ("ALPACA_API_KEY", "ALPACA_API_KEY"),
+        ("ALPACA_SECRET_KEY", "ALPACA_SECRET_KEY"),
+    )
+    loaded = 0
+    for env_name, service in pairs:
+        if os.getenv(env_name):
+            continue
+        value = _keychain_generic_password(service)
+        if value:
+            os.environ[env_name] = value
+            loaded += 1
+    if loaded:
+        logger.info("Loaded %s Alpaca credential(s) from Keychain (values not logged)", loaded)
+
+
 def get_alpaca_credentials() -> tuple[Optional[str], Optional[str]]:
     """
     Get Alpaca API credentials with proper priority (paper trading).
@@ -85,6 +137,7 @@ def get_alpaca_credentials() -> tuple[Optional[str], Optional[str]]:
     Priority order (first found wins) - UPDATED Jan 30, 2026:
     1. ALPACA_PAPER_TRADING_API_KEY / SECRET ($100K account - PRIMARY)
     2. ALPACA_API_KEY / ALPACA_SECRET_KEY (workflow fallback)
+    3. macOS Keychain services with the same names (account hermes-fleet)
 
     NOTE: The $5K/$30K accounts are deprecated. Use $100K account only.
     $100K account = No PDT restrictions, faster path to North Star.
@@ -93,6 +146,7 @@ def get_alpaca_credentials() -> tuple[Optional[str], Optional[str]]:
         Tuple of (api_key, secret_key) or (None, None) if not found.
     """
     _bootstrap_env_from_dotenv()
+    _bootstrap_env_from_keychain()
 
     env_vars_checked = [
         ("ALPACA_PAPER_TRADING_API_KEY", os.getenv("ALPACA_PAPER_TRADING_API_KEY")),

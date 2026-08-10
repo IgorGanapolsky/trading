@@ -42,6 +42,21 @@ def test_regime_blocks_low_ivr():
     assert any("IV rank" in b for b in gate["blockers"])
 
 
+def test_regime_allows_lean_premium_above_paper_floor():
+    """Paper floor may be below research preferred IVR; soft-flag lean premium."""
+    gate = evaluate_regime_gate(_snap(iv_rank_proxy=18.0), min_iv_rank=10.0)
+    assert gate["allowed"] is True
+    assert gate["blockers"] == []
+    assert any("research preferred" in f for f in gate["soft_flags"])
+    assert gate["thresholds"]["research_preferred_ivr"] == 30.0
+
+
+def test_regime_still_blocks_below_paper_floor():
+    gate = evaluate_regime_gate(_snap(iv_rank_proxy=5.0), min_iv_rank=10.0)
+    assert gate["allowed"] is False
+    assert any("IV rank" in b for b in gate["blockers"])
+
+
 def test_regime_missing_vix_fail_closed():
     gate = evaluate_regime_gate(_snap(vix=None), fail_closed_on_missing=True)
     assert gate["allowed"] is False
