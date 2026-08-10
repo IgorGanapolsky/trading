@@ -7,9 +7,11 @@ on:
   schedule:
     - cron: 0 15 * * 1-5 # 11:00 AM ET — exit residual IC + put-credit entry attempt
     - cron: 0 16 * * 1-5 # Exit check: 12:00 PM ET
+    - cron: 0 17 * * 1-5 # 1:00 PM ET — second entry attempt (low-vol recheck)
     - cron: 0 18 * * 1-5 # Exit check: 2:00 PM ET
     - cron: 30 19 * * 1-5 # EOD exit: 3:30 PM ET
-  # Manual dispatch is always a dry run. Scheduled jobs retain their bounded paper behavior.
+  # Manual dispatch is dry-run only (Checkov CKV_GHA_7 forbids workflow_dispatch inputs).
+  # Scheduled jobs execute paper entries under the kill switch.
   workflow_dispatch:
 
 permissions:
@@ -18,6 +20,14 @@ permissions:
 concurrency:
   group: ${{ format('state-writer-{0}-{1}', github.repository, github.ref_name || 'main') }}
   cancel-in-progress: false
+
+env:
+  # Paper validation floor (hard). Research preferred short-premium IVR remains 30;
+  # lean-premium entries are soft-flagged for stratified edge analysis.
+  # Evidence 2026-08-04..10: IVR proxy 8–29 blocked every 11:00 ET entry attempt.
+  PUT_CREDIT_MIN_IVR: "10"
+  PUT_CREDIT_RESEARCH_IVR: "30"
+  PUT_CREDIT_MAX_VIX: "30"
 
 jobs:
   run:
@@ -68,7 +78,7 @@ jobs:
             # GitHub can deliver scheduled jobs late. Preserve the intent of the
             # triggering cron expression instead of reclassifying by wall clock.
             case "$SCHEDULE_EXPRESSION" in
-              "0 15 * * 1-5")
+              "0 15 * * 1-5"|"0 17 * * 1-5")
                 MODE="both"
                 RUN_PUT_CREDIT=true
                 ;;
@@ -87,6 +97,7 @@ jobs:
             echo "run_put_credit=$RUN_PUT_CREDIT"
           } >> "$GITHUB_OUTPUT"
           echo "Mode: $MODE, Dry run: $DRY, Put credit: $RUN_PUT_CREDIT"
+          echo "Regime floors: PUT_CREDIT_MIN_IVR=${PUT_CREDIT_MIN_IVR:-unset} RESEARCH=${PUT_CREDIT_RESEARCH_IVR:-unset}"
 
       - name: Reconcile filled put-credit journals
         if: steps.mode.outputs.mode != 'status'
