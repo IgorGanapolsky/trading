@@ -132,5 +132,35 @@
     "exit_order_id": "3310d412-8ec4-4e91-9a6f-123366586a4a",
     "exit_filled_at": "2026-08-03T16:48:41.592843+00:00",
     "evidence_note": "broker_reconstructed_unverified: excluded from protocol validation cohort"
+  },
+  "PCS_260925_928dceab1cf942c18e38f9ff0f5d9fe6": {
+    "strategy_family": "spy_put_credit",
+    "order_id": "928dceab-1cf9-42c1-8e38-f9ff0f5d9fe6",
+    "entry_time": "2026-08-11T15:23:00.070304+00:00",
+    "expiry": "2026-09-25",
+    "quantity": 1,
+    "credit": 0.66,
+    "limit_credit": 0.66,
+    "credit_source": "limit_estimate_unconfirmed",
+    "put_delta": 0.215,
+    "selection_method": "live_delta_band_scan",
+    "strikes": {
+      "short_put": 742.0,
+      "long_put": 737.0
+    },
+    "signature": "SPY_2026-09-25_P737-742",
+    "validation_phase": true,
+    "profile_name": "spy-put-credit",
+    "status": "submitted_unconfirmed",
+    "regime": {
+      "captured_at": "2026-08-11T15:22:49.820855+00:00",
+      "spy_price": 772.7999877929688,
+      "vix": 15.3,
+      "iv_rank_proxy": 11.11,
+      "iv_rank_method": "vix_percentile_252",
+      "spy_sma_200": 703.9746,
+      "spy_above_200dma": true,
+      "source_errors": ["iv_rank_proxy_none"]
+    }
   }
 }
