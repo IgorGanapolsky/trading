@@ -143,6 +143,152 @@
       "ingested_at": "2026-08-10T23:52:54.586646+00:00",
       "sha256": "5fe9ab733274c543c793d4b40c6c4ed5ffbce011e3edd015dfa19bc2d613e9a5",
       "chunks": 11
+    },
+    "2608.09586v1": {
+      "title": "ICM Out! Better Tournament Strategy from Computed Continuations, vs. Solvers and LLMs",
+      "published": "2026-08-10T13:20:36Z",
+      "relevance_score": 0.31,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.GT",
+        "cs.MA"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.09586v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_09586v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_09586v1.md",
+      "ingested_at": "2026-08-11T06:27:09.505086+00:00",
+      "sha256": "637cb2d734f0a61358b6a671d9c0e0dbbbaa59e473e482efff1390a246cb7387",
+      "chunks": 12
+    },
+    "2608.09893v1": {
+      "title": "Fusion Training for Mathematical Generalization in Large Language Models",
+      "published": "2026-08-10T17:41:19Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.09893v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_09893v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_09893v1.md",
+      "ingested_at": "2026-08-11T06:27:09.506729+00:00",
+      "sha256": "a374ef121964e0ad0467ee022e178522bf6b6beb58411b59f39b76f6cf86d057",
+      "chunks": 10
+    },
+    "2608.09880v1": {
+      "title": "Financial Numerical Prediction and Allocation as Token Generation",
+      "published": "2026-08-10T17:33:10Z",
+      "relevance_score": 0.43,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CV",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.09880v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_09880v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_09880v1.md",
+      "ingested_at": "2026-08-11T06:27:09.507914+00:00",
+      "sha256": "47b94fb9e7c8b16acd97eddb00407b29603e568a97d2eebf7ff27fe37c3f0b02",
+      "chunks": 11
+    },
+    "2608.09928v1": {
+      "title": "Multimodal Model Diffing for Feature Discovery and Control",
+      "published": "2026-08-10T17:59:30Z",
+      "relevance_score": 0.36,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CV",
+        "cs.AI",
+        "cs.CL",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.09928v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_09928v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_09928v1.md",
+      "ingested_at": "2026-08-11T06:27:09.509295+00:00",
+      "sha256": "5d0c8159646905a25b3749951dd1a0a0b586b1926de68098319e1cb4d5ccf172",
+      "chunks": 11
+    },
+    "2608.09902v1": {
+      "title": "DSLE: A Learning Environment for Dark Souls Boss Encounters",
+      "published": "2026-08-10T17:48:45Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.NE"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.09902v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_09902v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_09902v1.md",
+      "ingested_at": "2026-08-11T06:27:09.510504+00:00",
+      "sha256": "5e51912b67c9c3124d5a05c5cc995e53501bb5a3a67beea7b9394d2b9a345413",
+      "chunks": 11
+    },
+    "2608.09859v1": {
+      "title": "Nash Peer-to-Peer Insurance Bargaining under Price Fairness and Coalitional Stability",
+      "published": "2026-08-10T17:16:46Z",
+      "relevance_score": 0.2,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "q-fin.RM"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.09859v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_09859v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_09859v1.md",
+      "ingested_at": "2026-08-11T06:27:09.511725+00:00",
+      "sha256": "5a6511ccd134d13dfb6eaf0973893db6ce3fb4fed42dbe021c3d139307104ed0",
+      "chunks": 11
+    },
+    "2608.09853v1": {
+      "title": "RynnValue: Scaling Robotic Value Foundation Models with Temporal Distance",
+      "published": "2026-08-10T17:09:37Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.RO",
+        "cs.CV",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.09853v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_09853v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_09853v1.md",
+      "ingested_at": "2026-08-11T06:27:09.514465+00:00",
+      "sha256": "a19dd7db560b14d676062e201c8ccc96a59896be368e536c639c375e4e6f082d",
+      "chunks": 11
+    },
+    "2608.09834v1": {
+      "title": "RA-FinBERT: Rule-aware LoRA adaptation for low-resource financial sentiment classification",
+      "published": "2026-08-10T16:52:19Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CL",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.09834v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_09834v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_09834v1.md",
+      "ingested_at": "2026-08-11T06:27:09.515786+00:00",
+      "sha256": "273b06e0ac83619f72f208d7d3714c998c3ea4a155823a8f4688e30a11317dc4",
+      "chunks": 11
+    },
+    "2608.09921v1": {
+      "title": "GENCO - A Unified Neural Solver Embedded in a Development Framework for Steady-State Grid Analysis",
+      "published": "2026-08-10T17:57:49Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.09921v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_09921v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_09921v1.md",
+      "ingested_at": "2026-08-11T06:27:09.517171+00:00",
+      "sha256": "27814a9f4780a7b9c261848cfb970dbffbecddcbe5e8b6a65762a0e1412cc2c4",
+      "chunks": 11
     }
   },
   "skipped_low_relevance": {
@@ -163,13 +309,45 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-08-10T23:52:54.578120+00:00"
+    },
+    "2608.09790v1": {
+      "title": "CARD: Controlled Agentic Reddit Discussions for Credit Card Simulation",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-11T06:27:09.502525+00:00"
+    },
+    "2608.09687v1": {
+      "title": "FedOrbit: Adaptive Personalized Federated Learning for Non-IID LEO Satellite Constellations",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-11T06:27:09.503004+00:00"
+    },
+    "2608.09925v1": {
+      "title": "From Values to Benchmarks: Evaluating Large Language Models for Governmental Use in Dutch",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-11T06:27:09.505588+00:00"
     }
   },
-  "total_ingested": 9,
-  "last_run_utc": "2026-08-10T23:52:54.587014+00:00",
+  "total_ingested": 18,
+  "last_run_utc": "2026-08-11T06:27:09.517663+00:00",
   "runs": [
     {
       "finished_at": "2026-08-10T23:52:54.587014+00:00",
+      "candidates": 12,
+      "new_ingested": 9,
+      "skipped_low_relevance": 3,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-08-11T06:27:09.517663+00:00",
       "candidates": 12,
       "new_ingested": 9,
       "skipped_low_relevance": 3,
