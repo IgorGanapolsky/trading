@@ -139,9 +139,9 @@
     "entry_time": "2026-08-11T15:23:00.070304+00:00",
     "expiry": "2026-09-25",
     "quantity": 1,
-    "credit": 0.66,
+    "credit": 0.65,
     "limit_credit": 0.66,
-    "credit_source": "limit_estimate_unconfirmed",
+    "credit_source": "broker_fill",
     "put_delta": 0.215,
     "selection_method": "live_delta_band_scan",
     "strikes": {
@@ -151,7 +151,7 @@
     "signature": "SPY_2026-09-25_P737-742",
     "validation_phase": true,
     "profile_name": "spy-put-credit",
-    "status": "submitted_unconfirmed",
+    "status": "open",
     "regime": {
       "captured_at": "2026-08-11T15:22:49.820855+00:00",
       "spy_price": 772.7999877929688,
@@ -161,6 +161,24 @@
       "spy_sma_200": 703.9746,
       "spy_above_200dma": true,
       "source_errors": ["iv_rank_proxy_none"]
+    },
+    "fill_confirmed_at": "2026-08-11T16:17:58.920593+00:00",
+    "last_counterfactuals": {
+      "tp_25_target": 16.25,
+      "tp_50_target": 32.5,
+      "would_hit_tp_25_now": false,
+      "would_hit_tp_50_now": false,
+      "public_exit_dte": 21,
+      "dte_now": 45,
+      "would_trigger_public_21dte_exit": false,
+      "note": "Counterfactuals only \u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history."
+    },
+    "last_counterfactuals_at": "2026-08-11T16:17:58.929758+00:00",
+    "last_mark": {
+      "current_debit": 0.7199999999999998,
+      "estimated_pnl": -6.999999999999973,
+      "dte": 45,
+      "hold_hours": 0.9163483677777777
     }
   }
 }
