@@ -20,6 +20,8 @@ from src.utils.llm_gateway import (
     resolve_openrouter_primary_and_fallback_configs,
 )
 
+ANTHROPIC_BASE_URL = "https://api.anthropic.com/v1"
+
 
 def _is_truthy(value: str | None) -> bool:
     return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
@@ -57,9 +59,92 @@ class LLMObservabilityReport:
     critical_execution_covered_by_openrouter: bool
     warnings: tuple[str, ...]
     notes: tuple[str, ...]
+    anthropic_api_key_present: bool = False
+    local_structured_tracing_available: bool = False
 
     def as_dict(self) -> dict:
         return asdict(self)
+
+
+def _broken_gateway_report(
+    exc: GatewayRequiredError,
+    *,
+    gateway_base_url: str | None,
+    gateway_api_key_present: bool,
+    openrouter_api_key_present: bool,
+    anthropic_api_key_present: bool,
+    input_output_logging_declared: bool,
+) -> LLMObservabilityReport:
+    """Build the fail-closed report for a required but unavailable gateway."""
+    return LLMObservabilityReport(
+        status="broken",
+        summary="Gateway routing required but not configured.",
+        primary_route="unconfigured",
+        primary_base_url=None,
+        primary_base_host=None,
+        fallback_base_host=None,
+        openrouter_api_key_present=openrouter_api_key_present,
+        gateway_base_url_present=bool(gateway_base_url),
+        gateway_base_host=_host(gateway_base_url),
+        gateway_api_key_present=gateway_api_key_present,
+        input_output_logging_declared=input_output_logging_declared,
+        openrouter_private_logs_cover_primary=False,
+        openrouter_private_logs_cover_fallback=False,
+        critical_execution_provider="deterministic_python",
+        critical_execution_covered_by_openrouter=False,
+        warnings=(str(exc),),
+        notes=(),
+        anthropic_api_key_present=anthropic_api_key_present,
+        local_structured_tracing_available=True,
+    )
+
+
+def _resolve_primary_route(
+    primary_cfg, *, anthropic_api_key_present: bool
+) -> tuple[str, str | None]:
+    """Return the truthful primary route and base URL for the resolved credentials."""
+    if primary_cfg.api_key:
+        primary_base_url = primary_cfg.base_url or OPENROUTER_BASE_URL
+        primary_route = (
+            "direct_openrouter"
+            if _same_base_url(primary_base_url, OPENROUTER_BASE_URL)
+            else "gateway"
+        )
+        return primary_route, primary_base_url
+    if anthropic_api_key_present:
+        return "direct_anthropic", ANTHROPIC_BASE_URL
+    return "unconfigured", None
+
+
+def _route_summary(
+    *,
+    primary_route: str,
+    primary_base_url: str | None,
+    compatible_route_configured: bool,
+    anthropic_api_key_present: bool,
+    input_output_logging_declared: bool,
+) -> tuple[str, list[str]]:
+    """Describe route coverage without conflating provider presence with tracing."""
+    warnings: list[str] = []
+    if not anthropic_api_key_present and not compatible_route_configured:
+        return (
+            "No LLM provider route is configured; deterministic paths only.",
+            ["No Anthropic, gateway, or OpenRouter credential was resolved."],
+        )
+    if primary_route == "gateway":
+        gateway_host = _host(primary_base_url)
+        warnings.append(
+            f"OpenRouter private logs do not cover primary gateway traffic through {gateway_host}."
+        )
+        return "Gateway routing is configured with local structured tracing.", warnings
+    if primary_route == "direct_openrouter":
+        if not input_output_logging_declared:
+            warnings.append(
+                "Direct OpenRouter routing is active, but "
+                "OPENROUTER_INPUT_OUTPUT_LOGGING_ENABLED is not declared."
+            )
+        return "Direct OpenRouter routing is configured with local structured tracing.", warnings
+    return "Direct Anthropic analysis is configured with local structured tracing.", warnings
 
 
 def build_llm_observability_report() -> LLMObservabilityReport:
@@ -68,70 +153,49 @@ def build_llm_observability_report() -> LLMObservabilityReport:
     gateway_base_url = get_llm_gateway_base_url()
     gateway_api_key_present = bool(get_llm_gateway_api_key())
     openrouter_api_key_present = bool((os.getenv("OPENROUTER_API_KEY") or "").strip())
-
+    anthropic_api_key_present = bool(
+        (os.getenv("ANTHROPIC_API_KEY") or "").strip()
+        or (os.getenv("CLAUDE_API_KEY") or "").strip()
+    )
     try:
         primary_cfg, fallback_cfg = resolve_openrouter_primary_and_fallback_configs()
     except GatewayRequiredError as exc:
-        return LLMObservabilityReport(
-            status="broken",
-            summary="Gateway routing required but not configured.",
-            primary_route="unconfigured",
-            primary_base_url=None,
-            primary_base_host=None,
-            fallback_base_host=None,
-            openrouter_api_key_present=openrouter_api_key_present,
-            gateway_base_url_present=bool(gateway_base_url),
-            gateway_base_host=_host(gateway_base_url),
+        return _broken_gateway_report(
+            exc,
+            gateway_base_url=gateway_base_url,
             gateway_api_key_present=gateway_api_key_present,
+            openrouter_api_key_present=openrouter_api_key_present,
+            anthropic_api_key_present=anthropic_api_key_present,
             input_output_logging_declared=input_output_logging_declared,
-            openrouter_private_logs_cover_primary=False,
-            openrouter_private_logs_cover_fallback=False,
-            critical_execution_provider="anthropic",
-            critical_execution_covered_by_openrouter=False,
-            warnings=(str(exc),),
-            notes=(),
         )
 
-    primary_base_url = primary_cfg.base_url or OPENROUTER_BASE_URL
-    primary_route = (
-        "direct_openrouter" if _same_base_url(primary_base_url, OPENROUTER_BASE_URL) else "gateway"
+    compatible_route_configured = bool(primary_cfg.api_key)
+    primary_route, primary_base_url = _resolve_primary_route(
+        primary_cfg,
+        anthropic_api_key_present=anthropic_api_key_present,
     )
     fallback_base_host = _host(getattr(fallback_cfg, "base_url", None) if fallback_cfg else None)
-    warnings: list[str] = []
-    notes = ["Critical trade execution routes directly via Anthropic API key."]
+    notes = [
+        "Order authorization remains deterministic; LLM output is advisory and cannot bypass risk gates.",
+        "Local structured tracing is available without sending prompts or responses to telemetry.",
+    ]
+    if anthropic_api_key_present:
+        notes.append("Direct Anthropic analysis credentials are configured.")
 
-    from pathlib import Path
+    summary, warnings = _route_summary(
+        primary_route=primary_route,
+        primary_base_url=primary_base_url,
+        compatible_route_configured=compatible_route_configured,
+        anthropic_api_key_present=anthropic_api_key_present,
+        input_output_logging_declared=input_output_logging_declared,
+    )
 
-    secret_path = Path.home() / ".resume_secrets" / "anthropic.json"
-    if "ANTHROPIC_API_KEY" in os.environ:
-        anthropic_key_present = bool(os.environ["ANTHROPIC_API_KEY"].strip())
-    else:
-        anthropic_key_present = secret_path.exists() or True
-    if anthropic_key_present:
-        notes.append(
-            "Primary execution uses direct Anthropic API key; optional OpenRouter fallback configured."
-        )
-        summary = (
-            "Direct Anthropic execution active; optional OpenRouter private logging configured."
-        )
-    else:
-        if not primary_cfg.api_key:
-            warnings.append("No OpenRouter-compatible API key resolved for the primary route.")
-        if primary_route == "direct_openrouter":
-            if not input_output_logging_declared:
-                warnings.append(
-                    "Direct OpenRouter routing is active, but OPENROUTER_INPUT_OUTPUT_LOGGING_ENABLED is not declared."
-                )
-            summary = "Direct OpenRouter routing active; compatible requests can appear in OpenRouter private logs."
-        else:
-            gateway_host = _host(primary_base_url)
-            warnings.append(f"Primary OpenRouter-compatible traffic routes through {gateway_host}.")
-            summary = "Gateway routing active; OpenRouter private logs are subset-only and do not cover primary traffic."
-
-        if not openrouter_api_key_present:
-            warnings.append(
-                "OPENROUTER_API_KEY is absent; direct OpenRouter fallback/logging is unavailable."
-            )
+    openrouter_private_logs_cover_primary = bool(
+        compatible_route_configured
+        and primary_route == "direct_openrouter"
+        and input_output_logging_declared
+    )
+    openrouter_private_logs_cover_fallback = bool(fallback_cfg and input_output_logging_declared)
 
     status = "ok" if not warnings else "warning"
     return LLMObservabilityReport(
@@ -146,13 +210,14 @@ def build_llm_observability_report() -> LLMObservabilityReport:
         gateway_base_host=_host(gateway_base_url),
         gateway_api_key_present=gateway_api_key_present,
         input_output_logging_declared=input_output_logging_declared,
-        openrouter_private_logs_cover_primary=primary_route == "direct_openrouter",
-        openrouter_private_logs_cover_fallback=bool(fallback_cfg)
-        or primary_route == "direct_openrouter",
-        critical_execution_provider="anthropic",
+        openrouter_private_logs_cover_primary=openrouter_private_logs_cover_primary,
+        openrouter_private_logs_cover_fallback=openrouter_private_logs_cover_fallback,
+        critical_execution_provider="deterministic_python",
         critical_execution_covered_by_openrouter=False,
         warnings=tuple(warnings),
         notes=tuple(notes),
+        anthropic_api_key_present=anthropic_api_key_present,
+        local_structured_tracing_available=True,
     )
 
 
@@ -163,14 +228,16 @@ def render_llm_observability_lines(report: LLMObservabilityReport) -> list[str]:
         f"Gateway configured: {'yes' if report.gateway_base_url_present else 'no'}",
         f"Gateway credential present: {'yes' if report.gateway_api_key_present else 'no'}",
         f"OpenRouter key present: {'yes' if report.openrouter_api_key_present else 'no'}",
+        f"Anthropic key present: {'yes' if report.anthropic_api_key_present else 'no'}",
+        "Local structured tracing available: "
+        f"{'yes' if report.local_structured_tracing_available else 'no'}",
         "OpenRouter Input & Output Logging declared: "
         f"{'yes' if report.input_output_logging_declared else 'no'}",
         "OpenRouter private logs cover primary traffic: "
         f"{'yes' if report.openrouter_private_logs_cover_primary else 'no'}",
         "OpenRouter private logs cover fallback traffic: "
         f"{'yes' if report.openrouter_private_logs_cover_fallback else 'no'}",
-        "Critical Anthropic execution covered by OpenRouter logs: "
-        f"{'yes' if report.critical_execution_covered_by_openrouter else 'no'}",
+        f"Critical order execution provider: {report.critical_execution_provider}",
     ]
 
     if report.fallback_base_host:
