@@ -4,7 +4,7 @@
     "created": "2026-07-07T21:32:24.241944+00:00",
     "purpose": "Master ledger for broker-paired closed option structures",
     "paper_phase_start": "2026-01-22",
-    "last_sync": "2026-08-11T19:51:34.943006+00:00",
+    "last_sync": "2026-08-12T15:22:09.530461+00:00",
     "sync_source": "sync_closed_positions.py"
   },
   "stats": {
@@ -47,8 +47,8 @@
       }
     },
     "paper_phase_start": "2026-01-22",
-    "paper_phase_days": 201,
-    "last_updated": "2026-08-11T19:51:34.942994+00:00",
+    "paper_phase_days": 202,
+    "last_updated": "2026-08-12T15:22:09.530448+00:00",
     "unpaired_realized_pnl": 2167.0,
     "unpaired_in_cohort_pnl": 409.0,
     "unpaired_order_count": 15,
