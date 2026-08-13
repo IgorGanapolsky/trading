@@ -434,6 +434,134 @@
       "ingested_at": "2026-08-12T06:38:11.714034+00:00",
       "sha256": "11e2e506893cd40eb5c349a839387e721ed4c6d0708e6041d92d53368c58c621",
       "chunks": 11
+    },
+    "2608.12306v1": {
+      "title": "Redistribution-based Cost Inference Improves Sparse Safe Offline RL",
+      "published": "2026-08-12T17:53:15Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.12306v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_12306v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_12306v1.md",
+      "ingested_at": "2026-08-13T06:39:41.967718+00:00",
+      "sha256": "36e470713ef358ab74ca7225aaae67bb6793edca1686a7f38879af5fa834baac",
+      "chunks": 10
+    },
+    "2608.12220v1": {
+      "title": "SCOUT: Unlocking Enhanced Spatial Reasoning via Structured Chain-of-Thought and Multi-Objective Process Reward",
+      "published": "2026-08-12T16:14:25Z",
+      "relevance_score": 0.33,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.12220v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_12220v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_12220v1.md",
+      "ingested_at": "2026-08-13T06:39:41.969449+00:00",
+      "sha256": "0db5cc6af93f37676ed3dc92e9a11d284ce54a33a281ce572cea9477bd339acb",
+      "chunks": 11
+    },
+    "2608.11980v1": {
+      "title": "HCGRec: Hint-Conditioned Generative Recommendation with Semantic IDs",
+      "published": "2026-08-12T12:13:08Z",
+      "relevance_score": 0.27,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.IR",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.11980v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_11980v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_11980v1.md",
+      "ingested_at": "2026-08-13T06:39:41.971123+00:00",
+      "sha256": "58df688d3a3642b5ca1bfb65d31fc1bdac0a8db3c85f1f196ab146ee4e41d804",
+      "chunks": 11
+    },
+    "2608.12283v1": {
+      "title": "Large Language Model-Driven Small-Capitalization Trading: Integrating Financial News Sentiment, Macroeconomic Indicators, and Technical Signals",
+      "published": "2026-08-12T17:28:03Z",
+      "relevance_score": 0.3,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "q-fin.PM",
+        "cs.CL"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.12283v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_12283v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_12283v1.md",
+      "ingested_at": "2026-08-13T06:39:41.972864+00:00",
+      "sha256": "740c244993187dae63e762f79144e0374101de5265f9ed6374665215552f8824",
+      "chunks": 12
+    },
+    "2608.12271v1": {
+      "title": "Earth observation embeddings are effective sub-grid descriptors for probabilistic weather downscaling",
+      "published": "2026-08-12T17:10:42Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "physics.ao-ph"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.12271v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_12271v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_12271v1.md",
+      "ingested_at": "2026-08-13T06:39:41.974467+00:00",
+      "sha256": "f7585118e3705cb49e0989d917d3d84e347ad02e7b3658c9c478b0bb5947e7fb",
+      "chunks": 12
+    },
+    "2608.12259v1": {
+      "title": "Calibration Bets on the Past: Post-Training Quantization for Financial Time-Series Forecasting",
+      "published": "2026-08-12T17:02:06Z",
+      "relevance_score": 0.33,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "q-fin.ST"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.12259v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_12259v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_12259v1.md",
+      "ingested_at": "2026-08-13T06:39:41.976025+00:00",
+      "sha256": "e7f67da4dd6f235acf1968cea289810159447f30da9cb1339ca199c21a24533b",
+      "chunks": 11
+    },
+    "2608.12307v1": {
+      "title": "AI4AI at Test-Time: Strong-to-Weak Capability Transfer via Harnesses",
+      "published": "2026-08-12T17:53:18Z",
+      "relevance_score": 0.28,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.CL"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.12307v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_12307v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_12307v1.md",
+      "ingested_at": "2026-08-13T06:39:41.977569+00:00",
+      "sha256": "21ee580c11df57318b11df52d8cdb5ed7ec9291ef95b093c9e437227b1cc78a4",
+      "chunks": 11
+    },
+    "2608.12304v1": {
+      "title": "Constructing Dynamic Master Logic Models as Knowledge Graphs for Complex System Diagnostics Using Retrieval-Augmented Large Language Models",
+      "published": "2026-08-12T17:50:39Z",
+      "relevance_score": 0.29,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.12304v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_12304v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_12304v1.md",
+      "ingested_at": "2026-08-13T06:39:41.981302+00:00",
+      "sha256": "f70c55dee9ef259c27f6f93d891e27c7b55c5f208a6bb39ab545a8dbdbe9aa0e",
+      "chunks": 11
     }
   },
   "skipped_low_relevance": {
@@ -496,10 +624,22 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-08-12T06:38:11.712353+00:00"
+    },
+    "2608.12302v1": {
+      "title": "A Framework for Designing Reward Functions: From Objectives to Features to Human-Aligned Reward Functions",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-13T06:39:41.978497+00:00"
+    },
+    "2608.12308v1": {
+      "title": "DreamFly: Causal Memory and Receding-Horizon Diffusion Planning for Aerial Vision-Language Navigation",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-13T06:39:41.979601+00:00"
     }
   },
-  "total_ingested": 27,
-  "last_run_utc": "2026-08-12T18:53:20.764962+00:00",
+  "total_ingested": 35,
+  "last_run_utc": "2026-08-13T06:39:41.981993+00:00",
   "runs": [
     {
       "finished_at": "2026-08-10T23:52:54.587014+00:00",
@@ -548,6 +688,20 @@
       "candidates": 13,
       "new_ingested": 0,
       "skipped_low_relevance": 0,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-08-13T06:39:41.981993+00:00",
+      "candidates": 10,
+      "new_ingested": 8,
+      "skipped_low_relevance": 2,
       "min_relevance": 0.18,
       "queries": [
         "option credit spread OR iron condor OR put credit",
