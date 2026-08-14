@@ -562,6 +562,158 @@
       "ingested_at": "2026-08-13T06:39:41.981302+00:00",
       "sha256": "f70c55dee9ef259c27f6f93d891e27c7b55c5f208a6bb39ab545a8dbdbe9aa0e",
       "chunks": 11
+    },
+    "2608.13277v1": {
+      "title": "Mixture of Training: Recombining Small-Scale Scaffolded Pretraining Runs into a Larger Language Model",
+      "published": "2026-08-13T14:13:46Z",
+      "relevance_score": 0.25,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.13277v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_13277v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_13277v1.md",
+      "ingested_at": "2026-08-14T06:38:20.926077+00:00",
+      "sha256": "14c3e53407960481cd23950ee337419176c86ce0b9508092f8d39d2bf7fc4516",
+      "chunks": 10
+    },
+    "2608.13179v1": {
+      "title": "Teach the Magnitude, Not the Direction: Verifier-Bounded Credit Assignment for Multi-Turn Multi-step LLM Agents",
+      "published": "2026-08-13T12:44:37Z",
+      "relevance_score": 0.25,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.13179v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_13179v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_13179v1.md",
+      "ingested_at": "2026-08-14T06:38:20.928063+00:00",
+      "sha256": "7b2d4fb1da90fe0e06b758de660e0c9b516c0a1af941fd302fd0075d3efa0239",
+      "chunks": 11
+    },
+    "2608.13522v1": {
+      "title": "Vero: Can AI Agents Build Formally Verified Software Repositories?",
+      "published": "2026-08-13T17:41:27Z",
+      "relevance_score": 0.26,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.LO",
+        "cs.PL",
+        "cs.SE"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.13522v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_13522v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_13522v1.md",
+      "ingested_at": "2026-08-14T06:38:20.930142+00:00",
+      "sha256": "da6a42f1624e32215f126efb19145b2367b0d0f576fb8ba015ea23b36d117b11",
+      "chunks": 12
+    },
+    "2608.13472v1": {
+      "title": "AaLLM: An End-to-End Analog Circuit Design Framework from Topology Generation to Sizing Using Large Language Models",
+      "published": "2026-08-13T16:57:07Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "eess.SY",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.13472v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_13472v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_13472v1.md",
+      "ingested_at": "2026-08-14T06:38:20.932954+00:00",
+      "sha256": "b4bda874de9871c02537056393e15b2459c08994cf3f71b6b0a9f0b83b2e65c0",
+      "chunks": 11
+    },
+    "2608.13560v1": {
+      "title": "AutoDesign: Meta-Harness Optimization for Long-Horizon Agentic Design",
+      "published": "2026-08-13T17:59:57Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CV",
+        "cs.AI",
+        "cs.CL"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.13560v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_13560v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_13560v1.md",
+      "ingested_at": "2026-08-14T06:38:20.934960+00:00",
+      "sha256": "7abcd187ea1043b74313f79de9dce8cb3292bfb785c7f334fca439970a702e8b",
+      "chunks": 11
+    },
+    "2608.13554v1": {
+      "title": "Defensive Boosting for Online Probabilistic Forecasting",
+      "published": "2026-08-13T17:59:35Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.CC",
+        "cs.DS",
+        "stat.ML"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.13554v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_13554v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_13554v1.md",
+      "ingested_at": "2026-08-14T06:38:20.936975+00:00",
+      "sha256": "aad77338a8dadb8cf0c2e876dd007061783cd92c09cc52bcf9a7ee51bb7c782d",
+      "chunks": 12
+    },
+    "2608.13549v1": {
+      "title": "Exponential Convex Calibration Dimension for the Multi-Label Jaccard Measure",
+      "published": "2026-08-13T17:59:17Z",
+      "relevance_score": 0.26,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "stat.ML"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.13549v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_13549v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_13549v1.md",
+      "ingested_at": "2026-08-14T06:38:20.939057+00:00",
+      "sha256": "268912bd1fee69b34574e18e4d87b72b161cabb64c2864f26fc24e2267297fd0",
+      "chunks": 11
+    },
+    "2608.13520v1": {
+      "title": "The data geometry of masking diffusion: Certified-optimal schedules via unmasking growth complexity",
+      "published": "2026-08-13T17:40:17Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.IT",
+        "math.ST",
+        "stat.ML"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.13520v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_13520v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_13520v1.md",
+      "ingested_at": "2026-08-14T06:38:20.942060+00:00",
+      "sha256": "af6886a7ef4a8c2e18caea8c112eaad55df2cf22f1f03694440d0907a990e016",
+      "chunks": 11
+    },
+    "2608.13558v1": {
+      "title": "OmniScientist: An Omni-Modal Omni-Discipline AI Scientist",
+      "published": "2026-08-13T17:59:52Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.CL"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.13558v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_13558v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_13558v1.md",
+      "ingested_at": "2026-08-14T06:38:20.944159+00:00",
+      "sha256": "4710bddb23ea64cb1bb5e3325dc4b043c80df9e57b900763d3dd950238774afb",
+      "chunks": 11
     }
   },
   "skipped_low_relevance": {
@@ -636,10 +788,34 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-08-13T06:39:41.979601+00:00"
+    },
+    "2608.13297v1": {
+      "title": "The Time Value of Evolution",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-14T06:38:20.923316+00:00"
+    },
+    "2608.13484v1": {
+      "title": "Toward a Gricean Retreat: Probing LLMs for Knowledge Boundaries and Referent Specificity",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-14T06:38:20.931038+00:00"
+    },
+    "2608.13521v1": {
+      "title": "Exponential quantum advantage for learning signals with a single qubit",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-14T06:38:20.940000+00:00"
+    },
+    "2608.13547v1": {
+      "title": "QuoteBench: How Matched Scores Can Hide Command-Path Failures",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-14T06:38:20.945106+00:00"
     }
   },
-  "total_ingested": 35,
-  "last_run_utc": "2026-08-13T06:39:41.981993+00:00",
+  "total_ingested": 44,
+  "last_run_utc": "2026-08-14T06:38:20.946021+00:00",
   "runs": [
     {
       "finished_at": "2026-08-10T23:52:54.587014+00:00",
@@ -702,6 +878,20 @@
       "candidates": 10,
       "new_ingested": 8,
       "skipped_low_relevance": 2,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-08-14T06:38:20.946021+00:00",
+      "candidates": 13,
+      "new_ingested": 9,
+      "skipped_low_relevance": 4,
       "min_relevance": 0.18,
       "queries": [
         "option credit spread OR iron condor OR put credit",
