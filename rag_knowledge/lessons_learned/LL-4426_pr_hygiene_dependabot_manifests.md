@@ -1,4 +1,4 @@
-# LL-2026-08-17 PR hygiene: Dependabot blocked by tracked generated manifests
+# LL-4426 PR hygiene: Dependabot blocked by tracked generated manifests
 
 ## Context
 

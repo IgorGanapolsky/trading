@@ -1,4 +1,4 @@
-# LL-2026-07-02 — Silent quarantine blocked ALL validation entries for 2 weeks
+# LL-20260702 Silent quarantine blocked ALL validation entries for 2 weeks
 
 **Severity: 5 (system stopped trading while reporting green)**
 

@@ -436,7 +436,12 @@ def _entry_has_open_broker_legs(entry: dict[str, Any], positions: dict[str, Any]
 
 
 def reconcile_put_credit_entries(client: Any, *, dry_run: bool = False) -> dict[str, Any]:
-    """Recover missing PCS journals from our filled paper BPS parent orders."""
+    """Recover missing PCS journals and re-sync cancelled vs open broker legs.
+
+    1. Recover filled paper BPS parent orders that never got a durable journal.
+    2. Re-open journal rows marked cancelled/closed when both legs are still live.
+    3. Close ghost open rows that no longer have either leg (no freehand orders).
+    """
 
     from alpaca.trading.enums import QueryOrderStatus
     from alpaca.trading.requests import GetOrdersRequest
@@ -467,6 +472,10 @@ def reconcile_put_credit_entries(client: Any, *, dry_run: bool = False) -> dict[
         "invalid_filled_orders": 0,
         "recovered": 0,
         "would_recover": 0,
+        "reopened": 0,
+        "would_reopen": 0,
+        "ghost_closed": 0,
+        "would_ghost_close": 0,
         "broken": 0,
         "details": [],
     }
@@ -484,6 +493,66 @@ def reconcile_put_credit_entries(client: Any, *, dry_run: bool = False) -> dict[
         order_id = str(getattr(order, "id", "") or "")
         if order_id in existing_order_ids:
             report["existing"] += 1
+            # If journal is cancelled/closed but this filled order still has legs,
+            # re-open and refresh strikes/signature from the broker order (fixes
+            # mislabeled strike journals).
+            for key, existing in list(entries.items()):
+                if not isinstance(existing, dict):
+                    continue
+                if str(existing.get("order_id") or "") != order_id:
+                    continue
+                try:
+                    _, recovered = _recovered_put_credit_entry(order)
+                except ValueError:
+                    break
+                if not _entry_has_open_broker_legs(recovered, positions):
+                    break
+                status = str(existing.get("status") or "open").strip().lower()
+                needs_reopen = status in CLOSED_ENTRY_STATES
+                needs_strike_fix = existing.get("strikes") != recovered.get("strikes")
+                if not needs_reopen and not needs_strike_fix:
+                    break
+                if dry_run:
+                    report["would_reopen"] += 1
+                    report["details"].append(
+                        {
+                            "key": key,
+                            "order_id": order_id,
+                            "status": "would_reopen_from_order",
+                            "was": status,
+                            "strikes": recovered.get("strikes"),
+                        }
+                    )
+                    break
+                existing["status"] = "open"
+                existing["strikes"] = recovered["strikes"]
+                existing["signature"] = recovered.get("signature") or existing.get("signature")
+                existing["expiry"] = recovered.get("expiry") or existing.get("expiry")
+                if recovered.get("credit") is not None:
+                    existing["credit"] = recovered["credit"]
+                    existing["credit_source"] = recovered.get("credit_source") or "broker_fill"
+                existing["reconciliation_reason"] = "reopened_from_filled_order_legs"
+                existing["reopened_at"] = datetime.now(UTC).isoformat()
+                for ghost_key in (
+                    "exit_filled_at",
+                    "exit_reason",
+                    "exit_order_id",
+                    "exit_pending_at",
+                    "last_error",
+                ):
+                    existing.pop(ghost_key, None)
+                changed = True
+                report["reopened"] += 1
+                report["details"].append(
+                    {
+                        "key": key,
+                        "order_id": order_id,
+                        "status": "reopened_from_order",
+                        "was": status,
+                        "strikes": existing["strikes"],
+                    }
+                )
+                break
             continue
         try:
             key, entry = _recovered_put_credit_entry(order)
@@ -506,6 +575,80 @@ def reconcile_put_credit_entries(client: Any, *, dry_run: bool = False) -> dict[
         changed = True
         report["recovered"] += 1
         report["details"].append({"order_id": order_id, "key": key, "status": "recovered"})
+
+    # Re-open cancelled/closed journals that still match live broker legs.
+    for key, entry in list(entries.items()):
+        if not isinstance(entry, dict):
+            continue
+        status = str(entry.get("status") or "open").strip().lower()
+        if status not in CLOSED_ENTRY_STATES:
+            continue
+        if not _entry_has_open_broker_legs(entry, positions):
+            continue
+        if dry_run:
+            report["would_reopen"] += 1
+            report["details"].append({"key": key, "status": "would_reopen", "was": status})
+            continue
+        entry["status"] = "open"
+        entry["reconciliation_reason"] = "reopened_broker_legs_present"
+        entry["reopened_at"] = datetime.now(UTC).isoformat()
+        for ghost_key in (
+            "exit_filled_at",
+            "exit_reason",
+            "exit_order_id",
+            "exit_pending_at",
+            "last_error",
+        ):
+            entry.pop(ghost_key, None)
+        changed = True
+        report["reopened"] += 1
+        report["details"].append({"key": key, "status": "reopened", "was": status})
+
+    # Close ghost active rows with no legs (status open/broken/entry_pending flat).
+    for key, entry in list(entries.items()):
+        if not isinstance(entry, dict) or not _is_active_entry(entry):
+            continue
+        if _entry_has_open_broker_legs(entry, positions):
+            # Still active with full structure.
+            continue
+        # Skip partial/broken structures — manage-exits owns orphan handling.
+        try:
+            expiry = _expiry_yymmdd(entry)
+            strikes = entry.get("strikes") or {}
+            short_symbol = _option_symbol(expiry, float(strikes["short_put"]))
+            long_symbol = _option_symbol(expiry, float(strikes["long_put"]))
+        except (KeyError, TypeError, ValueError):
+            continue
+        short_pos = positions.get(short_symbol)
+        long_pos = positions.get(long_symbol)
+        if short_pos is not None or long_pos is not None:
+            continue
+        entry_status = _entry_order_status(client, entry)
+        if any(state in entry_status for state in ("NEW", "ACCEPT", "PENDING", "HELD")):
+            continue
+        if dry_run:
+            report["would_ghost_close"] += 1
+            report["details"].append(
+                {
+                    "key": key,
+                    "status": "would_ghost_close",
+                    "entry_order_status": entry_status,
+                }
+            )
+            continue
+        entry["status"] = "closed"
+        entry["reconciliation_reason"] = "broker_flat_ghost_open"
+        entry["exit_filled_at"] = entry.get("exit_filled_at") or datetime.now(UTC).isoformat()
+        entry["exit_reason"] = entry.get("exit_reason") or "broker_reconcile_flat"
+        changed = True
+        report["ghost_closed"] += 1
+        report["details"].append(
+            {
+                "key": key,
+                "status": "ghost_closed",
+                "entry_order_status": entry_status,
+            }
+        )
 
     if changed:
         _save_entries(entries)

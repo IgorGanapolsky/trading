@@ -467,6 +467,131 @@ def test_malformed_historical_put_credit_does_not_block_exit_workflow(tmp_path, 
     assert report["recovered"] == 0
 
 
+def test_reconcile_reopens_cancelled_when_broker_legs_present(tmp_path, monkeypatch):
+    from scripts import spy_put_credit as pcs
+
+    entries_path = tmp_path / "put_credit_entries.json"
+    entries_path.write_text(
+        json.dumps(
+            {
+                "PCS_cancel": {
+                    "status": "cancelled",
+                    "order_id": "ord-live",
+                    "quantity": 1,
+                    "expiry": "2026-09-25",
+                    "strikes": {"short_put": 746.0, "long_put": 741.0},
+                    "credit": 0.62,
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(pcs, "ENTRIES_FILE", entries_path)
+    client = MagicMock()
+    client.get_orders.return_value = []
+    client.get_all_positions.return_value = [
+        SimpleNamespace(symbol="SPY260925P00741000", qty="1"),
+        SimpleNamespace(symbol="SPY260925P00746000", qty="-1"),
+    ]
+
+    report = pcs.reconcile_put_credit_entries(client)
+
+    assert report["reopened"] == 1
+    saved = json.loads(entries_path.read_text(encoding="utf-8"))
+    assert saved["PCS_cancel"]["status"] == "open"
+    assert saved["PCS_cancel"]["reconciliation_reason"] == "reopened_broker_legs_present"
+
+
+def test_reconcile_reopens_and_corrects_strikes_from_filled_order(tmp_path, monkeypatch):
+    from scripts import spy_put_credit as pcs
+
+    entries_path = tmp_path / "put_credit_entries.json"
+    entries_path.write_text(
+        json.dumps(
+            {
+                "PCS_wrong": {
+                    "status": "cancelled",
+                    "order_id": "818b7a94-239e-4579-bf33-e6aab40ff847",
+                    "quantity": 1,
+                    "expiry": "2026-09-25",
+                    # Mislabeled vs broker fill (real was 735/740).
+                    "strikes": {"short_put": 742.0, "long_put": 737.0},
+                    "signature": "SPY_2026-09-25_P737-742",
+                    "credit": 0.51,
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(pcs, "ENTRIES_FILE", entries_path)
+    monkeypatch.setattr(pcs, "AUDIT_DIR", tmp_path / "audit")
+    order = SimpleNamespace(
+        id="818b7a94-239e-4579-bf33-e6aab40ff847",
+        client_order_id="IC-OPEN-BPS--1786986801253838000003",
+        status="FILLED",
+        qty="1",
+        filled_qty="1",
+        filled_avg_price="-0.51",
+        limit_price="-0.65",
+        submitted_at=datetime.fromisoformat("2026-08-17T17:13:25+00:00"),
+        filled_at=datetime.fromisoformat("2026-08-17T17:13:33+00:00"),
+        legs=[
+            SimpleNamespace(symbol="SPY260925P00735000", side="BUY", filled_avg_price="3.88"),
+            SimpleNamespace(symbol="SPY260925P00740000", side="SELL", filled_avg_price="4.39"),
+        ],
+    )
+    client = MagicMock()
+    client.get_orders.return_value = [order]
+    client.get_all_positions.return_value = [
+        SimpleNamespace(symbol="SPY260925P00735000", qty="1"),
+        SimpleNamespace(symbol="SPY260925P00740000", qty="-1"),
+    ]
+
+    report = pcs.reconcile_put_credit_entries(client)
+
+    assert report["reopened"] == 1
+    saved = json.loads(entries_path.read_text(encoding="utf-8"))
+    entry = saved["PCS_wrong"]
+    assert entry["status"] == "open"
+    assert entry["strikes"] == {"short_put": 740.0, "long_put": 735.0}
+    assert entry["signature"] == "SPY_2026-09-25_P735-740"
+
+
+def test_reconcile_ghost_closes_open_without_legs(tmp_path, monkeypatch):
+
+    from scripts import spy_put_credit as pcs
+
+    entries_path = tmp_path / "put_credit_entries.json"
+    entries_path.write_text(
+        json.dumps(
+            {
+                "PCS_ghost": {
+                    "status": "open",
+                    "order_id": "ord-gone",
+                    "quantity": 1,
+                    "expiry": "2026-09-25",
+                    "strikes": {"short_put": 742.0, "long_put": 737.0},
+                    "credit": 0.65,
+                    "exit_filled_at": "2026-08-17T16:58:24+00:00",
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(pcs, "ENTRIES_FILE", entries_path)
+    client = MagicMock()
+    client.get_orders.return_value = []
+    client.get_all_positions.return_value = []
+    client.get_order_by_id.side_effect = Exception("order not found")
+
+    report = pcs.reconcile_put_credit_entries(client)
+
+    assert report["ghost_closed"] == 1
+    saved = json.loads(entries_path.read_text(encoding="utf-8"))
+    assert saved["PCS_ghost"]["status"] == "closed"
+    assert saved["PCS_ghost"]["reconciliation_reason"] == "broker_flat_ghost_open"
+
+
 def test_put_credit_entry_builds_supported_bull_put_order_id(tmp_path, monkeypatch):
     from scripts import spy_put_credit as pcs
     from src.utils.order_intent import parse_client_order_id
