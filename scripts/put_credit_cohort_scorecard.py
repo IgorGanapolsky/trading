@@ -305,9 +305,7 @@ def build_scorecard(
     closed_from_trades = summarize_closed(_trade_rows(trades))
 
     # Get closed entries from put_credit_entries.json
-    closed_from_entries = _summarize_closed_entries(
-        entries if isinstance(entries, dict) else {}
-    )
+    closed_from_entries = _summarize_closed_entries(entries if isinstance(entries, dict) else {})
 
     # Aggregate from both sources - merge unique closed trades
     # Entries in put_credit_entries.json are authoritative for put credit cohort
@@ -378,7 +376,9 @@ def build_scorecard(
         "kill_criteria": kill,
         "rolling_20": _rolling_windows(all_closed_pnls_sorted, 20),
         "sources": {
-            "trades_json": len(closed_from_trades.get("closed_trades", [])) if isinstance(closed_from_trades, dict) else 0,
+            "trades_json": len(closed_from_trades.get("closed_trades", []))
+            if isinstance(closed_from_trades, dict)
+            else 0,
             "entries_json": closed_from_entries.get("closed_from_entries", 0),
         },
     }

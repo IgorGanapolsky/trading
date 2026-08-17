@@ -19,12 +19,12 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
 
-class OptimizerEngine(str, Enum):
+class OptimizerEngine(StrEnum):
     GUROBI = "gurobi"
     HIGHSPY = "highspy"  # Open-source fallback
 
@@ -43,7 +43,7 @@ class PutCreditCandidate:
     vega_risk: float = 0.0
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "PutCreditCandidate":
+    def from_dict(cls, data: dict[str, Any]) -> PutCreditCandidate:
         return cls(
             expiry=data["expiry"],
             short_delta=data["short_delta"],
@@ -170,14 +170,16 @@ def optimize_put_credit_sizing(
         if avg_correlation > max_correlation and selected:
             break
 
-        selected.append({
-            "expiry": c.expiry,
-            "credit": c.credit,
-            "wing_width": c.wing_width,
-            "short_delta": c.short_delta,
-            "allocated": c.max_loss,
-            "expected_return": c.expected_return,
-        })
+        selected.append(
+            {
+                "expiry": c.expiry,
+                "credit": c.credit,
+                "wing_width": c.wing_width,
+                "short_delta": c.short_delta,
+                "allocated": c.max_loss,
+                "expected_return": c.expected_return,
+            }
+        )
 
         total_allocated += c.max_loss
         total_expected_return += c.credit * 100  # Scale by contract multiplier
@@ -185,7 +187,7 @@ def optimize_put_credit_sizing(
 
     # Update average correlation
     if selected:
-        correlations = [c.correlation_to_portfolio for c in sorted_candidates[:len(selected)]]
+        correlations = [c.correlation_to_portfolio for c in sorted_candidates[: len(selected)]]
         avg_correlation = sum(correlations) / len(correlations) if correlations else 0.0
 
     return OptimizationResult(
@@ -241,19 +243,29 @@ def main() -> int:
     args = parser.parse_args()
 
     if not args.candidates.exists():
-        print(json.dumps({
-            "ok": False,
-            "error": f"Candidates file not found: {args.candidates}",
-        }, indent=2))
+        print(
+            json.dumps(
+                {
+                    "ok": False,
+                    "error": f"Candidates file not found: {args.candidates}",
+                },
+                indent=2,
+            )
+        )
         return 1
 
     candidates = load_candidates_from_file(args.candidates)
 
     if not candidates:
-        print(json.dumps({
-            "ok": False,
-            "error": "No valid candidates found",
-        }, indent=2))
+        print(
+            json.dumps(
+                {
+                    "ok": False,
+                    "error": "No valid candidates found",
+                },
+                indent=2,
+            )
+        )
         return 1
 
     result = optimize_put_credit_sizing(candidates, args.capital, args.max_correlation)
