@@ -25,7 +25,9 @@ env:
   # Paper validation floor (hard). Research preferred short-premium IVR remains 30;
   # lean-premium entries are soft-flagged for stratified edge analysis.
   # Evidence 2026-08-04..10: IVR proxy 8–29 blocked every 11:00 ET entry attempt.
-  PUT_CREDIT_MIN_IVR: "10"
+  # Paper validation floor only — research preferred remains 30 for edge claims.
+  # 10 froze entries for multi-day stretches when VIX percentile sat just under 10.
+  PUT_CREDIT_MIN_IVR: "5"
   PUT_CREDIT_RESEARCH_IVR: "30"
   PUT_CREDIT_MAX_VIX: "30"
 
