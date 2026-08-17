@@ -110,6 +110,25 @@ def _self_check() -> int:
             },
             False,
         ),
+        (
+            "strategy_research_bad",
+            {
+                "kind": TaskKind.STRATEGY_RESEARCH,
+                "text": "propose 10-wide SPY put spread without stop loss",
+            },
+            False,
+        ),
+        (
+            "strategy_research_clean",
+            {
+                "kind": TaskKind.STRATEGY_RESEARCH,
+                "text": (
+                    "Sell 1-lot 30-45 DTE SPY put credit spread, $5-wide wings, 15-delta short leg, "
+                    "take profit 25%, stop loss 200%, exit by 7 DTE, regime filter IVR >= 30 and VIX <= 30."
+                ),
+            },
+            True,
+        ),
     ]
     failures = []
     for name, kwargs, expect_pass in cases:

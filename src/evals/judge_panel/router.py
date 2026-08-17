@@ -18,6 +18,10 @@ class ExpertRouter:
         TaskKind.COORD_AUDIT: (ExpertName.COORDINATION, ExpertName.RISK_RULES),
         # Trade entry: risk only — never spin a full council.
         TaskKind.TRADE_ENTRY: (ExpertName.RISK_RULES,),
+        TaskKind.STRATEGY_RESEARCH: (
+            ExpertName.RESEARCH_CRITIC,
+            ExpertName.RISK_RULES,
+        ),
     }
 
     def select(self, kind: TaskKind) -> tuple[ExpertName, ...]:
