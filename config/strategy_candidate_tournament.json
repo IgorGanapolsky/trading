@@ -37,16 +37,16 @@
     },
     {
       "strategy_id": "dividend_growth_income",
-      "hypothesis": "A tax-efficient buy-and-hold qualified-dividend growth allocation (SCHD-style) is the most realistic route to a passive, non-day-trading monthly income stream once sufficient capital is deployed. Research (2026-07-25) estimates ~2.8% after-tax yield at a 24% ordinary / 15% qualified-dividend assumption, requiring roughly $430K in capital to net $1,000/mo after-tax. No strategy code exists yet; src/strategies/reit_strategy.py was evaluated as a possible starting point and rejected because it fails to instantiate (declares StrategyInterface but never implements its abstract analyze/execute methods) and has zero callers or tests anywhere in the repo.",
+      "hypothesis": "A 3-Bucket passive distribution engine combining Section 1256 option-income ETFs (SPYI, QQQI, JEPQ: 55% weight at ~10% yield), qualified dividend compounders (SCHD, DGRO: 30% weight at ~3.4% yield), and cash reserves (SGOV, USFR: 15% weight at ~5% yield). Replaces the $2.5M capital requirement of pure dividend growth with a $600K target capital structure generating $6,000/mo net cashflow without forced share liquidation during bear markets (implemented in src/strategies/income_bucket_engine.py).",
       "rules": {
-        "universe": "Broad qualified-dividend growth equity ETF(s), e.g. SCHD-style; DRIP reinvestment while capital is small",
-        "entry": "Not yet implemented. No code exists for this candidate.",
-        "exit": "Long-term hold; sales only for rebalancing or once real income distributions begin, always after the 365-day LTCG threshold where practical",
-        "risk": "Buy-and-hold equity exposure only; no leverage, no options, no day trading",
-        "regime": "Hypothesis only; capital-gated, not yet in any validation cohort. Requires deployed real capital far beyond current live account equity ($0) before this can produce measurable income regardless of code readiness."
+        "universe": "Bucket 1: SGOV/USFR (15%); Bucket 2: SPYI/QQQI/JEPQ/DIVO (55%); Bucket 3: SCHD/DGRO (30%)",
+        "entry": "Systematic DCA allocation via IncomeBucketEngine.plan_rebalance_dca; directs deposits into underweight buckets first.",
+        "exit": "Passive monthly cash distribution payouts; 0 discretionary sales of Bucket 2/3 shares during market pullbacks.",
+        "risk": "Bucket 1 maintains 12 months of living expense buffer, insulating portfolio against sequence-of-returns drawdowns.",
+        "regime": "Passive multi-asset distribution; active accumulation phase scales capital toward the $600,000 North Star threshold."
       },
       "broker_requirements": {
-        "asset_class": "equity",
+        "asset_class": "equity_and_etf",
         "legs": 1,
         "minimum_options_level": 0,
         "requires_paper_trading": true

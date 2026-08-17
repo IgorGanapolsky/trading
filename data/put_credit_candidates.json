@@ -1,0 +1,34 @@
+{
+  "candidates": [
+    {
+      "expiry": "2026-09-25",
+      "short_delta": 0.15,
+      "credit": 0.65,
+      "wing_width": 5.0,
+      "max_loss": 500.0,
+      "expected_return": 130.0,
+      "correlation_to_portfolio": 0.1,
+      "vega_risk": 0.05
+    },
+    {
+      "expiry": "2026-10-23",
+      "short_delta": 0.18,
+      "credit": 0.72,
+      "wing_width": 5.0,
+      "max_loss": 500.0,
+      "expected_return": 144.0,
+      "correlation_to_portfolio": 0.3,
+      "vega_risk": 0.08
+    },
+    {
+      "expiry": "2026-11-20",
+      "short_delta": 0.2,
+      "credit": 0.78,
+      "wing_width": 5.0,
+      "max_loss": 500.0,
+      "expected_return": 156.0,
+      "correlation_to_portfolio": 0.5,
+      "vega_risk": 0.12
+    }
+  ]
+}

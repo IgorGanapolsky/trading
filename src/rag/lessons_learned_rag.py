@@ -548,3 +548,5 @@ class LessonsLearnedRAG:
         lesson_file = self.knowledge_dir / f"{lesson_id}.md"
         lesson_file.write_text(content, encoding="utf-8")
         self._load_lessons()  # Reload
+        if self._pipeline is not None:
+            self._pipeline.index_from_markdown_dir(str(self.knowledge_dir))

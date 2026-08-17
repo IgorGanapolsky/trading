@@ -15,12 +15,14 @@ class TaskKind(StrEnum):
     COORD_AUDIT = "coord_audit"
     # Explicit: never an LLM trade council — risk expert only + structural refuse.
     TRADE_ENTRY = "trade_entry"
+    STRATEGY_RESEARCH = "strategy_research"
 
 
 class ExpertName(StrEnum):
     RISK_RULES = "risk_rules"
     EVIDENCE = "evidence"
     COORDINATION = "coordination"
+    RESEARCH_CRITIC = "research_critic"
 
 
 @dataclass(frozen=True)

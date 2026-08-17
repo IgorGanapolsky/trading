@@ -5,7 +5,7 @@ VENV_PYTHON := $(VENV)/bin/python
 TRADING_ENV ?= paper
 export TRADING_ENV
 
-.PHONY: setup lint ruff format test coverage audit security health skill-check coordination-check coordination-audit coordination-preflight check dry-run hygiene graph-rag-check rag-aplus-check
+.PHONY: setup lint ruff format test coverage audit security health skill-check coordination-check coordination-audit coordination-preflight check dry-run hygiene graph-rag-check rag-aplus-check gsd-tick gsd-status cohort-scorecard
 
 setup:
 	$(PYTHON) -m venv $(VENV)
@@ -75,3 +75,25 @@ dry-run: health
 
 hygiene:
 	scripts/worktree_hygiene.sh --prune
+
+# Ralph+GSD Framework Targets
+gsd-tick:
+	@echo "=== Running GSD Profit Tick ==="
+	$(VENV_PYTHON) scripts/ralph_gsd_profit_tick.py
+
+gsd-status:
+	@echo "=== Ralph Iteration Status ==="
+	test -f .claude/ralph/state.json && cat .claude/ralph/state.json | $(VENV_PYTHON) -m json.tool || echo "No active Ralph iteration"
+
+cohort-scorecard:
+	@echo "=== Put Credit Cohort Scorecard ==="
+	$(VENV_PYTHON) scripts/put_credit_cohort_scorecard.py --json | $(VENV_PYTHON) -m json.tool
+
+# Run full daily trading cycle (inventory, regime, exits, cohort)
+daily-cycle:
+	@echo "=== Daily Trading Cycle ==="
+	$(VENV_PYTHON) scripts/audit_open_inventory.py
+	$(VENV_PYTHON) scripts/spy_put_credit.py --regime-status
+	$(VENV_PYTHON) scripts/spy_put_credit.py --manage-exits --dry-run
+	$(VENV_PYTHON) scripts/residual_ic_manager.py --dry-run
+	$(VENV_PYTHON) scripts/put_credit_cohort_scorecard.py --json

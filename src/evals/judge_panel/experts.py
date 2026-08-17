@@ -310,10 +310,44 @@ class CoordinationExpert:
         )
 
 
+class ResearchCriticExpert:
+    """Adversarial critic for quantitative strategy research proposals and candidate tournaments."""
+
+    name = ExpertName.RESEARCH_CRITIC
+
+    def evaluate(self, payload: PanelInput) -> ExpertOpinion:
+        from src.evals.research_critic import evaluate_strategy_candidate
+
+        body = _primary_corpus(payload)
+        if not body:
+            return ExpertOpinion(
+                expert=self.name,
+                score=0.0,
+                passed=False,
+                findings=["no strategy content provided to evaluate"],
+                evidence_cites=["research_critic:empty"],
+                veto=True,
+            )
+
+        verdict = evaluate_strategy_candidate(body)
+        findings = [f"{f.code}: {f.message}" for f in verdict.findings]
+        cites = [f"critic:{f.code}" for f in verdict.findings] or ["critic:clean"]
+
+        return ExpertOpinion(
+            expert=self.name,
+            score=verdict.score,
+            passed=verdict.passed,
+            findings=findings or ["strategy spec passed adversarial critique"],
+            evidence_cites=cites,
+            veto=verdict.vetoed,
+        )
+
+
 DEFAULT_EXPERTS: dict[ExpertName, Expert] = {
     ExpertName.RISK_RULES: RiskRulesExpert(),
     ExpertName.EVIDENCE: EvidenceExpert(),
     ExpertName.COORDINATION: CoordinationExpert(),
+    ExpertName.RESEARCH_CRITIC: ResearchCriticExpert(),
 }
 
 
