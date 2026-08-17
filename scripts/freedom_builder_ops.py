@@ -152,9 +152,7 @@ def main() -> int:
         return 0
 
     if args.command == "monthly-income":
-        out = monthly_income_report(
-            closed_rows, year=args.year, month=args.month
-        )
+        out = monthly_income_report(closed_rows, year=args.year, month=args.month)
         _write(
             args.out_dir / "freedom_builder_monthly_income_latest.json",
             json.dumps(out, indent=2, default=str) + "\n",

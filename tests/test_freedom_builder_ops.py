@@ -113,9 +113,7 @@ def test_monthly_income_exact_cents():
         {"id": "b", "exit_time": "2026-08-10T12:00:00+00:00", "realized_pnl": 28.01},
         {"id": "c", "exit_date": "2026-07-01", "realized_pnl": 99.0},  # other month
     ]
-    out = monthly_income_report(
-        rows, year=2026, month=8, now=datetime(2026, 8, 17, tzinfo=UTC)
-    )
+    out = monthly_income_report(rows, year=2026, month=8, now=datetime(2026, 8, 17, tzinfo=UTC))
     assert out["n_closed"] == 2
     assert out["total_realized_pnl_cents"] == 2800 + 2801  # 28.00 + 28.01
     assert out["total_realized_pnl"] == 56.01

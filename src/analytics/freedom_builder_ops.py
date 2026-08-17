@@ -230,7 +230,9 @@ def score_plan(
         "expectancy_pf_tracked": closed.get("expectancy") is not None or n_closed == 0,
     }
 
-    def _dim(letter: str, name: str, checks: dict[str, bool], notes: tuple[str, ...]) -> PlanDimensionScore:
+    def _dim(
+        letter: str, name: str, checks: dict[str, bool], notes: tuple[str, ...]
+    ) -> PlanDimensionScore:
         passed = sum(1 for v in checks.values() if v)
         total = len(checks) or 1
         score = int(round(25 * passed / total))
@@ -266,9 +268,7 @@ def score_plan(
             "N",
             "Numbers",
             n_checks,
-            (
-                f"closed_n={n_closed}; claim_profitable={claim_profitable}; edge={edge}.",
-            ),
+            (f"closed_n={n_closed}; claim_profitable={claim_profitable}; edge={edge}.",),
         ),
     ]
     total = sum(d.score for d in dims)
@@ -387,9 +387,7 @@ def portfolio_transparency(
         qty = int(e.get("quantity") or 1)
         credit_f = float(credit) if credit is not None else None
         max_profit = round(credit_f * 100 * qty, 2) if credit_f is not None else None
-        max_loss_planning = (
-            round((5.0 - credit_f) * 100 * qty, 2) if credit_f is not None else None
-        )
+        max_loss_planning = round((5.0 - credit_f) * 100 * qty, 2) if credit_f is not None else None
         why = (
             "Open paper put-credit validation structure — hold for TP/stop/DTE rules; "
             "not a discretionary swing."
@@ -536,6 +534,7 @@ def behind_the_scenes_decisions(
             }
         )
     rows = closed_rows or []
+
     # most recent by exit
     def _sort_key(r: dict[str, Any]) -> str:
         return str(r.get("exit_time") or r.get("exit_date") or "")
@@ -691,9 +690,7 @@ def render_start_here_markdown(pack: dict[str, Any]) -> str:
         "## Start here (ordered)",
     ]
     for step in pack.get("steps") or []:
-        lines.append(
-            f"{step.get('order')}. **{step.get('title')}** — {step.get('why')}"
-        )
+        lines.append(f"{step.get('order')}. **{step.get('title')}** — {step.get('why')}")
         lines.append(f"   - `{step.get('command')}`")
     lines.extend(["", "## Every Wednesday", ""])
     for item in pack.get("every_wednesday") or []:
@@ -780,19 +777,13 @@ def build_full_ops_report(
         "schema_version": "freedom-builder-ops/1",
         "generated_at": now.isoformat(),
         "start_here": start_here_pack(now=now),
-        "plan": score_plan(
-            scorecard=scorecard, inventory_clean=inventory_clean, now=now
-        ),
+        "plan": score_plan(scorecard=scorecard, inventory_clean=inventory_clean, now=now),
         "scenario_10k": scenario_10k(stake=stake, now=now),
-        "portfolio": portfolio_transparency(
-            scorecard, paper_equity=paper_equity, now=now
-        ),
+        "portfolio": portfolio_transparency(scorecard, paper_equity=paper_equity, now=now),
         "monthly_income": monthly_income_report(
             closed_rows or [], year=now.year, month=now.month, now=now
         ),
-        "behind_the_scenes": behind_the_scenes_decisions(
-            scorecard, closed_rows, now=now
-        ),
+        "behind_the_scenes": behind_the_scenes_decisions(scorecard, closed_rows, now=now),
         "wednesday_issue": wednesday_free_issue(
             scorecard,
             paper_equity=paper_equity,
