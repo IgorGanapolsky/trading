@@ -152,7 +152,7 @@ def test_scorecard_includes_research_protocol(tmp_path: Path, monkeypatch):
     card = sc.build_scorecard(
         trades_path=trades_path, entries_path=entries_path, kill_path=kill_path
     )
-    assert card["schema_version"] == "put-credit-cohort-scorecard/2"
+    assert card["schema_version"] == "put-credit-cohort-scorecard/3"
     rp = card["research_protocol"]
     assert rp.get("langchain_adopted") is False
     assert "validation" in rp

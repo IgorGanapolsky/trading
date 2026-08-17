@@ -322,10 +322,17 @@ def build_scorecard(
                 all_closed_pnls.append(pnl)
 
     # Then, add from trades.json if not already seen
-    for row in closed_from_trades:
-        # Check if this trade is already covered by entry
-        # By using entries as primary source, we avoid double-counting
-        pass
+    for row in _trade_rows(trades):
+        if not _is_put_credit_trade(row) or not _is_closed(row):
+            continue
+        key = row.get("id") or row.get("signature") or row.get("key")
+        if key and key in seen_keys:
+            continue
+        if key:
+            seen_keys.add(key)
+        pnl = _extract_pnl(row)
+        if pnl is not None:
+            all_closed_pnls.append(pnl)
 
     # Use aggregated PNLS for calculation
     closed_metrics = _metrics_from_pnls(all_closed_pnls)
@@ -408,8 +415,28 @@ def build_scorecard(
         "pct_to_gate": round(min(100.0, closed["closed_n"] / KILL_N * 100.0), 1),
     }
 
+    try:
+        from src.analytics.put_credit_milestones import evaluate_milestones
+
+        milestones_view = evaluate_milestones(closed)
+    except Exception as exc:  # noqa: BLE001
+        milestones_view = {"error": str(exc)}
+
+    try:
+        from src.research.put_credit_research_protocol import (
+            research_critic_audit,
+            scorecard_research_section,
+        )
+
+        rp_section = scorecard_research_section(trades)
+        critic = research_critic_audit(trades_payload=trades, kill_n=KILL_N)
+        rp_section["critic"] = critic
+        research_view = rp_section
+    except Exception as exc:  # noqa: BLE001
+        research_view = {"error": str(exc)}
+
     return {
-        "schema_version": "put-credit-cohort-scorecard/2",
+        "schema_version": "put-credit-cohort-scorecard/3",
         "generated_at": datetime.now(UTC).isoformat(),
         "active_family": kill_switch.get("active_family"),
         "paper_only": kill_switch.get("paper_only"),
@@ -418,6 +445,8 @@ def build_scorecard(
         "open": open_,
         "closed": closed,
         "progress": progress,
+        "milestones": milestones_view,
+        "research_protocol": research_view,
         "honesty": {
             "claim_profitable": False
             if closed["closed_n"] < KILL_N
