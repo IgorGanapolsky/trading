@@ -8,7 +8,7 @@ license = { text = "MIT" }
 authors = [{ name = "Igor Ganapolsky" }]
 keywords = ["trading", "alpaca", "options", "risk-management", "rag"]
 dependencies = [
-  "alpaca-py>=0.43.5",
+  "alpaca-py>=0.44.0",
   "anthropic>=0.120.2,<1.0.0",
   "fastapi>=0.141.1,<1.0.0",
   "holidays>=0.102",
