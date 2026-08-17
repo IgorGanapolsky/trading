@@ -1,0 +1,44 @@
+name: Entry Cadence Alarm
+
+# The validation workflow swallows the exit code of its entry step, so a refused
+# session and a working one both render as a green check. This job goes red when
+# the paper cohort stops growing, which is the symptom every silent failure mode
+# shares. Owner: AGENT-359.
+
+on:
+  schedule:
+    - cron: 0 21 * * 1-5 # 5:00 PM ET, after the last exit run has committed
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: entry-cadence-alarm-${{ github.ref_name || 'main' }}
+  cancel-in-progress: true
+
+jobs:
+  cadence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Fetch repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.0.0
+        with:
+          python-version: "3.11"
+
+      - name: Verify the validation cohort is still growing
+        run: python3 scripts/check_entry_cadence.py
+
+      - name: Explain a red result
+        if: failure()
+        run: |
+          echo "::error::Validation cohort has stalled. A green run on the entry"
+          echo "::error::workflow does NOT mean an entry was placed. Read the gate"
+          echo "::error::decision in the 11:00 ET entry run before concluding that"
+          echo "::error::the market was simply quiet."
