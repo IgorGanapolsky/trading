@@ -18,7 +18,14 @@ Source inspiration: freeCodeCamp Multi-Agent Trading Research System with LangCh
 .venv/bin/python scripts/put_credit_research_protocol.py --compare-preferred-ivr
 .venv/bin/python scripts/put_credit_research_protocol.py --freeze-baseline
 .venv/bin/python scripts/put_credit_research_protocol.py --unlock-holdout
+.venv/bin/python scripts/put_credit_research_protocol.py --critic-audit
+.venv/bin/python scripts/put_credit_cohort_scorecard.py --json  # includes research_protocol
 ```
+
+## Wired surfaces
+
+- Cohort scorecard schema v2 embeds `research_protocol` + deterministic critic
+- `put-credit-validation.yml` runs baseline + critic smoke (no broker)
 
 ## Hard boundaries
 

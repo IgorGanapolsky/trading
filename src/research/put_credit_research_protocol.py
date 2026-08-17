@@ -450,3 +450,104 @@ def _filter_pnls_for_params(trades_payload: Any, params: dict[str, Any]) -> list
         if pnl is not None:
             pnls.append(float(pnl))
     return pnls
+
+
+def scorecard_research_section(trades_payload: Any) -> dict[str, Any]:
+    """Read-only research view for cohort scorecard (no registry writes)."""
+    timed = extract_closed_put_credit_pnls(trades_payload)
+    evaluation = evaluate_splits(timed)
+    n = evaluation["n_closed"]
+    return {
+        "handbook_roi": "deterministic_eval_fixed_selection_holdout",
+        "langchain_adopted": False,
+        "selection_rule_fixed": True,
+        "n_closed": n,
+        "split_sizes": evaluation["split_sizes"],
+        "development": evaluation["development"],
+        "validation": evaluation["validation"],
+        "holdout": evaluation["holdout"],
+        "full_sample": evaluation["full_sample"],
+        "honesty": {
+            "edge_claim_allowed": False if n < 30 else None,
+            "holdout_usable_for_selection": False,
+            "note": (
+                "Research splits are for protocol comparison only. Live remains blocked "
+                "until kill_criteria EDGE_CANDIDATE on the full put-credit cohort."
+            ),
+        },
+    }
+
+
+def research_critic_audit(
+    *,
+    trades_payload: Any,
+    decision: dict[str, Any] | None = None,
+    champion_path: Path | None = None,
+    kill_n: int = 30,
+) -> dict[str, Any]:
+    """Deterministic research critic (handbook critic role — no LLM).
+
+    Fails closed on:
+    - decisions that reference holdout metrics for promotion
+    - champion freeze claiming live readiness
+    - edge/profit claims when closed n < kill_n
+    """
+    findings: list[dict[str, str]] = []
+    timed = extract_closed_put_credit_pnls(trades_payload)
+    n = len(timed)
+
+    if decision:
+        if decision.get("used_holdout_for_selection") is True:
+            findings.append(
+                {
+                    "severity": "error",
+                    "code": "holdout_used_for_selection",
+                    "message": "Holdout metrics must not drive champion selection",
+                }
+            )
+        if decision.get("claim_profitable") is True and n < kill_n:
+            findings.append(
+                {
+                    "severity": "error",
+                    "code": "premature_edge_claim",
+                    "message": f"Edge claim with n={n} < {kill_n}",
+                }
+            )
+
+    if champion_path and Path(champion_path).is_file():
+        champ = json.loads(Path(champion_path).read_text(encoding="utf-8"))
+        if champ.get("live_trading") is True:
+            findings.append(
+                {
+                    "severity": "error",
+                    "code": "freeze_claims_live",
+                    "message": "Champion freeze must keep live_trading=false",
+                }
+            )
+        if champ.get("claim_profitable") is True and n < kill_n:
+            findings.append(
+                {
+                    "severity": "error",
+                    "code": "freeze_claims_profit",
+                    "message": "Champion freeze must not claim profitability before n gate",
+                }
+            )
+
+    # Soft warnings
+    if n < kill_n:
+        findings.append(
+            {
+                "severity": "info",
+                "code": "insufficient_sample",
+                "message": f"Closed put-credit n={n}; research only, no edge claim",
+            }
+        )
+
+    errors = [f for f in findings if f["severity"] == "error"]
+    return {
+        "role": "research_critic",
+        "pass": len(errors) == 0,
+        "n_closed": n,
+        "findings": findings,
+        "errors": len(errors),
+    }
