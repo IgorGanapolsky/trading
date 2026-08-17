@@ -547,9 +547,7 @@ def _is_order_not_found_error(exc: BaseException) -> bool:
     if code in (40410000, 404):
         return True
     return (
-        "order not found" in text
-        or "40410000" in text
-        or ("not found" in text and "order" in text)
+        "order not found" in text or "40410000" in text or ("not found" in text and "order" in text)
     )
 
 
@@ -694,9 +692,9 @@ def manage_put_credit_exits(client, *, dry_run: bool = False) -> dict[str, Any]:
             # Covers account resets and filled exits whose order ids are gone from the API.
             if short_pos is None and long_pos is None:
                 entry["status"] = "closed"
-                entry["exit_filled_at"] = entry.get("exit_filled_at") or datetime.now(
-                    UTC
-                ).isoformat()
+                entry["exit_filled_at"] = (
+                    entry.get("exit_filled_at") or datetime.now(UTC).isoformat()
+                )
                 entry["reconciliation_reason"] = (
                     "broker_flat_after_exit_pending"
                     if entry.pop("_exit_order_not_found", None)
@@ -739,9 +737,9 @@ def manage_put_credit_exits(client, *, dry_run: bool = False) -> dict[str, Any]:
             if short_pos is None and long_pos is None and entry_status == "UNKNOWN":
                 entry["status"] = "closed"
                 entry["reconciliation_reason"] = "broker_flat_entry_order_unknown"
-                entry["exit_filled_at"] = entry.get("exit_filled_at") or datetime.now(
-                    UTC
-                ).isoformat()
+                entry["exit_filled_at"] = (
+                    entry.get("exit_filled_at") or datetime.now(UTC).isoformat()
+                )
                 entry["exit_reason"] = entry.get("exit_reason") or "broker_reconcile_flat"
                 changed = True
                 report["details"].append(

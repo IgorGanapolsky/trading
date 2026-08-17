@@ -22,6 +22,32 @@ class EvaluationScore:
     is_hallucination_risk: bool
 
 
+def _token_variants(token: str) -> tuple[str, ...]:
+    """Hyphen/space and common protocol phrasing variants for keyword groundedness."""
+    t = (token or "").strip().lower()
+    if not t:
+        return ()
+    variants = {t, t.replace("-", " "), t.replace(" ", "-")}
+    if t in {"rule #1", "rule#1"}:
+        variants.update({"rule #1", "phil town rule #1", "don't lose money"})
+    elif t in {"stop-loss", "stop loss"}:
+        variants.update({"stop-loss", "stop loss", "2x credit", "200% of credit"})
+    elif t in {"15-delta", "15 delta"}:
+        variants.update({"15-delta", "15 delta", "~15-delta", "15δ"})
+    elif t in {"7 dte", "7-dte"}:
+        variants.update({"7 dte", "7-dte", "exit by 7", "7 dte to"})
+    elif t in {"1-lot", "1 lot"}:
+        variants.update({"1-lot", "1 lot", "one-lot", "one lot", "1-lot only"})
+    elif t == "50% profit":
+        variants.update({"50% profit", "50% of max", "50% of maximum"})
+    return tuple(sorted(variants, key=len, reverse=True))
+
+
+def _text_has_token(text: str, token: str) -> bool:
+    hay = (text or "").lower()
+    return any(v in hay for v in _token_variants(token))
+
+
 class ReasoningEvaluator:
     """
     Evaluates LLM reasoning traces against RAG context and market data.
@@ -64,7 +90,7 @@ class ReasoningEvaluator:
 
         grounded_points = 0
         for check in checks:
-            if check in context_text and check in reasoning_lower:
+            if _text_has_token(context_text, check) and _text_has_token(reasoning_lower, check):
                 grounded_points += 1
 
         groundedness = grounded_points / len(checks) if len(checks) > 0 else 1.0

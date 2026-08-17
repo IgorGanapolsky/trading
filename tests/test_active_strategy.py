@@ -873,7 +873,6 @@ def test_put_credit_parsing_and_credit_confirmation_failure_paths(tmp_path, monk
     )
 
 
-
 def test_pending_exit_order_not_found_is_not_active():
     from scripts import spy_put_credit as pcs
 
