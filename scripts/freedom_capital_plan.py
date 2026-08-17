@@ -50,7 +50,9 @@ def _paper_equity_from_state(path: Path) -> float | None:
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--monthly", type=float, default=DEFAULT_MONTHLY_AFTER_TAX)
-    p.add_argument("--liquid", type=float, default=None, help="Total liquid capital across ops+lab+field")
+    p.add_argument(
+        "--liquid", type=float, default=None, help="Total liquid capital across ops+lab+field"
+    )
     p.add_argument("--from-system-state", action="store_true")
     p.add_argument("--paper-equity", type=float, default=None)
     p.add_argument("--day", type=int, default=1, help="Day index in 30-day sprint (1-30)")

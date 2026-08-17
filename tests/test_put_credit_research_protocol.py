@@ -78,7 +78,7 @@ def test_baseline_with_closed_pcs_trades(tmp_path: Path):
             {
                 "strategy": "spy_put_credit",
                 "status": "closed",
-                "exit_time": f"2026-07-{10+i:02d}T15:00:00+00:00",
+                "exit_time": f"2026-07-{10 + i:02d}T15:00:00+00:00",
                 "realized_pnl": 10.0 if i % 2 == 0 else -8.0,
             }
             for i in range(6)

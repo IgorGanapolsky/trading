@@ -16,11 +16,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from scripts.put_credit_cohort_scorecard import build_scorecard  # noqa: E402
 from src.analytics.put_credit_milestones import (  # noqa: E402
     build_weekly_accountability_packet,
     render_weekly_markdown,
 )
+
+from scripts.put_credit_cohort_scorecard import build_scorecard  # noqa: E402
 
 DEFAULT_JSON = ROOT / "data" / "audit" / "put_credit_weekly_accountability_latest.json"
 DEFAULT_MD = ROOT / "data" / "audit" / "put_credit_weekly_accountability_latest.md"
