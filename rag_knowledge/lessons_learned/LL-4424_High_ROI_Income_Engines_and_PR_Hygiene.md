@@ -1,6 +1,6 @@
-# LL-321: High-ROI Income Engines, PLAN Framework & PR Hygiene
+# LL-4424: High-ROI Income Engines, PLAN Framework & PR Hygiene
 
-**ID**: LL-321
+**ID**: LL-4424
 **Date**: 2026-08-17
 **Severity**: LOW
 **Category**: Strategy Evaluation, Tax Optimization, PR Hygiene
