@@ -2131,8 +2131,9 @@ def safe_submit_order(client, order_request, strategy: str | None = None):
 
                     # LessonsSearch.search returns list[(LessonResult, score)]
                     hits = LessonsSearch().search(
-                        f"{strategy} {symbol} stop-loss delta DTE Rule #1",
-                        top_k=5,
+                        f"{strategy} {symbol} stop-loss 15-delta 7 DTE Rule #1 "
+                        "1-lot put credit Phil Town",
+                        top_k=8,
                     )
                     for item in hits or []:
                         lesson = item[0] if isinstance(item, tuple) else item
@@ -2149,6 +2150,30 @@ def safe_submit_order(client, order_request, strategy: str | None = None):
                     logger.warning("LessonsSearch failed during reasoning audit: %s", rag_exc)
                     retrieved_context = []
 
+                # Ground put-credit openings in on-disk policy (not free-form synthetic text).
+                # Greptile #4281 forbids inventing protocol strings; rule files are source of truth.
+                if (strategy or "").strip().lower() in {
+                    "spy_put_credit",
+                    "bull_put",
+                    "bull_put_credit",
+                    "put_credit",
+                    "credit_spread",
+                }:
+                    root = Path(__file__).resolve().parents[2]
+                    for rel in (
+                        ".claude/rules/risk-management.md",
+                        ".claude/rules/trading.md",
+                        ".claude/rules/controlled-experiment.md",
+                    ):
+                        policy_path = root / rel
+                        try:
+                            if policy_path.is_file():
+                                text = policy_path.read_text(encoding="utf-8").strip()
+                                if text:
+                                    retrieved_context.append(text[:4000])
+                        except OSError as policy_exc:
+                            logger.debug("policy context skip %s: %s", rel, policy_exc)
+
                 if not retrieved_context:
                     raise ValueError(
                         "REASONING AUDIT FAILED: RAG retrieval required for openings "
@@ -2157,7 +2182,7 @@ def safe_submit_order(client, order_request, strategy: str | None = None):
 
                 # Greptile #4281 P1: do NOT inject synthetic protocol baseline into
                 # retrieved_context — that made any nonempty lesson score groundedness
-                # 1.0. Score against *actual lessons only*; protocol lives in reasoning.
+                # 1.0. Score against *actual lessons/policy only*; protocol lives in reasoning.
                 score = evaluator.evaluate(
                     proposal=proposal,
                     reasoning=protocol_reasoning,
