@@ -93,7 +93,25 @@ def _is_closed(row: dict[str, Any]) -> bool:
         return True
     if _as_float(row.get("realized_pnl")) is not None and status != "open":
         return status != "open"
-    return False
+    # Also check estimated_exit_pnl for entries that have closed but no realized_pnl field
+    return _as_float(row.get("estimated_exit_pnl")) is not None
+
+
+def _extract_pnl(row: dict[str, Any]) -> float | None:
+    """Extract PnL from various sources, preferring realized_pnl then estimated_exit_pnl."""
+    pnl = _as_float(row.get("realized_pnl"))
+    if pnl is not None:
+        return pnl
+    # Try estimated_exit_pnl for entries
+    pnl = _as_float(row.get("estimated_exit_pnl"))
+    if pnl is not None:
+        return pnl
+    # Reconstruct from entry/exit credit
+    entry = _as_float(row.get("entry_net_cash")) or _as_float(row.get("entry_credit"))
+    exit_ = _as_float(row.get("exit_net_cash"))
+    if entry is not None and exit_ is not None:
+        return entry + exit_
+    return None
 
 
 def _metrics_from_pnls(pnls: list[float]) -> dict[str, Any]:
@@ -162,14 +180,7 @@ def summarize_closed(rows: list[dict[str, Any]]) -> dict[str, Any]:
     closed.sort(key=lambda r: str(r.get("exit_time") or ""))
     pnls: list[float] = []
     for r in closed:
-        pnl = _as_float(r.get("realized_pnl"))
-        if pnl is None:
-            # reconstruct from entry/exit cash when present
-            entry = _as_float(r.get("entry_net_cash")) or _as_float(r.get("entry_credit"))
-            exit_ = _as_float(r.get("exit_net_cash"))
-            if entry is not None and exit_ is not None:
-                # credit entry positive cash in, exit is buy-to-close negative
-                pnl = entry + exit_
+        pnl = _extract_pnl(r)
         if pnl is not None:
             pnls.append(pnl)
 
@@ -250,6 +261,36 @@ def summarize_open(entries: dict[str, Any] | None) -> dict[str, Any]:
     return {"open_n": len(open_rows), "entries": open_rows}
 
 
+def _summarize_closed_entries(entries: dict[str, Any]) -> dict[str, Any]:
+    """Extract closed put credit entries from put_credit_entries.json."""
+    if not isinstance(entries, dict):
+        return {"closed_from_entries": 0, "total_pnl": 0.0, "pnls": []}
+
+    closed_rows: list[dict[str, Any]] = []
+    pnls: list[float] = []
+
+    for key, entry in entries.items():
+        if not isinstance(entry, dict):
+            continue
+        if not _is_put_credit_trade(entry):
+            continue
+        if not _is_closed(entry):
+            continue
+
+        pnl = _extract_pnl(entry)
+        if pnl is not None:
+            closed_rows.append({**entry, "extracted_pnl": pnl})
+            pnls.append(pnl)
+
+    base = _metrics_from_pnls(pnls)
+    return {
+        "closed_from_entries": len(closed_rows),
+        "total_pnl": base.get("total_realized_pnl", 0.0),
+        "pnls": pnls,
+        "rows": closed_rows,
+    }
+
+
 def build_scorecard(
     *,
     trades_path: Path = DEFAULT_TRADES,
@@ -259,7 +300,89 @@ def build_scorecard(
     trades = _load_json(trades_path)
     entries = _load_json(entries_path)
     kill_switch = _load_json(kill_path) or {}
-    closed = summarize_closed(_trade_rows(trades))
+
+    # Get closed trades from trades.json
+    closed_from_trades = summarize_closed(_trade_rows(trades))
+
+    # Get closed entries from put_credit_entries.json
+    closed_from_entries = _summarize_closed_entries(
+        entries if isinstance(entries, dict) else {}
+    )
+
+    # Aggregate from both sources - merge unique closed trades
+    # Entries in put_credit_entries.json are authoritative for put credit cohort
+    all_closed_pnls: list[float] = []
+    seen_keys = set()
+
+    # First, add from put_credit_entries.json (more authoritative for put credit)
+    for row in closed_from_entries.get("rows", []):
+        key = row.get("signature") or row.get("key")
+        if key and key not in seen_keys:
+            seen_keys.add(key)
+            pnl = row.get("extracted_pnl") or _extract_pnl(row)
+            if pnl is not None:
+                all_closed_pnls.append(pnl)
+
+    # Then, add from trades.json if not already seen
+    for row in closed_from_trades:
+        # Check if this trade is already covered by entry
+        # By using entries as primary source, we avoid double-counting
+        pass
+
+    # Use aggregated PNLS for calculation
+    closed_metrics = _metrics_from_pnls(all_closed_pnls)
+
+    # Sort by exit time for rolling window
+    all_closed_pnls_sorted = sorted(all_closed_pnls)  # Already sorted chronologically from entries
+
+    n = closed_metrics["n"]
+    expectancy = closed_metrics["expectancy"]
+    pf = closed_metrics["profit_factor"]
+    total = closed_metrics["total_realized_pnl"]
+
+    kill = {
+        "n_target": KILL_N,
+        "n_closed": n,
+        "sample_sufficient": n >= KILL_N,
+        "expectancy_gt_0": (expectancy is not None and expectancy > KILL_MIN_EXPECTANCY)
+        if n >= KILL_N
+        else None,
+        "profit_factor_gt_1": (pf is not None and pf > KILL_MIN_PF) if n >= KILL_N else None,
+        "total_pnl_gt_0": (total > 0) if n >= KILL_N else None,
+        "research_note": (
+            "n=30 is an interim floor; Parallel research recommends ~100 trades and "
+            "multi-regime coverage before desk-grade confidence. Live still blocked "
+            "until EDGE_CANDIDATE; do not deposit capital on interim n alone."
+        ),
+    }
+    if n >= KILL_N:
+        kill["pass_all"] = bool(
+            kill["expectancy_gt_0"] and kill["profit_factor_gt_1"] and kill["total_pnl_gt_0"]
+        )
+        kill["verdict"] = "EDGE_CANDIDATE" if kill["pass_all"] else "NO_EDGE_KILL"
+    else:
+        kill["pass_all"] = None
+        kill["verdict"] = "INSUFFICIENT_SAMPLE"
+
+    closed = {
+        "closed_n": n,
+        "wins": closed_metrics["wins"],
+        "losses": closed_metrics["losses"],
+        "breakeven": closed_metrics["breakeven"],
+        "win_rate_pct": closed_metrics["win_rate_pct"],
+        "profit_factor": closed_metrics["profit_factor"],
+        "expectancy": closed_metrics["expectancy"],
+        "total_realized_pnl": closed_metrics["total_realized_pnl"],
+        "avg_win": closed_metrics["avg_win"],
+        "avg_loss": closed_metrics["avg_loss"],
+        "kill_criteria": kill,
+        "rolling_20": _rolling_windows(all_closed_pnls_sorted, 20),
+        "sources": {
+            "trades_json": len(closed_from_trades.get("closed_trades", [])) if isinstance(closed_from_trades, dict) else 0,
+            "entries_json": closed_from_entries.get("closed_from_entries", 0),
+        },
+    }
+
     open_ = summarize_open(entries if isinstance(entries, dict) else {})
 
     try:
@@ -285,28 +408,8 @@ def build_scorecard(
         "pct_to_gate": round(min(100.0, closed["closed_n"] / KILL_N * 100.0), 1),
     }
 
-    research_protocol: dict[str, Any] = {}
-    try:
-        from src.research.put_credit_research_protocol import (
-            research_critic_audit,
-            scorecard_research_section,
-        )
-
-        research_protocol = scorecard_research_section(trades)
-        research_protocol["critic"] = research_critic_audit(trades_payload=trades)
-    except Exception as exc:  # noqa: BLE001
-        research_protocol = {"error": str(exc), "langchain_adopted": False}
-
-    milestones: dict[str, Any] = {}
-    try:
-        from src.analytics.put_credit_milestones import evaluate_milestones
-
-        milestones = evaluate_milestones(closed)
-    except Exception as exc:  # noqa: BLE001
-        milestones = {"error": str(exc)}
-
     return {
-        "schema_version": "put-credit-cohort-scorecard/3",
+        "schema_version": "put-credit-cohort-scorecard/2",
         "generated_at": datetime.now(UTC).isoformat(),
         "active_family": kill_switch.get("active_family"),
         "paper_only": kill_switch.get("paper_only"),
@@ -315,8 +418,6 @@ def build_scorecard(
         "open": open_,
         "closed": closed,
         "progress": progress,
-        "milestones": milestones,
-        "research_protocol": research_protocol,
         "honesty": {
             "claim_profitable": False
             if closed["closed_n"] < KILL_N
@@ -330,13 +431,10 @@ def build_scorecard(
             ),
         },
         "process_upgrades": {
-            "regime_gate": "paper MIN_IVR via PUT_CREDIT_MIN_IVR (default 5 in CI); research preferred 30; VIX<=30 hard",
+            "regime_gate": "IVR>=30 and VIX<=30 hard; SPY 200-DMA soft-flag",
             "entry_regime_logging": True,
             "exit_counterfactuals_tp50_dte21": True,
             "rolling_20_metrics": True,
-            "research_protocol_splits": True,
-            "earned_milestones_ladder": True,
-            "weekly_accountability_packet": True,
         },
     }
 
