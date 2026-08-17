@@ -1015,6 +1015,28 @@ def _check_ml_trade_confidence(
         return 1.0, []
 
 
+# CRITICAL-severity lessons that must NOT block SPY put-credit openings.
+# LL-209 teaches that defined-risk SPY credit spreads were always affordable;
+# treating it as a trade ban inverts the lesson (AGENT-392 false deny).
+_RAG_NON_BLOCKING_MARKERS: frozenset[str] = frozenset(
+    {
+        "ll-209",
+        "ll_209",
+        "critical math error - spy credit spreads were always affordable",
+    }
+)
+
+
+def _rag_lesson_is_non_blocking(title: str) -> bool:
+    """True when a retrieved lesson is advisory history, not an entry ban."""
+    t = (title or "").strip().lower()
+    if not t:
+        return False
+    if t in _RAG_NON_BLOCKING_MARKERS:
+        return True
+    return any(marker in t for marker in _RAG_NON_BLOCKING_MARKERS)
+
+
 def _query_rag_for_blocking_lessons(symbol: str, strategy: str) -> tuple[bool, list[str]]:
     """
     Query RAG for lessons that should block this trade.
@@ -1037,13 +1059,22 @@ def _query_rag_for_blocking_lessons(symbol: str, strategy: str) -> tuple[bool, l
             score = float(result.get("rerank_score", result.get("score", 0.0)))
             severity = str(result.get("severity", "MEDIUM")).upper()
             title = result.get("title", "Unknown lesson")
+            non_blocking = _rag_lesson_is_non_blocking(title)
 
             if severity == "CRITICAL" and score > 0.5:
-                should_block = True
-                warnings.append(f"[CRITICAL] {title} (score={score:.2f}) - BLOCKING")
+                if non_blocking:
+                    warnings.append(
+                        f"[CRITICAL] {title} (score={score:.2f}) - NON_BLOCKING_ALLOWLIST"
+                    )
+                else:
+                    should_block = True
+                    warnings.append(f"[CRITICAL] {title} (score={score:.2f}) - BLOCKING")
             elif severity == "HIGH" and score > 0.7:
-                should_block = True
-                warnings.append(f"[HIGH] {title} (score={score:.2f}) - BLOCKING")
+                if non_blocking:
+                    warnings.append(f"[HIGH] {title} (score={score:.2f}) - NON_BLOCKING_ALLOWLIST")
+                else:
+                    should_block = True
+                    warnings.append(f"[HIGH] {title} (score={score:.2f}) - BLOCKING")
             elif severity in ("HIGH", "CRITICAL"):
                 warnings.append(f"[{severity}] {title} (score={score:.2f})")
 

@@ -358,6 +358,57 @@ class TestValidateTradeMandatory:
         )
         assert any("legacy ML halt bypassed" in warning for warning in result.rag_warnings)
 
+    def test_ll209_critical_retrieval_does_not_block_put_credit(self, monkeypatch):
+        """LL-209 is pro credit-spread math; CRITICAL retrieval must not ban openings."""
+        import src.safety.mandatory_trade_gate as gate_mod
+
+        assert gate_mod._rag_lesson_is_non_blocking(
+            "LL-209: Critical Math Error - SPY Credit Spreads Were Always Affordable"
+        )
+
+        class _Pipe:
+            def query(self, **_kwargs):
+                return [
+                    {
+                        "title": "LL-209: Critical Math Error - SPY Credit Spreads Were Always Affordable",
+                        "severity": "CRITICAL",
+                        "rerank_score": 0.55,
+                    }
+                ]
+
+        monkeypatch.setattr(
+            "src.rag.rag_pipeline.get_trading_rag_pipeline",
+            lambda: _Pipe(),
+            raising=False,
+        )
+        # Import path used inside the helper
+        import src.rag.rag_pipeline as rag_pipeline
+
+        monkeypatch.setattr(rag_pipeline, "get_trading_rag_pipeline", lambda: _Pipe())
+
+        blocked, warnings = gate_mod._query_rag_for_blocking_lessons("SPY", "spy_put_credit")
+        assert blocked is False
+        assert any("NON_BLOCKING_ALLOWLIST" in w for w in warnings)
+
+    def test_critical_non_allowlisted_lesson_still_blocks(self, monkeypatch):
+        import src.safety.mandatory_trade_gate as gate_mod
+        import src.rag.rag_pipeline as rag_pipeline
+
+        class _Pipe:
+            def query(self, **_kwargs):
+                return [
+                    {
+                        "title": "LL-999: Never open naked short options",
+                        "severity": "CRITICAL",
+                        "rerank_score": 0.9,
+                    }
+                ]
+
+        monkeypatch.setattr(rag_pipeline, "get_trading_rag_pipeline", lambda: _Pipe())
+        blocked, warnings = gate_mod._query_rag_for_blocking_lessons("SPY", "spy_put_credit")
+        assert blocked is True
+        assert any("BLOCKING" in w for w in warnings)
+
     def test_successor_put_credit_is_an_allowed_controlled_paper_family(self, monkeypatch):
         import src.safety.mandatory_trade_gate as gate_mod
 
