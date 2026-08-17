@@ -297,8 +297,16 @@ def build_scorecard(
     except Exception as exc:  # noqa: BLE001
         research_protocol = {"error": str(exc), "langchain_adopted": False}
 
+    milestones: dict[str, Any] = {}
+    try:
+        from src.analytics.put_credit_milestones import evaluate_milestones
+
+        milestones = evaluate_milestones(closed)
+    except Exception as exc:  # noqa: BLE001
+        milestones = {"error": str(exc)}
+
     return {
-        "schema_version": "put-credit-cohort-scorecard/2",
+        "schema_version": "put-credit-cohort-scorecard/3",
         "generated_at": datetime.now(UTC).isoformat(),
         "active_family": kill_switch.get("active_family"),
         "paper_only": kill_switch.get("paper_only"),
@@ -307,6 +315,7 @@ def build_scorecard(
         "open": open_,
         "closed": closed,
         "progress": progress,
+        "milestones": milestones,
         "research_protocol": research_protocol,
         "honesty": {
             "claim_profitable": False
@@ -326,6 +335,8 @@ def build_scorecard(
             "exit_counterfactuals_tp50_dte21": True,
             "rolling_20_metrics": True,
             "research_protocol_splits": True,
+            "earned_milestones_ladder": True,
+            "weekly_accountability_packet": True,
         },
     }
 
