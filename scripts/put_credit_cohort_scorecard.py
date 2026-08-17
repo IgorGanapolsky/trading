@@ -285,8 +285,20 @@ def build_scorecard(
         "pct_to_gate": round(min(100.0, closed["closed_n"] / KILL_N * 100.0), 1),
     }
 
+    research_protocol: dict[str, Any] = {}
+    try:
+        from src.research.put_credit_research_protocol import (
+            research_critic_audit,
+            scorecard_research_section,
+        )
+
+        research_protocol = scorecard_research_section(trades)
+        research_protocol["critic"] = research_critic_audit(trades_payload=trades)
+    except Exception as exc:  # noqa: BLE001
+        research_protocol = {"error": str(exc), "langchain_adopted": False}
+
     return {
-        "schema_version": "put-credit-cohort-scorecard/1",
+        "schema_version": "put-credit-cohort-scorecard/2",
         "generated_at": datetime.now(UTC).isoformat(),
         "active_family": kill_switch.get("active_family"),
         "paper_only": kill_switch.get("paper_only"),
@@ -295,6 +307,7 @@ def build_scorecard(
         "open": open_,
         "closed": closed,
         "progress": progress,
+        "research_protocol": research_protocol,
         "honesty": {
             "claim_profitable": False
             if closed["closed_n"] < KILL_N
@@ -308,10 +321,11 @@ def build_scorecard(
             ),
         },
         "process_upgrades": {
-            "regime_gate": "IVR>=30 and VIX<=30 hard; SPY 200-DMA soft-flag",
+            "regime_gate": "paper MIN_IVR via PUT_CREDIT_MIN_IVR (default 5 in CI); research preferred 30; VIX<=30 hard",
             "entry_regime_logging": True,
             "exit_counterfactuals_tp50_dte21": True,
             "rolling_20_metrics": True,
+            "research_protocol_splits": True,
         },
     }
 

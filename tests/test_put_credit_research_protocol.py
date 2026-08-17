@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -102,6 +103,60 @@ def test_freeze_then_holdout_once(tmp_path: Path):
     assert "holdout" in report
     with pytest.raises(RuntimeError, match="already evaluated"):
         unlock_holdout_once(tmp_path, timed)
+
+
+def test_research_critic_flags_holdout_selection():
+    from src.research.put_credit_research_protocol import research_critic_audit
+
+    trades = {"trades": []}
+    bad = research_critic_audit(
+        trades_payload=trades,
+        decision={"event": "decision", "used_holdout_for_selection": True},
+    )
+    assert bad["pass"] is False
+    assert any(f["code"] == "holdout_used_for_selection" for f in bad["findings"])
+
+    good = research_critic_audit(
+        trades_payload=trades,
+        decision={"event": "decision", "used_holdout_for_selection": False},
+    )
+    assert good["pass"] is True
+
+
+def test_scorecard_includes_research_protocol(tmp_path: Path, monkeypatch):
+    from scripts import put_credit_cohort_scorecard as sc
+
+    trades_path = tmp_path / "trades.json"
+    trades_path.write_text(
+        json.dumps(
+            {
+                "trades": [
+                    {
+                        "strategy": "spy_put_credit",
+                        "status": "closed",
+                        "exit_time": "2026-07-10T15:00:00+00:00",
+                        "realized_pnl": 17.0,
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    entries_path = tmp_path / "entries.json"
+    entries_path.write_text("{}", encoding="utf-8")
+    kill_path = tmp_path / "kill.json"
+    kill_path.write_text(
+        json.dumps({"active_family": "spy_put_credit", "paper_only": True, "live_blocked": True}),
+        encoding="utf-8",
+    )
+    card = sc.build_scorecard(
+        trades_path=trades_path, entries_path=entries_path, kill_path=kill_path
+    )
+    assert card["schema_version"] == "put-credit-cohort-scorecard/2"
+    rp = card["research_protocol"]
+    assert rp.get("langchain_adopted") is False
+    assert "validation" in rp
+    assert rp.get("critic", {}).get("pass") is True
 
 
 def test_compare_preferred_ivr_records_decision(tmp_path: Path):

@@ -26,6 +26,7 @@ from src.research.put_credit_research_protocol import (  # noqa: E402
     extract_closed_put_credit_pnls,
     freeze_champion,
     metrics_from_pnls,
+    research_critic_audit,
     run_baseline_snapshot,
     split_dev_val_holdout,
     unlock_holdout_once,
@@ -53,6 +54,11 @@ def main() -> int:
     )
     p.add_argument("--freeze-baseline", action="store_true")
     p.add_argument("--unlock-holdout", action="store_true")
+    p.add_argument(
+        "--critic-audit",
+        action="store_true",
+        help="Deterministic research critic (no LLM); exit 1 on hard failures",
+    )
     p.add_argument("--json", action="store_true")
     args = p.parse_args()
 
@@ -60,7 +66,12 @@ def main() -> int:
     out: dict = {}
 
     if args.baseline or not any(
-        [args.compare_preferred_ivr, args.freeze_baseline, args.unlock_holdout]
+        [
+            args.compare_preferred_ivr,
+            args.freeze_baseline,
+            args.unlock_holdout,
+            args.critic_audit,
+        ]
     ):
         out["baseline"] = run_baseline_snapshot(trades, args.research_dir)
 
@@ -103,8 +114,18 @@ def main() -> int:
             args.research_dir, extract_closed_put_credit_pnls(trades)
         )
 
+    if args.critic_audit:
+        champ = Path(args.research_dir) / "champion.json"
+        out["critic"] = research_critic_audit(
+            trades_payload=trades,
+            decision=out.get("compare") if isinstance(out.get("compare"), dict) else None,
+            champion_path=champ if champ.is_file() else None,
+        )
+
     text = json.dumps(out, indent=2, default=str)
     print(text)
+    if args.critic_audit and not out.get("critic", {}).get("pass", True):
+        return 1
     return 0
 
 

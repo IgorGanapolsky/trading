@@ -194,6 +194,21 @@ jobs:
         run: |
           python3 scripts/spy_put_credit.py --status
 
+      # Handbook high-ROI: deterministic research protocol smoke (no broker, no orders).
+      - name: Put-credit research protocol smoke
+        if: always()
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          python3 scripts/put_credit_research_protocol.py --baseline --critic-audit
+          python3 scripts/put_credit_cohort_scorecard.py --json | python3 -c "
+          import json,sys
+          card=json.load(sys.stdin)
+          rp=card.get('research_protocol') or {}
+          assert 'validation' in rp or 'error' in rp, rp
+          print('research_protocol_ok', rp.get('n_closed'), rp.get('critic',{}).get('pass'))
+          "
+
       - name: Commit trade data
         if: >-
           always() &&
