@@ -873,6 +873,57 @@ def test_put_credit_parsing_and_credit_confirmation_failure_paths(tmp_path, monk
     )
 
 
+
+def test_pending_exit_order_not_found_is_not_active():
+    from scripts import spy_put_credit as pcs
+
+    client = MagicMock()
+    client.get_order_by_id.side_effect = RuntimeError(
+        '{"code":40410000,"message":"order not found for close-1"}'
+    )
+    entry = {"status": "exit_pending", "exit_order_id": "close-1"}
+    assert pcs._pending_exit_is_active(client, entry) is False
+    assert entry.get("_exit_order_not_found") is True
+
+
+def test_manage_exits_reconciles_flat_exit_pending_when_order_missing(tmp_path, monkeypatch):
+    from scripts import spy_put_credit as pcs
+
+    entries_path = tmp_path / "put_credit_entries.json"
+    entries_path.write_text(
+        json.dumps(
+            {
+                "PCS_ghost": {
+                    "status": "exit_pending",
+                    "exit_order_id": "missing-close",
+                    "exit_reason": "profit_target",
+                    "order_id": "missing-entry",
+                    "expiry": "2026-08-28",
+                    "entry_time": datetime.now(UTC).isoformat(),
+                    "credit": 0.65,
+                    "quantity": 1,
+                    "strikes": {"short_put": 712.0, "long_put": 707.0},
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(pcs, "ENTRIES_FILE", entries_path)
+    client = MagicMock()
+    client.get_all_positions.return_value = []
+    client.get_order_by_id.side_effect = RuntimeError(
+        '{"code":40410000,"message":"order not found"}'
+    )
+
+    report = pcs.manage_put_credit_exits(client, dry_run=False)
+    saved = json.loads(entries_path.read_text(encoding="utf-8"))
+    assert saved["PCS_ghost"]["status"] == "closed"
+    assert saved["PCS_ghost"]["reconciliation_reason"] == "broker_flat_after_exit_pending"
+    assert report["details"][0]["status"] == "closed_reconciled_flat"
+    assert report["pending"] == 0
+    assert report["broken"] == 0
+
+
 def test_put_credit_pending_and_entry_status_failure_paths():
     from scripts import spy_put_credit as pcs
 

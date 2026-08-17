@@ -540,6 +540,19 @@ def _confirm_entry_credit(client, entry: dict[str, Any], short_pos: Any, long_po
     return False
 
 
+def _is_order_not_found_error(exc: BaseException) -> bool:
+    """True when broker says the order id does not exist (vs transient API failure)."""
+    text = str(exc).lower()
+    code = getattr(exc, "code", None)
+    if code in (40410000, 404):
+        return True
+    return (
+        "order not found" in text
+        or "40410000" in text
+        or ("not found" in text and "order" in text)
+    )
+
+
 def _pending_exit_is_active(client, entry: dict[str, Any]) -> bool:
     exit_order_id = str(entry.get("exit_order_id") or "")
     if not exit_order_id:
@@ -547,8 +560,14 @@ def _pending_exit_is_active(client, entry: dict[str, Any]) -> bool:
     try:
         order = client.get_order_by_id(exit_order_id)
         status = _order_status_name(getattr(order, "status", ""))
-    except Exception:
+    except Exception as exc:
+        # Transient API failures: keep pending so we do not double-submit closes.
+        # Hard not-found is handled by manage_put_credit_exits with position context.
+        if _is_order_not_found_error(exc):
+            entry["_exit_order_not_found"] = True
+            return False
         return True
+    entry.pop("_exit_order_not_found", None)
     if status == "FILLED":
         entry["status"] = "closed"
         entry["exit_filled_at"] = datetime.now(UTC).isoformat()
@@ -664,11 +683,36 @@ def manage_put_credit_exits(client, *, dry_run: bool = False) -> dict[str, Any]:
             continue
         short_pos = positions.get(short_symbol)
         long_pos = positions.get(long_symbol)
-        if str(entry.get("status")) == "exit_pending" and _pending_exit_is_active(client, entry):
-            changed = True
-            report["pending"] += 1
-            report["details"].append({"key": key, "status": "exit_pending"})
-            continue
+        if str(entry.get("status")) == "exit_pending":
+            still_pending = _pending_exit_is_active(client, entry)
+            if still_pending:
+                changed = True
+                report["pending"] += 1
+                report["details"].append({"key": key, "status": "exit_pending"})
+                continue
+            # Exit order missing/terminal and broker has neither leg: treat as closed.
+            # Covers account resets and filled exits whose order ids are gone from the API.
+            if short_pos is None and long_pos is None:
+                entry["status"] = "closed"
+                entry["exit_filled_at"] = entry.get("exit_filled_at") or datetime.now(
+                    UTC
+                ).isoformat()
+                entry["reconciliation_reason"] = (
+                    "broker_flat_after_exit_pending"
+                    if entry.pop("_exit_order_not_found", None)
+                    else "broker_flat_exit_terminal"
+                )
+                changed = True
+                report["details"].append(
+                    {
+                        "key": key,
+                        "status": "closed_reconciled_flat",
+                        "reason": entry["reconciliation_reason"],
+                    }
+                )
+                continue
+            entry.pop("_exit_order_not_found", None)
+            # Legs still present after a dead exit order: fall through to re-evaluate exit.
         if short_pos is None or long_pos is None:
             entry_status = _entry_order_status(client, entry)
             if (
@@ -690,6 +734,23 @@ def manage_put_credit_exits(client, *, dry_run: bool = False) -> dict[str, Any]:
                 entry["entry_terminal_status"] = entry_status
                 changed = True
                 report["details"].append({"key": key, "status": "entry_rejected"})
+                continue
+            # Flat book + missing entry order on this account: journal is ghost risk, close it.
+            if short_pos is None and long_pos is None and entry_status == "UNKNOWN":
+                entry["status"] = "closed"
+                entry["reconciliation_reason"] = "broker_flat_entry_order_unknown"
+                entry["exit_filled_at"] = entry.get("exit_filled_at") or datetime.now(
+                    UTC
+                ).isoformat()
+                entry["exit_reason"] = entry.get("exit_reason") or "broker_reconcile_flat"
+                changed = True
+                report["details"].append(
+                    {
+                        "key": key,
+                        "status": "closed_reconciled_flat",
+                        "reason": entry["reconciliation_reason"],
+                    }
+                )
                 continue
             entry["status"] = "broken_structure"
             entry["last_error"] = (
