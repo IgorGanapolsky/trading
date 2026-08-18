@@ -1,0 +1,179 @@
+{
+  "papers": {
+    "2608.16856v1": {
+      "title": "zLend: A Dual-Scope Cash-Flow Reconstruction Framework for On-Chain Credit Underwriting",
+      "published": "2026-08-17T17:39:05Z",
+      "relevance_score": 0.43,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "q-fin.RM",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.16856v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_16856v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_16856v1.md",
+      "ingested_at": "2026-08-18T06:15:36.740614+00:00",
+      "sha256": "f5ba4bedd7b52e90fc2ea7138971ced9e3f33ebedd3944216c97d2b30b4d5aad",
+      "chunks": 12
+    },
+    "2608.16842v1": {
+      "title": "When ratios fall: A dynamic approach to contingent convertibles",
+      "published": "2026-08-17T17:27:32Z",
+      "relevance_score": 0.32,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "q-fin.PR",
+        "q-fin.MF"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.16842v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_16842v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_16842v1.md",
+      "ingested_at": "2026-08-18T06:15:36.743466+00:00",
+      "sha256": "e40f42770fdbdbb5c0ba7364ccc0f3269c48ff6c6c81bd35a1a01d006357590b",
+      "chunks": 11
+    },
+    "2608.16876v1": {
+      "title": "AutoSR: Automatic Symbolic Regression by Searching Research States",
+      "published": "2026-08-17T17:55:26Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.SC",
+        "cs.AI",
+        "cs.LG",
+        "math.NA"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.16876v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_16876v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_16876v1.md",
+      "ingested_at": "2026-08-18T06:15:36.861686+00:00",
+      "sha256": "225f18f5d40c5e3d3ef61db10c7a963283e66c1c009533d7860dfb64bc7fee20",
+      "chunks": 11
+    },
+    "2608.16888v1": {
+      "title": "Q-based Variational Inverse Reinforcement Learning",
+      "published": "2026-08-17T17:59:55Z",
+      "relevance_score": 0.25,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.16888v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_16888v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_16888v1.md",
+      "ingested_at": "2026-08-18T06:15:36.952115+00:00",
+      "sha256": "9b8730fea1df41e1b295679e6fd96af75216e7df6f8df6bfce7fcbc362b1c568",
+      "chunks": 10
+    },
+    "2608.16884v1": {
+      "title": "Improving the matrix multiplication exponent with modern optimization and AlphaEvolve",
+      "published": "2026-08-17T17:59:05Z",
+      "relevance_score": 0.28,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.DS",
+        "cs.AI",
+        "cs.CC",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.16884v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_16884v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_16884v1.md",
+      "ingested_at": "2026-08-18T06:15:36.961186+00:00",
+      "sha256": "f91754e712366ac814997bb1443a0b76db61b5c858c032e598a255d05e297fe8",
+      "chunks": 10
+    },
+    "2608.16864v1": {
+      "title": "Non-Crossing Deep Quantile Regression for Distributional Survival Prediction",
+      "published": "2026-08-17T17:46:41Z",
+      "relevance_score": 0.28,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "stat.ML",
+        "cs.LG",
+        "stat.AP"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.16864v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_16864v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_16864v1.md",
+      "ingested_at": "2026-08-18T06:15:36.962102+00:00",
+      "sha256": "4a1b682df0a1965c25b71df0539d9e87858d21151972c0f8585de9b291f5c3d9",
+      "chunks": 11
+    },
+    "2608.16805v1": {
+      "title": "Diagnosing Dense Same-Class Attribute Misbinding in Large Vision-Language Models",
+      "published": "2026-08-17T17:01:21Z",
+      "relevance_score": 0.31,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.16805v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_16805v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_16805v1.md",
+      "ingested_at": "2026-08-18T06:15:36.973275+00:00",
+      "sha256": "0d7f69776c456089319b4ac38a7a2acb7fa870e611ae96b3332ad3512a0e4d42",
+      "chunks": 11
+    },
+    "2608.16873v1": {
+      "title": "An Analytical-Prior Framework for Data-Efficient Prediction of Sound-Reduction Frequencies in Rectangular Side-Branch Helmholtz Resonators",
+      "published": "2026-08-17T17:53:14Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.16873v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_16873v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_16873v1.md",
+      "ingested_at": "2026-08-18T06:15:36.981074+00:00",
+      "sha256": "6940bdbad2495ea5ec52053ff4637f584e4a0c8fa0bfa8ff2e3e2b56b68d8fc9",
+      "chunks": 11
+    }
+  },
+  "skipped_low_relevance": {
+    "2608.16889v1": {
+      "title": "Don't Drop the BATON: Long-Horizon Robot Manipulation via Agentic Subtask Exploration and Transition-aware Memory",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-18T06:15:36.739373+00:00"
+    },
+    "2608.16878v1": {
+      "title": "Spectral Gaps of Hit-and-Run and Coordinate Hit-and-Run",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-18T06:15:36.860695+00:00"
+    },
+    "2608.16870v1": {
+      "title": "Data-Efficient and Interpretable Classification of Circulating Tumor Cell Phenotypes in Microfluidic Devices via Deep Learning",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-18T06:15:36.981373+00:00"
+    },
+    "2608.16868v1": {
+      "title": "Towards Computational Provenance: Carrying Causal-State Evidence in Generated Text",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-18T06:15:36.981872+00:00"
+    }
+  },
+  "total_ingested": 8,
+  "last_run_utc": "2026-08-18T06:15:36.990502+00:00",
+  "runs": [
+    {
+      "finished_at": "2026-08-18T06:15:36.990502+00:00",
+      "candidates": 12,
+      "new_ingested": 8,
+      "skipped_low_relevance": 4,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    }
+  ]
+}
