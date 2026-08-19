@@ -130,6 +130,137 @@
       "ingested_at": "2026-08-18T06:15:36.981074+00:00",
       "sha256": "6940bdbad2495ea5ec52053ff4637f584e4a0c8fa0bfa8ff2e3e2b56b68d8fc9",
       "chunks": 11
+    },
+    "2608.17822v1": {
+      "title": "Spatially explicit feature importance for building height estimation using research-access high-resolution SAR and optical sensors",
+      "published": "2026-08-18T14:20:53Z",
+      "relevance_score": 0.4,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "physics.soc-ph",
+        "cs.LG",
+        "stat.ML"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.17822v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_17822v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_17822v1.md",
+      "ingested_at": "2026-08-19T06:16:21.426221+00:00",
+      "sha256": "1eebd7b2e51c7ddb1b87cff0643263e5de42dfd78d322fcc3b332c98905221f7",
+      "chunks": 11
+    },
+    "2608.17715v1": {
+      "title": "Communicating Credit Risk with Large Language Models: Evaluation of Explanations from Standard and Alternative Data-Based Models",
+      "published": "2026-08-18T12:39:46Z",
+      "relevance_score": 0.33,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "q-fin.RM",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.17715v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_17715v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_17715v1.md",
+      "ingested_at": "2026-08-19T06:16:21.427469+00:00",
+      "sha256": "54df415dbfe1b8e7bbc70b4db0d66c5ce89a6e3b3a38a4b3d9583e88b0d066ea",
+      "chunks": 11
+    },
+    "2608.17713v1": {
+      "title": "Cross-View Correspondence Is a Measurement Intervention: Two-Sided Validation for Agent Evaluation and Credit Assignment",
+      "published": "2026-08-18T12:39:21Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.17713v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_17713v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_17713v1.md",
+      "ingested_at": "2026-08-19T06:16:21.428678+00:00",
+      "sha256": "11f680d4ad34450edfe1c383287a5139adfa2938c87648b29fa9c9b6b0bfb34d",
+      "chunks": 11
+    },
+    "2608.17841v1": {
+      "title": "Toward the Optimal Regret-Instability Trade-off in Multi-Armed Bandits",
+      "published": "2026-08-18T14:38:47Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "stat.ML",
+        "cs.LG",
+        "math.OC",
+        "math.ST"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.17841v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_17841v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_17841v1.md",
+      "ingested_at": "2026-08-19T06:16:21.429891+00:00",
+      "sha256": "bdf752e87038330941c89c214ef20e84f29be76799b13b0363c83fe8addd9edd",
+      "chunks": 11
+    },
+    "2608.17776v1": {
+      "title": "Debate Training Reduces Reward Hacking in RLAIF",
+      "published": "2026-08-18T13:40:29Z",
+      "relevance_score": 0.25,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.17776v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_17776v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_17776v1.md",
+      "ingested_at": "2026-08-19T06:16:21.431565+00:00",
+      "sha256": "d32207d90434608ec38d9897a0bb9447bf1bef9613c27666c56f5f29dcb41fee",
+      "chunks": 12
+    },
+    "2608.18066v1": {
+      "title": "On the Fragility of Self-Improving Agents: Variance, Task Order, and Underspecification",
+      "published": "2026-08-18T17:55:07Z",
+      "relevance_score": 0.28,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.CL",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.18066v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_18066v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_18066v1.md",
+      "ingested_at": "2026-08-19T06:16:21.432827+00:00",
+      "sha256": "0492cf989d1b9d18b54bdc3ed3d50346cedfe94c94c3043e836d5d941479019d",
+      "chunks": 12
+    },
+    "2608.18076v1": {
+      "title": "From Corpora to Co-Evolving Capabilities: Capability-Centric Data Design for Generalist Image Generation",
+      "published": "2026-08-18T17:59:01Z",
+      "relevance_score": 0.31,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.18076v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_18076v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_18076v1.md",
+      "ingested_at": "2026-08-19T06:16:21.435044+00:00",
+      "sha256": "1ebe0d8602d7bb953d685be55f6eb1dcc825e2e7159fbe9cb68b7b3092ef51fd",
+      "chunks": 11
+    },
+    "2608.18025v1": {
+      "title": "Why GPT-Style Models Do Not Directly Transfer to Symbolic Music: Compression in the Wrong Coordinate System",
+      "published": "2026-08-18T17:20:12Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.SD"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.18025v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_18025v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_18025v1.md",
+      "ingested_at": "2026-08-19T06:16:21.436368+00:00",
+      "sha256": "5347e20785c487c9ed2092e27de63401120d23a69767fcf4427a2f1c420a11ca",
+      "chunks": 11
     }
   },
   "skipped_low_relevance": {
@@ -156,16 +287,48 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-08-18T06:15:36.981872+00:00"
+    },
+    "2608.17829v1": {
+      "title": "The Model's Tell: Measuring Context-Leakage Attack Signals with Behavior Gauges",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-19T06:16:21.430310+00:00"
+    },
+    "2608.18062v1": {
+      "title": "TokEval: A Tokenizer Evaluation Suite",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-19T06:16:21.433283+00:00"
+    },
+    "2608.18061v1": {
+      "title": "The concentration game: Bayesian updating, regret, and information",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-19T06:16:21.433802+00:00"
     }
   },
-  "total_ingested": 8,
-  "last_run_utc": "2026-08-18T06:15:36.990502+00:00",
+  "total_ingested": 16,
+  "last_run_utc": "2026-08-19T06:16:21.436850+00:00",
   "runs": [
     {
       "finished_at": "2026-08-18T06:15:36.990502+00:00",
       "candidates": 12,
       "new_ingested": 8,
       "skipped_low_relevance": 4,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-08-19T06:16:21.436850+00:00",
+      "candidates": 11,
+      "new_ingested": 8,
+      "skipped_low_relevance": 3,
       "min_relevance": 0.18,
       "queries": [
         "option credit spread OR iron condor OR put credit",
