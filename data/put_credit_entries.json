@@ -169,16 +169,16 @@
       "would_hit_tp_25_now": false,
       "would_hit_tp_50_now": false,
       "public_exit_dte": 21,
-      "dte_now": 37,
+      "dte_now": 36,
       "would_trigger_public_21dte_exit": false,
       "note": "Counterfactuals only \u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history."
     },
-    "last_counterfactuals_at": "2026-08-19T19:40:29.520908+00:00",
+    "last_counterfactuals_at": "2026-08-20T15:12:56.593116+00:00",
     "last_mark": {
-      "current_debit": 0.6699999999999999,
-      "estimated_pnl": -1.9999999999999907,
-      "dte": 37,
-      "hold_hours": 196.29151287166667
+      "current_debit": 0.7700000000000005,
+      "estimated_pnl": -12.000000000000044,
+      "dte": 36,
+      "hold_hours": 215.8323663452778
     },
     "reconciliation_reason": "broker_flat_entry_order_unknown",
     "exit_filled_at": "2026-08-17T16:58:24.293115+00:00",
@@ -268,16 +268,16 @@
       "would_hit_tp_25_now": false,
       "would_hit_tp_50_now": false,
       "public_exit_dte": 21,
-      "dte_now": 37,
+      "dte_now": 36,
       "would_trigger_public_21dte_exit": false,
       "note": "Counterfactuals only \u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history."
     },
-    "last_counterfactuals_at": "2026-08-19T19:40:29.520961+00:00",
+    "last_counterfactuals_at": "2026-08-20T15:12:56.593167+00:00",
     "last_mark": {
-      "current_debit": 0.6699999999999999,
-      "estimated_pnl": -15.999999999999993,
-      "dte": 37,
-      "hold_hours": 50.45104718888889
+      "current_debit": 0.7700000000000005,
+      "estimated_pnl": -26.000000000000046,
+      "dte": 36,
+      "hold_hours": 69.99190057972223
     },
     "reconciliation_reason": "reopened_broker_legs_present",
     "reopened_at": "2026-08-18T15:10:34.774956+00:00"
