@@ -375,6 +375,104 @@
       "ingested_at": "2026-08-20T06:16:22.277193+00:00",
       "sha256": "f5e42d353f6e014bf7e216b79d7fe0ababec5fc209f5cf0ef0eabc6fa39d5aaa",
       "chunks": 11
+    },
+    "2608.20337v1": {
+      "title": "Information on trajectories: martingales and random times",
+      "published": "2026-08-20T17:59:57Z",
+      "relevance_score": 0.25,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "math.PR",
+        "cs.IT",
+        "cs.LG",
+        "math.ST"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.20337v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_20337v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_20337v1.md",
+      "ingested_at": "2026-08-21T06:17:05.683341+00:00",
+      "sha256": "62d6a6723779d40fc6cd906518f718ecb4959b9a2f680e032da07238bc8cf364",
+      "chunks": 10
+    },
+    "2608.20274v1": {
+      "title": "Break It Down, Pass It On: Cross-Task Skill Transfer in LLM Agents",
+      "published": "2026-08-20T17:12:08Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.CL"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.20274v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_20274v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_20274v1.md",
+      "ingested_at": "2026-08-21T06:17:05.684342+00:00",
+      "sha256": "6581df19d0f634f04d236dac682e3305e068ddfc2e414dbb72ee3b4d86645647",
+      "chunks": 11
+    },
+    "2608.20186v1": {
+      "title": "Decoding silent reading from non-invasive EEG",
+      "published": "2026-08-20T15:41:05Z",
+      "relevance_score": 0.33,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "q-bio.NC"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.20186v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_20186v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_20186v1.md",
+      "ingested_at": "2026-08-21T06:17:05.685274+00:00",
+      "sha256": "6387dd9a46cb87d9d5c012f821a5ad05f477cbb375bd2c6215999100452aa568",
+      "chunks": 12
+    },
+    "2608.20331v1": {
+      "title": "G-CARL: Grounded Checklist-Aligned Reward Learning for Patient-Oriented Medical Report Interpretation",
+      "published": "2026-08-20T17:59:46Z",
+      "relevance_score": 0.43,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.CV"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.20331v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_20331v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_20331v1.md",
+      "ingested_at": "2026-08-21T06:17:05.687624+00:00",
+      "sha256": "ff4351f47f06ff11f7b40eb037c370251ae9ec979acd9ea64fd4d6e4678fb614",
+      "chunks": 11
+    },
+    "2608.20326v1": {
+      "title": "$TCP_\u03b1$: Margin-Controlled Confidence estimation for reliable Music Information Retrieval",
+      "published": "2026-08-20T17:58:50Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "eess.AS",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.20326v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_20326v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_20326v1.md",
+      "ingested_at": "2026-08-21T06:17:05.688631+00:00",
+      "sha256": "2afaa94ad57a59acb0bfc49516f9f4caebe43e22933028b22369374510c96bea",
+      "chunks": 12
+    },
+    "2608.20304v1": {
+      "title": "Calibration-Induced Degeneracy in LLM Financial Forecasting: An Audit-Trailed Case Study on Next-Day Market Risk",
+      "published": "2026-08-20T17:42:21Z",
+      "relevance_score": 0.3,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "q-fin.RM"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.20304v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_20304v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_20304v1.md",
+      "ingested_at": "2026-08-21T06:17:05.689578+00:00",
+      "sha256": "b2e141c7f0f83919f266a9e69957f10f8275c35747b9dfbf5a3d7f119b8a5fa2",
+      "chunks": 10
     }
   },
   "skipped_low_relevance": {
@@ -443,10 +541,34 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-08-20T06:16:22.335329+00:00"
+    },
+    "2608.20322v1": {
+      "title": "A comparison between ceiling-mounted FMCW, IR-UWB and Wi-Fi radar for in-bedroom human activity monitoring and sleep interruption detection",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-21T06:17:05.685682+00:00"
+    },
+    "2608.20271v1": {
+      "title": "Catching the Rug: Early Prediction of Fraudulent Memecoins on Solana via Machine Learning",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-21T06:17:05.686153+00:00"
+    },
+    "2608.20231v1": {
+      "title": "Growth Without Us: Machine Consumers, Corporate Circularity, and the Decoupling of GDP from Humanity after AGI",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-21T06:17:05.686656+00:00"
+    },
+    "2608.20280v1": {
+      "title": "Which Eviction Policy Should an LLM Cache Use? A Systematic Study Across Workloads, Capacities, and Encoders",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-21T06:17:05.689990+00:00"
     }
   },
-  "total_ingested": 23,
-  "last_run_utc": "2026-08-20T06:16:22.335861+00:00",
+  "total_ingested": 29,
+  "last_run_utc": "2026-08-21T06:17:05.690402+00:00",
   "runs": [
     {
       "finished_at": "2026-08-18T06:15:36.990502+00:00",
@@ -494,6 +616,20 @@
       "finished_at": "2026-08-20T06:16:22.335861+00:00",
       "candidates": 11,
       "new_ingested": 7,
+      "skipped_low_relevance": 4,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-08-21T06:17:05.690402+00:00",
+      "candidates": 10,
+      "new_ingested": 6,
       "skipped_low_relevance": 4,
       "min_relevance": 0.18,
       "queries": [
