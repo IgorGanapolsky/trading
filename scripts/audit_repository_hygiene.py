@@ -28,6 +28,18 @@ FORBIDDEN_PREFIXES = (
     "node_modules/",
     "reports/",
 )
+# Deliberately persisted state that lives under a FORBIDDEN_PREFIXES directory.
+# These two manifests are dedupe / version state for the arXiv research ingest:
+# .github/workflows/arxiv-paper-ingestion.yml force-adds them on every scheduled run,
+# and src/research/arxiv_collector.py + src/rag/document_ingestion_pipeline.py read
+# them back to avoid re-ingesting papers. Untracking them (see LL-4426) only breaks
+# main again on the next scheduled ingest, so they are allowlisted here instead.
+ALLOWED_GENERATED_PATHS = frozenset(
+    {
+        "data/audit/arxiv_ingestion_manifest.json",
+        "data/audit/ingestion_version_manifest.json",
+    }
+)
 FORBIDDEN_NAMES = {".coverage", ".DS_Store", "coverage.json", "coverage.xml", "pytest.ini"}
 BINARY_SUFFIXES = {
     ".avif",
@@ -112,7 +124,9 @@ def scan(repo: Path) -> dict:
         data = path.read_bytes()
         total_lines += physical_line_count(data)
         suffix_counts[path.suffix.lower() or "[no suffix]"] += 1
-        if any(relative.startswith(prefix) for prefix in FORBIDDEN_PREFIXES):
+        if relative not in ALLOWED_GENERATED_PATHS and any(
+            relative.startswith(prefix) for prefix in FORBIDDEN_PREFIXES
+        ):
             findings.append(
                 Finding("error", "generated-path", relative, "tracked generated output")
             )
