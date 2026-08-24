@@ -473,6 +473,117 @@
       "ingested_at": "2026-08-21T06:17:05.689578+00:00",
       "sha256": "b2e141c7f0f83919f266a9e69957f10f8275c35747b9dfbf5a3d7f119b8a5fa2",
       "chunks": 10
+    },
+    "2608.21319v1": {
+      "title": "Unified Branch-and-Bound Search for the Steiner Traveling Salesman Problem on Graphs of Convex Sets",
+      "published": "2026-08-21T17:28:03Z",
+      "relevance_score": 0.25,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.RO"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.21319v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_21319v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_21319v1.md",
+      "ingested_at": "2026-08-24T06:22:26.848793+00:00",
+      "sha256": "270d7eab076f5e6b1ee7a278ec36a5a5ee8653a803e5c790bbe273edcc387bff",
+      "chunks": 11
+    },
+    "2608.21307v1": {
+      "title": "SPARCL: Spectral Partitioned Analytic Continual Learning",
+      "published": "2026-08-21T17:09:48Z",
+      "relevance_score": 0.25,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.21307v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_21307v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_21307v1.md",
+      "ingested_at": "2026-08-24T06:22:26.850934+00:00",
+      "sha256": "de407e7413f743dd6d75c2327f0559ac57d6b37a4a856c5353285f735b16f278",
+      "chunks": 11
+    },
+    "2608.21262v1": {
+      "title": "The Exceedance Design Effect: Effective Sample Size for Thresholds under Clustering",
+      "published": "2026-08-21T16:19:50Z",
+      "relevance_score": 0.28,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "stat.ML",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.21262v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_21262v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_21262v1.md",
+      "ingested_at": "2026-08-24T06:22:26.852871+00:00",
+      "sha256": "08301d931933d59fbdb65e62be2f0f08ad4a87157c0a42bd7b49fd8c5fdb6655",
+      "chunks": 11
+    },
+    "2608.21203v1": {
+      "title": "SENTRY: Deterministic, Intelligent Risk Assessment for IT Change Management",
+      "published": "2026-08-21T15:18:21Z",
+      "relevance_score": 0.31,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.21203v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_21203v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_21203v1.md",
+      "ingested_at": "2026-08-24T06:22:26.856507+00:00",
+      "sha256": "f38d52d28970edb9dc4d77b49b92dd4c290b4eab5f7b1d4dd5828720aa789bc4",
+      "chunks": 11
+    },
+    "2608.21359v1": {
+      "title": "Primal Acceleration of Newton's Method",
+      "published": "2026-08-21T17:59:37Z",
+      "relevance_score": 0.28,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "math.OC",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.21359v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_21359v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_21359v1.md",
+      "ingested_at": "2026-08-24T06:22:26.858426+00:00",
+      "sha256": "9d56266dae628b4780aff90ca012e1b8588ab6567a2fa78c9e2df3b4ced71af7",
+      "chunks": 10
+    },
+    "2608.21349v1": {
+      "title": "PerturbRx: Learning Treatment-Conditioned Latent Transitions for Patient Drug Response Prediction",
+      "published": "2026-08-21T17:54:48Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "q-bio.QM",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.21349v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_21349v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_21349v1.md",
+      "ingested_at": "2026-08-24T06:22:26.860352+00:00",
+      "sha256": "ff442c1ed17789a4347e65ba4623c54f4f961074f102eccf920095f5a5e69e42",
+      "chunks": 10
+    },
+    "2608.21243v1": {
+      "title": "Adapting Knowledge Graphs for Behavior Denoising in Sequential Recommendation",
+      "published": "2026-08-21T15:54:39Z",
+      "relevance_score": 0.31,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.IR",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.21243v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_21243v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_21243v1.md",
+      "ingested_at": "2026-08-24T06:22:26.863175+00:00",
+      "sha256": "cdff8e09fddebe12ab37b88e031c3f7d3294fe49fd049c4f4a5450897d8b13a0",
+      "chunks": 11
     }
   },
   "skipped_low_relevance": {
@@ -565,10 +676,40 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-08-21T06:17:05.689990+00:00"
+    },
+    "2608.21278v1": {
+      "title": "CLEAR: Continuous Latent Adapter Routing for Utility-Preserving LLM Safety Alignment",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-24T06:22:26.853846+00:00"
+    },
+    "2608.21254v1": {
+      "title": "On the Transferability of Agricultural Weed Detection Under Cross-Field Distribution Shift",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-24T06:22:26.854650+00:00"
+    },
+    "2608.21348v1": {
+      "title": "Truthful Calibration Measures for Sequential Prediction",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-24T06:22:26.861263+00:00"
+    },
+    "2608.21356v1": {
+      "title": "AI with Authority, from Application to Silicon",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-24T06:22:26.864079+00:00"
+    },
+    "2608.21345v1": {
+      "title": "Asymmetric Capacity Allocation in Self-Refinement Pipelines",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-24T06:22:26.864969+00:00"
     }
   },
-  "total_ingested": 29,
-  "last_run_utc": "2026-08-23T18:04:55.554288+00:00",
+  "total_ingested": 36,
+  "last_run_utc": "2026-08-24T06:22:26.865889+00:00",
   "runs": [
     {
       "finished_at": "2026-08-18T06:15:36.990502+00:00",
@@ -687,6 +828,20 @@
       "candidates": 10,
       "new_ingested": 0,
       "skipped_low_relevance": 0,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-08-24T06:22:26.865889+00:00",
+      "candidates": 12,
+      "new_ingested": 7,
+      "skipped_low_relevance": 5,
       "min_relevance": 0.18,
       "queries": [
         "option credit spread OR iron condor OR put credit",
