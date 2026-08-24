@@ -38,7 +38,7 @@ dev = [
 rag = [
   "lancedb>=0.37.1,<1.0.0",
   "scikit-learn>=1.9.0,<2.0.0",
-  "sentence-transformers>=5.7.0,<6.0.0",
+  "sentence-transformers>=6.0.0,<7.0.0",
 ]
 research = [
   "google-generativeai>=0.8.6,<1.0.0",
