@@ -1,6 +1,6 @@
 # Lightweight workflow runtime. Keep heavy semantic-RAG and research providers optional.
 alpaca-py==0.44.0
-anthropic>=0.120.2,<1.0.0
+anthropic>=1.0.0,<2.0.0
 fastapi>=0.141.1,<1.0.0
 holidays>=0.103
 httpx>=0.28.1,<1.0.0
