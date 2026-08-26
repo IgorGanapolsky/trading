@@ -718,6 +718,113 @@
       "ingested_at": "2026-08-25T06:16:50.789508+00:00",
       "sha256": "350322adf8803b62195300944c85b603524d72ea7c8dbe4cd8d0125f9371b3e8",
       "chunks": 10
+    },
+    "2608.24786v1": {
+      "title": "Harvesting the Volatility Risk Premium: A Learning-to-Rank Approach",
+      "published": "2026-08-25T16:31:48Z",
+      "relevance_score": 0.52,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "q-fin.CP",
+        "q-fin.ST"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.24786v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_24786v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_24786v1.md",
+      "ingested_at": "2026-08-26T06:17:47.256948+00:00",
+      "sha256": "1056e05398bfcb75f509e5eb5fdf6c5ccaaf2f412803a501a79eaa84fba89b39",
+      "chunks": 11
+    },
+    "2608.24588v1": {
+      "title": "IAPO: Influence-Aware Policy Optimization for Credit Assignment in Multi-Turn Service Agents",
+      "published": "2026-08-25T14:14:36Z",
+      "relevance_score": 0.33,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.24588v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_24588v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_24588v1.md",
+      "ingested_at": "2026-08-26T06:17:47.260869+00:00",
+      "sha256": "bccedc0d0035670a0a30c91c5b8a0af95b6018d80bdc3f99b00bee56613c3565",
+      "chunks": 11
+    },
+    "2608.24825v1": {
+      "title": "A Dual-Dimensional LLM Framework for Automated Item Incidental Content Similarity Analysis in Large-Scale Assessments",
+      "published": "2026-08-25T17:07:16Z",
+      "relevance_score": 0.33,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.24825v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_24825v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_24825v1.md",
+      "ingested_at": "2026-08-26T06:17:47.264407+00:00",
+      "sha256": "9ace1dae153f96b370ef8efae7f00ceff79c31e82455319f4c5662a0d5cd00f6",
+      "chunks": 11
+    },
+    "2608.24818v1": {
+      "title": "A Geometric Theory of Robust Fairness Audits",
+      "published": "2026-08-25T16:58:57Z",
+      "relevance_score": 0.29,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.24818v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_24818v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_24818v1.md",
+      "ingested_at": "2026-08-26T06:17:47.267376+00:00",
+      "sha256": "6a4449ef4c1d721b6c28728c6d87f9792dcca184ec18b447d9dccebaf9264303",
+      "chunks": 10
+    },
+    "2608.24881v1": {
+      "title": "What FID Hides: Detecting, Ranking, and Diagnosing Deviations in Generative Evaluation",
+      "published": "2026-08-25T17:58:46Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "stat.ML",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.24881v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_24881v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_24881v1.md",
+      "ingested_at": "2026-08-26T06:17:47.269880+00:00",
+      "sha256": "d7e7a1e842e209c372154d7e8e97eebfbb8b3d2e4c5d700e96351d6a07879d68",
+      "chunks": 11
+    },
+    "2608.24871v1": {
+      "title": "NatPar: Natural Parametric Modeling",
+      "published": "2026-08-25T17:52:26Z",
+      "relevance_score": 0.3,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "q-fin.RM"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.24871v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_24871v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_24871v1.md",
+      "ingested_at": "2026-08-26T06:17:47.272384+00:00",
+      "sha256": "090687d5f1142685f39b14cb864f2628f6a66b933eaa5dcc13805ddaf8058b2b",
+      "chunks": 11
+    },
+    "2608.24870v1": {
+      "title": "SPO++: Stream-Aligned Policy Optimization for Asynchronous Agentic RL",
+      "published": "2026-08-25T17:52:19Z",
+      "relevance_score": 0.25,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.24870v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_24870v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_24870v1.md",
+      "ingested_at": "2026-08-26T06:17:47.274871+00:00",
+      "sha256": "0e77e7576e67bc9f1c742cc43dc494d9bde9183fb688a614f29ae509048cd019",
+      "chunks": 10
     }
   },
   "skipped_low_relevance": {
@@ -870,10 +977,34 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-08-25T06:16:50.791199+00:00"
+    },
+    "2608.24631v1": {
+      "title": "When Similarity Is Interaction-Driven: Quantum Kernels for Regime-Sensitive Learning",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-26T06:17:47.258195+00:00"
+    },
+    "2608.24865v1": {
+      "title": "Parameterized Complexity of $L_p$-Lipschitz Constants for Input Convex Neural Networks and $L_p$-Norm Maximization over Zonotopes",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-26T06:17:47.262037+00:00"
+    },
+    "2608.24795v1": {
+      "title": "LION: A Clifford Neural Paradigm for Multimodal-Attributed Graph Learning",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-26T06:17:47.276104+00:00"
+    },
+    "2608.24758v1": {
+      "title": "RACE: Scalable Statistical Estimation of Functional Consistency in LLM Neurons",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-26T06:17:47.277353+00:00"
     }
   },
-  "total_ingested": 44,
-  "last_run_utc": "2026-08-25T06:16:50.792141+00:00",
+  "total_ingested": 51,
+  "last_run_utc": "2026-08-26T06:17:47.278666+00:00",
   "runs": [
     {
       "finished_at": "2026-08-18T06:15:36.990502+00:00",
@@ -1020,6 +1151,20 @@
       "candidates": 13,
       "new_ingested": 8,
       "skipped_low_relevance": 5,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-08-26T06:17:47.278666+00:00",
+      "candidates": 11,
+      "new_ingested": 7,
+      "skipped_low_relevance": 4,
       "min_relevance": 0.18,
       "queries": [
         "option credit spread OR iron condor OR put credit",
