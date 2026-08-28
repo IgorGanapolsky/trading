@@ -977,6 +977,134 @@
       "ingested_at": "2026-08-27T09:17:21.673168+00:00",
       "sha256": "32f1b231c9635094ba11473567d9161d6e5370467c9f72439c391bafa1a6acd1",
       "chunks": 12
+    },
+    "2608.27439v1": {
+      "title": "RedEvoAgent: Automatic Red-Teaming Agent with Experience-Driven Skill Evolution",
+      "published": "2026-08-27T17:55:33Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.27439v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_27439v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_27439v1.md",
+      "ingested_at": "2026-08-28T09:21:42.608627+00:00",
+      "sha256": "3ce825a369a230effb9db59080532bd44b07e905e92fcb6e2072125eb3aa6002",
+      "chunks": 10
+    },
+    "2608.27421v1": {
+      "title": "Learning a Continuous Sepsis Severity Score Without Hour-by-Hour Supervision: A Two-Site Retrospective Study",
+      "published": "2026-08-27T17:46:21Z",
+      "relevance_score": 0.26,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.27421v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_27421v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_27421v1.md",
+      "ingested_at": "2026-08-28T09:21:42.610998+00:00",
+      "sha256": "b8587ab06c4be68006bd485cbdec3fb2e0cb12977579fefd592c0586039fb1ef",
+      "chunks": 11
+    },
+    "2608.27295v1": {
+      "title": "A Temporal Multiplex Graph Neural Network for Systemic Risk Transmission in Global Banking",
+      "published": "2026-08-27T16:01:11Z",
+      "relevance_score": 0.2,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "q-fin.CP"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.27295v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_27295v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_27295v1.md",
+      "ingested_at": "2026-08-28T09:21:42.622663+00:00",
+      "sha256": "6dff3830fa2effd6d792d3435f49511b225db866f36db3d38501e34dec2dcd4f",
+      "chunks": 10
+    },
+    "2608.27351v1": {
+      "title": "Understanding Evolution Strategies for LLM Reasoning: Broader Reasoning Coverage than GRPO",
+      "published": "2026-08-27T16:48:39Z",
+      "relevance_score": 0.37,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.27351v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_27351v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_27351v1.md",
+      "ingested_at": "2026-08-28T09:21:42.625208+00:00",
+      "sha256": "f56fa863e7874bc7056184c22a7ce479341fd496e98e688d7a6f95937f1aaded",
+      "chunks": 11
+    },
+    "2608.27260v1": {
+      "title": "What Makes Good Agentic Data? An ACE Lens on Data Generation for LLM Agents",
+      "published": "2026-08-27T15:43:50Z",
+      "relevance_score": 0.43,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.CL"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.27260v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_27260v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_27260v1.md",
+      "ingested_at": "2026-08-28T09:21:42.627822+00:00",
+      "sha256": "9b76f2281d6013c69530901b63196b7de743d491d97aab91cd5e7df6077c2c9e",
+      "chunks": 11
+    },
+    "2608.27176v1": {
+      "title": "When Text Misleads: Inconsistent-Aware Reasoning for Audio-Grounded Dialogue",
+      "published": "2026-08-27T14:26:46Z",
+      "relevance_score": 0.26,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.LG",
+        "eess.AS"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.27176v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_27176v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_27176v1.md",
+      "ingested_at": "2026-08-28T09:21:42.630407+00:00",
+      "sha256": "384808f1862044ca851cdbe012ce88d489761dcfd972de044401a7fde4458639",
+      "chunks": 11
+    },
+    "2608.27424v1": {
+      "title": "Beyond F1: Evaluating Coverage and Failure Recovery in AI Model Security Scanners",
+      "published": "2026-08-27T17:49:28Z",
+      "relevance_score": 0.31,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.27424v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_27424v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_27424v1.md",
+      "ingested_at": "2026-08-28T09:21:42.640512+00:00",
+      "sha256": "c1199a99eb368be16919399964b260db2a7014f3e6a7b0abe350a142173c1db6",
+      "chunks": 11
+    },
+    "2608.27395v1": {
+      "title": "LeVJEPA: Efficient & Scalable Video Pretraining without the Heuristics",
+      "published": "2026-08-27T17:26:24Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.27395v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_27395v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_27395v1.md",
+      "ingested_at": "2026-08-28T09:21:42.643165+00:00",
+      "sha256": "d119e0c414d2b10f5dbd1aa5d4cc546a917c94f01baf8bfa26673b4275474e6e",
+      "chunks": 12
     }
   },
   "skipped_low_relevance": {
@@ -1177,10 +1305,34 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-08-27T09:17:21.670263+00:00"
+    },
+    "2608.27429v1": {
+      "title": "Mechanistic Reaction Prediction via Discrete Flow Matching on Graph-Structured Electron Occupation",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-28T09:21:42.631626+00:00"
+    },
+    "2608.27367v1": {
+      "title": "Successive Capacity Growth: Task-Complexity-Driven Width and Depth Expansion for Vision Transformer Encoders in JEPA World Models",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-28T09:21:42.644422+00:00"
+    },
+    "2608.27339v1": {
+      "title": "Beyond Parallel Blindness: Information Floors and Model Gaps in Block Drafting",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-28T09:21:42.645844+00:00"
+    },
+    "2608.27454v1": {
+      "title": "WikiSkill: Compiling Agent Experience into Persistent Knowledge for Skill Evolution",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-28T09:21:42.647198+00:00"
     }
   },
-  "total_ingested": 60,
-  "last_run_utc": "2026-08-27T09:17:21.674475+00:00",
+  "total_ingested": 68,
+  "last_run_utc": "2026-08-28T09:21:42.648585+00:00",
   "runs": [
     {
       "finished_at": "2026-08-18T06:15:36.990502+00:00",
@@ -1368,6 +1520,20 @@
       "finished_at": "2026-08-27T09:17:21.674475+00:00",
       "candidates": 13,
       "new_ingested": 9,
+      "skipped_low_relevance": 4,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-08-28T09:21:42.648585+00:00",
+      "candidates": 12,
+      "new_ingested": 8,
       "skipped_low_relevance": 4,
       "min_relevance": 0.18,
       "queries": [
