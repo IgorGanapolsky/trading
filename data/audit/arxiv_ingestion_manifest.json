@@ -1332,7 +1332,7 @@
     }
   },
   "total_ingested": 68,
-  "last_run_utc": "2026-08-30T06:28:57.547275+00:00",
+  "last_run_utc": "2026-08-30T18:07:13.110524+00:00",
   "runs": [
     {
       "finished_at": "2026-08-18T06:15:36.990502+00:00",
@@ -1588,6 +1588,20 @@
     },
     {
       "finished_at": "2026-08-30T06:28:57.547275+00:00",
+      "candidates": 12,
+      "new_ingested": 0,
+      "skipped_low_relevance": 0,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-08-30T18:07:13.110524+00:00",
       "candidates": 12,
       "new_ingested": 0,
       "skipped_low_relevance": 0,
