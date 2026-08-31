@@ -1105,6 +1105,103 @@
       "ingested_at": "2026-08-28T09:21:42.643165+00:00",
       "sha256": "d119e0c414d2b10f5dbd1aa5d4cc546a917c94f01baf8bfa26673b4275474e6e",
       "chunks": 12
+    },
+    "2608.28421v1": {
+      "title": "Program Learning with Verifiable Rewards: Symbolic Backpropagation for Post-Training LLMs",
+      "published": "2026-08-28T15:06:00Z",
+      "relevance_score": 0.35,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.28421v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_28421v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_28421v1.md",
+      "ingested_at": "2026-08-31T06:41:03.203594+00:00",
+      "sha256": "62a29800a6fc1ba38f6b3caadd41382fda3990f161be2a9c3ec76567fc30ad57",
+      "chunks": 11
+    },
+    "2608.28397v1": {
+      "title": "Market-Informed Valuation of GMMB Riders with Surrender Options under a Heston Stochastic-Local Volatility Model",
+      "published": "2026-08-28T14:50:09Z",
+      "relevance_score": 0.5,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "q-fin.CP"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.28397v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_28397v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_28397v1.md",
+      "ingested_at": "2026-08-31T06:41:03.206619+00:00",
+      "sha256": "bc3174ffa37f1da3a63dc166971a69e01a3433fc31b2ce6af2ef9445ef53d08b",
+      "chunks": 11
+    },
+    "2608.28549v1": {
+      "title": "Video Generative Models as Geometry Learner",
+      "published": "2026-08-28T17:25:31Z",
+      "relevance_score": 0.31,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.28549v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_28549v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_28549v1.md",
+      "ingested_at": "2026-08-31T06:41:03.210933+00:00",
+      "sha256": "d60ef98400390eb7ed520ae10f7bfa6b6590b221410184b8adab7d5d04a7de48",
+      "chunks": 11
+    },
+    "2608.28399v1": {
+      "title": "RetailAgent: Structured Adverse Timing in Self-Conditioned Multimodal LLM Trading Agents",
+      "published": "2026-08-28T14:53:08Z",
+      "relevance_score": 0.25,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "q-fin.TR"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.28399v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_28399v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_28399v1.md",
+      "ingested_at": "2026-08-31T06:41:03.213848+00:00",
+      "sha256": "6dbb0013e52e89ce46cece4dc96347795e0e1718099ea7d86116feb2a25e6d0b",
+      "chunks": 10
+    },
+    "2608.28578v1": {
+      "title": "Aero Hand Open: A Simulation-Ready Tendon-Driven Hand for Dexterous Manipulation Learning",
+      "published": "2026-08-28T17:53:48Z",
+      "relevance_score": 0.3,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.28578v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_28578v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_28578v1.md",
+      "ingested_at": "2026-08-31T06:41:03.218134+00:00",
+      "sha256": "f7bc93ee455b50ee381ee1a6b2f2ebd2aaeba4f386da8722afe35e8aad371a33",
+      "chunks": 10
+    },
+    "2608.28576v1": {
+      "title": "Learning a Size-Weight Frontier for Synthetic-Augmented Inference",
+      "published": "2026-08-28T17:52:33Z",
+      "relevance_score": 0.33,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "stat.ME",
+        "cs.AI",
+        "cs.LG",
+        "stat.ML"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.28576v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_28576v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_28576v1.md",
+      "ingested_at": "2026-08-31T06:41:03.221045+00:00",
+      "sha256": "dcd72aaf43a168a9cb3d7ed3598c2988550005bc03371c794cba20b5f484549e",
+      "chunks": 10
     }
   },
   "skipped_low_relevance": {
@@ -1329,10 +1426,34 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-08-28T09:21:42.647198+00:00"
+    },
+    "2608.28262v1": {
+      "title": "SinkSLOT: Sinkhorn via Sparse Lifted Optimal Transport",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-31T06:41:03.208029+00:00"
+    },
+    "2608.28589v1": {
+      "title": "QGPINNs: A Physics-Informed Neural Network Framework for Nonlocal Differential Equations on Quantum Graphs",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-31T06:41:03.215223+00:00"
+    },
+    "2608.28566v1": {
+      "title": "On two proofs of $d^2$ mixing of weighted Dikin walks",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-31T06:41:03.225567+00:00"
+    },
+    "2608.28444v1": {
+      "title": "Sliding-window beats linear attention",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-08-31T06:41:03.227093+00:00"
     }
   },
-  "total_ingested": 68,
-  "last_run_utc": "2026-08-30T18:07:13.110524+00:00",
+  "total_ingested": 74,
+  "last_run_utc": "2026-08-31T06:41:03.228737+00:00",
   "runs": [
     {
       "finished_at": "2026-08-18T06:15:36.990502+00:00",
@@ -1605,6 +1726,20 @@
       "candidates": 12,
       "new_ingested": 0,
       "skipped_low_relevance": 0,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-08-31T06:41:03.228737+00:00",
+      "candidates": 10,
+      "new_ingested": 6,
+      "skipped_low_relevance": 4,
       "min_relevance": 0.18,
       "queries": [
         "option credit spread OR iron condor OR put credit",
