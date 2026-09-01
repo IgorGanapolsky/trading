@@ -1202,6 +1202,84 @@
       "ingested_at": "2026-08-31T06:41:03.221045+00:00",
       "sha256": "dcd72aaf43a168a9cb3d7ed3598c2988550005bc03371c794cba20b5f484549e",
       "chunks": 10
+    },
+    "2608.31105v1": {
+      "title": "BLOOM-WILT: Logit Tilting for Behaviour Elicitation in Automated LLM Auditing",
+      "published": "2026-08-31T17:10:59Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.CL"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.31105v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_31105v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_31105v1.md",
+      "ingested_at": "2026-09-01T06:34:32.158121+00:00",
+      "sha256": "b11e9edae4020749425c706a6409b934b71ba21efe6e78c050896a311ba3f3fa",
+      "chunks": 11
+    },
+    "2608.31077v1": {
+      "title": "Reconciling Process Supervision with Outcome-Based Credit in Agentic Policy Optimization",
+      "published": "2026-08-31T16:51:50Z",
+      "relevance_score": 0.57,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.31077v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_31077v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_31077v1.md",
+      "ingested_at": "2026-09-01T06:34:32.161687+00:00",
+      "sha256": "7effaa422f9f864eca75f5b14835f1d3889bad8f2ae9620077edf88aff6b9604",
+      "chunks": 11
+    },
+    "2608.31137v1": {
+      "title": "OntoAligner-Ensemble: Voting-Based Fusion across Heterogeneous Ontology Alignment Techniques",
+      "published": "2026-08-31T17:44:25Z",
+      "relevance_score": 0.29,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.31137v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_31137v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_31137v1.md",
+      "ingested_at": "2026-09-01T06:34:32.166890+00:00",
+      "sha256": "62be0a8d6f0723fef636386b4df014ec30c3c76caee5795aa27c8c4b45e9d315",
+      "chunks": 12
+    },
+    "2608.31166v1": {
+      "title": "Constant Individual Regret in General Games",
+      "published": "2026-08-31T17:59:16Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.GT"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.31166v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_31166v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_31166v1.md",
+      "ingested_at": "2026-09-01T06:34:32.172012+00:00",
+      "sha256": "3721ee541cdbd8751a4c325f87c2908804e8af310f1aa97d1ea04e733aa30066",
+      "chunks": 10
+    },
+    "2608.31157v1": {
+      "title": "Sharp Approximation Rates for Neural Networks with Affine Latent Parameterizations",
+      "published": "2026-08-31T17:55:51Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "stat.ML"
+      ],
+      "abs_url": "https://arxiv.org/abs/2608.31157v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2608_31157v1.md",
+      "audit_path": "data/arxiv/arxiv_2608_31157v1.md",
+      "ingested_at": "2026-09-01T06:34:32.177182+00:00",
+      "sha256": "b782329bfa550f88f9d692268f6c7b33351bb37fa2326f3a5838afba0b27705b",
+      "chunks": 11
     }
   },
   "skipped_low_relevance": {
@@ -1450,10 +1528,34 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-08-31T06:41:03.227093+00:00"
+    },
+    "2608.30956v1": {
+      "title": "Taking the Whys Seriously: Limitations of Counterfactual Explanations in Justification and Recourse",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-01T06:34:32.163370+00:00"
+    },
+    "2608.31120v1": {
+      "title": "On the Complexity of the Compatibility Problem for Succinctly Encoded Conditional Distributions",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-01T06:34:32.168605+00:00"
+    },
+    "2608.31167v1": {
+      "title": "SUN: Persistent Programs For Language-Grounded Control-to-Learning-to-Real Policies",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-01T06:34:32.173700+00:00"
+    },
+    "2608.31142v1": {
+      "title": "Auditing Anonymous AI Models: A Four-Stage Protocol for Black-Box Identity Verification",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-01T06:34:32.178898+00:00"
     }
   },
-  "total_ingested": 74,
-  "last_run_utc": "2026-08-31T18:08:28.262652+00:00",
+  "total_ingested": 79,
+  "last_run_utc": "2026-09-01T06:34:32.180670+00:00",
   "runs": [
     {
       "finished_at": "2026-08-18T06:15:36.990502+00:00",
@@ -1754,6 +1856,20 @@
       "candidates": 10,
       "new_ingested": 0,
       "skipped_low_relevance": 0,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-09-01T06:34:32.180670+00:00",
+      "candidates": 9,
+      "new_ingested": 5,
+      "skipped_low_relevance": 4,
       "min_relevance": 0.18,
       "queries": [
         "option credit spread OR iron condor OR put credit",
