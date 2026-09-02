@@ -1280,6 +1280,104 @@
       "ingested_at": "2026-09-01T06:34:32.177182+00:00",
       "sha256": "b782329bfa550f88f9d692268f6c7b33351bb37fa2326f3a5838afba0b27705b",
       "chunks": 11
+    },
+    "2609.01596v1": {
+      "title": "Facet-0: A Robotic Foundation Model for Contact-Rich Precise Manipulation",
+      "published": "2026-09-01T17:58:07Z",
+      "relevance_score": 0.25,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.RO",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.01596v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_01596v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_01596v1.md",
+      "ingested_at": "2026-09-02T06:37:04.973957+00:00",
+      "sha256": "5bf20fe58b059c0e95f1bce8f6ada25c7a6795fddd7df16f4f780d7a780ff639",
+      "chunks": 11
+    },
+    "2609.01554v1": {
+      "title": "BS: Take the Hint - Interactive Multitracer PET/CT Lesion Segmentation with a Scribble-Conditioned ResEnc U-Net",
+      "published": "2026-09-01T17:19:34Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.01554v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_01554v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_01554v1.md",
+      "ingested_at": "2026-09-02T06:37:04.977635+00:00",
+      "sha256": "bf527aac34fa65bb38c0ff6b3e2283ce940c3ee9ae77d53b9e0d1baea69e04fb",
+      "chunks": 11
+    },
+    "2609.01515v1": {
+      "title": "TempCloze: Can Video-LLMs Identify the Missing Middle?",
+      "published": "2026-09-01T16:45:02Z",
+      "relevance_score": 0.25,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.01515v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_01515v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_01515v1.md",
+      "ingested_at": "2026-09-02T06:37:04.981259+00:00",
+      "sha256": "1d25b4f9108c071ad8959c304a1eff28376477e21ec94d154926c4682fcaf2f9",
+      "chunks": 11
+    },
+    "2609.01556v1": {
+      "title": "Retrieved but not ranked: surface-form bias in structural retrieval, from mathematics to agent trajectories",
+      "published": "2026-09-01T17:19:57Z",
+      "relevance_score": 0.26,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.IR"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.01556v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_01556v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_01556v1.md",
+      "ingested_at": "2026-09-02T06:37:04.988642+00:00",
+      "sha256": "2c6c997fe0cdd5d207ea5303635c08851c4ec572fd9a4dae25ddff20f7a76789",
+      "chunks": 12
+    },
+    "2609.01597v1": {
+      "title": "The Rise of Verbal Reinforcement Learning",
+      "published": "2026-09-01T17:58:18Z",
+      "relevance_score": 0.33,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.01597v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_01597v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_01597v1.md",
+      "ingested_at": "2026-09-02T06:37:04.994123+00:00",
+      "sha256": "b36a0fe1ca52cc18955e62d1ce810b85994cda000df3fbeb952af05264f20d4d",
+      "chunks": 11
+    },
+    "2609.01601v1": {
+      "title": "Adaptive Critical Token-Aware Retrieval for Repository-Level Code Generation",
+      "published": "2026-09-01T17:59:39Z",
+      "relevance_score": 0.39,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.SE",
+        "cs.AI",
+        "cs.CL"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.01601v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_01601v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_01601v1.md",
+      "ingested_at": "2026-09-02T06:37:05.001579+00:00",
+      "sha256": "a299426747c4b4106c0eb449c39624a8c1878ecf140fb096b59d3d225b84038c",
+      "chunks": 11
     }
   },
   "skipped_low_relevance": {
@@ -1552,10 +1650,40 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-09-01T06:34:32.178898+00:00"
+    },
+    "2609.01595v1": {
+      "title": "Mechanism Design for Alignment and Control",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-02T06:37:04.983087+00:00"
+    },
+    "2609.01558v1": {
+      "title": "Gradient-Update Mismatch: Rethinking Conflict-Free Training of Physics-Informed Neural Networks",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-02T06:37:04.984978+00:00"
+    },
+    "2609.01604v1": {
+      "title": "Beyond Scores: Understanding LLM-as-a-Judge Mechanisms in Summarization Evaluation",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-02T06:37:04.990480+00:00"
+    },
+    "2609.01600v1": {
+      "title": "CordisBench: Can Language Models Reason About Component Lifecycles in Dynamic Agent Harnesses?",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-02T06:37:04.995968+00:00"
+    },
+    "2609.01576v1": {
+      "title": "Pointwise Majorization for sub-Weibull and Mixed Tail Processes with Applications in Quadratic Chaos and Ergodic Diffusions",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-02T06:37:04.997899+00:00"
     }
   },
-  "total_ingested": 79,
-  "last_run_utc": "2026-09-01T18:08:18.043949+00:00",
+  "total_ingested": 85,
+  "last_run_utc": "2026-09-02T06:37:05.003372+00:00",
   "runs": [
     {
       "finished_at": "2026-08-18T06:15:36.990502+00:00",
@@ -1884,6 +2012,20 @@
       "candidates": 9,
       "new_ingested": 0,
       "skipped_low_relevance": 0,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-09-02T06:37:05.003372+00:00",
+      "candidates": 11,
+      "new_ingested": 6,
+      "skipped_low_relevance": 5,
       "min_relevance": 0.18,
       "queries": [
         "option credit spread OR iron condor OR put credit",
