@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess
+import subprocess  # nosec B404 — Keychain CLI bridge only
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
@@ -50,8 +50,8 @@ INVESTING_CAPITAL_BOUNDARY = {
     "mercury_is_llc_bank": True,
     "not_alpaca_buying_power": True,
     "live_ach_requires": "MERCURY_LIVE_TRANSFERS_ENABLED=1",
-    "token_scope": "read_only",
-    "token_nickname": "trading-readonly",
+    "token_scope": "read_only",  # nosec B105 — scope label, not a credential
+    "token_nickname": "trading-readonly",  # nosec B105 — public nickname, not a secret
     "official_api_base": "https://api.mercury.com/api/v1",
     "keep_alive_path": "/accounts",
     "unused_deletion_days": 45,
@@ -83,7 +83,7 @@ def _keychain_token() -> str | None:
     """Read MERCURY_API_TOKEN from macOS Keychain. Never logs the secret."""
     for account, service in KEYCHAIN_LOOKUPS:
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603 — absolute binary + fixed argv
                 [
                     "/usr/bin/security",
                     "find-generic-password",

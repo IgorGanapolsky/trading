@@ -10,7 +10,7 @@ Mercury emailed 2026-09-02 that Max Smith KDP LLC API token nickname
 `trading-readonly` will be deleted in 7 days after 38 days with no API
 activity. `~/.resume_secrets/mercury.json` was missing. The trading GitHub
 repo had no `MERCURY_API_TOKEN` secret. No scheduled GET heartbeat existed.
-`autonomous-money-cycle.yml` runs a paper Mercury income *simulation* and
+`autonomous-money-cycle.yml` runs a paper Mercury income _simulation_ and
 never calls the real bank API.
 
 Official keep-alive is GET `https://api.mercury.com/api/v1/accounts`.
