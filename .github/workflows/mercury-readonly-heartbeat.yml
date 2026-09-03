@@ -49,5 +49,5 @@ jobs:
           assert receipt['ok'] is True
           assert receipt['read_only'] is True
           assert receipt['capital_boundary']['not_alpaca_buying_power'] is True
-          print('heartbeat_ok accounts', receipt['account_count'])
+          print('heartbeat_ok')
           "
