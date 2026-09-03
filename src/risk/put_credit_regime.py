@@ -135,9 +135,10 @@ def capture_regime_snapshot(spy_price: float | None = None) -> RegimeSnapshot:
         try:
             from src.options.vix_monitor import VIXMonitor
 
-            pct = float(VIXMonitor().get_vix_percentile(252))
-            ivr = pct
-            ivr_method = "vix_percentile_252"
+            pct = VIXMonitor().get_vix_percentile(252, default=None)
+            if pct is not None:
+                ivr = float(pct)
+                ivr_method = "vix_percentile_252"
         except Exception as exc:  # noqa: BLE001
             errors.append(f"vix_percentile:{exc}")
 
@@ -198,11 +199,13 @@ def evaluate_regime_gate(
 
     if ivr is None:
         msg = "IV rank proxy unavailable for regime gate"
-        if fail_closed_on_missing:
+        # Paper floor 0: VIX is the hard crash veto; missing IVR is a soft flag
+        # so n→30 is not frozen on a percentile gap (AGENT-566).
+        if fail_closed_on_missing and float(min_iv_rank) > 0:
             blockers.append(msg)
         else:
             soft.append(msg)
-    elif float(ivr) < float(min_iv_rank):
+    elif float(min_iv_rank) > 0 and float(ivr) < float(min_iv_rank):
         blockers.append(
             f"IV rank proxy {float(ivr):.1f} < min {float(min_iv_rank):.1f} (short-premium filter)"
         )
