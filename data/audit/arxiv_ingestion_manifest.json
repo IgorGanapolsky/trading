@@ -1378,6 +1378,141 @@
       "ingested_at": "2026-09-02T06:37:05.001579+00:00",
       "sha256": "a299426747c4b4106c0eb449c39624a8c1878ecf140fb096b59d3d225b84038c",
       "chunks": 11
+    },
+    "2609.02417v1": {
+      "title": "Coverage, Not Targeting: A Structural Regime in Multi-Turn Agent Credit Assignment",
+      "published": "2026-09-02T10:37:12Z",
+      "relevance_score": 0.28,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.02417v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_02417v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_02417v1.md",
+      "ingested_at": "2026-09-03T06:31:41.529845+00:00",
+      "sha256": "3230ee86269cfd688b9084c0807e80065d3757444e3f036d43f026ebae93938e",
+      "chunks": 12
+    },
+    "2609.02236v1": {
+      "title": "PGPO: Potential-Guided Policy Optimization for Multi-Turn Agentic Tasks",
+      "published": "2026-09-02T07:44:16Z",
+      "relevance_score": 0.25,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.02236v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_02236v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_02236v1.md",
+      "ingested_at": "2026-09-03T06:31:41.533735+00:00",
+      "sha256": "ff327546e4b88777014e02a243c121212748bd35061b54ef92b5353be3220bd2",
+      "chunks": 10
+    },
+    "2609.02887v1": {
+      "title": "A Common Measure of Communication for Speech Brain-Computer Interfaces",
+      "published": "2026-09-02T17:59:46Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "q-bio.NC"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.02887v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_02887v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_02887v1.md",
+      "ingested_at": "2026-09-03T06:31:41.537590+00:00",
+      "sha256": "4868da60c7e11177fb491f2aa15d647edfc01204111a010df7ebfa5834acba0c",
+      "chunks": 11
+    },
+    "2609.02876v1": {
+      "title": "GRADSOLVE: fast exact gradients for ODE ensembles on GPUs",
+      "published": "2026-09-02T17:56:10Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.MS",
+        "cs.DC",
+        "cs.LG",
+        "math.NA"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.02876v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_02876v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_02876v1.md",
+      "ingested_at": "2026-09-03T06:31:41.541499+00:00",
+      "sha256": "07345c0c2b31de05968cd1da4262ae3b855ca161c067877804d79172f555cc3e",
+      "chunks": 11
+    },
+    "2609.02746v1": {
+      "title": "HiPoly: a hierarchical polymer-native AI framework for property prediction and generative design",
+      "published": "2026-09-02T15:48:11Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "physics.chem-ph",
+        "cond-mat.mtrl-sci",
+        "cs.AI",
+        "cs.LG",
+        "physics.comp-ph"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.02746v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_02746v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_02746v1.md",
+      "ingested_at": "2026-09-03T06:31:41.545412+00:00",
+      "sha256": "b984ab45d7c081731f1ba7c901ef9267a59c4ef5a52ccbfbff297e433ee0a761",
+      "chunks": 11
+    },
+    "2609.02885v1": {
+      "title": "Discriminative World Models for Web Agents",
+      "published": "2026-09-02T17:59:40Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.02885v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_02885v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_02885v1.md",
+      "ingested_at": "2026-09-03T06:31:41.549357+00:00",
+      "sha256": "c5d3d2385e2426667b7493d0121bd3af40d99895545e47aa7f8fa5be148a0d73",
+      "chunks": 11
+    },
+    "2609.02855v1": {
+      "title": "Improved Gradient Descent Lower Bounds Beyond Nesterov",
+      "published": "2026-09-02T17:39:52Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "math.OC",
+        "cs.LG",
+        "stat.ML"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.02855v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_02855v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_02855v1.md",
+      "ingested_at": "2026-09-03T06:31:41.555417+00:00",
+      "sha256": "1ec5b974f4a469851d83287976e371adeed997b0854a277bf62c9d190f9c8721",
+      "chunks": 8
+    },
+    "2609.02797v1": {
+      "title": "Dutch Books for Language Models",
+      "published": "2026-09-02T16:31:47Z",
+      "relevance_score": 0.36,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "econ.GN",
+        "cs.AI",
+        "cs.CL",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.02797v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_02797v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_02797v1.md",
+      "ingested_at": "2026-09-03T06:31:41.561642+00:00",
+      "sha256": "dd0ca8cd3d533d6e07da5698cbf992e1d904c90694343298099e215d41dbc3a9",
+      "chunks": 10
     }
   },
   "skipped_low_relevance": {
@@ -1680,10 +1815,28 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-09-02T06:37:04.997899+00:00"
+    },
+    "2609.02620v1": {
+      "title": "Collective creativity in hybrid societies",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-03T06:31:41.525114+00:00"
+    },
+    "2609.02881v1": {
+      "title": "Graph Machine: Towards Better Pretraining via Edges",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-03T06:31:41.551368+00:00"
+    },
+    "2609.02833v1": {
+      "title": "Learning Spectral-Like Mesh-Free Discretisations",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-03T06:31:41.557488+00:00"
     }
   },
-  "total_ingested": 85,
-  "last_run_utc": "2026-09-02T18:08:39.421111+00:00",
+  "total_ingested": 93,
+  "last_run_utc": "2026-09-03T06:31:41.563670+00:00",
   "runs": [
     {
       "finished_at": "2026-08-18T06:15:36.990502+00:00",
@@ -2040,6 +2193,20 @@
       "candidates": 11,
       "new_ingested": 0,
       "skipped_low_relevance": 0,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-09-03T06:31:41.563670+00:00",
+      "candidates": 11,
+      "new_ingested": 8,
+      "skipped_low_relevance": 3,
       "min_relevance": 0.18,
       "queries": [
         "option credit spread OR iron condor OR put credit",
