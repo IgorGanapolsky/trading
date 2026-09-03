@@ -99,7 +99,7 @@ def cmd_heartbeat(client: MercuryReadOnlyClient, args: argparse.Namespace) -> No
         "generated_at": datetime.now(UTC).isoformat(),
         "ok": True,
         "read_only": True,
-        "token_nickname": "trading-readonly",
+        "token_nickname": "trading-readonly",  # nosec B105 — public nickname, not a secret
         "account_count": len(snapshot["accounts"]),
         "total_available_usd": snapshot["total_available_usd"],
         "capital_boundary": (snapshot.get("capital_boundary") or dict(INVESTING_CAPITAL_BOUNDARY)),
