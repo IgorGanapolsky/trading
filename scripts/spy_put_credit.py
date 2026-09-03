@@ -41,6 +41,17 @@ CLOSED_ENTRY_STATES = {
     "rejected",
     "expired",
 }
+# Journal rows can stay status=open after the broker is already flat.
+# AGENT-566: 2026-09-03 11:00 ET run counted 2/2 concurrent while pcs_legs=0
+# because one "open" row had exit_reason=broker_reconcile_flat.
+TERMINAL_EXIT_REASONS = {
+    "broker_reconcile_flat",
+    "profit_target",
+    "stop_loss",
+    "time_exit",
+    "dte_exit",
+    "expired",
+}
 EASTERN = ZoneInfo("America/New_York")
 
 
@@ -83,6 +94,21 @@ def _inventory_ok(client: Any | None = None) -> bool:
     return True
 
 
+def _broker_open_pcs_structures(client: Any | None = None) -> int | None:
+    """Count live put-credit structures from broker legs (2 legs each). None if unverified."""
+
+    try:
+        from scripts.residual_ic_manager import manage_residual_ics
+
+        broker = client or _get_paper_client()
+        result = manage_residual_ics(broker, dry_run=True)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Could not count broker PCS structures: %s", exc)
+        return None
+    excluded = result.get("pcs_inventory_excluded") or {}
+    return max(0, len(excluded) // 2)
+
+
 def _get_paper_client():
     from src.utils.alpaca_client import get_alpaca_credentials
 
@@ -111,7 +137,13 @@ def _save_entries(entries: dict[str, dict[str, Any]]) -> None:
 
 
 def _is_active_entry(entry: dict[str, Any]) -> bool:
-    return str(entry.get("status") or "open").strip().lower() not in CLOSED_ENTRY_STATES
+    status = str(entry.get("status") or "open").strip().lower()
+    if status in CLOSED_ENTRY_STATES:
+        return False
+    reason = str(entry.get("exit_reason") or "").strip().lower()
+    if reason in TERMINAL_EXIT_REASONS:
+        return False
+    return not entry.get("exit_filled_at")
 
 
 def _parse_timestamp(value: Any) -> datetime | None:
@@ -132,12 +164,21 @@ def evaluate_entry_limits(
     *,
     candidate_signature: str | None = None,
     now: datetime | None = None,
+    broker_open_structures: int | None = None,
 ) -> dict[str, Any]:
-    """Enforce one new structure/day, concurrency, and signature uniqueness."""
+    """Enforce daily cap, concurrency, and signature uniqueness.
+
+    Concurrent occupancy is the live book, not ghost journal rows. When the
+    broker reports 0 put-credit structures, journal leftovers cannot fill the
+    2/2 slot (AGENT-566, 2026-09-03).
+    """
 
     profile = _load_profile()
     current = (now or datetime.now(UTC)).astimezone(EASTERN)
     active = {key: entry for key, entry in entries.items() if _is_active_entry(entry)}
+    occupancy = len(active)
+    if broker_open_structures is not None:
+        occupancy = min(occupancy, max(0, int(broker_open_structures)))
     today_count = 0
     for entry in entries.values():
         entry_dt = _parse_timestamp(entry.get("entry_time"))
@@ -145,8 +186,8 @@ def evaluate_entry_limits(
             today_count += 1
 
     blockers: list[str] = []
-    if len(active) >= profile.max_concurrent_positions:
-        blockers.append(f"Concurrent put credits {len(active)}/{profile.max_concurrent_positions}.")
+    if occupancy >= profile.max_concurrent_positions:
+        blockers.append(f"Concurrent put credits {occupancy}/{profile.max_concurrent_positions}.")
     if today_count >= profile.max_daily_structures:
         blockers.append(f"Daily put-credit limit {today_count}/{profile.max_daily_structures}.")
     if candidate_signature and any(
@@ -157,7 +198,9 @@ def evaluate_entry_limits(
     return {
         "allowed": not blockers,
         "blockers": blockers,
-        "active_count": len(active),
+        "active_count": occupancy,
+        "journal_active_count": len(active),
+        "broker_open_structures": broker_open_structures,
         "today_count": today_count,
         "max_concurrent": profile.max_concurrent_positions,
         "max_daily": profile.max_daily_structures,
@@ -1442,7 +1485,8 @@ def main() -> int:
     if not _inventory_ok():
         return 2
 
-    limit_report = evaluate_entry_limits(_load_entries())
+    broker_n = _broker_open_pcs_structures()
+    limit_report = evaluate_entry_limits(_load_entries(), broker_open_structures=broker_n)
     if not limit_report["allowed"]:
         logger.error("PUT-CREDIT ENTRY LIMIT: %s", " | ".join(limit_report["blockers"]))
         print(json.dumps(limit_report, indent=2))
@@ -1507,7 +1551,11 @@ def main() -> int:
         return 1
 
     signature = f"SPY_{opp['expiry']}_P{int(opp['long_put'])}-{int(opp['short_put'])}"
-    limit_report = evaluate_entry_limits(_load_entries(), candidate_signature=signature)
+    limit_report = evaluate_entry_limits(
+        _load_entries(),
+        candidate_signature=signature,
+        broker_open_structures=broker_n,
+    )
     if not limit_report["allowed"]:
         logger.error("PUT-CREDIT ENTRY LIMIT: %s", " | ".join(limit_report["blockers"]))
         print(json.dumps(limit_report, indent=2))
@@ -1568,7 +1616,11 @@ def main() -> int:
                 )
                 return 2
             opp["regime"] = regime_snap2.as_dict()
-            limit_report = evaluate_entry_limits(_load_entries(), candidate_signature=signature)
+            limit_report = evaluate_entry_limits(
+                _load_entries(),
+                candidate_signature=signature,
+                broker_open_structures=_broker_open_pcs_structures(client),
+            )
             if not limit_report["allowed"]:
                 logger.error(
                     "PUT-CREDIT ENTRY LIMIT after lock: %s",

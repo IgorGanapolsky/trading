@@ -666,6 +666,35 @@ def test_put_credit_entry_limits_enforce_daily_concurrent_and_signature():
     assert any("Concurrent" in blocker for blocker in report["blockers"])
 
 
+def test_put_credit_ghost_journal_is_not_concurrent_occupancy():
+    """AGENT-566: status=open + broker_reconcile_flat must not fill the 2/2 slot."""
+    from scripts import spy_put_credit as pcs
+
+    now = datetime(2026, 9, 3, 15, 9, tzinfo=UTC)
+    entries = {
+        "PCS_flat": {
+            "status": "open",
+            "exit_reason": "broker_reconcile_flat",
+            "entry_time": "2026-08-11T15:23:00+00:00",
+            "signature": "SPY_2026-09-25_P737-742",
+        },
+        "PCS_open": {
+            "status": "open",
+            "entry_time": "2026-08-17T17:13:25+00:00",
+            "signature": "SPY_2026-09-25_P735-740",
+        },
+    }
+    report = pcs.evaluate_entry_limits(entries, now=now)
+    assert report["journal_active_count"] == 1
+    assert report["active_count"] == 1
+    assert report["allowed"] is True
+
+    flat_book = pcs.evaluate_entry_limits(entries, now=now, broker_open_structures=0)
+    assert flat_book["active_count"] == 0
+    assert flat_book["allowed"] is True
+    assert flat_book["broker_open_structures"] == 0
+
+
 def test_put_credit_exit_rules_cover_profit_stop_hold_and_dte():
     from scripts import spy_put_credit as pcs
 

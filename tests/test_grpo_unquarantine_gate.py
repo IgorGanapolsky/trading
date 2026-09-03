@@ -11,8 +11,13 @@ def test_grpo_quarantine_default():
     assert "Quarantined" in status.status_message
 
 
-def test_grpo_unquarantine_transition():
-    gate = GRPOUnquarantineGate(required_outcomes=30, min_win_rate_pct=75.0)
+def test_grpo_unquarantine_transition(tmp_path):
+    gate = GRPOUnquarantineGate(
+        required_outcomes=30,
+        min_win_rate_pct=75.0,
+        status_file=tmp_path / "grpo_quarantine_status.json",
+        persist=False,
+    )
     # Generate 35 winning outcomes
     outcomes = [{"profit_usd": 50.0, "behavior_prob": 0.8} for _ in range(35)]
     status = gate.check_status(outcomes)
@@ -21,6 +26,7 @@ def test_grpo_unquarantine_transition():
     assert status.total_verified_outcomes == 35
     assert status.win_rate_pct == 100.0
     assert "UNQUARANTINED" in status.status_message
+    assert not (tmp_path / "grpo_quarantine_status.json").exists()
 
 
 def test_llm_gateway_status():
