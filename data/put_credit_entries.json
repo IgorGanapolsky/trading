@@ -151,7 +151,7 @@
     "signature": "SPY_2026-09-25_P737-742",
     "validation_phase": true,
     "profile_name": "spy-put-credit",
-    "status": "exit_pending",
+    "status": "closed",
     "regime": {
       "captured_at": "2026-08-11T15:22:49.820855+00:00",
       "spy_price": 772.7999877929688,
@@ -180,7 +180,7 @@
       "dte": 22,
       "hold_hours": 551.7737461794444
     },
-    "reconciliation_reason": "broker_flat_entry_order_unknown",
+    "reconciliation_reason": "broker_flat_ghost_open",
     "exit_filled_at": "2026-08-17T16:58:24.293115+00:00",
     "exit_reason": "profit_target",
     "exit_order_id": "13ea8e07-243b-4b74-98a3-f17808478ccf",
@@ -264,7 +264,7 @@
     "signature": "SPY_2026-09-25_P737-742",
     "validation_phase": true,
     "profile_name": "spy-put-credit",
-    "status": "open",
+    "status": "closed",
     "regime": {
       "captured_at": "2026-08-17T17:13:02.415930+00:00",
       "spy_price": 774.4683227539062,
@@ -293,7 +293,9 @@
       "dte": 22,
       "hold_hours": 405.9337218088889
     },
-    "reconciliation_reason": "reopened_broker_legs_present",
-    "reopened_at": "2026-08-18T15:10:34.774956+00:00"
+    "reconciliation_reason": "broker_flat_ghost_open",
+    "reopened_at": "2026-08-18T15:10:34.774956+00:00",
+    "exit_filled_at": "2026-09-03T16:05:54.484084+00:00",
+    "exit_reason": "broker_reconcile_flat"
   }
 }
