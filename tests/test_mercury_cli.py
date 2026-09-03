@@ -97,7 +97,9 @@ class TestCommands:
         assert _run(["health"], _fake_client(ACCOUNTS_RESPONSE), monkeypatch) == 0
         assert "2 accounts" not in capsys.readouterr().out  # exactly one account in fixture
 
-    def test_heartbeat_writes_receipt_and_does_not_claim_alpaca(self, tmp_path, capsys, monkeypatch):
+    def test_heartbeat_writes_receipt_and_does_not_claim_alpaca(
+        self, tmp_path, capsys, monkeypatch
+    ):
         receipt = tmp_path / "mercury_readonly_heartbeat.json"
         code = _run(
             ["heartbeat", "--receipt-path", str(receipt)],
@@ -126,7 +128,9 @@ class TestCommands:
         payload = json.loads(capsys.readouterr().out)
         assert payload["ok"] is True
         assert payload["read_only"] is True
-        assert payload["capital_boundary"]["live_ach_requires"] == "MERCURY_LIVE_TRANSFERS_ENABLED=1"
+        assert (
+            payload["capital_boundary"]["live_ach_requires"] == "MERCURY_LIVE_TRANSFERS_ENABLED=1"
+        )
         dumped = json.dumps(payload)
         assert "Bearer tok" not in dumped
         assert "secret-token" not in dumped
