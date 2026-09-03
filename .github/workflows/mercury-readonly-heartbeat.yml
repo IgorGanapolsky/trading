@@ -30,7 +30,7 @@ jobs:
           cache: pip
 
       - name: Install deps
-        run: pip install requests
+        run: pip install "requests>=2.34.2,<3.0.0"
 
       - name: GET /accounts (read-only token keep-alive)
         env:
