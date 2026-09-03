@@ -9,17 +9,25 @@ hard stop (src/adapters/bank_adapter.py).
 
 Token resolution order:
   1. MERCURY_API_TOKEN environment variable
-  2. Vault file (MERCURY_SECRETS_PATH env override, default
+  2. macOS Keychain (account hermes-fleet, service MERCURY_API_TOKEN)
+  3. Vault file (MERCURY_SECRETS_PATH env override, default
      ~/.resume_secrets/mercury.json) under the "MERCURY_API_TOKEN" or legacy
      "api_token" key
 
 The token value is never logged, printed, or included in any return value.
+
+Mercury LLC cash is not Alpaca buying power. This client is the investing
+cash-truth seam (read-only). Live ACH stays behind MERCURY_LIVE_TRANSFERS_ENABLED=1.
+
+Official keep-alive (docs.mercury.com): GET https://api.mercury.com/api/v1/accounts
+with the token. Unused tokens are deleted after 45 days.
 """
 
 from __future__ import annotations
 
 import json
 import os
+import subprocess
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
@@ -31,6 +39,22 @@ DEFAULT_VAULT_PATH = Path.home() / ".resume_secrets" / "mercury.json"
 ACCOUNT_ALIAS_KEYS = {
     "checking": "MERCURY_ACCOUNT_ID",
     "savings": "MERCURY_SAVINGS_ACCOUNT_ID",
+}
+
+KEYCHAIN_LOOKUPS = (
+    ("hermes-fleet", "MERCURY_API_TOKEN"),
+    ("trading-readonly", "mercury.api"),
+)
+
+INVESTING_CAPITAL_BOUNDARY = {
+    "mercury_is_llc_bank": True,
+    "not_alpaca_buying_power": True,
+    "live_ach_requires": "MERCURY_LIVE_TRANSFERS_ENABLED=1",
+    "token_scope": "read_only",
+    "token_nickname": "trading-readonly",
+    "official_api_base": "https://api.mercury.com/api/v1",
+    "keep_alive_path": "/accounts",
+    "unused_deletion_days": 45,
 }
 
 HttpGet = Callable[[str, dict[str, Any], dict[str, str]], dict[str, Any]]
@@ -55,10 +79,41 @@ def _load_vault(secrets_path: Path | None = None) -> dict[str, Any]:
         return {}
 
 
+def _keychain_token() -> str | None:
+    """Read MERCURY_API_TOKEN from macOS Keychain. Never logs the secret."""
+    for account, service in KEYCHAIN_LOOKUPS:
+        try:
+            result = subprocess.run(
+                [
+                    "/usr/bin/security",
+                    "find-generic-password",
+                    "-a",
+                    account,
+                    "-s",
+                    service,
+                    "-w",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=5,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            continue
+        if result.returncode == 0:
+            token = (result.stdout or "").rstrip("\n")
+            if token:
+                return token
+    return None
+
+
 def resolve_token(secrets_path: Path | None = None) -> str | None:
     token = os.environ.get("MERCURY_API_TOKEN")
     if token:
         return token
+    keychain = _keychain_token()
+    if keychain:
+        return keychain
     vault = _load_vault(secrets_path)
     return vault.get("MERCURY_API_TOKEN") or vault.get("api_token")
 
@@ -178,4 +233,5 @@ class MercuryReadOnlyClient:
             "read_only": True,
             "accounts": accounts,
             "total_available_usd": total,
+            "capital_boundary": dict(INVESTING_CAPITAL_BOUNDARY),
         }
