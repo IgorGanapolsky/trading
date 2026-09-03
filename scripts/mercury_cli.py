@@ -102,7 +102,7 @@ def cmd_heartbeat(client: MercuryReadOnlyClient, args: argparse.Namespace) -> No
         "token_nickname": "trading-readonly",
         "account_count": len(snapshot["accounts"]),
         "total_available_usd": snapshot["total_available_usd"],
-        "capital_boundary": snapshot.get("capital_boundary") or dict(INVESTING_CAPITAL_BOUNDARY),
+        "capital_boundary": (snapshot.get("capital_boundary") or dict(INVESTING_CAPITAL_BOUNDARY)),
         "note": "Mercury LLC cash is not Alpaca buying power. Live ACH is not enabled.",
     }
     args.receipt_path.parent.mkdir(parents=True, exist_ok=True)
