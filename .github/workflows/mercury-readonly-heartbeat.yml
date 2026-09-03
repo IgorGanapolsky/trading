@@ -1,0 +1,53 @@
+name: Mercury Read-Only Heartbeat
+
+# Keep the Max Smith KDP LLC trading-readonly API token alive (Mercury deletes
+# unused tokens after 45 days; emailed 2026-09-02 after 38 idle days).
+# GET /accounts only. Never ACH. Mercury cash is not Alpaca buying power.
+
+on:
+  schedule:
+    # Every 3 days at 11:17 UTC — well inside the 45-day unused window.
+    - cron: 17 11 */3 * *
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mercury-readonly-heartbeat
+  cancel-in-progress: false
+
+jobs:
+  heartbeat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install deps
+        run: pip install requests
+
+      - name: GET /accounts (read-only token keep-alive)
+        env:
+          MERCURY_API_TOKEN: ${{ secrets.MERCURY_API_TOKEN }}
+        run: |
+          if [ -z "${MERCURY_API_TOKEN}" ]; then
+            echo "::error::MERCURY_API_TOKEN GitHub secret is empty. Store the trading-readonly token so Mercury does not delete it."
+            exit 1
+          fi
+          python3 scripts/mercury_cli.py heartbeat --json
+          python3 -c "
+          import json
+          from pathlib import Path
+          p = Path('data/audit/mercury_readonly_heartbeat.json')
+          receipt = json.loads(p.read_text())
+          assert receipt['ok'] is True
+          assert receipt['read_only'] is True
+          assert receipt['capital_boundary']['not_alpaca_buying_power'] is True
+          print('heartbeat_ok accounts', receipt['account_count'])
+          "

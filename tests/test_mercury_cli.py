@@ -56,6 +56,8 @@ class TestCommands:
         payload = json.loads(capsys.readouterr().out)
         assert payload["read_only"] is True
         assert payload["total_available_usd"] == 10.0
+        assert payload["capital_boundary"]["not_alpaca_buying_power"] is True
+        assert payload["capital_boundary"]["token_nickname"] == "trading-readonly"
 
     def test_transactions_table(self, capsys, monkeypatch):
         code = _run(
@@ -95,6 +97,41 @@ class TestCommands:
         assert _run(["health"], _fake_client(ACCOUNTS_RESPONSE), monkeypatch) == 0
         assert "2 accounts" not in capsys.readouterr().out  # exactly one account in fixture
 
+    def test_heartbeat_writes_receipt_and_does_not_claim_alpaca(self, tmp_path, capsys, monkeypatch):
+        receipt = tmp_path / "mercury_readonly_heartbeat.json"
+        code = _run(
+            ["heartbeat", "--receipt-path", str(receipt)],
+            _fake_client(ACCOUNTS_RESPONSE),
+            monkeypatch,
+        )
+        assert code == 0
+        payload = json.loads(receipt.read_text(encoding="utf-8"))
+        assert payload["ok"] is True
+        assert payload["read_only"] is True
+        assert payload["account_count"] == 1
+        assert payload["capital_boundary"]["not_alpaca_buying_power"] is True
+        out = capsys.readouterr().out
+        assert "not Alpaca" in out
+        assert "123456787725" not in out
+        assert "secret-token" not in out
+
+    def test_heartbeat_json_stdout_masks_and_keeps_ach_off(self, tmp_path, capsys, monkeypatch):
+        receipt = tmp_path / "mercury_readonly_heartbeat.json"
+        code = _run(
+            ["heartbeat", "--json", "--receipt-path", str(receipt)],
+            _fake_client(ACCOUNTS_RESPONSE),
+            monkeypatch,
+        )
+        assert code == 0
+        payload = json.loads(capsys.readouterr().out)
+        assert payload["ok"] is True
+        assert payload["read_only"] is True
+        assert payload["capital_boundary"]["live_ach_requires"] == "MERCURY_LIVE_TRANSFERS_ENABLED=1"
+        dumped = json.dumps(payload)
+        assert "Bearer tok" not in dumped
+        assert "secret-token" not in dumped
+        assert payload.get("token") is None
+
 
 class TestFailurePaths:
     def test_missing_credentials_exits_1(self, capsys, monkeypatch):
@@ -122,3 +159,21 @@ class TestParser:
     def test_requires_subcommand(self):
         with pytest.raises(SystemExit):
             mercury_cli.build_parser().parse_args([])
+
+
+class TestHeartbeatWorkflowContract:
+    """Prevention: the keep-alive job must stay GET-only and must not enable ACH."""
+
+    def test_workflow_is_get_only_and_not_alpaca(self):
+        from pathlib import Path
+
+        root = Path(__file__).resolve().parents[1]
+        text = (root / ".github/workflows/mercury-readonly-heartbeat.yml").read_text(
+            encoding="utf-8"
+        )
+        assert "python3 scripts/mercury_cli.py heartbeat --json" in text
+        assert "cron: 17 11 */3 * *" in text
+        assert "MERCURY_LIVE_TRANSFERS_ENABLED" not in text
+        assert "send_to_broker" not in text
+        assert "not_alpaca_buying_power" in text
+        assert "secrets.MERCURY_API_TOKEN" in text
