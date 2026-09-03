@@ -107,14 +107,24 @@ def cmd_heartbeat(client: MercuryReadOnlyClient, args: argparse.Namespace) -> No
     }
     args.receipt_path.parent.mkdir(parents=True, exist_ok=True)
     args.receipt_path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+    # CI/Actions stdout must not include cash or account metadata (Greptile P1).
+    public = {
+        "generated_at": receipt["generated_at"],
+        "ok": True,
+        "read_only": True,
+        "keep_alive": True,
+        "token_nickname": receipt["token_nickname"],
+        "keep_alive_path": "/accounts",
+        "capital_boundary": receipt["capital_boundary"],
+        "note": receipt["note"],
+        "receipt_written": True,
+    }
     if args.json:
-        print(json.dumps(receipt, indent=2))
+        print(json.dumps(public, indent=2))
         return
     print(
-        "✅ Mercury read-only heartbeat: "
-        f"{receipt['account_count']} accounts, "
-        f"${receipt['total_available_usd']:,.2f} available "
-        f"(not Alpaca) -> {args.receipt_path}"
+        "✅ Mercury read-only heartbeat ok (not Alpaca; cash stays off stdout) "
+        f"-> {args.receipt_path}"
     )
 
 

@@ -116,6 +116,8 @@ class TestCommands:
         assert "not Alpaca" in out
         assert "123456787725" not in out
         assert "secret-token" not in out
+        assert "$10.00" not in out
+        assert "1 accounts" not in out
 
     def test_heartbeat_json_stdout_masks_and_keeps_ach_off(self, tmp_path, capsys, monkeypatch):
         receipt = tmp_path / "mercury_readonly_heartbeat.json"
@@ -128,6 +130,7 @@ class TestCommands:
         payload = json.loads(capsys.readouterr().out)
         assert payload["ok"] is True
         assert payload["read_only"] is True
+        assert payload["keep_alive"] is True
         assert (
             payload["capital_boundary"]["live_ach_requires"] == "MERCURY_LIVE_TRANSFERS_ENABLED=1"
         )
@@ -135,6 +138,11 @@ class TestCommands:
         assert "Bearer tok" not in dumped
         assert "secret-token" not in dumped
         assert payload.get("token") is None
+        assert "account_count" not in payload
+        assert "total_available_usd" not in payload
+        file_receipt = json.loads(receipt.read_text(encoding="utf-8"))
+        assert file_receipt["account_count"] == 1
+        assert file_receipt["total_available_usd"] == 10.0
 
 
 class TestFailurePaths:
@@ -181,3 +189,6 @@ class TestHeartbeatWorkflowContract:
         assert "send_to_broker" not in text
         assert "not_alpaca_buying_power" in text
         assert "secrets.MERCURY_API_TOKEN" in text
+        assert "print('heartbeat_ok')" in text
+        assert "account_count" not in text
+        assert "total_available_usd" not in text

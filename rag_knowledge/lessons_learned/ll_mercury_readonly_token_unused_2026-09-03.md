@@ -27,9 +27,11 @@ cash as Alpaca buying power.
 ## Prevention
 
 - `scripts/mercury_cli.py heartbeat` issues GET `/accounts` and writes a
-  masked receipt that asserts `not_alpaca_buying_power`.
+  masked receipt that asserts `not_alpaca_buying_power`. Heartbeat stdout
+  (including `--json` for Actions) omits cash and account counts; those stay
+  in the gitignored local receipt only.
 - `.github/workflows/mercury-readonly-heartbeat.yml` every 3 days (fail-closed
-  if `secrets.MERCURY_API_TOKEN` is empty).
+  if `secrets.MERCURY_API_TOKEN` is empty). The job prints `heartbeat_ok` only.
 - Token resolution: env, then Keychain `hermes-fleet`/`MERCURY_API_TOKEN`,
   then the chmod 600 vault file.
 - Tests freeze the official `api.mercury.com` host and GET-only workflow.
