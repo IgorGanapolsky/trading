@@ -275,18 +275,34 @@ class ZgLocalSearch:
         limit: int,
         globs: Iterable[str] | None = None,
     ) -> list[dict[str, Any]]:
-        """Managed ripgrep: exhaustive literal/regex, no index required."""
-        rg = self._rg_bin
-        if not shutil.which(rg) and not Path(rg).exists():
-            logger.warning("ripgrep binary not found (%s); rg route empty", rg)
-            return []
+        """Managed ripgrep: exhaustive literal/regex, no index required.
 
+        Falls back to a pure-Python line scan when the ``rg`` binary is absent
+        (GitHub-hosted CI runners often lack ripgrep).
+        """
+        rg = self._rg_bin
+        if shutil.which(rg) or Path(rg).exists():
+            hits = self._run_rg_binary(pattern, limit=limit, globs=globs)
+            if hits:
+                return hits
+            # Binary present but no matches — do not invent hits.
+            return []
+        logger.info("ripgrep binary not found (%s); using Python line-scan fallback", rg)
+        return self._run_rg_python(pattern, limit=limit, globs=globs)
+
+    def _run_rg_binary(
+        self,
+        pattern: str,
+        *,
+        limit: int,
+        globs: Iterable[str] | None,
+    ) -> list[dict[str, Any]]:
         glob_args: list[str] = []
         for g in globs or DEFAULT_RG_GLOBS:
             glob_args.extend(["-g", g])
 
         cmd = [
-            rg,
+            self._rg_bin,
             "--line-number",
             "--no-heading",
             "--color",
@@ -311,11 +327,72 @@ class ZgLocalSearch:
             logger.warning("rg failed: %s", exc)
             return []
 
+        return self._parse_rg_stdout(proc.stdout or "", limit=limit)
+
+    def _run_rg_python(
+        self,
+        pattern: str,
+        *,
+        limit: int,
+        globs: Iterable[str] | None,
+    ) -> list[dict[str, Any]]:
+        """Bounded recursive text scan used when ripgrep is unavailable."""
+        try:
+            regex = re.compile(pattern)
+        except re.error:
+            regex = re.compile(re.escape(pattern))
+
+        include_exts = {".py", ".md", ".json", ".yml", ".yaml"}
+        # Honor simple "*.ext" globs when provided.
+        for g in globs or ():
+            if g.startswith("*.") and len(g) <= 8:
+                include_exts.add(g[1:])
+
+        skip_dirs = {".git", ".venv", "node_modules", "__pycache__", ".tox", "dist", "build"}
         hits: list[dict[str, Any]] = []
-        for raw_line in (proc.stdout or "").splitlines():
+        root = self.root
+        for path in root.rglob("*"):
             if len(hits) >= limit:
                 break
-            # path:line:text
+            if not path.is_file():
+                continue
+            if any(part in skip_dirs for part in path.parts):
+                continue
+            if path.suffix.lower() not in include_exts:
+                continue
+            try:
+                text = path.read_text(encoding="utf-8", errors="ignore")
+            except OSError:
+                continue
+            for i, line in enumerate(text.splitlines(), 1):
+                if not regex.search(line):
+                    continue
+                try:
+                    rel = str(path.resolve().relative_to(root.resolve()))
+                except ValueError:
+                    rel = str(path)
+                hits.append(
+                    _normalize_item(
+                        {
+                            "id": f"rg:{rel}:{i}",
+                            "path": rel,
+                            "line": i,
+                            "preview": line.strip(),
+                            "score": 1.0 / (len(hits) + 1),
+                            "title": "",
+                        },
+                        default_route="rg",
+                    )
+                )
+                if len(hits) >= limit:
+                    break
+        return hits
+
+    def _parse_rg_stdout(self, stdout: str, *, limit: int) -> list[dict[str, Any]]:
+        hits: list[dict[str, Any]] = []
+        for raw_line in stdout.splitlines():
+            if len(hits) >= limit:
+                break
             m = re.match(r"^(.*?):(\d+):(.*)$", raw_line)
             if not m:
                 continue

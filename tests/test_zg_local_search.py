@@ -88,12 +88,21 @@ def test_zg_rg_route_finds_file(tmp_path: Path):
     target = src / "sample_marker_mod.py"
     target.write_text("def unique_zg_marker_fn():\n    return 42\n")
 
-    engine = ZgLocalSearch(root=tmp_path, rewrite_queries=False)
+    # Force Python fallback so CI runners without ripgrep still pass.
+    engine = ZgLocalSearch(root=tmp_path, rewrite_queries=False, rg_bin="rg-not-installed-for-test")
     hits = engine.search("unique_zg_marker_fn", route=SearchRoute.RG, limit=5, globs=["*.py"])
-    assert hits, "rg route should find the marker"
+    assert hits, "rg route should find the marker via Python fallback"
     assert hits[0].line == 1
     assert "sample_marker_mod.py" in hits[0].path
     assert hits[0].route == "rg"
+
+
+def test_zg_rg_python_fallback_literal(tmp_path: Path):
+    (tmp_path / "note.md").write_text("hello TradeGateway world\n")
+    engine = ZgLocalSearch(root=tmp_path, rewrite_queries=False, rg_bin="/no/such/rg")
+    hits = engine.search("TradeGateway", route="rg", limit=3)
+    assert len(hits) == 1
+    assert hits[0].path.endswith("note.md")
 
 
 def test_evidence_hit_compact_line():
