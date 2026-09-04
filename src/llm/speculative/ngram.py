@@ -18,7 +18,7 @@ class DraftProposal:
     D: int
     mechanism: str
     n: int
-    draft_overhead: float  # rho * D analog; n-gram lookup is ~0
+    draft_overhead: float  # corpus comparison cost / corpus length
 
 
 def ngram_draft(prefix: str, corpus: str, *, D: int, n: int = 3) -> DraftProposal:
@@ -34,20 +34,24 @@ def ngram_draft(prefix: str, corpus: str, *, D: int, n: int = 3) -> DraftProposa
         )
 
     drafted: list[str] = []
+    comparisons = 0
     for window in range(min(order, len(prefix_toks)), 0, -1):
         needle = tuple(prefix_toks[-window:])
         last_idx = None
         for i in range(len(corpus_toks) - window):
+            comparisons += 1
             if tuple(corpus_toks[i : i + window]) == needle:
                 last_idx = i + window
         if last_idx is None:
             continue
         drafted = corpus_toks[last_idx : last_idx + d_len]
         break
+    # Normalize by corpus length so large corpora raise draft_overhead for policy.
+    overhead = float(comparisons) / float(max(len(corpus_toks), 1))
     return DraftProposal(
         tokens=list(drafted),
         D=d_len,
         mechanism="suffix_ngram",
         n=order,
-        draft_overhead=0.0,
+        draft_overhead=overhead,
     )

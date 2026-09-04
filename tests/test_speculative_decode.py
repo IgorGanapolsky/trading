@@ -26,7 +26,8 @@ def test_ngram_drafts_from_repeated_suffix() -> None:
     proposal = ngram_draft("paper spy put", corpus, D=3, n=3)
     assert proposal.mechanism == "suffix_ngram"
     assert proposal.tokens == ["credit", "skip", "live"]
-    assert proposal.draft_overhead == 0.0
+    # Corpus comparisons must be billed into draft_overhead (not hard-coded 0).
+    assert proposal.draft_overhead > 0.0
 
 
 def test_verify_is_lossless_until_first_mismatch() -> None:
@@ -114,6 +115,21 @@ def test_cli_json_and_choose_d() -> None:
     chosen = json.loads(choose.stdout)
     assert chosen["picked_D"] >= 1
     assert chosen["nvidia_speedup_is_not_ours"] is True
+
+
+def test_cli_invalid_flag_is_json() -> None:
+    completed = subprocess.run(
+        [sys.executable, str(OPS), "--not-a-flag"],
+        check=False,
+        capture_output=True,
+        text=True,
+        cwd=str(REPO),
+    )
+    assert completed.returncode == 2
+    payload = json.loads(completed.stdout)
+    assert payload["ok"] is False
+    assert payload["status"] == "UNAVAILABLE"
+    assert "error" in payload
 
 
 def test_sources_are_not_tensorrt_or_eagle_training() -> None:

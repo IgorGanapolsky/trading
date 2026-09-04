@@ -21,8 +21,20 @@ from src.llm.speculative.policy import (  # noqa: E402
 from src.llm.speculative.verify import verify_draft  # noqa: E402
 
 
+class _JsonArgParser(argparse.ArgumentParser):
+    def error(self, message: str) -> None:  # type: ignore[override]
+        print(
+            json.dumps(
+                {"ok": False, "status": "UNAVAILABLE", "error": message},
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        self.exit(2)
+
+
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = _JsonArgParser(description=__doc__)
     parser.add_argument("--prefix", default="")
     parser.add_argument("--corpus", default="")
     parser.add_argument("--corpus-file", type=Path)
@@ -34,60 +46,87 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: list[str] | None = None) -> int:
-    args = _parser().parse_args(argv)
-    corpus = args.corpus
-    if args.corpus_file:
-        corpus = args.corpus_file.read_text(encoding="utf-8")
+def _emit_error(message: str, *, code: int = 2) -> int:
+    print(
+        json.dumps(
+            {"ok": False, "status": "UNAVAILABLE", "error": message},
+            indent=2,
+            sort_keys=True,
+        )
+    )
+    return code
 
-    if args.choose_d:
-        measurements: list[DraftMeasurement] = []
-        target_toks = tokenize(args.target)
-        for d in range(0, max(0, args.max_d) + 1):
-            proposal = ngram_draft(args.prefix, corpus, D=d, n=args.n)
-            verified = verify_draft(proposal.tokens, target_toks, mechanism=proposal.mechanism)
-            measurements.append(
-                DraftMeasurement(D=d, AL=float(verified.AL), draft_overhead=proposal.draft_overhead)
-            )
-        picked = choose_D(measurements, max_D=args.max_d)
+
+def main(argv: list[str] | None = None) -> int:
+    try:
+        args = _parser().parse_args(argv)
+        corpus = args.corpus
+        if args.corpus_file:
+            try:
+                corpus = args.corpus_file.read_text(encoding="utf-8")
+            except OSError as exc:
+                return _emit_error(f"corpus file unreadable: {exc}")
+            except UnicodeDecodeError as exc:
+                return _emit_error(f"corpus file not utf-8: {exc}")
+
+        if args.choose_d:
+            measurements: list[DraftMeasurement] = []
+            target_toks = tokenize(args.target)
+            for d in range(0, max(0, args.max_d) + 1):
+                proposal = ngram_draft(args.prefix, corpus, D=d, n=args.n)
+                verified = verify_draft(proposal.tokens, target_toks, mechanism=proposal.mechanism)
+                measurements.append(
+                    DraftMeasurement(
+                        D=d, AL=float(verified.AL), draft_overhead=proposal.draft_overhead
+                    )
+                )
+            picked = choose_D(measurements, max_D=args.max_d)
+            payload = {
+                "ok": True,
+                "picked_D": picked,
+                "measurements": [
+                    {
+                        "D": row.D,
+                        "AL": row.AL,
+                        "draft_overhead": row.draft_overhead,
+                        "estimated_speedup": estimated_speedup(row.AL, row.D, row.draft_overhead),
+                    }
+                    for row in measurements
+                ],
+                "nvidia_speedup_is_not_ours": True,
+                "mechanism": "suffix_ngram",
+            }
+            print(json.dumps(payload, indent=2, sort_keys=True))
+            return 0
+
+        proposal = ngram_draft(args.prefix, corpus, D=args.draft_len, n=args.n)
+        verified = verify_draft(
+            proposal.tokens, tokenize(args.target), mechanism=proposal.mechanism
+        )
+        speedup = estimated_speedup(float(verified.AL), verified.D, proposal.draft_overhead)
         payload = {
             "ok": True,
-            "picked_D": picked,
-            "measurements": [
-                {
-                    "D": row.D,
-                    "AL": row.AL,
-                    "draft_overhead": row.draft_overhead,
-                    "estimated_speedup": estimated_speedup(row.AL, row.D, row.draft_overhead),
-                }
-                for row in measurements
-            ],
+            "draft": proposal.tokens,
+            "D": proposal.D,
+            "n": proposal.n,
+            "mechanism": proposal.mechanism,
+            "draft_overhead": proposal.draft_overhead,
+            "verify": verified.as_dict(),
+            "AL": verified.AL,
+            "estimated_speedup": speedup,
             "nvidia_speedup_is_not_ours": True,
-            "mechanism": "suffix_ngram",
+            "lossless": verified.lossless,
+            "paper_only": True,
+            "does_not_override_risk_engine": True,
         }
         print(json.dumps(payload, indent=2, sort_keys=True))
         return 0
-
-    proposal = ngram_draft(args.prefix, corpus, D=args.draft_len, n=args.n)
-    verified = verify_draft(proposal.tokens, tokenize(args.target), mechanism=proposal.mechanism)
-    speedup = estimated_speedup(float(verified.AL), verified.D, proposal.draft_overhead)
-    payload = {
-        "ok": True,
-        "draft": proposal.tokens,
-        "D": proposal.D,
-        "n": proposal.n,
-        "mechanism": proposal.mechanism,
-        "draft_overhead": proposal.draft_overhead,
-        "verify": verified.as_dict(),
-        "AL": verified.AL,
-        "estimated_speedup": speedup,
-        "nvidia_speedup_is_not_ours": True,
-        "lossless": verified.lossless,
-        "paper_only": True,
-        "does_not_override_risk_engine": True,
-    }
-    print(json.dumps(payload, indent=2, sort_keys=True))
-    return 0
+    except SystemExit as exc:
+        # argparse already emitted JSON via _JsonArgParser.error
+        code = exc.code
+        return int(code) if isinstance(code, int) else 2
+    except Exception as exc:  # noqa: BLE001 — CLI must stay JSON
+        return _emit_error(f"{type(exc).__name__}: {exc}")
 
 
 if __name__ == "__main__":
