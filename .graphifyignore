@@ -1,0 +1,16 @@
+# Extra excludes on top of .gitignore. Graphify merges this file with
+# .gitignore and never re-includes a gitignored path (official contract).
+rag_knowledge/arxiv/
+data/
+models/
+.worktrees/
+coverage/
+artifacts/
+reports/
+logs/
+*.pyc
+__pycache__/
+.venv/
+.go-cache/
+mcp/
+go/adk_trading/vendor/
