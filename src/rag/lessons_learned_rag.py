@@ -406,14 +406,15 @@ class LessonsLearnedRAG:
                         original_f = float(original) if original is not None else 0.0
                     except (TypeError, ValueError):
                         original_f = 0.0
+                    # Public score stays in [0, 1] for fused results (matches query() contract).
                     norm_rrf = round(float(hit.rrf_score) / rrf_max, 6)
                     base.update(
                         {
                             "id": hit.lesson_id,
                             "title": hit.title or base.get("title", ""),
-                            # Keep a normalized relevance score for callers; expose raw RRF too.
-                            "score": max(original_f, norm_rrf),
+                            "score": norm_rrf,
                             "rrf_score": hit.rrf_score,
+                            "source_score": original_f,
                             "snippet": hit.content_snippet or base.get("snippet", ""),
                             "content": base.get("content") or hit.content_snippet,
                             "rrf": True,

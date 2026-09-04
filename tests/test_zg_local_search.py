@@ -172,8 +172,9 @@ def test_hybrid_rrf_wiring_in_lessons_learned_rag(monkeypatch):
     assert out[0]["id"] == "LL-301"
     assert out[0].get("rrf") is True
     assert "FULL VECTOR DOCUMENT" in str(out[0].get("content") or "")
-    assert 0.0 <= float(out[0]["score"]) <= 12.0
+    assert 0.0 <= float(out[0]["score"]) <= 1.0
     assert "rrf_score" in out[0]
+    assert float(out[0].get("source_score") or 0) >= 0.0
 
 
 def test_canonical_doc_id_unifies_lesson_prefixes():

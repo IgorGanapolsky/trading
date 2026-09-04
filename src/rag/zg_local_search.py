@@ -362,16 +362,16 @@ class ZgLocalSearch:
         globs: Iterable[str] | None,
     ) -> list[dict[str, Any]]:
         """Bounded recursive text scan used when ripgrep is unavailable."""
-        try:
-            regex = re.compile(pattern)
-        except re.error:
-            regex = re.compile(re.escape(pattern))
+        # Literal match by default — avoid catastrophic backtracking on caller patterns.
+        regex = re.compile(re.escape(pattern))
 
-        include_exts = {".py", ".md", ".json", ".yml", ".yaml"}
-        # Honor simple "*.ext" globs when provided.
+        default_exts = {".py", ".md", ".json", ".yml", ".yaml"}
+        include_exts: set[str] = set()
         for g in globs or ():
-            if g.startswith("*.") and len(g) <= 8:
-                include_exts.add(g[1:])
+            if g.startswith("*.") and len(g) <= 10:
+                include_exts.add(g[1:].lower())
+        if not include_exts:
+            include_exts = default_exts
 
         skip_dirs = {".git", ".venv", "node_modules", "__pycache__", ".tox", "dist", "build"}
         hits: list[dict[str, Any]] = []
@@ -389,6 +389,7 @@ class ZgLocalSearch:
                 text = path.read_text(encoding="utf-8", errors="ignore")
             except OSError:
                 continue
+            # Match binary rg --max-count 1: at most one hit per file.
             for i, line in enumerate(text.splitlines(), 1):
                 if not regex.search(line):
                     continue
@@ -409,8 +410,7 @@ class ZgLocalSearch:
                         default_route="rg",
                     )
                 )
-                if len(hits) >= limit:
-                    break
+                break
         return hits
 
     def _parse_rg_stdout(self, stdout: str, *, limit: int) -> list[dict[str, Any]]:
