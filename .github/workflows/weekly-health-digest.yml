@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: read
-  issues: write
 
 jobs:
   digest:
@@ -90,61 +89,9 @@ jobs:
           print(body)
           "
 
-      - name: Post digest as issue comment or create issue
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+      - name: Upload digest artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          script: |
-            const fs = require("fs");
-            const body = fs.readFileSync("artifacts/weekly_digest.md", "utf8");
-            const title = "Weekly Trading Health Digest";
-            const label = "weekly-digest";
-
-            try {
-              await github.rest.issues.getLabel({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                name: label,
-              });
-            } catch (err) {
-              if (err.status === 404) {
-                await github.rest.issues.createLabel({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  name: label,
-                  color: "0E8A16",
-                  description: "Weekly automated health digest",
-                });
-              }
-            }
-
-            // Find existing open digest issue
-            const issues = await github.paginate(github.rest.issues.listForRepo, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: "open",
-              labels: label,
-              per_page: 10,
-            });
-
-            const existing = issues.find(i => !i.pull_request && i.title === title);
-
-            if (existing) {
-              // Update existing
-              await github.rest.issues.update({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: existing.number,
-                body,
-              });
-              core.info(`Updated digest issue #${existing.number}`);
-            } else {
-              // Create new
-              const created = await github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title,
-                body,
-                labels: [label],
-              });
-              core.info(`Created digest issue #${created.data.number}`);
-            }
+          name: weekly-health-digest
+          path: artifacts/weekly_digest.md
+          retention-days: 30
