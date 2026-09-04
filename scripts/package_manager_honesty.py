@@ -50,6 +50,9 @@ def main(argv: list[str] | None = None) -> int:
         )
         payload["scan"] = {k: scan[k] for k in ("ok", "status", "canonical", "foreign_lockfiles")}
         print(json.dumps(payload, indent=2, sort_keys=True))
+        # Dual/missing lockfile must fail the gate even if the command text looks frozen-uv.
+        if not scan.get("ok"):
+            return 2
         return 0 if payload.get("allowed") else 2
 
     payload = scan_tree(args.root)

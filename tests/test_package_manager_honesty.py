@@ -142,3 +142,30 @@ def test_dual_lockfile_cli(tmp_path: Path) -> None:
     assert completed.returncode == 2
     payload = json.loads(completed.stdout)
     assert payload["status"] == "DUAL_LOCKFILE"
+
+
+def test_compound_and_quoted_frozen_uv_are_denied() -> None:
+    for command in (
+        "uv sync --frozen && npm i",
+        'echo "uv sync --frozen"',
+        "uv sync --frozen; pnpm i",
+    ):
+        row = classify_command(command)
+        assert row["allowed"] is False, command
+
+
+def test_classify_cli_fails_on_dual_lockfile(tmp_path: Path) -> None:
+    (tmp_path / "pyproject.toml").write_text("[project]\nname='x'\n", encoding="utf-8")
+    (tmp_path / "uv.lock").write_text("# fake\n", encoding="utf-8")
+    (tmp_path / "package-lock.json").write_text("{}\n", encoding="utf-8")
+    completed = subprocess.run(
+        [sys.executable, str(OPS), "--root", str(tmp_path), "--classify", "uv sync --frozen"],
+        check=False,
+        capture_output=True,
+        text=True,
+        cwd=str(REPO),
+    )
+    assert completed.returncode == 2
+    payload = json.loads(completed.stdout)
+    assert payload["scan"]["status"] == "DUAL_LOCKFILE"
+    assert payload["allowed"] is True  # command text ok, tree not

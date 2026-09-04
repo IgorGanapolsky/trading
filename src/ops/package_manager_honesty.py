@@ -136,7 +136,8 @@ def classify_command(
             "lifecycle_scripts_default_deny": True,
         }
 
-    if any(marker in lowered for marker in ALLOWED_MARKERS):
+    allowed = {marker.strip().lower() for marker in ALLOWED_MARKERS}
+    if lowered in allowed:
         return {
             "role": "frozen_lock",
             "allowed": True,
