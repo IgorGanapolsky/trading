@@ -51,8 +51,15 @@ jobs:
               echo "Created pricing baseline PR for $BRANCH"
             else
               echo "::warning::Could not create PR with GITHUB_TOKEN; update branch pushed: $BRANCH"
-              gh issue create \
-                --title "OpenRouter pricing baseline update ready" \
-                --body "$PR_BODY"$'\n\n'"Branch: $BRANCH" || true
+              # Check if an open issue already exists before creating a new one
+              EXISTING=$(gh issue list --state open --author "app/github-actions" --search "OpenRouter pricing baseline update ready in:title" --json number --jq '.[0].number' || echo "")
+              if [[ -n "$EXISTING" ]]; then
+                echo "Issue #$EXISTING already exists; adding comment instead"
+                gh issue comment "$EXISTING" --body "$PR_BODY"$'\n\n'"Branch: $BRANCH" || true
+              else
+                gh issue create \
+                  --title "OpenRouter pricing baseline update ready" \
+                  --body "$PR_BODY"$'\n\n'"Branch: $BRANCH" || true
+              fi
             fi
           fi
