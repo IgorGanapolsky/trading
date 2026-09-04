@@ -155,7 +155,7 @@ def test_hybrid_rrf_wiring_in_lessons_learned_rag(monkeypatch):
                     "title": "IC Position Management",
                     "score": 0.9,
                     "snippet": "IC position management",
-                    "content": "IC position management",
+                    "content": "FULL VECTOR DOCUMENT CONTENT FOR LESSON 301 " * 3,
                     "file": "rag_knowledge/lessons_learned/ll_301.md",
                     "severity": "HIGH",
                 }
@@ -171,3 +171,32 @@ def test_hybrid_rrf_wiring_in_lessons_learned_rag(monkeypatch):
     assert rag.last_source == "hybrid_rrf"
     assert out[0]["id"] == "LL-301"
     assert out[0].get("rrf") is True
+    assert "FULL VECTOR DOCUMENT" in str(out[0].get("content") or "")
+    assert 0.0 <= float(out[0]["score"]) <= 12.0
+    assert "rrf_score" in out[0]
+
+
+def test_canonical_doc_id_unifies_lesson_prefixes():
+    from src.rag.zg_local_search import _canonical_doc_id
+
+    assert _canonical_doc_id("lesson:LL-301") == "LL-301"
+    assert _canonical_doc_id("ll_301") == "LL-301"
+    assert _canonical_doc_id("rag_knowledge/lessons_learned/LL-301_foo.md") == "LL-301"
+
+
+def test_cli_rejects_negative_limit():
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[1] / "scripts" / "zg_search.py"
+    spec = importlib.util.spec_from_file_location("zg_search_cli", path)
+    assert spec and spec.loader
+    cli = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cli)
+    try:
+        cli.main(["--limit", "-1", "query"])
+        raised = False
+    except SystemExit as exc:
+        raised = True
+        assert exc.code != 0
+    assert raised

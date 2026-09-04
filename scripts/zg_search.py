@@ -30,18 +30,24 @@ def main(argv: list[str] | None = None) -> int:
         default=SearchRoute.HYBRID.value,
         help="Retrieval route (default: hybrid = FTS+vector RRF, optional rg)",
     )
-    parser.add_argument("--limit", type=int, default=10, help="Max hits")
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=10,
+        help="Max hits (must be >= 0)",
+    )
     parser.add_argument(
         "--json",
         action="store_true",
         help="Emit JSON evidence hits instead of compact lines",
     )
-    parser.add_argument(
+    fuse_group = parser.add_mutually_exclusive_group()
+    fuse_group.add_argument(
         "--fuse-rg",
         action="store_true",
         help="Force ripgrep into hybrid fusion (default: only for symbol-like queries)",
     )
-    parser.add_argument(
+    fuse_group.add_argument(
         "--no-fuse-rg",
         action="store_true",
         help="Never fuse ripgrep into hybrid",
@@ -72,6 +78,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if not args.query.strip():
         parser.error("query is required unless --check-ready")
+    if args.limit < 0:
+        parser.error("--limit must be >= 0")
 
     fuse_rg: bool | None = None
     if args.fuse_rg:

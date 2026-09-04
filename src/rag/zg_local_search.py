@@ -81,6 +81,28 @@ VectorFn = Callable[[str, int], list[dict[str, Any]]]
 FtsFn = Callable[[str, int], list[dict[str, Any]]]
 
 
+def _canonical_doc_id(raw_id: str) -> str:
+    """Unify lesson:/LL-/path-ish IDs so RRF can fuse cross-route duplicates."""
+    s = (raw_id or "").strip()
+    if not s:
+        return s
+    lower = s.lower()
+    if lower.startswith("lesson:"):
+        s = s.split(":", 1)[1]
+    # Strip common path wrappers for lesson markdown files.
+    if "/" in s and s.lower().endswith(".md"):
+        stem = Path(s).stem
+        # ll_301_foo / LL-301_foo → prefer lesson token when present
+        m = re.search(r"(LL[-_]?\d+)", stem, flags=re.IGNORECASE)
+        if m:
+            return m.group(1).upper().replace("_", "-")
+        return stem
+    m = re.fullmatch(r"(?i)ll[-_]?(\d+)", s)
+    if m:
+        return f"LL-{m.group(1)}"
+    return s
+
+
 def _normalize_item(item: dict[str, Any], *, default_route: str) -> dict[str, Any]:
     path = str(item.get("path") or item.get("file") or item.get("source") or item.get("id") or "")
     preview = str(item.get("snippet") or item.get("content") or item.get("preview") or "")
@@ -94,8 +116,9 @@ def _normalize_item(item: dict[str, Any], *, default_route: str) -> dict[str, An
         score_f = float(score) if score is not None else 0.0
     except (TypeError, ValueError):
         score_f = 0.0
+    raw_id = str(item.get("id") or path or f"{default_route}:{preview[:40]}")
     return {
-        "id": str(item.get("id") or path or f"{default_route}:{preview[:40]}"),
+        "id": _canonical_doc_id(raw_id) or raw_id,
         "path": path,
         "line": line_i,
         "preview": preview[:500],
@@ -301,6 +324,8 @@ class ZgLocalSearch:
         for g in globs or DEFAULT_RG_GLOBS:
             glob_args.extend(["-g", g])
 
+        # --max-count is per-file; keep it small and truncate globally in Python
+        # so a large workspace does not buffer unbounded matches.
         cmd = [
             self._rg_bin,
             "--line-number",
@@ -308,7 +333,7 @@ class ZgLocalSearch:
             "--color",
             "never",
             "--max-count",
-            str(max(1, limit)),
+            "1",
             *glob_args,
             "--",
             pattern,

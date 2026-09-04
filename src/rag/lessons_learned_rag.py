@@ -370,17 +370,50 @@ class LessonsLearnedRAG:
                 merged = HybridRAGRetriever().rrf_merge(
                     vector_results, keyword_results, top_n=top_k
                 )
-                by_id = {
-                    str(r.get("id", "")).lower(): r for r in (vector_results + keyword_results)
-                }
+                # Prefer vector row as base so full LanceDB content is not overwritten
+                # by keyword snippets when the same lesson ID appears in both lists.
+                by_id: dict[str, dict] = {}
+                for r in keyword_results + vector_results:
+                    key = str(r.get("id", "")).lower()
+                    if not key:
+                        continue
+                    prev = by_id.get(key)
+                    if prev is None:
+                        by_id[key] = dict(r)
+                        continue
+                    # Keep longer content / higher original score when merging duplicates.
+                    merged_row = dict(prev)
+                    if len(str(r.get("content") or "")) > len(str(prev.get("content") or "")):
+                        merged_row["content"] = r.get("content")
+                        merged_row["snippet"] = r.get("snippet") or merged_row.get("snippet")
+                    try:
+                        if float(r.get("score") or 0) > float(prev.get("score") or 0):
+                            merged_row["score"] = r.get("score")
+                    except (TypeError, ValueError):
+                        pass
+                    by_id[key] = merged_row
+
+                # Normalize RRF ranks into [0, 1] so public `score` stays comparable
+                # to legacy keyword/vector relevance scores.
+                rrf_vals = [float(h.rrf_score) for h in merged] or [0.0]
+                rrf_max = max(rrf_vals) or 1.0
+
                 fused: list[dict] = []
                 for hit in merged:
                     base = dict(by_id.get(hit.lesson_id.lower(), {}))
+                    original = base.get("score")
+                    try:
+                        original_f = float(original) if original is not None else 0.0
+                    except (TypeError, ValueError):
+                        original_f = 0.0
+                    norm_rrf = round(float(hit.rrf_score) / rrf_max, 6)
                     base.update(
                         {
                             "id": hit.lesson_id,
                             "title": hit.title or base.get("title", ""),
-                            "score": hit.rrf_score,
+                            # Keep a normalized relevance score for callers; expose raw RRF too.
+                            "score": max(original_f, norm_rrf),
+                            "rrf_score": hit.rrf_score,
                             "snippet": hit.content_snippet or base.get("snippet", ""),
                             "content": base.get("content") or hit.content_snippet,
                             "rrf": True,
