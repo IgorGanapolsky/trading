@@ -70,16 +70,28 @@ def _assert_active() -> None:
         logger.info("Live capital blocked by kill switch (paper validation only).")
 
 
-def _inventory_ok(client: Any | None = None) -> bool:
-    """Require broker-order reconstruction to explain every live option leg."""
+def _broker_inventory_report(client: Any | None = None) -> dict[str, Any] | None:
+    """One residual-inventory reconstruction. None when the broker cannot be read."""
 
     try:
         from scripts.residual_ic_manager import manage_residual_ics
 
         broker = client or _get_paper_client()
-        result = manage_residual_ics(broker, dry_run=True)
+        return manage_residual_ics(broker, dry_run=True)
     except Exception as exc:  # noqa: BLE001
-        logger.error("BROKER_INVENTORY_UNVERIFIED — put-credit entry blocked: %s", exc)
+        logger.warning("Could not load broker inventory: %s", exc)
+        return None
+
+
+def _inventory_ok(
+    client: Any | None = None,
+    report: dict[str, Any] | None = None,
+) -> bool:
+    """Require broker-order reconstruction to explain every live option leg."""
+
+    result = report if report is not None else _broker_inventory_report(client)
+    if result is None:
+        logger.error("BROKER_INVENTORY_UNVERIFIED — put-credit entry blocked")
         return False
     if result["broken"]:
         logger.error("UNCLEAN_INVENTORY — broker reconstruction has unexplained option legs")
@@ -94,19 +106,33 @@ def _inventory_ok(client: Any | None = None) -> bool:
     return True
 
 
-def _broker_open_pcs_structures(client: Any | None = None) -> int | None:
-    """Count live put-credit structures from broker legs (2 legs each). None if unverified."""
+def _count_pcs_structures_from_excluded(excluded: dict[str, Any] | None) -> int:
+    """Count live 2-leg put credits from excluded broker qty, including shared strikes.
 
-    try:
-        from scripts.residual_ic_manager import manage_residual_ics
+    `pcs_inventory_excluded` is keyed by option symbol. Two spreads that share a
+    short strike produce three keys, not four, so `len(excluded) // 2` undercounts.
+    Absolute quantity / 2 is the structure count (1-lot vertical = qty 2).
+    """
 
-        broker = client or _get_paper_client()
-        result = manage_residual_ics(broker, dry_run=True)
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("Could not count broker PCS structures: %s", exc)
+    total_qty = 0.0
+    for qty in (excluded or {}).values():
+        try:
+            total_qty += abs(float(qty))
+        except (TypeError, ValueError):
+            continue
+    return max(0, int(total_qty) // 2)
+
+
+def _broker_open_pcs_structures(
+    client: Any | None = None,
+    report: dict[str, Any] | None = None,
+) -> int | None:
+    """Count live put-credit structures from broker legs. None if unverified."""
+
+    result = report if report is not None else _broker_inventory_report(client)
+    if result is None:
         return None
-    excluded = result.get("pcs_inventory_excluded") or {}
-    return max(0, len(excluded) // 2)
+    return _count_pcs_structures_from_excluded(result.get("pcs_inventory_excluded") or {})
 
 
 def _get_paper_client():
@@ -185,8 +211,9 @@ def evaluate_entry_limits(
     """Enforce daily cap, concurrency, and signature uniqueness.
 
     Concurrent occupancy is the live book, not ghost journal rows. When the
-    broker reports 0 put-credit structures, journal leftovers cannot fill the
-    2/2 slot (AGENT-566, 2026-09-03).
+    broker count is verified, it is occupancy: a flat book cannot fill 2/2
+    (AGENT-566, 2026-09-03), and close-pending live legs cannot drop to 0/2
+    (Greptile #4471 P1). Journal occupancy stays diagnostic.
     """
 
     profile = _load_profile()
@@ -194,7 +221,7 @@ def evaluate_entry_limits(
     active = {key: entry for key, entry in entries.items() if _occupies_concurrent_slot(entry)}
     occupancy = len(active)
     if broker_open_structures is not None:
-        occupancy = min(occupancy, max(0, int(broker_open_structures)))
+        occupancy = max(0, int(broker_open_structures))
     today_count = 0
     for entry in entries.values():
         entry_dt = _parse_timestamp(entry.get("entry_time"))
@@ -1498,10 +1525,11 @@ def main() -> int:
         print(json.dumps(gate, indent=2, default=str))
         return 0 if gate["allowed"] else 2
 
-    if not _inventory_ok():
+    inventory = _broker_inventory_report()
+    if not _inventory_ok(report=inventory):
         return 2
 
-    broker_n = _broker_open_pcs_structures()
+    broker_n = _broker_open_pcs_structures(report=inventory)
     limit_report = evaluate_entry_limits(_load_entries(), broker_open_structures=broker_n)
     if not limit_report["allowed"]:
         logger.error("PUT-CREDIT ENTRY LIMIT: %s", " | ".join(limit_report["blockers"]))
@@ -1620,7 +1648,8 @@ def main() -> int:
 
     try:
         with acquire_trade_lock(timeout=10):
-            if not _inventory_ok(client):
+            inventory = _broker_inventory_report(client)
+            if not _inventory_ok(client, report=inventory):
                 return 2
             # Re-check regime under lock (stale window)
             regime_snap2 = capture_regime_snapshot(spy_price)
@@ -1635,7 +1664,9 @@ def main() -> int:
             limit_report = evaluate_entry_limits(
                 _load_entries(),
                 candidate_signature=signature,
-                broker_open_structures=_broker_open_pcs_structures(client),
+                broker_open_structures=_broker_open_pcs_structures(
+                    client, report=inventory
+                ),
             )
             if not limit_report["allowed"]:
                 logger.error(

@@ -29,6 +29,12 @@ fixtures must not write production audit files.
 - Occupancy uses `_occupies_concurrent_slot` (terminal exit reasons / `exit_filled_at`
   do not fill 2/2). Reconcile and manage-exits still use `_is_live_journal_row` so
   ghosts and `exit_pending` + `profit_target` get closed.
+- When `broker_open_structures` is verified, occupancy **is** that count
+  (`max(0, int(broker))`), not `min(journal, broker)`. Close-pending live legs
+  still fill 2/2 even if the journal already has `exit_reason=profit_target`.
+- Broker structure count is `sum(abs(qty)) // 2` on `pcs_inventory_excluded`.
+  `len(excluded) // 2` undercounts two spreads that share a short strike.
 - `evaluate_entry_limits(..., broker_open_structures=0)` cannot report 2/2.
 - `PUT_CREDIT_MIN_IVR=0`; research preferred IVR 30 remains a soft flag.
+  Missing IVR at floor 0 is a soft flag, not a freeze; cover `iv_rank_proxy=None`.
 - `GRPOUnquarantineGate(persist=False)` by default.
