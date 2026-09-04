@@ -1664,9 +1664,7 @@ def main() -> int:
             limit_report = evaluate_entry_limits(
                 _load_entries(),
                 candidate_signature=signature,
-                broker_open_structures=_broker_open_pcs_structures(
-                    client, report=inventory
-                ),
+                broker_open_structures=_broker_open_pcs_structures(client, report=inventory),
             )
             if not limit_report["allowed"]:
                 logger.error(

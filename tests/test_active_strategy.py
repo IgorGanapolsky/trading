@@ -771,9 +771,12 @@ def test_count_pcs_structures_shared_short_strike_qty():
     assert len(excluded) // 2 == 1
     assert pcs._count_pcs_structures_from_excluded(excluded) == 2
     assert pcs._count_pcs_structures_from_excluded({}) == 0
-    assert pcs._count_pcs_structures_from_excluded(
-        {"SPY261016P00640000": -1.0, "SPY261016P00635000": 1.0}
-    ) == 1
+    assert (
+        pcs._count_pcs_structures_from_excluded(
+            {"SPY261016P00640000": -1.0, "SPY261016P00635000": 1.0}
+        )
+        == 1
+    )
 
 
 def test_broker_open_pcs_structures_uses_qty_and_reuses_report(monkeypatch):
