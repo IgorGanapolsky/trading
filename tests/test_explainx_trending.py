@@ -7,6 +7,7 @@ import subprocess
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
+from urllib.request import Request
 
 import pytest
 
@@ -23,6 +24,7 @@ from src.intel.explainx.map_rails import LOOKALIKE_SNIPPETS, lookalike_hits, map
 from src.intel.explainx.parse import (
     UNAVAILABLE,
     ExplainXParseError,
+    _SameOriginRedirect,
     _assert_http_url,
     parse_trending_html,
 )
@@ -246,6 +248,71 @@ def test_transport_rejects_non_http_schemes() -> None:
         _assert_http_url("file:///etc/passwd")
     with pytest.raises(ExplainXParseError):
         _assert_http_url("ftp://explainx.ai/trending")
+
+
+def test_transport_https_only_explainx_origin() -> None:
+    _assert_http_url("https://explainx.ai/trending")
+    _assert_http_url("https://www.explainx.ai/trending")
+    with pytest.raises(ExplainXParseError):
+        _assert_http_url("http://explainx.ai/trending")
+    with pytest.raises(ExplainXParseError):
+        _assert_http_url("https://evil.example/trending")
+    with pytest.raises(ExplainXParseError):
+        _assert_http_url("https://explainx.ai.evil.example/trending")
+
+
+def test_redirect_to_foreign_host_is_refused() -> None:
+    handler = _SameOriginRedirect()
+    request = Request("https://explainx.ai/trending")
+    with pytest.raises(ExplainXParseError):
+        handler.redirect_request(
+            request,
+            None,
+            302,
+            "Found",
+            {},
+            "https://evil.example/x",
+        )
+    with pytest.raises(ExplainXParseError):
+        handler.redirect_request(
+            request,
+            None,
+            302,
+            "Found",
+            {},
+            "http://explainx.ai/trending",
+        )
+
+
+def test_cli_invalid_limit_emits_json() -> None:
+    completed = subprocess.run(
+        [sys.executable, str(OPS), "--limit", "not-an-int"],
+        check=False,
+        capture_output=True,
+        text=True,
+        cwd=str(REPO),
+    )
+    assert completed.returncode == 2
+    payload = json.loads(completed.stdout)
+    assert payload["ok"] is False
+    assert payload["status"] == UNAVAILABLE
+    assert payload["auto_install"] is False
+    assert "limit" in payload["error"].lower() or "invalid" in payload["error"].lower()
+
+
+def test_cli_unknown_option_emits_json() -> None:
+    completed = subprocess.run(
+        [sys.executable, str(OPS), "--not-a-real-flag"],
+        check=False,
+        capture_output=True,
+        text=True,
+        cwd=str(REPO),
+    )
+    assert completed.returncode == 2
+    payload = json.loads(completed.stdout)
+    assert payload["ok"] is False
+    assert payload["status"] == UNAVAILABLE
+    assert payload["auto_install"] is False
 
 
 def test_sources_are_not_the_mac_yolo_theater_engine() -> None:

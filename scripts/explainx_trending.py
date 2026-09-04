@@ -42,8 +42,22 @@ def _load_json(path: Path) -> Any:
         return None
 
 
+class _JsonArgParser(argparse.ArgumentParser):
+    """Always emit JSON on parse failures (CLI contract is JSON, not usage text)."""
+
+    def error(self, message: str) -> None:  # type: ignore[override]
+        payload = {
+            "ok": False,
+            "status": UNAVAILABLE,
+            "error": message,
+            "auto_install": False,
+        }
+        print(json.dumps(payload, indent=2, sort_keys=True))
+        self.exit(2)
+
+
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = _JsonArgParser(description=__doc__)
     parser.add_argument("--fixture", type=Path, help="Local HTML fixture (offline)")
     parser.add_argument("--fetch", action="store_true", help="Fetch live explainx.ai/trending")
     parser.add_argument("--url", default=TRENDING_URL)

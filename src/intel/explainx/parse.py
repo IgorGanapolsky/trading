@@ -11,9 +11,10 @@ import re
 from dataclasses import asdict, dataclass
 from typing import Any
 from urllib.parse import urlparse
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 TRENDING_URL = "https://explainx.ai/trending"
+ALLOWED_HOSTS = frozenset({"explainx.ai", "www.explainx.ai"})
 UNAVAILABLE = "UNAVAILABLE"
 USER_AGENT = "trading-lab-explainx-mapper/1.0"
 _PUSH_DOUBLE_RE = re.compile(r'self\.__next_f\.push\(\[1,"((?:\\.|[^"\\])*)"\]\)')
@@ -41,9 +42,22 @@ class ExplainXParseError(RuntimeError):
 
 
 def _assert_http_url(url: str) -> None:
-    scheme = urlparse(url).scheme.lower()
-    if scheme not in {"https", "http"}:
-        raise ExplainXParseError(f"refusing non-http ExplainX URL scheme {scheme!r}")
+    parsed = urlparse(url)
+    scheme = parsed.scheme.lower()
+    host = (parsed.hostname or "").lower()
+    if scheme != "https":
+        raise ExplainXParseError(f"refusing non-https ExplainX URL scheme {scheme!r}")
+    if host not in ALLOWED_HOSTS:
+        raise ExplainXParseError(f"refusing ExplainX URL host {host!r}")
+
+
+class _SameOriginRedirect(HTTPRedirectHandler):
+    """Follow redirects only while the target stays on https://explainx.ai."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: ANN001
+        target = newurl if isinstance(newurl, str) else getattr(newurl, "full_url", str(newurl))
+        _assert_http_url(target)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
 def _unescape_js_double(payload: str) -> str | None:
@@ -177,5 +191,7 @@ def fetch_trending_html(
 ) -> str:
     _assert_http_url(url)
     request = Request(url, headers={"User-Agent": USER_AGENT, "Accept": "text/html"})
-    with urlopen(request, timeout=timeout) as response:  # nosec B310
+    opener = build_opener(_SameOriginRedirect())
+    with opener.open(request, timeout=timeout) as response:  # nosec B310
+        _assert_http_url(response.geturl())
         return response.read().decode("utf-8", errors="replace")
