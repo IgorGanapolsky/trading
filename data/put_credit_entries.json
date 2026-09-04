@@ -342,12 +342,12 @@
       "would_trigger_public_21dte_exit": false,
       "note": "Counterfactuals only \u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history."
     },
-    "last_counterfactuals_at": "2026-09-04T18:04:26.236452+00:00",
+    "last_counterfactuals_at": "2026-09-04T19:34:53.749241+00:00",
     "last_mark": {
-      "current_debit": 0.7000000000000002,
-      "estimated_pnl": -9.00000000000002,
+      "current_debit": 0.6700000000000008,
+      "estimated_pnl": -6.0000000000000835,
       "dte": 42,
-      "hold_hours": 0.9641192249999999
+      "hold_hours": 2.471761676111111
     }
   }
 }
