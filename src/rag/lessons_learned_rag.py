@@ -327,43 +327,81 @@ class LessonsLearnedRAG:
             except Exception as e:
                 logger.warning(f"TradingRAGPipeline query failed: {e} - using legacy search")
 
+        # zg-style hybrid: fuse LanceDB vector + keyword BM25 via RRF when both exist.
+        vector_results: list[dict] = []
         if self.lancedb_rag is not None:
             try:
-                results = self._query_lancedb(query, top_k=top_k)
-                if results:
-                    if severity_filter:
-                        results = [r for r in results if r.get("severity") == severity_filter][
-                            :top_k
-                        ]
-                    self.last_source = "lancedb"
-                    return self._reposition_results(query, results, top_k)
+                vector_results = self._query_lancedb(query, top_k=max(top_k * 3, 15))
+                if severity_filter and vector_results:
+                    vector_results = [
+                        r for r in vector_results if r.get("severity") == severity_filter
+                    ]
             except Exception as e:
                 logger.warning(f"LanceDB query failed: {e} - using keyword fallback")
+                vector_results = []
 
-        # Use LessonsSearch if available
+        keyword_results: list[dict] = []
         if self.search_engine is not None:
             try:
-                results = self.search_engine.search(
-                    query, top_k=top_k, severity_filter=severity_filter
+                kw_raw = self.search_engine.search(
+                    query, top_k=max(top_k * 3, 15), severity_filter=severity_filter
                 )
-                # Convert results to expected format
-                self.last_source = "keyword"
-                formatted = [
+                keyword_results = [
                     {
                         "id": lesson.id,
                         "severity": lesson.severity,
                         "score": score,
                         "snippet": lesson.snippet,
-                        "content": lesson.snippet,  # Use snippet as content
+                        "content": lesson.snippet,
                         "file": lesson.file,
                         "title": lesson.title,
                         "prevention": lesson.prevention,
                     }
-                    for lesson, score in results
+                    for lesson, score in kw_raw
                 ]
-                return self._reposition_results(query, formatted, top_k)
             except Exception as e:
                 logger.warning(f"LessonsSearch failed: {e} - using direct file search")
+                keyword_results = []
+
+        if vector_results and keyword_results:
+            try:
+                from src.rag.hybrid_retriever import HybridRAGRetriever
+
+                merged = HybridRAGRetriever().rrf_merge(
+                    vector_results, keyword_results, top_n=top_k
+                )
+                by_id = {
+                    str(r.get("id", "")).lower(): r for r in (vector_results + keyword_results)
+                }
+                fused: list[dict] = []
+                for hit in merged:
+                    base = dict(by_id.get(hit.lesson_id.lower(), {}))
+                    base.update(
+                        {
+                            "id": hit.lesson_id,
+                            "title": hit.title or base.get("title", ""),
+                            "score": hit.rrf_score,
+                            "snippet": hit.content_snippet or base.get("snippet", ""),
+                            "content": base.get("content") or hit.content_snippet,
+                            "rrf": True,
+                            "vector_rank": hit.vector_rank,
+                            "bm25_rank": hit.bm25_rank,
+                        }
+                    )
+                    fused.append(base)
+                if fused:
+                    self.last_source = "hybrid_rrf"
+                    return self._reposition_results(query, fused, top_k)
+            except Exception as e:
+                logger.warning("Hybrid RRF merge failed: %s — falling back", e)
+
+        if vector_results:
+            self.last_source = "lancedb"
+            return self._reposition_results(query, vector_results[:top_k], top_k)
+
+        if keyword_results:
+            self.last_source = "keyword"
+            return self._reposition_results(query, keyword_results[:top_k], top_k)
 
         # Fallback: keyword-based search
         if not self.lessons:
