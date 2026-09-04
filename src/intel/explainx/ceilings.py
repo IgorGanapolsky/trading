@@ -63,10 +63,15 @@ def count_open_entries(entries: Mapping[str, Any] | None) -> int:
     for row in entries.values():
         if not isinstance(row, Mapping):
             continue
-        if row.get("exit_time") or row.get("closed_at") or str(row.get("status") or "").lower() in {
-            "closed",
-            "exited",
-        }:
+        if (
+            row.get("exit_time")
+            or row.get("closed_at")
+            or str(row.get("status") or "").lower()
+            in {
+                "closed",
+                "exited",
+            }
+        ):
             continue
         open_count += 1
     return open_count

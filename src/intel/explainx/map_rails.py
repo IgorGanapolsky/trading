@@ -96,9 +96,7 @@ RULES: tuple[RailRule, ...] = (
 
 def _blob(item: TrendingItem) -> str:
     return " ".join(
-        part.lower()
-        for part in (item.name, item.href, item.description, item.type)
-        if part
+        part.lower() for part in (item.name, item.href, item.description, item.type) if part
     )
 
 

@@ -53,9 +53,9 @@ def test_empty_html_is_unavailable() -> None:
 
 def test_live_rsc_double_quoted_push_still_parses() -> None:
     html = (
-        "<script>self.__next_f.push([1,\"30:[[\\\"$\\\",\\\"$L36\\\",null,"
-        "{\\\"items\\\":[{\\\"type\\\":\\\"blog\\\",\\\"name\\\":\\\"Limit Reset\\\","
-        "\\\"href\\\":\\\"/blog/limit-reset\\\",\\\"score\\\":925}]}]\"])</script>"
+        '<script>self.__next_f.push([1,"30:[[\\"$\\",\\"$L36\\",null,'
+        '{\\"items\\":[{\\"type\\":\\"blog\\",\\"name\\":\\"Limit Reset\\",'
+        '\\"href\\":\\"/blog/limit-reset\\",\\"score\\":925}]}]"])</script>'
     )
     items = parse_trending_html(html)
     assert len(items) == 1

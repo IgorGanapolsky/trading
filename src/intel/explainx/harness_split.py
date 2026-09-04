@@ -35,7 +35,9 @@ DENIED_MARKERS = (
 )
 
 
-def classify_command(command: str, *, live_blocked: bool = True, paper_only: bool = True) -> dict[str, Any]:
+def classify_command(
+    command: str, *, live_blocked: bool = True, paper_only: bool = True
+) -> dict[str, Any]:
     text = " ".join(str(command or "").split())
     lowered = text.lower()
 
