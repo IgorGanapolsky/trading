@@ -216,7 +216,7 @@
     "signature": "SPY_2026-09-25_P741-746",
     "validation_phase": true,
     "profile_name": "spy-put-credit",
-    "status": "open",
+    "status": "closed",
     "regime": {
       "captured_at": "2026-08-17T16:59:51.536411+00:00",
       "spy_price": 774.7100219726562,
@@ -245,8 +245,10 @@
       "dte": 21,
       "hold_hours": 429.24788722527774
     },
-    "reconciliation_reason": "reopened_from_filled_order_legs",
-    "reopened_at": "2026-09-04T14:14:56.556730+00:00"
+    "reconciliation_reason": "broker_flat_ghost_open",
+    "reopened_at": "2026-09-04T14:14:56.556730+00:00",
+    "exit_filled_at": "2026-09-04T15:08:10.972621+00:00",
+    "exit_reason": "broker_reconcile_flat"
   },
   "PCS_260925_818b7a94239e4579bf33e6aab40ff847": {
     "strategy_family": "spy_put_credit",
@@ -266,7 +268,7 @@
     "signature": "SPY_2026-09-25_P735-740",
     "validation_phase": true,
     "profile_name": "spy-put-credit",
-    "status": "open",
+    "status": "closed",
     "regime": {
       "captured_at": "2026-08-17T17:13:02.415930+00:00",
       "spy_price": 774.4683227539062,
@@ -295,7 +297,9 @@
       "dte": 21,
       "hold_hours": 429.02651654472226
     },
-    "reconciliation_reason": "reopened_from_filled_order_legs",
-    "reopened_at": "2026-09-04T14:14:56.556623+00:00"
+    "reconciliation_reason": "broker_flat_ghost_open",
+    "reopened_at": "2026-09-04T14:14:56.556623+00:00",
+    "exit_filled_at": "2026-09-04T15:08:11.033128+00:00",
+    "exit_reason": "broker_reconcile_flat"
   }
 }
