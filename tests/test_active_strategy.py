@@ -694,6 +694,20 @@ def test_put_credit_ghost_journal_is_not_concurrent_occupancy():
     assert flat_book["allowed"] is True
     assert flat_book["broker_open_structures"] == 0
 
+    pending_profit = {
+        "PCS_pending": {
+            "status": "exit_pending",
+            "exit_reason": "profit_target",
+            "exit_order_id": "missing-close",
+            "entry_time": now.isoformat(),
+            "signature": "SPY_2026-09-25_P712-707",
+        }
+    }
+    pending_limits = pcs.evaluate_entry_limits(pending_profit, now=now)
+    assert pending_limits["journal_active_count"] == 0
+    assert pcs._is_active_entry(pending_profit["PCS_pending"]) is True
+    assert pcs._occupies_concurrent_slot(pending_profit["PCS_pending"]) is False
+
 
 def test_put_credit_exit_rules_cover_profit_stop_hold_and_dte():
     from scripts import spy_put_credit as pcs

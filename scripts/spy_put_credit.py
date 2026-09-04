@@ -136,14 +136,30 @@ def _save_entries(entries: dict[str, dict[str, Any]]) -> None:
     temporary.replace(ENTRIES_FILE)
 
 
-def _is_active_entry(entry: dict[str, Any]) -> bool:
+def _is_live_journal_row(entry: dict[str, Any]) -> bool:
+    """True when the journal still needs reconcile/exit work (status not terminal)."""
     status = str(entry.get("status") or "open").strip().lower()
-    if status in CLOSED_ENTRY_STATES:
+    return status not in CLOSED_ENTRY_STATES
+
+
+def _occupies_concurrent_slot(entry: dict[str, Any]) -> bool:
+    """True when a journal row should fill a concurrent entry slot.
+
+    Occupancy is not the same as live-journal work. A row can be status=open
+    with exit_reason=broker_reconcile_flat or exit_filled_at set — that must
+    not fill 2/2 (AGENT-566), but reconcile/manage-exits still have to close it.
+    """
+    if not _is_live_journal_row(entry):
         return False
     reason = str(entry.get("exit_reason") or "").strip().lower()
     if reason in TERMINAL_EXIT_REASONS:
         return False
     return not entry.get("exit_filled_at")
+
+
+def _is_active_entry(entry: dict[str, Any]) -> bool:
+    """Live journal rows: manager and ghost-close still process these."""
+    return _is_live_journal_row(entry)
 
 
 def _parse_timestamp(value: Any) -> datetime | None:
@@ -175,7 +191,7 @@ def evaluate_entry_limits(
 
     profile = _load_profile()
     current = (now or datetime.now(UTC)).astimezone(EASTERN)
-    active = {key: entry for key, entry in entries.items() if _is_active_entry(entry)}
+    active = {key: entry for key, entry in entries.items() if _occupies_concurrent_slot(entry)}
     occupancy = len(active)
     if broker_open_structures is not None:
         occupancy = min(occupancy, max(0, int(broker_open_structures)))

@@ -26,7 +26,9 @@ fixtures must not write production audit files.
 
 ## Prevention
 
-- `_is_active_entry` treats terminal exit reasons / `exit_filled_at` as inactive.
+- Occupancy uses `_occupies_concurrent_slot` (terminal exit reasons / `exit_filled_at`
+  do not fill 2/2). Reconcile and manage-exits still use `_is_live_journal_row` so
+  ghosts and `exit_pending` + `profit_target` get closed.
 - `evaluate_entry_limits(..., broker_open_structures=0)` cannot report 2/2.
 - `PUT_CREDIT_MIN_IVR=0`; research preferred IVR 30 remains a soft flag.
 - `GRPOUnquarantineGate(persist=False)` by default.
