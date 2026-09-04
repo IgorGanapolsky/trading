@@ -86,6 +86,10 @@ make graph-rag-check
 python scripts/graphify_ops.py status --json
 python scripts/graphify_ops.py query "what calls TradeGateway"
 make graphify-check
+# zg-style local-first search (hybrid|fts|vector|rg) — docs/ZG_LOCAL_SEARCH.md
+python scripts/zg_search.py --check-ready
+python scripts/zg_search.py "put credit stop loss"
+python scripts/zg_search.py --route rg "TradeGateway"
 ```
 
 Inventory unclean (`exit 2`) → **no new risk**.
