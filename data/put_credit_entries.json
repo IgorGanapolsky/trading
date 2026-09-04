@@ -301,5 +301,35 @@
     "reopened_at": "2026-09-04T14:14:56.556623+00:00",
     "exit_filled_at": "2026-09-04T15:08:11.033128+00:00",
     "exit_reason": "broker_reconcile_flat"
+  },
+  "PCS_261016_62c503e9a0864988aa1663ffe8ec33e7": {
+    "strategy_family": "spy_put_credit",
+    "order_id": "62c503e9-a086-4988-aa16-63ffe8ec33e7",
+    "entry_time": "2026-09-04T17:06:35.401253+00:00",
+    "expiry": "2026-10-16",
+    "quantity": 1,
+    "credit": 0.64,
+    "limit_credit": 0.64,
+    "credit_source": "limit_estimate_unconfirmed",
+    "put_delta": 0.2044,
+    "selection_method": "live_delta_band_scan",
+    "strikes": {
+      "short_put": 742.0,
+      "long_put": 737.0
+    },
+    "signature": "SPY_2026-10-16_P737-742",
+    "validation_phase": true,
+    "profile_name": "spy-put-credit",
+    "status": "submitted_unconfirmed",
+    "regime": {
+      "captured_at": "2026-09-04T17:06:25.242510+00:00",
+      "spy_price": 770.47998046875,
+      "vix": 14.03,
+      "iv_rank_proxy": 1.22,
+      "iv_rank_method": "vix_percentile_252",
+      "spy_sma_200": 712.124,
+      "spy_above_200dma": true,
+      "source_errors": ["iv_rank_proxy_none"]
+    }
   }
 }
