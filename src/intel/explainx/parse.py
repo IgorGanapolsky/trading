@@ -67,7 +67,20 @@ def _unescape_js_single(payload: str) -> str | None:
 def _extract_json_array(blob: str, start: int) -> Any | None:
     depth = 0
     end = None
+    in_string = False
+    escape = False
     for index, char in enumerate(blob[start:], start):
+        if in_string:
+            if escape:
+                escape = False
+            elif char == "\\":
+                escape = True
+            elif char == '"':
+                in_string = False
+            continue
+        if char == '"':
+            in_string = True
+            continue
         if char == "[":
             depth += 1
         elif char == "]":
@@ -124,16 +137,18 @@ def parse_trending_html(html: str) -> list[TrendingItem]:
         # Formatted fixtures and already-decoded blobs expose "items": directly.
         candidates = _items_from_decoded(text)
 
-    ranked: list[TrendingItem] = []
-    seen: set[tuple[str, str, int]] = set()
-    for row in sorted(
-        candidates,
-        key=lambda item: (-int(item.get("score") or 0), str(item.get("href") or "")),
-    ):
+    scored: list[tuple[int, dict[str, Any]]] = []
+    for row in candidates:
         try:
             score = int(row["score"])
         except (TypeError, ValueError, KeyError):
             continue
+        scored.append((score, row))
+    scored.sort(key=lambda item: (-item[0], str(item[1].get("href") or "")))
+
+    ranked: list[TrendingItem] = []
+    seen: set[tuple[str, str, int]] = set()
+    for score, row in scored:
         name = str(row.get("name") or "").strip()
         href = str(row.get("href") or "").strip()
         if not name or score < 0:

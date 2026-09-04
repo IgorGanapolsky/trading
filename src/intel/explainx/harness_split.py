@@ -32,6 +32,8 @@ DENIED_MARKERS = (
     "no-limits",
     "iron_condor_entry",
     "ic_simple_entry",
+    "--live",
+    "trading_env=live",
 )
 
 
@@ -43,16 +45,21 @@ def classify_command(
 
     denied = [marker for marker in DENIED_MARKERS if marker in lowered]
     if denied:
+        live_intent = "--live" in denied or "trading_env=live" in denied
         return {
             "role": "denied",
             "commerce_analog": None,
             "command": text,
             "allowed": False,
-            "reason": "boundary or invented reset",
+            "reason": (
+                "live submit refused; this split does not grant live"
+                if live_intent
+                else "boundary or invented reset"
+            ),
             "matched": denied,
             "eval": "must_not_run",
             "paper_only": paper_only,
-            "live_blocked": live_blocked,
+            "live_blocked": True if live_intent else live_blocked,
             "vendor_conversion_figures_are_ours": False,
         }
 

@@ -89,8 +89,8 @@ def count_put_credit_cohort(trades: list[Any] | None) -> int:
         family = str(row.get("strategy") or row.get("strategy_family") or "").strip().lower()
         if family != ACTIVE_FAMILY:
             continue
-        status = str(row.get("status") or "closed").strip().lower()
-        if status and status not in {"closed", "exited", "done"}:
+        status = str(row.get("status") or "").strip().lower()
+        if status not in {"closed", "exited", "done"}:
             continue
         count += 1
     return count

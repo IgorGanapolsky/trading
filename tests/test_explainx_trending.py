@@ -192,6 +192,11 @@ def test_planner_dry_run_vs_executor_vs_denied() -> None:
 
     live = classify_command("python scripts/spy_put_credit.py --live")
     assert live["allowed"] is False
+    assert live["role"] == "denied"
+
+    mixed = classify_command("python scripts/spy_put_credit.py --dry-run --live")
+    assert mixed["allowed"] is False
+    assert mixed["role"] == "denied"
 
     denied = classify_command("close_position SPY")
     assert denied["role"] == "denied"
@@ -200,6 +205,40 @@ def test_planner_dry_run_vs_executor_vs_denied() -> None:
     invented = classify_command("/reset-weekly")
     assert invented["role"] == "denied"
     assert invented["allowed"] is False
+
+
+def test_malformed_score_does_not_crash() -> None:
+    html = (
+        '<script>self.__next_f.push([1,"{\\"items\\":['
+        '{\\"name\\":\\"Bad\\",\\"href\\":\\"/x\\",\\"score\\":\\"nope\\",\\"type\\":\\"blog\\"},'
+        '{\\"name\\":\\"Good\\",\\"href\\":\\"/y\\",\\"score\\":10,\\"type\\":\\"blog\\"}'
+        ']}"])</script>'
+    )
+    items = parse_trending_html(html)
+    assert len(items) == 1
+    assert items[0].name == "Good"
+    assert items[0].score == 10
+
+
+def test_brackets_in_title_do_not_truncate_items() -> None:
+    html = (
+        '<script>self.__next_f.push([1,"{\\"items\\":['
+        '{\\"name\\":\\"Foo [bar]\\",\\"href\\":\\"/a\\",\\"score\\":3,\\"type\\":\\"blog\\"},'
+        '{\\"name\\":\\"Baz\\",\\"href\\":\\"/b\\",\\"score\\":2,\\"type\\":\\"blog\\"}'
+        ']}"])</script>'
+    )
+    items = parse_trending_html(html)
+    assert [item.name for item in items] == ["Foo [bar]", "Baz"]
+
+
+def test_statusless_rows_are_not_closed_cohort() -> None:
+    trades = [
+        {"strategy": "spy_put_credit", "status": "closed"},
+        {"strategy": "spy_put_credit", "status": ""},
+        {"strategy": "spy_put_credit"},
+        {"strategy": "spy_put_credit", "status": "open"},
+    ]
+    assert count_put_credit_cohort(trades) == 1
 
 
 def test_transport_rejects_non_http_schemes() -> None:
