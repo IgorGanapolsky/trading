@@ -666,6 +666,142 @@ def test_put_credit_entry_limits_enforce_daily_concurrent_and_signature():
     assert any("Concurrent" in blocker for blocker in report["blockers"])
 
 
+def test_put_credit_ghost_journal_is_not_concurrent_occupancy():
+    """AGENT-566: status=open + broker_reconcile_flat must not fill the 2/2 slot."""
+    from scripts import spy_put_credit as pcs
+
+    now = datetime(2026, 9, 3, 15, 9, tzinfo=UTC)
+    entries = {
+        "PCS_flat": {
+            "status": "open",
+            "exit_reason": "broker_reconcile_flat",
+            "entry_time": "2026-08-11T15:23:00+00:00",
+            "signature": "SPY_2026-09-25_P737-742",
+        },
+        "PCS_open": {
+            "status": "open",
+            "entry_time": "2026-08-17T17:13:25+00:00",
+            "signature": "SPY_2026-09-25_P735-740",
+        },
+    }
+    report = pcs.evaluate_entry_limits(entries, now=now)
+    assert report["journal_active_count"] == 1
+    assert report["active_count"] == 1
+    assert report["allowed"] is True
+
+    flat_book = pcs.evaluate_entry_limits(entries, now=now, broker_open_structures=0)
+    assert flat_book["active_count"] == 0
+    assert flat_book["allowed"] is True
+    assert flat_book["broker_open_structures"] == 0
+
+    pending_profit = {
+        "PCS_pending": {
+            "status": "exit_pending",
+            "exit_reason": "profit_target",
+            "exit_order_id": "missing-close",
+            "entry_time": now.isoformat(),
+            "signature": "SPY_2026-09-25_P712-707",
+        }
+    }
+    pending_limits = pcs.evaluate_entry_limits(pending_profit, now=now)
+    assert pending_limits["journal_active_count"] == 0
+    assert pcs._is_active_entry(pending_profit["PCS_pending"]) is True
+    assert pcs._occupies_concurrent_slot(pending_profit["PCS_pending"]) is False
+
+
+def test_close_pending_live_broker_occupies_concurrent_slots():
+    """Greptile #4471 P1: two close-pending live spreads still fill 2/2."""
+    from scripts import spy_put_credit as pcs
+
+    now = datetime(2026, 9, 4, 14, 40, tzinfo=UTC)
+    entries = {
+        "PCS_a": {
+            "status": "exit_pending",
+            "exit_reason": "profit_target",
+            "exit_order_id": "close-a",
+            "entry_time": now.isoformat(),
+            "signature": "SPY_2026-10-16_P640-635",
+        },
+        "PCS_b": {
+            "status": "exit_pending",
+            "exit_reason": "profit_target",
+            "exit_order_id": "close-b",
+            "entry_time": now.isoformat(),
+            "signature": "SPY_2026-10-16_P630-625",
+        },
+    }
+    journal_only = pcs.evaluate_entry_limits(entries, now=now)
+    assert journal_only["journal_active_count"] == 0
+    assert journal_only["active_count"] == 0
+
+    live_book = pcs.evaluate_entry_limits(entries, now=now, broker_open_structures=2)
+    assert live_book["journal_active_count"] == 0
+    assert live_book["active_count"] == 2
+    assert live_book["allowed"] is False
+    assert any("Concurrent" in blocker for blocker in live_book["blockers"])
+
+
+def test_verified_broker_count_is_occupancy_even_with_one_journal_row():
+    """CodeRabbit #4471: occupancy is the verified broker count, not min(journal, broker)."""
+    from scripts import spy_put_credit as pcs
+
+    now = datetime(2026, 9, 4, 14, 40, tzinfo=UTC)
+    entries = {
+        "PCS_open": {
+            "status": "open",
+            "entry_time": now.isoformat(),
+            "signature": "SPY_2026-10-16_P640-635",
+        }
+    }
+    report = pcs.evaluate_entry_limits(entries, now=now, broker_open_structures=2)
+    assert report["journal_active_count"] == 1
+    assert report["active_count"] == 2
+    assert report["allowed"] is False
+
+
+def test_count_pcs_structures_shared_short_strike_qty():
+    """Greptile #4471 P1: shared short strike is two structures, not len(keys)//2."""
+    from scripts import spy_put_credit as pcs
+
+    excluded = {
+        "SPY261016P00640000": -2.0,
+        "SPY261016P00635000": 1.0,
+        "SPY261016P00630000": 1.0,
+    }
+    assert len(excluded) // 2 == 1
+    assert pcs._count_pcs_structures_from_excluded(excluded) == 2
+    assert pcs._count_pcs_structures_from_excluded({}) == 0
+    assert (
+        pcs._count_pcs_structures_from_excluded(
+            {"SPY261016P00640000": -1.0, "SPY261016P00635000": 1.0}
+        )
+        == 1
+    )
+
+
+def test_broker_open_pcs_structures_uses_qty_and_reuses_report(monkeypatch):
+    from scripts import spy_put_credit as pcs
+
+    report = {
+        "broken": 0,
+        "reconciled": 0,
+        "unresolved": {},
+        "pcs_inventory_excluded": {
+            "SPY261016P00640000": -2.0,
+            "SPY261016P00635000": 1.0,
+            "SPY261016P00630000": 1.0,
+        },
+    }
+    manage = MagicMock(return_value=report)
+    monkeypatch.setattr("scripts.residual_ic_manager.manage_residual_ics", manage)
+    client = object()
+
+    assert pcs._broker_open_pcs_structures(client) == 2
+    manage.assert_called_once_with(client, dry_run=True)
+    assert pcs._broker_open_pcs_structures(client, report=report) == 2
+    manage.assert_called_once_with(client, dry_run=True)
+
+
 def test_put_credit_exit_rules_cover_profit_stop_hold_and_dte():
     from scripts import spy_put_credit as pcs
 
@@ -1132,7 +1268,7 @@ def test_put_credit_main_blocks_at_initial_entry_limit(monkeypatch, capsys):
 
     _patch_put_credit_cli_basics(pcs, monkeypatch)
     monkeypatch.setattr("sys.argv", ["spy_put_credit.py", "--dry-run"])
-    monkeypatch.setattr(pcs, "_inventory_ok", lambda *_args: True)
+    monkeypatch.setattr(pcs, "_inventory_ok", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(pcs, "_load_entries", lambda: {})
     monkeypatch.setattr(
         pcs,
@@ -1149,7 +1285,7 @@ def test_put_credit_main_blocks_duplicate_after_selection(tmp_path, monkeypatch,
     _patch_put_credit_cli_basics(pcs, monkeypatch)
     monkeypatch.setattr("sys.argv", ["spy_put_credit.py", "--dry-run"])
     monkeypatch.setattr(pcs, "AUDIT_DIR", tmp_path)
-    monkeypatch.setattr(pcs, "_inventory_ok", lambda *_args: True)
+    monkeypatch.setattr(pcs, "_inventory_ok", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(pcs, "_load_entries", lambda: {})
     monkeypatch.setattr("src.utils.options_analysis.get_underlying_price", lambda _: 747.0)
     monkeypatch.setattr(pcs, "find_put_credit_opportunity", lambda _: _put_credit_opp())
@@ -1167,7 +1303,7 @@ def test_put_credit_main_rechecks_limits_inside_trade_lock(tmp_path, monkeypatch
     _patch_put_credit_cli_basics(pcs, monkeypatch)
     monkeypatch.setattr("sys.argv", ["spy_put_credit.py", "--execute-paper"])
     monkeypatch.setattr(pcs, "AUDIT_DIR", tmp_path)
-    monkeypatch.setattr(pcs, "_inventory_ok", lambda *_args: True)
+    monkeypatch.setattr(pcs, "_inventory_ok", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(pcs, "_load_entries", lambda: {})
     monkeypatch.setattr("src.utils.options_analysis.get_underlying_price", lambda _: 747.0)
     monkeypatch.setattr(pcs, "find_put_credit_opportunity", lambda _: _put_credit_opp())

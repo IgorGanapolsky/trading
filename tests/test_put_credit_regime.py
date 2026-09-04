@@ -57,6 +57,22 @@ def test_regime_still_blocks_below_paper_floor():
     assert any("IV rank" in b for b in gate["blockers"])
 
 
+def test_regime_paper_floor_zero_soft_flags_low_ivr():
+    """AGENT-566: paper MIN_IVR=0 must not freeze on VIX-percentile 4.9 when VIX=14.61."""
+    gate = evaluate_regime_gate(_snap(vix=14.61, iv_rank_proxy=4.9), min_iv_rank=0.0)
+    assert gate["allowed"] is True
+    assert gate["blockers"] == []
+    assert any("research preferred" in f for f in gate["soft_flags"])
+
+
+def test_regime_paper_floor_zero_missing_ivr_is_soft_flag():
+    """Greptile #4471 P2: paper floor 0 changes only the iv_rank_proxy=None branch."""
+    gate = evaluate_regime_gate(_snap(vix=14.61, iv_rank_proxy=None), min_iv_rank=0.0)
+    assert gate["allowed"] is True
+    assert gate["blockers"] == []
+    assert any("IV rank proxy unavailable" in f for f in gate["soft_flags"])
+
+
 def test_regime_missing_vix_fail_closed():
     gate = evaluate_regime_gate(_snap(vix=None), fail_closed_on_missing=True)
     assert gate["allowed"] is False
