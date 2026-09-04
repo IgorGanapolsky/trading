@@ -27,6 +27,16 @@ def test_required_operational_paths_remain_in_candidate_tree() -> None:
     assert set(candidate_paths(REPO_ROOT)) >= REQUIRED_PATHS
 
 
+def test_arxiv_audit_copies_are_not_tracked() -> None:
+    tracked = candidate_paths(REPO_ROOT)
+    assert not any(path.startswith("data/arxiv/") for path in tracked)
+
+
+def test_pytorch_weights_are_not_tracked() -> None:
+    tracked = candidate_paths(REPO_ROOT)
+    assert not any(path.endswith(".pt") for path in tracked)
+
+
 def test_gitignore_covers_generated_surfaces() -> None:
     text = (REPO_ROOT / ".gitignore").read_text(encoding="utf-8")
     for pattern in ("artifacts/", "logs/", "data/cache/", "data/screenshots/", "__pycache__/"):

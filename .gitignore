@@ -163,6 +163,10 @@ data/vix_history.json
 # Local ML binaries. Small, reviewed metadata JSON may remain tracked.
 *.pt
 
+# Byte-identical copy of rag_knowledge/arxiv/. Ingest may still write it
+# locally; do not git-add it (AGENT-570).
+data/arxiv/
+
 # Miscellaneous local outputs
 *.mht
 article_*.html

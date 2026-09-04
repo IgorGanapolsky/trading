@@ -17,6 +17,7 @@ FORBIDDEN_PREFIXES = (
     "artifacts/",
     "coverage/",
     "data/agent_context/",
+    "data/arxiv/",
     "data/audit/",
     "data/backtests/",
     "data/cache/",
@@ -137,6 +138,15 @@ def scan(repo: Path) -> dict:
         if path.name in FORBIDDEN_NAMES or path.suffix.lower() in {".pyc", ".log"}:
             findings.append(
                 Finding("error", "generated-file", relative, "tracked runtime artifact")
+            )
+        if path.suffix.lower() == ".pt":
+            findings.append(
+                Finding(
+                    "error",
+                    "tracked-ml-binary",
+                    relative,
+                    "PyTorch weight is gitignored (*.pt) and must not be tracked",
+                )
             )
         if data:
             content_hashes[hashlib.sha256(data).hexdigest()].append(relative)
