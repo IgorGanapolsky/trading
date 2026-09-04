@@ -1,0 +1,20 @@
+{
+  "results": [
+    {
+      "id": "mem_inventory_hygiene",
+      "memory": "Open inventory must be clean before new put-credit risk. Unclean lots block TradeGateway.",
+      "metadata": { "source": "lesson", "kind": "operator" },
+      "updatedAt": "2026-09-04T00:00:00Z",
+      "similarity": 0.91
+    },
+    {
+      "id": "chk_kill_switch",
+      "chunk": "Iron condor new entries are killed. Residual inventory is exit-only.",
+      "metadata": { "source": "document", "kind": "policy" },
+      "updatedAt": "2026-09-04T00:00:00Z",
+      "similarity": 0.84
+    }
+  ],
+  "timing": 42,
+  "total": 2
+}

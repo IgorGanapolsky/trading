@@ -20,6 +20,7 @@ Operator and design docs for the trading lab.
 | [research/](./research/)                                           | Edge audits and deep dives                 |
 | [RAG_11_STAGES_SPECIFICATION.md](./RAG_11_STAGES_SPECIFICATION.md) | RAG pipeline stages                        |
 | [GRAPH_RAG.md](./GRAPH_RAG.md)                                     | Temporal Graph RAG (strategy/lesson/trade) |
+| [SUPERMEMORY.md](./SUPERMEMORY.md)                                 | Optional SuperMemory v3/v4 adapter         |
 | [EXTENSIONS.md](./EXTENSIONS.md)                                   | Optional provider boundary                 |
 
 ## Pitch / archive (not operating truth)
