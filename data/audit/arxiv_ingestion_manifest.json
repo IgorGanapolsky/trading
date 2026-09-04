@@ -1513,6 +1513,165 @@
       "ingested_at": "2026-09-03T06:31:41.561642+00:00",
       "sha256": "dd0ca8cd3d533d6e07da5698cbf992e1d904c90694343298099e215d41dbc3a9",
       "chunks": 10
+    },
+    "2609.04170v1": {
+      "title": "A Case Study on Emergent Cheating and Whistleblowing in Autonomous Research Swarms",
+      "published": "2026-09-03T17:54:09Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.04170v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_04170v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_04170v1.md",
+      "ingested_at": "2026-09-04T06:31:56.160856+00:00",
+      "sha256": "596a0b929dd9dc6f9d7d502c6377a47c94a367ad5c5f05cab2151b93fbbf38eb",
+      "chunks": 11
+    },
+    "2609.04094v1": {
+      "title": "DRACO: Fine-Grained Credit Assignment with Dynamic Rubrics for Long-Horizon Agent Training",
+      "published": "2026-09-03T17:02:20Z",
+      "relevance_score": 0.44,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.LG",
+        "cs.SE"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.04094v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_04094v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_04094v1.md",
+      "ingested_at": "2026-09-04T06:31:56.164486+00:00",
+      "sha256": "24f3fb52e036b29826168c0fc0ff109b4a29e302796a3eb9253fec22caa75e7c",
+      "chunks": 11
+    },
+    "2609.04168v1": {
+      "title": "Para-Pipe: Exploiting Hierarchical Operator Parallelism of ML Computational Graphs on SoCs",
+      "published": "2026-09-03T17:53:44Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.DC",
+        "cs.LG",
+        "cs.PF"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.04168v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_04168v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_04168v1.md",
+      "ingested_at": "2026-09-04T06:31:56.168031+00:00",
+      "sha256": "93de78bee147460b6bbda45a494a1fe657d574e772ee8919dbc5db4be76c5161",
+      "chunks": 11
+    },
+    "2609.04166v1": {
+      "title": "From Deceptive Outputs to Deceptive Mechanisms: A Causal Framework for Language-Model Deception Research",
+      "published": "2026-09-03T17:52:19Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.04166v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_04166v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_04166v1.md",
+      "ingested_at": "2026-09-04T06:31:56.171539+00:00",
+      "sha256": "4873acadd547685432d9c0fa2de525559c17173b8287eeebbe720813b6fd0f9b",
+      "chunks": 10
+    },
+    "2609.04141v1": {
+      "title": "Efficient Test-Time Adaptation through Human-AI Interaction",
+      "published": "2026-09-03T17:33:18Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.04141v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_04141v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_04141v1.md",
+      "ingested_at": "2026-09-04T06:31:56.175063+00:00",
+      "sha256": "7ef6306d8b7ed701be1133f3c14f95b59e3744131eb52166049850a35c11f589",
+      "chunks": 11
+    },
+    "2609.04199v1": {
+      "title": "Compile by Training: Turning Natural-Language Specifications into Local Neural Functions",
+      "published": "2026-09-03T17:59:49Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.04199v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_04199v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_04199v1.md",
+      "ingested_at": "2026-09-04T06:31:56.178505+00:00",
+      "sha256": "0a5196ae7826c61a683b135f4914b9ab83e3e01a60e6d3b31fbd56b46f7e5dda",
+      "chunks": 10
+    },
+    "2609.04198v1": {
+      "title": "Clean Engineering, Unstable Measurement: A Preregistered Reliability Failure of Black-Box LLM Observers on Shared Endpoints",
+      "published": "2026-09-03T17:59:43Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.04198v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_04198v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_04198v1.md",
+      "ingested_at": "2026-09-04T06:31:56.182555+00:00",
+      "sha256": "c763cb55f6d5379a05c75d52a622213d582aa3ed2c2af77bccdcfe3433336af7",
+      "chunks": 12
+    },
+    "2609.04183v1": {
+      "title": "Seeing Before Synthesizing: VLM-Guided Transition Event Discovery for Weakly-Supervised Dense Video Captioning",
+      "published": "2026-09-03T17:58:02Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.04183v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_04183v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_04183v1.md",
+      "ingested_at": "2026-09-04T06:31:56.190344+00:00",
+      "sha256": "b50d33f45640d3ba29f02e906afd164a4c830aee5d1662b6ee43ef1d56db1103",
+      "chunks": 10
+    },
+    "2609.04127v1": {
+      "title": "Epistemic Warrant for LLM Recommendations: Characterizing the Basis for Reliance When Ground Truth Is Unavailable",
+      "published": "2026-09-03T17:25:20Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.04127v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_04127v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_04127v1.md",
+      "ingested_at": "2026-09-04T06:31:56.194310+00:00",
+      "sha256": "1bb3a391584495bc0666943ff358e43bd83a087d240f5b9b40a3a684b8df997d",
+      "chunks": 11
+    },
+    "2609.04197v1": {
+      "title": "ESPO: Error-Structured Prompt Optimization via Diagnose, Diversify, and Stabilize",
+      "published": "2026-09-03T17:59:37Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.04197v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_04197v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_04197v1.md",
+      "ingested_at": "2026-09-04T06:31:56.198533+00:00",
+      "sha256": "9c3f718943158ed3a627bf7889defa0427613df7653d732e925852acc6a024bd",
+      "chunks": 11
     }
   },
   "skipped_low_relevance": {
@@ -1833,10 +1992,22 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-09-03T06:31:41.557488+00:00"
+    },
+    "2609.04177v1": {
+      "title": "A Computationally Feasible Framework for Causal Probabilistic Explanation",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-04T06:31:56.156438+00:00"
+    },
+    "2609.04194v1": {
+      "title": "Legibility is Not Interpretability: Comparing Judged and Actual Importance in Chain-Of-Thought Reasoning",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-04T06:31:56.184553+00:00"
     }
   },
-  "total_ingested": 93,
-  "last_run_utc": "2026-09-03T18:08:23.080108+00:00",
+  "total_ingested": 103,
+  "last_run_utc": "2026-09-04T06:31:56.200588+00:00",
   "runs": [
     {
       "finished_at": "2026-08-18T06:15:36.990502+00:00",
@@ -2221,6 +2392,20 @@
       "candidates": 11,
       "new_ingested": 0,
       "skipped_low_relevance": 0,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-09-04T06:31:56.200588+00:00",
+      "candidates": 12,
+      "new_ingested": 10,
+      "skipped_low_relevance": 2,
       "min_relevance": 0.18,
       "queries": [
         "option credit spread OR iron condor OR put credit",
