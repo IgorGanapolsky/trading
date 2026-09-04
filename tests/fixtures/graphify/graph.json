@@ -1,0 +1,155 @@
+{
+  "nodes": [
+    {
+      "id": "gateway",
+      "label": "gateway.py",
+      "file_type": "code",
+      "source_file": "gateway.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "gateway_tradegateway",
+      "label": "TradeGateway",
+      "file_type": "code",
+      "source_file": "gateway.py",
+      "source_location": "L3",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "gateway_tradegateway_reject_unclean",
+      "label": ".reject_unclean()",
+      "file_type": "code",
+      "source_file": "gateway.py",
+      "source_location": "L4",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "strategy",
+      "label": "strategy.py",
+      "file_type": "code",
+      "source_file": "strategy.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "strategy_plan_put_credit",
+      "label": "plan_put_credit()",
+      "file_type": "code",
+      "source_file": "strategy.py",
+      "source_location": "L6",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "strategy_rationale_1",
+      "label": "SPY put credit entry.",
+      "file_type": "rationale",
+      "source_file": "strategy.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    }
+  ],
+  "edges": [
+    {
+      "source": "gateway",
+      "target": "gateway_tradegateway",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "gateway.py",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "gateway_tradegateway",
+      "target": "gateway_tradegateway_reject_unclean",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "gateway.py",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "strategy",
+      "target": "gateway",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "strategy.py",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "strategy",
+      "target": "strategy_plan_put_credit",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "strategy.py",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "strategy_rationale_1",
+      "target": "strategy",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "strategy.py",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "strategy",
+      "target": "gateway_tradegateway",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "strategy.py",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "strategy_plan_put_credit",
+      "target": "gateway_tradegateway",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "strategy.py",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "strategy_plan_put_credit",
+      "target": "gateway_tradegateway",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "strategy.py",
+      "source_location": "L7",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "strategy_plan_put_credit",
+      "target": "gateway_tradegateway_reject_unclean",
+      "relation": "calls",
+      "confidence": "AMBIGUOUS",
+      "source_file": "strategy.py",
+      "source_location": "L7",
+      "weight": 0.4,
+      "_origin": "fixture"
+    }
+  ],
+  "hyperedges": [],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

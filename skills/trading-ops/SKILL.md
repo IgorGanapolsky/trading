@@ -82,6 +82,10 @@ python scripts/graph_rag_query.py --query "why is iron condor killed?" --graph-o
 # Hard gate: rebuild + 5 golden multi-hop assertions (CI offline-evals + make check)
 python scripts/verify_graph_rag.py
 make graph-rag-check
+# Official Graphify-Labs/graphify (package graphifyy; graph.json query/path/explain)
+python scripts/graphify_ops.py status --json
+python scripts/graphify_ops.py query "what calls TradeGateway"
+make graphify-check
 ```
 
 Inventory unclean (`exit 2`) → **no new risk**.

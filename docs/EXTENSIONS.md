@@ -13,3 +13,5 @@ The host owns configuration and secret lookup, validation, timeouts/retries/circ
 7. Do not create an extension registry until at least two retained adapters need the same lifecycle contract.
 
 This takes the useful part of a plugin architecture—clear ownership and optionality—without introducing a plugin loader the repository does not need.
+
+Official Graphify-Labs/graphify is an optional code-graph adapter (`src/rag/graphify/`, `scripts/graphify_ops.py`). The PyPI package is `graphifyy`; retrieval is `graph.json` via query/path/explain. It must not become a required core import, must not dump into `financial_graph.sqlite`, and must not treat `graph.html` as retrieval. See `docs/GRAPHIFY.md`.
