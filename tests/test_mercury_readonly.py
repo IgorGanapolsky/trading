@@ -12,10 +12,22 @@ from src.adapters.mercury_readonly import (
 
 @pytest.fixture
 def clean_env(monkeypatch, tmp_path):
-    """Isolate tests from the real env vars and the real vault file."""
+    """Isolate tests from the real env vars, Keychain, and vault file."""
     for key in ("MERCURY_API_TOKEN", "MERCURY_ACCOUNT_ID", "MERCURY_SAVINGS_ACCOUNT_ID"):
         monkeypatch.delenv(key, raising=False)
     monkeypatch.setenv("MERCURY_SECRETS_PATH", str(tmp_path / "missing.json"))
+
+    def fake_run(cmd, **kwargs):
+        class Result:
+            returncode = 1
+            stdout = ""
+            stderr = "not found"
+
+        if cmd[:2] == ["/usr/bin/security", "find-generic-password"]:
+            return Result()
+        raise AssertionError(cmd)
+
+    monkeypatch.setattr("src.adapters.mercury_readonly.subprocess.run", fake_run)
     return tmp_path
 
 
@@ -150,6 +162,36 @@ class TestRequests:
         assert snapshot["total_available_usd"] == 15.5
         assert snapshot["read_only"] is True
         assert "generated_at" in snapshot
+        assert snapshot["capital_boundary"]["not_alpaca_buying_power"] is True
+        assert snapshot["capital_boundary"]["token_scope"] == "read_only"
+        assert snapshot["capital_boundary"]["official_api_base"] == "https://api.mercury.com/api/v1"
+        assert snapshot["capital_boundary"]["keep_alive_path"] == "/accounts"
+        assert snapshot["capital_boundary"]["unused_deletion_days"] == 45
+
+    def test_readonly_client_defaults_to_official_host(self):
+        from pathlib import Path
+
+        text = (Path(__file__).resolve().parents[1] / "src/adapters/mercury_readonly.py").read_text(
+            encoding="utf-8"
+        )
+        assert 'os.environ.get("MERCURY_API_BASE_URL", "https://api.mercury.com/api/v1")' in text
+        assert "backend.mercury.com" not in text
+
+
+class TestKeychainResolution:
+    def test_keychain_used_when_env_missing(self, clean_env, monkeypatch):
+        def fake_run(cmd, **kwargs):
+            class Result:
+                returncode = 0
+                stdout = "keychain-token\n"
+                stderr = ""
+
+            if cmd[:2] == ["/usr/bin/security", "find-generic-password"]:
+                return Result()
+            raise AssertionError(cmd)
+
+        monkeypatch.setattr("src.adapters.mercury_readonly.subprocess.run", fake_run)
+        assert resolve_token() == "keychain-token"
 
 
 class TestSummarizers:
