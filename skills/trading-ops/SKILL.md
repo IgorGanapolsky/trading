@@ -90,6 +90,10 @@ make graphify-check
 python scripts/zg_search.py --check-ready
 python scripts/zg_search.py "put credit stop loss"
 python scripts/zg_search.py --route rg "TradeGateway"
+# JIT task→harness pack (memory/plan/actions/skills) — docs/JIT_HARNESS.md
+python scripts/jit_harness.py --check-ready
+python scripts/jit_harness.py "account status"
+python scripts/jit_harness.py --json "put credit dry-run"
 ```
 
 Inventory unclean (`exit 2`) → **no new risk**.
