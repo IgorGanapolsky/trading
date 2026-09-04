@@ -82,13 +82,7 @@ FtsFn = Callable[[str, int], list[dict[str, Any]]]
 
 
 def _normalize_item(item: dict[str, Any], *, default_route: str) -> dict[str, Any]:
-    path = str(
-        item.get("path")
-        or item.get("file")
-        or item.get("source")
-        or item.get("id")
-        or ""
-    )
+    path = str(item.get("path") or item.get("file") or item.get("source") or item.get("id") or "")
     preview = str(item.get("snippet") or item.get("content") or item.get("preview") or "")
     line = item.get("line")
     try:
@@ -236,7 +230,8 @@ class ZgLocalSearch:
         if self._vector_fn is not None:
             try:
                 return [
-                    _normalize_item(x, default_route="vector") for x in self._vector_fn(query, limit)
+                    _normalize_item(x, default_route="vector")
+                    for x in self._vector_fn(query, limit)
                 ]
             except Exception as exc:  # noqa: BLE001
                 logger.warning("vector_fn failed: %s", exc)

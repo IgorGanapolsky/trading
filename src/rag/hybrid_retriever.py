@@ -141,10 +141,7 @@ class HybridRAGRetriever:
                     path=str(item.get("path") or item.get("file") or lid),
                     line=line,
                     preview=str(
-                        item.get("preview")
-                        or item.get("snippet")
-                        or item.get("content")
-                        or ""
+                        item.get("preview") or item.get("snippet") or item.get("content") or ""
                     )[:500],
                     score=round(scores[lid], 6),
                     route=route_label,
