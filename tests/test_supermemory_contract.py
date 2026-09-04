@@ -11,6 +11,7 @@ from src.rag.supermemory.client import (
     SuperMemoryClient,
     SuperMemoryError,
     _assert_http_url,
+    _stdlib_transport,
     build_auth_headers,
     build_document_body,
     build_search_body,
@@ -163,6 +164,20 @@ def test_client_add_document_posts_v3() -> None:
 def test_transport_rejects_non_http_schemes() -> None:
     with pytest.raises(SuperMemoryError, match="non-http"):
         _assert_http_url("file:///etc/passwd")
+
+
+def test_transport_dns_failure_is_supermemory_error_not_crash(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import urllib.error
+    import urllib.request
+
+    def fake_urlopen(*_args: object, **_kwargs: object):
+        raise urllib.error.URLError("nodename nor servname provided")
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    with pytest.raises(SuperMemoryError, match="network error"):
+        _stdlib_transport("POST", "https://api.supermemory.ai/v4/search", {}, b"{}")
 
 
 def test_missing_key_degrades() -> None:

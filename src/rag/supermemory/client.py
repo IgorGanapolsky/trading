@@ -117,6 +117,12 @@ def _stdlib_transport(
     except urllib.error.HTTPError as exc:
         payload = exc.read().decode("utf-8", errors="replace")
         return int(exc.code), dict(exc.headers.items()), payload
+    except urllib.error.URLError as exc:
+        raise SuperMemoryError(f"SuperMemory network error: {exc.reason}") from exc
+    except TimeoutError as exc:
+        raise SuperMemoryError("SuperMemory timeout") from exc
+    except OSError as exc:
+        raise SuperMemoryError(f"SuperMemory OS error: {exc}") from exc
 
 
 class SuperMemoryClient:
