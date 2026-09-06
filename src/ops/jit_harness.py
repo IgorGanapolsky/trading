@@ -1,23 +1,33 @@
 """JIT task→harness packs for trading ops (deterministic).
 
-Process steal from JIT-Agent (arxiv:2608.25593 / Rohan Paul X 2026-09-02):
-a smaller model with the *right task-specific harness* beats a stronger model
-in a fat fixed harness. We do **not** train or vendor JIT-Agent.
+Process steal from JIT-Agent (arxiv:2608.25593v2, Sept 2026): harness quality
+can dominate model quality. We do **not** train or vendor JIT-Agent.
 
-Four-module harness artifact (paper protocol, mapped to ops):
+Four-module artifact (JIT protocol → trading ops):
 
-* memory  — which ledgers / RAG surfaces to load
-* plan    — ordered operator steps
-* actions — allowed scripts / CLI commands
-* skills  — skill routes to load (and hard forbids)
+* memory     — which ledgers / RAG surfaces to load
+* plan       — ordered operator steps (planning)
+* actions    — allowed scripts / CLI commands (action loop)
+* capability — skills allowlist + forbid denylist (tool_policy)
+
+Sept 2026 standards we implement here (not clones):
+
+* Task-specific packs beat fat fixed runtimes
+* Lazy / minimal skill surface (in-repo skills only)
+* Deterministic fail-closed capability gates (paper-only forbids)
+* Selection receipts for archive/eval (logs/, not model training)
+* Explicit intent-conflict resolution in the classifier
 
 Selection is keyword/rule based and fail-closed for live execution.
 """
 
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
 from typing import Any
@@ -51,6 +61,8 @@ class HarnessPack:
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
         d["task_class"] = self.task_class.value
+        # JIT-Agent capability/tool_policy module = skills allow + forbid deny
+        d["capability"] = {"skills": list(self.skills), "forbid": list(self.forbid)}
         return d
 
     def compact(self) -> str:
@@ -341,27 +353,153 @@ _RULES: tuple[tuple[TaskClass, tuple[str, ...]], ...] = (
 )
 
 
+@dataclass(frozen=True)
+class ClassificationResult:
+    """Classifier output with explicit conflict notes (Sept 2026 harness honesty)."""
+
+    task_class: TaskClass
+    conflict_note: str = ""
+    matched_intents: tuple[str, ...] = ()
+
+
+def _detect_intents(text: str) -> list[str]:
+    """Detect intents from the same `_RULES` patterns used for classification."""
+    found: list[str] = []
+    # Extra dry-run / --status markers used for conflict policy.
+    extras = (
+        ("dry_run", (r"--dry-run",)),
+        ("status", (r"--status\b",)),
+    )
+    for name, pats in extras:
+        if any(re.search(p, text, flags=re.IGNORECASE) for p in pats):
+            found.append(name)
+    for task_class, patterns in _RULES:
+        name = task_class.value
+        if name in found:
+            continue
+        if any(re.search(p, text, flags=re.IGNORECASE) for p in patterns):
+            found.append(name)
+    return found
+
+
 def classify_task(prompt: str) -> TaskClass:
     """Map free-text operator intent to a task class (first match)."""
+    return classify_with_meta(prompt).task_class
+
+
+def classify_with_meta(prompt: str) -> ClassificationResult:
+    """Classify with conflict notes when multiple intents appear."""
     text = (prompt or "").strip().lower()
     if not text:
-        return TaskClass.UNKNOWN
-    # Explicit --status / status mode beats generic spy_put_credit dry-run match.
-    if re.search(r"--status\b", text) and not re.search(r"dry.?run", text):
-        return TaskClass.STATUS
+        return ClassificationResult(TaskClass.UNKNOWN)
+    intents = tuple(_detect_intents(text))
+    conflict_note = ""
+
+    # Explicit dry-run language (not bare spy_put_credit) vs --status.
+    explicit_dry = bool(re.search(r"dry.?run|--dry-run", text))
+    has_status_flag = bool(re.search(r"--status\b", text))
+    has_status = "status" in intents or has_status_flag
+
+    # --status without explicit dry-run → STATUS even if spy_put_credit is present
+    # (flag may appear before the command name).
+    if has_status_flag and not explicit_dry:
+        return ClassificationResult(TaskClass.STATUS, conflict_note, intents)
+
+    # Conflict policy: explicit dry-run wins over status when both present.
+    if explicit_dry and has_status:
+        conflict_note = (
+            "conflict: dry_run+status → selected dry_run "
+            "(plan path includes status reads; status-only pack would omit --dry-run)"
+        )
+        return ClassificationResult(TaskClass.DRY_RUN, conflict_note, intents)
+
     for task_class, patterns in _RULES:
         for pat in patterns:
             if re.search(pat, text, flags=re.IGNORECASE):
-                return task_class
-    return TaskClass.UNKNOWN
+                return ClassificationResult(task_class, conflict_note, intents)
+    return ClassificationResult(TaskClass.UNKNOWN, conflict_note, intents)
 
 
 def select_harness(prompt: str) -> HarnessPack:
     """Just-in-time harness selection for a trading ops prompt."""
-    task_class = classify_task(prompt)
-    if task_class == TaskClass.UNKNOWN:
+    meta = classify_with_meta(prompt)
+    if meta.task_class == TaskClass.UNKNOWN:
         return _UNKNOWN
-    return _PACKS[task_class]
+    return _PACKS[meta.task_class]
+
+
+_SECRETISH = re.compile(r"(?i)\b(api[_-]?key|secret|token|password|authorization)\b\s*[:=]?\s*\S+")
+
+
+def redact_prompt_for_receipt(prompt: str) -> str:
+    """Strip credential-shaped tokens before writing selection archives."""
+    return _SECRETISH.sub(r"\1=[REDACTED]", prompt or "")
+
+
+def pack_fingerprint(pack: HarnessPack) -> str:
+    """Stable short hash of pack contents for receipts/archive."""
+    payload = json.dumps(pack.to_dict(), sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode()).hexdigest()[:16]
+
+
+def missing_action_scripts(pack: HarnessPack, *, repo_root: Path | None = None) -> list[str]:
+    """Return action command scripts that do not exist under repo_root."""
+    root = repo_root or Path(__file__).resolve().parents[2]
+    missing: list[str] = []
+    for action in pack.actions:
+        # Extract first scripts/*.py or make target path when present
+        m = re.search(r"scripts/[\w./-]+\.py", action)
+        if not m:
+            continue
+        rel = m.group(0)
+        if not (root / rel).is_file():
+            missing.append(rel)
+    return missing
+
+
+def selection_receipt(
+    prompt: str,
+    *,
+    repo_root: Path | None = None,
+    full_budget: int = 12000,
+) -> dict[str, Any]:
+    """Full selection artifact: pack + capability + conflicts + savings + fingerprint."""
+    meta = classify_with_meta(prompt)
+    pack = _UNKNOWN if meta.task_class == TaskClass.UNKNOWN else _PACKS[meta.task_class]
+    savings = estimate_savings_vs_full_context(pack, full_budget=full_budget)
+    missing_skills = unresolved_skills(pack, repo_root=repo_root)
+    missing_scripts = missing_action_scripts(pack, repo_root=repo_root)
+    return {
+        "prompt": redact_prompt_for_receipt(prompt),
+        "task_class": pack.task_class.value,
+        "matched_intents": list(meta.matched_intents),
+        "conflict_note": meta.conflict_note,
+        "pack": pack.to_dict(),
+        "fingerprint": pack_fingerprint(pack),
+        "savings_hint": savings,
+        "capability_ok": not missing_skills and not missing_scripts,
+        "unresolved_skills": missing_skills,
+        "missing_action_scripts": missing_scripts,
+        "standards": {
+            "source": "arxiv:2608.25593v2 + Sept 2026 harness craft (deterministic)",
+            "modules": ["memory", "plan", "actions", "capability"],
+            "train_jit_agent": False,
+        },
+    }
+
+
+def append_selection_receipt(receipt: dict[str, Any], *, repo_root: Path | None = None) -> Path:
+    """Append one JSONL receipt under logs/ (gitignored archive; not training)."""
+    root = repo_root or Path(__file__).resolve().parents[2]
+    path = root / "logs" / "jit_harness_receipts.jsonl"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    row = {
+        **receipt,
+        "ts": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(row, separators=(",", ":")) + "\n")
+    return path
 
 
 def list_task_classes() -> list[dict[str, Any]]:
@@ -422,13 +560,21 @@ def unresolved_skills(
 
 
 def readiness_report(repo_root: Path | None = None) -> dict[str, Any]:
-    """Catalog readiness: ready only when every pack skill resolves in-repo."""
+    """Catalog readiness: skills + action scripts must resolve in-repo."""
     missing = unresolved_skills(repo_root=repo_root)
+    missing_scripts: list[str] = []
+    seen: set[str] = set()
+    for pack in [*_PACKS.values(), _UNKNOWN]:
+        for rel in missing_action_scripts(pack, repo_root=repo_root):
+            if rel not in seen:
+                seen.add(rel)
+                missing_scripts.append(rel)
     return {
-        "ready": not missing,
-        "source": "arxiv:2608.25593 process steal (deterministic)",
+        "ready": not missing and not missing_scripts,
+        "source": "arxiv:2608.25593v2 process steal (deterministic, Sept 2026)",
         "task_classes": list_task_classes(),
         "unresolved_skills": missing,
+        "missing_action_scripts": missing_scripts,
         "skill_roots": [str(p) for p in repo_skill_roots(repo_root)],
     }
 

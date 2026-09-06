@@ -8,10 +8,12 @@ from pathlib import Path
 from src.ops.jit_harness import (
     TaskClass,
     classify_task,
+    classify_with_meta,
     estimate_savings_vs_full_context,
     list_task_classes,
     readiness_report,
     select_harness,
+    selection_receipt,
     unresolved_skills,
 )
 
@@ -104,3 +106,53 @@ def test_broker_sync_forbids_live_sync_script():
     assert "sync_alpaca_state.py" not in joined
     assert any("sync_alpaca_state" in f for f in pack.forbid)
     assert pack.skills == ("trading-ops",)
+
+
+def test_status_flag_before_command():
+    assert classify_task("--status spy_put_credit") == TaskClass.STATUS
+
+
+def test_dry_run_wins_status_conflict():
+    meta = classify_with_meta("spy_put_credit --status --dry-run")
+    assert meta.task_class == TaskClass.DRY_RUN
+    assert "conflict" in meta.conflict_note
+    assert "dry_run" in meta.matched_intents and "status" in meta.matched_intents
+
+
+def test_selection_receipt_capability_and_fingerprint():
+    root = Path(__file__).resolve().parents[1]
+    receipt = selection_receipt("account status", repo_root=root)
+    assert receipt["task_class"] == TaskClass.STATUS.value
+    assert receipt["capability_ok"] is True
+    assert receipt["pack"]["capability"]["skills"] == ["trading-ops"]
+    assert len(receipt["fingerprint"]) == 16
+    assert receipt["standards"]["train_jit_agent"] is False
+
+
+def test_cli_receipt():
+    path = Path(__file__).resolve().parents[1] / "scripts" / "jit_harness.py"
+    spec = importlib.util.spec_from_file_location("jit_harness_cli_receipt", path)
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    assert mod.main(["--receipt", "put credit dry-run"]) == 0
+
+
+def test_rule_only_status_intent_recorded():
+    meta = classify_with_meta("show equity")
+    assert meta.task_class == TaskClass.STATUS
+    assert "status" in meta.matched_intents
+
+
+def test_receipt_redacts_secretish_prompt():
+    root = Path(__file__).resolve().parents[1]
+    receipt = selection_receipt("status api_key=sk-live-ABC123", repo_root=root)
+    assert "sk-live-ABC123" not in receipt["prompt"]
+    assert "REDACTED" in receipt["prompt"]
+
+
+def test_readiness_includes_action_script_field():
+    root = Path(__file__).resolve().parents[1]
+    report = readiness_report(repo_root=root)
+    assert "missing_action_scripts" in report
+    assert report["missing_action_scripts"] == []
