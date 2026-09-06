@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read  # Reduced from write to read-only since this is a validation workflow
 
 concurrency:
   group: ${{ format('state-writer-{0}-{1}', github.repository, github.ref_name || 'main') }}

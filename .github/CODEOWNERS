@@ -1,0 +1,21 @@
+# Code owners for the trading system
+
+# Repository owner and primary maintainer
+* @IgorGanapolsky
+
+# Specific directories
+.github/ @IgorGanapolsky
+src/ @IgorGanapolsky
+scripts/ @IgorGanapolsky
+tests/ @IgorGanapolsky
+docs/ @IgorGanapolsky
+skills/ @IgorGanapolsky
+config/ @IgorGanapolsky
+
+# Configuration files
+*.md @IgorGanapolsky
+*.py @IgorGanapolsky
+*.json @IgorGanapolsky
+*.yml @IgorGanapolsky
+*.yaml @IgorGanapolsky
+*.toml @IgorGanapolsky

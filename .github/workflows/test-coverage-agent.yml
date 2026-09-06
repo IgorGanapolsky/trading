@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read  # Only reads content and uploads artifacts, no content modification
   pull-requests: write
 
 jobs:
