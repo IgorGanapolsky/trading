@@ -19,6 +19,7 @@ from __future__ import annotations
 import re
 from dataclasses import asdict, dataclass
 from enum import StrEnum
+from pathlib import Path
 from typing import Any
 
 
@@ -99,7 +100,7 @@ _PACKS: dict[TaskClass, HarnessPack] = {
             "python scripts/spy_put_credit.py --status",
             "python scripts/system_health_check.py",
         ),
-        skills=("trading-ops", "alpaca-paper-trading"),
+        skills=("trading-ops",),
         forbid=_LIVE_FORBIDS + ("make dry-run unless asked",),
         token_budget_hint=2500,
         rationale="Read-only status; smallest memory surface.",
@@ -122,7 +123,7 @@ _PACKS: dict[TaskClass, HarnessPack] = {
             "python scripts/spy_put_credit.py --dry-run",
             "make dry-run",
         ),
-        skills=("trading-ops", "alpaca-paper-trading"),
+        skills=("trading-ops",),
         forbid=_LIVE_FORBIDS + ("omit --dry-run", "claim planned trade as filled"),
         token_budget_hint=4000,
         rationale="Paper plan path; inventory gate before risk.",
@@ -166,7 +167,7 @@ _PACKS: dict[TaskClass, HarnessPack] = {
             'python scripts/zg_search.py --route rg "<symbol>"',
             'python scripts/graph_rag_query.py --query "<q>" --graph-only',
         ),
-        skills=("trading-ops", "zg-local-first-search", "fleet-repo-intelligence"),
+        skills=("trading-ops",),
         forbid=_LIVE_FORBIDS + ("invent expectancy from 0 trades",),
         token_budget_hint=3500,
         rationale="Compact retrieval beats dumping full RAG into context.",
@@ -190,13 +191,7 @@ _PACKS: dict[TaskClass, HarnessPack] = {
             "gh pr merge <N> --auto --squash",
             "make coordination-preflight",
         ),
-        skills=(
-            "trading-ops",
-            "fleet-pr-hygiene",
-            "trading-pr-base-sha-bare",
-            "three-bus-ship-cycle",
-            "multi-agent-coord",
-        ),
+        skills=("trading-ops",),
         forbid=_LIVE_FORBIDS + ("gh pr merge --admin", "force-push"),
         token_budget_hint=5000,
         rationale="PR hygiene does not need trade ledgers or strategy code.",
@@ -227,18 +222,24 @@ _PACKS: dict[TaskClass, HarnessPack] = {
         task_class=TaskClass.BROKER_SYNC,
         memory=("data/system_state.json", "data/trades.json"),
         plan=(
-            "Refresh broker snapshot",
-            "Refresh paired closed ledger",
+            "Prefer reading existing data/system_state.json (no live sync)",
+            "Refresh paired closed ledger via paper client only",
             "Re-read system_state mtime before trading claims",
+            "Do not run sync_alpaca_state.py (live branch when brokerage env present)",
         ),
         actions=(
-            "python scripts/sync_alpaca_state.py",
+            "python scripts/spy_put_credit.py --status",
             "python scripts/sync_closed_positions.py",
         ),
-        skills=("trading-ops", "alpaca-paper-trading"),
-        forbid=_LIVE_FORBIDS + ("treat unpaired fills as trades",),
+        skills=("trading-ops",),
+        forbid=_LIVE_FORBIDS
+        + (
+            "treat unpaired fills as trades",
+            "python scripts/sync_alpaca_state.py",
+            "live brokerage sync",
+        ),
         token_budget_hint=3000,
-        rationale="Sync mutates local ledgers only; still paper-scoped.",
+        rationale="Paper-scoped ledger refresh; never invoke live sync_alpaca_state.",
     ),
 }
 
@@ -383,6 +384,50 @@ def list_task_classes() -> list[dict[str, Any]]:
         }
     )
     return out
+
+
+def repo_skill_roots(repo_root: Path | None = None) -> tuple[Path, ...]:
+    """In-repo skill directories used for readiness honesty."""
+    root = repo_root or Path(__file__).resolve().parents[2]
+    return (root / "skills",)
+
+
+def resolve_skill(name: str, repo_root: Path | None = None) -> Path | None:
+    """Return SKILL.md path if `name` exists under an in-repo skills root."""
+    for base in repo_skill_roots(repo_root):
+        candidate = base / name / "SKILL.md"
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def unresolved_skills(
+    pack: HarnessPack | None = None, *, repo_root: Path | None = None
+) -> list[str]:
+    """Skill names referenced by packs that lack an in-repo SKILL.md."""
+    packs = [pack] if pack is not None else [*_PACKS.values(), _UNKNOWN]
+    missing: list[str] = []
+    seen: set[str] = set()
+    for p in packs:
+        for name in p.skills:
+            if name in seen:
+                continue
+            seen.add(name)
+            if resolve_skill(name, repo_root) is None:
+                missing.append(name)
+    return missing
+
+
+def readiness_report(repo_root: Path | None = None) -> dict[str, Any]:
+    """Catalog readiness: ready only when every pack skill resolves in-repo."""
+    missing = unresolved_skills(repo_root=repo_root)
+    return {
+        "ready": not missing,
+        "source": "arxiv:2608.25593 process steal (deterministic)",
+        "task_classes": list_task_classes(),
+        "unresolved_skills": missing,
+        "skill_roots": [str(p) for p in repo_skill_roots(repo_root)],
+    }
 
 
 def estimate_savings_vs_full_context(pack: HarnessPack, full_budget: int = 12000) -> dict[str, Any]:

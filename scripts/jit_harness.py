@@ -18,7 +18,7 @@ if str(ROOT) not in sys.path:
 
 from src.ops.jit_harness import (  # noqa: E402
     estimate_savings_vs_full_context,
-    list_task_classes,
+    readiness_report,
     select_harness,
 )
 
@@ -44,13 +44,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.check_ready or args.list:
-        payload = {
-            "ready": True,
-            "source": "arxiv:2608.25593 process steal (deterministic)",
-            "task_classes": list_task_classes(),
-        }
+        payload = readiness_report(repo_root=ROOT)
         print(json.dumps(payload, indent=2))
-        return 0
+        return 0 if payload.get("ready") else 1
 
     if not (args.prompt or "").strip():
         parser.error("prompt is required unless --list / --check-ready")

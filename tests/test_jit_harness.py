@@ -10,7 +10,9 @@ from src.ops.jit_harness import (
     classify_task,
     estimate_savings_vs_full_context,
     list_task_classes,
+    readiness_report,
     select_harness,
+    unresolved_skills,
 )
 
 
@@ -83,3 +85,20 @@ def test_cli_json_and_ready():
 
     assert mod.main(["--check-ready"]) == 0
     assert mod.main(["--json", "account status"]) == 0
+
+
+def test_readiness_skills_resolve_in_repo():
+    root = Path(__file__).resolve().parents[1]
+    report = readiness_report(repo_root=root)
+    assert report["ready"] is True
+    assert report["unresolved_skills"] == []
+    assert unresolved_skills(repo_root=root) == []
+
+
+def test_broker_sync_forbids_live_sync_script():
+    pack = select_harness("broker sync alpaca")
+    assert pack.task_class == TaskClass.BROKER_SYNC
+    joined = " ".join(pack.actions)
+    assert "sync_alpaca_state.py" not in joined
+    assert any("sync_alpaca_state" in f for f in pack.forbid)
+    assert pack.skills == ("trading-ops",)
