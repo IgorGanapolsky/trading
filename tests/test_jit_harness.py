@@ -136,3 +136,23 @@ def test_cli_receipt():
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     assert mod.main(["--receipt", "put credit dry-run"]) == 0
+
+
+def test_rule_only_status_intent_recorded():
+    meta = classify_with_meta("show equity")
+    assert meta.task_class == TaskClass.STATUS
+    assert "status" in meta.matched_intents
+
+
+def test_receipt_redacts_secretish_prompt():
+    root = Path(__file__).resolve().parents[1]
+    receipt = selection_receipt("status api_key=sk-live-ABC123", repo_root=root)
+    assert "sk-live-ABC123" not in receipt["prompt"]
+    assert "REDACTED" in receipt["prompt"]
+
+
+def test_readiness_includes_action_script_field():
+    root = Path(__file__).resolve().parents[1]
+    report = readiness_report(repo_root=root)
+    assert "missing_action_scripts" in report
+    assert report["missing_action_scripts"] == []

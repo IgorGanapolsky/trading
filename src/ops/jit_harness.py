@@ -363,19 +363,21 @@ class ClassificationResult:
 
 
 def _detect_intents(text: str) -> list[str]:
-    """Lightweight multi-intent detector for conflict resolution."""
+    """Detect intents from the same `_RULES` patterns used for classification."""
     found: list[str] = []
-    checks = (
-        ("dry_run", r"dry.?run|--dry-run|\bplan.?trade\b"),
-        ("status", r"--status\b|\bstatus\b|\bhealth\b"),
-        ("inventory", r"inventory|unclean|orphan|lot.?mismatch"),
-        ("pr_hygiene", r"\bpr\b|pull request|\bmerge\b|\bci\b|automerge"),
-        ("broker_sync", r"sync.?alpaca|broker.?sync|sync_closed"),
-        ("residual_ic", r"residual.?ic|iron.?condor|\bic_simple\b"),
-        ("rag_search", r"\brag\b|zg_search|\blesson\b|graph.?rag"),
+    # Extra dry-run / --status markers used for conflict policy.
+    extras = (
+        ("dry_run", (r"--dry-run",)),
+        ("status", (r"--status\b",)),
     )
-    for name, pat in checks:
-        if re.search(pat, text, flags=re.IGNORECASE):
+    for name, pats in extras:
+        if any(re.search(p, text, flags=re.IGNORECASE) for p in pats):
+            found.append(name)
+    for task_class, patterns in _RULES:
+        name = task_class.value
+        if name in found:
+            continue
+        if any(re.search(p, text, flags=re.IGNORECASE) for p in patterns):
             found.append(name)
     return found
 
@@ -393,19 +395,23 @@ def classify_with_meta(prompt: str) -> ClassificationResult:
     intents = tuple(_detect_intents(text))
     conflict_note = ""
 
-    # Conflict policy (deterministic): dry-run wins over status when both present.
-    # Status alone (incl. --status before/after spy_put_credit) stays read-only.
-    has_dry = "dry_run" in intents
-    has_status = "status" in intents
-    if has_dry and has_status:
+    # Explicit dry-run language (not bare spy_put_credit) vs --status.
+    explicit_dry = bool(re.search(r"dry.?run|--dry-run", text))
+    has_status_flag = bool(re.search(r"--status\b", text))
+    has_status = "status" in intents or has_status_flag
+
+    # --status without explicit dry-run → STATUS even if spy_put_credit is present
+    # (flag may appear before the command name).
+    if has_status_flag and not explicit_dry:
+        return ClassificationResult(TaskClass.STATUS, conflict_note, intents)
+
+    # Conflict policy: explicit dry-run wins over status when both present.
+    if explicit_dry and has_status:
         conflict_note = (
             "conflict: dry_run+status → selected dry_run "
             "(plan path includes status reads; status-only pack would omit --dry-run)"
         )
         return ClassificationResult(TaskClass.DRY_RUN, conflict_note, intents)
-
-    if re.search(r"--status\b", text) and not has_dry:
-        return ClassificationResult(TaskClass.STATUS, conflict_note, intents)
 
     for task_class, patterns in _RULES:
         for pat in patterns:
@@ -420,6 +426,14 @@ def select_harness(prompt: str) -> HarnessPack:
     if meta.task_class == TaskClass.UNKNOWN:
         return _UNKNOWN
     return _PACKS[meta.task_class]
+
+
+_SECRETISH = re.compile(r"(?i)\b(api[_-]?key|secret|token|password|authorization)\b\s*[:=]?\s*\S+")
+
+
+def redact_prompt_for_receipt(prompt: str) -> str:
+    """Strip credential-shaped tokens before writing selection archives."""
+    return _SECRETISH.sub(r"\1=[REDACTED]", prompt or "")
 
 
 def pack_fingerprint(pack: HarnessPack) -> str:
@@ -456,7 +470,7 @@ def selection_receipt(
     missing_skills = unresolved_skills(pack, repo_root=repo_root)
     missing_scripts = missing_action_scripts(pack, repo_root=repo_root)
     return {
-        "prompt": prompt,
+        "prompt": redact_prompt_for_receipt(prompt),
         "task_class": pack.task_class.value,
         "matched_intents": list(meta.matched_intents),
         "conflict_note": meta.conflict_note,
@@ -546,13 +560,21 @@ def unresolved_skills(
 
 
 def readiness_report(repo_root: Path | None = None) -> dict[str, Any]:
-    """Catalog readiness: ready only when every pack skill resolves in-repo."""
+    """Catalog readiness: skills + action scripts must resolve in-repo."""
     missing = unresolved_skills(repo_root=repo_root)
+    missing_scripts: list[str] = []
+    seen: set[str] = set()
+    for pack in [*_PACKS.values(), _UNKNOWN]:
+        for rel in missing_action_scripts(pack, repo_root=repo_root):
+            if rel not in seen:
+                seen.add(rel)
+                missing_scripts.append(rel)
     return {
-        "ready": not missing,
+        "ready": not missing and not missing_scripts,
         "source": "arxiv:2608.25593v2 process steal (deterministic, Sept 2026)",
         "task_classes": list_task_classes(),
         "unresolved_skills": missing,
+        "missing_action_scripts": missing_scripts,
         "skill_roots": [str(p) for p in repo_skill_roots(repo_root)],
     }
 
