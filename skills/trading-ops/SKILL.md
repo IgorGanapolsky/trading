@@ -94,6 +94,8 @@ python scripts/zg_search.py --route rg "TradeGateway"
 python scripts/jit_harness.py --check-ready
 python scripts/jit_harness.py "account status"
 python scripts/jit_harness.py --json "put credit dry-run"
+python scripts/jit_harness.py --receipt "spy_put_credit --status --dry-run"
+python scripts/jit_harness.py --receipt --record "merge ready PRs"
 ```
 
 Inventory unclean (`exit 2`) → **no new risk**.
