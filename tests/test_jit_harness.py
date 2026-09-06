@@ -19,6 +19,8 @@ from src.ops.jit_harness import (
 def test_classify_status():
     assert classify_task("what is account status?") == TaskClass.STATUS
     assert classify_task("show kill switch health") == TaskClass.STATUS
+    assert classify_task("spy_put_credit --status") == TaskClass.STATUS
+    assert select_harness("spy_put_credit --status").task_class == TaskClass.STATUS
 
 
 def test_classify_dry_run():

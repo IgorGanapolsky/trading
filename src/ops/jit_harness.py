@@ -311,7 +311,7 @@ _RULES: tuple[tuple[TaskClass, tuple[str, ...]], ...] = (
             r"dry.?run",
             r"plan.?trade",
             r"put.?credit.*plan",
-            r"spy_put_credit",
+            r"spy_put_credit(?!.*--status)",
             r"\bmake dry-run\b",
         ),
     ),
@@ -346,6 +346,9 @@ def classify_task(prompt: str) -> TaskClass:
     text = (prompt or "").strip().lower()
     if not text:
         return TaskClass.UNKNOWN
+    # Explicit --status / status mode beats generic spy_put_credit dry-run match.
+    if re.search(r"--status\b", text) and not re.search(r"dry.?run", text):
+        return TaskClass.STATUS
     for task_class, patterns in _RULES:
         for pat in patterns:
             if re.search(pat, text, flags=re.IGNORECASE):
