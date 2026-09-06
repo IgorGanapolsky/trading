@@ -16,7 +16,8 @@ def test_ci_workflow_runs_trunk_test_runner_and_workflow_validation():
     # Accept either tag form (@v7) or SHA-pinned form (@<sha> # v7).
     # Post-CVE-2025-30066 audit pinned all actions to full SHAs.
     assert "actions/upload-artifact@v7" in workflow or "# v7" in workflow
-    assert "requirements-ci.txt" in workflow
+    assert "./.github/actions/setup-uv-python" in workflow
+    assert "extra: dev" in workflow
 
 
 def test_ci_runner_script_exists_and_has_valid_bash_syntax():
