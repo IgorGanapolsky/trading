@@ -83,6 +83,23 @@ def test_edit_guard_invokes_file_scoped_coordination_preflight() -> None:
     assert '--file "${FILE_PATH}"' in content
 
 
+_SHA_PINNED_ACTION = re.compile(r"^[^@]+@[0-9a-f]{40}$")
+
+
+def _unpinned_remote_uses(text: str) -> list[str]:
+    """Remote marketplace actions must be SHA-pinned; local and docker uses are exempt.
+
+    Matches tests/test_workflow_integrity.py::test_actions_are_sha_pinned.
+    Scorecard Pinned-Dependencies does not require a SHA on `uses: ./…`.
+    """
+    uses = re.findall(r"^\s*-?\s*uses:\s*([^\s#]+)", text, re.MULTILINE)
+    return [
+        item
+        for item in uses
+        if not item.startswith(("./", "docker://")) and not _SHA_PINNED_ACTION.fullmatch(item)
+    ]
+
+
 def test_github_workflow_is_bounded_and_sha_pinned() -> None:
     path = ROOT / ".github/workflows/agent-coordination.yml"
     text = path.read_text(encoding="utf-8")
@@ -90,10 +107,20 @@ def test_github_workflow_is_bounded_and_sha_pinned() -> None:
     assert isinstance(workflow, dict)
     assert "pull_request" in text
     assert workflow["jobs"]["validate"]["timeout-minutes"] == 5
-    uses = re.findall(r"^\s*uses:\s*([^\s#]+)", text, re.MULTILINE)
+    uses = re.findall(r"^\s*-?\s*uses:\s*([^\s#]+)", text, re.MULTILINE)
     assert uses
-    assert all(re.fullmatch(r"[^@]+@[0-9a-f]{40}", item) for item in uses)
+    assert _unpinned_remote_uses(text) == []
+    assert any(item.startswith("./") for item in uses)
     assert "agent_coordination.py validate-pr" in text
+
+
+def test_local_composite_uses_are_not_treated_as_unpinned() -> None:
+    sample = (
+        "      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1\n"
+        "      - uses: ./.github/actions/setup-uv-python\n"
+        "      - uses: actions/setup-python@v5\n"
+    )
+    assert _unpinned_remote_uses(sample) == ["actions/setup-python@v5"]
 
 
 def test_pr_template_contains_machine_checked_fields() -> None:
