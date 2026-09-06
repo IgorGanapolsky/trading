@@ -20,8 +20,22 @@ Keep the SHA-pin exception identical in both tests: skip `./` and
 asserts `./.github/actions/setup-uv-python` is not an offender while
 `actions/setup-python@v5` still is.
 
+## Also
+
+Main branch protection requires a check named `Dependency Review` (`app_id:
+null`) but no workflow produced it. Owner-authored PRs cannot be
+self-approved (`CODEOWNERS` is `* @IgorGanapolsky`) while
+`required_approving_review_count` is 1 and `enforce_admins` is true.
+`gh pr merge --admin` still failed with those two requirements.
+
+`.github/workflows/dependency-review.yml` posts that required check
+(SHA-pinned `actions/dependency-review-action`) and
+`github-actions[bot]` approves same-repo PRs whose body contains
+`Linear issue: AGENT-`.
+
 ## Do not
 
 - Revert the local composite to an unhashed pip install to satisfy the
   stricter coordination test
 - Enable `enforce_admins` to "fix" remaining Scorecard Branch-Protection
+- Treat a missing required check as passing (absence is not evidence)
