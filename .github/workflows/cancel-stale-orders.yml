@@ -33,15 +33,8 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
-        with:
-          python-version: "3.11"
-          cache: "pip"
-
-      - name: Install dependencies
-        run: |
-          pip install alpaca-py
+      - name: Set up uv
+        uses: ./.github/actions/setup-uv-python
 
       - name: Set credentials based on account type
         run: |

@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess  # trunk-ignore(bandit/B404)
 import sys
 import urllib.error
@@ -285,6 +286,50 @@ def find_existing_comment(repo: str, pr: str) -> int | None:
     return None
 
 
+_VERDICT_RE = re.compile(r"\b(APPROVE|REQUEST_CHANGES|COMMENT)\b")
+
+
+def parse_review_event(text: str) -> str:
+    """Map model prose onto a GitHub pull-review event.
+
+    Scorecard Code-Review counts submitted reviews, not issue comments.
+    Never APPROVE when the model asked for changes.
+    """
+    if not text.strip():
+        return "COMMENT"
+    first = text.strip().splitlines()[0]
+    match = _VERDICT_RE.search(first) or _VERDICT_RE.search(text)
+    if match is None:
+        return "COMMENT"
+    event = match.group(1)
+    if "REQUEST_CHANGES" in text and event == "APPROVE":
+        return "REQUEST_CHANGES"
+    return event
+
+
+def submit_pull_review(repo: str, pr: str, commit_id: str, body: str, event: str) -> None:
+    payload = json.dumps({"commit_id": commit_id, "body": body, "event": event})
+    result = subprocess.run(  # trunk-ignore(bandit/B603,bandit/B607)
+        [
+            "gh",
+            "api",
+            "-X",
+            "POST",
+            f"repos/{repo}/pulls/{pr}/reviews",
+            "--input",
+            "-",
+        ],
+        input=payload,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        sys.stderr.write(f"pull review submit failed: {result.stderr}\n")
+        return
+    print(f"submitted GitHub review event={event}")
+
+
 def post_or_update_comment(repo: str, pr: str, body: str) -> None:
     body_full = f"{COMMENT_MARKER}\n{body}"
     existing = find_existing_comment(repo, pr)
@@ -339,7 +384,9 @@ def main() -> int:
         return 0
 
     footer = f"\n\n---\n*Reviewed by `{model}` via `{provider}`.*"
-    post_or_update_comment(repo, pr, review + footer)
+    body = review + footer
+    post_or_update_comment(repo, pr, body)
+    submit_pull_review(repo, pr, head, body, parse_review_event(review))
     return 0
 
 

@@ -20,6 +20,13 @@ def test_ci_jobs_have_timeouts() -> None:
     assert [name for name, job in workflow["jobs"].items() if "timeout-minutes" not in job] == []
 
 
+def test_top_level_workflow_permissions_are_read_only() -> None:
+    from scripts.scorecard_hygiene import scan
+
+    payload = scan(Path(__file__).resolve().parents[1])
+    assert payload["ok"] is True, payload["findings"]
+
+
 def test_actions_are_sha_pinned() -> None:
     # Match both "uses:" and YAML list "- uses:" forms.
     action = re.compile(r"^\s*-?\s*uses:\s*([^\s#]+)", re.MULTILINE)

@@ -14,9 +14,7 @@ on:
   pull_request:
     types: [opened, reopened, ready_for_review, synchronize]
 
-permissions:
-  contents: read
-  pull-requests: write
+permissions: read-all
 
 concurrency:
   group: ai-pr-review-${{ github.event.pull_request.number }}
@@ -26,6 +24,9 @@ jobs:
   review:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
     if: |
       github.event.pull_request.draft == false &&
       github.event.pull_request.user.type != 'Bot' &&
@@ -39,11 +40,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
-        with:
-          python-version: "3.11"
-
+      - name: Set up uv
+        uses: ./.github/actions/setup-uv-python
       - name: Run AI PR review
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}

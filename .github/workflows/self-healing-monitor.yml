@@ -21,14 +21,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
-        with:
-          python-version: "3.11"
-          cache: "pip"
-
-      - name: Install dependencies
-        run: pip install alpaca-py python-dotenv
+      - name: Set up uv
+        uses: ./.github/actions/setup-uv-python
 
       - name: Run System Health Check
         id: health_check
