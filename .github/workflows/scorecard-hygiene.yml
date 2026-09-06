@@ -1,0 +1,42 @@
+name: Scorecard Hygiene Gate
+
+# Local fail-closed Scorecard contract. Never files GitHub Issues (LL-569).
+# Complements OpenSSF Scorecard SARIF upload: this job fails the PR if a
+# workflow reintroduces top-level write tokens or unhashed pip.
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: 30 6 * * 1
+  workflow_dispatch:
+
+permissions: read-all
+
+concurrency:
+  group: scorecard-hygiene-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: Scorecard hygiene
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up uv
+        uses: ./.github/actions/setup-uv-python
+        with:
+          extra: dev
+
+      - name: Run hygiene gate
+        run: python scripts/scorecard_hygiene.py --json
+
+      - name: Unit tests
+        run: pytest -q tests/test_scorecard_hygiene.py tests/test_workflow_integrity.py

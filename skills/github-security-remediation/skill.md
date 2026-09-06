@@ -16,6 +16,7 @@ This skill provides a comprehensive approach to addressing GitHub security alert
 #### Workflow Permission Audit and Reduction
 - Review all workflow files in `.github/workflows/`
 - Apply principle of least privilege: reduce `contents: write` to `contents: read` where possible
+<<<<<<< HEAD
 - Maintain only necessary permissions for each workflow
 
 #### Example Fix
@@ -30,6 +31,11 @@ permissions:
   contents: read  # Reduced from write
   pull-requests: write
 ```
+||||||| bca54bb45
+=======
+- Use `permissions: read-all` for maximum security where appropriate
+- Maintain only necessary permissions for each workflow
+>>>>>>> 65d7850d3
 
 ### 2. Branch Protection Configuration
 

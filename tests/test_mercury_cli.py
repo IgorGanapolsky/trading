@@ -192,5 +192,5 @@ class TestHeartbeatWorkflowContract:
         assert "print('heartbeat_ok')" in text
         assert "account_count" not in text
         assert "total_available_usd" not in text
-        assert "requests>=2.34.2,<3.0.0" in text
-        assert "pip install requests\n" not in text
+        assert "./.github/actions/setup-uv-python" in text
+        assert "pip install" not in text

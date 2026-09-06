@@ -13,11 +13,7 @@ concurrency:
   group: codeql-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  actions: read
-  contents: read
-  security-events: write
-  pull-requests: read
+permissions: read-all
 
 jobs:
   analyze:
@@ -26,6 +22,11 @@ jobs:
     if: ${{ github.event_name != 'pull_request' || github.actor != 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+      pull-requests: read
     strategy:
       fail-fast: false
       matrix:

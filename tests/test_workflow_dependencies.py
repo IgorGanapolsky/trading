@@ -19,6 +19,9 @@ def test_workflows_use_only_canonical_requirement_files() -> None:
 def test_ci_installs_lint_and_test_tools() -> None:
     requirements = Path("requirements-ci.txt").read_text()
     assert ".[dev]" in requirements
+    ci = Path(".github/workflows/ci.yml").read_text()
+    assert "./.github/actions/setup-uv-python" in ci
+    assert "extra: dev" in ci
 
 
 def test_minimal_dependencies_exclude_heavy_optional_rag_stack() -> None:

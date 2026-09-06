@@ -45,6 +45,7 @@ fix_token_permissions() {
     # Find and update workflow files with overly broad permissions
     for workflow_file in .github/workflows/*.yml .github/workflows/*.yaml; do
         if [ -f "$workflow_file" ]; then
+<<<<<<< HEAD
             # Replace overly broad permissions
             sed -i.bak 's/contents: write # Required for creating PRs and managing repository content/contents: read # Only read access needed for most operations/' "$workflow_file" 2>/dev/null || true
             sed -i.bak 's/contents: write # Required for merging PRs/contents: read # Only read access needed for most operations/' "$workflow_file" 2>/dev/null || true
@@ -130,6 +131,51 @@ When a security vulnerability is reported:
 
 - Always use specific commit hashes for GitHub Actions instead of version tags
 - Apply principle of least privilege when setting workflow permissions
+||||||| bca54bb45
+=======
+            # Look for overly broad permissions and suggest using read-all
+            if grep -q "contents: write" "$workflow_file" && ! grep -q "permissions: read-all" "$workflow_file"; then
+                echo "Found contents: write in $workflow_file - consider using permissions: read-all for better security"
+            fi
+        fi
+    done
+}
+
+# Function to update pull request template with security considerations
+update_pr_template() {
+    echo "Pull request template already updated with security considerations."
+}
+
+# Function to enhance security documentation
+enhance_security_docs() {
+    echo "Enhancing security documentation..."
+    
+    SECURITY_FILE="SECURITY.md"
+    
+    if [ -f "$SECURITY_FILE" ]; then
+        # Check if enhanced content is already present
+        if ! grep -q "Security Response Process" "$SECURITY_FILE"; then
+            # Append enhanced security content
+            cat >> "$SECURITY_FILE" << 'EOF'
+
+## Security Response Process
+
+When a security vulnerability is reported:
+
+1. The security team will acknowledge receipt of the vulnerability within 48 hours
+2. An initial assessment will be conducted to determine severity and impact
+3. A fix will be developed and tested in a private branch
+4. The fix will be deployed to affected systems
+5. A coordinated disclosure will be made according to responsible disclosure practices
+
+## Security Best Practices
+
+### For Contributors
+
+- Always use specific commit hashes for GitHub Actions instead of version tags
+- Apply principle of least privilege when setting workflow permissions
+- Use `permissions: read-all` when possible for maximum security
+>>>>>>> 65d7850d3
 - Never hardcode secrets or credentials in code
 - Use environment variables or GitHub secrets for sensitive data
 - Review all dependencies for known vulnerabilities
