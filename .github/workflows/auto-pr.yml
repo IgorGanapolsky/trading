@@ -6,9 +6,9 @@ on:
       - "claude/**"
 
 permissions:
-  contents: write  # Required for creating PRs and managing repository content
-  pull-requests: write  # Required for creating and managing pull requests
-  statuses: read  # Only read access needed for checking commit statuses
+  contents: write # Required for creating PRs and managing repository content
+  pull-requests: write # Required for creating and managing pull requests
+  statuses: read # Only read access needed for checking commit statuses
 
 env:
   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
@@ -18,12 +18,12 @@ jobs:
   create-pr:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4  # Updated to latest version
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0 # Full history for git log comparison
 
       - name: Set up Python
-        uses: actions/setup-python@v5  # Updated to latest version
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.11"
           cache: "pip"
@@ -45,7 +45,7 @@ jobs:
             --audit-jsonl artifacts/devloop/agent_handoff_audit.jsonl
 
       - name: Upload handoff gate report
-        uses: actions/upload-artifact@v4  # Updated to latest version
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: agent-handoff-gate
           path: |
