@@ -77,3 +77,16 @@ This repository uses automated security scanning tools:
 - Dependabot for dependency scanning
 - GitHub's secret scanning
 - OpenSSF Scorecard for supply chain security
+
+## CII Best Practices Compliance
+
+This project follows the Core Infrastructure Initiative (CII) Best Practices:
+- The project has a defined contribution process
+- The project has a defined security policy
+- The project has a documented release process
+- The project performs regular security reviews
+- The project maintains up-to-date dependencies
+- The project implements automated testing
+- The project implements fuzzing for security-critical code
+
+For more information about CII Best Practices, visit: https://bestpractices.coreinfrastructure.org/
