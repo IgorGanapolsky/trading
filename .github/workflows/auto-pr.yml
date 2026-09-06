@@ -6,7 +6,7 @@ on:
       - "claude/**"
 
 permissions:
-  contents: write # Required for creating PRs and managing repository content
+  contents: read # Only read access needed for most operations
   pull-requests: write # Required for creating and managing pull requests
   statuses: read # Only read access needed for checking commit statuses
 

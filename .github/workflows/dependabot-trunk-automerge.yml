@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write # Required for merging PRs
+  contents: read # Only read access needed for most operations
   pull-requests: write # Required for managing pull requests
   checks: read # Required for checking PR status
 
