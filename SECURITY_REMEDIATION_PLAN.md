@@ -1,68 +1,30 @@
-# Security Remediation Plan
+# Scorecard remediation (AGENT-583)
 
-This document outlines the remediation efforts to address the security issues identified in the GitHub security scan.
+GitHub **code scanning on `branch:main`** for this repo is OpenSSF Scorecard,
+not application CodeQL CVEs. CodeQL currently has 0 open alerts.
 
-## Issue Summary
+Same-day docs-only commits (`e7f1f9b69`, `f1681c8de`) did not move write
+tokens to job scope and did not pin pip. AGENT-581 SHA-pinned Actions.
+This change is the remaining contract.
 
-From the security scan, we identified the following categories of issues:
+## What the gate now fails closed on
 
-1. **Token-Permissions (High)** -  Multiple workflow files had overly broad permissions
-2. **Branch-Protection (High)** - Inadequate branch protection settings
-3. **Code Review Process** - Lack of proper code review enforcement
+- Missing top-level `permissions` or any top-level `write` scope
+- Unhashed `pip install` in workflows (use `uv sync --frozen`)
+- Unpinned `FROM` images (digest required)
+- Workflows creating GitHub Issues (LL-569)
 
-## Remediation Steps Completed
+Owner: `scripts/scorecard_hygiene.py` + `.github/workflows/scorecard-hygiene.yml`.
 
-### 1. Token Permissions Fixes
+## What stays open on purpose
 
-Updated multiple workflow files to follow the principle of least privilege:
+- **Branch-Protection / enforce_admins**: owner-token agent merges would stop.
+  Do not enable without a dedicated bypass actor. Scorecard will keep this High.
+- **Code-Review trailing 30 PRs**: AI review now submits a GitHub review event.
+  The Scorecard number only moves after ~30 reviewed merges.
+- **CII Best Practices badge**: external form, not a code change.
+- **GO-2026-5932** (`golang.org/x/crypto/openpgp` unmaintained): indirect via
+  Google ADK. Bumping `x/crypto` clears the ssh/net/text OSV IDs; openpgp stays
+  until the upstream module splits.
 
-- `.github/workflows/deploy-rag-webhook.yml` - Updated action versions and reduced permissions
-- `.github/workflows/test-coverage-agent.yml` - Changed `contents: write` to `contents: read`
-- `.github/workflows/put-credit-validation.yml` - Changed `contents: write` to `contents: read`
-- `.github/workflows/scorecard.yml` - Updated action versions to latest
-
-### 2. Code Review Process
-
-- Added `.github/CODEOWNERS` file to establish clear ownership for all repository areas
-- Enhanced pull request template with security checklist
-- Added documentation for proper review process
-
-### 3. Branch Protection
-
-- Created `BRANCH_PROTECTION_GUIDELINES.md` with recommended settings
-- Added security policy documentation
-
-## Security Best Practices Implemented
-
-### Workflow Security
-- Use specific action versions instead of commit hashes where possible
-- Apply principle of least privilege for permissions
-- Use `persist-credentials: false` when appropriate
-- Update to latest action versions regularly
-
-### Code Review Process
-- Establish clear ownership with CODEOWNERS
-- Require security checks in PR templates
-- Document security review procedures
-
-## Ongoing Security Measures
-
-1. **Regular Updates**: Update GitHub Actions and dependencies regularly
-2. **Security Scanning**: Continue running CodeQL and dependency scans
-3. **Permission Auditing**: Periodically review workflow permissions
-4. **Branch Protection**: Implement the recommended branch protection settings in repository settings
-
-## Verification
-
-After implementing these changes:
-1. All workflow files should have minimal required permissions
-2. Code review process should be clearly documented
-3. Branch protection guidelines should be available
-4. Security scanning should show reduced number of alerts
-
-## Repository Owner Action Required
-
-To fully resolve the security issues, the repository owner should:
-1. Implement the branch protection settings outlined in BRANCH_PROTECTION_GUIDELINES.md
-2. Review and approve these changes
-3. Monitor security scanning results to ensure issues are resolved
+Do not treat GitHub Issues as the Scorecard dashboard.

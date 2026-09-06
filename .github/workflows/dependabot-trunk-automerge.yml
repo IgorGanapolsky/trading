@@ -9,15 +9,16 @@ on:
       - ready_for_review
   workflow_dispatch:
 
-permissions:
-  contents: write # Required for merging PRs
-  pull-requests: write # Required for managing pull requests
-  checks: read # Required for checking PR status
+permissions: read-all
 
 jobs:
   auto-merge:
     if: ${{ github.actor == 'dependabot[bot]' && github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      checks: read
 
     steps:
       - name: Fetch Dependabot metadata

@@ -11,9 +11,7 @@ on:
   pull_request:
     types: [opened, reopened, ready_for_review, synchronize]
 
-permissions:
-  contents: read
-  pull-requests: write
+permissions: read-all
 
 concurrency:
   group: sonarcloud-${{ github.event.pull_request.number || github.ref }}
@@ -24,32 +22,24 @@ jobs:
     name: SonarCloud Scan
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft != true
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0 # full history for blame-based new-code analysis
 
-      - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+      - name: Set up uv
+        uses: ./.github/actions/setup-uv-python
         with:
-          python-version: "3.11"
-
-      - name: Cache pip dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-sonar-3.11-${{ hashFiles('requirements-ci.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-sonar-3.11-
-
+          extra: dev
       - name: Generate coverage report
         env:
           PYTHON_BIN: python
           REPORT_DIR: artifacts/test-reports
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements-ci.txt
           chmod +x scripts/ci/run_all_tests.sh
           bash scripts/ci/run_all_tests.sh
 

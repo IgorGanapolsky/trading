@@ -19,8 +19,7 @@ on:
         default: "false"
         type: boolean
 
-permissions:
-  contents: write
+permissions: read-all
 
 concurrency:
   group: ${{ format('state-writer-{0}-{1}', github.repository, github.ref_name || 'main') }}
@@ -35,6 +34,8 @@ jobs:
     name: Sync Paper Account Status
     runs-on: ubuntu-latest
     timeout-minutes: 8
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
@@ -48,16 +49,8 @@ jobs:
           git fetch origin main
           git checkout -B main origin/main
 
-      - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
-        with:
-          python-version: "3.11"
-          cache: "pip"
-
-      - name: Install dependencies
-        run: |
-          pip install -q -r requirements-minimal.txt || pip install -q alpaca-py requests python-dotenv
-          pip install -q torch --index-url https://download.pytorch.org/whl/cpu 2>/dev/null || echo "⚠️ PyTorch not available - GRPO training will use fallback"
+      - name: Set up uv
+        uses: ./.github/actions/setup-uv-python
 
       - name: Sync Alpaca state
         env:
@@ -154,5 +147,4 @@ jobs:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          pip install -q requests || true
           python3 scripts/notify_ceo.py --type warning --message "ALPACA SYNC FAILED - Data may become stale. Run: ${{ github.run_id }}. Check: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"

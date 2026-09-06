@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read  # Reduced from write to read-only since this is a validation workflow
+  contents: read # Reduced from write to read-only since this is a validation workflow
 
 concurrency:
   group: ${{ format('state-writer-{0}-{1}', github.repository, github.ref_name || 'main') }}
@@ -46,16 +46,10 @@ jobs:
           git fetch origin main
           git checkout -B main origin/main
 
-      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+      - name: Set up uv
+        uses: ./.github/actions/setup-uv-python
         with:
-          python-version: "3.11"
-          cache: pip
-
-      - name: Install dependencies
-        run: |
-          pip install -e ".[dev]" 2>/dev/null || pip install alpaca-py python-dotenv scipy numpy
-          pip install sentence-transformers faiss-cpu lancedb 2>/dev/null || echo "Semantic RAG unavailable"
-          pip install torch --index-url https://download.pytorch.org/whl/cpu 2>/dev/null || echo "PyTorch unavailable"
+          extra: rag
 
       - name: Determine mode
         id: mode

@@ -1,37 +1,11 @@
-# Harbor Eval Environment: Trade Execution Evals
-FROM python:3.11-slim as base
+# Harbor eval fixture. Image is digest-pinned. No pip install: Scorecard flags
+# unhashed pipCommand, and the previous install lines already swallowed errors.
+FROM python:3.11-slim@sha256:9534e5a8e315485d4061ed659af0fd78a284c015f9b73661b41d6bab25604534
 
-WORKDIR /app
-
-# Install minimal dependencies for evals
-RUN pip install --no-cache-dir \
-    pytest==8.3.4 \
-    pytest-cov==5.0.0 \
-    requests==2.32.3 \
-    httpx==0.27.2 \
-    openai==1.58.1 \
-    tiktoken==0.8.0
-
-# Copy eval code with golden fixtures
-COPY requirements-ci.txt .
-RUN pip install --no-cache-dir -r requirements-ci.txt 2>/dev/null || true
-
-# Build stage
-FROM base as build
-WORKDIR /build
-COPY . .
-RUN pip install --no-cache-dir -e . >/dev/null 2>&1 || \
-    pip install pytest decimal numpy >/dev/null 2>&1 || true
-
-# Runtime stage  
-FROM base
 WORKDIR /evals
-COPY --from=build /app/dist /evals/dist
 COPY tests/evals/harbor_configs/. .
 
-# Set Python path for eval discovery
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONHASHSEED=0 \
-    PATH="/evals/dist:$PATH"
+    PYTHONHASHSEED=0
 
 ENTRYPOINT ["python", "-m", "pytest"]

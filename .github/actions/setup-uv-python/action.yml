@@ -1,0 +1,43 @@
+name: Setup uv Python
+description: SHA-pinned uv + frozen lockfile sync. Replaces unhashed pip install in workflows.
+
+inputs:
+  extra:
+    description: Comma-separated pyproject extras (dev, rag, security). Empty means --no-dev.
+    required: false
+    default: ""
+  sync:
+    description: Run uv sync --frozen (true/false).
+    required: false
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - name: Install uv
+      uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+      with:
+        python-version: "3.11"
+        enable-cache: true
+        activate-environment: true
+
+    - name: Sync uv.lock
+      if: inputs.sync == 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+        extra="${{ inputs.extra }}"
+        extra="${extra// /}"
+        cmd=(uv sync --frozen)
+        if [[ -z "${extra}" ]]; then
+          cmd+=(--no-dev)
+        else
+          IFS=',' read -ra extras <<< "${extra}"
+          for item in "${extras[@]}"; do
+            if [[ -n "${item}" ]]; then
+              cmd+=(--extra "${item}")
+            fi
+          done
+        fi
+        echo "Running: ${cmd[*]}"
+        "${cmd[@]}"
