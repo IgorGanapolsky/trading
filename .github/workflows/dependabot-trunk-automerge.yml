@@ -10,9 +10,9 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write  # Required for merging PRs
-  pull-requests: write  # Required for managing pull requests
-  checks: read  # Required for checking PR status
+  contents: write # Required for merging PRs
+  pull-requests: write # Required for managing pull requests
+  checks: read # Required for checking PR status
 
 jobs:
   auto-merge:
@@ -22,13 +22,13 @@ jobs:
     steps:
       - name: Fetch Dependabot metadata
         id: metadata
-        uses: dependabot/fetch-metadata@v2  # Updated to latest version
+        uses: dependabot/fetch-metadata@21025c705c08248db411dc16f3619e6b5f9ea21a # v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Auto-approve update
         continue-on-error: true # Non-critical: approval may fail due to permissions, merge step handles retry
-        uses: actions/github-script@v7  # Updated to latest version
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |

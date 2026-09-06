@@ -21,7 +21,8 @@ def test_ci_jobs_have_timeouts() -> None:
 
 
 def test_actions_are_sha_pinned() -> None:
-    action = re.compile(r"^\s*uses:\s*([^\s#]+)", re.MULTILINE)
+    # Match both "uses:" and YAML list "- uses:" forms.
+    action = re.compile(r"^\s*-?\s*uses:\s*([^\s#]+)", re.MULTILINE)
     sha = re.compile(r"^[^@]+@[0-9a-f]{40}$")
     offenders = []
     for path in WORKFLOWS.glob("*.yml"):

@@ -12,8 +12,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write  # This workflow needs write access to commit and push changes to the repository
-  pull-requests: read  # Only read access needed for pull requests
+  contents: write # This workflow needs write access to commit and push changes to the repository
+  pull-requests: read # Only read access needed for pull requests
 
 concurrency:
   group: arxiv-paper-ingest-${{ github.repository }}
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4  # Updated to latest version
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           token: ${{ secrets.GH_PAT || github.token }}
           fetch-depth: 0
@@ -34,7 +34,7 @@ jobs:
           git fetch origin main
           git checkout -B main origin/main
 
-      - uses: actions/setup-python@v5  # Updated to latest version
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.11"
           cache: pip
@@ -58,7 +58,7 @@ jobs:
 
       - name: Upload ingest summary
         if: always()
-        uses: actions/upload-artifact@v4  # Updated to latest version
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: arxiv-ingest-summary
           path: artifacts_arxiv_ingest.json
