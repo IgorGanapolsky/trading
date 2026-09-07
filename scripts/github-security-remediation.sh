@@ -269,27 +269,56 @@ configure_branch_protection() {
     fi
 }
 
+# Function to check for API token security issues
+check_api_token_security() {
+    echo "Checking for API token security issues..."
+    
+    # Check for Mercury token issues specifically
+    if grep -r "MERCURY_API_TOKEN" . --exclude-dir=.git --exclude-dir=.venv --exclude="*.pyc" --exclude="*.sh" 2>/dev/null; then
+        echo "Mercury API token references found in codebase."
+        echo "Checking if Mercury functionality is enabled..."
+        
+        if [ -f ".env" ] && grep -q "MERCURY_LIVE_TRANSFERS_ENABLED=1" .env; then
+            echo "⚠️  WARNING: Mercury live transfers are enabled!"
+        else
+            echo "✓ Mercury transfers are disabled (secure default)."
+        fi
+    fi
+    
+    # Check for other common API token patterns
+    POTENTIAL_TOKENS=$(grep -r "API_KEY\|SECRET\|TOKEN" . --exclude-dir=.git --exclude-dir=.venv --exclude="*.pyc" --exclude="*.sh" --exclude="*.md" 2>/dev/null | grep -v "_example\|example\|template" || true)
+    
+    if [ -n "$POTENTIAL_TOKENS" ]; then
+        echo "Potential API tokens or secrets found in codebase:"
+        echo "$POTENTIAL_TOKENS"
+        echo "Verify these are not actual credentials and follow security best practices."
+    fi
+}
+
 # Main execution
 main() {
     echo "GitHub Security Remediation Script"
     echo "=================================="
-    
+
     check_git_repo
     check_gh_auth
     backup_files
-    
+
     echo ""
     fix_token_permissions
-    
+
     echo ""
     update_pr_template
-    
+
     echo ""
     enhance_security_docs
-    
+
     echo ""
     verify_pinned_dependencies
-    
+
+    echo ""
+    check_api_token_security
+
     echo ""
     read -p "Do you want to configure branch protection? This requires admin rights. (y/N): " -n 1 -r REPLY
     echo ""
@@ -298,7 +327,7 @@ main() {
     else
         echo "Skipping branch protection configuration."
     fi
-    
+
     echo ""
     echo "GitHub Security Remediation Process Complete!"
     echo ""
@@ -307,6 +336,7 @@ main() {
     echo "2. Commit and push the changes to your repository"
     echo "3. Verify that security alerts decrease in GitHub Security tab"
     echo "4. If you didn't configure branch protection, do so manually in repository settings"
+    echo "5. Address any API token security issues identified above"
 }
 
 # Run the main function

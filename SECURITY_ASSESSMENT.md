@@ -78,6 +78,15 @@ def test_input_validation(input_str):
 - No hardcoded secrets or credentials
 - Proper error handling without information leakage
 
+### 4. API Token Management
+- API tokens never hardcoded in source code
+- Secure storage in environment variables or Keychain
+- Regular rotation and cleanup of unused tokens
+- Following principle of least privilege for token permissions
+- Monitoring token activity for security purposes
+
+Recent action taken: Identified unused Mercury API token "trading" and documented proper security procedures for handling token expiration.
+
 ## Verification Steps
 
 1. **Code Review Process**: Verified that PR template includes security assessment

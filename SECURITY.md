@@ -90,3 +90,14 @@ This project follows the Core Infrastructure Initiative (CII) Best Practices:
 - The project implements fuzzing for security-critical code
 
 For more information about CII Best Practices, visit: https://bestpractices.coreinfrastructure.org/
+
+## API Token Management
+
+This project follows secure API token management practices:
+- API tokens are never hardcoded in source code
+- Tokens are stored in secure environments (Keychain, encrypted env vars)
+- Unused tokens are regularly rotated or deactivated
+- Token permissions follow the principle of least privilege
+- Token activity is monitored for security purposes
+
+Recent action taken: Unused Mercury API token "trading" was identified and allowed to expire per security best practices.

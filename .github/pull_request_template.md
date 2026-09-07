@@ -30,6 +30,8 @@ Security considerations:
 - Does this change introduce new dependencies?
 - Does this change modify workflow permissions?
 - Have secrets been properly handled without hardcoding?
+- Are any API tokens being added, modified, or removed?
+- Are there any credential rotation or token expiration implications?
 
 ## Verification
 
