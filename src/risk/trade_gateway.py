@@ -120,6 +120,10 @@ class RejectionReason(Enum):
         "Open option inventory is unclean (lot/orphan/journal mismatch) — "
         "reconcile broker book before new entries"
     )
+    WRONG_PAPER_ACCOUNT = (
+        "Broker/ledger paper identity is not the validation account PA3C5AG0CECQ — "
+        "entries on the $30k/$5k books do not count toward n=30"
+    )
     BEHAVIORAL_GUARD_BLOCKED = "Behavioral guard blocked trade (FOMO/cooling/blacklist)"
 
 
@@ -897,6 +901,49 @@ class TradeGateway:
                 or (request.side.lower() == "sell" and existing_qty > 0)
             )
             if not is_reducing:
+                try:
+                    from src.core.paper_account_identity import (
+                        load_system_state,
+                        paper_identity_block_reason,
+                    )
+
+                    snapshot = getattr(self.executor, "account_snapshot", None)
+                    broker_number = None
+                    if isinstance(snapshot, dict):
+                        broker_number = snapshot.get("account_number")
+                    identity_reason = paper_identity_block_reason(
+                        broker_account_number=broker_number,
+                        state=load_system_state(),
+                    )
+                    if identity_reason:
+                        logger.error("🚨 WRONG PAPER ACCOUNT: %s", identity_reason)
+                        return GatewayDecision(
+                            approved=False,
+                            request=request,
+                            rejection_reasons=[RejectionReason.WRONG_PAPER_ACCOUNT],
+                            risk_score=1.0,
+                            metadata={
+                                "circuit_breaker": "WRONG_PAPER_ACCOUNT",
+                                "block_reasons": [identity_reason],
+                                "action": (
+                                    "Bind Keychain trading.alpaca.paper.* to "
+                                    "PA3C5AG0CECQ before new validation entries"
+                                ),
+                            },
+                        )
+                except Exception as ident_exc:  # noqa: BLE001 — fail closed on identity errors
+                    logger.error("🚨 Paper identity check failed closed: %s", ident_exc)
+                    return GatewayDecision(
+                        approved=False,
+                        request=request,
+                        rejection_reasons=[RejectionReason.WRONG_PAPER_ACCOUNT],
+                        risk_score=1.0,
+                        metadata={
+                            "circuit_breaker": "WRONG_PAPER_ACCOUNT",
+                            "error": str(ident_exc),
+                        },
+                    )
+
                 try:
                     from src.risk.open_inventory_audit import audit_open_inventory
 

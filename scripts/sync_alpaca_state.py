@@ -226,10 +226,11 @@ def sync_from_alpaca() -> dict | None:
         except Exception as e:
             logger.warning(f"⚠️ Could not fetch PAPER trade history: {e}")
 
+        snapshot = executor.account_snapshot or {}
         result["paper"] = {
             "equity": executor.account_equity,
-            "cash": executor.account_snapshot.get("cash", 0),
-            "buying_power": executor.account_snapshot.get("buying_power", 0),
+            "cash": snapshot.get("cash", 0),
+            "buying_power": snapshot.get("buying_power", 0),
             "last_equity": last_equity,
             "positions": positions,
             "positions_count": len(positions),
@@ -237,12 +238,30 @@ def sync_from_alpaca() -> dict | None:
             "trades_loaded": len(trade_history),
             "daily_change": round(daily_change, 2),
             "mode": "paper",
+            "account_number": snapshot.get("account_number"),
             "synced_at": datetime.now().isoformat(),
         }
         logger.info(f"✅ PAPER account synced: ${executor.account_equity:,.2f}")
 
     except Exception as e:
         logger.error(f"❌ Failed to sync PAPER account: {e}")
+
+    paper_book = result.get("paper")
+    if isinstance(paper_book, dict):
+        from src.core.paper_account_identity import (
+            PaperAccountIdentityError,
+            assert_broker_is_validation_paper,
+        )
+
+        try:
+            paper_book["account_number"] = assert_broker_is_validation_paper(
+                paper_book.get("account_number"),
+                equity=paper_book.get("equity"),
+            )
+        except PaperAccountIdentityError as exc:
+            logger.error("Refusing to write system_state.json: %s", exc)
+            result["paper"] = None
+            raise AlpacaSyncError(str(exc)) from exc
 
     # ========== SYNC LIVE (BROKERAGE) ACCOUNT ==========
     # LL-281: Dashboard was showing PAPER data for LIVE account because we never fetched LIVE
@@ -336,6 +355,28 @@ def update_system_state(alpaca_data: dict | None) -> None:
             if mode == "simulated":
                 raise AlpacaSyncError(f"REFUSING to update with SIMULATED data! mode='{mode}'")
 
+            from src.core.paper_account_identity import (
+                PaperAccountIdentityError,
+                assert_broker_is_validation_paper,
+                paper_identity_block_reason,
+            )
+
+            incoming_number = paper_data.get("account_number")
+            try:
+                if incoming_number:
+                    paper_data["account_number"] = assert_broker_is_validation_paper(
+                        incoming_number,
+                        equity=paper_data.get("equity"),
+                    )
+                else:
+                    fingerprint_reason = paper_identity_block_reason(
+                        state={"paper_account": {"equity": paper_data.get("equity")}}
+                    )
+                    if fingerprint_reason:
+                        raise AlpacaSyncError(fingerprint_reason)
+            except PaperAccountIdentityError as exc:
+                raise AlpacaSyncError(str(exc)) from exc
+
             # Update account section (primary account = PAPER for R&D)
             state.setdefault("account", {})
             state["account"]["current_equity"] = paper_data.get("equity", 0)
@@ -369,6 +410,7 @@ def update_system_state(alpaca_data: dict | None) -> None:
                 else 0
             )
             state["paper_account"]["daily_change"] = paper_data.get("daily_change", 0.0)
+            state["paper_account"]["account_number"] = paper_data.get("account_number")
 
             # Update meta
             state["meta"]["last_sync"] = paper_data.get("synced_at") or now_iso
