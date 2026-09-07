@@ -30,10 +30,16 @@ REQUIRED_TRADE_FIELDS = (
     "realized_pnl",
 )
 NUMERIC_TRADE_FIELDS = ("realized_pnl", "quantity")
+IDENTITY_TRADE_FIELDS = ("id",)
 
 
 def _load_trades(path: Path) -> dict:
-    payload = json.loads(path.read_text(encoding="utf-8"))
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise SchemaError(f"cannot read trades ledger: {exc}") from exc
+    except json.JSONDecodeError as exc:
+        raise SchemaError(f"trades.json is not valid JSON: {exc}") from exc
     if not isinstance(payload, dict):
         raise SchemaError("trades.json root must be an object")
     return payload
@@ -65,6 +71,7 @@ def main(argv: list[str] | None = None) -> int:
             rows,
             required=REQUIRED_TRADE_FIELDS,
             numeric_fields=NUMERIC_TRADE_FIELDS,
+            identity_fields=IDENTITY_TRADE_FIELDS,
             max_rows=args.max_rows,
         )
         stats = payload.get("stats") if isinstance(payload.get("stats"), dict) else {}

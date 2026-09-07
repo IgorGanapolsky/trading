@@ -52,6 +52,22 @@ def test_parse_strict_int_refuses_float_coercion():
         parse_strict_int(1.5, field="closed_trades")
 
 
+def test_parse_strict_int_refuses_negative_and_unicode_digits():
+    with pytest.raises(LosslessCoercionError, match="negative"):
+        parse_strict_int(-1, field="closed_trades")
+    with pytest.raises(LosslessCoercionError, match="non-digit"):
+        parse_strict_int("²", field="closed_trades")
+
+
+def test_collect_row_schema_rejects_float_identity():
+    with pytest.raises(SchemaError, match="lossy_identity:id"):
+        collect_row_schema(
+            [{"id": 9007199254740992.0, "status": "closed", "realized_pnl": 1.0}],
+            required=("id", "status", "realized_pnl"),
+            identity_fields=("id",),
+        )
+
+
 def test_assert_id_equality_string_safe():
     assert assert_id_equality("9007199254740993", "9007199254740993") == "9007199254740993"
     with pytest.raises(LosslessCoercionError, match="float identity"):

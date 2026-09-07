@@ -57,11 +57,21 @@ def strict_horizontal_zip(
     return [{key: values[i][row] for i, key in enumerate(keys)} for row in range(height)]
 
 
-def parse_strict_int(value: Any, *, field: str) -> int:
+def _is_ascii_decimal(text: str) -> bool:
+    """True only for optional leading '-' plus ASCII digits 0-9."""
+    if not text:
+        return False
+    body = text[1:] if text.startswith("-") else text
+    return bool(body) and all("0" <= ch <= "9" for ch in body)
+
+
+def parse_strict_int(value: Any, *, field: str, allow_negative: bool = False) -> int:
     """Parse a whole-number count/ID without float64 round-trip."""
     if isinstance(value, bool):
         raise LosslessCoercionError(f"{field}: bool is not a count/id")
     if isinstance(value, int):
+        if value < 0 and not allow_negative:
+            raise LosslessCoercionError(f"{field}: refuse negative count {value}")
         return value
     if isinstance(value, float):
         if not value.is_integer():
@@ -81,21 +91,45 @@ def parse_strict_int(value: Any, *, field: str) -> int:
         text = value.strip()
         if not text or text.lower() in {"none", "null", "nan"}:
             raise LosslessCoercionError(f"{field}: empty/null string is not a count/id")
-        if text.isdigit() or (text.startswith("-") and text[1:].isdigit()):
-            return int(text)
-        raise LosslessCoercionError(f"{field}: refuse non-digit string count/id {value!r}")
+        if not _is_ascii_decimal(text):
+            raise LosslessCoercionError(f"{field}: refuse non-digit string count/id {value!r}")
+        try:
+            parsed = int(text)
+        except ValueError as exc:  # pragma: no cover - ASCII guard should prevent this
+            raise LosslessCoercionError(
+                f"{field}: refuse non-digit string count/id {value!r}"
+            ) from exc
+        if parsed < 0 and not allow_negative:
+            raise LosslessCoercionError(f"{field}: refuse negative count {parsed}")
+        return parsed
     if value is None:
         raise LosslessCoercionError(f"{field}: None is not a count/id")
     raise LosslessCoercionError(f"{field}: unsupported count/id type {type(value).__name__}")
 
 
-def parse_optional_strict_int(value: Any, *, field: str) -> int | None:
+def parse_optional_strict_int(
+    value: Any, *, field: str, allow_negative: bool = False
+) -> int | None:
     """Like parse_strict_int but maps missing/empty to None."""
     if value is None:
         return None
     if isinstance(value, str) and not value.strip():
         return None
-    return parse_strict_int(value, field=field)
+    return parse_strict_int(value, field=field, allow_negative=allow_negative)
+
+
+def assert_identity_value(value: Any, *, field: str = "id") -> str:
+    """Accept string/int identity values; refuse floats."""
+    if isinstance(value, float):
+        raise LosslessCoercionError(
+            f"{field}: refuse float identity {value!r}; use a string or int id"
+        )
+    if isinstance(value, bool) or value is None:
+        raise LosslessCoercionError(f"{field}: invalid identity type {type(value).__name__}")
+    text = str(value).strip()
+    if not text:
+        raise LosslessCoercionError(f"{field}: empty id")
+    return text
 
 
 def assert_id_equality(left: Any, right: Any, *, field: str = "id") -> str:
@@ -119,6 +153,7 @@ def collect_row_schema(
     *,
     required: Sequence[str],
     numeric_fields: Sequence[str] = (),
+    identity_fields: Sequence[str] = (),
     max_rows: int | None = None,
 ) -> dict[str, Any]:
     """Resolve schema/types without computing metrics (collect_schema analog).
@@ -128,9 +163,11 @@ def collect_row_schema(
     """
     required_set = list(required)
     numeric_set = list(numeric_fields)
+    identity_set = list(identity_fields)
     inspected = 0
     missing: dict[str, int] = {name: 0 for name in required_set}
     bad_numeric: dict[str, int] = {name: 0 for name in numeric_set}
+    bad_identity: dict[str, int] = {name: 0 for name in identity_set}
     field_types: dict[str, set[str]] = {}
 
     for row in rows:
@@ -154,6 +191,13 @@ def collect_row_schema(
                     float(value)
                 except ValueError:
                     bad_numeric[name] += 1
+        for name in identity_set:
+            if name not in row or row.get(name) in (None, ""):
+                continue
+            try:
+                assert_identity_value(row.get(name), field=name)
+            except LosslessCoercionError:
+                bad_identity[name] += 1
         if max_rows is not None and inspected >= max_rows:
             break
 
@@ -164,14 +208,19 @@ def collect_row_schema(
     for name, count in bad_numeric.items():
         if count:
             issues.append(f"non_numeric:{name}:{count}/{inspected}")
+    for name, count in bad_identity.items():
+        if count:
+            issues.append(f"lossy_identity:{name}:{count}/{inspected}")
 
     report = {
         "inspected_rows": inspected,
         "required": required_set,
         "numeric_fields": numeric_set,
+        "identity_fields": identity_set,
         "field_types": {key: sorted(values) for key, values in sorted(field_types.items())},
         "missing_required_counts": {k: v for k, v in missing.items() if v},
         "non_numeric_counts": {k: v for k, v in bad_numeric.items() if v},
+        "lossy_identity_counts": {k: v for k, v in bad_identity.items() if v},
         "issues": issues,
         "ok": not issues,
     }
