@@ -1131,12 +1131,24 @@ def _scan_put_credit_candidates(
         est_credit = round(short_bid - long_ask, 2)
         if est_credit <= 0:
             continue
+        short_ask = _as_float(short.get("ask"))
+        long_bid = _as_float(long_option.get("bid")) if long_option else None
+        mid_credit = None
+        if short_ask is not None and long_bid is not None:
+            short_mid = (short_bid + short_ask) / 2.0
+            long_mid = (long_bid + long_ask) / 2.0
+            mid_credit = round(short_mid - long_mid, 2)
         row = {
             "expiry": expiry,
             "short_put": short_strike,
             "long_put": long_strike,
             "put_wing": float(profile.wing_width),
             "est_credit": est_credit,
+            "short_bid": short_bid,
+            "long_ask": long_ask,
+            "natural_credit": est_credit,
+            "mid_credit": mid_credit,
+            "pricing_method": "natural",
             "put_delta": put_delta,
             "method": "live_delta_band_scan",
             "quantity": profile.max_contracts_per_trade,
@@ -1215,14 +1227,18 @@ def find_put_credit_opportunity(spy_price: float) -> dict | None:
     pool.sort(key=lambda r: (-float(r["est_credit"]), r["delta_distance"]))
     opp = pool[0]
     opp.pop("delta_distance", None)
+    mid = opp.get("mid_credit")
+    mid_txt = f"${mid:.2f}" if isinstance(mid, (int, float)) else "n/a"
     logger.info(
-        "Opportunity: SPY put credit short=%.0f long=%.0f credit=$%.2f delta=%.3f exp=%s "
-        "(scanned %d band-qualified, %d min-credit-qualified)",
+        "Opportunity: SPY put credit short=%.0f long=%.0f natural=$%.2f mid=%s "
+        "delta=%.3f exp=%s pricing=%s (scanned %d band-qualified, %d min-credit-qualified)",
         opp["short_put"],
         opp["long_put"],
         opp["est_credit"],
+        mid_txt,
         opp["put_delta"],
         opp["expiry"],
+        opp.get("pricing_method") or "natural",
         len(candidates),
         len(qualified),
     )

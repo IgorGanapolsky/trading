@@ -171,6 +171,11 @@ def test_find_put_credit_scans_chain_once_and_uses_put_side_only(monkeypatch):
     assert opp["short_put"] == 700.0
     assert opp["long_put"] == 695.0
     assert opp["est_credit"] == 0.80
+    assert opp["natural_credit"] == 0.80
+    assert opp["short_bid"] == 1.20
+    assert opp["long_ask"] == 0.40
+    assert opp["pricing_method"] == "natural"
+    assert opp["mid_credit"] == 0.85  # (1.20+1.25)/2 - (0.35+0.40)/2
     assert opp["method"] == "live_delta_band_scan"
     assert "short_call" not in opp
     provider.get_options_chain_with_greeks.assert_called_once_with(
