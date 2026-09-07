@@ -58,6 +58,79 @@ def test_block_reason_broker_number_wins_over_ledger() -> None:
     assert "PA3PYE08C9MN" in reason
 
 
+def test_executor_tradingclient_snapshot_includes_account_number() -> None:
+    from types import SimpleNamespace
+
+    from src.execution.alpaca_executor import AlpacaExecutor
+
+    account = SimpleNamespace(
+        equity=94181.95,
+        buying_power=375003.8,
+        cash=94250.95,
+        portfolio_value=94181.95,
+        last_equity=94190.95,
+        account_number="PA3C5AG0CECQ",
+    )
+    executor = AlpacaExecutor.__new__(AlpacaExecutor)
+    executor.simulated = False
+    executor.paper = True
+    executor.trader = SimpleNamespace(get_account=lambda: account, get_all_positions=lambda: [])
+    executor.positions = []
+    executor.account_snapshot = {}
+    executor.sync_portfolio_state()
+    assert executor.account_snapshot["account_number"] == "PA3C5AG0CECQ"
+    assert executor.account_snapshot["equity"] == 94181.95
+
+
+def test_sync_from_alpaca_fills_account_number_from_get_account(monkeypatch) -> None:
+    import sys
+    import types
+    from pathlib import Path
+    from types import SimpleNamespace
+
+    scripts_dir = Path(__file__).resolve().parents[1] / "scripts"
+    sys.path.insert(0, str(scripts_dir))
+    import sync_alpaca_state
+
+    monkeypatch.setattr(
+        "src.utils.alpaca_client.get_alpaca_credentials",
+        lambda: ("paper_key", "paper_secret"),
+    )
+    monkeypatch.delenv("ALPACA_BROKERAGE_TRADING_API_KEY", raising=False)
+    monkeypatch.delenv("ALPACA_BROKERAGE_TRADING_API_SECRET", raising=False)
+
+    class _OrdersClient:
+        def get_orders(self, filter):  # noqa: A002
+            return []
+
+        def get_account(self):
+            return SimpleNamespace(account_number="PA3C5AG0CECQ")
+
+    class _Executor:
+        def __init__(self, paper=True, allow_simulator=False):  # noqa: ARG002
+            self.trader = _OrdersClient()
+            self.account_snapshot = {"cash": 94250.95, "buying_power": 1.0, "last_equity": 94190.0}
+            self.account_equity = 94181.95
+
+        def sync_portfolio_state(self) -> None:
+            return None
+
+        def get_positions(self):
+            return []
+
+    fake_executor_mod = types.ModuleType("src.execution.alpaca_executor")
+    fake_executor_mod.AlpacaExecutor = _Executor
+    monkeypatch.setitem(sys.modules, "src.execution.alpaca_executor", fake_executor_mod)
+    monkeypatch.setattr(
+        "src.utils.alpaca_client.get_alpaca_client",
+        lambda paper=True: _OrdersClient(),
+    )
+
+    result = sync_alpaca_state.sync_from_alpaca()
+    assert result is not None
+    assert result["paper"]["account_number"] == "PA3C5AG0CECQ"
+
+
 def test_sync_from_alpaca_refuses_30k_broker_book(monkeypatch) -> None:
     import sys
     import types

@@ -116,6 +116,27 @@ def _derive_trade_summary_from_fills(trade_history: object, *, now: datetime | N
     }
 
 
+def _paper_account_number(executor: object) -> str | None:
+    """Resolve paper account_number from snapshot or a live broker get_account()."""
+    snapshot = getattr(executor, "account_snapshot", None) or {}
+    if isinstance(snapshot, dict):
+        number = snapshot.get("account_number")
+        if number:
+            return str(number)
+    trader = getattr(executor, "trader", None)
+    account = None
+    if trader is not None and hasattr(trader, "get_account"):
+        account = trader.get_account()
+    elif trader is not None and hasattr(trader, "trading_client"):
+        account = trader.trading_client.get_account()
+    if account is None:
+        return None
+    number = getattr(account, "account_number", None)
+    if isinstance(number, str) and number.strip():
+        return number.strip()
+    return None
+
+
 def sync_from_alpaca() -> dict | None:
     """
     Sync account state from Alpaca.
@@ -238,7 +259,7 @@ def sync_from_alpaca() -> dict | None:
             "trades_loaded": len(trade_history),
             "daily_change": round(daily_change, 2),
             "mode": "paper",
-            "account_number": snapshot.get("account_number"),
+            "account_number": _paper_account_number(executor),
             "synced_at": datetime.now().isoformat(),
         }
         logger.info(f"✅ PAPER account synced: ${executor.account_equity:,.2f}")
