@@ -112,12 +112,28 @@ def paper_identity_block_reason(
     return None
 
 
+def default_system_state_path() -> Path:
+    """Canonical ledger path written by scripts/sync_alpaca_state.py."""
+    return Path(__file__).resolve().parents[2] / "data" / "system_state.json"
+
+
 def load_system_state(path: Path | None = None) -> dict[str, Any] | None:
-    state_path = path or Path("data/system_state.json")
+    """Load system_state.json.
+
+    Returns None only when the file is absent (unit tests, empty trees).
+    Read or JSON failures raise PaperAccountIdentityError so callers fail closed.
+    """
+    state_path = path or default_system_state_path()
     if not state_path.exists():
         return None
     try:
         raw = json.loads(state_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return None
-    return raw if isinstance(raw, dict) else None
+    except (OSError, json.JSONDecodeError) as exc:
+        raise PaperAccountIdentityError(
+            f"system_state unreadable at {state_path}: {exc}"
+        ) from exc
+    if not isinstance(raw, dict):
+        raise PaperAccountIdentityError(
+            f"system_state is not an object at {state_path}"
+        )
+    return raw

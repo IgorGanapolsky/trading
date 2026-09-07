@@ -903,6 +903,7 @@ class TradeGateway:
             if not is_reducing:
                 try:
                     from src.core.paper_account_identity import (
+                        default_system_state_path,
                         load_system_state,
                         paper_identity_block_reason,
                     )
@@ -913,7 +914,7 @@ class TradeGateway:
                         broker_number = snapshot.get("account_number")
                     identity_reason = paper_identity_block_reason(
                         broker_account_number=broker_number,
-                        state=load_system_state(),
+                        state=load_system_state(default_system_state_path()),
                     )
                     if identity_reason:
                         logger.error("🚨 WRONG PAPER ACCOUNT: %s", identity_reason)

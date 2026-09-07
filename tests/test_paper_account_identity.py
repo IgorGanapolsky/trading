@@ -182,12 +182,32 @@ def test_gateway_allows_unspecified_identity_for_unit_tests(tmp_path, monkeypatc
     assert RejectionReason.WRONG_PAPER_ACCOUNT not in decision.rejection_reasons
 
 
+def test_load_system_state_raises_on_malformed_json(tmp_path) -> None:
+    path = tmp_path / "system_state.json"
+    path.write_text("{not-json", encoding="utf-8")
+    with pytest.raises(PaperAccountIdentityError, match="unreadable"):
+        from src.core.paper_account_identity import load_system_state
+
+        load_system_state(path)
+
+
+def test_load_system_state_none_when_absent(tmp_path) -> None:
+    from src.core.paper_account_identity import load_system_state
+
+    assert load_system_state(tmp_path / "missing.json") is None
+
+
 def test_gateway_rejects_30k_ledger_fingerprint(tmp_path, monkeypatch) -> None:
     data_dir = tmp_path / "data"
     data_dir.mkdir()
-    (data_dir / "system_state.json").write_text(
+    state_path = data_dir / "system_state.json"
+    state_path.write_text(
         json.dumps({"paper_account": {"equity": 30055.2, "cash": 30147.2}}),
         encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        "src.core.paper_account_identity.default_system_state_path",
+        lambda: state_path,
     )
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(
