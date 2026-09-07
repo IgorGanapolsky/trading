@@ -24,7 +24,6 @@ from src.utils.strict_tabular import (  # noqa: E402
     parse_optional_strict_int,
 )
 
-
 REQUIRED_TRADE_FIELDS = (
     "id",
     "status",

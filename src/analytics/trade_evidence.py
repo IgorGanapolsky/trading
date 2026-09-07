@@ -338,12 +338,15 @@ def build_trade_evidence(
     stats = payload.get("stats", {}) if isinstance(payload.get("stats"), dict) else {}
     # Polars-2 steal: refuse silent float→int coercion for ledger counts (AGENT-589).
     try:
-        unpaired_count = parse_optional_strict_int(
-            stats.get("unpaired_order_count"), field="stats.unpaired_order_count"
-        ) or 0
-        reported_closed = parse_optional_strict_int(
-            stats.get("closed_trades"), field="stats.closed_trades"
-        ) or 0
+        unpaired_count = (
+            parse_optional_strict_int(
+                stats.get("unpaired_order_count"), field="stats.unpaired_order_count"
+            )
+            or 0
+        )
+        reported_closed = (
+            parse_optional_strict_int(stats.get("closed_trades"), field="stats.closed_trades") or 0
+        )
     except LosslessCoercionError as exc:
         issues.append(f"lossy_stats_count_coercion:{exc}")
         unpaired_count = 0
