@@ -77,9 +77,7 @@ def test_missing_kill_switch_state_fail_closed():
 
 
 def test_explicit_zero_max_concurrency_preserved():
-    result = evaluate_entry_challenges(
-        _ok_snap(open_put_credits=0, max_concurrent_put_credits=0)
-    )
+    result = evaluate_entry_challenges(_ok_snap(open_put_credits=0, max_concurrent_put_credits=0))
     assert result.first_blocker == "concurrency"
     assert "max=0" in next(c.detail for c in result.challenges if c.id == "concurrency")
 

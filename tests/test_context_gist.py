@@ -65,7 +65,9 @@ def test_many_dropped_extras_stay_within_budget():
     assert g.estimated_tokens <= g.token_budget
     compact = g.compact()
     assert estimate_tokens(compact) <= g.token_budget + 40  # metadata lines
-    assert any(d.startswith("dropped_overflow:") or d.startswith("noise:") for d in g.dropped_sections)
+    assert any(
+        d.startswith("dropped_overflow:") or d.startswith("noise:") for d in g.dropped_sections
+    )
     assert len(g.dropped_sections) < 50
 
 
