@@ -3,7 +3,8 @@
 ## Context
 
 CEO asked to implement/test high-ROI improvements from InfoQ PDF
-(`/Users/igorganapolsky/Downloads/infoq.pdf`). PR #4514 / AGENT-593.
+(local Downloads copy of infoq.pdf; do not commit absolute machine paths).
+PR #4514 / AGENT-593.
 Merged as `218c15eaa69a24e0528eacf742bc597949b1c923`.
 
 ## Steal (FORMAT only — not SaaS clones)
