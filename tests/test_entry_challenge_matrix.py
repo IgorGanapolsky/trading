@@ -16,8 +16,11 @@ def _ok_snap(**overrides):
         "iv_rank_proxy": 40.0,
         "min_iv_rank": 30.0,
         "lot_size": 1,
+        "max_lot_size": 1,
         "open_put_credits": 0,
+        "max_concurrent_put_credits": 2,
         "structures_today": 0,
+        "max_daily_structures": 3,
     }
     base.update(overrides)
     return base
@@ -61,3 +64,28 @@ def test_daily_cap():
 def test_inventory_unclean():
     result = evaluate_entry_challenges(_ok_snap(inventory_clean=False))
     assert result.first_blocker == "inventory_clean"
+
+
+def test_missing_kill_switch_state_fail_closed():
+    snap = _ok_snap()
+    snap.pop("live_blocked")
+    snap.pop("ic_entries_killed")
+    result = evaluate_entry_challenges(snap)
+    assert result.allowed is False
+    assert result.first_blocker == "kill_switch"
+    assert any(c.id == "kill_switch" and "missing" in c.detail for c in result.challenges)
+
+
+def test_explicit_zero_max_concurrency_preserved():
+    result = evaluate_entry_challenges(
+        _ok_snap(open_put_credits=0, max_concurrent_put_credits=0)
+    )
+    assert result.first_blocker == "concurrency"
+    assert "max=0" in next(c.detail for c in result.challenges if c.id == "concurrency")
+
+
+def test_missing_lot_size_fail_closed():
+    snap = _ok_snap()
+    snap.pop("lot_size")
+    result = evaluate_entry_challenges(snap)
+    assert result.first_blocker == "lot_size"

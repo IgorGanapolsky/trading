@@ -29,12 +29,12 @@ _HUMAN_GLOBS = (
     "scripts/sync_alpaca_state.py",
 )
 
+# Explicit allowlist only — never a blanket scripts/ prefix (submit_order etc.).
 _AI_OK_PREFIXES = (
     "docs/",
     "rag_knowledge/",
     "skills/",
     "tests/",
-    "scripts/",
     "src/ops/",
     "src/rag/",
     "README.md",
@@ -43,6 +43,14 @@ _AI_OK_PREFIXES = (
     "AGENTS.md",
     "Claude.md",
     "GEMINI.md",
+)
+
+_AI_OK_SCRIPTS = (
+    "scripts/context_gist.py",
+    "scripts/entry_challenges.py",
+    "scripts/flux_graph.py",
+    "scripts/infoq_agent_control_plane.py",
+    "scripts/package_manager_honesty.py",
 )
 
 _BILLED_REVIEW_MARKERS = (
@@ -76,11 +84,25 @@ class PrRiskDecision:
         return d
 
 
-def _norm(path: str) -> str:
+def _norm(path: str) -> str | None:
+    """Normalize POSIX relative paths. Reject absolute and root-escaping paths."""
+
     p = path.strip().replace("\\", "/")
     while p.startswith("./"):
         p = p[2:]
-    return p
+    if not p or p.startswith("/") or p.startswith("~") or (len(p) >= 2 and p[1] == ":"):
+        return None
+    parts: list[str] = []
+    for part in PurePosixPath(p).parts:
+        if part in ("", "."):
+            continue
+        if part == "..":
+            if not parts:
+                return None
+            parts.pop()
+            continue
+        parts.append(part)
+    return "/".join(parts) if parts else None
 
 
 def _matches_human(path: str) -> bool:
@@ -98,6 +120,8 @@ def _matches_human(path: str) -> bool:
 
 
 def _matches_ai_ok(path: str) -> bool:
+    if path in _AI_OK_SCRIPTS:
+        return True
     for prefix in _AI_OK_PREFIXES:
         if prefix.endswith("/"):
             if path.startswith(prefix):
@@ -119,7 +143,10 @@ def classify_pr_paths(
     unknown: list[str] = []
     for raw in paths:
         path = _norm(raw)
-        if not path or path.endswith("/"):
+        if path is None:
+            unknown.append(raw.strip().replace("\\", "/") or "(invalid_path)")
+            continue
+        if path.endswith("/"):
             continue
         if _matches_human(path):
             human.append(path)

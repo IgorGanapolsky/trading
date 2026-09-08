@@ -153,6 +153,28 @@ def gist_context(
         final_constraints.append(f"extra:{e}")
         used += cost
 
+    # Bound dropped diagnostics inside the same hard budget so compact()/to_dict
+    # cannot explode when many noise extras are recorded.
+    diag_budget = min(80, max(0, budget - used))
+    capped_dropped: list[str] = []
+    diag_used = 0
+    for idx, entry in enumerate(dropped):
+        label = entry[:64]
+        cost = estimate_tokens(label) + 2
+        remaining_entries = len(dropped) - idx
+        if diag_used + cost > diag_budget:
+            overflow = remaining_entries
+            summary = f"dropped_overflow:{overflow}"
+            scost = estimate_tokens(summary) + 2
+            if diag_used + scost <= diag_budget or not capped_dropped:
+                capped_dropped.append(summary)
+                diag_used += scost
+            break
+        capped_dropped.append(label)
+        diag_used += cost
+    dropped = capped_dropped
+    used += diag_used
+
     if used > budget:
         failing.append("over_token_budget")
 

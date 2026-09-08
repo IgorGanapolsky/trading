@@ -47,3 +47,30 @@ def test_unknown_path_fail_closed():
 def test_mentions_billed_review():
     assert mentions_billed_review("enable Copilot Code Review billed per review")
     assert not mentions_billed_review("use existing CI AI review")
+
+
+def test_unrecognized_script_requires_human():
+    d = classify_pr_paths(["scripts/submit_order.py"])
+    assert d.allow_ai_approve is False
+    assert d.require_human is True
+    assert "scripts/submit_order.py" in d.unknown_paths
+
+
+def test_allowlisted_infoq_script_ai_ok():
+    d = classify_pr_paths(["scripts/infoq_agent_control_plane.py", "docs/INFOQ_CONTROL_PLANE.md"])
+    assert d.allow_ai_approve is True
+    assert d.ok is True
+
+
+def test_path_traversal_resolves_to_human_policy():
+    d = classify_pr_paths(["src/ops/../risk/trade_gateway.py"])
+    assert d.require_human is True
+    assert d.allow_ai_approve is False
+    assert "src/risk/trade_gateway.py" in d.matched_human_paths
+
+
+def test_absolute_and_escaping_paths_fail_closed():
+    d = classify_pr_paths(["/etc/passwd", "../secrets.env"])
+    assert d.ok is False
+    assert d.require_human is True
+    assert len(d.unknown_paths) == 2

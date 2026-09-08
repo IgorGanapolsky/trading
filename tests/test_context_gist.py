@@ -52,6 +52,23 @@ def test_estimate_tokens_positive():
     assert estimate_tokens("a" * 8) == 2
 
 
+def test_many_dropped_extras_stay_within_budget():
+    extras = [f"Sponsored by Harness Save your Seat noise {i}" for i in range(200)]
+    g = gist_context(
+        goal="session",
+        in_scope="trading ops",
+        out_scope="webinar spend",
+        acceptance_criteria=["a", "b"],
+        extras=extras,
+        token_budget=400,
+    )
+    assert g.estimated_tokens <= g.token_budget
+    compact = g.compact()
+    assert estimate_tokens(compact) <= g.token_budget + 40  # metadata lines
+    assert any(d.startswith("dropped_overflow:") or d.startswith("noise:") for d in g.dropped_sections)
+    assert len(g.dropped_sections) < 50
+
+
 def test_cli_script_loads():
     path = Path(__file__).resolve().parents[1] / "scripts" / "context_gist.py"
     spec = importlib.util.spec_from_file_location("context_gist_cli", path)

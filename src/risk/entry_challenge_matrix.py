@@ -96,8 +96,15 @@ def _chal_paper_mode(snap: Snapshot) -> Challenge:
 
 def _chal_kill_switch(snap: Snapshot) -> Challenge:
     family = str(snap.get("active_family") or "").lower()
-    live_blocked = _as_bool(snap.get("live_blocked"), default=True)
-    ic_killed = _as_bool(snap.get("ic_entries_killed"), default=True)
+    if "live_blocked" not in snap or "ic_entries_killed" not in snap:
+        return Challenge(
+            id="kill_switch",
+            title="Kill switch permits put-credit only",
+            passed=False,
+            detail="kill_switch_state_missing",
+        )
+    live_blocked = _as_bool(snap.get("live_blocked"), default=False)
+    ic_killed = _as_bool(snap.get("ic_entries_killed"), default=False)
     ok = family in {"spy_put_credit", "put_credit", "spy-put-credit"} and live_blocked and ic_killed
     return Challenge(
         id="kill_switch",
@@ -137,20 +144,49 @@ def _chal_regime(snap: Snapshot) -> Challenge:
 
 
 def _chal_lot_size(snap: Snapshot) -> Challenge:
-    lots = _as_int(snap.get("lot_size"), 1)
-    max_lot = _as_int(snap.get("max_lot_size"), 1) or 1
-    ok = lots is not None and lots == max_lot == 1
+    if "lot_size" not in snap or "max_lot_size" not in snap:
+        return Challenge(
+            id="lot_size",
+            title="One-lot only",
+            passed=False,
+            detail="lot_size_missing",
+        )
+    lots = _as_int(snap.get("lot_size"))
+    max_lot = _as_int(snap.get("max_lot_size"))
+    if lots is None or max_lot is None:
+        return Challenge(
+            id="lot_size",
+            title="One-lot only",
+            passed=False,
+            detail="lot_size_invalid",
+        )
+    ok = lots == 1 and max_lot == 1
     return Challenge(
         id="lot_size",
         title="One-lot only",
-        passed=bool(ok),
+        passed=ok,
         detail=f"lot_size={lots} max_lot_size={max_lot}",
     )
 
 
 def _chal_concurrency(snap: Snapshot) -> Challenge:
-    open_n = _as_int(snap.get("open_put_credits"), 0) or 0
-    max_n = _as_int(snap.get("max_concurrent_put_credits"), 2) or 2
+    if "open_put_credits" not in snap or "max_concurrent_put_credits" not in snap:
+        return Challenge(
+            id="concurrency",
+            title="Under max concurrent put credits",
+            passed=False,
+            detail="concurrency_limits_missing",
+        )
+    open_n = _as_int(snap.get("open_put_credits"))
+    max_n = _as_int(snap.get("max_concurrent_put_credits"))
+    if open_n is None or max_n is None:
+        return Challenge(
+            id="concurrency",
+            title="Under max concurrent put credits",
+            passed=False,
+            detail="concurrency_limits_invalid",
+        )
+    # Preserve explicit zero maxima (do not coerce 0 → default).
     ok = open_n < max_n
     return Challenge(
         id="concurrency",
@@ -161,8 +197,22 @@ def _chal_concurrency(snap: Snapshot) -> Challenge:
 
 
 def _chal_daily_cap(snap: Snapshot) -> Challenge:
-    today = _as_int(snap.get("structures_today"), 0) or 0
-    max_day = _as_int(snap.get("max_daily_structures"), 3) or 3
+    if "structures_today" not in snap or "max_daily_structures" not in snap:
+        return Challenge(
+            id="daily_cap",
+            title="Under max daily structures",
+            passed=False,
+            detail="daily_cap_missing",
+        )
+    today = _as_int(snap.get("structures_today"))
+    max_day = _as_int(snap.get("max_daily_structures"))
+    if today is None or max_day is None:
+        return Challenge(
+            id="daily_cap",
+            title="Under max daily structures",
+            passed=False,
+            detail="daily_cap_invalid",
+        )
     ok = today < max_day
     return Challenge(
         id="daily_cap",
