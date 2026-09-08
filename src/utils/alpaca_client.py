@@ -110,22 +110,51 @@ def _keychain_generic_password(service: str, account: str = "hermes-fleet") -> O
         return None
 
 
+# Canonical paper Keychain aliases used by scripts/store_alpaca_keychain.py and
+# scripts/run_with_alpaca_keychain.py. Checked after env-named hermes-fleet services.
+_PAPER_KEYCHAIN_ALIASES: tuple[tuple[str, tuple[tuple[str, str], ...]], ...] = (
+    (
+        "ALPACA_PAPER_TRADING_API_KEY",
+        (
+            ("ALPACA_PAPER_TRADING_API_KEY", "hermes-fleet"),
+            ("trading.alpaca.paper.api-key", "paper"),
+        ),
+    ),
+    (
+        "ALPACA_PAPER_TRADING_API_SECRET",
+        (
+            ("ALPACA_PAPER_TRADING_API_SECRET", "hermes-fleet"),
+            ("trading.alpaca.paper.api-secret", "paper"),
+        ),
+    ),
+    (
+        "ALPACA_API_KEY",
+        (("ALPACA_API_KEY", "hermes-fleet"),),
+    ),
+    (
+        "ALPACA_SECRET_KEY",
+        (("ALPACA_SECRET_KEY", "hermes-fleet"),),
+    ),
+)
+
+
 def _bootstrap_env_from_keychain() -> None:
-    """Fill missing paper Alpaca env vars from Keychain (local Mac operator path)."""
-    pairs = (
-        ("ALPACA_PAPER_TRADING_API_KEY", "ALPACA_PAPER_TRADING_API_KEY"),
-        ("ALPACA_PAPER_TRADING_API_SECRET", "ALPACA_PAPER_TRADING_API_SECRET"),
-        ("ALPACA_API_KEY", "ALPACA_API_KEY"),
-        ("ALPACA_SECRET_KEY", "ALPACA_SECRET_KEY"),
-    )
+    """Fill missing paper Alpaca env vars from Keychain (local Mac operator path).
+
+    Tries hermes-fleet services matching env var names first, then the canonical
+    `trading.alpaca.paper.api-*` / account `paper` aliases used by the store/run
+    wrappers. Never logs secret values.
+    """
     loaded = 0
-    for env_name, service in pairs:
+    for env_name, lookups in _PAPER_KEYCHAIN_ALIASES:
         if os.getenv(env_name):
             continue
-        value = _keychain_generic_password(service)
-        if value:
-            os.environ[env_name] = value
-            loaded += 1
+        for service, account in lookups:
+            value = _keychain_generic_password(service, account=account)
+            if value:
+                os.environ[env_name] = value
+                loaded += 1
+                break
     if loaded:
         logger.info("Loaded %s Alpaca credential(s) from Keychain (values not logged)", loaded)
 
@@ -137,7 +166,8 @@ def get_alpaca_credentials() -> tuple[Optional[str], Optional[str]]:
     Priority order (first found wins) - UPDATED Jan 30, 2026:
     1. ALPACA_PAPER_TRADING_API_KEY / SECRET ($100K account - PRIMARY)
     2. ALPACA_API_KEY / ALPACA_SECRET_KEY (workflow fallback)
-    3. macOS Keychain services with the same names (account hermes-fleet)
+    3. macOS Keychain: hermes-fleet env-named services, then
+       trading.alpaca.paper.api-key|secret (account paper)
 
     NOTE: The $5K/$30K accounts are deprecated. Use $100K account only.
     $100K account = No PDT restrictions, faster path to North Star.
