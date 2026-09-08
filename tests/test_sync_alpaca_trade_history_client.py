@@ -76,7 +76,12 @@ def test_sync_from_alpaca_uses_trader_wrapped_trading_client(
     class _Executor:
         def __init__(self, paper=True, allow_simulator=False):  # noqa: ARG002
             self.trader = _TraderWrapper()
-            self.account_snapshot = {"cash": 1000.0, "buying_power": 2000.0, "last_equity": 950.0}
+            self.account_snapshot = {
+                "cash": 1000.0,
+                "buying_power": 2000.0,
+                "last_equity": 950.0,
+                "account_number": "PA3C5AG0CECQ",
+            }
             self.account_equity = 1000.0
 
         def sync_portfolio_state(self) -> None:
@@ -123,7 +128,12 @@ def test_sync_from_alpaca_falls_back_to_get_alpaca_client_for_orders(
     class _ExecutorNoTrader:
         def __init__(self, paper=True, allow_simulator=False):  # noqa: ARG002
             self.trader = None
-            self.account_snapshot = {"cash": 3000.0, "buying_power": 4000.0, "last_equity": 3050.0}
+            self.account_snapshot = {
+                "cash": 3000.0,
+                "buying_power": 4000.0,
+                "last_equity": 3050.0,
+                "account_number": "PA3C5AG0CECQ",
+            }
             self.account_equity = 3000.0
 
         def sync_portfolio_state(self) -> None:

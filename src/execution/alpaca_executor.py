@@ -191,9 +191,9 @@ class AlpacaExecutor:
             try:
                 # Try to get account info - this MUST work
                 if hasattr(self.trader, "get_account_info"):
-                    self.account_snapshot = self.trader.get_account_info()
+                    self.account_snapshot = self.trader.get_account_info() or {}
                 elif hasattr(self.trader, "get_account"):
-                    # Direct TradingClient fallback
+                    # Direct TradingClient fallback (MultiBroker.alpaca)
                     account = self.trader.get_account()
                     self.account_snapshot = {
                         "equity": float(account.equity),
@@ -202,9 +202,23 @@ class AlpacaExecutor:
                         "portfolio_value": float(account.portfolio_value),
                         # Needed for accurate daily P/L (used by sync_alpaca_state + dashboards).
                         "last_equity": float(getattr(account, "last_equity", 0.0) or 0.0),
+                        "account_number": getattr(account, "account_number", None),
                     }
                 else:
                     raise RuntimeError("Trader has no get_account_info or get_account method!")
+
+                if isinstance(self.account_snapshot, dict) and not self.account_snapshot.get(
+                    "account_number"
+                ):
+                    account = None
+                    if hasattr(self.trader, "get_account"):
+                        account = self.trader.get_account()
+                    elif hasattr(self.trader, "trading_client"):
+                        account = self.trader.trading_client.get_account()
+                    if account is not None:
+                        number = getattr(account, "account_number", None)
+                        if isinstance(number, str) and number.strip():
+                            self.account_snapshot["account_number"] = number.strip()
 
                 # Get positions
                 if hasattr(self.trader, "get_positions"):
