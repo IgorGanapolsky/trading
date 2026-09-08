@@ -178,3 +178,4 @@ ralph_output.txt
 population_log*.txt
 wiki/
 graphify-out/
+.venv/
