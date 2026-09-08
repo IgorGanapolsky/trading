@@ -23,3 +23,6 @@ AGENT-595.
 
 - `scripts/aistudio_agent_env_doctor.py` + `make aistudio-roi`
 - Tests cover forbidden tools, unknown domains, missing stop/AC
+- Network allowlist uses `urlsplit` hostname only; `test_network_rejects_userinfo_host_spoof` blocks `user@host` SSRF-shaped authority tricks (CodeRabbit on #4515)
+- Never commit machine `/Users/<user>/` paths into RAG/docs — `absolute-user-path` hygiene + `scripts/check_staged_absolute_paths.py` (see LL-588)
+- Do not land primary-checkout Gemini/edge/context theater SKUs on unrelated claimed branches
