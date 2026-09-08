@@ -21,6 +21,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from src.utils.strict_tabular import (
+    LosslessCoercionError,
+    parse_optional_strict_int,
+)
+
 STRATEGY_ALIASES = {
     "bull_put": "spy_put_credit",
     "bull_put_credit": "spy_put_credit",
@@ -331,9 +336,22 @@ def build_trade_evidence(
         verified_rows.append(normalized)
 
     stats = payload.get("stats", {}) if isinstance(payload.get("stats"), dict) else {}
-    unpaired_count = int(_as_float(stats.get("unpaired_order_count")) or 0)
+    # Polars-2 steal: refuse silent float→int coercion for ledger counts (AGENT-589).
+    try:
+        unpaired_count = (
+            parse_optional_strict_int(
+                stats.get("unpaired_order_count"), field="stats.unpaired_order_count"
+            )
+            or 0
+        )
+        reported_closed = (
+            parse_optional_strict_int(stats.get("closed_trades"), field="stats.closed_trades") or 0
+        )
+    except LosslessCoercionError as exc:
+        issues.append(f"lossy_stats_count_coercion:{exc}")
+        unpaired_count = 0
+        reported_closed = 0
     unpaired_cash = float(_as_float(stats.get("unpaired_realized_pnl")) or 0.0)
-    reported_closed = int(_as_float(stats.get("closed_trades")) or 0)
     reported_total = _as_float(stats.get("total_realized_pnl", stats.get("total_pnl")))
 
     physical_metrics = _metrics(

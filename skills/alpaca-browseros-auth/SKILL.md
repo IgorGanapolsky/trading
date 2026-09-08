@@ -33,8 +33,11 @@ The helper scripts never print secret values.
 In BrowserOS Neo, open Alpaca and confirm all of the following before touching API credentials:
 
 - The banner explicitly says **Paper Trading**.
+- The account switcher is on **PA3C5AG0CECQ** (validation paper, ~$94,181.95, SPY 261016 put credit).
+- Do **not** bind Keychain to `PA3PYE08C9MN` ($30k) or `PA36N5ZP8S40` ($5k). Those books do not count toward n=30.
+- Live brokerage `979807421` is blocked. Never copy live keys into the paper Keychain slots.
 - Record the paper account identifier and visible equity as non-secret evidence.
-- Do not infer that this is the repository's expected account. The API verification below decides that.
+- Do not infer that this is the repository's expected account. The API verification below decides that. `scripts/sync_alpaca_state.py` refuses to write `data/system_state.json` unless the broker `account_number` is `PA3C5AG0CECQ`.
 
 ### 2. Open Alpaca API keys
 
