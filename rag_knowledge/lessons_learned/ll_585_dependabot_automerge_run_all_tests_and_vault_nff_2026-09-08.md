@@ -15,3 +15,4 @@ PR hygiene after Scorecard/Dependabot batch. #4505 merged (29a2bb059). #4500-#45
 - Hygiene completion phrase gated on Dependabot MERGED (or required-fail evidence) + tip required checks + vault push + dry-run/health evidence.
 - Scorecard residuals are not GitHub Issues (never_opens_github_issues).
 - Before writing ll_NNN_*.md, list existing NNN on main.
+7. Tip push CI may be absent after rapid Dependabot squash lands; reattach with a docs PR if required checks are missing on tip.
