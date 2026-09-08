@@ -31,6 +31,7 @@ coverage:
 
 audit:
 	$(VENV_PYTHON) scripts/audit_repository_hygiene.py --check
+	$(VENV_PYTHON) scripts/check_staged_absolute_paths.py
 
 security:
 	$(VENV_PYTHON) -m pip_audit
