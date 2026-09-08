@@ -1,12 +1,11 @@
 # Lightweight workflow runtime. Keep heavy semantic-RAG and research providers optional.
 alpaca-py==0.44.0
-anthropic>=1.2.0,<2.0.0
+anthropic>=1.3.0,<2.0.0
 fastapi>=0.141.1,<1.0.0
-google-generativeai>=0.8.4,<1.0.0
 holidays>=0.103
 httpx>=0.28.1,<1.0.0
 numpy>=2.4.6,<3.0.0
-openai>=3.5.0,<4.0.0
+openai>=3.8.0,<4.0.0
 pandas>=3.0.5,<4.0.0
 pydantic-settings>=2.15.0,<3.0.0
 python-dotenv>=1.2.3,<2.0.0
