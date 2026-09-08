@@ -93,6 +93,12 @@ cohort-scorecard:
 	@echo "=== Put Credit Cohort Scorecard ==="
 	$(VENV_PYTHON) scripts/put_credit_cohort_scorecard.py --json | $(VENV_PYTHON) -m json.tool
 
+# InfoQ Sep 8 2026 FORMAT steals (gist / challenges / flux / pr-risk)
+infoq-roi:
+	@echo "=== InfoQ control-plane doctor ==="
+	$(VENV_PYTHON) -m pytest tests/test_context_gist.py tests/test_entry_challenge_matrix.py tests/test_flux_task_graph.py tests/test_pr_risk_classifier.py tests/test_infoq_agent_control_plane.py -q
+	$(VENV_PYTHON) scripts/infoq_agent_control_plane.py --acs 'tests pass|CLI fail-closed' --paths 'src/ops/context_gist.py,tests/test_context_gist.py,docs/INFOQ_CONTROL_PLANE.md'
+
 # Run full daily trading cycle (inventory, regime, exits, cohort)
 daily-cycle:
 	@echo "=== Daily Trading Cycle ==="
