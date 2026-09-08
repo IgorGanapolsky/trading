@@ -59,9 +59,7 @@ def test_scan_flags_absolute_user_path_outside_tests(tmp_path: Path, monkeypatch
     )
 
     report = scan(tmp_path)
-    absolute = [
-        f for f in report["findings"] if f["kind"] == "absolute-user-path"
-    ]
+    absolute = [f for f in report["findings"] if f["kind"] == "absolute-user-path"]
     assert len(absolute) == 1
     assert absolute[0]["path"] == "rag_knowledge/lessons_learned/ll_999_bad.md"
     assert report["errors"] >= 1
