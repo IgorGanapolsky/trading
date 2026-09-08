@@ -77,3 +77,35 @@ def test_check_staged_absolute_paths_helper(tmp_path: Path) -> None:
     (tests / "ok.py").write_text('p="/Users/igorganapolsky/x"\n', encoding="utf-8")
 
     assert check_paths(tmp_path, ["docs/note.md", "tests/ok.py"]) == ["docs/note.md"]
+
+
+def test_check_staged_reads_index_not_working_tree(tmp_path: Path) -> None:
+    """Staged blob with /Users path must fail even if working tree was scrubbed."""
+    import subprocess
+
+    from scripts.check_staged_absolute_paths import check_paths, main
+
+    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "config", "user.email", "test@example.com"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "test"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+    )
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    note = docs / "note.md"
+    note.write_text("root=/Users/igorganapolsky/workspace\n", encoding="utf-8")
+    subprocess.run(["git", "add", "docs/note.md"], cwd=tmp_path, check=True, capture_output=True)
+    # Working tree cleaned after staging — index still has the bad path.
+    note.write_text("root=/Users/.../workspace\n", encoding="utf-8")
+
+    assert check_paths(tmp_path, ["docs/note.md"], from_index=True) == ["docs/note.md"]
+    assert check_paths(tmp_path, ["docs/note.md"], from_index=False) == []
+    assert main(["--repo-root", str(tmp_path)]) == 1

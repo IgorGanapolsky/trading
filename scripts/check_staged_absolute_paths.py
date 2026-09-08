@@ -3,6 +3,9 @@
 
 Cheap local gate so absolute-user-path hygiene fails before push, not only in CI.
 Uses the same pattern as scripts/audit_repository_hygiene.py.
+
+Default mode reads blob contents from the Git index (`git show :path`) so a
+staged absolute path cannot be hidden by cleaning the working tree afterward.
 """
 
 from __future__ import annotations
@@ -25,18 +28,39 @@ def _staged_paths(repo: Path) -> list[str]:
     return [item.decode() for item in completed.stdout.split(b"\0") if item]
 
 
-def check_paths(repo: Path, paths: list[str]) -> list[str]:
+def _read_index_text(repo: Path, relative: str) -> str | None:
+    completed = subprocess.run(  # nosec B603 B607
+        ["git", "show", f":{relative}"],
+        cwd=repo,
+        capture_output=True,
+    )
+    if completed.returncode != 0:
+        return None
+    return completed.stdout.decode("utf-8", errors="replace")
+
+
+def check_paths(
+    repo: Path,
+    paths: list[str],
+    *,
+    from_index: bool = False,
+) -> list[str]:
     bad: list[str] = []
     for relative in paths:
         if relative.startswith("tests/"):
             continue
-        path = repo / relative
-        if not path.is_file():
-            continue
-        try:
-            text = path.read_text(encoding="utf-8", errors="replace")
-        except OSError:
-            continue
+        if from_index:
+            text = _read_index_text(repo, relative)
+            if text is None:
+                continue
+        else:
+            path = repo / relative
+            if not path.is_file():
+                continue
+            try:
+                text = path.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
         if LOCAL_PATH_PATTERN.search(text):
             bad.append(relative)
     return bad
@@ -48,12 +72,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "paths",
         nargs="*",
-        help="Optional paths to scan; default = git staged files",
+        help="Optional paths to scan from the filesystem; default = git staged index blobs",
     )
     args = parser.parse_args(argv)
     repo = args.repo_root.resolve()
-    paths = list(args.paths) if args.paths else _staged_paths(repo)
-    bad = check_paths(repo, paths)
+    explicit = bool(args.paths)
+    paths = list(args.paths) if explicit else _staged_paths(repo)
+    bad = check_paths(repo, paths, from_index=not explicit)
     if bad:
         print("absolute-user-path: machine-specific /Users path in:", file=sys.stderr)
         for item in bad:
