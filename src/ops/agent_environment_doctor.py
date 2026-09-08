@@ -20,6 +20,7 @@ import hashlib
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Iterable
+from urllib.parse import urlsplit
 
 # Paper-safe operator tools. Anything else requires human / fails closed.
 _DEFAULT_TOOL_ALLOWLIST = frozenset(
@@ -166,8 +167,15 @@ def check_tool_allowlist(
 
 
 def _domain_allowed(domain: str, patterns: tuple[str, ...]) -> bool:
-    host = domain.strip().lower().removeprefix("https://").removeprefix("http://")
-    host = host.split("/")[0].split(":")[0]
+    """Match hostname only; reject URL userinfo authority tricks."""
+
+    candidate = domain.strip().lower()
+    if not candidate:
+        return False
+    parsed = urlsplit(candidate if "://" in candidate else f"//{candidate}")
+    if parsed.username is not None or parsed.password is not None:
+        return False
+    host = (parsed.hostname or "").rstrip(".")
     if not host:
         return False
     for pattern in patterns:

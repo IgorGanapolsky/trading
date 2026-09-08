@@ -52,6 +52,15 @@ def test_network_allow_alpaca_and_offline():
     assert check_network_allowlist([]).ok is True
 
 
+def test_network_rejects_userinfo_host_spoof():
+    """SSRF-shaped authority: credentials must not count as the allowlisted host."""
+
+    spoof = "https://api.alpaca.markets:443@evil.example"
+    d = check_network_allowlist([spoof])
+    assert d.ok is False
+    assert any("evil.example" in f or spoof in f for f in d.failing)
+
+
 def test_termination_requires_stop_and_ac():
     bad = check_termination_criteria(stop_when="", acceptance_criteria=[], out_of_scope="")
     assert bad.ok is False
