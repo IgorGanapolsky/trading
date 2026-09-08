@@ -5,7 +5,7 @@ VENV_PYTHON := $(VENV)/bin/python
 TRADING_ENV ?= paper
 export TRADING_ENV
 
-.PHONY: setup lint ruff format test coverage audit security health skill-check coordination-check coordination-audit coordination-preflight check dry-run hygiene graph-rag-check graphify-check rag-aplus-check gsd-tick gsd-status cohort-scorecard infoq-roi
+.PHONY: setup lint ruff format test coverage audit security health skill-check coordination-check coordination-audit coordination-preflight check dry-run hygiene graph-rag-check graphify-check rag-aplus-check gsd-tick gsd-status cohort-scorecard infoq-roi aistudio-roi
 
 setup:
 	$(PYTHON) -m venv $(VENV)
@@ -98,6 +98,12 @@ infoq-roi:
 	@echo "=== InfoQ control-plane doctor ==="
 	$(VENV_PYTHON) -m pytest tests/test_context_gist.py tests/test_entry_challenge_matrix.py tests/test_flux_task_graph.py tests/test_pr_risk_classifier.py tests/test_infoq_agent_control_plane.py -q
 	$(VENV_PYTHON) scripts/infoq_agent_control_plane.py --acs 'tests pass|CLI fail-closed' --paths 'src/ops/context_gist.py,tests/test_context_gist.py,docs/INFOQ_CONTROL_PLANE.md'
+
+# AI Studio agents FORMAT steals (tool/network allowlist + sources + stop)
+aistudio-roi:
+	@echo "=== AI Studio agent-environment doctor ==="
+	$(VENV_PYTHON) -m pytest tests/test_agent_environment_doctor.py -q
+	$(VENV_PYTHON) scripts/aistudio_agent_env_doctor.py --tools 'context_gist,system_health_check,aistudio_agent_env_doctor' --domains 'api.github.com' --acs 'tests pass|CLI fail-closed'
 
 # Run full daily trading cycle (inventory, regime, exits, cohort)
 daily-cycle:
