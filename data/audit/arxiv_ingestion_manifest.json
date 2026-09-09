@@ -1672,6 +1672,117 @@
       "ingested_at": "2026-09-04T06:31:56.198533+00:00",
       "sha256": "9c3f718943158ed3a627bf7889defa0427613df7653d732e925852acc6a024bd",
       "chunks": 11
+    },
+    "2609.09140v1": {
+      "title": "NOAH: Learning the Full Patient Journey. A Longitudinal Multimodal Time-Aware Model for Representation and Forecasting",
+      "published": "2026-09-08T17:56:13Z",
+      "relevance_score": 0.3,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.09140v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_09140v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_09140v1.md",
+      "ingested_at": "2026-09-09T18:07:58.026678+00:00",
+      "sha256": "2d64ad88cd9f1e4cf5c728439011506a68430ba2a726769a0238180f86c76e57",
+      "chunks": 11
+    },
+    "2609.08861v1": {
+      "title": "API Benchmark Scores Do Not Reliably Transfer to Chatbot Interfaces",
+      "published": "2026-09-08T15:08:37Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.SE"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.08861v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_08861v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_08861v1.md",
+      "ingested_at": "2026-09-09T18:07:58.030936+00:00",
+      "sha256": "d47fc107d71d4383fcf1542146435a853ce7953570e23d00770f67395d74ec24",
+      "chunks": 11
+    },
+    "2609.09135v1": {
+      "title": "Entropy-Regularized Rank-Masked Policy Optimization for Test-Time Reinforcement Learning in Code Generation",
+      "published": "2026-09-08T17:54:13Z",
+      "relevance_score": 0.25,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.CL"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.09135v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_09135v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_09135v1.md",
+      "ingested_at": "2026-09-09T18:07:58.035035+00:00",
+      "sha256": "ce2930b6573fa7eee8f351a690d661e3b8c6d7527ba22852971865ee5ce8bbbe",
+      "chunks": 10
+    },
+    "2609.09116v1": {
+      "title": "When Does Scale-Invariant Optimization Become Unstable? An Exact Schedule Law with Weight Decay",
+      "published": "2026-09-08T17:46:17Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.09116v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_09116v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_09116v1.md",
+      "ingested_at": "2026-09-09T18:07:58.039214+00:00",
+      "sha256": "c91dd52097319ac21d199f28030678b112efd4b7b54aaf6d41ec13eaaad955f4",
+      "chunks": 11
+    },
+    "2609.09153v1": {
+      "title": "Procedural Graphs: Self-Evolving Execution Structures for LLM Agents",
+      "published": "2026-09-08T17:59:41Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.CL",
+        "cs.MA"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.09153v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_09153v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_09153v1.md",
+      "ingested_at": "2026-09-09T18:07:58.050071+00:00",
+      "sha256": "0d4982448edf33a0ea90cd6a80847a9b884b0fd74fbc059b09d452268b22987c",
+      "chunks": 11
+    },
+    "2609.09130v1": {
+      "title": "Nearly Tight Rademacher Bounds for Sparsely Activated Neural Networks",
+      "published": "2026-09-08T17:53:03Z",
+      "relevance_score": 0.26,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "stat.ML"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.09130v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_09130v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_09130v1.md",
+      "ingested_at": "2026-09-09T18:07:58.054286+00:00",
+      "sha256": "266db791d6e5ce5d24ea09413d60ed079deb36f0cacd9d1646ae2d7770e75137",
+      "chunks": 10
+    },
+    "2609.09099v1": {
+      "title": "Curriculum Learning as Transport: Understanding Curricula with Wasserstein Geodesics",
+      "published": "2026-09-08T17:39:16Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.09099v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_09099v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_09099v1.md",
+      "ingested_at": "2026-09-09T18:07:58.058667+00:00",
+      "sha256": "aa575c43dfeaf96dead3e3c411d89a0a0251c281ead5d19d03dfd5ab5f795650",
+      "chunks": 11
     }
   },
   "skipped_low_relevance": {
@@ -2004,10 +2115,34 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-09-04T06:31:56.184553+00:00"
+    },
+    "2609.09157v1": {
+      "title": "Learning Length-Extrapolatable Recurrent Models",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-09T18:07:58.021727+00:00"
+    },
+    "2609.09004v1": {
+      "title": "Evaluation of Contextual Understanding in Large Language Models",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-09T18:07:58.041368+00:00"
+    },
+    "2609.09158v1": {
+      "title": "TANGO: Humanoid Navigation in Cluttered Environments with a Whole-Body Vision-Language-Action Model",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-09T18:07:58.043652+00:00"
+    },
+    "2609.09152v1": {
+      "title": "Silver Rate Is (Almost) Optimal for Gradient Descent Acceleration",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-09T18:07:58.045864+00:00"
     }
   },
-  "total_ingested": 103,
-  "last_run_utc": "2026-09-06T18:06:55.742760+00:00",
+  "total_ingested": 110,
+  "last_run_utc": "2026-09-09T18:07:58.060827+00:00",
   "runs": [
     {
       "finished_at": "2026-08-18T06:15:36.990502+00:00",
@@ -2476,6 +2611,20 @@
       "candidates": 12,
       "new_ingested": 0,
       "skipped_low_relevance": 0,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-09-09T18:07:58.060827+00:00",
+      "candidates": 11,
+      "new_ingested": 7,
+      "skipped_low_relevance": 4,
       "min_relevance": 0.18,
       "queries": [
         "option credit spread OR iron condor OR put credit",
