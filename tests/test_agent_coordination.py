@@ -6,6 +6,7 @@ from pathlib import Path
 
 import src.coordination.agent_contract as contract
 from src.coordination.agent_contract import (
+    AUTO_LAND_PREFIX,
     Finding,
     LEGACY_LABEL,
     audit_repository,
@@ -239,6 +240,24 @@ def test_pr_requires_exact_base_sha_fields_and_checked_coordination() -> None:
     )
 
     assert {"pr-base-sha", "pr-field-missing", "pr-checkbox"} <= _codes(validate_pr_event(event))
+
+
+def test_auto_land_exemption_requires_prefix_and_auto_title() -> None:
+    event = {
+        "pull_request": {
+            "head": {"ref": f"{AUTO_LAND_PREFIX}arxiv-ingest-123"},
+            "user": {"login": "IgorGanapolsky"},
+            "title": "chore(rag): continuous arXiv research ingest [auto]",
+            "labels": [],
+            "body": "",
+        }
+    }
+    assert validate_pr_event(event) == []
+    event["pull_request"]["title"] = "chore(rag): continuous arXiv research ingest"
+    assert "pr-branch-missing-issue" in _codes(validate_pr_event(event))
+    event["pull_request"]["title"] = "chore(rag): continuous arXiv research ingest [auto]"
+    event["pull_request"]["head"]["ref"] = "fix/no-issue-key"
+    assert "pr-branch-missing-issue" in _codes(validate_pr_event(event))
 
 
 def test_dependabot_exemption_requires_actor_and_branch() -> None:

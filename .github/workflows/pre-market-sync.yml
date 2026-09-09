@@ -21,6 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -67,18 +68,11 @@ jobs:
           "
 
       - name: Commit sync data
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/system_state.json data/heartbeat.json data/runtime/
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "chore: pre-market data sync $(date +%Y-%m-%d)"
-            if [ -n "${{ secrets.GH_PAT }}" ]; then
-              git remote set-url origin "https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git"
-            fi
-            git pull --ff-only origin main
-            git push origin HEAD:main
-          fi
+          bash scripts/land_github_actions_pr.sh premarket-sync \
+            "chore: pre-market data sync $(date +%Y-%m-%d) [auto]" \
+            "chore: pre-market data sync [auto]"

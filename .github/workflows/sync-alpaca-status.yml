@@ -36,6 +36,7 @@ jobs:
     timeout-minutes: 8
     permissions:
       contents: write
+      pull-requests: write
 
     steps:
       - name: Checkout
@@ -103,11 +104,10 @@ jobs:
           python3 scripts/run_grpo_training.py || echo "⚠️ GRPO training skipped (insufficient data or missing deps)"
 
       - name: Commit synced state
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
         run: |
           set -euo pipefail
-          git config user.name "GitHub Actions Bot"
-          git config user.email "actions@github.com"
-
           # SYNC-OWNED FILES ONLY — prevents races with Put Credit Validation.
           # Put Credit Validation owns: trades.json, put_credit_entries.json,
           # ic_entries.json, grpo_*, trade_confidence_model,
@@ -125,19 +125,9 @@ jobs:
           git add -f data/north_star_weekly_history.json 2>/dev/null || true
           git add data/runtime/north_star_gate_overrides.json 2>/dev/null || true
           git add data/TRADING_HALTED 2>/dev/null || true
-          if git diff --staged --quiet; then
-            echo "No state changes to commit"
-            exit 0
-          fi
-
-          git commit -m "chore: Sync Alpaca state [auto]"
-
-          if [ -n "${{ secrets.GH_PAT }}" ]; then
-            git remote set-url origin "https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git"
-          fi
-
-          git pull --ff-only origin main
-          git push origin HEAD:main
+          bash scripts/land_github_actions_pr.sh alpaca-sync \
+            "chore: Sync Alpaca state [auto]" \
+            "chore: Sync Alpaca state [auto]"
 
       - name: Notify on Failure
         if: failure()
