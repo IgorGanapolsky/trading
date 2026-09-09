@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: write
-      pull-requests: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -62,22 +62,16 @@ jobs:
 
       - name: Commit corpus + RAG index
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
           git add -f \
             rag_knowledge/arxiv/ \
             data/audit/arxiv_ingestion_manifest.json \
             data/audit/ingestion_version_manifest.json \
             data/rag/lessons_query.json \
             2>/dev/null || true
-
-          if git diff --staged --quiet; then
-            echo "No arXiv corpus changes to commit"
-            exit 0
-          fi
-
-          git commit -m "chore(rag): continuous arXiv research ingest [auto]"
-          git push origin main
+          bash scripts/land_github_actions_pr.sh arxiv-ingest \
+            "chore(rag): continuous arXiv research ingest [auto]" \
+            "chore(rag): continuous arXiv research ingest [auto]"

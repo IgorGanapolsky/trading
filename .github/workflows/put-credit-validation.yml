@@ -35,6 +35,9 @@ jobs:
   run:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -208,11 +211,10 @@ jobs:
           always() &&
           steps.mode.outputs.mode != 'status' &&
           steps.mode.outputs.dry_run != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
           npx --yes prettier@3.6.2 --write \
             data/ic_entries.json \
             data/put_credit_entries.json \
@@ -229,13 +231,9 @@ jobs:
           git add -f data/system_state.json data/trades.json data/verification_reports.json 2>/dev/null || true
           git add -f data/runtime/intraday_pnl_latest.json data/runtime/intraday_pnl_history.json 2>/dev/null || true
           git add -f data/runtime/strategy_kill_switch.json 2>/dev/null || true
-          if git diff --staged --quiet; then
-            echo "No trade data changes"
-          else
-            git commit -m "chore: put-credit / residual IC trade data [auto]"
-            git pull --ff-only origin main
-            git push origin HEAD:main
-          fi
+          bash scripts/land_github_actions_pr.sh put-credit-data \
+            "chore: put-credit / residual IC trade data [auto]" \
+            "chore: put-credit / residual IC trade data [auto]"
 
       - name: Fail closed on unresolved residual IC inventory
         if: always() && steps.residual_ic.outcome == 'failure'

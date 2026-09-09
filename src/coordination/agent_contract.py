@@ -20,6 +20,8 @@ ISSUE_KEY_PATTERN = re.compile(r"\b((?:AGENT|IGO)-\d+)\b", re.IGNORECASE)
 FULL_SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$", re.IGNORECASE)
 ACTIVE_STATES = frozenset({"in progress", "started"})
 DEPENDABOT_LOGIN = "dependabot[bot]"
+AUTO_LAND_PREFIX = "chore/auto-"
+AUTO_LAND_LOGINS = frozenset({"github-actions[bot]", "github-actions"})
 LEGACY_LABEL = "coordination-legacy"
 
 
@@ -336,6 +338,7 @@ def validate_pr_event(event: Mapping[str, Any]) -> list[Finding]:
     branch = str(head.get("ref", "")) if isinstance(head, Mapping) else ""
     login = str(user.get("login", "")) if isinstance(user, Mapping) else ""
     body = str(pull_request.get("body") or "")
+    title = str(pull_request.get("title") or "")
     labels_raw = pull_request.get("labels") or []
     labels = {
         str(item.get("name", "")).lower()
@@ -344,6 +347,12 @@ def validate_pr_event(event: Mapping[str, Any]) -> list[Finding]:
     }
 
     if login == DEPENDABOT_LOGIN and branch.startswith("dependabot/"):
+        return []
+    if (
+        login in AUTO_LAND_LOGINS
+        and branch.startswith(AUTO_LAND_PREFIX)
+        and "[auto]" in title.lower()
+    ):
         return []
     if LEGACY_LABEL in labels:
         reason = _body_field(body, "Coordination legacy reason")

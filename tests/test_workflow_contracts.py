@@ -22,15 +22,50 @@ def test_put_credit_workflow_is_paper_only_and_fail_closed() -> None:
     assert "steps.residual_ic.outcome == 'failure'" in text
 
 
-def test_state_writers_serialize_and_fail_on_push_errors() -> None:
+STATE_WRITERS = (
+    "put-credit-validation.yml",
+    "sync-alpaca-status.yml",
+    "pre-market-sync.yml",
+    "arxiv-paper-ingestion.yml",
+)
+
+
+def test_state_writers_land_via_pr_not_protected_main() -> None:
     queue = "format('state-writer-{0}-{1}', github.repository, github.ref_name || 'main')"
-    for name in ("put-credit-validation.yml", "sync-alpaca-status.yml", "pre-market-sync.yml"):
+    helper = Path("scripts/land_github_actions_pr.sh")
+    assert helper.is_file()
+    helper_text = helper.read_text()
+    assert "set -euo pipefail" in helper_text
+    assert "chore/auto-" in helper_text
+    assert "git push origin main" not in helper_text
+    assert "git push origin HEAD:main" not in helper_text
+    assert "HEAD:refs/heads/main" not in helper_text
+    for name in STATE_WRITERS:
         text = _read(name)
-        assert queue in text or "state-writer-{0}-{1}" in text
-        assert "cancel-in-progress: false" in text and "set -euo pipefail" in text
-        assert (
-            "git pull --ff-only origin main" in text and "git push origin HEAD:main ||" not in text
-        )
+        assert "scripts/land_github_actions_pr.sh" in text, name
+        assert "git push origin main" not in text, name
+        assert "git push origin HEAD:main" not in text, name
+        assert "HEAD:refs/heads/main" not in text, name
+        assert "pull-requests: write" in text, name
+        assert "set -euo pipefail" in text, name
+        if name != "arxiv-paper-ingestion.yml":
+            assert queue in text or "state-writer-{0}-{1}" in text, name
+            assert "cancel-in-progress: false" in text, name
+
+
+def test_run_all_tests_core_timeout_outlives_gha_124() -> None:
+    runner = Path("scripts/ci/run_all_tests.sh").read_text()
+    ci = _read("ci.yml")
+    assert 'CORE_TIMEOUT_MINUTES="${CORE_TIMEOUT_MINUTES:-36}"' in runner
+    assert "timeout-minutes: 55" in ci
+
+
+def test_no_workflow_pushes_protected_main() -> None:
+    for path in WORKFLOWS.glob("*.yml"):
+        text = path.read_text()
+        assert "git push origin main" not in text, path.name
+        assert "git push origin HEAD:main" not in text, path.name
+        assert "HEAD:refs/heads/main" not in text, path.name
 
 
 def test_ci_cancels_superseded_branch_runs_only() -> None:
