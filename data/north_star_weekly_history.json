@@ -296,5 +296,15 @@
     "qualified_setups": 0,
     "cadence_passed": false,
     "updated_at": "2026-09-06T15:03:03.126014+00:00"
+  },
+  {
+    "week_start": "2026-09-07",
+    "sample_size": 1,
+    "win_rate_pct": 100.0,
+    "expectancy_per_trade": 19.0,
+    "mode": "validation_reset",
+    "qualified_setups": 0,
+    "cadence_passed": false,
+    "updated_at": "2026-09-09T15:09:17.922806+00:00"
   }
 ]
