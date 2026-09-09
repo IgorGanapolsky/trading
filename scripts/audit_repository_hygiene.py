@@ -42,6 +42,11 @@ ALLOWED_GENERATED_PATHS = frozenset(
     }
 )
 FORBIDDEN_NAMES = {".coverage", ".DS_Store", "coverage.json", "coverage.xml", "pytest.ini"}
+# Leftover editor/agent rewrite fragments (e.g. core_strategy.py_REWRITE_EXECUTE).
+# Live modules keep a normal .py suffix; query_rewriter.py is not a match.
+LEFTOVER_SOURCE_FRAGMENT = re.compile(
+    r"(?i)\.py(?:_[A-Za-z0-9]*REWRITE[A-Za-z0-9_]*|\.(?:bak|orig|tmp|old|disabled|unused)|_(?:BAK|ORIG|TMP|OLD|DISABLED|UNUSED))$"
+)
 BINARY_SUFFIXES = {
     ".avif",
     ".gif",
@@ -84,6 +89,11 @@ def _git_paths(repo: Path, *args: str) -> set[str]:
         ["git", *args, "-z"], cwd=repo, check=True, capture_output=True
     )
     return {item.decode() for item in completed.stdout.split(b"\0") if item}
+
+
+def is_leftover_source_fragment(relative: str) -> bool:
+    """True for tracked leftover rewrite/backup fragments, not live .py modules."""
+    return bool(LEFTOVER_SOURCE_FRAGMENT.search(Path(relative).name))
 
 
 def candidate_paths(repo: Path) -> list[str]:
@@ -146,6 +156,15 @@ def scan(repo: Path) -> dict:
                     "tracked-ml-binary",
                     relative,
                     "PyTorch weight is gitignored (*.pt) and must not be tracked",
+                )
+            )
+        if is_leftover_source_fragment(relative):
+            findings.append(
+                Finding(
+                    "error",
+                    "leftover-source-fragment",
+                    relative,
+                    "tracked editor/agent rewrite leftover; keep the live .py module only",
                 )
             )
         if data:
