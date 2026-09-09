@@ -51,6 +51,13 @@ def test_state_writers_land_via_pr_not_protected_main() -> None:
             assert "cancel-in-progress: false" in text, name
 
 
+def test_run_all_tests_core_timeout_outlives_gha_124() -> None:
+    runner = Path("scripts/ci/run_all_tests.sh").read_text()
+    ci = _read("ci.yml")
+    assert 'CORE_TIMEOUT_MINUTES="${CORE_TIMEOUT_MINUTES:-36}"' in runner
+    assert "timeout-minutes: 55" in ci
+
+
 def test_no_workflow_pushes_protected_main() -> None:
     for path in WORKFLOWS.glob("*.yml"):
         text = path.read_text()

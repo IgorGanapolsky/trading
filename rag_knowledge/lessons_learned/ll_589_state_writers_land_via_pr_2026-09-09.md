@@ -32,3 +32,5 @@ sync-alpaca-status, and pre-market-sync.
   can trigger CI.
 - Open GitHub Issues for a failed ingest (LL-569).
 - Commit primary-checkout Gemini theater onto this issue (LL-588).
+- Treat Run All Tests exit 124 at ~98% as a pin defect. It is the 28m core
+  watchdog (LL-572 class). Core timeout is 36m; job timeout is 55m.
