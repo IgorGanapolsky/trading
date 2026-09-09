@@ -63,7 +63,7 @@ jobs:
       - name: Commit corpus + RAG index
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           git add -f \

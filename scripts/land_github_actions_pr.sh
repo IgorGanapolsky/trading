@@ -22,7 +22,8 @@ git config user.name "github-actions[bot]"
 git config user.email "github-actions[bot]@users.noreply.github.com"
 
 RUN_ID="${GITHUB_RUN_ID:-$(date -u +%Y%m%d%H%M%S)}"
-BRANCH="chore/auto-${SLUG}-${RUN_ID}"
+ATTEMPT="${GITHUB_RUN_ATTEMPT:-1}"
+BRANCH="chore/auto-${SLUG}-${RUN_ID}-${ATTEMPT}"
 
 case "${TITLE}" in
 *[Aa][Uu][Tt][Oo]*) ;;

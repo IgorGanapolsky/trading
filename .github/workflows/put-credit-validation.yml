@@ -212,7 +212,7 @@ jobs:
           steps.mode.outputs.mode != 'status' &&
           steps.mode.outputs.dry_run != 'true'
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           npx --yes prettier@3.6.2 --write \

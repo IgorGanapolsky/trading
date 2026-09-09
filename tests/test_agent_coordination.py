@@ -6,6 +6,7 @@ from pathlib import Path
 
 import src.coordination.agent_contract as contract
 from src.coordination.agent_contract import (
+    AUTO_LAND_LOGINS,
     AUTO_LAND_PREFIX,
     Finding,
     LEGACY_LABEL,
@@ -242,17 +243,21 @@ def test_pr_requires_exact_base_sha_fields_and_checked_coordination() -> None:
     assert {"pr-base-sha", "pr-field-missing", "pr-checkbox"} <= _codes(validate_pr_event(event))
 
 
-def test_auto_land_exemption_requires_prefix_and_auto_title() -> None:
+def test_auto_land_exemption_requires_actions_bot_prefix_and_auto_title() -> None:
     event = {
         "pull_request": {
             "head": {"ref": f"{AUTO_LAND_PREFIX}arxiv-ingest-123"},
-            "user": {"login": "IgorGanapolsky"},
+            "user": {"login": "github-actions[bot]"},
             "title": "chore(rag): continuous arXiv research ingest [auto]",
             "labels": [],
             "body": "",
         }
     }
+    assert "github-actions[bot]" in AUTO_LAND_LOGINS
     assert validate_pr_event(event) == []
+    event["pull_request"]["user"]["login"] = "IgorGanapolsky"
+    assert "pr-branch-missing-issue" in _codes(validate_pr_event(event))
+    event["pull_request"]["user"]["login"] = "github-actions[bot]"
     event["pull_request"]["title"] = "chore(rag): continuous arXiv research ingest"
     assert "pr-branch-missing-issue" in _codes(validate_pr_event(event))
     event["pull_request"]["title"] = "chore(rag): continuous arXiv research ingest [auto]"

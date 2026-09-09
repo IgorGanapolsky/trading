@@ -105,7 +105,7 @@ jobs:
 
       - name: Commit synced state
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           # SYNC-OWNED FILES ONLY — prevents races with Put Credit Validation.

@@ -39,11 +39,13 @@ def test_state_writers_land_via_pr_not_protected_main() -> None:
     assert "chore/auto-" in helper_text
     assert "git push origin main" not in helper_text
     assert "git push origin HEAD:main" not in helper_text
+    assert "HEAD:refs/heads/main" not in helper_text
     for name in STATE_WRITERS:
         text = _read(name)
         assert "scripts/land_github_actions_pr.sh" in text, name
         assert "git push origin main" not in text, name
         assert "git push origin HEAD:main" not in text, name
+        assert "HEAD:refs/heads/main" not in text, name
         assert "pull-requests: write" in text, name
         assert "set -euo pipefail" in text, name
         if name != "arxiv-paper-ingestion.yml":
@@ -63,6 +65,7 @@ def test_no_workflow_pushes_protected_main() -> None:
         text = path.read_text()
         assert "git push origin main" not in text, path.name
         assert "git push origin HEAD:main" not in text, path.name
+        assert "HEAD:refs/heads/main" not in text, path.name
 
 
 def test_ci_cancels_superseded_branch_runs_only() -> None:
