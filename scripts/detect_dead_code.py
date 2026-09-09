@@ -103,6 +103,9 @@ def find_empty_directories(root: Path) -> list[str]:
         dirnames[:] = [d for d in dirnames if not d.startswith(".") and d != "__pycache__"]
 
         py_files = [f for f in filenames if f.endswith(".py")]
+        # Subpackages (e.g. src/intel/explainx) are real code, not empty dirs.
+        if dirnames:
+            continue
         if py_files == ["__init__.py"]:
             init_path = Path(dirpath) / "__init__.py"
             if init_path.stat().st_size < 100:  # Small __init__.py
