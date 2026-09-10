@@ -75,35 +75,8 @@ jobs:
             echo "run_full_tests=true" >> "${GITHUB_OUTPUT}"
           fi
 
-  trunk-check:
-    name: Trunk Check
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    # checks/pull-requests write are required for trunk-io/trunk-action to
-    # post annotations to the PR. Without them the action returns exit 1 with
-    # "Resource not accessible by integration" 403 (recurring noise on every
-    # recent PR). Job-level permissions narrow the broader workflow scope.
-    permissions:
-      contents: read
-      checks: write
-      pull-requests: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Cache Trunk artifacts
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
-        with:
-          path: ~/.cache/trunk
-          key: ${{ runner.os }}-trunk-${{ github.ref_name }}-${{ hashFiles('.trunk/trunk.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-trunk-${{ github.ref_name }}-
-            ${{ runner.os }}-trunk-
-      - name: Trunk Check
-        uses: trunk-io/trunk-action@e1234e67a86010d61ddac8d8ebf4b783e2ffd2fa # v2.0.0
-        with:
-          trunk-token: ${{ secrets.TRUNK_API_TOKEN }}
-          cache: "false"
+  # Trunk Check removed 2026-09-10 (AGENT-600): Trunk web app shut down;
+  # trunk-token deprecated; job exited 1 on every PR and is not a required check.
 
   test-suite:
     name: Run All Tests
