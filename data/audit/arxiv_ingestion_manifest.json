@@ -1783,6 +1783,156 @@
       "ingested_at": "2026-09-09T18:07:58.058667+00:00",
       "sha256": "aa575c43dfeaf96dead3e3c411d89a0a0251c281ead5d19d03dfd5ab5f795650",
       "chunks": 11
+    },
+    "2609.10494v1": {
+      "title": "IBIB: A Protocol for Measuring Enterprise AI Systems by Serving Route, Not Model Identifier",
+      "published": "2026-09-09T17:31:29Z",
+      "relevance_score": 0.26,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.10494v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_10494v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_10494v1.md",
+      "ingested_at": "2026-09-10T06:31:45.712384+00:00",
+      "sha256": "c23c465f69594f64f14858ce938260b4ed2e88bad6adf5fd03f567fc69dcacf7",
+      "chunks": 12
+    },
+    "2609.10350v1": {
+      "title": "Cyber-Financial Contagion: Modeling the Propagation of an AI Vendor Compromise Through the Banking System",
+      "published": "2026-09-09T15:46:16Z",
+      "relevance_score": 0.26,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.CY",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.10350v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_10350v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_10350v1.md",
+      "ingested_at": "2026-09-10T06:31:45.716760+00:00",
+      "sha256": "8717fc107779bde8f86ff2644d6abda405cbf801f2af2a256ba300061000369e",
+      "chunks": 11
+    },
+    "2609.10439v1": {
+      "title": "Forgetting Only What Matters: Layer-Selective Unlearning toward Robust LLMs",
+      "published": "2026-09-09T16:50:41Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.10439v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_10439v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_10439v1.md",
+      "ingested_at": "2026-09-10T06:31:45.721083+00:00",
+      "sha256": "37becba907d1064c929546bcaed2bf5ee343abf79fee249b1aabf5bcd428d37d",
+      "chunks": 11
+    },
+    "2609.10407v1": {
+      "title": "dexamine: A Python package for Uniswap event data on Ethereum",
+      "published": "2026-09-09T16:25:36Z",
+      "relevance_score": 0.28,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "q-fin.TR",
+        "cs.SE"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.10407v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_10407v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_10407v1.md",
+      "ingested_at": "2026-09-10T06:31:45.725390+00:00",
+      "sha256": "d369d260a2b6c13e832ec3919a7a57135b78f83252f0228e7e0afcd48df30816",
+      "chunks": 10
+    },
+    "2609.10372v1": {
+      "title": "PACE: Perceived-Latency-Aware Cascading Service Routing and Filler Control for QoE-Efficient Retrieval-Augmented Dialogue Serving",
+      "published": "2026-09-09T16:02:36Z",
+      "relevance_score": 0.39,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CV",
+        "cs.AI",
+        "cs.RO"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.10372v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_10372v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_10372v1.md",
+      "ingested_at": "2026-09-10T06:31:45.729692+00:00",
+      "sha256": "4dc877f999f2beb413b32e1e07c7643ac2665709f2a02768fe77462972bdd901",
+      "chunks": 10
+    },
+    "2609.10534v1": {
+      "title": "Likelihood-free inference with nuisance parameters through normalizing flows",
+      "published": "2026-09-09T17:58:15Z",
+      "relevance_score": 0.28,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "stat.ME",
+        "cs.LG",
+        "stat.ML"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.10534v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_10534v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_10534v1.md",
+      "ingested_at": "2026-09-10T06:31:45.734028+00:00",
+      "sha256": "e693088be3884edba909a8697d07bdf94f95f145fdae434fa9e4c603c0951cf3",
+      "chunks": 10
+    },
+    "2609.10529v1": {
+      "title": "A positive resolution of the gap-entropy conjecture",
+      "published": "2026-09-09T17:57:11Z",
+      "relevance_score": 0.28,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "stat.ML"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.10529v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_10529v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_10529v1.md",
+      "ingested_at": "2026-09-10T06:31:45.738399+00:00",
+      "sha256": "283075c1a87174fd533f6e3d1452909654c8dcc22b67be30cde701e7e29e5b9a",
+      "chunks": 10
+    },
+    "2609.10525v1": {
+      "title": "Characterizing Language Generation in the Limit: Finite Witnesses and a Separation-Width Hierarch",
+      "published": "2026-09-09T17:54:30Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.FL",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.10525v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_10525v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_10525v1.md",
+      "ingested_at": "2026-09-10T06:31:45.742943+00:00",
+      "sha256": "726bec2f74be4764c8f7c5f933d0243bf8ce227fd5e0c3d63fe73b88f893ada0",
+      "chunks": 11
+    },
+    "2609.10514v1": {
+      "title": "Optimal Low-Rank Quantum State Tomography with Bounded-Sample Joint Measurements",
+      "published": "2026-09-09T17:48:41Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "quant-ph",
+        "cs.DS",
+        "cs.IT",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.10514v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_10514v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_10514v1.md",
+      "ingested_at": "2026-09-10T06:31:45.747351+00:00",
+      "sha256": "758f5f84f6d79289090e661a0123ffa84222e203d1f8326639b94c0c6a553073",
+      "chunks": 11
     }
   },
   "skipped_low_relevance": {
@@ -2139,10 +2289,22 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-09-09T18:07:58.045864+00:00"
+    },
+    "2609.10505v1": {
+      "title": "Quantum Feature Engineering for Credit Default Prediction: When and Why IQP Circuits Help Linear Classifiers",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-10T06:31:45.707237+00:00"
+    },
+    "2609.10522v1": {
+      "title": "Show-Harness: Just a VLM Agent Can Play Robots",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-10T06:31:45.749666+00:00"
     }
   },
-  "total_ingested": 110,
-  "last_run_utc": "2026-09-09T18:07:58.060827+00:00",
+  "total_ingested": 119,
+  "last_run_utc": "2026-09-10T06:31:45.751960+00:00",
   "runs": [
     {
       "finished_at": "2026-08-18T06:15:36.990502+00:00",
@@ -2625,6 +2787,20 @@
       "candidates": 11,
       "new_ingested": 7,
       "skipped_low_relevance": 4,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-09-10T06:31:45.751960+00:00",
+      "candidates": 11,
+      "new_ingested": 9,
+      "skipped_low_relevance": 2,
       "min_relevance": 0.18,
       "queries": [
         "option credit spread OR iron condor OR put credit",
