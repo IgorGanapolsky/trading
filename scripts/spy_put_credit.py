@@ -1603,12 +1603,62 @@ def main() -> int:
     plan["spy_price"] = spy_price
     plan["regime"] = regime_snap.as_dict()
     plan["regime_gate"] = regime_gate
+
+    # Fahmy FORMAT OS (AGENT-602): market / structure / technical / predefined risk.
+    from src.risk.put_credit_regime import evaluate_entry_operating_system
+
+    risk_plan = None
+    if isinstance(opp, dict):
+        risk_plan = {
+            "entry": {
+                "expiry": opp.get("expiry"),
+                "short_put": opp.get("short_put"),
+                "long_put": opp.get("long_put"),
+                "est_credit": opp.get("est_credit"),
+            },
+            "quantity": plan.get("quantity"),
+            "stop_loss": plan.get("stop_loss_pct"),
+            "take_profit": plan.get("take_profit_pct"),
+            "time_exit": plan.get("exit_dte"),
+        }
+    entry_os = evaluate_entry_operating_system(
+        regime_gate=regime_gate,
+        opportunity=opp if isinstance(opp, dict) else None,
+        risk_plan=risk_plan,
+        min_dte=int(plan.get("min_dte") or 30),
+        max_dte=int(plan.get("max_dte") or 45),
+        min_short_delta=float((plan.get("delta_band") or [0.10, 0.25])[0]),
+        max_short_delta=float((plan.get("delta_band") or [0.10, 0.25])[1]),
+    )
+    plan["entry_operating_system"] = entry_os
+    if isinstance(opp, dict):
+        opp["entry_operating_system"] = entry_os
     path = write_plan(plan)
 
     if opp is None:
         logger.warning("No valid put-credit opportunity right now")
         print(json.dumps({"success": False, "reason": "no_opportunity", "plan_path": str(path)}))
         return 1
+
+    if not entry_os.get("pass") and not args.ignore_regime_gate:
+        logger.error(
+            "PUT-CREDIT ENTRY OS BLOCKED: %s",
+            " | ".join(entry_os.get("fails") or ["os_failed"]),
+        )
+        print(
+            json.dumps(
+                {
+                    "success": False,
+                    "reason": "entry_operating_system_blocked",
+                    "entry_operating_system": entry_os,
+                    "plan_path": str(path),
+                },
+                indent=2,
+                default=str,
+            )
+        )
+        # Dry-run still writes the plan for audit; non-zero so automation does not submit.
+        return 2
 
     signature = f"SPY_{opp['expiry']}_P{int(opp['long_put'])}-{int(opp['short_put'])}"
     limit_report = evaluate_entry_limits(
@@ -1642,6 +1692,7 @@ def main() -> int:
                     "dry_run": True,
                     "opportunity": opp,
                     "regime": regime_gate,
+                    "entry_operating_system": entry_os,
                     "plan_path": str(path),
                 },
                 indent=2,
