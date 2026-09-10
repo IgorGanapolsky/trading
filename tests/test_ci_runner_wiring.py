@@ -5,13 +5,15 @@ CI_WORKFLOW_PATH = PROJECT_ROOT / ".github" / "workflows" / "ci.yml"
 RUNNER_SCRIPT_PATH = PROJECT_ROOT / "scripts" / "ci" / "run_all_tests.sh"
 
 
-def test_ci_workflow_runs_trunk_test_runner_and_workflow_validation():
-    """CI should gate trunk, test execution, and workflow validation."""
+def test_ci_workflow_runs_test_runner_and_workflow_validation():
+    """CI should gate test execution and workflow validation (not dead Trunk)."""
     workflow = CI_WORKFLOW_PATH.read_text()
-    assert "trunk-io/trunk-action" in workflow
-    assert "Trunk Check" in workflow
+    # Trunk web app shut down; trunk-token deprecated — must stay removed.
+    assert "trunk-io/trunk-action" not in workflow
+    assert "name: Trunk Check" not in workflow
     assert "Run All Tests" in workflow
     assert "Validate Workflows" in workflow
+    assert "Detect Changed Paths" in workflow
     assert "bash scripts/ci/run_all_tests.sh" in workflow
     # Accept either tag form (@v7) or SHA-pinned form (@<sha> # v7).
     # Post-CVE-2025-30066 audit pinned all actions to full SHAs.
