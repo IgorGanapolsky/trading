@@ -287,12 +287,17 @@ def test_repo_kill_switch_file_present():
 
 
 def _put_credit_opp() -> dict:
+    # Keep expiry ~35–45 DTE from "today" so entry OS technical check stays valid.
+    from datetime import UTC, datetime, timedelta
+
+    expiry = (datetime.now(UTC).date() + timedelta(days=40)).isoformat()
     return {
-        "expiry": "2026-08-21",
+        "expiry": expiry,
         "short_put": 700.0,
         "long_put": 695.0,
         "est_credit": 1.0,
         "put_delta": 0.15,
+        "dte": 40,
         "method": "live_delta",
         "quantity": 1,
     }
@@ -304,13 +309,15 @@ def test_put_credit_journal_uses_unique_order_identity(tmp_path, monkeypatch):
     entries_path = tmp_path / "put_credit_entries.json"
     monkeypatch.setattr(pcs, "ENTRIES_FILE", entries_path)
 
-    pcs._record_entry(_put_credit_opp(), "order-1")
-    pcs._record_entry(_put_credit_opp(), "order-2")
+    opp = _put_credit_opp()
+    pcs._record_entry(opp, "order-1")
+    pcs._record_entry(opp, "order-2")
 
     entries = json.loads(entries_path.read_text(encoding="utf-8"))
-    assert set(entries) == {"PCS_260821_order1", "PCS_260821_order2"}
-    assert entries["PCS_260821_order1"]["credit_source"] == "limit_estimate_unconfirmed"
-    assert entries["PCS_260821_order2"]["expiry"] == "2026-08-21"
+    yymmdd = opp["expiry"].replace("-", "")[2:]
+    assert set(entries) == {f"PCS_{yymmdd}_order1", f"PCS_{yymmdd}_order2"}
+    assert entries[f"PCS_{yymmdd}_order1"]["credit_source"] == "limit_estimate_unconfirmed"
+    assert entries[f"PCS_{yymmdd}_order2"]["expiry"] == opp["expiry"]
 
 
 def test_reconcile_put_credit_entries_recovers_exact_filled_structure(tmp_path, monkeypatch):
