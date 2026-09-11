@@ -82,6 +82,7 @@ class TestTools:
 
     def test_missing_credentials_is_reported_not_raised(self, monkeypatch, tmp_path):
         monkeypatch.delenv("MERCURY_API_TOKEN", raising=False)
+        monkeypatch.setattr("src.adapters.mercury_readonly._keychain_token", lambda: None)
         monkeypatch.setenv("MERCURY_SECRETS_PATH", str(tmp_path / "missing.json"))
         result = mercury_server.get_bank_status()
         assert result["success"] is False

@@ -37,6 +37,7 @@ class TestGetAlpacaClient:
         with (
             patch.dict(os.environ, {}, clear=True),
             patch("src.utils.alpaca_client._bootstrap_env_from_dotenv", return_value=None),
+            patch("src.utils.alpaca_client._bootstrap_env_from_keychain", return_value=None),
         ):
             result = get_alpaca_client()
             assert result is None
@@ -49,6 +50,7 @@ class TestGetAlpacaClient:
         with (
             patch.dict(os.environ, {"ALPACA_API_KEY": "test_key"}, clear=True),
             patch("src.utils.alpaca_client._bootstrap_env_from_dotenv", return_value=None),
+            patch("src.utils.alpaca_client._bootstrap_env_from_keychain", return_value=None),
         ):
             result = get_alpaca_client()
             assert result is None
@@ -57,6 +59,7 @@ class TestGetAlpacaClient:
         with (
             patch.dict(os.environ, {"ALPACA_SECRET_KEY": "test_secret"}, clear=True),
             patch("src.utils.alpaca_client._bootstrap_env_from_dotenv", return_value=None),
+            patch("src.utils.alpaca_client._bootstrap_env_from_keychain", return_value=None),
         ):
             result = get_alpaca_client()
             assert result is None
@@ -88,6 +91,7 @@ class TestGetOptionsClient:
         with (
             patch.dict(os.environ, {}, clear=True),
             patch("src.utils.alpaca_client._bootstrap_env_from_dotenv", return_value=None),
+            patch("src.utils.alpaca_client._bootstrap_env_from_keychain", return_value=None),
         ):
             result = get_options_client(paper=True)
             assert result is None
