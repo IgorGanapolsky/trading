@@ -37,7 +37,7 @@ def test_occupancy_full_waits(tmp_path: Path) -> None:
     _write(
         tmp_path,
         "data/trades.json",
-        {"stats": {"by_strategy": {"spy_put_credit": {"closed": 3}}}},
+        {"stats": {"by_strategy": {"spy_put_credit": {"closed_trades": 3}}}},
     )
     rec = build_process_record(tmp_path)
     assert rec["state"]["open_journal"] == 2
@@ -58,7 +58,7 @@ def test_insufficient_sample_points_at_factory(tmp_path: Path) -> None:
     _write(
         tmp_path,
         "data/trades.json",
-        {"stats": {"by_strategy": {"spy_put_credit": {"closed": 3}}}},
+        {"stats": {"by_strategy": {"spy_put_credit": {"closed_trades": 3}}}},
     )
     rec = build_process_record(tmp_path)
     assert rec["state"]["n30_remaining"] == 27

@@ -50,7 +50,7 @@ def build_process_record(project_root: Path | None = None) -> dict[str, Any]:
         if isinstance(v, dict) and str(v.get("status") or "").lower() == "open"
     )
     pc = ((trades.get("stats") or {}).get("by_strategy") or {}).get("spy_put_credit") or {}
-    closed_n = pc.get("closed")
+    closed_n = pc.get("closed_trades", pc.get("closed"))
     try:
         closed_i = int(closed_n) if closed_n is not None else None
     except (TypeError, ValueError):
