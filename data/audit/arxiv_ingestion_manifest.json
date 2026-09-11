@@ -1933,6 +1933,124 @@
       "ingested_at": "2026-09-10T06:31:45.747351+00:00",
       "sha256": "758f5f84f6d79289090e661a0123ffa84222e203d1f8326639b94c0c6a553073",
       "chunks": 11
+    },
+    "2609.11490v1": {
+      "title": "Published Unlearning Numbers Move Per Checkpoint, and Not Because the Removed Data Survives: An Audit of 263 Released Batch-Normalized Checkpoints",
+      "published": "2026-09-10T12:57:14Z",
+      "relevance_score": 0.28,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.11490v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_11490v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_11490v1.md",
+      "ingested_at": "2026-09-11T06:31:04.589728+00:00",
+      "sha256": "75d7fd51b7c4c6888a25c4acc3ef2c304daccaef8d0f557977b8da01033c4a66",
+      "chunks": 10
+    },
+    "2609.11373v1": {
+      "title": "Characterizing Bluesky Content Moderation Service: From Automation of Service to Landscape of Harms",
+      "published": "2026-09-10T11:08:48Z",
+      "relevance_score": 0.31,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CY",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.11373v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_11373v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_11373v1.md",
+      "ingested_at": "2026-09-11T06:31:04.594401+00:00",
+      "sha256": "afef463a9d5aa72a426dfacf2e5bfc24699a1dd345d4147f6861eed1cb54591c",
+      "chunks": 11
+    },
+    "2609.11905v1": {
+      "title": "Entropic Value-at-Risk parity for tempered stable returns",
+      "published": "2026-09-10T17:56:21Z",
+      "relevance_score": 0.4,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "q-fin.PM",
+        "q-fin.RM"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.11905v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_11905v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_11905v1.md",
+      "ingested_at": "2026-09-11T06:31:04.598944+00:00",
+      "sha256": "5ca20727afabf03df65230b78c6fe3375696b4441cbcd4a84f56643cba642f5f",
+      "chunks": 10
+    },
+    "2609.11878v1": {
+      "title": "Domain-Specific Hallucination Detection in Large Language Models",
+      "published": "2026-09-10T17:45:36Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.11878v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_11878v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_11878v1.md",
+      "ingested_at": "2026-09-11T06:31:04.603483+00:00",
+      "sha256": "5e9839f7951cea4e63d278f2f0f901a00e1b674538e7c46ef650c352a8cb2a4e",
+      "chunks": 11
+    },
+    "2609.11918v1": {
+      "title": "General Quantification of Covariate and Concept Shifts",
+      "published": "2026-09-10T17:57:52Z",
+      "relevance_score": 0.41,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "stat.ML"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.11918v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_11918v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_11918v1.md",
+      "ingested_at": "2026-09-11T06:31:04.610472+00:00",
+      "sha256": "a13f5aca32a01349734d119c1ab3c4426df9f314511167df683ecd36971008aa",
+      "chunks": 10
+    },
+    "2609.11915v1": {
+      "title": "Generative Marketing Mix Modeling: A Causal Inference Framework Linking GEO and GEM to Business Impact",
+      "published": "2026-09-10T17:57:28Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "stat.ML",
+        "cs.AI",
+        "cs.LG",
+        "econ.EM",
+        "stat.ME"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.11915v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_11915v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_11915v1.md",
+      "ingested_at": "2026-09-11T06:31:04.617412+00:00",
+      "sha256": "0b5535914e01c86ae62511498f666ad42eb220fa5813deb6eb666542914c9374",
+      "chunks": 10
+    },
+    "2609.11900v1": {
+      "title": "MindTopo: Can Foundation Models Reason in Topological Space?",
+      "published": "2026-09-10T17:54:32Z",
+      "relevance_score": 0.25,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.CL",
+        "cs.CV"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.11900v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_11900v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_11900v1.md",
+      "ingested_at": "2026-09-11T06:31:04.622129+00:00",
+      "sha256": "20ee027295f6932cb9bceea17ec35c82011e7511766b838cd78c22305fea5fd3",
+      "chunks": 11
     }
   },
   "skipped_low_relevance": {
@@ -2301,10 +2419,46 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-09-10T06:31:45.749666+00:00"
+    },
+    "2609.11894v1": {
+      "title": "3D Point Splatting for mmWave Radar Novel View Synthesis",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-11T06:31:04.584347+00:00"
+    },
+    "2609.11864v1": {
+      "title": "RetroThinker: Enabling Retrospective Thinking in Speech LLMs",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-11T06:31:04.605916+00:00"
+    },
+    "2609.11917v1": {
+      "title": "Data Scarcity and Model Sparsity: Mixtures-of-Experts Overfit More to Repeated Data",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-11T06:31:04.612926+00:00"
+    },
+    "2609.11867v1": {
+      "title": "AdamX: Cosine similarity meets gradient descent",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-11T06:31:04.624566+00:00"
+    },
+    "2609.11923v1": {
+      "title": "GPU-CFR: 80x Faster Counterfactual Regret Minimization by Compiling the Game to Static Dataflow and CUDA Graph Replay",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-11T06:31:04.627020+00:00"
+    },
+    "2609.11916v1": {
+      "title": "Can Edge-Deployable Vision-Language Models Identify Species?",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-11T06:31:04.629466+00:00"
     }
   },
-  "total_ingested": 119,
-  "last_run_utc": "2026-09-10T18:07:47.341394+00:00",
+  "total_ingested": 126,
+  "last_run_utc": "2026-09-11T06:31:04.631884+00:00",
   "runs": [
     {
       "finished_at": "2026-08-18T06:15:36.990502+00:00",
@@ -2815,6 +2969,20 @@
       "candidates": 11,
       "new_ingested": 0,
       "skipped_low_relevance": 0,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-09-11T06:31:04.631884+00:00",
+      "candidates": 13,
+      "new_ingested": 7,
+      "skipped_low_relevance": 6,
       "min_relevance": 0.18,
       "queries": [
         "option credit spread OR iron condor OR put credit",
