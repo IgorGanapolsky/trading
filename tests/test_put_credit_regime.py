@@ -5,6 +5,7 @@ from __future__ import annotations
 from src.risk.put_credit_regime import (
     RegimeSnapshot,
     attach_counterfactuals,
+    evaluate_entry_operating_system,
     evaluate_regime_gate,
 )
 
@@ -18,6 +19,8 @@ def _snap(**kwargs) -> RegimeSnapshot:
         iv_rank_method="test",
         spy_sma_200=700.0,
         spy_above_200dma=True,
+        spy_sma_50=720.0,
+        spy_above_50dma=True,
         source_errors=(),
     )
     base.update(kwargs)
@@ -101,6 +104,101 @@ def test_trend_soft_flag_by_default():
 def test_trend_hard_when_required():
     gate = evaluate_regime_gate(_snap(spy_above_200dma=False), require_above_200dma=True)
     assert gate["allowed"] is False
+
+
+def test_50dma_soft_flag_by_default():
+    gate = evaluate_regime_gate(_snap(spy_above_50dma=False), require_above_50dma=False)
+    assert gate["allowed"] is True
+    assert any("50-day" in f for f in gate["soft_flags"])
+    assert gate["thresholds"]["require_above_50dma"] is False
+
+
+def test_50dma_hard_when_required():
+    gate = evaluate_regime_gate(_snap(spy_above_50dma=False), require_above_50dma=True)
+    assert gate["allowed"] is False
+    assert any("50-day" in b for b in gate["blockers"])
+
+
+def test_entry_os_passes_when_all_four_yes():
+    gate = evaluate_regime_gate(_snap())
+    opp = {
+        "expiry": "2026-10-23",
+        "short_put": 725.0,
+        "long_put": 720.0,
+        "est_credit": 0.67,
+        "quantity": 1,
+        "put_delta": 0.18,
+        "dte": 40,
+    }
+    risk = {
+        "entry": {"expiry": "2026-10-23"},
+        "quantity": 1,
+        "stop_loss": 2.0,
+        "take_profit": 0.25,
+        "time_exit": 7,
+    }
+    os_result = evaluate_entry_operating_system(regime_gate=gate, opportunity=opp, risk_plan=risk)
+    assert os_result["pass"] is True
+    assert os_result["fails"] == []
+    assert os_result["answers"]["market_healthy"]["yes"] is True
+    assert os_result["answers"]["structure_strong"]["yes"] is True
+    assert os_result["answers"]["clean_technical_setup"]["yes"] is True
+    assert os_result["answers"]["predefined_risk"]["yes"] is True
+
+
+def test_entry_os_fails_without_predefined_risk():
+    gate = evaluate_regime_gate(_snap())
+    opp = {
+        "expiry": "2026-10-23",
+        "short_put": 725.0,
+        "long_put": 720.0,
+        "est_credit": 0.67,
+        "quantity": 1,
+        "put_delta": 0.18,
+        "dte": 40,
+    }
+    os_result = evaluate_entry_operating_system(regime_gate=gate, opportunity=opp, risk_plan=None)
+    assert os_result["pass"] is False
+    assert "predefined_risk=no" in os_result["fails"]
+
+
+def test_entry_os_fails_when_market_unhealthy():
+    gate = evaluate_regime_gate(_snap(vix=40.0))
+    opp = {
+        "expiry": "2026-10-23",
+        "short_put": 725.0,
+        "long_put": 720.0,
+        "est_credit": 0.67,
+        "quantity": 1,
+        "put_delta": 0.18,
+        "dte": 40,
+    }
+    risk = {
+        "entry": {"expiry": "2026-10-23"},
+        "quantity": 1,
+        "stop_loss": 2.0,
+        "take_profit": 0.25,
+        "time_exit": 7,
+    }
+    os_result = evaluate_entry_operating_system(regime_gate=gate, opportunity=opp, risk_plan=risk)
+    assert os_result["pass"] is False
+    assert "market_healthy=no" in os_result["fails"]
+
+
+def test_ignore_regime_gate_only_bypasses_market_healthy_failure():
+    """CodeRabbit #4579: --ignore-regime-gate must not waive structure/risk OS fails."""
+    fails = ["market_healthy=no", "predefined_risk=no"]
+    ignore_regime_gate = True
+    blocking = [
+        failure for failure in fails if failure != "market_healthy=no" or not ignore_regime_gate
+    ]
+    assert blocking == ["predefined_risk=no"]
+
+    ignore_regime_gate = False
+    blocking = [
+        failure for failure in fails if failure != "market_healthy=no" or not ignore_regime_gate
+    ]
+    assert blocking == ["market_healthy=no", "predefined_risk=no"]
 
 
 def test_counterfactuals_tp50_and_21dte():
