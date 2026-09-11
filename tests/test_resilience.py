@@ -581,7 +581,11 @@ class TestSelfHealerChecks:
 
     def test_check_env_vars_missing(self, temp_project):
         """Missing environment variables is DEGRADED."""
-        with patch.dict(os.environ, {}, clear=True):
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch("src.utils.alpaca_client._bootstrap_env_from_dotenv", return_value=None),
+            patch("src.utils.alpaca_client._bootstrap_env_from_keychain", return_value=None),
+        ):
             healer = SelfHealer(project_root=temp_project)
             check = healer._check_env_vars()
 
