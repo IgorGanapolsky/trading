@@ -1364,9 +1364,7 @@ def validate_trade_mandatory(
         strategy=strategy, context=context
     )
     strategy_name = str(strategy or "").strip().lower()
-    paper_put_credit_validation = (
-        controlled_validation_entry and strategy_name == "spy_put_credit"
-    )
+    paper_put_credit_validation = controlled_validation_entry and strategy_name == "spy_put_credit"
     if is_opening:
         # =========================================================================
         # CHECK 5: Context freshness for opening trades
@@ -1378,13 +1376,10 @@ def validate_trade_mandatory(
         if context_result.is_stale and context_result.blocking:
             if paper_put_credit_validation:
                 logger.warning(
-                    "Context stale; skipping hard-block for controlled paper "
-                    "spy_put_credit: %s",
+                    "Context stale; skipping hard-block for controlled paper spy_put_credit: %s",
                     context_result.reason,
                 )
-                checks_performed.append(
-                    "context_freshness: SKIP (controlled paper put-credit)"
-                )
+                checks_performed.append("context_freshness: SKIP (controlled paper put-credit)")
             else:
                 return GateResult(
                     approved=False,

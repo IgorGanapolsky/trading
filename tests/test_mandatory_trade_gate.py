@@ -631,9 +631,7 @@ class TestPolicyGate:
                 is_stale=True,
                 blocking=True,
                 stale_sources=["context_engine_index"],
-                sources=[
-                    SimpleNamespace(is_stale=True, reason="context_engine_index stale")
-                ],
+                sources=[SimpleNamespace(is_stale=True, reason="context_engine_index stale")],
                 reason="Stale context indexes detected: context_engine_index",
             ),
         )
@@ -667,9 +665,7 @@ class TestPolicyGate:
                 is_stale=True,
                 blocking=True,
                 stale_sources=["context_engine_index"],
-                sources=[
-                    SimpleNamespace(is_stale=True, reason="context_engine_index stale")
-                ],
+                sources=[SimpleNamespace(is_stale=True, reason="context_engine_index stale")],
                 reason="Stale context indexes detected: context_engine_index",
             ),
         )
