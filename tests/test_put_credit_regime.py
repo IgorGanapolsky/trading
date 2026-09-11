@@ -185,6 +185,22 @@ def test_entry_os_fails_when_market_unhealthy():
     assert "market_healthy=no" in os_result["fails"]
 
 
+def test_ignore_regime_gate_only_bypasses_market_healthy_failure():
+    """CodeRabbit #4579: --ignore-regime-gate must not waive structure/risk OS fails."""
+    fails = ["market_healthy=no", "predefined_risk=no"]
+    ignore_regime_gate = True
+    blocking = [
+        failure for failure in fails if failure != "market_healthy=no" or not ignore_regime_gate
+    ]
+    assert blocking == ["predefined_risk=no"]
+
+    ignore_regime_gate = False
+    blocking = [
+        failure for failure in fails if failure != "market_healthy=no" or not ignore_regime_gate
+    ]
+    assert blocking == ["market_healthy=no", "predefined_risk=no"]
+
+
 def test_counterfactuals_tp50_and_21dte():
     base = {
         "should_exit": False,

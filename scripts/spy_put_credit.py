@@ -1640,10 +1640,17 @@ def main() -> int:
         print(json.dumps({"success": False, "reason": "no_opportunity", "plan_path": str(path)}))
         return 1
 
-    if not entry_os.get("pass") and not args.ignore_regime_gate:
+    # --ignore-regime-gate only bypasses market_healthy=no (regime debug).
+    # Structure / technical / predefined-risk failures still block (CodeRabbit P1).
+    blocking_fails = [
+        failure
+        for failure in (entry_os.get("fails") or [])
+        if failure != "market_healthy=no" or not args.ignore_regime_gate
+    ]
+    if blocking_fails:
         logger.error(
             "PUT-CREDIT ENTRY OS BLOCKED: %s",
-            " | ".join(entry_os.get("fails") or ["os_failed"]),
+            " | ".join(blocking_fails),
         )
         print(
             json.dumps(
@@ -1651,6 +1658,7 @@ def main() -> int:
                     "success": False,
                     "reason": "entry_operating_system_blocked",
                     "entry_operating_system": entry_os,
+                    "blocking_fails": blocking_fails,
                     "plan_path": str(path),
                 },
                 indent=2,
