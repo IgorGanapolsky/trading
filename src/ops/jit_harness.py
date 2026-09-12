@@ -159,6 +159,7 @@ _PACKS: dict[TaskClass, HarnessPack] = {
             "python scripts/audit_open_inventory.py",
             "python scripts/spy_put_credit.py --status",
             "python scripts/spy_put_credit.py --dry-run",
+            "python scripts/spy_put_credit.py --execute-paper",
         ),
         skills=("trading-ops",),
         forbid=_LIVE_FORBIDS

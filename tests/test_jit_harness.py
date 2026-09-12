@@ -41,7 +41,8 @@ def test_classify_discovery_loop_openworlds_format():
     assert "search" in joined and "evaluate" in joined and "trade" in joined
     assert any("openworlds" in f.lower() or "clone" in f.lower() for f in pack.forbid)
     assert any("--dry-run" in a for a in pack.actions)
-    assert not any("execute-paper" in a for a in pack.actions)
+    assert any("--execute-paper" in a for a in pack.actions)
+    assert not any("--live" in a for a in pack.actions)
 
 
 def test_classify_inventory_before_generic_search():
