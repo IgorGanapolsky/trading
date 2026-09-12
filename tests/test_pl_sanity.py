@@ -340,6 +340,7 @@ class TestEdgeCases:
         with (
             patch.dict(os.environ, {}, clear=True),
             patch("src.utils.alpaca_client._bootstrap_env_from_dotenv", return_value=None),
+            patch("src.utils.alpaca_client._bootstrap_env_from_keychain", return_value=None),
         ):
             result = checker.initialize_alpaca_api()
             assert result is False
