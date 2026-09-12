@@ -65,3 +65,16 @@ def test_insufficient_sample_points_at_factory(tmp_path: Path) -> None:
     assert rec["observability"]["stuck"] == "insufficient_sample"
     assert rec["observability"]["next"] == "factory_paper_if_gates_pass"
     assert rec["control"]["factory_may_submit_paper"] is True
+    assert readiness_ok(rec) is True
+
+
+def test_paired_stats_missing_is_not_ready(tmp_path: Path) -> None:
+    _write(
+        tmp_path,
+        "data/runtime/strategy_kill_switch.json",
+        {"active_family": "spy_put_credit", "paper_only": True, "live_blocked": True},
+    )
+    rec = build_process_record(tmp_path)
+    assert rec["observability"]["stuck"] == "paired_stats_missing"
+    assert rec["control"]["factory_may_submit_paper"] is False
+    assert readiness_ok(rec) is False

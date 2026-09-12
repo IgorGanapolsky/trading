@@ -106,7 +106,9 @@ def build_process_record(project_root: Path | None = None) -> dict[str, Any]:
             "paper_only": paper_only,
             "live_blocked": live_blocked,
             "human_required_for_live": True,
-            "factory_may_submit_paper": (not occupancy_full) and paper_only and live_blocked,
+            "factory_may_submit_paper": stuck == "insufficient_sample"
+            and paper_only
+            and live_blocked,
         },
         "observability": {
             "stuck": stuck,
@@ -132,4 +134,5 @@ def readiness_ok(record: dict[str, Any]) -> bool:
         and ctrl.get("live_blocked") is True
         and ctrl.get("instructions_are_not_control") is True
         and record.get("trade", {}).get("submitted") == 0
+        and st.get("paired_closed") is not None
     )
