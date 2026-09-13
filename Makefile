@@ -1,9 +1,10 @@
 SHELL := /bin/bash
 PYTHON ?= python3.11
-VENV ?= .venv
+VENV ?= $(shell if [ -x .venv/bin/python ]; then echo .venv; elif [ -x ../../.venv/bin/python ]; then echo ../../.venv; else echo .venv; fi)
 VENV_PYTHON := $(VENV)/bin/python
 TRADING_ENV ?= paper
 export TRADING_ENV
+
 
 .PHONY: setup lint ruff format test coverage audit security health skill-check coordination-check coordination-audit coordination-preflight check dry-run hygiene graph-rag-check graphify-check rag-aplus-check gsd-tick gsd-status cohort-scorecard infoq-roi aistudio-roi
 
@@ -114,3 +115,17 @@ daily-cycle:
 	$(VENV_PYTHON) scripts/spy_put_credit.py --manage-exits --dry-run
 	$(VENV_PYTHON) scripts/residual_ic_manager.py --dry-run
 	$(VENV_PYTHON) scripts/put_credit_cohort_scorecard.py --json
+
+# Pi (pi.dev) Agent Bridge Targets
+pi-status:
+	$(VENV_PYTHON) scripts/pi_trading_bridge.py status
+
+pi-dryrun:
+	$(VENV_PYTHON) scripts/pi_trading_bridge.py dry-run
+
+pi-scorecard:
+	$(VENV_PYTHON) scripts/pi_trading_bridge.py scorecard
+
+pi-check:
+	$(VENV_PYTHON) -m pytest tests/test_pi_integration.py -q
+
