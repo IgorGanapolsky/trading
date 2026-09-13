@@ -1093,9 +1093,12 @@ def test_schedule_preserves_trigger_intent_when_github_delivers_late():
 
     assert "SCHEDULE_EXPRESSION: ${{ github.event.schedule || '' }}" in determine_mode
     assert 'case "$SCHEDULE_EXPRESSION" in' in determine_mode
-    # Entry windows: 11:00 ET (0 15) and 1:00 PM ET recheck (0 17).
+    # Entry windows: 10:35 ET, 11:00 ET, 1:00 PM ET, 3:00 PM ET (AGENT-608).
+    assert '"35 14 * * 1-5"' in determine_mode
     assert '"0 15 * * 1-5"' in determine_mode
     assert '"0 17 * * 1-5"' in determine_mode
+    assert '"0 19 * * 1-5"' in determine_mode
+    assert '"30 19 * * 1-5"' in determine_mode
     assert "RUN_PUT_CREDIT=true" in determine_mode
     assert "date -u +%H" not in determine_mode
     assert "date -u +%u" not in determine_mode
