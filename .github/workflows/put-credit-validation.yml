@@ -175,7 +175,10 @@ jobs:
           if [ "$DRY_RUN" = "true" ]; then
             python3 scripts/spy_put_credit.py --dry-run
           else
-            # Paper MLEG only — live blocked by strategy_kill_switch.json
+            # Paper MLEG only — live blocked by strategy_kill_switch.json.
+            # Stale context_engine_index must not freeze this step (AGENT-604 /
+            # LL-593); the mandatory gate skips that SLO for controlled
+            # one-lot paper spy_put_credit. Cadence alarm still owns stall.
             python3 scripts/spy_put_credit.py --execute-paper || {
               echo "Put-credit entry skipped or no opportunity (exit 0 so workflow continues)"
               true

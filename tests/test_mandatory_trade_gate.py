@@ -619,6 +619,68 @@ class TestPolicyGate:
         assert "stale context" in result.reason.lower()
         assert "rag_query_index" in result.ml_anomalies
 
+    def test_stale_context_skips_for_controlled_paper_put_credit(self, monkeypatch):
+        """n=30 paper factory must not freeze on a 24h context_engine_index SLO."""
+        import src.safety.mandatory_trade_gate as gate_mod
+
+        monkeypatch.setattr(gate_mod, "_weekly_gate_allows_validation_entries", lambda: True)
+        monkeypatch.setattr(
+            gate_mod,
+            "check_context_freshness",
+            lambda is_market_day=True: SimpleNamespace(
+                is_stale=True,
+                blocking=True,
+                stale_sources=["context_engine_index"],
+                sources=[SimpleNamespace(is_stale=True, reason="context_engine_index stale")],
+                reason="Stale context indexes detected: context_engine_index",
+            ),
+        )
+
+        result = gate_mod.validate_trade_mandatory(
+            symbol="SPY",
+            amount=100.0,
+            side="SELL",
+            strategy="spy_put_credit",
+            context={
+                "equity": 100000.0,
+                "paper_trading": True,
+                "controlled_paper_validation_entry": True,
+                "validation_entry_quantity": 1,
+            },
+        )
+
+        assert "stale context" not in result.reason.lower()
+        assert any(
+            "context_freshness: SKIP (controlled paper put-credit)" in c
+            for c in result.checks_performed
+        )
+
+    def test_stale_context_still_blocks_non_validation_put_credit(self, monkeypatch):
+        import src.safety.mandatory_trade_gate as gate_mod
+
+        monkeypatch.setattr(
+            gate_mod,
+            "check_context_freshness",
+            lambda is_market_day=True: SimpleNamespace(
+                is_stale=True,
+                blocking=True,
+                stale_sources=["context_engine_index"],
+                sources=[SimpleNamespace(is_stale=True, reason="context_engine_index stale")],
+                reason="Stale context indexes detected: context_engine_index",
+            ),
+        )
+
+        result = gate_mod.validate_trade_mandatory(
+            symbol="SPY",
+            amount=100.0,
+            side="SELL",
+            strategy="spy_put_credit",
+            context={"equity": 100000.0, "paper_trading": False},
+        )
+
+        assert result.approved is False
+        assert "stale context" in result.reason.lower()
+
 
 class TestRegimeCheck:
     """Test regime-based trade gating (LL-247 ML-IMP-2)."""

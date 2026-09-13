@@ -39,8 +39,11 @@ task→pack selector aligned to Sept 2026 harness craft.
 
 ## Task classes
 
-`status` · `dry_run` · `inventory` · `rag_search` · `pr_hygiene` ·
+`status` · `dry_run` · `discovery_loop` · `inventory` · `rag_search` · `pr_hygiene` ·
 `residual_ic` · `broker_sync` · `unknown` (fail-closed → status-only)
+
+`discovery_loop` is an OpenWorlds **FORMAT** steal (search→evaluate→trade + receipt),
+not a clone of their product, wallets, or RL fleet. Trade stays paper factory only.
 
 ## Explicit non-goals
 

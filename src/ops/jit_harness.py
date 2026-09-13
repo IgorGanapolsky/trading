@@ -36,6 +36,7 @@ from typing import Any
 class TaskClass(StrEnum):
     STATUS = "status"
     DRY_RUN = "dry_run"
+    DISCOVERY_LOOP = "discovery_loop"
     INVENTORY = "inventory"
     RAG_SEARCH = "rag_search"
     PR_HYGIENE = "pr_hygiene"
@@ -139,6 +140,41 @@ _PACKS: dict[TaskClass, HarnessPack] = {
         forbid=_LIVE_FORBIDS + ("omit --dry-run", "claim planned trade as filled"),
         token_budget_hint=4000,
         rationale="Paper plan path; inventory gate before risk.",
+    ),
+    TaskClass.DISCOVERY_LOOP: HarnessPack(
+        task_class=TaskClass.DISCOVERY_LOOP,
+        memory=(
+            "data/runtime/strategy_kill_switch.json",
+            "data/put_credit_entries.json",
+            "data/trades.json (paired only)",
+            "data/system_state.json",
+        ),
+        plan=(
+            "SEARCH: kill switch + inventory + spy_put_credit --status (cohort n, occupancy)",
+            "EVALUATE: --dry-run plan; cite regime/occupancy/blockers; plan != fill",
+            "TRADE: paper --execute-paper via weekday factory only; live_blocked stays true",
+            "RECEIPT: record submitted 0/1 and the gate that fired; green cron is not a fill",
+        ),
+        actions=(
+            "python scripts/audit_open_inventory.py",
+            "python scripts/spy_put_credit.py --status",
+            "python scripts/spy_put_credit.py --dry-run",
+            "python scripts/spy_put_credit.py --execute-paper",
+        ),
+        skills=("trading-ops",),
+        forbid=_LIVE_FORBIDS
+        + (
+            "clone OpenWorlds / claim their product",
+            "wallet / delegated signing / non-custodial SKU",
+            "RL fleet training from action logs",
+            "claim planned trade as filled",
+            "live --execute",
+        ),
+        token_budget_hint=4200,
+        rationale=(
+            "OpenWorlds FORMAT steal (not a clone): search→evaluate→trade with a "
+            "receipt. Monetize path is n=30 paper put-credit, not a new agent SKU."
+        ),
     ),
     TaskClass.INVENTORY: HarnessPack(
         task_class=TaskClass.INVENTORY,
@@ -315,6 +351,15 @@ _RULES: tuple[tuple[TaskClass, tuple[str, ...]], ...] = (
             r"refresh.?ledger",
             r"sync_closed",
             r"system_state",
+        ),
+    ),
+    (
+        TaskClass.DISCOVERY_LOOP,
+        (
+            r"openworlds",
+            r"discovery.?loop",
+            r"search.{0,40}evaluate.{0,40}trade",
+            r"personal trading agent",
         ),
     ),
     (

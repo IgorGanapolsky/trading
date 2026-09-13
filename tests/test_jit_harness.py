@@ -30,6 +30,21 @@ def test_classify_dry_run():
     assert classify_task("make dry-run for today") == TaskClass.DRY_RUN
 
 
+def test_classify_discovery_loop_openworlds_format():
+    """OpenWorlds search→evaluate→trade FORMAT, not a product clone."""
+    assert classify_task("openworlds personal trading agent") == TaskClass.DISCOVERY_LOOP
+    assert classify_task("search, evaluate, and trade with autonomy") == TaskClass.DISCOVERY_LOOP
+    pack = select_harness("discovery loop for put credit")
+    assert pack.task_class == TaskClass.DISCOVERY_LOOP
+    assert pack.paper_only is True
+    joined = " ".join(pack.plan).lower()
+    assert "search" in joined and "evaluate" in joined and "trade" in joined
+    assert any("openworlds" in f.lower() or "clone" in f.lower() for f in pack.forbid)
+    assert any("--dry-run" in a for a in pack.actions)
+    assert any("--execute-paper" in a for a in pack.actions)
+    assert not any("--live" in a for a in pack.actions)
+
+
 def test_classify_inventory_before_generic_search():
     assert classify_task("audit open inventory unclean") == TaskClass.INVENTORY
 

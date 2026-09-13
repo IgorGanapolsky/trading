@@ -1360,30 +1360,43 @@ def validate_trade_mandatory(
         checks_performed.append("daily_loss: PASS")
 
     context_result = None
+    controlled_validation_entry = _is_controlled_paper_validation_context(
+        strategy=strategy, context=context
+    )
+    strategy_name = str(strategy or "").strip().lower()
+    paper_put_credit_validation = controlled_validation_entry and strategy_name == "spy_put_credit"
     if is_opening:
         # =========================================================================
         # CHECK 5: Context freshness for opening trades
+        # RAG/context index age is not a risk control. Controlled one-lot paper
+        # spy_put_credit must still open so the n=30 cohort can grow (LL-593).
+        # Live and non-validation openings stay fail-closed on the 24h SLO.
         # =========================================================================
         context_result = check_context_freshness(is_market_day=True)
         if context_result.is_stale and context_result.blocking:
-            return GateResult(
-                approved=False,
-                reason=f"Trade blocked by stale context: {context_result.reason}",
-                rag_warnings=[
-                    source.reason for source in context_result.sources if source.is_stale
-                ],
-                ml_anomalies=list(context_result.stale_sources),
-                checks_performed=checks_performed + ["context_freshness: BLOCKED"],
-            )
-        checks_performed.append("context_freshness: PASS")
+            if paper_put_credit_validation:
+                logger.warning(
+                    "Context stale; skipping hard-block for controlled paper spy_put_credit: %s",
+                    context_result.reason,
+                )
+                checks_performed.append("context_freshness: SKIP (controlled paper put-credit)")
+            else:
+                return GateResult(
+                    approved=False,
+                    reason=f"Trade blocked by stale context: {context_result.reason}",
+                    rag_warnings=[
+                        source.reason for source in context_result.sources if source.is_stale
+                    ],
+                    ml_anomalies=list(context_result.stale_sources),
+                    checks_performed=checks_performed + ["context_freshness: BLOCKED"],
+                )
+        else:
+            checks_performed.append("context_freshness: PASS")
 
         # =========================================================================
         # CHECK 6: Policy freshness and expectancy gate
         # Skip only for controlled one-lot paper validation reset entries.
         # =========================================================================
-        controlled_validation_entry = _is_controlled_paper_validation_context(
-            strategy=strategy, context=context
-        )
         if controlled_validation_entry:
             policy_decision = {
                 "eligible": True,
