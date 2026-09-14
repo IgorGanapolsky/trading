@@ -158,9 +158,7 @@ def test_cli_fails_when_execute_rc_0_but_unconfirmed(tmp_path, monkeypatch):
         encoding="utf-8",
     )
     kill.write_text(
-        json.dumps(
-            {"paper_only": True, "live_blocked": True, "active_family": "spy_put_credit"}
-        ),
+        json.dumps({"paper_only": True, "live_blocked": True, "active_family": "spy_put_credit"}),
         encoding="utf-8",
     )
     from scripts import work_within_reach as wwr

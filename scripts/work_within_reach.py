@@ -99,11 +99,7 @@ def evaluate_completed_task(
     ok = True
     if execute_rc == 0:
         ok = bool(newest) and is_completed_paper_fill(newest)
-        reason = (
-            "execute_rc_0_fill_confirmed"
-            if ok
-            else "execute_rc_0_without_broker_fill"
-        )
+        reason = "execute_rc_0_fill_confirmed" if ok else "execute_rc_0_without_broker_fill"
     elif execute_rc in {1, 2}:
         ok = True
         reason = f"honest_skip_or_block_rc_{execute_rc}"
@@ -301,7 +297,9 @@ def main() -> int:
     if args.json:
         print(json.dumps(report, indent=2))
     else:
-        print(f"ok={report['ok']} metrics={[m['metric'] + ':' + str(m['ok']) for m in report['metrics']]}")
+        print(
+            f"ok={report['ok']} metrics={[m['metric'] + ':' + str(m['ok']) for m in report['metrics']]}"
+        )
     return 0 if report["ok"] else 2
 
 

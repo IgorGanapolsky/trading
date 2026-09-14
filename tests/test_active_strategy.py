@@ -1402,9 +1402,7 @@ def test_put_credit_execute_paper_fatal_on_mandatory_gate_block(tmp_path, monkey
     assert "mandatory_gate_blocked" in out
 
 
-def test_execute_paper_rc_1_when_submit_is_not_a_broker_fill(
-    tmp_path, monkeypatch, capsys
-):
+def test_execute_paper_rc_1_when_submit_is_not_a_broker_fill(tmp_path, monkeypatch, capsys):
     """AGENT-610: success JSON without fill_confirmed is a skip, not rc 0."""
     from scripts import spy_put_credit as pcs
 
