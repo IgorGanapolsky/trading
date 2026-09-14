@@ -1,15 +1,10 @@
 {
-  "last_updated": "2026-09-14T20:03:28.320301+00:00",
+  "last_updated": "2026-09-14T20:31:56.389589+00:00",
   "sync_health": {
-    "last_successful_sync": "2026-09-14T20:03:28.320301+00:00",
+    "last_successful_sync": "2026-09-14T20:31:56.389589+00:00",
     "sync_source": "sync_alpaca_state.py",
-    "sync_count_today": 5,
+    "sync_count_today": 6,
     "history": [
-      {
-        "timestamp": "2026-09-04T19:19:03.713595+00:00",
-        "equity": 94182.02,
-        "success": true
-      },
       {
         "timestamp": "2026-09-04T19:36:05.711285+00:00",
         "equity": 94183.02,
@@ -124,9 +119,14 @@
         "timestamp": "2026-09-14T20:03:28.320301+00:00",
         "equity": 94156.9,
         "success": true
+      },
+      {
+        "timestamp": "2026-09-14T20:31:56.389589+00:00",
+        "equity": 94156.9,
+        "success": true
       }
     ],
-    "last_attempt": "2026-09-14T20:03:28.320301+00:00"
+    "last_attempt": "2026-09-14T20:31:56.389589+00:00"
   },
   "portfolio": {
     "equity": 94156.9,
@@ -2355,12 +2355,12 @@
     "buying_power": 373251.6
   },
   "meta": {
-    "last_updated": "2026-09-14T20:03:28.320301+00:00",
+    "last_updated": "2026-09-14T20:31:56.389589+00:00",
     "trade_sync": "alpaca_api",
     "sync_frequency_minutes": 5,
-    "last_sync_attempt": "2026-09-14T20:03:28.320301+00:00",
+    "last_sync_attempt": "2026-09-14T20:31:56.389589+00:00",
     "alpaca_keys_present": true,
-    "last_sync": "2026-09-14T20:03:28.117829",
+    "last_sync": "2026-09-14T20:31:55.776091",
     "sync_mode": "paper",
     "last_daily_verification_at": "2026-07-22T19:57:49.384381+00:00",
     "verification_source": "daily_verification.py"
@@ -2429,7 +2429,7 @@
   },
   "strategy_milestones": {
     "enabled": true,
-    "generated_at": "2026-09-14T20:04:10.900941Z",
+    "generated_at": "2026-09-14T20:31:58.120319Z",
     "primary_family": "options_income",
     "rolling_window": 50,
     "paused_families": ["equity_momentum", "alternatives", "other"],
@@ -2527,7 +2527,7 @@
     "estimated_cagr_from_expectancy": -0.0178,
     "target_capital": 300000.0,
     "target_date": null,
-    "updated_at": "2026-09-14T20:04:10.900941Z",
+    "updated_at": "2026-09-14T20:31:58.120319Z",
     "target_mode": "asap_monthly_income",
     "monthly_after_tax_target": 6000.0,
     "estimated_monthly_after_tax_from_expectancy": 0.0,
@@ -2629,24 +2629,21 @@
         "valid": true,
         "errors": [],
         "strategy_family": "spy_put_credit",
-        "hypothesis": "Replace the failed 4-leg SPY iron condor with a simpler 2-leg SPY bull put credit spread. Dual-side ICs produced inventory orphans, lot mismatches, and negative expectancy (PF 0.70). A single put credit keeps defined risk, rides long-term equity drift, halves leg complexity, and makes stop/target accounting auditable. Paper-only 1-lot validation tests whether this structure can produce expectancy > 0 and PF > 1 over 30 clean trades.",
+        "hypothesis": "Sept 2026 research (OptionKrafter realistic-fill DTE study + professional premium-seller rulebooks) says capital-preserving SPY bull put credits should use longer DTE (~60), trade less (1 concurrent / 1 per day), take profit near 50% of credit, stop at 200% of credit, stay defined-risk 1-lot $5-wide, and only sell when SPY is above the 200-DMA. Under Buffett Rule #1 (do not lose money), this paper cohort must prove expectancy > 0 and PF > 1 over 30 clean paired closes before any live capital.",
         "changed_rules": [
-          "KILL ic_simple / iron_condor as North Star entry path (data/runtime/strategy_kill_switch.json). No new IC entries.",
-          "Active family is spy_put_credit only: sell 1 SPY put + buy 1 lower put (bull put credit), never naked, never multi-leg 4-leg IC.",
-          "Paper-only validation; live and scale remain blocked until kill criteria clear.",
-          "1 contract only, max 3 new structures per day, max 2 concurrent put credits, SPY only.",
-          "30-45 DTE, target short delta 0.15 (band 0.10-0.22), wing width $5 only (reject 10-wide).",
-          "Live-delta strike provenance required; reject heuristic fallback and net credit < $0.50.",
-          "Exit: take profit at 25% of max profit; stop at 200% of credit; min hold 24h; force manage/exit by 7 DTE.",
-          "No same-expiry re-entry after a loss; no sub-24h discretionary closes except hard stop.",
-          "Block new entries if open inventory is unclean (lot/orphan/journal mismatch) or broker sync is stale.",
-          "Record exit_reason on every close (profit_target, stop_loss, dte_exit, orphan_cleanup)."
+          "Default profile spy-put-credit-buffett: target_dte=60, min_dte=45, max_dte=70, exit_dte=30.",
+          "Take profit 50% of credit; stop 200% of credit; short delta ~0.15 (band 0.10-0.20).",
+          "max_daily_structures=1 and max_concurrent_positions=1 (trade less / keep more).",
+          "Hard require SPY above 200-DMA for new entries (PUT_CREDIT_REQUIRE_200DMA default 1).",
+          "Buffett risk budget: max loss per structure <= 1% of equity.",
+          "IC / 0DTE / multi-lot / live capital remain forbidden until kill criteria clear.",
+          "Paper only; live_blocked stays true."
         ],
         "kill_criteria": {
           "min_closed_trades": 30,
-          "min_expectancy_per_trade": 1.0,
+          "min_expectancy_per_trade": 0.01,
           "min_profit_factor": 1.05,
-          "min_total_realized_pnl": 1.0
+          "min_total_realized_pnl": 0.01
         },
         "rehabilitation_plan": {
           "active": false,
@@ -2657,9 +2654,9 @@
       },
       "kill_criteria": {
         "min_closed_trades": 30,
-        "min_expectancy_per_trade": 1.0,
+        "min_expectancy_per_trade": 0.01,
         "min_profit_factor": 1.05,
-        "min_total_realized_pnl": 1.0
+        "min_total_realized_pnl": 0.01
       }
     },
     "contradiction_detected": false,
@@ -2730,9 +2727,9 @@
       "gate_block_counts": {},
       "top_rejection_reasons": [],
       "summary": "No qualified setups captured in lookback window. Focus on setup generation cadence before adjusting execution.",
-      "updated_at": "2026-09-14T20:04:10.898056+00:00"
+      "updated_at": "2026-09-14T20:31:58.116670+00:00"
     },
-    "updated_at": "2026-09-14T20:04:10.898464+00:00",
+    "updated_at": "2026-09-14T20:31:58.117230+00:00",
     "unverified_trade_history_diagnostic": {
       "samples": 2,
       "wins": 0,
@@ -2769,7 +2766,7 @@
     "estimated_live_contribution_this_month": 0.0,
     "contribution_estimate_confidence": "medium",
     "inference_note": "Live account has no open positions; live equity change is treated as estimated contribution.",
-    "updated_at": "2026-09-14T20:04:10.898585+00:00"
+    "updated_at": "2026-09-14T20:31:58.117331+00:00"
   },
   "ic_position_management": {
     "last_run": "2026-06-18T09:30:40.322213",
@@ -3307,7 +3304,7 @@
   "position_entries": {},
   "position_entry_features": {},
   "north_star_autopilot": {
-    "generated_at_utc": "2026-09-14T20:04:10.898707Z",
+    "generated_at_utc": "2026-09-14T20:31:58.117486Z",
     "cadence_optimizer": {
       "decision": "hold",
       "reason": "Liquidity floor unchanged.",
@@ -3391,7 +3388,7 @@
       "changed": false,
       "payload": {
         "min_liquidity_volume_ratio": 0.2,
-        "updated_at": "2026-09-14T20:04:10.898707+00:00",
+        "updated_at": "2026-09-14T20:31:58.117486+00:00",
         "source": "north_star_autopilot"
       }
     }
