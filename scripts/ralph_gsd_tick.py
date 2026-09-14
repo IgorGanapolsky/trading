@@ -105,11 +105,12 @@ def _open_prs() -> list[dict]:
 
 
 def _pick(score: dict, prs: list[dict]) -> dict:
-    cash = score.get("cash_fee_yes") or {}
+    cash = score.get("cash_fee_yes")
     overall = score.get("overall") or {}
     failing = []
     for pr in prs:
         for c in pr.get("statusCheckRollup") or []:
+            # Only hard-required merge gates — not Sonar/advisory on unrelated open PRs.
             if (c.get("conclusion") or "") == "FAILURE" and (c.get("name") or "") in {
                 "Run All Tests",
                 "Validate issue, claim, and branch metadata",
@@ -130,7 +131,10 @@ def _pick(score: dict, prs: list[dict]) -> dict:
             "detail": failing[:5],
             "act": "Heal failing required check in isolated worktree; push; re-arm auto-merge",
         }
-    if not cash.get("ok"):
+    # Only pick cash when scorecard explicitly reports cash_fee_yes.ok == False.
+    # Missing scorecard (CI runners) must NOT invent a cash residual — that made
+    # readiness/goal-backward fail without a RealEstate lane on the runner.
+    if isinstance(cash, dict) and "ok" in cash and cash.get("ok") is False:
         return {
             "residual": "cash_fee_yes",
             "priority": 3,
@@ -138,15 +142,18 @@ def _pick(score: dict, prs: list[dict]) -> dict:
                 "letter": cash.get("letter"),
                 "call_sheet": str(CALL_SHEET),
                 "call_sheet_exists": CALL_SHEET.exists(),
-                "overall": overall.get("letter"),
+                "overall": overall.get("letter") if isinstance(overall, dict) else None,
             },
             "act": "Expand CALL_SHEET_VERIFIED + drafts; verify Stripe checkout; do not auto-send",
         }
     return {
         "residual": "maintain",
         "priority": 99,
-        "detail": {"overall": overall.get("letter")},
-        "act": "Scorecard green path — run dry-run / Buffett status; keep live blocked until cohort gates",
+        "detail": {
+            "overall": overall.get("letter") if isinstance(overall, dict) else None,
+            "scorecard_present": bool(score),
+        },
+        "act": "Scorecard green/absent path — dry-run / Buffett status; keep live blocked until cohort gates",
     }
 
 
@@ -166,25 +173,43 @@ def verify_evidence(pick: dict, *, live_checkout: bool = False) -> dict:
     ok = True
 
     if residual == "cash_fee_yes":
-        sheet_ok = CALL_SHEET.exists()
-        draft_n = len(list(DRAFTS_DIR.glob("prepaid_*.json"))) if DRAFTS_DIR.exists() else 0
-        checks.append({"id": "call_sheet", "ok": sheet_ok, "path": str(CALL_SHEET)})
-        checks.append({"id": "prepaid_drafts", "ok": draft_n >= 1, "count": draft_n})
-        if live_checkout:
-            code = _checkout_http()
-            checks.append(
-                {"id": "checkout_http", "ok": code == 200, "status": code, "url": CHECKOUT_URL}
-            )
-        else:
+        lane_root = CALL_SHEET.parent.parent if CALL_SHEET else None
+        if lane_root is not None and not lane_root.exists():
+            # CI / machines without RealEstate-lane-grok: defer cash verify.
             checks.append(
                 {
-                    "id": "checkout_http",
+                    "id": "cash_lane",
                     "ok": True,
                     "skipped": True,
-                    "note": "pass --verify-live to probe Stripe",
+                    "note": f"RE lane absent ({lane_root}); cash verify deferred",
                 }
             )
-        ok = all(c["ok"] for c in checks)
+            ok = True
+        else:
+            sheet_ok = CALL_SHEET.exists()
+            draft_n = len(list(DRAFTS_DIR.glob("prepaid_*.json"))) if DRAFTS_DIR.exists() else 0
+            checks.append({"id": "call_sheet", "ok": sheet_ok, "path": str(CALL_SHEET)})
+            checks.append({"id": "prepaid_drafts", "ok": draft_n >= 1, "count": draft_n})
+            if live_checkout:
+                code = _checkout_http()
+                checks.append(
+                    {
+                        "id": "checkout_http",
+                        "ok": code == 200,
+                        "status": code,
+                        "url": CHECKOUT_URL,
+                    }
+                )
+            else:
+                checks.append(
+                    {
+                        "id": "checkout_http",
+                        "ok": True,
+                        "skipped": True,
+                        "note": "pass --verify-live to probe Stripe",
+                    }
+                )
+            ok = all(c["ok"] for c in checks)
     elif residual == "fix_required_ci":
         # Presence of failing list means verify NOT passed yet
         detail = pick.get("detail") or []

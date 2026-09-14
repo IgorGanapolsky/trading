@@ -86,3 +86,27 @@ def test_verify_ci_fails_while_detail_present():
     v = mod.verify_evidence(pick)
     assert v["ok"] is False
     assert v["status"] == "gaps_found"
+
+
+def test_pick_empty_scorecard_is_maintain_not_cash():
+    """CI runners often lack fleet-a-plus scorecard — must not invent cash residual."""
+    mod = _load_tick()
+    pick = mod._pick({}, [])
+    assert pick["residual"] == "maintain"
+
+
+def test_pick_explicit_cash_fail_is_cash():
+    mod = _load_tick()
+    pick = mod._pick({"cash_fee_yes": {"ok": False, "letter": "F"}, "overall": {"letter": "F"}}, [])
+    assert pick["residual"] == "cash_fee_yes"
+
+
+def test_verify_cash_skips_when_lane_absent(tmp_path, monkeypatch):
+    mod = _load_tick()
+    missing_lane = tmp_path / "no-such-lane" / "outreach" / "CALL_SHEET_VERIFIED.md"
+    monkeypatch.setattr(mod, "CALL_SHEET", missing_lane)
+    monkeypatch.setattr(mod, "DRAFTS_DIR", missing_lane.parent / "drafts")
+    v = mod.verify_evidence({"residual": "cash_fee_yes"})
+    assert v["ok"] is True
+    assert v["status"] == "passed"
+    assert any(c.get("skipped") for c in v["checks"])
