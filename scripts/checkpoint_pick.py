@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""Checkpoint / rope-length picker (AI Engineer: Superpowers vs GSD vs Compound).
+"""Checkpoint / rope-length picker (layered stack: open-gsd / Spec Kit / Superpowers / BMAD).
 
-Three questions:
-1. How expensive to undo?
-2. Does the run outgrow one context window?
-3. Are you making the same correction twice?
+Encodes docs/AGENT_WORKFLOW_STACK.md:
+- Everyday default = open-gsd FORMAT (never archived gsd-build/get-shit-done)
+- High-risk = Superpowers FORMAT
+- Auditable = Spec Kit FORMAT
+- Product-scale = BMAD FORMAT
+- Compound overlays when the same correction repeats
 
-Outputs a recommended belay: ralph | superpowers | gsd | compound | quick
-plus the concrete trading CLI to run. Not a product install.
+Not a product install. Model runtime stays separable.
 """
 
 from __future__ import annotations
@@ -19,66 +20,101 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 COMPOUND = ROOT / ".planning" / "COMPOUND.md"
+STACK_DOC = ROOT / "docs" / "AGENT_WORKFLOW_STACK.md"
+
+JOB_DEFAULTS = {
+    "throwaway": "ralph",
+    "everyday": "gsd",
+    "high_risk": "superpowers",
+    "auditable": "speckit",
+    "product_scale": "bmad",
+}
 
 
 def pick(
     *,
-    undo_cost: str,
-    multi_session: bool,
+    undo_cost: str = "medium",
+    multi_session: bool = False,
     repeat_correction: bool | None = None,
     one_sentence_diff: bool = False,
+    job: str | None = None,
 ) -> dict:
     undo = undo_cost.lower()
     if repeat_correction is None:
         repeat_correction = COMPOUND.exists() and "### slug:" in COMPOUND.read_text()
 
-    # Article decision tree
-    if one_sentence_diff and undo in {"free", "throwaway", "low"}:
+    # Explicit job wins when provided
+    if job:
+        rec = JOB_DEFAULTS.get(job, "gsd")
+        why_map = {
+            "throwaway": "Throwaway job → Ralph/Quick; no ceremony",
+            "everyday": "Everyday feature → open-gsd FORMAT (successor of archived get-shit-done)",
+            "high_risk": "High-risk → Superpowers FORMAT (verify-complete / TDD / AFT)",
+            "auditable": "Auditable/shared → Spec Kit FORMAT (constitution + converge)",
+            "product_scale": "Product-scale → BMAD FORMAT (SPEC + readiness + Quick Flow)",
+        }
+        why = why_map.get(job, "open-gsd everyday default")
+    elif one_sentence_diff and undo in {"free", "throwaway", "low"}:
         rec = "quick"
-        why = "One-sentence diff + cheap undo → bare prompt / Quick Flow; skip ceremony"
-        cli = "python3 scripts/bmad_readiness.py --no-append  # confirm Quick Flow still ok"
+        why = "One-sentence diff + cheap undo → Quick Flow; skip ceremony"
     elif undo in {"free", "throwaway"} and not multi_session:
         rec = "ralph"
-        why = "Throwaway / low undo cost → Ralph loop OK; no plan gate required"
-        cli = "python3 scripts/ralph_gsd_tick.py --verify"
+        why = "Throwaway / low undo cost → Ralph loop OK"
     elif multi_session or undo in {"high", "production", "irreversible"}:
-        rec = "gsd"
-        why = "Multi-session or expensive undo → phase boundaries + goal-backward (open-gsd FORMAT)"
-        cli = (
-            "python3 scripts/goal_backward_verify.py --goal harness && "
-            "python3 scripts/ralph_gsd_tick.py --converge --verify-live"
+        rec = "superpowers" if undo in {"production", "irreversible"} else "gsd"
+        why = (
+            "Irreversible/production → Superpowers rigor"
+            if rec == "superpowers"
+            else "Multi-session → open-gsd phase boundaries + goal-backward"
         )
     else:
-        rec = "superpowers"
-        why = "Default operator belay: plan/TDD/verify-before-claim without GSD ceremony"
-        cli = "python3 scripts/ralph_gsd_tick.py --verify-complete"
+        # Personal low-friction default = open-gsd (recommendation stack)
+        rec = "gsd"
+        why = "Default everyday belay = open-gsd FORMAT (not archived gsd-build)"
+
+    cli_map = {
+        "quick": "python3 scripts/bmad_readiness.py --no-append",
+        "ralph": "python3 scripts/ralph_gsd_tick.py --verify",
+        "gsd": (
+            "python3 scripts/goal_backward_verify.py --goal harness && "
+            "python3 scripts/ralph_gsd_tick.py --converge --verify-live"
+        ),
+        "superpowers": "python3 scripts/ralph_gsd_tick.py --verify-complete",
+        "speckit": "python3 scripts/speckit_converge.py --verify-live",
+        "bmad": "python3 scripts/bmad_readiness.py --verify-live",
+    }
+    cli = cli_map.get(rec, cli_map["gsd"])
 
     compound_note = None
     if repeat_correction:
         compound_note = (
-            "Same correction twice detected — ADD Compound Engineering fourth step "
-            "(python3 scripts/compound_lesson.py ...) on top of the chosen belay"
+            "Same correction twice — ADD Compound fourth step: "
+            "python3 scripts/compound_lesson.py --slug ... "
+            "(then promote into .claude/rules/)"
         )
-        if rec != "compound":
+        if "compound" not in rec:
             rec = f"{rec}+compound"
 
     return {
         "ok": True,
         "framework": "checkpoint_pick",
-        "stolen_format": "AI Engineer Superpowers vs GSD vs Compound Engineering",
+        "stolen_format": "Layered open-gsd + Spec Kit + Superpowers + BMAD (FORMAT only)",
+        "stack_doc": str(STACK_DOC) if STACK_DOC.exists() else None,
         "inputs": {
             "undo_cost": undo_cost,
             "multi_session": multi_session,
             "repeat_correction": repeat_correction,
             "one_sentence_diff": one_sentence_diff,
+            "job": job,
         },
         "recommend": rec,
         "why": why,
         "cli": cli,
         "compound_note": compound_note,
         "provenance": (
-            "Prefer open-gsd FORMAT (never original GSD supply chain). "
-            "Prefer Superpowers FORMAT steal over plugin if trading lab."
+            "NEVER gsd-build/get-shit-done (archived 2026-06-26). "
+            "USE open-gsd/gsd-core FORMAT steals in-repo. "
+            "AGENTS.md/CONSTITUTION/SPEC are the invariant contract."
         ),
         "ts": datetime.now(UTC).isoformat(),
     }
@@ -94,12 +130,19 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--multi-session", action="store_true")
     parser.add_argument("--repeat-correction", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--one-sentence-diff", action="store_true")
+    parser.add_argument(
+        "--job",
+        choices=list(JOB_DEFAULTS.keys()),
+        default=None,
+        help="Explicit job class from AGENT_WORKFLOW_STACK.md",
+    )
     args = parser.parse_args(argv)
     out = pick(
         undo_cost=args.undo_cost,
         multi_session=args.multi_session,
         repeat_correction=args.repeat_correction,
         one_sentence_diff=args.one_sentence_diff,
+        job=args.job,
     )
     print(json.dumps(out, indent=2, sort_keys=True))
     return 0

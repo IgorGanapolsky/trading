@@ -48,3 +48,8 @@ Skill: `/bmad-spec-driven-not-clone`. Do not install bmad-method. ready ≠ fee-
 Goal-backward TRUE conditions beat exit-0 theater. Pick belay via
 `scripts/checkpoint_pick.py`. Compound repeats into `.planning/COMPOUND.md`.
 Skill: `/framework-checkpoint-not-clone`. Prefer open-gsd FORMAT, never original GSD packages.
+
+## Agent workflow stack
+
+See `docs/AGENT_WORKFLOW_STACK.md`. Everyday = open-gsd FORMAT.
+NEVER archived `gsd-build/get-shit-done`. Skill: `/agent-workflow-stack`.

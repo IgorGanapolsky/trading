@@ -46,12 +46,13 @@ Never end a turn on diagnosis-only, “CI pending”, or “want me to?”. Obse
 Verify → Ship. Metered spend, outbound send, lock steal, and correctly firing safety
 gates remain HARD stops.
 
-### VI. Checkpoint Belay (Superpowers / GSD / Compound)
+### VI. Checkpoint Belay (layered stack)
 
-Pick rope length by undo-cost, multi-session risk, and repeat corrections
-(`scripts/checkpoint_pick.py`). Prefer **goal-backward** checks (what must be TRUE)
-over “did the command exit 0”. Compound every correction into `.planning/COMPOUND.md`
-so the next agent loads it — Fix→Test→Prevent→Memory→Verify stays mandatory.
+Canonical map: `docs/AGENT_WORKFLOW_STACK.md`. Everyday default = **open-gsd FORMAT**
+(never archived `gsd-build/get-shit-done`). High-risk → Superpowers; auditable → Spec Kit;
+product-scale → BMAD. Pick via `scripts/checkpoint_pick.py --job everyday|high_risk|…`.
+Prefer **goal-backward** TRUE conditions over exit-0 theater. Compound corrections into
+`.planning/COMPOUND.md`. Fix→Test→Prevent→Memory→Verify stays mandatory.
 
 ## Additional Constraints
 

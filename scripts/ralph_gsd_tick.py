@@ -363,6 +363,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--undo-cost", default="medium")
     parser.add_argument("--multi-session", action="store_true")
+    parser.add_argument(
+        "--job",
+        choices=["throwaway", "everyday", "high_risk", "auditable", "product_scale"],
+        default=None,
+        help="AGENT_WORKFLOW_STACK job class for --checkpoint-pick",
+    )
     args = parser.parse_args(argv)
 
     if args.checkpoint_pick:
@@ -373,6 +379,7 @@ def main(argv: list[str] | None = None) -> int:
         out = _pick_ckpt(
             undo_cost=args.undo_cost,
             multi_session=args.multi_session,
+            job=args.job,
         )
         out["skill"] = "/trading-ralph-gsd-24-7"
         out["tick"] = "checkpoint_pick"

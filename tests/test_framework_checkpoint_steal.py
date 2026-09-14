@@ -20,11 +20,12 @@ def _load(name: str, path: Path):
     return mod
 
 
-def test_checkpoint_pick_default_superpowers():
+def test_checkpoint_pick_default_open_gsd_everyday():
     mod = _load("checkpoint_pick", ROOT / "scripts" / "checkpoint_pick.py")
     out = mod.pick(undo_cost="medium", multi_session=False, repeat_correction=False)
-    assert out["recommend"] == "superpowers"
-    assert "verify-complete" in out["cli"]
+    assert out["recommend"] == "gsd"
+    assert "goal_backward" in out["cli"]
+    assert "gsd-build" in out["provenance"] or "archived" in out["provenance"].lower()
 
 
 def test_checkpoint_pick_gsd_for_multi_session():
@@ -32,6 +33,22 @@ def test_checkpoint_pick_gsd_for_multi_session():
     out = mod.pick(undo_cost="high", multi_session=True, repeat_correction=False)
     assert out["recommend"] == "gsd"
     assert "goal_backward" in out["cli"]
+
+
+def test_checkpoint_pick_job_matrix():
+    mod = _load("checkpoint_pick", ROOT / "scripts" / "checkpoint_pick.py")
+    assert mod.pick(job="everyday", repeat_correction=False)["recommend"] == "gsd"
+    assert mod.pick(job="high_risk", repeat_correction=False)["recommend"] == "superpowers"
+    assert mod.pick(job="auditable", repeat_correction=False)["recommend"] == "speckit"
+    assert mod.pick(job="product_scale", repeat_correction=False)["recommend"] == "bmad"
+    assert mod.pick(job="throwaway", repeat_correction=False)["recommend"] == "ralph"
+
+
+def test_workflow_stack_doc_forbids_archived_gsd():
+    text = (ROOT / "docs" / "AGENT_WORKFLOW_STACK.md").read_text()
+    assert "open-gsd" in text
+    assert "gsd-build/get-shit-done" in text
+    assert "Never" in text or "NEVER" in text or "archived" in text.lower()
 
 
 def test_checkpoint_pick_adds_compound_on_repeat():
