@@ -80,11 +80,15 @@ def test_assert_entry_allowed_blocks_ic(tmp_path: Path, monkeypatch):
 
 def test_put_credit_profile_is_one_lot_spy():
     p = get_put_credit_profile()
+    assert p.name == "spy-put-credit-buffett"
     assert p.underlying == "SPY"
     assert p.max_contracts_per_trade == 1
     assert p.wing_width == 5.0
-    assert p.take_profit_pct == 0.25
+    assert p.take_profit_pct == 0.50
     assert p.stop_loss_pct == 2.0
+    assert p.target_dte == 60
+    assert p.max_daily_structures == 1
+    assert p.max_concurrent_positions == 1
     cfg = get_active_strategy_config()
     assert cfg["strategy_family"] == "spy_put_credit"
     assert cfg["structure"] == "bull_put_credit"
@@ -297,7 +301,7 @@ def _put_credit_opp() -> dict:
         "long_put": 695.0,
         "est_credit": 1.0,
         "put_delta": 0.15,
-        "dte": 40,
+        "dte": 55,
         "method": "live_delta",
         "quantity": 1,
     }
@@ -724,7 +728,8 @@ def test_put_credit_ghost_journal_is_not_concurrent_occupancy():
     report = pcs.evaluate_entry_limits(entries, now=now)
     assert report["journal_active_count"] == 1
     assert report["active_count"] == 1
-    assert report["allowed"] is True
+    # Buffett profile max_concurrent=1 → at capacity
+    assert report["allowed"] is False
 
     flat_book = pcs.evaluate_entry_limits(entries, now=now, broker_open_structures=0)
     assert flat_book["active_count"] == 0
@@ -843,8 +848,9 @@ def test_put_credit_exit_rules_cover_profit_stop_hold_and_dte():
     from scripts import spy_put_credit as pcs
 
     now = datetime(2026, 7, 22, 16, 0, tzinfo=UTC)
+    # Expiry far enough that DTE > exit_dte(30) so TP/SL can fire first.
     entry = {
-        "expiry": "2026-08-21",
+        "expiry": "2026-09-25",
         "entry_time": (now - timedelta(days=2)).isoformat(),
         "credit": 1.0,
         "quantity": 1,
@@ -862,7 +868,7 @@ def test_put_credit_exit_rules_cover_profit_stop_hold_and_dte():
     young = pcs.evaluate_put_credit_exit(young_entry, short_price=0.60, long_price=0.10, now=now)
     assert young["should_exit"] is False
 
-    dte_entry = {**entry, "expiry": "2026-07-29"}
+    dte_entry = {**entry, "expiry": "2026-08-15"}  # ~24 DTE <= exit_dte 30
     dte = pcs.evaluate_put_credit_exit(dte_entry, short_price=1.0, long_price=0.20, now=now)
     assert dte["exit_reason"] == "dte_exit"
 
