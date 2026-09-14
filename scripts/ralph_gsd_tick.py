@@ -335,7 +335,27 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="With --verify, probe Stripe checkout HTTP",
     )
+    parser.add_argument(
+        "--converge",
+        action="store_true",
+        help="Run Spec Kit converge FORMAT (constitution + verify + append tasks)",
+    )
     args = parser.parse_args(argv)
+
+    if args.converge:
+        # Delegate to speckit_converge (github/spec-kit FORMAT)
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from speckit_converge import converge as _converge
+
+        out = _converge(verify_live=args.verify_live, append_tasks=True)
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "converge"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and out.get("status") != "converged":
+            return 2
+        return 0
+
     score = _scorecard()
     prs = _open_prs()
     pick = _pick(score if "error" not in score else {}, prs)
@@ -366,7 +386,10 @@ def main(argv: list[str] | None = None) -> int:
         "ok": True,
         "framework": "ralph_gsd",
         "skill": "/trading-ralph-gsd-24-7",
-        "stolen_format": "open-gsd/gsd-core (phase loop + STATE/CONTEXT; not a clone)",
+        "stolen_format": (
+            "open-gsd/gsd-core + github/spec-kit FORMAT "
+            "(phase loop, STATE/CONTEXT, constitution/converge; not a product clone)"
+        ),
         "ts": datetime.now(UTC).isoformat(),
         "repo": str(ROOT),
         "pick": pick,
@@ -374,6 +397,7 @@ def main(argv: list[str] | None = None) -> int:
         "verification": verification,
         "state_md": state_path,
         "context_md": context_path,
+        "constitution": str(ROOT / "docs" / "CONSTITUTION.md"),
         "open_pr_count": len(prs),
         "cash_ok": bool((score.get("cash_fee_yes") or {}).get("ok")),
         "overall_letter": (score.get("overall") or {}).get("letter"),

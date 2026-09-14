@@ -26,3 +26,9 @@ Scheduler: keep 30m durable wake while cash fee-yes is F or an own PR is open.
 Discuss → Plan → Execute → Verify → Ship via `scripts/ralph_gsd_tick.py`.
 Writes `.planning/STATE.md` + `CONTEXT.md`. Skill: `/open-gsd-phase-loop-not-clone`.
 Do not install `@opengsd/gsd-core`. Verify before claiming residual done.
+
+## Spec Kit FORMAT
+
+Constitution `docs/CONSTITUTION.md`. Converge via `scripts/speckit_converge.py`.
+Bug heals: assess→fix→test (`scripts/speckit_bug_aft.py`). Skill: `/github-spec-kit-not-clone`.
+Do not install specify-cli. `converged` ≠ fee-yes.

@@ -11,7 +11,8 @@ TICK_PATH = ROOT / "scripts" / "ralph_gsd_tick.py"
 
 def _load_tick():
     spec = importlib.util.spec_from_file_location("ralph_gsd_tick", TICK_PATH)
-    assert spec and spec.loader
+    if spec is None or spec.loader is None:
+        raise RuntimeError("cannot load tick")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
