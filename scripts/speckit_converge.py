@@ -54,6 +54,7 @@ def _constitution_checks(text: str) -> list[dict]:
         ("V. Anti-Babysitting", "Anti-Babysitting Autonomy"),
         ("fee-yes lock", "fee-yes"),
         ("live_blocked", "live_blocked"),
+        ("evidence-over-claims", "Evidence over claims"),
     ]
     out = []
     for cid, needle in required:

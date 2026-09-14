@@ -32,3 +32,8 @@ Do not install `@opengsd/gsd-core`. Verify before claiming residual done.
 Constitution `docs/CONSTITUTION.md`. Converge via `scripts/speckit_converge.py`.
 Bug heals: assess→fix→test (`scripts/speckit_bug_aft.py`). Skill: `/github-spec-kit-not-clone`.
 Do not install specify-cli. `converged` ≠ fee-yes.
+
+## Superpowers FORMAT
+
+Evidence before claims: `scripts/superpowers_verify_complete.py --harness`.
+Skill: `/obra-superpowers-not-clone`. Do not install the Superpowers plugin here.

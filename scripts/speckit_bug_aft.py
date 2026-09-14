@@ -28,6 +28,7 @@ def _slugify(s: str) -> str:
 
 
 def assess(slug: str, report: str, root_cause: str, evidence: str) -> Path:
+    """Phase 1 systematic-debugging (obra/superpowers) before any fix."""
     d = BUGS / slug
     d.mkdir(parents=True, exist_ok=True)
     path = d / "ASSESS.md"
@@ -36,21 +37,31 @@ def assess(slug: str, report: str, root_cause: str, evidence: str) -> Path:
 
 Updated: {datetime.now(UTC).isoformat()}
 
-## Report
+Iron law (obra/superpowers systematic-debugging): **NO FIXES WITHOUT ROOT CAUSE FIRST.**
+
+## Phase 1 — Root Cause Investigation
+
+### Report
 
 {report.strip()}
 
-## Root cause (must be disprovable)
+### Root cause (must be disprovable)
 
 {root_cause.strip()}
 
-## Evidence preserved before remediate
+### Evidence preserved before remediate
 
 {evidence.strip()}
 
+## Phases 2–4 (after assess)
+
+2. **Pattern analysis** — why this class of bug exists; related sites
+3. **Hypothesis + minimal fix** — document in FIX.md
+4. **Verification** — TEST.md with fresh command output (superpowers verify-complete)
+
 ## Gate
 
-Do not write FIX.md until root cause is evidenced. Do not claim TEST pass without command output.
+Do not write FIX.md until Phase 1 is evidenced. Do not claim TEST pass without fresh output.
 """
     )
     return path

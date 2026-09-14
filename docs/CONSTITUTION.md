@@ -27,6 +27,9 @@ No merge of harness changes without automated proof in the same change set
 (`pytest` / `ruff` / required CI). Spec Kit converge: do not claim **Converged** while
 required evidence is missing.
 
+**Evidence over claims** (obra/superpowers): no completion claim without fresh
+verification command output in the same turn (`scripts/superpowers_verify_complete.py`).
+
 ### IV. Spec → Plan → Tasks → Implement → Converge
 
 Intent before code. Durable artifacts: constitution, `.planning/STATE.md`,

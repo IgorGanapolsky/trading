@@ -340,7 +340,44 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Run Spec Kit converge FORMAT (constitution + verify + append tasks)",
     )
+    parser.add_argument(
+        "--verify-complete",
+        action="store_true",
+        help="obra/superpowers verification-before-completion harness suite",
+    )
     args = parser.parse_args(argv)
+
+    if args.verify_complete:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from superpowers_verify_complete import default_harness_suite, run_proof
+
+        results = []
+        for item in default_harness_suite():
+            cmd = item["command"]
+            if cmd[1:3] == ["-m", "pytest"]:
+                missing = [p for p in cmd if p.endswith(".py") and not (ROOT / p).exists()]
+                cmd = [c for c in cmd if c not in missing]
+            results.append(
+                run_proof(
+                    item["claim"],
+                    cmd,
+                    require_substr=item.get("require_substr"),
+                    forbid_substr=item.get("forbid_substr"),
+                )
+            )
+        all_ok = all(r["ok"] for r in results)
+        out = {
+            "ok": all_ok,
+            "framework": "ralph_gsd",
+            "tick": "verify_complete",
+            "skill": "/trading-ralph-gsd-24-7",
+            "stolen_format": "obra/superpowers verification-before-completion",
+            "results": results,
+            "ts": datetime.now(UTC).isoformat(),
+        }
+        print(json.dumps(out, indent=2, sort_keys=True))
+        return 0 if all_ok else 2
 
     if args.converge:
         # Delegate to speckit_converge (github/spec-kit FORMAT)
