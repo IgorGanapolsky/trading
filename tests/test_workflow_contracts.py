@@ -24,6 +24,25 @@ def test_put_credit_workflow_is_paper_only_and_fail_closed() -> None:
     assert "LL-593" in text
 
 
+def test_put_credit_workflow_has_four_weekday_entry_slots() -> None:
+    """AGENT-608: two extra entry attempts (10:35 ET, 15:00 ET) on top of 11:00/13:00."""
+    text = PUT_CREDIT.read_text()
+    assert "cron: 35 14 * * 1-5" in text
+    assert "cron: 0 19 * * 1-5" in text
+    assert '"35 14 * * 1-5"' in text
+    assert '"0 19 * * 1-5"' in text
+
+
+def test_put_credit_workflow_does_not_swallow_mandatory_gate_fatal() -> None:
+    """AGENT-607: Friday RTH found an opportunity then GATE BLOCKED, job still green."""
+    text = PUT_CREDIT.read_text()
+    assert "exit 0 so workflow continues" not in text
+    assert "AGENT-607" in text
+    assert 'if [ "$rc" -eq 3 ]' in text
+    assert "scripts/check_entry_cadence.py" in text
+    assert "Fail closed if paper factory stalled" in text
+
+
 STATE_WRITERS = (
     "put-credit-validation.yml",
     "sync-alpaca-status.yml",

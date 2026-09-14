@@ -5,10 +5,12 @@ name: Put Credit Validation
 
 on:
   schedule:
+    - cron: 35 14 * * 1-5 # 10:35 AM ET — open entry (AGENT-608; max 3/day, 2 concurrent)
     - cron: 0 15 * * 1-5 # 11:00 AM ET — exit residual IC + put-credit entry attempt
     - cron: 0 16 * * 1-5 # Exit check: 12:00 PM ET
     - cron: 0 17 * * 1-5 # 1:00 PM ET — second entry attempt (low-vol recheck)
     - cron: 0 18 * * 1-5 # Exit check: 2:00 PM ET
+    - cron: 0 19 * * 1-5 # 3:00 PM ET — third entry attempt (AGENT-608)
     - cron: 30 19 * * 1-5 # EOD exit: 3:30 PM ET
   # Manual dispatch is dry-run only (Checkov CKV_GHA_7 forbids workflow_dispatch inputs).
   # Scheduled jobs execute paper entries under the kill switch.
@@ -77,7 +79,7 @@ jobs:
             # GitHub can deliver scheduled jobs late. Preserve the intent of the
             # triggering cron expression instead of reclassifying by wall clock.
             case "$SCHEDULE_EXPRESSION" in
-              "0 15 * * 1-5"|"0 17 * * 1-5")
+              "35 14 * * 1-5"|"0 15 * * 1-5"|"0 17 * * 1-5"|"0 19 * * 1-5")
                 MODE="both"
                 RUN_PUT_CREDIT=true
                 ;;
@@ -178,12 +180,32 @@ jobs:
             # Paper MLEG only — live blocked by strategy_kill_switch.json.
             # Stale context_engine_index must not freeze this step (AGENT-604 /
             # LL-593); the mandatory gate skips that SLO for controlled
-            # one-lot paper spy_put_credit. Cadence alarm still owns stall.
-            python3 scripts/spy_put_credit.py --execute-paper || {
-              echo "Put-credit entry skipped or no opportunity (exit 0 so workflow continues)"
-              true
-            }
+            # one-lot paper spy_put_credit.
+            # AGENT-607: rc 0=fill, 1=no-fill/skip, 2=expected block, 3=fatal
+            # mandatory gate. Do not `|| true` rc 3 — that was the false-green
+            # that left n=3 while Friday RTH found a valid opportunity.
+            set +e
+            python3 scripts/spy_put_credit.py --execute-paper
+            rc=$?
+            set -e
+            if [ "$rc" -eq 3 ]; then
+              echo "FATAL: put-credit --execute-paper mandatory gate blocked (AGENT-607)"
+              exit 3
+            fi
+            if [ "$rc" -ne 0 ]; then
+              echo "Put-credit entry skipped (rc=$rc); workflow continues"
+            fi
           fi
+
+      - name: Fail closed if paper factory stalled
+        if: >-
+          always() &&
+          github.event_name == 'schedule' &&
+          steps.mode.outputs.run_put_credit == 'true' &&
+          steps.mode.outputs.dry_run != 'true'
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python3 scripts/check_entry_cadence.py
 
       - name: Show strategy status
         if: steps.mode.outputs.mode == 'status'

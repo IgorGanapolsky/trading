@@ -633,6 +633,23 @@ def test_put_credit_entry_builds_supported_bull_put_order_id(tmp_path, monkeypat
     assert parsed["intent"] == "BPS"
 
 
+def test_place_put_credit_reraises_mandatory_gate_as_fatal(tmp_path, monkeypatch):
+    from scripts import spy_put_credit as pcs
+
+    def fake_submit(client, request, strategy=None):
+        raise ValueError(
+            "MANDATORY GATE BLOCKED: Trade blocked by stale context: "
+            "Stale context indexes detected: context_engine_index"
+        )
+
+    monkeypatch.setattr(pcs, "ENTRIES_FILE", tmp_path / "put_credit_entries.json")
+    monkeypatch.setattr(pcs.time, "sleep", lambda _: None)
+    monkeypatch.setattr("src.safety.mandatory_trade_gate.safe_submit_order", fake_submit)
+
+    with pytest.raises(pcs.MandatoryGateSubmitError, match="MANDATORY GATE BLOCKED"):
+        pcs.place_put_credit(MagicMock(), _put_credit_opp())
+
+
 def test_put_credit_resolves_to_options_income_milestone_family():
     from src.safety.milestone_controller import resolve_strategy_family
 
@@ -1076,9 +1093,12 @@ def test_schedule_preserves_trigger_intent_when_github_delivers_late():
 
     assert "SCHEDULE_EXPRESSION: ${{ github.event.schedule || '' }}" in determine_mode
     assert 'case "$SCHEDULE_EXPRESSION" in' in determine_mode
-    # Entry windows: 11:00 ET (0 15) and 1:00 PM ET recheck (0 17).
+    # Entry windows: 10:35 ET, 11:00 ET, 1:00 PM ET, 3:00 PM ET (AGENT-608).
+    assert '"35 14 * * 1-5"' in determine_mode
     assert '"0 15 * * 1-5"' in determine_mode
     assert '"0 17 * * 1-5"' in determine_mode
+    assert '"0 19 * * 1-5"' in determine_mode
+    assert '"30 19 * * 1-5"' in determine_mode
     assert "RUN_PUT_CREDIT=true" in determine_mode
     assert "date -u +%H" not in determine_mode
     assert "date -u +%u" not in determine_mode
@@ -1328,3 +1348,50 @@ def test_put_credit_main_rechecks_limits_inside_trade_lock(tmp_path, monkeypatch
     )
 
     assert pcs.main() == 2
+
+
+def test_put_credit_execute_paper_fatal_on_mandatory_gate_block(tmp_path, monkeypatch, capsys):
+    """GATE BLOCKED is not a skip — factory must fail closed (AGENT-607)."""
+    from scripts import spy_put_credit as pcs
+
+    _patch_put_credit_cli_basics(pcs, monkeypatch)
+    monkeypatch.setattr("sys.argv", ["spy_put_credit.py", "--execute-paper"])
+    monkeypatch.setattr(pcs, "AUDIT_DIR", tmp_path)
+    monkeypatch.setattr(pcs, "_inventory_ok", lambda *_args, **_kwargs: True)
+    monkeypatch.setattr(pcs, "_load_entries", lambda: {})
+    monkeypatch.setattr("src.utils.options_analysis.get_underlying_price", lambda _: 747.0)
+    monkeypatch.setattr(pcs, "find_put_credit_opportunity", lambda _: _put_credit_opp())
+    monkeypatch.setattr(pcs, "_get_paper_client", lambda: object())
+    monkeypatch.setattr("src.safety.trade_lock.acquire_trade_lock", lambda **_: nullcontext())
+    monkeypatch.setattr(
+        pcs,
+        "evaluate_entry_limits",
+        lambda *_args, **_kwargs: {"allowed": True, "blockers": []},
+    )
+    monkeypatch.setattr(
+        pcs,
+        "place_put_credit",
+        lambda *_a, **_k: (_ for _ in ()).throw(
+            pcs.MandatoryGateSubmitError(
+                "MANDATORY GATE BLOCKED: Trade blocked by stale context: "
+                "Stale context indexes detected: context_engine_index"
+            )
+        ),
+    )
+
+    assert pcs.main() == pcs.EXECUTE_PAPER_FATAL_GATE
+    out = capsys.readouterr().out
+    assert "mandatory_gate_blocked" in out
+
+
+def test_is_mandatory_gate_submit_error_matches_production_message():
+    from scripts import spy_put_credit as pcs
+
+    assert pcs._is_mandatory_gate_submit_error(
+        ValueError(
+            "MANDATORY GATE BLOCKED: Trade blocked by stale context: "
+            "Stale context indexes detected: context_engine_index"
+        )
+    )
+    assert pcs._is_mandatory_gate_submit_error(ValueError("MANDATORY GATE ERROR (fail closed): x"))
+    assert not pcs._is_mandatory_gate_submit_error(ValueError("insufficient buying power"))
