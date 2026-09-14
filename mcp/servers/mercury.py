@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from src.adapters.mercury_readonly import MercuryReadOnlyClient
@@ -70,7 +70,7 @@ def get_bank_transactions(account: str = "checking", limit: int = 20) -> dict[st
         return {
             "success": True,
             "account": account,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             **result,
         }
     except Exception as e:  # noqa: BLE001
@@ -93,7 +93,7 @@ def get_bank_health() -> dict[str, Any]:
             "reachable": True,
             "accounts": len(accounts),
             "latency_ms": round((time.perf_counter() - start) * 1000, 1),
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
     except Exception as e:  # noqa: BLE001
         return {
@@ -101,5 +101,5 @@ def get_bank_health() -> dict[str, Any]:
             "reachable": False,
             "error": str(e),
             "latency_ms": round((time.perf_counter() - start) * 1000, 1),
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
