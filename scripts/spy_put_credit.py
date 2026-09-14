@@ -53,6 +53,17 @@ TERMINAL_EXIT_REASONS = {
     "expired",
 }
 EASTERN = ZoneInfo("America/New_York")
+# --execute-paper: 0 fill, 1 skip/no-fill, 2 expected block, 3 fatal gate (not a skip)
+EXECUTE_PAPER_FATAL_GATE = 3
+
+
+class MandatoryGateSubmitError(RuntimeError):
+    """validate_trade_mandatory refused the paper MLEG. Workflow must not swallow this."""
+
+
+def _is_mandatory_gate_submit_error(exc: BaseException) -> bool:
+    msg = str(exc)
+    return "MANDATORY GATE BLOCKED" in msg or "MANDATORY GATE ERROR" in msg
 
 
 def _load_profile():
@@ -1287,6 +1298,8 @@ def place_put_credit(client, opp: dict) -> str | None:
             )
         except Exception as exc:  # noqa: BLE001
             logger.error("Put credit submit failed: %s", exc)
+            if _is_mandatory_gate_submit_error(exc):
+                raise MandatoryGateSubmitError(str(exc)) from exc
             return None
         order_id = str(order.id)
         logger.info("Order %s status=%s", order_id, order.status)
@@ -1751,6 +1764,21 @@ def main() -> int:
     except TradeLockTimeout as exc:
         logger.warning("Put-credit entry lock unavailable: %s", exc)
         return 2
+    except MandatoryGateSubmitError as exc:
+        logger.error("PUT-CREDIT FACTORY FATAL: %s", exc)
+        print(
+            json.dumps(
+                {
+                    "success": False,
+                    "reason": "mandatory_gate_blocked",
+                    "detail": str(exc),
+                    "plan_path": str(path),
+                },
+                indent=2,
+                default=str,
+            )
+        )
+        return EXECUTE_PAPER_FATAL_GATE
     ok = order_id is not None
     print(
         json.dumps(

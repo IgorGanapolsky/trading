@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from src.risk.put_credit_regime import (
+    MIN_IV_RANK,
+    RESEARCH_PREFERRED_IVR,
     RegimeSnapshot,
     attach_counterfactuals,
     evaluate_entry_operating_system,
@@ -39,8 +41,17 @@ def test_regime_blocks_high_vix():
     assert any("VIX" in b for b in gate["blockers"])
 
 
-def test_regime_blocks_low_ivr():
+def test_paper_ivr_floor_defaults_to_zero():
+    """AGENT-608: local default must match CI PUT_CREDIT_MIN_IVR=0."""
+    assert MIN_IV_RANK == 0.0
+    assert RESEARCH_PREFERRED_IVR == 30.0
     gate = evaluate_regime_gate(_snap(iv_rank_proxy=10.0))
+    assert gate["allowed"] is True
+    assert any("research preferred" in f for f in gate["soft_flags"])
+
+
+def test_regime_blocks_low_ivr():
+    gate = evaluate_regime_gate(_snap(iv_rank_proxy=10.0), min_iv_rank=30.0)
     assert gate["allowed"] is False
     assert any("IV rank" in b for b in gate["blockers"])
 
@@ -84,7 +95,11 @@ def test_regime_missing_vix_fail_closed():
 
 def test_regime_missing_ivr_fail_closed():
     """Greptile #4280: unavailable IVR must block, not invent IVR=50."""
-    gate = evaluate_regime_gate(_snap(iv_rank_proxy=None), fail_closed_on_missing=True)
+    gate = evaluate_regime_gate(
+        _snap(iv_rank_proxy=None),
+        min_iv_rank=30.0,
+        fail_closed_on_missing=True,
+    )
     assert gate["allowed"] is False
     assert any("IV rank" in b for b in gate["blockers"])
 

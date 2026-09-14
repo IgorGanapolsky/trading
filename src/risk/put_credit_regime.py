@@ -28,7 +28,9 @@ logger = logging.getLogger(__name__)
 # cohort is not frozen in multi-week low-vol regimes; stratify scorecards by
 # iv_rank_proxy >= RESEARCH_PREFERRED_IVR when claiming edge.
 RESEARCH_PREFERRED_IVR = float(os.environ.get("PUT_CREDIT_RESEARCH_IVR", "30"))
-MIN_IV_RANK = float(os.environ.get("PUT_CREDIT_MIN_IVR", "30"))
+# Paper hard floor is VIX (crash veto). Default 0 matches CI PUT_CREDIT_MIN_IVR
+# (AGENT-361/566/608). Research preferred 30 stays a soft flag for stratification.
+MIN_IV_RANK = float(os.environ.get("PUT_CREDIT_MIN_IVR", "0"))
 MAX_VIX = float(os.environ.get("PUT_CREDIT_MAX_VIX", "30"))
 REQUIRE_ABOVE_200DMA = os.environ.get("PUT_CREDIT_REQUIRE_200DMA", "0").lower() in {
     "1",
