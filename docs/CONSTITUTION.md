@@ -46,6 +46,13 @@ Never end a turn on diagnosis-only, “CI pending”, or “want me to?”. Obse
 Verify → Ship. Metered spend, outbound send, lock steal, and correctly firing safety
 gates remain HARD stops.
 
+### VI. Checkpoint Belay (Superpowers / GSD / Compound)
+
+Pick rope length by undo-cost, multi-session risk, and repeat corrections
+(`scripts/checkpoint_pick.py`). Prefer **goal-backward** checks (what must be TRUE)
+over “did the command exit 0”. Compound every correction into `.planning/COMPOUND.md`
+so the next agent loads it — Fix→Test→Prevent→Memory→Verify stays mandatory.
+
 ## Additional Constraints
 
 - One Linear issue + one worktree; no lock steal; no dual-edit sibling Herdr cwd.

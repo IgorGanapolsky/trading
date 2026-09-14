@@ -25,6 +25,8 @@ CI/cash residuals keep moving without CEO prompts.
 | C4  | Superpowers verify   | `superpowers_verify_complete.py --harness` ok=true                    |
 | C5  | Call-sheet cash rail | CALL_SHEET_VERIFIED + prepaid drafts; checkout HTTP 200; no auto-send |
 | C6  | Active scope freeze  | `audit_active_scope.py --json` ok=true; IC entries killed             |
+| C7  | Goal-backward TRUE   | `goal_backward_verify.py --goal harness` all conditions ok            |
+| C8  | Checkpoint pick      | `checkpoint_pick.py` recommends belay; Compound when repeat lesson    |
 
 ## Constraints
 

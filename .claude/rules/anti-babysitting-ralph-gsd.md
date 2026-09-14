@@ -42,3 +42,9 @@ Skill: `/obra-superpowers-not-clone`. Do not install the Superpowers plugin here
 
 SPEC.md contract + `scripts/bmad_readiness.py` before expanding implement.
 Skill: `/bmad-spec-driven-not-clone`. Do not install bmad-method. ready ≠ fee-yes.
+
+## Framework checkpoints (Substack)
+
+Goal-backward TRUE conditions beat exit-0 theater. Pick belay via
+`scripts/checkpoint_pick.py`. Compound repeats into `.planning/COMPOUND.md`.
+Skill: `/framework-checkpoint-not-clone`. Prefer open-gsd FORMAT, never original GSD packages.

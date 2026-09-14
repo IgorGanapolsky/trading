@@ -350,7 +350,56 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="BMAD implementation-readiness gate (SPEC.md + converge + scope)",
     )
+    parser.add_argument(
+        "--goal-backward",
+        choices=["harness", "cash"],
+        default=None,
+        help="GSD goal-backward: what must be TRUE (not just did it run)",
+    )
+    parser.add_argument(
+        "--checkpoint-pick",
+        action="store_true",
+        help="Pick Superpowers/GSD/Compound/Ralph rope length for this residual",
+    )
+    parser.add_argument("--undo-cost", default="medium")
+    parser.add_argument("--multi-session", action="store_true")
     args = parser.parse_args(argv)
+
+    if args.checkpoint_pick:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from checkpoint_pick import pick as _pick_ckpt
+
+        out = _pick_ckpt(
+            undo_cost=args.undo_cost,
+            multi_session=args.multi_session,
+        )
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "checkpoint_pick"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        return 0
+
+    if args.goal_backward:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from goal_backward_verify import cash_conditions, harness_conditions, verify_goal
+
+        if args.goal_backward == "harness":
+            out = verify_goal(
+                "Harness residual is evidence-true (goal-backward)",
+                harness_conditions(),
+            )
+        else:
+            out = verify_goal(
+                "Cash residual operationally true (not fee-yes)",
+                cash_conditions(),
+            )
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "goal_backward"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and not out.get("ok"):
+            return 2
+        return 0 if out.get("ok") else 2
 
     if args.readiness:
         if str(ROOT / "scripts") not in sys.path:
