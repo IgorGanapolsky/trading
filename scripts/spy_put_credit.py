@@ -1676,8 +1676,21 @@ def main() -> int:
     plan["regime"] = regime_snap.as_dict()
     plan["regime_gate"] = regime_gate
 
-    # Fahmy FORMAT OS (AGENT-602): market / structure / technical / predefined risk.
+    # Fahmy FORMAT OS (AGENT-602) + Buffett risk budget (AGENT-616).
     from src.risk.put_credit_regime import evaluate_entry_operating_system
+
+    equity = None
+    try:
+        import json as _json
+        from pathlib import Path as _Path
+
+        ss = _json.loads((_Path("data/system_state.json")).read_text(encoding="utf-8"))
+        equity = (ss.get("portfolio") or {}).get("equity") or (ss.get("paper_account") or {}).get(
+            "equity"
+        )
+        equity = float(equity) if equity is not None else None
+    except Exception:
+        equity = None
 
     risk_plan = None
     if isinstance(opp, dict):
@@ -1692,15 +1705,17 @@ def main() -> int:
             "stop_loss": plan.get("stop_loss_pct"),
             "take_profit": plan.get("take_profit_pct"),
             "time_exit": plan.get("exit_dte"),
+            "wing_width": plan.get("wing_width") or opp.get("put_wing") or 5.0,
         }
     entry_os = evaluate_entry_operating_system(
         regime_gate=regime_gate,
         opportunity=opp if isinstance(opp, dict) else None,
         risk_plan=risk_plan,
-        min_dte=int(plan.get("min_dte") or 30),
-        max_dte=int(plan.get("max_dte") or 45),
-        min_short_delta=float((plan.get("delta_band") or [0.10, 0.25])[0]),
-        max_short_delta=float((plan.get("delta_band") or [0.10, 0.25])[1]),
+        min_dte=int(plan.get("min_dte") or 45),
+        max_dte=int(plan.get("max_dte") or 70),
+        min_short_delta=float((plan.get("delta_band") or [0.10, 0.20])[0]),
+        max_short_delta=float((plan.get("delta_band") or [0.10, 0.20])[1]),
+        equity=equity,
     )
     plan["entry_operating_system"] = entry_os
     if isinstance(opp, dict):
