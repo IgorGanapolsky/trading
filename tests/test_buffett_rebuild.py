@@ -37,16 +37,12 @@ def test_200dma_required_by_default():
 
 def test_buffett_risk_budget_allows_one_lot_five_wide():
     # $5 wide, $0.67 credit → max loss ≈ $433 on $100k = 0.43% < 1%
-    out = evaluate_buffett_risk_budget(
-        equity=100_000.0, wing_width=5.0, credit=0.67, quantity=1
-    )
+    out = evaluate_buffett_risk_budget(equity=100_000.0, wing_width=5.0, credit=0.67, quantity=1)
     assert out["allowed"] is True
     assert out["max_loss"] < 500
 
 
 def test_buffett_risk_budget_blocks_oversized():
-    out = evaluate_buffett_risk_budget(
-        equity=10_000.0, wing_width=5.0, credit=0.10, quantity=3
-    )
+    out = evaluate_buffett_risk_budget(equity=10_000.0, wing_width=5.0, credit=0.10, quantity=3)
     assert out["allowed"] is False
     assert any("exceeds" in b for b in out["blockers"])
