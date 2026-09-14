@@ -127,6 +127,25 @@ class QuantCoreEngine:
             captured_at=datetime.now(UTC).isoformat(),
         )
 
+    def validate_pre_action_diode(
+        self, spread_width: float, iv_rank: float, trend_bullish: bool
+    ) -> tuple[bool, list[str]]:
+        """Fail-closed pre-action diode enforcing empirical rules from RAG forensics."""
+        violations = []
+        if spread_width > 5.0:
+            violations.append(
+                "LL-360: 10-wide or wider wings strictly prohibited; max spread width is $5.00"
+            )
+        if iv_rank < self.config.min_iv_rank:
+            violations.append(
+                f"LL-247: IV Rank {iv_rank:.1f}% < {self.config.min_iv_rank:.1f}% produces negative expectancy after broker friction"
+            )
+        if not trend_bullish:
+            violations.append(
+                "LL-312: SPY < 200 SMA bear regimes require halting new bull put entries"
+            )
+        return len(violations) == 0, violations
+
     def evaluate_entry(self, regime: MarketRegime, current_positions_count: int) -> dict[str, Any]:
         """Check if market conditions meet entry criteria."""
         reasons = []
@@ -138,15 +157,13 @@ class QuantCoreEngine:
                 f"Max concurrent positions reached ({current_positions_count}/{self.config.max_concurrent_positions})"
             )
 
-        if regime.iv_rank < self.config.min_iv_rank:
+        # Pre-action diode check
+        diode_pass, diode_violations = self.validate_pre_action_diode(
+            self.config.spread_width, regime.iv_rank, regime.trend_bullish
+        )
+        if not diode_pass:
             is_eligible = False
-            reasons.append(
-                f"IV Rank too low ({regime.iv_rank:.1f} < {self.config.min_iv_rank:.1f})"
-            )
-
-        if not regime.trend_bullish:
-            is_eligible = False
-            reasons.append(f"Trend bearish (SPY ${regime.spy_price} < 200 SMA ${regime.sma200})")
+            reasons.extend(diode_violations)
 
         # Estimate strikes
         T = 40.0 / 365.0

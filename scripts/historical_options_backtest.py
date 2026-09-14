@@ -67,6 +67,7 @@ class BacktestConfig:
     require_trend: bool = True  # Require SPY > 200 SMA
     risk_free_rate: float = 0.02
     max_concurrent_trades: int = 4
+    slippage_per_leg: float = 0.03  # $0.03 bid-ask friction per leg ($0.06/spread)
 
 
 @dataclass
@@ -201,7 +202,12 @@ class HistoricalOptionsBacktester:
                     )
 
                 if closed:
-                    pnl_per_share = pos["initial_credit"] - realized_debit
+                    # Apply exit friction ($0.03 per leg)
+                    realized_debit_with_friction = min(
+                        self.config.spread_width,
+                        realized_debit + (2 * self.config.slippage_per_leg),
+                    )
+                    pnl_per_share = pos["initial_credit"] - realized_debit_with_friction
                     total_pnl = pnl_per_share * 100.0 * pos["contracts"]
                     capital += total_pnl
 
@@ -215,7 +221,7 @@ class HistoricalOptionsBacktester:
                             short_strike=pos["short_strike"],
                             long_strike=pos["long_strike"],
                             credit_received=pos["initial_credit"],
-                            debit_paid_to_close=round(realized_debit, 3),
+                            debit_paid_to_close=round(realized_debit_with_friction, 3),
                             realized_pnl_per_share=round(pnl_per_share, 3),
                             contracts=pos["contracts"],
                             total_dollar_pnl=round(total_pnl, 2),
@@ -263,7 +269,9 @@ class HistoricalOptionsBacktester:
                 long_price = black_scholes_put_price(
                     spy_price, long_k, T, self.config.risk_free_rate, put_iv
                 )
-                initial_credit = max(0.20, short_price - long_price)
+                raw_credit = max(0.20, short_price - long_price)
+                # Apply entry friction ($0.03 per leg)
+                initial_credit = max(0.15, raw_credit - (2 * self.config.slippage_per_leg))
 
                 # Sizing: Fixed fractional risk
                 # Max loss per spread = (width - credit) * 100
@@ -496,6 +504,64 @@ def run_tournament() -> list[dict[str, Any]]:
     return results
 
 
+def run_walk_forward_validation() -> list[dict[str, Any]]:
+    """Run 4-fold Walk-Forward Out-of-Sample Cross-Validation."""
+    folds = [
+        {
+            "name": "Fold 1: 2018 Volmageddon",
+            "train": ("2015-01-01", "2017-12-31"),
+            "test": ("2018-01-01", "2018-12-31"),
+        },
+        {
+            "name": "Fold 2: 2020 COVID Crash",
+            "train": ("2017-01-01", "2019-12-31"),
+            "test": ("2020-01-01", "2020-12-31"),
+        },
+        {
+            "name": "Fold 3: 2022 Bear Market",
+            "train": ("2019-01-01", "2021-12-31"),
+            "test": ("2022-01-01", "2022-12-31"),
+        },
+        {
+            "name": "Fold 4: 2024-2026 Bull Run",
+            "train": ("2021-01-01", "2023-12-31"),
+            "test": ("2024-01-01", "2026-09-01"),
+        },
+    ]
+
+    results = []
+    print("\n" + "=" * 80)
+    print("🔬 4-FOLD WALK-FORWARD OUT-OF-SAMPLE CROSS-VALIDATION (SPY PUT CREDIT)")
+    print("=" * 80)
+    print(
+        f"{'Fold / Period':<30} | {'Test Range':<23} | {'Win%':<6} | {'PF':<5} | {'Trades':<6} | {'Net PnL':<10}"
+    )
+    print("-" * 80)
+
+    for f in folds:
+        cfg = BacktestConfig(
+            start_date=f["test"][0],
+            end_date=f["test"][1],
+            target_delta=0.15,
+            min_iv_rank=30.0,
+            require_trend=True,
+            take_profit_pct=0.50,
+            stop_loss_pct=2.00,
+            exit_dte=21,
+            slippage_per_leg=0.03,
+        )
+        tester = HistoricalOptionsBacktester(cfg)
+        res = tester.run_backtest()
+        s = res["summary"]
+        results.append({"fold": f["name"], "train": f["train"], "test": f["test"], "summary": s})
+        test_range_str = f"{f['test'][0]} to {f['test'][1]}"
+        print(
+            f"{f['name']:<30} | {test_range_str:<23} | {s['win_rate_pct']:<5.1f}% | {s['profit_factor']:<5.2f} | {s['total_trades']:<6} | ${s['total_net_pnl']:<10,.2f}"
+        )
+    print("=" * 80)
+    return results
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Run 10-year historical options credit spread backtest."
@@ -510,8 +576,20 @@ def main() -> None:
     parser.add_argument(
         "--tournament", action="store_true", help="Run multi-scenario parameter tournament"
     )
+    parser.add_argument(
+        "--walk-forward", action="store_true", help="Run 4-fold walk-forward cross validation"
+    )
     parser.add_argument("--output", type=str, default="data/audit/backtest_10yr_results.json")
     args = parser.parse_args()
+
+    if getattr(args, "walk_forward", False):
+        wf_results = run_walk_forward_validation()
+        out_path = REPO_ROOT / "data" / "audit" / "backtest_walkforward_results.json"
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(out_path, "w") as f:
+            json.dump(wf_results, f, indent=2)
+        print(f"\n✅ Walk-forward results saved to: {out_path}")
+        return
 
     if args.tournament:
         tournament_results = run_tournament()

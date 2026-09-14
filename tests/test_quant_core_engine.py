@@ -60,4 +60,28 @@ def test_quant_engine_entry_evaluation():
     )
     eval_bearish = engine.evaluate_entry(regime_bearish, current_positions_count=0)
     assert eval_bearish["is_eligible"] is False
-    assert any("Trend bearish" in r for r in eval_bearish["reasons"])
+    assert any("LL-312" in r for r in eval_bearish["reasons"])
+
+
+def test_validate_pre_action_diode():
+    engine = QuantCoreEngine(QuantConfig())
+    # 10-wide wings violation
+    ok, violations = engine.validate_pre_action_diode(
+        spread_width=10.0, iv_rank=35.0, trend_bullish=True
+    )
+    assert ok is False
+    assert any("LL-360" in v for v in violations)
+
+    # Low IV Rank violation
+    ok, violations = engine.validate_pre_action_diode(
+        spread_width=5.0, iv_rank=15.0, trend_bullish=True
+    )
+    assert ok is False
+    assert any("LL-247" in v for v in violations)
+
+    # All pass
+    ok, violations = engine.validate_pre_action_diode(
+        spread_width=5.0, iv_rank=30.0, trend_bullish=True
+    )
+    assert ok is True
+    assert len(violations) == 0
