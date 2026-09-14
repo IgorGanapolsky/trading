@@ -9,6 +9,7 @@ Three questions:
 Outputs a recommended belay: ralph | superpowers | gsd | compound | quick
 plus the concrete trading CLI to run. Not a product install.
 """
+
 from __future__ import annotations
 
 import argparse

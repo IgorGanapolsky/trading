@@ -9,6 +9,7 @@ Stolen from: theaiengineer.substack.com Superpowers vs GSD vs Compound Engineeri
 
 EXIT 0 when all conditions pass; EXIT 2 otherwise (--strict default for CI).
 """
+
 from __future__ import annotations
 
 import argparse

@@ -9,6 +9,7 @@ Not an Every plugin install. Complements `.claude/rules/compound-engineering.md`
 
 EXIT 0. With --strict: EXIT 2 if repeat without --force.
 """
+
 from __future__ import annotations
 
 import argparse
