@@ -791,7 +791,7 @@ class TestMlGateHaltMatcher:
 
 
 class TestPutCreditDailyStructureGate:
-    """Active put-credit family must use profile max_daily=3, not IC max=1."""
+    """Active put-credit family must use Buffett profile max_daily=1, not IC max."""
 
     def test_max_daily_structures_uses_put_credit_profile(self, monkeypatch):
         import src.safety.mandatory_trade_gate as gate_mod
@@ -802,7 +802,7 @@ class TestPutCreditDailyStructureGate:
             gate_mod._max_daily_structures_for_gate()
             == get_put_credit_profile().max_daily_structures
         )
-        assert gate_mod._max_daily_structures_for_gate() == 3
+        assert gate_mod._max_daily_structures_for_gate() == 1
 
     def test_max_daily_structures_ic_family_uses_constant(self, monkeypatch):
         import src.safety.mandatory_trade_gate as gate_mod
@@ -810,7 +810,25 @@ class TestPutCreditDailyStructureGate:
         monkeypatch.setattr(gate_mod, "_active_strategy_family", lambda: "iron_condor")
         assert gate_mod._max_daily_structures_for_gate() == gate_mod.MAX_DAILY_STRUCTURES
 
-    def test_put_credit_intraday_guardrail_allows_under_three(self, monkeypatch):
+    def test_put_credit_intraday_guardrail_allows_under_daily_cap(self, monkeypatch):
+        import src.safety.mandatory_trade_gate as gate_mod
+
+        monkeypatch.setattr(gate_mod, "_active_strategy_family", lambda: "spy_put_credit")
+        ok, reason = gate_mod._enforce_intraday_guardrails(
+            equity=100_000.0,
+            is_opening=True,
+            checks_performed=[],
+            context={
+                "intraday_metrics": {
+                    "daily_pnl": 0.0,
+                    "fills_today": 0,
+                    "structures_today": 0,
+                }
+            },
+        )
+        assert ok is True, reason
+
+    def test_put_credit_intraday_guardrail_blocks_at_daily_cap(self, monkeypatch):
         import src.safety.mandatory_trade_gate as gate_mod
 
         monkeypatch.setattr(gate_mod, "_active_strategy_family", lambda: "spy_put_credit")
@@ -826,26 +844,8 @@ class TestPutCreditDailyStructureGate:
                 }
             },
         )
-        assert ok is True, reason
-
-    def test_put_credit_intraday_guardrail_blocks_at_three(self, monkeypatch):
-        import src.safety.mandatory_trade_gate as gate_mod
-
-        monkeypatch.setattr(gate_mod, "_active_strategy_family", lambda: "spy_put_credit")
-        ok, reason = gate_mod._enforce_intraday_guardrails(
-            equity=100_000.0,
-            is_opening=True,
-            checks_performed=[],
-            context={
-                "intraday_metrics": {
-                    "daily_pnl": 0.0,
-                    "fills_today": 0,
-                    "structures_today": 3,
-                }
-            },
-        )
         assert ok is False
-        assert "3/3" in reason
+        assert "1/1" in reason
 
     def test_structures_today_uses_max_of_journal_and_broker(self, monkeypatch):
         """Greptile #4278: fill-before-journal must not undercount past max_daily."""

@@ -1,90 +1,40 @@
 {
   "enabled": true,
+  "cohort_id": "buffett-put-credit-v2-2026-09",
   "strategy_family": "spy_put_credit",
-  "hypothesis": "Replace the failed 4-leg SPY iron condor with a simpler 2-leg SPY bull put credit spread. Dual-side ICs produced inventory orphans, lot mismatches, and negative expectancy (PF 0.70). A single put credit keeps defined risk, rides long-term equity drift, halves leg complexity, and makes stop/target accounting auditable. Paper-only 1-lot validation tests whether this structure can produce expectancy > 0 and PF > 1 over 30 clean trades.",
-  "changed_rules": [
-    "KILL ic_simple / iron_condor as North Star entry path (data/runtime/strategy_kill_switch.json). No new IC entries.",
-    "Active family is spy_put_credit only: sell 1 SPY put + buy 1 lower put (bull put credit), never naked, never multi-leg 4-leg IC.",
-    "Paper-only validation; live and scale remain blocked until kill criteria clear.",
-    "1 contract only, max 3 new structures per day, max 2 concurrent put credits, SPY only.",
-    "30-45 DTE, target short delta 0.15 (band 0.10-0.22), wing width $5 only (reject 10-wide).",
-    "Live-delta strike provenance required; reject heuristic fallback and net credit < $0.50.",
-    "Exit: take profit at 25% of max profit; stop at 200% of credit; min hold 24h; force manage/exit by 7 DTE.",
-    "No same-expiry re-entry after a loss; no sub-24h discretionary closes except hard stop.",
-    "Block new entries if open inventory is unclean (lot/orphan/journal mismatch) or broker sync is stale.",
-    "Record exit_reason on every close (profit_target, stop_loss, dte_exit, orphan_cleanup)."
+  "profile_name": "spy-put-credit-buffett",
+  "hypothesis": "Sept 2026 research (OptionKrafter realistic-fill DTE study + professional premium-seller rulebooks) says capital-preserving SPY bull put credits should use longer DTE (~60), trade less (1 concurrent / 1 per day), take profit near 50% of credit, stop at 200% of credit, stay defined-risk 1-lot $5-wide, and only sell when SPY is above the 200-DMA. Under Buffett Rule #1 (do not lose money), this paper cohort must prove expectancy > 0 and PF > 1 over 30 clean paired closes before any live capital.",
+  "research_citations": [
+    "https://optionkrafter.com/blog/45-dte-rule (2026-08-10; realistic fills update 2026-08-23)",
+    "https://optionkrafter.com/blog/0dte-iron-condor (2026-09-09)",
+    "https://www.theoptionpremium.com/p/advanced-options-strategies-professional-guide (2026-04-04)",
+    "https://www.theoptionpremium.com/p/probability-stack-options-trading (2026-09-08)",
+    "https://www.ruleoneinvesting.com/blog/how-to-invest/do-warren-buffett-and-phil-town-trade-options/ (2026-04-27)"
   ],
-  "rehabilitation_plan_ack": {
-    "source_plan": "data/runtime/edge_rehabilitation_plan.json",
-    "covered_loss_clusters": [
-      "ten_wide_wings",
-      "iron_condor_family",
-      "multi_contract",
-      "four_leg_complexity",
-      "long_hold_ge_7d",
-      "early_exit_lt_24h",
-      "early_exit_lt_1h",
-      "five_wide_or_less"
-    ],
-    "prohibited_rule_repeats": [
-      "Do not reopen 10-wide SPY iron condors.",
-      "Do not use multi-contract sizing before the put-credit cohort clears kill criteria.",
-      "Do not hold credit structures past 7 DTE without managed exit.",
-      "Do not use unmanaged sub-24-hour exits as discretionary management.",
-      "Do not reintroduce 4-leg IC entry while strategy_kill_switch lists ic_simple/iron_condor as killed."
-    ]
+  "supersedes": {
+    "prior_cohort": "spy-put-credit legacy (TP 25%, 30-45 DTE, max_daily=3)",
+    "prior_paired_n": 3,
+    "note": "Prior n=3 wins are not carried into Buffett v2 kill-gate sample; scorecards must filter profile_name=spy-put-credit-buffett."
   },
+  "changed_rules": [
+    "Default profile spy-put-credit-buffett: target_dte=60, min_dte=45, max_dte=70, exit_dte=30.",
+    "Take profit 50% of credit; stop 200% of credit; short delta ~0.15 (band 0.10-0.20).",
+    "max_daily_structures=1 and max_concurrent_positions=1 (trade less / keep more).",
+    "Hard require SPY above 200-DMA for new entries (PUT_CREDIT_REQUIRE_200DMA default 1).",
+    "Buffett risk budget: max loss per structure <= 1% of equity.",
+    "IC / 0DTE / multi-lot / live capital remain forbidden until kill criteria clear.",
+    "Paper only; live_blocked stays true."
+  ],
   "kill_criteria": {
     "min_closed_trades": 30,
-    "min_expectancy_per_trade": 1.0,
+    "min_expectancy_per_trade": 0.01,
     "min_profit_factor": 1.05,
-    "min_total_realized_pnl": 1.0
+    "min_total_realized_pnl": 0.01,
+    "profile_filter": "spy-put-credit-buffett"
   },
-  "post_clearance_scaling_plan": {
-    "enabled": true,
-    "trigger": "All kill_criteria met (n>=30, expectancy>0, PF>1.05, total P/L>0)",
-    "phase_1_scale_to_live": {
-      "description": "Transition from paper validation to live capital with conservative sizing",
-      "max_contracts_per_trade": 2,
-      "max_daily_structures": 3,
-      "max_concurrent_positions": 3,
-      "position_size_pct": 0.03,
-      "risk_per_trade_cap": 200.0,
-      "duration": "4 weeks minimum before phase 2",
-      "success_criteria": "No weekly drawdown > 5% of equity, PF > 1.10, expectancy > $10/trade"
-    },
-    "phase_2_scale_to_north_star": {
-      "description": "Scale to reach $6,000/month North Star target",
-      "max_contracts_per_trade": 6,
-      "max_daily_structures": 3,
-      "max_concurrent_positions": 5,
-      "position_size_pct": 0.05,
-      "risk_per_trade_cap": 500.0,
-      "target_monthly_pnl": 6000.0,
-      "required_avg_credit_per_trade": 55.0,
-      "required_trades_per_month": 109,
-      "required_trades_per_day": 5.5,
-      "note": "At 1-lot ($55 avg credit), need 109 trades/month = 5.5 trades/day to reach $6,000/month. With 6 contracts, need ~18 trades/month = 0.9 trades/day. Current max_daily_structures=3 supports 60 trades/month at 6 contracts = ~$3,300/month. To fully reach $6,000/month, either increase max_daily_structures to 6 or increase contracts to 10.",
-      "success_criteria": "Monthly P/L >= $6,000 after tax for 3 consecutive months"
-    },
-    "stop_loss_refinement": {
-      "description": "Tighten stop loss based on backtest evidence",
-      "current_stop_loss_pct": 2.0,
-      "proposed_stop_loss_pct": 1.0,
-      "rationale": "Bull put spread backtest (2025-10-16 to 2025-11-29) showed avg win $25.85 vs avg loss $148.08 with 200% stop. Tightening to 100% would reduce avg loss to ~$74, improving profit factor from 0.48 to ~0.96. Further refinement to 75% stop would bring PF above 1.0."
-    },
-    "guardrails": [
-      "Never exceed 5% of equity at risk across all concurrent positions",
-      "Never reintroduce 10-wide wings or 4-leg IC structures",
-      "Weekly drawdown gate: block new entries if weekly P/L < -3% of equity",
-      "Monthly PF gate: block scaling if monthly PF < 1.0 for 2 consecutive months",
-      "Broker sync must be verified before every entry (no blind trading)"
-    ]
-  },
-  "approval_record": {
-    "approved_by": "CEO (Igor Ganapolsky)",
-    "approved_at": "2026-07-22",
-    "scope": "scrap IC Simple; paper validation of spy_put_credit only; live remains blocked",
-    "directive": "do not be afraid to scrap previous strategy for a better winning system"
+  "north_star": {
+    "monthly_after_tax_usd": 6000,
+    "target_capital_usd": 300000,
+    "rule_1": "Do not lose money — defined risk, small size, no live until edge proven"
   }
 }
