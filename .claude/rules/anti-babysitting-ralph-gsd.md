@@ -20,3 +20,9 @@ Observe (scorecard/PRs/ledger/Herdr) → Act (CI heal / merge / cash drafts / gr
 Ending a turn with only status, "CI pending", or a question to Igor is a defect.
 Required close: evidence of motion + next residual already started (monitor armed, draft written, CI fix pushed, or dial sheet expanded).
 Scheduler: keep 30m durable wake while cash fee-yes is F or an own PR is open.
+
+## open-gsd FORMAT
+
+Discuss → Plan → Execute → Verify → Ship via `scripts/ralph_gsd_tick.py`.
+Writes `.planning/STATE.md` + `CONTEXT.md`. Skill: `/open-gsd-phase-loop-not-clone`.
+Do not install `@opengsd/gsd-core`. Verify before claiming residual done.
