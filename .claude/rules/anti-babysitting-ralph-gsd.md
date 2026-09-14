@@ -1,0 +1,16 @@
+# Anti-Babysitting + Ralph/GSD (AGENT-616+, 2026-09-14)
+
+CEO: do not stop; operate 24/7 in Ralph Loop and GSD. Skill: `/trading-ralph-gsd-24-7`.
+
+## Hard
+
+1. Never end a turn after status/diagnosis only — execute the next residual same turn.
+2. Never claim overall A+/10/10 while cash fee-yes is unmet (Miramar prepaid ≥$100 non-owner + clerk+BCPA).
+3. Dual-grade commercial vs ops for DS/ML/Graph RAG — standing refuse on commercial until fee-yes.
+4. Paper Buffett put-credit only; live_blocked; no IC/0DTE revival.
+5. One Linear issue + one worktree; no lock steal; no dual-edit of sibling Herdr cwd.
+6. Cash rail = RealEstate-lane-grok call sheet + drafts; cold email freeze → phone preferred; never auto-send.
+
+## Ralph tick
+
+Observe (scorecard/PRs/ledger/Herdr) → Act (CI heal / merge / cash drafts / graph heal) → Feedback → Promote skill → Enforce no babysitting close.
