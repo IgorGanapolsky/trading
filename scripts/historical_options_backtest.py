@@ -17,8 +17,8 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from scipy.stats import norm
 import yfinance as yf
+from scipy.stats import norm
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -41,9 +41,7 @@ def black_scholes_put_delta(S: float, K: float, T: float, r: float, sigma: float
     return abs(norm.cdf(d1) - 1.0)
 
 
-def find_strike_for_delta(
-    S: float, target_delta: float, T: float, r: float, sigma: float
-) -> float:
+def find_strike_for_delta(S: float, target_delta: float, T: float, r: float, sigma: float) -> float:
     """Find put strike K matching target delta (OTM put, Delta between 0.05 and 0.50)."""
     z = norm.ppf(1.0 - target_delta)
     # K = S * exp(-z * sigma * sqrt(T) + (r + 0.5 * sigma^2) * T)
@@ -98,7 +96,9 @@ class HistoricalOptionsBacktester:
 
     def fetch_market_data(self) -> pd.DataFrame:
         """Fetch SPY and VIX historical daily data."""
-        spy = yf.download(self.config.symbol, start="2014-01-01", end=self.config.end_date, progress=False)
+        spy = yf.download(
+            self.config.symbol, start="2014-01-01", end=self.config.end_date, progress=False
+        )
         vix = yf.download("^VIX", start="2014-01-01", end=self.config.end_date, progress=False)
 
         # Handle multi-index columns from yfinance
@@ -179,7 +179,9 @@ class HistoricalOptionsBacktester:
 
                 # Stop Loss check (loss >= 2x initial credit)
                 max_stop_debit = pos["initial_credit"] * (1.0 + self.config.stop_loss_pct)
-                if not closed and (current_spread_debit >= max_stop_debit or spy_low <= pos["long_strike"]):
+                if not closed and (
+                    current_spread_debit >= max_stop_debit or spy_low <= pos["long_strike"]
+                ):
                     closed = True
                     exit_reason = "STOP_LOSS_200%"
                     realized_debit = min(self.config.spread_width, max_stop_debit)
@@ -299,7 +301,11 @@ class HistoricalOptionsBacktester:
 
         # Compute comprehensive statistics
         summary = self._compute_statistics(trades, equity_curve)
-        return {"summary": summary, "trades": [asdict(t) for t in trades], "equity_curve": equity_curve}
+        return {
+            "summary": summary,
+            "trades": [asdict(t) for t in trades],
+            "equity_curve": equity_curve,
+        }
 
     def _compute_statistics(
         self, trades: list[TradeRecord], equity_curve: list[dict[str, Any]]
@@ -396,20 +402,78 @@ class HistoricalOptionsBacktester:
 def run_tournament() -> list[dict[str, Any]]:
     """Run parameter tournament across key delta, IV rank, and management rules."""
     scenarios = [
-        {"name": "Conservative 15Δ (50% TP, 200% SL, 21 DTE, IVR>=20)", "delta": 0.15, "tp": 0.50, "sl": 2.00, "exit_dte": 21, "min_ivr": 20.0, "trend": True},
-        {"name": "Selective High-IVR 15Δ (50% TP, 200% SL, 21 DTE, IVR>=30)", "delta": 0.15, "tp": 0.50, "sl": 2.00, "exit_dte": 21, "min_ivr": 30.0, "trend": True},
-        {"name": "Ultra-Safe 10Δ (50% TP, 200% SL, 21 DTE, IVR>=20)", "delta": 0.10, "tp": 0.50, "sl": 2.00, "exit_dte": 21, "min_ivr": 20.0, "trend": True},
-        {"name": "Aggressive 20Δ (50% TP, 200% SL, 21 DTE, IVR>=20)", "delta": 0.20, "tp": 0.50, "sl": 2.00, "exit_dte": 21, "min_ivr": 20.0, "trend": True},
-        {"name": "Fast Scalp 15Δ (25% TP, 200% SL, 21 DTE, IVR>=20)", "delta": 0.15, "tp": 0.25, "sl": 2.00, "exit_dte": 21, "min_ivr": 20.0, "trend": True},
-        {"name": "No Early Exit 15Δ (50% TP, 200% SL, Hold to Expiry, IVR>=20)", "delta": 0.15, "tp": 0.50, "sl": 2.00, "exit_dte": 0, "min_ivr": 20.0, "trend": True},
-        {"name": "Defined-Risk Only 15Δ (50% TP, No Stop Loss, 21 DTE, IVR>=20)", "delta": 0.15, "tp": 0.50, "sl": 10.0, "exit_dte": 21, "min_ivr": 20.0, "trend": True},
+        {
+            "name": "Conservative 15Δ (50% TP, 200% SL, 21 DTE, IVR>=20)",
+            "delta": 0.15,
+            "tp": 0.50,
+            "sl": 2.00,
+            "exit_dte": 21,
+            "min_ivr": 20.0,
+            "trend": True,
+        },
+        {
+            "name": "Selective High-IVR 15Δ (50% TP, 200% SL, 21 DTE, IVR>=30)",
+            "delta": 0.15,
+            "tp": 0.50,
+            "sl": 2.00,
+            "exit_dte": 21,
+            "min_ivr": 30.0,
+            "trend": True,
+        },
+        {
+            "name": "Ultra-Safe 10Δ (50% TP, 200% SL, 21 DTE, IVR>=20)",
+            "delta": 0.10,
+            "tp": 0.50,
+            "sl": 2.00,
+            "exit_dte": 21,
+            "min_ivr": 20.0,
+            "trend": True,
+        },
+        {
+            "name": "Aggressive 20Δ (50% TP, 200% SL, 21 DTE, IVR>=20)",
+            "delta": 0.20,
+            "tp": 0.50,
+            "sl": 2.00,
+            "exit_dte": 21,
+            "min_ivr": 20.0,
+            "trend": True,
+        },
+        {
+            "name": "Fast Scalp 15Δ (25% TP, 200% SL, 21 DTE, IVR>=20)",
+            "delta": 0.15,
+            "tp": 0.25,
+            "sl": 2.00,
+            "exit_dte": 21,
+            "min_ivr": 20.0,
+            "trend": True,
+        },
+        {
+            "name": "No Early Exit 15Δ (50% TP, 200% SL, Hold to Expiry, IVR>=20)",
+            "delta": 0.15,
+            "tp": 0.50,
+            "sl": 2.00,
+            "exit_dte": 0,
+            "min_ivr": 20.0,
+            "trend": True,
+        },
+        {
+            "name": "Defined-Risk Only 15Δ (50% TP, No Stop Loss, 21 DTE, IVR>=20)",
+            "delta": 0.15,
+            "tp": 0.50,
+            "sl": 10.0,
+            "exit_dte": 21,
+            "min_ivr": 20.0,
+            "trend": True,
+        },
     ]
 
     results = []
     print("\n" + "=" * 80)
     print("🏆 RUNNING QUANTITATIVE PARAMETER TOURNAMENT (2015-2026)")
     print("=" * 80)
-    print(f"{'Scenario':<42} | {'Win%':<6} | {'PF':<5} | {'Trades':<6} | {'Expectancy':<10} | {'MaxDD%':<6} | {'Net PnL':<11}")
+    print(
+        f"{'Scenario':<42} | {'Win%':<6} | {'PF':<5} | {'Trades':<6} | {'Expectancy':<10} | {'MaxDD%':<6} | {'Net PnL':<11}"
+    )
     print("-" * 80)
 
     for sc in scenarios:
@@ -433,13 +497,19 @@ def run_tournament() -> list[dict[str, Any]]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run 10-year historical options credit spread backtest.")
+    parser = argparse.ArgumentParser(
+        description="Run 10-year historical options credit spread backtest."
+    )
     parser.add_argument("--start", default="2015-01-01", help="Start date (YYYY-MM-DD)")
     parser.add_argument("--end", default="2026-09-01", help="End date (YYYY-MM-DD)")
     parser.add_argument("--capital", type=float, default=100000.0, help="Initial capital ($)")
-    parser.add_argument("--risk-pct", type=float, default=0.02, help="Risk per trade as pct of capital")
+    parser.add_argument(
+        "--risk-pct", type=float, default=0.02, help="Risk per trade as pct of capital"
+    )
     parser.add_argument("--min-iv-rank", type=float, default=20.0, help="Minimum IV rank")
-    parser.add_argument("--tournament", action="store_true", help="Run multi-scenario parameter tournament")
+    parser.add_argument(
+        "--tournament", action="store_true", help="Run multi-scenario parameter tournament"
+    )
     parser.add_argument("--output", type=str, default="data/audit/backtest_10yr_results.json")
     args = parser.parse_args()
 
@@ -476,7 +546,9 @@ def main() -> None:
     print(f"Period:              {summary['period']}")
     print(f"Initial Capital:     ${summary['initial_capital']:,.2f}")
     print(f"Final Capital:       ${summary['final_capital']:,.2f}")
-    print(f"Total Net PnL:       ${summary['total_net_pnl']:,.2f} (+{summary['total_return_pct']:.1f}%)")
+    print(
+        f"Total Net PnL:       ${summary['total_net_pnl']:,.2f} (+{summary['total_return_pct']:.1f}%)"
+    )
     print(f"CAGR:                {summary['cagr_pct']:.2f}%")
     print(f"Max Drawdown:        {summary['max_drawdown_pct']:.2f}%")
     print(f"Sharpe Ratio:        {summary['sharpe_ratio']:.2f}")
@@ -491,7 +563,9 @@ def main() -> None:
     print("=" * 60)
     print("\n📅 Yearly Breakdown:")
     for yr, data in summary["yearly_performance"].items():
-        print(f"  {yr}: {data['trades']} trades | WR: {data['win_rate_pct']}% | Net: ${data['total_pnl']:,.2f}")
+        print(
+            f"  {yr}: {data['trades']} trades | WR: {data['win_rate_pct']}% | Net: ${data['total_pnl']:,.2f}"
+        )
     print(f"\n✅ Full results saved to: {out_path}")
 
 

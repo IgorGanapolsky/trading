@@ -22,8 +22,8 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 import pandas as pd
-from scipy.stats import norm
 import yfinance as yf
+from scipy.stats import norm
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
@@ -101,8 +101,14 @@ class QuantCoreEngine:
             vix.columns = [c[0] for c in vix.columns]
 
         spy_price = float(spy["Close"].iloc[-1])
-        sma200 = float(spy["Close"].rolling(window=200).mean().iloc[-1]) if len(spy) >= 200 else spy_price
-        sma50 = float(spy["Close"].rolling(window=50).mean().iloc[-1]) if len(spy) >= 50 else spy_price
+        sma200 = (
+            float(spy["Close"].rolling(window=200).mean().iloc[-1])
+            if len(spy) >= 200
+            else spy_price
+        )
+        sma50 = (
+            float(spy["Close"].rolling(window=50).mean().iloc[-1]) if len(spy) >= 50 else spy_price
+        )
         trend_bullish = spy_price >= sma200
 
         vix_series = vix["Close"].dropna()
@@ -128,11 +134,15 @@ class QuantCoreEngine:
 
         if current_positions_count >= self.config.max_concurrent_positions:
             is_eligible = False
-            reasons.append(f"Max concurrent positions reached ({current_positions_count}/{self.config.max_concurrent_positions})")
+            reasons.append(
+                f"Max concurrent positions reached ({current_positions_count}/{self.config.max_concurrent_positions})"
+            )
 
         if regime.iv_rank < self.config.min_iv_rank:
             is_eligible = False
-            reasons.append(f"IV Rank too low ({regime.iv_rank:.1f} < {self.config.min_iv_rank:.1f})")
+            reasons.append(
+                f"IV Rank too low ({regime.iv_rank:.1f} < {self.config.min_iv_rank:.1f})"
+            )
 
         if not regime.trend_bullish:
             is_eligible = False
@@ -176,7 +186,10 @@ class QuantCoreEngine:
                     "mode": "paper" if self.config.paper_mode else "live",
                 }
             except Exception as exc:
-                account_info = {"error": str(exc), "mode": "paper" if self.config.paper_mode else "live"}
+                account_info = {
+                    "error": str(exc),
+                    "mode": "paper" if self.config.paper_mode else "live",
+                }
         else:
             account_info = {
                 "status": "unconnected",
@@ -198,7 +211,9 @@ class QuantCoreEngine:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Quant Core Options Engine CLI.")
-    parser.add_argument("--status", action="store_true", help="Show system status and market regime")
+    parser.add_argument(
+        "--status", action="store_true", help="Show system status and market regime"
+    )
     parser.add_argument("--live", action="store_true", help="Run in Live mode (default is paper)")
     args = parser.parse_args()
 
@@ -213,16 +228,24 @@ def main() -> None:
         print(f"Timestamp:       {res['timestamp']}")
         print(f"Mode:            {res['account'].get('mode', 'paper').upper()}")
         print(f"SPY Price:       ${res['market_regime']['spy_price']}")
-        print(f"200-day SMA:     ${res['market_regime']['sma200']} (Bullish: {res['market_regime']['trend_bullish']})")
+        print(
+            f"200-day SMA:     ${res['market_regime']['sma200']} (Bullish: {res['market_regime']['trend_bullish']})"
+        )
         print(f"VIX:             {res['market_regime']['vix']}")
-        print(f"252d IV Rank:    {res['market_regime']['iv_rank']}% (Min Entry: {config.min_iv_rank}%)")
+        print(
+            f"252d IV Rank:    {res['market_regime']['iv_rank']}% (Min Entry: {config.min_iv_rank}%)"
+        )
         print("-" * 60)
         entry = res["entry_evaluation"]
-        print(f"Entry Signal:    {'🟢 READY TO ENTER' if entry['is_eligible'] else '🔴 BLOCKED / FILTERED'}")
+        print(
+            f"Entry Signal:    {'🟢 READY TO ENTER' if entry['is_eligible'] else '🔴 BLOCKED / FILTERED'}"
+        )
         if not entry["is_eligible"]:
             for r in entry["reasons"]:
                 print(f"  - {r}")
-        print(f"Target Setup:    Sell SPY ${entry['target_spread']['short_strike']}P / Buy SPY ${entry['target_spread']['long_strike']}P (${entry['target_spread']['width']} wide, ~{entry['target_spread']['target_delta']*100:.0f}Δ, ~40 DTE)")
+        print(
+            f"Target Setup:    Sell SPY ${entry['target_spread']['short_strike']}P / Buy SPY ${entry['target_spread']['long_strike']}P (${entry['target_spread']['width']} wide, ~{entry['target_spread']['target_delta'] * 100:.0f}Δ, ~40 DTE)"
+        )
         print("=" * 60)
 
 
