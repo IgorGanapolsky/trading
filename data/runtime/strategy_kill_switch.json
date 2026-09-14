@@ -1,12 +1,13 @@
 {
-  "updated_at": "2026-07-23T15:00:00Z",
-  "updated_by": "CTO (autonomous) under CEO scrap-and-rebuild directive",
+  "updated_at": "2026-09-14T17:30:00Z",
+  "updated_by": "CTO (AGENT-616 Buffett Rule #1 rebuild)",
   "active_family": "spy_put_credit",
   "successor_family": "spy_put_credit",
+  "active_profile": "spy-put-credit-buffett",
   "killed_families": ["ic_simple", "iron_condor"],
   "paper_only": true,
   "live_blocked": true,
-  "reason": "IC Simple is KILLED as a North Star candidate. Verified paired ledger: 159 closed structures, 20 wins, 138 losses, 1 breakeven, 12.58% win rate, profit factor 0.16, expectancy -$48.62/trade, total realized P/L -$7,731. Fifteen unmatched orders and +$2,167 of reconciliation cash are quarantined from edge metrics. Loss clusters include 10-wide wings, multi-lot scaling, sub-24h churn, and dual-side inventory complexity. Successor is spy_put_credit: 2-leg SPY bull put credit only.",
+  "reason": "IC Simple remains KILLED (paired IC PF~0.17 / large negative expectancy). AGENT-616 resets put-credit validation to Buffett Rule #1 profile spy-put-credit-buffett: ~60 DTE, TP 50%, stop 200%, 1 concurrent / 1 daily, SPY>=200DMA, max loss <=1% equity. Live stays blocked until buffett-profile n>=30, expectancy>0, PF>1.05. North Star remains $6000/mo after-tax.",
   "evidence": {
     "source": "data/trades.json verified paired_closed_structure metrics",
     "metric_unit": "paired_closed_structure",
@@ -24,9 +25,9 @@
   "operator_rules": [
     "Killed iron-condor entry scripts were removed; do not recreate an alternate entry path.",
     "Exit/management of already-open IC legs remains allowed via guardian workflows only.",
-    "New paper validation entries must use spy_put_credit (1-lot SPY bull put, $5 wide).",
-    "Validation throughput: max 3 new put-credit structures per day (up from 1), 2 concurrent, 1 contract each. Triples validation speed with zero additional risk per trade.",
-    "Live capital and scale-up remain blocked until put-credit cohort clears kill criteria (n>=30, expectancy>0, PF>1, total P/L>0).",
+    "New paper validation entries must use profile spy-put-credit-buffett (1-lot SPY bull put, $5 wide, ~60 DTE).",
+    "Buffett throughput: max 1 new structure per day, 1 concurrent (trade less / keep more under realistic fills).",
+    "Live capital and scale-up remain blocked until Buffett-profile cohort clears kill criteria (n>=30, expectancy>0, PF>1.05, total P/L>0).",
     "Clear Street or any other broker is not a substitute for edge; venue migration waits until paper edge is proven."
   ]
 }

@@ -188,6 +188,8 @@ jobs:
             python3 scripts/spy_put_credit.py --execute-paper
             rc=$?
             set -e
+            mkdir -p data/audit
+            printf '%s\n' "$rc" > data/audit/put_credit_execute_rc.txt
             if [ "$rc" -eq 3 ]; then
               echo "FATAL: put-credit --execute-paper mandatory gate blocked (AGENT-607)"
               exit 3
@@ -196,6 +198,23 @@ jobs:
               echo "Put-credit entry skipped (rc=$rc); workflow continues"
             fi
           fi
+
+      - name: Completed-task receipt (Astra FORMAT, not GPT-6)
+        if: >-
+          always() &&
+          steps.mode.outputs.run_put_credit == 'true' &&
+          steps.mode.outputs.dry_run != 'true'
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          # AGENT-610: rc 0 is a completed fill, not a submitted_unconfirmed JSON.
+          # Does not subscribe to GPT-6 Astra or add OpenAI as a primary model.
+          RC_FILE=data/audit/put_credit_execute_rc.txt
+          if [ ! -f "$RC_FILE" ]; then
+            echo "execute-paper did not write an rc file; completed-task receipt skipped"
+            exit 0
+          fi
+          python3 scripts/work_within_reach.py --from-journal --execute-rc-file "$RC_FILE" --json
 
       - name: Fail closed if paper factory stalled
         if: >-
