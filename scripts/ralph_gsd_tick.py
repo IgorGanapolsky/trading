@@ -345,7 +345,25 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="obra/superpowers verification-before-completion harness suite",
     )
+    parser.add_argument(
+        "--readiness",
+        action="store_true",
+        help="BMAD implementation-readiness gate (SPEC.md + converge + scope)",
+    )
     args = parser.parse_args(argv)
+
+    if args.readiness:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from bmad_readiness import readiness as _readiness
+
+        out = _readiness(append_tasks=True, verify_live=args.verify_live)
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "bmad_readiness"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and not out.get("ready"):
+            return 2
+        return 0
 
     if args.verify_complete:
         if str(ROOT / "scripts") not in sys.path:

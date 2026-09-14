@@ -32,9 +32,13 @@ verification command output in the same turn (`scripts/superpowers_verify_comple
 
 ### IV. Spec → Plan → Tasks → Implement → Converge
 
-Intent before code. Durable artifacts: constitution, `.planning/STATE.md`,
+Intent before code. Durable artifacts: constitution, `docs/SPEC.md` (BMAD Why /
+Capabilities / Constraints / Non-goals / Success signal), `.planning/STATE.md`,
 `.planning/CONTEXT.md`, `.planning/tasks.md`. Fresh-context agents read files, not chat
 memory. After implement, run converge; append remaining work — never rewrite history.
+
+**Proportional depth (BMAD Quick Flow):** small harness fixes may skip PRD/architecture;
+fee-yes / high-risk work keeps full constraints + readiness (`scripts/bmad_readiness.py`).
 
 ### V. Anti-Babysitting Autonomy
 

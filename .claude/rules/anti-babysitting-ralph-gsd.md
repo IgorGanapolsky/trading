@@ -37,3 +37,8 @@ Do not install specify-cli. `converged` ≠ fee-yes.
 
 Evidence before claims: `scripts/superpowers_verify_complete.py --harness`.
 Skill: `/obra-superpowers-not-clone`. Do not install the Superpowers plugin here.
+
+## BMAD FORMAT
+
+SPEC.md contract + `scripts/bmad_readiness.py` before expanding implement.
+Skill: `/bmad-spec-driven-not-clone`. Do not install bmad-method. ready ≠ fee-yes.
