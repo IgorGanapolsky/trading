@@ -32,11 +32,15 @@ RESEARCH_PREFERRED_IVR = float(os.environ.get("PUT_CREDIT_RESEARCH_IVR", "30"))
 # (AGENT-361/566/608). Research preferred 30 stays a soft flag for stratification.
 MIN_IV_RANK = float(os.environ.get("PUT_CREDIT_MIN_IVR", "0"))
 MAX_VIX = float(os.environ.get("PUT_CREDIT_MAX_VIX", "30"))
-REQUIRE_ABOVE_200DMA = os.environ.get("PUT_CREDIT_REQUIRE_200DMA", "0").lower() in {
+# Buffett rebuild (AGENT-616): default ON — only sell bull puts when SPY is
+# above the 200-DMA (equity drift / capital-preservation regime).
+REQUIRE_ABOVE_200DMA = os.environ.get("PUT_CREDIT_REQUIRE_200DMA", "1").lower() in {
     "1",
     "true",
     "yes",
 }
+# Hard cap: max loss per structure as fraction of equity (Rule #1).
+MAX_RISK_PCT_OF_EQUITY = float(os.environ.get("PUT_CREDIT_MAX_RISK_PCT", "0.01"))
 REQUIRE_ABOVE_50DMA = os.environ.get("PUT_CREDIT_REQUIRE_50DMA", "0").lower() in {
     "1",
     "true",
@@ -266,7 +270,11 @@ def evaluate_regime_gate(
         else:
             soft.append(msg)
     elif above200 is None:
-        soft.append("SPY 200-DMA unavailable")
+        msg = "SPY 200-DMA unavailable"
+        if require_above_200dma and fail_closed_on_missing:
+            blockers.append(msg)
+        else:
+            soft.append(msg)
 
     return {
         "allowed": not blockers,
@@ -279,8 +287,51 @@ def evaluate_regime_gate(
             "require_above_200dma": require_above_200dma,
             "require_above_50dma": require_above_50dma,
             "fail_closed_on_missing": fail_closed_on_missing,
+            "max_risk_pct_of_equity": MAX_RISK_PCT_OF_EQUITY,
         },
         "snapshot": snap,
+    }
+
+
+def evaluate_buffett_risk_budget(
+    *,
+    equity: float | None,
+    wing_width: float,
+    credit: float | None,
+    quantity: int = 1,
+    max_risk_pct: float = MAX_RISK_PCT_OF_EQUITY,
+) -> dict[str, Any]:
+    """Rule #1: refuse structures whose max loss exceeds ~1% of equity."""
+
+    blockers: list[str] = []
+    try:
+        eq = float(equity) if equity is not None else None
+    except (TypeError, ValueError):
+        eq = None
+    try:
+        cr = float(credit) if credit is not None else 0.0
+    except (TypeError, ValueError):
+        cr = 0.0
+    qty = max(int(quantity or 0), 0)
+    width = float(wing_width)
+    max_loss = max(width - cr, 0.0) * 100.0 * qty
+    if eq is None or eq <= 0:
+        blockers.append("equity unavailable for Buffett risk budget")
+        budget = None
+    else:
+        budget = eq * float(max_risk_pct)
+        if max_loss > budget + 1e-9:
+            blockers.append(
+                f"max loss ${max_loss:.2f} exceeds {float(max_risk_pct)*100:.2f}% "
+                f"of equity (${budget:.2f})"
+            )
+    return {
+        "allowed": not blockers,
+        "blockers": blockers,
+        "max_loss": round(max_loss, 2),
+        "budget": None if budget is None else round(budget, 2),
+        "max_risk_pct": float(max_risk_pct),
+        "equity": eq,
     }
 
 
@@ -289,10 +340,11 @@ def evaluate_entry_operating_system(
     regime_gate: dict[str, Any],
     opportunity: dict[str, Any] | None,
     risk_plan: dict[str, Any] | None,
-    min_dte: int = 30,
-    max_dte: int = 45,
+    min_dte: int = 45,
+    max_dte: int = 70,
     min_short_delta: float = 0.10,
-    max_short_delta: float = 0.25,
+    max_short_delta: float = 0.20,
+    equity: float | None = None,
 ) -> dict[str, Any]:
     """Fahmy-style four-question OS mapped onto SPY put-credit (AGENT-602).
 
@@ -394,6 +446,24 @@ def evaluate_entry_operating_system(
         if qty != 1:
             risk_ok = False
         risk_detail = {"fields": present, "quantity_is_one_lot": qty == 1}
+        # Buffett Rule #1 budget (AGENT-616)
+        wing = None
+        credit = None
+        if isinstance(opportunity, dict):
+            wing = opportunity.get("put_wing") or opportunity.get("wing_width")
+            credit = opportunity.get("est_credit") or opportunity.get("natural_credit")
+        if wing is None and isinstance(risk_plan, dict):
+            wing = risk_plan.get("wing_width")
+        budget = evaluate_buffett_risk_budget(
+            equity=equity,
+            wing_width=float(wing or 5.0),
+            credit=credit,
+            quantity=qty or 1,
+        )
+        risk_detail["buffett_risk_budget"] = budget
+        if not budget.get("allowed"):
+            risk_ok = False
+            risk_detail["buffett_blockers"] = list(budget.get("blockers") or [])
     answers["predefined_risk"] = {"yes": risk_ok, "detail": risk_detail}
     if not risk_ok:
         fails.append("predefined_risk=no")
@@ -401,7 +471,7 @@ def evaluate_entry_operating_system(
     return {
         "pass": not fails,
         "rule": "Market healthy? Structure strong? Clean technical setup? Predefined risk?",
-        "source": "fahmy_os_format_steal_AGENT-602",
+        "source": "fahmy_os_format_steal_AGENT-602+buffett_AGENT-616",
         "answers": answers,
         "fails": fails,
         "note": (
