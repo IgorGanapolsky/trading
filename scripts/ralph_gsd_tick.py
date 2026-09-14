@@ -11,7 +11,7 @@ import argparse
 import json
 import subprocess  # nosec B404 — fixed argv only (gh + local scorecard)
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -70,7 +70,9 @@ def _pick(score: dict, prs: list[dict]) -> dict:
                 "Agent PR required review",
                 "grep-guard",
             }:
-                failing.append({"pr": pr.get("number"), "check": c.get("name"), "title": pr.get("title")})
+                failing.append(
+                    {"pr": pr.get("number"), "check": c.get("name"), "title": pr.get("title")}
+                )
     if failing:
         return {
             "residual": "fix_required_ci",
@@ -110,7 +112,7 @@ def main(argv: list[str] | None = None) -> int:
         "ok": True,
         "framework": "ralph_gsd",
         "skill": "/trading-ralph-gsd-24-7",
-        "ts": datetime.now(timezone.utc).isoformat(),
+        "ts": datetime.now(UTC).isoformat(),
         "repo": str(ROOT),
         "pick": pick,
         "open_pr_count": len(prs),
