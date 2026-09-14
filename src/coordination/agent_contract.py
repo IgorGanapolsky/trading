@@ -606,7 +606,21 @@ def protect_worktree(
             and bool(patch_lines)
             and all(line.startswith("- ") for line in patch_lines)
         )
-        if not patch_equivalent:
+        squash_merged = False
+        if key and not patch_equivalent:
+            squash_check = _run_git(
+                resolved_target,
+                "log",
+                "origin/main",
+                "-n",
+                "50",
+                f"--grep=\\b{key}\\b",
+                "--oneline",
+                check=False,
+            )
+            squash_merged = squash_check.returncode == 0 and bool(squash_check.stdout.strip())
+
+        if not patch_equivalent and not squash_merged:
             findings.append(
                 Finding(
                     "error",
