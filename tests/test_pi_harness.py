@@ -27,8 +27,15 @@ def test_live_gate_extension_denies_boundary_actions() -> None:
     src = (PI / "extensions" / "trading-live-gate.ts").read_text(encoding="utf-8")
     assert "tool_call" in src
     assert "close_position" in src
+    assert "close_positions" in src
+    assert "manage_positions" in src
+    assert "--live" in src
+    assert "PAPER_TRADING" in src
+    assert "pi\\s+install" in src or r"\bpi\s+install\b" in src
+    assert "strategy_kill_switch" in src
     assert "TRADING_HALTED" in src
     assert "trading_constants" in src
+    assert "PROTECTED_PATHS" in src
     assert "block: true" in src
     assert "pi-mcp" not in src.lower()
 
@@ -41,12 +48,3 @@ def test_paper_factory_skill_and_prompts_exist() -> None:
     assert "no MCP" in connectors or "No MCP" in connectors
     factory = (PI / "prompts" / "factory.md").read_text(encoding="utf-8")
     assert "put_credit_cohort_scorecard.py" in factory
-
-
-def test_does_not_own_pr_4624_surfaces() -> None:
-    """This harness PR must not collide with #4624's bridge/Makefile/status prompts."""
-    assert not (ROOT / "scripts" / "pi_trading_bridge.py").exists()
-    makefile = ROOT / "Makefile"
-    if makefile.is_file():
-        text = makefile.read_text(encoding="utf-8")
-        assert "pi-status:" not in text
