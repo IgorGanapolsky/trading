@@ -55,6 +55,7 @@ TERMINAL_EXIT_REASONS = {
 EASTERN = ZoneInfo("America/New_York")
 # --execute-paper: 0 fill, 1 skip/no-fill, 2 expected block, 3 fatal gate (not a skip)
 EXECUTE_PAPER_FATAL_GATE = 3
+# AGENT-610 / Astra FORMAT: rc 0 only after broker fill is journaled.
 
 
 class MandatoryGateSubmitError(RuntimeError):
@@ -1334,7 +1335,65 @@ def place_put_credit(client, opp: dict) -> str | None:
 
     if order_id:
         _record_entry(opp, order_id)
+        try:
+            refreshed = client.get_order_by_id(order_id)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Could not refresh put-credit order %s after submit: %s", order_id, exc)
+            refreshed = None
+        if refreshed is not None:
+            _stamp_fill_from_order(order_id, refreshed)
     return order_id
+
+
+def _journal_fill_confirmed(order_id: str | None) -> bool:
+    if not order_id:
+        return False
+    for entry in _load_entries().values():
+        if not isinstance(entry, dict):
+            continue
+        if str(entry.get("order_id") or "") != str(order_id):
+            continue
+        if entry.get("fill_confirmed_at") or entry.get("fill_confirmed") is True:
+            return True
+        return str(entry.get("credit_source") or "").strip().lower() == "broker_fill"
+    return False
+
+
+def _stamp_fill_from_order(order_id: str, order: Any) -> bool:
+    """Mark a journal row as a completed paper fill when the broker says FILLED.
+
+    execute-paper must not return rc 0 on submitted_unconfirmed (AGENT-610).
+    """
+
+    status = _order_status_name(getattr(order, "status", ""))
+    try:
+        filled_qty = float(getattr(order, "filled_qty", 0) or 0)
+    except (TypeError, ValueError):
+        filled_qty = 0.0
+    if status != "FILLED" and filled_qty <= 0:
+        return False
+    fill_px = getattr(order, "filled_avg_price", None)
+    entries = _load_entries()
+    changed = False
+    for entry in entries.values():
+        if not isinstance(entry, dict):
+            continue
+        if str(entry.get("order_id") or "") != str(order_id):
+            continue
+        entry["status"] = "open"
+        entry["credit_source"] = "broker_fill"
+        entry["fill_confirmed_at"] = datetime.now(UTC).isoformat()
+        if fill_px not in (None, ""):
+            try:
+                entry["credit"] = abs(float(fill_px))
+            except (TypeError, ValueError):
+                pass
+        changed = True
+        break
+    if changed:
+        _save_entries(entries)
+        logger.info("Stamped broker fill on journal for order %s", order_id)
+    return changed
 
 
 def _record_entry(opp: dict, order_id: str) -> None:
@@ -1617,8 +1676,21 @@ def main() -> int:
     plan["regime"] = regime_snap.as_dict()
     plan["regime_gate"] = regime_gate
 
-    # Fahmy FORMAT OS (AGENT-602): market / structure / technical / predefined risk.
+    # Fahmy FORMAT OS (AGENT-602) + Buffett risk budget (AGENT-616).
     from src.risk.put_credit_regime import evaluate_entry_operating_system
+
+    equity = None
+    try:
+        import json as _json
+        from pathlib import Path as _Path
+
+        ss = _json.loads((_Path("data/system_state.json")).read_text(encoding="utf-8"))
+        equity = (ss.get("portfolio") or {}).get("equity") or (ss.get("paper_account") or {}).get(
+            "equity"
+        )
+        equity = float(equity) if equity is not None else None
+    except Exception:
+        equity = None
 
     risk_plan = None
     if isinstance(opp, dict):
@@ -1633,15 +1705,17 @@ def main() -> int:
             "stop_loss": plan.get("stop_loss_pct"),
             "take_profit": plan.get("take_profit_pct"),
             "time_exit": plan.get("exit_dte"),
+            "wing_width": plan.get("wing_width") or opp.get("put_wing") or 5.0,
         }
     entry_os = evaluate_entry_operating_system(
         regime_gate=regime_gate,
         opportunity=opp if isinstance(opp, dict) else None,
         risk_plan=risk_plan,
-        min_dte=int(plan.get("min_dte") or 30),
-        max_dte=int(plan.get("max_dte") or 45),
-        min_short_delta=float((plan.get("delta_band") or [0.10, 0.25])[0]),
-        max_short_delta=float((plan.get("delta_band") or [0.10, 0.25])[1]),
+        min_dte=int(plan.get("min_dte") or 45),
+        max_dte=int(plan.get("max_dte") or 70),
+        min_short_delta=float((plan.get("delta_band") or [0.10, 0.20])[0]),
+        max_short_delta=float((plan.get("delta_band") or [0.10, 0.20])[1]),
+        equity=equity,
     )
     plan["entry_operating_system"] = entry_os
     if isinstance(opp, dict):
@@ -1779,13 +1853,15 @@ def main() -> int:
             )
         )
         return EXECUTE_PAPER_FATAL_GATE
-    ok = order_id is not None
+    fill_confirmed = _journal_fill_confirmed(order_id)
+    ok = bool(order_id) and fill_confirmed
     print(
         json.dumps(
             {
                 "success": ok,
                 "dry_run": False,
                 "order_id": order_id,
+                "fill_confirmed": fill_confirmed,
                 "opportunity": opp,
                 "plan_path": str(path),
             },
@@ -1793,6 +1869,11 @@ def main() -> int:
             default=str,
         )
     )
+    if order_id and not fill_confirmed:
+        logger.warning(
+            "PUT-CREDIT SUBMITTED BUT UNCONFIRMED: order %s is not a completed fill (AGENT-610)",
+            order_id,
+        )
     return 0 if ok else 1
 
 

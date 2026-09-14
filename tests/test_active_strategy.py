@@ -80,11 +80,15 @@ def test_assert_entry_allowed_blocks_ic(tmp_path: Path, monkeypatch):
 
 def test_put_credit_profile_is_one_lot_spy():
     p = get_put_credit_profile()
+    assert p.name == "spy-put-credit-buffett"
     assert p.underlying == "SPY"
     assert p.max_contracts_per_trade == 1
     assert p.wing_width == 5.0
-    assert p.take_profit_pct == 0.25
+    assert p.take_profit_pct == 0.50
     assert p.stop_loss_pct == 2.0
+    assert p.target_dte == 60
+    assert p.max_daily_structures == 1
+    assert p.max_concurrent_positions == 1
     cfg = get_active_strategy_config()
     assert cfg["strategy_family"] == "spy_put_credit"
     assert cfg["structure"] == "bull_put_credit"
@@ -297,7 +301,7 @@ def _put_credit_opp() -> dict:
         "long_put": 695.0,
         "est_credit": 1.0,
         "put_delta": 0.15,
-        "dte": 40,
+        "dte": 55,
         "method": "live_delta",
         "quantity": 1,
     }
@@ -619,12 +623,20 @@ def test_put_credit_entry_builds_supported_bull_put_order_id(tmp_path, monkeypat
     monkeypatch.setattr(pcs.time, "sleep", lambda _: None)
     monkeypatch.setattr("src.safety.mandatory_trade_gate.safe_submit_order", fake_submit)
     client = MagicMock()
-    client.get_order_by_id.return_value = SimpleNamespace(status="FILLED")
+    client.get_order_by_id.return_value = SimpleNamespace(
+        status="FILLED", filled_qty=1, filled_avg_price=-0.62
+    )
 
     order_id = pcs.place_put_credit(client, _put_credit_opp())
 
     assert order_id == "order-1"
     assert captured["strategy"] == "spy_put_credit"
+    saved = json.loads((tmp_path / "put_credit_entries.json").read_text(encoding="utf-8"))
+    row = next(iter(saved.values()))
+    assert row["credit_source"] == "broker_fill"
+    assert row["status"] == "open"
+    assert row["credit"] == 0.62
+    assert row.get("fill_confirmed_at")
     # limit starts at natural est_credit (1.00), not est-0.05 — improves fill rate
     assert float(captured["request"].limit_price) == -1.0
     parsed = parse_client_order_id(captured["request"].client_order_id)
@@ -716,7 +728,8 @@ def test_put_credit_ghost_journal_is_not_concurrent_occupancy():
     report = pcs.evaluate_entry_limits(entries, now=now)
     assert report["journal_active_count"] == 1
     assert report["active_count"] == 1
-    assert report["allowed"] is True
+    # Buffett profile max_concurrent=1 → at capacity
+    assert report["allowed"] is False
 
     flat_book = pcs.evaluate_entry_limits(entries, now=now, broker_open_structures=0)
     assert flat_book["active_count"] == 0
@@ -835,8 +848,9 @@ def test_put_credit_exit_rules_cover_profit_stop_hold_and_dte():
     from scripts import spy_put_credit as pcs
 
     now = datetime(2026, 7, 22, 16, 0, tzinfo=UTC)
+    # Expiry far enough that DTE > exit_dte(30) so TP/SL can fire first.
     entry = {
-        "expiry": "2026-08-21",
+        "expiry": "2026-09-25",
         "entry_time": (now - timedelta(days=2)).isoformat(),
         "credit": 1.0,
         "quantity": 1,
@@ -854,7 +868,7 @@ def test_put_credit_exit_rules_cover_profit_stop_hold_and_dte():
     young = pcs.evaluate_put_credit_exit(young_entry, short_price=0.60, long_price=0.10, now=now)
     assert young["should_exit"] is False
 
-    dte_entry = {**entry, "expiry": "2026-07-29"}
+    dte_entry = {**entry, "expiry": "2026-08-15"}  # ~24 DTE <= exit_dte 30
     dte = pcs.evaluate_put_credit_exit(dte_entry, short_price=1.0, long_price=0.20, now=now)
     assert dte["exit_reason"] == "dte_exit"
 
@@ -1069,6 +1083,16 @@ def test_put_credit_exit_manager_dry_run_flags_orphan_cleanup(tmp_path, monkeypa
     assert report["broken"] == 1
     assert report["would_exit"] == 1
     assert report["details"][0]["status"] == "would_close_orphan"
+
+
+def test_factory_completed_task_receipt_is_astra_format_not_gpt6():
+    workflow = (
+        Path(__file__).resolve().parents[1] / ".github" / "workflows" / "put-credit-validation.yml"
+    ).read_text(encoding="utf-8")
+    assert "scripts/work_within_reach.py" in workflow
+    assert "AGENT-610" in workflow
+    assert "not GPT-6" in workflow
+    assert "put_credit_execute_rc.txt" in workflow
 
 
 def test_schedule_manages_put_credit_exits_every_weekday_slot():
@@ -1382,6 +1406,52 @@ def test_put_credit_execute_paper_fatal_on_mandatory_gate_block(tmp_path, monkey
     assert pcs.main() == pcs.EXECUTE_PAPER_FATAL_GATE
     out = capsys.readouterr().out
     assert "mandatory_gate_blocked" in out
+
+
+def test_execute_paper_rc_1_when_submit_is_not_a_broker_fill(tmp_path, monkeypatch, capsys):
+    """AGENT-610: success JSON without fill_confirmed is a skip, not rc 0."""
+    from scripts import spy_put_credit as pcs
+
+    _patch_put_credit_cli_basics(pcs, monkeypatch)
+    monkeypatch.setattr("sys.argv", ["spy_put_credit.py", "--execute-paper"])
+    monkeypatch.setattr(pcs, "AUDIT_DIR", tmp_path)
+    monkeypatch.setattr(pcs, "_inventory_ok", lambda *_args, **_kwargs: True)
+    monkeypatch.setattr(pcs, "_load_entries", lambda: {})
+    monkeypatch.setattr("src.utils.options_analysis.get_underlying_price", lambda _: 747.0)
+    monkeypatch.setattr(pcs, "find_put_credit_opportunity", lambda _: _put_credit_opp())
+    monkeypatch.setattr(pcs, "_get_paper_client", lambda: object())
+    monkeypatch.setattr("src.safety.trade_lock.acquire_trade_lock", lambda **_: nullcontext())
+    monkeypatch.setattr(
+        pcs,
+        "evaluate_entry_limits",
+        lambda *_args, **_kwargs: {"allowed": True, "blockers": []},
+    )
+    monkeypatch.setattr(pcs, "place_put_credit", lambda *_a, **_k: "unconfirmed-order")
+    monkeypatch.setattr(pcs, "_journal_fill_confirmed", lambda *_a, **_k: False)
+
+    assert pcs.main() == 1
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["success"] is False
+    assert payload["fill_confirmed"] is False
+
+
+def test_stamp_fill_from_order_sets_broker_fill(tmp_path, monkeypatch):
+    from scripts import spy_put_credit as pcs
+
+    entries_path = tmp_path / "put_credit_entries.json"
+    monkeypatch.setattr(pcs, "ENTRIES_FILE", entries_path)
+    opp = _put_credit_opp()
+    pcs._record_entry(opp, "ord-fill")
+    stamped = pcs._stamp_fill_from_order(
+        "ord-fill",
+        SimpleNamespace(status="FILLED", filled_qty=1, filled_avg_price="-0.62"),
+    )
+    assert stamped is True
+    row = json.loads(entries_path.read_text(encoding="utf-8"))
+    entry = next(iter(row.values()))
+    assert entry["credit_source"] == "broker_fill"
+    assert entry["credit"] == 0.62
+    assert pcs._journal_fill_confirmed("ord-fill") is True
 
 
 def test_is_mandatory_gate_submit_error_matches_production_message():

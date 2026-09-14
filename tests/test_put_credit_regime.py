@@ -137,22 +137,26 @@ def test_50dma_hard_when_required():
 def test_entry_os_passes_when_all_four_yes():
     gate = evaluate_regime_gate(_snap())
     opp = {
-        "expiry": "2026-10-23",
+        "expiry": "2026-11-20",
         "short_put": 725.0,
         "long_put": 720.0,
         "est_credit": 0.67,
         "quantity": 1,
-        "put_delta": 0.18,
-        "dte": 40,
+        "put_delta": 0.15,
+        "put_wing": 5.0,
+        "dte": 55,
     }
     risk = {
-        "entry": {"expiry": "2026-10-23"},
+        "entry": {"expiry": "2026-11-20"},
         "quantity": 1,
         "stop_loss": 2.0,
-        "take_profit": 0.25,
-        "time_exit": 7,
+        "take_profit": 0.50,
+        "time_exit": 30,
+        "wing_width": 5.0,
     }
-    os_result = evaluate_entry_operating_system(regime_gate=gate, opportunity=opp, risk_plan=risk)
+    os_result = evaluate_entry_operating_system(
+        regime_gate=gate, opportunity=opp, risk_plan=risk, equity=100_000.0
+    )
     assert os_result["pass"] is True
     assert os_result["fails"] == []
     assert os_result["answers"]["market_healthy"]["yes"] is True
@@ -164,15 +168,17 @@ def test_entry_os_passes_when_all_four_yes():
 def test_entry_os_fails_without_predefined_risk():
     gate = evaluate_regime_gate(_snap())
     opp = {
-        "expiry": "2026-10-23",
+        "expiry": "2026-11-20",
         "short_put": 725.0,
         "long_put": 720.0,
         "est_credit": 0.67,
         "quantity": 1,
-        "put_delta": 0.18,
-        "dte": 40,
+        "put_delta": 0.15,
+        "dte": 55,
     }
-    os_result = evaluate_entry_operating_system(regime_gate=gate, opportunity=opp, risk_plan=None)
+    os_result = evaluate_entry_operating_system(
+        regime_gate=gate, opportunity=opp, risk_plan=None, equity=100_000.0
+    )
     assert os_result["pass"] is False
     assert "predefined_risk=no" in os_result["fails"]
 
@@ -180,22 +186,26 @@ def test_entry_os_fails_without_predefined_risk():
 def test_entry_os_fails_when_market_unhealthy():
     gate = evaluate_regime_gate(_snap(vix=40.0))
     opp = {
-        "expiry": "2026-10-23",
+        "expiry": "2026-11-20",
         "short_put": 725.0,
         "long_put": 720.0,
         "est_credit": 0.67,
         "quantity": 1,
-        "put_delta": 0.18,
-        "dte": 40,
+        "put_delta": 0.15,
+        "put_wing": 5.0,
+        "dte": 55,
     }
     risk = {
-        "entry": {"expiry": "2026-10-23"},
+        "entry": {"expiry": "2026-11-20"},
         "quantity": 1,
         "stop_loss": 2.0,
-        "take_profit": 0.25,
-        "time_exit": 7,
+        "take_profit": 0.50,
+        "time_exit": 30,
+        "wing_width": 5.0,
     }
-    os_result = evaluate_entry_operating_system(regime_gate=gate, opportunity=opp, risk_plan=risk)
+    os_result = evaluate_entry_operating_system(
+        regime_gate=gate, opportunity=opp, risk_plan=risk, equity=100_000.0
+    )
     assert os_result["pass"] is False
     assert "market_healthy=no" in os_result["fails"]
 
