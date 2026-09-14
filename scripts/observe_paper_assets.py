@@ -206,14 +206,9 @@ def observe_journal(payload: Any, *, as_of: datetime, path: Path) -> dict[str, A
     confirmed = [
         r
         for r in rows
-        if r.get("fill_confirmed_at")
-        or str(r.get("credit_source") or "").lower() == "broker_fill"
+        if r.get("fill_confirmed_at") or str(r.get("credit_source") or "").lower() == "broker_fill"
     ]
-    unconfirmed = [
-        r
-        for r in rows
-        if str(r.get("status") or "").lower() == "submitted_unconfirmed"
-    ]
+    unconfirmed = [r for r in rows if str(r.get("status") or "").lower() == "submitted_unconfirmed"]
     materialized = "healthy" if confirmed else ("warning" if rows else "unknown")
     checks = [
         _check(
