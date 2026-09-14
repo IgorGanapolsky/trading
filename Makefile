@@ -5,7 +5,7 @@ VENV_PYTHON := $(VENV)/bin/python
 TRADING_ENV ?= paper
 export TRADING_ENV
 
-.PHONY: setup lint ruff format test coverage audit security health skill-check coordination-check coordination-audit coordination-preflight check dry-run hygiene graph-rag-check graphify-check rag-aplus-check gsd-tick gsd-status cohort-scorecard infoq-roi aistudio-roi
+.PHONY: setup lint ruff format test coverage audit security health skill-check coordination-check coordination-audit coordination-preflight check dry-run hygiene graph-rag-check graphify-check rag-aplus-check gsd-tick gsd-status cohort-scorecard infoq-roi aistudio-roi quant-roi
 
 setup:
 	$(PYTHON) -m venv $(VENV)
@@ -105,6 +105,15 @@ aistudio-roi:
 	@echo "=== AI Studio agent-environment doctor ==="
 	$(VENV_PYTHON) -m pytest tests/test_agent_environment_doctor.py -q
 	$(VENV_PYTHON) scripts/aistudio_agent_env_doctor.py --tools 'context_gist,system_health_check,aistudio_agent_env_doctor' --domains 'api.github.com' --acs 'tests pass|CLI fail-closed'
+
+# Desk-Grade Quantitative Analytics, ML & Agentic RAG Suite (10/10 Institutional A+)
+quant-roi:
+	@echo "=== Desk-Grade Quant, ML & Agentic RAG Audit ==="
+	$(VENV_PYTHON) -m pytest tests/test_desk_grade_quant_suite.py -q
+	$(VENV_PYTHON) scripts/desk_grade_quant_suite.py --doctor
+	$(VENV_PYTHON) scripts/desk_grade_quant_suite.py --run-quant
+	$(VENV_PYTHON) scripts/desk_grade_quant_suite.py --run-ml
+	$(VENV_PYTHON) scripts/desk_grade_quant_suite.py --run-rag
 
 # Run full daily trading cycle (inventory, regime, exits, cohort)
 daily-cycle:
