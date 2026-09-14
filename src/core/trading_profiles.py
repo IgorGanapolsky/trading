@@ -154,19 +154,45 @@ _BASELINE_PUT_CREDIT_PROFILE = PutCreditProfile(
     position_size_pct=0.02,
     max_contracts_per_trade=1,
     max_concurrent_positions=2,
-    # Increased from 1 to 3: triples validation throughput (30-trade gate in ~10
-    # weeks instead of ~30) with zero additional risk per trade — each structure
-    # is still 1-lot, $5 wing, 24h min hold. Concurrent cap of 2 still enforced.
+    # Legacy cohort profile (pre AGENT-616). Kept for journal/replay parity.
     max_daily_structures=3,
+    min_credit=0.50,
+)
+
+# AGENT-616 Buffett Rule #1 rebuild (Sept 2026 research):
+# OptionKrafter Aug 2026: under realistic fills only ~60 DTE SPY PCS stayed
+# positive; faster arms lost to spread crossings. Trade less, keep more.
+# Consensus premium-seller rulebook: TP ~50% credit, stop 200%, defined risk,
+# 1–2% account risk, forbid 0DTE / iron-condor entries.
+_BUFFETT_PUT_CREDIT_PROFILE = PutCreditProfile(
+    name="spy-put-credit-buffett",
+    underlying="SPY",
+    target_dte=60,
+    min_dte=45,
+    max_dte=70,
+    short_delta=0.15,
+    delta_band_min=0.10,
+    delta_band_max=0.20,
+    wing_width=5.0,
+    take_profit_pct=0.50,
+    stop_loss_pct=2.0,
+    exit_dte=30,  # half of ~60 DTE (OptionKrafter proportional time exit)
+    min_hold_hours=24,
+    position_size_pct=0.01,  # Rule #1: max ~1% equity at risk per structure
+    max_contracts_per_trade=1,
+    max_concurrent_positions=1,
+    max_daily_structures=1,
     min_credit=0.50,
 )
 
 PUT_CREDIT_PROFILE_REGISTRY: dict[str, PutCreditProfile] = {
     "spy-put-credit": _BASELINE_PUT_CREDIT_PROFILE,
+    "spy-put-credit-buffett": _BUFFETT_PUT_CREDIT_PROFILE,
     "xsp-put-credit": _BASELINE_PUT_CREDIT_PROFILE.with_underlying("XSP"),
+    "xsp-put-credit-buffett": _BUFFETT_PUT_CREDIT_PROFILE.with_underlying("XSP"),
 }
 
-DEFAULT_PUT_CREDIT_PROFILE_NAME = "spy-put-credit"
+DEFAULT_PUT_CREDIT_PROFILE_NAME = "spy-put-credit-buffett"
 
 
 @cache
