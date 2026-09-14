@@ -1,0 +1,5 @@
+{
+  "enableInstallTelemetry": false,
+  "defaultProjectTrust": "ask",
+  "packages": []
+}
