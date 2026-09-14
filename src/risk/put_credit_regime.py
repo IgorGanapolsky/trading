@@ -322,7 +322,7 @@ def evaluate_buffett_risk_budget(
         budget = eq * float(max_risk_pct)
         if max_loss > budget + 1e-9:
             blockers.append(
-                f"max loss ${max_loss:.2f} exceeds {float(max_risk_pct)*100:.2f}% "
+                f"max loss ${max_loss:.2f} exceeds {float(max_risk_pct) * 100:.2f}% "
                 f"of equity (${budget:.2f})"
             )
     return {
