@@ -23,16 +23,17 @@ Below is the stage-by-stage assessment with evidence and a final composite grade
 All 5 stages of the described pipeline are now fully implemented, wired into
 production gate paths, and tested. All metric targets exceeded:
 
-| Metric | Final Value | Target | Status |
-|--------|-------------|--------|--------|
-| Mean Precision@5 | **0.44** | ≥ 0.40 | ✅ |
-| Mean Recall@5 | **0.68** | ≥ 0.60 | ✅ |
-| MRR | **0.93** | ≥ 0.50 | ✅ |
-| Utility@5 | 0.71 | — | — |
-| Unanswerable accuracy | **1.00** | ≥ 0.80 | ✅ |
-| False positive rate | **0.00** | ≤ 0.20 | ✅ |
+| Metric                | Final Value | Target | Status |
+| --------------------- | ----------- | ------ | ------ |
+| Mean Precision@5      | **0.44**    | ≥ 0.40 | ✅     |
+| Mean Recall@5         | **0.68**    | ≥ 0.60 | ✅     |
+| MRR                   | **0.93**    | ≥ 0.50 | ✅     |
+| Utility@5             | 0.71        | —      | —      |
+| Unanswerable accuracy | **1.00**    | ≥ 0.80 | ✅     |
+| False positive rate   | **0.00**    | ≤ 0.20 | ✅     |
 
 **Fixes applied:**
+
 - `mandatory_trade_gate.py:1027` — replaced broken `from src.rag.lessons_rag import LessonsRAG` with `get_trading_rag_pipeline()`
 - `src/rag/evaluation.py:516` — fixed nDCG bug: `graded_relevance` keys now normalized via `_normalize_match_id()` at lookup time (was always 0.000)
 - `LessonsLearnedRAG.query()` — delegates to `TradingRAGPipeline` as backend (backward compatible)
@@ -56,14 +57,14 @@ ID-inclusive text matching. Multi-query expansion always-on when top combined < 
 (fixed from original `len(hits) < top_k * 2` which never triggered). CE OOD detection
 uses absolute sigmoid (not min-max) to correctly reject out-of-domain queries.
 
-| Stage | Grade | Score (1–5) | Implemented? | Status |
-|-------|-------|-------------|--------------|--------|
-| 1. Capture 👎 → store lesson (SQLite FTS5) | **A** | 4.7/5 | ✅ Full | quality_gate, parse_lesson_markdown, SQLiteFTS5Store |
-| 2. Retrieve (bigram-Jaccard + keyword) | **A** | 4.8/5 | ✅ Full | pragmatic_hybrid_search with 6 scoring signals |
-| 3. Multi-query (3 variants, 0.55 threshold) | **A** | 4.5/5 | ✅ Full | generate_query_variants, triggered on low combined score |
-| 4. Rerank (cross-encoder/LLM/heuristic) | **A** | 4.5/5 | ✅ Full | CE with sigmoid normalization + ensemble + OOD detection |
-| 5. Assemble context + gate | **A** | 4.8/5 | ✅ Full | gate_decision deterministic, retrieve_and_gate integration |
-| **Composite** | **A+** | **4.7/5** | ✅ All wired | All 5 targets exceeded |
+| Stage                                       | Grade  | Score (1–5) | Implemented? | Status                                                     |
+| ------------------------------------------- | ------ | ----------- | ------------ | ---------------------------------------------------------- |
+| 1. Capture 👎 → store lesson (SQLite FTS5)  | **A**  | 4.7/5       | ✅ Full      | quality_gate, parse_lesson_markdown, SQLiteFTS5Store       |
+| 2. Retrieve (bigram-Jaccard + keyword)      | **A**  | 4.8/5       | ✅ Full      | pragmatic_hybrid_search with 6 scoring signals             |
+| 3. Multi-query (3 variants, 0.55 threshold) | **A**  | 4.5/5       | ✅ Full      | generate_query_variants, triggered on low combined score   |
+| 4. Rerank (cross-encoder/LLM/heuristic)     | **A**  | 4.5/5       | ✅ Full      | CE with sigmoid normalization + ensemble + OOD detection   |
+| 5. Assemble context + gate                  | **A**  | 4.8/5       | ✅ Full      | gate_decision deterministic, retrieve_and_gate integration |
+| **Composite**                               | **A+** | **4.7/5**   | ✅ All wired | All 5 targets exceeded                                     |
 
 ---
 
@@ -108,6 +109,7 @@ Lessons are hand-authored markdown files in `rag_knowledge/lessons_learned/` (32
 Zero references to `sqlite3` or `FTS5` or `CREATE VIRTUAL TABLE` exist in `src/rag/` or `src/memory/`. SQLite is used only in `src/orchestrator/checkpoint.py` (checkpoints) and `src/analytics/sqlite_analytics.py` (trade analytics). The described "store lesson (SQLite FTS5)" stage is entirely absent.
 
 **Storage reality:**
+
 - Primary: Markdown files on disk (320 files).
 - Secondary: LanceDB vector table `document_aware_rag` (1,178 lines, optional, requires `lancedb` + `sentence-transformers`).
 - The `LessonsSearch` singleton (`lessons_search.py`) does in-memory keyword matching — no persistent index.
@@ -131,7 +133,7 @@ src/orchestrator/anomaly_monitor.py:276:        self.lessons_rag.add_lesson(less
 
 ### Grade: **C** (2.3/5)
 
-**Defense:** A capture mechanism exists (👎 detection + AnomalyMonitor auto-lessons), but the spec's "normalize/quality-gate → SQLite FTS5" is not implemented. The feedback log is isolated from the lesson store. There is no quality gate beyond truncation. The grade is above failing only because *some* capture exists and the anomaly monitor does write actionable lessons.
+**Defense:** A capture mechanism exists (👎 detection + AnomalyMonitor auto-lessons), but the spec's "normalize/quality-gate → SQLite FTS5" is not implemented. The feedback log is isolated from the lesson store. There is no quality gate beyond truncation. The grade is above failing only because _some_ capture exists and the anomaly monitor does write actionable lessons.
 
 ---
 
@@ -140,6 +142,7 @@ src/orchestrator/anomaly_monitor.py:276:        self.lessons_rag.add_lesson(less
 ### What the spec says
 
 A single "pragmatic-hybrid-search" function that combines:
+
 1. **Lexical bigram-Jaccard** — set-based Jaccard similarity over bigram token sets.
 2. **Keyword search** — BM25 or term-frequency matching.
 
@@ -299,6 +302,7 @@ Rerank candidates using a cross-encoder model. If an LLM API key is present, use
 #### `RAGReranker` (`rag_reranker.py`, 79 lines)
 
 A heuristic reranker that:
+
 1. Tokenizes the query into words.
 2. Counts word overlap between query and (title + content) text.
 3. Applies a fixed `high_priority_keywords` list (7 trading-risk terms: "drawdown", "circuit breaker", "bogleheads", "section 1256", "safety buffer", "200-dma", "stop loss"), each adding +0.2.
@@ -306,7 +310,7 @@ A heuristic reranker that:
 
 ```python
 # rag_reranker.py:55-65
-query_words = set(query.lower().split())       # word-level, not bigram
+query_words = set(query.lower().split())  # word-level, not bigram
 overlap_score = sum(1 for w in query_words if w in text_lower) * 0.15
 priority_boost = 0.0
 for kw in self.high_priority_keywords:
@@ -316,6 +320,7 @@ final_score = orig_score + overlap_score + priority_boost
 ```
 
 **Deficiencies:**
+
 - Word-level overlap (not bigram, not cross-encoder).
 - Fixed keyword list (7 hardcoded terms) — not configurable, not learned.
 - No LLM API key check — the spec's "LLM if key present, else heuristic" is not implemented.
@@ -324,6 +329,7 @@ final_score = orig_score + overlap_score + priority_boost
 #### What production uses instead
 
 When LanceDB is available, LanceDB's native `RRFReranker` is used (in `document_aware_rag.py:920`):
+
 ```python
 search_builder = search_builder.rerank(RRFReranker())
 ```
@@ -387,6 +393,7 @@ except ImportError:
 The function returns `(should_block=False, warnings=[])` — meaning **the mandatory trade gate's RAG safety check is silently disabled**. No trade is ever blocked by RAG lesson lookup in `mandatory_trade_gate.py`.
 
 **Verified:**
+
 ```bash
 $ /opt/homebrew/bin/python3.11 -c "from src.rag.lessons_rag import LessonsRAG"
 ImportError: No module named 'src.rag.lessons_rag'
@@ -412,6 +419,7 @@ The correct import should be `from src.rag.lessons_learned_rag import LessonsLea
 #### Fail-closed behavior
 
 `TradeVerifier` is fail-closed (blocks when RAG unavailable):
+
 ```python
 def verify_entry(...) -> tuple[bool, str]:
     if not self.rag_available:
@@ -421,6 +429,7 @@ def verify_entry(...) -> tuple[bool, str]:
 ```
 
 But `RAGSafetyGuard.check_safety` fails **open** (never blocks):
+
 ```python
 if warnings:
     return {"veto": False, ...}  # Soft veto (warning) only
@@ -520,18 +529,18 @@ And `_query_rag_for_blocking_lessons` in `mandatory_trade_gate.py` is entirely b
 
 ### Baseline Metrics (320 lessons, keyword fallback, k=5)
 
-| Query | P@5 | R@5 | nDCG@5 | MRR | Utility@5 | First Relevant Pos |
-|-------|-----|-----|--------|-----|-----------|-------------------|
-| iron condor exit strategy | 0.20 | 0.33 | **0.00** | 1.00 | 0.47 | 1 |
-| iron condor win rate | 0.40 | 0.67 | **0.00** | 0.50 | 0.53 | 2 |
-| close position API bug | 0.40 | 0.50 | **0.00** | 1.00 | 0.71 | 1 |
-| tax optimization XSP | 0.60 | 1.00 | **0.00** | 1.00 | 0.85 | 1 |
-| financial independence roadmap | 0.40 | 0.50 | **0.00** | 1.00 | 0.54 | 1 |
-| position sizing error | 0.20 | 0.33 | **0.00** | 0.20 | 0.18 | 5 |
-| SOFI blocked trading | 0.20 | 0.33 | **0.00** | 0.50 | 0.50 | 2 |
-| delta selection options | 0.20 | 0.33 | **0.00** | 0.50 | 0.30 | 2 |
-| RAG Webhook RAG query | 0.40 | 0.67 | **0.00** | 1.00 | 1.00 | 1 |
-| iron condor entry signals | 0.20 | 0.33 | **0.00** | 0.50 | 0.30 | 2 |
+| Query                          | P@5  | R@5  | nDCG@5   | MRR  | Utility@5 | First Relevant Pos |
+| ------------------------------ | ---- | ---- | -------- | ---- | --------- | ------------------ |
+| iron condor exit strategy      | 0.20 | 0.33 | **0.00** | 1.00 | 0.47      | 1                  |
+| iron condor win rate           | 0.40 | 0.67 | **0.00** | 0.50 | 0.53      | 2                  |
+| close position API bug         | 0.40 | 0.50 | **0.00** | 1.00 | 0.71      | 1                  |
+| tax optimization XSP           | 0.60 | 1.00 | **0.00** | 1.00 | 0.85      | 1                  |
+| financial independence roadmap | 0.40 | 0.50 | **0.00** | 1.00 | 0.54      | 1                  |
+| position sizing error          | 0.20 | 0.33 | **0.00** | 0.20 | 0.18      | 5                  |
+| SOFI blocked trading           | 0.20 | 0.33 | **0.00** | 0.50 | 0.50      | 2                  |
+| delta selection options        | 0.20 | 0.33 | **0.00** | 0.50 | 0.30      | 2                  |
+| RAG Webhook RAG query          | 0.40 | 0.67 | **0.00** | 1.00 | 1.00      | 1                  |
+| iron condor entry signals      | 0.20 | 0.33 | **0.00** | 0.50 | 0.30      | 2                  |
 
 **nDCG@5 = 0.00 for all queries — confirmed bug in `evaluation.py`.**
 
@@ -539,30 +548,30 @@ The `ndcg_at_k` method (line 516) normalizes retrieved IDs via `_normalize_match
 
 ### Unanswerable Query Performance
 
-| Query | Max Score | Predicted | Actual | Correct? |
-|-------|-----------|-----------|--------|----------|
-| quantum gravity trade execution protocol | 0.10 | ✗ (match) | ✗ | ❌ FP |
-| mars colony funding strategy for options traders | 0.06 | ✗ (match) | ✗ | ❌ FP |
-| dinosaur extinction hedging playbook | 0.02 | ✓ (reject) | ✓ | ✅ TN |
+| Query                                            | Max Score | Predicted  | Actual | Correct? |
+| ------------------------------------------------ | --------- | ---------- | ------ | -------- |
+| quantum gravity trade execution protocol         | 0.10      | ✗ (match)  | ✗      | ❌ FP    |
+| mars colony funding strategy for options traders | 0.06      | ✗ (match)  | ✗      | ❌ FP    |
+| dinosaur extinction hedging playbook             | 0.02      | ✓ (reject) | ✓      | ✅ TN    |
 
 **False positive rate: 67%** — two of three non-trading queries get low-but-nonzero scores that pass the 0.04 threshold, meaning they would surface "lessons" for queries that should be rejected. This is dangerous for a trading safety system.
 
 ### Architecture Debt Metrics
 
-| Metric | Value |
-|--------|-------|
-| Total RAG source files | ~20 (rag/ + memory/) |
-| Total RAG test files | ~10 |
-| RAG source LOC | ~10,098 |
-| Dead modules (defined, not imported by production) | 5 (`hybrid_retriever.py`, `rag_reranker.py`, `query_rewriter.py`, `parent_child_retriever.py`, `rag_cache.py`) |
-| Broken production import | 1 (`src.rag.lessons_rag.LessonsRAG` in `mandatory_trade_gate.py:1027`) |
-| Competing search engines (all active) | 4+ (`LessonsLearnedRAG`, `LessonsSearch`, `UnifiedSearch`, `ContextBundleEngine`, `DocumentAwareRAG`, `TradeRAG`) |
-| SQLite FTS5 references | 0 |
-| Cross-encoder references | 0 |
-| LLM-reranker references | 0 |
-| Multi-query (>1 variant) references | 0 |
-| Bigram-Jaccard references | 0 |
-| Test pass rate | 48 passed, 5 skipped (skips require GCP/LanceDB/API) |
+| Metric                                             | Value                                                                                                             |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Total RAG source files                             | ~20 (rag/ + memory/)                                                                                              |
+| Total RAG test files                               | ~10                                                                                                               |
+| RAG source LOC                                     | ~10,098                                                                                                           |
+| Dead modules (defined, not imported by production) | 5 (`hybrid_retriever.py`, `rag_reranker.py`, `query_rewriter.py`, `parent_child_retriever.py`, `rag_cache.py`)    |
+| Broken production import                           | 1 (`src.rag.lessons_rag.LessonsRAG` in `mandatory_trade_gate.py:1027`)                                            |
+| Competing search engines (all active)              | 4+ (`LessonsLearnedRAG`, `LessonsSearch`, `UnifiedSearch`, `ContextBundleEngine`, `DocumentAwareRAG`, `TradeRAG`) |
+| SQLite FTS5 references                             | 0                                                                                                                 |
+| Cross-encoder references                           | 0                                                                                                                 |
+| LLM-reranker references                            | 0                                                                                                                 |
+| Multi-query (>1 variant) references                | 0                                                                                                                 |
+| Bigram-Jaccard references                          | 0                                                                                                                 |
+| Test pass rate                                     | 48 passed, 5 skipped (skips require GCP/LanceDB/API)                                                              |
 
 ### Critical Finding: Import Chain Coupling
 
@@ -572,21 +581,21 @@ Importing `LessonsLearnedRAG` triggers `src/__init__.py` → `from . import trad
 
 ## Ranked List (Best to Worst)
 
-| Rank | Component | Actual Implementation | Grade |
-|------|-----------|----------------------|-------|
-| 1 | **Context repositioning** | `context_repositioning.reposition_lessons()` — 8-signal reranker (base score, keyword overlap, phrase, structure, recency, misery forensics, verified evidence, severity) + token-Jaccard diversity | **B+** |
-| 2 | **Query rewriting/expansion** | `RAGQueryRewriter` — synonym expansion + ticker extraction (10 domain terms) + `LessonsLearnedRAG._query_lancedb` hardcoded expansion (5 terms) | **C-** |
-| 3 | **Context assembly** | `context_repositioning.reposition_lessons` + `ContextBundleEngine.super_retrieve` + `LessonsLearnedRAG._reposition_results` | **C** |
-| 4 | **Feedback detection** | `memory_gateway_feedback.detect_feedback_signal` — regex detection of 👍/👎 + implicit signals (undo/revert, ship it) | **C** |
-| 5 | **Lesson storage** | Markdown files (320) + LanceDB table + `ContextBundleEngine` JSON index | **C-** |
-| 6 | **Primary retrieval** | `LessonsLearnedRAG.query` — LanceDB vector+hybrid with keyword fallback + severity/recency boosts | **D** |
-| 7 | **Deterministic gating** | `TradeVerifier` (works), `RAGSafetyGuard` (soft warn), `gates.py RAGPreTradeQuery` (truncated), `_query_rag_for_blocking_lessons` (BROKEN IMPORT) | **D** |
-| 8 | **Multi-query** | `RAGQueryRewriter` produces 1 query (not 3), no threshold trigger — dead code | **F** |
-| 9 | **Cross-encoder reranker** | Does not exist — `RAGReranker` is heuristic word-overlap only, and is dead code | **F** |
-| 10 | **LLM reranker** | Does not exist — no API key check, no LLM path | **F** |
-| 11 | **SQLite FTS5 store** | Does not exist — no FTS5 in any RAG source file | **F** |
-| 12 | **Bigram-Jaccard** | Does not exist — only token-level Jaccard in diversity filter | **F** |
-| 13 | **End-to-end wiring** | 5 advanced modules exist as standalone but are never called from production; 1 production gate silently disabled by broken import | **F** |
+| Rank | Component                     | Actual Implementation                                                                                                                                                                               | Grade  |
+| ---- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| 1    | **Context repositioning**     | `context_repositioning.reposition_lessons()` — 8-signal reranker (base score, keyword overlap, phrase, structure, recency, misery forensics, verified evidence, severity) + token-Jaccard diversity | **B+** |
+| 2    | **Query rewriting/expansion** | `RAGQueryRewriter` — synonym expansion + ticker extraction (10 domain terms) + `LessonsLearnedRAG._query_lancedb` hardcoded expansion (5 terms)                                                     | **C-** |
+| 3    | **Context assembly**          | `context_repositioning.reposition_lessons` + `ContextBundleEngine.super_retrieve` + `LessonsLearnedRAG._reposition_results`                                                                         | **C**  |
+| 4    | **Feedback detection**        | `memory_gateway_feedback.detect_feedback_signal` — regex detection of 👍/👎 + implicit signals (undo/revert, ship it)                                                                               | **C**  |
+| 5    | **Lesson storage**            | Markdown files (320) + LanceDB table + `ContextBundleEngine` JSON index                                                                                                                             | **C-** |
+| 6    | **Primary retrieval**         | `LessonsLearnedRAG.query` — LanceDB vector+hybrid with keyword fallback + severity/recency boosts                                                                                                   | **D**  |
+| 7    | **Deterministic gating**      | `TradeVerifier` (works), `RAGSafetyGuard` (soft warn), `gates.py RAGPreTradeQuery` (truncated), `_query_rag_for_blocking_lessons` (BROKEN IMPORT)                                                   | **D**  |
+| 8    | **Multi-query**               | `RAGQueryRewriter` produces 1 query (not 3), no threshold trigger — dead code                                                                                                                       | **F**  |
+| 9    | **Cross-encoder reranker**    | Does not exist — `RAGReranker` is heuristic word-overlap only, and is dead code                                                                                                                     | **F**  |
+| 10   | **LLM reranker**              | Does not exist — no API key check, no LLM path                                                                                                                                                      | **F**  |
+| 11   | **SQLite FTS5 store**         | Does not exist — no FTS5 in any RAG source file                                                                                                                                                     | **F**  |
+| 12   | **Bigram-Jaccard**            | Does not exist — only token-level Jaccard in diversity filter                                                                                                                                       | **F**  |
+| 13   | **End-to-end wiring**         | 5 advanced modules exist as standalone but are never called from production; 1 production gate silently disabled by broken import                                                                   | **F**  |
 
 ---
 
@@ -607,6 +616,7 @@ The components were built and unit-tested but never connected to `LessonsLearned
 ### 2. Broken import silently disables safety gate
 
 `mandatory_trade_gate.py` (line 1027) contains:
+
 ```python
 from src.rag.lessons_rag import LessonsRAG
 ```
@@ -616,6 +626,7 @@ The module `src/rag/lessons_rag.py` does not exist. The import is inside a `try/
 ### 3. No SQLite FTS5 — storage is markdown + LanceDB
 
 The spec calls for "store lesson (SQLite FTS5)" but the actual storage is:
+
 - Markdown files on disk (no structured index)
 - LanceDB (optional, requires `lancedb` package + `sentence-transformers` model download)
 - `LessonsSearch` keyword matching (in-memory, no persistent index)
@@ -625,6 +636,7 @@ SQLite FTS5 is used nowhere in the RAG pipeline.
 ### 4. No bigram-Jaccard — no multi-query — no cross-encoder
 
 All three described retrieval mechanisms are absent:
+
 - **Bigram-Jaccard**: No n-gram similarity scoring anywhere. The only Jaccard is token-level, used for diversity filtering (not retrieval).
 - **Multi-query (3 variants, 0.6 threshold)**: `RAGQueryRewriter` produces a single expanded query. No variant generation, no score-based triggering.
 - **Cross-encoder reranker**: Only heuristic keyword-overlap reranker exists (`RAGReranker`, 19 lines of logic). No cross-encoder model, no LLM API key check.
@@ -632,6 +644,7 @@ All three described retrieval mechanisms are absent:
 ### 5. nDCG evaluation bug
 
 The `ndcg_at_k` method (line 516 of `evaluation.py`) is functionally broken:
+
 - `_normalize_match_id()` collapses full lesson IDs to `ll-XXX` format.
 - `graded_relevance` dict keys are full normalized IDs (`ll-268_iron_condor_win_rate_research`).
 - The lookup never matches → nDCG is always 0.000.
@@ -645,13 +658,17 @@ Additionally, `evaluate_all()` never calls `ndcg_at_k` — the metric exists but
 ### Immediate (P0 — fixes a silently disabled safety gate)
 
 1. **Fix the broken import** in `mandatory_trade_gate.py:1027`:
+
    ```python
    # BAD:
    from src.rag.lessons_rag import LessonsRAG
+
    # GOOD:
    from src.rag.lessons_learned_rag import LessonsLearnedRAG
+
    rag = LessonsLearnedRAG()
    ```
+
    Without this, the primary trade safety gate never blocks on RAG lessons.
 
 ### Short-term (P1 — wire existing components into production)
@@ -670,7 +687,7 @@ Additionally, `evaluate_all()` never calls `ndcg_at_k` — the metric exists but
 
 7. **Implement multi-query variant generation**: When top lexical score < 0.6, generate 3 query variants (paraphrase, keyword expansion, intent decomposition) and merge results.
 
-8. **Implement cross-encoder reranker**: Use `sentence-transformers` `CrossEncoder` (or `cohere`/`rerank-*) for the top-K candidates. Add an LLM reranker path gated on `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` presence.
+8. **Implement cross-encoder reranker**: Use `sentence-transformers` `CrossEncoder` (or `cohere`/`rerank-*) for the top-K candidates. Add an LLM reranker path gated on `OPENAI_API_KEY`or`ANTHROPIC_API_KEY` presence.
 
 9. **Replace markdown storage with SQLite FTS5** (or keep LanceDB) for a proper persistent index with write capability.
 
@@ -701,15 +718,15 @@ The 5 skipped tests require `GCP_SA_KEY` / `GOOGLE_CLOUD_PROJECT` (LanceDB cloud
 
 ## Final Composite Score
 
-| Category | Score (1–5) | Weight | Weighted |
-|----------|-------------|--------|----------|
-| Stage 1: Capture & Store | 2.3 | 15% | 0.35 |
-| Stage 2: Retrieve | 1.8 | 25% | 0.45 |
-| Stage 3: Multi-query | 1.0 | 10% | 0.10 |
-| Stage 4: Rerank | 1.0 | 15% | 0.15 |
-| Stage 5: Assemble & Gate | 2.0 | 25% | 0.50 |
-| End-to-end wiring / debt | 1.0 | 10% | 0.10 |
-| **Weighted Average** | | | **1.65 / 5.0** → **Grade D-** |
+| Category                 | Score (1–5) | Weight | Weighted                      |
+| ------------------------ | ----------- | ------ | ----------------------------- |
+| Stage 1: Capture & Store | 2.3         | 15%    | 0.35                          |
+| Stage 2: Retrieve        | 1.8         | 25%    | 0.45                          |
+| Stage 3: Multi-query     | 1.0         | 10%    | 0.10                          |
+| Stage 4: Rerank          | 1.0         | 15%    | 0.15                          |
+| Stage 5: Assemble & Gate | 2.0         | 25%    | 0.50                          |
+| End-to-end wiring / debt | 1.0         | 10%    | 0.10                          |
+| **Weighted Average**     |             |        | **1.65 / 5.0** → **Grade D-** |
 
 ### Defense of the grade
 
