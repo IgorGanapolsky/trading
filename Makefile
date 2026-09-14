@@ -5,7 +5,7 @@ VENV_PYTHON := $(VENV)/bin/python
 TRADING_ENV ?= paper
 export TRADING_ENV
 
-.PHONY: setup lint ruff format test coverage audit security health skill-check coordination-check coordination-audit coordination-preflight check dry-run hygiene graph-rag-check graphify-check rag-aplus-check gsd-tick gsd-status cohort-scorecard infoq-roi aistudio-roi
+.PHONY: setup lint ruff format test coverage audit security health skill-check coordination-check coordination-audit coordination-preflight check dry-run hygiene graph-rag-check graphify-check rag-aplus-check gsd-tick gsd-status cohort-scorecard infoq-roi aistudio-roi astra-roi
 
 setup:
 	$(PYTHON) -m venv $(VENV)
@@ -105,6 +105,13 @@ aistudio-roi:
 	@echo "=== AI Studio agent-environment doctor ==="
 	$(VENV_PYTHON) -m pytest tests/test_agent_environment_doctor.py -q
 	$(VENV_PYTHON) scripts/aistudio_agent_env_doctor.py --tools 'context_gist,system_health_check,aistudio_agent_env_doctor' --domains 'api.github.com' --acs 'tests pass|CLI fail-closed'
+
+# OpenAI GPT-6 Astra Next-Gen Work harness (Supervisor DAG / Manager Loop / Action Risk Interdiction)
+astra-roi:
+	@echo "=== OpenAI GPT-6 Astra work-harness doctor ==="
+	$(VENV_PYTHON) -m pytest tests/test_astra_work_harness.py -q
+	$(VENV_PYTHON) scripts/astra_work_harness.py --doctor
+	$(VENV_PYTHON) scripts/astra_work_harness.py --run-loop "daily trading cycle"
 
 # Run full daily trading cycle (inventory, regime, exits, cohort)
 daily-cycle:
