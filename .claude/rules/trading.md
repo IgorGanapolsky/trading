@@ -6,13 +6,15 @@
 - NORTH_STAR_MONTHLY_AFTER_TAX: 6000
 - MAX_POSITIONS: 8
 
-## Active Strategy: SPY Put Credit
+## Active Strategy: SPY Put Credit (Buffett v2, AGENT-616)
 
 - Paper-only SPY bull-put credit spreads through `scripts/spy_put_credit.py`.
+- Default profile: `spy-put-credit-buffett` (Rule #1 capital preservation).
 - The strategy kill switch is authoritative; killed families cannot submit new entries.
-- Use one-lot, $5-wide structures with a roughly 15-delta short strike and 30–45 DTE.
-- Maximum 3 structures per day and 2 concurrent structures.
-- Define a 200%-of-credit stop, a 25% profit target, and a 7-DTE time exit.
+- Use one-lot, $5-wide structures with a roughly 15-delta short strike and **45–70 DTE** (target 60).
+- Maximum **1** structure per day and **1** concurrent structure.
+- Define a 200%-of-credit stop, a **50%** profit target, and a **~30-DTE** time exit.
+- Require SPY above the 200-DMA; max loss ≤ 1% of equity per structure.
 - Residual iron-condor inventory is exit-only through `scripts/residual_ic_manager.py`.
 - Live capital stays blocked until at least 30 broker-reconciled, paired closures show
   positive expectancy and profit factor above 1.
