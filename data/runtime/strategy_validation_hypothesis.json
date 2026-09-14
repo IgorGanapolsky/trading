@@ -35,6 +35,17 @@
   "north_star": {
     "monthly_after_tax_usd": 6000,
     "target_capital_usd": 300000,
-    "rule_1": "Do not lose money — defined risk, small size, no live until edge proven"
+    "rule_1": "Do not lose money \u2014 defined risk, small size, no live until edge proven"
+  },
+  "rehabilitation_plan_ack": {
+    "source_plan": "data/runtime/edge_rehabilitation_plan.json",
+    "covered_loss_clusters": [
+      "ten_wide_wings",
+      "iron_condor_family",
+      "multi_contract",
+      "long_hold_ge_7d",
+      "early_exit_lt_24h"
+    ],
+    "note": "AGENT-616 Buffett profile forbids 10-wide wings, IC family entries, and multi-lot; trade-less 1 concurrent."
   }
 }

@@ -161,7 +161,7 @@ def test_two_ceilings_daily_reset_does_not_raise_cohort() -> None:
         trades=trades,
         now=now,
     )
-    assert report["session_analog"]["cap"] == 3
+    assert report["session_analog"]["cap"] == profile.max_daily_structures
     assert report["session_analog"]["used"] == 1
     assert report["weekly_analog"]["used"] == 3
     assert report["weekly_analog"]["cap"] == COHORT_GATE_N
