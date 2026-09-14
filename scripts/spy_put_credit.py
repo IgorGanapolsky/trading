@@ -55,6 +55,7 @@ TERMINAL_EXIT_REASONS = {
 EASTERN = ZoneInfo("America/New_York")
 # --execute-paper: 0 fill, 1 skip/no-fill, 2 expected block, 3 fatal gate (not a skip)
 EXECUTE_PAPER_FATAL_GATE = 3
+# AGENT-610 / Astra FORMAT: rc 0 only after broker fill is journaled.
 
 
 class MandatoryGateSubmitError(RuntimeError):
@@ -1334,7 +1335,65 @@ def place_put_credit(client, opp: dict) -> str | None:
 
     if order_id:
         _record_entry(opp, order_id)
+        try:
+            refreshed = client.get_order_by_id(order_id)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Could not refresh put-credit order %s after submit: %s", order_id, exc)
+            refreshed = None
+        if refreshed is not None:
+            _stamp_fill_from_order(order_id, refreshed)
     return order_id
+
+
+def _journal_fill_confirmed(order_id: str | None) -> bool:
+    if not order_id:
+        return False
+    for entry in _load_entries().values():
+        if not isinstance(entry, dict):
+            continue
+        if str(entry.get("order_id") or "") != str(order_id):
+            continue
+        if entry.get("fill_confirmed_at") or entry.get("fill_confirmed") is True:
+            return True
+        return str(entry.get("credit_source") or "").strip().lower() == "broker_fill"
+    return False
+
+
+def _stamp_fill_from_order(order_id: str, order: Any) -> bool:
+    """Mark a journal row as a completed paper fill when the broker says FILLED.
+
+    execute-paper must not return rc 0 on submitted_unconfirmed (AGENT-610).
+    """
+
+    status = _order_status_name(getattr(order, "status", ""))
+    try:
+        filled_qty = float(getattr(order, "filled_qty", 0) or 0)
+    except (TypeError, ValueError):
+        filled_qty = 0.0
+    if status != "FILLED" and filled_qty <= 0:
+        return False
+    fill_px = getattr(order, "filled_avg_price", None)
+    entries = _load_entries()
+    changed = False
+    for entry in entries.values():
+        if not isinstance(entry, dict):
+            continue
+        if str(entry.get("order_id") or "") != str(order_id):
+            continue
+        entry["status"] = "open"
+        entry["credit_source"] = "broker_fill"
+        entry["fill_confirmed_at"] = datetime.now(UTC).isoformat()
+        if fill_px not in (None, ""):
+            try:
+                entry["credit"] = abs(float(fill_px))
+            except (TypeError, ValueError):
+                pass
+        changed = True
+        break
+    if changed:
+        _save_entries(entries)
+        logger.info("Stamped broker fill on journal for order %s", order_id)
+    return changed
 
 
 def _record_entry(opp: dict, order_id: str) -> None:
@@ -1779,13 +1838,15 @@ def main() -> int:
             )
         )
         return EXECUTE_PAPER_FATAL_GATE
-    ok = order_id is not None
+    fill_confirmed = _journal_fill_confirmed(order_id)
+    ok = bool(order_id) and fill_confirmed
     print(
         json.dumps(
             {
                 "success": ok,
                 "dry_run": False,
                 "order_id": order_id,
+                "fill_confirmed": fill_confirmed,
                 "opportunity": opp,
                 "plan_path": str(path),
             },
@@ -1793,6 +1854,11 @@ def main() -> int:
             default=str,
         )
     )
+    if order_id and not fill_confirmed:
+        logger.warning(
+            "PUT-CREDIT SUBMITTED BUT UNCONFIRMED: order %s is not a completed fill (AGENT-610)",
+            order_id,
+        )
     return 0 if ok else 1
 
 

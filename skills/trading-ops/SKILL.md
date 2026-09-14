@@ -112,6 +112,14 @@ python scripts/residual_ic_manager.py --dry-run
 
 Never describe a dry-run plan as an executed trade.
 
+Completed paper work is a **broker-filled** 1-lot put-credit (`credit_source=broker_fill`).
+`--execute-paper` JSON `success: true` without `fill_confirmed` is not a fill (AGENT-610 / Astra FORMAT, not GPT-6).
+
+```bash
+python scripts/work_within_reach.py --from-journal --json
+python scripts/work_within_reach.py --from-journal --execute-rc 0 --json
+```
+
 ## Evidence rules
 
 - Equity / P/L / win rate: cite `data/system_state.json` or `data/trades.json` with numbers.
