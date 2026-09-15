@@ -467,7 +467,28 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="With --looped-flow, shared noise seed (stable residual_id)",
     )
+    parser.add_argument(
+        "--llm-cache-stats",
+        action="store_true",
+        help="TNS LLM response-cache hit/miss stats (not provider prompt-cache)",
+    )
     args = parser.parse_args(argv)
+
+    if args.llm_cache_stats:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from llm_response_cache import ResponseCache
+
+        cache = ResponseCache()
+        out = {
+            "skill": "/trading-ralph-gsd-24-7",
+            "tick": "llm_cache_stats",
+            "framework": "llm_response_cache",
+            "stolen_format": "TNS LLM response caching — exact-match fingerprint + TTL",
+            "stats": cache.stats(),
+        }
+        print(json.dumps(out, indent=2, sort_keys=True))
+        return 0
 
     if args.looped_flow:
         if str(ROOT / "scripts") not in sys.path:
