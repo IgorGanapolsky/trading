@@ -75,6 +75,7 @@ def test_cli_smoke_no_log():
         "fanout_memory",
         "hydrafusion",
         "hydrafusion_execute",
+        "astra_gate",
     ):
         assert key in data["observe"]
     he = data["observe"]["hydrafusion_execute"]

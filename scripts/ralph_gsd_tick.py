@@ -478,6 +478,11 @@ def main(argv: list[str] | None = None) -> int:
         help="AgentZip FORMAT: worktree fan-out memory budget + shared template fingerprint",
     )
     parser.add_argument(
+        "--astra-gate",
+        action="store_true",
+        help="GPT-6 Astra harness gate (notes/confirm/no-API-primary)",
+    )
+    parser.add_argument(
         "--hydrafusion-execute",
         action="store_true",
         help="Execute HydraFusion Cascade/Critique plan (early-exit + isolated critic)",
@@ -557,6 +562,22 @@ def main(argv: list[str] | None = None) -> int:
         out = _eval_summary()
         out["skill"] = "/trading-ralph-gsd-24-7"
         out["tick"] = "eval_ledger"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and not out.get("ok"):
+            return 2
+        return 0
+
+    if args.astra_gate:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from astra_harness_gate import evaluate as _astra_gate
+
+        out = _astra_gate(
+            proposed_action=args.task or "",
+            primary_model="",
+        )
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "astra_gate"
         print(json.dumps(out, indent=2, sort_keys=True))
         if args.strict and not out.get("ok"):
             return 2

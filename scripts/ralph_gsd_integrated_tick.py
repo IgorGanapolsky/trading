@@ -40,7 +40,8 @@ def run_integrated(
     write_state: bool = True,
     verify: bool = False,
 ) -> dict:
-    from agent_fanout_memory import evaluate as fanout_eval
+    from agent_fanout_memory import evaluate as fanout_eval  # noqa: I001
+    from astra_harness_gate import evaluate as astra_gate
     from eval_first_ledger import summary as eval_summary
     from hydrafusion_execute import execute as hydra_execute
     from hydrafusion_route import route as hydra_route
@@ -52,8 +53,6 @@ def run_integrated(
         _scorecard,
         verify_evidence,
         write_context,
-    )
-    from ralph_gsd_tick import (
         write_state as _write_state,
     )
 
@@ -72,6 +71,10 @@ def run_integrated(
 
     task = str(pick.get("residual") or pick.get("action") or "ops residual")
     high_risk = task in {"fix_required_ci", "cash_fee_yes"} or "kill" in task
+    observe["astra_gate"] = _safe(
+        "astra_gate",
+        lambda: astra_gate(proposed_action=task),
+    )
     observe["hydrafusion"] = _safe(
         "hydrafusion",
         lambda: hydra_route(
