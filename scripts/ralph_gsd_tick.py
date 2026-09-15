@@ -580,7 +580,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.multi_teacher_distill:
         if str(ROOT / "scripts") not in sys.path:
             sys.path.insert(0, str(ROOT / "scripts"))
-        from multi_teacher_distill import distill, demo_examples
+        from multi_teacher_distill import demo_examples, distill
 
         out = distill(demo_examples(), mode="auto")
         out["skill"] = "/trading-ralph-gsd-24-7"

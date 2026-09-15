@@ -82,3 +82,14 @@ def test_cli_demo():
     data = json.loads(r.stdout)
     assert data["framework"] == "multi_teacher_distill"
     assert data["cache_amortization"]["second_calls"] == 0
+
+
+def test_collector_and_convergence(tmp_path: Path, monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "CACHE_ROOT", tmp_path / "c")
+    examples = mod.demo_examples()
+    mod.distill(examples, mode="auto")
+    second = mod.distill(examples, mode="auto")
+    assert second["convergence"]["all_offline"] is True
+    assert second["collector_weights"]
+    assert abs(sum(second["collector_weights"].values()) - 1.0) < 1e-6

@@ -3,7 +3,10 @@
 <!-- FORMAT steal from LinkedIn "8X faster multi-teacher distillation" (Aug 2026).
      Not Ray / FSDP / H200 / SGLang training SaaS. -->
 
-**Source:** [Training infrastructure behind AI-Powered Job Search](https://www.linkedin.com/blog/engineering/infrastructure/the-training-infrastructure-behind-ai-powered-job-search-eight-x-faster-multi-teacher-distillation)
+**Sources:**
+
+- [InfoQ](https://www.infoq.com/news/2026/09/linkedin-ai-multi-teacher/)
+- [LinkedIn engineering](https://www.linkedin.com/blog/engineering/infrastructure/the-training-infrastructure-behind-ai-powered-job-search-eight-x-faster-multi-teacher-distillation)
 
 ## Steal
 
@@ -27,3 +30,9 @@ stabilize → runs converge to fully cached.
 - Train billion-param teachers in this lab
 - Claim 22k QPS/GPU or H200 HFU numbers as ours
 - Invalidate all teacher caches when only student weights change
+
+## InfoQ additions
+
+- Collector merge: average or learned weights
+- Convergence: online while teachers change → offline when stable
+- Compounding speedups (cache amortization), not one GPU trick

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Multi-teacher distillation cache (LinkedIn Job Search infra FORMAT).
 
-Source:
-https://www.linkedin.com/blog/engineering/infrastructure/the-training-infrastructure-behind-ai-powered-job-search-eight-x-faster-multi-teacher-distillation
+Sources:
+- https://www.infoq.com/news/2026/09/linkedin-ai-multi-teacher/
+- https://www.linkedin.com/blog/engineering/infrastructure/the-training-infrastructure-behind-ai-powered-job-search-eight-x-faster-multi-teacher-distillation
 
 Steal (not Ray/FSDP/H200/SGLang):
   - Pluggable specialized teachers (relevance, engagement, embedding-ish signals)
@@ -144,6 +145,51 @@ def run_teacher(
     }
 
 
+
+def collector_merge(
+    teacher_softs: dict[str, dict],
+    *,
+    strategy: str = "average",
+    learned_weights: dict[str, float] | None = None,
+) -> dict:
+    """InfoQ/LinkedIn collector: merge teacher soft labels (average or learned weights)."""
+    if not teacher_softs:
+        return {"score": 0.0, "p_yes": 0.0, "p_no": 1.0, "strategy": strategy}
+    if strategy == "learned" and learned_weights:
+        wsum = 0.0
+        acc = 0.0
+        for tid, soft in teacher_softs.items():
+            w = float(learned_weights.get(tid, 1.0))
+            s = float(soft.get("score", soft.get("p_yes", 0.0)))
+            acc += w * s
+            wsum += w
+        score = acc / wsum if wsum else 0.0
+    else:
+        vals = [float(s.get("score", s.get("p_yes", 0.0))) for s in teacher_softs.values()]
+        score = sum(vals) / len(vals)
+        strategy = "average"
+    return {
+        "score": round(score, 6),
+        "p_yes": round(score, 6),
+        "p_no": round(1.0 - score, 6),
+        "strategy": strategy,
+    }
+
+
+def learn_weights_from_teachers(
+    examples: list[dict],
+    teacher_outputs: dict[str, dict[str, dict]],
+) -> dict[str, float]:
+    """Cheap learned weighting: weight ∝ mean soft-score magnitude (stabilize high-signal teachers)."""
+    weights: dict[str, float] = {}
+    for tid, outs in teacher_outputs.items():
+        scores = [float((outs.get(example_id(ex)) or {}).get("score", 0.0)) for ex in examples]
+        weights[tid] = max(0.1, sum(scores) / max(len(scores), 1))
+    # normalize
+    s = sum(weights.values()) or 1.0
+    return {k: round(v / s, 4) for k, v in weights.items()}
+
+
 def fuse_student(
     examples: list[dict],
     teacher_outputs: dict[str, dict[str, dict]],
@@ -155,17 +201,14 @@ def fuse_student(
     results = []
     for ex in examples:
         eid = example_id(ex)
-        scores = []
-        wsum = 0.0
-        detail = {}
-        for tid, outs in teacher_outputs.items():
-            soft = outs.get(eid) or {}
-            s = float(soft.get("score", soft.get("p_yes", 0.0)))
-            w = float(weights.get(tid, 1.0))
-            scores.append(s * w)
-            wsum += w
-            detail[tid] = {"score": s, "weight": w}
-        student = (sum(scores) / wsum) if wsum else 0.0
+        softs = {tid: (outs.get(eid) or {}) for tid, outs in teacher_outputs.items()}
+        strategy = "learned" if weights else "average"
+        merged = collector_merge(softs, strategy=strategy, learned_weights=weights)
+        detail = {
+            tid: {"score": float(s.get("score", s.get("p_yes", 0.0))), "weight": float((weights or {}).get(tid, 1.0))}
+            for tid, s in softs.items()
+        }
+        student = float(merged["score"])
         results.append(
             {
                 "example_id": eid,
@@ -266,7 +309,16 @@ def distill(
             }
         teacher_outputs[tid] = result["outputs"]
 
+    if weights is None:
+        weights = learn_weights_from_teachers(examples, teacher_outputs)
     student = fuse_student(examples, teacher_outputs, weights=weights)
+    # InfoQ: online early → offline as teachers stabilize (convergence toward cached)
+    modes = [a.get("mode_used") for a in accounting]
+    convergence = {
+        "all_offline": all(m == "offline" for m in modes),
+        "modes": modes,
+        "note": "Query online while teachers change; switch to offline cache once stable",
+    }
     calls = sum(a.get("teacher_calls") or 0 for a in accounting)
     hits = sum(a.get("cache_hits") or 0 for a in accounting)
     # LinkedIn: avoid re-paying teacher inference when only student changes
@@ -281,6 +333,7 @@ def distill(
             "(not Ray/FSDP/H200 clone); ~8x narrative = eliminate redundant teacher GPU"
         ),
         "source": {
+            "infoq": "https://www.infoq.com/news/2026/09/linkedin-ai-multi-teacher/",
             "linkedin_engineering": (
                 "https://www.linkedin.com/blog/engineering/infrastructure/"
                 "the-training-infrastructure-behind-ai-powered-job-search-"
@@ -296,6 +349,8 @@ def distill(
         "estimated_speedup_vs_naive": round(speedup, 3),
         "elapsed_s": round(time.monotonic() - t0, 4),
         "student_ranking": student,
+        "collector_weights": weights,
+        "convergence": convergence,
         "ts": datetime.now(UTC).isoformat(),
     }
 
