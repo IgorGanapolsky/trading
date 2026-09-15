@@ -19,6 +19,7 @@ import subprocess  # nosec B404 — fixed argv only
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 RE_LANE = Path.home() / "workspace/git/igor/RealEstate-lane-grok"
@@ -29,24 +30,43 @@ SCORECARD = Path.home() / ".grok" / "skills" / "fleet-a-plus" / "scripts" / "sco
 GSD_STATE = RE_LANE / "data" / "ralph" / "GSD_STATE.json"
 
 
-def _sh(args: list[str], timeout: int = 60) -> subprocess.CompletedProcess:
-    return subprocess.run(  # nosec B603
-        args, capture_output=True, text=True, timeout=timeout
-    )
+def _sh(args: list[str], timeout: int = 60) -> dict[str, Any]:
+    """Run fixed argv; normalize launch/timeout/nonzero into collector error states."""
+    try:
+        completed = subprocess.run(  # nosec B603 — fixed argv from this module only
+            args, capture_output=True, text=True, timeout=timeout
+        )
+    except FileNotFoundError as exc:
+        return {"error": "exec_missing", "detail": str(exc)[:200]}
+    except subprocess.TimeoutExpired:
+        return {"error": "timeout", "detail": f"timeout={timeout}s"}
+    if completed.returncode != 0:
+        return {
+            "error": "nonzero_exit",
+            "returncode": completed.returncode,
+            "stderr": (completed.stderr or "")[:300],
+            "stdout": (completed.stdout or "")[:300],
+        }
+    return {"ok": True, "stdout": completed.stdout or "", "stderr": completed.stderr or ""}
 
 
-def _scorecard() -> dict:
+def _scorecard() -> dict[str, Any]:
     if not SCORECARD.exists():
         return {"error": "scorecard_missing"}
-    r = _sh([sys.executable, str(SCORECARD), "--json"], timeout=120)
+    result = _sh([sys.executable, str(SCORECARD), "--json"], timeout=120)
+    if "error" in result:
+        return result
     try:
-        return json.loads(r.stdout or "{}")
+        parsed = json.loads(result.get("stdout") or "{}")
     except json.JSONDecodeError:
-        return {"error": "scorecard_parse", "stderr": (r.stderr or "")[:300]}
+        return {"error": "scorecard_parse", "stderr": (result.get("stderr") or "")[:300]}
+    if not isinstance(parsed, dict):
+        return {"error": "scorecard_parse", "detail": "non-object JSON"}
+    return parsed
 
 
-def _open_prs() -> list[dict]:
-    r = _sh(
+def _open_prs() -> dict[str, Any]:
+    result = _sh(
         [
             "gh",
             "pr",
@@ -61,23 +81,28 @@ def _open_prs() -> list[dict]:
             "number,title,mergeStateStatus",
         ]
     )
+    if "error" in result:
+        return result
     try:
-        return json.loads(r.stdout or "[]")
+        parsed = json.loads(result.get("stdout") or "[]")
     except json.JSONDecodeError:
-        return []
+        return {"error": "prs_parse", "stderr": (result.get("stderr") or "")[:300]}
+    if not isinstance(parsed, list):
+        return {"error": "prs_parse", "detail": "non-array JSON"}
+    return {"prs": parsed}
 
 
-def _cash_funnel() -> dict:
+def _cash_funnel() -> dict[str, Any]:
     if not GSD_STATE.exists():
         return {"fee_yes_count": None, "live_cash_usd": None}
     try:
-        d = json.loads(GSD_STATE.read_text())
+        data = json.loads(GSD_STATE.read_text())
     except json.JSONDecodeError:
         return {"fee_yes_count": None, "live_cash_usd": None}
-    fun = d.get("funnel") or {}
+    fun = data.get("funnel") or {}
     return {
         "fee_yes_count": fun.get("fee_yes_count"),
-        "live_cash_usd": d.get("live_cash_usd"),
+        "live_cash_usd": data.get("live_cash_usd"),
         "cold_email_freeze": fun.get("cold_email_freeze"),
         "inbound_buyer_replies": fun.get("inbound_buyer_replies"),
     }
@@ -89,10 +114,26 @@ def _draft_count() -> int:
     return len(list(DRAFTS.glob("prepaid_*.json")))
 
 
-def build_value_center(score: dict, prs: list[dict], funnel: dict) -> dict:
+def build_value_center(
+    score: dict[str, Any],
+    prs_payload: list[dict[str, Any]] | dict[str, Any],
+    funnel: dict[str, Any],
+) -> dict[str, Any]:
     """Five Rohrer questions → evidence-backed answers."""
-    overall = (score.get("overall") or {}) if "error" not in score else {}
-    cash = (score.get("cash_fee_yes") or {}) if "error" not in score else {}
+    score_error = "error" in score
+    if isinstance(prs_payload, dict) and "error" in prs_payload:
+        prs: list[dict[str, Any]] = []
+        prs_error: str | None = str(prs_payload.get("error"))
+    elif isinstance(prs_payload, dict):
+        raw = prs_payload.get("prs")
+        prs = raw if isinstance(raw, list) else []
+        prs_error = None if isinstance(raw, list) else "prs_parse"
+    else:
+        prs = list(prs_payload)
+        prs_error = None
+
+    overall = (score.get("overall") or {}) if not score_error else {}
+    cash = (score.get("cash_fee_yes") or {}) if not score_error else {}
     letter = overall.get("letter")
     cash_ok = bool(cash.get("ok")) if cash else False
     fee_yes = funnel.get("fee_yes_count")
@@ -102,17 +143,33 @@ def build_value_center(score: dict, prs: list[dict], funnel: dict) -> dict:
     dial = DIAL_CARD.exists()
     sheet = CALL_SHEET.exists()
 
-    # Purpose = what the system DOES (Stacey/Beer), not aspirations
+    # Purpose = what the system DOES (Stacey/Beer), not aspirations.
+    # cleared_non_owner_cash must track validated cash_ok — not raw activity.
     purpose_does = {
         "paper_lab": True,
         "live_trading_deployed": False,
-        "cleared_non_owner_cash": (live_cash or 0) > 0 or (fee_yes or 0) > 0,
+        "cleared_non_owner_cash": cash_ok,
         "overall_letter": letter,
         "cash_ok": cash_ok,
+        "raw_live_cash_usd": live_cash,
+        "raw_fee_yes_count": fee_yes,
     }
 
-    # Coherence gaps: autonomy without coordination / false value claims
-    gaps: list[dict] = []
+    gaps: list[dict[str, str]] = []
+    if score_error:
+        gaps.append(
+            {
+                "id": "evidence_unavailable",
+                "detail": f"scorecard unavailable: {score.get('error')}",
+            }
+        )
+    if prs_error:
+        gaps.append(
+            {
+                "id": "evidence_unavailable",
+                "detail": f"open_prs unavailable: {prs_error}",
+            }
+        )
     if letter in {"A", "A+", "A-"} and not cash_ok:
         gaps.append(
             {
@@ -136,9 +193,6 @@ def build_value_center(score: dict, prs: list[dict], funnel: dict) -> dict:
         )
 
     residual = "cash_fee_yes" if not cash_ok else "maintain"
-    if any((p.get("mergeStateStatus") == "BLOCKED") and "fail" in str(p).lower() for p in prs):
-        # Prefer CI heal only when we know required fails — keep cash primary
-        pass
 
     questions = {
         "what_value_am_i_delivering": {
@@ -153,12 +207,14 @@ def build_value_center(score: dict, prs: list[dict], funnel: dict) -> dict:
                 "fee_yes_count": fee_yes,
                 "live_cash_usd": live_cash,
                 "drafts_prepaid": drafts,
+                "scorecard_error": score.get("error") if score_error else None,
             },
         },
         "how_do_we_coordinate": {
             "answer": "Linear claim + Obsidian vault + GitHub PR/worktree (three-bus)",
             "evidence": {
                 "open_prs": open_n,
+                "prs_error": prs_error,
                 "prs": [
                     {
                         "n": p.get("number"),
