@@ -478,6 +478,11 @@ def main(argv: list[str] | None = None) -> int:
         help="AgentZip FORMAT: worktree fan-out memory budget + shared template fingerprint",
     )
     parser.add_argument(
+        "--pair-fleet",
+        action="store_true",
+        help="NVIDIA PAIR FORMAT fleet inventory / routing status",
+    )
+    parser.add_argument(
         "--search-stack",
         action="store_true",
         help="LinkedIn search-stack FORMAT pipeline (understand→retrieve→rank)",
@@ -567,6 +572,19 @@ def main(argv: list[str] | None = None) -> int:
         out = _eval_summary()
         out["skill"] = "/trading-ralph-gsd-24-7"
         out["tick"] = "eval_ledger"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and not out.get("ok"):
+            return 2
+        return 0
+
+    if args.pair_fleet:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from pair_fleet_router import inventory as _pair_inv
+
+        out = _pair_inv()
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "pair_fleet"
         print(json.dumps(out, indent=2, sort_keys=True))
         if args.strict and not out.get("ok"):
             return 2

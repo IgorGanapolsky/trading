@@ -42,11 +42,11 @@ def run_integrated(
 ) -> dict:
     from agent_fanout_memory import evaluate as fanout_eval  # noqa: I001
     from astra_harness_gate import evaluate as astra_gate
-    from search_stack_pipeline import run_pipeline as search_stack
     from eval_first_ledger import summary as eval_summary
     from hydrafusion_execute import execute as hydra_execute
     from hydrafusion_route import route as hydra_route
     from ops_daily_brief import build_brief
+    from pair_fleet_router import inventory as pair_inventory
     from ralph_gsd_tick import (
         _open_prs,
         _phase_loop,
@@ -56,6 +56,7 @@ def run_integrated(
         write_context,
         write_state as _write_state,
     )
+    from search_stack_pipeline import run_pipeline as search_stack
 
     observe = {}
     observe["ops_brief"] = _safe(
@@ -64,6 +65,7 @@ def run_integrated(
     )
     observe["eval_ledger"] = _safe("eval_ledger", eval_summary)
     observe["fanout_memory"] = _safe("fanout_memory", fanout_eval)
+    observe["pair_fleet"] = _safe("pair_fleet", pair_inventory)
 
     score = _scorecard()
     prs = _open_prs()
