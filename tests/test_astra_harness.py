@@ -30,7 +30,9 @@ def test_doc_exists():
 def test_notes_search_across_windows(tmp_path: Path):
     mod = _load("astra_session_notes")
     path = tmp_path / "notes.jsonl"
-    mod.append_note(text="put credit kill switch gate", kind="requirement", window_id="w1", path=path)
+    mod.append_note(
+        text="put credit kill switch gate", kind="requirement", window_id="w1", path=path
+    )
     mod.append_note(text="pytest hydrafusion passed", kind="test_result", window_id="w2", path=path)
     hits = mod.search_notes("kill switch", path=path)
     assert hits and hits[0]["window_id"] == "w1"

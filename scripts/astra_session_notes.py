@@ -129,14 +129,16 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("summary")
     args = p.parse_args(argv)
     if args.cmd == "add":
-        row = append_note(
-            text=args.text, kind=args.kind, window_id=args.window_id, tags=args.tag
-        )
+        row = append_note(text=args.text, kind=args.kind, window_id=args.window_id, tags=args.tag)
         print(json.dumps(row, indent=2, sort_keys=True))
         return 0
     if args.cmd == "search":
         hits = search_notes(args.query, kind=args.kind, limit=args.limit)
-        print(json.dumps({"ok": bool(hits), "query": args.query, "hits": hits}, indent=2, sort_keys=True))
+        print(
+            json.dumps(
+                {"ok": bool(hits), "query": args.query, "hits": hits}, indent=2, sort_keys=True
+            )
+        )
         if args.strict and not hits:
             return 2
         return 0

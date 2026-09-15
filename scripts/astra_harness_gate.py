@@ -79,7 +79,9 @@ def evaluate(*, proposed_action: str = "", primary_model: str = "") -> dict:
             "ok": True,  # informational — caller must honor
             "needs_confirm": needs_confirm,
             "action": action or None,
-            "detail": "recommend_only / human confirm required" if needs_confirm else "non-consequential",
+            "detail": "recommend_only / human confirm required"
+            if needs_confirm
+            else "non-consequential",
         }
     )
 
@@ -115,7 +117,12 @@ def evaluate(*, proposed_action: str = "", primary_model: str = "") -> dict:
         }
     )
 
-    hard = [c for c in checks if c["id"] in {"searchable_notes_rail", "no_astra_api_primary", "offensive_cyber_blocked"} and not c["ok"]]
+    hard = [
+        c
+        for c in checks
+        if c["id"] in {"searchable_notes_rail", "no_astra_api_primary", "offensive_cyber_blocked"}
+        and not c["ok"]
+    ]
     return {
         "ok": len(hard) == 0,
         "framework": "astra_harness_gate",
