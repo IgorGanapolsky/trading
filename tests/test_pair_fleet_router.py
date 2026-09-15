@@ -138,3 +138,39 @@ def test_upstream_doctor_cli():
     data = json.loads(r.stdout)
     assert data["framework"] == "pair_upstream_doctor"
     assert data["source"]["github"].endswith("Personal-AI-Router")
+
+
+def test_select_requires_exact_model_not_family():
+    mod = _load()
+    inv = {
+        "nodes": [
+            {
+                "id": "s25-termux-ollama",
+                "kind": "elastic_phone",
+                "ready": True,
+                "models": ["qwen2.5:1.5b-instruct"],
+                "latency_ms": 10,
+                "base_url": "http://192.168.12.237:11434",
+            }
+        ]
+    }
+    assert mod.select_node(inv, model="qwen2.5:3b-hermes-64k") is None
+
+
+def test_s25_update_preserves_default_nodes(tmp_path, monkeypatch):
+    import importlib.util
+    import sys
+
+    path = ROOT / "scripts" / "pair_s25_termux_node.py"
+    spec = importlib.util.spec_from_file_location("pair_s25_termux_node", path)
+    assert spec and spec.loader
+    s25 = importlib.util.module_from_spec(spec)
+    sys.path.insert(0, str(ROOT / "scripts"))
+    nodes_path = tmp_path / "pair_fleet_nodes.json"
+    spec.loader.exec_module(s25)
+    monkeypatch.setattr(s25, "NODES", nodes_path)
+    s25.update_nodes_config("192.168.12.237", ready=False, models=[])
+    data = json.loads(nodes_path.read_text())
+    ids = {n["id"] for n in data["nodes"]}
+    assert "mac-pair-local" in ids or "mac-ollama-engine" in ids
+    assert "s25-termux-ollama" in ids

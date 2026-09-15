@@ -89,14 +89,25 @@ def probe(host: str, port: int = 11434) -> dict:
 
 
 def update_nodes_config(host: str, *, ready: bool, models: list | None = None) -> None:
+    """Upsert S25 node without wiping DEFAULT Mac PAIR/Ollama entries on first probe."""
+    # Import lazily to avoid circular import at module load.
+    from pair_fleet_router import DEFAULT_NODES  # noqa: I001
+
     NODES.parent.mkdir(parents=True, exist_ok=True)
-    payload = {"nodes": [], "updated_at": datetime.now(UTC).isoformat()}
     if NODES.exists():
         try:
             payload = json.loads(NODES.read_text())
+            nodes = list(payload.get("nodes") or [])
         except json.JSONDecodeError:
-            pass
-    nodes = payload.get("nodes") or []
+            nodes = list(DEFAULT_NODES)
+            payload = {"nodes": nodes}
+    else:
+        # Seed defaults so probing the phone does not erase mac-pair-local / mac-ollama-engine.
+        nodes = list(DEFAULT_NODES)
+        payload = {"nodes": nodes}
+    # If file existed but was empty, still seed defaults once.
+    if not nodes:
+        nodes = list(DEFAULT_NODES)
     found = False
     for n in nodes:
         if n.get("id") == "s25-termux-ollama":

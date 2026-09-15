@@ -182,8 +182,8 @@ def select_node(inv: dict, *, model: str) -> dict | None:
         if not n.get("ready"):
             continue
         names = n.get("models") or []
-        # exact or prefix match (qwen2.5:3b-hermes-64k vs tags)
-        if any(model == m or model in m or m.startswith(model.split(":")[0]) for m in names):
+        # Exact / same-tag variants only — do NOT match whole model family (qwen2.5:*).
+        if any(m == model or m.startswith(model + ":") or m.startswith(model + "-") for m in names):
             # Prefer official PAIR proxy over direct engine / phone
             prefer = (
                 0
