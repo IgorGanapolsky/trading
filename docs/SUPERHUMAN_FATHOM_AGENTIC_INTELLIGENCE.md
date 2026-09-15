@@ -2,7 +2,7 @@
 
 **Author**: Antigravity (CTO) | **Recipient**: Igor Ganapolsky (CEO)  
 **Reference Event**: Superhuman Acquisition of Fathom AI Notetaker (September 14, 2026)  
-**Implementation**: [`scripts/agentic_voice_action_bridge.py`](scripts/agentic_voice_action_bridge.py)
+**Implementation**: [`../scripts/agentic_voice_action_bridge.py`](../scripts/agentic_voice_action_bridge.py)
 
 ---
 
@@ -59,7 +59,7 @@ flowchart TD
 ### Pattern 3: Deal Extraction & MAO Underwriting Integration
 
 - **The Insight**: For real estate and B2B deals, conversations contain property addresses, budget caps, and price points.
-- **Our Implementation**: Extracts addresses (e.g., `5236 NW 117th Ave, Coral Springs, FL`) and dollar amounts, instantly routing them to [`fast_cash_deal_scout.py`](../RealEstate/scripts/fast_cash_deal_scout.py) for Maximum Allowable Offer (MAO) calculation.
+- **Our Implementation**: The bridge extracts addresses (e.g., `5236 NW 117th Ave, Coral Springs, FL`) and dollar amounts into structured packet data, writing JSON and Markdown outputs ready for downstream deal scouting and CRM workflows.
 
 ### Pattern 4: Zero-Friction Institutional RAG Memory
 

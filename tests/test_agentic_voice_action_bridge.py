@@ -63,3 +63,59 @@ def test_save_packet_generates_json_and_markdown(tmp_path: Path):
     assert "Security Ops Sync" in content
     assert "Linear Tasks" in content
     assert "Superhuman Follow-Up Email" in content
+
+
+def test_parse_transcript_no_action_items_fallback(tmp_path: Path):
+    bridge = AgenticVoiceActionBridge(output_dir=tmp_path)
+    raw_transcript = "Igor: Good morning everyone.\nAlice: Good morning, nice weather today."
+    packet = bridge.parse_transcript(raw_transcript, meeting_title="Casual Hello")
+
+    assert packet.action_items == []
+    assert packet.linear_tasks == []
+    assert len(packet.follow_up_emails) == 1
+    assert packet.follow_up_emails[0].recipient_name == "Alice"
+    assert "Thank you for the productive discussion" in packet.follow_up_emails[0].body
+    assert any("No explicit action items" in lesson for lesson in packet.institutional_lessons)
+
+
+def test_save_packet_auto_slug_with_timestamp(tmp_path: Path):
+    bridge = AgenticVoiceActionBridge(output_dir=tmp_path)
+    packet = bridge.parse_transcript("Igor: Review trade ledger.", meeting_title="Trading Review")
+    md_path = bridge.save_packet(packet)
+    assert md_path.exists()
+    assert "trading_review" in md_path.name
+
+
+def test_deal_extraction_with_unrelated_price(tmp_path: Path):
+    bridge = AgenticVoiceActionBridge(output_dir=tmp_path)
+    raw_transcript = "Igor: The book cost $25 at the airport bookstore."
+    packet = bridge.parse_transcript(raw_transcript, meeting_title="Book Discussion")
+    assert len(packet.deal_updates) == 0
+
+
+def test_main_doctor(capsys):
+    import sys
+    from scripts.agentic_voice_action_bridge import main
+
+    orig_argv = sys.argv
+    try:
+        sys.argv = ["agentic_voice_action_bridge.py", "--doctor"]
+        main()
+        captured = capsys.readouterr()
+        assert "Agentic Voice & Meeting Action Bridge: ONLINE" in captured.out
+    finally:
+        sys.argv = orig_argv
+
+
+def test_main_sample_execution(capsys):
+    import sys
+    from scripts.agentic_voice_action_bridge import main
+
+    orig_argv = sys.argv
+    try:
+        sys.argv = ["agentic_voice_action_bridge.py"]
+        main()
+        captured = capsys.readouterr()
+        assert "Generated Sample Action Packet" in captured.out
+    finally:
+        sys.argv = orig_argv

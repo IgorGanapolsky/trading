@@ -81,11 +81,24 @@ class AgenticVoiceActionBridge:
         # 1. Extract Participants
         participants = set()
         for line in lines:
-            match = re.match(r"^([A-Z][a-zA-Z\s]+):", line)
+            match = re.match(r"^([A-Z][a-zA-Z\s\(\)]+):", line)
             if match:
-                participants.add(match.group(1).strip())
+                clean_name = re.sub(r"\s*\(.*?\)", "", match.group(1)).strip()
+                if clean_name:
+                    participants.add(clean_name)
         if not participants:
             participants = {"Igor", "Client/Partner"}
+
+        # Host vs External deterministic identification
+        host_names = {"igor", "igor ganapolsky", "agy", "antigravity", "trading-agent"}
+        external_participants = [
+            p for p in sorted(list(participants)) if p.strip().lower() not in host_names
+        ]
+        primary_recipient = (
+            external_participants[0]
+            if external_participants
+            else (sorted(list(participants))[0] if participants else "Partner")
+        )
 
         # 2. Extract Action Items
         action_items: list[ActionItem] = []
@@ -110,16 +123,8 @@ class AgenticVoiceActionBridge:
                 if "trio" in lower or "stephanie" in lower:
                     owner = "Stephanie"
                 elif "client" in lower or "partner" in lower:
-                    owner = "Partner"
+                    owner = primary_recipient
                 action_items.append(ActionItem(description=clean_desc, owner=owner))
-
-        # Default fallback if no explicit action item detected
-        if not action_items:
-            action_items.append(
-                ActionItem(
-                    description="Review transcript sync & confirm next milestones", owner="Igor"
-                )
-            )
 
         # 3. Formulate Linear Tasks
         linear_tasks: list[LinearTaskDraft] = []
@@ -141,17 +146,21 @@ class AgenticVoiceActionBridge:
         recipient_email = email_matches[0] if email_matches else "partner@example.com"
 
         # Build concise high-velocity follow up body
-        items_bullets = "\n".join([f"• {act.description}" for act in action_items])
+        if action_items:
+            items_bullets = "\n".join([f"• {act.description}" for act in action_items])
+            action_section = f"Here are the agreed next steps:\n{items_bullets}\n\nWe are driving these forward immediately."
+        else:
+            action_section = "Thank you for the productive discussion. We will be in touch shortly with any next milestones."
+
         email_body = (
-            f"Hi there,\n\n"
+            f"Hi {primary_recipient},\n\n"
             f"Great connecting today during our {meeting_title}.\n\n"
-            f"Here are the agreed next steps:\n{items_bullets}\n\n"
-            f"We are driving these forward immediately. Let us know if you need anything else adjusted.\n\n"
+            f"{action_section} Let us know if you need anything else adjusted.\n\n"
             f"Best,\nIgor Ganapolsky"
         )
         follow_up_emails.append(
             FollowUpEmailDraft(
-                recipient_name=list(participants)[0] if participants else "Partner",
+                recipient_name=primary_recipient,
                 recipient_email=recipient_email,
                 subject=f"Next Steps & Summary: {meeting_title}",
                 body=email_body,
@@ -167,17 +176,35 @@ class AgenticVoiceActionBridge:
             re.IGNORECASE,
         )
         price_match = re.search(r"\$(\d{1,3}(?:,\d{3})+|\d+)", raw_transcript)
+        has_deal_context = any(
+            kw in raw_transcript.lower()
+            for kw in [
+                "property",
+                "house",
+                "distressed",
+                "buy box",
+                "mao",
+                "purchase",
+                "arv",
+                "rehab",
+                "terms",
+                "inspection",
+                "offer",
+            ]
+        )
 
-        if addr_match or price_match:
+        if addr_match or (price_match and has_deal_context):
             deal_updates.append(
                 DealUpdate(
                     property_address=addr_match.group(1) if addr_match else None,
-                    client_name=list(participants)[0] if participants else "Buyer",
-                    agreed_terms="Cash purchase / Assignment with 14-day inspection",
+                    client_name=primary_recipient,
+                    agreed_terms="Cash purchase / Assignment review" if has_deal_context else None,
                     mao_or_budget=float(price_match.group(1).replace(",", ""))
                     if price_match
                     else None,
-                    next_step="Send formal 1-page LOI / Deal Dossier",
+                    next_step="Send formal 1-page LOI / Deal Dossier"
+                    if has_deal_context
+                    else "Clarify deal parameters",
                 )
             )
 
@@ -186,9 +213,11 @@ class AgenticVoiceActionBridge:
             f"Meeting '{meeting_title}' codified {len(action_items)} action items and {len(linear_tasks)} Linear tasks.",
             "Fast follow-up email prepared for 1-click dispatch under <15 minute SLA.",
         ]
+        if not action_items:
+            lessons.append("No explicit action items identified in transcript.")
 
         # Summary
-        summary = f"Sync with {', '.join(participants)}. Extracted {len(action_items)} action items, {len(linear_tasks)} Linear tasks, and {len(deal_updates)} deal updates."
+        summary = f"Sync with {', '.join(sorted(list(participants)))}. Extracted {len(action_items)} action items, {len(linear_tasks)} Linear tasks, and {len(deal_updates)} deal updates."
 
         packet = MeetingActionPacket(
             meeting_title=meeting_title,
@@ -205,9 +234,23 @@ class AgenticVoiceActionBridge:
         return packet
 
     def save_packet(self, packet: MeetingActionPacket, slug: Optional[str] = None) -> Path:
-        slug = slug or re.sub(r"[^\w\-]", "_", packet.meeting_title.lower())
-        json_path = self.output_dir / f"{slug}_action_packet.json"
-        md_path = self.output_dir / f"{slug}_action_packet.md"
+        out_dir = self.output_dir.resolve()
+        if slug:
+            safe_slug = re.sub(r"[^\w\-]", "_", slug).strip("_")
+            if not safe_slug:
+                safe_slug = "meeting"
+        else:
+            base_slug = (
+                re.sub(r"[^\w\-]", "_", packet.meeting_title.lower()).strip("_") or "meeting"
+            )
+            ts_clean = re.sub(r"[^\w\-]", "_", packet.timestamp)[:19]
+            safe_slug = f"{base_slug}_{ts_clean}"
+
+        json_path = (out_dir / f"{safe_slug}_action_packet.json").resolve()
+        md_path = (out_dir / f"{safe_slug}_action_packet.md").resolve()
+
+        if not str(json_path).startswith(str(out_dir)) or not str(md_path).startswith(str(out_dir)):
+            raise ValueError(f"Target path escapes output directory boundary: {safe_slug}")
 
         with open(json_path, "w", encoding="utf-8") as f:
             json.dump(asdict(packet), f, indent=2)
