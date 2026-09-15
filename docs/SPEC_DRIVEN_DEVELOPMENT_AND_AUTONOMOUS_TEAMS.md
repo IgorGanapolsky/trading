@@ -5,7 +5,7 @@
 
 - _"When Spec-Driven Development Pays Off"_ by Nitin Garg
 - _"Beyond Autonomous Teams: Value Centers & Dependency Invariants"_  
-  **Implementation**: [`scripts/spec_conformance_evaluator.py`](file:///Users/igorganapolsky/workspace/git/igor/trading/scripts/spec_conformance_evaluator.py) & [`specs/trading_invariants.spec.json`](file:///Users/igorganapolsky/workspace/git/igor/trading/specs/trading_invariants.spec.json)
+  **Implementation**: [`../scripts/spec_conformance_evaluator.py`](../scripts/spec_conformance_evaluator.py) & [`../specs/trading_invariants.spec.json`](../specs/trading_invariants.spec.json)
 
 ---
 
