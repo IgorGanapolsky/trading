@@ -28,9 +28,7 @@ CALL_SHEET = RE_LANE / "outreach" / "CALL_SHEET_VERIFIED.md"
 PLANNING = ROOT / ".planning"
 DRIFT_LOG = PLANNING / "DRIFT_LOG.md"
 
-INV_ROW = re.compile(
-    r"\|\s*(INV_[A-Za-z0-9_]+)\s*\|\s*([^|]+)\|\s*([^|]+)\|"
-)
+INV_ROW = re.compile(r"\|\s*(INV_[A-Za-z0-9_]+)\s*\|\s*([^|]+)\|\s*([^|]+)\|")
 
 
 def _sh(args: list[str], timeout: int = 90) -> subprocess.CompletedProcess:
@@ -226,7 +224,9 @@ def review(*, write_log: bool = True) -> dict:
                 f"— attribution: {d['attribution']}"
             )
         lines.append("")
-        prior = DRIFT_LOG.read_text() if DRIFT_LOG.exists() else "# DRIFT_LOG — attributed findings\n\n"
+        prior = (
+            DRIFT_LOG.read_text() if DRIFT_LOG.exists() else "# DRIFT_LOG — attributed findings\n\n"
+        )
         DRIFT_LOG.write_text(prior.rstrip() + "\n" + "\n".join(lines))
         out["drift_log"] = str(DRIFT_LOG)
 
