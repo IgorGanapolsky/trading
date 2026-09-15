@@ -1,0 +1,176 @@
+"""Tests for NVIDIA PAIR FORMAT fleet router."""
+
+from __future__ import annotations
+
+import importlib.util
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def _load():
+    path = ROOT / "scripts" / "pair_fleet_router.py"
+    spec = importlib.util.spec_from_file_location("pair_fleet_router", path)
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_doc_exists():
+    text = (ROOT / "docs" / "PAIR_FLEET.md").read_text()
+    assert "PAIR" in text
+    assert "independent" in text.lower()
+    assert "S25" in text or "Galaxy" in text or "phone" in text.lower()
+
+
+def test_select_prefers_pair_proxy():
+    mod = _load()
+    inv = {
+        "nodes": [
+            {
+                "id": "s25-termux-ollama",
+                "kind": "elastic_phone",
+                "ready": True,
+                "models": ["qwen2.5:3b-hermes-64k"],
+                "latency_ms": 10,
+                "base_url": "http://192.168.12.237:11434",
+            },
+            {
+                "id": "mac-pair-local",
+                "kind": "nvidia_pair_proxy",
+                "ready": True,
+                "models": ["qwen2.5:3b-hermes-64k"],
+                "latency_ms": 50,
+                "base_url": "http://127.0.0.1:11434",
+            },
+        ]
+    }
+    node = mod.select_node(inv, model="qwen2.5:3b-hermes-64k")
+    assert node is not None
+    assert node["id"] == "mac-pair-local"
+
+
+def test_inventory_cli():
+    r = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "pair_fleet_router.py"), "inventory"],
+        cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, r.stderr
+    data = json.loads(r.stdout)
+    assert data["framework"] == "pair_fleet_router"
+    assert "nodes" in data
+    assert isinstance(data["nodes"], list)
+    assert data["ready_count"] >= 0
+    # CI runners usually have no local PAIR/Ollama — do not require ready_count >= 1.
+
+
+def test_chat_routes_when_pair_up():
+    inv = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "pair_fleet_router.py"), "inventory"],
+        cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert inv.returncode == 0, inv.stderr
+    inv_data = json.loads(inv.stdout)
+    if inv_data.get("ready_count", 0) < 1:
+        # Fail-closed JSON path when no node is up (CI / laptop without PAIR).
+        r = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts" / "pair_fleet_router.py"),
+                "chat",
+                "--model",
+                "qwen2.5:3b-hermes-64k",
+                "--prompt",
+                "Reply with exactly: PAIR_OK",
+            ],
+            cwd=str(ROOT),
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        assert r.returncode == 0, r.stderr
+        data = json.loads(r.stdout)
+        assert data["ok"] is False
+        return
+
+    r = subprocess.run(
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "pair_fleet_router.py"),
+            "chat",
+            "--model",
+            "qwen2.5:3b-hermes-64k",
+            "--prompt",
+            "Reply with exactly: PAIR_OK",
+        ],
+        cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, r.stderr
+    data = json.loads(r.stdout)
+    assert data["ok"] is True
+    assert "PAIR_OK" in (data.get("content") or "")
+    assert data["node"]["id"]
+
+
+def test_upstream_doctor_cli():
+    r = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "pair_upstream_doctor.py")],
+        cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, r.stderr
+    data = json.loads(r.stdout)
+    assert data["framework"] == "pair_upstream_doctor"
+    assert data["source"]["github"].endswith("Personal-AI-Router")
+
+
+def test_select_requires_exact_model_not_family():
+    mod = _load()
+    inv = {
+        "nodes": [
+            {
+                "id": "s25-termux-ollama",
+                "kind": "elastic_phone",
+                "ready": True,
+                "models": ["qwen2.5:1.5b-instruct"],
+                "latency_ms": 10,
+                "base_url": "http://192.168.12.237:11434",
+            }
+        ]
+    }
+    assert mod.select_node(inv, model="qwen2.5:3b-hermes-64k") is None
+
+
+def test_s25_update_preserves_default_nodes(tmp_path, monkeypatch):
+    import importlib.util
+    import sys
+
+    path = ROOT / "scripts" / "pair_s25_termux_node.py"
+    spec = importlib.util.spec_from_file_location("pair_s25_termux_node", path)
+    assert spec and spec.loader
+    s25 = importlib.util.module_from_spec(spec)
+    sys.path.insert(0, str(ROOT / "scripts"))
+    nodes_path = tmp_path / "pair_fleet_nodes.json"
+    spec.loader.exec_module(s25)
+    monkeypatch.setattr(s25, "NODES", nodes_path)
+    s25.update_nodes_config("192.168.12.237", ready=False, models=[])
+    data = json.loads(nodes_path.read_text())
+    ids = {n["id"] for n in data["nodes"]}
+    assert "mac-pair-local" in ids or "mac-ollama-engine" in ids
+    assert "s25-termux-ollama" in ids

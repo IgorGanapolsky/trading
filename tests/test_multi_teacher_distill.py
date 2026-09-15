@@ -53,6 +53,59 @@ def test_offline_fails_when_cold(tmp_path: Path, monkeypatch):
     assert out.get("error") == "offline_cache_incomplete"
 
 
+def test_cli_offline_strict_does_not_refill(tmp_path: Path, monkeypatch, capsys):
+    mod = _load()
+    monkeypatch.setattr(mod, "CACHE_ROOT", tmp_path / "cli_cold")
+    code = mod.main(["--demo", "--mode", "offline", "--strict"])
+    captured = capsys.readouterr()
+    assert code == 2, captured.out
+    data = json.loads(captured.out)
+    assert data["ok"] is False
+    assert "second_pass_teacher_calls" not in data
+    assert data["cache_amortization"]["status"] == "skipped_amortization"
+    assert data.get("error") == "offline_cache_incomplete"
+
+
+def test_shard_key_is_per_example(tmp_path: Path, monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "CACHE_ROOT", tmp_path / "shards")
+    examples = mod.demo_examples()
+    first = mod.distill(examples, teacher_ids=["relevance"], mode="auto")
+    assert first["ok"] is True
+    # Mutate only ex3 — ex1/ex2 shards must still hit
+    examples[2] = {**examples[2], "snippet": "changed unrelated marketing notes"}
+    second = mod.distill(examples, teacher_ids=["relevance"], mode="auto")
+    assert second["cache_hits"] >= 2
+    assert second["teacher_calls"] == 1
+
+
+def test_shard_id_blocks_path_traversal(tmp_path: Path, monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "CACHE_ROOT", tmp_path / "safe")
+    evil = {"id": "../../escaped", "query": "x", "path": "a.md", "snippet": "b", "severity": "info"}
+    out = mod.distill([evil], teacher_ids=["relevance"], mode="online")
+    assert out["ok"] is True
+    # Shard must live under CACHE_ROOT, not escaped
+    written = list((tmp_path / "safe").rglob("*.json"))
+    assert written
+    for path in written:
+        assert tmp_path / "safe" in path.parents or path.parent == tmp_path / "safe"
+
+
+def test_duplicate_example_ids_rejected(tmp_path: Path, monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "CACHE_ROOT", tmp_path / "dup")
+    examples = [
+        {"id": 1, "query": "a", "path": "a.md", "snippet": "a", "severity": "info"},
+        {"id": "1", "query": "b", "path": "b.md", "snippet": "b", "severity": "info"},
+    ]
+    try:
+        mod.distill(examples, teacher_ids=["relevance"], mode="online")
+        raise AssertionError("expected duplicate id ValueError")
+    except ValueError as exc:
+        assert "duplicate example id" in str(exc)
+
+
 def test_pluggable_teacher_version_isolation(tmp_path: Path, monkeypatch):
     mod = _load()
     monkeypatch.setattr(mod, "CACHE_ROOT", tmp_path / "iso")
