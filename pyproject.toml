@@ -33,11 +33,11 @@ dev = [
   "pytest-asyncio>=1.4.0,<2.0.0",
   "pytest-cov>=7.1.0,<8.0.0",
   "pytest-timeout>=2.4.0,<3.0.0",
-  "ruff>=0.16.6,<1.0.0",
+  "ruff>=0.16.7,<1.0.0",
 ]
 rag = [
   "lancedb>=0.38.0,<1.0.0",
-  "scikit-learn>=1.9.0,<2.0.0",
+  "scikit-learn>=1.9.1,<2.0.0",
   "sentence-transformers>=6.0.1,<7.0.0",
 ]
 research = [
