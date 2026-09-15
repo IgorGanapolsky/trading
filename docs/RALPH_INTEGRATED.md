@@ -28,3 +28,5 @@ Each fire automatically runs:
 
 Paste CLI blocks for Igor. The agent or LaunchAgent runs the entrypoint and
 reports outcomes (JSON path, residual, recommends).
+
+Committed template: `scripts/launchd/com.igor.trading.ralph-gsd-integrated.plist.example` (no machine `/Users` paths).

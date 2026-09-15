@@ -1,17 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!-- Repo template: scrubbed /Users/.../ paths (LL-588). Expand to real HOME when
-     installing into ~/Library/LaunchAgents — do not commit machine-specific paths. -->
 <plist version="1.0">
 <dict>
   <key>Label</key>
   <string>com.igor.trading.ralph-gsd-integrated</string>
   <key>WorkingDirectory</key>
-  <string>/Users/.../workspace/git/igor/trading</string>
+  <string>__TRADING_ROOT__</string>
   <key>ProgramArguments</key>
   <array>
-    <string>/Users/.../workspace/git/igor/trading/.venv/bin/python</string>
-    <string>/Users/.../workspace/git/igor/trading/scripts/ralph_gsd_integrated_tick.py</string>
+    <string>__TRADING_ROOT__/.venv/bin/python</string>
+    <string>__TRADING_ROOT__/scripts/ralph_gsd_integrated_tick.py</string>
     <string>--no-log</string>
   </array>
   <key>StartInterval</key>
@@ -19,15 +17,15 @@
   <key>RunAtLoad</key>
   <true/>
   <key>StandardOutPath</key>
-  <string>/Users/.../Library/Logs/trading/ralph-gsd-integrated.out</string>
+  <string>__HOME__/Library/Logs/trading/ralph-gsd-integrated.out</string>
   <key>StandardErrorPath</key>
-  <string>/Users/.../Library/Logs/trading/ralph-gsd-integrated.err</string>
+  <string>__HOME__/Library/Logs/trading/ralph-gsd-integrated.err</string>
   <key>EnvironmentVariables</key>
   <dict>
     <key>PATH</key>
     <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
     <key>HOME</key>
-    <string>/Users/...</string>
+    <string>__HOME__</string>
   </dict>
 </dict>
 </plist>
