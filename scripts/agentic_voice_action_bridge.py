@@ -13,7 +13,7 @@ import json
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 
 @dataclass
@@ -40,7 +40,7 @@ class FollowUpEmailDraft:
     recipient_email: str
     subject: str
     body: str
-    action_items_included: List[str] = field(default_factory=list)
+    action_items_included: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -56,13 +56,13 @@ class DealUpdate:
 class MeetingActionPacket:
     meeting_title: str
     timestamp: str
-    participants: List[str]
+    participants: list[str]
     summary: str
-    action_items: List[ActionItem]
-    linear_tasks: List[LinearTaskDraft]
-    follow_up_emails: List[FollowUpEmailDraft]
-    deal_updates: List[DealUpdate]
-    institutional_lessons: List[str]
+    action_items: list[ActionItem]
+    linear_tasks: list[LinearTaskDraft]
+    follow_up_emails: list[FollowUpEmailDraft]
+    deal_updates: list[DealUpdate]
+    institutional_lessons: list[str]
 
 
 class AgenticVoiceActionBridge:
@@ -72,8 +72,10 @@ class AgenticVoiceActionBridge:
         self.output_dir = output_dir or Path("data/voice_actions")
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-    def parse_transcript(self, raw_transcript: str, meeting_title: str = "Voice Sync") -> MeetingActionPacket:
-        now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    def parse_transcript(
+        self, raw_transcript: str, meeting_title: str = "Voice Sync"
+    ) -> MeetingActionPacket:
+        now_iso = datetime.datetime.now(datetime.UTC).isoformat()
         lines = [line.strip() for line in raw_transcript.strip().split("\n") if line.strip()]
 
         # 1. Extract Participants
@@ -86,12 +88,24 @@ class AgenticVoiceActionBridge:
             participants = {"Igor", "Client/Partner"}
 
         # 2. Extract Action Items
-        action_items: List[ActionItem] = []
-        action_keywords = ["todo:", "action item:", "will do", "need to", "i will", "we should", "follow up with", "send", "review"]
+        action_items: list[ActionItem] = []
+        action_keywords = [
+            "todo:",
+            "action item:",
+            "will do",
+            "need to",
+            "i will",
+            "we should",
+            "follow up with",
+            "send",
+            "review",
+        ]
         for line in lines:
             lower = line.lower()
             if any(kw in lower for kw in action_keywords):
-                clean_desc = re.sub(r"^(todo:|action item:|\-|\*)\s*", "", line, flags=re.IGNORECASE).strip()
+                clean_desc = re.sub(
+                    r"^(todo:|action item:|\-|\*)\s*", "", line, flags=re.IGNORECASE
+                ).strip()
                 owner = "Igor"
                 if "trio" in lower or "stephanie" in lower:
                     owner = "Stephanie"
@@ -101,10 +115,14 @@ class AgenticVoiceActionBridge:
 
         # Default fallback if no explicit action item detected
         if not action_items:
-            action_items.append(ActionItem(description="Review transcript sync & confirm next milestones", owner="Igor"))
+            action_items.append(
+                ActionItem(
+                    description="Review transcript sync & confirm next milestones", owner="Igor"
+                )
+            )
 
         # 3. Formulate Linear Tasks
-        linear_tasks: List[LinearTaskDraft] = []
+        linear_tasks: list[LinearTaskDraft] = []
         for item in action_items:
             if item.owner.lower() in ["igor", "agy", "grok", "team"]:
                 linear_tasks.append(
@@ -118,10 +136,10 @@ class AgenticVoiceActionBridge:
                 )
 
         # 4. Formulate 1-Click Follow-Up Emails (Superhuman style)
-        follow_up_emails: List[FollowUpEmailDraft] = []
+        follow_up_emails: list[FollowUpEmailDraft] = []
         email_matches = re.findall(r"[\w\.-]+@[\w\.-]+\.\w+", raw_transcript)
         recipient_email = email_matches[0] if email_matches else "partner@example.com"
-        
+
         # Build concise high-velocity follow up body
         items_bullets = "\n".join([f"• {act.description}" for act in action_items])
         email_body = (
@@ -142,17 +160,23 @@ class AgenticVoiceActionBridge:
         )
 
         # 5. Extract Real Estate / B2B Deal Updates
-        deal_updates: List[DealUpdate] = []
-        addr_match = re.search(r"(\d+\s+[\w\s]+(?:Ave|St|Rd|Blvd|Dr|Way|Lane|Ct|NW|SW|NE|SE)[,\s]+[\w\s]+,\s*FL\s*\d{5})", raw_transcript, re.IGNORECASE)
+        deal_updates: list[DealUpdate] = []
+        addr_match = re.search(
+            r"(\d+\s+[\w\s]+(?:Ave|St|Rd|Blvd|Dr|Way|Lane|Ct|NW|SW|NE|SE)[,\s]+[\w\s]+,\s*FL\s*\d{5})",
+            raw_transcript,
+            re.IGNORECASE,
+        )
         price_match = re.search(r"\$(\d{1,3}(?:,\d{3})+|\d+)", raw_transcript)
-        
+
         if addr_match or price_match:
             deal_updates.append(
                 DealUpdate(
                     property_address=addr_match.group(1) if addr_match else None,
                     client_name=list(participants)[0] if participants else "Buyer",
                     agreed_terms="Cash purchase / Assignment with 14-day inspection",
-                    mao_or_budget=float(price_match.group(1).replace(",", "")) if price_match else None,
+                    mao_or_budget=float(price_match.group(1).replace(",", ""))
+                    if price_match
+                    else None,
                     next_step="Send formal 1-page LOI / Deal Dossier",
                 )
             )
@@ -160,7 +184,7 @@ class AgenticVoiceActionBridge:
         # 6. Extract Institutional Lessons
         lessons = [
             f"Meeting '{meeting_title}' codified {len(action_items)} action items and {len(linear_tasks)} Linear tasks.",
-            "Fast follow-up email prepared for 1-click dispatch under <15 minute SLA."
+            "Fast follow-up email prepared for 1-click dispatch under <15 minute SLA.",
         ]
 
         # Summary
@@ -210,7 +234,9 @@ class AgenticVoiceActionBridge:
 
         md.append("\n## 🎯 Linear Tasks to Dispatch")
         for t in packet.linear_tasks:
-            md.append(f"- **{t.title}** (Team: `{t.team}`, Assignee: `{t.assignee}`, Priority: {t.priority})")
+            md.append(
+                f"- **{t.title}** (Team: `{t.team}`, Assignee: `{t.assignee}`, Priority: {t.priority})"
+            )
 
         md.append("\n## ✉️ 1-Click Superhuman Follow-Up Email")
         for email in packet.follow_up_emails:
@@ -257,7 +283,9 @@ def main():
             "Igor: Excellent. I will send over the full repair scope and title verification by 3 PM.\n"
             "Stephanie: Perfect, send it to info@triobuyshousesinflorida.com and we will review immediately."
         )
-        packet = bridge.parse_transcript(sample_transcript, meeting_title="Trio Property Buyers Acquisition Sync")
+        packet = bridge.parse_transcript(
+            sample_transcript, meeting_title="Trio Property Buyers Acquisition Sync"
+        )
         saved_path = bridge.save_packet(packet)
         print(f"[✓] Generated Sample Action Packet: {saved_path}")
 

@@ -38,7 +38,9 @@ def test_parse_transcript_real_estate_deal_extraction(tmp_path: Path):
         "Igor: Let us review 5236 NW 117th Ave, Coral Springs, FL 33076.\n"
         "Stephanie: We can close at $350,000 cash if inspection passes."
     )
-    packet = bridge.parse_transcript(raw_transcript, meeting_title="Coral Springs Acquisition Review")
+    packet = bridge.parse_transcript(
+        raw_transcript, meeting_title="Coral Springs Acquisition Review"
+    )
 
     assert len(packet.deal_updates) == 1
     deal = packet.deal_updates[0]
