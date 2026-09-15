@@ -4,6 +4,7 @@
 
 **Sources:**
 
+- [GitHub NVIDIA/Personal-AI-Router](https://github.com/NVIDIA/Personal-AI-Router)
 - [NVIDIA blog](https://developer.nvidia.com/blog/nvidia-pair-virtual-inference-router-expands-available-compute-on-your-local-network/)
 - [InfoQ](https://www.infoq.com/news/2026/09/nvidia-pair-ai-task-router/)
 
@@ -37,3 +38,7 @@ Play Store Termux blocks adb `run-as` / RunCommandService. Agent writes bootstra
 - Claim multi-node without Jobs ledger showing >1 `node_id`
 - Merge GPUs / pool VRAM
 - Require harness API changes (proxy stays OpenAI/Ollama shaped)
+
+## Upstream doctor
+
+`scripts/pair_upstream_doctor.py` verifies the installed PAIR binaries and `:11434` proxy.

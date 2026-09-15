@@ -75,7 +75,9 @@ def _http_json(url: str, *, timeout: float = 2.5, data: dict | None = None) -> d
         if data is not None:
             body = json.dumps(data).encode()
             headers["Content-Type"] = "application/json"
-        req = urllib.request.Request(url, data=body, headers=headers, method="POST" if data else "GET")
+        req = urllib.request.Request(
+            url, data=body, headers=headers, method="POST" if data else "GET"
+        )
         with urllib.request.urlopen(req, timeout=timeout) as resp:  # nosec B310
             return json.loads(resp.read().decode())
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError, ValueError):
@@ -136,14 +138,24 @@ def inventory() -> dict:
             probed.append(fut.result())
     probed.sort(key=lambda n: (not n.get("ready"), n.get("id") or ""))
     ready = [n for n in probed if n.get("ready")]
+    upstream = None
+    try:
+        from pair_upstream_doctor import doctor as _doctor
+
+        upstream = _doctor(smoke=False)
+    except Exception as exc:  # noqa: BLE001
+        upstream = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+
     return {
         "ok": bool(ready),
         "framework": "pair_fleet_router",
+        "upstream_doctor": upstream,
         "stolen_format": (
             "NVIDIA PAIR FORMAT — route independent inference across local nodes; "
             "no harness API change; Jobs ledger for placement (not VRAM pooling)"
         ),
         "source": {
+            "github": "https://github.com/NVIDIA/Personal-AI-Router",
             "nvidia_blog": (
                 "https://developer.nvidia.com/blog/"
                 "nvidia-pair-virtual-inference-router-expands-available-compute-on-your-local-network/"
@@ -173,7 +185,13 @@ def select_node(inv: dict, *, model: str) -> dict | None:
         # exact or prefix match (qwen2.5:3b-hermes-64k vs tags)
         if any(model == m or model in m or m.startswith(model.split(":")[0]) for m in names):
             # Prefer official PAIR proxy over direct engine / phone
-            prefer = 0 if n.get("kind") == "nvidia_pair_proxy" else 1 if n.get("kind") == "ollama_engine" else 2
+            prefer = (
+                0
+                if n.get("kind") == "nvidia_pair_proxy"
+                else 1
+                if n.get("kind") == "ollama_engine"
+                else 2
+            )
             candidates.append((prefer, n.get("latency_ms") or 9999, n))
     if not candidates:
         return None
@@ -242,7 +260,12 @@ def chat(
         payload = _http_json(
             f"{base}/api/generate",
             timeout=120,
-            data={"model": model, "prompt": prompt, "stream": False, "options": {"num_predict": max_tokens}},
+            data={
+                "model": model,
+                "prompt": prompt,
+                "stream": False,
+                "options": {"num_predict": max_tokens},
+            },
         )
         content = (payload or {}).get("response")
         ok = content is not None
@@ -264,9 +287,7 @@ def fanout_demo(prompts: list[str], *, model: str) -> dict:
     """Independent requests in parallel — PAIR's multi-agent sweet spot."""
     results = []
     with ThreadPoolExecutor(max_workers=min(len(prompts), 4) or 1) as pool:
-        futs = [
-            pool.submit(chat, model=model, prompt=p, max_tokens=24) for p in prompts
-        ]
+        futs = [pool.submit(chat, model=model, prompt=p, max_tokens=24) for p in prompts]
         for fut in as_completed(futs):
             results.append(fut.result())
     nodes_used = sorted({(r.get("node") or {}).get("id") for r in results if r.get("ok")})

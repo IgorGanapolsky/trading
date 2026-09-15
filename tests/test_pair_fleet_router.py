@@ -92,3 +92,17 @@ def test_chat_routes_when_pair_up():
     assert data["ok"] is True
     assert "PAIR_OK" in (data.get("content") or "")
     assert data["node"]["id"]
+
+
+def test_upstream_doctor_cli():
+    r = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "pair_upstream_doctor.py")],
+        cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, r.stderr
+    data = json.loads(r.stdout)
+    assert data["framework"] == "pair_upstream_doctor"
+    assert data["source"]["github"].endswith("Personal-AI-Router")
