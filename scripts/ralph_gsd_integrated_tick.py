@@ -48,6 +48,7 @@ def run_integrated(
     from hydrafusion_execute import execute as hydra_execute
     from hydrafusion_route import route as hydra_route
     from ops_daily_brief import build_brief
+    from pair_fleet_router import inventory as pair_inventory
     from ralph_gsd_tick import (
         _open_prs,
         _phase_loop,
@@ -65,6 +66,7 @@ def run_integrated(
     )
     observe["eval_ledger"] = _safe("eval_ledger", eval_summary)
     observe["fanout_memory"] = _safe("fanout_memory", fanout_eval)
+    observe["pair_fleet"] = _safe("pair_fleet", pair_inventory)
 
     score = _scorecard()
     prs = _open_prs()

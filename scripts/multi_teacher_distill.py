@@ -25,11 +25,14 @@ import argparse
 import hashlib
 import json
 import math
+import re
 import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Callable
+
+_SAFE_ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 
 ROOT = Path(__file__).resolve().parents[1]
 CACHE_ROOT = ROOT / "data" / "runtime" / "teacher_cache"
@@ -44,11 +47,42 @@ def data_fingerprint(examples: list[dict]) -> str:
 
 
 def example_id(ex: dict) -> str:
+    """Stable id for ranking; may contain unsafe path characters — use shard_id for files."""
     if "id" in ex:
         return str(ex["id"])
     return hashlib.sha256(
         json.dumps(ex, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()[:16]
+
+
+def shard_id(ex: dict) -> str:
+    """Filesystem-safe id derived from example_id (blocks path traversal)."""
+    raw = example_id(ex)
+    if _SAFE_ID_RE.match(raw):
+        return raw
+    return hashlib.sha256(raw.encode()).hexdigest()[:16]
+
+
+def example_fingerprint(ex: dict) -> str:
+    """Per-example cache key — batch edits must not invalidate unrelated shards."""
+    return data_fingerprint([ex])
+
+
+def _shard_path(tdir: Path, efp: str, sid: str) -> Path:
+    path = (tdir / f"{efp}_{sid}.json").resolve()
+    root = tdir.resolve()
+    if path != root and root not in path.parents:
+        raise ValueError(f"shard path escapes cache root: {path}")
+    return path
+
+
+def _assert_unique_example_ids(examples: list[dict]) -> None:
+    seen: set[str] = set()
+    for ex in examples:
+        eid = example_id(ex)
+        if eid in seen:
+            raise ValueError(f"duplicate example id after normalize: {eid!r}")
+        seen.add(eid)
 
 
 @dataclass
@@ -82,7 +116,8 @@ def run_teacher(
     mode: str = "auto",  # auto | online | offline
 ) -> dict:
     """Infer or load cache. auto = fill missing shards; online = re-infer all."""
-    fp = data_fingerprint(examples)
+    _assert_unique_example_ids(examples)
+    batch_fp = data_fingerprint(examples)
     tdir = teacher.cache_dir()
     teacher_calls = 0
     cache_hits = 0
@@ -91,9 +126,11 @@ def run_teacher(
 
     for ex in examples:
         eid = example_id(ex)
-        shard = tdir / f"{fp}_{eid}.json"
+        sid = shard_id(ex)
+        efp = example_fingerprint(ex)
+        shard = _shard_path(tdir, efp, sid)
         cached = _load_shard(shard)
-        if mode != "online" and cached and cached.get("data_fp") == fp:
+        if mode != "online" and cached and cached.get("data_fp") == efp:
             outputs[eid] = cached["soft"]
             cache_hits += 1
         else:
@@ -116,17 +153,21 @@ def run_teacher(
 
     for ex in to_infer:
         eid = example_id(ex)
+        sid = shard_id(ex)
+        efp = example_fingerprint(ex)
         soft = teacher.infer(ex)
         teacher_calls += 1
         outputs[eid] = soft
-        shard = tdir / f"{fp}_{eid}.json"
+        shard = _shard_path(tdir, efp, sid)
         _save_shard(
             shard,
             {
                 "teacher_id": teacher.teacher_id,
                 "version": teacher.version,
-                "data_fp": fp,
+                "data_fp": efp,
+                "batch_fp": batch_fp,
                 "example_id": eid,
+                "shard_id": sid,
                 "soft": soft,
                 "ts": datetime.now(UTC).isoformat(),
             },
@@ -136,7 +177,7 @@ def run_teacher(
         "ok": True,
         "teacher_id": teacher.teacher_id,
         "version": teacher.version,
-        "data_fp": fp,
+        "data_fp": batch_fp,
         "mode_used": "online" if teacher_calls else "offline",
         "teacher_calls": teacher_calls,
         "cache_hits": cache_hits,
@@ -394,8 +435,23 @@ def main(argv: list[str] | None = None) -> int:
         examples = json.loads(Path(args.examples_json).read_text())
     else:
         examples = demo_examples()
-    # First pass may fill cache; second pass should show speedup
+    # First pass honors --mode (offline must not fall through to online fill).
     out1 = distill(examples, mode=args.mode)
+    if args.mode == "offline" or not out1.get("ok"):
+        out = {
+            **out1,
+            "first_pass_teacher_calls": out1.get("teacher_calls"),
+            "cache_amortization": {
+                "first_calls": out1.get("teacher_calls"),
+                "note": "offline/cold path — no auto refill",
+                "status": "skipped_amortization",
+            },
+        }
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and not out.get("ok"):
+            return 2
+        return 0
+    # Warm-cache amortization pass (auto/online only after a successful first pass)
     out2 = distill(examples, mode="auto")
     out = {
         **out2,
