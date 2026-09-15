@@ -58,3 +58,7 @@ Hard multi-constraint → full SDD (`--sdd-target` / `--spec-drift`). Throwaway 
 ## TNS duplication health (2026-09-15)
 
 AI velocity ≠ value. `ralph --dup-health` / `docs/DUP_HEALTH.md`. Prefer extract/move over copy-paste.
+
+## HydraFusion routing (2026-09-15)
+
+Single|Cascade|Critique via `ralph --hydrafusion-route`. Critic is tool-less. See `docs/HYDRAFUSION.md`.

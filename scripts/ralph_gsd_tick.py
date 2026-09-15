@@ -477,7 +477,35 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="AgentZip FORMAT: worktree fan-out memory budget + shared template fingerprint",
     )
+    parser.add_argument(
+        "--hydrafusion-route",
+        action="store_true",
+        help="HydraFusion FORMAT: Single|Cascade|Critique plan + five principles",
+    )
+    parser.add_argument("--high-risk", action="store_true")
+    parser.add_argument("--needs-review", action="store_true")
     args = parser.parse_args(argv)
+
+    if args.hydrafusion_route:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from hydrafusion_route import route as _hydrafusion_route
+
+        out = _hydrafusion_route(
+            task=args.task or "",
+            multi_constraint=args.multi_constraint,
+            regulated=args.regulated,
+            high_risk=args.high_risk,
+            throwaway=args.throwaway,
+            one_shot=args.one_shot_reliable,
+            needs_review=args.needs_review,
+        )
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "hydrafusion_route"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and not out.get("ok"):
+            return 2
+        return 0
 
     if args.fanout_memory:
         if str(ROOT / "scripts") not in sys.path:
