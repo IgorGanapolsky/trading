@@ -394,7 +394,359 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="AGENT_WORKFLOW_STACK job class for --checkpoint-pick",
     )
+    parser.add_argument(
+        "--value-center",
+        action="store_true",
+        help="InfoQ/Rohrer value-center five questions (agency+coherence)",
+    )
+    parser.add_argument(
+        "--sdd-target",
+        action="store_true",
+        help="InfoQ SDD targeting rule (full|quick|skip) for this task",
+    )
+    parser.add_argument(
+        "--spec-drift",
+        action="store_true",
+        help="InfoQ attributed drift review against docs/SPEC.md INV_*",
+    )
+    parser.add_argument(
+        "--task",
+        default="",
+        help="Task description for --sdd-target",
+    )
+    parser.add_argument("--multi-constraint", action="store_true")
+    parser.add_argument("--regulated", action="store_true")
+    parser.add_argument("--one-shot-reliable", action="store_true")
+    parser.add_argument("--throwaway", action="store_true")
+    parser.add_argument(
+        "--no-log",
+        action="store_true",
+        help="With --spec-drift, skip writing .planning/DRIFT_LOG.md",
+    )
+    parser.add_argument(
+        "--dup-health",
+        action="store_true",
+        help="TNS/GitClear duplication + moved-code maintainability probe",
+    )
+    parser.add_argument(
+        "--path",
+        action="append",
+        default=[],
+        help="Limit --dup-health scan (repeatable)",
+    )
+    parser.add_argument(
+        "--min-lines",
+        type=int,
+        default=10,
+        help="Min duplicate block size for --dup-health",
+    )
+    parser.add_argument(
+        "--git-range",
+        default=None,
+        help="Optional rev range for --dup-health moved/copy + Diff Delta proxy",
+    )
+    parser.add_argument(
+        "--churn-days",
+        type=int,
+        default=None,
+        help="With --dup-health, enable two-window retouch churn (e.g. 14)",
+    )
+    parser.add_argument(
+        "--looped-flow",
+        action="store_true",
+        help="Looped Flows FORMAT: local denoising ticks + finer --loop-steps grid",
+    )
+    parser.add_argument(
+        "--loop-steps",
+        type=int,
+        default=3,
+        help="With --looped-flow, number of local-objective steps (max 16)",
+    )
+    parser.add_argument(
+        "--seed",
+        default=None,
+        help="With --looped-flow, shared noise seed (stable residual_id)",
+    )
+    parser.add_argument(
+        "--llm-cache-stats",
+        action="store_true",
+        help="TNS LLM response-cache hit/miss stats (not provider prompt-cache)",
+    )
+    parser.add_argument(
+        "--fanout-memory",
+        action="store_true",
+        help="AgentZip FORMAT: worktree fan-out memory budget + shared template fingerprint",
+    )
+    parser.add_argument(
+        "--search-stack",
+        action="store_true",
+        help="LinkedIn search-stack FORMAT pipeline (understand→retrieve→rank)",
+    )
+    parser.add_argument(
+        "--astra-gate",
+        action="store_true",
+        help="GPT-6 Astra harness gate (notes/confirm/no-API-primary)",
+    )
+    parser.add_argument(
+        "--hydrafusion-execute",
+        action="store_true",
+        help="Execute HydraFusion Cascade/Critique plan (early-exit + isolated critic)",
+    )
+    parser.add_argument(
+        "--dry-rails",
+        action="store_true",
+        help="With --hydrafusion-execute, deterministic control-flow only",
+    )
+    parser.add_argument(
+        "--hydrafusion-route",
+        action="store_true",
+        help="HydraFusion FORMAT: Single|Cascade|Critique plan + five principles",
+    )
+    parser.add_argument("--high-risk", action="store_true")
+    parser.add_argument("--needs-review", action="store_true")
+    parser.add_argument(
+        "--integrated",
+        action="store_true",
+        help="Run full automated observe bundle (ops brief+eval+fanout+hydrafusion+pick)",
+    )
+    parser.add_argument(
+        "--ops-brief",
+        action="store_true",
+        help="Always-on agent economics: narrow ops daily brief (recommend-only)",
+    )
+    parser.add_argument(
+        "--eval-ledger",
+        action="store_true",
+        help="Eval-first ledger summary (precision by workflow)",
+    )
+    parser.add_argument(
+        "--alert-budget",
+        type=int,
+        default=5,
+        help="With --ops-brief, max alerts shown (precision > coverage)",
+    )
     args = parser.parse_args(argv)
+
+    if args.integrated:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from ralph_gsd_integrated_tick import run_integrated as _integrated
+
+        out = _integrated(
+            alert_budget=args.alert_budget,
+            log_candidates=not args.no_log,
+            write_state=args.write_state,
+            verify=args.verify,
+        )
+        print(json.dumps(out, indent=2, sort_keys=True))
+        return 0
+
+    if args.ops_brief:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from ops_daily_brief import build_brief as _ops_brief
+
+        out = _ops_brief(
+            alert_budget=args.alert_budget,
+            log_candidates=not args.no_log,
+        )
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "ops_brief"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and any(
+            a.get("severity") == "critical" for a in out.get("alerts_shown") or []
+        ):
+            return 2
+        return 0
+
+    if args.eval_ledger:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from eval_first_ledger import summary as _eval_summary
+
+        out = _eval_summary()
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "eval_ledger"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and not out.get("ok"):
+            return 2
+        return 0
+
+    if args.search_stack:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from search_stack_pipeline import run_pipeline as _search_stack
+
+        out = _search_stack(args.task or "trading search", use_cache=True)
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "search_stack"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        return 0
+
+    if args.astra_gate:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from astra_harness_gate import evaluate as _astra_gate
+
+        out = _astra_gate(
+            proposed_action=args.task or "",
+            primary_model="",
+        )
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "astra_gate"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and not out.get("ok"):
+            return 2
+        return 0
+
+    if args.hydrafusion_execute:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from hydrafusion_execute import execute as _hydra_exec
+
+        out = _hydra_exec(
+            task=args.task or "ops residual",
+            high_risk=args.high_risk,
+            multi_constraint=args.multi_constraint,
+            throwaway=args.throwaway,
+            regulated=args.regulated,
+            dry_rails=args.dry_rails,
+        )
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "hydrafusion_execute"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and not out.get("ok"):
+            return 2
+        return 0
+
+    if args.hydrafusion_route:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from hydrafusion_route import route as _hydrafusion_route
+
+        out = _hydrafusion_route(
+            task=args.task or "",
+            multi_constraint=args.multi_constraint,
+            regulated=args.regulated,
+            high_risk=args.high_risk,
+            throwaway=args.throwaway,
+            one_shot=args.one_shot_reliable,
+            needs_review=args.needs_review,
+        )
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "hydrafusion_route"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and not out.get("ok"):
+            return 2
+        return 0
+
+    if args.fanout_memory:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from agent_fanout_memory import evaluate as _fanout_memory
+
+        out = _fanout_memory()
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "fanout_memory"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and not out.get("ok"):
+            return 2
+        return 0
+
+    if args.llm_cache_stats:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from llm_response_cache import ResponseCache
+
+        cache = ResponseCache()
+        out = {
+            "skill": "/trading-ralph-gsd-24-7",
+            "tick": "llm_cache_stats",
+            "framework": "llm_response_cache",
+            "stolen_format": "TNS LLM response caching — exact-match fingerprint + TTL",
+            "stats": cache.stats(),
+        }
+        print(json.dumps(out, indent=2, sort_keys=True))
+        return 0
+
+    if args.looped_flow:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from looped_flow_tick import run_loop as _looped_flow
+
+        goal = args.goal_backward or "harness"
+        out = _looped_flow(
+            goal=goal,
+            steps=args.loop_steps,
+            shared_seed=args.seed,
+        )
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "looped_flow"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and not out.get("ok"):
+            return 2
+        return 0
+
+    if args.dup_health:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from dup_health import evaluate as _dup_health
+
+        out = _dup_health(
+            paths=args.path or None,
+            min_lines=args.min_lines,
+            git_range=args.git_range,
+            churn_days=args.churn_days,
+        )
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "dup_health"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and not out.get("ok"):
+            return 2
+        return 0
+
+    if args.sdd_target:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from sdd_targeting import target as _sdd_target
+
+        out = _sdd_target(
+            task=args.task or "unspecified",
+            multi_constraint=args.multi_constraint,
+            regulated=args.regulated,
+            one_shot_reliable=args.one_shot_reliable,
+            throwaway=args.throwaway,
+        )
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "sdd_target"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        return 0
+
+    if args.spec_drift:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from spec_drift_review import review as _spec_drift
+
+        out = _spec_drift(write_log=not args.no_log)
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "spec_drift"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and not out.get("ok"):
+            return 2
+        return 0
+
+    if args.value_center:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from value_center_status import _cash_funnel, _open_prs, _scorecard, build_value_center
+
+        out = build_value_center(_scorecard(), _open_prs(), _cash_funnel())
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "value_center"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and not out["agency_coherence"]["coherent"]:
+            return 2
+        return 0
 
     if args.checkpoint_pick:
         if str(ROOT / "scripts") not in sys.path:

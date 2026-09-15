@@ -52,3 +52,26 @@ CI/cash residuals keep moving without CEO prompts.
 
 Overall letter may only rise when Success signal’s cash half clears — never from
 harness green alone.
+
+## Named invariants (InfoQ SDD governance)
+
+> Attribution contract for drift review. Findings must cite an INV\_\* id.
+> Source: InfoQ "When Spec-Driven Development Pays off" (FORMAT steal).
+
+| ID                     | Invariant                                                   | Evidence probe                             |
+| ---------------------- | ----------------------------------------------------------- | ------------------------------------------ |
+| INV_cash_grade_honesty | Overall letter must not be A/A+/A- while cash_fee_yes unmet | scorecard overall + cash_fee_yes           |
+| INV_cash_ship_lock     | fee-yes / live_cash_usd clear before commercial A+ claims   | GSD_STATE funnel + scorecard               |
+| INV_live_blocked       | Live trading remains blocked until cohort gates             | scorecard / kill switch / SPEC Constraints |
+| INV_no_autosend        | Cold email freeze; agent never auto-sends outreach          | GSD_STATE cold_email_freeze                |
+| INV_dial_path          | While cash unmet, dial card or call sheet must exist        | DIAL_CARD_NOW or CALL_SHEET_VERIFIED       |
+| INV_ic_killed          | New iron-condor entries remain killed                       | audit_active_scope --json ok               |
+| INV_sdd_targeting      | Full SDD ceremony only for hard multi-constraint work       | sdd_targeting.py tier                      |
+| INV_attribution        | Drift findings cite INV\_\* (not "looks wrong")             | spec_drift_review.py                       |
+
+## SDD targeting rule
+
+- **Spend SDD** on: cash grade honesty, risk gates, multi-constraint harness (hard).
+- **Skip SDD ceremony** on: one-line lint, throwaway scripts, model one-shots (Quick Flow / ralph).
+
+See also: [SPEC_GOVERNANCE.md](SPEC_GOVERNANCE.md) (InfoQ five control points + RACI).
