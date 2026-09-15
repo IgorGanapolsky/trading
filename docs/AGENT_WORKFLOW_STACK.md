@@ -44,3 +44,9 @@ Picker: `python3 scripts/checkpoint_pick.py --job everyday`
 ## Honesty lock
 
 Harness `ready` / goal-backward TRUE ≠ commercial overall A+. Fee-yes ship lock stands.
+
+## Value center (InfoQ / Rohrer)
+
+Five questions every tick: value / coordinate / fit / outside / who.
+`python3 scripts/value_center_status.py` · `docs/VALUE_CENTER.md`
+Prefer **coherence** over pure autonomy. Purpose = what we do today (cash F until fee-yes).

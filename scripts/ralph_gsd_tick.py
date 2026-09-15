@@ -394,7 +394,25 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="AGENT_WORKFLOW_STACK job class for --checkpoint-pick",
     )
+    parser.add_argument(
+        "--value-center",
+        action="store_true",
+        help="InfoQ/Rohrer value-center five questions (agency+coherence)",
+    )
     args = parser.parse_args(argv)
+
+    if args.value_center:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from value_center_status import _cash_funnel, _open_prs, _scorecard, build_value_center
+
+        out = build_value_center(_scorecard(), _open_prs(), _cash_funnel())
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "value_center"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and not out["agency_coherence"]["coherent"]:
+            return 2
+        return 0
 
     if args.checkpoint_pick:
         if str(ROOT / "scripts") not in sys.path:

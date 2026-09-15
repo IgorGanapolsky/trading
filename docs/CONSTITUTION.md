@@ -72,3 +72,9 @@ Prefer **goal-backward** TRUE conditions over exit-0 theater. Compound correctio
 
 Amendments require a PR that updates this file and the converge tests that bind it.
 Conflicts with `.claude/rules/` resolve to the **stricter** cash/safety rule.
+
+### VII. Value Center (Agency + Coherence)
+
+Autonomous agents without coherence invent A+ theater. Answer the five value-center
+questions (`scripts/value_center_status.py`) from live evidence. Purpose is what the
+system does today — not aspirations.
