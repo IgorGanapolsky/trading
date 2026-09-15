@@ -39,9 +39,7 @@ Grade 3: strong match (most facets / clear path)
 Grade 4: exact operator answer (script/rule/lesson that resolves the query)
 """
 
-ENTITY_RE = re.compile(
-    r"^(?:[A-Za-z_][\w]*|[A-Za-z]+(?:_[A-Za-z0-9]+)+|[A-Z]{2,}|\.py|\.md)$"
-)
+ENTITY_RE = re.compile(r"^(?:[A-Za-z_][\w]*|[A-Za-z]+(?:_[A-Za-z0-9]+)+|[A-Z]{2,}|\.py|\.md)$")
 
 
 def understand_query(query: str) -> dict:
@@ -75,9 +73,7 @@ def understand_query(query: str) -> dict:
         "intent": intent,
         "facets": facets,
         "route": route,
-        "thinking_state": (
-            f"Routing as {route}: intent={intent}; facets={list(facets) or 'none'}"
-        ),
+        "thinking_state": (f"Routing as {route}: intent={intent}; facets={list(facets) or 'none'}"),
     }
 
 
@@ -253,9 +249,7 @@ def run_pipeline(
 
     # Continuous measurement hook
     grades = [r["relevance_grade"] for r in ranked]
-    precision_at_3 = (
-        sum(1 for g in grades[:3] if g >= 3) / min(3, len(grades)) if grades else None
-    )
+    precision_at_3 = sum(1 for g in grades[:3] if g >= 3) / min(3, len(grades)) if grades else None
 
     out = {
         "ok": True,
