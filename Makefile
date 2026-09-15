@@ -5,7 +5,7 @@ VENV_PYTHON := $(VENV)/bin/python
 TRADING_ENV ?= paper
 export TRADING_ENV
 
-.PHONY: setup lint ruff format test coverage audit security health skill-check coordination-check coordination-audit coordination-preflight check dry-run hygiene graph-rag-check graphify-check rag-aplus-check gsd-tick gsd-status cohort-scorecard infoq-roi aistudio-roi
+.PHONY: setup lint ruff format test coverage audit security health skill-check coordination-check coordination-audit coordination-preflight check dry-run hygiene graph-rag-check graphify-check rag-aplus-check gsd-tick gsd-status ralph-integrated cohort-scorecard infoq-roi aistudio-roi
 
 setup:
 	$(PYTHON) -m venv $(VENV)
@@ -90,6 +90,11 @@ gsd-tick:
 gsd-status:
 	@echo "=== Ralph Iteration Status ==="
 	test -f .claude/ralph/state.json && cat .claude/ralph/state.json | $(VENV_PYTHON) -m json.tool || echo "No active Ralph iteration"
+
+ralph-integrated:
+	@echo "=== Ralph integrated tick (automated observe bundle) ==="
+	$(VENV_PYTHON) scripts/ralph_gsd_integrated_tick.py --no-log
+
 
 cohort-scorecard:
 	@echo "=== Put Credit Cohort Scorecard ==="

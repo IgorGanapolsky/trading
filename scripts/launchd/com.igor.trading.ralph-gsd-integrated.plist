@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.igor.trading.ralph-gsd-integrated</string>
+  <key>WorkingDirectory</key>
+  <string>/Users/igorganapolsky/workspace/git/igor/trading/.worktrees/value-center-infoq</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/igorganapolsky/workspace/git/igor/trading/.venv/bin/python</string>
+    <string>/Users/igorganapolsky/workspace/git/igor/trading/.worktrees/value-center-infoq/scripts/ralph_gsd_integrated_tick.py</string>
+    <string>--no-log</string>
+  </array>
+  <key>StartInterval</key>
+  <integer>1800</integer>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/Users/igorganapolsky/Library/Logs/trading/ralph-gsd-integrated.out</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/igorganapolsky/Library/Logs/trading/ralph-gsd-integrated.err</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    <key>HOME</key>
+    <string>/Users/igorganapolsky</string>
+  </dict>
+</dict>
+</plist>

@@ -485,6 +485,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--high-risk", action="store_true")
     parser.add_argument("--needs-review", action="store_true")
     parser.add_argument(
+        "--integrated",
+        action="store_true",
+        help="Run full automated observe bundle (ops brief+eval+fanout+hydrafusion+pick)",
+    )
+    parser.add_argument(
         "--ops-brief",
         action="store_true",
         help="Always-on agent economics: narrow ops daily brief (recommend-only)",
@@ -501,6 +506,20 @@ def main(argv: list[str] | None = None) -> int:
         help="With --ops-brief, max alerts shown (precision > coverage)",
     )
     args = parser.parse_args(argv)
+
+    if args.integrated:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from ralph_gsd_integrated_tick import run_integrated as _integrated
+
+        out = _integrated(
+            alert_budget=args.alert_budget,
+            log_candidates=not args.no_log,
+            write_state=args.write_state,
+            verify=args.verify,
+        )
+        print(json.dumps(out, indent=2, sort_keys=True))
+        return 0
 
     if args.ops_brief:
         if str(ROOT / "scripts") not in sys.path:
