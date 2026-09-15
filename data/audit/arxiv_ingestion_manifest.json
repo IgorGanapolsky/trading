@@ -2051,6 +2051,158 @@
       "ingested_at": "2026-09-11T06:31:04.622129+00:00",
       "sha256": "20ee027295f6932cb9bceea17ec35c82011e7511766b838cd78c22305fea5fd3",
       "chunks": 11
+    },
+    "2609.15919v1": {
+      "title": "Pilot Early, Commit Late: A Real-Options Model of Enterprise AI Adoption under Rapid Technological Progress",
+      "published": "2026-09-14T17:30:37Z",
+      "relevance_score": 0.25,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.15919v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_15919v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_15919v1.md",
+      "ingested_at": "2026-09-15T18:06:51.396137+00:00",
+      "sha256": "fb251d33c8b422ffb33194d0ea6881663cb98a49075aba0945ff11ec238c526d",
+      "chunks": 11
+    },
+    "2609.15744v1": {
+      "title": "Design of a Deep Learning Credit Risk Early Warning System Integrating Multi-source Heterogeneous Data",
+      "published": "2026-09-14T15:35:41Z",
+      "relevance_score": 0.3,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.CE",
+        "cs.DB",
+        "cs.LG",
+        "q-fin.RM"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.15744v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_15744v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_15744v1.md",
+      "ingested_at": "2026-09-15T18:06:51.401430+00:00",
+      "sha256": "f9eba6f93936f5122eca130700d022aa9a320e40f25e3e9b77ed667549667f72",
+      "chunks": 10
+    },
+    "2609.15939v1": {
+      "title": "Vulnerability Localization Benchmark: Measuring Agentic Security Analysis at Repository Scale",
+      "published": "2026-09-14T17:44:51Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.15939v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_15939v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_15939v1.md",
+      "ingested_at": "2026-09-15T18:06:51.409300+00:00",
+      "sha256": "b5ba108c8bd047b6459bf4251d9df5ea057fb74e5302e8c30a1a6cc4462f594c",
+      "chunks": 11
+    },
+    "2609.15901v1": {
+      "title": "Strategic Index Reconstitution: Differential Games, Closed-Loop Equilibria and Mean-Field Dynamics",
+      "published": "2026-09-14T17:18:55Z",
+      "relevance_score": 0.5,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "math.OC",
+        "q-fin.MF",
+        "q-fin.TR"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.15901v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_15901v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_15901v1.md",
+      "ingested_at": "2026-09-15T18:06:51.415040+00:00",
+      "sha256": "4eced1ed73f12fa7209007092c73123d115fb8967106fde9815a1099ccf18d6d",
+      "chunks": 10
+    },
+    "2609.15987v1": {
+      "title": "Bellman Policy Optimization",
+      "published": "2026-09-14T17:59:47Z",
+      "relevance_score": 0.25,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.CL",
+        "math.OC"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.15987v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_15987v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_15987v1.md",
+      "ingested_at": "2026-09-15T18:06:51.422965+00:00",
+      "sha256": "9d30b348118c29252caca6999b60b8630a6079d2525809415d6c9eb926e54990",
+      "chunks": 10
+    },
+    "2609.15983v1": {
+      "title": "Stellar Colosseum: A Many-Agent Harness for Long-Horizon Research in Mathematics and Theoretical Computer Science",
+      "published": "2026-09-14T17:58:55Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.CL",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.15983v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_15983v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_15983v1.md",
+      "ingested_at": "2026-09-15T18:06:51.428241+00:00",
+      "sha256": "fb09573c65ad21a186e2c616a242da01158c77079276e660def1d3217f5d5126",
+      "chunks": 11
+    },
+    "2609.15982v1": {
+      "title": "The Router Within: Eliciting Native Skill Routing from a Frozen LLM",
+      "published": "2026-09-14T17:58:27Z",
+      "relevance_score": 0.26,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.CL"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.15982v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_15982v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_15982v1.md",
+      "ingested_at": "2026-09-15T18:06:51.433461+00:00",
+      "sha256": "e5a3c22fe81ecf13ef4973f6b19ce4fae979fb97aa3360257711ad6073234ae5",
+      "chunks": 11
+    },
+    "2609.15894v1": {
+      "title": "Quenched Ensemble Sampling",
+      "published": "2026-09-14T17:16:07Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "stat.ML",
+        "cs.LG",
+        "stat.CO"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.15894v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_15894v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_15894v1.md",
+      "ingested_at": "2026-09-15T18:06:51.438715+00:00",
+      "sha256": "82ede02894fd0b4d6856623498922926d8431c594947daf8c245f7a3f09ca0cd",
+      "chunks": 10
+    },
+    "2609.15871v1": {
+      "title": "LLM-Based Schema-Aware Split Learning for Privacy-Preserving Mental Distress Prediction Across Heterogeneous Surveys",
+      "published": "2026-09-14T16:59:04Z",
+      "relevance_score": 0.28,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.CR"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.15871v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_15871v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_15871v1.md",
+      "ingested_at": "2026-09-15T18:06:51.443978+00:00",
+      "sha256": "e71a06e2e4686572ff99b1b184509d9846584daa7f402ef7255a8a64dedba237",
+      "chunks": 11
     }
   },
   "skipped_low_relevance": {
@@ -2455,10 +2607,28 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-09-11T06:31:04.629466+00:00"
+    },
+    "2609.15659v1": {
+      "title": "Kaininja: Extending Native 3D Generators to the Part Level",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-15T18:06:51.404146+00:00"
+    },
+    "2609.15857v1": {
+      "title": "Task-Directed Residual AddUNet:Perfect-Reconstruction Routing for Full-Rate Representations",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-15T18:06:51.417795+00:00"
+    },
+    "2609.15989v1": {
+      "title": "Corrupt Plans, Clean Traces: Evading Chain-of-Thought Monitoring with Plan Injection",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-15T18:06:51.446802+00:00"
     }
   },
-  "total_ingested": 126,
-  "last_run_utc": "2026-09-15T06:40:09.849004+00:00",
+  "total_ingested": 135,
+  "last_run_utc": "2026-09-15T18:06:51.449757+00:00",
   "runs": [
     {
       "finished_at": "2026-08-18T06:15:36.990502+00:00",
@@ -3067,6 +3237,20 @@
       "candidates": 0,
       "new_ingested": 0,
       "skipped_low_relevance": 0,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-09-15T18:06:51.449757+00:00",
+      "candidates": 12,
+      "new_ingested": 9,
+      "skipped_low_relevance": 3,
       "min_relevance": 0.18,
       "queries": [
         "option credit spread OR iron condor OR put credit",
