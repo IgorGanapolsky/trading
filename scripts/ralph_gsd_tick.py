@@ -478,6 +478,11 @@ def main(argv: list[str] | None = None) -> int:
         help="AgentZip FORMAT: worktree fan-out memory budget + shared template fingerprint",
     )
     parser.add_argument(
+        "--multi-teacher-distill",
+        action="store_true",
+        help="LinkedIn multi-teacher distill cache FORMAT (pluggable teachers + offline cache)",
+    )
+    parser.add_argument(
         "--search-stack",
         action="store_true",
         help="LinkedIn search-stack FORMAT pipeline (understand→retrieve→rank)",
@@ -567,6 +572,19 @@ def main(argv: list[str] | None = None) -> int:
         out = _eval_summary()
         out["skill"] = "/trading-ralph-gsd-24-7"
         out["tick"] = "eval_ledger"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and not out.get("ok"):
+            return 2
+        return 0
+
+    if args.multi_teacher_distill:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from multi_teacher_distill import demo_examples, distill
+
+        out = distill(demo_examples(), mode="auto")
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "multi_teacher_distill"
         print(json.dumps(out, indent=2, sort_keys=True))
         if args.strict and not out.get("ok"):
             return 2
