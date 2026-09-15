@@ -423,7 +423,46 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="With --spec-drift, skip writing .planning/DRIFT_LOG.md",
     )
+    parser.add_argument(
+        "--dup-health",
+        action="store_true",
+        help="TNS/GitClear duplication + moved-code maintainability probe",
+    )
+    parser.add_argument(
+        "--path",
+        action="append",
+        default=[],
+        help="Limit --dup-health scan (repeatable)",
+    )
+    parser.add_argument(
+        "--min-lines",
+        type=int,
+        default=10,
+        help="Min duplicate block size for --dup-health",
+    )
+    parser.add_argument(
+        "--git-range",
+        default=None,
+        help="Optional rev range for --dup-health moved/copy ratio",
+    )
     args = parser.parse_args(argv)
+
+    if args.dup_health:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from dup_health import evaluate as _dup_health
+
+        out = _dup_health(
+            paths=args.path or None,
+            min_lines=args.min_lines,
+            git_range=args.git_range,
+        )
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "dup_health"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and not out.get("ok"):
+            return 2
+        return 0
 
     if args.sdd_target:
         if str(ROOT / "scripts") not in sys.path:

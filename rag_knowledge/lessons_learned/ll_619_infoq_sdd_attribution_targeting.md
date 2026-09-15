@@ -1,4 +1,4 @@
-# LL-618 — InfoQ SDD: attribution + targeting (not recall theater)
+# LL-619 — InfoQ SDD: attribution + targeting (not recall theater)
 
 **Date:** 2026-09-15  
 **Source:** <https://www.infoq.com/articles/when-spec-driven-development-pays-off/>  

@@ -54,3 +54,7 @@ Prefer **coherence** over pure autonomy. Purpose = what we do today (cash F unti
 ## InfoQ SDD targeting (2026-09-15)
 
 Hard multi-constraint → full SDD (`--sdd-target` / `--spec-drift`). Throwaway → skip. Docs: `SPEC_GOVERNANCE.md`.
+
+## TNS duplication health (2026-09-15)
+
+AI velocity ≠ value. `ralph --dup-health` / `docs/DUP_HEALTH.md`. Prefer extract/move over copy-paste.
