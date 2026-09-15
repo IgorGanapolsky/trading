@@ -69,8 +69,17 @@ def test_cli_smoke_no_log():
     data = json.loads(r.stdout)
     assert data["tick"] == "integrated"
     assert data["framework"] == "ralph_gsd_integrated"
-    for key in ("ops_brief", "eval_ledger", "fanout_memory", "hydrafusion"):
+    for key in (
+        "ops_brief",
+        "eval_ledger",
+        "fanout_memory",
+        "hydrafusion",
+        "hydrafusion_execute",
+    ):
         assert key in data["observe"]
+    he = data["observe"]["hydrafusion_execute"]
+    assert he.get("ok") is True
+    assert (he.get("result") or {}).get("framework") == "hydrafusion_execute"
     assert data["automation"]["entrypoint"].endswith("ralph_gsd_integrated_tick.py")
 
 

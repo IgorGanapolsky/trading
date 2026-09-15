@@ -478,6 +478,16 @@ def main(argv: list[str] | None = None) -> int:
         help="AgentZip FORMAT: worktree fan-out memory budget + shared template fingerprint",
     )
     parser.add_argument(
+        "--hydrafusion-execute",
+        action="store_true",
+        help="Execute HydraFusion Cascade/Critique plan (early-exit + isolated critic)",
+    )
+    parser.add_argument(
+        "--dry-rails",
+        action="store_true",
+        help="With --hydrafusion-execute, deterministic control-flow only",
+    )
+    parser.add_argument(
         "--hydrafusion-route",
         action="store_true",
         help="HydraFusion FORMAT: Single|Cascade|Critique plan + five principles",
@@ -547,6 +557,26 @@ def main(argv: list[str] | None = None) -> int:
         out = _eval_summary()
         out["skill"] = "/trading-ralph-gsd-24-7"
         out["tick"] = "eval_ledger"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and not out.get("ok"):
+            return 2
+        return 0
+
+    if args.hydrafusion_execute:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from hydrafusion_execute import execute as _hydra_exec
+
+        out = _hydra_exec(
+            task=args.task or "ops residual",
+            high_risk=args.high_risk,
+            multi_constraint=args.multi_constraint,
+            throwaway=args.throwaway,
+            regulated=args.regulated,
+            dry_rails=args.dry_rails,
+        )
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "hydrafusion_execute"
         print(json.dumps(out, indent=2, sort_keys=True))
         if args.strict and not out.get("ok"):
             return 2

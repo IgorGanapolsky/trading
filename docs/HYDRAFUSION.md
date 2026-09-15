@@ -34,3 +34,10 @@ python3 scripts/ralph_gsd_tick.py --hydrafusion-route --task "typo" --throwaway
 - Enable Copilot HydraFusion /experimental here
 - Give the critic write/tool authority
 - Always-frontier every tick (defeats Cascade savings)
+
+## Runtime execute (2026-09-15)
+
+`scripts/hydrafusion_execute.py` enforces Cascade early-exit (skip escalation when
+gate passes) and Critique isolation (tool-less critic). Complete accounting of
+`cost_units_spent` vs planned. Wired into integrated tick (dry control-flow) and
+`ralph --hydrafusion-execute`.

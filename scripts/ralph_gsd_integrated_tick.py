@@ -42,6 +42,7 @@ def run_integrated(
 ) -> dict:
     from agent_fanout_memory import evaluate as fanout_eval
     from eval_first_ledger import summary as eval_summary
+    from hydrafusion_execute import execute as hydra_execute
     from hydrafusion_route import route as hydra_route
     from ops_daily_brief import build_brief
     from ralph_gsd_tick import (
@@ -52,7 +53,9 @@ def run_integrated(
         verify_evidence,
         write_context,
     )
-    from ralph_gsd_tick import write_state as _write_state
+    from ralph_gsd_tick import (
+        write_state as _write_state,
+    )
 
     observe = {}
     observe["ops_brief"] = _safe(
@@ -76,6 +79,16 @@ def run_integrated(
             high_risk=high_risk,
             multi_constraint=high_risk,
             throwaway=False,
+        ),
+    )
+    observe["hydrafusion_execute"] = _safe(
+        "hydrafusion_execute",
+        lambda: hydra_execute(
+            task=task,
+            high_risk=high_risk,
+            multi_constraint=high_risk,
+            throwaway=False,
+            dry_rails=True,  # control-flow + accounting every tick; full rails via --hydrafusion-execute
         ),
     )
 
