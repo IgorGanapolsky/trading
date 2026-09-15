@@ -51,6 +51,11 @@ def example_id(ex: dict) -> str:
     ).hexdigest()[:16]
 
 
+def example_fingerprint(ex: dict) -> str:
+    """Per-example cache key — batch edits must not invalidate unrelated shards."""
+    return data_fingerprint([ex])
+
+
 @dataclass
 class Teacher:
     teacher_id: str
@@ -82,7 +87,7 @@ def run_teacher(
     mode: str = "auto",  # auto | online | offline
 ) -> dict:
     """Infer or load cache. auto = fill missing shards; online = re-infer all."""
-    fp = data_fingerprint(examples)
+    batch_fp = data_fingerprint(examples)
     tdir = teacher.cache_dir()
     teacher_calls = 0
     cache_hits = 0
@@ -91,9 +96,10 @@ def run_teacher(
 
     for ex in examples:
         eid = example_id(ex)
-        shard = tdir / f"{fp}_{eid}.json"
+        efp = example_fingerprint(ex)
+        shard = tdir / f"{efp}_{eid}.json"
         cached = _load_shard(shard)
-        if mode != "online" and cached and cached.get("data_fp") == fp:
+        if mode != "online" and cached and cached.get("data_fp") == efp:
             outputs[eid] = cached["soft"]
             cache_hits += 1
         else:
@@ -116,16 +122,18 @@ def run_teacher(
 
     for ex in to_infer:
         eid = example_id(ex)
+        efp = example_fingerprint(ex)
         soft = teacher.infer(ex)
         teacher_calls += 1
         outputs[eid] = soft
-        shard = tdir / f"{fp}_{eid}.json"
+        shard = tdir / f"{efp}_{eid}.json"
         _save_shard(
             shard,
             {
                 "teacher_id": teacher.teacher_id,
                 "version": teacher.version,
-                "data_fp": fp,
+                "data_fp": efp,
+                "batch_fp": batch_fp,
                 "example_id": eid,
                 "soft": soft,
                 "ts": datetime.now(UTC).isoformat(),
@@ -136,7 +144,7 @@ def run_teacher(
         "ok": True,
         "teacher_id": teacher.teacher_id,
         "version": teacher.version,
-        "data_fp": fp,
+        "data_fp": batch_fp,
         "mode_used": "online" if teacher_calls else "offline",
         "teacher_calls": teacher_calls,
         "cache_hits": cache_hits,
@@ -394,8 +402,23 @@ def main(argv: list[str] | None = None) -> int:
         examples = json.loads(Path(args.examples_json).read_text())
     else:
         examples = demo_examples()
-    # First pass may fill cache; second pass should show speedup
+    # First pass honors --mode (offline must not fall through to online fill).
     out1 = distill(examples, mode=args.mode)
+    if args.mode == "offline" or not out1.get("ok"):
+        out = {
+            **out1,
+            "first_pass_teacher_calls": out1.get("teacher_calls"),
+            "cache_amortization": {
+                "first_calls": out1.get("teacher_calls"),
+                "note": "offline/cold path — no auto refill",
+                "status": "skipped_amortization",
+            },
+        }
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and not out.get("ok"):
+            return 2
+        return 0
+    # Warm-cache amortization pass (auto/online only after a successful first pass)
     out2 = distill(examples, mode="auto")
     out = {
         **out2,
