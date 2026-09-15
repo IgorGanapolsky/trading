@@ -43,6 +43,7 @@ def run_integrated(
     from agent_fanout_memory import evaluate as fanout_eval  # noqa: I001
     from astra_harness_gate import evaluate as astra_gate
     from search_stack_pipeline import run_pipeline as search_stack
+    from multi_teacher_distill import demo_examples, distill
     from eval_first_ledger import summary as eval_summary
     from hydrafusion_execute import execute as hydra_execute
     from hydrafusion_route import route as hydra_route
@@ -79,6 +80,10 @@ def run_integrated(
     observe["search_stack"] = _safe(
         "search_stack",
         lambda: search_stack(task or "trading ops", limit=5, use_cache=True),
+    )
+    observe["multi_teacher_distill"] = _safe(
+        "multi_teacher_distill",
+        lambda: distill(demo_examples(), mode="auto"),
     )
     observe["hydrafusion"] = _safe(
         "hydrafusion",
