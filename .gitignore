@@ -180,3 +180,4 @@ wiki/
 graphify-out/
 data/runtime/llm_response_cache/
 data/runtime/llm_response_cache_demo/
+data/runtime/eval_first_ledger.jsonl

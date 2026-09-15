@@ -484,7 +484,54 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--high-risk", action="store_true")
     parser.add_argument("--needs-review", action="store_true")
+    parser.add_argument(
+        "--ops-brief",
+        action="store_true",
+        help="Always-on agent economics: narrow ops daily brief (recommend-only)",
+    )
+    parser.add_argument(
+        "--eval-ledger",
+        action="store_true",
+        help="Eval-first ledger summary (precision by workflow)",
+    )
+    parser.add_argument(
+        "--alert-budget",
+        type=int,
+        default=5,
+        help="With --ops-brief, max alerts shown (precision > coverage)",
+    )
     args = parser.parse_args(argv)
+
+    if args.ops_brief:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from ops_daily_brief import build_brief as _ops_brief
+
+        out = _ops_brief(
+            alert_budget=args.alert_budget,
+            log_candidates=not args.no_log,
+        )
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "ops_brief"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and any(
+            a.get("severity") == "critical" for a in out.get("alerts_shown") or []
+        ):
+            return 2
+        return 0
+
+    if args.eval_ledger:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from eval_first_ledger import summary as _eval_summary
+
+        out = _eval_summary()
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "eval_ledger"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and not out.get("ok"):
+            return 2
+        return 0
 
     if args.hydrafusion_route:
         if str(ROOT / "scripts") not in sys.path:
