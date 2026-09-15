@@ -11,7 +11,7 @@ import argparse
 import hashlib
 import json
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Optional
 
@@ -48,7 +48,7 @@ class SpecConformanceEvaluator:
         self.audit_dir.mkdir(parents=True, exist_ok=True)
 
     def load_spec(self, spec_path: Path) -> dict[str, Any]:
-        with open(spec_path, "r", encoding="utf-8") as f:
+        with open(spec_path, encoding="utf-8") as f:
             return json.load(f)
 
     def evaluate_trading_spec(
@@ -56,7 +56,7 @@ class SpecConformanceEvaluator:
         spec: dict[str, Any],
         system_state: Optional[dict[str, Any]] = None,
     ) -> SpecConformanceReceipt:
-        now_iso = datetime.now(timezone.utc).isoformat()
+        now_iso = datetime.now(UTC).isoformat()
         invariants = spec.get("invariants", [])
         results: list[InvariantResult] = []
 
@@ -150,7 +150,9 @@ class SpecConformanceEvaluator:
 
         return receipt
 
-    def save_receipt(self, receipt: SpecConformanceReceipt, filename: str = "spec_conformance_receipt.json") -> Path:
+    def save_receipt(
+        self, receipt: SpecConformanceReceipt, filename: str = "spec_conformance_receipt.json"
+    ) -> Path:
         out_path = self.audit_dir / filename
         with open(out_path, "w", encoding="utf-8") as f:
             json.dump(asdict(receipt), f, indent=2)
@@ -159,7 +161,9 @@ class SpecConformanceEvaluator:
 
 def main():
     parser = argparse.ArgumentParser(description="Spec-Driven Development Conformance Evaluator")
-    parser.add_argument("--spec", type=str, default="specs/trading_invariants.spec.json", help="Path to spec file")
+    parser.add_argument(
+        "--spec", type=str, default="specs/trading_invariants.spec.json", help="Path to spec file"
+    )
     parser.add_argument("--doctor", action="store_true", help="Run health diagnostics")
     args = parser.parse_args()
 
@@ -184,7 +188,9 @@ def main():
     print(f"  SPEC CONFORMANCE EVALUATOR | Status: {receipt.conformance_status}")
     print("=" * 65)
     print(f"Spec ID: {receipt.spec_id} (v{receipt.spec_version})")
-    print(f"Score: {receipt.passed_invariants}/{receipt.total_invariants} ({receipt.conformance_pct}%)")
+    print(
+        f"Score: {receipt.passed_invariants}/{receipt.total_invariants} ({receipt.conformance_pct}%)"
+    )
     print(f"Receipt Fingerprint: {receipt.sha256_fingerprint[:16]}...")
     print(f"Saved Receipt: {saved_path}")
 
