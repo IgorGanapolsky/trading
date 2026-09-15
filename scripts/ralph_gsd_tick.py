@@ -472,7 +472,25 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="TNS LLM response-cache hit/miss stats (not provider prompt-cache)",
     )
+    parser.add_argument(
+        "--fanout-memory",
+        action="store_true",
+        help="AgentZip FORMAT: worktree fan-out memory budget + shared template fingerprint",
+    )
     args = parser.parse_args(argv)
+
+    if args.fanout_memory:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from agent_fanout_memory import evaluate as _fanout_memory
+
+        out = _fanout_memory()
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "fanout_memory"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and not out.get("ok"):
+            return 2
+        return 0
 
     if args.llm_cache_stats:
         if str(ROOT / "scripts") not in sys.path:
