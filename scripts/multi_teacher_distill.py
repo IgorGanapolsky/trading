@@ -25,11 +25,14 @@ import argparse
 import hashlib
 import json
 import math
+import re
 import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Callable
+
+_SAFE_ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 
 ROOT = Path(__file__).resolve().parents[1]
 CACHE_ROOT = ROOT / "data" / "runtime" / "teacher_cache"
@@ -44,6 +47,7 @@ def data_fingerprint(examples: list[dict]) -> str:
 
 
 def example_id(ex: dict) -> str:
+    """Stable id for ranking; may contain unsafe path characters — use shard_id for files."""
     if "id" in ex:
         return str(ex["id"])
     return hashlib.sha256(
@@ -51,9 +55,34 @@ def example_id(ex: dict) -> str:
     ).hexdigest()[:16]
 
 
+def shard_id(ex: dict) -> str:
+    """Filesystem-safe id derived from example_id (blocks path traversal)."""
+    raw = example_id(ex)
+    if _SAFE_ID_RE.match(raw):
+        return raw
+    return hashlib.sha256(raw.encode()).hexdigest()[:16]
+
+
 def example_fingerprint(ex: dict) -> str:
     """Per-example cache key — batch edits must not invalidate unrelated shards."""
     return data_fingerprint([ex])
+
+
+def _shard_path(tdir: Path, efp: str, sid: str) -> Path:
+    path = (tdir / f"{efp}_{sid}.json").resolve()
+    root = tdir.resolve()
+    if path != root and root not in path.parents:
+        raise ValueError(f"shard path escapes cache root: {path}")
+    return path
+
+
+def _assert_unique_example_ids(examples: list[dict]) -> None:
+    seen: set[str] = set()
+    for ex in examples:
+        eid = example_id(ex)
+        if eid in seen:
+            raise ValueError(f"duplicate example id after normalize: {eid!r}")
+        seen.add(eid)
 
 
 @dataclass
@@ -87,6 +116,7 @@ def run_teacher(
     mode: str = "auto",  # auto | online | offline
 ) -> dict:
     """Infer or load cache. auto = fill missing shards; online = re-infer all."""
+    _assert_unique_example_ids(examples)
     batch_fp = data_fingerprint(examples)
     tdir = teacher.cache_dir()
     teacher_calls = 0
@@ -96,8 +126,9 @@ def run_teacher(
 
     for ex in examples:
         eid = example_id(ex)
+        sid = shard_id(ex)
         efp = example_fingerprint(ex)
-        shard = tdir / f"{efp}_{eid}.json"
+        shard = _shard_path(tdir, efp, sid)
         cached = _load_shard(shard)
         if mode != "online" and cached and cached.get("data_fp") == efp:
             outputs[eid] = cached["soft"]
@@ -122,11 +153,12 @@ def run_teacher(
 
     for ex in to_infer:
         eid = example_id(ex)
+        sid = shard_id(ex)
         efp = example_fingerprint(ex)
         soft = teacher.infer(ex)
         teacher_calls += 1
         outputs[eid] = soft
-        shard = tdir / f"{efp}_{eid}.json"
+        shard = _shard_path(tdir, efp, sid)
         _save_shard(
             shard,
             {
@@ -135,6 +167,7 @@ def run_teacher(
                 "data_fp": efp,
                 "batch_fp": batch_fp,
                 "example_id": eid,
+                "shard_id": sid,
                 "soft": soft,
                 "ts": datetime.now(UTC).isoformat(),
             },

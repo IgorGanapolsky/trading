@@ -79,6 +79,33 @@ def test_shard_key_is_per_example(tmp_path: Path, monkeypatch):
     assert second["teacher_calls"] == 1
 
 
+def test_shard_id_blocks_path_traversal(tmp_path: Path, monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "CACHE_ROOT", tmp_path / "safe")
+    evil = {"id": "../../escaped", "query": "x", "path": "a.md", "snippet": "b", "severity": "info"}
+    out = mod.distill([evil], teacher_ids=["relevance"], mode="online")
+    assert out["ok"] is True
+    # Shard must live under CACHE_ROOT, not escaped
+    written = list((tmp_path / "safe").rglob("*.json"))
+    assert written
+    for path in written:
+        assert tmp_path / "safe" in path.parents or path.parent == tmp_path / "safe"
+
+
+def test_duplicate_example_ids_rejected(tmp_path: Path, monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "CACHE_ROOT", tmp_path / "dup")
+    examples = [
+        {"id": 1, "query": "a", "path": "a.md", "snippet": "a", "severity": "info"},
+        {"id": "1", "query": "b", "path": "b.md", "snippet": "b", "severity": "info"},
+    ]
+    try:
+        mod.distill(examples, teacher_ids=["relevance"], mode="online")
+        raise AssertionError("expected duplicate id ValueError")
+    except ValueError as exc:
+        assert "duplicate example id" in str(exc)
+
+
 def test_pluggable_teacher_version_isolation(tmp_path: Path, monkeypatch):
     mod = _load()
     monkeypatch.setattr(mod, "CACHE_ROOT", tmp_path / "iso")
