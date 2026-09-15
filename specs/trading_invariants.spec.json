@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "spec_id": "SPEC-TRADING-INVARIANTS-V1",
+  "title": "Autonomous Trading Invariant & Risk Diode Specification",
+  "version": "1.0.0",
+  "author": "Antigravity CTO",
+  "description": "Formal Spec-Driven Development (SDD) contract enforcing Buffett Rule #1, risk caps, and deterministic order execution.",
+  "invariants": [
+    {
+      "id": "INV-001",
+      "name": "Buffett Rule #1 Capital Preservation",
+      "description": "Never lose principal. Maximum portfolio risk allocation is strictly capped at 1.0% NAV.",
+      "rule_type": "risk_diode",
+      "enforcement": "blocking",
+      "parameters": {
+        "max_risk_pct_nav": 1.0,
+        "hard_stop_loss_pct": 200.0
+      }
+    },
+    {
+      "id": "INV-002",
+      "name": "Defined-Risk Spread Structure",
+      "description": "All option trades must have a protective long leg. Unhedged naked option writes are strictly prohibited.",
+      "rule_type": "structural_safety",
+      "enforcement": "blocking",
+      "parameters": {
+        "max_spread_width": 10.0,
+        "min_spread_width": 2.0,
+        "requires_protective_wing": true
+      }
+    },
+    {
+      "id": "INV-003",
+      "name": "Selective Regime & Delta Filtering",
+      "description": "Entries are only permitted when IV Rank >= 30, short delta <= 0.15, and underlying is above the 200-day moving average.",
+      "rule_type": "statistical_edge",
+      "enforcement": "blocking",
+      "parameters": {
+        "min_iv_rank": 30.0,
+        "max_short_delta": 0.15,
+        "trend_filter": "SPY > SMA_200"
+      }
+    },
+    {
+      "id": "INV-004",
+      "name": "Fast Capital Recycling (50% Profit Harvesting)",
+      "description": "Spreads must be harvested at 50% max credit to eliminate late-stage gamma tail risk and maximize annualized IRR.",
+      "rule_type": "capital_velocity",
+      "enforcement": "advisory_and_automated_exit",
+      "parameters": {
+        "profit_target_pct": 50.0,
+        "max_dte_hold": 21
+      }
+    },
+    {
+      "id": "INV-005",
+      "name": "Deterministic Single-Order Identity",
+      "description": "Every submitted order must carry a unique, deterministic order idempotency token to prevent double-fills.",
+      "rule_type": "broker_integrity",
+      "enforcement": "blocking",
+      "parameters": {
+        "idempotency_token_required": true,
+        "max_concurrent_active_spans": 1
+      }
+    }
+  ]
+}
