@@ -14,7 +14,7 @@ dependencies = [
   "holidays>=0.104",
   "httpx>=0.28.1,<1.0.0",
   "numpy>=2.4.6,<3.0.0",
-  "openai>=3.8.0,<4.0.0",
+  "openai>=3.13.0,<4.0.0",
   "pandas>=3.0.5,<4.0.0",
   "pydantic-settings>=2.15.0,<3.0.0",
   "python-dotenv>=1.2.3,<2.0.0",
@@ -37,7 +37,7 @@ dev = [
 ]
 rag = [
   "lancedb>=0.38.0,<1.0.0",
-  "scikit-learn>=1.9.0,<2.0.0",
+  "scikit-learn>=1.9.1,<2.0.0",
   "sentence-transformers>=6.0.1,<7.0.0",
 ]
 research = [
