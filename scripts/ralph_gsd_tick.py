@@ -443,7 +443,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--git-range",
         default=None,
-        help="Optional rev range for --dup-health moved/copy ratio",
+        help="Optional rev range for --dup-health moved/copy + Diff Delta proxy",
+    )
+    parser.add_argument(
+        "--churn-days",
+        type=int,
+        default=None,
+        help="With --dup-health, enable two-window retouch churn (e.g. 14)",
     )
     args = parser.parse_args(argv)
 
@@ -456,6 +462,7 @@ def main(argv: list[str] | None = None) -> int:
             paths=args.path or None,
             min_lines=args.min_lines,
             git_range=args.git_range,
+            churn_days=args.churn_days,
         )
         out["skill"] = "/trading-ralph-gsd-24-7"
         out["tick"] = "dup_health"

@@ -126,3 +126,43 @@ def test_ralph_dup_health_flag():
     data = json.loads(r.stdout)
     assert data["tick"] == "dup_health"
     assert data["framework"] == "dup_health"
+
+
+def test_error_masking_detects_bare_except(tmp_path: Path):
+    mod = _load()
+    f = tmp_path / "mask.py"
+    f.write_text("try:\n    1/0\nexcept:\n    pass\n")
+    out = mod.scan_error_masking([f], root=tmp_path)
+    assert out["hit_count"] >= 1
+    assert any(h["kind"] == "bare_except" for h in out["hits"])
+
+
+def test_tripwires_five():
+    mod = _load()
+    out = mod.evaluate(
+        root=ROOT,
+        paths=["scripts/sdd_targeting.py"],
+        min_lines=12,
+        max_blocks_per_million=5000.0,
+    )
+    assert len(out["tripwires"]) == 5
+    assert {t["id"] for t in out["tripwires"]} == {1, 2, 3, 4, 5}
+    assert "error_masking" in out
+    assert "hotspots" in out
+    assert "Diff Delta" in out["practices"]["message"] or "structure" in out["practices"]["message"]
+
+
+def test_hotspots_from_cross_file_dups(tmp_path: Path):
+    mod = _load()
+    block = "\n".join([f"    z = {i}" for i in range(12)])
+    d1 = tmp_path / "pkg_a"
+    d2 = tmp_path / "pkg_b"
+    d1.mkdir()
+    d2.mkdir()
+    (d1 / "a.py").write_text(f"def a():\n{block}\n")
+    (d2 / "b.py").write_text(f"def b():\n{block}\n")
+    dup = mod.find_duplicate_blocks([d1 / "a.py", d2 / "b.py"], min_lines=10, root=tmp_path)
+    hot = mod.hotspot_directories(dup)
+    assert hot["directories"]
+    paths = {d["path"] for d in hot["directories"]}
+    assert "pkg_a" in paths or "pkg_b" in paths
