@@ -342,12 +342,12 @@
       "would_trigger_public_21dte_exit": false,
       "note": "Counterfactuals only \u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history."
     },
-    "last_counterfactuals_at": "2026-09-15T16:03:56.069941+00:00",
+    "last_counterfactuals_at": "2026-09-15T17:05:00.408471+00:00",
     "last_mark": {
-      "current_debit": 1.1099999999999994,
-      "estimated_pnl": -49.99999999999994,
+      "current_debit": 1.12,
+      "estimated_pnl": -51.000000000000014,
       "dte": 31,
-      "hold_hours": 262.95573960722226
+      "hold_hours": 263.97361150638886
     }
   },
   "PCS_261023_10f4070115084b77902727942f402f31": {
@@ -392,12 +392,12 @@
       "would_trigger_public_21dte_exit": false,
       "note": "Counterfactuals only \u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history."
     },
-    "last_counterfactuals_at": "2026-09-15T16:03:56.069995+00:00",
+    "last_counterfactuals_at": "2026-09-15T17:05:00.408523+00:00",
     "last_mark": {
-      "current_debit": 0.7299999999999995,
-      "estimated_pnl": -10.999999999999954,
+      "current_debit": 0.7400000000000002,
+      "estimated_pnl": -12.000000000000021,
       "dte": 38,
-      "hold_hours": 26.505992550277778
+      "hold_hours": 27.52386436388889
     }
   }
 }
