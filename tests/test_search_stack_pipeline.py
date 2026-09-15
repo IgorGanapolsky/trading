@@ -44,7 +44,9 @@ def test_depth_controller_caps():
 
 def test_explain_and_grade():
     mod = _load()
-    snip = mod.explain_snippet("kill switch", "The kill switch blocks new iron condor entries.\nOther line")
+    snip = mod.explain_snippet(
+        "kill switch", "The kill switch blocks new iron condor entries.\nOther line"
+    )
     assert "kill" in snip.lower() or "**" in snip
     g = mod.policy_grade("kill switch put credit", "scripts/spy_put_credit.py", snip)
     assert 0 <= g["grade"] <= 4
