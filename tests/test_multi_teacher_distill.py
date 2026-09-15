@@ -59,9 +59,7 @@ def test_pluggable_teacher_version_isolation(tmp_path: Path, monkeypatch):
     examples = mod.demo_examples()[:1]
     mod.distill(examples, teacher_ids=["relevance"], mode="online")
     # bump version → cache miss
-    mod.DEFAULT_TEACHERS["relevance"] = mod.Teacher(
-        "relevance", "v2", mod.relevance_teacher
-    )
+    mod.DEFAULT_TEACHERS["relevance"] = mod.Teacher("relevance", "v2", mod.relevance_teacher)
     out = mod.distill(examples, teacher_ids=["relevance"], mode="auto")
     assert out["teacher_calls"] == 1
 

@@ -145,7 +145,6 @@ def run_teacher(
     }
 
 
-
 def collector_merge(
     teacher_softs: dict[str, dict],
     *,
@@ -205,7 +204,10 @@ def fuse_student(
         strategy = "learned" if weights else "average"
         merged = collector_merge(softs, strategy=strategy, learned_weights=weights)
         detail = {
-            tid: {"score": float(s.get("score", s.get("p_yes", 0.0))), "weight": float((weights or {}).get(tid, 1.0))}
+            tid: {
+                "score": float(s.get("score", s.get("p_yes", 0.0))),
+                "weight": float((weights or {}).get(tid, 1.0)),
+            }
             for tid, s in softs.items()
         }
         student = float(merged["score"])
@@ -338,7 +340,7 @@ def distill(
                 "https://www.linkedin.com/blog/engineering/infrastructure/"
                 "the-training-infrastructure-behind-ai-powered-job-search-"
                 "eight-x-faster-multi-teacher-distillation"
-            )
+            ),
         },
         "n_examples": len(examples),
         "teachers": ids,
