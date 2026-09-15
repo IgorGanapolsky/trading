@@ -185,3 +185,4 @@ data/runtime/astra_session_notes.jsonl
 data/runtime/search_score_cache/
 data/runtime/pair_fleet_jobs.jsonl
 data/runtime/pair_fleet_nodes.json
+data/runtime/teacher_cache/
