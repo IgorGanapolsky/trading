@@ -478,6 +478,11 @@ def main(argv: list[str] | None = None) -> int:
         help="AgentZip FORMAT: worktree fan-out memory budget + shared template fingerprint",
     )
     parser.add_argument(
+        "--search-stack",
+        action="store_true",
+        help="LinkedIn search-stack FORMAT pipeline (understand→retrieve→rank)",
+    )
+    parser.add_argument(
         "--astra-gate",
         action="store_true",
         help="GPT-6 Astra harness gate (notes/confirm/no-API-primary)",
@@ -565,6 +570,17 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(out, indent=2, sort_keys=True))
         if args.strict and not out.get("ok"):
             return 2
+        return 0
+
+    if args.search_stack:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from search_stack_pipeline import run_pipeline as _search_stack
+
+        out = _search_stack(args.task or "trading search", use_cache=True)
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "search_stack"
+        print(json.dumps(out, indent=2, sort_keys=True))
         return 0
 
     if args.astra_gate:

@@ -182,3 +182,4 @@ data/runtime/llm_response_cache/
 data/runtime/llm_response_cache_demo/
 data/runtime/eval_first_ledger.jsonl
 data/runtime/astra_session_notes.jsonl
+data/runtime/search_score_cache/

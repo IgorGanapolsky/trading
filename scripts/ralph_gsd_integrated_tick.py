@@ -42,6 +42,7 @@ def run_integrated(
 ) -> dict:
     from agent_fanout_memory import evaluate as fanout_eval  # noqa: I001
     from astra_harness_gate import evaluate as astra_gate
+    from search_stack_pipeline import run_pipeline as search_stack
     from eval_first_ledger import summary as eval_summary
     from hydrafusion_execute import execute as hydra_execute
     from hydrafusion_route import route as hydra_route
@@ -74,6 +75,10 @@ def run_integrated(
     observe["astra_gate"] = _safe(
         "astra_gate",
         lambda: astra_gate(proposed_action=task),
+    )
+    observe["search_stack"] = _safe(
+        "search_stack",
+        lambda: search_stack(task or "trading ops", limit=5, use_cache=True),
     )
     observe["hydrafusion"] = _safe(
         "hydrafusion",
