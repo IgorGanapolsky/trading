@@ -399,7 +399,61 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="InfoQ/Rohrer value-center five questions (agency+coherence)",
     )
+    parser.add_argument(
+        "--sdd-target",
+        action="store_true",
+        help="InfoQ SDD targeting rule (full|quick|skip) for this task",
+    )
+    parser.add_argument(
+        "--spec-drift",
+        action="store_true",
+        help="InfoQ attributed drift review against docs/SPEC.md INV_*",
+    )
+    parser.add_argument(
+        "--task",
+        default="",
+        help="Task description for --sdd-target",
+    )
+    parser.add_argument("--multi-constraint", action="store_true")
+    parser.add_argument("--regulated", action="store_true")
+    parser.add_argument("--one-shot-reliable", action="store_true")
+    parser.add_argument("--throwaway", action="store_true")
+    parser.add_argument(
+        "--no-log",
+        action="store_true",
+        help="With --spec-drift, skip writing .planning/DRIFT_LOG.md",
+    )
     args = parser.parse_args(argv)
+
+    if args.sdd_target:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from sdd_targeting import target as _sdd_target
+
+        out = _sdd_target(
+            task=args.task or "unspecified",
+            multi_constraint=args.multi_constraint,
+            regulated=args.regulated,
+            one_shot_reliable=args.one_shot_reliable,
+            throwaway=args.throwaway,
+        )
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "sdd_target"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        return 0
+
+    if args.spec_drift:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from spec_drift_review import review as _spec_drift
+
+        out = _spec_drift(write_log=not args.no_log)
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "spec_drift"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and not out.get("ok"):
+            return 2
+        return 0
 
     if args.value_center:
         if str(ROOT / "scripts") not in sys.path:

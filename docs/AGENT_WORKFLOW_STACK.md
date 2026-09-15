@@ -50,3 +50,7 @@ Harness `ready` / goal-backward TRUE ≠ commercial overall A+. Fee-yes ship loc
 Five questions every tick: value / coordinate / fit / outside / who.
 `python3 scripts/value_center_status.py` · `docs/VALUE_CENTER.md`
 Prefer **coherence** over pure autonomy. Purpose = what we do today (cash F until fee-yes).
+
+## InfoQ SDD targeting (2026-09-15)
+
+Hard multi-constraint → full SDD (`--sdd-target` / `--spec-drift`). Throwaway → skip. Docs: `SPEC_GOVERNANCE.md`.
