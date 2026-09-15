@@ -451,7 +451,41 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="With --dup-health, enable two-window retouch churn (e.g. 14)",
     )
+    parser.add_argument(
+        "--looped-flow",
+        action="store_true",
+        help="Looped Flows FORMAT: local denoising ticks + finer --loop-steps grid",
+    )
+    parser.add_argument(
+        "--loop-steps",
+        type=int,
+        default=3,
+        help="With --looped-flow, number of local-objective steps (max 16)",
+    )
+    parser.add_argument(
+        "--seed",
+        default=None,
+        help="With --looped-flow, shared noise seed (stable residual_id)",
+    )
     args = parser.parse_args(argv)
+
+    if args.looped_flow:
+        if str(ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(ROOT / "scripts"))
+        from looped_flow_tick import run_loop as _looped_flow
+
+        goal = args.goal_backward or "harness"
+        out = _looped_flow(
+            goal=goal,
+            steps=args.loop_steps,
+            shared_seed=args.seed,
+        )
+        out["skill"] = "/trading-ralph-gsd-24-7"
+        out["tick"] = "looped_flow"
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if args.strict and not out.get("ok"):
+            return 2
+        return 0
 
     if args.dup_health:
         if str(ROOT / "scripts") not in sys.path:
