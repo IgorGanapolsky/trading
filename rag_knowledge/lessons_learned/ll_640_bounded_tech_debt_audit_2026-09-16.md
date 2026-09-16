@@ -15,6 +15,7 @@
 
 - `tests/test_repo_hygiene.py::test_proven_dead_modules_stay_deleted` fails if those paths return.
 - Whole-repo “line-by-line every file” audits are refused: bound to scanner findings + caller proof (LL-349).
+- Coordination checkboxes must match `agent_contract.py` exactly (end of line). Extra parentheticals fail `pr-checkbox`.
 
 ## Coverage honesty
 
