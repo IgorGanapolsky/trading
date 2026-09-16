@@ -45,9 +45,7 @@ def test_proven_dead_modules_stay_deleted() -> None:
 
 
 def test_agent_pr_approve_binds_current_head_sha() -> None:
-    text = (REPO_ROOT / ".github/workflows/dependency-review.yml").read_text(
-        encoding="utf-8"
-    )
+    text = (REPO_ROOT / ".github/workflows/dependency-review.yml").read_text(encoding="utf-8")
     assert "github.event.pull_request.head.sha" in text
     assert "commit_id==" in text
     assert "${HEAD}" in text
