@@ -2203,6 +2203,153 @@
       "ingested_at": "2026-09-15T18:06:51.443978+00:00",
       "sha256": "e71a06e2e4686572ff99b1b184509d9846584daa7f402ef7255a8a64dedba237",
       "chunks": 11
+    },
+    "2609.17516v1": {
+      "title": "When Should LLMs Abstain? Chain-of-Self-Questioning for Selective Risk Control",
+      "published": "2026-09-15T17:52:24Z",
+      "relevance_score": 0.43,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.17516v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_17516v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_17516v1.md",
+      "ingested_at": "2026-09-16T18:07:24.023450+00:00",
+      "sha256": "b1ada4bda86dd9fb2c0c9528eb66ad0f987036e52f03bc6ebc642a9bce070490",
+      "chunks": 11
+    },
+    "2609.17394v1": {
+      "title": "Coding Agents Have Converged: Why the SWE-bench Leaderboard Can No Longer Order Its Top Entries, and What to Measure Instead",
+      "published": "2026-09-15T16:29:12Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.SE",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.17394v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_17394v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_17394v1.md",
+      "ingested_at": "2026-09-16T18:07:24.028993+00:00",
+      "sha256": "edadcbbbdaa471be094c51bc4fe321846e3fc261e201a82cc081f3761f0b42ca",
+      "chunks": 11
+    },
+    "2609.17226v1": {
+      "title": "Easy to Catch a Liar, Hard to Clear an Honest One: Language Models Diagnosing a Corrupted Reward Channel from a Verified Record",
+      "published": "2026-09-15T14:10:20Z",
+      "relevance_score": 0.52,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.CL"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.17226v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_17226v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_17226v1.md",
+      "ingested_at": "2026-09-16T18:07:24.034048+00:00",
+      "sha256": "4a4bc92894dc584c4f3b46f99fd0c550cf79358c219f1da0cef1a32031488b77",
+      "chunks": 11
+    },
+    "2609.17346v1": {
+      "title": "Where Should a Document Live: Context, Representations, or Parameters?",
+      "published": "2026-09-15T15:47:02Z",
+      "relevance_score": 0.31,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.17346v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_17346v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_17346v1.md",
+      "ingested_at": "2026-09-16T18:07:24.042457+00:00",
+      "sha256": "abbfa0bdb83a920d4c68eb3e0dc4e0a4206059225564bcc9b0d502733cc0b70f",
+      "chunks": 11
+    },
+    "2609.17523v1": {
+      "title": "ScienceBuddy: Recursive-in-Recursive Self-Improvement for Interactive Scientific Agents",
+      "published": "2026-09-15T17:55:28Z",
+      "relevance_score": 0.33,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.CL"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.17523v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_17523v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_17523v1.md",
+      "ingested_at": "2026-09-16T18:07:24.047929+00:00",
+      "sha256": "b4d63c2c1c620e29b11015290a6fcd616ace3909e9fc2caa8982c98b0bf921de",
+      "chunks": 10
+    },
+    "2609.17521v1": {
+      "title": "PhysStream: Streaming Physics-Grounded Video Generation with Structured Scene Memory and Fine-Grained Motion Control",
+      "published": "2026-09-15T17:55:13Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CV",
+        "cs.AI",
+        "cs.GR"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.17521v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_17521v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_17521v1.md",
+      "ingested_at": "2026-09-16T18:07:24.053190+00:00",
+      "sha256": "424e9aa75f00f775d428ce8f345386f9796adde423ee67d2eee83f609128d391",
+      "chunks": 11
+    },
+    "2609.17499v1": {
+      "title": "ENCP: Episode-Normalized Conformal Prediction for Vision-and-Language Navigation",
+      "published": "2026-09-15T17:42:15Z",
+      "relevance_score": 0.28,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.RO"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.17499v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_17499v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_17499v1.md",
+      "ingested_at": "2026-09-16T18:07:24.060268+00:00",
+      "sha256": "6c5788e28c27b792e7ccc6480180f12083cbaba51fd9641f2e0703cc3abeda35",
+      "chunks": 11
+    },
+    "2609.17496v1": {
+      "title": "Verifiable Social Reasoning for LLM Assistants",
+      "published": "2026-09-15T17:37:29Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.CL"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.17496v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_17496v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_17496v1.md",
+      "ingested_at": "2026-09-16T18:07:24.065801+00:00",
+      "sha256": "c74fae0434e470bcc15e9722ffb3683f236d9a150af7feda8afb5256c6dfe7d3",
+      "chunks": 11
+    },
+    "2609.17479v1": {
+      "title": "Det-LIME: Detector-Aware, Multi-Instance Local Interpretable Model-Agnostic Explanations for Automated Marine Mammal Detection",
+      "published": "2026-09-15T17:20:16Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.17479v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_17479v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_17479v1.md",
+      "ingested_at": "2026-09-16T18:07:24.077068+00:00",
+      "sha256": "d8aa3d38379b9db73d9ef44c0993de458dfc1b55a209d571bd4b87694d77e999",
+      "chunks": 11
     }
   },
   "skipped_low_relevance": {
@@ -2625,10 +2772,28 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-09-15T18:06:51.446802+00:00"
+    },
+    "2609.17477v1": {
+      "title": "Bias-Induced Crossover in Absolute Capacity of Dense Associative Memory",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-16T18:07:24.036777+00:00"
+    },
+    "2609.17483v1": {
+      "title": "Bridging the Gap Between Homogeneous and Heterogeneous Asynchronous Optimization Is Surprisingly Difficult",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-16T18:07:24.068553+00:00"
+    },
+    "2609.17488v1": {
+      "title": "LimiX-2: A Contextual Mechanism Network Towards General Structured-Data Intelligence",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-16T18:07:24.071722+00:00"
     }
   },
-  "total_ingested": 135,
-  "last_run_utc": "2026-09-15T18:06:51.449757+00:00",
+  "total_ingested": 144,
+  "last_run_utc": "2026-09-16T18:07:24.079895+00:00",
   "runs": [
     {
       "finished_at": "2026-08-18T06:15:36.990502+00:00",
@@ -3248,6 +3413,20 @@
     },
     {
       "finished_at": "2026-09-15T18:06:51.449757+00:00",
+      "candidates": 12,
+      "new_ingested": 9,
+      "skipped_low_relevance": 3,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-09-16T18:07:24.079895+00:00",
       "candidates": 12,
       "new_ingested": 9,
       "skipped_low_relevance": 3,
