@@ -33,12 +33,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
+          # dismiss_stale_reviews keeps historical state=APPROVED rows on old SHAs.
+          # Only skip when this HEAD already has a live bot approval.
           already="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR}/reviews" \
-            --jq '[.[] | select(.user.login=="github-actions[bot]" and .state=="APPROVED")] | length')"
+            --jq "[.[] | select(.user.login==\"github-actions[bot]\" and .state==\"APPROVED\" and .commit_id==\"${HEAD}\")] | length")"
           if [[ "${already}" != "0" ]]; then
-            echo "github-actions[bot] already approved"
+            echo "github-actions[bot] already approved ${HEAD}"
             exit 0
           fi
           gh pr review "${PR}" --repo "${GITHUB_REPOSITORY}" --approve \

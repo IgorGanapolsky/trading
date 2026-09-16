@@ -8,6 +8,12 @@ from scripts.audit_repository_hygiene import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+# Proven-dead (AGENT-631): zero importers, workflows, or Makefile refs.
+DELETED_DEAD_PATHS = {
+    "src/eval/eval_engineering_skill.py",
+    "scripts/ingest_phil_town_youtube.py",
+}
+
 REQUIRED_PATHS = {
     "skills/trading-ops/SKILL.md",
     ".github/pull_request_template.md",
@@ -30,6 +36,20 @@ def test_repository_hygiene_audit_has_no_errors() -> None:
 
 def test_required_operational_paths_remain_in_candidate_tree() -> None:
     assert set(candidate_paths(REPO_ROOT)) >= REQUIRED_PATHS
+
+
+def test_proven_dead_modules_stay_deleted() -> None:
+    tracked = set(candidate_paths(REPO_ROOT))
+    leaked = sorted(DELETED_DEAD_PATHS & tracked)
+    assert leaked == []
+
+
+def test_agent_pr_approve_binds_current_head_sha() -> None:
+    text = (REPO_ROOT / ".github/workflows/dependency-review.yml").read_text(encoding="utf-8")
+    assert "github.event.pull_request.head.sha" in text
+    assert "commit_id==" in text
+    assert "${HEAD}" in text
+    assert "--arg HEAD" not in text
 
 
 def test_arxiv_audit_copies_are_not_tracked() -> None:
