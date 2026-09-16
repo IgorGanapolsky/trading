@@ -9,7 +9,7 @@ CEO: do not stop; operate 24/7 in Ralph Loop and GSD. Skill: `/trading-ralph-gsd
 3. Dual-grade commercial vs ops for DS/ML/Graph RAG — standing refuse on commercial until fee-yes.
 4. Paper Buffett put-credit only; live_blocked; no IC/0DTE revival.
 5. One Linear issue + one worktree; no lock steal; no dual-edit of sibling Herdr cwd.
-6. Cash rail = RealEstate-lane-grok call sheet + drafts; cold email freeze → phone preferred; never auto-send.
+6. Trading money answers stay on trading ledgers. Never tell Igor to dial anyone (disability — AI owns outreach). Never auto-send.
 
 ## Ralph tick
 
