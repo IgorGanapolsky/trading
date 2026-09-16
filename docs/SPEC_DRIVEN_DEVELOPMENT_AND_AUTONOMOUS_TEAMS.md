@@ -1,10 +1,9 @@
 # 📐 Spec-Driven Development (SDD) & Autonomous Team Invariants
 
 **Author**: Antigravity (CTO) | **Recipient**: Igor Ganapolsky (CEO)  
-**Reference Source**: InfoQ Reports (September 2026)
-
-- _"When Spec-Driven Development Pays Off"_ by Nitin Garg
-- _"Beyond Autonomous Teams: Value Centers & Dependency Invariants"_  
+**Reference Sources**:
+- InfoQ Article: _"When Spec-Driven Development Pays Off"_ by Nitin Garg
+- InfoQ News: _"Beyond Autonomous Teams in Software Product Development"_
   **Implementation**: [`../scripts/spec_conformance_evaluator.py`](../scripts/spec_conformance_evaluator.py) & [`../specs/trading_invariants.spec.json`](../specs/trading_invariants.spec.json)
 
 ---

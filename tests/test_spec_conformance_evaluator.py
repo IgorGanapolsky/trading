@@ -105,3 +105,110 @@ def test_save_receipt_creates_valid_json(tmp_path: Path):
     content = receipt_path.read_text(encoding="utf-8")
     assert "TEST-SAVE" in content
     assert "sha256_fingerprint" in content
+
+
+def test_path_validation_and_traversal_prevention(tmp_path: Path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    evaluator = SpecConformanceEvaluator(specs_dir=tmp_path / "specs")
+
+    valid_spec = tmp_path / "spec.json"
+    valid_spec.write_text("{}", encoding="utf-8")
+    assert evaluator.validate_spec_path(valid_spec) == valid_spec.resolve()
+
+    # Non-existent file
+    import pytest
+
+    with pytest.raises(FileNotFoundError):
+        evaluator.validate_spec_path(tmp_path / "missing.json")
+
+    # Non-json file
+    bad_ext = tmp_path / "bad.txt"
+    bad_ext.write_text("bad", encoding="utf-8")
+    with pytest.raises(FileNotFoundError):
+        evaluator.validate_spec_path(bad_ext)
+
+    # Path traversal attempt outside root
+    outside = tmp_path.parent / "outside.json"
+    outside.write_text("{}", encoding="utf-8")
+    with pytest.raises(ValueError, match="Access denied"):
+        evaluator.validate_spec_path(outside)
+
+
+def test_load_spec(tmp_path: Path, monkeypatch):
+    import json
+
+    monkeypatch.chdir(tmp_path)
+    evaluator = SpecConformanceEvaluator()
+    spec_path = tmp_path / "test.json"
+    spec_path.write_text(json.dumps({"spec_id": "LOAD-01"}), encoding="utf-8")
+
+    data = evaluator.load_spec(spec_path)
+    assert data["spec_id"] == "LOAD-01"
+
+
+def test_verify_receipt_hmac(tmp_path: Path):
+    evaluator = SpecConformanceEvaluator(audit_dir=tmp_path)
+    mock_spec = {"spec_id": "TEST-HMAC", "version": "1.0.0", "invariants": []}
+    receipt = evaluator.evaluate_trading_spec(mock_spec)
+
+    assert SpecConformanceEvaluator.verify_receipt(receipt) is True
+
+    # Tampered receipt
+    import dataclasses
+
+    tampered = dataclasses.replace(receipt, conformance_status="TAMPERED")
+    assert SpecConformanceEvaluator.verify_receipt(tampered) is False
+
+    # Empty fingerprint
+    empty_fp = dataclasses.replace(receipt, sha256_fingerprint="")
+    assert SpecConformanceEvaluator.verify_receipt(empty_fp) is False
+
+
+def test_invariant_eval_failures(tmp_path: Path):
+    evaluator = SpecConformanceEvaluator(audit_dir=tmp_path)
+    spec = {
+        "spec_id": "TEST-FAIL",
+        "invariants": [
+            {"id": "INV-003", "parameters": {"min_iv_rank": 40.0, "max_short_delta": 0.10}},
+            {"id": "INV-004", "parameters": {"profit_target_pct": 50.0}},
+            {"id": "INV-005", "parameters": {}},
+            {"id": "INV-999", "name": "Custom"},
+        ],
+    }
+    # State with low IV rank and delta too high and no idempotency
+    state = {
+        "iv_rank": 20.0,
+        "short_delta": 0.25,
+        "has_order_idempotency": False,
+    }
+    receipt = evaluator.evaluate_trading_spec(spec, system_state=state)
+    assert receipt.conformance_status == "FAIL"
+    assert receipt.failed_invariants == 2  # INV-003 and INV-005 fail
+
+
+def test_main_cli(tmp_path: Path, monkeypatch, capsys):
+    from scripts.spec_conformance_evaluator import main
+
+    monkeypatch.chdir(tmp_path)
+
+    # Doctor flag
+    monkeypatch.setattr("sys.argv", ["evaluator", "--doctor"])
+    assert main() == 0
+    captured = capsys.readouterr()
+    assert "ONLINE" in captured.out
+
+    # Missing spec
+    monkeypatch.setattr("sys.argv", ["evaluator", "--spec", "nonexistent.json"])
+    assert main() == 1
+
+    # Valid passing spec
+    import json
+
+    valid_spec = tmp_path / "valid.spec.json"
+    valid_spec.write_text(
+        json.dumps({"spec_id": "CLI-TEST", "version": "1.0", "invariants": []}), encoding="utf-8"
+    )
+    monkeypatch.setattr("sys.argv", ["evaluator", "--spec", str(valid_spec)])
+    assert main() == 0
+    captured = capsys.readouterr()
+    assert "Status: PASS" in captured.out
