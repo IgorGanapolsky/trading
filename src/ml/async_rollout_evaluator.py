@@ -17,7 +17,7 @@ import math
 import statistics
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +108,7 @@ class RolloutSystemProfiler:
     def profile_trajectories(
         self,
         mode: str,
-        trajectories: List[TrajectoryTrace],
+        trajectories: list[TrajectoryTrace],
         group_size: int = 4,
         wall_clock_ms: Optional[float] = None,
     ) -> RolloutProfile:
@@ -236,7 +236,7 @@ class PromotionGateValidator:
         self.min_cost_reduction_pct = min_cost_reduction_pct
         self.min_tool_retention_ratio = min_tool_retention_ratio
 
-    def evaluate(self, baseline: RolloutProfile, candidate: RolloutProfile) -> Tuple[bool, str]:
+    def evaluate(self, baseline: RolloutProfile, candidate: RolloutProfile) -> tuple[bool, str]:
         if candidate.successful_tasks == 0:
             return False, "Candidate failed to solve any verified tasks (cost per solved task is infinite)."
 
@@ -316,7 +316,7 @@ class FairABRolloutHarness:
     ) -> TrajectoryTrace:
         """Simulates single trajectory execution with accurate cost instrumenting."""
         duration_ms = base_duration_ms * (2.8 if is_straggler else 1.0)
-        
+
         # Tool collapse simulation in GRPO vs retention in FlashREINFORCE
         actual_tools = tool_call_count
         if mode == "GRPO_SYNCHRONOUS" and scenario_type == "python_math_shortcut":
@@ -351,12 +351,12 @@ class FairABRolloutHarness:
 
     def run_ab_experiment(
         self,
-        tasks: List[Dict[str, Any]],
+        tasks: list[dict[str, Any]],
         group_size: int = 4,
     ) -> ABComparisonResult:
         """Runs paired A/B experiment across task set."""
-        grpo_traces: List[TrajectoryTrace] = []
-        flash_traces: List[TrajectoryTrace] = []
+        grpo_traces: list[TrajectoryTrace] = []
+        flash_traces: list[TrajectoryTrace] = []
 
         for task in tasks:
             tid = task["task_id"]

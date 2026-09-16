@@ -26,7 +26,7 @@ from collections import OrderedDict
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, List, Optional, Tuple
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -75,11 +75,11 @@ class DurablePillar:
         with open(self.journal_path, "a", encoding="utf-8") as f:
             f.write(json.dumps(record.as_dict()) + "\n")
 
-    def read_all(self) -> List[CobbleRecord]:
+    def read_all(self) -> list[CobbleRecord]:
         if not self.journal_path.exists():
             return []
         records = []
-        with open(self.journal_path, "r", encoding="utf-8") as f:
+        with open(self.journal_path, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if line:
@@ -104,7 +104,7 @@ class LorryBatchAccumulator:
         self.batch_dir = batch_dir
         self.batch_dir.mkdir(parents=True, exist_ok=True)
         self.batch_size = batch_size
-        self._buffer: List[CobbleRecord] = []
+        self._buffer: list[CobbleRecord] = []
         self._batch_counter = 0
 
     def add(self, record: CobbleRecord) -> Optional[Path]:
@@ -217,7 +217,7 @@ class CobbleReplica:
         """Ingests partition-aligned batch file from Lorry."""
         if not batch_path.exists():
             return 0
-        with open(batch_path, "r", encoding="utf-8") as f:
+        with open(batch_path, encoding="utf-8") as f:
             records_data = json.load(f)
 
         count = 0
@@ -256,7 +256,7 @@ class HedgedRequestRouter:
 
     def __init__(
         self,
-        replicas: List[CobbleReplica],
+        replicas: list[CobbleReplica],
         num_partitions: int = 16,
         hedged_delay_ms: float = 15.0,  # Fired when primary latency exceeds 15ms
     ):
@@ -265,7 +265,7 @@ class HedgedRequestRouter:
         self.replicas = replicas
         self.num_partitions = num_partitions
         self.hedged_delay_ms = hedged_delay_ms
-        self.read_receipts: List[ReadReceipt] = []
+        self.read_receipts: list[ReadReceipt] = []
 
     def get_partition_id(self, key: str) -> int:
         hash_val = int(hashlib.sha256(key.encode("utf-8")).hexdigest(), 16)
@@ -276,7 +276,7 @@ class HedgedRequestRouter:
         key: str,
         simulated_primary_delay_ms: float = 0.0,
         simulated_secondary_delay_ms: float = 0.0,
-    ) -> Tuple[Optional[CobbleRecord], ReadReceipt]:
+    ) -> tuple[Optional[CobbleRecord], ReadReceipt]:
         """Performs a read with automatic tail-latency hedging."""
         start_time = time.perf_counter()
         primary = self.replicas[0]
@@ -343,8 +343,8 @@ class CobbleDBHotStoreSystem:
         self.base_dir = base_dir
         self.pillar = DurablePillar(base_dir / "pillar" / "journal.jsonl")
         self.lorry = LorryBatchAccumulator(base_dir / "lorry_batches")
-        
-        self.replicas: List[CobbleReplica] = []
+
+        self.replicas: list[CobbleReplica] = []
         for i in range(num_replicas):
             rep_path = base_dir / f"replica_{i}" / "cobble_hot.db"
             self.replicas.append(CobbleReplica(f"replica_{i}", rep_path))
@@ -382,7 +382,7 @@ class CobbleDBHotStoreSystem:
         key: str,
         simulated_primary_delay_ms: float = 0.0,
         simulated_secondary_delay_ms: float = 0.0,
-    ) -> Tuple[Optional[CobbleRecord], ReadReceipt]:
+    ) -> tuple[Optional[CobbleRecord], ReadReceipt]:
         return self.router.read_with_hedging(
             key=key,
             simulated_primary_delay_ms=simulated_primary_delay_ms,
