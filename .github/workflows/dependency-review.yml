@@ -39,7 +39,7 @@ jobs:
           # dismiss_stale_reviews keeps historical state=APPROVED rows on old SHAs.
           # Only skip when this HEAD already has a live bot approval.
           already="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR}/reviews" \
-            --jq --arg HEAD "${HEAD}" '[.[] | select(.user.login=="github-actions[bot]" and .state=="APPROVED" and .commit_id==$HEAD)] | length')"
+            --jq "[.[] | select(.user.login==\"github-actions[bot]\" and .state==\"APPROVED\" and .commit_id==\"${HEAD}\")] | length")"
           if [[ "${already}" != "0" ]]; then
             echo "github-actions[bot] already approved ${HEAD}"
             exit 0

@@ -17,6 +17,7 @@
 - Whole-repo “line-by-line every file” audits are refused: bound to scanner findings + caller proof (LL-349).
 - Coordination checkboxes must match `agent_contract.py` exactly (end of line). Extra parentheticals fail `pr-checkbox`.
 - `agent-pr-approve` must match bot APPROVED reviews to the **current head SHA**. Counting any historical APPROVED row skips re-approve after `dismiss_stale_reviews`.
+- `gh api --jq` does not accept `--arg`. Interpolate the 40-char head SHA into the jq program.
 
 ## Coverage honesty
 

@@ -49,7 +49,9 @@ def test_agent_pr_approve_binds_current_head_sha() -> None:
         encoding="utf-8"
     )
     assert "github.event.pull_request.head.sha" in text
-    assert "commit_id==$HEAD" in text
+    assert "commit_id==" in text
+    assert "${HEAD}" in text
+    assert "--arg HEAD" not in text
 
 
 def test_arxiv_audit_copies_are_not_tracked() -> None:
