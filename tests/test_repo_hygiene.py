@@ -44,6 +44,14 @@ def test_proven_dead_modules_stay_deleted() -> None:
     assert leaked == []
 
 
+def test_agent_pr_approve_binds_current_head_sha() -> None:
+    text = (REPO_ROOT / ".github/workflows/dependency-review.yml").read_text(
+        encoding="utf-8"
+    )
+    assert "github.event.pull_request.head.sha" in text
+    assert "commit_id==$HEAD" in text
+
+
 def test_arxiv_audit_copies_are_not_tracked() -> None:
     tracked = candidate_paths(REPO_ROOT)
     assert not any(path.startswith("data/arxiv/") for path in tracked)
