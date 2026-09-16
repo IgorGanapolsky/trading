@@ -1,7 +1,7 @@
 """
 Group Relative Policy Optimization (GRPO) for Trading.
 
-STATUS: OPERATIONAL PRODUCTION PATH — wired into active strategy signals and feature pipeline.
+STATUS: OPTIONAL RESEARCH — not the default operator path (paper spy_put_credit). Do not treat GRPO outputs as authoritative without paired closed-trade n, and do not replace this module with FlashREINFORCE/Molt.
 Provides verifiable rewards and policy inference for optimal trade parameters (delta, DTE, entry timing).
 
 Key insight: Eliminates the critic model by using verifiable rewards.
