@@ -171,7 +171,9 @@ class RolloutSystemProfiler:
 
         total_tool_calls = sum(t.tool_calls for t in trajectories)
         tool_calls_per_traj = total_tool_calls / n
-        tasks_with_tools = sum(1 for t in trajectories if t.tool_calls > 0 and t.tool_success_count > 0)
+        tasks_with_tools = sum(
+            1 for t in trajectories if t.tool_calls > 0 and t.tool_success_count > 0
+        )
         tool_retention_rate = (tasks_with_tools / n) * 100.0
 
         total_cost = sum(t.total_cost for t in trajectories)
@@ -181,7 +183,11 @@ class RolloutSystemProfiler:
         if wall_clock_ms and wall_clock_ms > 0:
             throughput = n / (wall_clock_ms / 1000.0)
         else:
-            effective_time = sum(raw_durations) if mode != "GRPO_SYNCHRONOUS" else (sum(raw_durations) * (1 + idle_waste_pct / 100.0))
+            effective_time = (
+                sum(raw_durations)
+                if mode != "GRPO_SYNCHRONOUS"
+                else (sum(raw_durations) * (1 + idle_waste_pct / 100.0))
+            )
             throughput = n / (max(effective_time, 1.0) / 1000.0)
 
         return RolloutProfile(
@@ -232,13 +238,18 @@ class PromotionGateValidator:
     3. No regression in task success rate (success_rate >= baseline - 1.0%).
     """
 
-    def __init__(self, min_cost_reduction_pct: float = 15.0, min_tool_retention_ratio: float = 0.90):
+    def __init__(
+        self, min_cost_reduction_pct: float = 15.0, min_tool_retention_ratio: float = 0.90
+    ):
         self.min_cost_reduction_pct = min_cost_reduction_pct
         self.min_tool_retention_ratio = min_tool_retention_ratio
 
     def evaluate(self, baseline: RolloutProfile, candidate: RolloutProfile) -> tuple[bool, str]:
         if candidate.successful_tasks == 0:
-            return False, "Candidate failed to solve any verified tasks (cost per solved task is infinite)."
+            return (
+                False,
+                "Candidate failed to solve any verified tasks (cost per solved task is infinite).",
+            )
 
         # Check success rate regression
         if candidate.success_rate < (baseline.success_rate - 1.0):
@@ -262,7 +273,8 @@ class PromotionGateValidator:
             return False, "Both baseline and candidate solved 0 tasks."
 
         cost_delta_pct = (
-            (baseline.cost_per_solved_task - candidate.cost_per_solved_task) / baseline.cost_per_solved_task
+            (baseline.cost_per_solved_task - candidate.cost_per_solved_task)
+            / baseline.cost_per_solved_task
         ) * 100.0
 
         if cost_delta_pct < self.min_cost_reduction_pct:
@@ -330,7 +342,7 @@ class FairABRolloutHarness:
             completion_tokens * self.cost_per_completion_token
         )
         tool_cost = actual_tools * self.cost_per_tool_call
-        gpu_hours = (duration_ms / 3600000.0)
+        gpu_hours = duration_ms / 3600000.0
         compute_cost = gpu_hours * self.cost_per_gpu_hour
 
         return TrajectoryTrace(
@@ -412,15 +424,23 @@ class FairABRolloutHarness:
 
         # Compute relative deltas
         cost_reduction = (
-            ((grpo_profile.cost_per_solved_task - flash_profile.cost_per_solved_task) / grpo_profile.cost_per_solved_task)
+            (
+                (grpo_profile.cost_per_solved_task - flash_profile.cost_per_solved_task)
+                / grpo_profile.cost_per_solved_task
+            )
             * 100.0
             if grpo_profile.cost_per_solved_task > 0
             else 0.0
         )
 
         speedup = (
-            ((flash_profile.throughput_trajectories_per_sec - grpo_profile.throughput_trajectories_per_sec)
-             / grpo_profile.throughput_trajectories_per_sec)
+            (
+                (
+                    flash_profile.throughput_trajectories_per_sec
+                    - grpo_profile.throughput_trajectories_per_sec
+                )
+                / grpo_profile.throughput_trajectories_per_sec
+            )
             * 100.0
             if grpo_profile.throughput_trajectories_per_sec > 0
             else 0.0

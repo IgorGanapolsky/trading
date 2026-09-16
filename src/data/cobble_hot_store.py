@@ -305,7 +305,9 @@ class HedgedRequestRouter:
         receipt = ReadReceipt(
             key=key,
             found=record is not None,
-            replica_id=secondary.replica_id if winner == "HEDGED" and secondary else primary.replica_id,
+            replica_id=secondary.replica_id
+            if winner == "HEDGED" and secondary
+            else primary.replica_id,
             duration_ms=round(elapsed_ms, 3),
             hedged_request_fired=hedged_fired,
             winner=winner,
@@ -333,6 +335,7 @@ class HedgedRequestRouter:
 
 def math_ceil(v: float) -> int:
     import math
+
     return math.ceil(v)
 
 

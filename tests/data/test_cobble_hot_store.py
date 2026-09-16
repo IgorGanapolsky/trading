@@ -16,9 +16,15 @@ from src.data.cobble_hot_store import (
 
 
 def test_cobble_record_checksum_generation():
-    record1 = CobbleRecord(key="spy_tick_01", value={"vix": 18.5, "delta": 0.15}, partition_id=3, version=1)
-    record2 = CobbleRecord(key="spy_tick_01", value={"vix": 18.5, "delta": 0.15}, partition_id=3, version=1)
-    record3 = CobbleRecord(key="spy_tick_01", value={"vix": 20.0, "delta": 0.15}, partition_id=3, version=1)
+    record1 = CobbleRecord(
+        key="spy_tick_01", value={"vix": 18.5, "delta": 0.15}, partition_id=3, version=1
+    )
+    record2 = CobbleRecord(
+        key="spy_tick_01", value={"vix": 18.5, "delta": 0.15}, partition_id=3, version=1
+    )
+    record3 = CobbleRecord(
+        key="spy_tick_01", value={"vix": 20.0, "delta": 0.15}, partition_id=3, version=1
+    )
 
     assert record1.checksum == record2.checksum
     assert record1.checksum != record3.checksum
