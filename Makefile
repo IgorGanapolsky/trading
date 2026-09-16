@@ -5,7 +5,7 @@ VENV_PYTHON := $(VENV)/bin/python
 TRADING_ENV ?= paper
 export TRADING_ENV
 
-.PHONY: setup lint ruff format test coverage audit security health skill-check coordination-check coordination-audit coordination-preflight check dry-run hygiene graph-rag-check graphify-check rag-aplus-check gsd-tick gsd-status ralph-integrated cohort-scorecard infoq-roi aistudio-roi
+.PHONY: setup lint ruff format test coverage audit security health skill-check coordination-check coordination-audit coordination-preflight check dry-run hygiene graph-rag-check graphify-check rag-aplus-check gsd-tick gsd-status ralph-integrated cohort-scorecard infoq-roi aistudio-roi rollout-profile
 
 setup:
 	$(PYTHON) -m venv $(VENV)
@@ -99,6 +99,12 @@ ralph-integrated:
 cohort-scorecard:
 	@echo "=== Put Credit Cohort Scorecard ==="
 	$(VENV_PYTHON) scripts/put_credit_cohort_scorecard.py --json | $(VENV_PYTHON) -m json.tool
+
+# FlashREINFORCE FORMAT: profile rollouts; never clone Molt / swap GRPO
+rollout-profile:
+	@echo "=== Rollout cost profile (measure; do not infer GPU-hours from n) ==="
+	$(VENV_PYTHON) -m pytest tests/test_rollout_cost_profile.py -q
+	$(VENV_PYTHON) scripts/rollout_cost_profile.py --help >/dev/null
 
 # InfoQ Sep 8 2026 FORMAT steals (gist / challenges / flux / pr-risk)
 infoq-roi:
