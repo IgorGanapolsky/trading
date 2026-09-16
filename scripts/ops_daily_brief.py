@@ -97,24 +97,30 @@ def collect_alerts(*, log_candidates: bool = True) -> list[dict]:
                         provenance=str(scorecard),
                         confidence=0.95,
                         tier="rules",
-                        recommend="Dial TOP_5 research-packet buyers; no auto-send",
+                        recommend=(
+                            "Agent-owned cash residual only: advance drafts/checkout/"
+                            "ledger rails; never assign dials to Igor (LL-638); no auto-send"
+                        ),
                         severity="critical",
                     )
                 )
         except (OSError, json.JSONDecodeError):
             pass
     if cash_ok is None:
-        # cheap path: GSD / RE lane dial card presence
+        # cheap path: GSD / RE lane dial card presence (agent inventory — never Igor homework)
         dial = Path.home() / "workspace/git/igor/RealEstate-lane-grok/outreach/DIAL_CARD_NOW.md"
         if dial.exists():
             alerts.append(
                 _item(
                     workflow="dial_path",
-                    title="Dial card present — cash residual is human dials",
+                    title="Dial card present — agent inventory only (never assign to Igor)",
                     provenance=str(dial),
                     confidence=0.8,
                     tier="rules",
-                    recommend="Run next dial batch; log attempt in DIAL_ATTEMPT_LEDGER",
+                    recommend=(
+                        "Agents advance automated residual / drafts; log attempts "
+                        "themselves — do not tell Igor to dial (LL-638)"
+                    ),
                     severity="high",
                 )
             )
@@ -126,7 +132,10 @@ def collect_alerts(*, log_candidates: bool = True) -> list[dict]:
                     provenance="~/workspace/git/igor/RealEstate-lane-grok/outreach/",
                     confidence=0.7,
                     tier="rules",
-                    recommend="Refresh TOP_5_DIAL_NOW from research packets",
+                    recommend=(
+                        "Agent refreshes research-packet inventory for automation; "
+                        "never hand dial lists to Igor (LL-638)"
+                    ),
                     severity="high",
                 )
             )

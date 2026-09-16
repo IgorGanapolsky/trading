@@ -1,7 +1,8 @@
 # LL-638 — Never ask Igor to dial; trading money answers stay in trading
 
 **Date:** 2026-09-16  
-**Severity:** 5 (HARD permanent preference + scope failure)  
+**Severity**: CRITICAL (5) — HARD permanent preference + scope failure
+
 **Agent:** grok
 
 ## Mistake
@@ -31,5 +32,7 @@ On "are we winning? making real money? reaching our north star?" asked in the
 
 ## Prevention
 
-- Global skill auto-invoke on dial / call-sheet / TOP_5 close language
+- Tracked skill: `skills/never-ask-igor-to-dial/SKILL.md` (+ global `~/.grok` mirror)
+- `scripts/ops_daily_brief.py` recommends agent-owned residuals only (no Igor dial homework)
 - Rule line in `.claude/rules/anti-babysitting-ralph-gsd.md` updated
+- Global skill auto-invoke on dial / call-sheet / TOP_5 close language
