@@ -53,9 +53,7 @@ def is_no_behavior(text: str) -> bool:
         return False
     if re.search(r"^\s*class\s+\w+\s*\([^)]*\bEnum\b", text, re.M):
         return True
-    return not (
-        re.search(r"^\s*class\s+", text, re.M) and re.search(r"^\s+def\s+", text, re.M)
-    )
+    return not (re.search(r"^\s*class\s+", text, re.M) and re.search(r"^\s+def\s+", text, re.M))
 
 
 def baseline(
