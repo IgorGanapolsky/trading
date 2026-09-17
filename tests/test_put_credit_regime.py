@@ -254,7 +254,9 @@ def test_spy_tape_unusual_soft_flags_volume_gt_oi():
 
 
 def test_spy_tape_unusual_refuses_other_tickers():
-    out = evaluate_spy_tape_unusual(ticker="TSLA", short_put_volume=9_999, short_put_open_interest=1)
+    out = evaluate_spy_tape_unusual(
+        ticker="TSLA", short_put_volume=9_999, short_put_open_interest=1
+    )
     assert out["allowed"] is False
     assert any("SPY-only" in b for b in out["blockers"])
 
@@ -286,7 +288,9 @@ def test_entry_os_soft_flags_crowded_short_put_without_failing():
         regime_gate=gate, opportunity=opp, risk_plan=risk, equity=100_000.0
     )
     assert os_result["pass"] is True
-    assert any("volume>OI" in f for f in os_result["answers"]["tape_honesty"]["detail"]["soft_flags"])
+    assert any(
+        "volume>OI" in f for f in os_result["answers"]["tape_honesty"]["detail"]["soft_flags"]
+    )
 
 
 def test_counterfactuals_tp50_and_21dte():
