@@ -45,6 +45,16 @@ Exit codes: `0` allow · `2` abstain · `3` deny.
 
 Never print the API key. Never commit it.
 
+## Parallel questions (cookbook)
+
+Source: [Parallel questions](https://docs.typesafe.ai/cookbooks/parallel_questions)
+
+- Batch independent Noul/Choice/Score questions in **one** `system_one` call against the same state.
+- Cookbook: 13 questions / one ~54k doc → ~12× cheaper and ~10× faster vs N serial calls; answers unchanged.
+- Claim gate: 3 questions / 1 call. Skill suggest: batched Choice+gates, then batched fits (2 calls total — progressive disclosure).
+- NEVER one `system_one` per question when they share state.
+- Next ROI: one-document ledger/RAG briefings with many parallel Nouls in a single request.
+
 ## Hard don'ts
 
 | NEVER                                        | ALWAYS                                     |
