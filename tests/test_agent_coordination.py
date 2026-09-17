@@ -371,7 +371,6 @@ def test_worktree_removal_accepts_multi_commit_squash_via_content(tmp_path: Path
     assert protect_worktree(repo, worktree, vault_root=vault) == []
 
 
-
 def test_worktree_removal_rename_paths_use_no_renames(tmp_path: Path) -> None:
     """Renames must not hide the source path from content equivalence checks."""
     repo, worktree = _repo_with_worktree(tmp_path)
