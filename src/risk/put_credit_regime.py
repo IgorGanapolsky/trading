@@ -7,6 +7,8 @@ plus Fahmy-style market-health OS (FORMAT steal 2026-09-10, AGENT-602):
 - Trend soft-flags: SPY vs 50-day SMA (intermediate) and 200-day SMA (longer-term)
 - Pre-entry OS: market healthy / structure strong / clean setup / predefined risk
   (growth-stock earnings screens intentionally NOT transferred — SPY put-credit only)
+- Unusual Whales FORMAT (AGENT-657): predefined-risk P/L receipt + local
+  size>OI honesty overlay. Not their feed, API, Discord, or multi-name screener.
 
 Does NOT claim edge. Live remains blocked by kill switch until cohort gates pass.
 Missing market data fails closed for *new entries* (fail open for pure logging).
@@ -325,6 +327,12 @@ def evaluate_buffett_risk_budget(
                 f"max loss ${max_loss:.2f} exceeds {float(max_risk_pct) * 100:.2f}% "
                 f"of equity (${budget:.2f})"
             )
+    receipt = defined_risk_receipt(
+        credit=cr,
+        wing_width=width,
+        quantity=qty,
+        equity=eq,
+    )
     return {
         "allowed": not blockers,
         "blockers": blockers,
@@ -332,6 +340,91 @@ def evaluate_buffett_risk_budget(
         "budget": None if budget is None else round(budget, 2),
         "max_risk_pct": float(max_risk_pct),
         "equity": eq,
+        "receipt": receipt,
+    }
+
+
+def defined_risk_receipt(
+    *,
+    credit: float | None,
+    wing_width: float,
+    quantity: int = 1,
+    take_profit_pct: float = 0.50,
+    stop_loss_pct: float = 2.0,
+    equity: float | None = None,
+) -> dict[str, Any]:
+    """UW options-profit-calculator FORMAT: print the P/L shape before entry.
+
+    Not their calculator SKU. Paper SPY 1-lot bull put only.
+    """
+
+    try:
+        cr = float(credit) if credit is not None else 0.0
+    except (TypeError, ValueError):
+        cr = 0.0
+    qty = max(int(quantity or 0), 0)
+    width = float(wing_width)
+    max_profit = cr * 100.0 * qty
+    max_loss = max(width - cr, 0.0) * 100.0 * qty
+    return {
+        "format": "prebuilt_strategy_shape_receipt",
+        "source": "unusual_whales_profit_calculator_format_AGENT-657",
+        "vendor_unusual_whales": False,
+        "structure": "spy_bull_put_credit",
+        "quantity": qty,
+        "wing_width": width,
+        "credit": round(cr, 4),
+        "max_profit": round(max_profit, 2),
+        "max_loss": round(max_loss, 2),
+        "take_profit_pct": float(take_profit_pct),
+        "stop_loss_pct": float(stop_loss_pct),
+        "take_profit_dollars": round(max_profit * float(take_profit_pct), 2),
+        "stop_loss_dollars": round(-max_profit * float(stop_loss_pct), 2),
+        "equity": equity,
+    }
+
+
+def evaluate_spy_tape_unusual(
+    *,
+    ticker: str | None,
+    short_put_volume: float | None = None,
+    short_put_open_interest: float | None = None,
+) -> dict[str, Any]:
+    """UW size>OI unusual tag as a local honesty overlay.
+
+    Soft flags only. Never an entry chase. Never calls api.unusualwhales.com.
+    Non-SPY tickers are refused so this cannot become a multi-name screener.
+    """
+
+    symbol = (ticker or "SPY").strip().upper() or "SPY"
+    if symbol != "SPY":
+        return {
+            "allowed": False,
+            "blockers": [f"tape overlay is SPY-only (got {symbol})"],
+            "soft_flags": [],
+            "unusual_whales_api": False,
+            "source": "local_option_chain_not_unusual_whales",
+            "ticker": symbol,
+        }
+    flags: list[str] = []
+    if (
+        short_put_volume is not None
+        and short_put_open_interest is not None
+        and float(short_put_open_interest) > 0
+        and float(short_put_volume) > float(short_put_open_interest)
+    ):
+        flags.append(
+            "short put volume>OI (crowded contract; UW-style unusual tag — not an entry signal)"
+        )
+    return {
+        "allowed": True,
+        "blockers": [],
+        "soft_flags": flags,
+        "unusual_whales_api": False,
+        "source": "local_option_chain_not_unusual_whales",
+        "ticker": symbol,
+        "short_put_volume": short_put_volume,
+        "short_put_open_interest": short_put_open_interest,
     }
 
 
@@ -454,6 +547,15 @@ def evaluate_entry_operating_system(
             credit = opportunity.get("est_credit") or opportunity.get("natural_credit")
         if wing is None and isinstance(risk_plan, dict):
             wing = risk_plan.get("wing_width")
+        tp_pct = 0.50
+        sl_pct = 2.0
+        try:
+            if risk_plan.get("take_profit") is not None:
+                tp_pct = float(risk_plan.get("take_profit"))
+            if risk_plan.get("stop_loss") is not None:
+                sl_pct = float(risk_plan.get("stop_loss"))
+        except (TypeError, ValueError):
+            pass
         budget = evaluate_buffett_risk_budget(
             equity=equity,
             wing_width=float(wing or 5.0),
@@ -461,12 +563,36 @@ def evaluate_entry_operating_system(
             quantity=qty or 1,
         )
         risk_detail["buffett_risk_budget"] = budget
+        risk_detail["defined_risk_receipt"] = defined_risk_receipt(
+            credit=credit,
+            wing_width=float(wing or 5.0),
+            quantity=qty or 1,
+            take_profit_pct=tp_pct,
+            stop_loss_pct=sl_pct,
+            equity=equity,
+        )
         if not budget.get("allowed"):
             risk_ok = False
             risk_detail["buffett_blockers"] = list(budget.get("blockers") or [])
     answers["predefined_risk"] = {"yes": risk_ok, "detail": risk_detail}
     if not risk_ok:
         fails.append("predefined_risk=no")
+
+    tape_ticker = "SPY"
+    tape_vol = None
+    tape_oi = None
+    if isinstance(opportunity, dict):
+        tape_ticker = str(opportunity.get("ticker") or opportunity.get("underlying") or "SPY")
+        tape_vol = opportunity.get("short_put_volume")
+        tape_oi = opportunity.get("short_put_open_interest")
+    tape = evaluate_spy_tape_unusual(
+        ticker=tape_ticker,
+        short_put_volume=tape_vol,
+        short_put_open_interest=tape_oi,
+    )
+    answers["tape_honesty"] = {"yes": bool(tape.get("allowed")), "detail": tape}
+    if not tape.get("allowed"):
+        fails.append("tape_honesty=no")
 
     return {
         "pass": not fails,
