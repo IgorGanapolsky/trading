@@ -53,6 +53,15 @@ fi
 
 BODY="Automated state-writer landing. Main is ruleset-protected, so this PR is the only legal land path. No orders."
 
+# Close any open superseded automated PRs for this slug to prevent pileup
+OLD_PRS="$(gh pr list "${PR_ARGS[@]}" --state open --search "chore: ${SLUG} in:title,head" --json number,headRefName --jq '.[] | select(.headRefName | startswith("chore/auto-'"${SLUG}"'-")) | .number' 2>/dev/null || true)"
+for old_pr in ${OLD_PRS}; do
+	if [[ -n "${old_pr}" ]]; then
+		echo "Closing superseded automated PR #${old_pr} for slug ${SLUG}"
+		gh pr close "${PR_ARGS[@]}" "${old_pr}" --comment "Superseded by newer automated ${SLUG} sync run" --delete-branch || true
+	fi
+done
+
 gh pr create "${PR_ARGS[@]}" \
 	--base main \
 	--head "${BRANCH}" \
