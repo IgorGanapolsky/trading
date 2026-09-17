@@ -589,10 +589,11 @@ def protect_worktree(
         check=False,
     )
     if ancestor.returncode != 0:
-        # Squash merges deliberately produce a different commit SHA. Git's
-        # patch-id comparison marks those commits with ``-`` when their patch
-        # is already represented on origin/main. Only accept the worktree when
-        # every unique commit is patch-equivalent; any ``+`` remains protected.
+        # Squash merges deliberately produce a different commit SHA.
+        # 1) Single-commit squash: ``git cherry`` marks the tip with ``-``.
+        # 2) Multi-commit squash: individual patch-ids never match the combined
+        #    squash commit, so also accept when every file changed on the branch
+        #    tip has the same blob as origin/main (content already landed).
         cherry = _run_git(
             resolved_target,
             "cherry",
@@ -606,7 +607,8 @@ def protect_worktree(
             and bool(patch_lines)
             and all(line.startswith("- ") for line in patch_lines)
         )
-        if not patch_equivalent:
+        content_equivalent = _branch_tip_content_on_main(resolved_target, "origin/main")
+        if not (patch_equivalent or content_equivalent):
             findings.append(
                 Finding(
                     "error",
@@ -615,6 +617,41 @@ def protect_worktree(
                 )
             )
     return findings
+
+
+def _blob_at(repo: Path, rev: str, path: str) -> str | None:
+    """Return blob SHA for rev:path, or None if the path is absent."""
+    result = _run_git(repo, "rev-parse", "--verify", "--quiet", f"{rev}:{path}", check=False)
+    if result.returncode != 0:
+        return None
+    return (result.stdout or "").strip() or None
+
+
+def _branch_tip_content_on_main(worktree: Path, main_ref: str) -> bool:
+    """True when every path changed on HEAD vs merge-base matches main_ref blobs."""
+    mb = _run_git(worktree, "merge-base", main_ref, "HEAD", check=False)
+    if mb.returncode != 0:
+        return False
+    merge_base = (mb.stdout or "").strip()
+    if not merge_base:
+        return False
+    changed = _run_git(
+        worktree,
+        "diff",
+        "--name-only",
+        "--diff-filter=ACDMRTUXB",
+        f"{merge_base}..HEAD",
+        check=False,
+    )
+    if changed.returncode != 0:
+        return False
+    paths = [line.strip() for line in changed.stdout.splitlines() if line.strip()]
+    if not paths:
+        return False
+    for path in paths:
+        if _blob_at(worktree, "HEAD", path) != _blob_at(worktree, main_ref, path):
+            return False
+    return True
 
 
 def has_errors(findings: Iterable[Finding]) -> bool:

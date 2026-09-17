@@ -344,6 +344,33 @@ def test_worktree_removal_accepts_clean_squash_equivalent_target(tmp_path: Path)
     assert protect_worktree(repo, worktree, vault_root=vault) == []
 
 
+def test_worktree_removal_accepts_multi_commit_squash_via_content(tmp_path: Path) -> None:
+    """Multi-commit squash: cherry shows +, but tip blobs match main."""
+    repo, worktree = _repo_with_worktree(tmp_path)
+    vault = tmp_path / "vault"
+    _write_claim(vault, status="Done")
+
+    (worktree / "a.txt").write_text("part-a\n", encoding="utf-8")
+    _git(worktree, "add", "a.txt")
+    _git(worktree, "commit", "-m", "feat part a")
+    (worktree / "b.txt").write_text("part-b\n", encoding="utf-8")
+    _git(worktree, "add", "b.txt")
+    _git(worktree, "commit", "-m", "feat part b")
+
+    # Squash-equivalent on main as one commit (different SHAs; combined content)
+    (repo / "a.txt").write_text("part-a\n", encoding="utf-8")
+    (repo / "b.txt").write_text("part-b\n", encoding="utf-8")
+    _git(repo, "add", "a.txt", "b.txt")
+    _git(repo, "commit", "-m", "squash merge of multi-commit feature")
+    # Main also moved ahead with unrelated work (common after later merges)
+    (repo / "later.txt").write_text("later\n", encoding="utf-8")
+    _git(repo, "add", "later.txt")
+    _git(repo, "commit", "-m", "later main work")
+    _git(repo, "update-ref", "refs/remotes/origin/main", "HEAD")
+
+    assert protect_worktree(repo, worktree, vault_root=vault) == []
+
+
 def test_audit_detects_live_agent_in_primary_checkout(tmp_path: Path) -> None:
     repo, _ = _repo_with_worktree(tmp_path)
     vault = tmp_path / "vault"
