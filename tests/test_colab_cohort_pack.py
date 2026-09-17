@@ -48,12 +48,16 @@ def test_build_pack_writes_manifest(tmp_path: Path):
         entries_path=entries,
         kill_path=kill,
     )
+    from urllib.parse import urlparse
+
     assert manifest["never_auto_buy_compute_units"] is True
     assert manifest["plan_policy"] == "use_existing_colab_pro_plus_only"
     assert Path(manifest["pack_dir"]).is_dir()
     assert Path(manifest["scorecard_path"]).is_file()
     assert (out / "latest.json").is_file()
-    assert "colab.research.google.com" in manifest["colab_github_url"]
+    parsed = urlparse(str(manifest["colab_github_url"]))
+    assert parsed.scheme == "https"
+    assert parsed.hostname == "colab.research.google.com"
 
 
 def test_notebook_exists_and_is_ipynb():
