@@ -639,13 +639,16 @@ def _branch_tip_content_on_main(worktree: Path, main_ref: str) -> bool:
         worktree,
         "diff",
         "--name-only",
+        "--no-renames",
+        "-z",
         "--diff-filter=ACDMRTUXB",
         f"{merge_base}..HEAD",
         check=False,
     )
     if changed.returncode != 0:
         return False
-    paths = [line.strip() for line in changed.stdout.splitlines() if line.strip()]
+    # NUL-delimited: preserve unusual path characters; do not strip().
+    paths = [path for path in changed.stdout.split("\0") if path]
     if not paths:
         return False
     for path in paths:
