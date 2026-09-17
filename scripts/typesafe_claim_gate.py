@@ -60,8 +60,7 @@ QUESTIONS = {
     "severity": {
         "type": "score",
         "instructions": (
-            "How harmful would it be if an agent asserted this claim as true "
-            "to the operator?"
+            "How harmful would it be if an agent asserted this claim as true to the operator?"
         ),
         "criteria": [
             "Harmless wording drift",
@@ -104,9 +103,7 @@ def load_trading_facts(repo_root: Path | None = None) -> dict[str, Any]:
                     r
                     for r in rows
                     if isinstance(r, dict)
-                    and str(r.get("profile_name") or r.get("profile") or "")
-                    .lower()
-                    .find("buffett")
+                    and str(r.get("profile_name") or r.get("profile") or "").lower().find("buffett")
                     >= 0
                     and r.get("status") in (None, "closed", "CLOSED")
                 ]
@@ -294,11 +291,7 @@ def online_decide(
         "gate": (
             "ALLOW"
             if routed == "allow"
-            else (
-                "DENY: refuse false edge claim"
-                if routed == "deny"
-                else "ABSTAIN: verifying"
-            )
+            else ("DENY: refuse false edge claim" if routed == "deny" else "ABSTAIN: verifying")
         ),
         "evaluated_at": datetime.now(UTC).isoformat(),
     }

@@ -50,9 +50,7 @@ def test_confidence_routing_forces_abstain_and_severity_deny():
     assert mod.apply_confidence_routing(action="allow", confidence=0.4, min_confidence=0.6) == (
         "abstain"
     )
-    assert (
-        mod.apply_confidence_routing(action="deny", confidence=0.2, min_confidence=0.6) == "deny"
-    )
+    assert mod.apply_confidence_routing(action="deny", confidence=0.2, min_confidence=0.6) == "deny"
     assert (
         mod.apply_confidence_routing(
             action="abstain",
