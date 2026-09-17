@@ -2203,6 +2203,154 @@
       "ingested_at": "2026-09-15T18:06:51.443978+00:00",
       "sha256": "e71a06e2e4686572ff99b1b184509d9846584daa7f402ef7255a8a64dedba237",
       "chunks": 11
+    },
+    "2609.18555v1": {
+      "title": "Interpretable Patch-Based Deep Learning for Wildfire Spread Prediction from Ensemble Simulations",
+      "published": "2026-09-16T12:17:47Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.18555v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_18555v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_18555v1.md",
+      "ingested_at": "2026-09-17T06:33:08.804936+00:00",
+      "sha256": "f5e84b887c6497ac34677bbbd34f31b61ab8ed7a541026904fed08de7dd7c1ff",
+      "chunks": 10
+    },
+    "2609.19125v1": {
+      "title": "Affora: A Design System for Agent-Friendly Interfaces",
+      "published": "2026-09-16T17:46:34Z",
+      "relevance_score": 0.31,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.HC",
+        "cs.AI",
+        "cs.SE"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.19125v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_19125v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_19125v1.md",
+      "ingested_at": "2026-09-17T06:33:08.813968+00:00",
+      "sha256": "d65067542093d76c9e8b86781b1b8df2af7a5b2c3a3e3141200ab5c487cebd4a",
+      "chunks": 10
+    },
+    "2609.19090v1": {
+      "title": "Securing quantum error correction against misleading advice from AI agents",
+      "published": "2026-09-16T17:26:54Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "quant-ph",
+        "cs.AI",
+        "cs.CR",
+        "eess.SY"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.19090v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_19090v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_19090v1.md",
+      "ingested_at": "2026-09-17T06:33:08.819648+00:00",
+      "sha256": "c17bc7b118f59f12fcc62bfdbfc07b2decd9a51f47f29bb6fa30a354875a78e4",
+      "chunks": 12
+    },
+    "2609.18878v1": {
+      "title": "Preventing Model Collapse: A Fisher-Rao Perspective on the Dynamics of Training with Synthetic Data",
+      "published": "2026-09-16T16:14:02Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "eess.SY"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.18878v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_18878v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_18878v1.md",
+      "ingested_at": "2026-09-17T06:33:08.825255+00:00",
+      "sha256": "021c9c864b0781f348592bff1433388e8a876c2c47d7c23fd3042f9b6e098a3d",
+      "chunks": 11
+    },
+    "2609.19144v1": {
+      "title": "A Zeroth-Order Paradigm for LLM Preference Alignment",
+      "published": "2026-09-16T17:59:35Z",
+      "relevance_score": 0.28,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.19144v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_19144v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_19144v1.md",
+      "ingested_at": "2026-09-17T06:33:08.830852+00:00",
+      "sha256": "0409e56e03e26172be8172a9e9be310b2733e89d20103a8bf19dcee5b970ba88",
+      "chunks": 11
+    },
+    "2609.19137v1": {
+      "title": "Dreaming the Sound of Contact: Leveraging Video and Audio Generation for Zero-Shot Force-Aware Manipulation and Data Generation",
+      "published": "2026-09-16T17:56:44Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.19137v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_19137v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_19137v1.md",
+      "ingested_at": "2026-09-17T06:33:08.836595+00:00",
+      "sha256": "88876c0797250fddeaaea925c2cd3ae64967030f570fa6a404cefeea0c64d8f3",
+      "chunks": 10
+    },
+    "2609.19135v1": {
+      "title": "Exponential Hardness of Off-Policy Evaluation under History-Dependent Logging",
+      "published": "2026-09-16T17:56:12Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.19135v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_19135v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_19135v1.md",
+      "ingested_at": "2026-09-17T06:33:08.842295+00:00",
+      "sha256": "02cd390dcd606bac5139f18a34169feebe8efbe8ae0abc05bca2fd952f9c76ac",
+      "chunks": 10
+    },
+    "2609.18916v1": {
+      "title": "Higher-order pruning of experts in mixture-of-experts language models",
+      "published": "2026-09-16T16:55:46Z",
+      "relevance_score": 0.28,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.18916v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_18916v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_18916v1.md",
+      "ingested_at": "2026-09-17T06:33:08.848022+00:00",
+      "sha256": "a6af42c612fef284a30abeadae47973b0610784663feb0eceec849ec588511a3",
+      "chunks": 11
+    },
+    "2609.19128v1": {
+      "title": "Cognitive Extensions for Dual-Process Language Agents: Memory and Self-Reflection in Interactive Environments",
+      "published": "2026-09-16T17:50:42Z",
+      "relevance_score": 0.36,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.LG",
+        "cs.MA"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.19128v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_19128v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_19128v1.md",
+      "ingested_at": "2026-09-17T06:33:08.856791+00:00",
+      "sha256": "62aa4820c46456548c2b56c2ae2c7a7710833301f804084009fe63b0f09459cb",
+      "chunks": 10
     }
   },
   "skipped_low_relevance": {
@@ -2625,10 +2773,28 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-09-15T18:06:51.446802+00:00"
+    },
+    "2609.19124v1": {
+      "title": "Flag Game: A Toy Model for Mechanistic Swarm Interpretability",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-17T06:33:08.798494+00:00"
+    },
+    "2609.18489v1": {
+      "title": "Butterfly Effect and the Kinetic Energy Cascade in Probabilistic Machine Learning Weather Prediction Models",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-17T06:33:08.807993+00:00"
+    },
+    "2609.18894v1": {
+      "title": "Learning Lyapunov Operators for Nonlinear Systems",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-17T06:33:08.851053+00:00"
     }
   },
-  "total_ingested": 135,
-  "last_run_utc": "2026-09-15T18:06:51.449757+00:00",
+  "total_ingested": 144,
+  "last_run_utc": "2026-09-17T06:33:08.859792+00:00",
   "runs": [
     {
       "finished_at": "2026-08-18T06:15:36.990502+00:00",
@@ -3248,6 +3414,20 @@
     },
     {
       "finished_at": "2026-09-15T18:06:51.449757+00:00",
+      "candidates": 12,
+      "new_ingested": 9,
+      "skipped_low_relevance": 3,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-09-17T06:33:08.859792+00:00",
       "candidates": 12,
       "new_ingested": 9,
       "skipped_low_relevance": 3,
