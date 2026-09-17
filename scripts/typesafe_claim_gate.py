@@ -34,8 +34,8 @@ from src.adapters.typesafe_client import (  # noqa: E402
 )
 
 EDGE_CLAIM_RE = re.compile(
-    r"\b(profitab|expectancy|profit factor|edge|validated|proven|"
-    r"beat the market|positive expectancy|pf\s*>\s*1)\b",
+    r"\b(profitab(?:le|ility)|expectancy|profit factor|edge|validated|proven|"
+    r"beat the market|positive expectancy|pf\s*>\s*1|making money)\b",
     re.IGNORECASE,
 )
 
@@ -99,23 +99,15 @@ def load_trading_facts(repo_root: Path | None = None) -> dict[str, Any]:
             data = json.loads(trades.read_text(encoding="utf-8"))
             rows = data.get("trades") if isinstance(data, dict) else data
             if isinstance(rows, list):
-                buffett = [
+                # Canonical ledger contract: only explicit status=closed counts.
+                closed = [
                     r
                     for r in rows
                     if isinstance(r, dict)
-                    and str(r.get("profile_name") or r.get("profile") or "").lower().find("buffett")
-                    >= 0
-                    and r.get("status") in (None, "closed", "CLOSED")
+                    and "buffett" in str(r.get("profile_name") or r.get("profile") or "").lower()
+                    and str(r.get("status") or "").strip().lower() == "closed"
                 ]
-                # Prefer explicit closed marker when present
-                closed = [
-                    r
-                    for r in buffett
-                    if str(r.get("status") or "closed").lower() == "closed"
-                    or r.get("exit_time")
-                    or r.get("closed_at")
-                ]
-                facts["paired_buffett_closes"] = len(closed or buffett)
+                facts["paired_buffett_closes"] = len(closed)
                 facts["source_files"].append(str(trades.relative_to(root)))
         except (OSError, json.JSONDecodeError, TypeError):
             pass
@@ -231,11 +223,20 @@ def apply_confidence_routing(
         and severity_score >= 1.5
     ):
         routed = "deny"
-    if confidence is None:
-        return routed
-    if confidence < min_confidence and routed == "allow":
+    if routed == "allow" and (confidence is None or confidence < min_confidence):
         return "abstain"
     return routed
+
+
+def enforce_ledger_invariant(claim: str, facts: Mapping[str, Any], action: str) -> str:
+    """Hard local rule: edge claims cannot allow when cohort incomplete or live blocked."""
+    if action != "allow":
+        return action
+    n = int(facts.get("paired_buffett_closes") or 0)
+    live_blocked = bool(facts.get("live_blocked", True))
+    if EDGE_CLAIM_RE.search(claim) and (n < 30 or live_blocked):
+        return "deny"
+    return action
 
 
 def online_decide(
@@ -273,6 +274,7 @@ def online_decide(
         claim_supported_noul=noul,
         severity_score=severity,
     )
+    routed = enforce_ledger_invariant(claim, facts, routed)
     return {
         "ok": routed == "allow",
         "mode": "online",
@@ -314,13 +316,24 @@ def decide(
         if not key and not offline:
             result["note"] = "TYPESAFE_API_KEY missing; used offline heuristic"
         return result
-    return online_decide(
-        claim,
-        facts_obj,
-        api_key=key,
-        model=model,
-        min_confidence=min_confidence,
-    )
+    try:
+        return online_decide(
+            claim,
+            facts_obj,
+            api_key=key,
+            model=model,
+            min_confidence=min_confidence,
+        )
+    except Exception as exc:  # noqa: BLE001 — fail closed to abstain, not traceback exit 1
+        result = offline_decide(claim, facts_obj)
+        result["mode"] = "online_fallback_offline"
+        result["provider_error"] = f"{type(exc).__name__}: {exc}"[:300]
+        result["note"] = "TypeSafe provider failure; fail-closed via offline heuristic"
+        if result.get("action") == "allow":
+            result["action"] = "abstain"
+            result["ok"] = False
+            result["gate"] = "ABSTAIN: verifying"
+        return result
 
 
 def _exit_for_action(action: str) -> int:

@@ -35,6 +35,17 @@ def test_offline_denies_false_edge_claim():
     assert "DENY" in result["gate"]
 
 
+def test_offline_denies_profitable_and_making_money_terms():
+    mod = _load("typesafe_claim_gate", ROOT / "scripts" / "typesafe_claim_gate.py")
+    facts = {"paired_buffett_closes": 0, "live_blocked": True}
+    for claim in (
+        "The strategy is profitable.",
+        "We improved profitability.",
+        "Are we making money?",
+    ):
+        assert mod.offline_decide(claim, facts)["action"] == "deny", claim
+
+
 def test_offline_abstains_non_edge_claim():
     mod = _load("typesafe_claim_gate", ROOT / "scripts" / "typesafe_claim_gate.py")
     result = mod.offline_decide(
@@ -50,6 +61,9 @@ def test_confidence_routing_forces_abstain_and_severity_deny():
     assert mod.apply_confidence_routing(action="allow", confidence=0.4, min_confidence=0.6) == (
         "abstain"
     )
+    assert mod.apply_confidence_routing(action="allow", confidence=None, min_confidence=0.6) == (
+        "abstain"
+    )
     assert mod.apply_confidence_routing(action="deny", confidence=0.2, min_confidence=0.6) == "deny"
     assert (
         mod.apply_confidence_routing(
@@ -61,6 +75,44 @@ def test_confidence_routing_forces_abstain_and_severity_deny():
         )
         == "deny"
     )
+
+
+def test_online_cannot_allow_edge_when_ledger_incomplete(monkeypatch):
+    mod = _load("typesafe_claim_gate", ROOT / "scripts" / "typesafe_claim_gate.py")
+
+    def fake_system_one(**_kwargs):
+        return {
+            "model": "jev-test",
+            "answers": {
+                "claim_supported": {"type": "noul", "noul": 0.9},
+                "action": {"type": "choice", "choice": "allow", "confidence": 0.99},
+                "severity": {"type": "score", "score": 0.1, "confidence": 0.9},
+            },
+            "usage": {},
+        }
+
+    monkeypatch.setattr(mod, "system_one", fake_system_one)
+    result = mod.online_decide(
+        "Put credit is profitable.",
+        {"paired_buffett_closes": 0, "live_blocked": True},
+        api_key="test-key",
+    )
+    assert result["action"] == "deny"
+    assert result["raw_action"] == "allow"
+
+
+def test_provider_failure_fail_closes(monkeypatch):
+    mod = _load("typesafe_claim_gate", ROOT / "scripts" / "typesafe_claim_gate.py")
+    monkeypatch.setattr(mod, "load_api_key", lambda: "test-key")
+    monkeypatch.setattr(
+        mod,
+        "online_decide",
+        lambda *a, **k: (_ for _ in ()).throw(RuntimeError("TypeSafe HTTP 500")),
+    )
+    result = mod.decide("Inventory audit finished.", offline=False)
+    assert result["action"] in {"abstain", "deny"}
+    assert result["ok"] is False
+    assert "provider_error" in result
 
 
 def test_online_decide_uses_mocked_system_one(monkeypatch):
