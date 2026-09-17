@@ -89,20 +89,20 @@ jobs:
         run: |
           echo "run_full_tests=${{ needs.changes.outputs.run_full_tests }}"
 
-      - name: Skip full test suite
-        if: needs.changes.outputs.run_full_tests != 'true'
-        run: |
-          echo "Skipping full Python test suite for workflow/docs/config-only changes."
-
       - name: Checkout
-        if: needs.changes.outputs.run_full_tests == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up uv
-        if: needs.changes.outputs.run_full_tests == 'true'
         uses: ./.github/actions/setup-uv-python
         with:
           extra: dev
+
+      - name: Run fast audit (safe changes)
+        if: needs.changes.outputs.run_full_tests != 'true'
+        run: |
+          echo "Only workflow/docs/config/state files changed; running hygiene audit."
+          python -m ruff check src scripts tests
+          python scripts/audit_repository_hygiene.py --check
 
       - name: Run test runner
         if: needs.changes.outputs.run_full_tests == 'true'

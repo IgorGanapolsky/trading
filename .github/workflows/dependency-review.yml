@@ -23,7 +23,13 @@ jobs:
     name: Agent PR required review
     if: >
       github.event.pull_request.head.repo.full_name == github.repository &&
-      contains(github.event.pull_request.body, 'Linear issue: AGENT-')
+      (
+        contains(github.event.pull_request.body, 'Linear issue: AGENT-') ||
+        (
+          startsWith(github.event.pull_request.head.ref, 'chore/auto-') &&
+          contains(github.event.pull_request.title, '[auto]')
+        )
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
