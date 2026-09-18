@@ -7,8 +7,10 @@ from src.risk.put_credit_regime import (
     RESEARCH_PREFERRED_IVR,
     RegimeSnapshot,
     attach_counterfactuals,
+    defined_risk_receipt,
     evaluate_entry_operating_system,
     evaluate_regime_gate,
+    evaluate_spy_tape_unusual,
 )
 
 
@@ -163,6 +165,13 @@ def test_entry_os_passes_when_all_four_yes():
     assert os_result["answers"]["structure_strong"]["yes"] is True
     assert os_result["answers"]["clean_technical_setup"]["yes"] is True
     assert os_result["answers"]["predefined_risk"]["yes"] is True
+    receipt = os_result["answers"]["predefined_risk"]["detail"]["defined_risk_receipt"]
+    assert receipt["vendor_unusual_whales"] is False
+    assert receipt["max_profit"] == 67.0
+    assert receipt["take_profit_dollars"] == 33.5
+    assert receipt["stop_loss_dollars"] == -134.0
+    assert os_result["answers"]["tape_honesty"]["yes"] is True
+    assert os_result["answers"]["tape_honesty"]["detail"]["unusual_whales_api"] is False
 
 
 def test_entry_os_fails_without_predefined_risk():
@@ -224,6 +233,64 @@ def test_ignore_regime_gate_only_bypasses_market_healthy_failure():
         failure for failure in fails if failure != "market_healthy=no" or not ignore_regime_gate
     ]
     assert blocking == ["market_healthy=no", "predefined_risk=no"]
+
+
+def test_defined_risk_receipt_buffett_shape():
+    rec = defined_risk_receipt(
+        credit=0.67, wing_width=5.0, quantity=1, take_profit_pct=0.50, stop_loss_pct=2.0
+    )
+    assert rec["max_loss"] == 433.0
+    assert rec["max_profit"] == 67.0
+    assert rec["vendor_unusual_whales"] is False
+
+
+def test_spy_tape_unusual_soft_flags_volume_gt_oi():
+    out = evaluate_spy_tape_unusual(
+        ticker="SPY", short_put_volume=1200, short_put_open_interest=400
+    )
+    assert out["allowed"] is True
+    assert out["unusual_whales_api"] is False
+    assert any("volume>OI" in f for f in out["soft_flags"])
+
+
+def test_spy_tape_unusual_refuses_other_tickers():
+    out = evaluate_spy_tape_unusual(
+        ticker="TSLA", short_put_volume=9_999, short_put_open_interest=1
+    )
+    assert out["allowed"] is False
+    assert any("SPY-only" in b for b in out["blockers"])
+
+
+def test_entry_os_soft_flags_crowded_short_put_without_failing():
+    gate = evaluate_regime_gate(_snap())
+    opp = {
+        "ticker": "SPY",
+        "expiry": "2026-11-20",
+        "short_put": 725.0,
+        "long_put": 720.0,
+        "est_credit": 0.67,
+        "quantity": 1,
+        "put_delta": 0.15,
+        "put_wing": 5.0,
+        "dte": 55,
+        "short_put_volume": 800,
+        "short_put_open_interest": 200,
+    }
+    risk = {
+        "entry": {"expiry": "2026-11-20"},
+        "quantity": 1,
+        "stop_loss": 2.0,
+        "take_profit": 0.50,
+        "time_exit": 30,
+        "wing_width": 5.0,
+    }
+    os_result = evaluate_entry_operating_system(
+        regime_gate=gate, opportunity=opp, risk_plan=risk, equity=100_000.0
+    )
+    assert os_result["pass"] is True
+    assert any(
+        "volume>OI" in f for f in os_result["answers"]["tape_honesty"]["detail"]["soft_flags"]
+    )
 
 
 def test_counterfactuals_tp50_and_21dte():
