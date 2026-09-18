@@ -646,3 +646,205 @@ def test_underconsumed_paired_fill_cash_is_reported(recon_mod):
     assert diagnostics["underconsumed_qty"] == 3.0
     assert diagnostics["overconsumed_order_count"] == 0
     assert diagnostics["overconsumed_cash_reference"] == 0.0
+
+
+def _put_credit_and_ic_noise_fixture(tmp_path: Path) -> tuple[Path, Path, Path]:
+    """Complete 2-leg put (+$17) plus a one-sided 50-lot SIMPLE IC remnant."""
+    state = tmp_path / "system_state.json"
+    trades = tmp_path / "trades.json"
+    reports = tmp_path / "reports"
+    legs = ["SPY260828P00691000", "SPY260828P00696000"]
+    fills = [
+        {
+            "id": "pc_open",
+            "symbol": "SPY",
+            "side": "None",
+            "qty": "1",
+            "price": "-0.19",
+            "filled_at": "2026-07-20 15:00:00+00:00",
+            "status": "OrderStatus.FILLED",
+            "order_class": "OrderClass.MLEG",
+            "legs": legs,
+        },
+        {
+            "id": "pc_close",
+            "symbol": "SPY",
+            "side": "None",
+            "qty": "1",
+            "price": "0.02",
+            "filled_at": "2026-07-31 15:47:09+00:00",
+            "status": "OrderStatus.FILLED",
+            "order_class": "OrderClass.MLEG",
+            "legs": legs,
+        },
+        {
+            "id": "ic_orphan",
+            "symbol": "SPY260508P00600000",
+            "side": "OrderSide.SELL",
+            "qty": "50",
+            "price": "4.00",
+            "filled_at": "2026-04-02 15:01:45+00:00",
+            "status": "OrderStatus.FILLED",
+            "order_class": "OrderClass.SIMPLE",
+            "legs": [],
+        },
+    ]
+    # Dummy open symbol so _get_open_symbols does not treat the 50-lot remnant
+    # as currently open from net-qty fallback.
+    state.write_text(
+        json.dumps({"positions": [{"symbol": "UNRELATED"}], "trade_history": fills})
+    )
+    trades.write_text(
+        json.dumps(
+            {
+                "stats": {
+                    "total_pnl": -4983.0,
+                    "closed_trades": 2,
+                    "unpaired_realized_pnl": 2000.0,
+                    "unpaired_order_count": 15,
+                },
+                "trades": [
+                    {
+                        "id": "pcs_1",
+                        "strategy": "spy_put_credit",
+                        "status": "closed",
+                        "exit_time": "2026-07-31 15:47:09+00:00",
+                        "realized_pnl": 17.0,
+                    },
+                    {
+                        "id": "ic_1",
+                        "strategy": "iron_condor",
+                        "status": "closed",
+                        "exit_time": "2026-04-13 19:55:52+00:00",
+                        "realized_pnl": -5000.0,
+                    },
+                ],
+            }
+        )
+    )
+    return state, trades, reports
+
+
+def test_spy_put_credit_gate_ignores_killed_ic_incomplete_noise(
+    tmp_path: Path, recon_mod, monkeypatch
+):
+    """Active-family gate stays green when 50-lot IC remnants blow all-family delta."""
+    state, trades, reports = _put_credit_and_ic_noise_fixture(tmp_path)
+    monkeypatch.delenv("SENTRY_DSN", raising=False)
+    code = recon_mod.main(
+        [
+            "--system-state",
+            str(state),
+            "--trades",
+            str(trades),
+            "--report-dir",
+            str(reports),
+            "--date",
+            "2026-09-18",
+            "--gate-family",
+            "spy_put_credit",
+        ]
+    )
+    assert code == 0
+    report = json.loads((reports / "reconciliation_2026-09-18.json").read_text())
+    assert report["gate_family"] == "spy_put_credit"
+    assert report["broker_realized_pnl"] == 17.0
+    assert report["paired_realized_in_window"] == 17.0
+    assert report["delta_dollars"] == 0.0
+    assert report["alert_fired"] is False
+    assert report["put_credit_complete_group_count"] == 1
+    assert report["broker_incomplete_group_count"] == 1
+    assert report["all_family_alert_fired"] is True
+
+
+def test_all_family_gate_still_alerts_on_ic_noise(tmp_path: Path, recon_mod, monkeypatch):
+    state, trades, reports = _put_credit_and_ic_noise_fixture(tmp_path)
+    monkeypatch.delenv("SENTRY_DSN", raising=False)
+    code = recon_mod.main(
+        [
+            "--system-state",
+            str(state),
+            "--trades",
+            str(trades),
+            "--report-dir",
+            str(reports),
+            "--date",
+            "2026-09-18",
+        ]
+    )
+    assert code == 2
+    report = json.loads((reports / "reconciliation_2026-09-18.json").read_text())
+    assert report["gate_family"] == "all"
+    assert report["alert_fired"] is True
+    assert abs(report["delta_dollars"]) > 150
+
+
+def test_spy_put_credit_gate_alerts_when_family_delta_breaches(
+    tmp_path: Path, recon_mod, monkeypatch
+):
+    state = tmp_path / "system_state.json"
+    trades = tmp_path / "trades.json"
+    reports = tmp_path / "reports"
+    legs = ["SPY260828P00691000", "SPY260828P00696000"]
+    fills = [
+        {
+            "id": "pc_open",
+            "symbol": "SPY",
+            "side": "None",
+            "qty": "1",
+            "price": "-0.19",
+            "filled_at": "2026-07-20 15:00:00+00:00",
+            "status": "OrderStatus.FILLED",
+            "order_class": "OrderClass.MLEG",
+            "legs": legs,
+        },
+        {
+            "id": "pc_close",
+            "symbol": "SPY",
+            "side": "None",
+            "qty": "1",
+            "price": "0.02",
+            "filled_at": "2026-07-31 15:47:09+00:00",
+            "status": "OrderStatus.FILLED",
+            "order_class": "OrderClass.MLEG",
+            "legs": legs,
+        },
+    ]
+    state.write_text(json.dumps({"positions": [], "trade_history": fills}))
+    trades.write_text(
+        json.dumps(
+            {
+                "stats": {"total_pnl": 17.0, "closed_trades": 1},
+                "trades": [
+                    {
+                        "id": "pcs_1",
+                        "strategy": "spy_put_credit",
+                        "status": "closed",
+                        "exit_time": "2026-07-31 15:47:09+00:00",
+                        "realized_pnl": 400.0,
+                    }
+                ],
+            }
+        )
+    )
+    monkeypatch.delenv("SENTRY_DSN", raising=False)
+    code = recon_mod.main(
+        [
+            "--system-state",
+            str(state),
+            "--trades",
+            str(trades),
+            "--report-dir",
+            str(reports),
+            "--date",
+            "2026-09-18",
+            "--gate-family",
+            "spy_put_credit",
+        ]
+    )
+    assert code == 2
+    report = json.loads((reports / "reconciliation_2026-09-18.json").read_text())
+    assert report["broker_realized_pnl"] == 17.0
+    assert report["paired_realized_in_window"] == 400.0
+    assert report["delta_dollars"] == -383.0
+    assert report["alert_fired"] is True

@@ -218,19 +218,32 @@ def _get_open_symbols(system_state: dict[str, Any]) -> set[str]:
     return open_symbols
 
 
-def compute_broker_realized(
-    system_state: dict[str, Any],
-) -> tuple[float, int, str | None, str | None]:
-    """Return (broker_realized_dollars, closed_position_count, window_start, window_end).
+def _occ_right(symbol: str) -> str:
+    """Return P/C for an OCC option symbol, else empty.
 
-    Sums signed_cash only for SPY option fills, excluding currently open position legs.
-    The window is the [min, max] timestamp across the closed broker fills.
+    SPY equity options are ROOT(3) + YYMMDD(6) + right(1) + strike.
     """
+    if not symbol.startswith("SPY") or len(symbol) < 10:
+        return ""
+    right = symbol[9]
+    return right if right in {"P", "C"} else ""
+
+
+def _is_spy_put_credit_group(key: tuple) -> bool:
+    """True for a 2-leg SPY put vertical (active paper family)."""
+    if not key or key[0] != "MLEG":
+        return False
+    legs = key[1]
+    if not isinstance(legs, tuple) or len(legs) != 2:
+        return False
+    return all(_occ_right(str(leg)) == "P" for leg in legs)
+
+
+def _iter_recon_fills(system_state: dict[str, Any]) -> list[dict[str, Any]]:
+    """SPY option fills whose legs are not in the current open set."""
     history = system_state.get("trade_history") or []
     open_symbols = _get_open_symbols(system_state)
-
-    fills = []
-    closed_timestamps = []
+    fills: list[dict[str, Any]] = []
     for row in history:
         if not isinstance(row, dict):
             continue
@@ -247,13 +260,11 @@ def compute_broker_realized(
             elif isinstance(leg, str):
                 leg_symbols.append(leg)
 
-        # 1. Exclude open positions
         if symbol in open_symbols:
             continue
         if any(ls in open_symbols for ls in leg_symbols):
             continue
 
-        # 2. Filter to SPY options only (except mock tests where symbols are short or mock)
         is_pytest = "pytest" in sys.modules
         is_mock_test = False
         if is_pytest:
@@ -276,18 +287,76 @@ def compute_broker_realized(
                     continue
 
         fills.append(row)
-        ts = _row_timestamp(row)
-        if ts:
-            closed_timestamps.append(ts)
+    return fills
 
+
+def compute_broker_realized(
+    system_state: dict[str, Any],
+) -> tuple[float, int, str | None, str | None]:
+    """Return (broker_realized_dollars, closed_position_count, window_start, window_end).
+
+    Sums signed_cash only for SPY option fills, excluding currently open position legs.
+    The window is the [min, max] timestamp across the closed broker fills.
+    """
+    fills = _iter_recon_fills(system_state)
+    closed_timestamps = [ts for row in fills if (ts := _row_timestamp(row))]
     total = sum(_fill_signed_cash(row) for row in fills)
     window_start = min(closed_timestamps) if closed_timestamps else None
     window_end = max(closed_timestamps) if closed_timestamps else None
-
     unique_groups = {_leg_key(row) for row in fills}
-    closed_count = len(unique_groups)
+    return round(total, 2), len(unique_groups), window_start, window_end
 
-    return round(total, 2), closed_count, window_start, window_end
+
+def compute_broker_group_breakdown(system_state: dict[str, Any]) -> dict[str, Any]:
+    """Complete vs incomplete leg-groups, plus spy_put_credit complete 2-leg puts.
+
+    Incomplete groups (net signed qty != 0) are the killed 50-lot IC remnants that
+    coincidentally net near $0 and should not drive the active-family gate.
+    """
+    groups: dict[tuple, dict[str, Any]] = defaultdict(
+        lambda: {"qty": 0.0, "cash": 0.0, "n": 0, "timestamps": []}
+    )
+    for row in _iter_recon_fills(system_state):
+        key = _leg_key(row)
+        bucket = groups[key]
+        bucket["qty"] += _signed_qty(row)
+        bucket["cash"] += _fill_signed_cash(row)
+        bucket["n"] += 1
+        ts = _row_timestamp(row)
+        if ts:
+            bucket["timestamps"].append(ts)
+
+    complete_cash = 0.0
+    complete_n = 0
+    incomplete_cash = 0.0
+    incomplete_n = 0
+    pc_cash = 0.0
+    pc_n = 0
+    pc_timestamps: list[str] = []
+    for key, bucket in groups.items():
+        complete = abs(float(bucket["qty"])) <= 1e-6
+        cash = float(bucket["cash"])
+        if complete:
+            complete_cash += cash
+            complete_n += 1
+            if _is_spy_put_credit_group(key):
+                pc_cash += cash
+                pc_n += 1
+                pc_timestamps.extend(bucket["timestamps"])
+        else:
+            incomplete_cash += cash
+            incomplete_n += 1
+
+    return {
+        "complete_group_count": complete_n,
+        "complete_cash": round(complete_cash, 2),
+        "incomplete_group_count": incomplete_n,
+        "incomplete_cash": round(incomplete_cash, 2),
+        "put_credit_complete_group_count": pc_n,
+        "put_credit_complete_cash": round(pc_cash, 2),
+        "put_credit_window_start": min(pc_timestamps) if pc_timestamps else None,
+        "put_credit_window_end": max(pc_timestamps) if pc_timestamps else None,
+    }
 
 
 def compute_unconsumed_paired_cash(
@@ -495,6 +564,50 @@ def compute_paired_realized(
     }
 
 
+def compute_paired_family(
+    trades: dict[str, Any],
+    family: str,
+    window_start: str | None = None,
+    window_end: str | None = None,
+) -> dict[str, Any]:
+    """Paired closed P/L for one strategy family. Does not fold unpaired cash.
+
+    Unpaired stats mix killed iron-condor leftovers into the active-family
+    gate; keep them on the all-family diagnostic path only.
+    """
+    in_pnl = 0.0
+    out_pnl = 0.0
+    in_count = 0
+    out_count = 0
+    for trade in trades.get("trades") or []:
+        if not isinstance(trade, dict):
+            continue
+        if str(trade.get("status") or "").lower() != "closed":
+            continue
+        if str(trade.get("strategy") or "") != family:
+            continue
+        exit_time = str(trade.get("exit_time") or "")
+        pnl = _to_float(trade.get("realized_pnl"), 0.0)
+        if window_start and window_end and exit_time:
+            if window_start <= exit_time <= window_end:
+                in_pnl += pnl
+                in_count += 1
+            else:
+                out_pnl += pnl
+                out_count += 1
+        else:
+            in_pnl += pnl
+            in_count += 1
+    return {
+        "paired_realized_in_window": round(in_pnl, 2),
+        "paired_realized_outside_window": round(out_pnl, 2),
+        "paired_trade_count_in_window": in_count,
+        "paired_trade_count_outside_window": out_count,
+        "unpaired_order_count": 0,
+        "window_clipped": bool(window_start and window_end),
+    }
+
+
 def compute_delta(broker_realized: float, paired_realized: float) -> float:
     return round(broker_realized - paired_realized, 2)
 
@@ -600,6 +713,28 @@ def build_payload(
     return payload
 
 
+def _attach_gate_diagnostics(
+    payload: dict[str, Any],
+    *,
+    gate_family: str,
+    breakdown: dict[str, Any],
+    all_family_broker: float,
+    all_family_paired_in: float,
+) -> None:
+    all_delta = compute_delta(all_family_broker, all_family_paired_in)
+    payload["gate_family"] = gate_family
+    payload["broker_complete_group_count"] = breakdown["complete_group_count"]
+    payload["broker_complete_cash"] = breakdown["complete_cash"]
+    payload["broker_incomplete_group_count"] = breakdown["incomplete_group_count"]
+    payload["broker_incomplete_cash"] = breakdown["incomplete_cash"]
+    payload["put_credit_complete_group_count"] = breakdown["put_credit_complete_group_count"]
+    payload["put_credit_complete_cash"] = breakdown["put_credit_complete_cash"]
+    payload["all_family_broker_realized_pnl"] = all_family_broker
+    payload["all_family_paired_realized_pnl"] = all_family_paired_in
+    payload["all_family_delta_dollars"] = all_delta
+    payload["all_family_alert_fired"] = abs(all_delta) > THRESHOLD_DOLLARS
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--system-state", type=Path, default=DEFAULT_SYSTEM_STATE)
@@ -610,6 +745,16 @@ def main(argv: list[str] | None = None) -> int:
         type=str,
         default=None,
         help="Override report date (YYYY-MM-DD). Default = today UTC.",
+    )
+    parser.add_argument(
+        "--gate-family",
+        choices=("all", "spy_put_credit"),
+        default="all",
+        help=(
+            "Ledger slice that drives exit code and Sentry. "
+            "'all' is the historical all-family path (tests). "
+            "'spy_put_credit' ignores killed IC 50-lot incomplete groups."
+        ),
     )
     args = parser.parse_args(argv)
 
@@ -626,35 +771,49 @@ def main(argv: list[str] | None = None) -> int:
     trades = json.loads(args.trades.read_text())
 
     (
-        broker_realized,
+        all_family_broker,
         broker_closed_count,
         window_start,
         window_end,
     ) = compute_broker_realized(system_state)
-    paired = compute_paired_realized(trades, window_start, window_end)
+    breakdown = compute_broker_group_breakdown(system_state)
+    all_family_paired = compute_paired_realized(trades, window_start, window_end)
     partial_consumption = compute_partial_consumption_diagnostics(
         trades, system_state, window_start, window_end
     )
-    paired["paired_realized_in_window"] = round(
-        paired["paired_realized_in_window"] + partial_consumption["unconsumed_cash"], 2
+    all_family_paired["paired_realized_in_window"] = round(
+        all_family_paired["paired_realized_in_window"]
+        + partial_consumption["unconsumed_cash"],
+        2,
     )
+    all_family_paired_in = all_family_paired["paired_realized_in_window"]
+
+    if args.gate_family == "spy_put_credit":
+        broker_realized = breakdown["put_credit_complete_cash"]
+        broker_closed_count = breakdown["put_credit_complete_group_count"]
+        pc_start = breakdown["put_credit_window_start"]
+        pc_end = breakdown["put_credit_window_end"]
+        if pc_start and pc_end:
+            window_start, window_end = pc_start, pc_end
+        paired = compute_paired_family(
+            trades, "spy_put_credit", window_start, window_end
+        )
+        gate_partial: dict[str, Any] | None = None
+    else:
+        broker_realized = all_family_broker
+        paired = all_family_paired
+        gate_partial = partial_consumption
 
     date_str = args.date or _dt.datetime.now(_dt.UTC).strftime("%Y-%m-%d")
     notes = (
-        "broker_realized = sum(signed_cash) over FILLED rows grouped by "
-        "leg-key (SIMPLE: OCC symbol; MLEG: sorted tuple of leg symbols) "
-        "where net signed_qty == 0 (position fully closed). Open positions "
-        "contribute $0 so entry cash is not mistaken for realized P/L. "
-        "paired_realized_in_window = sum(trades[].realized_pnl) where "
-        "exit_time in [window_start, window_end] + "
-        "trades.stats.unpaired_realized_pnl + under-consumed paired fill cash. "
-        "Over-consumed paired fill references are reported as diagnostics and "
-        "excluded from P/L because they are duplicate/ledger-integrity signals, "
-        "not real cash. The window is the min/max "
-        "filled_at across closed broker leg-groups, so the rolling ~60d "
-        "broker history is not diff'd against the full paired ledger. "
-        "Threshold $150 sits above the ~$103 fee/spread noise floor "
-        "(LL-354 prevention layer)."
+        "gate_family selects the exit/Sentry slice. all = historical sum of "
+        "non-open SPY fills vs window-clipped paired+unpaired+underconsumed. "
+        "spy_put_credit = complete 2-leg SPY put MLEG groups (net qty 0) vs "
+        "paired trades.json rows with strategy=spy_put_credit; unpaired IC "
+        "cash and incomplete 50-lot groups are diagnostics only. "
+        "Open positions contribute $0. Over-consumed paired fill references "
+        "are diagnostics, not P/L. Threshold $150 sits above the ~$103 "
+        "fee/spread noise floor (LL-354 / LL-663)."
     )
 
     payload = build_payload(
@@ -665,7 +824,14 @@ def main(argv: list[str] | None = None) -> int:
         window_start=window_start,
         window_end=window_end,
         notes=notes,
-        partial_consumption=partial_consumption,
+        partial_consumption=gate_partial,
+    )
+    _attach_gate_diagnostics(
+        payload,
+        gate_family=args.gate_family,
+        breakdown=breakdown,
+        all_family_broker=all_family_broker,
+        all_family_paired_in=all_family_paired_in,
     )
 
     report_path = write_report(args.report_dir, payload)
