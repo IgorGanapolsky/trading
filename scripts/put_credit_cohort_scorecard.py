@@ -383,10 +383,10 @@ def build_scorecard(
         "kill_criteria": kill,
         "rolling_20": _rolling_windows(all_closed_pnls_sorted, 20),
         "sources": {
-            "trades_json": len(closed_from_trades.get("closed_trades", []))
+            "trades_json": int(closed_from_trades.get("closed_n") or 0)
             if isinstance(closed_from_trades, dict)
             else 0,
-            "entries_json": closed_from_entries.get("closed_from_entries", 0),
+            "entries_json": int(closed_from_entries.get("closed_from_entries") or 0),
         },
     }
 
