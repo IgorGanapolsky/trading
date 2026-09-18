@@ -44,54 +44,66 @@ def _severity(text: str) -> str:
     return (m.group(1).upper() if m else "LOW")[:16]
 
 
+def _sanitize_path(p: Path | str) -> Path:
+    resolved = Path(p).resolve()
+    if any(part == ".." for part in Path(p).parts):
+        raise ValueError(f"Path traversal detected: {p}")
+    return resolved
+
+
 def prepare_record(path: Path) -> dict[str, Any]:
-    text = path.read_text(encoding="utf-8", errors="replace")
+    safe_path = _sanitize_path(path)
+    with open(safe_path, encoding="utf-8", errors="replace") as f:
+        text = f.read()
     excerpt = " ".join(text.split())[:EXCERPT_CHARS]
     return {
-        "id": _lesson_id(path, text),
-        "title": _title(text, path.stem),
+        "id": _lesson_id(safe_path, text),
+        "title": _title(text, safe_path.stem),
         "severity": _severity(text),
-        "path": str(path),
+        "path": str(safe_path),
         "excerpt": excerpt,
-        "mtime_ns": path.stat().st_mtime_ns,
-        "bytes": path.stat().st_size,
+        "mtime_ns": safe_path.stat().st_mtime_ns,
+        "bytes": safe_path.stat().st_size,
     }
 
 
 def export_hot(*, durable: Path, hot: Path) -> dict[str, Any]:
     """Lorry: batch durable markdown into prepared hot records."""
-    files = sorted(p for p in durable.glob("*.md") if p.is_file())
+    safe_durable = _sanitize_path(durable)
+    safe_hot = _sanitize_path(hot)
+    files = sorted(p for p in safe_durable.glob("*.md") if p.is_file())
     records = [prepare_record(p) for p in files]
-    hot.parent.mkdir(parents=True, exist_ok=True)
-    tmp = hot.with_suffix(hot.suffix + ".tmp")
-    tmp.write_text(
-        "".join(json.dumps(r, sort_keys=True) + "\n" for r in records),
-        encoding="utf-8",
-    )
-    tmp.replace(hot)
+    safe_hot.parent.mkdir(parents=True, exist_ok=True)
+    tmp = safe_hot.with_suffix(safe_hot.suffix + ".tmp")
+    content = "".join(json.dumps(r, sort_keys=True) + "\n" for r in records)
+    with open(tmp, "w", encoding="utf-8") as f:
+        f.write(content)
+    tmp.replace(safe_hot)
     return {
         "ok": True,
         "exported": len(records),
-        "durable": str(durable),
-        "hot": str(hot),
+        "durable": str(safe_durable),
+        "hot": str(safe_hot),
         "source": SOURCE,
     }
 
 
 def load_hot(hot: Path) -> list[dict[str, Any]]:
-    if not hot.exists():
+    safe_hot = _sanitize_path(hot)
+    if not safe_hot.exists():
         return []
     rows: list[dict[str, Any]] = []
-    for line in hot.read_text(encoding="utf-8", errors="replace").splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            row = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        if isinstance(row, dict):
-            rows.append(row)
+    with open(safe_hot, encoding="utf-8", errors="replace") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(row, dict):
+                rows.append(row)
     return rows
 
 
