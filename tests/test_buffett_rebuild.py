@@ -40,6 +40,8 @@ def test_buffett_risk_budget_allows_one_lot_five_wide():
     out = evaluate_buffett_risk_budget(equity=100_000.0, wing_width=5.0, credit=0.67, quantity=1)
     assert out["allowed"] is True
     assert out["max_loss"] < 500
+    assert out["receipt"]["vendor_unusual_whales"] is False
+    assert out["receipt"]["max_loss"] == out["max_loss"]
 
 
 def test_buffett_risk_budget_blocks_oversized():
