@@ -42,12 +42,18 @@ jobs:
           HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
-          # dismiss_stale_reviews keeps historical state=APPROVED rows on old SHAs.
-          # Only skip when this HEAD already has a live bot approval.
-          already="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR}/reviews" \
-            --jq "[.[] | select(.user.login==\"github-actions[bot]\" and .state==\"APPROVED\" and .commit_id==\"${HEAD}\")] | length")"
-          if [[ "${already}" != "0" ]]; then
-            echo "github-actions[bot] already approved ${HEAD}"
+          # dismiss_stale_reviews keeps historical APPROVED rows on old SHAs.
+          # GITHUB_TOKEN is github-actions[bot] and cannot approve its own
+          # chore/auto-* PRs (GraphQL: Review Can not approve your own pull request).
+          any_approved="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR}/reviews" \
+            --jq "[.[] | select(.state==\"APPROVED\" and .commit_id==\"${HEAD}\")] | length")"
+          if [[ "${any_approved}" != "0" ]]; then
+            echo "HEAD already has an APPROVED review"
+            exit 0
+          fi
+          author="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR}" --jq .user.login)"
+          if [[ "${author}" == "github-actions[bot]" ]]; then
+            echo "bot-authored PR cannot be self-approved by GITHUB_TOKEN; CODEOWNERS still requires a human review"
             exit 0
           fi
           gh pr review "${PR}" --repo "${GITHUB_REPOSITORY}" --approve \
