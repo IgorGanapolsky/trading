@@ -95,6 +95,17 @@ def test_ci_cancels_superseded_branch_runs_only() -> None:
     assert "cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}" in text
 
 
+def test_ci_fast_audit_includes_put_credit_ledger_paths() -> None:
+    """AGENT-660: put-credit autos only touch ledger JSON; full suite loses to cron supersede."""
+    text = _read("ci.yml")
+    assert "data/put_credit_entries.json | data/trades.json" in text
+    assert (
+        "data/system_state.json | data/runtime/intraday_pnl_history.json | data/runtime/intraday_pnl_latest.json"
+        in text
+    )
+    assert "Run fast audit (safe changes)" in text
+
+
 def test_removed_mutating_automation_stays_removed() -> None:
     removed = {
         "auto-format.yml",

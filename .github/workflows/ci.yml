@@ -57,6 +57,8 @@ jobs:
                 ;;
               data/system_state.json | data/runtime/intraday_pnl_history.json | data/runtime/intraday_pnl_latest.json)
                 ;;
+              data/put_credit_entries.json | data/trades.json)
+                ;;
               data/north_star_weekly_history.json | data/runtime/north_star_gate_overrides.json | data/TRADING_HALTED)
                 ;;
               data/analytics/perplexity_utilization_latest.json)
