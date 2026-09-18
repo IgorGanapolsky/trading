@@ -330,7 +330,14 @@ def evaluate_put_credit_exit(
     try:
         from src.risk.put_credit_regime import attach_counterfactuals
 
-        result = attach_counterfactuals(result, credit=credit, quantity=quantity, dte=dte)
+        result = attach_counterfactuals(
+            result,
+            credit=credit,
+            quantity=quantity,
+            dte=dte,
+            take_profit_pct=profile.take_profit_pct,
+            exit_dte=profile.exit_dte,
+        )
     except Exception as exc:  # noqa: BLE001
         logger.debug("counterfactual attach skipped: %s", exc)
     return result

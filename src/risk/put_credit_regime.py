@@ -607,18 +607,45 @@ def evaluate_entry_operating_system(
     }
 
 
+def _live_exit_profile_knobs(
+    take_profit_pct: float | None,
+    exit_dte: int | None,
+) -> tuple[float, int]:
+    """Resolve live manager knobs so the counterfactual note cannot lag the profile."""
+
+    if take_profit_pct is not None and exit_dte is not None:
+        return float(take_profit_pct), int(exit_dte)
+    try:
+        from src.core.trading_profiles import get_put_credit_profile
+
+        profile = get_put_credit_profile()
+        tp = float(profile.take_profit_pct if take_profit_pct is None else take_profit_pct)
+        dte_exit = int(profile.exit_dte if exit_dte is None else exit_dte)
+        return tp, dte_exit
+    except (ImportError, AttributeError, TypeError, ValueError):
+        # Buffett default (AGENT-616), not the legacy 25%/7-DTE baseline.
+        return (
+            0.50 if take_profit_pct is None else float(take_profit_pct),
+            30 if exit_dte is None else int(exit_dte),
+        )
+
+
 def attach_counterfactuals(
     exit_eval: dict[str, Any],
     *,
     credit: float,
     quantity: int = 1,
     dte: int | None = None,
+    take_profit_pct: float | None = None,
+    exit_dte: int | None = None,
 ) -> dict[str, Any]:
     """Add public-rule counterfactuals (50% TP, 21 DTE) without changing live exits."""
 
     qty = abs(int(quantity or 1))
     max_profit = float(credit) * 100.0 * qty
     pnl = float(exit_eval.get("estimated_pnl") or 0.0)
+    live_tp, live_exit_dte = _live_exit_profile_knobs(take_profit_pct, exit_dte)
+    tp_pct_display = int(round(live_tp * 100.0))
     out = dict(exit_eval)
     out["counterfactuals"] = {
         "tp_25_target": round(max_profit * 0.25, 2),
@@ -628,8 +655,11 @@ def attach_counterfactuals(
         "public_exit_dte": 21,
         "dte_now": dte,
         "would_trigger_public_21dte_exit": (dte is not None and dte <= 21),
+        "live_take_profit_pct": live_tp,
+        "live_exit_dte": live_exit_dte,
         "note": (
-            "Counterfactuals only — system still exits at profile TP 25% / exit_dte=7. "
+            "Counterfactuals only — live manager uses profile "
+            f"TP {tp_pct_display}% / exit_dte={live_exit_dte}. "
             "Used to compare our rules to public 50%/21-DTE research without re-running history."
         ),
     }

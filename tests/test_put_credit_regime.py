@@ -306,6 +306,28 @@ def test_counterfactuals_tp50_and_21dte():
     assert cf["would_hit_tp_25_now"] is True  # 20 >= 20
     assert cf["would_hit_tp_50_now"] is False  # 20 < 40
     assert cf["would_trigger_public_21dte_exit"] is True  # dte 15 <= 21
+    assert cf["live_take_profit_pct"] == 0.50
+    assert cf["live_exit_dte"] == 30
+    assert "TP 50%" in cf["note"]
+    assert "exit_dte=30" in cf["note"]
+    assert "TP 25%" not in cf["note"]
+    assert "exit_dte=7" not in cf["note"]
+
+
+def test_counterfactual_note_uses_passed_legacy_profile_knobs():
+    out = attach_counterfactuals(
+        {"estimated_pnl": 0.0},
+        credit=0.62,
+        quantity=1,
+        dte=35,
+        take_profit_pct=0.25,
+        exit_dte=7,
+    )
+    cf = out["counterfactuals"]
+    assert cf["live_take_profit_pct"] == 0.25
+    assert cf["live_exit_dte"] == 7
+    assert "TP 25%" in cf["note"]
+    assert "exit_dte=7" in cf["note"]
 
 
 def test_exit_eval_includes_counterfactuals():
@@ -322,3 +344,6 @@ def test_exit_eval_includes_counterfactuals():
     detail = evaluate_put_credit_exit(entry, short_price=1.0, long_price=0.5)
     assert "counterfactuals" in detail
     assert detail["counterfactuals"]["would_hit_tp_50_now"] is True
+    assert detail["counterfactuals"]["live_exit_dte"] == 30
+    assert "TP 50%" in detail["counterfactuals"]["note"]
+    assert "exit_dte=7" not in detail["counterfactuals"]["note"]
