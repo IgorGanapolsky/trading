@@ -2,23 +2,12 @@
 
 from __future__ import annotations
 
-import importlib.util
 import json
-import subprocess
-import sys
 from pathlib import Path
 
+import scripts.cobble_hot_path as mod
+
 ROOT = Path(__file__).resolve().parents[1]
-
-
-def _load():
-    path = ROOT / "scripts" / "cobble_hot_path.py"
-    spec = importlib.util.spec_from_file_location("cobble_hot_path", path)
-    assert spec and spec.loader
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = mod
-    spec.loader.exec_module(mod)
-    return mod
 
 
 def _md(dir_: Path, name: str, body: str) -> Path:
@@ -28,7 +17,6 @@ def _md(dir_: Path, name: str, body: str) -> Path:
 
 
 def test_export_then_multiget_does_not_need_markdown(tmp_path: Path):
-    mod = _load()
     durable = tmp_path / "lessons"
     durable.mkdir()
     _md(
@@ -55,7 +43,6 @@ def test_export_then_multiget_does_not_need_markdown(tmp_path: Path):
 
 
 def test_query_scores_excerpts_only(tmp_path: Path):
-    mod = _load()
     durable = tmp_path / "lessons"
     durable.mkdir()
     _md(durable, "a.md", "# ll_straggler\n\nSeverity: HIGH\n\nSync idle wait.\n")
@@ -69,7 +56,6 @@ def test_query_scores_excerpts_only(tmp_path: Path):
 
 
 def test_status_stale_when_counts_differ(tmp_path: Path):
-    mod = _load()
     durable = tmp_path / "lessons"
     durable.mkdir()
     _md(durable, "a.md", "# ll_a\n\nSeverity: LOW\n\nx\n")
@@ -84,40 +70,34 @@ def test_status_stale_when_counts_differ(tmp_path: Path):
     assert "do_not_claim_5x_latency" in st["refuses"]
 
 
-def test_cli_export_query(tmp_path: Path):
+def test_cli_export_query_and_status(tmp_path: Path, capsys):
     durable = tmp_path / "lessons"
     durable.mkdir()
     (durable / "ll_cli.md").write_text(
         "# ll_cli\n\nSeverity: MEDIUM\n\nHot path only.\n", encoding="utf-8"
     )
     hot = tmp_path / "hot.jsonl"
-    script = ROOT / "scripts" / "cobble_hot_path.py"
-    r = subprocess.run(
-        [sys.executable, str(script), "--durable", str(durable), "--hot", str(hot), "export"],
-        cwd=str(ROOT),
-        capture_output=True,
-        text=True,
-        timeout=30,
-    )
-    assert r.returncode == 0, r.stderr
-    data = json.loads(r.stdout)
+
+    ret = mod.main(["--durable", str(durable), "--hot", str(hot), "export"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    data = json.loads(captured.out)
     assert data["exported"] == 1
-    r2 = subprocess.run(
-        [
-            sys.executable,
-            str(script),
-            "--hot",
-            str(hot),
-            "get",
-            "--keys",
-            "ll_cli,nope",
-        ],
-        cwd=str(ROOT),
-        capture_output=True,
-        text=True,
-        timeout=30,
-    )
-    assert r2.returncode == 0, r2.stderr
-    got = json.loads(r2.stdout)
+
+    ret = mod.main(["--hot", str(hot), "get", "--keys", "ll_cli,nope"])
+    assert ret == 0
+    got = json.loads(capsys.readouterr().out)
     assert got["n_hits"] == 1
     assert got["durable_globbed"] is False
+
+    ret = mod.main(["--hot", str(hot), "query", "hot path", "--limit", "2"])
+    assert ret == 0
+    q_out = json.loads(capsys.readouterr().out)
+    assert q_out["count"] == 1
+    assert q_out["results"][0]["id"] == "ll_cli"
+
+    ret = mod.main(["--durable", str(durable), "--hot", str(hot), "status"])
+    assert ret == 0
+    st_out = json.loads(capsys.readouterr().out)
+    assert st_out["ok"] is True
+    assert st_out["stale"] is False
