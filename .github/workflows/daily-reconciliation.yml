@@ -1,9 +1,9 @@
 name: Daily Broker-vs-Paired Reconciliation
 
-# LL-354 prevention layer: each weekday after market close, diff broker truth
-# (data/system_state.json trade_history fills) against the paired ledger
-# (data/trades.json stats.total_pnl + stats.unpaired_realized_pnl). Sentry-alert
-# and fail the workflow if |delta| > $150.
+# LL-354 / LL-663 prevention layer: each weekday after market close, diff
+# broker truth against the paired ledger. Exit/Sentry gate on spy_put_credit
+# complete 2-leg puts (--gate-family spy_put_credit). All-family IC 50-lot
+# remnants stay in the JSON as diagnostics and must not fail the active lab.
 
 on:
   schedule:
@@ -58,7 +58,7 @@ jobs:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
           set +e
-          python3 scripts/reconcile_broker_vs_paired.py
+          python3 scripts/reconcile_broker_vs_paired.py --gate-family spy_put_credit
           echo "reconcile_exit=$?" >> "$GITHUB_OUTPUT"
 
       - name: Upload reconciliation report
