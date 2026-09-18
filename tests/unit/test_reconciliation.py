@@ -691,9 +691,7 @@ def _put_credit_and_ic_noise_fixture(tmp_path: Path) -> tuple[Path, Path, Path]:
     ]
     # Dummy open symbol so _get_open_symbols does not treat the 50-lot remnant
     # as currently open from net-qty fallback.
-    state.write_text(
-        json.dumps({"positions": [{"symbol": "UNRELATED"}], "trade_history": fills})
-    )
+    state.write_text(json.dumps({"positions": [{"symbol": "UNRELATED"}], "trade_history": fills}))
     trades.write_text(
         json.dumps(
             {

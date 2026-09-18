@@ -782,8 +782,7 @@ def main(argv: list[str] | None = None) -> int:
         trades, system_state, window_start, window_end
     )
     all_family_paired["paired_realized_in_window"] = round(
-        all_family_paired["paired_realized_in_window"]
-        + partial_consumption["unconsumed_cash"],
+        all_family_paired["paired_realized_in_window"] + partial_consumption["unconsumed_cash"],
         2,
     )
     all_family_paired_in = all_family_paired["paired_realized_in_window"]
@@ -795,9 +794,7 @@ def main(argv: list[str] | None = None) -> int:
         pc_end = breakdown["put_credit_window_end"]
         if pc_start and pc_end:
             window_start, window_end = pc_start, pc_end
-        paired = compute_paired_family(
-            trades, "spy_put_credit", window_start, window_end
-        )
+        paired = compute_paired_family(trades, "spy_put_credit", window_start, window_end)
         gate_partial: dict[str, Any] | None = None
     else:
         broker_realized = all_family_broker
