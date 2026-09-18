@@ -2203,6 +2203,121 @@
       "ingested_at": "2026-09-15T18:06:51.443978+00:00",
       "sha256": "e71a06e2e4686572ff99b1b184509d9846584daa7f402ef7255a8a64dedba237",
       "chunks": 11
+    },
+    "2609.20754v1": {
+      "title": "RAFT: A Stateful Retrieval-Augmented Framework for Troubleshooting Agents",
+      "published": "2026-09-17T17:41:31Z",
+      "relevance_score": 0.51,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.20754v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_20754v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_20754v1.md",
+      "ingested_at": "2026-09-18T06:31:49.537836+00:00",
+      "sha256": "eb27121129e875170acf64fb23ef14c4eb3a6bee62e1901d10db6e28f260d1ed",
+      "chunks": 11
+    },
+    "2609.20658v1": {
+      "title": "Ownership in AI-Assisted Everyday Tasks",
+      "published": "2026-09-17T16:38:35Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.HC"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.20658v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_20658v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_20658v1.md",
+      "ingested_at": "2026-09-18T06:31:49.540914+00:00",
+      "sha256": "ab26cf0c875e2853a6e91772320b22e9abcab8370d065affa652bfe5fc8518bc",
+      "chunks": 10
+    },
+    "2609.20817v1": {
+      "title": "FAMOS: Feed-Forward 3D Articulation Modeling from Sparse Observations",
+      "published": "2026-09-17T17:59:40Z",
+      "relevance_score": 0.31,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CV",
+        "cs.AI",
+        "cs.RO"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.20817v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_20817v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_20817v1.md",
+      "ingested_at": "2026-09-18T06:31:49.552146+00:00",
+      "sha256": "ec46312bf039ea719c4e0ccca61a78830b99e970c4a544d39787419b12abffd5",
+      "chunks": 11
+    },
+    "2609.20814v1": {
+      "title": "How Does Distribution Shift Shape Pretraining Gains in Neural PDE Surrogates?",
+      "published": "2026-09-17T17:59:24Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "physics.comp-ph",
+        "cs.LG",
+        "physics.flu-dyn"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.20814v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_20814v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_20814v1.md",
+      "ingested_at": "2026-09-18T06:31:49.555135+00:00",
+      "sha256": "c1ca6d85e5eb1982b51bbebbe60e6eb93c42057fda1d0f13e5c4a3e8e114812f",
+      "chunks": 10
+    },
+    "2609.20756v1": {
+      "title": "OPTED: On-Policy Fine-Tuning for End-to-End Driving using a Render-Free Teacher",
+      "published": "2026-09-17T17:41:51Z",
+      "relevance_score": 0.25,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.RO",
+        "cs.CV",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.20756v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_20756v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_20756v1.md",
+      "ingested_at": "2026-09-18T06:31:49.558043+00:00",
+      "sha256": "7c011e4ecc6f425ed1f524f0d32341904fcbbe4e39c5d196a63f26c469b0fefa",
+      "chunks": 11
+    },
+    "2609.20816v1": {
+      "title": "Paint-Anything: Unified Any-Color Control for Image Generation and Editing",
+      "published": "2026-09-17T17:59:30Z",
+      "relevance_score": 0.36,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CV",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.20816v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_20816v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_20816v1.md",
+      "ingested_at": "2026-09-18T06:31:49.562544+00:00",
+      "sha256": "ee1daf9e35185b235c5949496d6a811e6545a64fcc7d2117c18fb520c2b8b05f",
+      "chunks": 11
+    },
+    "2609.20794v1": {
+      "title": "PosteriorBench: From Point Estimates to Posterior Matching in Evaluating Generative Inverse Solvers",
+      "published": "2026-09-17T17:54:12Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.CE"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.20794v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_20794v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_20794v1.md",
+      "ingested_at": "2026-09-18T06:31:49.565452+00:00",
+      "sha256": "dfdbc8a048e2a76f4ce9c7b820f5cf63cabbe0c455f26619d088c62ece480620",
+      "chunks": 11
     }
   },
   "skipped_low_relevance": {
@@ -2625,10 +2740,46 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-09-15T18:06:51.446802+00:00"
+    },
+    "2609.20481v1": {
+      "title": "greCAPTCHA: Assessing Understanding as Evidence of Research Authorship Under Generative AI",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-18T06:31:49.542463+00:00"
+    },
+    "2609.20779v1": {
+      "title": "Harm Laundering in GPT Models: Evidence That Gender Discrimination Is Transformed Rather Than Reduced Across Safety-Trained Generations",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-18T06:31:49.544067+00:00"
+    },
+    "2609.20722v1": {
+      "title": "Deep Noir: Autonomous Steering Discovery via Architectural Chronometry in Transformer Models",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-18T06:31:49.545675+00:00"
+    },
+    "2609.20821v1": {
+      "title": "Embedding Models Measure in Peculiar Ways",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-18T06:31:49.547545+00:00"
+    },
+    "2609.20820v1": {
+      "title": "Workspace Models: Lightweight Robotic Memory via Saliency-Driven Supervision",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-18T06:31:49.549209+00:00"
+    },
+    "2609.20751v1": {
+      "title": "dQwen3.5: Hybrid-Attention Diffusion Language Models",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-18T06:31:49.559597+00:00"
     }
   },
-  "total_ingested": 135,
-  "last_run_utc": "2026-09-15T18:06:51.449757+00:00",
+  "total_ingested": 142,
+  "last_run_utc": "2026-09-18T06:31:49.567007+00:00",
   "runs": [
     {
       "finished_at": "2026-08-18T06:15:36.990502+00:00",
@@ -3251,6 +3402,20 @@
       "candidates": 12,
       "new_ingested": 9,
       "skipped_low_relevance": 3,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-09-18T06:31:49.567007+00:00",
+      "candidates": 13,
+      "new_ingested": 7,
+      "skipped_low_relevance": 6,
       "min_relevance": 0.18,
       "queries": [
         "option credit spread OR iron condor OR put credit",
