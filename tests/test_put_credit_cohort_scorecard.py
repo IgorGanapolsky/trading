@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
-from scripts.put_credit_cohort_scorecard import summarize_closed, summarize_open
+import json
+from pathlib import Path
+
+from scripts.put_credit_cohort_scorecard import (
+    build_scorecard,
+    summarize_closed,
+    summarize_open,
+)
 
 
 def test_summarize_closed_insufficient_sample():
@@ -49,3 +56,46 @@ def test_summarize_open_skips_closed():
     out = summarize_open(entries)
     assert out["open_n"] == 1
     assert out["entries"][0]["key"] == "PCS_open"
+
+
+def test_scorecard_sources_count_trades_key_not_closed_trades(tmp_path: Path) -> None:
+    """AGENT-661: trades.json uses trades[], summarize_closed returns closed_n."""
+    trades_path = tmp_path / "trades.json"
+    trades_path.write_text(
+        json.dumps(
+            {
+                "trades": [
+                    {
+                        "strategy": "spy_put_credit",
+                        "status": "closed",
+                        "exit_time": "2026-07-10T15:00:00+00:00",
+                        "realized_pnl": 17.0,
+                    },
+                    {
+                        "strategy": "spy_put_credit",
+                        "status": "closed",
+                        "exit_time": "2026-07-17T15:00:00+00:00",
+                        "realized_pnl": 39.0,
+                    },
+                    {
+                        "strategy": "iron_condor",
+                        "status": "closed",
+                        "exit_time": "2026-06-01T15:00:00+00:00",
+                        "realized_pnl": -50.0,
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    entries_path = tmp_path / "entries.json"
+    entries_path.write_text("{}", encoding="utf-8")
+    kill_path = tmp_path / "kill.json"
+    kill_path.write_text(
+        json.dumps({"active_family": "spy_put_credit", "paper_only": True, "live_blocked": True}),
+        encoding="utf-8",
+    )
+    card = build_scorecard(trades_path=trades_path, entries_path=entries_path, kill_path=kill_path)
+    assert card["closed"]["sources"]["trades_json"] == 2
+    assert card["closed"]["sources"]["entries_json"] == 0
+    assert card["closed"]["closed_n"] == 2
