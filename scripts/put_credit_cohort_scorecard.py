@@ -301,91 +301,15 @@ def build_scorecard(
     entries = _load_json(entries_path)
     kill_switch = _load_json(kill_path) or {}
 
-    # Get closed trades from trades.json
+    # Kill-gate n is paired trades.json only (data-integrity). Journal
+    # put_credit_entries.json stays diagnostic in sources.entries_json.
     closed_from_trades = summarize_closed(_trade_rows(trades))
-
-    # Get closed entries from put_credit_entries.json
     closed_from_entries = _summarize_closed_entries(entries if isinstance(entries, dict) else {})
 
-    # Aggregate from both sources - merge unique closed trades
-    # Entries in put_credit_entries.json are authoritative for put credit cohort
-    all_closed_pnls: list[float] = []
-    seen_keys = set()
-
-    # First, add from put_credit_entries.json (more authoritative for put credit)
-    for row in closed_from_entries.get("rows", []):
-        key = row.get("signature") or row.get("key")
-        if key and key not in seen_keys:
-            seen_keys.add(key)
-            pnl = row.get("extracted_pnl") or _extract_pnl(row)
-            if pnl is not None:
-                all_closed_pnls.append(pnl)
-
-    # Then, add from trades.json if not already seen
-    for row in _trade_rows(trades):
-        if not _is_put_credit_trade(row) or not _is_closed(row):
-            continue
-        key = row.get("id") or row.get("signature") or row.get("key")
-        if key and key in seen_keys:
-            continue
-        if key:
-            seen_keys.add(key)
-        pnl = _extract_pnl(row)
-        if pnl is not None:
-            all_closed_pnls.append(pnl)
-
-    # Use aggregated PNLS for calculation
-    closed_metrics = _metrics_from_pnls(all_closed_pnls)
-
-    # Sort by exit time for rolling window
-    all_closed_pnls_sorted = sorted(all_closed_pnls)  # Already sorted chronologically from entries
-
-    n = closed_metrics["n"]
-    expectancy = closed_metrics["expectancy"]
-    pf = closed_metrics["profit_factor"]
-    total = closed_metrics["total_realized_pnl"]
-
-    kill = {
-        "n_target": KILL_N,
-        "n_closed": n,
-        "sample_sufficient": n >= KILL_N,
-        "expectancy_gt_0": (expectancy is not None and expectancy > KILL_MIN_EXPECTANCY)
-        if n >= KILL_N
-        else None,
-        "profit_factor_gt_1": (pf is not None and pf > KILL_MIN_PF) if n >= KILL_N else None,
-        "total_pnl_gt_0": (total > 0) if n >= KILL_N else None,
-        "research_note": (
-            "n=30 is an interim floor; Parallel research recommends ~100 trades and "
-            "multi-regime coverage before desk-grade confidence. Live still blocked "
-            "until EDGE_CANDIDATE; do not deposit capital on interim n alone."
-        ),
-    }
-    if n >= KILL_N:
-        kill["pass_all"] = bool(
-            kill["expectancy_gt_0"] and kill["profit_factor_gt_1"] and kill["total_pnl_gt_0"]
-        )
-        kill["verdict"] = "EDGE_CANDIDATE" if kill["pass_all"] else "NO_EDGE_KILL"
-    else:
-        kill["pass_all"] = None
-        kill["verdict"] = "INSUFFICIENT_SAMPLE"
-
     closed = {
-        "closed_n": n,
-        "wins": closed_metrics["wins"],
-        "losses": closed_metrics["losses"],
-        "breakeven": closed_metrics["breakeven"],
-        "win_rate_pct": closed_metrics["win_rate_pct"],
-        "profit_factor": closed_metrics["profit_factor"],
-        "expectancy": closed_metrics["expectancy"],
-        "total_realized_pnl": closed_metrics["total_realized_pnl"],
-        "avg_win": closed_metrics["avg_win"],
-        "avg_loss": closed_metrics["avg_loss"],
-        "kill_criteria": kill,
-        "rolling_20": _rolling_windows(all_closed_pnls_sorted, 20),
+        **closed_from_trades,
         "sources": {
-            "trades_json": int(closed_from_trades.get("closed_n") or 0)
-            if isinstance(closed_from_trades, dict)
-            else 0,
+            "trades_json": int(closed_from_trades.get("closed_n") or 0),
             "entries_json": int(closed_from_entries.get("closed_from_entries") or 0),
         },
     }

@@ -99,3 +99,73 @@ def test_scorecard_sources_count_trades_key_not_closed_trades(tmp_path: Path) ->
     assert card["closed"]["sources"]["trades_json"] == 2
     assert card["closed"]["sources"]["entries_json"] == 0
     assert card["closed"]["closed_n"] == 2
+
+
+def test_scorecard_kill_n_ignores_journal_only_closed_rows(tmp_path: Path) -> None:
+    """AGENT-662: unpaired journal closes must not advance the n/30 kill gate."""
+    trades_path = tmp_path / "trades.json"
+    trades_path.write_text(
+        json.dumps(
+            {
+                "trades": [
+                    {
+                        "strategy": "spy_put_credit",
+                        "status": "closed",
+                        "exit_time": "2026-07-10T15:00:00+00:00",
+                        "realized_pnl": 17.0,
+                    },
+                    {
+                        "strategy": "spy_put_credit",
+                        "status": "closed",
+                        "exit_time": "2026-07-17T15:00:00+00:00",
+                        "realized_pnl": 39.0,
+                    },
+                    {
+                        "strategy": "spy_put_credit",
+                        "status": "closed",
+                        "exit_time": "2026-08-11T16:17:58+00:00",
+                        "realized_pnl": 19.0,
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    entries_path = tmp_path / "entries.json"
+    entries_path.write_text(
+        json.dumps(
+            {
+                "PCS_journal_only_a": {
+                    "strategy": "spy_put_credit",
+                    "status": "closed",
+                    "signature": "SPY_2026-09-04_P700-705",
+                    "realized_pnl": 12.0,
+                },
+                "PCS_journal_only_b": {
+                    "strategy": "spy_put_credit",
+                    "status": "closed",
+                    "signature": "SPY_2026-09-14_P710-715",
+                    "realized_pnl": 8.0,
+                },
+                "PCS_journal_only_c": {
+                    "strategy": "spy_put_credit",
+                    "status": "closed",
+                    "signature": "SPY_2026-09-16_P720-725",
+                    "realized_pnl": 9.0,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    kill_path = tmp_path / "kill.json"
+    kill_path.write_text(
+        json.dumps({"active_family": "spy_put_credit", "paper_only": True, "live_blocked": True}),
+        encoding="utf-8",
+    )
+    card = build_scorecard(trades_path=trades_path, entries_path=entries_path, kill_path=kill_path)
+    assert card["closed"]["sources"]["trades_json"] == 3
+    assert card["closed"]["sources"]["entries_json"] == 3
+    assert card["closed"]["closed_n"] == 3
+    assert card["closed"]["kill_criteria"]["n_closed"] == 3
+    assert card["progress"]["closed_toward_n30"] == 3
+    assert card["closed"]["total_realized_pnl"] == 75.0
