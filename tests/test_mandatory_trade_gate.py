@@ -906,9 +906,18 @@ class TestMlConsensusAndHardReasoning:
 
     def test_protocol_reasoning_includes_put_credit_keywords(self):
         import src.safety.mandatory_trade_gate as gate_mod
+        from src.core.trading_profiles import get_put_credit_profile
 
-        text = gate_mod._protocol_reasoning_for_strategy("spy_put_credit").lower()
-        assert "rule #1" in text
-        assert "15-delta" in text or "15-delta" in text.replace(" ", "")
-        assert "stop-loss" in text or "stop-loss" in text.replace(" ", "-")
-        assert "7 dte" in text
+        profile = get_put_credit_profile()
+        text = gate_mod._protocol_reasoning_for_strategy("spy_put_credit")
+        lowered = text.lower()
+        tp_pct = int(round(profile.take_profit_pct * 100))
+        assert "rule #1" in lowered
+        assert "15-delta" in lowered
+        assert "stop-loss" in lowered
+        assert f"exit by {profile.exit_dte} dte" in lowered
+        assert f"take profit {tp_pct}%" in lowered
+        assert f"{profile.min_dte}-{profile.max_dte} dte" in lowered
+        assert "7 dte" not in lowered
+        assert "30-45 dte" not in lowered
+        assert "take profit 25%" not in lowered

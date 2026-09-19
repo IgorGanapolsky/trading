@@ -117,16 +117,31 @@ _daily_loss_lock = threading.Lock()
 _daily_loss_tracker: dict[str, float] = {"total": 0.0, "date": ""}
 
 
+def _put_credit_protocol_reasoning() -> str:
+    """Live put-credit knobs (Buffett default). Do not hardcode killed 25%/7-DTE lab."""
+    from src.core.trading_profiles import get_put_credit_profile
+
+    profile = get_put_credit_profile()
+    tp_pct = int(round(profile.take_profit_pct * 100))
+    stop_pct = int(round(profile.stop_loss_pct * 100))
+    delta_pct = int(round(profile.short_delta * 100))
+    return (
+        "Phil Town Rule #1: don't lose money. SPY-only 1-lot $5-wide bull put credit. "
+        f"Target ~{delta_pct}-delta short put in the "
+        f"{profile.delta_band_min}-{profile.delta_band_max} band, "
+        f"{profile.min_dte}-{profile.max_dte} DTE (target {profile.target_dte}). "
+        f"Defined risk stop-loss at {stop_pct}% of credit ({profile.stop_loss_pct}x), "
+        f"take profit {tp_pct}% of max credit, "
+        f"exit by {profile.exit_dte} DTE; min hold {profile.min_hold_hours}h except hard stop. "
+        "Paper validation only while live blocked."
+    )
+
+
 def _protocol_reasoning_for_strategy(strategy: str) -> str:
     """Deterministic protocol text for groundedness checks (not free-form LLM prose)."""
     family = (strategy or "").strip().lower()
     if family in {"spy_put_credit", "bull_put", "bull_put_credit", "credit_spread", "put_credit"}:
-        return (
-            "Phil Town Rule #1: don't lose money. SPY-only 1-lot $5-wide bull put credit. "
-            "Target ~15-delta short put in the 0.10-0.22 band, 30-45 DTE. "
-            "Defined risk stop-loss at 200% of credit (2.0x), take profit 25% of max credit, "
-            "exit by 7 DTE; min hold 24h except hard stop. Paper validation only while live blocked."
-        )
+        return _put_credit_protocol_reasoning()
     return (
         "Phil Town Rule #1: don't lose money. SPY defined-risk options only. "
         "Use 15-delta shorts, check VIX regime, mandatory stop-loss, "
