@@ -774,9 +774,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.value_center:
         if str(ROOT / "scripts") not in sys.path:
             sys.path.insert(0, str(ROOT / "scripts"))
-        from value_center_status import _cash_funnel, _open_prs, _scorecard, build_value_center
+        from value_center_status import _cash_funnel as _vc_cash_funnel
+        from value_center_status import _open_prs as _vc_open_prs
+        from value_center_status import _scorecard as _vc_scorecard
+        from value_center_status import build_value_center
 
-        out = build_value_center(_scorecard(), _open_prs(), _cash_funnel())
+        out = build_value_center(_vc_scorecard(), _vc_open_prs(), _vc_cash_funnel())
         out["skill"] = "/trading-ralph-gsd-24-7"
         out["tick"] = "value_center"
         print(json.dumps(out, indent=2, sort_keys=True))
