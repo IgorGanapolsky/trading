@@ -43,6 +43,21 @@ def test_put_credit_workflow_does_not_swallow_mandatory_gate_fatal() -> None:
     assert "Fail closed if paper factory stalled" in text
 
 
+def test_put_credit_dry_run_does_not_fail_job_on_expected_block() -> None:
+    """AGENT-668: workflow_dispatch dry-run rc 2 (concurrent 1/1) must not fail GHA."""
+    text = PUT_CREDIT.read_text()
+    assert "AGENT-668" in text
+    assert "python3 scripts/spy_put_credit.py --dry-run" in text
+    assert "Put-credit dry-run skipped (rc=$rc); workflow continues" in text
+    assert "FATAL: put-credit --dry-run mandatory gate blocked (AGENT-668)" in text
+    dry_idx = text.index("python3 scripts/spy_put_credit.py --dry-run")
+    exec_idx = text.index("python3 scripts/spy_put_credit.py --execute-paper")
+    dry_block = text[dry_idx - 280 : exec_idx]
+    assert "set +e" in dry_block
+    assert 'if [ "$rc" -eq 3 ]' in dry_block
+    assert "python3 scripts/spy_put_credit.py --dry-run || true" not in text
+
+
 STATE_WRITERS = (
     "put-credit-validation.yml",
     "sync-alpaca-status.yml",

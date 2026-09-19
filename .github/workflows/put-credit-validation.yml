@@ -175,7 +175,21 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
         run: |
           if [ "$DRY_RUN" = "true" ]; then
+            # AGENT-668: workflow_dispatch is dry-run only. rc 2 is expected
+            # concurrent/cap block (Buffett max 1). Do not fail the job.
+            # AGENT-607: rc 0=plan, 1=skip, 2=expected block, 3=fatal.
+            # Do not `|| true` rc 3.
+            set +e
             python3 scripts/spy_put_credit.py --dry-run
+            rc=$?
+            set -e
+            if [ "$rc" -eq 3 ]; then
+              echo "FATAL: put-credit --dry-run mandatory gate blocked (AGENT-668)"
+              exit 3
+            fi
+            if [ "$rc" -ne 0 ]; then
+              echo "Put-credit dry-run skipped (rc=$rc); workflow continues"
+            fi
           else
             # Paper MLEG only — live blocked by strategy_kill_switch.json.
             # Stale context_engine_index must not freeze this step (AGENT-604 /
