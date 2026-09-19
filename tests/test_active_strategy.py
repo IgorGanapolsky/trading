@@ -322,6 +322,16 @@ def test_put_credit_journal_uses_unique_order_identity(tmp_path, monkeypatch):
     assert set(entries) == {f"PCS_{yymmdd}_order1", f"PCS_{yymmdd}_order2"}
     assert entries[f"PCS_{yymmdd}_order1"]["credit_source"] == "limit_estimate_unconfirmed"
     assert entries[f"PCS_{yymmdd}_order2"]["expiry"] == opp["expiry"]
+    assert entries[f"PCS_{yymmdd}_order1"]["profile_name"] == pcs._load_profile().name
+    assert entries[f"PCS_{yymmdd}_order1"]["profile_name"] != "spy-put-credit"
+
+
+def test_spy_put_credit_source_does_not_hardcode_legacy_profile_name() -> None:
+    from pathlib import Path
+
+    src = Path("scripts/spy_put_credit.py").read_text(encoding="utf-8")
+    assert '"profile_name": "spy-put-credit"' not in src
+    assert '"profile_name": _load_profile().name' in src
 
 
 def test_reconcile_put_credit_entries_recovers_exact_filled_structure(tmp_path, monkeypatch):
@@ -411,6 +421,7 @@ def test_reconcile_put_credit_entries_recovers_exact_filled_structure(tmp_path, 
     assert entry["selection_method"] == "live_delta_band_scan"
     assert entry["strikes"] == {"short_put": 696.0, "long_put": 691.0}
     assert entry["status"] == "open"
+    assert entry["profile_name"] == pcs._load_profile().name
 
     second = pcs.reconcile_put_credit_entries(client)
     assert second["existing"] == 1
