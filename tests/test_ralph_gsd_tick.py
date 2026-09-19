@@ -110,3 +110,27 @@ def test_verify_cash_skips_when_lane_absent(tmp_path, monkeypatch):
     assert v["ok"] is True
     assert v["status"] == "passed"
     assert any(c.get("skipped") for c in v["checks"])
+
+
+def test_main_does_not_shadow_module_scorecard_or_open_prs():
+    """value_center import aliases must not make _scorecard/_open_prs locals of main().
+
+    AGENT-666: `from value_center_status import ... _scorecard` inside
+    `if args.value_center` caused UnboundLocalError on the default tick.
+    """
+    mod = _load_tick()
+    names = set(mod.main.__code__.co_varnames)
+    assert "_scorecard" not in names
+    assert "_open_prs" not in names
+
+
+def test_main_default_tick_uses_module_scorecard(capsys, monkeypatch):
+    import json
+
+    mod = _load_tick()
+    monkeypatch.setattr(mod, "_scorecard", lambda: {"error": "scorecard missing"})
+    monkeypatch.setattr(mod, "_open_prs", lambda: [])
+    rc = mod.main([])
+    assert rc == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["pick"]["residual"] == "maintain"
