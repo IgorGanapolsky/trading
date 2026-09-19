@@ -7,6 +7,8 @@ from datetime import UTC, datetime
 import pytest
 
 from src.analytics.freedom_builder_ops import (
+    _open_hold_why,
+    behind_the_scenes_decisions,
     build_full_ops_report,
     monthly_income_report,
     portfolio_transparency,
@@ -17,6 +19,7 @@ from src.analytics.freedom_builder_ops import (
     start_here_pack,
     wednesday_free_issue,
 )
+from src.analytics.put_credit_milestones import risk_framework
 
 
 def _scorecard(**overrides):
@@ -152,3 +155,18 @@ def test_full_report_bundle():
     assert r["schema_version"] == "freedom-builder-ops/1"
     assert "start_here" in r and "plan" in r and "wednesday_issue" in r
     assert r["honesty"]["not_stock_picks"] is True
+
+
+def test_behind_the_scenes_hold_why_follows_live_buffett_profile():
+    rf = risk_framework()
+    tp_pct = int(round(float(rf["take_profit_pct_of_credit"]) * 100))
+    exit_dte = int(rf["exit_dte"])
+    out = behind_the_scenes_decisions(_scorecard())
+    holds = [d for d in out["decisions"] if d["action"] == "hold"]
+    assert holds
+    why = holds[0]["why"]
+    assert why == _open_hold_why()
+    assert f"TP {tp_pct}%" in why
+    assert f"{exit_dte} DTE" in why
+    assert "TP 25%" not in why
+    assert "7 DTE" not in why

@@ -511,6 +511,20 @@ def monthly_income_report(
     }
 
 
+def _open_hold_why() -> str:
+    """Hold reason from the live put-credit profile (Buffett default)."""
+    from src.analytics.put_credit_milestones import risk_framework
+
+    rf = risk_framework()
+    tp_pct = int(round(float(rf["take_profit_pct_of_credit"]) * 100))
+    stop_pct = int(round(float(rf["stop_loss_pct_of_credit"]) * 100))
+    exit_dte = int(rf["exit_dte"])
+    return (
+        f"Open validation structure; manage via TP {tp_pct}% / "
+        f"stop {stop_pct}% credit / {exit_dte} DTE."
+    )
+
+
 def behind_the_scenes_decisions(
     scorecard: dict[str, Any],
     closed_rows: list[dict[str, Any]] | None = None,
@@ -522,6 +536,7 @@ def behind_the_scenes_decisions(
     now = now or datetime.now(UTC)
     decisions: list[dict[str, Any]] = []
     open_ = scorecard.get("open") or {}
+    hold_why = _open_hold_why()
     for e in open_.get("entries") or []:
         decisions.append(
             {
@@ -529,7 +544,7 @@ def behind_the_scenes_decisions(
                 "key": e.get("key"),
                 "signature": e.get("signature"),
                 "when": e.get("entry_time"),
-                "why": "Open validation structure; manage via TP 25% / stop 200% credit / 7 DTE.",
+                "why": hold_why,
                 "credit": e.get("credit"),
             }
         )
