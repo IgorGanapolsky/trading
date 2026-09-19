@@ -9,7 +9,27 @@ from src.analytics.put_credit_milestones import (
     build_weekly_accountability_packet,
     evaluate_milestones,
     render_weekly_markdown,
+    risk_framework,
 )
+from src.core.trading_profiles import get_put_credit_profile
+
+
+def test_risk_framework_follows_live_buffett_profile():
+    profile = get_put_credit_profile()
+    rf = risk_framework()
+    assert profile.name == "spy-put-credit-buffett"
+    assert rf["profile_name"] == "spy-put-credit-buffett"
+    assert rf["take_profit_pct_of_credit"] == profile.take_profit_pct == 0.50
+    assert rf["exit_dte"] == profile.exit_dte == 30
+    assert rf["max_concurrent"] == profile.max_concurrent_positions == 1
+    assert rf["max_daily_structures"] == profile.max_daily_structures == 1
+    assert rf["lot_size"] == 1
+    assert rf["paper_only"] is True
+    out = evaluate_milestones({"closed_n": 0, "kill_criteria": {"verdict": "INSUFFICIENT_SAMPLE"}})
+    assert out["risk_framework"]["take_profit_pct_of_credit"] == 0.50
+    assert out["risk_framework"]["exit_dte"] == 30
+    assert out["risk_framework"]["max_concurrent"] == 1
+    assert out["risk_framework"]["max_daily_structures"] == 1
 
 
 def test_milestones_none_at_zero():
@@ -74,6 +94,13 @@ def test_weekly_packet_and_markdown():
     assert "weekly accountability" in md.lower()
     assert "Foundation" in md
     assert "not a signal service" in md.lower()
+    assert packet["risk_framework"]["take_profit_pct_of_credit"] == 0.50
+    assert packet["risk_framework"]["exit_dte"] == 30
+    assert "spy-put-credit-buffett" in md
+    assert "exit_dte: `30`" in md
+    assert "TP: `0.5`" in md
+    assert "exit_dte: `7`" not in md
+    assert "TP: `0.25`" not in md
 
 
 def test_scorecard_embeds_milestones(tmp_path: Path):
@@ -109,3 +136,8 @@ def test_scorecard_embeds_milestones(tmp_path: Path):
     assert "milestones" in card
     assert card["milestones"]["highest_earned"] == "Foundation"
     assert card["milestones"]["risk_framework"]["not_a_signal_service"] is True
+    assert card["milestones"]["risk_framework"]["profile_name"] == "spy-put-credit-buffett"
+    assert card["milestones"]["risk_framework"]["take_profit_pct_of_credit"] == 0.50
+    assert card["milestones"]["risk_framework"]["exit_dte"] == 30
+    assert card["milestones"]["risk_framework"]["max_concurrent"] == 1
+    assert card["milestones"]["risk_framework"]["max_daily_structures"] == 1

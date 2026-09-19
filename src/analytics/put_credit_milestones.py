@@ -17,6 +17,8 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from typing import Any
 
+from src.core.trading_profiles import get_put_credit_profile
+
 # Fixed ladder (declared before results — same spirit as research selection rule).
 MILESTONE_LADDER: tuple[dict[str, Any], ...] = (
     {
@@ -49,19 +51,30 @@ MILESTONE_LADDER: tuple[dict[str, Any], ...] = (
     },
 )
 
-# Risk framework printed on every accountability packet (EYL: risk awareness).
-RISK_FRAMEWORK = {
-    "family": "spy_put_credit",
-    "paper_only": True,
-    "lot_size": 1,
-    "max_concurrent": 2,
-    "max_daily_structures": 3,
-    "stop_loss_pct_of_credit": 2.0,
-    "take_profit_pct_of_credit": 0.25,
-    "exit_dte": 7,
-    "not_a_signal_service": True,
-    "not_a_profit_guarantee": True,
-}
+
+def risk_framework() -> dict[str, Any]:
+    """Operator-facing knobs from the live put-credit profile (Buffett default).
+
+    AGENT-665: do not hardcode the killed spy-put-credit 25%/7-DTE / 3-per-day lab.
+    """
+    profile = get_put_credit_profile()
+    return {
+        "family": "spy_put_credit",
+        "paper_only": True,
+        "profile_name": profile.name,
+        "lot_size": profile.max_contracts_per_trade,
+        "max_concurrent": profile.max_concurrent_positions,
+        "max_daily_structures": profile.max_daily_structures,
+        "stop_loss_pct_of_credit": profile.stop_loss_pct,
+        "take_profit_pct_of_credit": profile.take_profit_pct,
+        "exit_dte": profile.exit_dte,
+        "not_a_signal_service": True,
+        "not_a_profit_guarantee": True,
+    }
+
+
+# Import-time snapshot of the live default. Call risk_framework() for a fresh copy.
+RISK_FRAMEWORK = risk_framework()
 
 
 @dataclass(frozen=True)
@@ -134,7 +147,7 @@ def evaluate_milestones(
                 "They do not guarantee returns and do not unlock live capital."
             ),
         },
-        "risk_framework": RISK_FRAMEWORK,
+        "risk_framework": risk_framework(),
     }
 
 
@@ -186,7 +199,7 @@ def build_weekly_accountability_packet(
             "langchain_adopted": research.get("langchain_adopted", False),
         },
         "honesty": honesty,
-        "risk_framework": RISK_FRAMEWORK,
+        "risk_framework": risk_framework(),
         "not_a_signal_service": True,
     }
 
@@ -194,6 +207,7 @@ def build_weekly_accountability_packet(
 def render_weekly_markdown(packet: dict[str, Any]) -> str:
     m = packet.get("metrics") or {}
     ms = packet.get("milestones") or {}
+    rf = packet.get("risk_framework") or risk_framework()
     lines = [
         "# Put-credit weekly accountability",
         "",
@@ -226,9 +240,10 @@ def render_weekly_markdown(packet: dict[str, Any]) -> str:
         [
             "",
             "## Risk framework",
-            f"- paper_only: `{RISK_FRAMEWORK['paper_only']}`",
-            f"- lot_size: `{RISK_FRAMEWORK['lot_size']}` max_concurrent: `{RISK_FRAMEWORK['max_concurrent']}`",
-            f"- stop: `{RISK_FRAMEWORK['stop_loss_pct_of_credit']}`x credit · TP: `{RISK_FRAMEWORK['take_profit_pct_of_credit']}` · exit_dte: `{RISK_FRAMEWORK['exit_dte']}`",
+            f"- paper_only: `{rf['paper_only']}`",
+            f"- lot_size: `{rf['lot_size']}` max_concurrent: `{rf['max_concurrent']}` max_daily: `{rf['max_daily_structures']}`",
+            f"- profile: `{rf['profile_name']}`",
+            f"- stop: `{rf['stop_loss_pct_of_credit']}`x credit · TP: `{rf['take_profit_pct_of_credit']}` · exit_dte: `{rf['exit_dte']}`",
             "",
             "## Honesty",
             f"- not a signal service: `{packet.get('not_a_signal_service')}`",
