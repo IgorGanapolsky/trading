@@ -516,7 +516,7 @@ def _recovered_put_credit_entry(order: Any) -> tuple[str, dict[str, Any]]:
         "strikes": {"short_put": short_put, "long_put": long_put},
         "signature": signature,
         "validation_phase": True,
-        "profile_name": "spy-put-credit",
+        "profile_name": _load_profile().name,
         "status": "open",
         "reconciled_at": datetime.now(UTC).isoformat(),
         "reconstruction_reason": "filled_broker_order_missing_durable_strategy_journal",
@@ -1439,7 +1439,7 @@ def _record_entry(opp: dict, order_id: str) -> None:
         },
         "signature": signature,
         "validation_phase": True,
-        "profile_name": "spy-put-credit",
+        "profile_name": _load_profile().name,
         "status": "submitted_unconfirmed",
         "regime": regime,
     }

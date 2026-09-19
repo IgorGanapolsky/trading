@@ -148,20 +148,36 @@ def _extract_expiry(row: dict[str, Any]) -> datetime | None:
     return _parse_timestamp(expiry)
 
 
+def _put_credit_profile_for_row(row: dict[str, Any]):
+    """Resolve a registered put-credit profile from the row stamp.
+
+    Legacy ``spy-put-credit`` (30–45 DTE) and live ``spy-put-credit-buffett``
+    (45–70 DTE) both stay protocol-valid. Unknown names are ``wrong_profile``.
+    """
+
+    from src.core.trading_profiles import PUT_CREDIT_PROFILE_REGISTRY
+
+    name = str(row.get("profile_name") or "").strip().lower()
+    return PUT_CREDIT_PROFILE_REGISTRY.get(name)
+
+
 def _put_credit_protocol_reasons(row: dict[str, Any]) -> list[str]:
     """Return controlled-experiment violations for a closed put credit."""
 
     reasons: list[str] = []
     if row.get("validation_phase") is not True:
         reasons.append("not_validation_phase")
-    if str(row.get("profile_name") or "") != "spy-put-credit":
+    profile = _put_credit_profile_for_row(row)
+    if profile is None:
         reasons.append("wrong_profile")
     selection = str(row.get("selection_method") or row.get("strike_selection_method") or "").lower()
     if selection not in {"live_delta", "live_delta_band_scan"}:
         reasons.append("unverified_strike_selection")
 
     delta = _as_float(row.get("put_delta", row.get("short_delta")))
-    if delta is None or not 0.10 <= abs(delta) <= 0.22:
+    delta_min = profile.delta_band_min if profile is not None else 0.10
+    delta_max = profile.delta_band_max if profile is not None else 0.22
+    if delta is None or not delta_min <= abs(delta) <= delta_max:
         reasons.append("delta_outside_protocol")
 
     quantity = _as_float(row.get("quantity"))
@@ -175,7 +191,9 @@ def _put_credit_protocol_reasons(row: dict[str, Any]) -> list[str]:
         reasons.append("missing_protocol_timestamps")
     else:
         dte = (expiry.date() - entry.date()).days
-        if not 30 <= dte <= 45:
+        min_dte = profile.min_dte if profile is not None else 30
+        max_dte = profile.max_dte if profile is not None else 45
+        if not min_dte <= dte <= max_dte:
             reasons.append("dte_outside_protocol")
         hold_hours = (exit_at - entry).total_seconds() / 3600
         exit_reason = str(row.get("exit_reason") or "").lower()
@@ -196,7 +214,8 @@ def _put_credit_protocol_reasons(row: dict[str, Any]) -> list[str]:
             parsed = [_as_float(value) for value in put_strikes]
             if all(value is not None for value in parsed):
                 long_put, short_put = min(parsed), max(parsed)
-    if short_put is None or long_put is None or abs((short_put - long_put) - 5.0) > 1e-9:
+    wing = profile.wing_width if profile is not None else 5.0
+    if short_put is None or long_put is None or abs((short_put - long_put) - wing) > 1e-9:
         reasons.append("wing_width_outside_protocol")
 
     return reasons

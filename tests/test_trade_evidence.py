@@ -116,6 +116,67 @@ def test_live_delta_band_scan_is_verified_protocol_evidence() -> None:
     assert "unverified_strike_selection" not in evidence.rejected_by_reason
 
 
+def test_buffett_profile_row_is_protocol_valid_at_60_dte() -> None:
+    payload = {
+        "trades": [
+            _put_credit_row(
+                id="PCS-buffett",
+                profile_name="spy-put-credit-buffett",
+                expiry="2026-08-30",
+            )
+        ],
+        "stats": {"closed_trades": 1, "total_realized_pnl": 75},
+    }
+
+    evidence = build_trade_evidence(
+        payload,
+        strategy_family="spy_put_credit",
+        require_protocol_fields=True,
+    )
+
+    assert [row["id"] for row in evidence.rows] == ["PCS-buffett"]
+    assert "wrong_profile" not in evidence.rejected_by_reason
+    assert "dte_outside_protocol" not in evidence.rejected_by_reason
+
+
+def test_buffett_profile_row_rejects_legacy_30_45_dte() -> None:
+    payload = {
+        "trades": [
+            _put_credit_row(
+                id="PCS-buffett-short",
+                profile_name="spy-put-credit-buffett",
+                expiry="2026-08-07",
+            )
+        ],
+        "stats": {"closed_trades": 1, "total_realized_pnl": 75},
+    }
+
+    evidence = build_trade_evidence(
+        payload,
+        strategy_family="spy_put_credit",
+        require_protocol_fields=True,
+    )
+
+    assert evidence.rows == []
+    assert evidence.rejected_by_reason["dte_outside_protocol"] == 1
+
+
+def test_unknown_profile_is_wrong_profile() -> None:
+    payload = {
+        "trades": [_put_credit_row(id="PCS-unknown", profile_name="not-a-profile")],
+        "stats": {"closed_trades": 1, "total_realized_pnl": 75},
+    }
+
+    evidence = build_trade_evidence(
+        payload,
+        strategy_family="spy_put_credit",
+        require_protocol_fields=True,
+    )
+
+    assert evidence.rows == []
+    assert evidence.rejected_by_reason["wrong_profile"] == 1
+
+
 def test_invalid_protocol_row_is_quarantined_and_blocks_learning() -> None:
     payload = {
         "trades": [
