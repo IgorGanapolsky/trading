@@ -2271,40 +2271,8 @@
         "acl_version": 1
       },
       "chunk_count": 11
-    },
-    "arxiv_2608_99999v1": {
-      "sha256_hash": "92b4cdaef62cfad367e2506b555ec638878c3d1df22396f307325c6a9e76276d",
-      "version": 1,
-      "file_path": "/tmp/pytest-of-jules/pytest-42/test_ingest_paper_writes_rag_a0/rag_knowledge/arxiv/arxiv_2608_99999v1.md",
-      "metadata": {
-        "file_name": "arxiv_2608_99999v1.md",
-        "char_count": 1158,
-        "line_count": 34,
-        "severity": "MEDIUM",
-        "chunk_strategy": "hierarchical",
-        "chunk_count": 8,
-        "sensitivity": "paper_only",
-        "acl_version": 1
-      },
-      "chunk_count": 8
-    },
-    "arxiv_2608_12345v1": {
-      "sha256_hash": "ef344a6251629b7d87da7318262e87b5e5e682cb7d32f71268cd99807df0d218",
-      "version": 1,
-      "file_path": "/tmp/pytest-of-jules/pytest-42/test_continuous_ingestion_dedu0/rag_knowledge/arxiv/arxiv_2608_12345v1.md",
-      "metadata": {
-        "file_name": "arxiv_2608_12345v1.md",
-        "char_count": 1301,
-        "line_count": 34,
-        "severity": "MEDIUM",
-        "chunk_strategy": "hierarchical",
-        "chunk_count": 8,
-        "sensitivity": "paper_only",
-        "acl_version": 1
-      },
-      "chunk_count": 8
     }
   },
-  "total_ingested": 144,
+  "total_ingested": 142,
   "last_updated": 0.0
 }
