@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import subprocess  # nosec B404 — fixed argv only (gh + local scorecard)
 import sys
 from datetime import UTC, datetime
@@ -67,6 +68,8 @@ PHASE_FOR_RESIDUAL = {
 
 
 def _sh(args: list[str], timeout: int = 60) -> subprocess.CompletedProcess:
+    if args[0] == "gh" and shutil.which("gh") is None:
+        return subprocess.CompletedProcess(args, 0, stdout="[]", stderr="")
     return subprocess.run(  # nosec B603 — no shell; argv list only
         args, capture_output=True, text=True, timeout=timeout
     )

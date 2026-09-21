@@ -21,7 +21,9 @@ FULL_SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$", re.IGNORECASE)
 ACTIVE_STATES = frozenset({"in progress", "started"})
 DEPENDABOT_LOGIN = "dependabot[bot]"
 AUTO_LAND_PREFIX = "chore/auto-"
-AUTO_LAND_LOGINS = frozenset({"github-actions[bot]", "github-actions", "google-labs-jules[bot]", "google-labs-jules"})
+AUTO_LAND_LOGINS = frozenset(
+    {"github-actions[bot]", "github-actions", "google-labs-jules[bot]", "google-labs-jules"}
+)
 LEGACY_LABEL = "coordination-legacy"
 
 
