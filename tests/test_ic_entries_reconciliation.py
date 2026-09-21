@@ -29,7 +29,6 @@ def _pcs_expiries(pcs: dict) -> set[str]:
         if len(exp) >= 10 and exp[4] == "-":
             y, m, d = exp[:10].split("-")
             out.add(f"{y[2:]}{m}{d}")
-            continue
         # key like PCS_260828_...
         m = re.search(r"(\d{6})", key)
         if m:
