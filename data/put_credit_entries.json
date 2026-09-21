@@ -388,19 +388,21 @@
     "last_counterfactuals": {
       "tp_25_target": 15.5,
       "tp_50_target": 31.0,
-      "would_hit_tp_25_now": false,
+      "would_hit_tp_25_now": true,
       "would_hit_tp_50_now": false,
       "public_exit_dte": 21,
-      "dte_now": 35,
+      "dte_now": 32,
       "would_trigger_public_21dte_exit": false,
-      "note": "Counterfactuals only \u2014 system still exits at profile TP 25% / exit_dte=7. Used to compare our rules to public 50%/21-DTE research without re-running history."
+      "live_take_profit_pct": 0.5,
+      "live_exit_dte": 30,
+      "note": "Counterfactuals only \u2014 live manager uses profile TP 50% / exit_dte=30. Used to compare our rules to public 50%/21-DTE research without re-running history."
     },
-    "last_counterfactuals_at": "2026-09-18T19:33:14.202359+00:00",
+    "last_counterfactuals_at": "2026-09-21T15:07:07.226033+00:00",
     "last_mark": {
-      "current_debit": 0.5,
-      "estimated_pnl": 12.0,
-      "dte": 35,
-      "hold_hours": 101.99436118722222
+      "current_debit": 0.31999999999999984,
+      "estimated_pnl": 30.000000000000014,
+      "dte": 32,
+      "hold_hours": 169.55908961833333
     }
   }
 }
