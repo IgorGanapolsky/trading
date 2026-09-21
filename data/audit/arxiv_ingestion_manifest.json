@@ -2318,6 +2318,118 @@
       "ingested_at": "2026-09-18T06:31:49.565452+00:00",
       "sha256": "dfdbc8a048e2a76f4ce9c7b820f5cf63cabbe0c455f26619d088c62ece480620",
       "chunks": 11
+    },
+    "2609.21942v1": {
+      "title": "When Should a Failing Robot Ask? Initiating Corrective Human-Robot Dialogue from Audited Sensor Evidence",
+      "published": "2026-09-18T15:56:52Z",
+      "relevance_score": 0.25,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.HC"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.21942v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_21942v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_21942v1.md",
+      "ingested_at": "2026-09-21T18:07:51.140669+00:00",
+      "sha256": "c84855970200d244844188fdde6884e0548e8aa81c988781d6edcb180ce9e17c",
+      "chunks": 11
+    },
+    "2609.21841v1": {
+      "title": "EnterpriseVal: Quantifying the Efficacy, Reliability and Value of Generative AI in the Enterprise",
+      "published": "2026-09-18T14:39:26Z",
+      "relevance_score": 0.26,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "stat.ML"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.21841v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_21841v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_21841v1.md",
+      "ingested_at": "2026-09-21T18:07:51.147443+00:00",
+      "sha256": "9cf83668155f8cd6ced2166e0320c19e9355e39170a2d528dcb8974238f919b7",
+      "chunks": 12
+    },
+    "2609.22052v1": {
+      "title": "Design and pricing of a transparent parametric-modeled loss CAT bond: application to German windstorm",
+      "published": "2026-09-18T17:43:48Z",
+      "relevance_score": 0.32,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "q-fin.PR",
+        "q-fin.RM"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.22052v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_22052v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_22052v1.md",
+      "ingested_at": "2026-09-21T18:07:51.151830+00:00",
+      "sha256": "841f7fa8cb0a1c9e5ca8204a593578ee87b89835a5eeee0ef70e4e5ad8d50a24",
+      "chunks": 11
+    },
+    "2609.22048v1": {
+      "title": "Available Guardrails: Certifying Selective Prediction across ML Systems",
+      "published": "2026-09-18T17:36:52Z",
+      "relevance_score": 0.31,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.22048v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_22048v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_22048v1.md",
+      "ingested_at": "2026-09-21T18:07:51.156085+00:00",
+      "sha256": "3c2d95596a9a7145d1eff0c32d4cbe1fbf77eb26c1d2458f5a091b53df499fd3",
+      "chunks": 12
+    },
+    "2609.22068v1": {
+      "title": "CodeMidas: Scaling Agentic Coding RL Environments from Code Itself",
+      "published": "2026-09-18T17:55:17Z",
+      "relevance_score": 0.39,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.22068v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_22068v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_22068v1.md",
+      "ingested_at": "2026-09-21T18:07:51.162791+00:00",
+      "sha256": "f662c448d613495fa0a00c6364177e50ae62d199d6f7dd6409385fc103015c2e",
+      "chunks": 11
+    },
+    "2609.22064v1": {
+      "title": "BrainWideBench: Benchmarking large-scale pretraining and across-animal transfer in multi-region neural recordings",
+      "published": "2026-09-18T17:54:32Z",
+      "relevance_score": 0.31,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "q-bio.NC"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.22064v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_22064v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_22064v1.md",
+      "ingested_at": "2026-09-21T18:07:51.167035+00:00",
+      "sha256": "f6b22b4b12e1b6f3a7fb54d84f664fb11311a35e75d216167e52fad3b4386a58",
+      "chunks": 12
+    },
+    "2609.22056v1": {
+      "title": "Predictable Failure in Multi-Hop Retrieval: Score-Distributional Confidence Scoring and Abstention",
+      "published": "2026-09-18T17:48:15Z",
+      "relevance_score": 0.31,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.IR",
+        "cs.CL",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.22056v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_22056v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_22056v1.md",
+      "ingested_at": "2026-09-21T18:07:51.171304+00:00",
+      "sha256": "9c56f4ed37ec4b5b7c4bc6d6980d8f446493150070e0d2b12f4d1298ab7c47df",
+      "chunks": 11
     }
   },
   "skipped_low_relevance": {
@@ -2776,25 +2888,35 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-09-18T06:31:49.559597+00:00"
+    },
+    "2609.21872v1": {
+      "title": "Chronosphere: Space-Time Tessellation of Local Climate Experts",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-21T18:07:51.143093+00:00"
+    },
+    "2609.22012v1": {
+      "title": "COMPLEX: A Closed-Form Certified Embedding of Multiparameter Persistence Modules",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-21T18:07:51.158399+00:00"
+    },
+    "2609.22055v1": {
+      "title": "Benchmarking World Models for Continual Learning on Compositional Tasks",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-21T18:07:51.173618+00:00"
+    },
+    "2609.22086v1": {
+      "title": "Designer-RSI: Evolving Procedural Memory from User Traffic for Agentic Graphic Design",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-21T18:07:51.176177+00:00"
     }
   },
-  "total_ingested": 142,
-  "last_run_utc": "2026-09-20T06:28:54.239782+00:00",
+  "total_ingested": 149,
+  "last_run_utc": "2026-09-21T18:07:51.178637+00:00",
   "runs": [
-    {
-      "finished_at": "2026-08-19T18:07:53.968141+00:00",
-      "candidates": 11,
-      "new_ingested": 0,
-      "skipped_low_relevance": 0,
-      "min_relevance": 0.18,
-      "queries": [
-        "option credit spread OR iron condor OR put credit",
-        "implied volatility OR volatility surface trading",
-        "reinforcement learning trading OR GRPO OR PPO finance",
-        "market microstructure order book",
-        "retrieval augmented generation finance OR financial RAG"
-      ]
-    },
     {
       "finished_at": "2026-08-20T06:16:22.335861+00:00",
       "candidates": 11,
@@ -3472,6 +3594,20 @@
       "candidates": 13,
       "new_ingested": 0,
       "skipped_low_relevance": 0,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-09-21T18:07:51.178637+00:00",
+      "candidates": 11,
+      "new_ingested": 7,
+      "skipped_low_relevance": 4,
       "min_relevance": 0.18,
       "queries": [
         "option credit spread OR iron condor OR put credit",
