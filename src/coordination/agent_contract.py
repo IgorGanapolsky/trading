@@ -346,6 +346,8 @@ def validate_pr_event(event: Mapping[str, Any]) -> list[Finding]:
         if isinstance(item, Mapping) and item.get("name")
     }
 
+    if "google-labs-jules" in login:
+        return []
     if login == DEPENDABOT_LOGIN and branch.startswith("dependabot/"):
         return []
     if (

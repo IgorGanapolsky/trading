@@ -1,0 +1,59 @@
+{
+  "meeting_title": "Trio Property Buyers Acquisition Sync",
+  "timestamp": "2026-09-21T15:32:17.738656+00:00",
+  "participants": [
+    "Igor",
+    "Stephanie"
+  ],
+  "summary": "Sync with Igor, Stephanie. Extracted 2 action items, 1 Linear tasks, and 1 deal updates.",
+  "action_items": [
+    {
+      "description": "Igor: Excellent. I will send over the full repair scope and title verification by 3 PM.",
+      "owner": "Igor",
+      "priority": "High",
+      "deadline": null,
+      "completed": false
+    },
+    {
+      "description": "Stephanie: Perfect, send it to info@triobuyshousesinflorida.com and we will review immediately.",
+      "owner": "Stephanie",
+      "priority": "High",
+      "deadline": null,
+      "completed": false
+    }
+  ],
+  "linear_tasks": [
+    {
+      "title": "Igor: Excellent. I will send over the full repair scope and title verification b",
+      "team": "AGENT",
+      "priority": 2,
+      "description": "Generated from meeting 'Trio Property Buyers Acquisition Sync'\n\nFull item: Igor: Excellent. I will send over the full repair scope and title verification by 3 PM.",
+      "assignee": "agy"
+    }
+  ],
+  "follow_up_emails": [
+    {
+      "recipient_name": "Stephanie",
+      "recipient_email": "info@triobuyshousesinflorida.com",
+      "subject": "Next Steps & Summary: Trio Property Buyers Acquisition Sync",
+      "body": "Hi Stephanie,\n\nGreat connecting today during our Trio Property Buyers Acquisition Sync.\n\nHere are the agreed next steps:\n\u2022 Igor: Excellent. I will send over the full repair scope and title verification by 3 PM.\n\u2022 Stephanie: Perfect, send it to info@triobuyshousesinflorida.com and we will review immediately.\n\nWe are driving these forward immediately. Let us know if you need anything else adjusted.\n\nBest,\nIgor Ganapolsky",
+      "action_items_included": [
+        "Igor: Excellent. I will send over the full repair scope and title verification by 3 PM.",
+        "Stephanie: Perfect, send it to info@triobuyshousesinflorida.com and we will review immediately."
+      ]
+    }
+  ],
+  "deal_updates": [
+    {
+      "property_address": null,
+      "client_name": "Stephanie",
+      "agreed_terms": "Cash purchase / Assignment review",
+      "mao_or_budget": 350000.0,
+      "next_step": "Send formal 1-page LOI / Deal Dossier"
+    }
+  ],
+  "institutional_lessons": [
+    "Meeting 'Trio Property Buyers Acquisition Sync' codified 2 action items and 1 Linear tasks.",
+    "Fast follow-up email prepared for 1-click dispatch under <15 minute SLA."
+  ]
+}
