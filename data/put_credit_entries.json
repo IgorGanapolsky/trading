@@ -371,7 +371,7 @@
     "signature": "SPY_2026-10-23_P723-728",
     "validation_phase": true,
     "profile_name": "spy-put-credit",
-    "status": "open",
+    "status": "closed",
     "regime": {
       "captured_at": "2026-09-14T13:33:09.110783+00:00",
       "spy_price": 758.97998046875,
@@ -401,6 +401,42 @@
       "estimated_pnl": 12.0,
       "dte": 35,
       "hold_hours": 101.99436118722222
-    }
+    },
+    "reconciliation_reason": "broker_flat_ghost_open",
+    "exit_filled_at": "2026-09-21T17:04:30.847070+00:00",
+    "exit_reason": "broker_reconcile_flat"
+  },
+  "PCS_261120_3d14c2b09da04b6d872b21ac41aae593": {
+    "strategy_family": "spy_put_credit",
+    "order_id": "3d14c2b0-9da0-4b6d-872b-21ac41aae593",
+    "entry_time": "2026-09-21T17:04:47.995733+00:00",
+    "expiry": "2026-11-20",
+    "quantity": 1,
+    "credit": 0.57,
+    "limit_credit": 0.61,
+    "credit_source": "broker_fill",
+    "put_delta": 0.1989,
+    "selection_method": "live_delta_band_scan",
+    "strikes": {
+      "short_put": 735.0,
+      "long_put": 730.0
+    },
+    "signature": "SPY_2026-11-20_P730-735",
+    "validation_phase": true,
+    "profile_name": "spy-put-credit-buffett",
+    "status": "open",
+    "regime": {
+      "captured_at": "2026-09-21T17:04:37.479168+00:00",
+      "spy_price": 772.25,
+      "vix": 15.08,
+      "iv_rank_proxy": 10.29,
+      "iv_rank_method": "vix_percentile_252",
+      "spy_sma_200": 716.7038,
+      "spy_above_200dma": true,
+      "spy_sma_50": 760.044,
+      "spy_above_50dma": true,
+      "source_errors": ["iv_rank_proxy_none"]
+    },
+    "fill_confirmed_at": "2026-09-21T17:04:48.004800+00:00"
   }
 }
