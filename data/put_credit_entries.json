@@ -446,12 +446,12 @@
       "live_exit_dte": 30,
       "note": "Counterfactuals only \u2014 live manager uses profile TP 50% / exit_dte=30. Used to compare our rules to public 50%/21-DTE research without re-running history."
     },
-    "last_counterfactuals_at": "2026-09-22T15:12:07.738840+00:00",
+    "last_counterfactuals_at": "2026-09-22T18:03:07.278419+00:00",
     "last_mark": {
-      "current_debit": 0.5899999999999999,
-      "estimated_pnl": -1.9999999999999907,
+      "current_debit": 0.5800000000000001,
+      "estimated_pnl": -1.000000000000012,
       "dte": 59,
-      "hold_hours": 22.123205361666667
+      "hold_hours": 24.973077588611112
     }
   }
 }
