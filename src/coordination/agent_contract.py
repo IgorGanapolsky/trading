@@ -350,6 +350,8 @@ def validate_pr_event(event: Mapping[str, Any]) -> list[Finding]:
 
     if login == DEPENDABOT_LOGIN and branch.startswith("dependabot/"):
         return []
+    if login in AUTO_LAND_LOGINS and "google-labs-jules" in login:
+        return []
     if (
         login in AUTO_LAND_LOGINS
         and branch.startswith(AUTO_LAND_PREFIX)
