@@ -4,7 +4,7 @@
     "created": "2026-07-07T21:32:24.241944+00:00",
     "purpose": "Master ledger for broker-paired closed option structures",
     "paper_phase_start": "2026-01-22",
-    "last_sync": "2026-09-21T19:33:51.722084+00:00",
+    "last_sync": "2026-09-22T14:49:22.049815+00:00",
     "sync_source": "sync_closed_positions.py"
   },
   "stats": {
@@ -23,7 +23,7 @@
     "total_realized_pnl": -7587.0,
     "edge_metric_unit": "paired_closed_structure",
     "unpaired_attribution_status": "quarantined_not_edge_eligible",
-    "reconciliation_total_cash": -5400.0,
+    "reconciliation_total_cash": -5426.0,
     "by_strategy": {
       "iron_condor": {
         "closed_trades": 161,
@@ -47,22 +47,22 @@
       }
     },
     "paper_phase_start": "2026-01-22",
-    "paper_phase_days": 242,
-    "last_updated": "2026-09-21T19:33:51.722072+00:00",
-    "unpaired_realized_pnl": 2187.0,
-    "unpaired_in_cohort_pnl": 429.0,
-    "unpaired_order_count": 18,
+    "paper_phase_days": 243,
+    "last_updated": "2026-09-22T14:49:22.049803+00:00",
+    "unpaired_realized_pnl": 2161.0,
+    "unpaired_in_cohort_pnl": 403.0,
+    "unpaired_order_count": 19,
     "unpaired_cohort_start": "2026-04-09",
     "unpaired_wins": 12,
-    "unpaired_losses": 6,
+    "unpaired_losses": 7,
     "unpaired_breakeven": 0,
-    "unpaired_gross_profit": 11937.0,
-    "unpaired_gross_loss": 9750.0,
+    "unpaired_gross_profit": 11942.0,
+    "unpaired_gross_loss": 9781.0,
     "unpaired_cohort_wins": 4,
-    "unpaired_cohort_losses": 5,
+    "unpaired_cohort_losses": 6,
     "unpaired_cohort_breakeven": 0,
-    "unpaired_cohort_gross_profit": 9782.0,
-    "unpaired_cohort_gross_loss": 9353.0
+    "unpaired_cohort_gross_profit": 9787.0,
+    "unpaired_cohort_gross_loss": 9384.0
   },
   "trades": [
     {
