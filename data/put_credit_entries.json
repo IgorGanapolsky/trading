@@ -440,18 +440,18 @@
       "would_hit_tp_25_now": false,
       "would_hit_tp_50_now": false,
       "public_exit_dte": 21,
-      "dte_now": 60,
+      "dte_now": 59,
       "would_trigger_public_21dte_exit": false,
       "live_take_profit_pct": 0.5,
       "live_exit_dte": 30,
       "note": "Counterfactuals only \u2014 live manager uses profile TP 50% / exit_dte=30. Used to compare our rules to public 50%/21-DTE research without re-running history."
     },
-    "last_counterfactuals_at": "2026-09-21T19:33:50.940879+00:00",
+    "last_counterfactuals_at": "2026-09-22T14:49:21.015664+00:00",
     "last_mark": {
       "current_debit": 0.5899999999999999,
       "estimated_pnl": -1.9999999999999907,
-      "dte": 60,
-      "hold_hours": 2.4852060180555555
+      "dte": 59,
+      "hold_hours": 21.743560077777776
     }
   }
 }
