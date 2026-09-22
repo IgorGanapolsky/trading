@@ -67,8 +67,6 @@ PHASE_FOR_RESIDUAL = {
 }
 
 
-import shutil
-
 def _sh(args: list[str], timeout: int = 60) -> subprocess.CompletedProcess:
     if args[0] == "gh" and shutil.which("gh") is None:
         return subprocess.CompletedProcess(args, 0, stdout="[]", stderr="")
