@@ -2383,8 +2383,120 @@
         "acl_version": 1
       },
       "chunk_count": 11
+    },
+    "arxiv_2609_24927v1": {
+      "sha256_hash": "5c2e01f006005df333ee2a35128323dc1563505d08b0a1bedf0ab8f0beff7604",
+      "version": 1,
+      "file_path": "/home/runner/work/trading/trading/rag_knowledge/arxiv/arxiv_2609_24927v1.md",
+      "metadata": {
+        "file_name": "arxiv_2609_24927v1.md",
+        "char_count": 2825,
+        "line_count": 34,
+        "severity": "MEDIUM",
+        "chunk_strategy": "hierarchical",
+        "chunk_count": 11,
+        "sensitivity": "paper_only",
+        "acl_version": 1
+      },
+      "chunk_count": 11
+    },
+    "arxiv_2609_24840v1": {
+      "sha256_hash": "91ab43b6c64eac1296a167234aee4671acdea1180b3f57bc14b9d6b3c93d4582",
+      "version": 1,
+      "file_path": "/home/runner/work/trading/trading/rag_knowledge/arxiv/arxiv_2609_24840v1.md",
+      "metadata": {
+        "file_name": "arxiv_2609_24840v1.md",
+        "char_count": 3161,
+        "line_count": 34,
+        "severity": "MEDIUM",
+        "chunk_strategy": "hierarchical",
+        "chunk_count": 11,
+        "sensitivity": "paper_only",
+        "acl_version": 1
+      },
+      "chunk_count": 11
+    },
+    "arxiv_2609_24859v1": {
+      "sha256_hash": "30ca134f8b2cae59ca8615e8fb0d01b32121f4274bedabb2b1f629ca2cdae397",
+      "version": 1,
+      "file_path": "/home/runner/work/trading/trading/rag_knowledge/arxiv/arxiv_2609_24859v1.md",
+      "metadata": {
+        "file_name": "arxiv_2609_24859v1.md",
+        "char_count": 3044,
+        "line_count": 34,
+        "severity": "MEDIUM",
+        "chunk_strategy": "hierarchical",
+        "chunk_count": 12,
+        "sensitivity": "paper_only",
+        "acl_version": 1
+      },
+      "chunk_count": 12
+    },
+    "arxiv_2609_24706v1": {
+      "sha256_hash": "9da98be0ddbdd462bb8c28160954d5f4ae7fbc0ac087f70d7fa212b62957cf8e",
+      "version": 1,
+      "file_path": "/home/runner/work/trading/trading/rag_knowledge/arxiv/arxiv_2609_24706v1.md",
+      "metadata": {
+        "file_name": "arxiv_2609_24706v1.md",
+        "char_count": 2355,
+        "line_count": 34,
+        "severity": "MEDIUM",
+        "chunk_strategy": "hierarchical",
+        "chunk_count": 10,
+        "sensitivity": "paper_only",
+        "acl_version": 1
+      },
+      "chunk_count": 10
+    },
+    "arxiv_2609_24862v1": {
+      "sha256_hash": "5bdac62ba478c7ee2ab798b529566eb2b44b0eb158e5ca0b0091c1ec360cf03b",
+      "version": 1,
+      "file_path": "/home/runner/work/trading/trading/rag_knowledge/arxiv/arxiv_2609_24862v1.md",
+      "metadata": {
+        "file_name": "arxiv_2609_24862v1.md",
+        "char_count": 2904,
+        "line_count": 34,
+        "severity": "MEDIUM",
+        "chunk_strategy": "hierarchical",
+        "chunk_count": 11,
+        "sensitivity": "paper_only",
+        "acl_version": 1
+      },
+      "chunk_count": 11
+    },
+    "arxiv_2609_24741v1": {
+      "sha256_hash": "1a7b2d8eb6f903d0008293f3ff0736acb5ce58ad6cc24329ecf51826b89413f4",
+      "version": 1,
+      "file_path": "/home/runner/work/trading/trading/rag_knowledge/arxiv/arxiv_2609_24741v1.md",
+      "metadata": {
+        "file_name": "arxiv_2609_24741v1.md",
+        "char_count": 2404,
+        "line_count": 34,
+        "severity": "MEDIUM",
+        "chunk_strategy": "hierarchical",
+        "chunk_count": 10,
+        "sensitivity": "paper_only",
+        "acl_version": 1
+      },
+      "chunk_count": 10
+    },
+    "arxiv_2609_24979v1": {
+      "sha256_hash": "337e81d2e3e88b27724b55030726bb674248bef787c0e38d131f5fd321523d53",
+      "version": 1,
+      "file_path": "/home/runner/work/trading/trading/rag_knowledge/arxiv/arxiv_2609_24979v1.md",
+      "metadata": {
+        "file_name": "arxiv_2609_24979v1.md",
+        "char_count": 3097,
+        "line_count": 34,
+        "severity": "MEDIUM",
+        "chunk_strategy": "hierarchical",
+        "chunk_count": 11,
+        "sensitivity": "paper_only",
+        "acl_version": 1
+      },
+      "chunk_count": 11
     }
   },
-  "total_ingested": 149,
+  "total_ingested": 156,
   "last_updated": 0.0
 }

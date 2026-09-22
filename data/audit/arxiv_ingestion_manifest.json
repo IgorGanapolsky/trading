@@ -2430,6 +2430,115 @@
       "ingested_at": "2026-09-21T18:07:51.171304+00:00",
       "sha256": "9c56f4ed37ec4b5b7c4bc6d6980d8f446493150070e0d2b12f4d1298ab7c47df",
       "chunks": 11
+    },
+    "2609.24927v1": {
+      "title": "Et Tu, Brute? Economic Misalignment in Personal AI Agents",
+      "published": "2026-09-21T17:22:44Z",
+      "relevance_score": 0.25,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.24927v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_24927v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_24927v1.md",
+      "ingested_at": "2026-09-22T06:32:00.121843+00:00",
+      "sha256": "5c2e01f006005df333ee2a35128323dc1563505d08b0a1bedf0ab8f0beff7604",
+      "chunks": 11
+    },
+    "2609.24840v1": {
+      "title": "PredActor: Predictive Action Diffusion for Steerable Onboard Humanoid Control",
+      "published": "2026-09-21T16:20:25Z",
+      "relevance_score": 0.51,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.RO",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.24840v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_24840v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_24840v1.md",
+      "ingested_at": "2026-09-22T06:32:00.127631+00:00",
+      "sha256": "91ab43b6c64eac1296a167234aee4671acdea1180b3f57bc14b9d6b3c93d4582",
+      "chunks": 11
+    },
+    "2609.24859v1": {
+      "title": "Small-world Networks of Agents Brainstorm AI Risks to Support Ideation",
+      "published": "2026-09-21T16:32:57Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.HC",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.24859v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_24859v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_24859v1.md",
+      "ingested_at": "2026-09-22T06:32:00.139980+00:00",
+      "sha256": "30ca134f8b2cae59ca8615e8fb0d01b32121f4274bedabb2b1f629ca2cdae397",
+      "chunks": 12
+    },
+    "2609.24706v1": {
+      "title": "\"MeBo Leaves a Piece of You Behind\": Designing a Relational Voice-Based Memory Companion for Older Adults",
+      "published": "2026-09-21T14:51:30Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.HC",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.24706v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_24706v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_24706v1.md",
+      "ingested_at": "2026-09-22T06:32:00.145518+00:00",
+      "sha256": "9da98be0ddbdd462bb8c28160954d5f4ae7fbc0ac087f70d7fa212b62957cf8e",
+      "chunks": 10
+    },
+    "2609.24862v1": {
+      "title": "When Tomorrow Becomes Today: Self-Evolving Policies for Agentic Time-Series Forecasting",
+      "published": "2026-09-21T16:33:59Z",
+      "relevance_score": 0.36,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.24862v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_24862v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_24862v1.md",
+      "ingested_at": "2026-09-22T06:32:00.163150+00:00",
+      "sha256": "5bdac62ba478c7ee2ab798b529566eb2b44b0eb158e5ca0b0091c1ec360cf03b",
+      "chunks": 11
+    },
+    "2609.24741v1": {
+      "title": "An Exact Junction-Tree Extended Formulation for Optimal Classification Trees",
+      "published": "2026-09-21T15:10:15Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.24741v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_24741v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_24741v1.md",
+      "ingested_at": "2026-09-22T06:32:00.168705+00:00",
+      "sha256": "1a7b2d8eb6f903d0008293f3ff0736acb5ce58ad6cc24329ecf51826b89413f4",
+      "chunks": 10
+    },
+    "2609.24979v1": {
+      "title": "LoRA-generating hypernetworks for efficient on-device LLM generative personalization",
+      "published": "2026-09-21T17:55:48Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.24979v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_24979v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_24979v1.md",
+      "ingested_at": "2026-09-22T06:32:00.174211+00:00",
+      "sha256": "337e81d2e3e88b27724b55030726bb674248bef787c0e38d131f5fd321523d53",
+      "chunks": 11
     }
   },
   "skipped_low_relevance": {
@@ -2912,25 +3021,41 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-09-21T18:07:51.176177+00:00"
+    },
+    "2609.24744v1": {
+      "title": "World State Generator",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-22T06:32:00.130566+00:00"
+    },
+    "2609.24882v1": {
+      "title": "Learning Prognostic Variables for AI Convective Parameterizations via Symbolic Distillation",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-22T06:32:00.134432+00:00"
+    },
+    "2609.24985v1": {
+      "title": "Critical-State RL: Diagnosing Trainable States for Multi-Turn Tool Use",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-22T06:32:00.148526+00:00"
+    },
+    "2609.24984v1": {
+      "title": "WorldCrafter: Consistent Video World Model with Implicit 3D-aware Memory",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-22T06:32:00.152440+00:00"
+    },
+    "2609.24983v1": {
+      "title": "onPanda: Efficient Annotation of On-Policy Alignment Data for LLMs and Agents via Token-Level Correction",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-22T06:32:00.156889+00:00"
     }
   },
-  "total_ingested": 149,
-  "last_run_utc": "2026-09-21T20:29:41.706201+00:00",
+  "total_ingested": 156,
+  "last_run_utc": "2026-09-22T06:32:00.177131+00:00",
   "runs": [
-    {
-      "finished_at": "2026-08-21T06:17:05.690402+00:00",
-      "candidates": 10,
-      "new_ingested": 6,
-      "skipped_low_relevance": 4,
-      "min_relevance": 0.18,
-      "queries": [
-        "option credit spread OR iron condor OR put credit",
-        "implied volatility OR volatility surface trading",
-        "reinforcement learning trading OR GRPO OR PPO finance",
-        "market microstructure order book",
-        "retrieval augmented generation finance OR financial RAG"
-      ]
-    },
     {
       "finished_at": "2026-08-22T06:13:45.443226+00:00",
       "candidates": 10,
@@ -3608,6 +3733,20 @@
       "candidates": 11,
       "new_ingested": 0,
       "skipped_low_relevance": 0,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-09-22T06:32:00.177131+00:00",
+      "candidates": 12,
+      "new_ingested": 7,
+      "skipped_low_relevance": 5,
       "min_relevance": 0.18,
       "queries": [
         "option credit spread OR iron condor OR put credit",
