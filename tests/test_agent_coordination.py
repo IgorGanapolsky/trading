@@ -463,6 +463,9 @@ def test_claim_loader_skips_invalid_files_and_uses_mtime_tiebreaker(tmp_path: Pa
     first = _write_claim(vault, timestamp="")
     second = claims_dir / "zz-latest.md"
     second.write_text(first.read_text(encoding="utf-8"), encoding="utf-8")
+    import time
+
+    time.sleep(0.01)
     second.touch()
     assert load_latest_claims(vault)["AGENT-27"].path == second
 
