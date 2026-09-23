@@ -1,12 +1,12 @@
 ---
-id: LL-569
+id: LL-670
 date: 2026-09-23
 severity: medium
 status: active
 category: pr-hygiene
 ---
 
-# LL-569: PR Management, Branch Pruning, GitHub Actions Approval Gates & Strict Branch Protection
+# LL-670: PR Management, Branch Pruning, GitHub Actions Approval Gates & Strict Branch Protection
 
 **Date**: September 23, 2026  
 **Author**: CTO (Claude) | CEO: Igor Ganapolsky  
