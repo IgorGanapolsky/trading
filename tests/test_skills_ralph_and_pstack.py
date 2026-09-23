@@ -104,7 +104,9 @@ def test_ralph_runner_success(tmp_path: Path) -> None:
     assert success is True
 
 
-def test_ralph_runner_struggle_detection(tmp_path: Path) -> None:
+def test_ralph_runner_struggle_detection(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     # A command that fails repeatedly with identical output triggers struggle detector
     success = execute_ralph_cycle(
         verify_cmd="python3 -c 'import sys; sys.stderr.write(\"repeat error\\n\"); exit(1)'",
@@ -112,6 +114,7 @@ def test_ralph_runner_struggle_detection(tmp_path: Path) -> None:
         cwd=tmp_path,
     )
     assert success is False
+    assert "STRUGGLE DETECTOR TRIGGERED" in capsys.readouterr().out
 
 
 def test_ralph_runner_auto_revert(tmp_path: Path) -> None:

@@ -89,10 +89,9 @@ For iteration $k = 1, 2, \dots, N$:
      ```bash
      git commit -m "fix(ralph): iteration $k - <short description>"
      ```
-   - **Case B (Fail/Regression)**: Revert immediately:
+   - **Case B (Fail/Regression)**: Revert iteration changes immediately (restore tracked files touched in this cycle, and remove newly created iteration scratch files):
      ```bash
-     git restore .
-     git clean -fd
+     git restore <touched_files>
      ```
 
 6. **Log Decision**:

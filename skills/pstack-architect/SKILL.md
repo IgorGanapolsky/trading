@@ -35,7 +35,7 @@ if not decision.is_permitted:
     logger.warning("Trade rejected: %s", decision.rejection_reason)
     return
 
-order_spec = decision.build_order()
+order_spec = decision.order_spec  # Invariant: non-null when is_permitted is True
 ```
 
 ### Step 2: Define Data Contracts
