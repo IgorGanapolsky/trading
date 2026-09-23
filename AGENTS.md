@@ -59,6 +59,16 @@ Always tell the user 100% truth. Never fabricate, hide, or misrepresent status, 
 - Do not comment on a user-pasted key being "compromised" due to being pasted into chat. Only raise key-handling actions when a secret is present in the repo, logs, or other systems we control (or when the user explicitly asks).
 - Retrieve authorized credentials at action time from environment variables or the local keyring. Never hardcode credentials.
 
+## Strict Corporate vs. Personal Identity Separation Mandate
+
+- **Absolute Prohibition**: Under NO circumstances may corporate/employer email addresses (specifically `*@ecisolutions.com`), corporate personas, or secondary accounts (such as GitHub account `iganapolsky`) be used, invited, referenced, or associated with this repository.
+- **Single Personal Identity**: The ONLY authorized owner and contributor identity is `IgorGanapolsky` (`iganapolsky@gmail.com`).
+- **Never Invite Corporate Accounts**: NEVER invite anyone from corporate/employer domains (`ecisolutions.com`) to collaborate on personal repositories.
+- **Git Config Isolation**: All local checkouts and worktrees must enforce `user.email = iganapolsky@gmail.com` and `user.name = Igor Ganapolsky`. Never inherit corporate Git identity.
+- **CLI Account Discipline**: Always verify `gh auth switch --user IgorGanapolsky` before any GitHub CLI operation. Never switch to work account `iganapolsky` for trading repository actions.
+- **Automated Enforcement**: Continuous CI hygiene audits reject any corporate email addresses or corporate commit authors.
+
+
 ## Repository Hygiene Standards
 
 - The active entry path is `scripts/spy_put_credit.py` in paper mode. New `ic_simple` and `iron_condor` entries are killed; `scripts/residual_ic_manager.py` owns residual exits.

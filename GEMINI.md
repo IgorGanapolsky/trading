@@ -48,6 +48,15 @@
 - Exclude secrets and tokens from stored directives and logs. Never hardcode credentials.
 - Treat chat-provided tokens as action-time credentials only; never save them to files, commits, or memory.
 
+## Strict Corporate vs. Personal Identity Separation Mandate
+
+- **Absolute Prohibition**: Never use, invite, or reference corporate email addresses (`*@ecisolutions.com`) or corporate GitHub accounts (such as `iganapolsky`) in this repository.
+- **Personal Identity Only**: The sole authorized identity is `IgorGanapolsky` (`iganapolsky@gmail.com`).
+- **Never Invite Corporate Accounts**: NEVER invite anyone from corporate/employer domains (`ecisolutions.com`) to collaborate on personal repositories.
+- **Git Config Isolation**: All checkouts and worktrees must enforce `user.email = iganapolsky@gmail.com`.
+- **CLI Account Discipline**: Always operate under `gh auth switch --user IgorGanapolsky`. Never switch to corporate profiles.
+
+
 ## Multi-Agent Coordination
 
 - Use the shared Linear/Obsidian bridge described in `docs/AGENT_COORDINATION.md` before
