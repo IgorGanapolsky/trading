@@ -110,7 +110,11 @@ def check_recent_commit_authors(repo: Path) -> list[Finding]:
     findings: list[Finding] = []
     try:
         completed = subprocess.run(  # nosec B603 B607
-            ["git", "log", "-n", "10", "--format=%ae"], cwd=repo, capture_output=True, text=True, check=False
+            ["git", "log", "-n", "10", "--format=%ae"],
+            cwd=repo,
+            capture_output=True,
+            text=True,
+            check=False,
         )
         emails = {e.strip().lower() for e in completed.stdout.splitlines() if e.strip()}
         if any("ecisolutions" in e for e in emails):
