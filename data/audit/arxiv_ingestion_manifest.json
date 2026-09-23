@@ -2539,6 +2539,142 @@
       "ingested_at": "2026-09-22T06:32:00.174211+00:00",
       "sha256": "337e81d2e3e88b27724b55030726bb674248bef787c0e38d131f5fd321523d53",
       "chunks": 11
+    },
+    "2609.26758v1": {
+      "title": "Type-Safe Is Not Error-Free: A Constrained Decision Head Follows the Option Name, Not the Rubric Bound to It",
+      "published": "2026-09-22T17:38:12Z",
+      "relevance_score": 0.25,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.26758v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_26758v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_26758v1.md",
+      "ingested_at": "2026-09-23T06:33:10.570859+00:00",
+      "sha256": "ca2e977c405266c1b64671836743a0f61e9114581759b8283139d30dff0fb4db",
+      "chunks": 11
+    },
+    "2609.26749v1": {
+      "title": "Metrics Failure in LLM-Based Code Vulnerability Repair: An Empirical Study and a Change-Aware Screen",
+      "published": "2026-09-22T17:32:05Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.SE",
+        "cs.AI",
+        "cs.CR"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.26749v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_26749v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_26749v1.md",
+      "ingested_at": "2026-09-23T06:33:10.575979+00:00",
+      "sha256": "cda0e6364769c03110a6c2bd8c689a34f870deebcfb9acfd70fbb6368a76e393",
+      "chunks": 12
+    },
+    "2609.26779v1": {
+      "title": "CliffCompaction: Cost-Efficient Compaction for Long-Horizon Coding Agents",
+      "published": "2026-09-22T17:55:59Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.LG",
+        "cs.SE"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.26779v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_26779v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_26779v1.md",
+      "ingested_at": "2026-09-23T06:33:10.583694+00:00",
+      "sha256": "00bf927f9eb9b9f5106fd527484666cf05353a188e373cb055379a5a1f92eee5",
+      "chunks": 11
+    },
+    "2609.26683v1": {
+      "title": "PROSWIN: Probabilistic Solar Wind Speed Forecasting Using Deep Distributional Regression From Solar Images",
+      "published": "2026-09-22T16:42:24Z",
+      "relevance_score": 0.31,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "astro-ph.SR",
+        "cs.LG",
+        "physics.data-an",
+        "physics.space-ph"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.26683v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_26683v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_26683v1.md",
+      "ingested_at": "2026-09-23T06:33:10.591456+00:00",
+      "sha256": "8f27b29ae5ac038b36fba30b1ff535ec979b0f0e4c4cc9a1672c1aa404d57980",
+      "chunks": 11
+    },
+    "2609.26783v1": {
+      "title": "A Decentralized Partially Observable Team Decision Methodology with Delayed Information Sharing",
+      "published": "2026-09-22T17:56:46Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "math.OC",
+        "cs.LG",
+        "eess.SY",
+        "stat.ML"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.26783v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_26783v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_26783v1.md",
+      "ingested_at": "2026-09-23T06:33:10.596412+00:00",
+      "sha256": "ffa0940012ff1cd25c141aa09988af895702d7321747ee02a1a2012eebd9fa77",
+      "chunks": 10
+    },
+    "2609.26780v1": {
+      "title": "SpeakerMem-R1: Speaker-Centered Dual-Track Memory for Multi-Party Dialogue",
+      "published": "2026-09-22T17:56:12Z",
+      "relevance_score": 0.32,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.IR",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.26780v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_26780v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_26780v1.md",
+      "ingested_at": "2026-09-23T06:33:10.601353+00:00",
+      "sha256": "b5556da04ace8e46bac6c698045579b367296b04a3d1ef80a5413633158fb673",
+      "chunks": 12
+    },
+    "2609.26777v1": {
+      "title": "SWE-Serve: Benchmarking Agentic Engineering For Production Inference Serving",
+      "published": "2026-09-22T17:54:59Z",
+      "relevance_score": 0.31,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.SE"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.26777v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_26777v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_26777v1.md",
+      "ingested_at": "2026-09-23T06:33:10.606390+00:00",
+      "sha256": "65139e8c6d3e1847a140c2a76aab1006bf191b9b6e039085b3b336d8524cb43f",
+      "chunks": 11
+    },
+    "2609.26537v1": {
+      "title": "Notes on Fourier-Bessel wavelets",
+      "published": "2026-09-22T14:57:54Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.CV",
+        "math.NA"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.26537v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_26537v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_26537v1.md",
+      "ingested_at": "2026-09-23T06:33:10.611581+00:00",
+      "sha256": "fbaed4cba35c520ca89e2a054ead85cd70504d606aa78eba879018584a9163df",
+      "chunks": 10
     }
   },
   "skipped_low_relevance": {
@@ -3051,25 +3187,23 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-09-22T06:32:00.156889+00:00"
+    },
+    "2609.26737v1": {
+      "title": "Diffusion-Induced Spatial Attention Overlapping Community Detection",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-23T06:33:10.578735+00:00"
+    },
+    "2609.26760v1": {
+      "title": "Grow the Harness, Not the Context: From Strategy-Free Scaffolds to Reusable Specialist Agents",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-23T06:33:10.586412+00:00"
     }
   },
-  "total_ingested": 156,
-  "last_run_utc": "2026-09-22T06:32:00.177131+00:00",
+  "total_ingested": 164,
+  "last_run_utc": "2026-09-23T06:33:10.614332+00:00",
   "runs": [
-    {
-      "finished_at": "2026-08-22T06:13:45.443226+00:00",
-      "candidates": 10,
-      "new_ingested": 0,
-      "skipped_low_relevance": 0,
-      "min_relevance": 0.18,
-      "queries": [
-        "option credit spread OR iron condor OR put credit",
-        "implied volatility OR volatility surface trading",
-        "reinforcement learning trading OR GRPO OR PPO finance",
-        "market microstructure order book",
-        "retrieval augmented generation finance OR financial RAG"
-      ]
-    },
     {
       "finished_at": "2026-08-22T18:04:58.632368+00:00",
       "candidates": 10,
@@ -3747,6 +3881,20 @@
       "candidates": 12,
       "new_ingested": 7,
       "skipped_low_relevance": 5,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-09-23T06:33:10.614332+00:00",
+      "candidates": 10,
+      "new_ingested": 8,
+      "skipped_low_relevance": 2,
       "min_relevance": 0.18,
       "queries": [
         "option credit spread OR iron condor OR put credit",
