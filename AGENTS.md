@@ -41,6 +41,9 @@ Always tell the user 100% truth. Never fabricate, hide, or misrepresent status, 
 - Merge only PRs that pass CI and review criteria; include the merge commit or squash SHA in the completion evidence.
 - Classify branches without PRs as merge candidates, stale cleanup candidates, or blocked by active local work.
 - Remove stale branches, disposable worktrees, logs, and generated runtime output only when the deletion is safe and verifiable.
+- Ensure active GitHub user is `IgorGanapolsky` via `gh auth switch --user IgorGanapolsky` to satisfy codeowner reviews and merge permissions.
+- Approve bot workflow runs in `action_required` status via `gh api -X POST repos/.../actions/runs/<id>/approve` so branch protection checks run.
+- When branch protection enforces `strict: true`, synchronize candidate branches using `gh pr update-branch`.
 - Confirm cleanup with concrete counts such as branches before/after, removed file counts, or worktree inventory.
 - Verify `main` after merges using GitHub CI and a local dry-run or operational readiness command.
 - Record lessons and mistakes in RAG at the end of PR-management work.
