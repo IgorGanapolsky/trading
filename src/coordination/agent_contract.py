@@ -350,13 +350,16 @@ def validate_pr_event(event: Mapping[str, Any]) -> list[Finding]:
 
     if login == DEPENDABOT_LOGIN and branch.startswith("dependabot/"):
         return []
-    if login in AUTO_LAND_LOGINS and "google-labs-jules" in login:
-        return []
-    if (
+
+    # Allow automated merges and testing without rigid PR description structures
+    is_auto_land = (
         login in AUTO_LAND_LOGINS
         and branch.startswith(AUTO_LAND_PREFIX)
         and "[auto]" in title.lower()
-    ):
+    )
+    is_jules_agent = login in AUTO_LAND_LOGINS and "google-labs-jules" in login
+
+    if is_auto_land or is_jules_agent:
         return []
     if LEGACY_LABEL in labels:
         reason = _body_field(body, "Coordination legacy reason")
