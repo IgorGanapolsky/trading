@@ -11,6 +11,7 @@ from scripts.ralph_loop_runner import (
     StruggleDetector,
     append_decision_log,
     execute_ralph_cycle,
+    main,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -111,3 +112,39 @@ def test_ralph_runner_struggle_detection(tmp_path: Path) -> None:
         cwd=tmp_path,
     )
     assert success is False
+
+
+def test_ralph_runner_auto_revert(tmp_path: Path) -> None:
+    # Verify auto-revert path executes without error
+    success = execute_ralph_cycle(
+        verify_cmd="python3 -c 'import time; print(time.time()); exit(1)'",
+        max_iterations=2,
+        auto_revert=True,
+        cwd=tmp_path,
+    )
+    assert success is False
+
+
+def test_ralph_runner_main_check_only() -> None:
+    code = main(["--verify-cmd", "python3 -c 'exit(0)'", "--check-only"])
+    assert code == 0
+
+    code_fail = main(["--verify-cmd", "python3 -c 'exit(2)'", "--check-only"])
+    assert code_fail == 2
+
+
+def test_ralph_runner_main_cli_success() -> None:
+    code = main(["--verify-cmd", "python3 -c 'exit(0)'", "--max-iterations", "1"])
+    assert code == 0
+
+
+def test_ralph_runner_iteration_success(tmp_path: Path) -> None:
+    flag = tmp_path / "flag"
+    # Fails first time (creating flag), passes second time
+    cmd = f"python3 -c 'import sys, pathlib; p = pathlib.Path(\"{flag}\"); sys.exit(0 if p.exists() else (p.touch() or 1))'"
+    success = execute_ralph_cycle(
+        verify_cmd=cmd,
+        max_iterations=3,
+        cwd=tmp_path,
+    )
+    assert success is True

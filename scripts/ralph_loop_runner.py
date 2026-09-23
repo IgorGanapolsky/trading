@@ -185,7 +185,10 @@ def execute_ralph_cycle(
     return False
 
 
-def main() -> None:
+from typing import Sequence
+
+
+def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Ralph Loop Autonomous Runner")
     parser.add_argument(
         "--verify-cmd",
@@ -209,20 +212,20 @@ def main() -> None:
         action="store_true",
         help="Run baseline verification once and exit",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.check_only:
         code, out = run_verification(args.verify_cmd)
         print(f"Exit code: {code}\nOutput:\n{out}")
-        sys.exit(code)
+        return code
 
     success = execute_ralph_cycle(
         verify_cmd=args.verify_cmd,
         max_iterations=args.max_iterations,
         auto_revert=args.auto_revert,
     )
-    sys.exit(0 if success else 1)
+    return 0 if success else 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
