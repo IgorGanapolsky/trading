@@ -26,6 +26,9 @@
 - Inspect every open PR and capture merge blockers with evidence.
 - Merge only the PRs that are actually ready.
 - Clean up stale branches, worktrees, and disposable runtime output when safe.
+- Set active GitHub CLI account to `IgorGanapolsky` (`gh auth switch --user IgorGanapolsky`) for codeowner approvals and merge rights.
+- Approve bot workflow runs in `action_required` status via GitHub API so branch protection checks can run.
+- Keep in-flight PR branches updated with `main` via `gh pr update-branch` to satisfy `strict: true` branch protection.
 - Verify `main` health after merges with CI plus a local dry-run/readiness check.
 - Use `make check` as the unified local gate and `make dry-run` as the paper-only smoke test.
 - Reject generated screenshots, caches, databases, reports, model artifacts, and duplicate RAG indexes from Git.
