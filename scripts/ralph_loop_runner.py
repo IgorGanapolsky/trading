@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import shlex
 import subprocess  # nosec B404
 import sys
 from datetime import UTC, datetime
@@ -78,14 +79,16 @@ def append_decision_log(
         )
 
 
-def run_verification(cmd: str, cwd: Path = REPO_ROOT) -> tuple[int, str]:
+def run_verification(cmd: str | Sequence[str], cwd: Path = REPO_ROOT) -> tuple[int, str]:
     """Execute verification command and capture exit code + combined output."""
-    res = subprocess.run(  # nosec B602
-        cmd,
-        shell=True,
+    cmd_args = shlex.split(cmd) if isinstance(cmd, str) else list(cmd)
+    res = subprocess.run(  # nosec B603
+        cmd_args,
+        shell=False,
         cwd=cwd,
         capture_output=True,
         text=True,
+        check=False,
     )
     output = (res.stdout + "\n" + res.stderr).strip()
     return res.returncode, output

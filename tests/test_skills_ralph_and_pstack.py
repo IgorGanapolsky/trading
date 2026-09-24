@@ -47,7 +47,8 @@ def test_skill_structure_and_frontmatter(skill_name: str) -> None:
     assert isinstance(parsed, dict), "Frontmatter must parse into a dictionary"
     assert parsed.get("name") == skill_name, f"Skill name in frontmatter must match '{skill_name}'"
     description = parsed.get("description")
-    assert description and isinstance(description, str), "Skill must have non-empty description"
+    assert description, "Skill must have non-empty description"
+    assert isinstance(description, str), "Skill description must be a string"
     assert len(description.strip()) > 20, "Skill description must be descriptive (>20 chars)"
 
     body = parts[2]
