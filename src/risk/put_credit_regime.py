@@ -69,6 +69,10 @@ class RegimeSnapshot:
     spy_above_200dma: bool | None
     spy_sma_50: float | None = None
     spy_above_50dma: bool | None = None
+    dealer_net_gamma: float | None = None
+    dealer_put_wall: float | None = None
+    dealer_gamma_flip: float | None = None
+    dealer_regime_safety: str | None = None
     source_errors: tuple[str, ...] = ()
 
     def as_dict(self) -> dict[str, Any]:
@@ -275,8 +279,11 @@ def evaluate_regime_gate(
         msg = "SPY 200-DMA unavailable"
         if require_above_200dma and fail_closed_on_missing:
             blockers.append(msg)
-        else:
-            soft.append(msg)
+    dealer_safety = snap.get("dealer_regime_safety")
+    if dealer_safety == "unhedged_breakdown":
+        soft.append("Dealer gamma regime: Put Wall breached (unhedged dealer breakdown)")
+    elif dealer_safety == "hazardous_negative_gamma":
+        soft.append("Dealer gamma regime: spot below Gamma Flip (dealers short gamma)")
 
     return {
         "allowed": not blockers,
@@ -425,6 +432,96 @@ def evaluate_spy_tape_unusual(
         "ticker": symbol,
         "short_put_volume": short_put_volume,
         "short_put_open_interest": short_put_open_interest,
+    }
+
+
+def evaluate_dealer_gamma_regime(
+    *,
+    spot_price: float | None,
+    net_gamma: float | None = None,
+    put_wall: float | None = None,
+    call_wall: float | None = None,
+    gamma_flip: float | None = None,
+    block_on_negative_gamma: bool = False,
+) -> dict[str, Any]:
+    """Dealer Gamma & Market Maker Positioning assessment (Unusual Whales Periscope format).
+
+    Evaluates:
+    1. Net Gamma Regime: Positive Gamma (stabilizing dampener) vs Negative Gamma (cascading accelerator).
+    2. Support/Resistance Defense: Put Wall (dealer floor) defended vs abandoned.
+    3. Delta Hedging Pressure: Expected dealer buying/selling on market drops.
+
+    Soft flags by default; blocks entry if block_on_negative_gamma is explicitly True.
+    """
+    if spot_price is None or spot_price <= 0.0:
+        return {
+            "allowed": True,
+            "blockers": [],
+            "soft_flags": ["Dealer gamma positioning unavailable (missing spot price)"],
+            "regime_safety": "unknown",
+            "net_gamma": net_gamma,
+            "put_wall": put_wall,
+            "gamma_flip": gamma_flip,
+        }
+
+    from src.analytics.options_vol_gex import (
+        calculate_expected_hedging_flow,
+        evaluate_dealer_defense_levels,
+    )
+
+    blockers: list[str] = []
+    soft_flags: list[str] = []
+
+    defense = evaluate_dealer_defense_levels(
+        spot_price=spot_price,
+        put_wall=put_wall,
+        call_wall=call_wall,
+        gamma_flip=gamma_flip,
+    )
+
+    flow = (
+        calculate_expected_hedging_flow(
+            spot_price=spot_price,
+            net_gamma=net_gamma,
+            spot_move_pct=-0.01,
+        )
+        if net_gamma is not None
+        else None
+    )
+
+    if defense.put_wall_status == "abandoned":
+        msg = f"Put Wall at {put_wall} breached! Dealers abandoned support; short puts trigger forced selling."
+        if block_on_negative_gamma:
+            blockers.append(msg)
+        else:
+            soft_flags.append(msg)
+    elif defense.above_gamma_flip is False:
+        msg = f"Spot {spot_price:.2f} below Gamma Flip {gamma_flip:.2f}; dealers in negative gamma (volatility expansion)."
+        if block_on_negative_gamma:
+            blockers.append(msg)
+        else:
+            soft_flags.append(msg)
+
+    if flow and flow.hedging_pressure == "accelerating_selling":
+        soft_flags.append(
+            f"Dealer hedging pressure is negative (${abs(flow.hedging_flow_dollars):,.0f} selling per 1% drop)."
+        )
+
+    return {
+        "allowed": not blockers,
+        "blockers": blockers,
+        "soft_flags": soft_flags,
+        "regime_safety": defense.regime_safety,
+        "defense_summary": defense.summary,
+        "put_wall_status": defense.put_wall_status,
+        "call_wall_status": defense.call_wall_status,
+        "hedging_pressure": flow.hedging_pressure if flow else "unknown",
+        "hedging_flow_dollars_per_1pct_drop": flow.hedging_flow_dollars if flow else 0.0,
+        "spot_price": spot_price,
+        "net_gamma": net_gamma,
+        "put_wall": put_wall,
+        "call_wall": call_wall,
+        "gamma_flip": gamma_flip,
     }
 
 

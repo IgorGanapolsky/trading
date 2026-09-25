@@ -60,6 +60,53 @@ class MarketTideResult:
     aggressive_buying_detected: bool
 
 
+@dataclass(frozen=True)
+class HedgingFlowResult:
+    """Estimated dealer delta-hedging rebalancing flow for a given price move.
+
+    Formula (Unusual Whales Periscope delta-hedging attribution):
+        Hedging Flow = - Net Gamma * Spot * (Spot * spot_move_pct) * 100
+    In positive gamma, dealers buy weakness and sell strength (stabilizing dampener).
+    In negative gamma, dealers sell weakness and buy strength (cascading accelerator).
+    """
+
+    spot_price: float
+    net_gamma: float
+    spot_move_pct: float
+    hedging_shares: float
+    hedging_flow_dollars: float
+    hedging_pressure: Literal["supportive_buying", "accelerating_selling", "neutral"]
+    description: str
+
+
+@dataclass(frozen=True)
+class DealerDefenseResult:
+    """Evaluation of whether key market maker support/resistance walls are defended or abandoned."""
+
+    spot_price: float
+    put_wall: float | None
+    put_wall_status: Literal["defended", "abandoned", "unknown"]
+    call_wall: float | None
+    call_wall_status: Literal["defended", "abandoned", "unknown"]
+    gamma_flip: float | None
+    above_gamma_flip: bool | None
+    regime_safety: Literal["safe_positive_gamma", "hazardous_negative_gamma", "unhedged_breakdown"]
+    summary: str
+
+
+@dataclass(frozen=True)
+class RiskPocketResult:
+    """0DTE / short-dated option dealer risk pocket near spot."""
+
+    strike: float
+    distance_pct: float
+    zero_dte_oi: int
+    total_oi: int
+    oi_concentration_pct: float
+    risk_level: Literal["critical", "elevated", "normal"]
+    hazard_description: str
+
+
 def black_scholes_gamma(
     spot: float,
     strike: float,
@@ -108,9 +155,7 @@ def calculate_gex_levels(
     - Net GEX per strike = SpotGEX(Call) + SpotGEX(Put), where SpotGEX(Put) is negative.
     - Spot GEX = Gamma * OI * Spot^2 * 100 (in dollar gamma terms per 1% or 1-point move).
     """
-    if not (
-        len(strikes) == len(call_gammas) == len(put_gammas) == len(call_ois) == len(put_ois)
-    ):
+    if not (len(strikes) == len(call_gammas) == len(put_gammas) == len(call_ois) == len(put_ois)):
         raise ValueError("All strike, gamma, and open interest sequences must have equal length.")
 
     if not strikes or spot_price <= 0.0:
@@ -154,9 +199,7 @@ def calculate_gex_levels(
 
     # Gamma Magnet: strike with largest-magnitude net gamma (strongest pin)
     gamma_magnet = (
-        max(per_strike_gex.items(), key=lambda item: abs(item[1]))[0]
-        if per_strike_gex
-        else None
+        max(per_strike_gex.items(), key=lambda item: abs(item[1]))[0] if per_strike_gex else None
     )
 
     # Gamma Flip crossings: find zero crossings between adjacent strikes
@@ -327,3 +370,180 @@ def calculate_market_tide(
         ask_side_ratio=ask_side_ratio,
         aggressive_buying_detected=aggressive_buying_detected,
     )
+
+
+def calculate_expected_hedging_flow(
+    spot_price: float,
+    net_gamma: float,
+    spot_move_pct: float = -0.01,
+) -> HedgingFlowResult:
+    """Calculate expected dealer delta-hedging rebalancing flow for a given spot move.
+
+    Replicates Unusual Whales Periscope 'Where delta-hedging flows may push market next'.
+    """
+    if spot_price <= 0.0:
+        return HedgingFlowResult(
+            spot_price=spot_price,
+            net_gamma=net_gamma,
+            spot_move_pct=spot_move_pct,
+            hedging_shares=0.0,
+            hedging_flow_dollars=0.0,
+            hedging_pressure="neutral",
+            description="Invalid spot price",
+        )
+
+    delta_s = spot_price * spot_move_pct
+    hedging_shares = -1.0 * net_gamma * delta_s * 100.0
+    hedging_flow_dollars = hedging_shares * (spot_price + delta_s)
+
+    if net_gamma > 1e-6:
+        if spot_move_pct < 0:
+            pressure: Literal["supportive_buying", "accelerating_selling", "neutral"] = (
+                "supportive_buying"
+            )
+            desc = "Dealers long gamma: mechanical rebalancing provides supportive dip buying."
+        else:
+            pressure = "supportive_buying"
+            desc = "Dealers long gamma: mechanical rebalancing trims rally into resistance."
+    elif net_gamma < -1e-6:
+        if spot_move_pct < 0:
+            pressure = "accelerating_selling"
+            desc = "Dealers short gamma: mechanical rebalancing triggers cascading selling into weakness."
+        else:
+            pressure = "accelerating_selling"
+            desc = "Dealers short gamma: mechanical rebalancing fuels upside short squeezes."
+    else:
+        pressure = "neutral"
+        desc = "Dealers delta-neutral at zero gamma: minimal mechanical flow pressure."
+
+    return HedgingFlowResult(
+        spot_price=spot_price,
+        net_gamma=net_gamma,
+        spot_move_pct=spot_move_pct,
+        hedging_shares=round(hedging_shares, 2),
+        hedging_flow_dollars=round(hedging_flow_dollars, 2),
+        hedging_pressure=pressure,
+        description=desc,
+    )
+
+
+def evaluate_dealer_defense_levels(
+    spot_price: float,
+    put_wall: float | None,
+    call_wall: float | None,
+    gamma_flip: float | None,
+) -> DealerDefenseResult:
+    """Evaluate whether dealer support/resistance walls are defended or abandoned.
+
+    Replicates Unusual Whales Periscope 'Which price levels they are defending or abandoning'.
+    """
+    if spot_price <= 0.0:
+        return DealerDefenseResult(
+            spot_price=spot_price,
+            put_wall=put_wall,
+            put_wall_status="unknown",
+            call_wall=call_wall,
+            call_wall_status="unknown",
+            gamma_flip=gamma_flip,
+            above_gamma_flip=None,
+            regime_safety="hazardous_negative_gamma",
+            summary="Invalid spot price",
+        )
+
+    # Put wall analysis
+    if put_wall is None:
+        put_status: Literal["defended", "abandoned", "unknown"] = "unknown"
+    elif spot_price >= put_wall:
+        put_status = "defended"
+    else:
+        put_status = "abandoned"
+
+    # Call wall analysis
+    if call_wall is None:
+        call_status: Literal["defended", "abandoned", "unknown"] = "unknown"
+    elif spot_price <= call_wall:
+        call_status = "defended"
+    else:
+        call_status = "abandoned"
+
+    # Gamma flip analysis
+    above_flip = (spot_price >= gamma_flip) if gamma_flip is not None else None
+
+    if put_status == "abandoned":
+        safety: Literal["safe_positive_gamma", "hazardous_negative_gamma", "unhedged_breakdown"] = (
+            "unhedged_breakdown"
+        )
+        summary = f"Put Wall at {put_wall} breached! Dealers abandoned support floor; short puts trigger forced selling."
+    elif above_flip is False:
+        safety = "hazardous_negative_gamma"
+        summary = f"Spot below Gamma Flip ({gamma_flip}). Dealers short gamma; volatility expansion and air pockets active."
+    else:
+        safety = "safe_positive_gamma"
+        summary = f"Spot above Put Wall ({put_wall}) and Gamma Flip ({gamma_flip}). Dealers defending support; dampening active."
+
+    return DealerDefenseResult(
+        spot_price=spot_price,
+        put_wall=put_wall,
+        put_wall_status=put_status,
+        call_wall=call_wall,
+        call_wall_status=call_status,
+        gamma_flip=gamma_flip,
+        above_gamma_flip=above_flip,
+        regime_safety=safety,
+        summary=summary,
+    )
+
+
+def detect_zero_dte_risk_pockets(
+    spot_price: float,
+    strikes: Sequence[float],
+    zero_dte_put_ois: Sequence[int],
+    zero_dte_call_ois: Sequence[int],
+    total_put_ois: Sequence[int] | None = None,
+    total_call_ois: Sequence[int] | None = None,
+    threshold_pct: float = 0.02,
+) -> list[RiskPocketResult]:
+    """Detect high-leverage 0DTE dealer risk pockets within proximity of spot.
+
+    Replicates Unusual Whales Periscope 'Where short-dated options create real risk pockets'.
+    """
+    if spot_price <= 0.0 or not strikes:
+        return []
+
+    pockets: list[RiskPocketResult] = []
+    tot_puts = total_put_ois if total_put_ois is not None else zero_dte_put_ois
+    tot_calls = total_call_ois if total_call_ois is not None else zero_dte_call_ois
+
+    for idx, k in enumerate(strikes):
+        dist_pct = abs(k - spot_price) / spot_price
+        if dist_pct > threshold_pct:
+            continue
+
+        z_oi = zero_dte_put_ois[idx] + zero_dte_call_ois[idx]
+        t_oi = tot_puts[idx] + tot_calls[idx]
+        conc = (z_oi / t_oi) if t_oi > 0 else 0.0
+
+        if conc >= 0.35 or z_oi >= 5000:
+            risk: Literal["critical", "elevated", "normal"] = "critical"
+            hazard = f"Severe 0DTE concentration ({conc * 100:.1f}%) at strike {k}. High dealer rebalancing velocity."
+        elif conc >= 0.20 or z_oi >= 2000:
+            risk = "elevated"
+            hazard = f"Elevated 0DTE concentration ({conc * 100:.1f}%) at strike {k}."
+        else:
+            risk = "normal"
+            hazard = "Normal short-dated distribution."
+
+        pockets.append(
+            RiskPocketResult(
+                strike=k,
+                distance_pct=round(dist_pct, 4),
+                zero_dte_oi=z_oi,
+                total_oi=t_oi,
+                oi_concentration_pct=round(conc, 4),
+                risk_level=risk,
+                hazard_description=hazard,
+            )
+        )
+
+    pockets.sort(key=lambda item: item.distance_pct)
+    return pockets

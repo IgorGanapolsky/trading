@@ -133,4 +133,29 @@ term_struct = calculate_iv_term_structure(
 )
 if term_struct.credit_spread_favorable and gex.gamma_regime == "positive_gamma":
     print("[+] Optimal Put Credit Spread Regime: Backwardated + Rich + Positive Gamma")
+
+# 4. Unusual Whales Periscope: Dealer Hedging Flow & Defended Levels
+from src.analytics.options_vol_gex import (
+    calculate_expected_hedging_flow,
+    evaluate_dealer_defense_levels,
+    detect_zero_dte_risk_pockets,
+)
+
+flow = calculate_expected_hedging_flow(spot_price=505.20, net_gamma=gex.net_gamma, spot_move_pct=-0.01)
+print(f"Hedging Pressure: {flow.hedging_pressure} ({flow.description})")
+
+defense = evaluate_dealer_defense_levels(
+    spot_price=505.20, put_wall=gex.put_wall, call_wall=gex.call_wall, gamma_flip=gex.gamma_flip
+)
+print(f"Safety: {defense.regime_safety} - {defense.summary}")
+
+pockets = detect_zero_dte_risk_pockets(
+    spot_price=505.20,
+    strikes=[500.0, 505.0, 510.0],
+    zero_dte_put_ois=[500, 3000, 200],
+    zero_dte_call_ois=[200, 4000, 100],
+)
+for p in pockets:
+    print(f"0DTE Risk Pocket: Strike {p.strike} -> {p.risk_level}: {p.hazard_description}")
 ```
+

@@ -2,25 +2,31 @@
 
 from __future__ import annotations
 
-import math
 import pytest
 
 from src.analytics.options_vol_gex import (
     black_scholes_gamma,
+    calculate_expected_hedging_flow,
     calculate_gex_levels,
     calculate_iv_term_structure,
     calculate_market_tide,
     calculate_max_pain,
+    detect_zero_dte_risk_pockets,
+    evaluate_dealer_defense_levels,
 )
 
 
 def test_black_scholes_gamma_standard_and_boundaries() -> None:
     # Standard ATM SPY option
-    gamma_atm = black_scholes_gamma(spot=500.0, strike=500.0, time_to_expiry_years=30 / 365, iv=0.18)
+    gamma_atm = black_scholes_gamma(
+        spot=500.0, strike=500.0, time_to_expiry_years=30 / 365, iv=0.18
+    )
     assert gamma_atm > 0.0
 
     # Far OTM option has lower gamma than ATM
-    gamma_otm = black_scholes_gamma(spot=500.0, strike=550.0, time_to_expiry_years=30 / 365, iv=0.18)
+    gamma_otm = black_scholes_gamma(
+        spot=500.0, strike=550.0, time_to_expiry_years=30 / 365, iv=0.18
+    )
     assert 0.0 < gamma_otm < gamma_atm
 
     # Boundary values return 0.0 safely without raising
@@ -144,12 +150,16 @@ def test_calculate_max_pain() -> None:
 
 def test_calculate_iv_term_structure() -> None:
     # Identical DTE edge case
-    res_flat = calculate_iv_term_structure(front_dte=10.0, front_iv=0.20, back_dte=10.0, back_iv=0.20)
+    res_flat = calculate_iv_term_structure(
+        front_dte=10.0, front_iv=0.20, back_dte=10.0, back_iv=0.20
+    )
     assert res_flat.slope == 0.0
 
     # Backwardation case (front elevated above back)
     # Slope = (0.15 - 0.25) / (45 - 10) = -0.10 / 35 = -0.002857 (not quite -0.00406)
-    res_moderate = calculate_iv_term_structure(front_dte=10.0, front_iv=0.25, back_dte=45.0, back_iv=0.15)
+    res_moderate = calculate_iv_term_structure(
+        front_dte=10.0, front_iv=0.25, back_dte=45.0, back_iv=0.15
+    )
     assert res_moderate.slope < 0.0
     assert res_moderate.is_backwardated is False
 
@@ -211,5 +221,101 @@ def test_calculate_market_tide() -> None:
 
 def test_black_scholes_zero_denom() -> None:
     # Extremely small iv and expiry producing zero denominator
-    assert black_scholes_gamma(spot=100.0, strike=100.0, time_to_expiry_years=1e-15, iv=1e-15) == 0.0
+    assert (
+        black_scholes_gamma(spot=100.0, strike=100.0, time_to_expiry_years=1e-15, iv=1e-15) == 0.0
+    )
 
+
+def test_calculate_expected_hedging_flow() -> None:
+    # Spot 500, positive net gamma -> market drops 1% -> dealers buy shares
+    res_pos = calculate_expected_hedging_flow(spot_price=500.0, net_gamma=0.05, spot_move_pct=-0.01)
+    assert res_pos.hedging_shares > 0.0
+    assert res_pos.hedging_pressure == "supportive_buying"
+    assert "supportive dip buying" in res_pos.description
+
+    # Spot 500, positive net gamma -> market rises 1% -> dealers sell shares into rally
+    res_pos_up = calculate_expected_hedging_flow(
+        spot_price=500.0, net_gamma=0.05, spot_move_pct=0.01
+    )
+    assert res_pos_up.hedging_shares < 0.0
+    assert "trims rally" in res_pos_up.description
+
+    # Spot 500, negative net gamma -> market drops 1% -> dealers sell shares (accelerating dump)
+    res_neg = calculate_expected_hedging_flow(
+        spot_price=500.0, net_gamma=-0.05, spot_move_pct=-0.01
+    )
+    assert res_neg.hedging_shares < 0.0
+    assert res_neg.hedging_pressure == "accelerating_selling"
+    assert "cascading selling" in res_neg.description
+
+    # Zero net gamma -> neutral
+    res_neutral = calculate_expected_hedging_flow(
+        spot_price=500.0, net_gamma=0.0, spot_move_pct=-0.01
+    )
+    assert res_neutral.hedging_pressure == "neutral"
+
+    # Invalid spot -> safe zero result
+    res_invalid = calculate_expected_hedging_flow(spot_price=0.0, net_gamma=0.05)
+    assert res_invalid.hedging_flow_dollars == 0.0
+
+
+def test_evaluate_dealer_defense_levels() -> None:
+    # Spot 505, Put Wall 500, Call Wall 515, Gamma Flip 502 -> all defended, safe positive gamma
+    safe = evaluate_dealer_defense_levels(
+        spot_price=505.0, put_wall=500.0, call_wall=515.0, gamma_flip=502.0
+    )
+    assert safe.put_wall_status == "defended"
+    assert safe.call_wall_status == "defended"
+    assert safe.regime_safety == "safe_positive_gamma"
+
+    # Spot 495, Put Wall 500 (breached) -> Put Wall abandoned, unhedged breakdown
+    breached = evaluate_dealer_defense_levels(
+        spot_price=495.0, put_wall=500.0, call_wall=515.0, gamma_flip=502.0
+    )
+    assert breached.put_wall_status == "abandoned"
+    assert breached.regime_safety == "unhedged_breakdown"
+
+    # Spot 501, Put Wall 490 (intact), but below Gamma Flip 502 -> hazardous negative gamma
+    neg_gamma = evaluate_dealer_defense_levels(
+        spot_price=501.0, put_wall=490.0, call_wall=515.0, gamma_flip=502.0
+    )
+    assert neg_gamma.put_wall_status == "defended"
+    assert neg_gamma.regime_safety == "hazardous_negative_gamma"
+
+    # Invalid spot
+    invalid = evaluate_dealer_defense_levels(
+        spot_price=-1.0, put_wall=500.0, call_wall=510.0, gamma_flip=500.0
+    )
+    assert invalid.put_wall_status == "unknown"
+
+
+def test_detect_zero_dte_risk_pockets() -> None:
+    strikes = [490.0, 495.0, 500.0, 505.0, 510.0]
+    spot = 500.0
+    z_puts = [100, 200, 3000, 150, 50]
+    z_calls = [50, 100, 3000, 100, 50]
+    t_puts = [500, 1000, 6000, 800, 500]
+    t_calls = [500, 1000, 6000, 800, 500]
+
+    pockets = detect_zero_dte_risk_pockets(
+        spot_price=spot,
+        strikes=strikes,
+        zero_dte_put_ois=z_puts,
+        zero_dte_call_ois=z_calls,
+        total_put_ois=t_puts,
+        total_call_ois=t_calls,
+        threshold_pct=0.02,
+    )
+    # Strike 500 has 6000 0DTE OI out of 12000 total (50%) -> critical risk pocket
+    assert len(pockets) >= 1
+    atm_pocket = next(p for p in pockets if p.strike == 500.0)
+    assert atm_pocket.risk_level == "critical"
+    assert "Severe 0DTE concentration" in atm_pocket.hazard_description
+
+    # Empty strikes
+    assert (
+        detect_zero_dte_risk_pockets(
+            spot_price=500.0, strikes=[], zero_dte_put_ois=[], zero_dte_call_ois=[]
+        )
+        == []
+    )
