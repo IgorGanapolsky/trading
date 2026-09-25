@@ -315,7 +315,23 @@ def test_detect_zero_dte_risk_pockets() -> None:
     # Empty strikes
     assert (
         detect_zero_dte_risk_pockets(
-            spot_price=500.0, strikes=[], zero_dte_put_ois=[], zero_dte_call_ois=[]
+            spot_price=500.0,
+            strikes=[],
+            zero_dte_put_ois=[],
+            zero_dte_call_ois=[],
+            total_put_ois=[],
+            total_call_ois=[],
         )
         == []
     )
+
+    # Unequal length raises ValueError
+    with pytest.raises(ValueError, match="equal length"):
+        detect_zero_dte_risk_pockets(
+            spot_price=500.0,
+            strikes=[500.0],
+            zero_dte_put_ois=[100],
+            zero_dte_call_ois=[100],
+            total_put_ois=[500],
+            total_call_ois=[],
+        )

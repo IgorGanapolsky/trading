@@ -499,20 +499,27 @@ def detect_zero_dte_risk_pockets(
     strikes: Sequence[float],
     zero_dte_put_ois: Sequence[int],
     zero_dte_call_ois: Sequence[int],
-    total_put_ois: Sequence[int] | None = None,
-    total_call_ois: Sequence[int] | None = None,
+    total_put_ois: Sequence[int],
+    total_call_ois: Sequence[int],
     threshold_pct: float = 0.02,
 ) -> list[RiskPocketResult]:
     """Detect high-leverage 0DTE dealer risk pockets within proximity of spot.
 
     Replicates Unusual Whales Periscope 'Where short-dated options create real risk pockets'.
     """
+    if not (
+        len(strikes)
+        == len(zero_dte_put_ois)
+        == len(zero_dte_call_ois)
+        == len(total_put_ois)
+        == len(total_call_ois)
+    ):
+        raise ValueError("All strike, 0DTE OI, and total OI sequences must have equal length.")
+
     if spot_price <= 0.0 or not strikes:
         return []
 
     pockets: list[RiskPocketResult] = []
-    tot_puts = total_put_ois if total_put_ois is not None else zero_dte_put_ois
-    tot_calls = total_call_ois if total_call_ois is not None else zero_dte_call_ois
 
     for idx, k in enumerate(strikes):
         dist_pct = abs(k - spot_price) / spot_price
@@ -520,7 +527,7 @@ def detect_zero_dte_risk_pockets(
             continue
 
         z_oi = zero_dte_put_ois[idx] + zero_dte_call_ois[idx]
-        t_oi = tot_puts[idx] + tot_calls[idx]
+        t_oi = total_put_ois[idx] + total_call_ois[idx]
         conc = (z_oi / t_oi) if t_oi > 0 else 0.0
 
         if conc >= 0.35 or z_oi >= 5000:

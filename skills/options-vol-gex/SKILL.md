@@ -154,6 +154,8 @@ pockets = detect_zero_dte_risk_pockets(
     strikes=[500.0, 505.0, 510.0],
     zero_dte_put_ois=[500, 3000, 200],
     zero_dte_call_ois=[200, 4000, 100],
+    total_put_ois=[1500, 5000, 1000],
+    total_call_ois=[1000, 8000, 2000],
 )
 for p in pockets:
     print(f"0DTE Risk Pocket: Strike {p.strike} -> {p.risk_level}: {p.hazard_description}")
