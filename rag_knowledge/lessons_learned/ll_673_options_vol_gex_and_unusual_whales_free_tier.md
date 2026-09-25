@@ -37,8 +37,14 @@ Unusual Whales charges $750/month for their basic API and $3,000/month for real-
    - Net Call Premium vs. Net Put Premium delta tracking directional momentum.
    - Ask-side volume ratio $\ge 70\%$ over rolling 5-minute intervals flags aggressive institutional buying urgency.
 
+5. **Periscope Market-Maker Positioning (`wales.pdf`)**:
+   - **Hedging Flow Direction & Pressure**: Dealers must rebalance $-\text{GEX} \times \Delta S$ in shares. In positive gamma, dealer hedging creates supportive buying on market dips; in negative gamma, dealer hedging forces accelerating selling and cascading liquidations.
+   - **Defended vs Abandoned Walls**: When spot price breaks below the Put Wall, dealers abandon support and flip into aggressive underlying sellers, triggering unhedged breakdown conditions.
+   - **0DTE Risk Pockets**: Outsized concentration of 0DTE OI ($\ge 35\%$ of total strike OI) near spot creates hyper-sensitive volatility pockets where delta rebalancing occurs with extreme velocity.
+
 ## Zero-Cost Engineering Mandate
 
 - Never purchase or subscribe to paid retail flow APIs when the underlying financial mechanics are publicly documented and computable from free broker data.
 - Compute option Greeks locally using standard Black-Scholes formulas in microseconds with zero network calls.
 - Track political and insider transactions using free public government data (SEC EDGAR Form 4 and House/Senate STOCK Act disclosure portals).
+
