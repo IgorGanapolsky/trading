@@ -3,6 +3,7 @@
 .env.*
 !.env.example
 .envrc
+.venv
 .venv/
 venv/
 env/
@@ -145,6 +146,8 @@ data/rag/tfidf_vectorizer.pkl
 data/rag/lessons_learned.json
 data/rag/lessons_learned_index.json
 data/rag/lessons_indexing_stats.json
+data/rag/dair_ai_research_manifest.json
+data/voice_actions/
 
 # Deprecated raw snapshots; canonical state is explicitly tracked in data/.
 data/*.csv
