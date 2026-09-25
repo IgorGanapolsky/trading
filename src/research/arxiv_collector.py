@@ -130,7 +130,11 @@ class ArxivCollector:
         self.manifest_file = manifest_file or ARXIV_MANIFEST_FILE
         self.manifest = self._load_manifest()
         self.min_relevance = float(min_relevance)
-        self.ingestion_pipeline = DocumentIngestionPipeline()
+        if manifest_file is not None and manifest_file != ARXIV_MANIFEST_FILE:
+            isolated_pipeline_manifest = manifest_file.parent / "ingestion_version_manifest.json"
+            self.ingestion_pipeline = DocumentIngestionPipeline(manifest_file=isolated_pipeline_manifest)
+        else:
+            self.ingestion_pipeline = DocumentIngestionPipeline()
 
     def _load_manifest(self) -> dict[str, Any]:
         if self.manifest_file.exists():
