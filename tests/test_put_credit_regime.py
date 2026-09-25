@@ -347,3 +347,69 @@ def test_exit_eval_includes_counterfactuals():
     assert detail["counterfactuals"]["live_exit_dte"] == 30
     assert "TP 50%" in detail["counterfactuals"]["note"]
     assert "exit_dte=7" not in detail["counterfactuals"]["note"]
+
+
+def test_evaluate_dealer_gamma_regime_defended_and_positive() -> None:
+    from src.risk.put_credit_regime import evaluate_dealer_gamma_regime
+
+    res = evaluate_dealer_gamma_regime(
+        spot_price=510.0,
+        net_gamma=0.04,
+        put_wall=500.0,
+        call_wall=520.0,
+        gamma_flip=505.0,
+    )
+    assert res["allowed"] is True
+    assert res["blockers"] == []
+    assert res["regime_safety"] == "safe_positive_gamma"
+    assert res["put_wall_status"] == "defended"
+    assert res["hedging_pressure"] == "supportive_buying"
+
+
+def test_evaluate_dealer_gamma_regime_put_wall_breached_and_negative() -> None:
+    from src.risk.put_credit_regime import evaluate_dealer_gamma_regime
+
+    # Breached put wall creates soft flag by default
+    res = evaluate_dealer_gamma_regime(
+        spot_price=495.0,
+        net_gamma=-0.03,
+        put_wall=500.0,
+        call_wall=520.0,
+        gamma_flip=505.0,
+        block_on_negative_gamma=False,
+    )
+    assert res["allowed"] is True
+    assert res["regime_safety"] == "unhedged_breakdown"
+    assert res["put_wall_status"] == "abandoned"
+    assert any("breached" in flag for flag in res["soft_flags"])
+    assert any("accelerating" in flag or "negative" in flag for flag in res["soft_flags"])
+
+    # Hard blocker when block_on_negative_gamma=True
+    res_blocked = evaluate_dealer_gamma_regime(
+        spot_price=495.0,
+        net_gamma=-0.03,
+        put_wall=500.0,
+        call_wall=520.0,
+        gamma_flip=505.0,
+        block_on_negative_gamma=True,
+    )
+    assert res_blocked["allowed"] is False
+    assert len(res_blocked["blockers"]) >= 1
+
+
+def test_evaluate_regime_gate_with_dealer_safety_flag() -> None:
+    from src.risk.put_credit_regime import RegimeSnapshot, evaluate_regime_gate
+
+    snap = RegimeSnapshot(
+        captured_at="2026-09-25T10:00:00Z",
+        spy_price=500.0,
+        vix=18.0,
+        iv_rank_proxy=35.0,
+        iv_rank_method="vix_percentile_252",
+        spy_sma_200=480.0,
+        spy_above_200dma=True,
+        dealer_regime_safety="unhedged_breakdown",
+    )
+    gate = evaluate_regime_gate(snap)
+    assert gate["allowed"] is True
+    assert any("Put Wall breached" in flag for flag in gate["soft_flags"])
