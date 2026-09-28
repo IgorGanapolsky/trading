@@ -41,6 +41,9 @@ Always tell the user 100% truth. Never fabricate, hide, or misrepresent status, 
 - Merge only PRs that pass CI and review criteria; include the merge commit or squash SHA in the completion evidence.
 - Classify branches without PRs as merge candidates, stale cleanup candidates, or blocked by active local work.
 - Remove stale branches, disposable worktrees, logs, and generated runtime output only when the deletion is safe and verifiable.
+- Ensure active GitHub user is `IgorGanapolsky` via `gh auth switch --user IgorGanapolsky` to satisfy codeowner reviews and merge permissions.
+- Approve bot workflow runs in `action_required` status via `gh api -X POST repos/.../actions/runs/<id>/approve` so branch protection checks run.
+- When branch protection enforces `strict: true`, synchronize candidate branches using `gh pr update-branch`.
 - Confirm cleanup with concrete counts such as branches before/after, removed file counts, or worktree inventory.
 - Verify `main` after merges using GitHub CI and a local dry-run or operational readiness command.
 - Record lessons and mistakes in RAG at the end of PR-management work.
@@ -55,6 +58,16 @@ Always tell the user 100% truth. Never fabricate, hide, or misrepresent status, 
 - Avoid phrasing like "your key is compromised" or "effectively compromised". State only concrete, verifiable facts (e.g., whether a secret appears in the repo) and the next required action.
 - Do not comment on a user-pasted key being "compromised" due to being pasted into chat. Only raise key-handling actions when a secret is present in the repo, logs, or other systems we control (or when the user explicitly asks).
 - Retrieve authorized credentials at action time from environment variables or the local keyring. Never hardcode credentials.
+
+## Strict Corporate vs. Personal Identity Separation Mandate
+
+- **Absolute Prohibition**: Under NO circumstances may corporate/employer email addresses (specifically `*@ecisolutions.com`), corporate personas, or secondary accounts (such as GitHub account `iganapolsky`) be used, invited, referenced, or associated with this repository.
+- **Single Personal Identity**: The ONLY authorized owner and contributor identity is `IgorGanapolsky` (`iganapolsky@gmail.com`).
+- **Never Invite Corporate Accounts**: NEVER invite anyone from corporate/employer domains (`ecisolutions.com`) to collaborate on personal repositories.
+- **Git Config Isolation**: All local checkouts and worktrees must enforce `user.email = iganapolsky@gmail.com` and `user.name = Igor Ganapolsky`. Never inherit corporate Git identity.
+- **CLI Account Discipline**: Always verify `gh auth switch --user IgorGanapolsky` before any GitHub CLI operation. Never switch to work account `iganapolsky` for trading repository actions.
+- **Automated Enforcement**: Continuous CI hygiene audits reject any corporate email addresses or corporate commit authors.
+
 
 ## Repository Hygiene Standards
 

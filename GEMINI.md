@@ -26,6 +26,9 @@
 - Inspect every open PR and capture merge blockers with evidence.
 - Merge only the PRs that are actually ready.
 - Clean up stale branches, worktrees, and disposable runtime output when safe.
+- Set active GitHub CLI account to `IgorGanapolsky` (`gh auth switch --user IgorGanapolsky`) for codeowner approvals and merge rights.
+- Approve bot workflow runs in `action_required` status via GitHub API so branch protection checks can run.
+- Keep in-flight PR branches updated with `main` via `gh pr update-branch` to satisfy `strict: true` branch protection.
 - Verify `main` health after merges with CI plus a local dry-run/readiness check.
 - Use `make check` as the unified local gate and `make dry-run` as the paper-only smoke test.
 - Reject generated screenshots, caches, databases, reports, model artifacts, and duplicate RAG indexes from Git.
@@ -44,6 +47,15 @@
 - Record mistakes and lessons learned in RAG.
 - Exclude secrets and tokens from stored directives and logs. Never hardcode credentials.
 - Treat chat-provided tokens as action-time credentials only; never save them to files, commits, or memory.
+
+## Strict Corporate vs. Personal Identity Separation Mandate
+
+- **Absolute Prohibition**: Never use, invite, or reference corporate email addresses (`*@ecisolutions.com`) or corporate GitHub accounts (such as `iganapolsky`) in this repository.
+- **Personal Identity Only**: The sole authorized identity is `IgorGanapolsky` (`iganapolsky@gmail.com`).
+- **Never Invite Corporate Accounts**: NEVER invite anyone from corporate/employer domains (`ecisolutions.com`) to collaborate on personal repositories.
+- **Git Config Isolation**: All checkouts and worktrees must enforce `user.email = iganapolsky@gmail.com`.
+- **CLI Account Discipline**: Always operate under `gh auth switch --user IgorGanapolsky`. Never switch to corporate profiles.
+
 
 ## Multi-Agent Coordination
 
