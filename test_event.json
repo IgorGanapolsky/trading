@@ -1,0 +1,13 @@
+{
+  "pull_request": {
+    "head": {
+      "ref": "test-microstructure-features-10516738590700812865"
+    },
+    "user": {
+      "login": "google-labs-jules[bot]"
+    },
+    "body": "Fixes things",
+    "title": "🧪 [testing improvement] Add tests for microstructure features signal",
+    "labels": []
+  }
+}
