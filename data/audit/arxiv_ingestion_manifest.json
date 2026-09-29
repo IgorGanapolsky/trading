@@ -2675,6 +2675,105 @@
       "ingested_at": "2026-09-23T06:33:10.611581+00:00",
       "sha256": "fbaed4cba35c520ca89e2a054ead85cd70504d606aa78eba879018584a9163df",
       "chunks": 10
+    },
+    "2609.35767v1": {
+      "title": "Learning Native Reflection in Unified Models with Interleaved Reinforcement Learning",
+      "published": "2026-09-28T17:59:36Z",
+      "relevance_score": 0.25,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.35767v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_35767v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_35767v1.md",
+      "ingested_at": "2026-09-29T18:08:30.118114+00:00",
+      "sha256": "7ed2d8b9285fcf5a74bfe0366481abc16eaeb12281d8922e4c674dc156343219",
+      "chunks": 11
+    },
+    "2609.35741v1": {
+      "title": "Shockingly Simple Self-retrospection Improves Agentic Models Without RL",
+      "published": "2026-09-28T17:54:24Z",
+      "relevance_score": 0.37,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.CL"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.35741v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_35741v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_35741v1.md",
+      "ingested_at": "2026-09-29T18:08:30.122504+00:00",
+      "sha256": "e1a6c628f1449c67ee07ae2f7b80eac1125844f690feb9554f5440d5983ec2d9",
+      "chunks": 11
+    },
+    "2609.35576v1": {
+      "title": "Share-Borne AI Virus: Memory-Hopping Attacks Across LLM Agents",
+      "published": "2026-09-28T16:34:52Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.CL",
+        "cs.CR",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.35576v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_35576v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_35576v1.md",
+      "ingested_at": "2026-09-29T18:08:30.127891+00:00",
+      "sha256": "a2160cd22c963761c59facf1b70cb27f6902c055a980da01efff6588da5c9d81",
+      "chunks": 11
+    },
+    "2609.35629v1": {
+      "title": "SANTA++: Sampling Attention through Representative Keys",
+      "published": "2026-09-28T17:00:30Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.CL"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.35629v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_35629v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_35629v1.md",
+      "ingested_at": "2026-09-29T18:08:30.136183+00:00",
+      "sha256": "c8e2ca204a52a7e2968c5bd9b97e82150a1dfd63f0f0215d235a8d3c5fbf679f",
+      "chunks": 11
+    },
+    "2609.35760v1": {
+      "title": "TokenCast: Forecasting Token Consumption During LLM Agent Execution",
+      "published": "2026-09-28T17:59:09Z",
+      "relevance_score": 0.28,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.SE"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.35760v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_35760v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_35760v1.md",
+      "ingested_at": "2026-09-29T18:08:30.149585+00:00",
+      "sha256": "d2ebaf4561f43454bd6c882bbd9c6d708b208e9c7848ebbcc86ff3a638d6e3db",
+      "chunks": 11
+    },
+    "2609.35703v1": {
+      "title": "A Unified Uncertainty Representation for Graph Neural Networks via Doubly-Spectral Stochastic Expansion",
+      "published": "2026-09-28T17:42:52Z",
+      "relevance_score": 0.28,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.35703v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_35703v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_35703v1.md",
+      "ingested_at": "2026-09-29T18:08:30.155098+00:00",
+      "sha256": "f5389bbfcf09add0eb773f5f027932fb21e7a9dea8522bd22b02c14f7933b9b5",
+      "chunks": 11
     }
   },
   "skipped_low_relevance": {
@@ -3199,25 +3298,35 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-09-23T06:33:10.586412+00:00"
+    },
+    "2609.35770v1": {
+      "title": "FurE: Efficient Instance-Specific 3D Fur Reconstruction without Animal-Fur Datasets",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-29T18:08:30.130585+00:00"
+    },
+    "2609.35621v1": {
+      "title": "Cartridges++: KV Cache Compression without Off-Context Derailment",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-29T18:08:30.138849+00:00"
+    },
+    "2609.35768v1": {
+      "title": "PDMD: Projected Distribution Matching Distillation for Video Diffusion Models",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-29T18:08:30.141917+00:00"
+    },
+    "2609.35695v1": {
+      "title": "Rethinking Personalized Generation: Test-Time Alignment via Factorized Ranking Models",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-29T18:08:30.157866+00:00"
     }
   },
-  "total_ingested": 164,
-  "last_run_utc": "2026-09-23T06:33:10.614332+00:00",
+  "total_ingested": 170,
+  "last_run_utc": "2026-09-29T18:08:30.162163+00:00",
   "runs": [
-    {
-      "finished_at": "2026-08-22T18:04:58.632368+00:00",
-      "candidates": 10,
-      "new_ingested": 0,
-      "skipped_low_relevance": 0,
-      "min_relevance": 0.18,
-      "queries": [
-        "option credit spread OR iron condor OR put credit",
-        "implied volatility OR volatility surface trading",
-        "reinforcement learning trading OR GRPO OR PPO finance",
-        "market microstructure order book",
-        "retrieval augmented generation finance OR financial RAG"
-      ]
-    },
     {
       "finished_at": "2026-08-23T06:14:51.228772+00:00",
       "candidates": 10,
@@ -3895,6 +4004,20 @@
       "candidates": 10,
       "new_ingested": 8,
       "skipped_low_relevance": 2,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-09-29T18:08:30.162163+00:00",
+      "candidates": 10,
+      "new_ingested": 6,
+      "skipped_low_relevance": 4,
       "min_relevance": 0.18,
       "queries": [
         "option credit spread OR iron condor OR put credit",
