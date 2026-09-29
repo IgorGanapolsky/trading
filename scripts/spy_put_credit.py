@@ -1638,10 +1638,75 @@ def main() -> int:
         return 1
 
     # Research-backed regime gate (IVR / VIX) before scanning or submitting.
-    from src.risk.put_credit_regime import capture_regime_snapshot, evaluate_regime_gate
+    from src.risk.put_credit_regime import capture_regime_snapshot, evaluate_regime_gate, evaluate_dealer_gamma_regime
 
     regime_snap = capture_regime_snapshot(spy_price)
     regime_gate = evaluate_regime_gate(regime_snap)
+
+    # -------------------------------------------------------------------------
+    # Dealer Gamma Exposure (GEX) & Market Tide Gate (AGENT-673 / CEO Mandate)
+    # -------------------------------------------------------------------------
+    # Fetch option chain metrics directly or derive them. In this iteration, we
+    # pass block_on_negative_gamma=True to ensure we never sell premium in a
+    # negative gamma (volatility expanding) regime.
+    try:
+        from src.analytics.options_vol_gex import calculate_gex_levels, calculate_market_tide
+        from src.data.iv_data_provider import IVDataProvider
+        provider = IVDataProvider()
+        # Full chain required to calculate accurate GEX and Market Tide
+        options = provider.get_options_chain_with_greeks(symbol="SPY", min_open_interest=0)
+
+        strikes, call_gammas, put_gammas, call_ois, put_ois = [], [], [], [], []
+        for opt in options:
+            strike = float(opt.get("strike", 0.0))
+            gamma = float(opt.get("gamma", 0.0))
+            oi = int(opt.get("open_interest", 0))
+            if opt.get("type") == "call":
+                strikes.append(strike)
+                call_gammas.append(gamma)
+                call_ois.append(oi)
+                # Keep aligned for put matching
+                put_gammas.append(0.0)
+                put_ois.append(0)
+            elif opt.get("type") == "put":
+                if strike in strikes:
+                    idx = strikes.index(strike)
+                    put_gammas[idx] = gamma
+                    put_ois[idx] = oi
+                else:
+                    strikes.append(strike)
+                    put_gammas.append(gamma)
+                    put_ois.append(oi)
+                    call_gammas.append(0.0)
+                    call_ois.append(0)
+
+        gex = calculate_gex_levels(
+            spot_price=spy_price,
+            strikes=strikes,
+            call_gammas=call_gammas,
+            put_gammas=put_gammas,
+            call_ois=call_ois,
+            put_ois=put_ois
+        )
+
+        dealer_gate = evaluate_dealer_gamma_regime(
+            spot_price=spy_price,
+            net_gamma=gex.net_gamma,
+            put_wall=gex.put_wall,
+            call_wall=gex.call_wall,
+            gamma_flip=gex.gamma_flip,
+            block_on_negative_gamma=True # CEO MANDATE: Do not sell premium in negative gamma.
+        )
+
+        if not dealer_gate.get("allowed", True):
+            for blocker in dealer_gate.get("blockers", []):
+                if blocker not in regime_gate["blockers"]:
+                    regime_gate["blockers"].append(blocker)
+            regime_gate["allowed"] = False
+
+    except Exception as exc:
+        logger.warning(f"Dealer Gamma / GEX calculation failed: {exc}. Proceeding with standard regime gate.")
+
     if not regime_gate["allowed"] and not args.ignore_regime_gate:
         logger.error(
             "PUT-CREDIT REGIME GATE BLOCKED: %s",
@@ -1823,6 +1888,65 @@ def main() -> int:
             # Re-check regime under lock (stale window)
             regime_snap2 = capture_regime_snapshot(spy_price)
             regime_gate2 = evaluate_regime_gate(regime_snap2)
+
+            # Dealer GEX re-check inside lock
+            try:
+                from src.analytics.options_vol_gex import calculate_gex_levels
+                from src.data.iv_data_provider import IVDataProvider
+                from src.risk.put_credit_regime import evaluate_dealer_gamma_regime
+
+                provider = IVDataProvider()
+                options = provider.get_options_chain_with_greeks(symbol="SPY", min_open_interest=0)
+
+                strikes, call_gammas, put_gammas, call_ois, put_ois = [], [], [], [], []
+                for opt in options:
+                    strike = float(opt.get("strike", 0.0))
+                    gamma = float(opt.get("gamma", 0.0))
+                    oi = int(opt.get("open_interest", 0))
+                    if opt.get("type") == "call":
+                        strikes.append(strike)
+                        call_gammas.append(gamma)
+                        call_ois.append(oi)
+                        put_gammas.append(0.0)
+                        put_ois.append(0)
+                    elif opt.get("type") == "put":
+                        if strike in strikes:
+                            idx = strikes.index(strike)
+                            put_gammas[idx] = gamma
+                            put_ois[idx] = oi
+                        else:
+                            strikes.append(strike)
+                            put_gammas.append(gamma)
+                            put_ois.append(oi)
+                            call_gammas.append(0.0)
+                            call_ois.append(0)
+
+                gex = calculate_gex_levels(
+                    spot_price=spy_price,
+                    strikes=strikes,
+                    call_gammas=call_gammas,
+                    put_gammas=put_gammas,
+                    call_ois=call_ois,
+                    put_ois=put_ois
+                )
+
+                dealer_gate2 = evaluate_dealer_gamma_regime(
+                    spot_price=spy_price,
+                    net_gamma=gex.net_gamma,
+                    put_wall=gex.put_wall,
+                    call_wall=gex.call_wall,
+                    gamma_flip=gex.gamma_flip,
+                    block_on_negative_gamma=True
+                )
+
+                if not dealer_gate2.get("allowed", True):
+                    for blocker in dealer_gate2.get("blockers", []):
+                        if blocker not in regime_gate2["blockers"]:
+                            regime_gate2["blockers"].append(blocker)
+                    regime_gate2["allowed"] = False
+            except Exception as exc:
+                logger.warning(f"Dealer Gamma / GEX re-check failed inside lock: {exc}")
+
             if not regime_gate2["allowed"] and not args.ignore_regime_gate:
                 logger.error(
                     "PUT-CREDIT REGIME GATE BLOCKED after lock: %s",

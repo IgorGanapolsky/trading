@@ -74,6 +74,7 @@ LOCAL_PATH_PATTERN = re.compile(r"/Users/(?!\.\.\.)[A-Za-z0-9._-]+/")
 STALE_STATUS_PATTERN = re.compile(
     r"(?im)^\s*(?:\*\*)?status(?:\*\*)?\s*:\s*(IN_PROGRESS|ACTIVE CRISIS|PENDING)\b"
 )
+FORBIDDEN_CORPORATE_EMAIL = re.compile(r"(?i)\b[A-Za-z0-9._%+-]+@ecisolutions\.com\b")
 
 
 @dataclass(frozen=True)
@@ -82,6 +83,52 @@ class Finding:
     kind: str
     path: str
     detail: str
+
+
+def check_git_identity(repo: Path) -> list[Finding]:
+    findings: list[Finding] = []
+    try:
+        completed = subprocess.run(  # nosec B603 B607
+            ["git", "config", "user.email"], cwd=repo, capture_output=True, text=True, check=False
+        )
+        email = completed.stdout.strip().lower()
+        if "ecisolutions" in email:
+            findings.append(
+                Finding(
+                    "error",
+                    "forbidden-corporate-git-identity",
+                    ".git/config",
+                    f"git user.email is set to corporate address '{email}'; personal repos must use personal identity",
+                )
+            )
+    except Exception:
+        pass
+    return findings
+
+
+def check_recent_commit_authors(repo: Path) -> list[Finding]:
+    findings: list[Finding] = []
+    try:
+        completed = subprocess.run(  # nosec B603 B607
+            ["git", "log", "-n", "10", "--format=%ae"],
+            cwd=repo,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        emails = {e.strip().lower() for e in completed.stdout.splitlines() if e.strip()}
+        if any("ecisolutions" in e for e in emails):
+            findings.append(
+                Finding(
+                    "error",
+                    "forbidden-corporate-commit-author",
+                    "git-history",
+                    "recent commit author contains forbidden corporate email domain ecisolutions",
+                )
+            )
+    except Exception:
+        pass
+    return findings
 
 
 def _git_paths(repo: Path, *args: str) -> set[str]:
@@ -125,6 +172,8 @@ def lesson_id(path: str, text: str) -> str | None:
 def scan(repo: Path) -> dict:
     paths = candidate_paths(repo)
     findings: list[Finding] = []
+    findings.extend(check_git_identity(repo))
+    findings.extend(check_recent_commit_authors(repo))
     suffix_counts: Counter[str] = Counter()
     content_hashes: dict[str, list[str]] = defaultdict(list)
     lesson_ids: dict[str, list[str]] = defaultdict(list)
@@ -182,6 +231,15 @@ def scan(repo: Path) -> dict:
                     "absolute-user-path",
                     relative,
                     "contains a machine-specific /Users path",
+                )
+            )
+        if FORBIDDEN_CORPORATE_EMAIL.search(text) and not relative.startswith("tests/"):
+            findings.append(
+                Finding(
+                    "error",
+                    "forbidden-corporate-email",
+                    relative,
+                    "contains corporate email address; personal repos must remain strictly isolated",
                 )
             )
         if relative.startswith("rag_knowledge/lessons_learned/"):

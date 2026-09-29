@@ -9,19 +9,19 @@ authors = [{ name = "Igor Ganapolsky" }]
 keywords = ["trading", "alpaca", "options", "risk-management", "rag"]
 dependencies = [
   "alpaca-py>=0.44.0",
-  "anthropic>=1.5.0,<2.0.0",
+  "anthropic>=1.6.0,<2.0.0",
   "fastapi>=0.141.1,<1.0.0",
   "holidays>=0.104",
   "httpx>=0.28.1,<1.0.0",
   "numpy>=2.4.6,<3.0.0",
-  "openai>=3.13.0,<4.0.0",
-  "pandas>=3.0.5,<4.0.0",
+  "openai>=3.16.2,<4.0.0",
+  "pandas>=3.0.6,<4.0.0",
   "pydantic-settings>=2.15.0,<3.0.0",
   "python-dotenv>=1.2.3,<2.0.0",
   "PyYAML>=6.0.3,<8.0.0",
   "requests>=2.34.2,<3.0.0",
   "scipy>=1.17.1,<2.0.0",
-  "uvicorn>=0.52.4,<1.0.0",
+  "uvicorn>=0.53.0,<1.0.0",
   "yfinance>=1.7.0,<2.0.0",
 ]
 
@@ -33,7 +33,7 @@ dev = [
   "pytest-asyncio>=1.4.0,<2.0.0",
   "pytest-cov>=7.1.0,<8.0.0",
   "pytest-timeout>=2.4.0,<3.0.0",
-  "ruff>=0.16.7,<1.0.0",
+  "ruff>=0.16.8,<1.0.0",
 ]
 rag = [
   "lancedb>=0.38.0,<1.0.0",

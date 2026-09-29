@@ -92,3 +92,31 @@ def test_gitignore_covers_generated_surfaces() -> None:
     text = (REPO_ROOT / ".gitignore").read_text(encoding="utf-8")
     for pattern in ("artifacts/", "logs/", "data/cache/", "data/screenshots/", "__pycache__/"):
         assert pattern in text
+
+
+def test_scan_errors_on_corporate_email(tmp_path: Path) -> None:
+    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
+    leaked = tmp_path / "script.py"
+    leaked.write_text("# Author: test@ecisolutions.com\n")
+    subprocess.run(["git", "add", leaked.name], cwd=tmp_path, check=True, capture_output=True)
+    report = scan(tmp_path)
+    findings = [item for item in report["findings"] if item["kind"] == "forbidden-corporate-email"]
+    assert findings
+    assert findings[0]["path"] == leaked.name
+    assert findings[0]["severity"] == "error"
+
+
+def test_scan_errors_on_corporate_git_identity(tmp_path: Path) -> None:
+    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "config", "user.email", "corp@ecisolutions.com"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+    )
+    report = scan(tmp_path)
+    findings = [
+        item for item in report["findings"] if item["kind"] == "forbidden-corporate-git-identity"
+    ]
+    assert findings
+    assert findings[0]["severity"] == "error"

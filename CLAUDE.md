@@ -25,6 +25,9 @@ Project instructions live in `.claude/CLAUDE.md`. Rules auto-load from `.claude/
 - Never hand work back to the user when it can be executed directly from the repo, GitHub, or local runtime.
 - Merge PRs only when review criteria are met; report blockers immediately when present.
 - Keep branch hygiene: remove stale/orphan branches after merges.
+- Ensure active GitHub user is `IgorGanapolsky` via `gh auth switch --user IgorGanapolsky` to satisfy codeowner reviews and merge permissions.
+- Approve bot workflow runs in `action_required` status via `gh api -X POST repos/.../actions/runs/<id>/approve` so branch protection checks run.
+- When branch protection enforces `strict: true`, synchronize candidate branches using `gh pr update-branch`.
 - Run operational readiness checks (CI on `main` plus local dry-run health checks) before declaring completion.
 - Record lessons learned in RAG after task completion and log any execution mistake there as well.
 - Never persist action-time secrets or GitHub tokens in directives, RAG, logs, commits, or generated artifacts.
@@ -44,6 +47,16 @@ Project instructions live in `.claude/CLAUDE.md`. Rules auto-load from `.claude/
 - Every workflow needs a current owner and tested contract. Delete disabled one-off workflows.
 - Optional integrations belong behind narrow adapters and core imports remain side-effect free.
 - Reusable agent instructions live under `skills/`; human guidance lives in `README.md`, `CONTRIBUTING.md`, and `docs/`.
+- Maintain absolute separation from corporate/employer domains (`ecisolutions.com`). Under NO circumstances may corporate emails, accounts, or personas be invited, committed, or referenced.
+
+## Strict Corporate vs. Personal Identity Separation Mandate
+
+- **Absolute Prohibition**: Never use, invite, or reference corporate email addresses (`*@ecisolutions.com`) or corporate GitHub accounts (such as `iganapolsky`) in this repository.
+- **Personal Identity Only**: The sole authorized identity is `IgorGanapolsky` (`iganapolsky@gmail.com`).
+- **Never Invite Corporate Accounts**: NEVER invite anyone from corporate/employer domains (`ecisolutions.com`) to collaborate on personal repositories.
+- **Git Config Isolation**: All checkouts and worktrees must enforce `user.email = iganapolsky@gmail.com`.
+- **CLI Account Discipline**: Always operate under `gh auth switch --user IgorGanapolsky`. Never switch to corporate profiles.
+
 
 ## Multi-Agent Coordination
 
