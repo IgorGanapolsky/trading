@@ -64,11 +64,15 @@ def execute_chrome_js(raw_js: str, target_url_prefix: str = JULES_BASE_URL) -> t
         repeat with w in windows
             repeat with t in tabs of w
                 if URL of t starts with "{target_url_prefix}" then
-                    set targetTab to t
-                    exit repeat
+                    if URL of t contains "suggestions" then
+                        set targetTab to t
+                        exit repeat
+                    else if targetTab is missing value then
+                        set targetTab to t
+                    end if
                 end if
             end repeat
-            if targetTab is not missing value then exit repeat
+            if targetTab is not missing value and URL of targetTab contains "suggestions" then exit repeat
         end repeat
         if targetTab is missing value then
             return "NO_JULES_TAB"
@@ -203,7 +207,9 @@ def expand_suggestion(index: int) -> dict[str, Any] | None:
         }}
         return "CLICKED";
     """
-    execute_chrome_js(expand_js)
+    _, expand_res, _ = execute_chrome_js(expand_js)
+    if "CLICKED" not in expand_res:
+        return None
     time.sleep(0.4)
 
     read_js = rf"""
@@ -278,12 +284,19 @@ def dispatch_suggestion(index: int, custom_instructions: str | None = None) -> d
     append_js = f"""
         const ce = document.querySelector('[contenteditable="true"]');
         if (!ce) return {{__error__: "no composer contenteditable found"}};
-        const additional = atob('{b64_safety}');
+        const binary = atob('{b64_safety}');
+        const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+        const additional = new TextDecoder('utf-8').decode(bytes);
         ce.innerText = ce.innerText + additional;
         ce.dispatchEvent(new Event('input', {{ bubbles: true }}));
         return "APPENDED";
     """
-    execute_chrome_js(append_js)
+    _, append_res, append_err = execute_chrome_js(append_js)
+    if "APPENDED" not in append_res:
+        return {
+            "status": "error",
+            "message": f"Failed to append safety constraints: {append_res or append_err}",
+        }
     time.sleep(0.3)
 
     # 3. Click start task button
