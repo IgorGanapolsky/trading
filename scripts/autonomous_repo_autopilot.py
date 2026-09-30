@@ -146,8 +146,12 @@ def merge_pr(pr_number: int) -> bool:
         logger.info(f"Successfully merged PR #{pr_number}")
         return True
     logger.warning(f"Failed to merge PR #{pr_number}: {proc.stderr.strip()}")
-    # Attempt branch update if behind
-    if "out of date" in proc.stderr.lower() or "base branch policy" in proc.stderr.lower():
+    stderr_lower = proc.stderr.lower()
+    if (
+        "not up to date" in stderr_lower
+        or "out of date" in stderr_lower
+        or "base branch policy" in stderr_lower
+    ):
         logger.info(f"Attempting gh pr update-branch for #{pr_number}")
         run_cmd(["gh", "pr", "update-branch", str(pr_number)])
     return False
