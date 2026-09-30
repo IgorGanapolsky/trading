@@ -16,12 +16,9 @@ def test_load_api_key_from_env():
 
 
 @patch("src.adapters.typesafe_client.os.name", "posix")
-@patch("src.adapters.typesafe_client.Path.exists")
+@patch("src.adapters.typesafe_client.Path.exists", return_value=True)
 @patch("subprocess.run")
 def test_load_api_key_from_keychain_success(mock_run, mock_exists):
-    # Setup mock to simulate finding key in keychain
-    mock_exists.side_effect = lambda: True  # For Path("/usr/bin/security").exists()
-
     mock_proc = MagicMock()
     mock_proc.returncode = 0
     mock_proc.stdout = "keychain_key\n"
@@ -34,12 +31,9 @@ def test_load_api_key_from_keychain_success(mock_run, mock_exists):
 
 
 @patch("src.adapters.typesafe_client.os.name", "posix")
-@patch("src.adapters.typesafe_client.Path.exists")
+@patch("src.adapters.typesafe_client.Path.exists", return_value=True)
 @patch("subprocess.run")
 def test_load_api_key_from_keychain_empty(mock_run, mock_exists):
-    # Setup mock to simulate finding key in keychain
-    mock_exists.side_effect = lambda: True  # For Path("/usr/bin/security").exists()
-
     mock_proc = MagicMock()
     mock_proc.returncode = 0
     mock_proc.stdout = " \n "
@@ -52,11 +46,9 @@ def test_load_api_key_from_keychain_empty(mock_run, mock_exists):
 
 
 @patch("src.adapters.typesafe_client.os.name", "posix")
-@patch("src.adapters.typesafe_client.Path.exists")
+@patch("src.adapters.typesafe_client.Path.exists", return_value=True)
 @patch("subprocess.run")
 def test_load_api_key_from_keychain_fails(mock_run, mock_exists):
-    # Setup mock to simulate finding key in keychain
-    mock_exists.side_effect = lambda: True  # For Path("/usr/bin/security").exists()
 
     mock_proc = MagicMock()
     mock_proc.returncode = 1
