@@ -2,31 +2,42 @@
 
 from __future__ import annotations
 
-
 from src.analytics.congressional_flow_tracker import (
     OptionsFlowSignal,
     PoliticianTrade,
     analyze_congressional_flow,
     calculate_disclosure_decay,
+    derive_trade_direction,
     evaluate_committee_conflict,
 )
 
 
+def test_derive_trade_direction():
+    assert derive_trade_direction("purchase", "stock") == "bullish"
+    assert derive_trade_direction("purchase", "call_option") == "bullish"
+    assert derive_trade_direction("purchase", "put_option") == "bearish"
+    assert derive_trade_direction("sale", "stock") == "bearish"
+    assert derive_trade_direction("sale", "call_option") == "bearish"
+    assert derive_trade_direction("sale", "put_option") == "bullish"
+    assert derive_trade_direction("purchase", "other") == "neutral"
+
+
 def test_politician_trade_init_default_roster():
     trade = PoliticianTrade(
-        ticker="  nvda  ",
-        politician="Nancy Pelosi",
-        chamber="house",
-        party="D",
+        ticker="  lmt  ",
+        politician="Tommy Tuberville",
+        chamber="senate",
+        party="R",
         transaction_type="purchase",
         trade_date="2026-09-01",
         disclosure_date="2026-09-15",
         amount_min=500_000,
         amount_max=1_000_000,
     )
-    assert trade.ticker == "NVDA"
-    assert "Energy and Commerce" in trade.committees
-    assert "Intelligence" in trade.committees
+    assert trade.ticker == "LMT"
+    assert "Armed Services" in trade.committees
+    assert "Agriculture" in trade.committees
+    assert trade.direction == "bullish"
 
 
 def test_politician_trade_init_custom_committees():
@@ -40,10 +51,12 @@ def test_politician_trade_init_custom_committees():
         disclosure_date="2026-09-10",
         amount_min=15_000,
         amount_max=50_000,
+        instrument="put_option",
         committees=("Armed Services",),
     )
     assert trade.ticker == "LMT"
     assert trade.committees == ("Armed Services",)
+    assert trade.direction == "bearish"
 
 
 def test_options_flow_signal_init():
@@ -61,7 +74,7 @@ def test_options_flow_signal_init():
     assert flow.sweep is True
 
 
-def test_calculate_disclosure_decay_normal_and_zero_delay():
+def test_calculate_disclosure_decay_normal_and_as_of_date():
     # 0 days delay -> 1.0
     decay_0 = calculate_disclosure_decay("2026-09-01", "2026-09-01", half_life_days=30.0)
     assert decay_0 == 1.0
@@ -73,6 +86,15 @@ def test_calculate_disclosure_decay_normal_and_zero_delay():
     # 60 days delay -> 0.25
     decay_60 = calculate_disclosure_decay("2026-09-01", "2026-10-31", half_life_days=30.0)
     assert decay_60 == 0.25
+
+    # Elapsed age via as_of_date discounts prompt filing from 2024
+    decay_elapsed = calculate_disclosure_decay(
+        "2024-01-01",
+        "2024-01-02",
+        as_of_date_str="2026-09-29",
+        half_life_days=30.0,
+    )
+    assert decay_elapsed == 0.05  # hits floor due to 900+ days elapsed
 
 
 def test_calculate_disclosure_decay_edge_cases():
@@ -88,12 +110,8 @@ def test_calculate_disclosure_decay_edge_cases():
     assert calculate_disclosure_decay("2026-09-01", "2026-09-15", half_life_days=0) == 0.0
     assert calculate_disclosure_decay("2026-09-01", "2026-09-15", half_life_days=-10) == 0.0
 
-    # Very large delay -> floor at 0.05
-    decay_stale = calculate_disclosure_decay("2024-01-01", "2026-09-01", half_life_days=30.0)
-    assert decay_stale == 0.05
 
-
-def test_evaluate_committee_conflict_match():
+def test_evaluate_committee_conflict_match_and_aliases():
     trade = PoliticianTrade(
         ticker="LMT",
         politician="Tommy Tuberville",
@@ -104,18 +122,38 @@ def test_evaluate_committee_conflict_match():
         disclosure_date="2026-09-10",
         amount_min=500_000,
         amount_max=1_000_000,
+        committees=("Senate Armed Services",),
     )
     score, matches = evaluate_committee_conflict(trade)
     assert "Armed Services" in matches
     assert score > 0.80  # size boost applied
 
 
+def test_evaluate_committee_conflict_blank_regression():
+    # Blank or whitespace-only committee must NOT match any jurisdiction
+    trade = PoliticianTrade(
+        ticker="LMT",
+        politician="Anonymous",
+        chamber="house",
+        party="D",
+        transaction_type="purchase",
+        trade_date="2026-09-01",
+        disclosure_date="2026-09-15",
+        amount_min=500_000,
+        amount_max=1_000_000,
+        committees=("", "   "),
+    )
+    score, matches = evaluate_committee_conflict(trade)
+    assert matches == ()
+    assert score == 0.20
+
+
 def test_evaluate_committee_conflict_no_match():
     trade = PoliticianTrade(
         ticker="XYZNONEXISTENT",
-        politician="Nancy Pelosi",
-        chamber="house",
-        party="D",
+        politician="Tommy Tuberville",
+        chamber="senate",
+        party="R",
         transaction_type="purchase",
         trade_date="2026-09-01",
         disclosure_date="2026-09-15",
@@ -130,9 +168,9 @@ def test_evaluate_committee_conflict_no_match():
 def test_analyze_congressional_flow_purchase_bullish_sweep_negative_gamma():
     trade = PoliticianTrade(
         ticker="NVDA",
-        politician="Nancy Pelosi",
+        politician="Dan Crenshaw",
         chamber="house",
-        party="D",
+        party="R",
         transaction_type="purchase",
         trade_date="2026-09-20",
         disclosure_date="2026-09-22",
@@ -152,6 +190,7 @@ def test_analyze_congressional_flow_purchase_bullish_sweep_negative_gamma():
     signal = analyze_congressional_flow(trade, flow=flow, gex_regime="negative_gamma")
 
     assert signal.ticker == "NVDA"
+    assert signal.direction == "bullish"
     assert signal.action == "BUY_CALL_SPREAD"
     assert signal.flow_confirmation is True
     assert signal.composite_score >= 0.50
@@ -164,9 +203,9 @@ def test_analyze_congressional_flow_purchase_bullish_sweep_negative_gamma():
 def test_analyze_congressional_flow_purchase_positive_gamma():
     trade = PoliticianTrade(
         ticker="NVDA",
-        politician="Nancy Pelosi",
+        politician="Dan Crenshaw",
         chamber="house",
-        party="D",
+        party="R",
         transaction_type="purchase",
         trade_date="2026-09-20",
         disclosure_date="2026-09-21",
@@ -175,25 +214,30 @@ def test_analyze_congressional_flow_purchase_positive_gamma():
     )
     signal = analyze_congressional_flow(trade, flow=None, gex_regime="positive_gamma")
 
-    # In positive gamma, high conviction purchase signals SELL_PUT_CREDIT
+    # In positive gamma, high conviction bullish signals SELL_PUT_CREDIT
+    assert signal.direction == "bullish"
     assert signal.action == "SELL_PUT_CREDIT"
     assert signal.flow_confirmation is False
     assert signal.flow_details is None
     assert "positive_gamma" in signal.rationale
 
 
-def test_analyze_congressional_flow_sale_bearish_sweep():
+def test_analyze_congressional_flow_put_option_purchase_is_bearish():
+    # Purchasing put option is BEARISH economic direction
     trade = PoliticianTrade(
         ticker="XOM",
         politician="Dan Crenshaw",
         chamber="house",
         party="R",
-        transaction_type="sale",
+        transaction_type="purchase",
+        instrument="put_option",
         trade_date="2026-09-20",
         disclosure_date="2026-09-22",
         amount_min=250_000,
         amount_max=500_000,
     )
+    assert trade.direction == "bearish"
+
     flow = OptionsFlowSignal(
         ticker="XOM",
         option_type="put",
@@ -207,12 +251,30 @@ def test_analyze_congressional_flow_sale_bearish_sweep():
     signal = analyze_congressional_flow(trade, flow=flow, gex_regime=None)
 
     assert signal.ticker == "XOM"
+    assert signal.direction == "bearish"
     assert signal.action == "BUY_PUT_SPREAD"
     assert signal.flow_confirmation is True
 
 
+def test_analyze_congressional_flow_neutral_instrument():
+    trade = PoliticianTrade(
+        ticker="NVDA",
+        politician="Dan Crenshaw",
+        chamber="house",
+        party="R",
+        transaction_type="purchase",
+        instrument="other",
+        trade_date="2026-09-20",
+        disclosure_date="2026-09-22",
+        amount_min=500_000,
+        amount_max=1_000_000,
+    )
+    signal = analyze_congressional_flow(trade)
+    assert signal.direction == "neutral"
+    assert signal.action == "NEUTRAL_HOLD"
+
+
 def test_analyze_congressional_flow_neutral_hold_low_conviction():
-    # Stale trade and no conflict -> low composite score (< 0.50)
     trade = PoliticianTrade(
         ticker="UNKNOWN",
         politician="Anonymous Member",
@@ -234,9 +296,9 @@ def test_analyze_congressional_flow_neutral_hold_low_conviction():
 def test_analyze_congressional_flow_mismatched_ticker_or_unconfirmed_flow():
     trade = PoliticianTrade(
         ticker="NVDA",
-        politician="Nancy Pelosi",
+        politician="Dan Crenshaw",
         chamber="house",
-        party="D",
+        party="R",
         transaction_type="purchase",
         trade_date="2026-09-20",
         disclosure_date="2026-09-22",
@@ -257,7 +319,7 @@ def test_analyze_congressional_flow_mismatched_ticker_or_unconfirmed_flow():
     assert signal1.flow_confirmation is False
     assert signal1.flow_details is None
 
-    # Flow is put (bearish) on purchase (bullish trade) -> does not confirm
+    # Flow is put (bearish) on bullish trade -> does not confirm
     flow_unconfirmed = OptionsFlowSignal(
         ticker="NVDA",
         option_type="put",
