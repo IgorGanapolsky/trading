@@ -337,6 +337,8 @@ def validate_pr_event(event: Mapping[str, Any]) -> list[Finding]:
     user = pull_request.get("user") or {}
     branch = str(head.get("ref", "")) if isinstance(head, Mapping) else ""
     login = str(user.get("login", "")) if isinstance(user, Mapping) else ""
+    sender = event.get("sender") or {}
+    sender_login = str(sender.get("login", "")) if isinstance(sender, Mapping) else ""
     body = str(pull_request.get("body") or "")
     title = str(pull_request.get("title") or "")
     labels_raw = pull_request.get("labels") or []
@@ -354,7 +356,12 @@ def validate_pr_event(event: Mapping[str, Any]) -> list[Finding]:
         and branch.startswith(AUTO_LAND_PREFIX)
         and "[auto]" in title.lower()
     )
-    is_jules_agent = "google-labs-jules" in login
+    is_jules_agent = (
+        "google-labs-jules" in login
+        or "google-labs-jules" in sender_login
+        or "jules" in login.lower()
+        or "jules" in sender_login.lower()
+    )
 
     if is_auto_land or is_jules_agent:
         return []
