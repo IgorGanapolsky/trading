@@ -69,7 +69,7 @@ def list_open_prs() -> list[dict[str, Any]]:
         "--state",
         "open",
         "--limit",
-        "50",
+        "200",
         "--json",
         "number,title,headRefName,author,statusCheckRollup,mergeable,reviewDecision,createdAt",
     ]

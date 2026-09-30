@@ -1467,7 +1467,11 @@ def evaluate_congressional_alpha_overlay(
                 trades = []
 
         regime = gex_regime or "positive_gamma"
-        if not trades:
+        matching_trades = [
+            t for t in trades
+            if isinstance(t, dict) and t.get("ticker", "").strip().upper() == underlying.strip().upper()
+        ]
+        if not matching_trades:
             return {
                 "active": True,
                 "underlying": underlying,
@@ -1480,7 +1484,7 @@ def evaluate_congressional_alpha_overlay(
                 "rationale": f"Dealer gamma regime '{regime}' favors credit spread theta harvesting.",
             }
 
-        sample = trades[0]
+        sample = matching_trades[0]
         pol_trade = PoliticianTrade(
             ticker=sample.get("ticker", underlying),
             politician=sample.get("politician", "Unknown Member"),
@@ -1498,12 +1502,12 @@ def evaluate_congressional_alpha_overlay(
             "active": True,
             "underlying": underlying,
             "gex_regime": regime,
-            "flow_count": len(trades),
+            "flow_count": len(matching_trades),
             "composite_alpha_score": alpha.composite_score,
             "recommended_action": alpha.action,
             "rationale": alpha.rationale,
             "conflict_score": alpha.conflict_score,
-            "disclosure_freshness": alpha.disclosure_freshness,
+            "disclosure_freshness": alpha.disclosure_decay,
         }
     except Exception as exc:
         logger.warning("Congressional alpha overlay evaluation failed: %s", exc)
