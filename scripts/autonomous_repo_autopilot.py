@@ -32,12 +32,14 @@ logger = logging.getLogger("autonomous_autopilot")
 
 AUTO_LAND_PREFIX = "chore/auto-"
 SLUG_REGEX = re.compile(r"^chore/auto-([a-zA-Z0-9_-]+?)-\d+-\d+$")
-ALLOWED_AUTOMATION_AUTHORS = frozenset({
-    "app/github-actions",
-    "github-actions[bot]",
-    "github-actions",
-    "IgorGanapolsky",
-})
+ALLOWED_AUTOMATION_AUTHORS = frozenset(
+    {
+        "app/github-actions",
+        "github-actions[bot]",
+        "github-actions",
+        "IgorGanapolsky",
+    }
+)
 
 
 def run_cmd(

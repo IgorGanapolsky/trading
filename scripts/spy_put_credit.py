@@ -1468,8 +1468,10 @@ def evaluate_congressional_alpha_overlay(
 
         regime = gex_regime or "positive_gamma"
         matching_trades = [
-            t for t in trades
-            if isinstance(t, dict) and t.get("ticker", "").strip().upper() == underlying.strip().upper()
+            t
+            for t in trades
+            if isinstance(t, dict)
+            and t.get("ticker", "").strip().upper() == underlying.strip().upper()
         ]
         if not matching_trades:
             return {
