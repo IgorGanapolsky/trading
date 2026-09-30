@@ -1,23 +1,37 @@
 import pytest
 from unittest.mock import MagicMock, patch
-import sys
+
+
+# Mock modules using patch.dict in an autouse fixture to avoid global state pollution
+@pytest.fixture(autouse=True)
+def mock_external_modules():
+    from unittest.mock import MagicMock
+
+    mock_modules = {
+        'alpaca': MagicMock(),
+        'alpaca.trading': MagicMock(),
+        'alpaca.trading.client': MagicMock(),
+        'alpaca.trading.enums': MagicMock(),
+        'alpaca.trading.requests': MagicMock(),
+        'alpaca.data': MagicMock(),
+        'alpaca.data.historical': MagicMock(),
+        'alpaca.data.requests': MagicMock(),
+        'src.safety.mandatory_trade_gate': MagicMock(),
+    }
+
+    # Configure the mandatory_trade_gate mock
+    mock_modules['src.safety.mandatory_trade_gate'].validate_ticker.return_value = (True, "")
+
+    with patch.dict('sys.modules', mock_modules):
+        yield
 
 # Mock modules that might not be available or are nested
-sys.modules["alpaca"] = MagicMock()
-sys.modules["alpaca.trading"] = MagicMock()
-sys.modules["alpaca.trading.client"] = MagicMock()
-sys.modules["alpaca.trading.enums"] = MagicMock()
-sys.modules["alpaca.trading.requests"] = MagicMock()
-sys.modules["alpaca.data"] = MagicMock()
-sys.modules["alpaca.data.historical"] = MagicMock()
-sys.modules["alpaca.data.requests"] = MagicMock()
 
 # Instead of patching 'src.safety.mandatory_trade_gate.validate_ticker' directly,
 # we need to make sure the module is mocked first or patch where it's used.
 # Let's mock the entire module to avoid AttributeError.
-mock_mandatory_trade_gate = MagicMock()
-sys.modules["src.safety"] = MagicMock()
-sys.modules["src.safety.mandatory_trade_gate"] = mock_mandatory_trade_gate
+
+
 
 from src.brokers.multi_broker import BrokerType, OrderResult, MultiBroker, get_multi_broker
 
