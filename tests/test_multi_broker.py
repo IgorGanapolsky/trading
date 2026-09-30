@@ -3,34 +3,38 @@ from unittest.mock import MagicMock, patch
 import sys
 
 # Mock modules that might not be available or are nested
-sys.modules['alpaca'] = MagicMock()
-sys.modules['alpaca.trading'] = MagicMock()
-sys.modules['alpaca.trading.client'] = MagicMock()
-sys.modules['alpaca.trading.enums'] = MagicMock()
-sys.modules['alpaca.trading.requests'] = MagicMock()
-sys.modules['alpaca.data'] = MagicMock()
-sys.modules['alpaca.data.historical'] = MagicMock()
-sys.modules['alpaca.data.requests'] = MagicMock()
+sys.modules["alpaca"] = MagicMock()
+sys.modules["alpaca.trading"] = MagicMock()
+sys.modules["alpaca.trading.client"] = MagicMock()
+sys.modules["alpaca.trading.enums"] = MagicMock()
+sys.modules["alpaca.trading.requests"] = MagicMock()
+sys.modules["alpaca.data"] = MagicMock()
+sys.modules["alpaca.data.historical"] = MagicMock()
+sys.modules["alpaca.data.requests"] = MagicMock()
 
 # Instead of patching 'src.safety.mandatory_trade_gate.validate_ticker' directly,
 # we need to make sure the module is mocked first or patch where it's used.
 # Let's mock the entire module to avoid AttributeError.
 mock_mandatory_trade_gate = MagicMock()
-sys.modules['src.safety'] = MagicMock()
-sys.modules['src.safety.mandatory_trade_gate'] = mock_mandatory_trade_gate
+sys.modules["src.safety"] = MagicMock()
+sys.modules["src.safety.mandatory_trade_gate"] = mock_mandatory_trade_gate
 
 from src.brokers.multi_broker import BrokerType, OrderResult, MultiBroker, get_multi_broker
+
 
 @pytest.fixture(autouse=True)
 def reset_singleton():
     """Reset the singleton instance before each test."""
     import src.brokers.multi_broker
+
     src.brokers.multi_broker._multi_broker = None
     yield
+
 
 def test_broker_type():
     """Test BrokerType enum."""
     assert BrokerType.ALPACA.value == "alpaca"
+
 
 def test_order_result():
     """Test OrderResult dataclass."""
@@ -42,7 +46,7 @@ def test_order_result():
         quantity=10,
         status="filled",
         filled_price=150.0,
-        timestamp="2023-01-01T00:00:00"
+        timestamp="2023-01-01T00:00:00",
     )
     assert result.broker == BrokerType.ALPACA
     assert result.order_id == "123"
@@ -53,12 +57,14 @@ def test_order_result():
     assert result.filled_price == 150.0
     assert result.timestamp == "2023-01-01T00:00:00"
 
+
 def test_get_multi_broker_singleton():
     """Test get_multi_broker returns a singleton."""
     broker1 = get_multi_broker()
     broker2 = get_multi_broker()
     assert broker1 is broker2
     assert isinstance(broker1, MultiBroker)
+
 
 @patch("src.utils.alpaca_client.get_alpaca_credentials")
 @patch("alpaca.trading.client.TradingClient")
@@ -80,6 +86,7 @@ def test_alpaca_lazy_load(mock_trading_client, mock_get_credentials):
     assert client is client2
     mock_trading_client.assert_called_once_with("fake_api_key", "fake_secret_key", paper=True)
 
+
 @patch("src.utils.alpaca_client.get_alpaca_credentials")
 @patch("alpaca.trading.client.TradingClient")
 def test_alpaca_lazy_load_failure(mock_trading_client, mock_get_credentials):
@@ -90,6 +97,7 @@ def test_alpaca_lazy_load_failure(mock_trading_client, mock_get_credentials):
     client = broker.alpaca
     assert client is None
     mock_trading_client.assert_not_called()
+
 
 def test_get_account():
     """Test get_account method."""
@@ -112,6 +120,7 @@ def test_get_account():
         "buying_power": 20000.00,
         "status": "ACTIVE",
     }
+
 
 def test_get_positions():
     """Test get_positions method."""
@@ -154,6 +163,7 @@ def test_get_positions():
         "cost_basis": 1620.0,
     }
 
+
 @patch("src.brokers.multi_broker.validate_ticker", create=True)
 def test_submit_order_blocked_ticker(mock_validate_ticker):
     """Test submit_order blocks invalid tickers."""
@@ -161,11 +171,14 @@ def test_submit_order_blocked_ticker(mock_validate_ticker):
 
     # In src.brokers.multi_broker, it does:
     # from src.safety.mandatory_trade_gate import validate_ticker
-    with patch("src.safety.mandatory_trade_gate.validate_ticker", return_value=(False, "Invalid ticker")):
+    with patch(
+        "src.safety.mandatory_trade_gate.validate_ticker", return_value=(False, "Invalid ticker")
+    ):
         broker = MultiBroker()
 
         with pytest.raises(ValueError, match="ORDER BLOCKED: Invalid ticker"):
             broker.submit_order("INVALID", 10, "buy")
+
 
 @patch("src.safety.mandatory_trade_gate.validate_ticker")
 @patch("alpaca.trading.requests.MarketOrderRequest")
@@ -201,6 +214,7 @@ def test_submit_order_market(mock_tif, mock_side, mock_market_request, mock_vali
     # Verify the request made to alpaca
     mock_client.submit_order.assert_called_once_with("mock_request")
 
+
 @patch("src.safety.mandatory_trade_gate.validate_ticker")
 @patch("alpaca.trading.requests.LimitOrderRequest")
 @patch("alpaca.trading.enums.OrderSide")
@@ -233,6 +247,7 @@ def test_submit_order_limit(mock_tif, mock_side, mock_limit_request, mock_valida
 
     mock_client.submit_order.assert_called_once_with("mock_request")
 
+
 @patch("alpaca.data.historical.StockHistoricalDataClient")
 @patch("alpaca.data.requests.StockLatestQuoteRequest")
 @patch("src.utils.alpaca_client.get_alpaca_credentials")
@@ -260,6 +275,7 @@ def test_get_quote(mock_get_credentials, mock_quote_request, mock_historical_cli
         "last": 150.05,
     }
 
+
 def test_health_check_healthy():
     """Test health_check when alpaca is healthy."""
     broker = MultiBroker()
@@ -273,6 +289,7 @@ def test_health_check_healthy():
     assert "alpaca" in status
     assert status["alpaca"]["status"] == "healthy"
     assert status["alpaca"]["equity"] == 10000.0
+
 
 def test_health_check_unhealthy():
     """Test health_check when alpaca throws an error."""
