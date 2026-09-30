@@ -180,6 +180,24 @@ def _is_closed(row: dict[str, Any]) -> bool:
     return False
 
 
+def _is_open(row: dict[str, Any]) -> bool:
+    status = str(row.get("status") or "").lower()
+    return status == "open" and not _is_closed(row)
+
+
+def _is_unexpired_open(row: dict[str, Any], today: date) -> bool:
+    if not _is_open(row):
+        return False
+    expiry_str = row.get("expiry")
+    if not expiry_str:
+        return True
+    try:
+        exp_date = date.fromisoformat(expiry_str)
+        return exp_date >= today
+    except ValueError:
+        return True
+
+
 def _trade_rows(payload: Any) -> list[dict[str, Any]]:
     if isinstance(payload, list):
         return [t for t in payload if isinstance(t, dict)]
@@ -234,11 +252,24 @@ def evaluate(
     trades_payload: Any,
     today: date,
     max_stall_days: int,
+    max_concurrent_positions: int | None = None,
 ) -> dict:
     rows = _entry_rows(entries_payload)
     latest = latest_entry_time(rows)
     n = cohort_size(trades_payload)
     complete = n >= COHORT_TARGET
+
+    if max_concurrent_positions is None:
+        try:
+            from src.core.trading_profiles import get_put_credit_profile
+
+            max_concurrent_positions = get_put_credit_profile().max_concurrent_positions
+        except Exception:
+            max_concurrent_positions = 2
+
+    open_rows = [r for r in rows if _is_open(r)]
+    active_unexpired = [r for r in open_rows if _is_unexpired_open(r, today)]
+    open_count = len(open_rows)
 
     if latest is None:
         stall_days: int | None = None
@@ -249,6 +280,19 @@ def evaluate(
         stalled = stall_days >= max_stall_days and not complete
         detail = f"last validation entry {latest.date().isoformat()}"
 
+    if stalled and not complete:
+        if open_count >= max_concurrent_positions and active_unexpired:
+            stalled = False
+            detail = (
+                f"holding active positions at capacity ({open_count}/{max_concurrent_positions})"
+            )
+        elif active_unexpired:
+            stalled = False
+            detail = (
+                f"holding {len(active_unexpired)} active position(s) "
+                f"({open_count}/{max_concurrent_positions}) during hold period"
+            )
+
     return {
         "stalled": stalled,
         "stall_trading_days": stall_days,
@@ -258,6 +302,8 @@ def evaluate(
         "cohort_closed": n,
         "cohort_target": COHORT_TARGET,
         "cohort_complete": complete,
+        "open_positions": open_count,
+        "max_concurrent_positions": max_concurrent_positions,
         "detail": detail,
         "as_of": today.isoformat(),
         "validation_only": True,
@@ -271,6 +317,8 @@ def _render(report: dict) -> str:
         f"  last entry         : {report['last_entry_time'] or 'never'}",
         f"  stall (trading dys): {report['stall_trading_days']}"
         f" (allowed {report['max_stall_days']})",
+        f"  open positions     : {report.get('open_positions', 0)}"
+        f" (max allowed {report.get('max_concurrent_positions', 'n/a')})",
         f"  journaled entries  : {report['journaled_entries']}",
         f"  cohort closed      : {report['cohort_closed']} of {report['cohort_target']}",
     ]
@@ -285,7 +333,7 @@ def _render(report: dict) -> str:
             "    gh api repos/:owner/:repo/actions/workflows/325931964/runs",
         ]
     else:
-        lines.append("  RESULT: healthy")
+        lines.append(f"  RESULT: healthy ({report.get('detail', 'active')})")
     return "\n".join(lines)
 
 
@@ -296,6 +344,12 @@ def main(argv: list[str] | None = None) -> int:
         type=int,
         default=DEFAULT_MAX_STALL_DAYS,
         help=f"trading days without an entry before failing (default {DEFAULT_MAX_STALL_DAYS})",
+    )
+    parser.add_argument(
+        "--max-concurrent",
+        type=int,
+        default=None,
+        help="override max concurrent positions allowed by profile",
     )
     parser.add_argument("--json", action="store_true", help="emit the report as JSON")
     parser.add_argument(
@@ -317,6 +371,7 @@ def main(argv: list[str] | None = None) -> int:
         trades_payload=trades_payload,
         today=datetime.now(UTC).date(),
         max_stall_days=args.max_stall_days,
+        max_concurrent_positions=args.max_concurrent,
     )
 
     print(json.dumps(report, indent=2) if args.json else _render(report))
