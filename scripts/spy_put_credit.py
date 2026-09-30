@@ -1447,6 +1447,69 @@ def _record_entry(opp: dict, order_id: str) -> None:
     logger.info("Recorded %s in %s", key, ENTRIES_FILE)
 
 
+def evaluate_congressional_alpha_overlay(
+    underlying: str = "SPY",
+    gex_regime: str | None = None,
+) -> dict[str, Any]:
+    """Evaluate institutional unusual options flow and Congressional insider alpha."""
+    try:
+        from src.analytics.congressional_flow_tracker import (
+            PoliticianTrade,
+            analyze_congressional_flow,
+        )
+
+        signals_file = Path("data/signals/congressional_flow.json")
+        trades: list[dict[str, Any]] = []
+        if signals_file.exists():
+            try:
+                trades = json.loads(signals_file.read_text(encoding="utf-8"))
+            except Exception:
+                trades = []
+
+        regime = gex_regime or "positive_gamma"
+        if not trades:
+            return {
+                "active": True,
+                "underlying": underlying,
+                "gex_regime": regime,
+                "flow_count": 0,
+                "composite_alpha_score": 0.50 if regime == "positive_gamma" else 0.40,
+                "recommended_action": "SELL_PUT_CREDIT"
+                if regime == "positive_gamma"
+                else "NEUTRAL_HOLD",
+                "rationale": f"Dealer gamma regime '{regime}' favors credit spread theta harvesting.",
+            }
+
+        sample = trades[0]
+        pol_trade = PoliticianTrade(
+            ticker=sample.get("ticker", underlying),
+            politician=sample.get("politician", "Unknown Member"),
+            chamber=sample.get("chamber", "house"),
+            party=sample.get("party", "D"),
+            transaction_type=sample.get("transaction_type", "purchase"),
+            trade_date=sample.get("trade_date", "2026-09-01"),
+            disclosure_date=sample.get("disclosure_date", "2026-09-15"),
+            amount_min=float(sample.get("amount_min", 100_000)),
+            amount_max=float(sample.get("amount_max", 250_000)),
+            instrument=sample.get("instrument", "stock"),
+        )
+        alpha = analyze_congressional_flow(pol_trade, gex_regime=regime)
+        return {
+            "active": True,
+            "underlying": underlying,
+            "gex_regime": regime,
+            "flow_count": len(trades),
+            "composite_alpha_score": alpha.composite_score,
+            "recommended_action": alpha.action,
+            "rationale": alpha.rationale,
+            "conflict_score": alpha.conflict_score,
+            "disclosure_freshness": alpha.disclosure_freshness,
+        }
+    except Exception as exc:
+        logger.warning("Congressional alpha overlay evaluation failed: %s", exc)
+        return {"active": False, "error": str(exc), "composite_alpha_score": 0.0}
+
+
 def plan_structure(dry_run: bool = True, opp: dict | None = None) -> dict:
     profile = _load_profile()
     cfg = profile.as_strategy_config()
@@ -1682,6 +1745,18 @@ def main() -> int:
     plan["spy_price"] = spy_price
     plan["regime"] = regime_snap.as_dict()
     plan["regime_gate"] = regime_gate
+
+    gex_reg = "positive_gamma" if (regime_snap.vix or 15.0) < 22.0 else "negative_gamma"
+    congressional_alpha = evaluate_congressional_alpha_overlay("SPY", gex_reg)
+    plan["congressional_alpha"] = congressional_alpha
+    if isinstance(opp, dict):
+        opp["congressional_alpha"] = congressional_alpha
+    logger.info(
+        "Congressional & Flow Alpha: score=%.2f action=%s (%s)",
+        congressional_alpha.get("composite_alpha_score", 0.0),
+        congressional_alpha.get("recommended_action", "NEUTRAL_HOLD"),
+        congressional_alpha.get("rationale", ""),
+    )
 
     # Fahmy FORMAT OS (AGENT-602) + Buffett risk budget (AGENT-616).
     from src.risk.put_credit_regime import evaluate_entry_operating_system
