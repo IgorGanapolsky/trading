@@ -354,9 +354,7 @@ def validate_pr_event(event: Mapping[str, Any]) -> list[Finding]:
         and branch.startswith(AUTO_LAND_PREFIX)
         and "[auto]" in title.lower()
     )
-    is_jules_agent = (
-        login.endswith("[bot]") or login.endswith("-bot") or "jules" in login.lower()
-    ) and login not in AUTO_LAND_LOGINS
+    is_jules_agent = "google-labs-jules" in login
 
     if is_auto_land or is_jules_agent:
         return []
