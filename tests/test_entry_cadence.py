@@ -286,3 +286,20 @@ class TestOpenPositionsAndHoldingPeriod:
         )
         assert report["stalled"] is True
         assert report["open_positions"] == 0
+
+    def test_malformed_expiry_does_not_prevent_stall(self):
+        report = cadence.evaluate(
+            entries_payload=[
+                {
+                    "entry_time": "2026-07-01T15:00:00+00:00",
+                    "status": "open",
+                    "expiry": "not-a-date",
+                    "validation_phase": True,
+                }
+            ],
+            trades_payload=_trades(2),
+            today=date(2026, 9, 30),
+            max_stall_days=5,
+            max_concurrent_positions=1,
+        )
+        assert report["stalled"] is True

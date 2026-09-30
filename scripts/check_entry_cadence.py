@@ -190,12 +190,12 @@ def _is_unexpired_open(row: dict[str, Any], today: date) -> bool:
         return False
     expiry_str = row.get("expiry")
     if not expiry_str:
-        return True
+        return False
     try:
         exp_date = date.fromisoformat(expiry_str)
         return exp_date >= today
     except ValueError:
-        return True
+        return False
 
 
 def _trade_rows(payload: Any) -> list[dict[str, Any]]:
