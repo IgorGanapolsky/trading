@@ -32,6 +32,12 @@ logger = logging.getLogger("autonomous_autopilot")
 
 AUTO_LAND_PREFIX = "chore/auto-"
 SLUG_REGEX = re.compile(r"^chore/auto-([a-zA-Z0-9_-]+?)-\d+-\d+$")
+ALLOWED_AUTOMATION_AUTHORS = frozenset({
+    "app/github-actions",
+    "github-actions[bot]",
+    "github-actions",
+    "IgorGanapolsky",
+})
 
 
 def run_cmd(
@@ -71,7 +77,7 @@ def list_open_prs() -> list[dict[str, Any]]:
         "--limit",
         "200",
         "--json",
-        "number,title,headRefName,author,statusCheckRollup,mergeable,reviewDecision,createdAt",
+        "number,title,headRefName,author,statusCheckRollup,mergeable,reviewDecision,createdAt,isCrossRepository",
     ]
     proc = run_cmd(cmd)
     if proc.returncode != 0:
@@ -167,6 +173,15 @@ def run_cycle() -> dict[str, Any]:
         branch = pr.get("headRefName", "")
         title = pr.get("title", "")
         if branch.startswith(AUTO_LAND_PREFIX) and "[auto]" in title.lower():
+            # Validate source repo and author to prevent CWE-862 authorization bypass
+            is_cross_repo = bool(pr.get("isCrossRepository", False))
+            author_login = pr.get("author", {}).get("login", "")
+            if is_cross_repo or author_login not in ALLOWED_AUTOMATION_AUTHORS:
+                logger.warning(
+                    f"Skipping unverified automated PR #{pr.get('number')}: "
+                    f"cross_repo={is_cross_repo}, author={author_login}"
+                )
+                continue
             slug = extract_slug(branch)
             auto_prs_by_slug.setdefault(slug, []).append(pr)
 

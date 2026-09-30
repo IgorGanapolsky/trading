@@ -72,6 +72,8 @@ def test_run_cycle_pruning_and_merge(
             "number": 5136,
             "title": "chore: pre-market data sync [auto]",
             "headRefName": "chore/auto-premarket-sync-36730468804-1",
+            "author": {"login": "app/github-actions"},
+            "isCrossRepository": False,
             "createdAt": "2026-09-30T10:00:00Z",
             "reviewDecision": "REVIEW_REQUIRED",
             "statusCheckRollup": [
@@ -82,6 +84,8 @@ def test_run_cycle_pruning_and_merge(
             "number": 5099,
             "title": "chore: pre-market data sync [auto]",
             "headRefName": "chore/auto-premarket-sync-36583757416-1",
+            "author": {"login": "app/github-actions"},
+            "isCrossRepository": False,
             "createdAt": "2026-09-29T10:00:00Z",
             "reviewDecision": "REVIEW_REQUIRED",
             "statusCheckRollup": [],
@@ -90,6 +94,8 @@ def test_run_cycle_pruning_and_merge(
             "number": 5066,
             "title": "chore: pre-market data sync [auto]",
             "headRefName": "chore/auto-premarket-sync-36437319896-1",
+            "author": {"login": "app/github-actions"},
+            "isCrossRepository": False,
             "createdAt": "2026-09-28T10:00:00Z",
             "reviewDecision": "REVIEW_REQUIRED",
             "statusCheckRollup": [],
@@ -108,3 +114,24 @@ def test_run_cycle_pruning_and_merge(
     # Verify newest PR approved and merged
     mock_approve.assert_called_once_with(5136)
     mock_merge.assert_called_once_with(5136)
+
+
+@patch("scripts.autonomous_repo_autopilot.list_open_prs")
+def test_run_cycle_rejects_unauthorized_author_or_fork(mock_list_prs: MagicMock):
+    # Fork PR from external contributor trying to mimic auto sync
+    mock_list_prs.return_value = [
+        {
+            "number": 9999,
+            "title": "chore: pre-market data sync [auto]",
+            "headRefName": "chore/auto-premarket-sync-99999-1",
+            "author": {"login": "malicious-contributor"},
+            "isCrossRepository": True,
+            "createdAt": "2026-09-30T12:00:00Z",
+            "statusCheckRollup": [],
+        },
+    ]
+    summary = run_cycle()
+    assert summary["open_prs_scanned"] == 1
+    assert summary["auto_slugs"] == []
+    assert summary["superseded_closed"] == 0
+    assert summary["auto_merged"] == 0
