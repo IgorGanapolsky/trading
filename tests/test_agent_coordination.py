@@ -279,6 +279,30 @@ def test_dependabot_exemption_requires_actor_and_branch() -> None:
     assert "pr-branch-missing-issue" in _codes(validate_pr_event(event))
 
 
+def test_jules_exemption_requires_exact_bot_identity() -> None:
+    event = {
+        "pull_request": {
+            "head": {"ref": "feat/jules-test"},
+            "user": {"login": "google-labs-jules[bot]"},
+            "labels": [],
+            "body": "",
+        },
+        "sender": {"login": "google-labs-jules[bot]"},
+    }
+    # Exact Jules bot login is exempt
+    assert validate_pr_event(event) == []
+
+    # Partial substring logins must NOT be exempt (prevents authorization bypass)
+    event["pull_request"]["user"]["login"] = "jules-contributor"
+    event["sender"]["login"] = "jules-contributor"
+    assert "pr-branch-missing-issue" in _codes(validate_pr_event(event))
+
+    # Sender alone does not exempt an unauthorized author
+    event["pull_request"]["user"]["login"] = "human-developer"
+    event["sender"]["login"] = "google-labs-jules[bot]"
+    assert "pr-branch-missing-issue" in _codes(validate_pr_event(event))
+
+
 def test_legacy_exception_requires_visible_reason() -> None:
     event = _valid_pr_event()
     event["pull_request"]["labels"] = [{"name": LEGACY_LABEL}]

@@ -22,6 +22,7 @@ ACTIVE_STATES = frozenset({"in progress", "started"})
 DEPENDABOT_LOGIN = "dependabot[bot]"
 AUTO_LAND_PREFIX = "chore/auto-"
 AUTO_LAND_LOGINS = frozenset({"github-actions[bot]", "github-actions"})
+JULES_BOT_LOGINS = frozenset({"google-labs-jules[bot]", "google-labs-jules"})
 LEGACY_LABEL = "coordination-legacy"
 
 
@@ -337,10 +338,11 @@ def _is_exempt_pr(login: str, branch: str, title: str, sender_login: str) -> boo
         and "[auto]" in title.lower()
     ):
         return True
-    lower_logins = (login.lower(), sender_login.lower())
-    return any(
-        "google-labs-jules" in name_item or "jules" in name_item for name_item in lower_logins
-    )
+    canonical_login = login.strip().lower()
+    canonical_sender = sender_login.strip().lower()
+    if canonical_login in JULES_BOT_LOGINS:
+        return canonical_sender in JULES_BOT_LOGINS or not canonical_sender
+    return False
 
 
 def _validate_legacy_pr(body: str, labels: set[str]) -> list[Finding] | None:
