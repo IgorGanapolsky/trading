@@ -1,0 +1,39 @@
+name: Auto Merge State PRs
+
+on:
+  schedule:
+    # Run every 30 minutes during market hours and active cycles
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
+      - ready_for_review
+
+permissions: read-all
+
+jobs:
+  auto-merge-state:
+    if: github.repository == 'IgorGanapolsky/trading'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+
+      - name: Set up uv
+        uses: ./.github/actions/setup-uv-python
+        with:
+          extra: dev
+
+      - name: Run autonomous repo autopilot
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          python3 scripts/autonomous_repo_autopilot.py --once
