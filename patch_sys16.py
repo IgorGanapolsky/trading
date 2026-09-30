@@ -1,4 +1,17 @@
-import pytest
+# Let's fix this properly.
+# We will NOT use `@patch` for ANYTHING that is conditionally imported or locally imported.
+# Instead, we will use `patch(...)` as a context manager INSIDE the test functions.
+# That way, the `patch` resolution happens ONLY when the test executes!
+# And since we use `importorskip`, the test will NEVER execute if the dependency is missing!
+# This solves ALL the problems!
+#
+# Also, for `TradingClient`, since it's imported locally:
+# `from alpaca.trading.client import TradingClient`
+# We MUST patch `alpaca.trading.client.TradingClient` directly!
+
+import re
+
+content = """import pytest
 from unittest.mock import MagicMock, patch
 
 from src.brokers.multi_broker import BrokerType, OrderResult, MultiBroker, get_multi_broker
@@ -10,19 +23,19 @@ pytest.importorskip("src.safety.mandatory_trade_gate")
 
 @pytest.fixture(autouse=True)
 def reset_singleton():
-    """Reset the singleton instance before each test."""
+    \"\"\"Reset the singleton instance before each test.\"\"\"
     import src.brokers.multi_broker
     src.brokers.multi_broker._multi_broker = None
     yield
 
 
 def test_broker_type():
-    """Test BrokerType enum."""
+    \"\"\"Test BrokerType enum.\"\"\"
     assert BrokerType.ALPACA.value == "alpaca"
 
 
 def test_order_result():
-    """Test OrderResult dataclass."""
+    \"\"\"Test OrderResult dataclass.\"\"\"
     result = OrderResult(
         broker=BrokerType.ALPACA,
         order_id="123",
@@ -39,15 +52,16 @@ def test_order_result():
 
 
 def test_get_multi_broker_singleton():
-    """Test get_multi_broker returns a singleton."""
+    \"\"\"Test get_multi_broker returns a singleton.\"\"\"
     broker1 = get_multi_broker()
     broker2 = get_multi_broker()
     assert broker1 is broker2
 
 
 def test_alpaca_lazy_load():
-    """Test lazy loading of Alpaca client."""
-    with patch("src.utils.alpaca_client.get_alpaca_credentials") as mock_get_credentials,          patch("alpaca.trading.client.TradingClient") as mock_trading_client:
+    \"\"\"Test lazy loading of Alpaca client.\"\"\"
+    with patch("src.utils.alpaca_client.get_alpaca_credentials") as mock_get_credentials, \
+         patch("alpaca.trading.client.TradingClient") as mock_trading_client:
 
         mock_get_credentials.return_value = ("fake_api_key", "fake_secret_key")
         mock_trading_client.return_value = MagicMock()
@@ -63,8 +77,9 @@ def test_alpaca_lazy_load():
 
 
 def test_alpaca_lazy_load_failure():
-    """Test lazy loading failure doesn't crash but logs warning."""
-    with patch("src.utils.alpaca_client.get_alpaca_credentials") as mock_get_credentials,          patch("alpaca.trading.client.TradingClient") as mock_trading_client:
+    \"\"\"Test lazy loading failure doesn't crash but logs warning.\"\"\"
+    with patch("src.utils.alpaca_client.get_alpaca_credentials") as mock_get_credentials, \
+         patch("alpaca.trading.client.TradingClient") as mock_trading_client:
 
         mock_get_credentials.return_value = (None, None)
 
@@ -75,7 +90,7 @@ def test_alpaca_lazy_load_failure():
 
 
 def test_get_account():
-    """Test get_account method."""
+    \"\"\"Test get_account method.\"\"\"
     broker = MultiBroker()
     mock_client = MagicMock()
     mock_account = MagicMock()
@@ -98,7 +113,7 @@ def test_get_account():
 
 
 def test_get_positions():
-    """Test get_positions method."""
+    \"\"\"Test get_positions method.\"\"\"
     broker = MultiBroker()
     mock_client = MagicMock()
 
@@ -126,7 +141,7 @@ def test_get_positions():
 
 
 def test_submit_order_blocked_ticker():
-    """Test submit_order blocks invalid tickers."""
+    \"\"\"Test submit_order blocks invalid tickers.\"\"\"
     with patch("src.safety.mandatory_trade_gate.validate_ticker") as mock_validate_ticker:
         mock_validate_ticker.return_value = (False, "Invalid ticker")
 
@@ -136,8 +151,9 @@ def test_submit_order_blocked_ticker():
 
 
 def test_submit_order_market():
-    """Test submit_order for market order."""
-    with patch("src.safety.mandatory_trade_gate.validate_ticker") as mock_validate_ticker,          patch("alpaca.trading.requests.MarketOrderRequest") as mock_market_request:
+    \"\"\"Test submit_order for market order.\"\"\"
+    with patch("src.safety.mandatory_trade_gate.validate_ticker") as mock_validate_ticker, \
+         patch("alpaca.trading.requests.MarketOrderRequest") as mock_market_request:
 
         mock_validate_ticker.return_value = (True, "")
         broker = MultiBroker()
@@ -163,8 +179,9 @@ def test_submit_order_market():
 
 
 def test_submit_order_limit():
-    """Test submit_order for limit order."""
-    with patch("src.safety.mandatory_trade_gate.validate_ticker") as mock_validate_ticker,          patch("alpaca.trading.requests.LimitOrderRequest") as mock_limit_request:
+    \"\"\"Test submit_order for limit order.\"\"\"
+    with patch("src.safety.mandatory_trade_gate.validate_ticker") as mock_validate_ticker, \
+         patch("alpaca.trading.requests.LimitOrderRequest") as mock_limit_request:
 
         mock_validate_ticker.return_value = (True, "")
         broker = MultiBroker()
@@ -188,8 +205,10 @@ def test_submit_order_limit():
 
 
 def test_get_quote():
-    """Test get_quote method."""
-    with patch("src.utils.alpaca_client.get_alpaca_credentials") as mock_get_credentials,          patch("alpaca.data.historical.StockHistoricalDataClient") as mock_historical_client_cls,          patch("alpaca.data.requests.StockLatestQuoteRequest"):
+    \"\"\"Test get_quote method.\"\"\"
+    with patch("src.utils.alpaca_client.get_alpaca_credentials") as mock_get_credentials, \
+         patch("alpaca.data.historical.StockHistoricalDataClient") as mock_historical_client_cls, \
+         patch("alpaca.data.requests.StockLatestQuoteRequest"):
 
         mock_get_credentials.return_value = ("key", "secret")
 
@@ -215,7 +234,7 @@ def test_get_quote():
 
 
 def test_health_check_healthy():
-    """Test health_check when alpaca is healthy."""
+    \"\"\"Test health_check when alpaca is healthy.\"\"\"
     broker = MultiBroker()
     mock_client = MagicMock()
     mock_account = MagicMock()
@@ -229,7 +248,7 @@ def test_health_check_healthy():
 
 
 def test_health_check_unhealthy():
-    """Test health_check when alpaca throws an error."""
+    \"\"\"Test health_check when alpaca throws an error.\"\"\"
     broker = MultiBroker()
     mock_client = MagicMock()
     mock_client.get_account.side_effect = Exception("API Error")
@@ -238,3 +257,6 @@ def test_health_check_unhealthy():
     status = broker.health_check()
     assert "alpaca" in status
     assert status["alpaca"]["status"] == "unhealthy"
+"""
+with open("tests/test_multi_broker.py", "w") as f:
+    f.write(content)
