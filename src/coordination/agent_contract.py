@@ -22,6 +22,7 @@ ACTIVE_STATES = frozenset({"in progress", "started"})
 DEPENDABOT_LOGIN = "dependabot[bot]"
 AUTO_LAND_PREFIX = "chore/auto-"
 AUTO_LAND_LOGINS = frozenset({"github-actions[bot]", "github-actions"})
+JULES_BOT_LOGINS = frozenset({"google-labs-jules[bot]", "google-labs-jules"})
 LEGACY_LABEL = "coordination-legacy"
 
 
@@ -327,55 +328,41 @@ def _body_field(body: str, label: str) -> str:
     return match.group(1).strip() if match else ""
 
 
-def validate_pr_event(event: Mapping[str, Any]) -> list[Finding]:
-    """Validate issue/claim metadata from a GitHub pull_request event."""
-
-    pull_request = event.get("pull_request")
-    if not isinstance(pull_request, Mapping):
-        return [Finding("error", "event-shape", "pull_request payload is missing")]
-    head = pull_request.get("head") or {}
-    user = pull_request.get("user") or {}
-    branch = str(head.get("ref", "")) if isinstance(head, Mapping) else ""
-    login = str(user.get("login", "")) if isinstance(user, Mapping) else ""
-    body = str(pull_request.get("body") or "")
-    title = str(pull_request.get("title") or "")
-    labels_raw = pull_request.get("labels") or []
-    labels = {
-        str(item.get("name", "")).lower()
-        for item in labels_raw
-        if isinstance(item, Mapping) and item.get("name")
-    }
-
+def _is_exempt_pr(login: str, branch: str, title: str, sender_login: str) -> bool:
+    """Return True if the pull request is exempt from Linear coordination checks."""
     if login == DEPENDABOT_LOGIN and branch.startswith("dependabot/"):
-        return []
-
-    is_auto_land = (
+        return True
+    if (
         login in AUTO_LAND_LOGINS
         and branch.startswith(AUTO_LAND_PREFIX)
         and "[auto]" in title.lower()
-    )
-    is_jules_agent = "google-labs-jules" in login
+    ):
+        return True
+    canonical_login = login.strip().lower()
+    canonical_sender = sender_login.strip().lower()
+    if canonical_login in JULES_BOT_LOGINS:
+        return canonical_sender in JULES_BOT_LOGINS or not canonical_sender
+    return False
 
-    if is_auto_land or is_jules_agent:
-        return []
-    if LEGACY_LABEL in labels:
-        reason = _body_field(body, "Coordination legacy reason")
-        if reason:
-            return [
-                Finding(
-                    "warning",
-                    "legacy-exception",
-                    f"legacy coordination exception: {reason}",
-                )
-            ]
-        return [
-            Finding(
-                "error",
-                "legacy-reason-missing",
-                f"{LEGACY_LABEL} requires '- Coordination legacy reason:' in the PR body",
-            )
-        ]
 
+def _validate_legacy_pr(body: str, labels: set[str]) -> list[Finding] | None:
+    """Check legacy coordination label rules. Returns None if not a legacy PR."""
+    if LEGACY_LABEL not in labels:
+        return None
+    reason = _body_field(body, "Coordination legacy reason")
+    if reason:
+        return [Finding("warning", "legacy-exception", f"legacy coordination exception: {reason}")]
+    return [
+        Finding(
+            "error",
+            "legacy-reason-missing",
+            f"{LEGACY_LABEL} requires '- Coordination legacy reason:' in the PR body",
+        )
+    ]
+
+
+def _validate_pr_body_metadata(body: str, branch: str) -> list[Finding]:
+    """Validate issue keys, required template fields, and checkboxes in PR body."""
     findings: list[Finding] = []
     branch_key = normalize_issue_key(branch)
     linear_value = _body_field(body, "Linear issue")
@@ -386,7 +373,7 @@ def validate_pr_event(event: Mapping[str, Any]) -> list[Finding]:
         )
     if not body_key:
         findings.append(Finding("error", "pr-body-missing-issue", "Linear issue is missing"))
-    if branch_key and body_key and branch_key != body_key:
+    elif branch_key and branch_key != body_key:
         findings.append(
             Finding(
                 "error",
@@ -422,6 +409,37 @@ def validate_pr_event(event: Mapping[str, Any]) -> list[Finding]:
                 Finding("error", "pr-checkbox", f"unchecked coordination item: {checkbox}")
             )
     return findings
+
+
+def validate_pr_event(event: Mapping[str, Any]) -> list[Finding]:
+    """Validate issue/claim metadata from a GitHub pull_request event."""
+
+    pull_request = event.get("pull_request")
+    if not isinstance(pull_request, Mapping):
+        return [Finding("error", "event-shape", "pull_request payload is missing")]
+    head = pull_request.get("head") or {}
+    user = pull_request.get("user") or {}
+    branch = str(head.get("ref", "")) if isinstance(head, Mapping) else ""
+    login = str(user.get("login", "")) if isinstance(user, Mapping) else ""
+    sender = event.get("sender") or {}
+    sender_login = str(sender.get("login", "")) if isinstance(sender, Mapping) else ""
+    body = str(pull_request.get("body") or "")
+    title = str(pull_request.get("title") or "")
+    labels_raw = pull_request.get("labels") or []
+    labels = {
+        str(item.get("name", "")).lower()
+        for item in labels_raw
+        if isinstance(item, Mapping) and item.get("name")
+    }
+
+    if _is_exempt_pr(login, branch, title, sender_login):
+        return []
+
+    legacy_findings = _validate_legacy_pr(body, labels)
+    if legacy_findings is not None:
+        return legacy_findings
+
+    return _validate_pr_body_metadata(body, branch)
 
 
 def _parse_herdr_agents(payload: Mapping[str, Any] | None) -> list[Mapping[str, Any]]:
