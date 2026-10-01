@@ -209,3 +209,97 @@ class TestValidationEntryFilter:
         # Last *validation* entry is 2026-07-20 → stalled past 5 trading days.
         assert report["stalled"] is True
         assert report["last_entry_time"].startswith("2026-07-20")
+
+
+class TestOpenPositionsAndHoldingPeriod:
+    def test_open_position_at_capacity_prevents_false_stall(self):
+        report = cadence.evaluate(
+            entries_payload=[
+                {
+                    "entry_time": "2026-09-21T17:04:44.192144+00:00",
+                    "status": "open",
+                    "expiry": "2026-11-20",
+                    "validation_phase": True,
+                }
+            ],
+            trades_payload=_trades(2),
+            today=date(2026, 9, 30),
+            max_stall_days=5,
+            max_concurrent_positions=1,
+        )
+        assert report["stalled"] is False
+        assert report["stall_trading_days"] == 7
+        assert report["open_positions"] == 1
+        assert "holding active positions at capacity (1/1)" in report["detail"]
+
+    def test_open_position_during_hold_period_prevents_false_stall(self):
+        report = cadence.evaluate(
+            entries_payload=[
+                {
+                    "entry_time": "2026-09-21T17:04:44.192144+00:00",
+                    "status": "open",
+                    "expiry": "2026-11-20",
+                    "validation_phase": True,
+                }
+            ],
+            trades_payload=_trades(2),
+            today=date(2026, 9, 30),
+            max_stall_days=5,
+            max_concurrent_positions=2,
+        )
+        assert report["stalled"] is False
+        assert report["open_positions"] == 1
+        assert "holding 1 active position(s) (1/2) during hold period" in report["detail"]
+
+    def test_expired_open_position_alarms_as_stalled(self):
+        report = cadence.evaluate(
+            entries_payload=[
+                {
+                    "entry_time": "2026-07-01T15:00:00+00:00",
+                    "status": "open",
+                    "expiry": "2026-08-01",
+                    "validation_phase": True,
+                }
+            ],
+            trades_payload=_trades(2),
+            today=date(2026, 9, 30),
+            max_stall_days=5,
+            max_concurrent_positions=1,
+        )
+        assert report["stalled"] is True
+
+    def test_closed_positions_do_not_prevent_stall(self):
+        report = cadence.evaluate(
+            entries_payload=[
+                {
+                    "entry_time": "2026-07-01T15:00:00+00:00",
+                    "status": "closed",
+                    "exit_filled_at": "2026-07-20T15:00:00+00:00",
+                    "expiry": "2026-11-20",
+                    "validation_phase": True,
+                }
+            ],
+            trades_payload=_trades(2),
+            today=date(2026, 9, 30),
+            max_stall_days=5,
+            max_concurrent_positions=1,
+        )
+        assert report["stalled"] is True
+        assert report["open_positions"] == 0
+
+    def test_malformed_expiry_does_not_prevent_stall(self):
+        report = cadence.evaluate(
+            entries_payload=[
+                {
+                    "entry_time": "2026-07-01T15:00:00+00:00",
+                    "status": "open",
+                    "expiry": "not-a-date",
+                    "validation_phase": True,
+                }
+            ],
+            trades_payload=_trades(2),
+            today=date(2026, 9, 30),
+            max_stall_days=5,
+            max_concurrent_positions=1,
+        )
+        assert report["stalled"] is True

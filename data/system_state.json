@@ -175,10 +175,7 @@
       "filled_at": "2026-09-21 17:04:44.192144+00:00",
       "status": "OrderStatus.FILLED",
       "order_class": "OrderClass.MLEG",
-      "legs": [
-        "SPY261120P00730000",
-        "SPY261120P00735000"
-      ]
+      "legs": ["SPY261120P00730000", "SPY261120P00735000"]
     },
     {
       "id": "65e86768-fdcb-4b14-879c-256ce65887d8",
@@ -189,10 +186,7 @@
       "filled_at": "2026-09-21 16:05:40.022165+00:00",
       "status": "OrderStatus.FILLED",
       "order_class": "OrderClass.MLEG",
-      "legs": [
-        "SPY261023P00728000",
-        "SPY261023P00723000"
-      ]
+      "legs": ["SPY261023P00728000", "SPY261023P00723000"]
     },
     {
       "id": "d7d53c83-2f31-4d7e-81f6-03b3cbdab00c",
@@ -203,10 +197,7 @@
       "filled_at": "2026-09-16 13:30:04.124369+00:00",
       "status": "OrderStatus.FILLED",
       "order_class": "OrderClass.MLEG",
-      "legs": [
-        "SPY261016P00742000",
-        "SPY261016P00737000"
-      ]
+      "legs": ["SPY261016P00742000", "SPY261016P00737000"]
     },
     {
       "id": "10f40701-1508-4b77-9027-27942f402f31",
@@ -217,10 +208,7 @@
       "filled_at": "2026-09-14 13:33:30.660689+00:00",
       "status": "OrderStatus.FILLED",
       "order_class": "OrderClass.MLEG",
-      "legs": [
-        "SPY261023P00723000",
-        "SPY261023P00728000"
-      ]
+      "legs": ["SPY261023P00723000", "SPY261023P00728000"]
     },
     {
       "id": "62c503e9-a086-4988-aa16-63ffe8ec33e7",
@@ -231,10 +219,7 @@
       "filled_at": "2026-09-04 17:06:31.419465+00:00",
       "status": "OrderStatus.FILLED",
       "order_class": "OrderClass.MLEG",
-      "legs": [
-        "SPY261016P00737000",
-        "SPY261016P00742000"
-      ]
+      "legs": ["SPY261016P00737000", "SPY261016P00742000"]
     },
     {
       "id": "13ea8e07-243b-4b74-98a3-f17808478ccf",
@@ -245,10 +230,7 @@
       "filled_at": "2026-09-03 15:09:27.192457+00:00",
       "status": "OrderStatus.FILLED",
       "order_class": "OrderClass.MLEG",
-      "legs": [
-        "SPY260925P00742000",
-        "SPY260925P00737000"
-      ]
+      "legs": ["SPY260925P00742000", "SPY260925P00737000"]
     },
     {
       "id": "928dceab-1cf9-42c1-8e38-f9ff0f5d9fe6",
@@ -259,10 +241,7 @@
       "filled_at": "2026-08-11 15:22:56.239297+00:00",
       "status": "OrderStatus.FILLED",
       "order_class": "OrderClass.MLEG",
-      "legs": [
-        "SPY260925P00737000",
-        "SPY260925P00742000"
-      ]
+      "legs": ["SPY260925P00737000", "SPY260925P00742000"]
     },
     {
       "id": "3310d412-8ec4-4e91-9a6f-123366586a4a",
@@ -273,10 +252,7 @@
       "filled_at": "2026-08-03 15:55:00.577186+00:00",
       "status": "OrderStatus.FILLED",
       "order_class": "OrderClass.MLEG",
-      "legs": [
-        "SPY260828P00712000",
-        "SPY260828P00707000"
-      ]
+      "legs": ["SPY260828P00712000", "SPY260828P00707000"]
     },
     {
       "id": "27681593-6554-41c9-b130-ac5e8e73972e",
@@ -287,10 +263,7 @@
       "filled_at": "2026-07-31 15:47:09.125593+00:00",
       "status": "OrderStatus.FILLED",
       "order_class": "OrderClass.MLEG",
-      "legs": [
-        "SPY260828P00696000",
-        "SPY260828P00691000"
-      ]
+      "legs": ["SPY260828P00696000", "SPY260828P00691000"]
     },
     {
       "id": "179d4bc2-348a-4060-80fe-0f3dc9c4f01d",
@@ -317,10 +290,7 @@
       "filled_at": "2026-07-24 16:58:19.813684+00:00",
       "status": "OrderStatus.FILLED",
       "order_class": "OrderClass.MLEG",
-      "legs": [
-        "SPY260828P00707000",
-        "SPY260828P00712000"
-      ]
+      "legs": ["SPY260828P00707000", "SPY260828P00712000"]
     },
     {
       "id": "fcfdc5c5-be14-42b4-a539-237c85a8f1a8",
@@ -347,10 +317,7 @@
       "filled_at": "2026-07-23 15:37:08.050702+00:00",
       "status": "OrderStatus.FILLED",
       "order_class": "OrderClass.MLEG",
-      "legs": [
-        "SPY260828P00691000",
-        "SPY260828P00696000"
-      ]
+      "legs": ["SPY260828P00691000", "SPY260828P00696000"]
     },
     {
       "id": "12d3f881-7beb-46a0-b445-7185d0e5a9b9",
@@ -2413,11 +2380,7 @@
     "generated_at": "2026-09-30T14:37:32.225284Z",
     "primary_family": "options_income",
     "rolling_window": 50,
-    "paused_families": [
-      "equity_momentum",
-      "alternatives",
-      "other"
-    ],
+    "paused_families": ["equity_momentum", "alternatives", "other"],
     "strategy_families": {
       "options_income": {
         "status": "validation_reset",
@@ -2766,9 +2729,7 @@
       "severity_score": 0.0,
       "blocked": false,
       "watch": false,
-      "reasons": [
-        "No credit spread data available."
-      ],
+      "reasons": ["No credit spread data available."],
       "latest_data_date": null,
       "stale_days": null,
       "metrics": {
@@ -2797,9 +2758,7 @@
       "position_size_multiplier": 1.0,
       "blocked": false,
       "watch": false,
-      "reasons": [
-        "No USD macro data available."
-      ],
+      "reasons": ["No USD macro data available."],
       "latest_data_date": null,
       "stale_days": null,
       "metrics": {
@@ -2837,9 +2796,7 @@
       "regime": "transition",
       "confidence": 0.396,
       "capex_deceleration_shock": false,
-      "reasons": [
-        "AI-cycle proxies stable"
-      ],
+      "reasons": ["AI-cycle proxies stable"],
       "latest_data_date": "2026-03-05",
       "stale_days": 1,
       "features": {
@@ -2862,13 +2819,7 @@
           "ORCL"
         ],
         "hyperscaler_capex_proxy_observed": 5,
-        "ai_infra_proxy_tickers": [
-          "NVDA",
-          "AVGO",
-          "ANET",
-          "AMD",
-          "SMCI"
-        ],
+        "ai_infra_proxy_tickers": ["NVDA", "AVGO", "ANET", "AMD", "SMCI"],
         "ai_infra_proxy_observed": 5,
         "edge_monetization_proxy_tickers": [
           "META",
@@ -3286,10 +3237,7 @@
     "harvest_source": "daily-trading-workflow",
     "execution_date": "2026-02-27",
     "selection_method": "adaptive",
-    "target_tickers": [
-      "SPY",
-      "IWM"
-    ],
+    "target_tickers": ["SPY", "IWM"],
     "strategy_note": "Uses credit spreads when buying power < 000, CSPs otherwise",
     "tickers_scanned": 0,
     "orders_submitted_today": 0,
