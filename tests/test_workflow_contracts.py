@@ -92,7 +92,7 @@ def test_state_writers_land_via_pr_not_protected_main() -> None:
 def test_run_all_tests_core_timeout_outlives_gha_124() -> None:
     runner = Path("scripts/ci/run_all_tests.sh").read_text()
     ci = _read("ci.yml")
-    assert 'CORE_TIMEOUT_MINUTES="${CORE_TIMEOUT_MINUTES:-36}"' in runner
+    assert 'CORE_TIMEOUT_MINUTES="${CORE_TIMEOUT_MINUTES:-42}"' in runner
     assert "timeout-minutes: 55" in ci
 
 
