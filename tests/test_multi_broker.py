@@ -1,11 +1,20 @@
 import pytest
 from unittest.mock import MagicMock, patch
+import sys
 
 from src.brokers.multi_broker import BrokerType, OrderResult, MultiBroker, get_multi_broker
 
 # If alpaca isn't available, we skip the test entirely.
 pytest.importorskip("alpaca")
-pytest.importorskip("src.safety.mandatory_trade_gate")
+
+# Let's mock out the module BEFORE doing any local imports
+try:
+    import src.safety.mandatory_trade_gate
+except ImportError:
+    # If it cannot be imported, we create a dummy module in sys.modules so patch won't fail
+    import types
+    sys.modules["src.safety.mandatory_trade_gate"] = types.ModuleType("src.safety.mandatory_trade_gate")
+    sys.modules["src.safety.mandatory_trade_gate"].validate_ticker = MagicMock()
 
 
 @pytest.fixture(autouse=True)
