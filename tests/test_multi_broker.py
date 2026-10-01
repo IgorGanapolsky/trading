@@ -47,7 +47,8 @@ def test_get_multi_broker_singleton():
 
 def test_alpaca_lazy_load():
     """Test lazy loading of Alpaca client."""
-    with patch("src.utils.alpaca_client.get_alpaca_credentials") as mock_get_credentials,          patch("alpaca.trading.client.TradingClient") as mock_trading_client:
+    with patch("src.utils.alpaca_client.get_alpaca_credentials") as mock_get_credentials, \
+         patch("alpaca.trading.client.TradingClient") as mock_trading_client:
 
         mock_get_credentials.return_value = ("fake_api_key", "fake_secret_key")
         mock_trading_client.return_value = MagicMock()
@@ -64,7 +65,8 @@ def test_alpaca_lazy_load():
 
 def test_alpaca_lazy_load_failure():
     """Test lazy loading failure doesn't crash but logs warning."""
-    with patch("src.utils.alpaca_client.get_alpaca_credentials") as mock_get_credentials,          patch("alpaca.trading.client.TradingClient") as mock_trading_client:
+    with patch("src.utils.alpaca_client.get_alpaca_credentials") as mock_get_credentials, \
+         patch("alpaca.trading.client.TradingClient") as mock_trading_client:
 
         mock_get_credentials.return_value = (None, None)
 
@@ -137,7 +139,8 @@ def test_submit_order_blocked_ticker():
 
 def test_submit_order_market():
     """Test submit_order for market order."""
-    with patch("src.safety.mandatory_trade_gate.validate_ticker") as mock_validate_ticker,          patch("alpaca.trading.requests.MarketOrderRequest") as mock_market_request:
+    with patch("src.safety.mandatory_trade_gate.validate_ticker") as mock_validate_ticker, \
+         patch("alpaca.trading.requests.MarketOrderRequest") as mock_market_request:
 
         mock_validate_ticker.return_value = (True, "")
         broker = MultiBroker()
@@ -164,7 +167,8 @@ def test_submit_order_market():
 
 def test_submit_order_limit():
     """Test submit_order for limit order."""
-    with patch("src.safety.mandatory_trade_gate.validate_ticker") as mock_validate_ticker,          patch("alpaca.trading.requests.LimitOrderRequest") as mock_limit_request:
+    with patch("src.safety.mandatory_trade_gate.validate_ticker") as mock_validate_ticker, \
+         patch("alpaca.trading.requests.LimitOrderRequest") as mock_limit_request:
 
         mock_validate_ticker.return_value = (True, "")
         broker = MultiBroker()
@@ -189,7 +193,9 @@ def test_submit_order_limit():
 
 def test_get_quote():
     """Test get_quote method."""
-    with patch("src.utils.alpaca_client.get_alpaca_credentials") as mock_get_credentials,          patch("alpaca.data.historical.StockHistoricalDataClient") as mock_historical_client_cls,          patch("alpaca.data.requests.StockLatestQuoteRequest"):
+    with patch("src.utils.alpaca_client.get_alpaca_credentials") as mock_get_credentials, \
+         patch("alpaca.data.historical.StockHistoricalDataClient") as mock_historical_client_cls, \
+         patch("alpaca.data.requests.StockLatestQuoteRequest"):
 
         mock_get_credentials.return_value = ("key", "secret")
 
