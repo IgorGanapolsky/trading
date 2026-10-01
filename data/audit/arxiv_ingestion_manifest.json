@@ -2675,6 +2675,140 @@
       "ingested_at": "2026-09-23T06:33:10.611581+00:00",
       "sha256": "fbaed4cba35c520ca89e2a054ead85cd70504d606aa78eba879018584a9163df",
       "chunks": 10
+    },
+    "2609.38147v1": {
+      "title": "Thinking Before Thinking: Scaling Agentic Inference Through Meta-Reasoning",
+      "published": "2026-09-29T17:57:25Z",
+      "relevance_score": 0.35,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.38147v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_38147v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_38147v1.md",
+      "ingested_at": "2026-09-30T18:09:40.221688+00:00",
+      "sha256": "dc7a2ef325aec96e65e4c3de693a019f07518bfb79d6ad855c7bc9aa661e1717",
+      "chunks": 11
+    },
+    "2609.37930v1": {
+      "title": "Learning What to Remember: Long-horizon Counterfactual Memory Optimization",
+      "published": "2026-09-29T16:17:32Z",
+      "relevance_score": 0.31,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CL",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.37930v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_37930v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_37930v1.md",
+      "ingested_at": "2026-09-30T18:09:40.228709+00:00",
+      "sha256": "11e914444ec02deadc77d4a2a4dcf8ff62cc622cda5be7ba48726722feada5ac",
+      "chunks": 10
+    },
+    "2609.37825v1": {
+      "title": "Privy to the Foil: Recasting Value Estimation with a Self-Privileged Critic for RLVR",
+      "published": "2026-09-29T15:32:21Z",
+      "relevance_score": 0.26,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.37825v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_37825v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_37825v1.md",
+      "ingested_at": "2026-09-30T18:09:40.235469+00:00",
+      "sha256": "c844654fd5c815d8a69eec8ad1ce185e7ed7913e0e13fd810f0756ea47373c19",
+      "chunks": 10
+    },
+    "2609.37974v1": {
+      "title": "On Trajectory-Aware Training for Masked Diffusion Language Models",
+      "published": "2026-09-29T16:40:34Z",
+      "relevance_score": 0.26,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.CL"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.37974v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_37974v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_37974v1.md",
+      "ingested_at": "2026-09-30T18:09:40.249477+00:00",
+      "sha256": "c85336bbf77ea4f848fd960d226e2dadc0c8bc0dec3b4d2e25677e17030448e2",
+      "chunks": 11
+    },
+    "2609.38178v1": {
+      "title": "Skill-Space Shooting for Autonomous Robot Policy Improvement",
+      "published": "2026-09-29T17:59:55Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.38178v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_38178v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_38178v1.md",
+      "ingested_at": "2026-09-30T18:09:40.256172+00:00",
+      "sha256": "d7088ab267bcc0160d50181d8a0c27e23b63dd8b4e4151cd45e3564c4523d9c5",
+      "chunks": 11
+    },
+    "2609.38169v1": {
+      "title": "STEPQuant: When and Where Errors Matter in Delta-Rule Recurrent State Quantization",
+      "published": "2026-09-29T17:59:40Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.38169v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_38169v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_38169v1.md",
+      "ingested_at": "2026-09-30T18:09:40.266458+00:00",
+      "sha256": "46b60da00905f16e0d6874dff73405474ed10ed13f890ee41e210ef1ca27375b",
+      "chunks": 11
+    },
+    "2609.38132v1": {
+      "title": "Achieving an $O(1/N)$ Optimality Gap in Average-Reward Weakly-Coupled MDPs",
+      "published": "2026-09-29T17:53:39Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "math.OC",
+        "math.PR"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.38132v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_38132v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_38132v1.md",
+      "ingested_at": "2026-09-30T18:09:40.273183+00:00",
+      "sha256": "5e58c720c761b8cf9e2dc1a12078cb069c03b3565554dc5f83c0b8bd3d57a974",
+      "chunks": 10
+    },
+    "2609.38155v1": {
+      "title": "Beyond the Timeline: Augmenting Long-Video Memory with Grounded Entity Biographies",
+      "published": "2026-09-29T17:59:01Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CV",
+        "cs.AI",
+        "cs.CL",
+        "cs.IR",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.38155v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_38155v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_38155v1.md",
+      "ingested_at": "2026-09-30T18:09:40.287362+00:00",
+      "sha256": "717bd2df2ab38bb4ab0296d5bfc15cb5e3c8b839700de560e1db338c6b05a778",
+      "chunks": 11
     }
   },
   "skipped_low_relevance": {
@@ -3199,25 +3333,41 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-09-23T06:33:10.586412+00:00"
+    },
+    "2609.38104v1": {
+      "title": "Explore Broadly, Reason Sharply: Push Small Models toward the Frontier via Sampling",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-30T18:09:40.239079+00:00"
+    },
+    "2609.38066v1": {
+      "title": "Alpha Diffusion Language Models: Factorization Alone Is Not the Problem",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-30T18:09:40.242715+00:00"
+    },
+    "2609.38176v1": {
+      "title": "Breakdown of Local Denoising as Semantic Speciation",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-30T18:09:40.259755+00:00"
+    },
+    "2609.38121v1": {
+      "title": "WUSH-KV: KV Cache Quantization with Data-Adaptive Transforms",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-30T18:09:40.276787+00:00"
+    },
+    "2609.38096v1": {
+      "title": "Tail-Influence Sampling for CVaR Policy Evaluation",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-09-30T18:09:40.280408+00:00"
     }
   },
-  "total_ingested": 164,
-  "last_run_utc": "2026-09-23T06:33:10.614332+00:00",
+  "total_ingested": 172,
+  "last_run_utc": "2026-09-30T18:09:40.292004+00:00",
   "runs": [
-    {
-      "finished_at": "2026-08-22T18:04:58.632368+00:00",
-      "candidates": 10,
-      "new_ingested": 0,
-      "skipped_low_relevance": 0,
-      "min_relevance": 0.18,
-      "queries": [
-        "option credit spread OR iron condor OR put credit",
-        "implied volatility OR volatility surface trading",
-        "reinforcement learning trading OR GRPO OR PPO finance",
-        "market microstructure order book",
-        "retrieval augmented generation finance OR financial RAG"
-      ]
-    },
     {
       "finished_at": "2026-08-23T06:14:51.228772+00:00",
       "candidates": 10,
@@ -3895,6 +4045,20 @@
       "candidates": 10,
       "new_ingested": 8,
       "skipped_low_relevance": 2,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-09-30T18:09:40.292004+00:00",
+      "candidates": 13,
+      "new_ingested": 8,
+      "skipped_low_relevance": 5,
       "min_relevance": 0.18,
       "queries": [
         "option credit spread OR iron condor OR put credit",
