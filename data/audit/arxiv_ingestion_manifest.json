@@ -2809,6 +2809,88 @@
       "ingested_at": "2026-09-30T18:09:40.287362+00:00",
       "sha256": "717bd2df2ab38bb4ab0296d5bfc15cb5e3c8b839700de560e1db338c6b05a778",
       "chunks": 11
+    },
+    "2609.40360v1": {
+      "title": "Semifactual Credit-Augmented Policy Optimization",
+      "published": "2026-09-30T17:59:56Z",
+      "relevance_score": 0.44,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.CL"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.40360v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_40360v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_40360v1.md",
+      "ingested_at": "2026-10-01T06:34:37.829608+00:00",
+      "sha256": "fea03d219db3ff049b6c5147ab9b984efefca6d5693008730f6665277ae6bb17",
+      "chunks": 12
+    },
+    "2609.40131v1": {
+      "title": "Prototype-Rule Neurosymbolic Regularization for Rank-Constrained Tensor Neural Networks under Label Scarcity",
+      "published": "2026-09-30T16:49:08Z",
+      "relevance_score": 0.33,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.CV"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.40131v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_40131v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_40131v1.md",
+      "ingested_at": "2026-10-01T06:34:37.837581+00:00",
+      "sha256": "ee1c95aa7cf2390ba87f45cc0f185db1a435c2b83a0dcd1312a3bbae95b6f949",
+      "chunks": 10
+    },
+    "2609.40356v1": {
+      "title": "ViTeX-Bench: Benchmarking High-Fidelity Video Scene Text Editing",
+      "published": "2026-09-30T17:59:33Z",
+      "relevance_score": 0.21,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.40356v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_40356v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_40356v1.md",
+      "ingested_at": "2026-10-01T06:34:37.844720+00:00",
+      "sha256": "3464672faa7f24fecf7f3f81102489e86d14247138f98188ffaca50d8930ca95",
+      "chunks": 11
+    },
+    "2609.40361v1": {
+      "title": "Ranking-Aware Prompt Optimization for Multimodal Clinical Diagnosis",
+      "published": "2026-09-30T17:59:56Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "cs.CL",
+        "cs.CV"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.40361v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_40361v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_40361v1.md",
+      "ingested_at": "2026-10-01T06:34:37.856714+00:00",
+      "sha256": "babe2bba30271d6b0c41473c3dece94a59efd52aa14d247f9c40caff9ef33dcb",
+      "chunks": 12
+    },
+    "2609.40359v1": {
+      "title": "Removing Timing Shortcuts Improves Non-Invasive Brain-to-Text",
+      "published": "2026-09-30T17:59:52Z",
+      "relevance_score": 0.23,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG",
+        "q-bio.NC"
+      ],
+      "abs_url": "https://arxiv.org/abs/2609.40359v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2609_40359v1.md",
+      "audit_path": "data/arxiv/arxiv_2609_40359v1.md",
+      "ingested_at": "2026-10-01T06:34:37.861992+00:00",
+      "sha256": "c7b0b4f7eb15ed02a5faa125f2e07a07a300939e4c6048598a91327a0186e230",
+      "chunks": 12
     }
   },
   "skipped_low_relevance": {
@@ -3363,25 +3445,41 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-09-30T18:09:40.280408+00:00"
+    },
+    "2609.40140v1": {
+      "title": "Less is more: error-distance scaling relation for data-efficient kilometer-scale downscaling of extreme heat",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-10-01T06:34:37.832459+00:00"
+    },
+    "2609.40117v1": {
+      "title": "Beyond Model Ranking: Regime Diagnosis for Distributional-Statistical Misspecification in Industrial Time-Series Forecasting",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-10-01T06:34:37.847635+00:00"
+    },
+    "2609.40089v1": {
+      "title": "Replay on Demand: An Emergent Curriculum for Balancing Adaptation and Forgetting in Continued Pretraining",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-10-01T06:34:37.850686+00:00"
+    },
+    "2609.40342v1": {
+      "title": "Learning Global Sensitivity Indices from Observational Data: A Metamodel-Based Approach",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-10-01T06:34:37.864830+00:00"
+    },
+    "2609.40292v1": {
+      "title": "Disentangling Computation in Multi-Task Neural Networks with the Green's Operator",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-10-01T06:34:37.867710+00:00"
     }
   },
-  "total_ingested": 172,
-  "last_run_utc": "2026-09-30T18:09:40.292004+00:00",
+  "total_ingested": 177,
+  "last_run_utc": "2026-10-01T06:34:37.870659+00:00",
   "runs": [
-    {
-      "finished_at": "2026-08-23T06:14:51.228772+00:00",
-      "candidates": 10,
-      "new_ingested": 0,
-      "skipped_low_relevance": 0,
-      "min_relevance": 0.18,
-      "queries": [
-        "option credit spread OR iron condor OR put credit",
-        "implied volatility OR volatility surface trading",
-        "reinforcement learning trading OR GRPO OR PPO finance",
-        "market microstructure order book",
-        "retrieval augmented generation finance OR financial RAG"
-      ]
-    },
     {
       "finished_at": "2026-08-23T18:04:55.554288+00:00",
       "candidates": 10,
@@ -4058,6 +4156,20 @@
       "finished_at": "2026-09-30T18:09:40.292004+00:00",
       "candidates": 13,
       "new_ingested": 8,
+      "skipped_low_relevance": 5,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-10-01T06:34:37.870659+00:00",
+      "candidates": 10,
+      "new_ingested": 5,
       "skipped_low_relevance": 5,
       "min_relevance": 0.18,
       "queries": [
