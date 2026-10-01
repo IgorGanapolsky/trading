@@ -180,7 +180,7 @@ _BUFFETT_PUT_CREDIT_PROFILE = PutCreditProfile(
     min_hold_hours=24,
     position_size_pct=0.01,  # Rule #1: max ~1% equity at risk per structure
     max_contracts_per_trade=1,
-    max_concurrent_positions=2,
+    max_concurrent_positions=1,
     max_daily_structures=1,
     min_credit=0.50,
 )
