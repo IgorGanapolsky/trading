@@ -2809,6 +2809,140 @@
       "ingested_at": "2026-09-30T18:09:40.287362+00:00",
       "sha256": "717bd2df2ab38bb4ab0296d5bfc15cb5e3c8b839700de560e1db338c6b05a778",
       "chunks": 11
+    },
+    "2610.01834v1": {
+      "title": "Code Owns the Simulation, Jev Owns the Evaluation",
+      "published": "2026-10-01T15:06:40Z",
+      "relevance_score": 0.38,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2610.01834v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2610_01834v1.md",
+      "audit_path": "data/arxiv/arxiv_2610_01834v1.md",
+      "ingested_at": "2026-10-02T06:33:36.417626+00:00",
+      "sha256": "0776910fdaa5181916c89f8010cce8c3b8339259742d0b3eb7f6d48c5c8be40c",
+      "chunks": 11
+    },
+    "2610.01785v1": {
+      "title": "VETO: Video Efficient Token Optimization for Vision Language Models",
+      "published": "2026-10-01T14:32:43Z",
+      "relevance_score": 0.25,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CV",
+        "cs.AI",
+        "cs.CL"
+      ],
+      "abs_url": "https://arxiv.org/abs/2610.01785v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2610_01785v1.md",
+      "audit_path": "data/arxiv/arxiv_2610_01785v1.md",
+      "ingested_at": "2026-10-02T06:33:36.424634+00:00",
+      "sha256": "c711fff5a271750779db421f6daa6b31f5875975c717fe7b49650f6959994bf4",
+      "chunks": 11
+    },
+    "2610.01729v1": {
+      "title": "Function-Structured Reinforcement Learning with Executable Verifiers for Mathematical Reasoning",
+      "published": "2026-10-01T14:02:24Z",
+      "relevance_score": 0.47,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2610.01729v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2610_01729v1.md",
+      "audit_path": "data/arxiv/arxiv_2610_01729v1.md",
+      "ingested_at": "2026-10-02T06:33:36.431377+00:00",
+      "sha256": "9db51290a2a2fc3cb837cb26249cb24e6113995b81e9023f4d65c37f9628babf",
+      "chunks": 10
+    },
+    "2610.02201v1": {
+      "title": "SILSA: Sliding-Window Slice Latents for Topology-Preserving High-Resolution 3D Generation",
+      "published": "2026-10-01T17:59:46Z",
+      "relevance_score": 0.36,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CV",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2610.02201v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2610_02201v1.md",
+      "audit_path": "data/arxiv/arxiv_2610_02201v1.md",
+      "ingested_at": "2026-10-02T06:33:36.438404+00:00",
+      "sha256": "e04214186ee4ee0b6e747933a2ff9611d7c7c1162beeaef93ea0896fb508c671",
+      "chunks": 11
+    },
+    "2610.02128v1": {
+      "title": "Sample complexity bounds for categorical Markov random fields via Discrete Diffusions",
+      "published": "2026-10-01T17:40:21Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "math.ST",
+        "cs.LG",
+        "stat.ML"
+      ],
+      "abs_url": "https://arxiv.org/abs/2610.02128v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2610_02128v1.md",
+      "audit_path": "data/arxiv/arxiv_2610_02128v1.md",
+      "ingested_at": "2026-10-02T06:33:36.445352+00:00",
+      "sha256": "dfbb46e97e396885fc5c7c5c5176a5280310a609a8921047dd51d01ea0a5076b",
+      "chunks": 12
+    },
+    "2610.02092v1": {
+      "title": "Scalable, Transferable Meta-network for Data Selection Requires a Different Loss (and Why the Obvious Choice is Problematic)",
+      "published": "2026-10-01T17:23:29Z",
+      "relevance_score": 0.18,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2610.02092v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2610_02092v1.md",
+      "audit_path": "data/arxiv/arxiv_2610_02092v1.md",
+      "ingested_at": "2026-10-02T06:33:36.452251+00:00",
+      "sha256": "054978311a60385c1a54b1115fedc08f01140c46605a88fdcc3290da2dd62698",
+      "chunks": 10
+    },
+    "2610.02207v1": {
+      "title": "One Basis to Animate Them All: Gaussian Blendshape Distillation for Real-Time Avatars",
+      "published": "2026-10-01T17:59:58Z",
+      "relevance_score": 0.26,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CV",
+        "cs.AI",
+        "cs.HC",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2610.02207v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2610_02207v1.md",
+      "audit_path": "data/arxiv/arxiv_2610_02207v1.md",
+      "ingested_at": "2026-10-02T06:33:36.459169+00:00",
+      "sha256": "aa8be7a042f3d350b47dc467b3c49989c5c437be37c97948d1ef1bdb146899fd",
+      "chunks": 11
+    },
+    "2610.02206v1": {
+      "title": "KaliBench: A Fine-Grained Benchmark for Cybersecurity Tool Use on Kali Linux with Runtime-Free Verifiable Rewards",
+      "published": "2026-10-01T17:59:55Z",
+      "relevance_score": 0.25,
+      "relevance_method": "keyword_boost_v1",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.CR"
+      ],
+      "abs_url": "https://arxiv.org/abs/2610.02206v1",
+      "file_path": "rag_knowledge/arxiv/arxiv_2610_02206v1.md",
+      "audit_path": "data/arxiv/arxiv_2610_02206v1.md",
+      "ingested_at": "2026-10-02T06:33:36.466152+00:00",
+      "sha256": "90b88753b6d10546637c94ae2ae3d618ae7678a38afd2986d8badade8da0f654",
+      "chunks": 11
     }
   },
   "skipped_low_relevance": {
@@ -3363,25 +3497,29 @@
       "relevance_score": 0.13,
       "min_relevance": 0.18,
       "evaluated_at": "2026-09-30T18:09:40.280408+00:00"
+    },
+    "2610.02203v1": {
+      "title": "Embedding Prediction Helps Image Generation",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-10-02T06:33:36.469922+00:00"
+    },
+    "2610.02199v1": {
+      "title": "TACO: Ternary Absolute-max Column-wise One-sparse Optimizer for LLM Fine-Tuning",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-10-02T06:33:36.474912+00:00"
+    },
+    "2610.02190v1": {
+      "title": "Trust the Direction, Search the Step: Zero-and-First-Order Methods for LLM Fine-Tuning",
+      "relevance_score": 0.13,
+      "min_relevance": 0.18,
+      "evaluated_at": "2026-10-02T06:33:36.478715+00:00"
     }
   },
-  "total_ingested": 172,
-  "last_run_utc": "2026-09-30T18:09:40.292004+00:00",
+  "total_ingested": 180,
+  "last_run_utc": "2026-10-02T06:33:36.482501+00:00",
   "runs": [
-    {
-      "finished_at": "2026-08-23T06:14:51.228772+00:00",
-      "candidates": 10,
-      "new_ingested": 0,
-      "skipped_low_relevance": 0,
-      "min_relevance": 0.18,
-      "queries": [
-        "option credit spread OR iron condor OR put credit",
-        "implied volatility OR volatility surface trading",
-        "reinforcement learning trading OR GRPO OR PPO finance",
-        "market microstructure order book",
-        "retrieval augmented generation finance OR financial RAG"
-      ]
-    },
     {
       "finished_at": "2026-08-23T18:04:55.554288+00:00",
       "candidates": 10,
@@ -4059,6 +4197,20 @@
       "candidates": 13,
       "new_ingested": 8,
       "skipped_low_relevance": 5,
+      "min_relevance": 0.18,
+      "queries": [
+        "option credit spread OR iron condor OR put credit",
+        "implied volatility OR volatility surface trading",
+        "reinforcement learning trading OR GRPO OR PPO finance",
+        "market microstructure order book",
+        "retrieval augmented generation finance OR financial RAG"
+      ]
+    },
+    {
+      "finished_at": "2026-10-02T06:33:36.482501+00:00",
+      "candidates": 11,
+      "new_ingested": 8,
+      "skipped_low_relevance": 3,
       "min_relevance": 0.18,
       "queries": [
         "option credit spread OR iron condor OR put credit",
